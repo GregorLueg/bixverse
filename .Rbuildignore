@@ -1,2 +1,4 @@
 ^BIXverse\.Rproj$
 ^\.Rproj\.user$
+^src/\.cargo$
+^LICENSE\.md$
