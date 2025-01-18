@@ -3,7 +3,7 @@ rextendr::document()
 devtools::document()
 devtools::load_all()
 
-devtools::install()
+# devtools::install()
 
 library(magrittr)
 
@@ -13,8 +13,8 @@ seed = 123
 set.seed(seed)
 
 universe = protein_coding_genes$id
-gene_sets_no = 10000
-target_gene_sets_no = 1000
+gene_sets_no = 5000
+target_gene_sets_no = 2500
 
 gene_sets = purrr::map(1:gene_sets_no, ~{
   set.seed(seed + .x + 1)
