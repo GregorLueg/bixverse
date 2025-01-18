@@ -10,25 +10,13 @@
 #' @useDynLib BIXverse, .registration = TRUE
 NULL
 
-#' Calculate the p-value of a hypergeometric test.
+#' Run a single hypergeometric test.
 #' @export
-hypergeom_pval <- function(q, m, n, k) .Call(wrap__hypergeom_pval, q, m, n, k)
-
-#' Calculate the odds ratio
-#' @export
-hypergeom_odds_ratio <- function(a1_b1, a0_b1, a1_b0, a0_b0) .Call(wrap__hypergeom_odds_ratio, a1_b1, a0_b1, a1_b0, a0_b0)
-
-#' Create an integer vector of overlaps
-#' @export
-count_hits <- function(gene_set_list, target_genes) .Call(wrap__count_hits, gene_set_list, target_genes)
+rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
 
 #' Run a single hypergeometric test.
 #' @export
-hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__hypergeom_test, target_genes, gene_sets, gene_universe)
-
-#' Run hypergeometric tests over a list of target gene sets.
-#' @export
-hypergeom_test_list <- function(target_gene_lists, gene_sets, gene_universe) .Call(wrap__hypergeom_test_list, target_gene_lists, gene_sets, gene_universe)
+rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes, gene_sets, gene_universe)
 
 
 # nolint end

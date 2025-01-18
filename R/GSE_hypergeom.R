@@ -30,15 +30,124 @@ GSE_hypergeometric <- function(target_genes,
   # Input checks
   checkmate::qassert(target_genes, "S+")
   checkmate::assertList(gene_set_list, types = "character")
+  checkmate::qassert(names(gene_set_list), "S+")
   checkmate::qassert(gene_universe, c("0", "S+"))
   checkmate::qassert(threshold, c("R1[0,1]", "0"))
   checkmate::qassert(minimum_overlap, "I1")
   checkmate::qassert(verbose, "B1")
   # Function body
   if (is.null(gene_universe)) {
-    if (verbose) message("No gene universe given. Function will use the represented genes in the pathways/gene sets as reference.")
+    if (verbose) {
+      message(
+        "No gene universe given. Function will use the represented genes in the pathways/gene sets as reference."
+      )
+    }
     gene_universe <- unique(unlist(gene_set_list))
   }
+
+  gse_results <- rs_hypergeom_test(
+    target_genes = target_genes,
+    gene_sets = gene_set_list,
+    gene_universe = gene_universe
+  )
+
+  # Imprecision in floats can yield negative p-values. Make these positive
+  gse_results <-
+    data.table::data.table(do.call(cbind, gse_results)) %>%
+    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
+    .[, `:=`(gene_set_name = names(gene_set_list),
+             FDR = p.adjust(pvals, method = "BH"))] %>%
+    data.table::setcolorder(.,
+                            c(
+                              'gene_set_name',
+                              'odds_ratios',
+                              'pvals',
+                              'FDR',
+                              'hits',
+                              'gene_set_lengths'
+                            )) %>%
+    .[(FDR <= threshold) & (hits >= minimum_overlap)] %>%
+    data.table::setorder(., pvals)
+
+  gse_results
+}
+
+
+#' Gene set enrichment (GSE) based on a hypergeometric test over a list.
+#'
+#' @description
+#' Takes a set of list of target genes, a list of gene sets and calculates a p-value (hypergeometric test) and odds ratio (OR) against
+#' all the gene sets. Also applies a multiple hypothesis correction (BH) to the p-values.
+#'
+#' @param target_gene_list  Named list of character vectors. Names should represent the identifiers of the target genes and the elements the
+#' genes.
+#' @param gene_set_list Named list of character vectors. Names should represent the gene sets, pathways, and the elements the
+#' genes within the respective gene set.
+#' @param gene_universe Optional character vector. If you would like to specify specifically the gene universe. If set to NULL,
+#' the function will default to all represented genes in the `gene_set_list`.
+#' @param threshold Float between 0 and 1 to filter on the FDR. Default: 0.05. If NULL everything is returned.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return data.table with enrichment results.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+#' @import data.table
+GSE_hypergeometric_list <- function(target_genes_list,
+                                    gene_set_list,
+                                    gene_universe = NULL,
+                                    threshold = 0.05,
+                                    minimum_overlap = 3L,
+                                    verbose = T) {
+  # Input checks
+  checkmate::assertList(target_genes_list, types = "character")
+  checkmate::qassert(names(target_genes_list), "S+")
+  checkmate::assertList(gene_set_list, types = "character")
+  checkmate::qassert(names(gene_set_list), "S+")
+  checkmate::qassert(gene_universe, c("0", "S+"))
+  checkmate::qassert(threshold, c("R1[0,1]", "0"))
+  checkmate::qassert(minimum_overlap, "I1")
+  checkmate::qassert(verbose, "B1")
+  # Function body
+  if (is.null(gene_universe)) {
+    if (verbose) {
+      message(
+        "No gene universe given. Function will use the represented genes in the pathways/gene sets as reference."
+      )
+    }
+    gene_universe <- unique(unlist(gene_set_list))
+  }
+
+  gse_results <- rs_hypergeom_test_list(
+    target_genes = target_genes_list,
+    gene_sets = gene_set_list,
+    gene_universe = gene_universe
+  )
+
+  gse_results <-
+    data.table::data.table(do.call(cbind, gse_results)) %>%
+    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
+    .[, `:=`(
+      gene_set_name  = rep(names(gene_set_list), length(target_genes_list)),
+      target_set_name = rep(names(target_genes_list), each = length(gene_set_list))
+    )] %>%
+    .[, FDR := p.adjust(pvals, method = 'BH'), by = target_set_name] %>%
+    data.table::setcolorder(
+      .,
+      c(
+        'target_set_name',
+        'gene_set_name',
+        'odds_ratios',
+        'pvals',
+        'FDR',
+        'hits',
+        'gene_set_lengths'
+      )
+    ) %>%
+    .[(FDR <= threshold) & (hits >= minimum_overlap)] %>%
+    data.table::setorder(., pvals)
 
   gse_results
 }

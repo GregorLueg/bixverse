@@ -10,3 +10,4 @@ name = 'BIXverse'
 [dependencies]
 extendr-api = '*'
 statrs = '*'
+rayon = '*'
