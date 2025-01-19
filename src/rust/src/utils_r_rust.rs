@@ -1,6 +1,8 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
 
+// Takes an R list and transforms into a hashmap with the names being the keys
+// and the values being stored as Vec<String>
 pub fn r_list_to_hashmap(
   r_list: List
 ) -> HashMap<String, Vec<String>> {
@@ -18,6 +20,8 @@ pub fn r_list_to_hashmap(
     tuple_array.into_iter().collect()
 }
 
+// Takes an R list and transforms into a hashmap with the names being the keys
+// and the values being stored as HashSet<String>
 pub fn r_list_to_hashmap_set(
   r_list: List,
 ) -> HashMap<String, HashSet<String>> {
@@ -34,7 +38,7 @@ pub fn r_list_to_hashmap_set(
 }
 
 
-/// List of Strings as Robj to Vec<Vec<String>>
+// List of Strings as Robj to Vec<Vec<String>>
 pub fn r_list_to_str_vec(
   r_list: List
 ) -> Vec<Vec<String>> {

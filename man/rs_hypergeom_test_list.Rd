@@ -2,10 +2,21 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_hypergeom_test_list}
 \alias{rs_hypergeom_test_list}
-\title{Run a single hypergeometric test.}
+\title{Run a hypergeometric test over a list of target genes}
 \usage{
 rs_hypergeom_test_list(target_genes, gene_sets, gene_universe)
 }
+\arguments{
+\item{target_genes:}{A character vector representing the target gene set.}
+
+\item{gene_sets:}{A list of strings that represent the gene sets to test against.}
+
+\item{gene_universe:}{A character vector representing the gene universe from which the target genes
+and gene sets are sampled from.}
+}
+\value{
+A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+}
 \description{
-Run a single hypergeometric test.
+Given a list of target gene sets, this function will test for each of the individual
 }

@@ -64,6 +64,24 @@ pub fn count_hits(
   hits
 }
 
+pub fn count_hits_2(
+  gene_set_list: Vec<&HashSet<String>>,
+  target_genes: &Vec<String>,
+) -> Vec<u64> {
+  let target_genes_hash: HashSet<String> = target_genes
+    .into_iter()
+    .map(|s| s.clone())
+    .collect();
+  let hits: Vec<u64> = gene_set_list
+    .into_iter()
+    .map(|s| {
+      let intersection = s.intersection(&target_genes_hash).count() as u64;
+      intersection
+    })
+    .collect();
+  hits
+}
+
 /// Helper function to generate the 
 pub fn hypergeom_helper(
   target_genes: &Vec<String>,

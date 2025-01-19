@@ -6,6 +6,18 @@
 \usage{
 rs_hypergeom_test(target_genes, gene_sets, gene_universe)
 }
+\arguments{
+\item{target_genes:}{A character vector representing the target gene set.}
+
+\item{gene_sets:}{A list of strings that represent the gene sets to test against.}
+
+\item{gene_universe:}{A character vector representing the gene universe from which the target genes
+and gene sets are sampled from.}
+}
+\value{
+A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+}
 \description{
-Run a single hypergeometric test.
+Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
+of the target genes in the gene sets.
 }

@@ -18,7 +18,11 @@ use_package("parallel")
 use_package("furrr")
 use_package("checkmate")
 use_package("magrittr")
+use_package("S7")
+use_package("zeallot")
+use_package("arrow")
 
 ## Functions / R stuff ----
 
 use_r("GSE_hypergeom")
+use_r("S7_go_object")

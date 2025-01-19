@@ -11,12 +11,41 @@
 NULL
 
 #' Run a single hypergeometric test.
+#' 
+#' Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
+#' of the target genes in the gene sets.
+#' 
+#' @param target_genes: A character vector representing the target gene set.
+#' @param gene_sets: A list of strings that represent the gene sets to test against.
+#' @param gene_universe: A character vector representing the gene universe from which the target genes
+#' and gene sets are sampled from.
+#' 
+#' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+#' 
 #' @export
 rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
 
-#' Run a single hypergeometric test.
+#' Run a hypergeometric test over a list of target genes
+#' 
+#' Given a list of target gene sets, this function will test for each of the individual 
+#' 
+#' @param target_genes: A character vector representing the target gene set.
+#' @param gene_sets: A list of strings that represent the gene sets to test against.
+#' @param gene_universe: A character vector representing the gene universe from which the target genes
+#' and gene sets are sampled from.
+#' 
+#' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+#' 
 #' @export
 rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes, gene_sets, gene_universe)
+
+#' Run hypergeometric enrichment over the gene ontology
+#' 
+#' This function implements a Rust version of the gene ontology enrichment with elimination:
+#' the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+#' Should the hypergeometric test
+#' @export
+rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
 
 # nolint end
