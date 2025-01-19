@@ -163,9 +163,9 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
 
 # S7 ----
 
-gene_ontology_enrich_data <- S7::new_class(
+gene_ontology_data <- S7::new_class(
   # Name
-  name = "gene_ontology_enrich_data",
+  name = "gene_ontology_data",
   # Properties, i.e., slots
   properties = list(
     go_info = S7::class_data.frame,

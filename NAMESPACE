@@ -2,10 +2,11 @@
 
 export(.get_go_genes_biomind)
 export(.get_go_ontology_depth_ancestry_biomind)
+export(GSE_GO_elim_method)
 export(GSE_hypergeometric)
 export(GSE_hypergeometric_list)
 export(biomind_to_go_data)
-export(gene_ontology_enrich_data)
+export(gene_ontology_data)
 export(rs_gse_geom_elim)
 export(rs_gse_geom_elim_list)
 export(rs_hypergeom_test)

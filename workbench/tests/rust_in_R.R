@@ -74,11 +74,16 @@ min_genes = 3
 
 go_data_dt = biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
 
-go_data_s7 = gene_ontology_enrich_data(go_data_dt, 3L)
+?gene_ontology_enrich_data
 
+go_data_s7 = gene_ontology_data(go_data_dt, min_genes = 3L)
+
+go_info = S7::prop(go_data_s7, "go_info")
 go_to_genes = S7::prop(go_data_s7, "go_to_genes")
 ancestry = S7::prop(go_data_s7, "ancestry")
 levels = S7::prop(go_data_s7, "levels")
+
+class(S7::prop(go_data_s7, "min_genes"))
 
 gene_universe_length = length(unique(unlist(go_to_genes)))
 
@@ -95,8 +100,27 @@ results_go = rs_gse_geom_elim(
 )
 tictoc::toc()
 
-test_1 = data.table(do.call(cbind, results_go[-1])) %>%
-  .[, go_id := results_go$go_ids]
+results_go_dt = data.table(do.call(cbind, results_go[-1])) %>%
+  .[, `:=`(go_id = results_go$go_ids,
+           FDR = p.adjust(pvals, method = 'BH'))] %>%
+  merge(.,
+        go_info,
+        by = 'go_id') %>%
+  data.table::setcolorder(
+    .,
+    c(
+      'go_id',
+      'go_name',
+      'odds_ratios',
+      'pvals',
+      'FDR',
+      'hits',
+      'gene_set_lengths'
+    )
+  )
+
+
+
 
 test_2 = data.table(do.call(cbind, results_go[-1])) %>%
   .[, go_id := results_go$go_ids]

@@ -18,5 +18,6 @@ Imports:
     furrr,
     magrittr,
     parallel,
+    rextendr,
     S7,
     zeallot
