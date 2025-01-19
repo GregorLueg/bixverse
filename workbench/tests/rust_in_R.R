@@ -2,7 +2,7 @@
 rextendr::document()
 devtools::document()
 devtools::load_all()
-devtools::check()
+# devtools::check()
 
 # devtools::install()
 
@@ -74,16 +74,18 @@ min_genes = 3
 
 go_data_dt = biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
 
-?gene_ontology_enrich_data
-
 go_data_s7 = gene_ontology_data(go_data_dt, min_genes = 3L)
+
+
+x = GSE_GO_elim_method(go_data_s7, target_genes, min_genes = 3L, fdr_threshold = 1)
+
+
+head(x)
 
 go_info = S7::prop(go_data_s7, "go_info")
 go_to_genes = S7::prop(go_data_s7, "go_to_genes")
 ancestry = S7::prop(go_data_s7, "ancestry")
 levels = S7::prop(go_data_s7, "levels")
-
-class(S7::prop(go_data_s7, "min_genes"))
 
 gene_universe_length = length(unique(unlist(go_to_genes)))
 
@@ -134,6 +136,7 @@ combined = merge(
 
 head(combined)
 
+?GSE_GO_elim_method
 
 tictoc::tic()
 results_go_list = rs_gse_geom_elim_list(
