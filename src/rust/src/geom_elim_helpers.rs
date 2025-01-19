@@ -3,15 +3,40 @@ use std::collections::{HashMap, HashSet};
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
 use crate::hypergeom_helpers::*;
 
-// Class, methods
+/// Type alias for the go identifier to gene Hashmap
+type GeneMap = HashMap<String, HashSet<String>>;
+
+/// Type alias for the ancestor to go identifier HashMap
+type AncestorMap = HashMap<String, Vec<String>>;
+
+/// Type alias for the ontology level to go identifier HashMap
+type LevelMap = HashMap<String, Vec<String>>;
+
+/// Return structure of the `process_ontology_level()` ontology function.
+pub struct GoElimLevelResults {
+  pub go_ids: Vec<String>,
+  pub pvals: Vec<f64>,
+  pub odds_ratios: Vec<f64>,
+  pub hits: Vec<u64>,
+  pub gene_set_lengths: Vec<u64>,
+}
+
+/// Structure that contains the gene ontology and key functions to do apply the elimination method.
 pub struct GeneOntology {
-    pub go_to_gene: HashMap<String, HashSet<String>>,
-    pub ancestors: HashMap<String, Vec<String>>,
-    pub levels: HashMap<String, Vec<String>>,
+    pub go_to_gene: GeneMap,
+    pub ancestors: AncestorMap,
+    pub levels: LevelMap,
 }
 
 impl GeneOntology {
-  // Get the ancestors for a given id
+
+  /// Returns the ancestors of a given gene ontology term identifier
+  /// 
+  /// ### Arguments
+  /// * id: gene ontology term identifier for which to get the ancestors.
+  /// 
+  /// ### Returns
+  /// * The ancestors of (if available) of the given gene ontology term identifier.
   pub fn get_ancestors(
     &self, 
     id: &String
@@ -19,7 +44,13 @@ impl GeneOntology {
     self.ancestors.get(id)
   }
 
-  //
+  /// Returns the gene ontology term identifiers for a given level of the ontology.
+  /// 
+  /// ### Arguments
+  /// * id: identifier of the level you wish to query of the ontology.
+  /// 
+  /// ### Returns
+  /// * The gene ontology term identifiers at this level.
   pub fn get_level_ids(
     &self,
     id: &String
@@ -30,7 +61,7 @@ impl GeneOntology {
   // Remove genes from defined sets of genes
   pub fn remove_genes(
     &mut self, 
-    ids: &Vec<String>, 
+    ids: &[String], 
     genes_to_remove: &HashSet<String>
   ) {
     for id in ids.iter() {
@@ -53,9 +84,8 @@ impl GeneOntology {
 
     let id_keys: HashSet<_> = ids.into_iter().collect();
 
-    let ids_final: Vec<String> = id_keys
+    let ids_final: Vec<String>= id_keys
       .intersection(&keys)
-      .into_iter()
       .map(|s| s.to_string())
       .collect();
 
@@ -79,23 +109,18 @@ impl GeneOntology {
 }
 
 
-// Function to go from R List object to the Gene Ontology structure
-pub fn generate_go_structure(
+
+// Prepare the data for ingestion into a GO object
+pub fn prepare_go_data(
   go_to_genes: List,
   ancestors: List,
   levels: List,
-) -> GeneOntology {
+ ) -> (GeneMap, AncestorMap, LevelMap) {
   let go_to_genes = r_list_to_hashmap_set(go_to_genes);
   let ancestors = r_list_to_hashmap(ancestors);
   let levels = r_list_to_hashmap(levels);
 
-  let go_obj = GeneOntology {
-    go_to_gene: go_to_genes,
-    ancestors: ancestors,
-    levels: levels,
-  };
-
-  return go_obj
+  (go_to_genes, ancestors, levels)
 }
 
 // Process a given ontology level
@@ -107,12 +132,10 @@ pub fn process_ontology_level(
   gene_universe_length: u64,
   elim_threshold: f64,
   debug: bool,
-) -> (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>) {
+) -> GoElimLevelResults {
   // Get the identfiers of that level and clean everything up
-  let go_ids = go_obj.get_level_ids(&level);
-  let go_ids_final: Vec<String> = go_ids
-    .map(|v| v.clone())
-    .unwrap_or_else(Vec::new);
+  let go_ids = go_obj.get_level_ids(level);
+  let go_ids_final: Vec<String> = go_ids.cloned().unwrap_or_default();
   let level_data = go_obj.get_genes_list(go_ids_final);
   let mut go_identifiers = level_data.0;
   let mut go_gene_sets = level_data.1;
@@ -195,9 +218,7 @@ pub fn process_ontology_level(
 
   for term in go_to_remove.iter() {
     let ancestors = go_obj.get_ancestors(term);
-    let ancestors_final: Vec<String> = ancestors
-      .map(|v| v.clone())
-      .unwrap_or_else(Vec::new);
+    let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
     
     if let Some(genes_to_remove) = go_obj.get_genes(term) {
         let genes_to_remove = genes_to_remove.clone();
@@ -205,5 +226,11 @@ pub fn process_ontology_level(
     }
   }
 
-  (go_identifiers, pvals, odds_ratios, hits, gene_set_lengths)
+  GoElimLevelResults {
+    go_ids: go_identifiers,
+    pvals,
+    odds_ratios,
+    hits,
+    gene_set_lengths,
+  }
 }

@@ -21,6 +21,7 @@ use_package("magrittr")
 use_package("S7")
 use_package("zeallot")
 use_package("arrow")
+use_package("foreach")
 
 ## Functions / R stuff ----
 

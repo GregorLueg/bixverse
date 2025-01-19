@@ -15,8 +15,29 @@ rs_gse_geom_elim(
   debug
 )
 }
+\arguments{
+\item{target_genes:}{A character vector representing the target gene set.}
+
+\item{go_to_genes:}{A named list with the gene identifers as elements and gene ontology identifiers as
+names.}
+
+\item{ancestors:}{A named list with the go identifiers of all ancestors as elements and the gene ontology
+identifiers as names.}
+
+\item{levels:}{A named list with the go identifiers of that ontology level as elements and the level name
+as names. IMPORTANT! This list needs to be ordered in the right way!}
+
+\item{gene_universe_length:}{The length of the gene universe.}
+
+\item{min_genes:}{number of minimum genes for the gene ontology term to be tested.}
+
+\item{elim_threshold:}{p-value below which the elimination procedure shall be applied to the ancestors.}
+
+\item{debug:}{boolean that will provide additional console information for debugging purposes.}
+}
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
 the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
-Should the hypergeometric test
+Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
+term will be removed from all ancestors.
 }

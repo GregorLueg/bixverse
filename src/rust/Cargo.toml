@@ -11,4 +11,4 @@ name = 'BIXverse'
 extendr-api = '*'
 statrs = '*'
 rayon = '*'
-indicatif = '*'
+indicatif = { version = "0.17", features = ["rayon"] }

@@ -7,14 +7,10 @@
 gene_ontology_enrich_data(go_data_dt, min_genes)
 }
 \arguments{
-\item{raw_data}{Matrix. Input matrix of the gene expression values (rows = genes;
-cols = samples).}
+\item{go_data_dt}{A data.table that contains the gene ontology information. This can for example
+be produced with \code{biomind_to_go_data()}.}
 
-\item{meta_data}{data.frame. Meta-data information in form of a data.frame.}
-
-\item{checks_enabled}{Boolean. Shall additional checks be done on the input matrix (i.e., is the
-dimensionality sensible).
-Defaults to TRUE.}
+\item{min_genes}{data.frame. Meta-data information in form of a data.frame.}
 }
 \value{
 Returns the S7 object for further operations.
@@ -22,24 +18,10 @@ Returns the S7 object for further operations.
 \description{
 This class is used to store the gene ontology information for
 \itemize{
-\item go_info: Matrix, the original provided matrix. In the special case of cPCA, the target matrix.
-\item go_to_genes: data.frame, the meta_data of the samples.
-\item ancestry: List. This is where various intermediary files will be stored.
-\item levels: List. Final results from the co-expression module detection will be stored here.
-}
-}
-\examples{
-\dontrun{
-
-synthetic_GEX <- create_synthetic_signal_matrix()
-
-meta_data <- data.table(sampleID = names(synthetic_GEX$group),
-                        group = as.character(synthetic_GEX$group))
-
-raw_data <- synthetic_GEX$mat
-
-S7_test <- co_expression_modules(raw_data = raw_data,
-                                 meta_data = meta_data)
-
+\item go_info: data.table. Contains the gene ontology identifiers and names.
+\item go_to_genes: List. Contains the genes within each gene ontology term.
+\item ancestry: List. Contains the ancestors for each gene ontology term.
+\item levels: List. Which gene ontology terms sit at which level.
+\item min_genes: Integer, the minimum genes in the gene ontology term to conduct the test.
 }
 }

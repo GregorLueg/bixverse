@@ -171,7 +171,8 @@ gene_ontology_enrich_data <- S7::new_class(
     go_info = S7::class_data.frame,
     go_to_genes = S7::class_list,
     ancestry = S7::class_list,
-    levels = S7::class_list
+    levels = S7::class_list,
+    min_genes = S7::class_integer
   ),
 
   #' Constructor of the S7 class
@@ -179,36 +180,19 @@ gene_ontology_enrich_data <- S7::new_class(
   #' @description
   #' This class is used to store the gene ontology information for
   #'
-  #' - go_info: Matrix, the original provided matrix. In the special case of cPCA, the target matrix.
-  #' - go_to_genes: data.frame, the meta_data of the samples.
-  #' - ancestry: List. This is where various intermediary files will be stored.
-  #' - levels: List. Final results from the co-expression module detection will be stored here.
+  #' - go_info: data.table. Contains the gene ontology identifiers and names.
+  #' - go_to_genes: List. Contains the genes within each gene ontology term.
+  #' - ancestry: List. Contains the ancestors for each gene ontology term.
+  #' - levels: List. Which gene ontology terms sit at which level.
+  #' - min_genes: Integer, the minimum genes in the gene ontology term to conduct the test.
   #'
-  #' @param raw_data Matrix. Input matrix of the gene expression values (rows = genes;
-  #' cols = samples).
-  #' @param meta_data data.frame. Meta-data information in form of a data.frame.
-  #' @param checks_enabled Boolean. Shall additional checks be done on the input matrix (i.e., is the
-  #' dimensionality sensible).
-  #' Defaults to TRUE.
+  #' @param go_data_dt A data.table that contains the gene ontology information. This can for example
+  #' be produced with `biomind_to_go_data()`.
+  #' @param min_genes data.frame. Meta-data information in form of a data.frame.
   #'
   #' @return Returns the S7 object for further operations.
   #'
   #' @export
-  #'
-  #' @examples
-  #' \dontrun{
-  #'
-  #' synthetic_GEX <- create_synthetic_signal_matrix()
-  #'
-  #' meta_data <- data.table(sampleID = names(synthetic_GEX$group),
-  #'                         group = as.character(synthetic_GEX$group))
-  #'
-  #' raw_data <- synthetic_GEX$mat
-  #'
-  #' S7_test <- co_expression_modules(raw_data = raw_data,
-  #'                                  meta_data = meta_data)
-  #'
-  #' }
   constructor = function(go_data_dt, min_genes) {
     # Checks
     checkmate::assertDataTable(go_data_dt)
@@ -240,7 +224,8 @@ gene_ontology_enrich_data <- S7::new_class(
       go_info = go_info,
       go_to_genes = go_to_genes,
       ancestry = ancestry,
-      levels = levels
+      levels = levels,
+      min_genes = min_genes
     )
   }
 )

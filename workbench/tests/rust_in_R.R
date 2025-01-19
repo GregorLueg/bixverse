@@ -2,6 +2,7 @@
 rextendr::document()
 devtools::document()
 devtools::load_all()
+devtools::check()
 
 # devtools::install()
 
@@ -14,7 +15,7 @@ set.seed(seed)
 
 universe = protein_coding_genes$id
 gene_sets_no = 5000
-target_gene_sets_no = 2500
+target_gene_sets_no = 100
 
 gene_sets = purrr::map(1:gene_sets_no, ~{
   set.seed(seed + .x + 1)
@@ -81,6 +82,7 @@ levels = S7::prop(go_data_s7, "levels")
 
 gene_universe_length = length(unique(unlist(go_to_genes)))
 
+tictoc::tic()
 results_go = rs_gse_geom_elim(
   target_genes = target_genes,
   go_to_genes = go_to_genes,
@@ -88,9 +90,10 @@ results_go = rs_gse_geom_elim(
   levels = levels,
   gene_universe_length = gene_universe_length,
   min_genes = 3,
-  elim_threshold = 0,
-  debug = TRUE
+  elim_threshold = 0.1,
+  debug = FALSE
 )
+tictoc::toc()
 
 test_1 = data.table(do.call(cbind, results_go[-1])) %>%
   .[, go_id := results_go$go_ids]
@@ -106,6 +109,20 @@ combined = merge(
   setorder(pvals.x)
 
 head(combined)
+
+
+tictoc::tic()
+results_go_list = rs_gse_geom_elim_list(
+  target_genes = target_gene_sets,
+  go_to_genes = go_to_genes,
+  ancestors = ancestry,
+  levels = levels,
+  gene_universe_length = gene_universe_length,
+  min_genes = 3,
+  elim_threshold = 0,
+  debug = FALSE
+)
+tictoc::toc()
 
 plot(
   combined$gene_set_lengths.x,

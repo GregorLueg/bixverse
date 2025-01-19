@@ -1,5 +1,7 @@
 # Gene Set Enrichment functions ----
 
+## Hypergeometric functions ----
+
 #' Gene set enrichment (GSE) based on a hypergeometric test.
 #'
 #' @description
@@ -151,3 +153,5 @@ GSE_hypergeometric_list <- function(target_genes_list,
 
   gse_results
 }
+
+## Gene ontology
