@@ -122,9 +122,10 @@
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom zeallot `%<-%`
-biomind_to_go_data <- function(path_to_biomind_processed) {
+biomind_to_go_data <- function(path_to_biomind_processed, verbose = TRUE) {
   # Check that expected files exist
   checkmate::qassert(path_to_biomind_processed, "S1")
+  checkmate::qassert(verbose, "B1")
   path_nodes <- file.path(path_to_biomind_processed,
                           "nodes_OT_gene_ontology.parquet")
   path_go_genes <-
@@ -135,6 +136,8 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
   checkmate::assertFileExists(path_go_genes)
   checkmate::assertFileExists(path_ontology)
   # Function body
+  if (verbose)
+    print("1. Loading data in.")
   go_nodes <- arrow::read_parquet(path_nodes) %>%
     as.data.table()
   edges_go_genes <- arrow::read_parquet(path_go_genes) %>%
@@ -142,7 +145,14 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
   edges_ontology <- arrow::read_parquet(path_ontology) %>%
     as.data.table()
 
+  if (verbose)
+    print("2. Processing gene ontology to genes.")
+
   go_genes = .get_go_genes_biomind(edges_go_genes)
+
+  if (verbose)
+    print("3. Processing gene ontological information.")
+
   c(go_ancestry, go_depth) %<-% .get_go_ontology_depth_ancestry_biomind(edges_ontology)
 
   df_list <- list(

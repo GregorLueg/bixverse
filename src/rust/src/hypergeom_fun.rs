@@ -8,9 +8,6 @@ use rayon::prelude::*; // Import rayon's parallel iterator traits
 /// A type alias that can be returned by par_iter() functions.
 type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
 
-/// A type alias that can be returned by the par_iter() functions.
-type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
-
 /// Run a single hypergeometric test.
 /// 
 /// Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
@@ -32,7 +29,7 @@ fn rs_hypergeom_test(
 ) -> List {
   let gene_sets = r_list_to_str_vec(gene_sets);
 
-  let res = hypergeom_helper(
+  let res: HypergeomResult = hypergeom_helper(
     &target_genes,
     &gene_sets,
     &gene_universe
@@ -70,7 +67,7 @@ fn rs_hypergeom_test_list(
   let res: Vec<HypergeomResult> = target_genes
     .par_iter()
     .map(|x_i| {
-      let res_i: (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>) = hypergeom_helper(
+      let res_i: HypergeomResult = hypergeom_helper(
         x_i,
         &gene_sets,
         &gene_universe

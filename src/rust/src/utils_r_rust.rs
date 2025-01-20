@@ -3,10 +3,10 @@ use std::collections::{HashMap, HashSet};
 
 /// Transforms a Robj List into a Hashmap
 /// 
-/// ### Arguments
+/// #### Arguments
 /// * r_list: The R list to transform. The function is expecting Strings as content of the list
 /// 
-/// ### Returns
+/// #### Returns
 /// * A Hashmap with the names of the list as keys and the character vectors stored as String arrays.
 pub fn r_list_to_hashmap(
   r_list: List
@@ -27,10 +27,10 @@ pub fn r_list_to_hashmap(
 
 /// Transforms a Robj List into a Hashmap with the values as Hashset
 /// 
-/// ### Arguments
+/// #### Arguments
 /// * r_list: The R list to transform. The function is expecting Strings as content of the list
 /// 
-/// ### Returns
+/// #### Returns
 /// * A Hashmap with the names of the list as keys and the character vectors stored as HashSets.
 pub fn r_list_to_hashmap_set(
   r_list: List,
@@ -50,10 +50,10 @@ pub fn r_list_to_hashmap_set(
 
 /// Transforms a Robj List into an array of String arrays.
 /// 
-/// ### Arguments
+/// #### Arguments
 /// * r_list: The R list to transform. The function is expecting Strings as content of the list
 /// 
-/// ### Returns
+/// #### Returns
 /// * An array of String arrays.
 pub fn r_list_to_str_vec(
   r_list: List

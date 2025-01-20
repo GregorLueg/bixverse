@@ -3,6 +3,10 @@ use std::collections::{HashMap, HashSet};
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
 use crate::hypergeom_helpers::*;
 
+///////////////////////
+// Types & Structure //
+///////////////////////
+
 /// Type alias for the go identifier to gene Hashmap
 type GeneMap = HashMap<String, HashSet<String>>;
 
@@ -32,10 +36,10 @@ impl GeneOntology {
 
   /// Returns the ancestors of a given gene ontology term identifier
   /// 
-  /// ### Arguments
+  /// #### Arguments
   /// * id: gene ontology term identifier for which to get the ancestors.
   /// 
-  /// ### Returns
+  /// #### Returns
   /// * The ancestors of (if available) of the given gene ontology term identifier.
   pub fn get_ancestors(
     &self, 
@@ -46,10 +50,10 @@ impl GeneOntology {
 
   /// Returns the gene ontology term identifiers for a given level of the ontology.
   /// 
-  /// ### Arguments
+  /// #### Arguments
   /// * id: identifier of the level you wish to query of the ontology.
   /// 
-  /// ### Returns
+  /// #### Returns
   /// * The gene ontology term identifiers at this level.
   pub fn get_level_ids(
     &self,
@@ -58,7 +62,11 @@ impl GeneOntology {
     self.levels.get(id)
   }
 
-  // Remove genes from defined sets of genes
+  /// Remove genes from defined sets of genes
+  /// 
+  /// #### Arguments
+  /// * ids: gene ontology term identifiers from which to remove the genes.
+  /// * genes_to_remove: the genes you wish to remove from the gene ontology terms.
   pub fn remove_genes(
     &mut self, 
     ids: &[String], 
@@ -71,8 +79,13 @@ impl GeneOntology {
     }
   }
 
-  // Get the genes for a set of IDs This function will ensure that the keys and ids overlap
-  // and return the ids that could be found.
+  /// Get the genes based on an array of Strings.
+  /// 
+  /// #### Arguments
+  /// * ids: An array of gene ontology term identifiers for which to retrieve the gene identifiers.
+  /// 
+  /// #### Returns
+  /// * A tuple: the first element contains the gene ontology term identifiers for which genes could be identified. The second element contains an array of HashSets with the gene identifiers.
   pub fn get_genes_list(
     &self,
     ids: Vec<String>,
@@ -99,7 +112,13 @@ impl GeneOntology {
     (ids_final, gene_sets)
   }
 
-  // Get the genes of a specific ID
+  /// Get the genes for one specific ID
+  /// 
+  /// #### Params
+  /// * id: the gene ontology term identifier for which to retrieve the genes.
+  /// 
+  /// #### Returns
+  /// * The gene identifiers associated with 
   pub fn get_genes(
     &self,
     id: &String
@@ -108,9 +127,19 @@ impl GeneOntology {
   }
 }
 
+///////////////
+// Functions //
+///////////////
 
-
-// Prepare the data for ingestion into a GO object
+/// Prepare the data for ingestion into a GO object
+/// 
+/// #### Params
+/// * go_to_genes: An R list with the GO to genes.
+/// * ancestors: An R list with the gene ontology term identifiers and their ancestors. 
+/// * levels: An R list 
+/// 
+/// #### Returns
+/// * A tuple of the needed hashmaps for GeneOntology structure.
 pub fn prepare_go_data(
   go_to_genes: List,
   ancestors: List,
@@ -123,7 +152,21 @@ pub fn prepare_go_data(
   (go_to_genes, ancestors, levels)
 }
 
-// Process a given ontology level
+/// Process a given ontology level
+/// 
+/// This function processes a given ontology level
+/// 
+/// ### Params:
+/// * target_genes: Vector of target genes to test against.
+/// * level: The level of the ontology you want to test.
+/// * go_obj: GeneOntology class.
+/// * min_genes: Integer, indicating how many genes need to be present for the tests to occur.
+/// * gene_universe_length: Integer, indicating the size of the gene universe
+/// * elim_threshold: Float. Below this threshold, the genes of the term will be removed from its ancestors.
+/// * debug: Bool. Allos for plotting of data.
+/// 
+/// ### Returns:
+/// * GoElimLevelResults
 pub fn process_ontology_level(
   target_genes: Vec<String>,
   level: &String,
@@ -158,9 +201,6 @@ pub fn process_ontology_level(
     go_gene_sets.push(set);
   }
 
-  // Run the hypergeometric tests on the reduced data
-
-  // Prepare the variables
   let trials = target_genes
     .clone()
     .into_iter()
@@ -213,7 +253,11 @@ pub fn process_ontology_level(
 
   if debug {
     let no_terms = go_to_remove.len();
-    println!("At level {} a total of {} gene ontology terms will be affected by elimination.", level, no_terms);
+    println!(
+      "At level {} a total of {} gene ontology terms will be affected by elimination.", 
+      level, 
+      no_terms
+    );
   }
 
   for term in go_to_remove.iter() {

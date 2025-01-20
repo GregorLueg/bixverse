@@ -3,6 +3,7 @@
 export(.get_go_genes_biomind)
 export(.get_go_ontology_depth_ancestry_biomind)
 export(GSE_GO_elim_method)
+export(GSE_GO_elim_method_list)
 export(GSE_hypergeometric)
 export(GSE_hypergeometric_list)
 export(biomind_to_go_data)

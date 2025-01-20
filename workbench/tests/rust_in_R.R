@@ -15,7 +15,7 @@ set.seed(seed)
 
 universe = protein_coding_genes$id
 gene_sets_no = 5000
-target_gene_sets_no = 100
+target_gene_sets_no = 50
 
 gene_sets = purrr::map(1:gene_sets_no, ~{
   set.seed(seed + .x + 1)
@@ -76,9 +76,11 @@ go_data_dt = biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
 
 go_data_s7 = gene_ontology_data(go_data_dt, min_genes = 3L)
 
+?GSE_GO_elim_method
 
 x = GSE_GO_elim_method(go_data_s7, target_genes, min_genes = 3L, fdr_threshold = 1)
 
+?GSE_GO_elim_method
 
 head(x)
 
@@ -122,22 +124,6 @@ results_go_dt = data.table(do.call(cbind, results_go[-1])) %>%
   )
 
 
-
-
-test_2 = data.table(do.call(cbind, results_go[-1])) %>%
-  .[, go_id := results_go$go_ids]
-
-combined = merge(
-  test_1,
-  test_2,
-  by = 'go_id'
-) %>%
-  setorder(pvals.x)
-
-head(combined)
-
-?GSE_GO_elim_method
-
 tictoc::tic()
 results_go_list = rs_gse_geom_elim_list(
   target_genes = target_gene_sets,
@@ -146,10 +132,23 @@ results_go_list = rs_gse_geom_elim_list(
   levels = levels,
   gene_universe_length = gene_universe_length,
   min_genes = 3,
-  elim_threshold = 0,
+  elim_threshold = 0.1,
   debug = FALSE
 )
 tictoc::toc()
+
+devtools::document()
+
+GSE_GO_elim_method_list(
+  S7_obj = go_data_s7,
+  target_gene_list = target_gene_sets
+)
+
+
+
+
+
+test =
 
 plot(
   combined$gene_set_lengths.x,

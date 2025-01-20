@@ -6,8 +6,8 @@ use std::collections::HashSet;
 // Types //
 ///////////
 
+/// A type alias that can be returned by the par_iter() functions.
 pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
-
 
 ///////////////
 // Functions //
@@ -16,15 +16,13 @@ pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
 /// Calculate the p-value of a hypergeometric test.
 /// 
 /// ### Arguments
-/// 
-/// * q: 
-/// * m:
-/// * n:
-/// * k:
+/// * q: ...
+/// * m: ...
+/// * n: ...
+/// * k: ...
 /// 
 /// ### Returns
-/// 
-/// The p-value of the hypergeometric test.
+/// * The p-value of the hypergeometric test.
 pub fn hypergeom_pval(
   q: u64, 
   m: u64, 
@@ -49,6 +47,15 @@ pub fn hypergeom_pval(
 }
 
 /// Calculate odds ratios
+/// 
+/// ### Arguments
+/// * a1_b1: ...
+/// * a0_b1: ...
+/// * a1_b0: ...
+/// * a0_b0: ...
+/// 
+/// ### Returns
+/// * The odds ratio given the parameter
 pub fn hypergeom_odds_ratio(
   a1_b1: u64,
   a0_b1: u64,
@@ -80,6 +87,7 @@ pub fn count_hits(
   hits
 }
 
+/// Counts the number of hits
 pub fn count_hits_2(
   gene_set_list: Vec<&HashSet<String>>,
   target_genes: &[String],
