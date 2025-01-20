@@ -36,8 +36,8 @@ data.table with enrichment results.
 \description{
 This method takes the gene_ontology_data and a list of target gene sets and performs an GSE
 enrichment leveraging ontological information. It starts at the lowest levels of the ontology
-and tests if there is significant enrichment for any GO terms. If yes and the threshold is below
+and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
 the elimination threshold, the genes from this term will be removed from all its ancestors. The
 function then proceeds to the next level of the ontology and repeats the process. The class will
-leverage Rust hyperthreading to parallelise the process.
+leverage Rust threading to parallelise the process.
 }

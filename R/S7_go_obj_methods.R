@@ -5,7 +5,7 @@
 #' @description
 #' This method takes the gene_ontology_data and a target gene set and performs an GSE
 #' enrichment leveraging ontological information. It starts at the lowest levels of the ontology
-#' and tests if there is significant enrichment for any GO terms. If yes and the threshold is below
+#' and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
 #' the elimination threshold, the genes from this term will be removed from all its ancestors. The
 #' function then proceeds to the next level of the ontology and repeats the process.
 #'
@@ -99,10 +99,10 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
 #' @description
 #' This method takes the gene_ontology_data and a list of target gene sets and performs an GSE
 #' enrichment leveraging ontological information. It starts at the lowest levels of the ontology
-#' and tests if there is significant enrichment for any GO terms. If yes and the threshold is below
+#' and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
 #' the elimination threshold, the genes from this term will be removed from all its ancestors. The
 #' function then proceeds to the next level of the ontology and repeats the process. The class will
-#' leverage Rust hyperthreading to parallelise the process.
+#' leverage Rust threading to parallelise the process.
 #'
 #' @usage GSE_GO_elim_method(
 #'  S7_obj,
@@ -170,16 +170,10 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
       rep(.x, each = .y)
     }))
 
-    print(length(target_set_names))
-
-    print(length(results_go$go_ids))
-
-    results_go_dt <- data.table(do.call(cbind, results_go[-1])) %>%
+    results_go_dt <- data.table(do.call(cbind, results_go[c("pvals", "odds_ratios", "hits", "gene_set_lengths")])) %>%
       .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
-      .[, `:=`(go_id = results_go$go_ids, target_set_name = target_set_names)]
-
-    # %>%
-    #   .[, FDR := p.adjust(pvals, method = "BH"), by = target_set_name]
+      .[, `:=`(go_id = results_go$go_ids, target_set_name = target_set_names)] %>%
+      .[, FDR := p.adjust(pvals, method = "BH"), by = target_set_name]
 
     results_go_dt <- merge(results_go_dt, go_info, by = "go_id") %>%
       data.table::setorder(., pvals) %>%
@@ -191,7 +185,7 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
           "go_id",
           "odds_ratios",
           "pvals",
-          # "FDR",
+          "FDR",
           "hits",
           "gene_set_lengths"
         )
