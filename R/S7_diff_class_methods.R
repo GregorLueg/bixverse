@@ -2,7 +2,16 @@
 
 ## Diffusion methods ----
 
-#' Diffuse seed genes over network
+#' Diffuse seed genes over a network
+#'
+#' @description
+#' This is the generic function for diffusing seed genes over a network.
+#'
+#' @export
+diffuse_seed_genes <- S7::new_generic("diffuse_seed_genes", "network_diffusions")
+
+
+#' @name diffuse_seed_genes
 #'
 #' @description
 #' This function takes a diffusion vector and leverages personalised page-rank diffusion
@@ -21,11 +30,14 @@
 #' @param summarisation If there are duplicated names in the `diffusion_vector` how to summarise
 #' these.
 #'
+#' @return The class with added diffusion score based on a single set of seed genes. Additionally,
+#' the seed genes are stored in the class.
+#'
 #' @export
 #'
 #' @importFrom magrittr `%>%`
-diffuse_seed_genes <- S7::new_generic("diffuse_seed_genes", "network_diffusions")
-
+#'
+#' @method diffuse_seed_genes network_diffusions
 S7::method(diffuse_seed_genes, network_diffusions) <-
   function(network_diffusions,
            diffusion_vector,
@@ -59,14 +71,23 @@ S7::method(diffuse_seed_genes, network_diffusions) <-
     network_diffusions
   }
 
+#' Diffuse seed genes in a tied manner over a network
+#'
+#' @description
+#' This is the generic function for diffusion two sets of seed genes over
+#' a network.
+#'
+#' @export
+tied_diffusion <- S7::new_generic("tied_diffusion", "network_diffusions")
 
-#' Use tied diffusion for two sets of seed genes.
+
+#' @name tied_diffusion
 #'
 #' @description
 #' This function takes two sets of diffusion vector and leverages tied diffusion to identify an intersection
 #' of influential nodes.
 #'
-#' @usage diffuse_seed_genes(
+#' @usage tied_diffusion(
 #'  network_diffusions,
 #'  diffusion_vector.1,
 #'  diffusion_vector.2,
@@ -85,11 +106,14 @@ S7::method(diffuse_seed_genes, network_diffusions) <-
 #' @param score_aggregation How to summarise the tied scores.
 #' @param verbose Controls verbosity of the function.
 #'
+#' @return The class with added diffusion score based on a two sets of seed genes. Additionally,
+#' the seed genes are stored in the class.
+#'
 #' @export
 #'
 #' @importFrom magrittr `%>%`
-tied_diffusion <- S7::new_generic("tied_diffusion", "network_diffusions")
-
+#'
+#' @method tied_diffusion network_diffusions
 S7::method(tied_diffusion, network_diffusions) <-
   function(network_diffusions,
            diffusion_vector.1,
@@ -154,29 +178,238 @@ S7::method(tied_diffusion, network_diffusions) <-
     S7::prop(network_diffusions, "diffusion_res") <- final_tiedie_diffusion
     S7::prop(network_diffusions, "params")['diffusion_type'] <- 'tied'
     S7::prop(network_diffusions, "params")[['seed_genes']] <- list('set_1' = seed_genes.1, 'set_2' = seed_genes.2)
+
     network_diffusions
   }
 
 ## Community detection ----
 
+#' Identify privileged communities based on a given diffusion vector
+#'
+#' @description
+#' This is the generic function for diffusing seed genes over a network.
+#'
+#' @export
+community_detection <- S7::new_generic("community_detection", "network_diffusions")
+
+#' @name community_detection
+#'
+#' @description ...
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#'
+#' @method community_detection network_diffusions
+S7::method(community_detection, network_diffusions) <- function(network_diffusions,
+                                                                diffusion_threshold,
+                                                                max_genes = 300L,
+                                                                min_genes = 10L,
+                                                                min_seed_genes = 0L,
+                                                                intial_res = 0.5,
+                                                                seed = 42L,
+                                                                .verbose = T,
+                                                                .max_iters = 100L) {
+  # Checks
+  checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+  checkmate::qassert(diffusion_threshold, "R1[0,1]")
+  checkmate::qassert(max_genes, "I1")
+  checkmate::qassert(min_genes, "I1")
+  checkmate::qassert(min_seed_genes, "I1")
+  checkmate::qassert(intial_res, "R1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(.max_iters, "I1")
+
+  # Body
+  ## Reduce the graph
+  diffusion_score <- S7::prop(network_diffusions, "diffusion_res")
+  if (length(diffusion_score) == 0) {
+    warning(
+      "The diffusion score has length 0. Likely you did not run the diffusion methods. Returning NULL."
+    )
+    return(NULL)
+  }
+  nodes_to_include <- diffusion_score %>%
+    sort(decreasing = T) %>%
+    .[1:ceiling(diffusion_threshold * length(diffusion_score))]
+
+
+  red_graph <- igraph::subgraph(S7::prop(network_diffusions, "graph"),
+                                names(nodes_to_include))
+
+  ## First clustering
+  set.seed(seed)
+
+  if (S7::prop(network_diffusions, "params")$directed_graph) {
+    red_graph = igraph::as_undirected(red_graph, mode = 'each')
+  }
+
+  first_clusters <- igraph::cluster_leiden(red_graph, resolution = intial_res)
+
+  clusters_df <- data.table::data.table(nodeID = first_clusters$names, clusterID = first_clusters$membership)
+
+  node_frequency <- clusters_df[, .N, .(clusterID)]
+
+  ## Subclustering
+  clusters_with_too_many_nodes <- node_frequency[N > max_genes, clusterID]
+  final_clusters <- clusters_df[!clusterID %in% clusters_with_too_many_nodes]
+
+  for (cluster_i in clusters_with_too_many_nodes) {
+    nodes_in_cluster <- clusters_df[clusterID == cluster_i, nodeID]
+    finalised_clusters <- data.table()
+    # Loop through, until all clusters are below the minimum genes or max iterations is hit
+    l <- 1
+    while (length(nodes_in_cluster) != 0) {
+      set.seed(random_seed + l)
+      if (verbose)
+        message("Cluster ", i, " gets subclustered. Iter: ", l)
+      red_graph_l <- igraph::subgraph(red_graph,
+                                      data.table::chmatch(nodes_in_cluster, igraph::V(red_graph)$name))
+
+      clusters_red <- igraph::cluster_leiden(red_graph_l, resolution = intial_res + l * 0.05)
+
+      subclusters <- data.table(nodeID = clusters_red$names,
+                                clusterID = clusters_red$membership)
+      subclusters_frequency <- subclusters[, .N, .(clusterID)]
+      clusters_small_enough <- subclusters_frequency[N <= max_genes, clusterID]
+
+      good_clusters <- subclusters[clusterID %in% clusters_small_enough] %>%
+        dplyr::mutate(clusterID = paste0(i, paste(rep("sub", l), collapse = ""), clusterID))
+
+      finalised_clusters <- rbind(finalised_clusters, good_clusters)
+
+      l <- l + 1
+      if (l == .max_iters)
+        break
+
+      nodes_in_cluster <- setdiff(genes_in_cluster, good_clusters$nodeID)
+    }
+
+    final_clusters <- rbind(final_clusters, finalised_clusters)
+  }
+
+  ## Add the seed node information based on diffusion type
+  diffusion_type <- S7::prop(network_diffusions, "params")$diffusion_type
+
+  final_node_frequency <- if (diffusion_type == 'single') {
+    seed_genes <- S7::prop(network_diffusions, "params")$seed_genes
+
+    final_clusters[, .(cluster_size = length(nodeID),
+                       seed_nodes = sum(nodeID %in% seed_genes)), .(clusterID)]
+  } else {
+    seed_genes_set_1 <- S7::prop(network_diffusions, "params")$seed_genes$set_1
+    seed_genes_set_2 <- S7::prop(network_diffusions, "params")$seed_genes$set_2
+
+    final_clusters[, .(
+      cluster_size = length(nodeID),
+      seed_nodes_1 = sum(nodeID %in% seed_genes_set_1),
+      seed_nodes_2 = sum(nodeID %in% seed_genes_set_2)
+    ), .(clusterID)]
+  }
+
+  ## Finalise the clusters
+  clusters_to_take <- if (diffusion_type == 'single') {
+    final_node_frequency[cluster_size >= min_genes &
+                           seed_nodes >= min_seed_genes, clusterID]
+  } else {
+    final_node_frequency[cluster_size >= min_genes &
+                           seed_nodes_1 >= min_seed_genes &
+                           seed_nodes_2 >= min_seed_genes, clusterID]
+  }
+
+  if (length(clusters_to_take) == 0) {
+    warning("No cluster passed the supplied criteria. Returning NULL")
+    return(NULL)
+  }
+
+  finalised_clusters.clean <- final_clusters[clusterID %in% clusters_to_take]
+
+  ks_vals = vector(mode = "numeric", length = length(clusters_to_take))
+
+  for (i in seq_along(clusters_to_take)) {
+    cluster <- clusters_to_take[i]
+    cluster_nodes <- finalised_clusters.clean[clusterID == cluster, nodeID]
+    ks <- ks.test(diffusion_score[cluster_nodes],
+                  diffusion_score[which(!names(diffusion_score) %in% cluster_nodes)],
+                  alternative = "less")
+    ks_vals[i] <- ks$p.value
+  }
+
+  ks_val_df <- data.table(
+    clusterID = clusters_to_take,
+    ks_pval = ks_vals
+  ) %>%
+    .[, fdr := p.adjust(ks_pval, method = "fdr")]
+
+  final_result <- purrr::reduce(list(finalised_clusters.clean, ks_val_df, final_node_frequency),
+                                merge,
+                                by = 'clusterID') %>%
+    .[, `:=`(diffusion_score = diffusion_score[nodeID])]
+
+  final_result
+}
+
 # Utils ----
 
-## Others ----
+## Statistics ----
 
-calculate_diff_AUC <- S7::new_generic("calculate_diff_AUC", "network_diffusions")
+#' Calculate the AUROC for a diffusion score
+#'
+#' @description
+#' This is the generic function for calculating AUC/AUROCs for a set of genes based
+#' on the diffusion vector of either single or tied diffusion.
+#'
+#' @export
+calculate_diffusion_AUC <- S7::new_generic("calculate_diffusion_AUC", "network_diffusions")
 
-S7::method(calculate_diff_AUC, network_diffusions) <-
+
+#' @name calculate_diffusion_AUC
+#'
+#' @description
+#' This functions can take a given `network_diffusions` class and calculates an AUC and generates
+#' a Z-score based on random permutation of `random_aucs` for test for statistical significance if
+#' desired.
+#'
+#' @usage calculate_diffusion_AUC(
+#'  network_diffusions,
+#'  hit_nodes,
+#'  auc_iters = 10000L,
+#'  random_aucs = 1000L,
+#'  permutation_test = FALSE,
+#'  seed = 42L
+#' )
+#'
+#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param hit_nodes Which nodes would consist a hit to calculate the AUROC against.
+#' @param auc_iters How many iterations to run to approximate the AUROC.
+#' @param random_aucs How many random AUROCs to calculate to estimate the Z-score
+#' @param seed Seed for reproducibility purposes.
+#'
+#' @return List with AUC and Z-score as the two named elements if permutations_test set
+#' to TRUE; otherwise just the AUC.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method tied_diffusion network_diffusions
+S7::method(calculate_diffusion_AUC, network_diffusions) <-
   function(network_diffusions,
            hit_nodes,
-           random_aucs = 1000L,
            auc_iters = 10000L,
+           random_aucs = 1000L,
+           permutation_test = FALSE,
            seed = 42L) {
     # Checks
     checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
     checkmate::qassert(hit_nodes, "S+")
-    checkmate::qassert(random_aucs, "I1")
     checkmate::qassert(auc_iters, "I1")
     checkmate::qassert(seed, "I1")
+    checkmate::qassert(permutation_test, "B1")
+    if (permutation_test)
+      checkmate::qassert(random_aucs, "I1")
     # Body
     diffusion_score <- S7::prop(network_diffusions, "diffusion_res")
     if(length(diffusion_score) == 0) {
@@ -184,28 +417,33 @@ S7::method(calculate_diff_AUC, network_diffusions) <-
       return(NULL)
     }
     pos.scores <- diffusion_score[hit_nodes]
-    neg.scores <- diffusion_score[which(!names(scores) %in% hit_nodes)]
+    neg.scores <- diffusion_score[which(!names(diffusion_score) %in% hit_nodes)]
     auc <- rs_fast_auc(
       pos_scores = pos.scores,
       neg_scores = neg.scores,
       iters = auc_iters,
       seed = seed
     )
-    random_aucs <- rs_create_random_aucs(
-      score_vec = diffusion_score,
-      size_pos = length(pos.scores),
-      random_iters = random_aucs,
-      auc_iters = auc_iters,
-      seed = seed
-    )
+    if (permutation_test) {
+      random_aucs <- rs_create_random_aucs(
+        score_vec = diffusion_score,
+        size_pos = length(pos.scores),
+        random_iters = random_aucs,
+        auc_iters = auc_iters,
+        seed = seed
+      )
 
-    z <- (auc - mean(random_aucs)) / sd(random_aucs)
+      z <- (auc - mean(random_aucs)) / sd(random_aucs)
 
-    list(auc = auc, z = z)
+      return (list(auc = auc, z = z))
+    } else {
+      return(auc)
+    }
   }
 
+## Accessing data ----
 
-## Helpers ----
+# Other Helpers ----
 
 #' Summarise gene scores if they are duplicates.
 #'

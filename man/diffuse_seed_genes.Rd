@@ -2,8 +2,10 @@
 % Please edit documentation in R/S7_diff_class_methods.R
 \name{diffuse_seed_genes}
 \alias{diffuse_seed_genes}
-\title{Diffuse seed genes over network}
+\title{Diffuse seed genes over a network}
 \usage{
+diffuse_seed_genes(network_diffusions, ...)
+
 diffuse_seed_genes(
  network_diffusions,
  diffusion_vector,
@@ -19,7 +21,13 @@ personalised page-rank diffusion. Names should represent node names of the graph
 \item{summarisation}{If there are duplicated names in the \code{diffusion_vector} how to summarise
 these.}
 }
+\value{
+The class with added diffusion score based on a single set of seed genes. Additionally,
+the seed genes are stored in the class.
+}
 \description{
+This is the generic function for diffusing seed genes over a network.
+
 This function takes a diffusion vector and leverages personalised page-rank diffusion
 to identify influential nodes. These can be used subsequently for community detection
 or check AUROC values given a set of genes.

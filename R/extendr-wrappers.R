@@ -108,14 +108,17 @@ rs_set_sim_list <- function(string, string_list, similarity_index) .Call(wrap__r
 #' @export
 rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
 
-#' Fast AUC calculation
+#' Create random AUCs
 #' 
-#' This function calculates rapidly AUCs based on an approximation.
+#' This function creates a random set of AUCs based on a score vector and
+#' a size of the positive set. This can be used for permutation-based estimation
+#' of Z-scores and subsequently p-values.
 #' 
-#' @param pos_scores The scores of your hits.
-#' @param neg_scores The scores of your non-hits.
-#' @param iters Number of iterations to run the function for. Recommended size: 10,000.
-#' @param random_seed Seed.
+#' @param score_vec The overall vector of scores.
+#' @param size_pos The size of the hits represented in the score_vec.
+#' @param random_iters Number of random AUCs to generate.
+#' @param auc_iters Number of random iterations to approximate the AUCs.
+#' @param seed Seed.
 #' 
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
