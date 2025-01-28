@@ -6,25 +6,14 @@ use std::collections::HashSet;
 // Types //
 ///////////
 
+/// A type alias that can be returned by the par_iter() functions.
 pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
-
 
 ///////////////
 // Functions //
 ///////////////
 
 /// Calculate the p-value of a hypergeometric test.
-/// 
-/// ### Arguments
-/// 
-/// * q: 
-/// * m:
-/// * n:
-/// * k:
-/// 
-/// ### Returns
-/// 
-/// The p-value of the hypergeometric test.
 pub fn hypergeom_pval(
   q: u64, 
   m: u64, 
@@ -80,7 +69,8 @@ pub fn count_hits(
   hits
 }
 
-pub fn count_hits_2(
+/// Count the number of hits for the hypergeometric tests (against HashSets)
+pub fn count_hits_hash(
   gene_set_list: Vec<&HashSet<String>>,
   target_genes: &[String],
 ) -> Vec<u64> {
@@ -98,7 +88,7 @@ pub fn count_hits_2(
   hits
 }
 
-/// Helper function to generate the 
+/// Helper function for the hypergeometric test
 pub fn hypergeom_helper(
   target_genes: &[String],
   gene_sets: &[Vec<String>],

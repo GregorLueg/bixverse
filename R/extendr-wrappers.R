@@ -15,9 +15,9 @@ NULL
 #' Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
 #' of the target genes in the gene sets.
 #' 
-#' @param target_genes: A character vector representing the target gene set.
-#' @param gene_sets: A list of strings that represent the gene sets to test against.
-#' @param gene_universe: A character vector representing the gene universe from which the target genes
+#' @param target_genes A character vector representing the target gene set.
+#' @param gene_sets A list of strings that represent the gene sets to test against.
+#' @param gene_universe A character vector representing the gene universe from which the target genes
 #' and gene sets are sampled from.
 #' 
 #' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
@@ -29,9 +29,9 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #' 
 #' Given a list of target gene sets, this function will test for each of the individual 
 #' 
-#' @param target_genes: A character vector representing the target gene set.
-#' @param gene_sets: A list of strings that represent the gene sets to test against.
-#' @param gene_universe: A character vector representing the gene universe from which the target genes
+#' @param target_genes A character vector representing the target gene set.
+#' @param gene_sets A list of strings that represent the gene sets to test against.
+#' @param gene_universe A character vector representing the gene universe from which the target genes
 #' and gene sets are sampled from.
 #' 
 #' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
@@ -46,23 +46,79 @@ rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call
 #' Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 #' term will be removed from all ancestors.
 #' 
-#' @param target_genes: A character vector representing the target gene set.
-#' @param go_to_genes: A named list with the gene identifers as elements and gene ontology identifiers as 
+#' @param target_genes A character vector representing the target gene set.
+#' @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
 #' names.
-#' @param ancestors: A named list with the go identifiers of all ancestors as elements and the gene ontology
+#' @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
 #' identifiers as names.
-#' @param levels: A named list with the go identifiers of that ontology level as elements and the level name
+#' @param levels A named list with the go identifiers of that ontology level as elements and the level name
 #' as names. IMPORTANT! This list needs to be ordered in the right way!
-#' @param gene_universe_length: The length of the gene universe.
-#' @param min_genes: number of minimum genes for the gene ontology term to be tested.
-#' @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
-#' @param debug: boolean that will provide additional console information for debugging purposes.
+#' @param gene_universe_length The length of the gene universe.
+#' @param min_genes number of minimum genes for the gene ontology term to be tested.
+#' @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
+#' @param debug boolean that will provide additional console information for debugging purposes.
 #' 
 #' @export
 rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
+#' Run hypergeometric enrichment a list of target genes over the gene ontology
+#' 
+#' This function implements a Rust version of the gene ontology enrichment with elimination:
+#' the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+#' Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
+#' term will be removed from all ancestors. This function is designed to leverage Rust-based threading
+#' for parallel processing of a list of target genes.
+#' 
+#' @param target_genes_list A list of target genes against which to run the method.
+#' @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
+#' names.
+#' @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
+#' identifiers as names.
+#' @param levels A named list with the go identifiers of that ontology level as elements and the level name
+#' as names. IMPORTANT! This list needs to be ordered in the right way!
+#' @param gene_universe_length The length of the gene universe.
+#' @param min_genes number of minimum genes for the gene ontology term to be tested.
+#' @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
+#' @param debug boolean that will provide additional console information for debugging purposes.
+#' 
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
+
+#' Set similarities
+#' 
+#' This function calculates the Jaccard or similarity index between a given 
+#' string vector and a list of other string vectors.
+#' 
+#' @param string The String vector against which to calculate the set similarities.
+#' @param string_list The list of character vectors for which to calculate the set similarities. 
+#' @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
+#' 
+#' @export
+rs_set_sim_list <- function(string, string_list, similarity_index) .Call(wrap__rs_set_sim_list, string, string_list, similarity_index)
+
+#' Fast AUC calculation
+#' 
+#' This function calculates rapidly AUCs based on an approximation.
+#' 
+#' @param pos_scores The scores of your hits.
+#' @param neg_scores The scores of your non-hits.
+#' @param iters Number of iterations to run the function for. Recommended size: 10,000.
+#' @param random_seed Seed.
+#' 
+#' @export
+rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
+
+#' Fast AUC calculation
+#' 
+#' This function calculates rapidly AUCs based on an approximation.
+#' 
+#' @param pos_scores The scores of your hits.
+#' @param neg_scores The scores of your non-hits.
+#' @param iters Number of iterations to run the function for. Recommended size: 10,000.
+#' @param random_seed Seed.
+#' 
+#' @export
+rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
 
 
 # nolint end

@@ -2,7 +2,7 @@
 % Please edit documentation in R/S7_go_obj.R
 \name{gene_ontology_data}
 \alias{gene_ontology_data}
-\title{Constructor of the S7 class}
+\title{Gene Ontology data}
 \usage{
 gene_ontology_data(go_data_dt, min_genes)
 }
@@ -16,7 +16,7 @@ be produced with \code{biomind_to_go_data()}.}
 Returns the S7 object for further operations.
 }
 \description{
-This class is used to store the gene ontology information for
+This class is used to store the gene ontology information for usage in GSE elimination methods.
 \itemize{
 \item go_info: data.table. Contains the gene ontology identifiers and names.
 \item go_to_genes: List. Contains the genes within each gene ontology term.

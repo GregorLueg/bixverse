@@ -1,3 +1,72 @@
+# S7 ----
+
+gene_ontology_data <- S7::new_class(
+  # Name
+  name = "gene_ontology_data",
+  # Properties, i.e., slots
+  properties = list(
+    go_info = S7::class_data.frame,
+    go_to_genes = S7::class_list,
+    ancestry = S7::class_list,
+    levels = S7::class_list,
+    min_genes = S7::class_integer
+  ),
+
+  #' Gene Ontology data
+  #'
+  #' @description
+  #' This class is used to store the gene ontology information for usage in GSE elimination methods.
+  #'
+  #' - go_info: data.table. Contains the gene ontology identifiers and names.
+  #' - go_to_genes: List. Contains the genes within each gene ontology term.
+  #' - ancestry: List. Contains the ancestors for each gene ontology term.
+  #' - levels: List. Which gene ontology terms sit at which level.
+  #' - min_genes: Integer, the minimum genes in the gene ontology term to conduct the test.
+  #'
+  #' @param go_data_dt A data.table that contains the gene ontology information. This can for example
+  #' be produced with `biomind_to_go_data()`.
+  #' @param min_genes data.frame. Meta-data information in form of a data.frame.
+  #'
+  #' @return Returns the S7 object for further operations.
+  #'
+  #' @export
+  constructor = function(go_data_dt, min_genes) {
+    # Checks
+    checkmate::assertDataTable(go_data_dt)
+    checkmate::qassert(min_genes, "I1")
+    go_data_dt <-
+      go_data_dt[, `:=`(
+        no_genes = purrr::map_dbl(ensembl_id, length),
+        depth = sprintf("%02d", depth)
+      )]
+
+    go_data_dt <- go_data_dt[no_genes >= min_genes]
+
+    go_info <- go_data_dt[, c("go_id", "go_name")]
+
+    go_to_genes <- go_data_dt$ensembl_id
+    names(go_to_genes) <- go_data_dt$go_id
+
+    ancestry <- go_data_dt$ancestors
+    names(ancestry) <- go_data_dt$go_id
+
+    depth_df <- go_data_dt[, .(go_ids = list(go_id)), .(depth)]
+
+    levels <- depth_df$go_ids
+    names(levels) <- depth_df$depth
+
+    # Finalise object
+    S7::new_object(
+      S7::S7_object(),
+      go_info = go_info,
+      go_to_genes = go_to_genes,
+      ancestry = ancestry,
+      levels = levels,
+      min_genes = min_genes
+    )
+  }
+)
+
 # Raw data helpers ----
 
 #' Wrapper to clean up the GO identifiers to ensembl identifer table.
@@ -122,9 +191,10 @@
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom zeallot `%<-%`
-biomind_to_go_data <- function(path_to_biomind_processed) {
+biomind_to_go_data <- function(path_to_biomind_processed, verbose = TRUE) {
   # Check that expected files exist
   checkmate::qassert(path_to_biomind_processed, "S1")
+  checkmate::qassert(verbose, "B1")
   path_nodes <- file.path(path_to_biomind_processed,
                           "nodes_OT_gene_ontology.parquet")
   path_go_genes <-
@@ -135,6 +205,8 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
   checkmate::assertFileExists(path_go_genes)
   checkmate::assertFileExists(path_ontology)
   # Function body
+  if (verbose)
+    print("1. Loading data in.")
   go_nodes <- arrow::read_parquet(path_nodes) %>%
     as.data.table()
   edges_go_genes <- arrow::read_parquet(path_go_genes) %>%
@@ -142,7 +214,14 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
   edges_ontology <- arrow::read_parquet(path_ontology) %>%
     as.data.table()
 
+  if (verbose)
+    print("2. Processing gene ontology to genes.")
+
   go_genes = .get_go_genes_biomind(edges_go_genes)
+
+  if (verbose)
+    print("3. Processing gene ontological information.")
+
   c(go_ancestry, go_depth) %<-% .get_go_ontology_depth_ancestry_biomind(edges_ontology)
 
   df_list <- list(
@@ -161,71 +240,4 @@ biomind_to_go_data <- function(path_to_biomind_processed) {
   final_res
 }
 
-# S7 ----
 
-gene_ontology_data <- S7::new_class(
-  # Name
-  name = "gene_ontology_data",
-  # Properties, i.e., slots
-  properties = list(
-    go_info = S7::class_data.frame,
-    go_to_genes = S7::class_list,
-    ancestry = S7::class_list,
-    levels = S7::class_list,
-    min_genes = S7::class_integer
-  ),
-
-  #' Constructor of the S7 class
-  #'
-  #' @description
-  #' This class is used to store the gene ontology information for
-  #'
-  #' - go_info: data.table. Contains the gene ontology identifiers and names.
-  #' - go_to_genes: List. Contains the genes within each gene ontology term.
-  #' - ancestry: List. Contains the ancestors for each gene ontology term.
-  #' - levels: List. Which gene ontology terms sit at which level.
-  #' - min_genes: Integer, the minimum genes in the gene ontology term to conduct the test.
-  #'
-  #' @param go_data_dt A data.table that contains the gene ontology information. This can for example
-  #' be produced with `biomind_to_go_data()`.
-  #' @param min_genes data.frame. Meta-data information in form of a data.frame.
-  #'
-  #' @return Returns the S7 object for further operations.
-  #'
-  #' @export
-  constructor = function(go_data_dt, min_genes) {
-    # Checks
-    checkmate::assertDataTable(go_data_dt)
-    checkmate::qassert(min_genes, "I1")
-    go_data_dt <-
-      go_data_dt[, `:=`(
-        no_genes = purrr::map_dbl(ensembl_id, length),
-        depth = sprintf("%02d", depth)
-      )]
-
-    go_data_dt <- go_data_dt[no_genes >= min_genes]
-
-    go_info <- go_data_dt[, c("go_id", "go_name")]
-
-    go_to_genes <- go_data_dt$ensembl_id
-    names(go_to_genes) <- go_data_dt$go_id
-
-    ancestry <- go_data_dt$ancestors
-    names(ancestry) <- go_data_dt$go_id
-
-    depth_df <- go_data_dt[, .(go_ids = list(go_id)), .(depth)]
-
-    levels <- depth_df$go_ids
-    names(levels) <- depth_df$depth
-
-    # Finalise object
-    S7::new_object(
-      S7::S7_object(),
-      go_info = go_info,
-      go_to_genes = go_to_genes,
-      ancestry = ancestry,
-      levels = levels,
-      min_genes = min_genes
-    )
-  }
-)

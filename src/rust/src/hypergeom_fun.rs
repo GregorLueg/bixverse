@@ -1,24 +1,21 @@
 use extendr_api::prelude::*;
 use crate::hypergeom_helpers::*;
 use crate::geom_elim_helpers::*;
-use crate::utils_r_rust::r_list_to_str_vec;
-use rayon::prelude::*; // Import rayon's parallel iterator traits
+use crate::r_rust_utils::r_list_to_str_vec;
+use rayon::prelude::*; 
 
 
 /// A type alias that can be returned by par_iter() functions.
 type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
-
-/// A type alias that can be returned by the par_iter() functions.
-type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
 
 /// Run a single hypergeometric test.
 /// 
 /// Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
 /// of the target genes in the gene sets.
 /// 
-/// @param target_genes: A character vector representing the target gene set.
-/// @param gene_sets: A list of strings that represent the gene sets to test against.
-/// @param gene_universe: A character vector representing the gene universe from which the target genes
+/// @param target_genes A character vector representing the target gene set.
+/// @param gene_sets A list of strings that represent the gene sets to test against.
+/// @param gene_universe A character vector representing the gene universe from which the target genes
 /// and gene sets are sampled from.
 /// 
 /// @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
@@ -32,7 +29,7 @@ fn rs_hypergeom_test(
 ) -> List {
   let gene_sets = r_list_to_str_vec(gene_sets);
 
-  let res = hypergeom_helper(
+  let res: HypergeomResult = hypergeom_helper(
     &target_genes,
     &gene_sets,
     &gene_universe
@@ -50,9 +47,9 @@ fn rs_hypergeom_test(
 /// 
 /// Given a list of target gene sets, this function will test for each of the individual 
 /// 
-/// @param target_genes: A character vector representing the target gene set.
-/// @param gene_sets: A list of strings that represent the gene sets to test against.
-/// @param gene_universe: A character vector representing the gene universe from which the target genes
+/// @param target_genes A character vector representing the target gene set.
+/// @param gene_sets A list of strings that represent the gene sets to test against.
+/// @param gene_universe A character vector representing the gene universe from which the target genes
 /// and gene sets are sampled from.
 /// 
 /// @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
@@ -70,7 +67,7 @@ fn rs_hypergeom_test_list(
   let res: Vec<HypergeomResult> = target_genes
     .par_iter()
     .map(|x_i| {
-      let res_i: (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>) = hypergeom_helper(
+      let res_i: HypergeomResult = hypergeom_helper(
         x_i,
         &gene_sets,
         &gene_universe
@@ -123,17 +120,17 @@ fn rs_hypergeom_test_list(
 /// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 /// term will be removed from all ancestors.
 /// 
-/// @param target_genes: A character vector representing the target gene set.
-/// @param go_to_genes: A named list with the gene identifers as elements and gene ontology identifiers as 
+/// @param target_genes A character vector representing the target gene set.
+/// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
 /// names.
-/// @param ancestors: A named list with the go identifiers of all ancestors as elements and the gene ontology
+/// @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
 /// identifiers as names.
-/// @param levels: A named list with the go identifiers of that ontology level as elements and the level name
+/// @param levels A named list with the go identifiers of that ontology level as elements and the level name
 /// as names. IMPORTANT! This list needs to be ordered in the right way!
-/// @param gene_universe_length: The length of the gene universe.
-/// @param min_genes: number of minimum genes for the gene ontology term to be tested.
-/// @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
-/// @param debug: boolean that will provide additional console information for debugging purposes.
+/// @param gene_universe_length The length of the gene universe.
+/// @param min_genes number of minimum genes for the gene ontology term to be tested.
+/// @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
+/// @param debug boolean that will provide additional console information for debugging purposes.
 /// 
 /// @export
 #[extendr]
@@ -221,6 +218,27 @@ fn rs_gse_geom_elim(
   )
 }
 
+
+/// Run hypergeometric enrichment a list of target genes over the gene ontology
+/// 
+/// This function implements a Rust version of the gene ontology enrichment with elimination:
+/// the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+/// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
+/// term will be removed from all ancestors. This function is designed to leverage Rust-based threading
+/// for parallel processing of a list of target genes.
+/// 
+/// @param target_genes_list A list of target genes against which to run the method.
+/// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
+/// names.
+/// @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
+/// identifiers as names.
+/// @param levels A named list with the go identifiers of that ontology level as elements and the level name
+/// as names. IMPORTANT! This list needs to be ordered in the right way!
+/// @param gene_universe_length The length of the gene universe.
+/// @param min_genes number of minimum genes for the gene ontology term to be tested.
+/// @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
+/// @param debug boolean that will provide additional console information for debugging purposes.
+/// 
 /// @export
 #[extendr]
 fn rs_gse_geom_elim_list(

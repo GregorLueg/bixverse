@@ -15,9 +15,8 @@ Imports:
     checkmate,
     data.table,
     foreach,
-    furrr,
+    igraph,
     magrittr,
-    parallel,
     rextendr,
     S7,
     zeallot
