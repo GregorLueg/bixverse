@@ -10,30 +10,35 @@
 #' function then proceeds to the next level of the ontology and repeats the process.
 #'
 #' @usage GSE_GO_elim_method(
-#'  S7_obj,
+#'  gene_ontology_data,
 #'  target_genes,
 #'  minimum_overlap = 3L,
 #'  fdr_threshold = 0.05,
+#'  elim_threshold = 0.05,
 #'  min_genes = NULL,
 #'  .debug = FALSE
 #' )
 #'
-#' @param S7_obj `gene_ontology_data` The underlying gene ontology data.
+#' @param gene_ontology_data The underlying `gene_ontology_data` class.
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
 #' @param fdr_threshold Float. Threshold for maximum FDR to include in the output.
 #' @param elim_threshold Float. Threshold from which p-value onwards the elimination on the ancestors shall
 #' be conducted.
-#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term
+#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term.
+#' If NULL, it will default to the number of minimum genes stored in `gene_ontology_data`.
 #' @param .debug Boolean. Shall information from the Rust function be displayed. For debugging purposes.
 #'
 #' @return data.table with enrichment results.
 #'
 #' @export
-GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "S7_obj")
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data")
 
 S7::method(GSE_GO_elim_method, gene_ontology_data) <-
-  function(S7_obj,
+  function(gene_ontology_data,
            target_genes,
            minimum_overlap = 3L,
            fdr_threshold = 0.05,
@@ -41,7 +46,7 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
            min_genes = NULL,
            .debug = FALSE) {
     # First check
-    checkmate::assertClass(S7_obj, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
     checkmate::qassert(target_genes, "S+")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -50,12 +55,12 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
     checkmate::qassert(.debug, "B1")
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
-      min_genes <- S7::prop(S7_obj, "min_genes")
+      min_genes <- S7::prop(gene_ontology_data, "min_genes")
     }
-    go_to_genes <- S7::prop(S7_obj, "go_to_genes")
-    ancestry <- S7::prop(S7_obj, "ancestry")
-    levels <- S7::prop(S7_obj, "levels")
-    go_info <- S7::prop(S7_obj, "go_info")
+    go_to_genes <- S7::prop(gene_ontology_data, "go_to_genes")
+    ancestry <- S7::prop(gene_ontology_data, "ancestry")
+    levels <- S7::prop(gene_ontology_data, "levels")
+    go_info <- S7::prop(gene_ontology_data, "go_info")
 
     gene_universe_length <- length(unique(unlist(go_to_genes)))
 
@@ -105,31 +110,36 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
 #' leverage Rust threading to parallelise the process.
 #'
 #' @usage GSE_GO_elim_method(
-#'  S7_obj,
+#'  gene_ontology_data,
 #'  target_gene_list,
 #'  minimum_overlap = 3L,
 #'  fdr_threshold = 0.05,
+#'  elim_threshold = 0.05
 #'  min_genes = NULL,
 #'  .debug = FALSE
 #' )
 #'
-#' @param S7_obj `gene_ontology_data` The underlying gene ontology data.
+#' @param gene_ontology_data The underlying gene ontology data.
 #' @param target_gene_list List. The target genes list you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
 #' @param fdr_threshold Float. Threshold for maximum FDR to include in the output.
 #' @param elim_threshold Float. Threshold from which p-value onwards the elimination on the ancestors shall
 #' be conducted.
-#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term
+#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term.
+#' If NULL, it will default to the number of minimum genes stored in `gene_ontology_data`.
 #' @param .debug Boolean. Shall information from the Rust function be displayed. For debugging purposes.
 #' Warning: should you run this command over a large list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
 #' @export
-GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "S7_obj")
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_ontology_data")
 
 S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
-  function(S7_obj,
+  function(gene_ontology_data,
            target_gene_list,
            minimum_overlap = 3L,
            fdr_threshold = 0.05,
@@ -137,7 +147,7 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
            min_genes = NULL,
            .debug = FALSE) {
     # First check
-    checkmate::assertClass(S7_obj, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
     checkmate::assertList(target_gene_list, types = "character")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -146,12 +156,12 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
     checkmate::qassert(.debug, "B1")
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
-      min_genes <- S7::prop(S7_obj, "min_genes")
+      min_genes <- S7::prop(gene_ontology_data, "min_genes")
     }
-    go_to_genes <- S7::prop(S7_obj, "go_to_genes")
-    ancestry <- S7::prop(S7_obj, "ancestry")
-    levels <- S7::prop(S7_obj, "levels")
-    go_info <- S7::prop(S7_obj, "go_info")
+    go_to_genes <- S7::prop(gene_ontology_data, "go_to_genes")
+    ancestry <- S7::prop(gene_ontology_data, "ancestry")
+    levels <- S7::prop(gene_ontology_data, "levels")
+    go_info <- S7::prop(gene_ontology_data, "go_info")
 
     gene_universe_length <- length(unique(unlist(go_to_genes)))
 

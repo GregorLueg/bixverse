@@ -5,16 +5,17 @@
 \title{GSE on a single set of target genes with the GO elimination method.}
 \usage{
 GSE_GO_elim_method(
- S7_obj,
+ gene_ontology_data,
  target_genes,
  minimum_overlap = 3L,
  fdr_threshold = 0.05,
+ elim_threshold = 0.05,
  min_genes = NULL,
  .debug = FALSE
 )
 }
 \arguments{
-\item{S7_obj}{\code{gene_ontology_data} The underlying gene ontology data.}
+\item{gene_ontology_data}{The underlying \code{gene_ontology_data} class.}
 
 \item{target_genes}{String. The target genes you wish to apply the GSEA over.}
 
@@ -25,7 +26,8 @@ GSE_GO_elim_method(
 \item{elim_threshold}{Float. Threshold from which p-value onwards the elimination on the ancestors shall
 be conducted.}
 
-\item{min_genes}{Integer. Minimum number of genes that have to be included in the gene ontology term}
+\item{min_genes}{Integer. Minimum number of genes that have to be included in the gene ontology term.
+If NULL, it will default to the number of minimum genes stored in \code{gene_ontology_data}.}
 
 \item{.debug}{Boolean. Shall information from the Rust function be displayed. For debugging purposes.}
 }

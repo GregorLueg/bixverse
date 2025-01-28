@@ -7,11 +7,11 @@
 rs_hypergeom_test_list(target_genes, gene_sets, gene_universe)
 }
 \arguments{
-\item{target_genes:}{A character vector representing the target gene set.}
+\item{target_genes}{A character vector representing the target gene set.}
 
-\item{gene_sets:}{A list of strings that represent the gene sets to test against.}
+\item{gene_sets}{A list of strings that represent the gene sets to test against.}
 
-\item{gene_universe:}{A character vector representing the gene universe from which the target genes
+\item{gene_universe}{A character vector representing the gene universe from which the target genes
 and gene sets are sampled from.}
 }
 \value{

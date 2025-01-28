@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
-use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
+use crate::r_rust_utils::{r_list_to_hashmap, r_list_to_hashmap_set};
 use crate::hypergeom_helpers::*;
 
 ///////////////////////
@@ -35,12 +35,6 @@ pub struct GeneOntology {
 impl GeneOntology {
 
   /// Returns the ancestors of a given gene ontology term identifier
-  /// 
-  /// #### Arguments
-  /// * id: gene ontology term identifier for which to get the ancestors.
-  /// 
-  /// #### Returns
-  /// * The ancestors of (if available) of the given gene ontology term identifier.
   pub fn get_ancestors(
     &self, 
     id: &String
@@ -49,12 +43,6 @@ impl GeneOntology {
   }
 
   /// Returns the gene ontology term identifiers for a given level of the ontology.
-  /// 
-  /// #### Arguments
-  /// * id: identifier of the level you wish to query of the ontology.
-  /// 
-  /// #### Returns
-  /// * The gene ontology term identifiers at this level.
   pub fn get_level_ids(
     &self,
     id: &String
@@ -63,10 +51,6 @@ impl GeneOntology {
   }
 
   /// Remove genes from defined sets of genes
-  /// 
-  /// #### Arguments
-  /// * ids: gene ontology term identifiers from which to remove the genes.
-  /// * genes_to_remove: the genes you wish to remove from the gene ontology terms.
   pub fn remove_genes(
     &mut self, 
     ids: &[String], 
@@ -80,12 +64,6 @@ impl GeneOntology {
   }
 
   /// Get the genes based on an array of Strings.
-  /// 
-  /// #### Arguments
-  /// * ids: An array of gene ontology term identifiers for which to retrieve the gene identifiers.
-  /// 
-  /// #### Returns
-  /// * A tuple: the first element contains the gene ontology term identifiers for which genes could be identified. The second element contains an array of HashSets with the gene identifiers.
   pub fn get_genes_list(
     &self,
     ids: Vec<String>,
@@ -113,12 +91,6 @@ impl GeneOntology {
   }
 
   /// Get the genes for one specific ID
-  /// 
-  /// #### Params
-  /// * id: the gene ontology term identifier for which to retrieve the genes.
-  /// 
-  /// #### Returns
-  /// * The gene identifiers associated with 
   pub fn get_genes(
     &self,
     id: &String
@@ -132,14 +104,6 @@ impl GeneOntology {
 ///////////////
 
 /// Prepare the data for ingestion into a GO object
-/// 
-/// #### Params
-/// * go_to_genes: An R list with the GO to genes.
-/// * ancestors: An R list with the gene ontology term identifiers and their ancestors. 
-/// * levels: An R list 
-/// 
-/// #### Returns
-/// * A tuple of the needed hashmaps for GeneOntology structure.
 pub fn prepare_go_data(
   go_to_genes: List,
   ancestors: List,
@@ -153,20 +117,6 @@ pub fn prepare_go_data(
 }
 
 /// Process a given ontology level
-/// 
-/// This function processes a given ontology level
-/// 
-/// ### Params:
-/// * target_genes: Vector of target genes to test against.
-/// * level: The level of the ontology you want to test.
-/// * go_obj: GeneOntology class.
-/// * min_genes: Integer, indicating how many genes need to be present for the tests to occur.
-/// * gene_universe_length: Integer, indicating the size of the gene universe
-/// * elim_threshold: Float. Below this threshold, the genes of the term will be removed from its ancestors.
-/// * debug: Bool. Allos for plotting of data.
-/// 
-/// ### Returns:
-/// * GoElimLevelResults
 pub fn process_ontology_level(
   target_genes: Vec<String>,
   level: &String,
@@ -213,7 +163,7 @@ pub fn process_ontology_level(
       s.len() as u64
     })
     .collect::<Vec<u64>>();
-  let hits = count_hits_2(go_gene_sets, &target_genes);
+  let hits = count_hits_hash(go_gene_sets, &target_genes);
 
   // Calculate p-values and odds ratios
   let pvals: Vec<f64> = hits
