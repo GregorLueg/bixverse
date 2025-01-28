@@ -1,4 +1,6 @@
-# S7 ----
+# S7 object ----
+
+## Class ----
 
 network_diffusions <- S7::new_class(
   # Name
@@ -51,3 +53,82 @@ network_diffusions <- S7::new_class(
     )
   }
 )
+
+## Property access methods ----
+
+#' Get the parameters that were used.
+#'
+#' @description
+#' This method accesses the params slot and can return R lists or JSON strings.
+#'
+#' @export
+get_params <- S7::new_generic("get_params", "network_diffusions")
+
+#' @name get_params
+#'
+#' @description Extracts params from the `network_diffusion` class and has options
+#' to return (pretty) JSONs
+#'
+#' @usage get_params(
+#'  network_diffusions,
+#'  to_json = FALSE,
+#'  pretty_json = FALSE
+#' )
+#'
+#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param to_json Shall the params be returned as a JSON string.
+#' @param pretty_json Shall the params be returned as a pretty JSON string.
+#'
+#' @return Depending on parameters either the R list or a (pretty) JSON string.
+#'
+#' @method get_params network_diffusions
+S7::method(get_params, network_diffusions) <-
+  function(network_diffusions,
+           to_json = FALSE,
+           pretty_json = FALSE) {
+    # Checks
+    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+    checkmate::qassert(to_json, "B1")
+    checkmate::qassert(pretty_json, "B1")
+
+    # Body
+    to_ret <- S7::prop(network_diffusions, "params")
+    if (to_json) {
+      to_ret <- jsonlite::toJSON(to_ret)
+    }
+    if (to_json &&
+        pretty_json) {
+      to_ret <- jsonlite::prettify(to_ret)
+    }
+
+    return(to_ret)
+  }
+
+
+#' Get the diffusion results
+#'
+#' @description
+#' This method returns the community detection results from the class
+#'
+#' @export
+get_results <- S7::new_generic("get_results", "network_diffusions")
+
+#' @name get_results
+#'
+#' @description Get the community detection results from the class
+#'
+#' @usage get_results(network_diffusions)
+#'
+#' @param network_diffusions The underlying `network_diffusions` class.
+#'
+#' @return Returns the community detection results if any can be found.
+#'
+#' @method get_results network_diffusions
+S7::method(get_results, network_diffusions) <-
+  function(network_diffusions) {
+    # Checks
+    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+
+    # Return
+    return(S7::prop(network_diffusions, "community_res"))
+  }

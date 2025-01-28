@@ -8,17 +8,17 @@
 #' This is the generic function for diffusing seed genes over a network.
 #'
 #' @export
-diffuse_seed_genes <- S7::new_generic("diffuse_seed_genes", "network_diffusions")
+diffuse_seed_nodes <- S7::new_generic("diffuse_seed_nodes", "network_diffusions")
 
 
-#' @name diffuse_seed_genes
+#' @name diffuse_seed_nodes
 #'
 #' @description
 #' This function takes a diffusion vector and leverages personalised page-rank diffusion
 #' to identify influential nodes. These can be used subsequently for community detection
 #' or check AUROC values given a set of genes.
 #'
-#' @usage diffuse_seed_genes(
+#' @usage diffuse_seed_nodes(
 #'  network_diffusions,
 #'  diffusion_vector,
 #'  summarisation = c("max", "mean", "harmonic_sum")
@@ -37,8 +37,8 @@ diffuse_seed_genes <- S7::new_generic("diffuse_seed_genes", "network_diffusions"
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method diffuse_seed_genes network_diffusions
-S7::method(diffuse_seed_genes, network_diffusions) <-
+#' @method diffuse_seed_nodes network_diffusions
+S7::method(diffuse_seed_nodes, network_diffusions) <-
   function(network_diffusions,
            diffusion_vector,
            summarisation = c("max", "mean", "harmonic_sum")) {
@@ -47,14 +47,14 @@ S7::method(diffuse_seed_genes, network_diffusions) <-
     checkmate::assertNumeric(diffusion_vector)
     checkmate::assertNamed(diffusion_vector, .var.name = "diffusion_vector")
     checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
-    # Body
 
+    # Body
     ## Create the diffusion vector
     diffusion_vector <- .summarise_scores(diffusion_vector, summarisation = summarisation)
     nodes_names <- igraph::V(S7::prop(network_diffusions, "graph"))$name
-    seed_genes <- intersect(names(diffusion_vector), nodes_names)
+    seed_nodes <- intersect(names(diffusion_vector), nodes_names)
     diff_vec <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
-    for (node in seed_genes) {
+    for (node in seed_nodes) {
       diff_vec[node] <- diffusion_vector[node]
     }
 
@@ -67,7 +67,7 @@ S7::method(diffuse_seed_genes, network_diffusions) <-
     ## Assign and return
     S7::prop(network_diffusions, "diffusion_res") <- page_rank_score$vector
     S7::prop(network_diffusions, "params")['diffusion_type'] <- 'single'
-    S7::prop(network_diffusions, "params")[['seed_genes']] <- seed_genes
+    S7::prop(network_diffusions, "params")[['seed_nodes']] <- seed_nodes
     network_diffusions
   }
 
@@ -120,7 +120,7 @@ S7::method(tied_diffusion, network_diffusions) <-
            diffusion_vector.2,
            summarisation = c("max", "mean", "harmonic_sum"),
            score_aggregation = c("min", "max", "mean"),
-           .verbose = TRUE) {
+           .verbose = FALSE) {
     # Checks
     checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
     checkmate::assertNumeric(diffusion_vector.1)
@@ -130,23 +130,25 @@ S7::method(tied_diffusion, network_diffusions) <-
     checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
     checkmate::assertChoice(score_aggregation, c("min", "max", "mean"))
     checkmate::qassert(.verbose, "B1")
-    # Body
 
+    # Body
     ## Create the diffusion vectors
     diffusion_vector.1 <- .summarise_scores(diffusion_vector.1, summarisation = summarisation)
     diffusion_vector.2 <- .summarise_scores(diffusion_vector.2, summarisation = summarisation)
     nodes_names <- igraph::V(S7::prop(network_diffusions, "graph"))$name
-    seed_genes.1 <- intersect(names(diffusion_vector.1), nodes_names)
-    seed_genes.2 <- intersect(names(diffusion_vector.2), nodes_names)
+    seed_nodes.1 <- intersect(names(diffusion_vector.1), nodes_names)
+    seed_nodes.2 <- intersect(names(diffusion_vector.2), nodes_names)
     diff_vec.1 <- diff_vec.2 <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
-    for (node in seed_genes.1) {
+    for (node in seed_nodes.1) {
       diff_vec.1[node] <- diffusion_vector.1[node]
     }
-    for (node in seed_genes.2) {
+    for (node in seed_nodes.2) {
       diff_vec.2[node] <- diffusion_vector.2[node]
     }
-    if ((sum(diff_vec.1) == 0) || (sum(diff_vec.1) == 0) )
-      error("No scores found on first and/or second of the diffusion vectors. Please check the names and/or values.")
+    if ((sum(diff_vec.1) == 0) || (sum(diff_vec.1) == 0))
+      error(
+        "No scores found on first and/or second of the diffusion vectors. Please check the names and/or values."
+      )
 
     ## First diffusion
     score_1 <- igraph::page_rank(S7::prop(network_diffusions, "graph"), personalized = diff_vec.1)$vector
@@ -155,7 +157,9 @@ S7::method(tied_diffusion, network_diffusions) <-
     directed <- S7::prop(network_diffusions, "params")[['directed_graph']]
     score_2 <- if (directed) {
       if (.verbose)
-        message("Directed graph found. Function will use transpose of adjacency for second diffusion.")
+        message(
+          "Directed graph found. Function will use transpose of adjacency for second diffusion."
+        )
       adj <- igraph::as_adjacency_matrix(S7::prop(network_diffusions, "graph"))
       adj_T <- Matrix::t(adj)
       igraph_obj_t <- igraph::graph_from_adjacency_matrix(adj_T)
@@ -177,7 +181,7 @@ S7::method(tied_diffusion, network_diffusions) <-
     ## Assign and return
     S7::prop(network_diffusions, "diffusion_res") <- final_tiedie_diffusion
     S7::prop(network_diffusions, "params")['diffusion_type'] <- 'tied'
-    S7::prop(network_diffusions, "params")[['seed_genes']] <- list('set_1' = seed_genes.1, 'set_2' = seed_genes.2)
+    S7::prop(network_diffusions, "params")[['seed_nodes']] <- list('set_1' = seed_nodes.1, 'set_2' = seed_nodes.2)
 
     network_diffusions
   }
@@ -194,7 +198,37 @@ community_detection <- S7::new_generic("community_detection", "network_diffusion
 
 #' @name community_detection
 #'
-#' @description ...
+#' @description Detects privileged communities after a diffusion based on seed nodes.
+#'
+#' @usage community_detection(
+#'  network_diffusions,
+#'  diffusion_threshold,
+#'  max_nodes = 300L,
+#'  min_nodes = 10L,
+#'  min_seed_nodes = 2L,
+#'  intial_res = 0.5,
+#'  seed = 42L,
+#'  .verbose = F,
+#'  .max_iters = 100L
+#' )
+#'
+#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param diffusion_threshold How much of the network to keep based on the diffusion
+#' values. 0.25 for example would keep the 25% nodes with the highest scores.
+#' @param max_nodes Number of max genes per community. Communities that are larger
+#' than that will be further subclustered.
+#' @param min_nodes Number of minimum nodes per community. Smaller communities will be removed.
+#' @param min_seed_nodes Number of minimum seed nodes per community to be kept. In the case of
+#' a tied diffusion, this number must be reached by both initial seed gene vectors.
+#' @param intial_res Initial resolution parameter for the Leiden community detection.
+#' @param seed Random seed.
+#' @param .verbose Controls the verbosity of the function.
+#' @param .max_iters Controls how many iterations shall be tried for the subclustering. To note,
+#' in each iteration of the subclustering, the resolution parameter is increased by 0.05, to identify
+#' more granular communities.
+#'
+#' @return The class with added diffusion community detection results (if any could be identified
+#' with the provided parameters).
 #'
 #' @export
 #'
@@ -204,19 +238,19 @@ community_detection <- S7::new_generic("community_detection", "network_diffusion
 #' @method community_detection network_diffusions
 S7::method(community_detection, network_diffusions) <- function(network_diffusions,
                                                                 diffusion_threshold,
-                                                                max_genes = 300L,
-                                                                min_genes = 10L,
-                                                                min_seed_genes = 0L,
+                                                                max_nodes = 300L,
+                                                                min_nodes = 10L,
+                                                                min_seed_nodes = 2L,
                                                                 intial_res = 0.5,
                                                                 seed = 42L,
-                                                                .verbose = T,
+                                                                .verbose = F,
                                                                 .max_iters = 100L) {
   # Checks
   checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
   checkmate::qassert(diffusion_threshold, "R1[0,1]")
-  checkmate::qassert(max_genes, "I1")
-  checkmate::qassert(min_genes, "I1")
-  checkmate::qassert(min_seed_genes, "I1")
+  checkmate::qassert(max_nodes, "I1")
+  checkmate::qassert(min_nodes, "I1")
+  checkmate::qassert(min_seed_nodes, "I1")
   checkmate::qassert(intial_res, "R1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -225,11 +259,12 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
   # Body
   ## Reduce the graph
   diffusion_score <- S7::prop(network_diffusions, "diffusion_res")
+  # Early return
   if (length(diffusion_score) == 0) {
     warning(
-      "The diffusion score has length 0. Likely you did not run the diffusion methods. Returning NULL."
+      "The diffusion score has length 0. Likely you did not run the diffusion methods. Returning class as is."
     )
-    return(NULL)
+    return(network_diffusions)
   }
   nodes_to_include <- diffusion_score %>%
     sort(decreasing = T) %>%
@@ -253,17 +288,18 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
   node_frequency <- clusters_df[, .N, .(clusterID)]
 
   ## Subclustering
-  clusters_with_too_many_nodes <- node_frequency[N > max_genes, clusterID]
+  clusters_with_too_many_nodes <- node_frequency[N > max_nodes, clusterID]
   final_clusters <- clusters_df[!clusterID %in% clusters_with_too_many_nodes]
 
-  for (cluster_i in clusters_with_too_many_nodes) {
+  for (i in seq_along(clusters_with_too_many_nodes)) {
+    cluster_i <- clusters_with_too_many_nodes[i]
     nodes_in_cluster <- clusters_df[clusterID == cluster_i, nodeID]
     finalised_clusters <- data.table()
     # Loop through, until all clusters are below the minimum genes or max iterations is hit
     l <- 1
     while (length(nodes_in_cluster) != 0) {
-      set.seed(random_seed + l)
-      if (verbose)
+      set.seed(seed + l)
+      if (.verbose)
         message("Cluster ", i, " gets subclustered. Iter: ", l)
       red_graph_l <- igraph::subgraph(red_graph,
                                       data.table::chmatch(nodes_in_cluster, igraph::V(red_graph)$name))
@@ -273,7 +309,7 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
       subclusters <- data.table(nodeID = clusters_red$names,
                                 clusterID = clusters_red$membership)
       subclusters_frequency <- subclusters[, .N, .(clusterID)]
-      clusters_small_enough <- subclusters_frequency[N <= max_genes, clusterID]
+      clusters_small_enough <- subclusters_frequency[N <= max_nodes, clusterID]
 
       good_clusters <- subclusters[clusterID %in% clusters_small_enough] %>%
         dplyr::mutate(clusterID = paste0(i, paste(rep("sub", l), collapse = ""), clusterID))
@@ -284,7 +320,7 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
       if (l == .max_iters)
         break
 
-      nodes_in_cluster <- setdiff(genes_in_cluster, good_clusters$nodeID)
+      nodes_in_cluster <- setdiff(nodes_in_cluster, good_clusters$nodeID)
     }
 
     final_clusters <- rbind(final_clusters, finalised_clusters)
@@ -294,34 +330,37 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
   diffusion_type <- S7::prop(network_diffusions, "params")$diffusion_type
 
   final_node_frequency <- if (diffusion_type == 'single') {
-    seed_genes <- S7::prop(network_diffusions, "params")$seed_genes
-
-    final_clusters[, .(cluster_size = length(nodeID),
-                       seed_nodes = sum(nodeID %in% seed_genes)), .(clusterID)]
-  } else {
-    seed_genes_set_1 <- S7::prop(network_diffusions, "params")$seed_genes$set_1
-    seed_genes_set_2 <- S7::prop(network_diffusions, "params")$seed_genes$set_2
+    seed_nodes <- S7::prop(network_diffusions, "params")$seed_nodes
 
     final_clusters[, .(
       cluster_size = length(nodeID),
-      seed_nodes_1 = sum(nodeID %in% seed_genes_set_1),
-      seed_nodes_2 = sum(nodeID %in% seed_genes_set_2)
+      seed_nodes_no = sum(nodeID %in% seed_nodes)
+    ), .(clusterID)]
+  } else {
+    seed_nodes_set_1 <- S7::prop(network_diffusions, "params")$seed_nodes$set_1
+    seed_nodes_set_2 <- S7::prop(network_diffusions, "params")$seed_nodes$set_2
+
+    final_clusters[, .(
+      cluster_size = length(nodeID),
+      seed_nodes_1 = sum(nodeID %in% seed_nodes_set_1),
+      seed_nodes_2 = sum(nodeID %in% seed_nodes_set_2)
     ), .(clusterID)]
   }
 
   ## Finalise the clusters
   clusters_to_take <- if (diffusion_type == 'single') {
-    final_node_frequency[cluster_size >= min_genes &
-                           seed_nodes >= min_seed_genes, clusterID]
+    final_node_frequency[cluster_size >= min_nodes &
+                           seed_nodes_no >= min_seed_nodes, clusterID]
   } else {
-    final_node_frequency[cluster_size >= min_genes &
-                           seed_nodes_1 >= min_seed_genes &
-                           seed_nodes_2 >= min_seed_genes, clusterID]
+    final_node_frequency[cluster_size >= min_nodes &
+                           seed_nodes_1 >= min_seed_nodes &
+                           seed_nodes_2 >= min_seed_nodes, clusterID]
   }
 
+  # Early return
   if (length(clusters_to_take) == 0) {
-    warning("No cluster passed the supplied criteria. Returning NULL")
-    return(NULL)
+    warning("No communities found with the given parameters. Returning class as is.")
+    return(network_diffusions)
   }
 
   finalised_clusters.clean <- final_clusters[clusterID %in% clusters_to_take]
@@ -331,24 +370,36 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
   for (i in seq_along(clusters_to_take)) {
     cluster <- clusters_to_take[i]
     cluster_nodes <- finalised_clusters.clean[clusterID == cluster, nodeID]
-    ks <- ks.test(diffusion_score[cluster_nodes],
-                  diffusion_score[which(!names(diffusion_score) %in% cluster_nodes)],
-                  alternative = "less")
+    ks <- suppressWarnings(ks.test(diffusion_score[cluster_nodes], diffusion_score[which(!names(diffusion_score) %in% cluster_nodes)], alternative = "less"))
     ks_vals[i] <- ks$p.value
   }
 
-  ks_val_df <- data.table(
-    clusterID = clusters_to_take,
-    ks_pval = ks_vals
-  ) %>%
-    .[, fdr := p.adjust(ks_pval, method = "fdr")]
+  ks_val_df <- data.table(clusterID = clusters_to_take, ks_pval = ks_vals)
 
   final_result <- purrr::reduce(list(finalised_clusters.clean, ks_val_df, final_node_frequency),
                                 merge,
                                 by = 'clusterID') %>%
-    .[, `:=`(diffusion_score = diffusion_score[nodeID])]
+    .[, `:=`(diffusion_score = diffusion_score[nodeID],
+             clusterID = as.character(clusterID))]
 
-  final_result
+
+  cluster_name_prettifier <- setNames(paste("cluster", 1:length(unique(
+    final_result$clusterID
+  )), sep = "_"),
+  unique(final_result$clusterID))
+
+  final_result[, clusterID := cluster_name_prettifier[clusterID]]
+
+  ## Assign and return
+  S7::prop(network_diffusions, "community_res") <- final_result
+  S7::prop(network_diffusions, "params")[['community_params']] <- list(
+    diffusion_threshold = diffusion_threshold,
+    max_nodes = max_nodes,
+    min_nodes = min_seed_nodes,
+    min_seed_nodes = min_seed_nodes
+  )
+
+  return(network_diffusions)
 }
 
 # Utils ----
@@ -412,8 +463,10 @@ S7::method(calculate_diffusion_AUC, network_diffusions) <-
       checkmate::qassert(random_aucs, "I1")
     # Body
     diffusion_score <- S7::prop(network_diffusions, "diffusion_res")
-    if(length(diffusion_score) == 0) {
-      warning("The diffusion score has length 0. Likely you did not run the diffusion methods. Returning NULL.")
+    if (length(diffusion_score) == 0) {
+      warning(
+        "The diffusion score has length 0. Likely you did not run the diffusion methods. Returning NULL."
+      )
       return(NULL)
     }
     pos.scores <- diffusion_score[hit_nodes]
@@ -435,13 +488,13 @@ S7::method(calculate_diffusion_AUC, network_diffusions) <-
 
       z <- (auc - mean(random_aucs)) / sd(random_aucs)
 
-      return (list(auc = auc, z = z))
+      to_ret <- list(auc = auc, z = z)
     } else {
-      return(auc)
+      to_ret <- auc
     }
-  }
 
-## Accessing data ----
+    return(to_ret)
+  }
 
 # Other Helpers ----
 

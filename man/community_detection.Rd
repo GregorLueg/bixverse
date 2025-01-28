@@ -5,9 +5,49 @@
 \title{Identify privileged communities based on a given diffusion vector}
 \usage{
 community_detection(network_diffusions, ...)
+
+community_detection(
+ network_diffusions,
+ diffusion_threshold,
+ max_nodes = 300L,
+ min_nodes = 10L,
+ min_seed_nodes = 2L,
+ intial_res = 0.5,
+ seed = 42L,
+ .verbose = F,
+ .max_iters = 100L
+)
+}
+\arguments{
+\item{network_diffusions}{The underlying \code{network_diffusions} class.}
+
+\item{diffusion_threshold}{How much of the network to keep based on the diffusion
+values. 0.25 for example would keep the 25\% nodes with the highest scores.}
+
+\item{max_nodes}{Number of max genes per community. Communities that are larger
+than that will be further subclustered.}
+
+\item{min_nodes}{Number of minimum nodes per community. Smaller communities will be removed.}
+
+\item{min_seed_nodes}{Number of minimum seed nodes per community to be kept. In the case of
+a tied diffusion, this number must be reached by both initial seed gene vectors.}
+
+\item{intial_res}{Initial resolution parameter for the Leiden community detection.}
+
+\item{seed}{Random seed.}
+
+\item{.verbose}{Controls the verbosity of the function.}
+
+\item{.max_iters}{Controls how many iterations shall be tried for the subclustering. To note,
+in each iteration of the subclustering, the resolution parameter is increased by 0.05, to identify
+more granular communities.}
+}
+\value{
+The class with added diffusion community detection results (if any could be identified
+with the provided parameters).
 }
 \description{
 This is the generic function for diffusing seed genes over a network.
 
-...
+Detects privileged communities after a diffusion based on seed nodes.
 }
