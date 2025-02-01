@@ -2,14 +2,16 @@
 % Please edit documentation in R/S7_go_obj_methods.R
 \name{GSE_GO_elim_method_list}
 \alias{GSE_GO_elim_method_list}
-\title{GSE on a list of target genes with the GO elimination method.}
+\title{Run gene ontology enrichment with elimination method over a list..}
 \usage{
+GSE_GO_elim_method_list(gene_ontology_data, ...)
+
 GSE_GO_elim_method(
  gene_ontology_data,
  target_gene_list,
  minimum_overlap = 3L,
  fdr_threshold = 0.05,
- elim_threshold = 0.05
+ elim_threshold = 0.05,
  min_genes = NULL,
  .debug = FALSE
 )
@@ -36,6 +38,10 @@ Warning: should you run this command over a large list, you will have a large pr
 data.table with enrichment results.
 }
 \description{
+This is the generic function for running gene ontology enrichment with an ontology-aware
+elimination of genes from ancestors upon significant enrichment. This version takes in
+a list of target genes.
+
 This method takes the gene_ontology_data and a list of target gene sets and performs an GSE
 enrichment leveraging ontological information. It starts at the lowest levels of the ontology
 and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below

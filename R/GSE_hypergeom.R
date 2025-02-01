@@ -14,7 +14,8 @@
 #' @param gene_universe Optional character vector. If you would like to specify specifically the gene universe. If set to NULL,
 #' the function will default to all represented genes in the `gene_set_list`.
 #' @param threshold Float between 0 and 1 to filter on the FDR. Default: 0.05. If NULL everything is returned.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param minimum_overlap Number of minimum overlap between the target genes and the respective gene set.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -28,7 +29,7 @@ GSE_hypergeometric <- function(target_genes,
                                gene_universe = NULL,
                                threshold = 0.05,
                                minimum_overlap = 3L,
-                               verbose = T) {
+                               .verbose = F) {
   # Input checks
   checkmate::qassert(target_genes, "S+")
   checkmate::assertList(gene_set_list, types = "character")
@@ -36,10 +37,10 @@ GSE_hypergeometric <- function(target_genes,
   checkmate::qassert(gene_universe, c("0", "S+"))
   checkmate::qassert(threshold, c("R1[0,1]", "0"))
   checkmate::qassert(minimum_overlap, "I1")
-  checkmate::qassert(verbose, "B1")
+  checkmate::qassert(.verbose, "B1")
   # Function body
   if (is.null(gene_universe)) {
-    if (verbose) {
+    if (.verbose) {
       message(
         "No gene universe given. Function will use the represented genes in the pathways/gene sets as reference."
       )
@@ -81,14 +82,15 @@ GSE_hypergeometric <- function(target_genes,
 #' Takes a set of list of target genes, a list of gene sets and calculates a p-value (hypergeometric test) and odds ratio (OR) against
 #' all the gene sets. Also applies a multiple hypothesis correction (BH) to the p-values.
 #'
-#' @param target_gene_list  Named list of character vectors. Names should represent the identifiers of the target genes and the elements the
+#' @param target_genes_list  Named list of character vectors. Names should represent the identifiers of the target genes and the elements the
 #' genes.
 #' @param gene_set_list Named list of character vectors. Names should represent the gene sets, pathways, and the elements the
 #' genes within the respective gene set.
 #' @param gene_universe Optional character vector. If you would like to specify specifically the gene universe. If set to NULL,
 #' the function will default to all represented genes in the `gene_set_list`.
 #' @param threshold Float between 0 and 1 to filter on the FDR. Default: 0.05. If NULL everything is returned.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param minimum_overlap Number of minimum overlap between the target genes and the respective gene set.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -102,7 +104,7 @@ GSE_hypergeometric_list <- function(target_genes_list,
                                     gene_universe = NULL,
                                     threshold = 0.05,
                                     minimum_overlap = 3L,
-                                    verbose = T) {
+                                    .verbose = F) {
   # Input checks
   checkmate::assertList(target_genes_list, types = "character")
   checkmate::qassert(names(target_genes_list), "S+")
@@ -111,10 +113,10 @@ GSE_hypergeometric_list <- function(target_genes_list,
   checkmate::qassert(gene_universe, c("0", "S+"))
   checkmate::qassert(threshold, c("R1[0,1]", "0"))
   checkmate::qassert(minimum_overlap, "I1")
-  checkmate::qassert(verbose, "B1")
+  checkmate::qassert(.verbose, "B1")
   # Function body
   if (is.null(gene_universe)) {
-    if (verbose) {
+    if (.verbose) {
       message(
         "No gene universe given. Function will use the represented genes in the pathways/gene sets as reference."
       )
@@ -153,6 +155,5 @@ GSE_hypergeometric_list <- function(target_genes_list,
   gse_results
 }
 
-## Gene ontology with elimination ----
 
 

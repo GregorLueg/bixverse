@@ -270,7 +270,6 @@ S7::method(community_detection, network_diffusions) <- function(network_diffusio
     sort(decreasing = T) %>%
     .[1:ceiling(diffusion_threshold * length(diffusion_score))]
 
-
   red_graph <- igraph::subgraph(S7::prop(network_diffusions, "graph"),
                                 names(nodes_to_include))
 

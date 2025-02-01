@@ -10,10 +10,13 @@ GSE_hypergeometric_list(
   gene_universe = NULL,
   threshold = 0.05,
   minimum_overlap = 3L,
-  verbose = T
+  .verbose = F
 )
 }
 \arguments{
+\item{target_genes_list}{Named list of character vectors. Names should represent the identifiers of the target genes and the elements the
+genes.}
+
 \item{gene_set_list}{Named list of character vectors. Names should represent the gene sets, pathways, and the elements the
 genes within the respective gene set.}
 
@@ -22,10 +25,9 @@ the function will default to all represented genes in the \code{gene_set_list}.}
 
 \item{threshold}{Float between 0 and 1 to filter on the FDR. Default: 0.05. If NULL everything is returned.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{minimum_overlap}{Number of minimum overlap between the target genes and the respective gene set.}
 
-\item{target_gene_list}{Named list of character vectors. Names should represent the identifiers of the target genes and the elements the
-genes.}
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 data.table with enrichment results.

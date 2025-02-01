@@ -6,6 +6,7 @@ rextendr::document()
 devtools::load_all()
 devtools::check()
 
+
 edge_data = arrow::read_parquet("~/Desktop/biomind_downloads/processed_data/edges_OT_interactions.parquet") %>%
   as.data.table() %>%
   .[network_resource == 'STRING']
@@ -45,10 +46,8 @@ test_class <- community_detection(
   test_class,
   min_seed_nodes = 0L,
   diffusion_threshold = .5,
-  max_nodes = 100L
+  max_nodes = 300L
 )
-
-?get_params
 
 get_params(test_class, to_json = TRUE, pretty_json = TRUE)
 

@@ -23,6 +23,8 @@ use_package("foreach")
 use_package("rextendr")
 use_package("igraph")
 use_package("rlang")
+use_package("dplyr")
+use_package("purrr")
 
 ## Functions / R stuff ----
 

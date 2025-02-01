@@ -16,7 +16,10 @@ network_diffusions <- S7::new_class(
   #' Network diffusion class
   #'
   #' @description
-  #' ...
+  #' This class helps to do diffusion of seed nodes in a single or tied version over a
+  #' network, measure the ability of these diffusion vectors to recall against a gold standard
+  #' set of nodes and do community detection within the subset of the network that received the
+  #' the most heat from the initial seed genes.
   #'
   #' @param edge_data_frame data.table with the columns
   #' @param weighted Boolean. Is the graph weighted.
