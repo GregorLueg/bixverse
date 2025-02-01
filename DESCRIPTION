@@ -14,9 +14,14 @@ Imports:
     arrow,
     checkmate,
     data.table,
+    dplyr,
     foreach,
     igraph,
     magrittr,
+    purrr,
     rextendr,
     S7,
-    zeallot
+    zeallot,
+    rlang,
+    matrixStats,
+    jsonlite

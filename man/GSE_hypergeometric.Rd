@@ -10,7 +10,7 @@ GSE_hypergeometric(
   gene_universe = NULL,
   threshold = 0.05,
   minimum_overlap = 3L,
-  verbose = T
+  .verbose = F
 )
 }
 \arguments{
@@ -24,7 +24,9 @@ the function will default to all represented genes in the \code{gene_set_list}.}
 
 \item{threshold}{Float between 0 and 1 to filter on the FDR. Default: 0.05. If NULL everything is returned.}
 
-\item{verbose}{Boolean. Controls verbosity of the function.}
+\item{minimum_overlap}{Number of minimum overlap between the target genes and the respective gene set.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 data.table with enrichment results.

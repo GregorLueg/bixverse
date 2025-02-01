@@ -2,9 +2,11 @@
 % Please edit documentation in R/S7_diff_class_methods.R
 \name{tied_diffusion}
 \alias{tied_diffusion}
-\title{Use tied diffusion for two sets of seed genes.}
+\title{Diffuse seed genes in a tied manner over a network}
 \usage{
-diffuse_seed_genes(
+tied_diffusion(network_diffusions, ...)
+
+tied_diffusion(
  network_diffusions,
  diffusion_vector.1,
  diffusion_vector.2,
@@ -29,7 +31,14 @@ these.}
 
 \item{verbose}{Controls verbosity of the function.}
 }
+\value{
+The class with added diffusion score based on a two sets of seed genes. Additionally,
+the seed genes are stored in the class.
+}
 \description{
+This is the generic function for diffusion two sets of seed genes over
+a network.
+
 This function takes two sets of diffusion vector and leverages tied diffusion to identify an intersection
 of influential nodes.
 }

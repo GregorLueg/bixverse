@@ -1,6 +1,15 @@
 # Gene Set Enrichment versions ----
 
-#' GSE on a single set of target genes with the GO elimination method.
+#' Run gene ontology enrichment with elimination method.
+#'
+#' @description
+#' This is the generic function for running gene ontology enrichment with an ontology-aware
+#' elimination of genes from ancestors upon significant enrichment.
+#'
+#' @export
+GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data")
+
+#' @name GSE_GO_elim_method
 #'
 #' @description
 #' This method takes the gene_ontology_data and a target gene set and performs an GSE
@@ -35,8 +44,8 @@
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
-GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data")
-
+#'
+#' @method GSE_GO_elim_method gene_ontology_data
 S7::method(GSE_GO_elim_method, gene_ontology_data) <-
   function(gene_ontology_data,
            target_genes,
@@ -98,8 +107,17 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
   }
 
 
+#' Run gene ontology enrichment with elimination method over a list..
+#'
+#' @description
+#' This is the generic function for running gene ontology enrichment with an ontology-aware
+#' elimination of genes from ancestors upon significant enrichment. This version takes in
+#' a list of target genes.
+#'
+#' @export
+GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_ontology_data")
 
-#' GSE on a list of target genes with the GO elimination method.
+#' @name GSE_GO_elim_method_list
 #'
 #' @description
 #' This method takes the gene_ontology_data and a list of target gene sets and performs an GSE
@@ -114,7 +132,7 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
 #'  target_gene_list,
 #'  minimum_overlap = 3L,
 #'  fdr_threshold = 0.05,
-#'  elim_threshold = 0.05
+#'  elim_threshold = 0.05,
 #'  min_genes = NULL,
 #'  .debug = FALSE
 #' )
@@ -136,8 +154,8 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
-GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_ontology_data")
-
+#'
+#' @method GSE_GO_elim_method_list gene_ontology_data
 S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
   function(gene_ontology_data,
            target_gene_list,

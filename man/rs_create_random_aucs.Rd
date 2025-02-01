@@ -2,19 +2,23 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_create_random_aucs}
 \alias{rs_create_random_aucs}
-\title{Fast AUC calculation}
+\title{Create random AUCs}
 \usage{
 rs_create_random_aucs(score_vec, size_pos, random_iters, auc_iters, seed)
 }
 \arguments{
-\item{pos_scores}{The scores of your hits.}
+\item{score_vec}{The overall vector of scores.}
 
-\item{neg_scores}{The scores of your non-hits.}
+\item{size_pos}{The size of the hits represented in the score_vec.}
 
-\item{iters}{Number of iterations to run the function for. Recommended size: 10,000.}
+\item{random_iters}{Number of random AUCs to generate.}
 
-\item{random_seed}{Seed.}
+\item{auc_iters}{Number of random iterations to approximate the AUCs.}
+
+\item{seed}{Seed.}
 }
 \description{
-This function calculates rapidly AUCs based on an approximation.
+This function creates a random set of AUCs based on a score vector and
+a size of the positive set. This can be used for permutation-based estimation
+of Z-scores and subsequently p-values.
 }

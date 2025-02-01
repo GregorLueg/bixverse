@@ -2,8 +2,10 @@
 % Please edit documentation in R/S7_go_obj_methods.R
 \name{GSE_GO_elim_method}
 \alias{GSE_GO_elim_method}
-\title{GSE on a single set of target genes with the GO elimination method.}
+\title{Run gene ontology enrichment with elimination method.}
 \usage{
+GSE_GO_elim_method(gene_ontology_data, ...)
+
 GSE_GO_elim_method(
  gene_ontology_data,
  target_genes,
@@ -35,6 +37,9 @@ If NULL, it will default to the number of minimum genes stored in \code{gene_ont
 data.table with enrichment results.
 }
 \description{
+This is the generic function for running gene ontology enrichment with an ontology-aware
+elimination of genes from ancestors upon significant enrichment.
+
 This method takes the gene_ontology_data and a target gene set and performs an GSE
 enrichment leveraging ontological information. It starts at the lowest levels of the ontology
 and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
