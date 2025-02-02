@@ -84,18 +84,6 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
-#' Set similarities
-#' 
-#' This function calculates the Jaccard or similarity index between a given 
-#' string vector and a list of other string vectors.
-#' 
-#' @param string The String vector against which to calculate the set similarities.
-#' @param string_list The list of character vectors for which to calculate the set similarities. 
-#' @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
-#' 
-#' @export
-rs_set_sim_list <- function(string, string_list, similarity_index) .Call(wrap__rs_set_sim_list, string, string_list, similarity_index)
-
 #' Fast AUC calculation
 #' 
 #' This function calculates rapidly AUCs based on an approximation.
@@ -122,6 +110,9 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' 
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
+
+#' @export
+rs_rbh_sets <- function(module_list, similiarity_index, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, similiarity_index, min_similarity, debug)
 
 
 # nolint end

@@ -1,7 +1,8 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
-use crate::r_rust_utils::{r_list_to_hashmap, r_list_to_hashmap_set};
-use crate::hypergeom_helpers::*;
+
+use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
+use crate::helpers_hypergeom::*;
 
 ///////////////////////
 // Types & Structure //

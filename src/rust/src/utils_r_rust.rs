@@ -1,13 +1,10 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
 
+/// A double nested HashMap
+pub type NestedHashMap = HashMap<String, HashMap<String, HashSet<String>>>;
+
 /// Transforms a Robj List into a Hashmap
-/// 
-/// #### Arguments
-/// * r_list: The R list to transform. The function is expecting Strings as content of the list
-/// 
-/// #### Returns
-/// * A Hashmap with the names of the list as keys and the character vectors stored as String arrays.
 pub fn r_list_to_hashmap(
   r_list: List
 ) -> HashMap<String, Vec<String>> {
@@ -26,12 +23,6 @@ pub fn r_list_to_hashmap(
 }
 
 /// Transforms a Robj List into a Hashmap with the values as Hashset
-/// 
-/// #### Arguments
-/// * r_list: The R list to transform. The function is expecting Strings as content of the list
-/// 
-/// #### Returns
-/// * A Hashmap with the names of the list as keys and the character vectors stored as HashSets.
 pub fn r_list_to_hashmap_set(
   r_list: List,
 ) -> HashMap<String, HashSet<String>> {
@@ -49,12 +40,6 @@ pub fn r_list_to_hashmap_set(
 
 
 /// Transforms a Robj List into an array of String arrays.
-/// 
-/// #### Arguments
-/// * r_list: The R list to transform. The function is expecting Strings as content of the list
-/// 
-/// #### Returns
-/// * An array of String arrays.
 pub fn r_list_to_str_vec(
   r_list: List
 ) -> Vec<Vec<String>> {
@@ -66,4 +51,20 @@ pub fn r_list_to_str_vec(
           .unwrap()
     })
     .collect()
+}
+
+/// Transforms a Robj nested list into a Vec
+pub fn r_nested_list_to_rust(
+  r_nested_list: List
+) -> NestedHashMap{
+  let outer_list: Vec<_> = r_nested_list
+    .into_iter()
+    .map(|(key, value)| {
+      let inner_list = value.as_list().unwrap();
+      let value = r_list_to_hashmap_set(inner_list);
+      (key.to_string(), value)
+    })
+    .collect();
+
+  outer_list.into_iter().collect()
 }

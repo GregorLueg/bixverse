@@ -1,56 +1,58 @@
 use extendr_api::prelude::*;
-use std::collections::HashSet;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
-use crate::r_rust_utils::r_list_to_str_vec;
-use crate::stats_utils::split_vector_randomly;
 use rayon::prelude::*; 
 
-/// Set similarities
-/// 
-/// This function calculates the Jaccard or similarity index between a given 
-/// string vector and a list of other string vectors.
-/// 
-/// @param string The String vector against which to calculate the set similarities.
-/// @param string_list The list of character vectors for which to calculate the set similarities. 
-/// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
-/// 
-/// @export
-#[extendr]
-fn rs_set_sim_list(
-  string: Vec<String>,
-  string_list: List,
-  similarity_index: bool,
-) -> Vec<f64> {
-    let string_vec = r_list_to_str_vec(string_list);
-    let string: HashSet<_> = string
-      .iter()
-      .collect();
-    let values: Vec<(u64, u64)> = string_vec
-      .iter()
-      .map(|s| {
-        let s_hash: HashSet<_> = s
-        .iter()
-        .collect();
-        let i = s_hash.intersection(&string).count() as u64;
-        let u = if similarity_index {
-          std::cmp::min(s_hash.len(), string.len()) as u64
-        } else {
-          s_hash.union(&string).count() as u64
-        };
-        (i, u)
-      })
-      .collect();
+use crate::utils_stats::split_vector_randomly;
+// use std::collections::HashSet;
+// use crate::utils_r_rust::r_list_to_str_vec;
 
-    let mut sim: Vec<f64> = Vec::new();
 
-    for (i, u) in values {
-      let sim_i: f64 = (i as f64) / (u as f64);
-      sim.push(sim_i)
-    }
+// /// Set similarities
+// /// 
+// /// This function calculates the Jaccard or similarity index between a given 
+// /// string vector and a list of other string vectors.
+// /// 
+// /// @param string The String vector against which to calculate the set similarities.
+// /// @param string_list The list of character vectors for which to calculate the set similarities. 
+// /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
+// /// 
+// /// @export
+// #[extendr]
+// fn rs_set_sim_list(
+//   string: Vec<String>,
+//   string_list: List,
+//   similarity_index: bool,
+// ) -> Vec<f64> {
+//     let string_vec = r_list_to_str_vec(string_list);
+//     let string: HashSet<_> = string
+//       .iter()
+//       .collect();
+//     let values: Vec<(u64, u64)> = string_vec
+//       .iter()
+//       .map(|s| {
+//         let s_hash: HashSet<_> = s
+//         .iter()
+//         .collect();
+//         let i = s_hash.intersection(&string).count() as u64;
+//         let u = if similarity_index {
+//           std::cmp::min(s_hash.len(), string.len()) as u64
+//         } else {
+//           s_hash.union(&string).count() as u64
+//         };
+//         (i, u)
+//       })
+//       .collect();
 
-    sim
-  }
+//     let mut sim: Vec<f64> = Vec::new();
+
+//     for (i, u) in values {
+//       let sim_i: f64 = (i as f64) / (u as f64);
+//       sim.push(sim_i)
+//     }
+
+//     sim
+//   }
 
 /// Fast AUC calculation
 /// 
@@ -129,8 +131,8 @@ fn rs_create_random_aucs(
 
 
 extendr_module! {
-    mod stats_fun;
-    fn rs_set_sim_list;
+    mod fun_stats;
+    // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
 }

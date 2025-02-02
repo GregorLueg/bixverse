@@ -1,8 +1,10 @@
 use extendr_api::prelude::*;
-use crate::hypergeom_helpers::*;
-use crate::geom_elim_helpers::*;
-use crate::r_rust_utils::r_list_to_str_vec;
 use rayon::prelude::*; 
+
+use crate::helpers_hypergeom::*;
+use crate::helpers_geom_elim::*;
+use crate::utils_r_rust::r_list_to_str_vec;
+use crate::utils_rust::flatten_vector;
 
 
 /// A type alias that can be returned by par_iter() functions.
@@ -88,22 +90,10 @@ fn rs_hypergeom_test_list(
     gene_set_lengths.push(gene_set_length);
   }
 
-  let pvals: Vec<_> = pvals
-    .into_iter()
-    .flatten()
-    .collect();
-  let odds_ratios: Vec<_> = odds_ratios
-    .into_iter()
-    .flatten()
-    .collect();
-  let hits: Vec<_> = hits
-    .into_iter()
-    .flatten()
-    .collect();
-  let gene_set_lengths: Vec<_> = gene_set_lengths
-    .into_iter()
-    .flatten()
-    .collect();
+  let pvals: Vec<_> = flatten_vector(pvals);
+  let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
+  let hits: Vec<_> = flatten_vector(hits);
+  let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
   
   list!(
     pvals = pvals, 
@@ -188,26 +178,11 @@ fn rs_gse_geom_elim(
     gene_set_lengths.push(level_res.gene_set_lengths);
   }
   
-  let go_ids: Vec<_> = go_ids
-    .into_iter()
-    .flatten()
-    .collect();
-  let pvals: Vec<_> = pvals
-    .into_iter()
-    .flatten()
-    .collect();
-  let odds_ratios: Vec<_> = odds_ratios
-    .into_iter()
-    .flatten()
-    .collect();
-  let hits: Vec<_> = hits
-    .into_iter()
-    .flatten()
-    .collect();
-  let gene_set_lengths: Vec<_> = gene_set_lengths
-    .into_iter()
-    .flatten()
-    .collect();
+  let go_ids: Vec<_> = flatten_vector(go_ids);
+  let pvals: Vec<_> = flatten_vector(pvals);
+  let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
+  let hits: Vec<_> = flatten_vector(hits);
+  let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
 
   list!(
     go_ids = go_ids,
@@ -303,27 +278,12 @@ fn rs_gse_geom_elim_list(
       }
   
       // Flatten the vectors
-      let go_ids: Vec<_> = go_ids
-        .into_iter()
-        .flatten()
-        .collect();
-      let pvals: Vec<_> = pvals
-        .into_iter()
-        .flatten()
-        .collect();
-      let odds_ratios: Vec<_> = odds_ratios
-        .into_iter()
-        .flatten()
-        .collect();
-      let hits: Vec<_> = hits
-        .into_iter()
-        .flatten()
-        .collect();
-      let gene_set_lengths: Vec<_> = gene_set_lengths
-        .into_iter()
-        .flatten()
-        .collect();
-
+      let go_ids: Vec<_> = flatten_vector(go_ids);
+      let pvals: Vec<_> = flatten_vector(pvals);
+      let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
+      let hits: Vec<_> = flatten_vector(hits);
+      let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
+    
       (go_ids, pvals, odds_ratios, hits, gene_set_lengths)
     })
     .collect();
@@ -335,7 +295,13 @@ fn rs_gse_geom_elim_list(
   let mut gene_set_lengths_final = Vec::new();
   let mut no_tests = Vec::new();
 
-  for (go_ids, pval, odds_ratio, hit, gene_set_length) in res {
+  for (
+    go_ids, 
+    pval, 
+    odds_ratio, 
+    hit, 
+    gene_set_length
+  ) in res {
     no_tests.push(go_ids.len());
     go_ids_final.push(go_ids);
     pvals_final.push(pval);
@@ -344,26 +310,11 @@ fn rs_gse_geom_elim_list(
     gene_set_lengths_final.push(gene_set_length);
   }
 
-  let go_ids_final: Vec<_>= go_ids_final
-    .into_iter()
-    .flatten()
-    .collect();
-  let pvals_final: Vec<_> = pvals_final
-    .into_iter()
-    .flatten()
-    .collect();
-  let odds_ratios_final: Vec<_> = odds_ratios_final
-    .into_iter()
-    .flatten()
-    .collect();
-  let hits_final: Vec<_> = hits_final
-    .into_iter()
-    .flatten()
-    .collect();
-  let gene_set_lengths_final: Vec<_> = gene_set_lengths_final
-    .into_iter()
-    .flatten()
-    .collect();
+  let go_ids_final: Vec<_>= flatten_vector(go_ids_final);
+  let pvals_final: Vec<_> = flatten_vector(pvals_final);
+  let odds_ratios_final: Vec<_> = flatten_vector(odds_ratios_final);
+  let hits_final: Vec<_> = flatten_vector(hits_final);
+  let gene_set_lengths_final: Vec<_> = flatten_vector(gene_set_lengths_final);
 
   list!(
     go_ids = go_ids_final,
@@ -376,7 +327,7 @@ fn rs_gse_geom_elim_list(
 }
 
 extendr_module! {
-    mod hypergeom_fun;
+    mod fun_hypergeom;
     fn rs_hypergeom_test;
     fn rs_hypergeom_test_list;
     fn rs_gse_geom_elim;

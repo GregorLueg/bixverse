@@ -11,5 +11,5 @@ name = 'BIXverse'
 extendr-api = '*'
 statrs = '*'
 rayon = '*'
-indicatif = { version = "0.17", features = ["rayon"] }
 rand = '*'
+ndarray = '*'

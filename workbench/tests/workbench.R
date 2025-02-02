@@ -6,6 +6,7 @@ rextendr::document()
 devtools::load_all()
 devtools::check()
 
+# Community detections ----
 
 edge_data = arrow::read_parquet("~/Desktop/biomind_downloads/processed_data/edges_OT_interactions.parquet") %>%
   as.data.table() %>%
@@ -65,3 +66,60 @@ get_params(test_class, TRUE, TRUE)
 
 jsonlite::toJSON(test_class@params) %>% jsonlite::prettify()
 
+# RBH graph ----
+
+protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
+
+universe <- protein_coding_genes$id[1:250]
+
+sets_per_origin <- 5
+
+gene_sets_no <- sets_per_origin * length(LETTERS[1:3])
+
+seed <- 123
+set.seed(seed)
+
+gene_sets <- purrr::map(1:gene_sets_no, ~ {
+  set.seed(seed + .x + 1)
+  size <- sample(20:100, 1)
+  sample(universe, size, replace = FALSE)
+})
+
+names(gene_sets) <- purrr::map_chr(1:gene_sets_no, ~ {
+  set.seed(seed + .x + 1)
+  paste(sample(LETTERS, 5), collapse = "")
+})
+
+gene_sets_df <- purrr::imap(gene_sets, ~{
+  data.table::data.table(
+    genes = .x,
+    name = .y
+  )
+})
+
+origins <- rep(LETTERS[1:3], each = sets_per_origin)
+
+gene_sets_df <- purrr::map2(gene_sets_df, origins, ~{
+  .x[, origin := .y]
+}) %>% rbindlist
+
+head(gene_sets_df)
+
+module_df = gene_sets_df
+dataset_col = 'origin'
+module_col = 'name'
+value_col = 'genes'
+
+list_of_list <- split(module_df %>% dplyr::select(!!module_col, !!value_col),
+                      module_df[, ..dataset_col]) %>%
+  purrr::map(., ~ {
+    df <- .
+    split(unlist(df[, ..value_col]),
+          unlist(df[, ..module_col]))
+  })
+
+rextendr::document()
+
+tictoc::tic()
+rbh_results_v1 = rs_rbh_sets(list_of_list, FALSE, min_similarity = 0.3, TRUE)
+tictoc::toc()
