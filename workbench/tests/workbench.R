@@ -18,6 +18,14 @@ edge_data_clean = edge_data %>%
 
 test_class = network_diffusions(edge_data_clean, weighted = FALSE, directed = TRUE)
 
+print(test_class)
+
+test_class
+
+test_class@params
+
+get_params(test_class)
+
 set.seed(123)
 genes = sample(igraph::V(test_class@graph)$name, 10)
 genes.2 = sample(igraph::V(test_class@graph)$name, 10)
@@ -70,11 +78,11 @@ jsonlite::toJSON(test_class@params) %>% jsonlite::prettify()
 
 protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
 
-universe <- protein_coding_genes$id[1:250]
+universe <- protein_coding_genes$id[1:500]
 
-sets_per_origin <- 5
+sets_per_origin <- 100
 
-gene_sets_no <- sets_per_origin * length(LETTERS[1:3])
+gene_sets_no <- sets_per_origin * length(LETTERS)
 
 seed <- 123
 set.seed(seed)
@@ -97,18 +105,29 @@ gene_sets_df <- purrr::imap(gene_sets, ~{
   )
 })
 
-origins <- rep(LETTERS[1:3], each = sets_per_origin)
+origins <- rep(LETTERS, each = sets_per_origin)
 
 gene_sets_df <- purrr::map2(gene_sets_df, origins, ~{
   .x[, origin := .y]
 }) %>% rbindlist
 
-head(gene_sets_df)
 
 module_df = gene_sets_df
-dataset_col = 'origin'
-module_col = 'name'
-value_col = 'genes'
+
+devtools::document()
+
+rbh_class = rbh_graph(
+  gene_sets_df,
+  dataset_col = 'origin',
+  module_col = 'name',
+  value_col = 'genes'
+)
+
+rbh_class
+
+print(rbh_class)
+
+rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = F)
 
 list_of_list <- split(module_df %>% dplyr::select(!!module_col, !!value_col),
                       module_df[, ..dataset_col]) %>%
@@ -118,8 +137,46 @@ list_of_list <- split(module_df %>% dplyr::select(!!module_col, !!value_col),
           unlist(df[, ..module_col]))
   })
 
-rextendr::document()
 
 tictoc::tic()
-rbh_results_v1 = rs_rbh_sets(list_of_list, FALSE, min_similarity = 0.3, TRUE)
+rbh_results_v1 = rs_rbh_sets(list_of_list, FALSE, min_similarity = 0.2, FALSE)
 tictoc::toc()
+
+names(rbh_results_v1)
+
+do.call(cbind, rbh_results_v1[c("origin_modules", "target_modules", "similarity")])
+
+origin_vector <- unlist(purrr::map2(rbh_results_v1$origin, rbh_results_v1$comparisons, ~ {
+  rep(.x, each = .y)
+}))
+
+target_vector <- unlist(purrr::map2(rbh_results_v1$target, rbh_results_v1$comparisons, ~ {
+  rep(.x, each = .y)
+}))
+
+rbh_results_v1$origin_modules[rbh_results_v1$origin_modules == "NA"] <- NA
+
+rbh_results_dt = data.table::data.table(
+  origin = origin_vector,
+  target = target_vector,
+  origin_modules = rbh_results_v1$origin_modules,
+  target_modules = rbh_results_v1$target_modules,
+  similiarity = rbh_results_v1$similarity
+) %>%
+  .[!is.na(origin_modules) & similiarity >= 0.2] %>%
+  .[, `:=`(
+    combined_origin = paste(origin, origin_modules, sep = "_"),
+    combined_target = paste(target, target_modules, sep = "_")
+  )]
+
+edge_df <- rbh_results_dt[, c("combined_origin", "combined_target", "similiarity")] %>%
+  data.table::setnames(
+    .,
+    old = c("combined_origin", "combined_target", "similiarity"),
+    new = c("from", "to", "weight")
+  )
+
+graph <- igraph::graph_from_data_frame(edge_df, directed = FALSE)
+
+
+rbh_results_dt

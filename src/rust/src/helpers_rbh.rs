@@ -11,7 +11,7 @@ pub type RbhTriplet = Vec<(String, String, f64)>;
 pub fn calculate_rbh_set(
   origin_modules: &HashMap<String, HashSet<String>>,
   target_modules: &HashMap<String, HashSet<String>>,
-  similiarity_index: bool,
+  overlap_coefficient: bool,
   min_similarity: f64,
   debug: bool
 ) -> RbhTriplet {
@@ -27,7 +27,7 @@ pub fn calculate_rbh_set(
           set_similarity(
             &module_i, 
             &module_l,
-            similiarity_index
+            overlap_coefficient
          ) 
         })
         .collect();

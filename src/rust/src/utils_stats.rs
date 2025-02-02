@@ -23,12 +23,12 @@ pub fn split_vector_randomly(
 pub fn set_similarity(
     s_1: &HashSet<String>,
     s_2: &HashSet<String>,
-    similarity_index: bool
+    overlap_coefficient: bool
 ) -> f64{
     let i = s_1
         .intersection(s_2)
         .count() as u64;
-    let u = if similarity_index {
+    let u = if overlap_coefficient {
          std::cmp::min(s_1.len(), s_2.len()) as u64
     } else {
         s_1.union(s_2).count() as u64

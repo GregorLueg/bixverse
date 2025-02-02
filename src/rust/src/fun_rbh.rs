@@ -14,12 +14,31 @@ pub struct RbhResult {
     pub similarities: Vec<f64>
 }
 
-
+/// Generate reciprocal best hits based on set similarities
+/// 
+/// This function takes a nested list that contains gene modules/sets derived from various methods
+/// and generate identifies reciprocal best hits between gene modules/sets across the different origins.
+/// 
+/// @param module_list A nested named list. The outer list should contain the origin of the gene modules,
+/// the inner list the names of the gene modules and the respective genes in them.
+/// @param overlap_coefficient Shall the overlap coefficient instead of the Jaccard similarity be used.
+/// @param min_similarity Minimum similarity that should exist between any two given gene modules to 
+/// actually calculate RBH pairs.
+/// @param debug Boolean Boolean that activates print messages for debugging purposes.
+/// 
+/// @return An R list with 6 elements: 
+/// - origin: The name of the origin of the gene modules.
+/// - target: The name of the target of the gene modules.
+/// - comparisons: Integer vector indicating how many RBH hits were identified in this comparison
+/// - origin_modules: Names of the gene modules from the origin.
+/// - target_modules: Names of the gene modules from the target.
+/// - similarity: The similarities between the two respective gene modules.
+/// 
 /// @export
 #[extendr]
 fn rs_rbh_sets(
   module_list: List,
-  similiarity_index: bool,
+  overlap_coefficient: bool,
   min_similarity: f64,
   debug: bool
 ) -> List {
@@ -58,10 +77,10 @@ fn rs_rbh_sets(
             .get(target)
             .unwrap();
 
-          let rbh_res = calculate_rbh_set(
+          let rbh_res: RbhTriplet = calculate_rbh_set(
             origin_module_data,
             target_module_data,
-            similiarity_index,
+            overlap_coefficient,
             min_similarity,
             debug
           );
@@ -90,10 +109,8 @@ fn rs_rbh_sets(
     })
     .collect();
 
-  let rbh_results_unnested: Vec<_> = rbh_results
-    .iter()
-    .flatten()
-    .collect();
+  // Flatten and extract relevant data.
+  let rbh_results_flatten: Vec<_> = flatten_vector(rbh_results);
 
   let mut origin = Vec::new();
   let mut target = Vec::new();
@@ -102,7 +119,7 @@ fn rs_rbh_sets(
   let mut target_modules = Vec::new();
   let mut similarity = Vec::new();
 
-  for module in rbh_results_unnested {
+  for module in rbh_results_flatten {
     origin.push(module.origin.clone());
     target.push(module.target.clone());
     origin_modules.push(module.origin_modules.clone());

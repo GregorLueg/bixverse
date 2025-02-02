@@ -20,7 +20,11 @@ type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u6
 /// @param gene_universe A character vector representing the gene universe from which the target genes
 /// and gene sets are sampled from.
 /// 
-/// @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+/// @returns A list with the following elements: 
+/// - pvals, the p-values from the hypergeometric test 
+/// - odds ratios, the calculated odds ratios
+/// - overlap, the size of the overlap,
+/// - gene_set_lengths, the length of the gene sets.
 /// 
 /// @export
 #[extendr]
@@ -54,7 +58,11 @@ fn rs_hypergeom_test(
 /// @param gene_universe A character vector representing the gene universe from which the target genes
 /// and gene sets are sampled from.
 /// 
-/// @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+/// @returns A list with the following elements: 
+/// - pvals, the p-values from the hypergeometric test 
+/// - odds ratios, the calculated odds ratios
+/// - overlap, the size of the overlap,
+/// - gene_set_lengths, the length of the gene sets.
 /// 
 /// @export
 #[extendr]
@@ -121,6 +129,13 @@ fn rs_hypergeom_test_list(
 /// @param min_genes number of minimum genes for the gene ontology term to be tested.
 /// @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
 /// @param debug boolean that will provide additional console information for debugging purposes.
+/// 
+/// @returns A list with the following elements: 
+/// - go_ids, the gene ontology identifier
+/// - pvals, the p-values from the hypergeometric test 
+/// - odds ratios, the calculated odds ratios
+/// - overlap, the size of the overlap,
+/// - gene_set_lengths, the length of the gene sets.
 /// 
 /// @export
 #[extendr]
@@ -213,6 +228,15 @@ fn rs_gse_geom_elim(
 /// @param min_genes number of minimum genes for the gene ontology term to be tested.
 /// @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
 /// @param debug boolean that will provide additional console information for debugging purposes.
+/// 
+/// @returns A list with the following elements: 
+/// - go_ids, the gene ontology identifier
+/// - pvals, the p-values from the hypergeometric test 
+/// - odds ratios, the calculated odds ratios
+/// - overlap, the size of the overlap,
+/// - gene_set_lengths, the length of the gene sets.
+/// - no_test, the number of tests that were conducted against target_gene_list. First element indicates
+/// how many values belong to the first target_genes set in the list, etc.
 /// 
 /// @export
 #[extendr]
