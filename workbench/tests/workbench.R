@@ -125,9 +125,13 @@ rbh_class = rbh_graph(
 
 rbh_class
 
+
+
 print(rbh_class)
 
 rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = F)
+
+get_params(rbh_class, TRUE, TRUE)
 
 list_of_list <- split(module_df %>% dplyr::select(!!module_col, !!value_col),
                       module_df[, ..dataset_col]) %>%

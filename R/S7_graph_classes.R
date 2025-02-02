@@ -170,16 +170,10 @@ rbh_graph <- S7::new_class(
   }
 )
 
-## printers
+## methods ----
+
+### print/show ----
 
 
 
-
-
-# S7::method(print, rbh_graph) <- function(x, ...) {
-#   cat("test")
-# }
-
-
-
-## getters ----
+### getters ----
