@@ -9,18 +9,23 @@ Person <- new_class("Person",
 )
 
 # Define a custom print method
-print_person <- function(x, ...) {  # Change 'object' to 'x'
-  cat("Person Object:\n")
-  cat("Name:", x@name, "\n")
-  cat("Age:", x@age, "\n")
+print_person <- function(x, ...) {
+  cat(format(x), "\n")  # Use format() to ensure consistency
 }
 
-# Register the method for print()
+# Define a format method (used when object is printed directly)
+format_person <- function(x, ...) {
+  paste0("Person Object:\n",
+         "Name: ", x@name, "\n",
+         "Age: ", x@age)
+}
+
+# Register the methods
 method(print, Person) <- print_person
+method(format, Person) <- format_person  # Ensures auto-printing works
 
 # Create an instance
 p <- Person(name = "Alice", age = 30)
 
 # Print the object
-print(p)  # This will call the custom print method
-p  # Also triggers print() in the console
+p  # Now this should trigger the custom format

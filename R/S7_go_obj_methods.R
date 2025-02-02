@@ -66,7 +66,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     # Initial assignment
     `.` <- pvals <- fdr <- hits <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
     checkmate::qassert(target_genes, "S+")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -192,7 +192,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     # Binding checks
     `.` <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
     checkmate::assertList(target_gene_list, types = "character")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")

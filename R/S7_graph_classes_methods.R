@@ -28,7 +28,7 @@
   summary_fun <- switch(summarisation,
     "mean" = expr(mean(value)),
     "max" = expr(max(value)),
-    expr(BIXverse::OT_harmonic_score(value)) # Default case
+    expr(bixverse::OT_harmonic_score(value)) # Default case
   )
 
   res <- dt[, .(value = !!summary_fun), by = node_name] %$%
@@ -88,7 +88,7 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
            diffusion_vector,
            summarisation = c("max", "mean", "harmonic_sum")) {
     # Checks
-    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+    checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
     checkmate::assertNumeric(diffusion_vector)
     checkmate::assertNamed(diffusion_vector, .var.name = "diffusion_vector")
     checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
@@ -178,7 +178,7 @@ S7::method(tied_diffusion, network_diffusions) <-
            score_aggregation = c("min", "max", "mean"),
            .verbose = FALSE) {
     # Checks
-    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+    checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
     checkmate::assertNumeric(diffusion_vector_1)
     checkmate::assertNamed(diffusion_vector_1, .var.name = "diffusion_vector_1")
     checkmate::assertNumeric(diffusion_vector_2)
@@ -336,7 +336,7 @@ S7::method(community_detection, network_diffusions) <- function(
   `.` <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
     seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- NULL
   # Checks
-  checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+  checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
   checkmate::qassert(diffusion_threshold, "R1[0,1]")
   checkmate::qassert(max_nodes, "I1")
   checkmate::qassert(min_nodes, "I1")
@@ -573,7 +573,7 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
            permutation_test = FALSE,
            seed = 42L) {
     # Checks
-    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+    checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
     checkmate::qassert(hit_nodes, "S+")
     checkmate::qassert(auc_iters, "I1")
     checkmate::qassert(seed, "I1")
@@ -657,7 +657,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     origin_modules <- `.` <- similiarity <- origin <- target <-
       target_modules <- NULL
     # Checks
-    checkmate::assertClass(rbh_graph, "BIXverse::rbh_graph")
+    checkmate::assertClass(rbh_graph, "bixverse::rbh_graph")
     checkmate::qassert(minimum_similarity, "R[0, 1]")
     checkmate::qassert(overlap_coefficient, "B1")
     checkmate::qassert(.debug, "B1")
