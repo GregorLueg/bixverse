@@ -28,9 +28,9 @@ bixverse_generic_class <- S7::new_class(
 
 ## print ----
 
-print <- S7::new_generic("print", "x", function(x, ...) {
-  S7::S7_dispatch()
-})
+# print <- S7::new_generic("print", "x", function(x, ...) {
+#   S7::S7_dispatch()
+# })
 
 ## show ----
 
@@ -69,7 +69,7 @@ S7::method(get_params, bixverse_generic_class) <-
            pretty_json = FALSE) {
     # Checks
     checkmate::assertClass(
-      bixverse_generic_class, "BIXverse::bixverse_generic_class"
+      bixverse_generic_class, "bixverse::bixverse_generic_class"
     )
     checkmate::qassert(to_json, "B1")
     checkmate::qassert(pretty_json, "B1")

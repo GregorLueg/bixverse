@@ -1,15 +1,15 @@
 [package]
-name = 'BIXverse'
+name = 'bixverse'
 version = '0.1.0'
 edition = '2021'
 
 [lib]
 crate-type = [ 'staticlib' ]
-name = 'BIXverse'
+name = 'bixverse'
 
 [dependencies]
 extendr-api = '*'
-statrs = '*'
 rayon = '*'
 rand = '*'
+statrs = '*'
 ndarray = '*'

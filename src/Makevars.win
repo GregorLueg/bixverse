@@ -2,8 +2,8 @@ TARGET = $(subst 64,x86_64,$(subst 32,i686,$(WIN)))-pc-windows-gnu
 
 TARGET_DIR = ./rust/target
 LIBDIR = $(TARGET_DIR)/$(TARGET)/release
-STATLIB = $(LIBDIR)/libBIXverse.a
-PKG_LIBS = -L$(LIBDIR) -lBIXverse -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
+STATLIB = $(LIBDIR)/libbixverse.a
+PKG_LIBS = -L$(LIBDIR) -lbixverse -lws2_32 -ladvapi32 -luserenv -lbcrypt -lntdll
 
 all: C_clean
 

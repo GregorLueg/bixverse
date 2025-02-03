@@ -232,6 +232,7 @@ biomind_to_go_data <- function(path_to_biomind_processed, .verbose = TRUE) {
   }
   go_nodes <- arrow::read_parquet(path_nodes) %>%
     as.data.table()
+
   edges_go_genes <- arrow::read_parquet(path_go_genes) %>%
     as.data.table()
   edges_ontology <- arrow::read_parquet(path_ontology) %>%
@@ -241,7 +242,7 @@ biomind_to_go_data <- function(path_to_biomind_processed, .verbose = TRUE) {
     print("2. Processing gene ontology to genes.")
   }
 
-  go_genes <- .get_go_genes_bm()(edges_go_genes)
+  go_genes <- .get_go_genes_bm(edges_go_genes)
 
   if (.verbose) {
     print("3. Processing gene ontological information.")
@@ -250,8 +251,8 @@ biomind_to_go_data <- function(path_to_biomind_processed, .verbose = TRUE) {
   c(go_ancestry, go_depth) %<-% .get_go_depth_ancestry_bm(edges_ontology)
 
   df_list <- list(
-    go_nodes[, c("node_id", "node_name")] %>%
-      dplyr::rename(go_id = node_id, go_name = node_name),
+    go_nodes[, c("nodeID", "node_name")] %>%
+      dplyr::rename(go_id = nodeID, go_name = node_name),
     go_genes,
     go_ancestry,
     go_depth

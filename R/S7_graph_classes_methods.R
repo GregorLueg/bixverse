@@ -11,29 +11,22 @@
 #'
 #' @importFrom magrittr `%$%`
 .summarise_scores <- function(x,
-                              summarisation = c(
-                                "max",
-                                "mean",
-                                "harmonic_sum"
-                              )) {
-  # Assigns
-  `.` <- value <- expr <- node_name <- NULL
+                              summarisation = c("max", "mean", "harmonic_sum")) {
   # Checks
   checkmate::assertNumeric(x)
   checkmate::assertNamed(x, .var.name = "x")
   checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
   # Body
   dt <- data.table::data.table(node_name = names(x), value = x)
-
-  summary_fun <- switch(summarisation,
-    "mean" = expr(mean(value)),
-    "max" = expr(max(value)),
-    expr(bixverse::OT_harmonic_score(value)) # Default case
+  summary_fun <- switch(
+    summarisation,
+    "mean" = rlang::expr(mean(value)),
+    "max" = rlang::expr(max(value)),
+    rlang::expr(bixverse::OT_harmonic_score(value)) # Default case
   )
-
-  res <- dt[, .(value = !!summary_fun), by = node_name] %$%
+  res <-
+    rlang::eval_tidy(rlang::quo(dt[, .(value = !!summary_fun), .(node_name)])) %$%
     setNames(value, node_name)
-
   res
 }
 

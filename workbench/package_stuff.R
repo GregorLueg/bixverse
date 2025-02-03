@@ -34,3 +34,9 @@ use_r("S7_go_object")
 document()
 
 check()
+
+
+## Rust ----
+
+rextendr::use_extendr()
+rextendr::document()

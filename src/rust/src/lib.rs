@@ -13,7 +13,7 @@ mod utils_rust;
 use extendr_api::prelude::*;
 
 extendr_module! {
-    mod BIXverse;
+    mod bixverse;
     use fun_hypergeom;
     use fun_stats;
     use fun_rbh;

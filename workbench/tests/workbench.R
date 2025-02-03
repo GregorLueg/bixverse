@@ -18,12 +18,6 @@ edge_data_clean = edge_data %>%
 
 test_class = network_diffusions(edge_data_clean, weighted = FALSE, directed = TRUE)
 
-print(test_class)
-
-test_class
-
-test_class@params
-
 get_params(test_class)
 
 set.seed(123)
@@ -33,14 +27,16 @@ genes.3 = sample(igraph::V(test_class@graph)$name, 25)
 diffusion_vector = rep(1, 10) %>% `names<-`(genes)
 diffusion_vector.2 = rep(1, 10) %>% `names<-`(genes.2)
 
+devtools::document()
+
 test_class <- diffuse_seed_nodes(test_class, diffusion_vector, 'max')
 
 get_params(test_class, TRUE, TRUE)
 
 test_class <- tied_diffusion(
   network_diffusions = test_class,
-  diffusion_vector.1 = diffusion_vector,
-  diffusion_vector.2 = diffusion_vector.2,
+  diffusion_vector_1 = diffusion_vector,
+  diffusion_vector_2 = diffusion_vector.2,
   summarisation = 'max',
   score_aggregation = 'min'
 )

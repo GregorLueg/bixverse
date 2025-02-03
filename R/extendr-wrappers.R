@@ -4,10 +4,10 @@
 
 #
 # This file was created with the following call:
-#   .Call("wrap__make_BIXverse_wrappers", use_symbols = TRUE, package_name = "BIXverse")
+#   .Call("wrap__make_bixverse_wrappers", use_symbols = TRUE, package_name = "bixverse")
 
 #' @usage NULL
-#' @useDynLib BIXverse, .registration = TRUE
+#' @useDynLib bixverse, .registration = TRUE
 NULL
 
 #' Run a single hypergeometric test.

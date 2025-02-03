@@ -6,8 +6,6 @@ devtools::load_all()
 
 # devtools::install()
 
-print('x')
-
 library(magrittr)
 
 protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
@@ -43,10 +41,8 @@ names(target_gene_sets) <- purrr::map_chr(1:target_gene_sets_no, ~ {
 
 target_genes <- target_gene_sets[[1]]
 
-rs_set_sim_list(target_genes, target_gene_sets, similarity_index = T)
-
 tictoc::tic()
-t1 <- GSE_hypergeometric(
+t1 <- gse_hypergeometric(
   target_genes = target_genes,
   gene_set_list = gene_sets,
   gene_universe = universe,
@@ -56,7 +52,7 @@ t1 <- GSE_hypergeometric(
 tictoc::toc()
 
 tictoc::tic()
-t2 <- GSE_hypergeometric_list(
+t2 <- gse_hypergeometric_list(
   target_gene_sets,
   gene_set_list = gene_sets,
   minimum_overlap = 0L,
@@ -70,16 +66,6 @@ go_data_dt <- biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
 
 go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
 
-print(go_data_s7)
-
-
-S7_obj <- go_data_s7
-
-print("test")
-
-print(go_data_s7)
-
-go_data_s7
 
 number_levels <- length(S7::prop(S7_obj, "levels"))
 number_gene_sets <- length(S7::prop(S7_obj, "go_to_genes"))
@@ -99,14 +85,14 @@ cat(paste(
 arrow::write_parquet(go_data_dt, sink = "~/Desktop/go_data.parquet")
 
 tictoc::tic()
-t3 <- GSE_GO_elim_method(go_data_s7,
+t3 <- gse_go_elim_method(go_data_s7,
                          target_genes,
                          minimum_overlap = 0L,
                          fdr_threshold = 1)
 tictoc::toc()
 
 tictoc::tic()
-t4 <- GSE_GO_elim_method_list(
+t4 <- gse_go_elim_method_list(
   go_data_s7,
   target_gene_sets,
   minimum_overlap = 0L,

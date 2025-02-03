@@ -89,7 +89,7 @@ get_results <- S7::new_generic("get_results", "network_diffusions")
 S7::method(get_results, network_diffusions) <-
   function(network_diffusions) {
     # Checks
-    checkmate::assertClass(network_diffusions, "BIXverse::network_diffusions")
+    checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
 
     # Return
     return(S7::prop(network_diffusions, "community_res"))

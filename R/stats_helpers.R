@@ -10,7 +10,7 @@
 #' @return Harmonic, normalised sum of the provided scores.
 #'
 #' @export
-OT_harmonic_score <- function(x) {
+ot_harmonic_score <- function(x) {
   # Checks
   checkmate::qassert(x, "R+[0,1]")
   # Function body - finally this is fast...
