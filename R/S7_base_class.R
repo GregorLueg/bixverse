@@ -7,11 +7,15 @@ bixverse_generic_class <- S7::new_class(
   name = "bixverse_generic_class",
   properties = list(params = S7::class_list),
 
-  #' BIXverse generic class
+  #' bixverse generic class
   #'
   #' @description
   #' Generic class that is used for inheritance in certain common methods
   #' across classes.
+  #'
+  #' Internal properties:
+  #' - params: A list for the parameters.
+  #' - final_results: A data.table that will contain the final results.
   #'
   #' @return Returns the S7 object for further operations.
   #'

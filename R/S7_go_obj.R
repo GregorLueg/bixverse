@@ -1,8 +1,9 @@
-# S7 ----
+# class ----
 
 gene_ontology_data <- S7::new_class(
-  # Name
+  # Names, parents
   name = "gene_ontology_data",
+
   # Properties, i.e., slots
   properties = list(
     go_info = S7::class_data.frame,

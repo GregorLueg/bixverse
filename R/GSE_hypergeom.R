@@ -17,7 +17,7 @@
 #' specifically the gene universe. If set to NULL, the function will default to
 #' all represented genes in the `gene_set_list`.
 #' @param threshold Float between 0 and 1 to filter on the fdr. Default: 0.05.
-#' If NULL everything is returned.
+#' If 1 everything is returned.
 #' @param minimum_overlap Number of minimum overlap between the target genes
 #' and the respective gene set.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -133,7 +133,7 @@ gse_hypergeometric_list <- function(target_genes_list,
   if (is.null(gene_universe)) {
     if (.verbose) {
       message(
-        "No gene universe given. Function will use the represented genes in the 
+        "No gene universe given. Function will use the represented genes in the
         pathways/gene sets as reference."
       )
     }

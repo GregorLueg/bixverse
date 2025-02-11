@@ -25,7 +25,7 @@ specifically the gene universe. If set to NULL, the function will default to
 all represented genes in the \code{gene_set_list}.}
 
 \item{threshold}{Float between 0 and 1 to filter on the fdr. Default: 0.05.
-If NULL everything is returned.}
+If 1 everything is returned.}
 
 \item{minimum_overlap}{Number of minimum overlap between the target genes
 and the respective gene set.}

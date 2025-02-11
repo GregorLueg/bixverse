@@ -2,7 +2,7 @@
 % Please edit documentation in R/S7_base_class.R
 \name{bixverse_generic_class}
 \alias{bixverse_generic_class}
-\title{BIXverse generic class}
+\title{bixverse generic class}
 \usage{
 bixverse_generic_class()
 }
@@ -12,4 +12,10 @@ Returns the S7 object for further operations.
 \description{
 Generic class that is used for inheritance in certain common methods
 across classes.
+
+Internal properties:
+\itemize{
+\item params: A list for the parameters.
+\item final_results: A data.table that will contain the final results.
+}
 }
