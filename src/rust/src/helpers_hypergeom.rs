@@ -1,6 +1,6 @@
+use std::collections::HashSet;
 use statrs::distribution::Hypergeometric;
 use statrs::distribution::DiscreteCDF;
-use std::collections::HashSet;
 
 ///////////
 // Types //

@@ -7,8 +7,8 @@
 gene_ontology_data(go_data_dt, min_genes)
 }
 \arguments{
-\item{go_data_dt}{A data.table that contains the gene ontology information. This can for example
-be produced with \code{biomind_to_go_data()}.}
+\item{go_data_dt}{A data.table that contains the gene ontology information.
+This can for example be produced with \code{biomind_to_go_data()}.}
 
 \item{min_genes}{data.frame. Meta-data information in form of a data.frame.}
 }
@@ -16,12 +16,14 @@ be produced with \code{biomind_to_go_data()}.}
 Returns the S7 object for further operations.
 }
 \description{
-This class is used to store the gene ontology information for usage in GSE elimination methods.
+This class is used to store the gene ontology information for usage in GSE
+elimination methods.
 \itemize{
 \item go_info: data.table. Contains the gene ontology identifiers and names.
 \item go_to_genes: List. Contains the genes within each gene ontology term.
 \item ancestry: List. Contains the ancestors for each gene ontology term.
 \item levels: List. Which gene ontology terms sit at which level.
-\item min_genes: Integer, the minimum genes in the gene ontology term to conduct the test.
+\item min_genes: Integer, the minimum genes in the gene ontology term to
+conduct the test.
 }
 }

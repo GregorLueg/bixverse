@@ -3,22 +3,28 @@
 #' Run gene ontology enrichment with elimination method.
 #'
 #' @description
-#' This is the generic function for running gene ontology enrichment with an ontology-aware
-#' elimination of genes from ancestors upon significant enrichment.
+#' This is the generic function for running gene ontology enrichment with an
+#' ontology-aware elimination of genes from ancestors upon significant
+#' enrichment.
 #'
 #' @export
-GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data")
+gse_go_elim_method <- S7::new_generic(
+  "gse_go_elim_method",
+  "gene_ontology_data"
+)
 
-#' @name GSE_GO_elim_method
+
+#' @name gse_go_elim_method
 #'
 #' @description
-#' This method takes the gene_ontology_data and a target gene set and performs an GSE
-#' enrichment leveraging ontological information. It starts at the lowest levels of the ontology
-#' and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
-#' the elimination threshold, the genes from this term will be removed from all its ancestors. The
-#' function then proceeds to the next level of the ontology and repeats the process.
+#' This method takes the gene_ontology_data and a target gene set and performs
+#' an GSE enrichment leveraging ontological information. It starts at the lowest
+#' levels of the ontology and tests if there is significant enrichment for any
+#' GO terms. If the threshold of the p-value is below the elimination threshold,
+#' the genes from this term will be removed from all its ancestors. The function
+#' then proceeds to the next level of the ontology and repeats the process.
 #'
-#' @usage GSE_GO_elim_method(
+#' @usage gse_go_elim_method(
 #'  gene_ontology_data,
 #'  target_genes,
 #'  minimum_overlap = 3L,
@@ -31,12 +37,15 @@ GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data"
 #' @param gene_ontology_data The underlying `gene_ontology_data` class.
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
-#' @param fdr_threshold Float. Threshold for maximum FDR to include in the output.
-#' @param elim_threshold Float. Threshold from which p-value onwards the elimination on the ancestors shall
-#' be conducted.
-#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term.
-#' If NULL, it will default to the number of minimum genes stored in `gene_ontology_data`.
-#' @param .debug Boolean. Shall information from the Rust function be displayed. For debugging purposes.
+#' @param fdr_threshold Float. Threshold for maximum fdr to include in the
+#' output.
+#' @param elim_threshold Float. Threshold from which p-value onwards the
+#' elimination on the ancestors shall be conducted.
+#' @param min_genes Integer. Minimum number of genes that have to be included in
+#' the gene ontology term. If NULL, it will default to the number of minimum
+#' genes stored in `gene_ontology_data`.
+#' @param .debug Boolean. Shall information from the Rust function be displayed.
+#' For debugging purposes.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -45,8 +54,8 @@ GSE_GO_elim_method <- S7::new_generic("GSE_GO_elim_method", "gene_ontology_data"
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method GSE_GO_elim_method gene_ontology_data
-S7::method(GSE_GO_elim_method, gene_ontology_data) <-
+#' @method gse_go_elim_method gene_ontology_data
+S7::method(gse_go_elim_method, gene_ontology_data) <-
   function(gene_ontology_data,
            target_genes,
            minimum_overlap = 3L,
@@ -54,8 +63,10 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
            elim_threshold = 0.05,
            min_genes = NULL,
            .debug = FALSE) {
+    # Initial assignment
+    `.` <- pvals <- fdr <- hits <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
     checkmate::qassert(target_genes, "S+")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -84,50 +95,60 @@ S7::method(GSE_GO_elim_method, gene_ontology_data) <-
       debug = .debug
     )
 
-    # Weird issue sometimes with pulling f64 back to Double and end up with negative p-values
+    # Weird issue sometimes with pulling f64 back to Double and end up with
+    # negative p-values
     results_go_dt <- data.table(do.call(cbind, results_go[-1])) %>%
       .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
-      .[, `:=`(go_id = results_go$go_ids,
-               FDR = p.adjust(pvals, method = "BH"))] %>%
-      data.table::setcolorder(.,
-                              c(
-                                "go_id",
-                                "odds_ratios",
-                                "pvals",
-                                "FDR",
-                                "hits",
-                                "gene_set_lengths"
-                              ))
+      .[, `:=`(
+        go_id = results_go$go_ids,
+        fdr = p.adjust(pvals, method = "BH")
+      )] %>%
+      data.table::setcolorder(
+        .,
+        c(
+          "go_id",
+          "odds_ratios",
+          "pvals",
+          "fdr",
+          "hits",
+          "gene_set_lengths"
+        )
+      )
 
     results_go_dt <- merge(go_info, results_go_dt, by = "go_id") %>%
       data.table::setorder(., pvals) %>%
-      .[(FDR <= fdr_threshold) & (hits >= minimum_overlap)]
+      .[(fdr <= fdr_threshold) & (hits >= minimum_overlap)]
 
     results_go_dt
   }
 
 
-#' Run gene ontology enrichment with elimination method over a list..
+#' Run gene ontology enrichment with elimination method over a list.
 #'
 #' @description
-#' This is the generic function for running gene ontology enrichment with an ontology-aware
-#' elimination of genes from ancestors upon significant enrichment. This version takes in
-#' a list of target genes.
+#' This is the generic function for running gene ontology enrichment with an
+#' ontology-aware elimination of genes from ancestors upon significant
+#' enrichment. This version takes in a list of target genes.
 #'
 #' @export
-GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_ontology_data")
+gse_go_elim_method_list <- S7::new_generic(
+  "gse_go_elim_method_list",
+  "gene_ontology_data"
+)
 
-#' @name GSE_GO_elim_method_list
+#' @name gse_go_elim_method_list
 #'
 #' @description
-#' This method takes the gene_ontology_data and a list of target gene sets and performs an GSE
-#' enrichment leveraging ontological information. It starts at the lowest levels of the ontology
-#' and tests if there is significant enrichment for any GO terms. If the threshold of the p-value is below
-#' the elimination threshold, the genes from this term will be removed from all its ancestors. The
-#' function then proceeds to the next level of the ontology and repeats the process. The class will
-#' leverage Rust threading to parallelise the process.
+#' This method takes the gene_ontology_data and a list of target gene sets and
+#' performs an GSE enrichment leveraging ontological information. It starts at
+#' the lowest levels of the ontology and tests if there is significant
+#' enrichment for any GO terms. If the threshold of the p-value is below the
+#' elimination threshold, the genes from this term will be removed from all its
+#' ancestors. The function then proceeds to the next level of the ontology and
+#' repeats the process. The class will leverage Rust threading to parallelise
+#' the process.
 #'
-#' @usage GSE_GO_elim_method(
+#' @usage gse_go_elim_method(
 #'  gene_ontology_data,
 #'  target_gene_list,
 #'  minimum_overlap = 3L,
@@ -138,15 +159,19 @@ GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_onto
 #' )
 #'
 #' @param gene_ontology_data The underlying gene ontology data.
-#' @param target_gene_list List. The target genes list you wish to apply the GSEA over.
+#' @param target_gene_list List. The target genes list you wish to apply the
+#' gene set enrichment analysis over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
-#' @param fdr_threshold Float. Threshold for maximum FDR to include in the output.
-#' @param elim_threshold Float. Threshold from which p-value onwards the elimination on the ancestors shall
-#' be conducted.
-#' @param min_genes Integer. Minimum number of genes that have to be included in the gene ontology term.
-#' If NULL, it will default to the number of minimum genes stored in `gene_ontology_data`.
-#' @param .debug Boolean. Shall information from the Rust function be displayed. For debugging purposes.
-#' Warning: should you run this command over a large list, you will have a large print output!
+#' @param fdr_threshold Float. Threshold for maximum fdr to include in the
+#' output.
+#' @param elim_threshold Float. Threshold from which p-value onwards the
+#' elimination on the ancestors shall be conducted.
+#' @param min_genes Integer. Minimum number of genes that have to be included in
+#' the gene ontology term. If NULL, it will default to the number of minimum
+#' genes stored in `gene_ontology_data`.
+#' @param .debug Boolean. Shall information from the Rust function be displayed.
+#' For debugging purposes. Warning: should you run this command over a large
+#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -155,8 +180,8 @@ GSE_GO_elim_method_list <- S7::new_generic("GSE_GO_elim_method_list", "gene_onto
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method GSE_GO_elim_method_list gene_ontology_data
-S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
+#' @method gse_go_elim_method_list gene_ontology_data
+S7::method(gse_go_elim_method_list, gene_ontology_data) <-
   function(gene_ontology_data,
            target_gene_list,
            minimum_overlap = 3L,
@@ -164,8 +189,10 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
            elim_threshold = 0.05,
            min_genes = NULL,
            .debug = FALSE) {
+    # Binding checks
+    `.` <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "BIXverse::gene_ontology_data")
+    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
     checkmate::assertList(target_gene_list, types = "character")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -194,14 +221,24 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
       debug = .debug
     )
 
-    target_set_names <- unlist(purrr::map2(names(target_gene_list), results_go$no_test, ~ {
-      rep(.x, each = .y)
-    }))
+    target_set_names <- purrr::map2(
+      names(target_gene_list), results_go$no_test,
+      ~ {
+        rep(.x, each = .y)
+      }
+    )
 
-    results_go_dt <- data.table(do.call(cbind, results_go[c("pvals", "odds_ratios", "hits", "gene_set_lengths")])) %>%
+    target_set_names <- unlist(target_set_names)
+
+    cols_to_select <- c("pvals", "odds_ratios", "hits", "gene_set_lengths")
+
+    results_go_dt <- data.table(do.call(cbind, results_go[cols_to_select])) %>%
       .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
-      .[, `:=`(go_id = results_go$go_ids, target_set_name = target_set_names)] %>%
-      .[, FDR := p.adjust(pvals, method = "BH"), by = target_set_name]
+      .[, `:=`(
+        go_id = results_go$go_ids,
+        target_set_name = target_set_names
+      )] %>%
+      .[, fdr := p.adjust(pvals, method = "BH"), by = target_set_name]
 
     results_go_dt <- merge(results_go_dt, go_info, by = "go_id") %>%
       data.table::setorder(., pvals) %>%
@@ -213,12 +250,12 @@ S7::method(GSE_GO_elim_method_list, gene_ontology_data) <-
           "go_id",
           "odds_ratios",
           "pvals",
-          "FDR",
+          "fdr",
           "hits",
           "gene_set_lengths"
         )
       ) %>%
-      .[(FDR <= fdr_threshold) & (hits >= minimum_overlap)]
+      .[(fdr <= fdr_threshold) & (hits >= minimum_overlap)]
 
     results_go_dt
   }

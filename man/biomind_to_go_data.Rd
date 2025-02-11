@@ -4,15 +4,20 @@
 \alias{biomind_to_go_data}
 \title{Generates the GO data from the BioMind pre-processed data.}
 \usage{
-biomind_to_go_data(path_to_biomind_processed, verbose = TRUE)
+biomind_to_go_data(path_to_biomind_processed, .verbose = TRUE)
 }
 \arguments{
-\item{path_to_biomind_processed}{The path to the processed BioMind data with the .parquet files in there}
+\item{path_to_biomind_processed}{The path to the processed BioMind data with
+the .parquet files in there.}
+
+\item{.verbose}{}
 }
 \value{
-A data.table with all of the data ready for ingestion into the S7_GO_obj.
+A data.table with all of the data ready for ingestion into the
+S7_GO_obj.
 }
 \description{
-The function needs to be pointed to the processed BioMind data and will automatically
-ingest and process the gene ontology data for usage for GSE with elimination method.
+The function needs to be pointed to the processed BioMind data and will
+automatically ingest and process the gene ontology data for usage for GSE
+with elimination method.
 }

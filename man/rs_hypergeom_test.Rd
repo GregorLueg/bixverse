@@ -15,7 +15,13 @@ rs_hypergeom_test(target_genes, gene_sets, gene_universe)
 and gene sets are sampled from.}
 }
 \value{
-A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+A list with the following elements:
+\itemize{
+\item pvals, the p-values from the hypergeometric test
+\item odds ratios, the calculated odds ratios
+\item overlap, the size of the overlap,
+\item gene_set_lengths, the length of the gene sets.
+}
 }
 \description{
 Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment

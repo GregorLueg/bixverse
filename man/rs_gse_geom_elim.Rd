@@ -35,6 +35,16 @@ as names. IMPORTANT! This list needs to be ordered in the right way!}
 
 \item{debug}{boolean that will provide additional console information for debugging purposes.}
 }
+\value{
+A list with the following elements:
+\itemize{
+\item go_ids, the gene ontology identifier
+\item pvals, the p-values from the hypergeometric test
+\item odds ratios, the calculated odds ratios
+\item overlap, the size of the overlap,
+\item gene_set_lengths, the length of the gene sets.
+}
+}
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
 the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.

@@ -4,10 +4,10 @@
 
 #
 # This file was created with the following call:
-#   .Call("wrap__make_BIXverse_wrappers", use_symbols = TRUE, package_name = "BIXverse")
+#   .Call("wrap__make_bixverse_wrappers", use_symbols = TRUE, package_name = "bixverse")
 
 #' @usage NULL
-#' @useDynLib BIXverse, .registration = TRUE
+#' @useDynLib bixverse, .registration = TRUE
 NULL
 
 #' Run a single hypergeometric test.
@@ -20,7 +20,11 @@ NULL
 #' @param gene_universe A character vector representing the gene universe from which the target genes
 #' and gene sets are sampled from.
 #' 
-#' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+#' @returns A list with the following elements: 
+#' - pvals, the p-values from the hypergeometric test 
+#' - odds ratios, the calculated odds ratios
+#' - overlap, the size of the overlap,
+#' - gene_set_lengths, the length of the gene sets.
 #' 
 #' @export
 rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
@@ -34,7 +38,11 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #' @param gene_universe A character vector representing the gene universe from which the target genes
 #' and gene sets are sampled from.
 #' 
-#' @returns A list with the following elements: pvals, odds ratios, overlap and the length of the gene set.
+#' @returns A list with the following elements: 
+#' - pvals, the p-values from the hypergeometric test 
+#' - odds ratios, the calculated odds ratios
+#' - overlap, the size of the overlap,
+#' - gene_set_lengths, the length of the gene sets.
 #' 
 #' @export
 rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes, gene_sets, gene_universe)
@@ -57,6 +65,13 @@ rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call
 #' @param min_genes number of minimum genes for the gene ontology term to be tested.
 #' @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
 #' @param debug boolean that will provide additional console information for debugging purposes.
+#' 
+#' @returns A list with the following elements: 
+#' - go_ids, the gene ontology identifier
+#' - pvals, the p-values from the hypergeometric test 
+#' - odds ratios, the calculated odds ratios
+#' - overlap, the size of the overlap,
+#' - gene_set_lengths, the length of the gene sets.
 #' 
 #' @export
 rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
@@ -81,20 +96,17 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
 #' @param debug boolean that will provide additional console information for debugging purposes.
 #' 
+#' @returns A list with the following elements: 
+#' - go_ids, the gene ontology identifier
+#' - pvals, the p-values from the hypergeometric test 
+#' - odds ratios, the calculated odds ratios
+#' - overlap, the size of the overlap,
+#' - gene_set_lengths, the length of the gene sets.
+#' - no_test, the number of tests that were conducted against target_gene_list. First element indicates
+#' how many values belong to the first target_genes set in the list, etc.
+#' 
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
-
-#' Set similarities
-#' 
-#' This function calculates the Jaccard or similarity index between a given 
-#' string vector and a list of other string vectors.
-#' 
-#' @param string The String vector against which to calculate the set similarities.
-#' @param string_list The list of character vectors for which to calculate the set similarities. 
-#' @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
-#' 
-#' @export
-rs_set_sim_list <- function(string, string_list, similarity_index) .Call(wrap__rs_set_sim_list, string, string_list, similarity_index)
 
 #' Fast AUC calculation
 #' 
@@ -104,6 +116,8 @@ rs_set_sim_list <- function(string, string_list, similarity_index) .Call(wrap__r
 #' @param neg_scores The scores of your non-hits.
 #' @param iters Number of iterations to run the function for. Recommended size: 10,000.
 #' @param random_seed Seed.
+#' 
+#' @return The AUC.
 #' 
 #' @export
 rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
@@ -120,8 +134,43 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' @param auc_iters Number of random iterations to approximate the AUCs.
 #' @param seed Seed.
 #' 
+#' @return A vector of random AUCs based the score vector and size of the positive set.
+#' 
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
+
+#' Calculate the OT harmonic sum
+#' 
+#' @param x The numeric vector (should be between 0 and 1) for which to 
+#' calculate the harmonic sum
+#' 
+#' @return Returns the harmonic sum according to the OT calculation.
+#' 
+#' @export
+rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
+
+#' Generate reciprocal best hits based on set similarities
+#' 
+#' This function takes a nested list that contains gene modules/sets derived from various methods
+#' and generate identifies reciprocal best hits between gene modules/sets across the different origins.
+#' 
+#' @param module_list A nested named list. The outer list should contain the origin of the gene modules,
+#' the inner list the names of the gene modules and the respective genes in them.
+#' @param overlap_coefficient Shall the overlap coefficient instead of the Jaccard similarity be used.
+#' @param min_similarity Minimum similarity that should exist between any two given gene modules to 
+#' actually calculate RBH pairs.
+#' @param debug Boolean Boolean that activates print messages for debugging purposes.
+#' 
+#' @return An R list with 6 elements: 
+#' - origin: The name of the origin of the gene modules.
+#' - target: The name of the target of the gene modules.
+#' - comparisons: Integer vector indicating how many RBH hits were identified in this comparison
+#' - origin_modules: Names of the gene modules from the origin.
+#' - target_modules: Names of the gene modules from the target.
+#' - similarity: The similarities between the two respective gene modules.
+#' 
+#' @export
+rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
 
 
 # nolint end
