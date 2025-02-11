@@ -15,6 +15,9 @@ rs_fast_auc(pos_scores, neg_scores, iters, seed)
 
 \item{random_seed}{Seed.}
 }
+\value{
+The AUC.
+}
 \description{
 This function calculates rapidly AUCs based on an approximation.
 }

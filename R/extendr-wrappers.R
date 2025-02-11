@@ -117,6 +117,8 @@ rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, lev
 #' @param iters Number of iterations to run the function for. Recommended size: 10,000.
 #' @param random_seed Seed.
 #' 
+#' @return The AUC.
+#' 
 #' @export
 rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
 
@@ -132,8 +134,20 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' @param auc_iters Number of random iterations to approximate the AUCs.
 #' @param seed Seed.
 #' 
+#' @return A vector of random AUCs based the score vector and size of the positive set.
+#' 
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
+
+#' Calculate the OT harmonic sum
+#' 
+#' @param x The numeric vector (should be between 0 and 1) for which to 
+#' calculate the harmonic sum
+#' 
+#' @return Returns the harmonic sum according to the OT calculation.
+#' 
+#' @export
+rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 
 #' Generate reciprocal best hits based on set similarities
 #' 

@@ -53,7 +53,7 @@ pub fn r_list_to_str_vec(
     .collect()
 }
 
-/// Transforms a Robj nested list into a Vec
+/// Transforms a Robj nested list into a nested hashmap
 pub fn r_nested_list_to_rust(
   r_nested_list: List
 ) -> NestedHashMap{

@@ -12,7 +12,7 @@ network_diffusions <- S7::new_class(
   properties = list(
     graph = S7::class_any,
     diffusion_res = S7::class_numeric,
-    community_res = S7::class_data.frame,
+    final_results = S7::class_data.frame,
     params = S7::class_list
   ),
 
@@ -57,7 +57,7 @@ network_diffusions <- S7::new_class(
       S7::S7_object(),
       graph = graph,
       diffusion_res = vector(mode = "numeric"),
-      community_res = data.table(),
+      final_results = data.table(),
       params = params
     )
   }
@@ -65,35 +65,7 @@ network_diffusions <- S7::new_class(
 
 ### methods ----
 
-#### getters ----
 
-#' Get the diffusion results
-#'
-#' @description
-#' This method returns the community detection results from the class
-#'
-#' @export
-get_results <- S7::new_generic("get_results", "network_diffusions")
-
-#' @name get_results
-#'
-#' @description Get the community detection results from the class
-#'
-#' @usage get_results(network_diffusions)
-#'
-#' @param network_diffusions The underlying `network_diffusions` class.
-#'
-#' @return Returns the community detection results if any can be found.
-#'
-#' @method get_results network_diffusions
-S7::method(get_results, network_diffusions) <-
-  function(network_diffusions) {
-    # Checks
-    checkmate::assertClass(network_diffusions, "bixverse::network_diffusions")
-
-    # Return
-    return(S7::prop(network_diffusions, "community_res"))
-  }
 
 ### print/show ----
 
@@ -115,7 +87,7 @@ rbh_graph <- S7::new_class(
     module_data = S7::class_list,
     rbh_graph = S7::class_any,
     rbh_edge_df = S7::class_data.frame,
-    community_res = S7::class_data.frame,
+    final_results = S7::class_data.frame,
     params = S7::class_list
   ),
 
@@ -162,7 +134,7 @@ rbh_graph <- S7::new_class(
       module_data = list_of_list,
       rbh_edge_df = data.table(),
       rbh_graph = NULL,
-      community_res = data.table(),
+      final_results = data.table(),
       params = list(
         no_compared_modules = nrow(module_results)
       )

@@ -19,7 +19,8 @@ bixverse_generic_class <- S7::new_class(
   constructor = function() {
     S7::new_object(
       S7::S7_object(),
-      params = list()
+      params = list(),
+      final_results = data.table()
     )
   }
 )
@@ -84,4 +85,37 @@ S7::method(get_params, bixverse_generic_class) <-
     }
 
     return(to_ret)
+  }
+
+
+#### getters ----
+
+#' Get the diffusion results
+#'
+#' @description
+#' This method returns the final results from a given module class.
+#'
+#' @export
+get_results <- S7::new_generic("get_results", "bixverse_generic_class")
+
+#' @name get_results
+#'
+#' @description Get the final results from the
+#'
+#' @usage get_results(bixverse_generic_class)
+#'
+#' @param bixverse_generic_class The underlying `bixverse_generic_class` class.
+#'
+#' @return Returns the final results if any have been stored in the class.
+#'
+#' @method get_results bixverse_generic_class
+S7::method(get_results, bixverse_generic_class) <-
+  function(bixverse_generic_class) {
+    # Checks
+    checkmate::assertClass(
+      bixverse_generic_class, "bixverse::bixverse_generic_class"
+    )
+
+    # Return
+    return(S7::prop(bixverse_generic_class, "final_results"))
   }

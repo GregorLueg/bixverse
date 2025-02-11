@@ -20,6 +20,8 @@ test_class = network_diffusions(edge_data_clean, weighted = FALSE, directed = TR
 
 get_params(test_class)
 
+get_results(test_class)
+
 set.seed(123)
 genes = sample(igraph::V(test_class@graph)$name, 10)
 genes.2 = sample(igraph::V(test_class@graph)$name, 10)
@@ -27,7 +29,6 @@ genes.3 = sample(igraph::V(test_class@graph)$name, 25)
 diffusion_vector = rep(1, 10) %>% `names<-`(genes)
 diffusion_vector.2 = rep(1, 10) %>% `names<-`(genes.2)
 
-devtools::document()
 
 test_class <- diffuse_seed_nodes(test_class, diffusion_vector, 'max')
 
@@ -119,64 +120,43 @@ rbh_class = rbh_graph(
   value_col = 'genes'
 )
 
-rbh_class
 
+rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .15, overlap_coefficient = F)
 
-
-print(rbh_class)
-
-rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = F)
+rbh_class = find_rbh_communities(rbh_class)
 
 get_params(rbh_class, TRUE, TRUE)
 
-list_of_list <- split(module_df %>% dplyr::select(!!module_col, !!value_col),
-                      module_df[, ..dataset_col]) %>%
-  purrr::map(., ~ {
-    df <- .
-    split(unlist(df[, ..value_col]),
-          unlist(df[, ..module_col]))
-  })
+get_results(rbh_class)
+
+rbh_class
+
+edge_dt = S7::prop(rbh_class, "rbh_edge_df")
+
+graph = S7::prop(rbh_class, "rbh_graph")
 
 
-tictoc::tic()
-rbh_results_v1 = rs_rbh_sets(list_of_list, FALSE, min_similarity = 0.2, FALSE)
-tictoc::toc()
 
-names(rbh_results_v1)
+cluster_red <- igraph::cluster_louvain(
+  graph,
+  resolution = .5
+)
 
-do.call(cbind, rbh_results_v1[c("origin_modules", "target_modules", "similarity")])
+?igraph::cluster_infomap
 
-origin_vector <- unlist(purrr::map2(rbh_results_v1$origin, rbh_results_v1$comparisons, ~ {
-  rep(.x, each = .y)
-}))
+clusters_red <- igraph::cluster_infomap(
+  graph
+)
 
-target_vector <- unlist(purrr::map2(rbh_results_v1$target, rbh_results_v1$comparisons, ~ {
-  rep(.x, each = .y)
-}))
-
-rbh_results_v1$origin_modules[rbh_results_v1$origin_modules == "NA"] <- NA
-
-rbh_results_dt = data.table::data.table(
-  origin = origin_vector,
-  target = target_vector,
-  origin_modules = rbh_results_v1$origin_modules,
-  target_modules = rbh_results_v1$target_modules,
-  similiarity = rbh_results_v1$similarity
-) %>%
-  .[!is.na(origin_modules) & similiarity >= 0.2] %>%
-  .[, `:=`(
-    combined_origin = paste(origin, origin_modules, sep = "_"),
-    combined_target = paste(target, target_modules, sep = "_")
-  )]
-
-edge_df <- rbh_results_dt[, c("combined_origin", "combined_target", "similiarity")] %>%
-  data.table::setnames(
-    .,
-    old = c("combined_origin", "combined_target", "similiarity"),
-    new = c("from", "to", "weight")
-  )
-
-graph <- igraph::graph_from_data_frame(edge_df, directed = FALSE)
+community_res <- data.table(
+  node_id = igraph::V(graph)$name,
+  community_name = clusters_red$membership
+)
 
 
-rbh_results_dt
+
+
+
+table(clusters_red$membership)
+
+graph

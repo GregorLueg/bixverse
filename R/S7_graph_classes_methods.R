@@ -22,7 +22,7 @@
     summarisation,
     "mean" = rlang::expr(mean(value)),
     "max" = rlang::expr(max(value)),
-    rlang::expr(bixverse::OT_harmonic_score(value)) # Default case
+    rlang::expr(bixverse::ot_harmonic_score(value)) # Default case
   )
   res <-
     rlang::eval_tidy(rlang::quo(dt[, .(value = !!summary_fun), .(node_name)])) %$%
@@ -501,7 +501,7 @@ S7::method(community_detection, network_diffusions) <- function(
   final_result[, cluster_id := cluster_name_prettifier[cluster_id]]
 
   ## Assign and return
-  S7::prop(network_diffusions, "community_res") <- final_result
+  S7::prop(network_diffusions, "final_results") <- final_result
   S7::prop(network_diffusions, "params")[["community_params"]] <- list(
     diffusion_threshold = diffusion_threshold,
     max_nodes = max_nodes,
@@ -715,3 +715,55 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 
     return(rbh_graph)
   }
+
+
+#' Find RBH communities
+#'
+#' @description
+#' This is the generic function for identifying communities on top of an RBH
+#' graph.
+#'
+#' @export
+find_rbh_communities <- S7::new_generic("find_rbh_communities", "rbh_graph")
+
+
+#' @name find_rbh_communities
+#'
+#' @description
+#' This function will generate an RBH graph based on set similarity between
+#' gene modules. You have the option to use an overlap coefficient instead of
+#' Jaccard similarity and to specify a
+#'
+#' @param rbh_graph The `rbh_class` class.
+#'
+#' @return The class with added community detection results.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method find_rbh_communities rbh_graph
+S7::method(find_rbh_communities, rbh_graph) <- function(rbh_graph) {
+  # Checks
+  checkmate::assertClass(rbh_graph, "bixverse::rbh_graph")
+
+  if(is.null(S7::prop(rbh_class, "rbh_graph"))) {
+    warning("No RBH graph yet generated. Returning class as is.")
+    return(rbh_class)
+  }
+
+  graph <- S7::prop(rbh_class, "rbh_graph")
+
+  clusters_red <- igraph::cluster_infomap(
+    graph
+  )
+
+  community_res <- data.table(
+    node_id = igraph::V(graph)$name,
+    community_name = clusters_red$membership
+  )
+
+  S7::prop(rbh_class, "final_results") <- community_res
+
+  return(rbh_class)
+}

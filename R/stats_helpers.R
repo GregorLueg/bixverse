@@ -13,11 +13,6 @@
 ot_harmonic_score <- function(x) {
   # Checks
   checkmate::qassert(x, "R+[0,1]")
-  # Function body - finally this is fast...
-  x <- sort(x, decreasing = T)
-  len.x <- length(x)
-  denominator <- seq_len(len.x) ^ 2
-  harmonic_sum <- x / denominator
-  max_harmonic_sum <- rep(1, len.x) / denominator
-  sum(harmonic_sum) / sum(max_harmonic_sum)
+  # Function body - using Rust here
+  rs_ot_harmonic_sum(x)
 }

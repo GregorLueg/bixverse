@@ -17,6 +17,9 @@ rs_create_random_aucs(score_vec, size_pos, random_iters, auc_iters, seed)
 
 \item{seed}{Seed.}
 }
+\value{
+A vector of random AUCs based the score vector and size of the positive set.
+}
 \description{
 This function creates a random set of AUCs based on a score vector and
 a size of the positive set. This can be used for permutation-based estimation

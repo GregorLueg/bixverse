@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
-use rand::seq::SliceRandom;
+// use rand::seq::SliceRandom;
 use rayon::prelude::*; 
 
 use crate::utils_stats::split_vector_randomly;
@@ -63,6 +63,8 @@ use crate::utils_stats::split_vector_randomly;
 /// @param iters Number of iterations to run the function for. Recommended size: 10,000.
 /// @param random_seed Seed.
 /// 
+/// @return The AUC.
+/// 
 /// @export
 #[extendr]
 fn rs_fast_auc(
@@ -97,6 +99,8 @@ fn rs_fast_auc(
 /// @param auc_iters Number of random iterations to approximate the AUCs.
 /// @param seed Seed.
 /// 
+/// @return A vector of random AUCs based the score vector and size of the positive set.
+/// 
 /// @export
 #[extendr]
 fn rs_create_random_aucs(
@@ -130,9 +134,42 @@ fn rs_create_random_aucs(
 }
 
 
+/// Calculate the OT harmonic sum
+/// 
+/// @param x The numeric vector (should be between 0 and 1) for which to 
+/// calculate the harmonic sum
+/// 
+/// @return Returns the harmonic sum according to the OT calculation.
+/// 
+/// @export
+#[extendr]
+fn rs_ot_harmonic_sum(
+  mut x: Vec<f64>
+) -> f64 {
+  x.sort_by(|a, b| b.partial_cmp(a).unwrap());
+
+  let harmonic_sum: f64 = x.iter()
+    .enumerate()
+    .map(|(i, x)| {
+      x / (i + 1).pow(2) as f64
+    })
+    .sum();
+
+  let max_sum: f64 = vec![1; x.len()].into_iter()
+    .enumerate()
+    .map(|(i, x)|{
+      x as f64 / (i + 1).pow(2) as f64
+    })
+    .sum();
+
+  harmonic_sum / max_sum
+}
+
+
 extendr_module! {
     mod fun_stats;
     // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
+    fn rs_ot_harmonic_sum;
 }

@@ -99,3 +99,14 @@ t4 <- gse_go_elim_method_list(
   fdr_threshold = 1
 )
 tictoc::toc()
+
+
+x = c(0, 0.1, 0.25, 1)
+
+tictoc::tic()
+rs_ot_harmonic_sum(x)
+tictoc::toc()
+
+tictoc::tic()
+ot_harmonic_score(x)
+tictoc::toc()
