@@ -8,8 +8,9 @@ crate-type = [ 'staticlib' ]
 name = 'bixverse'
 
 [dependencies]
-extendr-api = '*'
+extendr-api = { version = "*", features = ["ndarray"] }
 rayon = '*'
 rand = '*'
 statrs = '*'
 ndarray = '*'
+faer = '*'
