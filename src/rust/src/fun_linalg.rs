@@ -2,6 +2,9 @@ use extendr_api::prelude::*;
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::helpers_linalg::*;
 use crate::utils_rust::nested_vector_to_faer_mat;
+use faer::*;
+use rayon::iter::ParallelIterator;
+use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max};
 
 
 /// Calculate the column-wise co-variance
@@ -79,7 +82,6 @@ fn rs_contrastive_pca(
   }
 }
 
-
 /// @export
 #[extendr]
 fn rs_whiten_matrix(
@@ -93,9 +95,35 @@ fn rs_whiten_matrix(
 }
 
 
+/// @export
+#[extendr]
+fn rs_fast_ica(
+  whiten: RMatrix<f64>,
+  w_init: RMatrix<f64>,
+  maxit: usize,
+  alpha: f64,
+  tol: f64,
+  verbose: bool
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let x = r_matrix_to_faer(whiten);
+  let w_init = r_matrix_to_faer(w_init);
+
+  let a = fast_ica_logcosh(
+    x, 
+    w_init, 
+    tol, 
+    alpha, 
+    maxit, 
+    verbose
+  );
+
+  faer_to_r_matrix(a)
+}
+
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_contrastive_pca;
   fn rs_whiten_matrix;
+  fn rs_fast_ica;
 }

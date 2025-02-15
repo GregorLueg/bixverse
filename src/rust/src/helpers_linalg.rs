@@ -1,4 +1,8 @@
 use faer::Mat;
+use rayon::iter::ParallelIterator;
+
+use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max};
+use crate::utils_rust::nested_vector_to_faer_mat;
 
 /// Scale a matrix by its mean (column wise)
 pub fn scale_matrix(mat: &Mat<f64>) -> Mat<f64>{
@@ -82,8 +86,8 @@ pub fn whiten_matrix(
     .iter()
     .map(|x| {1_f64 / x.sqrt()})
     .collect::<Vec<_>>();
-  let len_s = s.len();
-  let d = Mat::from_fn(len_s, len_s, |row, col| if row == col {s[row]} else {0.0});
+
+  let d = faer_diagonal_from_vec(s);
 
   // Get k
   let u = svd_res.U();
@@ -92,12 +96,93 @@ pub fn whiten_matrix(
   k * centered
 }
 
+pub fn update_init_mat(
+  w: Mat<f64>
+) -> faer::Mat<f64> {
+  // SVD
+  let svd_res = w.svd().unwrap();
+
+  let s = svd_res.S();
+  let u = svd_res.U();
+  let s = s
+    .column_vector()
+    .iter()
+    .map(|x| {1_f64 / x})
+    .collect::<Vec<_>>();
+  let d = faer_diagonal_from_vec(s);
+
+  u * d * u.transpose() * w
+}
+
 pub fn fast_ica_logcosh(
   x: Mat<f64>,
-  n_ica: usize,
+  w_init: Mat<f64>,
   tol: f64,
   alpha: f64,
   maxit: usize,
-) {
+  verbose: bool,
+) -> faer::Mat<f64> {
+  let p = x.ncols();
+  let mut w = update_init_mat(w_init);
+  let mut lim = vec![1000_f64; maxit];
 
+  let mut it = 0;
+
+  while lim[it] > tol && it < maxit {
+    let mut wx: Mat<f64> = &w * &x;
+    
+    let gwx: Vec<Vec<f64>>  = wx
+      .par_col_iter()
+      .map(|x| {
+      x.iter().map(|x| {alpha * x.tanh()}).collect()
+      })
+      .collect();
+
+    let gwx = nested_vector_to_faer_mat(gwx);
+
+    let v1 = &gwx * &x.transpose() / p as f64;  
+
+    let gwx_2: Vec<Vec<f64>> = gwx
+      .par_col_iter()
+      .map(|x| {
+        x.iter().map(|x| {1_f64 - x.powi(2)}).collect()
+      })
+      .collect(); 
+
+    let gwx_2 = nested_vector_to_faer_mat(gwx_2);
+
+    let ones = Mat::from_fn(p, 1, |_, _| 1.0);
+    let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);
+
+    let row_means_vec: Vec<f64> = row_means.as_ref().col_iter()
+      .flat_map(|col| col.iter())
+      .copied()
+      .collect();
+
+    let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
+
+    let w1 = update_init_mat(v1 - v2);
+
+    let w1_up = w1.clone() * w.transpose();
+
+    let diagonal: Vec<f64>= w1_up.diagonal()
+      .column_vector()
+      .iter()
+      .map(|x| {
+        (1_f64 - x).abs()
+      })
+      .collect();
+    
+    lim[it + 1] = array_f64_max(&diagonal);
+
+    if verbose {
+      println!("Iteration: {:?}, tol: {:?}", it, lim[it])
+    }
+
+    w = w1;
+
+    it += 1;
+  }
+
+  w
 }
