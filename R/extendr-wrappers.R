@@ -12,19 +12,22 @@ NULL
 
 #' Run a single hypergeometric test.
 #' 
-#' Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
-#' of the target genes in the gene sets.
+#' Given a set of target genes, this is a Rust implementation of an hypergeometric 
+#' test testing for overenrichment of the target genes in the gene sets.
 #' 
 #' @param target_genes A character vector representing the target gene set.
 #' @param gene_sets A list of strings that represent the gene sets to test against.
-#' @param gene_universe A character vector representing the gene universe from which the target genes
+#' @param gene_universe A character vector representing the gene universe from 
+#' which the target genes
 #' and gene sets are sampled from.
 #' 
-#' @returns A list with the following elements: 
-#' - pvals, the p-values from the hypergeometric test 
-#' - odds ratios, the calculated odds ratios
-#' - overlap, the size of the overlap,
-#' - gene_set_lengths, the length of the gene sets.
+#' @return A list containing:
+#'  \itemize{
+#'   \item pvals - The p-values from the hypergeometric test
+#'   \item odds_ratios - The calculated odds ratios
+#'   \item overlap - The size of the overlap
+#'   \gene_set_lengths - The length of the gene sets.
+#' }
 #' 
 #' @export
 rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
@@ -38,11 +41,13 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #' @param gene_universe A character vector representing the gene universe from which the target genes
 #' and gene sets are sampled from.
 #' 
-#' @returns A list with the following elements: 
-#' - pvals, the p-values from the hypergeometric test 
-#' - odds ratios, the calculated odds ratios
-#' - overlap, the size of the overlap,
-#' - gene_set_lengths, the length of the gene sets.
+#' @return A list containing:
+#'  \itemize{
+#'   \item pvals - The p-values from the hypergeometric test
+#'   \item odds ratios - The calculated odds ratios
+#'   \item overlap - The size of the overlap
+#'   \gene_set_lengths - The length of the gene sets.
+#' }
 #' 
 #' @export
 rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes, gene_sets, gene_universe)
@@ -66,12 +71,14 @@ rs_hypergeom_test_list <- function(target_genes, gene_sets, gene_universe) .Call
 #' @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
 #' @param debug boolean that will provide additional console information for debugging purposes.
 #' 
-#' @returns A list with the following elements: 
-#' - go_ids, the gene ontology identifier
-#' - pvals, the p-values from the hypergeometric test 
-#' - odds ratios, the calculated odds ratios
-#' - overlap, the size of the overlap,
-#' - gene_set_lengths, the length of the gene sets.
+#' @return A list containing:
+#'  \itemize{
+#'   \item go_ids - The gene ontology identifier.
+#'   \item pvals - The calculated odds ratios.
+#'   \item odds_ratios - The calculated odds ratios.
+#'   \item overlap - The size of the overlap.
+#'   \gene_set_lengths - The length of the gene sets.
+#' }
 #' 
 #' @export
 rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
@@ -96,14 +103,17 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
 #' @param debug boolean that will provide additional console information for debugging purposes.
 #' 
-#' @returns A list with the following elements: 
-#' - go_ids, the gene ontology identifier
-#' - pvals, the p-values from the hypergeometric test 
-#' - odds ratios, the calculated odds ratios
-#' - overlap, the size of the overlap,
-#' - gene_set_lengths, the length of the gene sets.
-#' - no_test, the number of tests that were conducted against target_gene_list. First element indicates
-#' how many values belong to the first target_genes set in the list, etc.
+#' @return A list containing:
+#'  \itemize{
+#'   \item go_ids - The gene ontology identifier.
+#'   \item pvals - The calculated odds ratios.
+#'   \item odds_ratios - The calculated odds ratios.
+#'   \item overlap - The size of the overlap.
+#'   \gene_set_lengths - The length of the gene sets.
+#'   \no_test - The number of tests that were conducted against target_gene_list.
+#'   First element indicates how many values belong to the first target_genes set 
+#'   in the list, etc.
+#' }
 #' 
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
@@ -191,15 +201,49 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @param return_loadings Shall the loadings be returned from the contrastive
 #' PCA
 #' 
-#' @return An R list with loadings and factors. If return_loadings == FALSE, 
-#' then loadings will be NULL.
+#' @return A list containing:
+#'  \itemize{
+#'   \item factors - The factors of the contrastive PCA.
+#'   \item loadings - The loadings of the contrastive PCA. Will be NULL if 
+#'    return_loadings is set to FALSE.
+#' }
 #' 
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+#' Whiten a matrix
+#' 
+#' @description Whitens the matrix for subsequent usage. This is a need pre-
+#' processing step for ICA.
+#' 
+#' @param x The matrix to whiten. The whitening will happen over the columns.
+#' 
+#' @return The whitened matrix (will be transposed compared to x).
+#' 
 #' @export
 rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
 
+#' Run the Rust implementation of fast ICA.
+#' 
+#' @description This function serves as a wrapper over the fast ICA implementations
+#' in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
+#' 
+#' @param whiten The whitened matrix.
+#' @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
+#' @param maxit Maximum number of iterations to try if algorithm does not converge.
+#' @param alpha The alpha parameter for the LogCosh implementation of ICA.
+#' @param tol Tolerance parameter.
+#' @param ica_type One of 'logcosh' or 'exp'.
+#' @param verbose Controls the verbosity of the function.
+#' 
+#' @param x The matrix to whiten. The whitening will happen over the columns.
+#' 
+#' @return A list containing:
+#'  \itemize{
+#'   \item mixing - The mixing matrix for subsequent usage.
+#'   \item tol - Boolean if the algorithm converged.
+#' }
+#' 
 #' @export
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 

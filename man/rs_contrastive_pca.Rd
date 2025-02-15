@@ -28,8 +28,12 @@ rs_contrastive_pca(
 PCA}
 }
 \value{
-An R list with loadings and factors. If return_loadings == FALSE,
-then loadings will be NULL.
+A list containing:
+\itemize{
+\item factors - The factors of the contrastive PCA.
+\item loadings - The loadings of the contrastive PCA. Will be NULL if
+return_loadings is set to FALSE.
+}
 }
 \description{
 Calculate the contrastive PCA

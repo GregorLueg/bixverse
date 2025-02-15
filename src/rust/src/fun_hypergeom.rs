@@ -12,19 +12,22 @@ type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u6
 
 /// Run a single hypergeometric test.
 /// 
-/// Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
-/// of the target genes in the gene sets.
+/// Given a set of target genes, this is a Rust implementation of an hypergeometric 
+/// test testing for overenrichment of the target genes in the gene sets.
 /// 
 /// @param target_genes A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test against.
-/// @param gene_universe A character vector representing the gene universe from which the target genes
+/// @param gene_universe A character vector representing the gene universe from 
+/// which the target genes
 /// and gene sets are sampled from.
 /// 
-/// @returns A list with the following elements: 
-/// - pvals, the p-values from the hypergeometric test 
-/// - odds ratios, the calculated odds ratios
-/// - overlap, the size of the overlap,
-/// - gene_set_lengths, the length of the gene sets.
+/// @return A list containing:
+///  \itemize{
+///   \item pvals - The p-values from the hypergeometric test
+///   \item odds_ratios - The calculated odds ratios
+///   \item overlap - The size of the overlap
+///   \gene_set_lengths - The length of the gene sets.
+/// }
 /// 
 /// @export
 #[extendr]
@@ -58,11 +61,13 @@ fn rs_hypergeom_test(
 /// @param gene_universe A character vector representing the gene universe from which the target genes
 /// and gene sets are sampled from.
 /// 
-/// @returns A list with the following elements: 
-/// - pvals, the p-values from the hypergeometric test 
-/// - odds ratios, the calculated odds ratios
-/// - overlap, the size of the overlap,
-/// - gene_set_lengths, the length of the gene sets.
+/// @return A list containing:
+///  \itemize{
+///   \item pvals - The p-values from the hypergeometric test
+///   \item odds ratios - The calculated odds ratios
+///   \item overlap - The size of the overlap
+///   \gene_set_lengths - The length of the gene sets.
+/// }
 /// 
 /// @export
 #[extendr]
@@ -130,12 +135,14 @@ fn rs_hypergeom_test_list(
 /// @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
 /// @param debug boolean that will provide additional console information for debugging purposes.
 /// 
-/// @returns A list with the following elements: 
-/// - go_ids, the gene ontology identifier
-/// - pvals, the p-values from the hypergeometric test 
-/// - odds ratios, the calculated odds ratios
-/// - overlap, the size of the overlap,
-/// - gene_set_lengths, the length of the gene sets.
+/// @return A list containing:
+///  \itemize{
+///   \item go_ids - The gene ontology identifier.
+///   \item pvals - The calculated odds ratios.
+///   \item odds_ratios - The calculated odds ratios.
+///   \item overlap - The size of the overlap.
+///   \gene_set_lengths - The length of the gene sets.
+/// }
 /// 
 /// @export
 #[extendr]
@@ -229,14 +236,17 @@ fn rs_gse_geom_elim(
 /// @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
 /// @param debug boolean that will provide additional console information for debugging purposes.
 /// 
-/// @returns A list with the following elements: 
-/// - go_ids, the gene ontology identifier
-/// - pvals, the p-values from the hypergeometric test 
-/// - odds ratios, the calculated odds ratios
-/// - overlap, the size of the overlap,
-/// - gene_set_lengths, the length of the gene sets.
-/// - no_test, the number of tests that were conducted against target_gene_list. First element indicates
-/// how many values belong to the first target_genes set in the list, etc.
+/// @return A list containing:
+///  \itemize{
+///   \item go_ids - The gene ontology identifier.
+///   \item pvals - The calculated odds ratios.
+///   \item odds_ratios - The calculated odds ratios.
+///   \item overlap - The size of the overlap.
+///   \gene_set_lengths - The length of the gene sets.
+///   \no_test - The number of tests that were conducted against target_gene_list.
+///   First element indicates how many values belong to the first target_genes set 
+///   in the list, etc.
+/// }
 /// 
 /// @export
 #[extendr]

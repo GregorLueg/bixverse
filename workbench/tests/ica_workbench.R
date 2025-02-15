@@ -1,7 +1,10 @@
 # Check fastICA implementation
 
+?create_synthetic_signal_matrix()
 
 rextendr::document()
+
+?rs_contrastive_pca
 
 synthetic_data = create_synthetic_signal_matrix()
 
@@ -32,6 +35,8 @@ data_whitened_red = data_whitened[1:n_ica, ]
 dim(data_whitened_red)
 
 dim(w.init)
+
+?rs_fast_ica
 
 a = rs_fast_ica(
   data_whitened_red,

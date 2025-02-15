@@ -34,8 +34,12 @@ fn rs_covariance(
 /// @param return_loadings Shall the loadings be returned from the contrastive
 /// PCA
 /// 
-/// @return An R list with loadings and factors. If return_loadings == FALSE, 
-/// then loadings will be NULL.
+/// @return A list containing:
+///  \itemize{
+///   \item factors - The factors of the contrastive PCA.
+///   \item loadings - The loadings of the contrastive PCA. Will be NULL if 
+///    return_loadings is set to FALSE.
+/// }
 /// 
 /// @export
 #[extendr]
@@ -69,17 +73,26 @@ fn rs_contrastive_pca(
 
   if return_loadings {
     list!(
-      loadings = faer_to_r_matrix(c_pca_loadings),
-      factors = faer_to_r_matrix(c_pca_factors)
+      factors = faer_to_r_matrix(c_pca_factors),
+      loadings = faer_to_r_matrix(c_pca_loadings)
     )
   } else {
     list!(
-      loadings = r!(NULL),
-      factors = faer_to_r_matrix(c_pca_factors)
+      factors = faer_to_r_matrix(c_pca_factors),
+      loadings = r!(NULL)
     )
   }
 }
 
+/// Whiten a matrix
+/// 
+/// @description Whitens the matrix for subsequent usage. This is a need pre-
+/// processing step for ICA.
+/// 
+/// @param x The matrix to whiten. The whitening will happen over the columns.
+/// 
+/// @return The whitened matrix (will be transposed compared to x).
+/// 
 /// @export
 #[extendr]
 fn rs_whiten_matrix(
@@ -92,7 +105,27 @@ fn rs_whiten_matrix(
   faer_to_r_matrix(whiten)
 }
 
-
+/// Run the Rust implementation of fast ICA.
+/// 
+/// @description This function serves as a wrapper over the fast ICA implementations
+/// in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
+/// 
+/// @param whiten The whitened matrix.
+/// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
+/// @param maxit Maximum number of iterations to try if algorithm does not converge.
+/// @param alpha The alpha parameter for the LogCosh implementation of ICA.
+/// @param tol Tolerance parameter.
+/// @param ica_type One of 'logcosh' or 'exp'.
+/// @param verbose Controls the verbosity of the function.
+/// 
+/// @param x The matrix to whiten. The whitening will happen over the columns.
+/// 
+/// @return A list containing:
+///  \itemize{
+///   \item mixing - The mixing matrix for subsequent usage.
+///   \item converged - Boolean if the algorithm converged.
+/// }
+/// 
 /// @export
 #[extendr]
 fn rs_fast_ica(
@@ -118,7 +151,7 @@ fn rs_fast_ica(
 
   Ok(list!(
     mixing = faer_to_r_matrix(a.0),
-    tol = a.1)
+    converged = a.1 < tol)
   )
 }
 

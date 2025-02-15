@@ -15,12 +15,12 @@ rs_hypergeom_test_list(target_genes, gene_sets, gene_universe)
 and gene sets are sampled from.}
 }
 \value{
-A list with the following elements:
+A list containing:
 \itemize{
-\item pvals, the p-values from the hypergeometric test
-\item odds ratios, the calculated odds ratios
-\item overlap, the size of the overlap,
-\item gene_set_lengths, the length of the gene sets.
+\item pvals - The p-values from the hypergeometric test
+\item odds ratios - The calculated odds ratios
+\item overlap - The size of the overlap
+\gene_set_lengths - The length of the gene sets.
 }
 }
 \description{
