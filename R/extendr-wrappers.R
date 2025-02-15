@@ -197,5 +197,8 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+#' @export
+rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
+
 
 # nolint end

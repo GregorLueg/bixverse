@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
-use crate::helpers_linalg::{column_covariance, get_top_eigenvalues};
+use crate::helpers_linalg::*;
 use crate::utils_rust::nested_vector_to_faer_mat;
 
 
@@ -79,8 +79,23 @@ fn rs_contrastive_pca(
   }
 }
 
+
+/// @export
+#[extendr]
+fn rs_whiten_matrix(
+  x: RMatrix<f64>,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let x = r_matrix_to_faer(x);
+  
+  let whiten = whiten_matrix(x);
+
+  faer_to_r_matrix(whiten)
+}
+
+
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_contrastive_pca;
+  fn rs_whiten_matrix;
 }
