@@ -74,8 +74,9 @@ pub fn r_nested_list_to_rust(
 /// Transform an R matrix to a Faer one
 pub fn r_matrix_to_faer(
   x: RMatrix<f64>
-) -> faer::Mat<Vec<f64>> {
-  let data = x.data();
-  let dim = x.dim();
-  Mat::full(dim[0], dim[1], data.to_vec())
+) -> faer::Mat<f64> {
+  let ncol = x.ncols();
+  let nrow= x.nrows();
+  
+  Mat::from_fn(nrow, ncol, |i, j| x[[i, j]])
 }

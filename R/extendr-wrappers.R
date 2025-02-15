@@ -172,5 +172,8 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
 
+#' @export
+rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
+
 
 # nolint end
