@@ -1,5 +1,6 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
+use faer::Mat;
 
 /// A double nested HashMap
 pub type NestedHashMap = HashMap<String, HashMap<String, HashSet<String>>>;
@@ -67,4 +68,28 @@ pub fn r_nested_list_to_rust(
     .collect();
 
   outer_list.into_iter().collect()
+}
+
+
+/// Transform an R matrix to a Faer one
+pub fn r_matrix_to_faer(
+  x: RMatrix<f64>
+) -> faer::Mat<f64> {
+  let ncol = x.ncols();
+  let nrow= x.nrows();
+  
+  Mat::from_fn(nrow, ncol, |i, j| x[[i, j]])
+}
+
+/// Transform a faer into an R matrix
+pub fn faer_to_r_matrix(
+  x: faer::Mat<f64>
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let nrow = x.nrows();
+  let ncol = x.ncols();
+  RArray::new_matrix(
+    nrow, 
+    ncol, 
+    |row, column| x[(row, column)]
+  )
 }

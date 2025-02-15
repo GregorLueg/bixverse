@@ -110,3 +110,28 @@ tictoc::toc()
 tictoc::tic()
 ot_harmonic_score(x)
 tictoc::toc()
+
+rextendr::document()
+
+
+
+rextendr::document()
+
+
+
+y_1[1:5, 1:5]
+
+coop::pcor()
+
+tictoc::tic()
+y_2 = coop::covar(x)
+tictoc::toc()
+
+y_2[1:5, 1:5]
+
+install.packages('coop', type="source")
+
+
+
+
+

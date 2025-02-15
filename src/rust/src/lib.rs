@@ -1,10 +1,12 @@
 mod helpers_hypergeom;
 mod helpers_geom_elim;
 mod helpers_rbh;
+mod helpers_linalg;
 
 mod fun_hypergeom;
 mod fun_stats;
 mod fun_rbh;
+mod fun_linalg;
 
 mod utils_stats;
 mod utils_r_rust;
@@ -17,4 +19,5 @@ extendr_module! {
     use fun_hypergeom;
     use fun_stats;
     use fun_rbh;
+    use fun_linalg;
 }
