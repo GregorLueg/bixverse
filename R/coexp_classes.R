@@ -51,3 +51,39 @@ bulk_coexp <- S7::new_class(
     )
   }
 )
+
+# getters ----
+
+#' Return the outputs from bulk_coexp
+#'
+#' @description
+#' Getter function to extract the outputs from the [bixverse::bulk_coexp()]
+#' class.
+#'
+#' @export
+get_outputs <- S7::new_generic(
+  "get_outputs",
+  "bulk_coexp"
+)
+
+
+#' @name get_outputs
+#'
+#' @description Get the final results from the
+#'
+#' @param bulk_coexp The underlying `bixverse_base_class` class, see
+#' [bixverse::bulk_coexp()].
+#'
+#' @return Returns the outputs stored in the class.
+#'
+#' @method get_outputs bulk_coexp
+S7::method(get_outputs, bulk_coexp) <-
+  function(bulk_coexp) {
+    # Checks
+    checkmate::assertClass(
+      bulk_coexp, "bixverse::bulk_coexp"
+    )
+
+    # Return
+    return(S7::prop(bulk_coexp, "outputs"))
+  }

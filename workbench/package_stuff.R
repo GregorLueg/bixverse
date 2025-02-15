@@ -25,6 +25,7 @@ use_package("igraph")
 use_package("rlang")
 use_package("dplyr")
 use_package("purrr")
+use_package("ggplot2")
 
 ## Functions / R stuff ----
 

@@ -104,11 +104,13 @@ get_results <- S7::new_generic("get_results", "bixverse_base_class")
 
 #' @name get_results
 #'
-#' @description Get the final results from the
+#' @description Get the final results from the a
+#' [bixverse::bixverse_base_class()] class.
 #'
 #' @usage get_results(bixverse_base_class)
 #'
-#' @param bixverse_base_class The underlying `bixverse_base_class` class.
+#' @param bixverse_base_class The underlying [bixverse::bixverse_base_class()]
+#' class. This class is usually inherited by other classes.
 #'
 #' @return Returns the final results if any have been stored in the class.
 #'

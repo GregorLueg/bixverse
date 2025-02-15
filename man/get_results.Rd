@@ -9,7 +9,8 @@ get_results(bixverse_base_class, ...)
 get_results(bixverse_base_class)
 }
 \arguments{
-\item{bixverse_base_class}{The underlying \code{bixverse_base_class} class.}
+\item{bixverse_base_class}{The underlying \code{\link[=bixverse_base_class]{bixverse_base_class()}}
+class. This class is usually inherited by other classes.}
 }
 \value{
 Returns the final results if any have been stored in the class.
@@ -17,5 +18,6 @@ Returns the final results if any have been stored in the class.
 \description{
 This method returns the final results from a given module class.
 
-Get the final results from the
+Get the final results from the a
+\code{\link[=bixverse_base_class]{bixverse_base_class()}} class.
 }

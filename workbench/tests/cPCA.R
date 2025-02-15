@@ -41,75 +41,14 @@ sample_meta = data.table(
 
 bulk_coexp_class = bulk_coexp(raw_data = raw_data, meta_data = sample_meta)
 
-bulk_coexp_class = cPCA_preprocessing(bulk_coexp_class, background_mat = background_mat)
+bulk_coexp_class = contrastive_pca_processing(bulk_coexp_class, background_mat = background_mat)
 
-## Pre-processing ----
+?c_pca_plot_alphas
+
+c_pca_plot_alphas(bulk_coexp_class, label_column = 'grp', n_alphas = 15L, max_alpha = 1000)
+
+bulk_coexp_class <- apply_contrastive_pca(bulk_coexp_class, alpha = 1, no_pcs	= 10L)
 
 get_params(bulk_coexp_class, TRUE, TRUE)
 
-target_mat <- S7::prop(bulk_coexp_class, "raw_data")
-background_mat <- background_mat
-verbose = TRUE
-scale = FALSE
-
-intersecting_features <- intersect(
-  colnames(target_mat),
-  colnames(background_mat)
-)
-if (verbose)
-  message(sprintf(
-    "A total of %i features/genes were identified",
-    length(intersecting_features)
-  )
-  )
-
-target_mat <- target_mat[, intersecting_features]
-background_mat <- background_mat[, intersecting_features]
-
-if (scale) {
-  target_mat <- scale(target_mat, scale = scale)
-  background_mat <- scale(background_mat, scale = scale)
-}
-
-target_covar = rs_covariance(target_mat)
-background_covar = rs_covariance(background_mat)
-
-dim(target_mat)
-
-## cPCA functions ----
-
-devtools::document()
-
-
-alpha = 1
-nPCs = 2
-
-final_covar = target_covar - alpha * background_covar
-
-final_covar[1:10, 1:10]
-
-isSymmetric.matrix(final_covar)
-
-tictoc::tic()
-cPCA_results <- irlba::partial_eigen(final_covar, nPCs)
-tictoc::toc()
-
-cPCA_results$vectors
-
-rextendr::document()
-
-test_eigen(final_covar)
-
-rs_contrastive_pca
-
-c(loadings, factors) %<-% rs_contrastive_pca(
-  target_covar = target_covar,
-  background_covar = background_covar,
-  target_mat = target_mat,
-  alpha = .5,
-  n_pcs = 5,
-  return_loadings = FALSE
-)
-
-x = NULL
-
+get_outputs(bulk_coexp_class)
