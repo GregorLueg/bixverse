@@ -5,7 +5,7 @@
 network_diffusions <- S7::new_class(
   # Names, parents
   name = "network_diffusions",
-  parent = bixverse_generic_class,
+  parent = bixverse_base_class,
 
   # Properties, i.e., slots
   properties = list(
@@ -82,7 +82,7 @@ network_diffusions <- S7::new_class(
 rbh_graph <- S7::new_class(
   # Names, parents
   name = "rbh_graph",
-  parent = bixverse_generic_class,
+  parent = bixverse_base_class,
 
   # Properties, i.e., slots
   properties = list(

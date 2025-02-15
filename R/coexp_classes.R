@@ -3,7 +3,7 @@
 bulk_coexp <- S7::new_class(
   # Names, parents
   name = "bulk_coexp",
-  parent = bixverse_generic_class,
+  parent = bixverse_base_class,
 
   # Properties
   properties = list(
@@ -18,10 +18,12 @@ bulk_coexp <- S7::new_class(
   #' Bulk RNAseq co-expression modules
   #'
   #' @description
-  #' ...
+  #' Class for applying various co-expression module detection methods on top of
+  #' bulk RNAseq data.
   #'
-  #' @param raw_data ...
-  #' @param meta_data ...
+  #' @param raw_data The raw count matrix. Rows = samples, columns = features.
+  #' @param meta_data Metadata information on the samples. It expects to have a
+  #' column sample_id and case_control column.
   #'
   #' @return Returns the `bulk_coexp` class for further operations.
   #'
@@ -32,7 +34,7 @@ bulk_coexp <- S7::new_class(
     checkmate::assertDataFrame(meta_data)
     checkmate::assertNames(names(meta_data),
                            must.include = c("sample_id", "case_control"))
-    checkmate::assertTRUE(all(colnames(raw_data) %in% meta_data$sampleID))
+    checkmate::assertTRUE(all(rownames(raw_data) %in% meta_data$sample_id))
 
     params <- list(
       "original_dim" = dim(raw_data)

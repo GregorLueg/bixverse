@@ -172,8 +172,30 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
 
+#' Calculate the column-wise co-variance
+#' 
+#' @param x R matrix with doubles.
+#' 
+#' @returns The co-variance matrix.
+#' 
 #' @export
 rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
+
+#' Calculate the contrastive PCA
+#' 
+#' @param target_covar The co-variance matrix of the target data set.
+#' @param background_covar The co-variance matrix of the background data set.
+#' @param target_mat The original values of the target matrix.
+#' @param alpha How much of the background co-variance should be removed.
+#' @param n_pcs How many contrastive PCs to return
+#' @param return_loadings Shall the loadings be returned from the contrastive
+#' PCA
+#' 
+#' @return An R list with loadings and factors. If return_loadings == FALSE, 
+#' then loadings will be NULL.
+#' 
+#' @export
+rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
 
 # nolint end

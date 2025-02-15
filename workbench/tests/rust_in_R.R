@@ -113,17 +113,11 @@ tictoc::toc()
 
 rextendr::document()
 
-ncol = 10000
-nrow = 100
 
-set.seed(123)
-x = matrix(rnorm(ncol * nrow), nrow, ncol)
 
 rextendr::document()
 
-tictoc::tic()
-y_1 = cov(x)
-tictoc::toc()
+
 
 y_1[1:5, 1:5]
 
@@ -137,14 +131,7 @@ y_2[1:5, 1:5]
 
 install.packages('coop', type="source")
 
-dim(x)
 
-tictoc::tic()
-y_3 = rs_add_matrix(x)
-tictoc::toc()
 
-y_1[1:10, 1:10]
 
-y_3[1:10, 1:10]
 
-y_3[1:5, 1:5]

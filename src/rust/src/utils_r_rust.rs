@@ -80,3 +80,16 @@ pub fn r_matrix_to_faer(
   
   Mat::from_fn(nrow, ncol, |i, j| x[[i, j]])
 }
+
+/// Transform a faer into an R matrix
+pub fn faer_to_r_matrix(
+  x: faer::Mat<f64>
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let nrow = x.nrows();
+  let ncol = x.ncols();
+  RArray::new_matrix(
+    nrow, 
+    ncol, 
+    |row, column| x[(row, column)]
+  )
+}

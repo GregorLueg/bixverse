@@ -1,3 +1,5 @@
+use faer::Mat;
+
 /// Flatten a nested vector
 pub fn flatten_vector<T>(
     vec: Vec<Vec<T>>
@@ -29,4 +31,14 @@ pub fn array_f64_min(
         }
     }
     min_val
+}
+
+/// Transform a nested vector into a faer matrix
+pub fn nested_vector_to_faer_mat(
+  nested_vec: Vec<Vec<f64>>
+) -> faer::Mat<f64> {
+  let nrow = nested_vec[0].len();
+  let ncol = nested_vec.len();
+  let data = flatten_vector(nested_vec);
+  Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
 }
