@@ -201,7 +201,7 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
 
 #' @export
-rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, verbose)
+rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
 
 # nolint end

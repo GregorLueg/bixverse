@@ -1,10 +1,8 @@
 use extendr_api::prelude::*;
+
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::helpers_linalg::*;
 use crate::utils_rust::nested_vector_to_faer_mat;
-use faer::*;
-use rayon::iter::ParallelIterator;
-use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max};
 
 
 /// Calculate the column-wise co-variance
@@ -103,21 +101,25 @@ fn rs_fast_ica(
   maxit: usize,
   alpha: f64,
   tol: f64,
+  ica_type: &str,
   verbose: bool
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> extendr_api::Result<List> {
+  // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
+
   let x = r_matrix_to_faer(whiten);
   let w_init = r_matrix_to_faer(w_init);
 
-  let a = fast_ica_logcosh(
-    x, 
-    w_init, 
-    tol, 
-    alpha, 
-    maxit, 
-    verbose
-  );
+  let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
 
-  faer_to_r_matrix(a)
+  let a = match ica_type {
+    IcaType::Exp => fast_ica_exp(x, w_init, tol, maxit, verbose),
+    IcaType::LogCosh => fast_ica_logcosh(x, w_init, tol, alpha, maxit, verbose),
+  };
+
+  Ok(list!(
+    mixing = faer_to_r_matrix(a.0),
+    tol = a.1)
+  )
 }
 
 extendr_module! {

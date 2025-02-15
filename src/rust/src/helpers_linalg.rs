@@ -1,7 +1,7 @@
 use faer::Mat;
 use rayon::iter::ParallelIterator;
 
-use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max};
+use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max, array_f64_min};
 use crate::utils_rust::nested_vector_to_faer_mat;
 
 /// Scale a matrix by its mean (column wise)
@@ -65,6 +65,7 @@ pub fn get_top_eigenvalues(
 }
 
 
+/// Whiten a matrix. This is needed pre-processing for ICA.
 pub fn whiten_matrix(
   x: Mat<f64>
 ) -> faer::Mat<f64> {
@@ -96,7 +97,9 @@ pub fn whiten_matrix(
   k * centered
 }
 
-pub fn update_init_mat(
+
+/// Update the mixing matrix for ICA
+pub fn update_mix_mat(
   w: Mat<f64>
 ) -> faer::Mat<f64> {
   // SVD
@@ -114,6 +117,27 @@ pub fn update_init_mat(
   u * d * u.transpose() * w
 }
 
+
+/// Enum for the ICA types
+#[derive(Debug)]
+pub enum IcaType {
+    Exp,
+    LogCosh,
+}
+
+/// Parsing the ICA types
+pub fn parse_ica_type(s: &str) -> Option<IcaType> {
+  match s.to_lowercase().as_str() {
+    "exp" => Some(IcaType::Exp),
+    "logcosh" => Some(IcaType::LogCosh),
+    _ => None,
+  }
+}
+
+
+type IcaRes = (faer::Mat<f64>, f64);
+
+/// Fast ICA implementation based on logcosh.
 pub fn fast_ica_logcosh(
   x: Mat<f64>,
   w_init: Mat<f64>,
@@ -121,15 +145,15 @@ pub fn fast_ica_logcosh(
   alpha: f64,
   maxit: usize,
   verbose: bool,
-) -> faer::Mat<f64> {
+) -> IcaRes {
   let p = x.ncols();
-  let mut w = update_init_mat(w_init);
+  let mut w = update_mix_mat(w_init);
   let mut lim = vec![1000_f64; maxit];
 
   let mut it = 0;
 
-  while lim[it] > tol && it < maxit {
-    let mut wx: Mat<f64> = &w * &x;
+  while it < maxit && lim[it] > tol {
+    let wx: Mat<f64> = &w * &x;
     
     let gwx: Vec<Vec<f64>>  = wx
       .par_col_iter()
@@ -140,7 +164,7 @@ pub fn fast_ica_logcosh(
 
     let gwx = nested_vector_to_faer_mat(gwx);
 
-    let v1 = &gwx * &x.transpose() / p as f64;  
+    let v1 = &gwx * x.transpose() / p as f64;  
 
     let gwx_2: Vec<Vec<f64>> = gwx
       .par_col_iter()
@@ -161,7 +185,7 @@ pub fn fast_ica_logcosh(
 
     let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
 
-    let w1 = update_init_mat(v1 - v2);
+    let w1 = update_mix_mat(v1 - v2);
 
     let w1_up = w1.clone() * w.transpose();
 
@@ -173,7 +197,9 @@ pub fn fast_ica_logcosh(
       })
       .collect();
     
-    lim[it + 1] = array_f64_max(&diagonal);
+    if it + 1 < maxit {
+      lim[it + 1] = array_f64_max(&diagonal);
+    }
 
     if verbose {
       println!("Iteration: {:?}, tol: {:?}", it, lim[it])
@@ -184,5 +210,88 @@ pub fn fast_ica_logcosh(
     it += 1;
   }
 
-  w
+  let min_tol = array_f64_min(&lim);
+
+  (w, min_tol)
+}
+
+
+/// Fast ICA implementation based on exp.
+pub fn fast_ica_exp(
+  x: Mat<f64>,
+  w_init: Mat<f64>,
+  tol: f64,
+  maxit: usize,
+  verbose: bool,
+) -> IcaRes {
+  let p = x.ncols();
+  let mut w = update_mix_mat(w_init);
+  let mut lim = vec![1000_f64; maxit];
+
+  let mut it = 0;
+  while it < maxit && lim[it] > tol {
+    let wx: Mat<f64> = &w * &x;
+    
+    let gwx: Vec<Vec<f64>>  = wx
+      .par_col_iter()
+      .map(|x| {
+      x.iter().map(|x| {
+        x * (-x.powi(2) / 2.0).exp()
+      }).collect()
+      })
+      .collect();
+
+    let gwx = nested_vector_to_faer_mat(gwx);
+
+    let v1 = &gwx * x.transpose() / p as f64;   
+
+    let gwx_2: Vec<Vec<f64>> = wx
+      .par_col_iter()
+      .map(|x| {
+        x.iter().map(|x| {
+          (1.0 - x.powi(2)) * (-x.powi(2) / 2.0).exp()
+        }).collect()
+      })
+      .collect(); 
+
+    let gwx_2 = nested_vector_to_faer_mat(gwx_2);
+
+    let ones = Mat::from_fn(p, 1, |_, _| 1.0);
+    let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);
+
+    let row_means_vec: Vec<f64> = row_means.as_ref().col_iter()
+      .flat_map(|col| col.iter())
+      .copied()
+      .collect();
+
+    let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
+
+    let w1 = update_mix_mat(v1 - v2);
+
+    let w1_up = w1.clone() * w.transpose();
+
+    let diagonal: Vec<f64>= w1_up.diagonal()
+      .column_vector()
+      .iter()
+      .map(|x| {
+        (1_f64 - x).abs()
+      })
+      .collect();
+    
+    if it + 1 < maxit {
+      lim[it + 1] = array_f64_max(&diagonal);
+    }
+
+    if verbose {
+      println!("Iteration: {:?}, tol: {:?}", it, lim[it])
+    }
+
+    w = w1;
+
+    it += 1;
+  }
+
+  let min_tol = array_f64_min(&lim);
+
+  (w, min_tol)
 }
