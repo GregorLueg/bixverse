@@ -27,7 +27,7 @@ rs_fast_ica(whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 A list containing:
 \itemize{
 \item mixing - The mixing matrix for subsequent usage.
-\item tol - Boolean if the algorithm converged.
+\item converged - Boolean if the algorithm converged.
 }
 }
 \description{

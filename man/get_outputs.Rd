@@ -7,7 +7,7 @@
 get_outputs(bulk_coexp, ...)
 }
 \arguments{
-\item{bulk_coexp}{The underlying \code{bixverse_base_class} class, see
+\item{bulk_coexp}{The underlying \code{bulk_coexp} class, see
 \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
@@ -17,5 +17,5 @@ Returns the outputs stored in the class.
 Getter function to extract the outputs from the \code{\link[=bulk_coexp]{bulk_coexp()}}
 class.
 
-Get the final results from the
+Get the outputs that are stored in the class.
 }

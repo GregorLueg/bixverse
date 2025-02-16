@@ -1,8 +1,16 @@
 use faer::Mat;
-use rayon::iter::ParallelIterator;
 
 use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max, array_f64_min};
-use crate::utils_rust::nested_vector_to_faer_mat;
+
+/// Enum for the ICA types
+#[derive(Debug)]
+pub enum IcaType {
+    Exp,
+    LogCosh,
+}
+
+/// Type alias of the ICA results
+type IcaRes = (faer::Mat<f64>, f64);
 
 /// Scale a matrix by its mean (column wise)
 pub fn scale_matrix(mat: &Mat<f64>) -> Mat<f64>{
@@ -68,7 +76,7 @@ pub fn get_top_eigenvalues(
 /// Whiten a matrix. This is needed pre-processing for ICA.
 pub fn whiten_matrix(
   x: Mat<f64>
-) -> faer::Mat<f64> {
+) -> (faer::Mat<f64>, faer::Mat<f64>) {
   let n = x.nrows();  
 
   let centered = scale_matrix(&x);
@@ -94,7 +102,9 @@ pub fn whiten_matrix(
   let u = svd_res.U();
   let k = d * u.transpose();
 
-  k * centered
+  let whiten = &k * centered;
+
+  (whiten, k)
 }
 
 
@@ -118,13 +128,6 @@ pub fn update_mix_mat(
 }
 
 
-/// Enum for the ICA types
-#[derive(Debug)]
-pub enum IcaType {
-    Exp,
-    LogCosh,
-}
-
 /// Parsing the ICA types
 pub fn parse_ica_type(s: &str) -> Option<IcaType> {
   match s.to_lowercase().as_str() {
@@ -133,9 +136,6 @@ pub fn parse_ica_type(s: &str) -> Option<IcaType> {
     _ => None,
   }
 }
-
-
-type IcaRes = (faer::Mat<f64>, f64);
 
 /// Fast ICA implementation based on logcosh.
 pub fn fast_ica_logcosh(
@@ -155,25 +155,25 @@ pub fn fast_ica_logcosh(
   while it < maxit && lim[it] > tol {
     let wx: Mat<f64> = &w * &x;
     
-    let gwx: Vec<Vec<f64>>  = wx
-      .par_col_iter()
-      .map(|x| {
-      x.iter().map(|x| {alpha * x.tanh()}).collect()
-      })
-      .collect();
-
-    let gwx = nested_vector_to_faer_mat(gwx);
+    let gwx = Mat::from_fn(
+      wx.nrows(),
+      wx.ncols(),
+    |i, j| {
+        let x = wx.get(i, j);
+        alpha * x.tanh()
+      }
+    );
 
     let v1 = &gwx * x.transpose() / p as f64;  
 
-    let gwx_2: Vec<Vec<f64>> = gwx
-      .par_col_iter()
-      .map(|x| {
-        x.iter().map(|x| {1_f64 - x.powi(2)}).collect()
-      })
-      .collect(); 
-
-    let gwx_2 = nested_vector_to_faer_mat(gwx_2);
+    let gwx_2 = Mat::from_fn(
+      gwx.nrows(),
+      gwx.ncols(),
+    |i, j| {
+        let x = gwx.get(i, j);
+        1_f64 - x.powi(2)
+      }
+    );
 
     let ones = Mat::from_fn(p, 1, |_, _| 1.0);
     let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);
@@ -231,30 +231,26 @@ pub fn fast_ica_exp(
   let mut it = 0;
   while it < maxit && lim[it] > tol {
     let wx: Mat<f64> = &w * &x;
-    
-    let gwx: Vec<Vec<f64>>  = wx
-      .par_col_iter()
-      .map(|x| {
-      x.iter().map(|x| {
-        x * (-x.powi(2) / 2.0).exp()
-      }).collect()
-      })
-      .collect();
 
-    let gwx = nested_vector_to_faer_mat(gwx);
+    let gwx = Mat::from_fn(
+      wx.nrows(),
+      wx.ncols(),
+    |i, j| {
+        let x = wx.get(i, j);
+        x * (-x.powi(2) / 2.0).exp()
+      }
+    );
 
     let v1 = &gwx * x.transpose() / p as f64;   
 
-    let gwx_2: Vec<Vec<f64>> = wx
-      .par_col_iter()
-      .map(|x| {
-        x.iter().map(|x| {
-          (1.0 - x.powi(2)) * (-x.powi(2) / 2.0).exp()
-        }).collect()
-      })
-      .collect(); 
-
-    let gwx_2 = nested_vector_to_faer_mat(gwx_2);
+    let gwx_2 = Mat::from_fn(
+      wx.nrows(),
+      wx.ncols(),
+    |i, j| {
+        let x = wx.get(i, j);
+        (1.0 - x.powi(2)) * (-x.powi(2) / 2.0).exp()
+      }
+    );
 
     let ones = Mat::from_fn(p, 1, |_, _| 1.0);
     let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);

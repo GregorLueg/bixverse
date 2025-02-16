@@ -218,7 +218,11 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' 
 #' @param x The matrix to whiten. The whitening will happen over the columns.
 #' 
-#' @return The whitened matrix (will be transposed compared to x).
+#' @return A list containing:
+#'  \itemize{
+#'   \item whiten - The whitened matrix.
+#'   \item k - The K matrix.
+#' }
 #' 
 #' @export
 rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
@@ -241,7 +245,7 @@ rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
 #' @return A list containing:
 #'  \itemize{
 #'   \item mixing - The mixing matrix for subsequent usage.
-#'   \item tol - Boolean if the algorithm converged.
+#'   \item converged - Boolean if the algorithm converged.
 #' }
 #' 
 #' @export

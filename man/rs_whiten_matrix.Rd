@@ -10,7 +10,11 @@ rs_whiten_matrix(x)
 \item{x}{The matrix to whiten. The whitening will happen over the columns.}
 }
 \value{
-The whitened matrix (will be transposed compared to x).
+A list containing:
+\itemize{
+\item whiten - The whitened matrix.
+\item k - The K matrix.
+}
 }
 \description{
 Whitens the matrix for subsequent usage. This is a need pre-

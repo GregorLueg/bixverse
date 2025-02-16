@@ -91,18 +91,25 @@ fn rs_contrastive_pca(
 /// 
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
-/// @return The whitened matrix (will be transposed compared to x).
+/// @return A list containing:
+///  \itemize{
+///   \item whiten - The whitened matrix.
+///   \item k - The K matrix.
+/// }
 /// 
 /// @export
 #[extendr]
 fn rs_whiten_matrix(
   x: RMatrix<f64>,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> List {
   let x = r_matrix_to_faer(x);
   
-  let whiten = whiten_matrix(x);
+  let (whiten, k) = whiten_matrix(x);
 
-  faer_to_r_matrix(whiten)
+  list!(
+    whiten = faer_to_r_matrix(whiten),
+    k = faer_to_r_matrix(k)
+  )
 }
 
 /// Run the Rust implementation of fast ICA.
