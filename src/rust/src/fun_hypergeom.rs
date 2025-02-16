@@ -14,6 +14,8 @@ type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u6
 /// 
 /// Given a set of target genes, this is a Rust implementation of an hypergeometric 
 /// test testing for overenrichment of the target genes in the gene sets.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test against.
@@ -55,6 +57,9 @@ fn rs_hypergeom_test(
 /// Run a hypergeometric test over a list of target genes
 /// 
 /// Given a list of target gene sets, this function will test for each of the individual 
+/// target genes the hypergeoemetric enrichment against the specified gene sets.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test against.
@@ -72,14 +77,14 @@ fn rs_hypergeom_test(
 /// @export
 #[extendr]
 fn rs_hypergeom_test_list(
-  target_genes: List,
+  target_genes_list: List,
   gene_sets: List,
   gene_universe: Vec<String>
 ) -> List {
   let gene_sets = r_list_to_str_vec(gene_sets);
-  let target_genes = r_list_to_str_vec(target_genes);
+  let target_genes_list = r_list_to_str_vec(target_genes_list);
 
-  let res: Vec<HypergeomResult> = target_genes
+  let res: Vec<HypergeomResult> = target_genes_list
     .par_iter()
     .map(|x_i| {
       let res_i: HypergeomResult = hypergeom_helper(
@@ -119,9 +124,11 @@ fn rs_hypergeom_test_list(
 /// Run hypergeometric enrichment over the gene ontology
 /// 
 /// This function implements a Rust version of the gene ontology enrichment with elimination:
-/// the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+/// the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 /// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 /// term will be removed from all ancestors.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
 /// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
@@ -219,10 +226,12 @@ fn rs_gse_geom_elim(
 /// Run hypergeometric enrichment a list of target genes over the gene ontology
 /// 
 /// This function implements a Rust version of the gene ontology enrichment with elimination:
-/// the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+/// the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 /// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 /// term will be removed from all ancestors. This function is designed to leverage Rust-based threading
 /// for parallel processing of a list of target genes.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param target_genes_list A list of target genes against which to run the method.
 /// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
@@ -242,8 +251,8 @@ fn rs_gse_geom_elim(
 ///   \item pvals - The calculated odds ratios.
 ///   \item odds_ratios - The calculated odds ratios.
 ///   \item overlap - The size of the overlap.
-///   \gene_set_lengths - The length of the gene sets.
-///   \no_test - The number of tests that were conducted against target_gene_list.
+///   \item gene_set_lengths - The length of the gene sets.
+///   \item no_test - The number of tests that were conducted against target_gene_list.
 ///   First element indicates how many values belong to the first target_genes set 
 ///   in the list, etc.
 /// }

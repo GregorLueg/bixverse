@@ -35,4 +35,6 @@ A list containing:
 \description{
 This function serves as a wrapper over the fast ICA implementations
 in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

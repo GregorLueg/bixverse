@@ -1,165 +1,3 @@
-# Copy and paste the function in
-
-fastICA <-
-  function (X, n.comp, alg.typ = c("parallel","deflation"),
-            fun = c("logcosh", "exp"),
-            alpha = 1, method = c("R", "C"),
-            row.norm = FALSE, maxit = 200, tol = 1e-04,
-            verbose = FALSE, w.init=NULL)
-  {
-    dd <- dim(X)
-    d <- dd[dd != 1L]
-    if (length(d) != 2L)
-      stop("data must be matrix-conformal")
-    X <- if (length(d) != length(dd)) matrix(X, d[1L], d[2L])
-    else as.matrix(X)
-
-    if (alpha < 1 || alpha > 2)
-      stop("alpha must be in range [1,2]")
-    method <- match.arg(method)
-    alg.typ <- match.arg(alg.typ)
-    fun <- match.arg(fun)
-    n <- nrow(X)
-    p <- ncol(X)
-
-    if (n.comp > min(n, p)) {
-      message("'n.comp' is too large: reset to ", min(n, p))
-      n.comp <- min(n, p)
-    }
-    if(is.null(w.init)) {
-      set.seed(10101)
-      w.init <- matrix(rnorm(n.comp^2),n.comp,n.comp)
-    } else {
-      if(!is.matrix(w.init) || length(w.init) != (n.comp^2))
-        stop("w.init is not a matrix or is the wrong size")
-    }
-    if (method == "R") {
-      if (verbose) message("Centering")
-
-      X <- scale(X, scale = FALSE)
-
-      X <- if (row.norm) t(scale(X, scale=row.norm)) else t(X)
-
-      if (verbose) message("Whitening")
-      V <- X %*% t(X)/n
-
-      s <- La.svd(V)
-      D <- diag(c(1/sqrt(s$d)))
-
-      K <- D %*% t(s$u)
-      K <- matrix(K[1:n.comp, ], n.comp, p)
-
-      X1 <- K %*% X
-      a <- if (alg.typ == "deflation")
-        ica.R.def(X1, n.comp, tol = tol, fun = fun,
-                  alpha = alpha, maxit = maxit, verbose = verbose, w.init = w.init)
-      else if (alg.typ == "parallel")
-        ica.R.par(X1, n.comp, tol = tol, fun = fun,
-                  alpha = alpha, maxit = maxit, verbose = verbose, w.init = w.init)
-      w <- a %*% K
-      S <- w %*% X
-      A <- t(w) %*% solve(w %*% t(w))
-      return(list(X = t(X), K = t(K), W = t(a), A = t(A), S = t(S), X1 = X1))
-    } else if (method == "C") {
-      a <- .C(icainc_JM,
-              as.double(X),
-              as.double(w.init),
-              as.integer(p),
-              as.integer(n),
-              as.integer(n.comp),
-              as.double(alpha),
-              as.integer(1),
-              as.integer(row.norm),
-              as.integer(1L + (fun == "exp")),
-              as.integer(maxit),
-              as.double(tol),
-              as.integer(alg.typ != "parallel"),
-              as.integer(verbose),
-              X = double(p * n),
-              K = double(n.comp * p),
-              W = double(n.comp * n.comp),
-              A = double(p * n.comp),
-              S = double(n.comp * n))
-      X1 <- matrix(a$X, n, p)
-      K <- matrix(a$K, p, n.comp)
-      W <- matrix(a$W, n.comp, n.comp)
-      A <- matrix(a$A, n.comp, p)
-      S <- matrix(a$S, n, n.comp)
-      list(X = X1, K = K, W = W, A = A, S = S)
-    }
-  }
-
-
-ica.R.par <- function (X, n.comp, tol, fun, alpha, maxit, verbose, w.init)
-{
-  Diag <- function(d) if(length(d) > 1L) diag(d) else as.matrix(d)
-  p <- ncol(X)
-  W <- w.init
-  sW <- La.svd(W)
-  W <- sW$u %*% Diag(1/sW$d) %*% t(sW$u) %*% W
-  W1 <- W
-  lim <- rep(1000, maxit)
-  it <- 1
-  if (fun == "logcosh") {
-    if (verbose)
-      message("Symmetric FastICA using logcosh approx. to neg-entropy function")
-    while (lim[it] > tol && it < maxit) {
-      wx <- W %*% X
-
-
-
-      gwx <- tanh(alpha * wx)
-
-      v1 <- gwx %*% t(X)/p
-
-      print(v1)
-
-      g.wx <- alpha * (1 - (gwx)^2)
-      v2 <- Diag(apply(g.wx, 1, FUN = mean)) %*% W
-
-      print(v2)
-
-      W1 <- v1 - v2
-
-      print(W1)
-
-      sW1 <- La.svd(W1)
-      W1 <- sW1$u %*% Diag(1/sW1$d) %*% t(sW1$u) %*% W1
-
-      lim[it + 1] <- max(Mod(Mod(diag(W1 %*% t(W))) - 1))
-      W <- W1
-      if (verbose)
-        message("Iteration ", it, " tol = ", format(lim[it + 1]))
-
-      print("----")
-
-      it <- it + 1
-    }
-  }
-  if (fun == "exp") {
-    if (verbose)
-      message("Symmetric FastICA using exponential approx. to neg-entropy function")
-    while (lim[it] > tol && it < maxit) {
-      wx <- W %*% X
-      gwx <- wx * exp(-(wx^2)/2)
-      v1 <- gwx %*% t(X)/p
-      g.wx <- (1 - wx^2) * exp(-(wx^2)/2)
-      v2 <- Diag(apply(g.wx, 1, FUN = mean)) %*% W
-      W1 <- v1 - v2
-      sW1 <- La.svd(W1)
-      W1 <- sW1$u %*% Diag(1/sW1$d) %*% t(sW1$u) %*% W1
-      lim[it + 1] <- max(Mod(Mod(diag(W1 %*% t(W))) - 1))
-      W <- W1
-      if (verbose)
-        message("Iteration ", it, " tol = ", format(lim[it + 1]))
-      it <- it + 1
-    }
-  }
-  W
-}
-
-
-
 # Check fastICA implementation
 
 library(zeallot)
@@ -168,32 +6,37 @@ devtools::document()
 rextendr::document()
 
 
-set.seed(123)
-S <- matrix(runif(18000), 6000, 3)
-A <- matrix(c(1, 1, -1, 3, 2, 0, -3, 0.5, 1), 3, 3, byrow = TRUE)
-X <- S %*% A
-
-
 syn_data = synthetic_signal_matrix()
 
-X = t(syn_data$mat)[, 1:300]
+X = t(syn_data$mat) # Artificial count matrix; transposed for rows = samples, cols = features
+
+meta_data = data.table::data.table(
+  sample_id = names(syn_data$group),
+  case_control = 'case',
+  grp = syn_data$group
+)
+
+
+ica_test = bulk_coexp(X, meta_data)
+
+ica_test = ica_processing(ica_test)
+
+
+dim(ica_test@processed_data$whiten_data)
+
+dim(ica_test@processed_data$K)
 
 
 
-tictoc::tic()
-set.seed(10101)
-res = fastICA(X, n.comp = 25, method = "R", verbose = TRUE, fun = "logcosh")
-tictoc::toc()
-
-
-res$X1
-
-tictoc::tic()
-X <- S %*% A
+sprintf("I1[2,%i]", ncol(X))
 
 c(X_norm, K) %<-% rs_prepare_whitening(X)
 
-n_ica = 25
+dim(X_norm)
+
+nrow(X_norm)
+
+n_ica = 15
 
 K_2 <- matrix(K[1:n_ica, ], n_ica, dim(X_norm)[1])
 
@@ -202,104 +45,45 @@ X1 <- K_2 %*% X_norm
 set.seed(10101)
 w.init <- matrix(rnorm(n_ica ^ 2), n_ica, n_ica)
 
-dim(X1)
-
-dim(w.init)
-
 a = rs_fast_ica(
   X1,
   w.init,
   maxit = 200L,
   alpha = 1,
-  tol = 0.0001,
+  tol = 1e-04,
   ica_type = "logcosh",
-  verbose = TRUE,
-  debug = TRUE
+  verbose = TRUE
 )
 
-# R iter 1
-# [,1]      [,2]       [,3]
-# [1,] -0.3899996 0.3637492 -0.3305839
-# [2,] -0.3396391 0.1141273  0.4986014
-# [3,]  0.3664918 0.5023617  0.1053140
-# [,1]      [,2]       [,3]
-# [1,] -0.3589565 0.3316225 -0.3252534
-# [2,] -0.3344774 0.1131903  0.4845431
-# [3,]  0.3267950 0.4678023  0.1163051
-
-
-# R iter 2
-# [1] "----"
-# [,1]       [,2]        [,3]
-# [1,] -0.5403717  0.3998702 -0.13983235
-# [2,]  0.1242588 -0.0410185 -0.58992558
-# [3,]  0.3818256  0.5682458  0.05445773
-# [,1]        [,2]        [,3]
-# [1,] -0.4029436  0.29462530 -0.13720097
-# [2,]  0.1671741 -0.04257172 -0.58238986
-# [3,]  0.2964139  0.43036244  0.05362638
-# [,1]       [,2]          [,3]
-# [1,] -0.13742805 0.10524488 -0.0026313763
-# [2,] -0.04291530 0.00155322 -0.0075357239
-# [3,]  0.08541171 0.13788337  0.0008313444
-
-w <- a$mixing %*% K[1:n_ica, 1:n_ica]
-S <- w %*% X_white[1:n_ica, ]
+w <- a$mixing %*% K_2
+S <- w %*% X_norm
 A <- t(w) %*% solve(w %*% t(w))
 
 A
 
-res$W
-w
+dim(w)
 
-tictoc::toc()
+dim(S)
 
-
-# Somewhere there is a bug...
-
-Diag <- function(d) if(length(d) > 1L) diag(d) else as.matrix(d)
-n.comp = 2
-maxit = 200
-alpha = 1
-row.norm = FALSE
+dim(A)
 
 
-set.seed(10101)
-w.init <- matrix(rnorm(n.comp ^ 2), n.comp, n.comp)
+t(A)
 
-X <- S %*% A
+res$A[1:5, 1:5]
 
-n <- nrow(X)
-p <- ncol(X)
-
-
-X <- scale(X, scale = FALSE)
-
-X <- if (row.norm) t(scale(X, scale=row.norm)) else t(X)
-
-message("Whitening")
-V <- X %*% t(X)/n
-
-s <- La.svd(V)
-D <- diag(c(1/sqrt(s$d)))
-
-K <- D %*% t(s$u)
-K <- matrix(K[1:n.comp, ], n.comp, p)
-
-X1 <- K %*% X
-
-X <- X1
-
-p <- ncol(X)
-W <- w.init
-sW <- La.svd(W)
-W <- sW$u %*% Diag(1/sW$d) %*% t(sW$u) %*% W
-W1 <- W
-lim <- rep(1000, maxit)
-it <- 1
-
-
-wx <- W %*% X
-
-gwx <- tanh(alpha * wx)
-
+# [,1]       [,2]       [,3]
+# [1,]  0.7677161 -0.3683827 -0.5243150
+# [2,] -0.1558387 -0.9010015  0.4048587
+# [3,] -0.6215515 -0.2291080 -0.7491216
+# Iteration 1 tol = 0.2508784
+# [,1]       [,2]        [,3]
+# [1,]  0.6673540 -0.7220799 -0.18231637
+# [2,] -0.7372638 -0.6751538 -0.02468729
+# [3,] -0.1052654  0.1508904 -0.98292995
+# Iteration 2 tol = 0.332646
+# [,1]        [,2]       [,3]
+# [1,]  0.98664947 -0.07880524 -0.1425221
+# [2,] -0.04167781 -0.96816819  0.2468062
+# [3,] -0.15743498 -0.23757122 -0.9585271
+# Iteration 3 tol = 0.04147293

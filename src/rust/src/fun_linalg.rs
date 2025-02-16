@@ -5,7 +5,11 @@ use crate::helpers_linalg::*;
 use crate::utils_rust::nested_vector_to_faer_mat;
 
 
-/// Calculate the column-wise co-variance
+/// Calculate the column-wise co-variance.
+/// 
+/// @description Calculates the co-variance of the columns.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param x R matrix with doubles.
 /// 
@@ -25,6 +29,14 @@ fn rs_covariance(
 
 
 /// Calculate the contrastive PCA
+/// 
+/// @description This function calculate the contrastive PCA given a target
+/// covariance matrix and the background covariance matrix you wish to subtract.
+/// The alpha parameter controls how much of the background covariance you wish
+/// to remove. You have the options to return the feature loadings and you can
+/// specificy the number of cPCAs to return.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.
@@ -86,14 +98,15 @@ fn rs_contrastive_pca(
 
 /// Prepare the data for whitening
 /// 
-/// @description Whitens the matrix for subsequent usage. This is a need pre-
-/// processing step for ICA.
+/// @description Prepares the data for subsequent usag in ICA.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
 /// @return A list containing:
 ///  \itemize{
-///   \item whiten - The whitened matrix.
+///   \item x - The transposed and scaled data for subsequent usage in ICA.
 ///   \item k - The K matrix.
 /// }
 /// 
@@ -116,6 +129,8 @@ fn rs_prepare_whitening(
 /// 
 /// @description This function serves as a wrapper over the fast ICA implementations
 /// in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
 /// @param whiten The whitened matrix.
 /// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.

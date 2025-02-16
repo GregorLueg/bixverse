@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_covariance}
 \alias{rs_covariance}
-\title{Calculate the column-wise co-variance}
+\title{Calculate the column-wise co-variance.}
 \usage{
 rs_covariance(x)
 }
@@ -13,5 +13,7 @@ rs_covariance(x)
 The co-variance matrix.
 }
 \description{
-Calculate the column-wise co-variance
+Calculates the co-variance of the columns.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

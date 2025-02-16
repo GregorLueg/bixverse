@@ -73,31 +73,6 @@ pub fn get_top_eigenvalues(
 }
 
 
-// fn normalize_svd_signs(mut u: Mat<f64>) -> Mat<f64> {
-//     // R's convention: make the element with the largest absolute value in the first column positive
-//     let mut max_abs = 0.0;
-//     let mut max_idx = 0;
-    
-//     // Find largest absolute value in the first column
-//     for i in 0..u.nrows() {
-//         let abs_val = u[(i, 0)].abs();
-//         if abs_val > max_abs {
-//             max_abs = abs_val;
-//             max_idx = i;
-//         }
-//     }
-    
-//     // If the largest element is negative, flip signs in the entire matrix
-//     if u[(max_idx, 0)] < 0.0 {
-//         for j in 0..u.ncols() {
-//             for i in 0..u.nrows() {
-//                 u[(i, j)] = -u[(i, j)];
-//             }
-//         }
-//     }
-//     u
-// }
-
 /// Whiten a matrix. This is needed pre-processing for ICA.
 pub fn prepare_whitening(
   x: Mat<f64>
@@ -182,7 +157,7 @@ pub fn fast_ica_logcosh(
 
   while it < maxit && lim[it] > tol {
     let wx: Mat<f64> = &w * &x;
-    
+
     let gwx = Mat::from_fn(
       wx.nrows(),
       wx.ncols(),
@@ -192,7 +167,7 @@ pub fn fast_ica_logcosh(
       }
     );
 
-    let v1 = &gwx * x.transpose() / p as f64;  
+    let v1 = &gwx * x.transpose() / p as f64; 
 
     let gwx_2 = alpha * Mat::from_fn(
       gwx.nrows(),
@@ -217,15 +192,8 @@ pub fn fast_ica_logcosh(
 
     let w1_up = w1.clone() * w.transpose();
 
-    let diagonal: Vec<f64>= w1_up.diagonal()
+    let tol_it = w1_up.diagonal()
       .column_vector()
-      .iter()
-      .map(|x| {
-        (1_f64 - x).abs()
-      })
-      .collect();
-    
-    let tol_it = 1_f64 - diagonal
       .iter()
       .map(|x| (x.abs() - 1.0).abs())
       .fold(f64::NEG_INFINITY, f64::max);
@@ -294,20 +262,13 @@ pub fn fast_ica_exp(
       .collect();
 
     let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
-    
+
     let w1 = update_mix_mat(v1 - v2);
 
     let w1_up = w1.clone() * w.transpose();
-
-    let diagonal: Vec<f64>= w1_up.diagonal()
+    
+    let tol_it = w1_up.diagonal()
       .column_vector()
-      .iter()
-      .map(|x| {
-        (1_f64 - x).abs()
-      })
-      .collect();
-
-    let tol_it = 1_f64 - diagonal
       .iter()
       .map(|x| (x.abs() - 1.0).abs())
       .fold(f64::NEG_INFINITY, f64::max);

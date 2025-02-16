@@ -47,7 +47,9 @@ A list containing:
 }
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
-the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 term will be removed from all ancestors.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

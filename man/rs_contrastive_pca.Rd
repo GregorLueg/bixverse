@@ -36,5 +36,11 @@ return_loadings is set to FALSE.
 }
 }
 \description{
-Calculate the contrastive PCA
+This function calculate the contrastive PCA given a target
+covariance matrix and the background covariance matrix you wish to subtract.
+The alpha parameter controls how much of the background covariance you wish
+to remove. You have the options to return the feature loadings and you can
+specificy the number of cPCAs to return.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

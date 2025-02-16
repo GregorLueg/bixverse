@@ -42,16 +42,18 @@ A list containing:
 \item pvals - The calculated odds ratios.
 \item odds_ratios - The calculated odds ratios.
 \item overlap - The size of the overlap.
-\gene_set_lengths - The length of the gene sets.
-\no_test - The number of tests that were conducted against target_gene_list.
+\item gene_set_lengths - The length of the gene sets.
+\item no_test - The number of tests that were conducted against target_gene_list.
 First element indicates how many values belong to the first target_genes set
 in the list, etc.
 }
 }
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
-the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 term will be removed from all ancestors. This function is designed to leverage Rust-based threading
 for parallel processing of a list of target genes.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

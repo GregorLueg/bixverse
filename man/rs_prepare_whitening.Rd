@@ -12,11 +12,12 @@ rs_prepare_whitening(x)
 \value{
 A list containing:
 \itemize{
-\item whiten - The whitened matrix.
+\item x - The transposed and scaled data for subsequent usage in ICA.
 \item k - The K matrix.
 }
 }
 \description{
-Whitens the matrix for subsequent usage. This is a need pre-
-processing step for ICA.
+Prepares the data for subsequent usag in ICA.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }
