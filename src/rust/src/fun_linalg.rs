@@ -84,7 +84,7 @@ fn rs_contrastive_pca(
   }
 }
 
-/// Whiten a matrix
+/// Prepare the data for whitening
 /// 
 /// @description Whitens the matrix for subsequent usage. This is a need pre-
 /// processing step for ICA.
@@ -99,15 +99,15 @@ fn rs_contrastive_pca(
 /// 
 /// @export
 #[extendr]
-fn rs_whiten_matrix(
+fn rs_prepare_whitening(
   x: RMatrix<f64>,
 ) -> List {
   let x = r_matrix_to_faer(x);
   
-  let (whiten, k) = whiten_matrix(x);
+  let (x, k) = prepare_whitening(x);
 
   list!(
-    whiten = faer_to_r_matrix(whiten),
+    x = faer_to_r_matrix(x),
     k = faer_to_r_matrix(k)
   )
 }
@@ -124,6 +124,7 @@ fn rs_whiten_matrix(
 /// @param tol Tolerance parameter.
 /// @param ica_type One of 'logcosh' or 'exp'.
 /// @param verbose Controls the verbosity of the function.
+/// @param debug Additional messages if desired.
 /// 
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
@@ -142,7 +143,7 @@ fn rs_fast_ica(
   alpha: f64,
   tol: f64,
   ica_type: &str,
-  verbose: bool
+  verbose: bool,
 ) -> extendr_api::Result<List> {
   // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
 
@@ -166,6 +167,6 @@ extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_contrastive_pca;
-  fn rs_whiten_matrix;
+  fn rs_prepare_whitening;
   fn rs_fast_ica;
 }

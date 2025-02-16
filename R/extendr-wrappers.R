@@ -211,7 +211,7 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
-#' Whiten a matrix
+#' Prepare the data for whitening
 #' 
 #' @description Whitens the matrix for subsequent usage. This is a need pre-
 #' processing step for ICA.
@@ -225,7 +225,7 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' }
 #' 
 #' @export
-rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
+rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 
 #' Run the Rust implementation of fast ICA.
 #' 
@@ -239,6 +239,7 @@ rs_whiten_matrix <- function(x) .Call(wrap__rs_whiten_matrix, x)
 #' @param tol Tolerance parameter.
 #' @param ica_type One of 'logcosh' or 'exp'.
 #' @param verbose Controls the verbosity of the function.
+#' @param debug Additional messages if desired.
 #' 
 #' @param x The matrix to whiten. The whitening will happen over the columns.
 #' 

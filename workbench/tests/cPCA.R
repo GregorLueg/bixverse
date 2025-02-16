@@ -5,6 +5,7 @@ library(zeallot)
 
 devtools::document()
 devtools::load_all()
+rextendr::document()
 
 cPCA_data = create_synthetic_cPCA_data()
 
@@ -39,85 +40,10 @@ sample_meta = data.table(
 
 bulk_coexp_class = bulk_coexp(raw_data = raw_data, meta_data = sample_meta)
 
-get_params(bulk_coexp_class, TRUE, TRUE)
+bulk_coexp_class = preprocess_bulk_coexp(bulk_coexp_class)
 
-devtools::document()
-
-test = bulk_coexp(raw_data = raw_data, meta_data = sample_meta)
-
-mat <- S7::prop(bulk_coexp_class, "raw_data")
-
-feature_meta <- data.table::data.table(
-  feature_name = colnames(mat),
-  mean_exp = colMeans(mat),
-  MAD = matrixStats::colMads(mat),
-  var_exp = matrixStats::colVars(mat)
-) %>%
-  data.table::setorder(-MAD)
-
-hvg = NULL
-mad_threshold = NULL
-scaling = TRUE
-scaling_type = 'robust'
-
-if(is.null(hvg) & is.null(mad_threshold)) {
-  hvg = 1
-}
-
-
-if (!is.null(hvg)) {
-  no_genes_to_take <-
-    ifelse(is.integer(hvg), hvg, ceiling(hvg * ncol(mat)))
-  hvg_genes <- feature_meta[1:no_genes_to_take, feature_name]
-} else {
-  hvg_genes <- feature_meta[MAD >= mad_threshold, feature_name]
-}
-
-feature_meta[, hvg := feature_name %in% hvg_genes]
-
-# Process the matrix
-matrix_processed <- mat[, hvg_genes]
-
-if (scaling) {
-  fun <-
-    ifelse(scaling_type == "normal",
-           "scale",
-           "bixverse::robust_scale"
-    )
-  matrix_processed <- rlang::eval_tidy(rlang::quo(apply(
-    matrix_processed, 1, !!!rlang::parse_exprs(fun)
-  )))
-}
-
-
-S7::method(format, bulk_coexp) <- function(x, ...) {
-  pre_processed <- !purrr::is_empty(x@processed_data)
-  co_exp_method <- if (purrr::is_empty(x@params[["detection_method"]])) {
-    'not defined yet'
-  } else {
-    S7::prop(x, "params")[["detection_method"]]
-  }
-  outputs_available = !purrr::is_empty(S7::prop(bulk_coexp, "params")[["outputs"]])
-
-  sprintf(
-    "Bulk co-expression class object:\n  Pre-processsed: %b\n  Method: %s\n  Outputs available: %b",
-    pre_processed,
-    co_exp_method,
-    outputs_available
-  )
-}
-
-bulk_coexp_class
-
-print(bulk_coexp_class)
-
-purrr::is_empty(bulk_coexp_class@params[["outputs"]])
-
-
-
+# If this is run without pre-processing it will throw a warning
 bulk_coexp_class = contrastive_pca_processing(bulk_coexp_class, background_mat = background_mat)
-
-?c_pca_plot_alphas
 
 c_pca_plot_alphas(bulk_coexp_class, label_column = 'grp', n_alphas = 15L, max_alpha = 1000)
 

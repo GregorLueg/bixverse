@@ -1,6 +1,6 @@
 use faer::Mat;
 
-use crate::utils_rust::{faer_diagonal_from_vec, array_f64_max, array_f64_min};
+use crate::utils_rust::{faer_diagonal_from_vec, array_f64_min};
 
 /// Enum for the ICA types
 #[derive(Debug)]
@@ -73,8 +73,33 @@ pub fn get_top_eigenvalues(
 }
 
 
+// fn normalize_svd_signs(mut u: Mat<f64>) -> Mat<f64> {
+//     // R's convention: make the element with the largest absolute value in the first column positive
+//     let mut max_abs = 0.0;
+//     let mut max_idx = 0;
+    
+//     // Find largest absolute value in the first column
+//     for i in 0..u.nrows() {
+//         let abs_val = u[(i, 0)].abs();
+//         if abs_val > max_abs {
+//             max_abs = abs_val;
+//             max_idx = i;
+//         }
+//     }
+    
+//     // If the largest element is negative, flip signs in the entire matrix
+//     if u[(max_idx, 0)] < 0.0 {
+//         for j in 0..u.ncols() {
+//             for i in 0..u.nrows() {
+//                 u[(i, j)] = -u[(i, j)];
+//             }
+//         }
+//     }
+//     u
+// }
+
 /// Whiten a matrix. This is needed pre-processing for ICA.
-pub fn whiten_matrix(
+pub fn prepare_whitening(
   x: Mat<f64>
 ) -> (faer::Mat<f64>, faer::Mat<f64>) {
   let n = x.nrows();  
@@ -83,10 +108,10 @@ pub fn whiten_matrix(
 
   let centered = centered.transpose();
 
-  let covariance =  centered * centered.transpose() / n as f64;
+  let v =  centered * centered.transpose() / n as f64;
 
   // SVD
-  let svd_res = covariance.svd().unwrap();
+  let svd_res = v.svd().unwrap();
 
   // Get d
   let s = svd_res.S();
@@ -100,11 +125,12 @@ pub fn whiten_matrix(
 
   // Get k
   let u = svd_res.U();
-  let k = d * u.transpose();
 
-  let whiten = &k * centered;
+  let u_transpose = u.transpose();
 
-  (whiten, k)
+  let k = d * u_transpose;
+
+  (centered.cloned(), k)
 }
 
 
@@ -120,7 +146,9 @@ pub fn update_mix_mat(
   let s = s
     .column_vector()
     .iter()
-    .map(|x| {1_f64 / x})
+    .map(|x| {
+      1_f64 / x
+    })
     .collect::<Vec<_>>();
   let d = faer_diagonal_from_vec(s);
 
@@ -160,13 +188,13 @@ pub fn fast_ica_logcosh(
       wx.ncols(),
     |i, j| {
         let x = wx.get(i, j);
-        alpha * x.tanh()
+        (alpha * x).tanh()
       }
     );
 
     let v1 = &gwx * x.transpose() / p as f64;  
 
-    let gwx_2 = Mat::from_fn(
+    let gwx_2 = alpha * Mat::from_fn(
       gwx.nrows(),
       gwx.ncols(),
     |i, j| {
@@ -197,12 +225,17 @@ pub fn fast_ica_logcosh(
       })
       .collect();
     
+    let tol_it = 1_f64 - diagonal
+      .iter()
+      .map(|x| (x.abs() - 1.0).abs())
+      .fold(f64::NEG_INFINITY, f64::max);
+
     if it + 1 < maxit {
-      lim[it + 1] = array_f64_max(&diagonal);
+      lim[it + 1] = tol_it
     }
 
     if verbose {
-      println!("Iteration: {:?}, tol: {:?}", it, lim[it])
+      println!("Iteration: {:?}, tol: {:?}", it + 1, tol_it)
     }
 
     w = w1;
@@ -261,7 +294,7 @@ pub fn fast_ica_exp(
       .collect();
 
     let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
-
+    
     let w1 = update_mix_mat(v1 - v2);
 
     let w1_up = w1.clone() * w.transpose();
@@ -273,13 +306,18 @@ pub fn fast_ica_exp(
         (1_f64 - x).abs()
       })
       .collect();
+
+    let tol_it = 1_f64 - diagonal
+      .iter()
+      .map(|x| (x.abs() - 1.0).abs())
+      .fold(f64::NEG_INFINITY, f64::max);
     
     if it + 1 < maxit {
-      lim[it + 1] = array_f64_max(&diagonal);
+      lim[it + 1] = tol_it
     }
 
     if verbose {
-      println!("Iteration: {:?}, tol: {:?}", it, lim[it])
+      println!("Iteration: {:?}, tol: {:?}", it + 1, tol_it)
     }
 
     w = w1;

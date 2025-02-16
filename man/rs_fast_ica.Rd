@@ -21,6 +21,8 @@ rs_fast_ica(whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
 \item{verbose}{Controls the verbosity of the function.}
 
+\item{debug}{Additional messages if desired.}
+
 \item{x}{The matrix to whiten. The whitening will happen over the columns.}
 }
 \value{

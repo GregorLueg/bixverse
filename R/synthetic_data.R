@@ -44,7 +44,7 @@
 #' synthetic_GEX <- create_synthetic_signal_matrix()
 #' synthetic_signal_mat <- synthetic_GEX$mat
 #' }
-create_synthetic_signal_matrix <- function(no_grps = 3,
+synthetic_signal_matrix <- function(no_grps = 3,
                                            per_group = 30,
                                            total_genes = 1000L,
                                            mean_initial = 5,
@@ -133,6 +133,7 @@ create_synthetic_signal_matrix <- function(no_grps = 3,
     diff = diff,
     group = group
   )
+
   attr(result, "synthetic_example") <- TRUE
 
   return(result)
@@ -152,7 +153,7 @@ create_synthetic_signal_matrix <- function(no_grps = 3,
 #' @importFrom magrittr `%>%`
 #'
 #' @export
-create_synthetic_cPCA_data <- function(seed = 10101L) {
+synthetic_cPCA_data <- function(seed = 10101L) {
   # Checks
   checkmate::qassert(seed, "I1")
   set.seed(seed)
