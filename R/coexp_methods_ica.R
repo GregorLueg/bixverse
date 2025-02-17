@@ -53,7 +53,7 @@ fast_ica_rust <- function(X_norm,
 
   c(a, converged) %<-% rs_fast_ica(
     X1,
-    w.init,
+    w_init,
     maxit = maxit,
     alpha = alpha,
     tol = tol,
@@ -66,10 +66,10 @@ fast_ica_rust <- function(X_norm,
   A <- t(w) %*% solve(w %*% t(w))
 
   res <- list(
-    w <- w,
-    A <- A,
-    S <- S,
-    converged <- converged
+    w = w,
+    A = A,
+    S = S,
+    converged = converged
   )
 
   return(res)

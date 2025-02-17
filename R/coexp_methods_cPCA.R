@@ -105,11 +105,9 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     S7::prop(bulk_coexp, "processed_data")[["background_covar"]] <-
       background_covar
 
-
     # Set the object to a cPCA analysis
     S7::prop(bulk_coexp, "params")["detection_method"] <- "cPCA"
     S7::prop(bulk_coexp, "params")[["cPCA_params"]] <- internal_params
-
 
     # Return
     bulk_coexp

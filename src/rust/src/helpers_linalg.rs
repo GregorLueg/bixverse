@@ -5,8 +5,8 @@ use crate::utils_rust::{faer_diagonal_from_vec, array_f64_min};
 /// Enum for the ICA types
 #[derive(Debug)]
 pub enum IcaType {
-    Exp,
-    LogCosh,
+  Exp,
+  LogCosh,
 }
 
 /// Type alias of the ICA results
@@ -290,3 +290,4 @@ pub fn fast_ica_exp(
 
   (w, min_tol)
 }
+

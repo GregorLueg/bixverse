@@ -21,16 +21,18 @@ ica_test = bulk_coexp(X, meta_data)
 
 ica_test = ica_processing(ica_test)
 
-
-dim(ica_test@processed_data$whiten_data)
-
-dim(ica_test@processed_data$K)
-
-
-
-sprintf("I1[2,%i]", ncol(X))
-
 c(X_norm, K) %<-% rs_prepare_whitening(X)
+
+ica_res <- fast_ica_rust(
+  X_norm,
+  K,
+  n_icas = 50L,
+  ica_fun = "logcosh",
+  seed =123L,
+  .verbose = TRUE
+)
+
+ica_res
 
 dim(X_norm)
 

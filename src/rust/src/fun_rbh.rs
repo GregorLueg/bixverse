@@ -126,10 +126,10 @@ fn rs_rbh_sets(
   let mut similarity = Vec::new();
 
   for module in rbh_results_flatten {
-    origin.push(module.origin.clone());
-    target.push(module.target.clone());
-    origin_modules.push(module.origin_modules.clone());
-    target_modules.push(module.target_modules.clone());
+    origin.push(module.origin);
+    target.push(module.target);
+    origin_modules.push(module.origin_modules);
+    target_modules.push(module.target_modules);
     similarity.push(module.similarities.clone());
     comparisons.push(module.similarities.len());
   }

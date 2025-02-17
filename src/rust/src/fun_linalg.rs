@@ -172,9 +172,11 @@ fn rs_fast_ica(
     IcaType::LogCosh => fast_ica_logcosh(x, w_init, tol, alpha, maxit, verbose),
   };
 
-  Ok(list!(
-    mixing = faer_to_r_matrix(a.0),
-    converged = a.1 < tol)
+  Ok(list!
+    (
+      mixing = faer_to_r_matrix(a.0),
+      converged = a.1 < tol
+    )
   )
 }
 
