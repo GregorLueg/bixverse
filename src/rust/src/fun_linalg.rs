@@ -26,8 +26,6 @@ fn rs_covariance(
   faer_to_r_matrix(covar)
 }
 
-
-
 /// Calculate the contrastive PCA
 /// 
 /// @description This function calculate the contrastive PCA given a target

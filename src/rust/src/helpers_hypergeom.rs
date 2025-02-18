@@ -30,18 +30,22 @@ pub fn hypergeom_pval(
     // For the extreme case where hits equals gene_set_length
     if q == m && q <= k {
       // Calculate survival function directly in log space
-      let mut log_prob = 0.0;
+      // I needed to do this with help of Claude to deal with precision problems
             
       // Convert to f64 once at the start
       let (n_f, m_f, k_f, q_f) = (n as f64, m as f64, k as f64, q as f64);
       let population_f = population as f64;
             
       // ln(P(X ≥ q)) calculation
-      log_prob = ln_gamma(m_f + 1.0) + ln_gamma(n_f + 1.0) + ln_gamma(k_f + 1.0) + 
-                 ln_gamma(population_f - k_f + 1.0) - 
-                 ln_gamma(q_f + 1.0) - ln_gamma(m_f - q_f + 1.0) - 
-                 ln_gamma(k_f - q_f + 1.0) - ln_gamma(n_f - (k_f - q_f) + 1.0) - 
-                 ln_gamma(population_f + 1.0);
+      let log_prob = ln_gamma(m_f + 1.0) + 
+        ln_gamma(n_f + 1.0) + 
+        ln_gamma(k_f + 1.0) + 
+        ln_gamma(population_f - k_f + 1.0) - 
+        ln_gamma(q_f + 1.0) - 
+        ln_gamma(m_f - q_f + 1.0) - 
+        ln_gamma(k_f - q_f + 1.0) - 
+        ln_gamma(n_f - (k_f - q_f) + 1.0) - 
+        ln_gamma(population_f + 1.0);
             
       log_prob.exp()
     } else {
