@@ -129,11 +129,12 @@ rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, lev
 
 #' Fast AUC calculation
 #' 
-#' This function calculates rapidly AUCs based on an approximation.
+#' @description This function calculates rapidly AUCs based on an approximation.
 #' 
 #' @param pos_scores The scores of your hits.
 #' @param neg_scores The scores of your non-hits.
-#' @param iters Number of iterations to run the function for. Recommended size: 10,000.
+#' @param iters Number of iterations to run the function for. 
+#' Recommended size: 10000L.
 #' @param random_seed Seed.
 #' 
 #' @return The AUC.
@@ -143,14 +144,15 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 
 #' Create random AUCs
 #' 
-#' This function creates a random set of AUCs based on a score vector and
-#' a size of the positive set. This can be used for permutation-based estimation
+#' @description This function creates a random set of AUCs based on a score vector 
+#' and a size of the positive set. This can be used for permutation-based estimation
 #' of Z-scores and subsequently p-values.
 #' 
 #' @param score_vec The overall vector of scores.
 #' @param size_pos The size of the hits represented in the score_vec.
 #' @param random_iters Number of random AUCs to generate.
-#' @param auc_iters Number of random iterations to approximate the AUCs.
+#' @param auc_iters Number of random iterations to approximate the AUCs. 
+#' Recommended size: 10000L.
 #' @param seed Seed.
 #' 
 #' @return A vector of random AUCs based the score vector and size of the positive set.
@@ -167,6 +169,9 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' 
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
+
+#' @export
+rs_hypergeom <- function(q, m, n, k) .Call(wrap__rs_hypergeom, q, m, n, k)
 
 #' Generate reciprocal best hits based on set similarities
 #' 

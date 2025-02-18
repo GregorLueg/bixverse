@@ -37,8 +37,8 @@ fn rs_hypergeom_test(
   target_genes: Vec<String>,
   gene_sets: List,
   gene_universe: Vec<String>
-) -> List {
-  let gene_sets = r_list_to_str_vec(gene_sets);
+) -> extendr_api::Result<List> {
+  let gene_sets = r_list_to_str_vec(gene_sets)?;
 
   let res: HypergeomResult = hypergeom_helper(
     &target_genes,
@@ -46,12 +46,12 @@ fn rs_hypergeom_test(
     &gene_universe
   );
 
-  list!(
-    pvals = res.0, 
+  Ok(list!(
+    pvals = res.0,
     odds_ratios = res.1,
     hits = res.2,
     gene_set_lengths = res.3
-  )
+  ))
 }
 
 /// Run a hypergeometric test over a list of target genes
@@ -80,9 +80,9 @@ fn rs_hypergeom_test_list(
   target_genes_list: List,
   gene_sets: List,
   gene_universe: Vec<String>
-) -> List {
-  let gene_sets = r_list_to_str_vec(gene_sets);
-  let target_genes_list = r_list_to_str_vec(target_genes_list);
+) -> extendr_api::Result<List> {
+  let gene_sets = r_list_to_str_vec(gene_sets)?;
+  let target_genes_list = r_list_to_str_vec(target_genes_list)?;
 
   let res: Vec<HypergeomResult> = target_genes_list
     .par_iter()
@@ -113,12 +113,12 @@ fn rs_hypergeom_test_list(
   let hits: Vec<_> = flatten_vector(hits);
   let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
   
-  list!(
-    pvals = pvals, 
+  Ok(list!(
+    pvals = pvals,
     odds_ratios = odds_ratios,
     hits = hits,
     gene_set_lengths = gene_set_lengths
-  )
+  ))
 }
 
 /// Run hypergeometric enrichment over the gene ontology
@@ -154,72 +154,72 @@ fn rs_hypergeom_test_list(
 /// @export
 #[extendr]
 fn rs_gse_geom_elim(
-  target_genes: Vec<String>,
-  go_to_genes: List,
-  ancestors: List,
-  levels: List,
-  gene_universe_length: u64,
-  min_genes: i64,
-  elim_threshold: f64,
-  debug: bool,
-) -> List {
-  let level_ids: Vec<String> = levels
-    .clone()
-    .iter()
-    .map(|(n, _)| {
-      n.to_string()
-    })
-    .collect();
+    target_genes: Vec<String>,
+    go_to_genes: List,
+    ancestors: List,
+    levels: List,
+    gene_universe_length: u64,
+    min_genes: i64,
+    elim_threshold: f64,
+    debug: bool,
+) -> extendr_api::Result<List> {
+    let level_ids: Vec<String> = levels
+        .clone()
+        .iter()
+        .map(|(n, _)| {
+            n.to_string()
+        })
+        .collect();
 
-  let go_data = prepare_go_data(
-    go_to_genes,
-    ancestors,
-    levels,
-  );
+    // Destructure the tuple returned by prepare_go_data
+    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(
+        go_to_genes,
+        ancestors,
+        levels,
+    )?;  // The ? operator goes here, after prepare_go_data
 
-  let mut go_obj = GeneOntology {
-    go_to_gene: go_data.0,
-    ancestors: go_data.1,
-    levels: go_data.2,
-  };
-  
-  let mut go_ids: Vec<Vec<String>> = Vec::new();
-  let mut pvals: Vec<Vec<f64>> = Vec::new();
-  let mut odds_ratios: Vec<Vec<f64>> = Vec::new();
-  let mut hits: Vec<Vec<u64>> = Vec::new();
-  let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
+    let mut go_obj = GeneOntology {
+        go_to_gene,         // Use the destructured values
+        ancestors: ancestors_map,
+        levels: levels_map,
+    };  // No ? operator here
 
-  for level in level_ids.iter() {
-    let level_res = process_ontology_level(
-      target_genes.clone(),
-      level,
-      &mut go_obj,
-      min_genes,
-      gene_universe_length,
-      elim_threshold,
-      debug
-    );
+    let mut go_ids: Vec<Vec<String>> = Vec::new();
+    let mut pvals: Vec<Vec<f64>> = Vec::new();
+    let mut odds_ratios: Vec<Vec<f64>> = Vec::new();
+    let mut hits: Vec<Vec<u64>> = Vec::new();
+    let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
 
-    go_ids.push(level_res.go_ids);
-    pvals.push(level_res.pvals);
-    odds_ratios.push(level_res.odds_ratios);
-    hits.push(level_res.hits);
-    gene_set_lengths.push(level_res.gene_set_lengths);
-  }
-  
-  let go_ids: Vec<_> = flatten_vector(go_ids);
-  let pvals: Vec<_> = flatten_vector(pvals);
-  let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
-  let hits: Vec<_> = flatten_vector(hits);
-  let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
+    for level in level_ids.iter() {
+        let level_res = process_ontology_level(
+            target_genes.clone(),
+            level,
+            &mut go_obj,
+            min_genes,
+            gene_universe_length,
+            elim_threshold,
+            debug
+        );
+        go_ids.push(level_res.go_ids);
+        pvals.push(level_res.pvals);
+        odds_ratios.push(level_res.odds_ratios);
+        hits.push(level_res.hits);
+        gene_set_lengths.push(level_res.gene_set_lengths);
+    }
 
-  list!(
-    go_ids = go_ids,
-    pvals = pvals, 
-    odds_ratios = odds_ratios,
-    hits = hits,
-    gene_set_lengths = gene_set_lengths
-  )
+    let go_ids: Vec<_> = flatten_vector(go_ids);
+    let pvals: Vec<_> = flatten_vector(pvals);
+    let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
+    let hits: Vec<_> = flatten_vector(hits);
+    let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
+
+    Ok(list!(
+        go_ids = go_ids,
+        pvals = pvals,
+        odds_ratios = odds_ratios,
+        hits = hits,
+        gene_set_lengths = gene_set_lengths
+    ))
 }
 
 
@@ -268,9 +268,9 @@ fn rs_gse_geom_elim_list(
   min_genes: i64,
   elim_threshold: f64,
   debug: bool,
-) -> List {
+)  -> extendr_api::Result<List> {
   // Prepare various variables
-  let target_genes_list = r_list_to_str_vec(target_genes_list);
+  let target_genes_list = r_list_to_str_vec(target_genes_list)?;
   let level_ids: Vec<String> = levels
     .clone()
     .iter()
@@ -283,7 +283,7 @@ fn rs_gse_geom_elim_list(
     go_to_genes,
     ancestors,
     levels,
-  );
+  )?;
 
   let res: Vec<GoElimLevelResultsIter> = target_genes_list
     .par_iter()
@@ -359,14 +359,14 @@ fn rs_gse_geom_elim_list(
   let hits_final: Vec<_> = flatten_vector(hits_final);
   let gene_set_lengths_final: Vec<_> = flatten_vector(gene_set_lengths_final);
 
-  list!(
+  Ok(list!(
     go_ids = go_ids_final,
     pvals = pvals_final, 
     odds_ratios = odds_ratios_final,
     hits = hits_final,
     gene_set_lengths = gene_set_lengths_final,
     no_test = no_tests
-  )
+  ))
 }
 
 extendr_module! {

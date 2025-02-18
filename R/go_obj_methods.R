@@ -98,7 +98,6 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     # Weird issue sometimes with pulling f64 back to Double and end up with
     # negative p-values
     results_go_dt <- data.table(do.call(cbind, results_go[-1])) %>%
-      .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
       .[, `:=`(
         go_id = results_go$go_ids,
         fdr = p.adjust(pvals, method = "BH")
@@ -233,7 +232,6 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     cols_to_select <- c("pvals", "odds_ratios", "hits", "gene_set_lengths")
 
     results_go_dt <- data.table(do.call(cbind, results_go[cols_to_select])) %>%
-      .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
       .[, `:=`(
         go_id = results_go$go_ids,
         target_set_name = target_set_names

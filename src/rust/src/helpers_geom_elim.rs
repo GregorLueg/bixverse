@@ -28,9 +28,9 @@ pub struct GoElimLevelResults {
 
 /// Structure that contains the gene ontology and key functions to do apply the elimination method.
 pub struct GeneOntology {
-    pub go_to_gene: GeneMap,
-    pub ancestors: AncestorMap,
-    pub levels: LevelMap,
+  pub go_to_gene: GeneMap,
+  pub ancestors: AncestorMap,
+  pub levels: LevelMap,
 }
 
 impl GeneOntology {
@@ -109,12 +109,12 @@ pub fn prepare_go_data(
   go_to_genes: List,
   ancestors: List,
   levels: List,
- ) -> (GeneMap, AncestorMap, LevelMap) {
-  let go_to_genes = r_list_to_hashmap_set(go_to_genes);
-  let ancestors = r_list_to_hashmap(ancestors);
-  let levels = r_list_to_hashmap(levels);
+ ) -> extendr_api::Result<(GeneMap, AncestorMap, LevelMap)> {
+  let go_to_genes = r_list_to_hashmap_set(go_to_genes)?;
+  let ancestors = r_list_to_hashmap(ancestors)?;
+  let levels = r_list_to_hashmap(levels)?;
 
-  (go_to_genes, ancestors, levels)
+  Ok((go_to_genes, ancestors, levels))
 }
 
 /// Process a given ontology level

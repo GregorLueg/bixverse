@@ -13,7 +13,7 @@ pub enum IcaType {
 type IcaRes = (faer::Mat<f64>, f64);
 
 /// Scale a matrix by its mean (column wise)
-pub fn scale_matrix(mat: &Mat<f64>) -> Mat<f64>{
+pub fn scale_matrix_col(mat: &Mat<f64>) -> Mat<f64>{
   let n_rows = mat.nrows();
   let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
   let means = (ones.transpose() * mat) / n_rows as f64;
@@ -25,7 +25,7 @@ pub fn column_covariance(mat: &Mat<f64>) -> Mat<f64> {
   let n_rows = mat.nrows();
     
   // Center the matrix by subtracting means from each column
-  let centered = scale_matrix(mat);
+  let centered = scale_matrix_col(mat);
     
   // Calculate covariance: (1/(n-1)) * (X - 1*means)^T * (X - 1*means)
   let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
@@ -79,7 +79,7 @@ pub fn prepare_whitening(
 ) -> (faer::Mat<f64>, faer::Mat<f64>) {
   let n = x.nrows();  
 
-  let centered = scale_matrix(&x);
+  let centered = scale_matrix_col(&x);
 
   let centered = centered.transpose();
 

@@ -2,6 +2,7 @@ use extendr_api::prelude::*;
 use rand::prelude::*;
 // use rand::seq::SliceRandom;
 use rayon::prelude::*; 
+use statrs::distribution::{Hypergeometric, DiscreteCDF};
 
 use crate::utils_stats::split_vector_randomly;
 // use std::collections::HashSet;
@@ -121,6 +122,33 @@ fn rs_ot_harmonic_sum(
   harmonic_sum / max_sum
 }
 
+
+/// @export
+#[extendr]
+fn rs_hypergeom(
+  q: u64, 
+  m: u64, 
+  n: u64, 
+  k: u64
+) -> f64 {
+  if q == 0 {
+    // Special case of no hits. Due to being -1 here, the p-value returns as 0.
+    1.0
+  } else {
+    let population = m + n;
+    let successes = m;     
+    let draws = k;  
+    let dist: Hypergeometric = Hypergeometric::new(
+      population, 
+      successes, 
+      draws
+    )
+    .unwrap();
+    1.0 - dist.cdf(q - 1)
+  }
+}
+
+
 // /// Set similarities
 // /// 
 // /// This function calculates the Jaccard or similarity index between a given 
@@ -174,4 +202,5 @@ extendr_module! {
     fn rs_fast_auc;
     fn rs_create_random_aucs;
     fn rs_ot_harmonic_sum;
+    fn rs_hypergeom;
 }
