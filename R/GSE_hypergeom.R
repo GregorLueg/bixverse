@@ -62,10 +62,8 @@ gse_hypergeometric <- function(target_genes,
     gene_universe = gene_universe
   )
 
-  # Imprecision in floats can yield negative p-values. Make these positive
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
     .[, `:=`(gene_set_name = names(gene_set_list),
              fdr = p.adjust(pvals, method = "BH"))] %>%
     data.table::setcolorder(.,
@@ -148,7 +146,6 @@ gse_hypergeometric_list <- function(target_genes_list,
 
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
     .[, `:=`(
       gene_set_name  = rep(names(gene_set_list), length(target_genes_list)),
       target_set_name = rep(

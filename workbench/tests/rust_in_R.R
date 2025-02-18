@@ -8,6 +8,8 @@ devtools::load_all()
 
 library(magrittr)
 
+# General hypergeom tests ------------------------------------------------------
+
 protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
 
 seed <- 123
@@ -60,7 +62,6 @@ t2 <- gse_hypergeometric_list(
 )
 tictoc::toc()
 
-devtools::document()
 
 go_data_dt <- biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
 

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
-use statrs::distribution::Hypergeometric;
-use statrs::distribution::DiscreteCDF;
+use statrs::distribution::{Hypergeometric, Discrete};
+use statrs::function::gamma::ln_gamma;
 
 ///////////
 // Types //
@@ -21,19 +21,40 @@ pub fn hypergeom_pval(
   k: u64
 ) -> f64 {
   if q == 0 {
-    // Special case of no hits. Due to being -1 here, the p-value returns as 0.
     1.0
   } else {
     let population = m + n;
-    let successes = m;     
-    let draws = k;  
-    let dist: Hypergeometric = Hypergeometric::new(
-      population, 
-      successes, 
-      draws
-    )
-    .unwrap();
-    1.0 - dist.cdf(q - 1)
+    let successes = m;
+    let draws = k;
+        
+    // For the extreme case where hits equals gene_set_length
+    if q == m && q <= k {
+      // Calculate survival function directly in log space
+      let mut log_prob = 0.0;
+            
+      // Convert to f64 once at the start
+      let (n_f, m_f, k_f, q_f) = (n as f64, m as f64, k as f64, q as f64);
+      let population_f = population as f64;
+            
+      // ln(P(X ≥ q)) calculation
+      log_prob = ln_gamma(m_f + 1.0) + ln_gamma(n_f + 1.0) + ln_gamma(k_f + 1.0) + 
+                 ln_gamma(population_f - k_f + 1.0) - 
+                 ln_gamma(q_f + 1.0) - ln_gamma(m_f - q_f + 1.0) - 
+                 ln_gamma(k_f - q_f + 1.0) - ln_gamma(n_f - (k_f - q_f) + 1.0) - 
+                 ln_gamma(population_f + 1.0);
+            
+      log_prob.exp()
+    } else {
+      // For non-extreme cases, use survival function
+      let dist = Hypergeometric::new(population, successes, draws).unwrap();
+      let mut sum = 0.0;
+      // Sum P(X = i) for i from q to min(k, m)
+      let upper = k.min(m);
+      for i in q..=upper {
+        sum += dist.pmf(i);  
+      }
+      sum
+    }
   }
 }
 

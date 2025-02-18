@@ -47,8 +47,8 @@ fn rs_rbh_sets(
   overlap_coefficient: bool,
   min_similarity: f64,
   debug: bool
-) -> List {
-  let module_list: NestedHashMap = r_nested_list_to_rust(module_list);
+) -> extendr_api::Result<List> {
+  let module_list: NestedHashMap = r_nested_list_to_rust(module_list)?;
   // Pull out all the keys
   let origins: Vec<String>  = module_list
     .clone()
@@ -139,14 +139,14 @@ fn rs_rbh_sets(
   let similarity: Vec<_> = flatten_vector(similarity);
 
 
-  list!(
+  Ok(list!(
     origin = origin,
     target = target,
     comparisons = comparisons,
     origin_modules = origin_modules,
     target_modules = target_modules,
     similarity = similarity
-  )
+  ))
 }
 
 extendr_module! {
