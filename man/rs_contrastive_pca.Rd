@@ -28,9 +28,19 @@ rs_contrastive_pca(
 PCA}
 }
 \value{
-An R list with loadings and factors. If return_loadings == FALSE,
-then loadings will be NULL.
+A list containing:
+\itemize{
+\item factors - The factors of the contrastive PCA.
+\item loadings - The loadings of the contrastive PCA. Will be NULL if
+return_loadings is set to FALSE.
+}
 }
 \description{
-Calculate the contrastive PCA
+This function calculate the contrastive PCA given a target
+covariance matrix and the background covariance matrix you wish to subtract.
+The alpha parameter controls how much of the background covariance you wish
+to remove. You have the options to return the feature loadings and you can
+specificy the number of cPCAs to return.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

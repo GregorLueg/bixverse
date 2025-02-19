@@ -121,7 +121,9 @@ rbh_class = rbh_graph(
 )
 
 
-rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .15, overlap_coefficient = F)
+rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = T)
+
+rbh_class@rbh_edge_df
 
 rbh_class = find_rbh_communities(rbh_class)
 

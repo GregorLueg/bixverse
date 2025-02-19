@@ -7,28 +7,33 @@
 rs_rbh_sets(module_list, overlap_coefficient, min_similarity, debug)
 }
 \arguments{
-\item{module_list}{A nested named list. The outer list should contain the origin of the gene modules,
-the inner list the names of the gene modules and the respective genes in them.}
+\item{module_list}{A nested named list. The outer list should contain the
+origin of the gene modules, the inner list the names of the gene modules and
+the respective genes in them.}
 
-\item{overlap_coefficient}{Shall the overlap coefficient instead of the Jaccard similarity be used.}
+\item{overlap_coefficient}{Shall the overlap coefficient instead of the
+Jaccard similarity be used.}
 
-\item{min_similarity}{Minimum similarity that should exist between any two given gene modules to
-actually calculate RBH pairs.}
+\item{min_similarity}{Minimum similarity that should exist between any two
+given gene modules to actually calculate RBH pairs.}
 
 \item{debug}{Boolean Boolean that activates print messages for debugging purposes.}
 }
 \value{
-An R list with 6 elements:
+A list containing:
 \itemize{
-\item origin: The name of the origin of the gene modules.
-\item target: The name of the target of the gene modules.
-\item comparisons: Integer vector indicating how many RBH hits were identified in this comparison
-\item origin_modules: Names of the gene modules from the origin.
-\item target_modules: Names of the gene modules from the target.
-\item similarity: The similarities between the two respective gene modules.
+\item origin - The name of the origin of the gene modules.
+\item target - The name of the target of the gene modules.
+\item comparisons - Integer vector indicating how many RBH hits were identified in this comparison
+\item origin_modules - Names of the gene modules from the origin.
+\item target_modules - Names of the gene modules from the target.
+\item similarity - The similarities between the two respective gene modules.
 }
 }
 \description{
-This function takes a nested list that contains gene modules/sets derived from various methods
-and generate identifies reciprocal best hits between gene modules/sets across the different origins.
+This function takes a nested list that contains gene modules/sets
+derived from various methods and generate identifies reciprocal best hits between
+gene modules/sets across the different origins.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

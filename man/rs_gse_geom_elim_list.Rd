@@ -36,21 +36,24 @@ as names. IMPORTANT! This list needs to be ordered in the right way!}
 \item{elim_threshold:}{p-value below which the elimination procedure shall be applied to the ancestors.}
 }
 \value{
-A list with the following elements:
+A list containing:
 \itemize{
-\item go_ids, the gene ontology identifier
-\item pvals, the p-values from the hypergeometric test
-\item odds ratios, the calculated odds ratios
-\item overlap, the size of the overlap,
-\item gene_set_lengths, the length of the gene sets.
-\item no_test, the number of tests that were conducted against target_gene_list. First element indicates
-how many values belong to the first target_genes set in the list, etc.
+\item go_ids - The gene ontology identifier.
+\item pvals - The calculated odds ratios.
+\item odds_ratios - The calculated odds ratios.
+\item overlap - The size of the overlap.
+\item gene_set_lengths - The length of the gene sets.
+\item no_test - The number of tests that were conducted against target_gene_list.
+First element indicates how many values belong to the first target_genes set
+in the list, etc.
 }
 }
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
-the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 term will be removed from all ancestors. This function is designed to leverage Rust-based threading
 for parallel processing of a list of target genes.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

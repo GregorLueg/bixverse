@@ -2,65 +2,21 @@ use extendr_api::prelude::*;
 use rand::prelude::*;
 // use rand::seq::SliceRandom;
 use rayon::prelude::*; 
+use statrs::distribution::{Hypergeometric, DiscreteCDF};
 
 use crate::utils_stats::split_vector_randomly;
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
 
 
-// /// Set similarities
-// /// 
-// /// This function calculates the Jaccard or similarity index between a given 
-// /// string vector and a list of other string vectors.
-// /// 
-// /// @param string The String vector against which to calculate the set similarities.
-// /// @param string_list The list of character vectors for which to calculate the set similarities. 
-// /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
-// /// 
-// /// @export
-// #[extendr]
-// fn rs_set_sim_list(
-//   string: Vec<String>,
-//   string_list: List,
-//   similarity_index: bool,
-// ) -> Vec<f64> {
-//     let string_vec = r_list_to_str_vec(string_list);
-//     let string: HashSet<_> = string
-//       .iter()
-//       .collect();
-//     let values: Vec<(u64, u64)> = string_vec
-//       .iter()
-//       .map(|s| {
-//         let s_hash: HashSet<_> = s
-//         .iter()
-//         .collect();
-//         let i = s_hash.intersection(&string).count() as u64;
-//         let u = if similarity_index {
-//           std::cmp::min(s_hash.len(), string.len()) as u64
-//         } else {
-//           s_hash.union(&string).count() as u64
-//         };
-//         (i, u)
-//       })
-//       .collect();
-
-//     let mut sim: Vec<f64> = Vec::new();
-
-//     for (i, u) in values {
-//       let sim_i: f64 = (i as f64) / (u as f64);
-//       sim.push(sim_i)
-//     }
-
-//     sim
-//   }
-
 /// Fast AUC calculation
 /// 
-/// This function calculates rapidly AUCs based on an approximation.
+/// @description This function calculates rapidly AUCs based on an approximation.
 /// 
 /// @param pos_scores The scores of your hits.
 /// @param neg_scores The scores of your non-hits.
-/// @param iters Number of iterations to run the function for. Recommended size: 10,000.
+/// @param iters Number of iterations to run the function for. 
+/// Recommended size: 10000L.
 /// @param random_seed Seed.
 /// 
 /// @return The AUC.
@@ -89,14 +45,15 @@ fn rs_fast_auc(
 
 /// Create random AUCs
 /// 
-/// This function creates a random set of AUCs based on a score vector and
-/// a size of the positive set. This can be used for permutation-based estimation
+/// @description This function creates a random set of AUCs based on a score vector 
+/// and a size of the positive set. This can be used for permutation-based estimation
 /// of Z-scores and subsequently p-values.
 /// 
 /// @param score_vec The overall vector of scores.
 /// @param size_pos The size of the hits represented in the score_vec.
 /// @param random_iters Number of random AUCs to generate.
-/// @param auc_iters Number of random iterations to approximate the AUCs.
+/// @param auc_iters Number of random iterations to approximate the AUCs. 
+/// Recommended size: 10000L.
 /// @param seed Seed.
 /// 
 /// @return A vector of random AUCs based the score vector and size of the positive set.
@@ -166,10 +123,84 @@ fn rs_ot_harmonic_sum(
 }
 
 
+/// @export
+#[extendr]
+fn rs_hypergeom(
+  q: u64, 
+  m: u64, 
+  n: u64, 
+  k: u64
+) -> f64 {
+  if q == 0 {
+    // Special case of no hits. Due to being -1 here, the p-value returns as 0.
+    1.0
+  } else {
+    let population = m + n;
+    let successes = m;     
+    let draws = k;  
+    let dist: Hypergeometric = Hypergeometric::new(
+      population, 
+      successes, 
+      draws
+    )
+    .unwrap();
+    1.0 - dist.cdf(q - 1)
+  }
+}
+
+
+// /// Set similarities
+// /// 
+// /// This function calculates the Jaccard or similarity index between a given 
+// /// string vector and a list of other string vectors.
+// /// 
+// /// @param string The String vector against which to calculate the set similarities.
+// /// @param string_list The list of character vectors for which to calculate the set similarities. 
+// /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
+// /// 
+// /// @export
+// #[extendr]
+// fn rs_set_sim_list(
+//   string: Vec<String>,
+//   string_list: List,
+//   similarity_index: bool,
+// ) -> Vec<f64> {
+//     let string_vec = r_list_to_str_vec(string_list);
+//     let string: HashSet<_> = string
+//       .iter()
+//       .collect();
+//     let values: Vec<(u64, u64)> = string_vec
+//       .iter()
+//       .map(|s| {
+//         let s_hash: HashSet<_> = s
+//         .iter()
+//         .collect();
+//         let i = s_hash.intersection(&string).count() as u64;
+//         let u = if similarity_index {
+//           std::cmp::min(s_hash.len(), string.len()) as u64
+//         } else {
+//           s_hash.union(&string).count() as u64
+//         };
+//         (i, u)
+//       })
+//       .collect();
+
+//     let mut sim: Vec<f64> = Vec::new();
+
+//     for (i, u) in values {
+//       let sim_i: f64 = (i as f64) / (u as f64);
+//       sim.push(sim_i)
+//     }
+
+//     sim
+//   }
+
+
 extendr_module! {
     mod fun_stats;
     // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
     fn rs_ot_harmonic_sum;
+    fn rs_hypergeom;
 }

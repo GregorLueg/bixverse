@@ -16,24 +16,30 @@ pub struct RbhResult {
 
 /// Generate reciprocal best hits based on set similarities
 /// 
-/// This function takes a nested list that contains gene modules/sets derived from various methods
-/// and generate identifies reciprocal best hits between gene modules/sets across the different origins.
+/// @description This function takes a nested list that contains gene modules/sets 
+/// derived from various methods and generate identifies reciprocal best hits between 
+/// gene modules/sets across the different origins.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// with type checks are provided in the package.
 /// 
-/// @param module_list A nested named list. The outer list should contain the origin of the gene modules,
-/// the inner list the names of the gene modules and the respective genes in them.
-/// @param overlap_coefficient Shall the overlap coefficient instead of the Jaccard similarity be used.
-/// @param min_similarity Minimum similarity that should exist between any two given gene modules to 
-/// actually calculate RBH pairs.
+/// @param module_list A nested named list. The outer list should contain the 
+/// origin of the gene modules, the inner list the names of the gene modules and
+/// the respective genes in them.
+/// @param overlap_coefficient Shall the overlap coefficient instead of the 
+/// Jaccard similarity be used.
+/// @param min_similarity Minimum similarity that should exist between any two 
+/// given gene modules to actually calculate RBH pairs.
 /// @param debug Boolean Boolean that activates print messages for debugging purposes.
 /// 
-/// @return An R list with 6 elements: 
-/// - origin: The name of the origin of the gene modules.
-/// - target: The name of the target of the gene modules.
-/// - comparisons: Integer vector indicating how many RBH hits were identified in this comparison
-/// - origin_modules: Names of the gene modules from the origin.
-/// - target_modules: Names of the gene modules from the target.
-/// - similarity: The similarities between the two respective gene modules.
-/// 
+/// @return A list containing:
+///  \itemize{
+///   \item origin - The name of the origin of the gene modules.
+///   \item target - The name of the target of the gene modules.
+///   \item comparisons - Integer vector indicating how many RBH hits were identified in this comparison
+///   \item origin_modules - Names of the gene modules from the origin.
+///   \item target_modules - Names of the gene modules from the target.
+///   \item similarity - The similarities between the two respective gene modules.
+/// }
 /// @export
 #[extendr]
 fn rs_rbh_sets(
@@ -41,8 +47,8 @@ fn rs_rbh_sets(
   overlap_coefficient: bool,
   min_similarity: f64,
   debug: bool
-) -> List {
-  let module_list: NestedHashMap = r_nested_list_to_rust(module_list);
+) -> extendr_api::Result<List> {
+  let module_list: NestedHashMap = r_nested_list_to_rust(module_list)?;
   // Pull out all the keys
   let origins: Vec<String>  = module_list
     .clone()
@@ -120,10 +126,10 @@ fn rs_rbh_sets(
   let mut similarity = Vec::new();
 
   for module in rbh_results_flatten {
-    origin.push(module.origin.clone());
-    target.push(module.target.clone());
-    origin_modules.push(module.origin_modules.clone());
-    target_modules.push(module.target_modules.clone());
+    origin.push(module.origin);
+    target.push(module.target);
+    origin_modules.push(module.origin_modules);
+    target_modules.push(module.target_modules);
     similarity.push(module.similarities.clone());
     comparisons.push(module.similarities.len());
   }
@@ -133,14 +139,14 @@ fn rs_rbh_sets(
   let similarity: Vec<_> = flatten_vector(similarity);
 
 
-  list!(
+  Ok(list!(
     origin = origin,
     target = target,
     comparisons = comparisons,
     origin_modules = origin_modules,
     target_modules = target_modules,
     similarity = similarity
-  )
+  ))
 }
 
 extendr_module! {

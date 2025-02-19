@@ -36,18 +36,20 @@ as names. IMPORTANT! This list needs to be ordered in the right way!}
 \item{debug}{boolean that will provide additional console information for debugging purposes.}
 }
 \value{
-A list with the following elements:
+A list containing:
 \itemize{
-\item go_ids, the gene ontology identifier
-\item pvals, the p-values from the hypergeometric test
-\item odds ratios, the calculated odds ratios
-\item overlap, the size of the overlap,
-\item gene_set_lengths, the length of the gene sets.
+\item go_ids - The gene ontology identifier.
+\item pvals - The calculated odds ratios.
+\item odds_ratios - The calculated odds ratios.
+\item overlap - The size of the overlap.
+\gene_set_lengths - The length of the gene sets.
 }
 }
 \description{
 This function implements a Rust version of the gene ontology enrichment with elimination:
-the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
+the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
 Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
 term will be removed from all ancestors.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+with type checks are provided in the package.
 }

@@ -16,7 +16,7 @@ contrastive_pca_processing <- S7::new_generic(
 #'
 #' @description
 #' This function will prepare the `bulk_coexp` for subsequent usage of the
-#' contrastive PCA function. This is based on the work of Abid, et al.
+#' contrastive PCA functions. This is based on the work of Abid, et al.
 #'
 #' @usage contrastive_pca_processing(
 #'  bulk_coexp = bulk_coexp,
@@ -26,11 +26,13 @@ contrastive_pca_processing <- S7::new_generic(
 #' )
 #'
 #' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
-#' @param background_matrix Numeric matrix.
+#' @param background_matrix Numeric matrix. The background matrix you wish to
+#' remove. You should apply any data transformation to this matrix, too!
 #' @param scale Boolean. Shall the data be scaled. Defaults to FALSE.
-#' @param verbose Boolean. Controls verbosity of the function.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `bulk_coexp` with additional data in the slots
+#' @return `bulk_coexp` with the needed data for contrastive PCA in the
+#' properties of the class.
 #'
 #' @export
 #'
@@ -53,7 +55,13 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     checkmate::qassert(.verbose, "B1")
 
     # Function body
-    target_mat <- S7::prop(bulk_coexp, "raw_data")
+    if(purrr::is_empty(S7::prop(bulk_coexp_class, "processed_data")[['processed_data']])) {
+      warning("No pre-processed data found. Defaulting to the raw data")
+      target_mat <- S7::prop(bulk_coexp, "raw_data")
+    } else {
+      target_mat <- S7::prop(bulk_coexp_class, "processed_data")[['processed_data']]
+    }
+
     background_mat <- background_mat
 
     intersecting_features <- intersect(
@@ -78,6 +86,9 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     target_covar <- rs_covariance(target_mat)
     background_covar <- rs_covariance(background_mat)
 
+    rownames(target_covar) <- rownames(background_covar) <- intersecting_features
+    colnames(target_covar) <- colnames(background_covar) <- intersecting_features
+
     internal_params <- list(
       "intersecting_features" = intersecting_features,
       "scaled_data" = scale
@@ -94,11 +105,9 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     S7::prop(bulk_coexp, "processed_data")[["background_covar"]] <-
       background_covar
 
-
     # Set the object to a cPCA analysis
     S7::prop(bulk_coexp, "params")["detection_method"] <- "cPCA"
     S7::prop(bulk_coexp, "params")[["cPCA_params"]] <- internal_params
-
 
     # Return
     bulk_coexp
@@ -157,7 +166,7 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
     target_mat <- S7::prop(bulk_coexp, "processed_data")[["target_mat"]]
 
     # Run cPCA
-    c(loadings, factors) %<-% rs_contrastive_pca(
+    c(factors, loadings) %<-% rs_contrastive_pca(
       target_covar = target_covar,
       background_covar = background_covar,
       target_mat = target_mat,
@@ -260,7 +269,7 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(bulk_coexp,
   # Calculate the contrastive PCs...
   cpcs_list <- purrr::map(alpha_seq, ~ {
     # Rust baby...
-    c(loadings, factors) %<-% rs_contrastive_pca(
+    c(factors, loadings) %<-% rs_contrastive_pca(
       target_covar = target_covar,
       background_covar = background_covar,
       target_mat = target_mat,
