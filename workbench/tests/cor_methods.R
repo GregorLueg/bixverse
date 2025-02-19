@@ -25,13 +25,20 @@ X_scaled[1:5, 1:5]
 #
 # out = (prod_sum_jax - prod_means_jax) / prod_sds_jax
 
-tictoc::tic()
-cor_X <- cor(X)
-tictoc::toc()
+
+X <- matrix(data = rnorm(1000 * 1000), nrow = 1000, ncol = 1000)
 
 tictoc::tic()
-X_scaled_rs <- rs_cor(X)
+cor_X <- cor(X, method = "spearman")
 tictoc::toc()
+
+cor_X[1:5, 1:5]
+
+tictoc::tic()
+cor_X_rs <- rs_cor(X)
+tictoc::toc()
+
+cor_X_rs[1:5, 1:5]
 
 n <- nrow(X_scaled)
 

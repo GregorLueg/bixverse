@@ -1,15 +1,15 @@
 use extendr_api::prelude::*;
 
-use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::helpers_linalg::*;
+use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::utils_rust::nested_vector_to_faer_mat;
 
 
 /// Calculate the column-wise co-variance.
 /// 
 /// @description Calculates the co-variance of the columns.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
 /// 
 /// @param x R matrix with doubles.
 /// 
@@ -26,17 +26,28 @@ fn rs_covariance(
   faer_to_r_matrix(covar)
 }
 
+/// Calculate the column wise correlations.
+/// 
+/// @description Calculates the correlation matrix of the columns.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param x R matrix with doubles.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// 
 /// @export
 #[extendr]
 fn rs_cor(
-  x: RMatrix<f64>
+  x: RMatrix<f64>,
+  spearman: bool
 ) -> extendr_api::RArray<f64, [usize; 2]> {
   let mat = r_matrix_to_faer(x);
-  let scaled = scale_matrix_col(&mat, true);
 
-  let nrow = scaled.nrows() as f64;
-
-  let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
+  let cor = column_correlation(
+    &mat,
+    spearman
+  );
 
   faer_to_r_matrix(cor)
 }

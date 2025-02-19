@@ -288,7 +288,7 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
 #' @export
-rs_cor <- function(x) .Call(wrap__rs_cor, x)
+rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
 
 # nolint end

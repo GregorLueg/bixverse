@@ -1,6 +1,6 @@
 use faer::Mat;
-
-use crate::utils_rust::{faer_diagonal_from_vec, array_f64_min};
+use rayon::iter::ParallelIterator;
+use crate::utils_rust::*;
 
 /// Enum for the ICA types
 #[derive(Debug)]
@@ -60,13 +60,40 @@ pub fn scale_matrix_col(
   scaled
 }
 
-/// Calculate the co-variance
+/// Calculate the column-wise co-variance
 pub fn column_covariance(mat: &Mat<f64>) -> Mat<f64> {
   let n_rows = mat.nrows();
   let centered = scale_matrix_col(mat, false);
   let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
     
   covariance
+}
+
+/// Calculate the column-wise correlation. Option to use spearman.
+pub fn column_correlation(
+  mat: &Mat<f64>,
+  spearman: bool
+) -> Mat<f64>{
+  let mat = if spearman {
+    let ranked_vecs: Vec<Vec<f64>> = mat
+      .par_col_iter()
+      .map(|x_i| { 
+        let x_i: Vec<f64> = x_i.iter().copied().collect();
+        rank_vector(&x_i)
+      }).collect();
+
+    nested_vector_to_faer_mat(ranked_vecs)
+  } else {
+    mat.cloned()
+  };
+
+  let scaled = scale_matrix_col(&mat, true);
+
+  let nrow = scaled.nrows() as f64;
+
+  let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
+
+  cor
 }
 
 /// Get the eigenvalues and vectors from a symmetric matrix
