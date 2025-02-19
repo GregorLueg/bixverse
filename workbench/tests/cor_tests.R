@@ -1,5 +1,6 @@
 library(devtools)
 
+devtools::document()
 devtools::load_all()
 rextendr::document()
 
@@ -32,13 +33,13 @@ X_b <- matrix(data = rnorm(1000 * 1000), nrow = 1000, ncol = 1000)
 diff_cor_res <- rs_differential_cor(X_a, X_b, spearman = TRUE)
 
 tictoc::tic()
-cor_X <- cor(X, method = "spearman")
+cor_X <- cor(X_a, method = "spearman")
 tictoc::toc()
 
 cor_X[1:5, 1:5]
 
 tictoc::tic()
-cor_X_rs <- rs_cor(X, spearman = TRUE)
+cor_X_rs <- rs_cor(X_a, spearman = TRUE)
 tictoc::toc()
 
 cor_X_rs[1:5, 1:5]

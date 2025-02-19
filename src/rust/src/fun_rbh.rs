@@ -7,11 +7,11 @@ use crate::utils_rust::flatten_vector;
 
 /// Structure to store the RBH results.
 pub struct RbhResult {
-    pub origin: String,
-    pub target: String,
-    pub origin_modules: Vec<String>,
-    pub target_modules: Vec<String>,
-    pub similarities: Vec<f64>
+  pub origin: String,
+  pub target: String,
+  pub origin_modules: Vec<String>,
+  pub target_modules: Vec<String>,
+  pub similarities: Vec<f64>
 }
 
 /// Generate reciprocal best hits based on set similarities

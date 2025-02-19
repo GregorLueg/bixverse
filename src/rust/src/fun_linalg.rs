@@ -87,11 +87,16 @@ fn rs_differential_cor(
   x_b: RMatrix<f64>,
   spearman: bool
 ) -> List {
+  assert!(
+    x_a.ncols() == x_b.ncols(),
+    "Input matrices must have the same number of columns. Found {} columns in first matrix and {} in second.",
+    x_a.ncols(), 
+    x_b.ncols()
+  );
   let n_sample_a = x_a.nrows();
   let n_sample_b = x_b.nrows();
   let mat_a = r_matrix_to_faer(x_a);
   let mat_b = r_matrix_to_faer(x_b);
-
 
   let cor_a = column_correlation(&mat_a, spearman);
   let cor_b = column_correlation(&mat_b, spearman);
