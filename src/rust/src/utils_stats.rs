@@ -1,6 +1,7 @@
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
+use statrs::distribution::{Normal, ContinuousCDF};
 
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
 pub fn split_vector_randomly(
@@ -36,7 +37,17 @@ pub fn set_similarity(
     i as f64 / u as f64
 }
 
-
+pub fn z_scores_to_pval(
+  z_scores: &[f64]
+) -> Vec<f64> {
+    let normal = Normal::new(0.0, 1.0).unwrap();
+    z_scores.iter()
+        .map(|&z| {
+            let abs_z = z.abs();
+            2.0 * (1.0 - normal.cdf(abs_z))
+        })
+        .collect()
+}
 
 // /// Calculate the Jaccard or Set similarity over a vector of HashSets.
 // pub fn set_similarity_iter(

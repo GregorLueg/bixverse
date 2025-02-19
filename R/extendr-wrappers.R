@@ -205,8 +205,8 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug)
 #' Calculate the column-wise co-variance.
 #' 
 #' @description Calculates the co-variance of the columns.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
 #' 
 #' @param x R matrix with doubles.
 #' 
@@ -214,6 +214,49 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug)
 #' 
 #' @export
 rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
+
+#' Calculate the column wise correlations.
+#' 
+#' @description Calculates the correlation matrix of the columns.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
+#' 
+#' @param x R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' 
+#' @returns The correlation matrix.
+#' 
+#' @export
+rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
+
+#' Calculate the column wise differential correlation between two sets of data.
+#' 
+#' @description This function calculates the differential correlation based on
+#' the Fisher method. For speed purposes, the function will only calculate the
+#' differential correlation on the upper triangle of the two correlation
+#' matrices.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
+#' 
+#' @param x_a R matrix a to be used for the differential correlation analysis.
+#' @param x_b R matrix a to be used for the differential correlation analysis.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' 
+#' @return A list containing:
+#'  \itemize{
+#'   \item r_a - The correlation coefficients in the upper triangle of 
+#'   matrix a.
+#'   \item r_b - The correlation coefficients in the upper triangle of 
+#'   matrix b.
+#'   \item z_score - The z-scores of the difference in correlation 
+#'   coefficients. 
+#'   \item p_val - The z-scores transformed to p-values.
+#' }
+#' 
+#' @export
+rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_cor, x_a, x_b, spearman)
 
 #' Calculate the contrastive PCA
 #' 
@@ -286,9 +329,6 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' 
 #' @export
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
-
-#' @export
-rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
 
 # nolint end

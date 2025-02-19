@@ -1,6 +1,11 @@
 use faer::Mat;
-use rayon::iter::ParallelIterator;
+use rayon::iter::*;
 use crate::utils_rust::*;
+use crate::utils_stats::z_scores_to_pval;
+
+//////////////////////////////
+// ENUMS, TYPES, STRUCTURES //
+//////////////////////////////
 
 /// Enum for the ICA types
 #[derive(Debug)]
@@ -11,6 +16,18 @@ pub enum IcaType {
 
 /// Type alias of the ICA results
 type IcaRes = (faer::Mat<f64>, f64);
+
+/// Structure for DiffCor results
+pub struct DiffCorRes {
+  pub r_a: Vec<f64>,
+  pub r_b: Vec<f64>,
+  pub z_score: Vec<f64>,
+  pub p_vals: Vec<f64>
+}
+
+//////////////////////////////
+// SCALING, COVAR, COR, PCA //
+//////////////////////////////
 
 /// Scale a matrix by its mean (column wise)
 pub fn scale_matrix_col(
@@ -96,6 +113,58 @@ pub fn column_correlation(
   cor
 }
 
+/// Calculate differential calculations
+pub fn calculate_diff_correlation(
+  mat_a: &Mat<f64>,
+  mat_b: &Mat<f64>,
+  no_sample_a: usize,
+  no_sample_b: usize,
+  spearman: bool,
+) -> DiffCorRes {
+  let mut cors_a: Vec<f64> = Vec::new();
+  let mut cors_b: Vec<f64> = Vec::new();
+
+  let upper_triangle_indices = upper_triangle_indices(
+    mat_a.ncols(),
+    1
+  );
+
+  for (&r, &c) in upper_triangle_indices.0.iter().zip(upper_triangle_indices.1.iter()) {
+    cors_a.push(*mat_a.get(r, c));
+    cors_b.push(*mat_b.get(r, c));
+  }
+
+  cors_a
+    .par_iter_mut()
+    .for_each(|x| *x = x.atanh());
+  cors_b
+    .par_iter_mut()
+    .for_each(|x| *x = x.atanh());
+
+  // Constant will depend on if Spearman or Pearson  
+  let constant = if spearman { 1.06 } else { 1.0 } ;
+  let denominator = ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
+
+  let z_scores: Vec<f64> = cors_a
+    .par_iter()
+    .zip(
+      cors_b.par_iter()
+    )
+    .map(|(a, b)| {
+      (a - b) / denominator
+    })
+    .collect();
+
+  let p_values = z_scores_to_pval(&z_scores);
+
+  DiffCorRes{
+    r_a: cors_a,
+    r_b: cors_b,
+    z_score: z_scores,
+    p_vals: p_values
+  }
+}
+
 /// Get the eigenvalues and vectors from a symmetric matrix
 pub fn get_top_eigenvalues(
   matrix: &Mat<f64>, 
@@ -135,6 +204,9 @@ pub fn get_top_eigenvalues(
   res
 }
 
+/////////
+// ICA //
+/////////
 
 /// Whiten a matrix. This is needed pre-processing for ICA.
 pub fn prepare_whitening(

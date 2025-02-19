@@ -1,5 +1,7 @@
 use faer::Mat;
 
+// VECTOR STUFF
+
 /// Flatten a nested vector
 pub fn flatten_vector<T>(
     vec: Vec<Vec<T>>
@@ -32,25 +34,6 @@ pub fn array_f64_min(
     }
     min_val
 }
-
-/// Transform a nested vector into a faer matrix
-pub fn nested_vector_to_faer_mat(
-  nested_vec: Vec<Vec<f64>>
-) -> faer::Mat<f64> {
-  let nrow = nested_vec[0].len();
-  let ncol = nested_vec.len();
-  let data = flatten_vector(nested_vec);
-  Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
-}
-
-/// Create a diagonal matrix with the vector values in the diagonal and the rest being 0's
-pub fn faer_diagonal_from_vec(
-    vec: Vec<f64>
-) -> Mat<f64> {
-    let len = vec.len();
-    Mat::from_fn(len, len, |row, col| if row == col {vec[row]} else {0.0})
-}
-
 
 /// Generate the rank of a vector with tie correction.
 pub fn rank_vector(
@@ -91,4 +74,47 @@ pub fn rank_vector(
 
   ranks  
 }
+
+// MATRIX STUFF
+
+/// Transform a nested vector into a faer matrix
+pub fn nested_vector_to_faer_mat(
+  nested_vec: Vec<Vec<f64>>
+) -> faer::Mat<f64> {
+  let nrow = nested_vec[0].len();
+  let ncol = nested_vec.len();
+  let data = flatten_vector(nested_vec);
+  Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
+}
+
+/// Create a diagonal matrix with the vector values in the diagonal and the rest being 0's
+pub fn faer_diagonal_from_vec(
+    vec: Vec<f64>
+) -> Mat<f64> {
+    let len = vec.len();
+    Mat::from_fn(len, len, |row, col| if row == col {vec[row]} else {0.0})
+}
+
+/// Get the index positions of the upper triangle of a symmetric matrix
+pub fn upper_triangle_indices(
+  n_dim: usize,
+  offset: usize
+) -> (Vec<usize>, Vec<usize>) {
+  let mut row_indices: Vec<usize> = Vec::new();
+  let mut col_indices: Vec<usize> = Vec::new();
+
+  for row in 0..n_dim{
+    let start_col = std::cmp::max(row + offset, 0) as usize;
+    if start_col < n_dim {
+      for col in start_col..n_dim {
+        row_indices.push(row);
+        col_indices.push(col);
+      }
+    }
+  }
+
+  (row_indices, col_indices)
+}
+
+
 

@@ -26,7 +26,10 @@ X_scaled[1:5, 1:5]
 # out = (prod_sum_jax - prod_means_jax) / prod_sds_jax
 
 
-X <- matrix(data = rnorm(1000 * 1000), nrow = 1000, ncol = 1000)
+X_a <- matrix(data = rnorm(1000 * 1000, 1, 2), nrow = 1000, ncol = 1000)
+X_b <- matrix(data = rnorm(1000 * 1000), nrow = 1000, ncol = 1000)
+
+diff_cor_res <- rs_differential_cor(X_a, X_b, spearman = TRUE)
 
 tictoc::tic()
 cor_X <- cor(X, method = "spearman")
@@ -35,7 +38,7 @@ tictoc::toc()
 cor_X[1:5, 1:5]
 
 tictoc::tic()
-cor_X_rs <- rs_cor(X)
+cor_X_rs <- rs_cor(X, spearman = TRUE)
 tictoc::toc()
 
 cor_X_rs[1:5, 1:5]

@@ -36,6 +36,8 @@ fn rs_covariance(
 /// @param spearman Shall the Spearman correlation be calculated instead of 
 /// Pearson.
 /// 
+/// @returns The correlation matrix.
+/// 
 /// @export
 #[extendr]
 fn rs_cor(
@@ -51,6 +53,65 @@ fn rs_cor(
 
   faer_to_r_matrix(cor)
 }
+
+
+/// Calculate the column wise differential correlation between two sets of data.
+/// 
+/// @description This function calculates the differential correlation based on
+/// the Fisher method. For speed purposes, the function will only calculate the
+/// differential correlation on the upper triangle of the two correlation
+/// matrices.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param x_a R matrix a to be used for the differential correlation analysis.
+/// @param x_b R matrix a to be used for the differential correlation analysis.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// 
+/// @return A list containing:
+///  \itemize{
+///   \item r_a - The correlation coefficients in the upper triangle of 
+///   matrix a.
+///   \item r_b - The correlation coefficients in the upper triangle of 
+///   matrix b.
+///   \item z_score - The z-scores of the difference in correlation 
+///   coefficients. 
+///   \item p_val - The z-scores transformed to p-values.
+/// }
+/// 
+/// @export
+#[extendr]
+fn rs_differential_cor(
+  x_a: RMatrix<f64>,
+  x_b: RMatrix<f64>,
+  spearman: bool
+) -> List {
+  let n_sample_a = x_a.nrows();
+  let n_sample_b = x_b.nrows();
+  let mat_a = r_matrix_to_faer(x_a);
+  let mat_b = r_matrix_to_faer(x_b);
+
+
+  let cor_a = column_correlation(&mat_a, spearman);
+  let cor_b = column_correlation(&mat_b, spearman);
+
+  let diff_cor = calculate_diff_correlation(
+    &cor_a,
+    &cor_b,
+    n_sample_a,
+    n_sample_b,
+    spearman
+  );
+
+  list!(
+    r_a = diff_cor.r_a,
+    r_b = diff_cor.r_b,
+    z_score = diff_cor.z_score,
+    p_val = diff_cor.p_vals
+  )
+}
+
 
 /// Calculate the contrastive PCA
 /// 
@@ -207,8 +268,9 @@ fn rs_fast_ica(
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
+  fn rs_cor;
+  fn rs_differential_cor;
   fn rs_contrastive_pca;
   fn rs_prepare_whitening;
   fn rs_fast_ica;
-  fn rs_cor;
 }
