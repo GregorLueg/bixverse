@@ -1,0 +1,42 @@
+library(devtools)
+
+devtools::load_all()
+rextendr::document()
+
+
+syn_data = synthetic_signal_matrix()
+
+X = t(syn_data$mat)
+
+X[1:5, 1:5]
+
+cor(X)[1:5, 1:5]
+
+rs_cor(X)[1:5, 1:5]
+
+X_scaled[1:5, 1:5]
+
+# means_jax = X_jax.mean(axis=0).reshape(1, X_jax.shape[1])
+# std_jax = X_jax.std(axis=0).reshape(1, X_jax.shape[1])
+#
+# prod_sum_jax = X_jax.T.dot(X_jax)
+# prod_means_jax = means_jax.T.dot(means_jax) * X_jax.shape[0]
+# prod_sds_jax = std_jax.T.dot(std_jax) * X_jax.shape[0]
+#
+# out = (prod_sum_jax - prod_means_jax) / prod_sds_jax
+
+tictoc::tic()
+cor_X <- cor(X)
+tictoc::toc()
+
+tictoc::tic()
+X_scaled_rs <- rs_cor(X)
+tictoc::toc()
+
+n <- nrow(X_scaled)
+
+cor_m <- t(X_scaled) %*% X_scaled / (n - 1)
+
+cor <- (m1 - row_means) / row_stds
+
+cor_m[1:5, 1:5]

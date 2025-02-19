@@ -26,6 +26,21 @@ fn rs_covariance(
   faer_to_r_matrix(covar)
 }
 
+/// @export
+#[extendr]
+fn rs_cor(
+  x: RMatrix<f64>
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let mat = r_matrix_to_faer(x);
+  let scaled = scale_matrix_col(&mat, true);
+
+  let nrow = scaled.nrows() as f64;
+
+  let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
+
+  faer_to_r_matrix(cor)
+}
+
 /// Calculate the contrastive PCA
 /// 
 /// @description This function calculate the contrastive PCA given a target
@@ -184,4 +199,5 @@ extendr_module! {
   fn rs_contrastive_pca;
   fn rs_prepare_whitening;
   fn rs_fast_ica;
+  fn rs_cor;
 }

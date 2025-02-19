@@ -13,17 +13,57 @@ pub enum IcaType {
 type IcaRes = (faer::Mat<f64>, f64);
 
 /// Scale a matrix by its mean (column wise)
-pub fn scale_matrix_col(mat: &Mat<f64>) -> Mat<f64>{
+pub fn scale_matrix_col(
+  mat: &Mat<f64>,
+  scale_sd: bool
+) -> Mat<f64>{
   let n_rows = mat.nrows();
   let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
   let means = (ones.transpose() * mat) / n_rows as f64;
-  mat - &ones * &means
+  let centered = mat - &ones * &means;
+
+  if !scale_sd {
+    return centered;
+  }
+
+  let squared_diff = Mat::from_fn(
+    centered.nrows(),
+    centered.ncols(),
+  |i, j| {
+      let x = centered.get(i, j);
+      x.powi(2)
+    }
+  );
+
+  let sum_squared_diff = ones.transpose() * squared_diff;
+  let variances = sum_squared_diff / (n_rows as f64 - 1.0);
+
+  let standard_dev = Mat::from_fn(
+    variances.nrows(),
+    variances.ncols(),
+    |i, j| {
+      let x = variances.get(i, j);
+      let x = x.sqrt();
+      if x < 1e-10 { 1.0 } else { x }
+    }
+  );
+
+  let mut scaled = centered.clone();
+  let n_cols = mat.ncols();
+
+  for j in 0..n_cols {
+    for i in 0..n_rows {
+      scaled[(i, j)] = centered[(i, j)] / standard_dev[(0, j)];
+    }
+  }
+  
+  scaled
 }
 
 /// Calculate the co-variance
 pub fn column_covariance(mat: &Mat<f64>) -> Mat<f64> {
   let n_rows = mat.nrows();
-  let centered = scale_matrix_col(mat);
+  let centered = scale_matrix_col(mat, false);
   let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
     
   covariance
@@ -75,7 +115,7 @@ pub fn prepare_whitening(
 ) -> (faer::Mat<f64>, faer::Mat<f64>) {
   let n = x.nrows();  
 
-  let centered = scale_matrix_col(&x);
+  let centered = scale_matrix_col(&x, false);
 
   let centered = centered.transpose();
 
