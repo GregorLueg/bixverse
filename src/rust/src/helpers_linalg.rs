@@ -23,11 +23,7 @@ pub fn scale_matrix_col(mat: &Mat<f64>) -> Mat<f64>{
 /// Calculate the co-variance
 pub fn column_covariance(mat: &Mat<f64>) -> Mat<f64> {
   let n_rows = mat.nrows();
-    
-  // Center the matrix by subtracting means from each column
   let centered = scale_matrix_col(mat);
-    
-  // Calculate covariance: (1/(n-1)) * (X - 1*means)^T * (X - 1*means)
   let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
     
   covariance
@@ -46,7 +42,7 @@ pub fn get_top_eigenvalues(
   let s = eigendecomp.S();
   let u = eigendecomp.U();
 
-  // Extract the real part of the eigen values and vectors
+  // Extract the real part of the eigenvalues and vectors
   let mut eigenpairs = s
     .column_vector()
     .iter()
@@ -290,4 +286,7 @@ pub fn fast_ica_exp(
 
   (w, min_tol)
 }
+
+
+
 
