@@ -26,11 +26,18 @@ c(X_norm, K) %<-% rs_prepare_whitening(X)
 ica_res <- fast_ica_rust(
   X_norm,
   K,
-  n_icas = 50L,
+  n_icas = 90L,
   ica_fun = "logcosh",
-  seed =123L,
-  .verbose = TRUE
+  seed = 246L,
+  .verbose = FALSE
 )
+
+results <- ica_res$A
+
+ica_res$A[1:10, ]
+
+results[1:10, ]
+
 
 ica_res
 
