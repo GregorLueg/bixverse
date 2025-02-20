@@ -37,11 +37,11 @@ cor_module_processing <- S7::new_generic(
 #'
 #' @method cor_module_processing bulk_coexp
 S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
-                                                          non_parametric_cors = TRUE,
+                                                          correlation_method = c("pearson", "spearman"),
                                                           .verbose = TRUE) {
   # Checks
   checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
-  checkmate::qassert(non_parametric_cors, "B1")
+  checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function body
@@ -52,10 +52,20 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
     target_mat <- S7::prop(bulk_coexp, "processed_data")[['processed_data']]
   }
 
-  # Calculate the correlation matrix
-  cor_matrx <- rs_cor(x = target_mat, spearman = non_parametric_cors)
+  spearman <- if (correlation_method == 'pearson') {
+    if (.verbose)
+      message("Using Pearson correlations.")
+    FALSE
+  } else {
+    if (.verbose)
+      message("Using Spearman correlations.")
+    TRUE
+  }
 
-  S7::prop(bulk_coexp, "processed_data")[["cor_mat"]] <- cor_matrx
+  # Calculate the correlation matrix
+  cor_matrix <- rs_cor(x = target_mat, spearman = spearman)
+
+  S7::prop(bulk_coexp, "processed_data")[["cor_mat"]] <- cor_matrix
 
   return(bulk_coexp)
 }

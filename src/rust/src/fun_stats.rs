@@ -1,10 +1,9 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
-// use rand::seq::SliceRandom;
 use rayon::prelude::*; 
-use statrs::distribution::{Hypergeometric, DiscreteCDF};
 
-use crate::utils_stats::split_vector_randomly;
+use crate::utils_stats::{split_vector_randomly, hedge_g_effect};
+use crate::utils_r_rust::r_matrix_to_faer;
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
 
@@ -122,30 +121,38 @@ fn rs_ot_harmonic_sum(
   harmonic_sum / max_sum
 }
 
-
 /// @export
 #[extendr]
-fn rs_hypergeom(
-  q: u64, 
-  m: u64, 
-  n: u64, 
-  k: u64
-) -> f64 {
-  if q == 0 {
-    // Special case of no hits. Due to being -1 here, the p-value returns as 0.
-    1.0
-  } else {
-    let population = m + n;
-    let successes = m;     
-    let draws = k;  
-    let dist: Hypergeometric = Hypergeometric::new(
-      population, 
-      successes, 
-      draws
-    )
-    .unwrap();
-    1.0 - dist.cdf(q - 1)
+fn rs_hedges_g(
+  mat_a: RMatrix<f64>,
+  mat_b: RMatrix<f64>,
+  small_sample_correction: bool,
+) -> List {
+  let mat_a = r_matrix_to_faer(mat_a);
+  let mat_b = r_matrix_to_faer(mat_b);
+
+  let es_se: Vec<(f64, f64)> = mat_a
+    .par_col_iter()
+    .zip(mat_b.par_col_iter())
+    .map(|(a, b)| {
+      let a: Vec<f64> = a.iter().cloned().collect();
+      let b: Vec<f64> = b.iter().cloned().collect();
+      hedge_g_effect(&a, &b, small_sample_correction)
+    })
+    .collect();
+
+  let mut es: Vec<f64> = Vec::new();
+  let mut se: Vec<f64> = Vec::new();
+
+  for (effect_size, standard_error) in es_se {
+    es.push(effect_size);
+    se.push(standard_error);
   }
+
+  list!(
+    effect_sizes = es,
+    standard_errors = se
+  )
 }
 
 
@@ -202,5 +209,5 @@ extendr_module! {
     fn rs_fast_auc;
     fn rs_create_random_aucs;
     fn rs_ot_harmonic_sum;
-    fn rs_hypergeom;
+    fn rs_hedges_g;
 }

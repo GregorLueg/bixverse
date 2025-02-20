@@ -171,7 +171,7 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 
 #' @export
-rs_hypergeom <- function(q, m, n, k) .Call(wrap__rs_hypergeom, q, m, n, k)
+rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
 
 #' Generate reciprocal best hits based on set similarities
 #' 
