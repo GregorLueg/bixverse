@@ -51,13 +51,14 @@ pub fn array_f64_var(
   x: &[f64]
 ) -> f64 {
   let mean_a = array_f64_mean(x);
-  let var = x
+  let var: f64 = x
     .iter()
     .map(|x| {
       (x - mean_a).powi(2)
     })
     .sum();
-  var
+
+  var / (x.len() - 1) as f64
 }
 
 /// Generate the rank of a vector with tie correction.

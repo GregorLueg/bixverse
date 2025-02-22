@@ -29,6 +29,42 @@ pub struct DiffCorRes {
 // SCALING, COVAR, COR, PCA //
 //////////////////////////////
 
+
+/// Calculates the columns means of a matrix and returns it as Vec<f64>
+pub fn col_means(
+  mat: &Mat<f64>
+) -> Vec<f64> {
+  let n_rows = mat.nrows();
+  let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
+  let means = (ones.transpose() * mat) / n_rows as f64;
+
+  means.row(0).iter().cloned().collect()
+}
+
+/// Calculate the column standard deviations
+pub fn col_sds(mat: &Mat<f64>) -> Vec<f64> {
+    let n = mat.nrows() as f64;
+    let n_cols = mat.ncols();
+    
+    // Calculate means and SDs in one pass
+    let (_, m2): (Vec<f64>, Vec<f64>) = (0..n_cols).map(|j| {
+       let mut mean = 0.0;
+       let mut m2 = 0.0;
+       let mut count = 0.0;
+       
+       for i in 0..mat.nrows() {
+           count += 1.0;
+           let delta = mat[(i, j)] - mean;
+           mean += delta / count;
+           let delta2 = mat[(i, j)] - mean;
+           m2 += delta * delta2;
+       }
+       (mean, (m2 / (n - 1.0)).sqrt())
+   }).unzip();
+
+    m2
+}
+
 /// Scale a matrix by its mean (column wise)
 pub fn scale_matrix_col(
   mat: &Mat<f64>,
@@ -113,7 +149,7 @@ pub fn column_correlation(
   cor
 }
 
-/// Calculate differential calculations
+/// Calculate differential correlations
 pub fn calculate_diff_correlation(
   mat_a: &Mat<f64>,
   mat_b: &Mat<f64>,

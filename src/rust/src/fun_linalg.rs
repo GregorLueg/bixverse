@@ -124,9 +124,9 @@ fn rs_differential_cor(
 /// covariance matrix and the background covariance matrix you wish to subtract.
 /// The alpha parameter controls how much of the background covariance you wish
 /// to remove. You have the options to return the feature loadings and you can
-/// specificy the number of cPCAs to return.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// specificy the number of cPCAs to return. WARNING! Incorrect use can cause
+/// kernel crashes. Wrapper around the Rust functions with type checks are
+/// provided in the package.
 /// 
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.
@@ -189,8 +189,8 @@ fn rs_contrastive_pca(
 /// Prepare the data for whitening
 /// 
 /// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+/// functions with type checks are provided in the package.
 /// 
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
@@ -217,14 +217,15 @@ fn rs_prepare_whitening(
 
 /// Run the Rust implementation of fast ICA.
 /// 
-/// @description This function serves as a wrapper over the fast ICA implementations
-/// in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// @description This function serves as a wrapper over the fast ICA
+/// implementations in Rust. It assumes a pre-whiten matrix and also an 
+/// intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+/// around the Rust functions with type checks are provided in the package.
 /// 
 /// @param whiten The whitened matrix.
 /// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-/// @param maxit Maximum number of iterations to try if algorithm does not converge.
+/// @param maxit Maximum number of iterations to try if algorithm does not
+/// converge.
 /// @param alpha The alpha parameter for the LogCosh implementation of ICA.
 /// @param tol Tolerance parameter.
 /// @param ica_type One of 'logcosh' or 'exp'.
@@ -269,6 +270,7 @@ fn rs_fast_ica(
     )
   )
 }
+
 
 extendr_module! {
   mod fun_linalg;

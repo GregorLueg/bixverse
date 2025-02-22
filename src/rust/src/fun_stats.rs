@@ -4,6 +4,7 @@ use rayon::prelude::*;
 
 use crate::utils_stats::{split_vector_randomly, hedge_g_effect};
 use crate::utils_r_rust::r_matrix_to_faer;
+use crate::helpers_linalg::{col_means, col_sds};
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
 
@@ -44,9 +45,9 @@ fn rs_fast_auc(
 
 /// Create random AUCs
 /// 
-/// @description This function creates a random set of AUCs based on a score vector 
-/// and a size of the positive set. This can be used for permutation-based estimation
-/// of Z-scores and subsequently p-values.
+/// @description This function creates a random set of AUCs based on a score
+/// vector and a size of the positive set. This can be used for permutation-
+/// based estimation of Z-scores and subsequently p-values.
 /// 
 /// @param score_vec The overall vector of scores.
 /// @param size_pos The size of the hits represented in the score_vec.
@@ -55,7 +56,8 @@ fn rs_fast_auc(
 /// Recommended size: 10000L.
 /// @param seed Seed.
 /// 
-/// @return A vector of random AUCs based the score vector and size of the positive set.
+/// @return A vector of random AUCs based the score vector and size of the
+/// positive set.
 /// 
 /// @export
 #[extendr]
@@ -121,6 +123,22 @@ fn rs_ot_harmonic_sum(
   harmonic_sum / max_sum
 }
 
+
+/// Calculate the OT harmonic sum
+/// 
+/// @description Calculates the Hedge's G effect for two sets of matrices. The
+/// function assumes that rows = samples and columns = features. 
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param mat_a The matrix of samples and features in grp A for which to
+/// calculate the Hedge's G effect. 
+/// @param mat_b The matrix of samples and features in grp B for which to
+/// calculate the Hedge's G effect.
+/// @param small_sample_correction Shall the small sample correction be applied.
+/// 
+/// @return Returns the harmonic sum according to the OT calculation.
+/// 
 /// @export
 #[extendr]
 fn rs_hedges_g(
@@ -128,26 +146,27 @@ fn rs_hedges_g(
   mat_b: RMatrix<f64>,
   small_sample_correction: bool,
 ) -> List {
-  let mat_a = r_matrix_to_faer(mat_a);
-  let mat_b = r_matrix_to_faer(mat_b);
+  let mat_a: faer::Mat<f64> = r_matrix_to_faer(mat_a);
+  let mat_b: faer::Mat<f64> = r_matrix_to_faer(mat_b);
 
-  let es_se: Vec<(f64, f64)> = mat_a
-    .par_col_iter()
-    .zip(mat_b.par_col_iter())
-    .map(|(a, b)| {
-      let a: Vec<f64> = a.iter().cloned().collect();
-      let b: Vec<f64> = b.iter().cloned().collect();
-      hedge_g_effect(&a, &b, small_sample_correction)
-    })
-    .collect();
+  let n_a = mat_a.nrows();
+  let n_b = mat_b.nrows();
 
-  let mut es: Vec<f64> = Vec::new();
-  let mut se: Vec<f64> = Vec::new();
+  let mean_a = col_means(&mat_a);
+  let mean_b = col_means(&mat_b);
 
-  for (effect_size, standard_error) in es_se {
-    es.push(effect_size);
-    se.push(standard_error);
-  }
+  let std_a = col_sds(&mat_a);
+  let std_b = col_sds(&mat_b);
+
+  let (es, se) = hedge_g_effect(
+    &mean_a,
+    &mean_b,
+    &std_a,
+    &std_b,
+    n_a,
+    n_b,
+    small_sample_correction
+  );
 
   list!(
     effect_sizes = es,
@@ -161,7 +180,7 @@ fn rs_hedges_g(
 // /// This function calculates the Jaccard or similarity index between a given 
 // /// string vector and a list of other string vectors.
 // /// 
-// /// @param string The String vector against which to calculate the set similarities.
+// /// @param string The String vector against which to calculate the setsimilarities.
 // /// @param string_list The list of character vectors for which to calculate the set similarities. 
 // /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
 // /// 

@@ -26,7 +26,8 @@ pub struct GoElimLevelResults {
   pub gene_set_lengths: Vec<u64>,
 }
 
-/// Structure that contains the gene ontology and key functions to do apply the elimination method.
+/// Structure that contains the gene ontology and key functions to do apply the
+/// elimination method.
 pub struct GeneOntology {
   pub go_to_gene: GeneMap,
   pub ancestors: AncestorMap,
@@ -43,7 +44,8 @@ impl GeneOntology {
     self.ancestors.get(id)
   }
 
-  /// Returns the gene ontology term identifiers for a given level of the ontology.
+  /// Returns the gene ontology term identifiers for a given level of the
+  /// ontology.
   pub fn get_level_ids(
     &self,
     id: &String

@@ -12,8 +12,7 @@ rs_hypergeom_test(target_genes, gene_sets, gene_universe)
 \item{gene_sets}{A list of strings that represent the gene sets to test against.}
 
 \item{gene_universe}{A character vector representing the gene universe from
-which the target genes
-and gene sets are sampled from.}
+which the target genes and gene sets are sampled from.}
 }
 \value{
 A list containing:
@@ -25,8 +24,8 @@ A list containing:
 }
 }
 \description{
-Given a set of target genes, this is a Rust implementation of an hypergeometric
-test testing for overenrichment of the target genes in the gene sets.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-with type checks are provided in the package.
+Given a set of target genes, this is a Rust implementation of
+an hypergeometric test testing for overenrichment of the target genes in the
+gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around
+the Rust functions with type checks are provided in the package.
 }

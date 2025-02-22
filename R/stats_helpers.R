@@ -46,3 +46,72 @@ robust_scale <- function(x) {
   checkmate::qassert(x, "r+")
   (x - median(x, na.rm = T)) / IQR(x, na.rm = T)
 }
+
+
+#' Calculate the Hedge's G effect between two matrices
+#'
+#' @description
+#' This function takes two matrices in and calculate on a per column basis the
+#' Hedge's G effect size and the standard error. These results can be
+#' subsequently used for meta-analyses or other approaches.
+#'
+#' @param mat_a Numerical matrix. Contains the values for group a. Assumes that
+#' rows = samples, and columns = features.
+#' @param mat_b Numerical matrix. Contains the values for group b.
+#' @param small_sample_correction Can be NULL (automatic determination if a
+#' small sample size correction should be applied) or Boolean.
+#' @param .verbose Boolean that controls verbosity of the function.
+#'
+#' @return x, robustly scaled.
+#'
+#' @export
+calculate_effect_size <- function(mat_a,
+                                  mat_b,
+                                  small_sample_correction = NULL,
+                                  .verbose = TRUE) {
+  # Checks
+  checkmate::assertMatrix(mat_a,
+                          mode = 'numeric',
+                          min.rows = 3L,
+                          min.cols = 1L)
+  checkmate::assertMatrix(mat_b,
+                          mode = 'numeric',
+                          min.rows = 3L,
+                          min.cols = 1L)
+  checkmate::qassert(small_sample_correction, c("B1", "0"))
+  # Function
+  intersecting_features <- intersect(colnames(mat_a), colnames(mat_b))
+  mat_a <- mat_a[, intersecting_features]
+  mat_b <- mat_b[, intersecting_features]
+
+  message_text <- if (!is.null(small_sample_correction)) {
+    sprintf(
+      "Using user-specified choice for small sample correction. Correction is set to %b",
+      small_sample_correction
+    )
+  } else {
+    total_n <- nrow(mat_a) + nrow(mat_b)
+    ifelse(
+      total_n <= 50,
+      "Less than 50 samples identified. Applying small sample correction.",
+      "More than 50 samples identified. No small sample correction applied."
+    )
+  }
+
+  if(.verbose)
+    message(message_text)
+  small_sample_correction <- if (is.null(small_sample_correction))
+    total_n <= 50
+  else
+    small_sample_correction
+
+  # TO DO: implement Glass effect size estimation
+
+  results <- rs_hedges_g(
+    mat_a = mat_a,
+    mat_b = mat_b,
+    small_sample_correction = small_sample_correction
+  )
+
+  results
+}

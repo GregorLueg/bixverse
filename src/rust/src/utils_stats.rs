@@ -2,7 +2,7 @@ use rand::prelude::*;
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use statrs::distribution::{Normal, ContinuousCDF};
-use crate::utils_rust::*;
+use rayon::prelude::*; 
 
 
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
@@ -42,28 +42,52 @@ pub fn set_similarity(
 
 /// Calculate the Hedge's g effect size and its standard error
 pub fn hedge_g_effect(
-  grp_a: &[f64],
-  grp_b: &[f64],
+  mean_a: &[f64],
+  mean_b: &[f64],
+  std_a: &[f64],
+  std_b: &[f64],
+  n_a: usize,
+  n_b: usize,
   small_sample_correction: bool
-) -> (f64, f64) {
-  let len_a = grp_a.len();
-  let len_b = grp_b.len();
-  let total_n = (len_a + len_b) as f64;
-  let mean_a = array_f64_mean(grp_a);
-  let mean_b = array_f64_mean(grp_b);
-  let var_a = array_f64_var(grp_a);
-  let var_b = array_f64_var(grp_b);
-  // Calculate the Hedge's G effect
-  let pooled_sd = (((len_a - 1) as f64 * var_a + (len_b - 1) as f64 * var_b) / ((len_a - 1) as f64 + (len_b - 1) as f64)).sqrt();
-  let effect_size = (mean_a - mean_b) / pooled_sd;
-  let effect_size = if small_sample_correction {
-    let correction_factor = ((total_n - 3.0) / (total_n - 2.25)) * ((total_n - 2.0) / total_n).sqrt();
-    correction_factor * effect_size
-  } else {
-    effect_size
-  };
-  let standard_error = (total_n / (len_a as f64 * len_b as f64) + (effect_size.powi(2) / 2.0 * total_n)).sqrt();
-  (effect_size, standard_error)
+) -> (
+  Vec<f64>,
+  Vec<f64>
+) {
+  let total_n = (n_a + n_b) as f64;
+  let res: Vec<(f64, f64)> = mean_a.par_iter()
+    .zip(mean_b.par_iter())
+    .zip(std_a.par_iter())
+    .zip(std_b.par_iter())
+    .map(|(((mean_a, mean_b), std_a), std_b)| {
+      let pooled_sd = (
+        ((n_a - 1) as f64 * std_a.powi(2) + (n_b - 1) as f64 * std_b.powi(2)) / 
+        ((n_a + n_b - 2) as f64)
+      ).sqrt();
+      let effect_size = (mean_a - mean_b) / pooled_sd;
+      // Small sample correction if needed
+      let effect_size = if small_sample_correction {
+        let correction_factor = ((total_n - 3.0) / (total_n - 2.25)) * ((total_n - 2.0) / total_n).sqrt();
+        correction_factor * effect_size
+      } else {
+        effect_size
+      };
+      let standard_error = (
+        (total_n / (n_a as f64 * n_b as f64)) + 
+        (effect_size.powi(2) / (2.0 * total_n))
+      ).sqrt();
+      (effect_size, standard_error)
+    })
+    .collect();
+
+  let mut effect_sizes: Vec<f64> = Vec::new();
+  let mut standard_errors: Vec<f64> = Vec::new();
+
+  for (effect_size, standard_error) in res {
+    effect_sizes.push(effect_size);
+    standard_errors.push(standard_error);
+  }
+
+  (effect_sizes, standard_errors)
 }
 
 /// Transform Z-scores into p-values (assuming normality).
