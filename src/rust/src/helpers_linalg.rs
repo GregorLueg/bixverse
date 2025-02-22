@@ -230,7 +230,7 @@ pub fn get_top_eigenvalues(
     .collect::<Vec<(f64, Vec<f64>)>>();
 
   // Sort and return Top N
-  eigenpairs.sort_by(|a, b| b.0.abs().total_cmp(&a.0.abs()));
+  eigenpairs.sort_by(|a, b| b.0.total_cmp(&a.0));
 
   let res: Vec<(f64, Vec<f64>)> = eigenpairs
     .into_iter()

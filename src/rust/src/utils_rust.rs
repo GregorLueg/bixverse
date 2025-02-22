@@ -1,6 +1,8 @@
 use faer::Mat;
 
-// VECTOR STUFF
+//////////////////
+// VECTOR STUFF //
+//////////////////
 
 /// Flatten a nested vector
 pub fn flatten_vector<T>(
@@ -35,31 +37,31 @@ pub fn array_f64_min(
   min_val
 }
 
-/// Get the mean value from an f64 array
-pub fn array_f64_mean(
-  x: &[f64]
-) -> f64 {
-  let len_x = x.len();
-  let sum_x: f64 = x
-    .iter()
-    .sum();
-  sum_x / len_x as f64
-}
+// Get the mean value from an f64 array
+// pub fn array_f64_mean(
+//   x: &[f64]
+// ) -> f64 {
+//   let len_x = x.len();
+//   let sum_x: f64 = x
+//     .iter()
+//     .sum();
+//   sum_x / len_x as f64
+// }
 
-/// Get the variance from an f64 array
-pub fn array_f64_var(
-  x: &[f64]
-) -> f64 {
-  let mean_a = array_f64_mean(x);
-  let var: f64 = x
-    .iter()
-    .map(|x| {
-      (x - mean_a).powi(2)
-    })
-    .sum();
+// Get the variance from an f64 array
+// pub fn array_f64_var(
+//   x: &[f64]
+// ) -> f64 {
+//   let mean_a = array_f64_mean(x);
+//   let var: f64 = x
+//     .iter()
+//     .map(|x| {
+//       (x - mean_a).powi(2)
+//     })
+//     .sum();
 
-  var / (x.len() - 1) as f64
-}
+//   var / (x.len() - 1) as f64
+// }
 
 /// Generate the rank of a vector with tie correction.
 pub fn rank_vector(
@@ -101,7 +103,9 @@ pub fn rank_vector(
   ranks  
 }
 
-// MATRIX STUFF
+//////////////////
+// MATRIX STUFF //
+//////////////////
 
 /// Transform a nested vector into a faer matrix
 pub fn nested_vector_to_faer_mat(

@@ -171,6 +171,8 @@ fn rs_contrastive_pca(
 
   let c_pca_loadings= nested_vector_to_faer_mat(eigenvectors);
 
+  println!("Are these correct? {:?}", c_pca_loadings);
+
   let c_pca_factors = target_mat * c_pca_loadings.clone();
 
   if return_loadings {

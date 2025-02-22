@@ -13,19 +13,7 @@ X[1:5, 1:5]
 
 cor(X)[1:5, 1:5]
 
-rs_cor(X)[1:5, 1:5]
-
-X_scaled[1:5, 1:5]
-
-# means_jax = X_jax.mean(axis=0).reshape(1, X_jax.shape[1])
-# std_jax = X_jax.std(axis=0).reshape(1, X_jax.shape[1])
-#
-# prod_sum_jax = X_jax.T.dot(X_jax)
-# prod_means_jax = means_jax.T.dot(means_jax) * X_jax.shape[0]
-# prod_sds_jax = std_jax.T.dot(std_jax) * X_jax.shape[0]
-#
-# out = (prod_sum_jax - prod_means_jax) / prod_sds_jax
-
+rs_cor(X, spearman = FALSE)[1:5, 1:5]
 
 X_a <- matrix(data = rnorm(1000 * 1000, 1, 2), nrow = 1000, ncol = 1000)
 X_b <- matrix(data = rnorm(1000 * 1000), nrow = 1000, ncol = 1000)
