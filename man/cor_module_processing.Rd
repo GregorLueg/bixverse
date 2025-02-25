@@ -21,9 +21,10 @@ correlations. Defaults to \code{TRUE}.}
 correlation-based co-expression modules.
 }
 \description{
-This is the generic function for doing the necessary preprocessing for
-running independent component analysis.
+This function will
 
 This function will generate necessarily data for correlation-based detection
-of gene modules. Relevant data will be added to the \code{bulk_coexp} class.
+of gene modules. In this case, this will be based on simple correlation
+between the genes and the relevant data will be added to the \code{bulk_coexp}
+class.
 }

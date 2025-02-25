@@ -336,7 +336,8 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(bulk_coexp,
     theme(legend.position = "right")
   if (add_labels) {
     plot <- plot +
-      geom_point(aes(col = label))
+      geom_point(aes(col = label)) +
+      scale_color_brewer(palette = "Spectral")
   } else {
     plot <- plot +
       geom_point()

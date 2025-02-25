@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 
 use crate::helpers_linalg::*;
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
-use crate::utils_rust::nested_vector_to_faer_mat;
+use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 
 
 /// Calculate the column-wise co-variance.
@@ -54,6 +54,47 @@ fn rs_cor(
   faer_to_r_matrix(cor)
 }
 
+/// Calculate the column wise correlations.
+/// 
+/// @description Calculates the correlation matrix of the columns. This function
+/// will return the upper triangle. WARNING! Incorrect use can cause kernel 
+/// crashes. Wrapper around the Rust functions with type checks are provided in
+/// the package.
+/// 
+/// @param x R matrix with doubles.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// 
+/// @returns The upper triangle of the correlation matrix iterating through the
+/// rows, shifted by one (the diagonal will not be returned).
+/// 
+/// @export
+#[extendr]
+fn rs_cor_upper_triangle(
+  x: RMatrix<f64>,
+  spearman: bool,
+  shift: usize,
+) -> Vec<f64> {
+  let mat = r_matrix_to_faer(x);
+
+  let cor = column_correlation(
+    &mat,
+    spearman
+  );
+
+  let upper_triangle_indices = upper_triangle_indices(
+    mat.ncols(),
+    shift
+  );
+
+  let mut cor_flat = Vec::new();
+
+  for (&r, &c) in upper_triangle_indices.0.iter().zip(upper_triangle_indices.1.iter()) {
+    cor_flat.push(*cor.get(r, c));
+  }
+
+  cor_flat
+}
 
 /// Calculate the column wise differential correlation between two sets of data.
 /// 
@@ -171,8 +212,6 @@ fn rs_contrastive_pca(
 
   let c_pca_loadings= nested_vector_to_faer_mat(eigenvectors);
 
-  println!("Are these correct? {:?}", c_pca_loadings);
-
   let c_pca_factors = target_mat * c_pca_loadings.clone();
 
   if return_loadings {
@@ -278,6 +317,7 @@ extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_cor_upper_triangle;
   fn rs_differential_cor;
   fn rs_contrastive_pca;
   fn rs_prepare_whitening;

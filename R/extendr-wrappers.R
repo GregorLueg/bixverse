@@ -140,6 +140,9 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
+#' @export
+rs_gaussian_affinity_kernel <- function(x, sd) .Call(wrap__rs_gaussian_affinity_kernel, x, sd)
+
 #' Fast AUC calculation
 #' 
 #' @description This function calculates rapidly AUCs based on an approximation.
@@ -184,7 +187,7 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 
-#' Calculate the OT harmonic sum
+#' Calculate the Hedge's G effect
 #' 
 #' @description Calculates the Hedge's G effect for two sets of matrices. The
 #' function assumes that rows = samples and columns = features. 
@@ -261,6 +264,23 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' 
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
+
+#' Calculate the column wise correlations.
+#' 
+#' @description Calculates the correlation matrix of the columns. This function
+#' will return the upper triangle. WARNING! Incorrect use can cause kernel 
+#' crashes. Wrapper around the Rust functions with type checks are provided in
+#' the package.
+#' 
+#' @param x R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' 
+#' @returns The upper triangle of the correlation matrix iterating through the
+#' rows, shifted by one (the diagonal will not be returned).
+#' 
+#' @export
+rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
 
 #' Calculate the column wise differential correlation between two sets of data.
 #' 

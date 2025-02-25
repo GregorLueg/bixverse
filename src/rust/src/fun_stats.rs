@@ -124,7 +124,7 @@ fn rs_ot_harmonic_sum(
 }
 
 
-/// Calculate the OT harmonic sum
+/// Calculate the Hedge's G effect
 /// 
 /// @description Calculates the Hedge's G effect for two sets of matrices. The
 /// function assumes that rows = samples and columns = features. 
@@ -172,6 +172,31 @@ fn rs_hedges_g(
     effect_sizes = es,
     standard_errors = se
   )
+}
+
+
+/// Apply a Gaussian affinity kernel to a distance metric
+/// 
+/// @description Applies a Gaussian kernel to a vector of distances.
+/// 
+/// @param x The distance metric. Should be positive values only!
+/// @param bandwidth The bandwidth of the kernel. Smaller values will yield
+/// smaller affinities.
+/// 
+/// @export
+#[extendr]
+fn rs_gaussian_affinity_kernel(
+  x: &[f64],
+  bandwidth: f64
+) -> Vec<f64> {
+  let res: Vec<f64> = x.par_iter()
+    .map(|val| {
+      f64::exp(
+        -(val.powi(2)) / bandwidth.powi(2)
+      )
+    })
+    .collect();
+  res
 }
 
 
@@ -224,6 +249,7 @@ fn rs_hedges_g(
 
 extendr_module! {
     mod fun_stats;
+    fn rs_gaussian_affinity_kernel;
     // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;

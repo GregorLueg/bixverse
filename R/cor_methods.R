@@ -2,9 +2,13 @@
 
 #' Prepare correlation-based module detection
 #'
+#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
+#' @param non_parametric_cors Boolean. Shall Spearman be used over Pearson
+#' correlations. Defaults to `TRUE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
 #' @description
-#' This is the generic function for doing the necessary preprocessing for
-#' running independent component analysis.
+#' This function will
 #'
 #' @export
 cor_module_processing <- S7::new_generic(
@@ -16,14 +20,11 @@ cor_module_processing <- S7::new_generic(
 #'
 #' @description
 #' This function will generate necessarily data for correlation-based detection
-#' of gene modules. Relevant data will be added to the `bulk_coexp` class.
+#' of gene modules. In this case, this will be based on simple correlation
+#' between the genes and the relevant data will be added to the `bulk_coexp`
+#' class.
 #'
 #' @usage ...
-#'
-#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
-#' @param non_parametric_cors Boolean. Shall Spearman be used over Pearson
-#' correlations. Defaults to `TRUE`.
-#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return `bulk_coexp` with the needed data for subsequent identification of
 #' correlation-based co-expression modules.
@@ -36,9 +37,11 @@ cor_module_processing <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_processing bulk_coexp
-S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
-                                                          correlation_method = c("pearson", "spearman"),
-                                                          .verbose = TRUE) {
+S7::method(cor_module_processing, bulk_coexp) <- function(
+    bulk_coexp,
+    correlation_method = c("pearson", "spearman"),
+    .verbose = TRUE)
+  {
   # Checks
   checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
   checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
@@ -62,10 +65,37 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
     TRUE
   }
 
-  # Calculate the correlation matrix
-  cor_matrix <- rs_cor(x = target_mat, spearman = spearman)
+  # Calculate the upper triangle of correlation matrix
+  cor_diagonal <- rs_cor_upper_triangle(target_mat, spearman = spearman, shift = 0L)
 
-  S7::prop(bulk_coexp, "processed_data")[["cor_mat"]] <- cor_matrix
+  feature_names <- colnames(target_mat)
+  total_len <- length(feature_names)
+
+  feature_a <- purrr::map(1:total_len, \(idx) {
+    rep(feature_names[[idx]], total_len - idx)
+  })
+  feature_a <- do.call(c, feature_a)
+
+  feature_b <- purrr::map(1:total_len, \(idx) {
+    remaining <- total_len - idx
+    if (remaining > 0) feature_names[(idx + 1:remaining)] else character(0)
+  })
+  feature_b <- do.call(c, feature_b)
+
+  correlation_res <- data.table(
+    feature_a = feature_a,
+    feature_b = feature_b,
+    r = cor_diagonal,
+    r_abs = abs(cor_diagonal)
+  )
+
+  correlation_params <- list(
+    spearman = spearman,
+    type = 'simple'
+  )
+
+  S7::prop(bulk_coexp, "processed_data")[["correlation_res"]] <- correlation_res
+  S7::prop(bulk_coexp, "params")[["correlation_params"]] <- correlation_params
 
   return(bulk_coexp)
 }

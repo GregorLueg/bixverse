@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_hedges_g}
 \alias{rs_hedges_g}
-\title{Calculate the OT harmonic sum}
+\title{Calculate the Hedge's G effect}
 \usage{
 rs_hedges_g(mat_a, mat_b, small_sample_correction)
 }
