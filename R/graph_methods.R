@@ -1,4 +1,4 @@
-# Helpers ----
+# helpers ----
 
 #' Summarise gene scores if they are duplicates.
 #'
@@ -30,11 +30,9 @@
   res
 }
 
-# Methods ----
+# network_diffusions ----
 
-## network_diffusions ----
-
-### diffusion methods ----
+## diffusion methods ----
 
 #' Diffuse seed genes over a network
 #'
@@ -255,7 +253,7 @@ S7::method(tied_diffusion, network_diffusions) <-
     network_diffusions
   }
 
-### community detection ----
+## community detection ----
 
 #' Identify privileged communities based on a given diffusion vector
 #'
@@ -512,7 +510,7 @@ S7::method(community_detection, network_diffusions) <- function(
   return(network_diffusions)
 }
 
-### utils ----
+## utils ----
 
 #' Calculate the AUROC for a diffusion score
 #'
@@ -610,9 +608,9 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     return(to_ret)
   }
 
-## rbh_graph ----
+# rbh_graph ----
 
-### graph generation ----
+## graph generation ----
 
 #' Generate an RBH graph.
 #'

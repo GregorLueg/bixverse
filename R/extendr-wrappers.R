@@ -140,8 +140,16 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
+#' Apply a Gaussian affinity kernel to a distance metric
+#' 
+#' @description Applies a Gaussian kernel to a vector of distances.
+#' 
+#' @param x The distance metric. Should be positive values only!
+#' @param bandwidth The bandwidth of the kernel. Smaller values will yield
+#' smaller affinities.
+#' 
 #' @export
-rs_gaussian_affinity_kernel <- function(x, sd) .Call(wrap__rs_gaussian_affinity_kernel, x, sd)
+rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_affinity_kernel, x, bandwidth)
 
 #' Fast AUC calculation
 #' 

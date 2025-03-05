@@ -9,10 +9,7 @@ cor_module_processing(bulk_coexp, ...)
 ...
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
-
-\item{non_parametric_cors}{Boolean. Shall Spearman be used over Pearson
-correlations. Defaults to \code{TRUE}.}
+\item{correlation_method}{String. Option of \code{c("pearson", "spearman")}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
@@ -21,7 +18,8 @@ correlations. Defaults to \code{TRUE}.}
 correlation-based co-expression modules.
 }
 \description{
-This function will
+This is the generic function for running a single correlation across your
+genes.
 
 This function will generate necessarily data for correlation-based detection
 of gene modules. In this case, this will be based on simple correlation

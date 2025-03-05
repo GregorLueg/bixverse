@@ -20,7 +20,11 @@ cor_test = bulk_coexp(X, meta_data)
 
 cor_test = preprocess_bulk_coexp(cor_test)
 
+?cor_module_processing()
 
+cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
+
+cor_test@processed_data$correlation_res
 
 # Calculate cluster quality
 cluster_quality <- function(community_df, correlation_res) {
@@ -47,6 +51,7 @@ cluster_quality <- function(community_df, correlation_res) {
       r_adjusted = median * log1p(size)
     )
   })
+
   cluster_quality
 }
 
@@ -102,6 +107,7 @@ dist[dist < 0] <- 0
 
 rs_gauss_kernel <- rs_gaussian_affinity_kernel(dist, 0.25)
 
+?rs_gaussian_affinity_kernel
 
 graph_df = correlation_res[, c("feature_a", "feature_b")][, weight := rs_gauss_kernel] %>%
   data.table::setnames(., old = c("feature_a", "feature_b"), new = c("from", "to"))
@@ -110,10 +116,13 @@ graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
 graph <- igraph::simplify(graph)
 
 
-
 resolutions <- seq(from = 0.5, to = 5, by = .5)
 
-resolution_results <- purrr::map(resolutions, \(resolution) {
+random_seed = 123L
+
+resolution_results <- purrr::imap_dfr(resolutions, \(resolution, index) {
+
+  set.seed(random_seed + index)
 
   community <- igraph::cluster_leiden(graph, objective_function = 'modularity', resolution = resolution)
 
@@ -136,7 +145,6 @@ resolution_results <- purrr::map(resolutions, \(resolution) {
   res
 })
 
-resolution_results <- rbindlist(resolution_results)
 
 plot(resolution_results$res, resolution_results$r_median_of_adjust,
      xlab = "Leiden resolution",
