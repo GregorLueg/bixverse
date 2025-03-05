@@ -34,13 +34,16 @@ cor_cluster_quality <- function(community_df, correlation_res) {
                                         c(median(r_abs, na.rm = TRUE),
                                           mad(r_abs, na.rm = TRUE))]
     size <- length(nodes)
-    data.table(
+
+    res <- data.table::data.table(
       module_name = community,
       r_median = median,
       r_mad = mad,
       r_adjusted = median * log1p(size),
       size = size
     )
+
+    res
   })
 
   cluster_quality
@@ -128,8 +131,8 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   feature_b <- do.call(c, feature_b)
 
   correlation_res <- data.table(
-    feature_a = feature_a,
-    feature_b = feature_b,
+    feature_a = factor(feature_a),
+    feature_b = factor(feature_b),
     r = cor_diagonal,
     r_abs = abs(cor_diagonal)
   )
@@ -155,14 +158,22 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 #' methods.
 #'
 #' @export
-cor_module_identification <- S7::new_generic(
-  "cor_module_identification",
+cor_module_resolutions <- S7::new_generic(
+  "cor_module_resolutions",
   "bulk_coexp"
 )
 
 
 
-#' @name cor_module_identification
+#' @name cor_module_resolutions
+#'
+#' @param bulk_coexp description
+#' @param kernel_bandwidth description
+#' @param min_res description
+#' @param max_res description
+#' @param by description
+#' @param random_seed description
+#' @param .verbose description
 #'
 #' @description
 #' ...
@@ -181,8 +192,8 @@ cor_module_identification <- S7::new_generic(
 #' @importFrom zeallot `%<-%`
 #' @import data.table
 #'
-#' @method cor_module_identification bulk_coexp
-S7::method(cor_module_identification, bulk_coexp) <- function(bulk_coexp,
+#' @method cor_module_resolutions bulk_coexp
+S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
                                                               kernel_bandwidth = 0.25,
                                                               min_res = 0.5,
                                                               max_res = 5,
@@ -209,7 +220,7 @@ S7::method(cor_module_identification, bulk_coexp) <- function(bulk_coexp,
   dist <- 1 - correlation_res$r_abs
   # Deal with float precision errors because of Rust <> R interface
   dist[dist < 0] <- 0
-  affinity <- rs_gaussian_affinity_kernel(x = dist, sd = kernel_bandwidth)
+  affinity <- rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)
 
   graph_df <- correlation_res[, c("feature_a", "feature_b")] %>%
     .[, weight := affinity] %>%
@@ -223,8 +234,8 @@ S7::method(cor_module_identification, bulk_coexp) <- function(bulk_coexp,
   resolutions <- seq(from = min_res, max_res, by = by)
 
   if (.verbose) message(sprintf("Iterating through %i resolutions", length(resolutions)))
-  resolution_results <- purrr::imap_dfr(resolutions, \(resolution, index) {
-    set.seed(random_seed + index)
+  resolution_results <- purrr::map_dfr(resolutions, \(resolution) {
+    set.seed(random_seed)
 
     community <- igraph::cluster_leiden(graph,
                                         objective_function = 'modularity',
@@ -233,7 +244,10 @@ S7::method(cor_module_identification, bulk_coexp) <- function(bulk_coexp,
     community_df <- data.table(node_name = community$names,
                                membership = community$membership)
 
-    qc <- cluster_quality(community_df = community_df, correlation_res = correlation_res)
+    qc <- cor_cluster_quality(
+      community_df = community_df,
+      correlation_res = correlation_res
+    )
 
     res <- qc[, .(
       res = resolution,

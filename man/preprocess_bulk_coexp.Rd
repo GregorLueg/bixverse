@@ -9,6 +9,14 @@ preprocess_bulk_coexp(bulk_coexp, ...)
 \arguments{
 \item{bulk_coexp}{The underlying \code{bixverse_base_class} class, see
 \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
+\item{hvg}{...}
+
+\item{mad_threshold}{...}
+
+\item{scaling}{...}
+
+\item{scaling_type}{...}
 }
 \value{
 Returns the class with the processed_data data slot populated.
