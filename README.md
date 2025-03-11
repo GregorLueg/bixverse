@@ -4,7 +4,7 @@
 
 </br>
 
-![bixverse logo](/misc/bixverse_logo.png)
+<img src="/misc/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
 
 ## *Description* 
 
