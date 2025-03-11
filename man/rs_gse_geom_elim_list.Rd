@@ -34,11 +34,11 @@ ordered in the right way!}
 \item{min_genes}{number of minimum genes for the gene ontology term to be
 tested.}
 
+\item{elim_threshold}{p-value below which the elimination procedure shall
+be applied to the ancestors.}
+
 \item{debug}{boolean that will provide additional console information for
 debugging purposes.}
-
-\item{elim_threshold:}{p-value below which the elimination procedure shall
-be applied to the ancestors.}
 }
 \value{
 A list containing:

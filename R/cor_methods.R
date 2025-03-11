@@ -1,96 +1,95 @@
-# helpers ----
+# methods - helpers ------------------------------------------------------------
 
-#' Assess the quality of clusters
+## graph generation ------------------------------------------------------------
+
+#' Get correlation-based graph
 #'
-#' @description Helper function that will assess the quality (defined as the
-#' median absolute correlation within the cluster) of a given set of clusters.
+#' @description
+#' Helper function to get a correlation-based igraph from the class
 #'
-#' @param community_df A data.table. Contains node_name (name of the node in the
-#' graph) and membership (membership of the node to the respective community).
-#' @param correlation_res A data.table. Contains feature_a (first node name),
-#' feature_b (second node name) and the r_abs (absolute correlation coefficient)
-#' columns.
+#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param kernel_bandwidth Numerical. The bandwidth to use for the affinity
+#' kernel
+#' @param min_affinity Numerical. Minimum affinity needed to keep the edge.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @returns A data.table with the followoing columns:
-#'
-#' @export
-cor_cluster_quality <- function(community_df, correlation_res) {
+#' @return igraph given the provided parameters.
+get_cor_graph_single <- S7::new_generic(
+  name = 'get_cor_graph_single',
+  dispatch_args = 'bulk_coexp',
+  fun = function(bulk_coexp,
+                 kernel_bandwidth,
+                 min_affinity,
+                 .verbose) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_cor_graph_single bulk_coexp
+S7::method(get_cor_graph_single, bulk_coexp) <- function(bulk_coexp,
+                                                         kernel_bandwidth,
+                                                         min_affinity,
+                                                         .verbose) {
   # Checks
-  checkmate::assertDataTable(community_df)
-  checkmate::assertDataTable(correlation_res)
-  checkmate::assertNames(names(community_df),
-                         must.include = c("node_name", "membership"))
-  checkmate::assertNames(names(correlation_res),
-                         must.include = c("feature_a", "feature_b", "r_abs"))
-  # Function
-  community_df_list <- split(community_df$node_name, community_df$membership)
-  community_df_list <- purrr::keep(community_df_list, \(x) length(x) > 1)
-
-  # Ensure that the keys exist
-  data.table::setkey(correlation_res, feature_a, feature_b)
-
-  # Pre-allocate
-  cluster_quality <- vector(mode = "list", length = length(community_df_list))
-
-  for (i in seq_along(cluster_genes)) {
-    nodes <- cluster_genes[[i]]
-    community <- names(cluster_genes)[i]
-
-    node_combinations <- data.table::CJ(feature_a = nodes, feature_b = nodes)
-
-    # Use binary join instead of filtering (much faster for large data)
-    # F--k knows why ... ?
-    subset_data <- correlation_res_red[node_combinations, on = .(feature_a, feature_b), nomatch = 0]
-
-    median_val <- median(subset_data$r_abs, na.rm = TRUE)
-    mad_val <- mad(subset_data$r_abs, na.rm = TRUE)
-    size <- length(nodes)
-
-    res <- data.table::data.table(
-      module_name = community,
-      r_median = median_val,
-      r_mad = mad_val,
-      r_adjusted = median_val * log10(size),
-      size = size
+  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::qassert(kernel_bandwidth, "R1[0,1]")
+  checkmate::qassert(min_affinity, "R1[0,1]")
+  checkmate::qassert(.verbose, "B1")
+  # Function body
+  cor_res <- S7::prop(bulk_coexp, "processed_data")$correlation_res
+  graph_df <- cor_res$get_data_table(.verbose = .verbose) %>%
+    .[, cor_abs := abs(cor)] %>%
+    .[, dist := 1 - cor_abs] %>%
+    .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
+    .[, affinity := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
+    .[affinity >= min_affinity] %>%
+    .[, c("feature_a", "feature_b", "affinity")] %>%
+    data.table::setnames(
+      .,
+      old = c("feature_a", "feature_b", "affinity"),
+      new = c("from", "to", "weight")
     )
 
-    cluster_quality[[i]] <- res
-  }
+  if(.verbose)
+    message("Generating correlation-based graph.")
 
-  cluster_quality <- data.table::rbindlist(cluster_quality)
+  graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
+  graph <- igraph::simplify(graph)
 
-  cluster_quality
+  graph
 }
 
-# methods - simple correlations ----
+## getters ---------------------------------------------------------------------
+
+# methods - simple correlations ------------------------------------------------
 
 #' Prepare correlation-based module detection
 #'
 #' @description
-#' This is the generic function for running a single correlation across your
-#' genes.
+#' This function will calculate the correlation coefficients between the genes,
+#' using the highly variable genes (if available, otherwise the function will
+#' use the raw data). The data will be stored in a memory-efficient format as a
+#' vector within the class.
 #'
-#' @export
-cor_module_processing <- S7::new_generic(
-  "cor_module_processing",
-  "bulk_coexp"
-)
-
-#' @name cor_module_processing
-#'
-#' @description
-#' This function will generate necessarily data for correlation-based detection
-#' of gene modules. In this case, this will be based on simple correlation
-#' between the genes and the relevant data will be added to the `bulk_coexp`
-#' class.
-#'
-#' @usage ...
-#'
-#' @return `bulk_coexp` with the needed data for subsequent identification of
-#' correlation-based co-expression modules.
+#' @return `bulk_coexp` The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' should run [bixverse::preprocess_bulk_coexp()] before applying this class.
 #' @param correlation_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
+#' @return The class with added data to the properties for subsequent functions.
+#'
+#' @export
+cor_module_processing <- S7::new_generic(
+  name = "cor_module_processing",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp,
+                 correlation_method = c("pearson", "spearman"),
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -143,47 +142,72 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 
   S7::prop(bulk_coexp, "processed_data")[["correlation_res"]] <- cor_data
   S7::prop(bulk_coexp, "params")[["correlation_params"]] <- correlation_params
+  S7::prop(bulk_coexp, "params")["detection_method"] <- "correlation-based"
 
   return(bulk_coexp)
 }
 
 
-# methods - graph-based gene module detection ----
+# methods - graph-based gene module detection ----------------------------------
 
-#' Identify correlation-based gene modules via graph methods.
+#' Identify correlation-based gene modules via graphs.
 #'
 #' @description
-#' This is the generic function for identifying gene modules via graph-based
-#' methods.
+#' This function will identify gene modules based on affinity graphs from the
+#' single correlation or differential correlation methods. Briefly, in the case
+#' of single correlation, the graph is generated based on the absolute
+#' correlation coefficients that are subjected to a Gaussian affinity kernel.
+#' TODO: Write what is being done for differential correlation methods.
+#' This reduces spurious correlations and leaves a sparsely connected graph.
+#' Subsequently, Leiden community detection is applied through a range of
+#' resolutions that the user can define. The function then returns meta
+#' information about the resolutions (which can also be plotted) to identify
+#' the best suitable resolution parameter to identify co-expression modules.
+#'
+#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param min_res Numeric. The minimum resolution to test for the Leiden
+#' community detection.
+#' @param max_res Numeric. The maximum resolution to test for the Leiden
+#' community detection.
+#' @param number_res Integer. Number of resolutions to test.
+#' The resolutions will be spread in a logarithmic fashion over `min_res` to
+#' `max_res`.
+#' @param random_seed Integer. Random seed.
+#' @param kernel_bandwidth Numeric. !This parameter is only relevant for simple
+#' correlation modules!. The bandwidth for the affinity kernel. Needs to be
+#' value between 0 and 1.
+#' @param min_affinity Float. !This parameter is only relevant for simple
+#' correlation modules! This parameter will remove edges below this affinity
+#' threshold. Needs to be a value between 0 and 1.
+#' @param min_genes Integer. Minimum number of genes that should be in a
+#' community.
+#' @param parallel Boolean. Parallelise the Leiden clustering.
+#' @param max_workers Integer. Maximum number of workers to use if parallel is
+#' set to `TRUE`.
+#' @param .verbose Controls the verbosity of the function.
+#'
+#' @return The class with added data to the properties.
 #'
 #' @export
-cor_module_resolutions <- S7::new_generic(
-  "cor_module_resolutions",
-  "bulk_coexp"
+cor_module_check_res <- S7::new_generic(
+  name = "cor_module_check_res",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp,
+                 min_res = 0.1,
+                 max_res = 10,
+                 number_res = 15L,
+                 random_seed = 123L,
+                 kernel_bandwidth = 0.2,
+                 min_affinity = 0.001,
+                 min_genes = 10L,
+                 parallel = TRUE,
+                 max_workers = as.integer(parallel::detectCores() / 2),
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
 )
 
 
-
-#' @name cor_module_resolutions
-#'
-#' @param bulk_coexp description
-#' @param kernel_bandwidth description
-#' @param min_res description
-#' @param max_res description
-#' @param by description
-#' @param random_seed description
-#' @param .verbose description
-#'
-#' @description
-#' ...
-#'
-#' @usage ...
-#'
-#' @return `bulk_coexp` class. You need to run either
-#' [bixverse::cor_module_processing()] or ... .
-#' @param correlation_method ...
-#' @param .verbose Boolean. Controls verbosity of the function.
-#'
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -191,23 +215,29 @@ cor_module_resolutions <- S7::new_generic(
 #' @importFrom zeallot `%<-%`
 #' @import data.table
 #'
-#' @method cor_module_resolutions bulk_coexp
-S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
-                                                           kernel_bandwidth = 0.25,
-                                                           min_res = 0.5,
-                                                           max_res = 5,
-                                                           by = 0.5,
-                                                           random_seed = 123L,
-                                                           cores = as.integer(parallel::detectCores() / 2),
-                                                           parallel = TRUE,
-                                                           .verbose = TRUE) {
+#' @method cor_module_check_res bulk_coexp
+S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
+                                                         min_res = 0.1,
+                                                         max_res = 10,
+                                                         number_res = 15L,
+                                                         random_seed = 123L,
+                                                         kernel_bandwidth = 0.2,
+                                                         min_affinity = 0.001,
+                                                         min_genes = 10L,
+                                                         parallel = TRUE,
+                                                         max_workers = as.integer(parallel::detectCores() / 2),
+                                                         .verbose = TRUE) {
   # Checks
   checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
-  checkmate::qassert(kernel_bandwidth, "N1")
   checkmate::qassert(min_res, "N1")
   checkmate::qassert(max_res, "N1")
-  checkmate::qassert(by, "N1")
   checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(kernel_bandwidth, "R1[0,1]")
+  checkmate::qassert(min_affinity, "R1[0,1]")
+  checkmate::qassert(number_res, "I1")
+  checkmate::qassert(min_genes, "I1")
+  checkmate::qassert(parallel, "B1")
+  checkmate::qassert(max_workers, "I1")
   checkmate::qassert(.verbose, "B1")
 
   # Early return
@@ -216,59 +246,79 @@ S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
     return(bulk_coexp)
   }
 
-  # Return the data.table from the correlation results
-  # correlation_res <- S7::prop(bulk_coexp, "processed_data")$correlation_res$get_data_table() %>%
-  #   .[, cor_abs := abs(cor)] %>%
-  #   .[, dist := 1 - cor_abs] %>%
-  #   .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
-  #   .[, affinitiy := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
-  #   .[affinitiy >= ]
+  graph <- if(S7::prop(bulk_coexp, "params")[["detection_method"]] == "correlation-based") {
+    get_cor_graph_single(
+      bulk_coexp,
+      kernel_bandwidth = kernel_bandwidth,
+      min_affinity = min_affinity,
+      .verbose = .verbose
+    )
+  }
 
-  dist <- 1 - correlation_res$r_abs
-  # Deal with float precision errors because of Rust <> R interface
-  dist[dist < 0] <- 0
-  affinity <- rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)
+  resolutions <- exp(seq(
+    log(min_res),
+    log(max_res),
+    length.out = number_res
+  ))
 
-  graph_df <- correlation_res[, c("feature_a", "feature_b")] %>%
-    .[, weight := affinity] %>%
-    data.table::setnames(.,
-                         old = c("feature_a", "feature_b"),
-                         new = c("from", "to"))
+  if (.verbose) message(sprintf("Iterating through %i resolutions", length(resolutions)))
 
-  graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
-  graph <- igraph::simplify(graph)
+  if(parallel) {
+    if (.verbose)
+      message(sprintf("Using parallel computation over %i cores.", max_workers))
+    future::plan(future::multisession(workers = max_workers))
+  } else {
+    if (.verbose)
+      message("Using sequential computation.")
+    future::plan(future::sequential())
+  }
 
-  resolutions <- seq(from = min_res, max_res, by = by)
+  community_df_res <- furrr::future_map(
+    resolutions,
+    \(res) {
+      set.seed(123)
+      community <- igraph::cluster_leiden(graph,
+                                          objective_function = 'modularity',
+                                          resolution = res,
+                                          n_iterations = 5L)
 
-  if (.verbose)
-    message(sprintf("Iterating through %i resolutions", length(resolutions)))
-  resolution_results <- purrr::map_dfr(resolutions, \(resolution) {
-    set.seed(random_seed)
+      modularity <- igraph::modularity(x = graph, membership = community$membership)
 
-    community <- igraph::cluster_leiden(graph,
-                                        objective_function = 'modularity',
-                                        resolution = resolution)
+      community_df <- data.table::data.table(
+        resolution = res,
+        node_name = community$names,
+        membership = community$membership,
+        modularity = modularity
+      )
+    },
+    .progress = .verbose,
+    .options = furrr::furrr_options(seed = TRUE)
+  ) %>% data.table::rbindlist(.)
 
-    community_df <- data.table(node_name = community$names,
-                               membership = community$membership)
+  future::plan(future::sequential()); gc()
 
-    qc <- cor_cluster_quality(community_df = community_df, correlation_res = correlation_res)
+  community_df_res[, combined_id := sprintf("id_%s_%s", resolution, membership)]
 
-    res <- qc[, .(
-      res = resolution,
-      n = .N,
-      "median_size" = median(size, na.rm = TRUE),
-      "r_weighted_median" = sum(r_median * size) / sum(size),
-      "r_median_of_medians" = median(r_median, na.rm = TRUE),
-      "r_median_of_adjust" = median(r_adjusted, na.rm = TRUE)
-    )]
+  cluster_summary <- community_df_res[, .N, combined_id] %>%
+    .[, good_clusters := N >= min_genes] %>%
+    data.table::merge.data.table(.,
+                                 unique(community_df_res[, c('resolution', 'combined_id')]),
+                                 by.x = 'combined_id',
+                                 by.y = 'combined_id',
+    ) %>%
+    .[, .(
+      good_clusters = sum(good_clusters),
+      avg_size = mean(N),
+      max_size = max(N)
+    ), resolution]
 
-    res
-  })
+  resolution_results <- community_df_res[, .(no_clusters = length(unique(membership)),
+                                             modularity = unique(modularity)), resolution] %>%
+    data.table::merge.data.table(., cluster_summary, by.x = 'resolution', by.y = 'resolution')
 
-  S7::prop(bulk_coexp, "outputs")[['cluser_quality']] <- resolution_results
+  S7::prop(bulk_coexp, "outputs")[['resolution_results']] <- resolution_results
 
   return(bulk_coexp)
 }
 
-# methods - plotting ----
+

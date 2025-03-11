@@ -19,19 +19,14 @@ meta_data = data.table::data.table(
   grp = syn_data$group
 )
 
-?preprocess_bulk_coexp
-
-?get_params
-
 cor_test = bulk_coexp(X, meta_data)
 
 cor_test = preprocess_bulk_coexp(cor_test)
 
-get_outputs(cor_test)
-
-cor_test
 
 cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
+
+
 
 cor_test@processed_data$correlation_res$get_data_table()
 
@@ -88,6 +83,8 @@ cor_test = preprocess_bulk_coexp(cor_test, mad_threshold = 1)
 
 cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
 
+cor_test = cor_module_check_res(cor_test)
+
 plot_df <- cor_test@processed_data$feature_meta
 
 ggplot(data = plot_df,
@@ -99,28 +96,26 @@ ggplot(data = plot_df,
 
 kernel_bandwidth = 0.2
 min_res = 0.1
-max_res = 5
-number_res = 10
+max_res = 10
+number_res = 15
 random_seed = 123L
 min_affinity = 0.001
 min_genes = 10L
+parallel = TRUE
+max_workers = as.integer(parallel::detectCores() / 2)
 .verbose = TRUE
 
+x <- cor_test
 
-correlation_res <- S7::prop(cor_test, "processed_data")$correlation_res$get_data_table() %>%
-  .[, cor_abs := abs(cor)] %>%
-  .[, dist := 1 - cor_abs] %>%
-  .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
-  .[, affinity := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
-  .[affinity >= min_affinity]
+S7::prop(x, "params")[["detection_method"]] == "correlation-based"
 
 
-graph_df <- correlation_res[, c("feature_a", "feature_b", "affinity")] %>%
-  data.table::setnames(.,
-                       old = c("feature_a", "feature_b", "affinity"),
-                       new = c("from", "to", "weight"))
-
-graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
+graph <- get_cor_graph_single(
+  cor_test,
+  kernel_bandwidth = kernel_bandwidth,
+  min_affinity = min_affinity,
+  .verbose = TRUE
+)
 
 
 resolutions <- exp(seq(
@@ -131,7 +126,15 @@ resolutions <- exp(seq(
 
 if (.verbose) message(sprintf("Iterating through %i resolutions", length(resolutions)))
 
-future::plan(future::multisession(workers = parallel::detectCores() / 2))
+if(parallel) {
+  if (.verbose)
+    message(sprintf("Using parallel computation over %i cores.", max_workers))
+  future::plan(future::multisession(workers = max_workers))
+} else {
+  if (.verbose)
+    message("Using sequential computation.")
+  future::plan(future::sequential())
+}
 
 community_df_res <- furrr::future_map(
   resolutions,
@@ -139,7 +142,8 @@ community_df_res <- furrr::future_map(
     set.seed(123)
     community <- igraph::cluster_leiden(graph,
                                         objective_function = 'modularity',
-                                        resolution = res, n_iterations = 5L)
+                                        resolution = res,
+                                        n_iterations = 5L)
 
     modularity <- igraph::modularity(x = graph, membership = community$membership)
 
@@ -157,6 +161,27 @@ community_df_res <- furrr::future_map(
 future::plan(future::sequential()); gc()
 
 community_df_res[, combined_id := sprintf("id_%s_%s", resolution, membership)]
+
+cluster_summary <- community_df_res[, .N, combined_id] %>%
+  .[, good_clusters := N >= min_genes] %>%
+  data.table::merge.data.table(.,
+                               unique(community_df_res[, c('resolution', 'combined_id')]),
+                               by.x = 'combined_id',
+                               by.y = 'combined_id',
+  ) %>%
+  .[, .(
+    good_clusters = sum(good_clusters),
+    avg_size = mean(N),
+    max_size = max(N)
+  ), resolution]
+
+resolution_results <- community_df_res[, .(no_clusters = length(unique(membership)),
+                                           modularity = unique(modularity)), resolution] %>%
+  data.table::merge.data.table(., cluster_summary, by.x = 'resolution', by.y = 'resolution')
+
+
+
+
 
 clusters_to_keep <- community_df_res[, .N, combined_id][N >= min_genes, combined_id]
 

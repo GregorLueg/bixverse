@@ -11,6 +11,9 @@ rs_cor_upper_triangle(x, spearman, shift)
 
 \item{spearman}{Shall the Spearman correlation be calculated instead of
 Pearson.}
+
+\item{shift}{Shall a shift be applied to the matrix. 0 = the diagonal will
+be included. 1 = the diagonal will not be included.}
 }
 \value{
 The upper triangle of the correlation matrix iterating through the

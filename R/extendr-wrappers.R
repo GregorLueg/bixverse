@@ -41,7 +41,7 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #' Wrapper around the Rust functions with type checks are provided in the 
 #' package.
 #' 
-#' @param target_genes A character vector representing the target gene set.
+#' @param target_genes_list A character vector representing the target gene set.
 #' @param gene_sets A list of strings that represent the gene sets to test
 #' against.
 #' @param gene_universe A character vector representing the gene universe from 
@@ -119,7 +119,7 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @param gene_universe_length The length of the gene universe.
 #' @param min_genes number of minimum genes for the gene ontology term to be
 #' tested.
-#' @param elim_threshold: p-value below which the elimination procedure shall
+#' @param elim_threshold p-value below which the elimination procedure shall
 #' be applied to the ancestors.
 #' @param debug boolean that will provide additional console information for
 #' debugging purposes.
@@ -158,7 +158,7 @@ rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_af
 #' @param neg_scores The scores of your non-hits.
 #' @param iters Number of iterations to run the function for. 
 #' Recommended size: 10000L.
-#' @param random_seed Seed.
+#' @param seed Seed.
 #' 
 #' @return The AUC.
 #' 
@@ -282,6 +282,8 @@ rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 #' @param x R matrix with doubles.
 #' @param spearman Shall the Spearman correlation be calculated instead of 
 #' Pearson.
+#' @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
+#' be included. 1 = the diagonal will not be included.
 #' 
 #' @returns The upper triangle of the correlation matrix iterating through the
 #' rows, shifted by one (the diagonal will not be returned).

@@ -129,14 +129,23 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
     ''
   }
   # Prints for different methods
-  method_info <- if (S7::prop(x, "params")[["detection_method"]] == "cPCA") {
+  method_info <- if (is.null(S7::prop(x, "params")[["detection_method"]])) {
+    # Case of nothing has been applied
+    ''
+  } else if (S7::prop(x, "params")[["detection_method"]] == "cPCA") {
+    # Contrastive PCA
     no_intersecting_features <- length(S7::prop(x, "params")[["cPCA_params"]][['intersecting_features']])
     paste0(
       " Detection method: cPCA.\n",
       sprintf("  No of intersecting features: %i.\n", no_intersecting_features)
     )
-  } else {
-    ''
+  } else if (S7::prop(x, "params")[["detection_method"]] == "correlation-based") {
+    # For simple correlations
+    non_parametric <- S7::prop(x, "params")[['correlation_params']][['spearman']]
+    paste0(
+      " Detection method: correlation based.\n",
+      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric)
+    )
   }
 
   cat(
@@ -148,6 +157,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
     method_info,
     sep = ''
   )
+
   invisible(x)
 }
 

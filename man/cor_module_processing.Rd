@@ -4,9 +4,11 @@
 \alias{cor_module_processing}
 \title{Prepare correlation-based module detection}
 \usage{
-cor_module_processing(bulk_coexp, ...)
-
-...
+cor_module_processing(
+  bulk_coexp,
+  correlation_method = c("pearson", "spearman"),
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{correlation_method}{String. Option of \code{c("pearson", "spearman")}.}
@@ -14,15 +16,14 @@ cor_module_processing(bulk_coexp, ...)
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} with the needed data for subsequent identification of
-correlation-based co-expression modules.
+\code{bulk_coexp} The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this class.
+
+The class with added data to the properties for subsequent functions.
 }
 \description{
-This is the generic function for running a single correlation across your
-genes.
-
-This function will generate necessarily data for correlation-based detection
-of gene modules. In this case, this will be based on simple correlation
-between the genes and the relevant data will be added to the \code{bulk_coexp}
-class.
+This function will calculate the correlation coefficients between the genes,
+using the highly variable genes (if available, otherwise the function will
+use the raw data). The data will be stored in a memory-efficient format as a
+vector within the class.
 }
