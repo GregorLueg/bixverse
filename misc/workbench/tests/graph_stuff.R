@@ -8,7 +8,7 @@ devtools::check()
 
 # Community detections ----
 
-edge_data = arrow::read_parquet("~/Desktop/biomind_downloads/processed_data/edges_OT_interactions.parquet") %>%
+edge_data = arrow::read_parquet("~/Desktop/biomind_downloads/processed_data/edges_interactions.parquet") %>%
   as.data.table() %>%
   .[network_resource == 'STRING']
 
@@ -18,9 +18,6 @@ edge_data_clean = edge_data %>%
 
 test_class = network_diffusions(edge_data_clean, weighted = FALSE, directed = TRUE)
 
-get_params(test_class)
-
-get_results(test_class)
 
 set.seed(123)
 genes = sample(igraph::V(test_class@graph)$name, 10)
@@ -42,9 +39,6 @@ test_class <- tied_diffusion(
   score_aggregation = 'min'
 )
 
-?tied_diffusion
-
-?get_params
 
 get_params(test_class, TRUE, TRUE)
 
@@ -119,7 +113,6 @@ rbh_class = rbh_graph(
   module_col = 'name',
   value_col = 'genes'
 )
-
 
 rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = T)
 

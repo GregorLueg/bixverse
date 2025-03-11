@@ -24,14 +24,16 @@ over a network, measure the ability of these diffusion vectors to recall
 against a gold standard set of nodes and do community detection within the
 subset of the network that received the the most heat from the initial seed
 genes.
+}
+\section{Properties}{
 
-Internal properties:
-\itemize{
-\item graph: The underlying igraph.
-\item diffusion_res: This is the numerical vector that contains the single or
-tied diffusion results
-\item final_results: This is where the final communities will be stored.
-\item params: A list with the params. This will be populated during subsequent
-function calls.
+\describe{
+\item{graph}{igraph. The underlying graph.}
+\item{diffusion_res}{Numeric vector. Contains contains the single or tied
+diffusion results.}
+\item{params}{A (nested) list that will store all the parameters of the
+applied function.}
+\item{final_results}{data.table. Contains final results.}
 }
 }
+

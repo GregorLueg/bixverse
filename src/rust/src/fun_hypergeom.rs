@@ -12,23 +12,22 @@ type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u6
 
 /// Run a single hypergeometric test.
 /// 
-/// Given a set of target genes, this is a Rust implementation of an hypergeometric 
-/// test testing for overenrichment of the target genes in the gene sets.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// @description Given a set of target genes, this is a Rust implementation of 
+/// an hypergeometric test testing for overenrichment of the target genes in the 
+/// gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around 
+/// the Rust functions with type checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test against.
 /// @param gene_universe A character vector representing the gene universe from 
-/// which the target genes
-/// and gene sets are sampled from.
+/// which the target genes and gene sets are sampled from.
 /// 
 /// @return A list containing:
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds_ratios - The calculated odds ratios
 ///   \item overlap - The size of the overlap
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -56,22 +55,24 @@ fn rs_hypergeom_test(
 
 /// Run a hypergeometric test over a list of target genes
 /// 
-/// Given a list of target gene sets, this function will test for each of the individual 
-/// target genes the hypergeoemetric enrichment against the specified gene sets.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// @description Given a list of target gene sets, this function will test for
+/// each of the individual target genes the hypergeoemetric enrichment against 
+/// the specified gene sets. WARNING! Incorrect use can cause kernel crashes. 
+/// Wrapper around the Rust functions with type checks are provided in the 
+/// package.
 /// 
-/// @param target_genes A character vector representing the target gene set.
-/// @param gene_sets A list of strings that represent the gene sets to test against.
-/// @param gene_universe A character vector representing the gene universe from which the target genes
-/// and gene sets are sampled from.
+/// @param target_genes_list A character vector representing the target gene set.
+/// @param gene_sets A list of strings that represent the gene sets to test
+/// against.
+/// @param gene_universe A character vector representing the gene universe from 
+/// which the target genes and gene sets are sampled from.
 /// 
 /// @return A list containing:
 ///  \itemize{
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds ratios - The calculated odds ratios
 ///   \item overlap - The size of the overlap
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -123,24 +124,29 @@ fn rs_hypergeom_test_list(
 
 /// Run hypergeometric enrichment over the gene ontology
 /// 
-/// This function implements a Rust version of the gene ontology enrichment with elimination:
-/// the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
-/// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
-/// term will be removed from all ancestors.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// @description This function implements a Rust version of the gene ontology
+/// enrichment with elimination: the starting point are the leafs of the
+/// ontology and hypergeometric tests will first conducted there. Should the 
+/// hypergeometric test p-value be below a certain threshold, the genes of that
+/// gene ontology term will be removed from all ancestors. WARNING! Incorrect
+/// use can cause kernel crashes. Wrapper around the Rust functions with type
+/// checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
-/// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
-/// names.
-/// @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
-/// identifiers as names.
-/// @param levels A named list with the go identifiers of that ontology level as elements and the level name
-/// as names. IMPORTANT! This list needs to be ordered in the right way!
+/// @param go_to_genes A named list with the gene identifers as elements and
+/// gene ontology identifiers as names.
+/// @param ancestors A named list with the go identifiers of all ancestors as
+/// elements and the gene ontology identifiers as names.
+/// @param levels A named list with the go identifiers of that ontology level as
+/// elements and the level name as names. IMPORTANT! This list needs to be
+/// ordered in the right way!
 /// @param gene_universe_length The length of the gene universe.
-/// @param min_genes number of minimum genes for the gene ontology term to be tested.
-/// @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
-/// @param debug boolean that will provide additional console information for debugging purposes.
+/// @param min_genes number of minimum genes for the gene ontology term to be
+/// tested.
+/// @param elim_threshold p-value below which the elimination procedure shall be
+/// applied to the ancestors.
+/// @param debug boolean that will provide additional console information for
+/// debugging purposes.
 /// 
 /// @return A list containing:
 ///  \itemize{
@@ -148,7 +154,7 @@ fn rs_hypergeom_test_list(
 ///   \item pvals - The calculated odds ratios.
 ///   \item odds_ratios - The calculated odds ratios.
 ///   \item overlap - The size of the overlap.
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -225,25 +231,31 @@ fn rs_gse_geom_elim(
 
 /// Run hypergeometric enrichment a list of target genes over the gene ontology
 /// 
-/// This function implements a Rust version of the gene ontology enrichment with elimination:
-/// the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
-/// Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
-/// term will be removed from all ancestors. This function is designed to leverage Rust-based threading
-/// for parallel processing of a list of target genes.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// This function implements a Rust version of the gene ontology enrichment with
+/// elimination: the starting point are the leafs of the ontology and
+/// hypergeometric tests will first conducted there. Should the hypergeometric
+/// test p-value be below a certain threshold, the genes of that gene ontology
+/// term will be removed from all ancestors. This function is designed to
+/// leverage Rust-based threading for parallel processing of a list of target
+/// genes. WARNING! Incorrect use can cause kernel crashes. Wrapper around the
+/// Rust functions with type checks are provided in the package.
 /// 
-/// @param target_genes_list A list of target genes against which to run the method.
-/// @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
-/// names.
-/// @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
-/// identifiers as names.
-/// @param levels A named list with the go identifiers of that ontology level as elements and the level name
-/// as names. IMPORTANT! This list needs to be ordered in the right way!
+/// @param target_genes_list A list of target genes against which to run the
+/// method.
+/// @param go_to_genes A named list with the gene identifers as elements and
+/// gene ontology identifiers as names.
+/// @param ancestors A named list with the go identifiers of all ancestors as
+/// elements and the gene ontology identifiers as names.
+/// @param levels A named list with the go identifiers of that ontology level as
+/// elements and the level name as names. IMPORTANT! This list needs to be
+/// ordered in the right way!
 /// @param gene_universe_length The length of the gene universe.
-/// @param min_genes number of minimum genes for the gene ontology term to be tested.
-/// @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
-/// @param debug boolean that will provide additional console information for debugging purposes.
+/// @param min_genes number of minimum genes for the gene ontology term to be
+/// tested.
+/// @param elim_threshold p-value below which the elimination procedure shall
+/// be applied to the ancestors.
+/// @param debug boolean that will provide additional console information for
+/// debugging purposes.
 /// 
 /// @return A list containing:
 ///  \itemize{
@@ -252,9 +264,9 @@ fn rs_gse_geom_elim(
 ///   \item odds_ratios - The calculated odds ratios.
 ///   \item overlap - The size of the overlap.
 ///   \item gene_set_lengths - The length of the gene sets.
-///   \item no_test - The number of tests that were conducted against target_gene_list.
-///   First element indicates how many values belong to the first target_genes set 
-///   in the list, etc.
+///   \item no_test - The number of tests that were conducted against
+///   target_gene_list. First element indicates how many values belong to the 
+///   first target_genes set in the list, etc.
 /// }
 /// 
 /// @export

@@ -1,15 +1,15 @@
 use extendr_api::prelude::*;
 
-use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::helpers_linalg::*;
-use crate::utils_rust::nested_vector_to_faer_mat;
+use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
+use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 
 
 /// Calculate the column-wise co-variance.
 /// 
 /// @description Calculates the co-variance of the columns.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
 /// 
 /// @param x R matrix with doubles.
 /// 
@@ -26,15 +26,147 @@ fn rs_covariance(
   faer_to_r_matrix(covar)
 }
 
+/// Calculate the column wise correlations.
+/// 
+/// @description Calculates the correlation matrix of the columns.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param x R matrix with doubles.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// 
+/// @returns The correlation matrix.
+/// 
+/// @export
+#[extendr]
+fn rs_cor(
+  x: RMatrix<f64>,
+  spearman: bool
+) -> extendr_api::RArray<f64, [usize; 2]> {
+  let mat = r_matrix_to_faer(x);
+
+  let cor = column_correlation(
+    &mat,
+    spearman
+  );
+
+  faer_to_r_matrix(cor)
+}
+
+/// Calculate the column wise correlations.
+/// 
+/// @description Calculates the correlation matrix of the columns. This function
+/// will return the upper triangle. WARNING! Incorrect use can cause kernel 
+/// crashes. Wrapper around the Rust functions with type checks are provided in
+/// the package.
+/// 
+/// @param x R matrix with doubles.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
+/// be included. 1 = the diagonal will not be included.
+/// 
+/// @returns The upper triangle of the correlation matrix iterating through the
+/// rows, shifted by one (the diagonal will not be returned).
+/// 
+/// @export
+#[extendr]
+fn rs_cor_upper_triangle(
+  x: RMatrix<f64>,
+  spearman: bool,
+  shift: usize,
+) -> Vec<f64> {
+  // Calculate the correlations
+  let mat = r_matrix_to_faer(x);
+  let cor = column_correlation(
+    &mat,
+    spearman
+  );
+  let upper_triangle_indices = upper_triangle_indices(
+    mat.ncols(),
+    shift
+  );
+  let mut cor_flat = Vec::new();
+  for (&r, &c) in upper_triangle_indices.0.iter().zip(upper_triangle_indices.1.iter()) {
+    cor_flat.push(*cor.get(r, c));
+  }
+
+  cor_flat
+}
+
+/// Calculate the column wise differential correlation between two sets of data.
+/// 
+/// @description This function calculates the differential correlation based on
+/// the Fisher method. For speed purposes, the function will only calculate the
+/// differential correlation on the upper triangle of the two correlation
+/// matrices.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param x_a R matrix a to be used for the differential correlation analysis.
+/// @param x_b R matrix a to be used for the differential correlation analysis.
+/// @param spearman Shall the Spearman correlation be calculated instead of 
+/// Pearson.
+/// 
+/// @return A list containing:
+///  \itemize{
+///   \item r_a - The correlation coefficients in the upper triangle of 
+///   matrix a.
+///   \item r_b - The correlation coefficients in the upper triangle of 
+///   matrix b.
+///   \item z_score - The z-scores of the difference in correlation 
+///   coefficients. 
+///   \item p_val - The z-scores transformed to p-values.
+/// }
+/// 
+/// @export
+#[extendr]
+fn rs_differential_cor(
+  x_a: RMatrix<f64>,
+  x_b: RMatrix<f64>,
+  spearman: bool
+) -> List {
+  assert!(
+    x_a.ncols() == x_b.ncols(),
+    "Input matrices must have the same number of columns. Found {} columns in first matrix and {} in second.",
+    x_a.ncols(), 
+    x_b.ncols()
+  );
+  let n_sample_a = x_a.nrows();
+  let n_sample_b = x_b.nrows();
+  let mat_a = r_matrix_to_faer(x_a);
+  let mat_b = r_matrix_to_faer(x_b);
+
+  let cor_a = column_correlation(&mat_a, spearman);
+  let cor_b = column_correlation(&mat_b, spearman);
+
+  let diff_cor = calculate_diff_correlation(
+    &cor_a,
+    &cor_b,
+    n_sample_a,
+    n_sample_b,
+    spearman
+  );
+
+  list!(
+    r_a = diff_cor.r_a,
+    r_b = diff_cor.r_b,
+    z_score = diff_cor.z_score,
+    p_val = diff_cor.p_vals
+  )
+}
+
+
 /// Calculate the contrastive PCA
 /// 
 /// @description This function calculate the contrastive PCA given a target
 /// covariance matrix and the background covariance matrix you wish to subtract.
 /// The alpha parameter controls how much of the background covariance you wish
 /// to remove. You have the options to return the feature loadings and you can
-/// specificy the number of cPCAs to return.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// specificy the number of cPCAs to return. WARNING! Incorrect use can cause
+/// kernel crashes. Wrapper around the Rust functions with type checks are
+/// provided in the package.
 /// 
 /// @param target_covar The co-variance matrix of the target data set.
 /// @param background_covar The co-variance matrix of the background data set.
@@ -97,8 +229,8 @@ fn rs_contrastive_pca(
 /// Prepare the data for whitening
 /// 
 /// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+/// functions with type checks are provided in the package.
 /// 
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
@@ -125,14 +257,15 @@ fn rs_prepare_whitening(
 
 /// Run the Rust implementation of fast ICA.
 /// 
-/// @description This function serves as a wrapper over the fast ICA implementations
-/// in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-/// with type checks are provided in the package.
+/// @description This function serves as a wrapper over the fast ICA
+/// implementations in Rust. It assumes a pre-whiten matrix and also an 
+/// intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+/// around the Rust functions with type checks are provided in the package.
 /// 
 /// @param whiten The whitened matrix.
 /// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-/// @param maxit Maximum number of iterations to try if algorithm does not converge.
+/// @param maxit Maximum number of iterations to try if algorithm does not
+/// converge.
 /// @param alpha The alpha parameter for the LogCosh implementation of ICA.
 /// @param tol Tolerance parameter.
 /// @param ica_type One of 'logcosh' or 'exp'.
@@ -178,9 +311,13 @@ fn rs_fast_ica(
   )
 }
 
+
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
+  fn rs_cor;
+  fn rs_cor_upper_triangle;
+  fn rs_differential_cor;
   fn rs_contrastive_pca;
   fn rs_prepare_whitening;
   fn rs_fast_ica;

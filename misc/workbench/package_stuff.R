@@ -26,6 +26,7 @@ use_package("rlang")
 use_package("dplyr")
 use_package("purrr")
 use_package("ggplot2")
+use_package("R6")
 
 ## Functions / R stuff ----
 

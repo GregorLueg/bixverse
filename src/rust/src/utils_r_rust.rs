@@ -76,9 +76,10 @@ pub fn r_matrix_to_faer(
   x: RMatrix<f64>
 ) -> faer::Mat<f64> {
   let ncol = x.ncols();
-  let nrow= x.nrows();
-  
-  Mat::from_fn(nrow, ncol, |i, j| x[[i, j]])
+  let nrow = x.nrows();
+  let data = x.data();
+
+  Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
 }
 
 /// Transform a faer into an R matrix

@@ -14,7 +14,7 @@ rs_fast_auc(pos_scores, neg_scores, iters, seed)
 \item{iters}{Number of iterations to run the function for.
 Recommended size: 10000L.}
 
-\item{random_seed}{Seed.}
+\item{seed}{Seed.}
 }
 \value{
 The AUC.

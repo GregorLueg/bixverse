@@ -7,6 +7,7 @@ mod fun_hypergeom;
 mod fun_stats;
 mod fun_rbh;
 mod fun_linalg;
+mod fun_helpers;
 
 mod utils_stats;
 mod utils_r_rust;

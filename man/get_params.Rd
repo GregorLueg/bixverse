@@ -4,13 +4,7 @@
 \alias{get_params}
 \title{Get the parameters that were used.}
 \usage{
-get_params(bixverse_base_class, ...)
-
-get_params(
- bixverse_base_class,
- to_json = FALSE,
- pretty_json = FALSE
-)
+get_params(bixverse_base_class, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
 \item{bixverse_base_class}{The underlying \code{bixverse_base_class} class.}
@@ -23,8 +17,6 @@ get_params(
 Depending on parameters either the R list or a (pretty) JSON string.
 }
 \description{
-This method accesses the params slot and can return R lists or JSON strings.
-
 Extracts params from the \code{bixverse_base_class} (or child)
 class and has options to return (pretty) JSONs
 }

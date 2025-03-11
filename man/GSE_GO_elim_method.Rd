@@ -4,20 +4,19 @@
 \alias{gse_go_elim_method}
 \title{Run gene ontology enrichment with elimination method.}
 \usage{
-gse_go_elim_method(gene_ontology_data, ...)
-
 gse_go_elim_method(
- gene_ontology_data,
- target_genes,
- minimum_overlap = 3L,
- fdr_threshold = 0.05,
- elim_threshold = 0.05,
- min_genes = NULL,
- .debug = FALSE
+  gene_ontology_data,
+  target_genes,
+  minimum_overlap = 3L,
+  fdr_threshold = 0.05,
+  elim_threshold = 0.05,
+  min_genes = NULL,
+  .debug = FALSE
 )
 }
 \arguments{
-\item{gene_ontology_data}{The underlying \code{gene_ontology_data} class.}
+\item{gene_ontology_data}{The underlying \code{gene_ontology_data} class, see
+\code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{target_genes}{String. The target genes you wish to apply the GSEA over.}
 
@@ -40,10 +39,6 @@ For debugging purposes.}
 data.table with enrichment results.
 }
 \description{
-This is the generic function for running gene ontology enrichment with an
-ontology-aware elimination of genes from ancestors upon significant
-enrichment.
-
 This method takes the gene_ontology_data and a target gene set and performs
 an GSE enrichment leveraging ontological information. It starts at the lowest
 levels of the ontology and tests if there is significant enrichment for any

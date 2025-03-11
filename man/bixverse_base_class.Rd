@@ -12,10 +12,13 @@ Returns the S7 object for further operations.
 \description{
 Generic base class that is used for inheritance in certain common methods
 across classes.
+}
+\section{Properties}{
 
-Internal properties:
-\itemize{
-\item params: A list for the parameters.
-\item final_results: A data.table that will contain the final results.
+\describe{
+\item{params}{A (nested) list that will store all the parameters of the
+applied function.}
+\item{final_results}{A data.table that will contain the final results.}
 }
 }
+

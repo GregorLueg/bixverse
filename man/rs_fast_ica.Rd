@@ -11,7 +11,8 @@ rs_fast_ica(whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
 \item{w_init}{The w_init matrix. ncols need to be equal to nrows of whiten.}
 
-\item{maxit}{Maximum number of iterations to try if algorithm does not converge.}
+\item{maxit}{Maximum number of iterations to try if algorithm does not
+converge.}
 
 \item{alpha}{The alpha parameter for the LogCosh implementation of ICA.}
 
@@ -33,8 +34,8 @@ A list containing:
 }
 }
 \description{
-This function serves as a wrapper over the fast ICA implementations
-in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-with type checks are provided in the package.
+This function serves as a wrapper over the fast ICA
+implementations in Rust. It assumes a pre-whiten matrix and also an
+intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+around the Rust functions with type checks are provided in the package.
 }

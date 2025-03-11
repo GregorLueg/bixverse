@@ -14,6 +14,6 @@ The co-variance matrix.
 }
 \description{
 Calculates the co-variance of the columns.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-with type checks are provided in the package.
+WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+functions with type checks are provided in the package.
 }

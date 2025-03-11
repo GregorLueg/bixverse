@@ -19,6 +19,7 @@ Imports:
     igraph,
     magrittr,
     purrr,
+    R6,
     rextendr,
     rlang,
     S7,

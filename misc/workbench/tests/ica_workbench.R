@@ -23,6 +23,8 @@ ica_test = ica_processing(ica_test)
 
 c(X_norm, K) %<-% rs_prepare_whitening(X)
 
+dim(X_norm)
+
 ica_res <- fast_ica_rust(
   X_norm,
   K,

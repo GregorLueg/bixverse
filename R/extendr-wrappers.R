@@ -12,23 +12,22 @@ NULL
 
 #' Run a single hypergeometric test.
 #' 
-#' Given a set of target genes, this is a Rust implementation of an hypergeometric 
-#' test testing for overenrichment of the target genes in the gene sets.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' @description Given a set of target genes, this is a Rust implementation of 
+#' an hypergeometric test testing for overenrichment of the target genes in the 
+#' gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around 
+#' the Rust functions with type checks are provided in the package.
 #' 
 #' @param target_genes A character vector representing the target gene set.
 #' @param gene_sets A list of strings that represent the gene sets to test against.
 #' @param gene_universe A character vector representing the gene universe from 
-#' which the target genes
-#' and gene sets are sampled from.
+#' which the target genes and gene sets are sampled from.
 #' 
 #' @return A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
 #'   \item overlap - The size of the overlap
-#'   \gene_set_lengths - The length of the gene sets.
+#'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #' 
 #' @export
@@ -36,22 +35,24 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 
 #' Run a hypergeometric test over a list of target genes
 #' 
-#' Given a list of target gene sets, this function will test for each of the individual 
-#' target genes the hypergeoemetric enrichment against the specified gene sets.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' @description Given a list of target gene sets, this function will test for
+#' each of the individual target genes the hypergeoemetric enrichment against 
+#' the specified gene sets. WARNING! Incorrect use can cause kernel crashes. 
+#' Wrapper around the Rust functions with type checks are provided in the 
+#' package.
 #' 
-#' @param target_genes A character vector representing the target gene set.
-#' @param gene_sets A list of strings that represent the gene sets to test against.
-#' @param gene_universe A character vector representing the gene universe from which the target genes
-#' and gene sets are sampled from.
+#' @param target_genes_list A character vector representing the target gene set.
+#' @param gene_sets A list of strings that represent the gene sets to test
+#' against.
+#' @param gene_universe A character vector representing the gene universe from 
+#' which the target genes and gene sets are sampled from.
 #' 
 #' @return A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds ratios - The calculated odds ratios
 #'   \item overlap - The size of the overlap
-#'   \gene_set_lengths - The length of the gene sets.
+#'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #' 
 #' @export
@@ -59,58 +60,29 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 
 #' Run hypergeometric enrichment over the gene ontology
 #' 
-#' This function implements a Rust version of the gene ontology enrichment with elimination:
-#' the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
-#' Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
-#' term will be removed from all ancestors.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' @description This function implements a Rust version of the gene ontology
+#' enrichment with elimination: the starting point are the leafs of the
+#' ontology and hypergeometric tests will first conducted there. Should the 
+#' hypergeometric test p-value be below a certain threshold, the genes of that
+#' gene ontology term will be removed from all ancestors. WARNING! Incorrect
+#' use can cause kernel crashes. Wrapper around the Rust functions with type
+#' checks are provided in the package.
 #' 
 #' @param target_genes A character vector representing the target gene set.
-#' @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
-#' names.
-#' @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
-#' identifiers as names.
-#' @param levels A named list with the go identifiers of that ontology level as elements and the level name
-#' as names. IMPORTANT! This list needs to be ordered in the right way!
+#' @param go_to_genes A named list with the gene identifers as elements and
+#' gene ontology identifiers as names.
+#' @param ancestors A named list with the go identifiers of all ancestors as
+#' elements and the gene ontology identifiers as names.
+#' @param levels A named list with the go identifiers of that ontology level as
+#' elements and the level name as names. IMPORTANT! This list needs to be
+#' ordered in the right way!
 #' @param gene_universe_length The length of the gene universe.
-#' @param min_genes number of minimum genes for the gene ontology term to be tested.
-#' @param elim_threshold p-value below which the elimination procedure shall be applied to the ancestors.
-#' @param debug boolean that will provide additional console information for debugging purposes.
-#' 
-#' @return A list containing:
-#'  \itemize{
-#'   \item go_ids - The gene ontology identifier.
-#'   \item pvals - The calculated odds ratios.
-#'   \item odds_ratios - The calculated odds ratios.
-#'   \item overlap - The size of the overlap.
-#'   \gene_set_lengths - The length of the gene sets.
-#' }
-#' 
-#' @export
-rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
-
-#' Run hypergeometric enrichment a list of target genes over the gene ontology
-#' 
-#' This function implements a Rust version of the gene ontology enrichment with elimination:
-#' the starting point are the leafs of the ontology and hypergeometric tests will first conducted there.
-#' Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
-#' term will be removed from all ancestors. This function is designed to leverage Rust-based threading
-#' for parallel processing of a list of target genes.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
-#' 
-#' @param target_genes_list A list of target genes against which to run the method.
-#' @param go_to_genes A named list with the gene identifers as elements and gene ontology identifiers as 
-#' names.
-#' @param ancestors A named list with the go identifiers of all ancestors as elements and the gene ontology
-#' identifiers as names.
-#' @param levels A named list with the go identifiers of that ontology level as elements and the level name
-#' as names. IMPORTANT! This list needs to be ordered in the right way!
-#' @param gene_universe_length The length of the gene universe.
-#' @param min_genes number of minimum genes for the gene ontology term to be tested.
-#' @param elim_threshold: p-value below which the elimination procedure shall be applied to the ancestors.
-#' @param debug boolean that will provide additional console information for debugging purposes.
+#' @param min_genes number of minimum genes for the gene ontology term to be
+#' tested.
+#' @param elim_threshold p-value below which the elimination procedure shall be
+#' applied to the ancestors.
+#' @param debug boolean that will provide additional console information for
+#' debugging purposes.
 #' 
 #' @return A list containing:
 #'  \itemize{
@@ -119,13 +91,64 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #'   \item odds_ratios - The calculated odds ratios.
 #'   \item overlap - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item no_test - The number of tests that were conducted against target_gene_list.
-#'   First element indicates how many values belong to the first target_genes set 
-#'   in the list, etc.
+#' }
+#' 
+#' @export
+rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
+
+#' Run hypergeometric enrichment a list of target genes over the gene ontology
+#' 
+#' This function implements a Rust version of the gene ontology enrichment with
+#' elimination: the starting point are the leafs of the ontology and
+#' hypergeometric tests will first conducted there. Should the hypergeometric
+#' test p-value be below a certain threshold, the genes of that gene ontology
+#' term will be removed from all ancestors. This function is designed to
+#' leverage Rust-based threading for parallel processing of a list of target
+#' genes. WARNING! Incorrect use can cause kernel crashes. Wrapper around the
+#' Rust functions with type checks are provided in the package.
+#' 
+#' @param target_genes_list A list of target genes against which to run the
+#' method.
+#' @param go_to_genes A named list with the gene identifers as elements and
+#' gene ontology identifiers as names.
+#' @param ancestors A named list with the go identifiers of all ancestors as
+#' elements and the gene ontology identifiers as names.
+#' @param levels A named list with the go identifiers of that ontology level as
+#' elements and the level name as names. IMPORTANT! This list needs to be
+#' ordered in the right way!
+#' @param gene_universe_length The length of the gene universe.
+#' @param min_genes number of minimum genes for the gene ontology term to be
+#' tested.
+#' @param elim_threshold p-value below which the elimination procedure shall
+#' be applied to the ancestors.
+#' @param debug boolean that will provide additional console information for
+#' debugging purposes.
+#' 
+#' @return A list containing:
+#'  \itemize{
+#'   \item go_ids - The gene ontology identifier.
+#'   \item pvals - The calculated odds ratios.
+#'   \item odds_ratios - The calculated odds ratios.
+#'   \item overlap - The size of the overlap.
+#'   \item gene_set_lengths - The length of the gene sets.
+#'   \item no_test - The number of tests that were conducted against
+#'   target_gene_list. First element indicates how many values belong to the 
+#'   first target_genes set in the list, etc.
 #' }
 #' 
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
+
+#' Apply a Gaussian affinity kernel to a distance metric
+#' 
+#' @description Applies a Gaussian kernel to a vector of distances.
+#' 
+#' @param x The distance metric. Should be positive values only!
+#' @param bandwidth The bandwidth of the kernel. Smaller values will yield
+#' smaller affinities.
+#' 
+#' @export
+rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_affinity_kernel, x, bandwidth)
 
 #' Fast AUC calculation
 #' 
@@ -135,7 +158,7 @@ rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, lev
 #' @param neg_scores The scores of your non-hits.
 #' @param iters Number of iterations to run the function for. 
 #' Recommended size: 10000L.
-#' @param random_seed Seed.
+#' @param seed Seed.
 #' 
 #' @return The AUC.
 #' 
@@ -144,9 +167,9 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 
 #' Create random AUCs
 #' 
-#' @description This function creates a random set of AUCs based on a score vector 
-#' and a size of the positive set. This can be used for permutation-based estimation
-#' of Z-scores and subsequently p-values.
+#' @description This function creates a random set of AUCs based on a score
+#' vector and a size of the positive set. This can be used for permutation-
+#' based estimation of Z-scores and subsequently p-values.
 #' 
 #' @param score_vec The overall vector of scores.
 #' @param size_pos The size of the hits represented in the score_vec.
@@ -155,7 +178,8 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' Recommended size: 10000L.
 #' @param seed Seed.
 #' 
-#' @return A vector of random AUCs based the score vector and size of the positive set.
+#' @return A vector of random AUCs based the score vector and size of the
+#' positive set.
 #' 
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
@@ -170,15 +194,30 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 
+#' Calculate the Hedge's G effect
+#' 
+#' @description Calculates the Hedge's G effect for two sets of matrices. The
+#' function assumes that rows = samples and columns = features. 
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
+#' 
+#' @param mat_a The matrix of samples and features in grp A for which to
+#' calculate the Hedge's G effect. 
+#' @param mat_b The matrix of samples and features in grp B for which to
+#' calculate the Hedge's G effect.
+#' @param small_sample_correction Shall the small sample correction be applied.
+#' 
+#' @return Returns the harmonic sum according to the OT calculation.
+#' 
 #' @export
-rs_hypergeom <- function(q, m, n, k) .Call(wrap__rs_hypergeom, q, m, n, k)
+rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
 
 #' Generate reciprocal best hits based on set similarities
 #' 
-#' @description This function takes a nested list that contains gene modules/sets 
-#' derived from various methods and generate identifies reciprocal best hits between 
-#' gene modules/sets across the different origins.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+#' @description This function takes a nested list that contains gene modules/
+#' sets derived from various methods and generate identifies reciprocal best
+#' hits between gene modules/sets across the different origins. WARNING!
+#' Incorrect use can cause kernel crashes. Wrapper around the Rust functions
 #' with type checks are provided in the package.
 #' 
 #' @param module_list A nested named list. The outer list should contain the 
@@ -188,16 +227,19 @@ rs_hypergeom <- function(q, m, n, k) .Call(wrap__rs_hypergeom, q, m, n, k)
 #' Jaccard similarity be used.
 #' @param min_similarity Minimum similarity that should exist between any two 
 #' given gene modules to actually calculate RBH pairs.
-#' @param debug Boolean Boolean that activates print messages for debugging purposes.
+#' @param debug Boolean Boolean that activates print messages for debugging
+#' purposes.
 #' 
 #' @return A list containing:
 #'  \itemize{
 #'   \item origin - The name of the origin of the gene modules.
 #'   \item target - The name of the target of the gene modules.
-#'   \item comparisons - Integer vector indicating how many RBH hits were identified in this comparison
+#'   \item comparisons - Integer vector indicating how many RBH hits were 
+#'   identified in this comparison
 #'   \item origin_modules - Names of the gene modules from the origin.
 #'   \item target_modules - Names of the gene modules from the target.
-#'   \item similarity - The similarities between the two respective gene modules.
+#'   \item similarity - The similarities between the two respective gene
+#'   modules.
 #' }
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
@@ -205,8 +247,8 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug)
 #' Calculate the column-wise co-variance.
 #' 
 #' @description Calculates the co-variance of the columns.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
 #' 
 #' @param x R matrix with doubles.
 #' 
@@ -215,15 +257,77 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug)
 #' @export
 rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 
+#' Calculate the column wise correlations.
+#' 
+#' @description Calculates the correlation matrix of the columns.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
+#' 
+#' @param x R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' 
+#' @returns The correlation matrix.
+#' 
+#' @export
+rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
+
+#' Calculate the column wise correlations.
+#' 
+#' @description Calculates the correlation matrix of the columns. This function
+#' will return the upper triangle. WARNING! Incorrect use can cause kernel 
+#' crashes. Wrapper around the Rust functions with type checks are provided in
+#' the package.
+#' 
+#' @param x R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
+#' be included. 1 = the diagonal will not be included.
+#' 
+#' @returns The upper triangle of the correlation matrix iterating through the
+#' rows, shifted by one (the diagonal will not be returned).
+#' 
+#' @export
+rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
+
+#' Calculate the column wise differential correlation between two sets of data.
+#' 
+#' @description This function calculates the differential correlation based on
+#' the Fisher method. For speed purposes, the function will only calculate the
+#' differential correlation on the upper triangle of the two correlation
+#' matrices.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' functions with type checks are provided in the package.
+#' 
+#' @param x_a R matrix a to be used for the differential correlation analysis.
+#' @param x_b R matrix a to be used for the differential correlation analysis.
+#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' Pearson.
+#' 
+#' @return A list containing:
+#'  \itemize{
+#'   \item r_a - The correlation coefficients in the upper triangle of 
+#'   matrix a.
+#'   \item r_b - The correlation coefficients in the upper triangle of 
+#'   matrix b.
+#'   \item z_score - The z-scores of the difference in correlation 
+#'   coefficients. 
+#'   \item p_val - The z-scores transformed to p-values.
+#' }
+#' 
+#' @export
+rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_cor, x_a, x_b, spearman)
+
 #' Calculate the contrastive PCA
 #' 
 #' @description This function calculate the contrastive PCA given a target
 #' covariance matrix and the background covariance matrix you wish to subtract.
 #' The alpha parameter controls how much of the background covariance you wish
 #' to remove. You have the options to return the feature loadings and you can
-#' specificy the number of cPCAs to return.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' specificy the number of cPCAs to return. WARNING! Incorrect use can cause
+#' kernel crashes. Wrapper around the Rust functions with type checks are
+#' provided in the package.
 #' 
 #' @param target_covar The co-variance matrix of the target data set.
 #' @param background_covar The co-variance matrix of the background data set.
@@ -246,8 +350,8 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' Prepare the data for whitening
 #' 
 #' @description Prepares the data for subsequent usag in ICA.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+#' functions with type checks are provided in the package.
 #' 
 #' @param x The matrix to whiten. The whitening will happen over the columns.
 #' 
@@ -262,14 +366,15 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 
 #' Run the Rust implementation of fast ICA.
 #' 
-#' @description This function serves as a wrapper over the fast ICA implementations
-#' in Rust. It assumes a pre-whiten matrix and also an intialised w_init.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
+#' @description This function serves as a wrapper over the fast ICA
+#' implementations in Rust. It assumes a pre-whiten matrix and also an 
+#' intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+#' around the Rust functions with type checks are provided in the package.
 #' 
 #' @param whiten The whitened matrix.
 #' @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-#' @param maxit Maximum number of iterations to try if algorithm does not converge.
+#' @param maxit Maximum number of iterations to try if algorithm does not
+#' converge.
 #' @param alpha The alpha parameter for the LogCosh implementation of ICA.
 #' @param tol Tolerance parameter.
 #' @param ica_type One of 'logcosh' or 'exp'.

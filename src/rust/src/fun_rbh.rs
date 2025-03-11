@@ -7,19 +7,19 @@ use crate::utils_rust::flatten_vector;
 
 /// Structure to store the RBH results.
 pub struct RbhResult {
-    pub origin: String,
-    pub target: String,
-    pub origin_modules: Vec<String>,
-    pub target_modules: Vec<String>,
-    pub similarities: Vec<f64>
+  pub origin: String,
+  pub target: String,
+  pub origin_modules: Vec<String>,
+  pub target_modules: Vec<String>,
+  pub similarities: Vec<f64>
 }
 
 /// Generate reciprocal best hits based on set similarities
 /// 
-/// @description This function takes a nested list that contains gene modules/sets 
-/// derived from various methods and generate identifies reciprocal best hits between 
-/// gene modules/sets across the different origins.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+/// @description This function takes a nested list that contains gene modules/
+/// sets derived from various methods and generate identifies reciprocal best
+/// hits between gene modules/sets across the different origins. WARNING!
+/// Incorrect use can cause kernel crashes. Wrapper around the Rust functions
 /// with type checks are provided in the package.
 /// 
 /// @param module_list A nested named list. The outer list should contain the 
@@ -29,16 +29,19 @@ pub struct RbhResult {
 /// Jaccard similarity be used.
 /// @param min_similarity Minimum similarity that should exist between any two 
 /// given gene modules to actually calculate RBH pairs.
-/// @param debug Boolean Boolean that activates print messages for debugging purposes.
+/// @param debug Boolean Boolean that activates print messages for debugging
+/// purposes.
 /// 
 /// @return A list containing:
 ///  \itemize{
 ///   \item origin - The name of the origin of the gene modules.
 ///   \item target - The name of the target of the gene modules.
-///   \item comparisons - Integer vector indicating how many RBH hits were identified in this comparison
+///   \item comparisons - Integer vector indicating how many RBH hits were 
+///   identified in this comparison
 ///   \item origin_modules - Names of the gene modules from the origin.
 ///   \item target_modules - Names of the gene modules from the target.
-///   \item similarity - The similarities between the two respective gene modules.
+///   \item similarity - The similarities between the two respective gene
+///   modules.
 /// }
 /// @export
 #[extendr]

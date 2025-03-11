@@ -1,10 +1,10 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
-// use rand::seq::SliceRandom;
 use rayon::prelude::*; 
-use statrs::distribution::{Hypergeometric, DiscreteCDF};
 
-use crate::utils_stats::split_vector_randomly;
+use crate::utils_stats::{split_vector_randomly, hedge_g_effect};
+use crate::utils_r_rust::r_matrix_to_faer;
+use crate::helpers_linalg::{col_means, col_sds};
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
 
@@ -17,7 +17,7 @@ use crate::utils_stats::split_vector_randomly;
 /// @param neg_scores The scores of your non-hits.
 /// @param iters Number of iterations to run the function for. 
 /// Recommended size: 10000L.
-/// @param random_seed Seed.
+/// @param seed Seed.
 /// 
 /// @return The AUC.
 /// 
@@ -45,9 +45,9 @@ fn rs_fast_auc(
 
 /// Create random AUCs
 /// 
-/// @description This function creates a random set of AUCs based on a score vector 
-/// and a size of the positive set. This can be used for permutation-based estimation
-/// of Z-scores and subsequently p-values.
+/// @description This function creates a random set of AUCs based on a score
+/// vector and a size of the positive set. This can be used for permutation-
+/// based estimation of Z-scores and subsequently p-values.
 /// 
 /// @param score_vec The overall vector of scores.
 /// @param size_pos The size of the hits represented in the score_vec.
@@ -56,7 +56,8 @@ fn rs_fast_auc(
 /// Recommended size: 10000L.
 /// @param seed Seed.
 /// 
-/// @return A vector of random AUCs based the score vector and size of the positive set.
+/// @return A vector of random AUCs based the score vector and size of the
+/// positive set.
 /// 
 /// @export
 #[extendr]
@@ -123,29 +124,79 @@ fn rs_ot_harmonic_sum(
 }
 
 
+/// Calculate the Hedge's G effect
+/// 
+/// @description Calculates the Hedge's G effect for two sets of matrices. The
+/// function assumes that rows = samples and columns = features. 
+/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+/// functions with type checks are provided in the package.
+/// 
+/// @param mat_a The matrix of samples and features in grp A for which to
+/// calculate the Hedge's G effect. 
+/// @param mat_b The matrix of samples and features in grp B for which to
+/// calculate the Hedge's G effect.
+/// @param small_sample_correction Shall the small sample correction be applied.
+/// 
+/// @return Returns the harmonic sum according to the OT calculation.
+/// 
 /// @export
 #[extendr]
-fn rs_hypergeom(
-  q: u64, 
-  m: u64, 
-  n: u64, 
-  k: u64
-) -> f64 {
-  if q == 0 {
-    // Special case of no hits. Due to being -1 here, the p-value returns as 0.
-    1.0
-  } else {
-    let population = m + n;
-    let successes = m;     
-    let draws = k;  
-    let dist: Hypergeometric = Hypergeometric::new(
-      population, 
-      successes, 
-      draws
-    )
-    .unwrap();
-    1.0 - dist.cdf(q - 1)
-  }
+fn rs_hedges_g(
+  mat_a: RMatrix<f64>,
+  mat_b: RMatrix<f64>,
+  small_sample_correction: bool,
+) -> List {
+  let mat_a: faer::Mat<f64> = r_matrix_to_faer(mat_a);
+  let mat_b: faer::Mat<f64> = r_matrix_to_faer(mat_b);
+
+  let n_a = mat_a.nrows();
+  let n_b = mat_b.nrows();
+
+  let mean_a = col_means(&mat_a);
+  let mean_b = col_means(&mat_b);
+
+  let std_a = col_sds(&mat_a);
+  let std_b = col_sds(&mat_b);
+
+  let (es, se) = hedge_g_effect(
+    &mean_a,
+    &mean_b,
+    &std_a,
+    &std_b,
+    n_a,
+    n_b,
+    small_sample_correction
+  );
+
+  list!(
+    effect_sizes = es,
+    standard_errors = se
+  )
+}
+
+
+/// Apply a Gaussian affinity kernel to a distance metric
+/// 
+/// @description Applies a Gaussian kernel to a vector of distances.
+/// 
+/// @param x The distance metric. Should be positive values only!
+/// @param bandwidth The bandwidth of the kernel. Smaller values will yield
+/// smaller affinities.
+/// 
+/// @export
+#[extendr]
+fn rs_gaussian_affinity_kernel(
+  x: &[f64],
+  bandwidth: f64
+) -> Vec<f64> {
+  let res: Vec<f64> = x.par_iter()
+    .map(|val| {
+      f64::exp(
+        -(val.powi(2)) / bandwidth.powi(2)
+      )
+    })
+    .collect();
+  res
 }
 
 
@@ -154,7 +205,7 @@ fn rs_hypergeom(
 // /// This function calculates the Jaccard or similarity index between a given 
 // /// string vector and a list of other string vectors.
 // /// 
-// /// @param string The String vector against which to calculate the set similarities.
+// /// @param string The String vector against which to calculate the setsimilarities.
 // /// @param string_list The list of character vectors for which to calculate the set similarities. 
 // /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
 // /// 
@@ -198,9 +249,10 @@ fn rs_hypergeom(
 
 extendr_module! {
     mod fun_stats;
+    fn rs_gaussian_affinity_kernel;
     // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
     fn rs_ot_harmonic_sum;
-    fn rs_hypergeom;
+    fn rs_hedges_g;
 }

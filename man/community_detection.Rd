@@ -4,22 +4,21 @@
 \alias{community_detection}
 \title{Identify privileged communities based on a given diffusion vector}
 \usage{
-community_detection(network_diffusions, ...)
-
 community_detection(
- network_diffusions,
- diffusion_threshold,
- max_nodes = 300L,
- min_nodes = 10L,
- min_seed_nodes = 2L,
- intial_res = 0.5,
- seed = 42L,
- .verbose = F,
- .max_iters = 100L
+  network_diffusions,
+  diffusion_threshold,
+  max_nodes = 300L,
+  min_nodes = 10L,
+  min_seed_nodes = 2L,
+  intial_res = 0.5,
+  seed = 42L,
+  .verbose = FALSE,
+  .max_iters = 100L
 )
 }
 \arguments{
-\item{network_diffusions}{The underlying \code{network_diffusions} class.}
+\item{network_diffusions}{The \code{network_diffusions} class, see
+\code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{diffusion_threshold}{How much of the network to keep based on the
 diffusion values. 0.25 for example would keep the 25\% nodes with the highest
@@ -49,12 +48,9 @@ communities.}
 }
 \value{
 The class with added diffusion community detection results (if any
-could be identified
-with the provided parameters).
+could be identified with the provided parameters).
 }
 \description{
-This is the generic function for diffusing seed genes over a network.
-
 Detects privileged communities after a diffusion based on seed
 nodes.
 }
