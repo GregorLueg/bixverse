@@ -4,16 +4,15 @@
 \alias{diffuse_seed_nodes}
 \title{Diffuse seed genes over a network}
 \usage{
-diffuse_seed_nodes(network_diffusions, ...)
-
 diffuse_seed_nodes(
- network_diffusions,
- diffusion_vector,
- summarisation = c("max", "mean", "harmonic_sum")
+  network_diffusions,
+  diffusion_vector,
+  summarisation = c("max", "mean", "harmonic_sum")
 )
 }
 \arguments{
-\item{network_diffusions}{The underlying \code{network_diffusions} class.}
+\item{network_diffusions}{The \code{network_diffusions} class, see
+\code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{diffusion_vector}{A named vector with values to use for the reset
 parameter in the personalised page-rank diffusion. Names should represent
@@ -27,8 +26,6 @@ The class with added diffusion score based on a single set of seed
 genes. Additionally, the seed genes are stored in the class.
 }
 \description{
-This is the generic function for diffusing seed genes over a network.
-
 This function takes a diffusion vector and leverages personalised page-rank
 diffusion to identify influential nodes. These can be used subsequently for
 community detection or check AUROC values given a set of genes.

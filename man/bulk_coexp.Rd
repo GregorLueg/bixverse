@@ -19,3 +19,17 @@ Returns the \code{bulk_coexp} class for further operations.
 Class for applying various co-expression module detection methods on top of
 bulk RNAseq data.
 }
+\section{Properties}{
+
+\describe{
+\item{raw_data}{A numerical matrix of the provided raw data.}
+\item{meta_data}{A data.table with the meta-information about the samples.}
+\item{processed_data}{A list in which various types of processed data will
+be stored.}
+\item{outputs}{A list in which key outputs will be stored.}
+\item{params}{A (nested) list that will store all the parameters of the
+applied function.}
+\item{final_results}{A data.table that will contain the final results.}
+}
+}
+

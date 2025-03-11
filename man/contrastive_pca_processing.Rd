@@ -4,13 +4,11 @@
 \alias{contrastive_pca_processing}
 \title{Prepare class for contrastive PCA}
 \usage{
-contrastive_pca_processing(bulk_coexp, ...)
-
 contrastive_pca_processing(
- bulk_coexp = bulk_coexp,
- background_matrix = background_matrix,
- scale = FALSE
- .verbose = TRUE
+  bulk_coexp,
+  background_matrix,
+  scale = FALSE,
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -28,8 +26,6 @@ remove. You should apply any data transformation to this matrix, too!}
 properties of the class.
 }
 \description{
-This is the generic function for doing the preprocessing for contrastive PCA.
-
 This function will prepare the \code{bulk_coexp} for subsequent usage of the
 contrastive PCA functions. This is based on the work of Abid, et al.
 }

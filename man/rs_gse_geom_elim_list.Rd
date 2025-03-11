@@ -49,9 +49,8 @@ A list containing:
 \item overlap - The size of the overlap.
 \item gene_set_lengths - The length of the gene sets.
 \item no_test - The number of tests that were conducted against
-target_gene_list.
-First element indicates how many values belong to the first target_genes
-set in the list, etc.
+target_gene_list. First element indicates how many values belong to the
+first target_genes set in the list, etc.
 }
 }
 \description{

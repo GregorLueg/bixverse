@@ -1,4 +1,4 @@
-# helpers ----
+# helpers ----------------------------------------------------------------------
 
 #' Summarise gene scores if they are duplicates.
 #'
@@ -30,36 +30,19 @@
   res
 }
 
-# network_diffusions ----
+# network_diffusions -----------------------------------------------------------
 
-## diffusion methods ----
+## diffusion methods -----------------------------------------------------------
 
 #' Diffuse seed genes over a network
-#'
-#' @description
-#' This is the generic function for diffusing seed genes over a network.
-#'
-#' @export
-diffuse_seed_nodes <- S7::new_generic(
-  "diffuse_seed_nodes",
-  "network_diffusions"
-)
-
-
-#' @name diffuse_seed_nodes
 #'
 #' @description
 #' This function takes a diffusion vector and leverages personalised page-rank
 #' diffusion to identify influential nodes. These can be used subsequently for
 #' community detection or check AUROC values given a set of genes.
 #'
-#' @usage diffuse_seed_nodes(
-#'  network_diffusions,
-#'  diffusion_vector,
-#'  summarisation = c("max", "mean", "harmonic_sum")
-#' )
-#'
-#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param network_diffusions The `network_diffusions` class, see
+#' [bixverse::network_diffusions()].
 #' @param diffusion_vector A named vector with values to use for the reset
 #' parameter in the personalised page-rank diffusion. Names should represent
 #' node names of the graph.
@@ -69,6 +52,18 @@ diffuse_seed_nodes <- S7::new_generic(
 #' @return The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.
 #'
+#' @export
+diffuse_seed_nodes <- S7::new_generic(
+  name = "diffuse_seed_nodes",
+  dispatch_args = "network_diffusions",
+  fun = function(network_diffusions,
+                 diffusion_vector,
+                 summarisation = c("max", "mean", "harmonic_sum")) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -118,29 +113,11 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 #' Diffuse seed genes in a tied manner over a network
 #'
 #' @description
-#' This is the generic function for diffusion two sets of seed genes over
-#' a network.
-#'
-#' @export
-tied_diffusion <- S7::new_generic("tied_diffusion", "network_diffusions")
-
-
-#' @name tied_diffusion
-#'
-#' @description
 #' This function takes two sets of diffusion vector and leverages tied diffusion
 #' to identify an intersection of influential nodes.
 #'
-#' @usage tied_diffusion(
-#'  network_diffusions,
-#'  diffusion_vector_1,
-#'  diffusion_vector_2,
-#'  summarisation = c("max", "mean", "harmonic_sum"),
-#'  score_aggregation = c("min", "max", "mean"),
-#'  verbose = TRUE
-#' )
-#'
-#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param network_diffusions The `network_diffusions` class, see
+#' [bixverse::network_diffusions()].
 #' @param diffusion_vector_1 The first named vector with values to use for the
 #' reset parameter in the personalised page-rank diffusion. Names should
 #' represent node names of the graph.
@@ -151,11 +128,26 @@ tied_diffusion <- S7::new_generic("tied_diffusion", "network_diffusions")
 #' how to summarise
 #' these.
 #' @param score_aggregation How to summarise the tied scores.
-#' @param verbose Controls verbosity of the function.
+#' @param .verbose Controls verbosity of the function.
 #'
 #' @return The class with added diffusion score based on a two sets of seed
 #' genes. Additionally, the seed genes are stored in the class.
 #'
+#' @export
+tied_diffusion <- S7::new_generic(
+  name = "tied_diffusion",
+  dispatch_args = "network_diffusions",
+  fun = function(network_diffusions,
+                 diffusion_vector_1,
+                 diffusion_vector_2,
+                 summarisation = c("max", "mean", "harmonic_sum"),
+                 score_aggregation = c("min", "max", "mean"),
+                 .verbose = FALSE) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -253,37 +245,15 @@ S7::method(tied_diffusion, network_diffusions) <-
     network_diffusions
   }
 
-## community detection ----
+## community detection ---------------------------------------------------------
 
 #' Identify privileged communities based on a given diffusion vector
-#'
-#' @description
-#' This is the generic function for diffusing seed genes over a network.
-#'
-#' @export
-community_detection <- S7::new_generic(
-  "community_detection",
-  "network_diffusions"
-)
-
-#' @name community_detection
 #'
 #' @description Detects privileged communities after a diffusion based on seed
 #' nodes.
 #'
-#' @usage community_detection(
-#'  network_diffusions,
-#'  diffusion_threshold,
-#'  max_nodes = 300L,
-#'  min_nodes = 10L,
-#'  min_seed_nodes = 2L,
-#'  intial_res = 0.5,
-#'  seed = 42L,
-#'  .verbose = F,
-#'  .max_iters = 100L
-#' )
-#'
-#' @param network_diffusions The underlying `network_diffusions` class.
+#' @param network_diffusions The `network_diffusions` class, see
+#' [bixverse::network_diffusions()].
 #' @param diffusion_threshold How much of the network to keep based on the
 #' diffusion values. 0.25 for example would keep the 25% nodes with the highest
 #' scores.
@@ -304,9 +274,26 @@ community_detection <- S7::new_generic(
 #' communities.
 #'
 #' @return The class with added diffusion community detection results (if any
-#' could be identified
-#' with the provided parameters).
+#' could be identified with the provided parameters).
 #'
+#' @export
+community_detection <- S7::new_generic(
+  name = "community_detection",
+  dispatch_args = "network_diffusions",
+  fun = function(network_diffusions,
+                 diffusion_threshold,
+                 max_nodes = 300L,
+                 min_nodes = 10L,
+                 min_seed_nodes = 2L,
+                 intial_res = 0.5,
+                 seed = 42L,
+                 .verbose = FALSE,
+                 .max_iters = 100L) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @import data.table
@@ -515,42 +502,40 @@ S7::method(community_detection, network_diffusions) <- function(
 #' Calculate the AUROC for a diffusion score
 #'
 #' @description
-#' This is the generic function for calculating AUC/AUROCs for a set of genes
-#' based on the diffusion vector of either single or tied diffusion.
-#'
-#' @export
-calculate_diffusion_auc <- S7::new_generic(
-  "calculate_diffusion_auc", "network_diffusions"
-)
-
-
-#' @name calculate_diffusion_auc
-#'
-#' @description
 #' This functions can take a given `network_diffusions` class and calculates an
 #' AUC and generates a Z-score based on random permutation of `random_aucs` for
 #' test for statistical significance if desired.
 #'
-#' @usage calculate_diffusion_auc(
-#'  network_diffusions,
-#'  hit_nodes,
-#'  auc_iters = 10000L,
-#'  random_aucs = 1000L,
-#'  permutation_test = FALSE,
-#'  seed = 42L
-#' )
-#'
-#' @param network_diffusions The underlying `network_diffusions` class.
-#' @param hit_nodes Which nodes would consist a hit to calculate the AUROC
-#' against.
-#' @param auc_iters How many iterations to run to approximate the AUROC.
-#' @param random_aucs How many random AUROCs to calculate to estimate the
-#' Z-score
-#' @param seed Seed for reproducibility purposes.
+#' @param network_diffusions The `network_diffusions` class, see
+#' [bixverse::network_diffusions()].
+#' @param hit_nodes String vector. Which nodes in the graph are considered a
+#' 'hit'.
+#' @param auc_iters Integer. How many iterations to run to approximate the
+#' AUROC.
+#' @param random_aucs Integer. How many random AUROCs to calculate to estimate
+#' the Z-score. Only of relevance if permutation test is set to `TRUE`.
+#' @param permutation_test Boolean. Shall a permutation based Z-score be
+#' calculated.
+#' @param seed Integer. Random seed.
 #'
 #' @return List with AUC and Z-score as the two named elements if permutations
 #' test set to TRUE; otherwise just the AUC.
 #'
+#' @export
+calculate_diffusion_auc <- S7::new_generic(
+  name = "calculate_diffusion_auc",
+  dispatch_args = "network_diffusions",
+  fun = function(network_diffusions,
+                 hit_nodes,
+                 auc_iters = 10000L,
+                 random_aucs = 1000L,
+                 permutation_test = FALSE,
+                 seed = 42L) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -615,25 +600,31 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
 #' Generate an RBH graph.
 #'
 #' @description
-#' This is the generic function for generating an RBH graph.
-#'
-#' @export
-generate_rbh_graph <- S7::new_generic("generate_rbh_graph", "rbh_graph")
-
-
-#' @name generate_rbh_graph
-#'
-#' @description
 #' This function will generate an RBH graph based on set similarity between
 #' gene modules. You have the option to use an overlap coefficient instead of
-#' Jaccard similarity and to specify a
+#' Jaccard similarity and to specify a minimum similarity.
 #'
-#' @param rbh_graph The `rbh_class` class.
+#' @param rbh_graph The `rbh_class` class, see [bixverse::rbh_graph()].
 #' @param minimum_similarity The minimum similarity to create an edge.
 #' @param overlap_coefficient Shall the overlap coefficient be used instead of
 #' Jaccard similarity.
 #' @param .debug Debug flat that will create print messages from Rust.
 #'
+#' @return The class with added properties.
+#'
+#' @export
+generate_rbh_graph <- S7::new_generic(
+  name = "generate_rbh_graph",
+  dispatch_args = "rbh_graph",
+  fun = function(rbh_graph,
+                 minimum_similarity,
+                 overlap_coefficient = FALSE,
+                 .debug = FALSE) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -721,21 +712,20 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 #' This is the generic function for identifying communities on top of an RBH
 #' graph.
 #'
-#' @export
-find_rbh_communities <- S7::new_generic("find_rbh_communities", "rbh_graph")
-
-
-#' @name find_rbh_communities
-#'
-#' @description
-#' This function will generate an RBH graph based on set similarity between
-#' gene modules. You have the option to use an overlap coefficient instead of
-#' Jaccard similarity and to specify a
-#'
-#' @param rbh_graph The `rbh_class` class.
+#' @param rbh_graph The `rbh_class` class, see [bixverse::rbh_graph()].
 #'
 #' @return The class with added community detection results.
 #'
+#' @export
+find_rbh_communities <- S7::new_generic(
+  name = "find_rbh_communities",
+  dispatch_args = "rbh_graph",
+  fun = function(rbh_graph) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`

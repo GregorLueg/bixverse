@@ -17,7 +17,7 @@ use crate::helpers_linalg::{col_means, col_sds};
 /// @param neg_scores The scores of your non-hits.
 /// @param iters Number of iterations to run the function for. 
 /// Recommended size: 10000L.
-/// @param random_seed Seed.
+/// @param seed Seed.
 /// 
 /// @return The AUC.
 /// 

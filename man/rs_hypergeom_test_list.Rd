@@ -21,7 +21,7 @@ A list containing:
 \item pvals - The p-values from the hypergeometric test
 \item odds ratios - The calculated odds ratios
 \item overlap - The size of the overlap
-\gene_set_lengths - The length of the gene sets.
+\item gene_set_lengths - The length of the gene sets.
 }
 }
 \description{

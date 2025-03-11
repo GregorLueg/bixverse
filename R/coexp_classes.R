@@ -1,5 +1,30 @@
-# class ----
+# class ------------------------------------------------------------------------
 
+#' Bulk RNAseq co-expression modules
+#'
+#' @description
+#' Class for applying various co-expression module detection methods on top of
+#' bulk RNAseq data.
+#'
+#' @param raw_data The raw count matrix. Rows = samples, columns = features.
+#' @param meta_data Metadata information on the samples. It expects to have a
+#' column sample_id and case_control column.
+#'
+#' @section Properties:
+#' \describe{
+#'   \item{raw_data}{A numerical matrix of the provided raw data.}
+#'   \item{meta_data}{A data.table with the meta-information about the samples.}
+#'   \item{processed_data}{A list in which various types of processed data will
+#'   be stored.}
+#'   \item{outputs}{A list in which key outputs will be stored.}
+#'   \item{params}{A (nested) list that will store all the parameters of the
+#'   applied function.}
+#'   \item{final_results}{A data.table that will contain the final results.}
+#' }
+#'
+#' @return Returns the `bulk_coexp` class for further operations.
+#'
+#' @export
 bulk_coexp <- S7::new_class(
   # Names, parents
   name = "bulk_coexp",
@@ -15,19 +40,7 @@ bulk_coexp <- S7::new_class(
     final_results = S7::class_data.frame
   ),
 
-  #' Bulk RNAseq co-expression modules
-  #'
-  #' @description
-  #' Class for applying various co-expression module detection methods on top of
-  #' bulk RNAseq data.
-  #'
-  #' @param raw_data The raw count matrix. Rows = samples, columns = features.
-  #' @param meta_data Metadata information on the samples. It expects to have a
-  #' column sample_id and case_control column.
-  #'
-  #' @return Returns the `bulk_coexp` class for further operations.
-  #'
-  #' @export
+
   constructor = function(raw_data, meta_data) {
     # Checks
     checkmate::assertMatrix(raw_data, mode = "numeric")
@@ -52,7 +65,7 @@ bulk_coexp <- S7::new_class(
   }
 )
 
-# getters ----
+# getters ----------------------------------------------------------------------
 
 #' Return the outputs from bulk_coexp
 #'
@@ -60,23 +73,24 @@ bulk_coexp <- S7::new_class(
 #' Getter function to extract the outputs from the [bixverse::bulk_coexp()]
 #' class.
 #'
-#' @export
-get_outputs <- S7::new_generic(
-  "get_outputs",
-  "bulk_coexp"
-)
-
-
-#' @name get_outputs
-#'
-#' @description Get the outputs that are stored in the class.
-#'
 #' @param bulk_coexp The underlying `bulk_coexp` class, see
 #' [bixverse::bulk_coexp()].
 #'
 #' @return Returns the outputs stored in the class.
 #'
+#' @export
+get_outputs <- S7::new_generic(
+  name = "get_outputs",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @method get_outputs bulk_coexp
+#'
+#' @export
 S7::method(get_outputs, bulk_coexp) <-
   function(bulk_coexp) {
     # Checks
@@ -89,26 +103,55 @@ S7::method(get_outputs, bulk_coexp) <-
   }
 
 
-# prints ----
+# print ------------------------------------------------------------------------
 
-# S7::method(format, bulk_coexp) <- function(x, ...) {
-#   pre_processed <- !purrr::is_empty(S7::prop(bulk_coexp, "processed_data"))
-#   co_exp_method <- if (purrr::is_empty(S7::prop(bulk_coexp, "params")[["detection_method"]])) {
-#     'not defined yet'
-#   } else {
-#     S7::prop(bulk_coexp, "params")[["detection_method"]]
-#   }
-#   outputs_available = !purrr::is_empty(S7::prop(bulk_coexp, "params")[["outputs"]])
-#
-#   sprintf(
-#     "Bulk co-expression class object:\n  Pre-processsed: %b\n  Method: %s\n  Outputs available: %b",
-#     pre_processed,
-#     co_exp_method,
-#     outputs_available
-#   )
-# }
+#' @name print.bulk_coexp
+#' @title print Method for bulk_coexp object
+#'
+#' @description
+#' Print a bulk_coexp object.
+#'
+#' @param x An object of class `bulk_coexp`.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @method print bulk_coexp
+S7::method(print, bulk_coexp) <- function(x, ...) {
+  # Pre-processing
+  preprocessed <- !is.null(S7::prop(x, "processed_data")[['processed_data']])
+  features <- if(preprocessed) {
+    no_features <- S7::prop(x, "processed_data")[['feature_meta']] %>%
+      .[(hvg)] %>%
+      nrow()
+    sprintf('  Number of HVG: %i.\n', no_features)
+  } else {
+    ''
+  }
+  # Prints for different methods
+  method_info <- if (S7::prop(x, "params")[["detection_method"]] == "cPCA") {
+    no_intersecting_features <- length(S7::prop(x, "params")[["cPCA_params"]][['intersecting_features']])
+    paste0(
+      " Detection method: cPCA.\n",
+      sprintf("  No of intersecting features: %i.\n", no_intersecting_features)
+    )
+  } else {
+    ''
+  }
 
-# general methods ----
+  cat(
+    "Bulk co-expression module class (bulk_coexp).\n",
+    " Pre-processing done: ",
+    preprocessed,
+    ".\n",
+    features,
+    method_info,
+    sep = ''
+  )
+  invisible(x)
+}
+
+# general methods --------------------------------------------------------------
 
 #' Process the raw data
 #'
@@ -116,106 +159,138 @@ S7::method(get_outputs, bulk_coexp) <-
 #' Function to do general pre-processing on top of the [bixverse::bulk_coexp()].
 #' Options to do scaling, HVG selection, etc.
 #'
-#' @export
-preprocess_bulk_coexp <- S7::new_generic(
-  "preprocess_bulk_coexp",
-  "bulk_coexp"
-)
-
-
-#' @name preprocess_bulk_coexp
-#'
-#' @description Do pre-processing on top of the data. This can include selection
-#' of highly variable genes and/or scaling.
-#'
 #' @param bulk_coexp The underlying `bixverse_base_class` class, see
 #' [bixverse::bulk_coexp()].
-#' @param hvg ...
-#' @param mad_threshold ...
-#' @param scaling ...
-#' @param scaling_type ...
+#' @param hvg Integer or float. If an integer, the top `hvg` genes will be
+#' included; if float, the float has to be between 0 and 1, representing the
+#' percentage of genes to include.
+#' @param mad_threshold Float. Instead of of selecting number or proportion of
+#' genes, you can also provide a mad_threshold.
+#' @param scaling Boolean. Shall the data be scaled.
+#' @param scaling_type String. You have the option to use normal scaling or
+#' robust scaling.
+#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return Returns the class with the processed_data data slot populated.
 #'
-#' @method preprocess_bulk_coexp bulk_coexp
-S7::method(preprocess_bulk_coexp, bulk_coexp) <-
-  function(bulk_coexp,
-           hvg = NULL,
-           mad_threshold = NULL,
-           scaling = F,
-           scaling_type = c("normal", "robust")) {
-    # Checks
-    checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
-    checkmate::qassert(mad_threshold, c("R1", "0"))
-    nfeatures <- S7::prop(bulk_coexp, "params")[['original_dim']][2]
-    checkmate::qassert(hvg, c("R1[0,1]", sprintf("I1[0,%i]", nfeatures), "0"))
-    checkmate::qassert(scaling, "B1")
-    if (scaling) {
-      checkmate::assertChoice(scaling_type, c("normal", "robust"))
-    }
-
-    mat <- S7::prop(bulk_coexp, "raw_data")
-
-    feature_meta <- data.table::data.table(
-      feature_name = colnames(mat),
-      mean_exp = colMeans(mat),
-      MAD = matrixStats::colMads(mat),
-      var_exp = matrixStats::colVars(mat)
-    ) %>%
-      data.table::setorder(-MAD)
-
-    if(is.null(hvg) & is.null(mad_threshold)) {
-      hvg = 1
-    }
-
-    if (!is.null(hvg)) {
-      no_genes_to_take <-
-        ifelse(is.integer(hvg), hvg, ceiling(hvg * ncol(mat)))
-      hvg_genes <- feature_meta[1:no_genes_to_take, feature_name]
-    } else {
-      hvg_genes <- feature_meta[MAD >= mad_threshold, feature_name]
-    }
-
-    feature_meta[, hvg := feature_name %in% hvg_genes]
-
-    # Process the matrix
-    matrix_processed <- mat[, hvg_genes]
-
-    if (scaling) {
-      fun <-
-        ifelse(scaling_type == "normal",
-               "scale",
-               "bixverse::robust_scale"
-        )
-      matrix_processed <- rlang::eval_tidy(rlang::quo(apply(
-        matrix_processed, 1, !!!rlang::parse_exprs(fun)
-      )))
-    }
-
-    processing_params <- list(
-      mad_threshold = if (is.null(mad_threshold)) {
-        "not applicable"
-      } else {
-        mad_threshold
-      },
-      hvg = if (is.null(hvg)) {
-        "not applicable"
-      } else {
-        hvg
-      },
-      scaling = scaling,
-      scaling_type = if (!scaling) {
-        "not applicable"
-      } else {
-        scaling_type
-      }
-    )
-
-    S7::prop(bulk_coexp, "params")[['preprocessing']] <- processing_params
-    S7::prop(bulk_coexp, "processed_data")[['processed_data']] <- matrix_processed
-    S7::prop(bulk_coexp, "processed_data")[['feature_meta']] <- feature_meta
-
-    # Return
-    bulk_coexp
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+preprocess_bulk_coexp <- S7::new_generic(
+  "preprocess_bulk_coexp",
+  "bulk_coexp",
+  fun = function(bulk_coexp,
+                 hvg = NULL,
+                 mad_threshold = NULL,
+                 scaling = FALSE,
+                 scaling_type = c("normal", "robust"),
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
   }
+)
+
+#' @method preprocess_bulk_coexp bulk_coexp
+#' @export
+S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
+                                                          hvg = NULL,
+                                                          mad_threshold = NULL,
+                                                          scaling = FALSE,
+                                                          scaling_type = c("normal", "robust"),
+                                                          .verbose = TRUE) {
+  # Checks
+  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::qassert(mad_threshold, c("R1", "0"))
+  nfeatures <- S7::prop(bulk_coexp, "params")[['original_dim']][2]
+  checkmate::qassert(hvg, c("R1[0,1]", sprintf("I1[0,%i]", nfeatures), "0"))
+  checkmate::qassert(scaling, "B1")
+  if (scaling) {
+    checkmate::assertChoice(scaling_type, c("normal", "robust"))
+  }
+
+  mat <- S7::prop(bulk_coexp, "raw_data")
+
+  feature_meta <- data.table::data.table(
+    feature_name = colnames(mat),
+    mean_exp = colMeans(mat),
+    MAD = matrixStats::colMads(mat),
+    var_exp = matrixStats::colVars(mat)
+  ) %>%
+    data.table::setorder(-MAD)
+
+  if (!is.null(hvg) & !is.null(mad_threshold)) {
+    choice <- menu(
+      choices = c("MAD threshold", "HVG threshold"),
+      title = paste(
+        "You have provided both a MAD and HVG",
+        "threshold. Which one do you want to use?"
+      )
+    )
+    if (choice == 1) {
+      hvg <- NULL
+    } else {
+      mad_threshold <- NULL
+    }
+  }
+
+  if (is.null(hvg) & is.null(mad_threshold)) {
+    hvg = 1
+  }
+
+  if (!is.null(hvg)) {
+    no_genes_to_take <-
+      ifelse(is.integer(hvg), hvg, ceiling(hvg * ncol(mat)))
+    hvg_genes <- feature_meta[1:no_genes_to_take, feature_name]
+  } else {
+    hvg_genes <- feature_meta[MAD >= mad_threshold, feature_name]
+  }
+
+  if (.verbose)
+    message(sprintf("A total of %i genes will be included.", length(hvg_genes)))
+
+  feature_meta[, hvg := feature_name %in% hvg_genes]
+
+  # Process the matrix
+  matrix_processed <- mat[, hvg_genes]
+
+  if (scaling) {
+    fun <-
+      ifelse(scaling_type == "normal",
+             "scale",
+             "bixverse::robust_scale")
+    matrix_processed <- rlang::eval_tidy(rlang::quo(apply(
+      matrix_processed, 1, !!!rlang::parse_exprs(fun)
+    )))
+  }
+
+  processing_params <- list(
+    mad_threshold = if (is.null(mad_threshold)) {
+      "not applicable"
+    } else {
+      mad_threshold
+    },
+    hvg = if (is.null(hvg)) {
+      "not applicable"
+    } else {
+      hvg
+    },
+    scaling = scaling,
+    scaling_type = if (!scaling) {
+      "not applicable"
+    } else {
+      scaling_type
+    }
+  )
+
+  S7::prop(bulk_coexp, "params")[['preprocessing']] <-
+    processing_params
+  S7::prop(bulk_coexp, "processed_data")[['processed_data']] <-
+    matrix_processed
+  S7::prop(bulk_coexp, "processed_data")[['feature_meta']] <-
+    feature_meta
+
+  # Return
+  bulk_coexp
+}
 

@@ -1,29 +1,10 @@
-# processing ----
+# processing -------------------------------------------------------------------
 
 #' Prepare class for contrastive PCA
 #'
 #' @description
-#' This is the generic function for doing the preprocessing for contrastive PCA.
-#'
-#' @export
-contrastive_pca_processing <- S7::new_generic(
-  "contrastive_pca_processing",
-  "bulk_coexp"
-)
-
-
-#' @name contrastive_pca_processing
-#'
-#' @description
 #' This function will prepare the `bulk_coexp` for subsequent usage of the
 #' contrastive PCA functions. This is based on the work of Abid, et al.
-#'
-#' @usage contrastive_pca_processing(
-#'  bulk_coexp = bulk_coexp,
-#'  background_matrix = background_matrix,
-#'  scale = FALSE
-#'  .verbose = TRUE
-#' )
 #'
 #' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
 #' @param background_matrix Numeric matrix. The background matrix you wish to
@@ -34,13 +15,25 @@ contrastive_pca_processing <- S7::new_generic(
 #' @return `bulk_coexp` with the needed data for contrastive PCA in the
 #' properties of the class.
 #'
-#' @export
-#'
 #' @references Abid, et al., Nature Communications, 2018
 #'
+#' @export
+contrastive_pca_processing <- S7::new_generic(
+  name = "contrastive_pca_processing",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp,
+                 background_matrix,
+                 scale = FALSE,
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
 #' @import data.table
+#'
+#' @export
 #'
 #' @method contrastive_pca_processing bulk_coexp
 S7::method(contrastive_pca_processing, bulk_coexp) <-
@@ -114,27 +107,13 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
   }
 
 
-# methods ----
+# methods ----------------------------------------------------------------------
 
 #' Apply contrastive PCA.
 #'
 #' @description
-#' This is the generic function for doing the preprocessing for contrastive PCA.
-#'
-#' @export
-apply_contrastive_pca <- S7::new_generic(
-  "apply_contrastive_pca",
-  "bulk_coexp"
-)
-
-
-#' @name apply_contrastive_pca
-#'
-#' @description
 #' Applies the contrastive PCA algorithm given a specified alpha and a number of
 #' contrastive principal components to extract.
-#'
-#' @usage ...
 #'
 #' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
 #' @param alpha Alpha parameter to use.
@@ -142,13 +121,23 @@ apply_contrastive_pca <- S7::new_generic(
 #'
 #' @return `bulk_coexp` with additional data in the slots
 #'
-#' @export
-#'
 #' @references Abid, et al., Nature Communications, 2018
 #'
+#' @export
+apply_contrastive_pca <- S7::new_generic(
+  name = "apply_contrastive_pca",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp, alpha, no_pcs) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
 #' @import data.table
+#'
+#' @export
 #'
 #' @method apply_contrastive_pca bulk_coexp
 S7::method(apply_contrastive_pca, bulk_coexp) <-
@@ -188,31 +177,13 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
     return(bulk_coexp)
   }
 
-# plotting ----
+# plotting ---------------------------------------------------------------------
 
 #' Plot various alphas for the contrastive PCA
 #'
 #' @description
-#' This function will plot
-#'
-#' @export
-c_pca_plot_alphas <- S7::new_generic("c_pca_plot_alphas", "bulk_coexp")
-
-
-#' @name c_pca_plot_alphas
-#'
-#' @description
 #' This function will plot various alphas to highlight the most interesting
 #' alpha parameters akin to the implementation of contrastive PCA in Python.
-#'
-#' @usage c_pca_plot_alphas(
-#'  bulk_coexp = bulk_coexp,
-#'  label_column = NULL,
-#'  min_alpha = .1,
-#'  max_alpha = 100,
-#'  n_alphas = 10L,
-#'  .verbose = TRUE
-#' )
 #'
 #' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()]. You need
 #' to apply [bixverse::contrastive_pca_processing()] to the function for this
@@ -225,8 +196,26 @@ c_pca_plot_alphas <- S7::new_generic("c_pca_plot_alphas", "bulk_coexp")
 #' of alphas from log(min_alpha) to log(max_alpha) to test out.
 #' @param .verbose Controls verbosity of function.
 #'
-#' @return A ggplot showing the changes
+#' @return A ggplot showing the impact of various alpha parameters on the
+#' samples in form of 2D plots.
 #'
+#' @references Abid, et al., Nature Communications, 2018
+#'
+#' @export
+c_pca_plot_alphas <- S7::new_generic(
+  name = "c_pca_plot_alphas",
+  dispatch_args = "bulk_coexp",
+  fun = function(bulk_coexp,
+                 label_column = NULL,
+                 min_alpha = .1,
+                 max_alpha = 100,
+                 n_alphas = 10L,
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  })
+
+
+
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -236,8 +225,6 @@ c_pca_plot_alphas <- S7::new_generic("c_pca_plot_alphas", "bulk_coexp")
 #' @import ggplot2
 #'
 #' @method c_pca_plot_alphas bulk_coexp
-#'
-#' @references Abid, et al., Nature Communications, 2018
 S7::method(c_pca_plot_alphas, bulk_coexp) <- function(bulk_coexp,
                                                       label_column = NULL,
                                                       min_alpha = .1,

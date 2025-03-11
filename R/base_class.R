@@ -2,24 +2,25 @@
 
 ## bixverse_base_class ----
 
+#' bixverse base class
+#'
+#' @description
+#' Generic base class that is used for inheritance in certain common methods
+#' across classes.
+#'
+#' @section Properties:
+#' \describe{
+#'   \item{params}{A (nested) list that will store all the parameters of the
+#'   applied function.}
+#'   \item{final_results}{A data.table that will contain the final results.}
+#' }
+#'
+#' @return Returns the S7 object for further operations.
 bixverse_base_class <- S7::new_class(
   # Name
   name = "bixverse_base_class",
   properties = list(params = S7::class_list),
 
-  #' bixverse base class
-  #'
-  #' @description
-  #' Generic base class that is used for inheritance in certain common methods
-  #' across classes.
-  #'
-  #' Internal properties:
-  #' - params: A list for the parameters.
-  #' - final_results: A data.table that will contain the final results.
-  #'
-  #' @return Returns the S7 object for further operations.
-  #'
-  #' @export
   constructor = function() {
     S7::new_object(
       S7::S7_object(),
@@ -31,35 +32,14 @@ bixverse_base_class <- S7::new_class(
 
 # methods ----
 
-## print ----
-
-# print <- S7::new_generic("print", "x", function(x, ...) {
-#   S7::S7_dispatch()
-# })
-
-## show ----
-
-
 ## getters ----
+
+?S7::new_generic
 
 #' Get the parameters that were used.
 #'
-#' @description
-#' This method accesses the params slot and can return R lists or JSON strings.
-#'
-#' @export
-get_params <- S7::new_generic("get_params", "bixverse_base_class")
-
-#' @name get_params
-#'
 #' @description Extracts params from the `bixverse_base_class` (or child)
 #' class and has options to return (pretty) JSONs
-#'
-#' @usage get_params(
-#'  bixverse_base_class,
-#'  to_json = FALSE,
-#'  pretty_json = FALSE
-#' )
 #'
 #' @param bixverse_base_class The underlying `bixverse_base_class` class.
 #' @param to_json Shall the params be returned as a JSON string.
@@ -67,7 +47,18 @@ get_params <- S7::new_generic("get_params", "bixverse_base_class")
 #'
 #' @return Depending on parameters either the R list or a (pretty) JSON string.
 #'
+#' @export
+get_params <- S7::new_generic(
+  name = "get_params",
+  dispatch_args = "bixverse_base_class",
+  fun = function(bixverse_base_class,
+                 to_json = FALSE,
+                 pretty_json = FALSE) {
+    S7::S7_dispatch()
+  })
+
 #' @method get_params bixverse_base_class
+#' @export
 S7::method(get_params, bixverse_base_class) <-
   function(bixverse_base_class,
            to_json = FALSE,
@@ -92,28 +83,25 @@ S7::method(get_params, bixverse_base_class) <-
   }
 
 
-#### getters ----
-
-#' Get the diffusion results
-#'
-#' @description
-#' This method returns the final results from a given module class.
-#'
-#' @export
-get_results <- S7::new_generic("get_results", "bixverse_base_class")
-
-#' @name get_results
+#' Get the final results from the class
 #'
 #' @description Get the final results from the a
 #' [bixverse::bixverse_base_class()] class.
-#'
-#' @usage get_results(bixverse_base_class)
 #'
 #' @param bixverse_base_class The underlying [bixverse::bixverse_base_class()]
 #' class. This class is usually inherited by other classes.
 #'
 #' @return Returns the final results if any have been stored in the class.
 #'
+#' @export
+get_results <- S7::new_generic(
+  name = "get_results",
+  dispatch_args = "bixverse_base_class",
+  fun = function(bixverse_base_class) {
+    S7::S7_dispatch()
+  })
+
+#' @export
 #' @method get_results bixverse_generic_class
 S7::method(get_results, bixverse_base_class) <-
   function(bixverse_base_class) {

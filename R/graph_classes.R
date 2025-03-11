@@ -2,6 +2,34 @@
 
 ## class ----
 
+#' Network diffusion class
+#'
+#' @description
+#' This class helps to do diffusion of seed nodes in a single or tied version
+#' over a network, measure the ability of these diffusion vectors to recall
+#' against a gold standard set of nodes and do community detection within the
+#' subset of the network that received the the most heat from the initial seed
+#' genes.
+#'
+#' @section Properties:
+#' \describe{
+#'   \item{graph}{igraph. The underlying graph.}
+#'   \item{diffusion_res}{Numeric vector. Contains contains the single or tied
+#'   diffusion results.}
+#'   \item{params}{A (nested) list that will store all the parameters of the
+#'   applied function.}
+#'   \item{final_results}{data.table. Contains final results.}
+#' }
+#'
+#' @param edge_data_frame data.table that contains the edge information. It is
+#' expected to have the columns 'from' and 'to'.
+#' @param weighted Boolean. Is the graph weighted. If set to TRUE, the
+#' `edge_data_frame` needs to have a weight column.
+#' @param directed Boolean. Shall the graph be stored as directed.
+#'
+#' @return Returns the `network_diffusions` class for further operations.
+#'
+#' @export
 network_diffusions <- S7::new_class(
   # Names, parents
   name = "network_diffusions",
@@ -15,33 +43,7 @@ network_diffusions <- S7::new_class(
     params = S7::class_list
   ),
 
-  #' Network diffusion class
-  #'
-  #' @description
-  #' This class helps to do diffusion of seed nodes in a single or tied version
-  #' over a network, measure the ability of these diffusion vectors to recall
-  #' against a gold standard set of nodes and do community detection within the
-  #' subset of the network that received the the most heat from the initial seed
-  #' genes.
-  #'
-  #' Internal properties:
-  #' - graph: The underlying igraph.
-  #' - diffusion_res: This is the numerical vector that contains the single or
-  #' tied diffusion results
-  #' - final_results: This is where the final communities will be stored.
-  #' - params: A list with the params. This will be populated during subsequent
-  #' function calls.
-  #'
-  #'
-  #' @param edge_data_frame data.table that contains the edge information. It is
-  #' expected to have the columns 'from' and 'to'.
-  #' @param weighted Boolean. Is the graph weighted. If set to TRUE, the
-  #' `edge_data_frame` needs to have a weight column.
-  #' @param directed Boolean. Shall the graph be stored as directed.
-  #'
-  #' @return Returns the `network_diffusions` class for further operations.
-  #'
-  #' @export
+
   constructor = function(edge_data_frame, weighted, directed) {
     # Checks
     needed_cols <- if (weighted) {

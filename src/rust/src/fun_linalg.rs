@@ -64,6 +64,8 @@ fn rs_cor(
 /// @param x R matrix with doubles.
 /// @param spearman Shall the Spearman correlation be calculated instead of 
 /// Pearson.
+/// @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
+/// be included. 1 = the diagonal will not be included.
 /// 
 /// @returns The upper triangle of the correlation matrix iterating through the
 /// rows, shifted by one (the diagonal will not be returned).
@@ -75,20 +77,17 @@ fn rs_cor_upper_triangle(
   spearman: bool,
   shift: usize,
 ) -> Vec<f64> {
+  // Calculate the correlations
   let mat = r_matrix_to_faer(x);
-
   let cor = column_correlation(
     &mat,
     spearman
   );
-
   let upper_triangle_indices = upper_triangle_indices(
     mat.ncols(),
     shift
   );
-
   let mut cor_flat = Vec::new();
-
   for (&r, &c) in upper_triangle_indices.0.iter().zip(upper_triangle_indices.1.iter()) {
     cor_flat.push(*cor.get(r, c));
   }

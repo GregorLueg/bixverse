@@ -5,8 +5,9 @@ library(magrittr)
 devtools::document()
 devtools::load_all()
 rextendr::document()
+devtools::check()
 
-devtools::install()
+?S7::new_generic
 
 syn_data = synthetic_signal_matrix()
 
@@ -18,11 +19,21 @@ meta_data = data.table::data.table(
   grp = syn_data$group
 )
 
+?preprocess_bulk_coexp
+
+?get_params
+
 cor_test = bulk_coexp(X, meta_data)
 
 cor_test = preprocess_bulk_coexp(cor_test)
 
+get_outputs(cor_test)
+
+cor_test
+
 cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
+
+cor_test@processed_data$correlation_res$get_data_table()
 
 cor_test = cor_module_identification(cor_test)
 
@@ -44,10 +55,6 @@ plot_df
 
 # Test on real data ----
 
-library(recount3)
-library(limma)
-library(edgeR)
-
 gtex_brain <- recount3::create_rse_manual(
   project = "BRAIN",
   project_home = "data_sources/gtex",
@@ -56,68 +63,73 @@ gtex_brain <- recount3::create_rse_manual(
   type = "gene"
 )
 
-coldata <- colData(gtex_brain) |> as.data.frame()
-rowdata <- rowData(gtex_brain) |> as.data.frame()
+coldata <- SummarizedExperiment::colData(gtex_brain) |> as.data.frame()
+rowdata <- SummarizedExperiment::rowData(gtex_brain) |> as.data.frame()
 
-d <- DGEList(assay(gtex_brain))
-d <- calcNormFactors(d, method = 'upperquartile')
-to_keep <- suppressWarnings(filterByExpr(d))
+d <- edgeR::DGEList(SummarizedExperiment::assay(gtex_brain))
+d <- edgeR::calcNormFactors(d, method = 'upperquartile')
+to_keep <- suppressWarnings(edgeR::filterByExpr(d))
 d <- d[to_keep, ]
-d <- cpm(d, log = TRUE)
+d <- edgeR::cpm(d, log = TRUE)
 
 d <- as.matrix(d)
 
-new_meta_data <- data.table(
+new_meta_data <- data.table::data.table(
   sample_id = rownames(coldata),
-  case_control = 'case'
+  case_control = 'case',
+  gtex_subgrp = coldata$gtex.smtsd
 )
-d[1:5, 1:5]
 
-cor_test = bulk_coexp(t(d), new_meta_data)
+samples_to_keep <- new_meta_data[gtex_subgrp == "Brain - Hippocampus", sample_id]
 
-cor_test = preprocess_bulk_coexp(cor_test, hvg = 0.5)
+cor_test = bulk_coexp(t(d)[samples_to_keep, ], new_meta_data[gtex_subgrp == "Brain - Hippocampus"])
 
-tictoc::tic()
+cor_test = preprocess_bulk_coexp(cor_test, mad_threshold = 1)
+
 cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
-tictoc::toc()
 
-cor_test = cor_module_identification(cor_test)
+plot_df <- cor_test@processed_data$feature_meta
 
-kernel_bandwidth = 0.25
-min_res = 0.5
+ggplot(data = plot_df,
+       mapping =  aes(x = MAD)) +
+  geom_histogram(mapping = aes(fill = hvg), bins = 100) +
+  theme_minimal()
+
+?geom_histogram
+
+kernel_bandwidth = 0.2
+min_res = 0.1
 max_res = 5
-by = 0.5
+number_res = 10
 random_seed = 123L
-min_affinity = 0.1
+min_affinity = 0.001
 min_genes = 10L
 .verbose = TRUE
 
-correlation_res <- S7::prop(cor_test, "processed_data")[['correlation_res']]
 
-dist <- 1 - correlation_res$r_abs
-# Deal with float precision errors because of Rust <> R interface
-dist[dist < 0] <- 0
-affinity <- rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)
+correlation_res <- S7::prop(cor_test, "processed_data")$correlation_res$get_data_table() %>%
+  .[, cor_abs := abs(cor)] %>%
+  .[, dist := 1 - cor_abs] %>%
+  .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
+  .[, affinity := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
+  .[affinity >= min_affinity]
 
-to_keep = (affinity > min_affinity)
 
-graph_df <- correlation_res[, c("feature_a", "feature_b")] %>%
-  .[, weight := affinity] %>%
+graph_df <- correlation_res[, c("feature_a", "feature_b", "affinity")] %>%
   data.table::setnames(.,
-                       old = c("feature_a", "feature_b"),
-                       new = c("from", "to")) %>%
-  .[(to_keep)]
-
+                       old = c("feature_a", "feature_b", "affinity"),
+                       new = c("from", "to", "weight"))
 
 graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
-graph <- igraph::simplify(graph)
 
-resolutions <- seq(from = min_res, max_res, by = by)
+
+resolutions <- exp(seq(
+  log(min_res),
+  log(max_res),
+  length.out = number_res
+))
 
 if (.verbose) message(sprintf("Iterating through %i resolutions", length(resolutions)))
-
-correlation_res_red <- correlation_res[(to_keep)]
-data.table::setkey(correlation_res_red, feature_a, feature_b)
 
 future::plan(future::multisession(workers = parallel::detectCores() / 2))
 
@@ -127,12 +139,15 @@ community_df_res <- furrr::future_map(
     set.seed(123)
     community <- igraph::cluster_leiden(graph,
                                         objective_function = 'modularity',
-                                        resolution = res)
+                                        resolution = res, n_iterations = 5L)
+
+    modularity <- igraph::modularity(x = graph, membership = community$membership)
 
     community_df <- data.table::data.table(
       resolution = res,
       node_name = community$names,
-      membership = community$membership
+      membership = community$membership,
+      modularity = modularity
     )
   },
   .progress = TRUE,
@@ -145,92 +160,93 @@ community_df_res[, combined_id := sprintf("id_%s_%s", resolution, membership)]
 
 clusters_to_keep <- community_df_res[, .N, combined_id][N >= min_genes, combined_id]
 
+x <- community_df_res[, .N, .(resolution, membership)]
+
 community_df_res <- community_df_res[combined_id %in% clusters_to_keep]
 
+community_df_res[, c("resolution", "modularity")] %>% unique()
+
+community_df_res[, .(no_clusters = length(unique(membership)),
+                     modularity = unique(modularity)), resolution]
+
+length(unique(community_df_res$node_name))
+
+# Into function
+
+tictoc::tic()
 cluster_genes <- split(community_df_res$node_name, community_df_res$combined_id)
 
-tictoc::tic()
-cluster_quality <- purrr::imap_dfr(cluster_genes, \(nodes, community) {
-  c(median, mad) %<-% correlation_res_red[feature_a %in% nodes &
-                                            feature_b %in% nodes, c(median(r_abs, na.rm = TRUE), mad(r_abs, na.rm = TRUE))]
-  size <- length(nodes)
+data.table::setkey(correlation_res, feature_a, feature_b)
 
-  res <- data.table::data.table(
-    module_name = community,
-    r_median = median,
-    r_mad = mad,
-    r_adjusted = median * log1p(size),
-    size = size
-  )
+cluster_quality <- vector(mode = "list", length = length(cluster_genes))
 
-  res
-})
-tictoc::toc()
-
-?CJ
-
-
-
-tictoc::tic()
 for (i in seq_along(cluster_genes)) {
   nodes <- cluster_genes[[i]]
   community <- names(cluster_genes)[i]
+  node_combinations <- data.table::CJ(feature_a = nodes, feature_b = nodes)
+  subset_data <- correlation_res[node_combinations, on = .(feature_a, feature_b), nomatch = 0]
 
-  # Create a temporary data.table of node combinations within this cluster
-  node_combinations <- CJ(feature_a = nodes, feature_b = nodes)
+  # subset_data <- correlation_res[feature_a %in% nodes & feature_b %in% nodes]
 
-  # Use binary join instead of filtering (much faster for large data)
-  subset_data <- correlation_res_red[node_combinations, on = .(feature_a, feature_b), nomatch = 0]
-
-  # Calculate statistics
-  median_val <- median(subset_data$r_abs, na.rm = TRUE)
-  mad_val <- mad(subset_data$r_abs, na.rm = TRUE)
+  mean_abs_cor <- median(subset_data$cor_abs)
+  sd_abs_cor <- mad(subset_data$cor_abs)
   size <- length(nodes)
 
-  # Add to results
-  cluster_quality <- rbindlist(list(
-    cluster_quality,
-    data.table::data.table(
-      module_name = community,
-      r_median = median_val,
-      r_mad = mad_val,
-      r_adjusted = median_val * log1p(size),
-      size = size
-    )
-  ))
-}
-tictoc::toc()
-
-future::plan(future::multisession(workers = parallel::detectCores() / 2))
-
-tictoc::tic()
-# Process clusters in parallel
-results_list <- furrr::future_map(seq_along(cluster_genes), function(i) {
-  nodes <- cluster_genes[[i]]
-  community <- names(cluster_genes)[i]
-
-  # Create indices for filtering
-  node_idx <- which(correlation_res_red$feature_a %in% nodes &
-                      correlation_res_red$feature_b %in% nodes)
-
-  # Subset using indices (faster than logical filtering)
-  r_abs_values <- correlation_res_red$r_abs[node_idx]
-
-  # Calculate statistics
-  median_val <- median(r_abs_values, na.rm = TRUE)
-  mad_val <- mad(r_abs_values, na.rm = TRUE)
-  size <- length(nodes)
-
-  # Return as a single row data.table
-  data.table(
+  results <- data.table::data.table(
     module_name = community,
-    r_median = median_val,
-    r_mad = mad_val,
-    r_adjusted = median_val * log1p(size),
+    mean_abs_cor = mean_abs_cor,
+    sd_abs_cor = sd_abs_cor,
     size = size
   )
-})
+
+  cluster_quality[[i]] <- results
+}
+
+cluster_quality <- data.table::rbindlist(cluster_quality)
 tictoc::toc()
 
-# Combine results efficiently
-cluster_quality <- rbindlist(results_list)
+cluster_quality_final = merge(
+  unique(community_df_res[, c("resolution", "membership", "combined_id", "modularity")]),
+  cluster_quality,
+  by.x = 'combined_id', by.y = 'module_name')
+
+head(cluster_quality_final)
+
+cluster_quality_summarised <- cluster_quality_final[, .(
+  mom_abs_cor = median(mean_abs_cor),
+  mean_of_sd_abs_cor = median(sd_abs_cor),
+  mean_size = mean(size),
+  modularity = unique(modularity),
+  cluster_no = .N
+), resolution] %>% data.table::setorder(., resolution)
+
+head(cluster_quality_summarised)
+
+ggplot(
+  data = cluster_quality_summarised,
+  mapping = aes(
+    x = resolution,
+    y = modularity
+  )
+) +
+  geom_point(aes(color = mom_abs_cor, size = sqrt(cluster_no)))
+
+
+
+i <- 4
+
+nodes <- cluster_genes[[i]]
+community <- names(cluster_genes)[i]
+
+tictoc::tic()
+node_combinations <- data.table::CJ(feature_a = nodes, feature_b = nodes)
+subset_data <- correlation_res[node_combinations, on = .(feature_a, feature_b), nomatch = 0]
+tictoc::toc()
+
+tictoc::tic()
+
+tictoc::toc()
+
+
+quantile(subset_data$cor_abs, 0.75)[1]
+

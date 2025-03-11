@@ -4,9 +4,7 @@
 \alias{apply_contrastive_pca}
 \title{Apply contrastive PCA.}
 \usage{
-apply_contrastive_pca(bulk_coexp, ...)
-
-...
+apply_contrastive_pca(bulk_coexp, alpha, no_pcs)
 }
 \arguments{
 \item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
@@ -19,8 +17,6 @@ apply_contrastive_pca(bulk_coexp, ...)
 \code{bulk_coexp} with additional data in the slots
 }
 \description{
-This is the generic function for doing the preprocessing for contrastive PCA.
-
 Applies the contrastive PCA algorithm given a specified alpha and a number of
 contrastive principal components to extract.
 }

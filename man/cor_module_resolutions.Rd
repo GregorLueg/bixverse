@@ -21,6 +21,8 @@ cor_module_resolutions(bulk_coexp, ...)
 
 \item{random_seed}{description}
 
+\item{correlation_method}{...}
+
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{

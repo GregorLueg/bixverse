@@ -4,7 +4,7 @@
 \alias{get_outputs}
 \title{Return the outputs from bulk_coexp}
 \usage{
-get_outputs(bulk_coexp, ...)
+get_outputs(bulk_coexp)
 }
 \arguments{
 \item{bulk_coexp}{The underlying \code{bulk_coexp} class, see
@@ -16,6 +16,4 @@ Returns the outputs stored in the class.
 \description{
 Getter function to extract the outputs from the \code{\link[=bulk_coexp]{bulk_coexp()}}
 class.
-
-Get the outputs that are stored in the class.
 }

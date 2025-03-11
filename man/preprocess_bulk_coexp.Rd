@@ -4,19 +4,32 @@
 \alias{preprocess_bulk_coexp}
 \title{Process the raw data}
 \usage{
-preprocess_bulk_coexp(bulk_coexp, ...)
+preprocess_bulk_coexp(
+  bulk_coexp,
+  hvg = NULL,
+  mad_threshold = NULL,
+  scaling = FALSE,
+  scaling_type = c("normal", "robust"),
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{bulk_coexp}{The underlying \code{bixverse_base_class} class, see
 \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
-\item{hvg}{...}
+\item{hvg}{Integer or float. If an integer, the top \code{hvg} genes will be
+included; if float, the float has to be between 0 and 1, representing the
+percentage of genes to include.}
 
-\item{mad_threshold}{...}
+\item{mad_threshold}{Float. Instead of of selecting number or proportion of
+genes, you can also provide a mad_threshold.}
 
-\item{scaling}{...}
+\item{scaling}{Boolean. Shall the data be scaled.}
 
-\item{scaling_type}{...}
+\item{scaling_type}{String. You have the option to use normal scaling or
+robust scaling.}
+
+\item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 Returns the class with the processed_data data slot populated.
@@ -24,7 +37,4 @@ Returns the class with the processed_data data slot populated.
 \description{
 Function to do general pre-processing on top of the \code{\link[=bulk_coexp]{bulk_coexp()}}.
 Options to do scaling, HVG selection, etc.
-
-Do pre-processing on top of the data. This can include selection
-of highly variable genes and/or scaling.
 }

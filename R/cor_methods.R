@@ -14,8 +14,6 @@
 #' @returns A data.table with the followoing columns:
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
 cor_cluster_quality <- function(community_df, correlation_res) {
   # Checks
   checkmate::assertDataTable(community_df)
@@ -28,23 +26,38 @@ cor_cluster_quality <- function(community_df, correlation_res) {
   community_df_list <- split(community_df$node_name, community_df$membership)
   community_df_list <- purrr::keep(community_df_list, \(x) length(x) > 1)
 
-  cluster_quality <- purrr::imap_dfr(community_df_list, \(nodes, community) {
-    c(median, mad) %<-% correlation_res[feature_a %in% nodes &
-                                          feature_b %in% nodes,
-                                        c(median(r_abs, na.rm = TRUE),
-                                          mad(r_abs, na.rm = TRUE))]
+  # Ensure that the keys exist
+  data.table::setkey(correlation_res, feature_a, feature_b)
+
+  # Pre-allocate
+  cluster_quality <- vector(mode = "list", length = length(community_df_list))
+
+  for (i in seq_along(cluster_genes)) {
+    nodes <- cluster_genes[[i]]
+    community <- names(cluster_genes)[i]
+
+    node_combinations <- data.table::CJ(feature_a = nodes, feature_b = nodes)
+
+    # Use binary join instead of filtering (much faster for large data)
+    # F--k knows why ... ?
+    subset_data <- correlation_res_red[node_combinations, on = .(feature_a, feature_b), nomatch = 0]
+
+    median_val <- median(subset_data$r_abs, na.rm = TRUE)
+    mad_val <- mad(subset_data$r_abs, na.rm = TRUE)
     size <- length(nodes)
 
     res <- data.table::data.table(
       module_name = community,
-      r_median = median,
-      r_mad = mad,
-      r_adjusted = median * log1p(size),
+      r_median = median_val,
+      r_mad = mad_val,
+      r_adjusted = median_val * log10(size),
       size = size
     )
 
-    res
-  })
+    cluster_quality[[i]] <- res
+  }
+
+  cluster_quality <- data.table::rbindlist(cluster_quality)
 
   cluster_quality
 }
@@ -116,25 +129,11 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   # Calculate the upper triangle of correlation matrix
   cor_diagonal <- rs_cor_upper_triangle(target_mat, spearman = spearman, shift = 1L)
 
-  feature_names <- colnames(target_mat)
-  total_len <- length(feature_names)
-
-  feature_a <- purrr::map(1:total_len, \(idx) {
-    rep(feature_names[[idx]], total_len - idx)
-  })
-  feature_a <- do.call(c, feature_a)
-
-  feature_b <- purrr::map(1:total_len, \(idx) {
-    remaining <- total_len - idx
-    if (remaining > 0) feature_names[(idx + 1:remaining)] else character(0)
-  })
-  feature_b <- do.call(c, feature_b)
-
-  correlation_res <- data.table(
-    feature_a = factor(feature_a),
-    feature_b = factor(feature_b),
-    r = cor_diagonal,
-    r_abs = abs(cor_diagonal)
+  # Save data to memory friendly R6 class
+  cor_data <- upper_triangular_cor_mat$new(
+    cor_coef = cor_diagonal,
+    features = colnames(target_mat),
+    shift = 1L
   )
 
   correlation_params <- list(
@@ -142,7 +141,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
     type = 'simple'
   )
 
-  S7::prop(bulk_coexp, "processed_data")[["correlation_res"]] <- correlation_res
+  S7::prop(bulk_coexp, "processed_data")[["correlation_res"]] <- cor_data
   S7::prop(bulk_coexp, "params")[["correlation_params"]] <- correlation_params
 
   return(bulk_coexp)
@@ -182,7 +181,7 @@ cor_module_resolutions <- S7::new_generic(
 #'
 #' @return `bulk_coexp` class. You need to run either
 #' [bixverse::cor_module_processing()] or ... .
-#' @param correlation_method
+#' @param correlation_method ...
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @export
@@ -194,12 +193,14 @@ cor_module_resolutions <- S7::new_generic(
 #'
 #' @method cor_module_resolutions bulk_coexp
 S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
-                                                              kernel_bandwidth = 0.25,
-                                                              min_res = 0.5,
-                                                              max_res = 5,
-                                                              by = 0.5,
-                                                              random_seed = 123L,
-                                                              .verbose = TRUE) {
+                                                           kernel_bandwidth = 0.25,
+                                                           min_res = 0.5,
+                                                           max_res = 5,
+                                                           by = 0.5,
+                                                           random_seed = 123L,
+                                                           cores = as.integer(parallel::detectCores() / 2),
+                                                           parallel = TRUE,
+                                                           .verbose = TRUE) {
   # Checks
   checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
   checkmate::qassert(kernel_bandwidth, "N1")
@@ -215,7 +216,13 @@ S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
     return(bulk_coexp)
   }
 
-  correlation_res <- S7::prop(bulk_coexp, "processed_data")[['correlation_res']]
+  # Return the data.table from the correlation results
+  # correlation_res <- S7::prop(bulk_coexp, "processed_data")$correlation_res$get_data_table() %>%
+  #   .[, cor_abs := abs(cor)] %>%
+  #   .[, dist := 1 - cor_abs] %>%
+  #   .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
+  #   .[, affinitiy := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
+  #   .[affinitiy >= ]
 
   dist <- 1 - correlation_res$r_abs
   # Deal with float precision errors because of Rust <> R interface
@@ -233,7 +240,8 @@ S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
 
   resolutions <- seq(from = min_res, max_res, by = by)
 
-  if (.verbose) message(sprintf("Iterating through %i resolutions", length(resolutions)))
+  if (.verbose)
+    message(sprintf("Iterating through %i resolutions", length(resolutions)))
   resolution_results <- purrr::map_dfr(resolutions, \(resolution) {
     set.seed(random_seed)
 
@@ -244,10 +252,7 @@ S7::method(cor_module_resolutions, bulk_coexp) <- function(bulk_coexp,
     community_df <- data.table(node_name = community$names,
                                membership = community$membership)
 
-    qc <- cor_cluster_quality(
-      community_df = community_df,
-      correlation_res = correlation_res
-    )
+    qc <- cor_cluster_quality(community_df = community_df, correlation_res = correlation_res)
 
     res <- qc[, .(
       res = resolution,

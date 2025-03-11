@@ -4,10 +4,10 @@
 \alias{find_rbh_communities}
 \title{Find RBH communities}
 \usage{
-find_rbh_communities(rbh_graph, ...)
+find_rbh_communities(rbh_graph)
 }
 \arguments{
-\item{rbh_graph}{The \code{rbh_class} class.}
+\item{rbh_graph}{The \code{rbh_class} class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
 }
 \value{
 The class with added community detection results.
@@ -15,8 +15,4 @@ The class with added community detection results.
 \description{
 This is the generic function for identifying communities on top of an RBH
 graph.
-
-This function will generate an RBH graph based on set similarity between
-gene modules. You have the option to use an overlap coefficient instead of
-Jaccard similarity and to specify a
 }

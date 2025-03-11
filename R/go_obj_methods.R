@@ -3,20 +3,6 @@
 #' Run gene ontology enrichment with elimination method.
 #'
 #' @description
-#' This is the generic function for running gene ontology enrichment with an
-#' ontology-aware elimination of genes from ancestors upon significant
-#' enrichment.
-#'
-#' @export
-gse_go_elim_method <- S7::new_generic(
-  "gse_go_elim_method",
-  "gene_ontology_data"
-)
-
-
-#' @name gse_go_elim_method
-#'
-#' @description
 #' This method takes the gene_ontology_data and a target gene set and performs
 #' an GSE enrichment leveraging ontological information. It starts at the lowest
 #' levels of the ontology and tests if there is significant enrichment for any
@@ -24,17 +10,8 @@ gse_go_elim_method <- S7::new_generic(
 #' the genes from this term will be removed from all its ancestors. The function
 #' then proceeds to the next level of the ontology and repeats the process.
 #'
-#' @usage gse_go_elim_method(
-#'  gene_ontology_data,
-#'  target_genes,
-#'  minimum_overlap = 3L,
-#'  fdr_threshold = 0.05,
-#'  elim_threshold = 0.05,
-#'  min_genes = NULL,
-#'  .debug = FALSE
-#' )
-#'
-#' @param gene_ontology_data The underlying `gene_ontology_data` class.
+#' @param gene_ontology_data The underlying `gene_ontology_data` class, see
+#' [bixverse::gene_ontology_data()].
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
 #' @param fdr_threshold Float. Threshold for maximum fdr to include in the
@@ -49,6 +26,22 @@ gse_go_elim_method <- S7::new_generic(
 #'
 #' @return data.table with enrichment results.
 #'
+#' @export
+gse_go_elim_method <- S7::new_generic(
+  name = "gse_go_elim_method",
+  dispatch_args = "gene_ontology_data",
+  fun = function(gene_ontology_data,
+                 target_genes,
+                 minimum_overlap = 3L,
+                 fdr_threshold = 0.05,
+                 elim_threshold = 0.05,
+                 min_genes = NULL,
+                 .debug = FALSE) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @import data.table
@@ -125,19 +118,6 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' Run gene ontology enrichment with elimination method over a list.
 #'
 #' @description
-#' This is the generic function for running gene ontology enrichment with an
-#' ontology-aware elimination of genes from ancestors upon significant
-#' enrichment. This version takes in a list of target genes.
-#'
-#' @export
-gse_go_elim_method_list <- S7::new_generic(
-  "gse_go_elim_method_list",
-  "gene_ontology_data"
-)
-
-#' @name gse_go_elim_method_list
-#'
-#' @description
 #' This method takes the gene_ontology_data and a list of target gene sets and
 #' performs an GSE enrichment leveraging ontological information. It starts at
 #' the lowest levels of the ontology and tests if there is significant
@@ -147,17 +127,8 @@ gse_go_elim_method_list <- S7::new_generic(
 #' repeats the process. The class will leverage Rust threading to parallelise
 #' the process.
 #'
-#' @usage gse_go_elim_method(
-#'  gene_ontology_data,
-#'  target_gene_list,
-#'  minimum_overlap = 3L,
-#'  fdr_threshold = 0.05,
-#'  elim_threshold = 0.05,
-#'  min_genes = NULL,
-#'  .debug = FALSE
-#' )
-#'
-#' @param gene_ontology_data The underlying gene ontology data.
+#' @param gene_ontology_data The underlying `gene_ontology_data` class, see
+#' [bixverse::gene_ontology_data()].
 #' @param target_gene_list List. The target genes list you wish to apply the
 #' gene set enrichment analysis over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
@@ -174,6 +145,22 @@ gse_go_elim_method_list <- S7::new_generic(
 #'
 #' @return data.table with enrichment results.
 #'
+#' @export
+gse_go_elim_method_list <- S7::new_generic(
+  name = "gse_go_elim_method_list",
+  dispatch_args = "gene_ontology_data",
+  fun = function(gene_ontology_data,
+                 target_gene_list,
+                 minimum_overlap = 3L,
+                 fdr_threshold = 0.05,
+                 elim_threshold = 0.05,
+                 min_genes = NULL,
+                 .debug = FALSE) {
+    S7::S7_dispatch()
+  }
+)
+
+
 #' @export
 #'
 #' @import data.table

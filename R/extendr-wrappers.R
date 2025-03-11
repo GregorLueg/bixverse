@@ -27,7 +27,7 @@ NULL
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
 #'   \item overlap - The size of the overlap
-#'   \gene_set_lengths - The length of the gene sets.
+#'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #' 
 #' @export
@@ -52,7 +52,7 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds ratios - The calculated odds ratios
 #'   \item overlap - The size of the overlap
-#'   \gene_set_lengths - The length of the gene sets.
+#'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #' 
 #' @export
@@ -90,7 +90,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #'   \item pvals - The calculated odds ratios.
 #'   \item odds_ratios - The calculated odds ratios.
 #'   \item overlap - The size of the overlap.
-#'   \gene_set_lengths - The length of the gene sets.
+#'   \item gene_set_lengths - The length of the gene sets.
 #' }
 #' 
 #' @export
@@ -132,9 +132,8 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #'   \item overlap - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
 #'   \item no_test - The number of tests that were conducted against
-#'   target_gene_list.
-#'   First element indicates how many values belong to the first target_genes
-#'   set in the list, etc.
+#'   target_gene_list. First element indicates how many values belong to the 
+#'   first target_genes set in the list, etc.
 #' }
 #' 
 #' @export

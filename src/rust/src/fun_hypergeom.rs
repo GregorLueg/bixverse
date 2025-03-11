@@ -27,7 +27,7 @@ type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u6
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds_ratios - The calculated odds ratios
 ///   \item overlap - The size of the overlap
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -61,7 +61,7 @@ fn rs_hypergeom_test(
 /// Wrapper around the Rust functions with type checks are provided in the 
 /// package.
 /// 
-/// @param target_genes A character vector representing the target gene set.
+/// @param target_genes_list A character vector representing the target gene set.
 /// @param gene_sets A list of strings that represent the gene sets to test
 /// against.
 /// @param gene_universe A character vector representing the gene universe from 
@@ -72,7 +72,7 @@ fn rs_hypergeom_test(
 ///   \item pvals - The p-values from the hypergeometric test
 ///   \item odds ratios - The calculated odds ratios
 ///   \item overlap - The size of the overlap
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -154,7 +154,7 @@ fn rs_hypergeom_test_list(
 ///   \item pvals - The calculated odds ratios.
 ///   \item odds_ratios - The calculated odds ratios.
 ///   \item overlap - The size of the overlap.
-///   \gene_set_lengths - The length of the gene sets.
+///   \item gene_set_lengths - The length of the gene sets.
 /// }
 /// 
 /// @export
@@ -252,7 +252,7 @@ fn rs_gse_geom_elim(
 /// @param gene_universe_length The length of the gene universe.
 /// @param min_genes number of minimum genes for the gene ontology term to be
 /// tested.
-/// @param elim_threshold: p-value below which the elimination procedure shall
+/// @param elim_threshold p-value below which the elimination procedure shall
 /// be applied to the ancestors.
 /// @param debug boolean that will provide additional console information for
 /// debugging purposes.
@@ -265,9 +265,8 @@ fn rs_gse_geom_elim(
 ///   \item overlap - The size of the overlap.
 ///   \item gene_set_lengths - The length of the gene sets.
 ///   \item no_test - The number of tests that were conducted against
-///   target_gene_list.
-///   First element indicates how many values belong to the first target_genes
-///   set in the list, etc.
+///   target_gene_list. First element indicates how many values belong to the 
+///   first target_genes set in the list, etc.
 /// }
 /// 
 /// @export

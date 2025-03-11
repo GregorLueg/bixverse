@@ -2,10 +2,8 @@
 % Please edit documentation in R/base_class.R
 \name{get_results}
 \alias{get_results}
-\title{Get the diffusion results}
+\title{Get the final results from the class}
 \usage{
-get_results(bixverse_base_class, ...)
-
 get_results(bixverse_base_class)
 }
 \arguments{
@@ -16,8 +14,6 @@ class. This class is usually inherited by other classes.}
 Returns the final results if any have been stored in the class.
 }
 \description{
-This method returns the final results from a given module class.
-
 Get the final results from the a
 \code{\link[=bixverse_base_class]{bixverse_base_class()}} class.
 }

@@ -2,9 +2,12 @@
 rextendr::document()
 devtools::document()
 devtools::load_all()
+devtools::install()
 # devtools::check()
 
 # devtools::install()
+
+system.file("extdata", package = "bixverse") |> list.files()
 
 library(magrittr)
 
@@ -62,11 +65,16 @@ t2 <- gse_hypergeometric_list(
 )
 tictoc::toc()
 
+system.file("extdata", package = "bixverse") |> list.files()
 
-go_data_dt <- biomind_to_go_data("~/Desktop/biomind_downloads/processed_data/")
+system.file("extdata", 'go_data_hs.parquet', package = "bixverse")
+
+
+go_data_dt <- get_go_human_data()
 
 go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
 
+go_data_s7
 
 number_levels <- length(S7::prop(S7_obj, "levels"))
 number_gene_sets <- length(S7::prop(S7_obj, "go_to_genes"))
@@ -83,7 +91,7 @@ cat(paste(
 
 ?network_diffusions
 
-arrow::write_parquet(go_data_dt, sink = "~/Desktop/go_data.parquet")
+?gse_go_elim_method
 
 tictoc::tic()
 t3 <- gse_go_elim_method(go_data_s7,
@@ -91,6 +99,8 @@ t3 <- gse_go_elim_method(go_data_s7,
                          minimum_overlap = 0L,
                          fdr_threshold = 1)
 tictoc::toc()
+
+?gse_go_elim_method_list
 
 tictoc::tic()
 t4 <- gse_go_elim_method_list(
