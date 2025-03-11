@@ -414,7 +414,18 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
                                              modularity = unique(modularity)), resolution] %>%
     data.table::merge.data.table(., cluster_summary, by.x = 'resolution', by.y = 'resolution')
 
+  # Store the parameters
+  graph_params <- list(
+    kernel_bandwidth = kernel_bandwidth,
+    min_affinity = min_affinity,
+    no_nodes = length(igraph::V(graph)),
+    no_edges = length(igraph::E(graph))
+  )
+
+  # Assign stuff
+  S7::prop(bulk_coexp, "params")[["correlation_graph"]] <- graph_params
   S7::prop(bulk_coexp, "outputs")[['resolution_results']] <- resolution_results
+  S7::prop(bulk_coexp, "outputs")[['cor_graph']] <- graph
 
   return(bulk_coexp)
 }

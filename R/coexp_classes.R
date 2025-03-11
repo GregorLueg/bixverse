@@ -142,9 +142,11 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   } else if (S7::prop(x, "params")[["detection_method"]] == "correlation-based") {
     # For simple correlations
     non_parametric <- S7::prop(x, "params")[['correlation_params']][['spearman']]
+    graph_generated <- !is.null(S7::prop(x, "params")[['correlation_graph']][['no_nodes']])
     paste0(
       " Detection method: correlation based.\n",
-      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric)
+      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric),
+      sprintf("  Graph generated: %s.\n", graph_generated)
     )
   }
 
