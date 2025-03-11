@@ -51,6 +51,9 @@ set to \code{TRUE}.}
 
 \item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
+\value{
+The class with added data to the properties.
+}
 \description{
 This function will identify gene modules based on affinity graphs from the
 single correlation or differential correlation methods. Briefly, in the case

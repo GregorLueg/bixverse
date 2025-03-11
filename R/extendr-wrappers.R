@@ -392,5 +392,7 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' @export
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
+rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
+
 
 # nolint end

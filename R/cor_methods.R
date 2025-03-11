@@ -61,6 +61,99 @@ S7::method(get_cor_graph_single, bulk_coexp) <- function(bulk_coexp,
 
 ## getters ---------------------------------------------------------------------
 
+#' Get the resolution results
+#'
+#' @description
+#' Getter function to get the
+#'
+#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If resolution results were found, returns the data.table. Otherwise,
+#' throws a warning and returns NULL.
+#'
+#' @export
+get_resolution_res <- S7::new_generic(
+  name = 'get_resolution_res',
+  dispatch_args = 'bulk_coexp',
+  fun = function(bulk_coexp) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#' @method get_resolution_res bulk_coexp
+S7::method(get_resolution_res, bulk_coexp) <- function(bulk_coexp) {
+  # Checks
+  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  # Body
+  resolution_results <- S7::prop(bulk_coexp, "outputs")[['resolution_results']]
+  if(is.null(resolution_results))
+    warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
+
+  resolution_results
+}
+
+## plotting --------------------------------------------------------------------
+
+#' Get the resolution results
+#'
+#' @description
+#' Helper function to get a correlation-based igraph from the class
+#'
+#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If resolution results were found, returns the data.table. Otherwise,
+#' throws a warning and returns NULL.
+#'
+#' @export
+plot_resolution_res <- S7::new_generic(
+  name = 'plot_resolution_res',
+  dispatch_args = 'bulk_coexp',
+  fun = function(bulk_coexp,
+                 print_head = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import ggplot2
+#'
+#' @method plot_resolution_res bulk_coexp
+S7::method(plot_resolution_res, bulk_coexp) <- function(bulk_coexp, print_head = TRUE) {
+  # Checks
+  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::qassert(print_head, "B1")
+  # Body
+  plot_df <- S7::prop(bulk_coexp, "outputs")[['resolution_results']]
+  if (is.null(plot_df)) {
+    warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
+    return(NULL)
+  }
+
+  plot_df <- data.table::setorder(plot_df, -modularity)
+
+  # if (print_head)
+  #   print(head(plot_df))
+
+  p <- ggplot(data = plot_df,
+              mapping =  aes(x = resolution, y = modularity)) +
+    geom_point(
+      mapping = aes(size = log10(good_clusters), fill = log10(avg_size)),
+      shape = 21,
+      alpha = .7
+    ) +
+    xlab("Leiden cluster resolution") +
+    ylab("Modularity") +
+    theme_minimal() +
+    scale_fill_viridis_c() +
+    scale_size_continuous(range = c(2, 8)) +
+    labs(size = "Number of good clusters (log10)", fill = "Average cluster size (log10)") +
+    ggtitle("Resolution vs. modularity", subtitle = 'With cluster number and size')
+
+  p
+}
+
 # methods - simple correlations ------------------------------------------------
 
 #' Prepare correlation-based module detection
@@ -266,7 +359,12 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
   if(parallel) {
     if (.verbose)
       message(sprintf("Using parallel computation over %i cores.", max_workers))
-    future::plan(future::multisession(workers = max_workers))
+
+    # future plan funkiness
+    assign(".temp_workers", max_workers, envir = .GlobalEnv)
+    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+
+    future::plan(future::multisession(workers = .temp_workers))
   } else {
     if (.verbose)
       message("Using sequential computation.")
@@ -276,7 +374,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
   community_df_res <- furrr::future_map(
     resolutions,
     \(res) {
-      set.seed(123)
+      set.seed(random_seed)
       community <- igraph::cluster_leiden(graph,
                                           objective_function = 'modularity',
                                           resolution = res,

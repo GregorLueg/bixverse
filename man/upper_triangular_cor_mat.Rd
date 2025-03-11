@@ -2,7 +2,7 @@
 % Please edit documentation in R/triangular_mat_classes.R
 \name{upper_triangular_cor_mat}
 \alias{upper_triangular_cor_mat}
-\title{Class for symmetric cor matrices}
+\title{Class for symmetric correlation matrices}
 \description{
 The class allows to store the upper triangular matrix of a symmetric
 correlation matrix in an memory-efficient form and return data.table if need
@@ -14,6 +14,7 @@ be.
 \item \href{#method-upper_triangular_cor_mat-new}{\code{upper_triangular_cor_mat$new()}}
 \item \href{#method-upper_triangular_cor_mat-print}{\code{upper_triangular_cor_mat$print()}}
 \item \href{#method-upper_triangular_cor_mat-get_data_table}{\code{upper_triangular_cor_mat$get_data_table()}}
+\item \href{#method-upper_triangular_cor_mat-get_cor_matrix}{\code{upper_triangular_cor_mat$get_cor_matrix()}}
 \item \href{#method-upper_triangular_cor_mat-clone}{\code{upper_triangular_cor_mat$clone()}}
 }
 }
@@ -84,6 +85,26 @@ A data.table with three columns:
 matrix.
 \item cor: The correlation coefficients between these two features.
 }
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-upper_triangular_cor_mat-get_cor_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangular_cor_mat-get_cor_matrix}{}}}
+\subsection{Method \code{get_cor_matrix()}}{
+Return the full correlation matrix.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_cor_mat$get_cor_matrix(.verbose = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{.verbose}}{Boolean. Controls verbosity.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the initialised class
 }
 }
 \if{html}{\out{<hr>}}
