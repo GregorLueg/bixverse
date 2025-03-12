@@ -12,6 +12,8 @@ cor_module_check_res(
   random_seed = 123L,
   kernel_bandwidth = 0.2,
   min_affinity = 0.001,
+  min_cor = 0.2,
+  fdr_threshold = 0.05,
   min_genes = 10L,
   parallel = TRUE,
   max_workers = as.integer(parallel::detectCores()/2),
@@ -31,13 +33,23 @@ The resolutions will be spread in a logarithmic fashion over \code{min_res} to
 
 \item{random_seed}{Integer. Random seed.}
 
-\item{kernel_bandwidth}{Numeric. !This parameter is only relevant for simple
-correlation modules!. The bandwidth for the affinity kernel. Needs to be
-value between 0 and 1.}
+\item{kernel_bandwidth}{Numeric. The bandwidth for the affinity kernel. Needs
+to be value between 0 and 1. \emph{!This parameter is only relevant for simple}
+\emph{correlation modules!}}
 
-\item{min_affinity}{Float. !This parameter is only relevant for simple
-correlation modules! This parameter will remove edges below this affinity
-threshold. Needs to be a value between 0 and 1.}
+\item{min_affinity}{Numeric. This parameter will remove edges below this
+affinity threshold. Needs to be a value between 0 and 1. \emph{!This parameter is}
+\emph{only relevant for simple correlation modules!}}
+
+\item{min_cor}{Numeric. This parameter will remove edges in the differential
+correlation approach where none of the two gene correlations reach this abs
+threshold. \emph{!This parameter is only relevant for differential correlation}
+\emph{module detection!}}
+
+\item{fdr_threshold}{Numeric. This parameter will remove edges in the
+differential correlation approach that are above the specified threshold.
+\emph{!This parameter is only relevant for differential correlation module}
+\emph{detection!}}
 
 \item{min_genes}{Integer. Minimum number of genes that should be in a
 community.}

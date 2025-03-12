@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
-use statrs::distribution::{Normal, ContinuousCDF};
+use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use rayon::prelude::*; 
 
 
@@ -99,7 +99,14 @@ pub fn z_scores_to_pval(
     .iter()
     .map(|&z| {
       let abs_z = z.abs();
-      2.0 * (1.0 - normal.cdf(abs_z))
+      if abs_z > 6.0 {
+        // Deal with numeric precision problems for very large z-scores.
+        let pdf = normal.pdf(abs_z);
+        let p = pdf / abs_z * (1.0 - 1.0/(abs_z*abs_z));
+        2.0 * p
+      } else {
+        2.0 * (1.0 - normal.cdf(abs_z))
+      }
     })
     .collect()
 }

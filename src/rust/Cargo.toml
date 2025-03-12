@@ -7,11 +7,15 @@ edition = '2021'
 crate-type = [ 'staticlib' ]
 name = 'bixverse'
 
+[features]
+default = []
+simd = []  # Or another SIMD implementation
+
 [dependencies]
 extendr-api = { version = "*", features = ["ndarray"] }
 rayon = '*'
 rand = '*'
 statrs = '*'
-ndarray = '*'
-faer = '*'
+ndarray = '0.16.1'
+faer = '0.21.7'
 num-complex = '*'

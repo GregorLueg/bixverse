@@ -13,6 +13,8 @@ cor_module_final_modules(
   random_seed = 123L,
   .kernel_bandwidth = 0.2,
   .min_affinity = 0.001,
+  .min_cor = 0.2,
+  .fdr_threshold = 0.05,
   .max_iters = 100L,
   .verbose = TRUE
 )
@@ -31,11 +33,17 @@ are too large be further sub clustered. Defaults to \code{TRUE}.}
 
 \item{random_seed}{Integer. Random seed.}
 
-\item{.kernel_bandwidth}{Numeric. A value between 0 and 1. !This parameter
-only plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!.}
+\item{.kernel_bandwidth}{Numeric. A value between 0 and 1. \emph{!This parameter}
+\emph{only plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!}}
 
-\item{.min_affinity}{Numeric. A value between 0 and 1. !This parameter only
-plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!.}
+\item{.min_affinity}{Numeric. A value between 0 and 1. \emph{This parameter only}
+\emph{plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!}}
+
+\item{.min_cor}{Numeric. A value between 0 and 1. \emph{!This parameter}
+\emph{only plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!}}
+
+\item{.fdr_threshold}{Numeric. A value between 0 and 1. \emph{!This parameter}
+\emph{only plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!}}
 
 \item{.max_iters}{Integer. If sub clustering is set to \code{TRUE}, what shall be the
 maximum number of iterations. Defaults to 100L.}

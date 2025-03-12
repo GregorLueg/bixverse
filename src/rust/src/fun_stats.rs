@@ -1,6 +1,7 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*; 
+// use std::sync::{Arc, Mutex};
 
 use crate::utils_stats::{split_vector_randomly, hedge_g_effect};
 use crate::utils_r_rust::r_matrix_to_faer;
@@ -92,36 +93,7 @@ fn rs_create_random_aucs(
 }
 
 
-/// Calculate the OT harmonic sum
-/// 
-/// @param x The numeric vector (should be between 0 and 1) for which to 
-/// calculate the harmonic sum
-/// 
-/// @return Returns the harmonic sum according to the OT calculation.
-/// 
-/// @export
-#[extendr]
-fn rs_ot_harmonic_sum(
-  mut x: Vec<f64>
-) -> f64 {
-  x.sort_by(|a, b| b.partial_cmp(a).unwrap());
 
-  let harmonic_sum: f64 = x.iter()
-    .enumerate()
-    .map(|(i, x)| {
-      x / (i + 1).pow(2) as f64
-    })
-    .sum();
-
-  let max_sum: f64 = vec![1; x.len()].into_iter()
-    .enumerate()
-    .map(|(i, x)|{
-      x as f64 / (i + 1).pow(2) as f64
-    })
-    .sum();
-
-  harmonic_sum / max_sum
-}
 
 
 /// Calculate the Hedge's G effect
@@ -175,28 +147,58 @@ fn rs_hedges_g(
 }
 
 
-/// Apply a Gaussian affinity kernel to a distance metric
+/// Calculate a BH-based FDR
 /// 
-/// @description Applies a Gaussian kernel to a vector of distances.
+/// @description Rust implementation that will be faster if you have an 
+/// terrifying amount of p-values to adjust.
 /// 
-/// @param x The distance metric. Should be positive values only!
-/// @param bandwidth The bandwidth of the kernel. Smaller values will yield
-/// smaller affinities.
+/// @param pvals Numeric vector. The p-values you wish to adjust.
+/// 
+/// @return The Benjamini-Hochberg adjusted p-values.
 /// 
 /// @export
 #[extendr]
-fn rs_gaussian_affinity_kernel(
-  x: &[f64],
-  bandwidth: f64
+fn rs_fdr_adjustment(
+  pvals: &[f64]
 ) -> Vec<f64> {
-  let res: Vec<f64> = x.par_iter()
-    .map(|val| {
-      f64::exp(
-        -(val.powi(2)) / bandwidth.powi(2)
-      )
-    })
+  let n = pvals.len();
+  let n_f64 = n as f64;
+
+  let mut indexed_pval: Vec<(usize, f64)> = pvals
+    .par_iter()
+    .enumerate()
+    .map(|(i, &x)| (i, x))
     .collect();
-  res
+
+  indexed_pval.sort_unstable_by(|a, b| {
+    a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal)
+  });
+  
+  let adj_pvals_tmp: Vec<f64> = indexed_pval
+    .par_iter()
+    .enumerate()
+    .map(
+      |(i, (_, p))| {
+        (n_f64 / (i + 1) as f64) * p
+      }
+    ).collect();
+
+  let mut current_min = adj_pvals_tmp[n - 1].min(1.0); 
+  let mut monotonic_adj = vec![current_min; n];
+
+  for i in (0..n-1).rev() {
+    current_min = current_min.min(adj_pvals_tmp[i]).min(1.0);
+    monotonic_adj[i] = current_min;
+  } 
+
+  let mut adj_pvals = vec![0.0; n];
+    
+  for (i, &(original_idx, _)) in indexed_pval.iter().enumerate() {
+    adj_pvals[original_idx] = monotonic_adj[i];
+  }
+
+  adj_pvals
+
 }
 
 
@@ -249,10 +251,9 @@ fn rs_gaussian_affinity_kernel(
 
 extendr_module! {
     mod fun_stats;
-    fn rs_gaussian_affinity_kernel;
     // fn rs_set_sim_list;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
-    fn rs_ot_harmonic_sum;
     fn rs_hedges_g;
+    fn rs_fdr_adjustment;
 }

@@ -7,10 +7,14 @@
 rs_gaussian_affinity_kernel(x, bandwidth)
 }
 \arguments{
-\item{x}{The distance metric. Should be positive values only!}
+\item{x}{Numeric vector. The distances you wish to apply the Gaussian kernel
+onto.}
 
 \item{bandwidth}{The bandwidth of the kernel. Smaller values will yield
 smaller affinities.}
+}
+\value{
+The affinities after the Kernel was applied.
 }
 \description{
 Applies a Gaussian kernel to a vector of distances.
