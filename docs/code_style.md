@@ -45,7 +45,7 @@ go *brrrrrr*. Some libraries such as [igraph](https://r.igraph.org) are
 incredibly fast by their nature to go low level themselves, so no need to
 reinvent wheels here. Nonetheless, the speed-ups you can gain from using Rust can
 be incredible. Rust functions should start with *rs_*, and ideally an R wrapper
-should exist to use them. Please refer to the (yet to be written) [Why Rust](docs/why_rust.md)
+should exist to use them. Please refer to the (yet to be written) [Why Rust](/docs/why_rust.md)
 section.
 5. In terms of object-oriented programming, [S7](https://github.com/RConsortium/S7)
 provides a way to write very R-like OOP (the methods belong to generics). For 
