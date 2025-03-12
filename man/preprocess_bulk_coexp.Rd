@@ -14,7 +14,7 @@ preprocess_bulk_coexp(
 )
 }
 \arguments{
-\item{bulk_coexp}{The underlying \code{bixverse_base_class} class, see
+\item{bulk_coexp}{The underlying \code{bulk_coexp} class, see
 \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{hvg}{Integer or float. If an integer, the top \code{hvg} genes will be
@@ -32,7 +32,8 @@ robust scaling.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-Returns the class with the processed_data data slot populated.
+Returns the class with the \code{processed_data} data slot populated and
+applied parameters added to the \code{params} slot.
 }
 \description{
 Function to do general pre-processing on top of the \code{\link[=bulk_coexp]{bulk_coexp()}}.

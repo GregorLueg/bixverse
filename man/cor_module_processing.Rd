@@ -24,6 +24,6 @@ The class with added data to the properties for subsequent functions.
 \description{
 This function will calculate the correlation coefficients between the genes,
 using the highly variable genes (if available, otherwise the function will
-use the raw data). The data will be stored in a memory-efficient format as a
-vector within the class.
+use the raw data). The data will be stored in a memory-efficient format
+in the properties of the class.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/cor_methods.R
 \name{get_resolution_res}
 \alias{get_resolution_res}
-\title{Get the resolution results}
+\title{Return the resolution results}
 \usage{
 get_resolution_res(bulk_coexp)
 }
@@ -14,5 +14,5 @@ If resolution results were found, returns the data.table. Otherwise,
 throws a warning and returns NULL.
 }
 \description{
-Getter function to get the
+Getter function to get the resolution results (if available).
 }

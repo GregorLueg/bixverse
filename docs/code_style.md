@@ -52,7 +52,9 @@ when they want to. The point of the bixverse is to be fast, so let's stick with
 data.table.
 5. Be explicit in the code where possible. Simple example, if you provide 
 parameters to a function, write the parameter name. It makes reasoning and
-debugging code so much easier. Try to use meaningful variable names.
+debugging code so much easier. Try to use meaningful variable names. Think about
+future you when writing code. Will I still understand what a piece of code does 
+in 12 months? If you are doubting yourself here, maybe rethink what you wrote.
 6. The good old for loop vs. lapply/map question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
 equivalent parallelised versionsvia [furrr](https://furrr.futureverse.org), i.e., 

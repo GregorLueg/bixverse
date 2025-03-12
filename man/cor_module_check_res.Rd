@@ -2,7 +2,7 @@
 % Please edit documentation in R/cor_methods.R
 \name{cor_module_check_res}
 \alias{cor_module_check_res}
-\title{Identify correlation-based gene modules via graphs.}
+\title{Iterate through Leiden resolutions for graph-based community detection.}
 \usage{
 cor_module_check_res(
   bulk_coexp,

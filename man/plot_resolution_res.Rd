@@ -2,7 +2,7 @@
 % Please edit documentation in R/cor_methods.R
 \name{plot_resolution_res}
 \alias{plot_resolution_res}
-\title{Get the resolution results}
+\title{Plot the resolution results.}
 \usage{
 plot_resolution_res(bulk_coexp, print_head = TRUE)
 }
@@ -14,5 +14,6 @@ If resolution results were found, returns the data.table. Otherwise,
 throws a warning and returns NULL.
 }
 \description{
-Helper function to get a correlation-based igraph from the class
+Plots the resolution results (if they can be found in the class). The x-axis
+reflects the
 }

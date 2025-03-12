@@ -48,5 +48,11 @@ maximum number of iterations. Defaults to 100L.}
 The class with added data to the properties.
 }
 \description{
-To be written...
+This function leverages graph-based clustering to identify gene co-expression
+modules. The class has the option to sub-cluster large communities within
+their respective sub graphs, akin to the approach taken by Barrio-Hernandez,
+et al.
+}
+\references{
+Barrio-Hernandez, et al., Nat Genet, 2023.
 }
