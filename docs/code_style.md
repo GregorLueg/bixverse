@@ -39,9 +39,10 @@ data.frame. Yeah, but I like dplyr and the tidyverse. We get it... But the
 speed-ups, increased memory efficacy, feature richness of data.table are just 
 too big to not use. 
 4. If the function does something beyond 'simple' transformation, aggregation of
-data, renaming, plotting go to Rust and use the rextendr interface to make 
-computations go *brrrrrr*. Some libraries such as [igraph](https://r.igraph.org)
-are incredibly fast by their nature to go low level themselves, so no need to
+data, renaming, plotting go to [Rust](https://www.rust-lang.org) and use the 
+[rextendr](https://github.com/extendr/rextendr) interface to make computations 
+go *brrrrrr*. Some libraries such as [igraph](https://r.igraph.org) are 
+incredibly fast by their nature to go low level themselves, so no need to
 reinvent wheels here. Nonetheless, the speed-ups you can gain from using Rust can
 be incredible. Rust functions should start with *rs_*, and ideally an R wrapper
 should exist to use them. Please refer to the (yet to be written) [Installation Guide](docs/why_rust.md)
