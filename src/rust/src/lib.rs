@@ -21,4 +21,5 @@ extendr_module! {
     use fun_stats;
     use fun_rbh;
     use fun_linalg;
+    use fun_helpers;
 }

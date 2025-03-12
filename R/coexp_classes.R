@@ -1,6 +1,6 @@
 # class ------------------------------------------------------------------------
 
-#' Bulk RNAseq co-expression modules
+#' @title Bulk RNAseq co-expression modules
 #'
 #' @description
 #' Class for applying various co-expression module detection methods on top of
@@ -65,7 +65,9 @@ bulk_coexp <- S7::new_class(
   }
 )
 
-# getters ----------------------------------------------------------------------
+# utils ------------------------------------------------------------------------
+
+## getters ---------------------------------------------------------------------
 
 #' Return the outputs from bulk_coexp
 #'
@@ -102,8 +104,7 @@ S7::method(get_outputs, bulk_coexp) <-
     return(S7::prop(bulk_coexp, "outputs"))
   }
 
-
-# print ------------------------------------------------------------------------
+## print -----------------------------------------------------------------------
 
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object
@@ -142,9 +143,11 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   } else if (S7::prop(x, "params")[["detection_method"]] == "correlation-based") {
     # For simple correlations
     non_parametric <- S7::prop(x, "params")[['correlation_params']][['spearman']]
+    graph_generated <- !is.null(S7::prop(x, "params")[['correlation_graph']][['no_nodes']])
     paste0(
       " Detection method: correlation based.\n",
-      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric)
+      sprintf("  Non-parametric correlation applied: %s.\n", non_parametric),
+      sprintf("  Graph generated: %s.\n", graph_generated)
     )
   }
 
@@ -161,7 +164,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   invisible(x)
 }
 
-# general methods --------------------------------------------------------------
+# methods ----------------------------------------------------------------------
 
 #' Process the raw data
 #'
@@ -169,7 +172,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
 #' Function to do general pre-processing on top of the [bixverse::bulk_coexp()].
 #' Options to do scaling, HVG selection, etc.
 #'
-#' @param bulk_coexp The underlying `bixverse_base_class` class, see
+#' @param bulk_coexp The underlying `bulk_coexp` class, see
 #' [bixverse::bulk_coexp()].
 #' @param hvg Integer or float. If an integer, the top `hvg` genes will be
 #' included; if float, the float has to be between 0 and 1, representing the
@@ -181,7 +184,8 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
 #' robust scaling.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return Returns the class with the processed_data data slot populated.
+#' @return Returns the class with the `processed_data` data slot populated and
+#' applied parameters added to the `params` slot.
 #'
 #' @export
 #'
@@ -304,3 +308,58 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
   bulk_coexp
 }
 
+# plots ------------------------------------------------------------------------
+
+#' @title Plot the highly variable genes
+#'
+#' @description
+#' Plots the median-absolute deviation of the genes and applied thresholds.
+#' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
+#' error otherwise.
+#'
+#' @param bulk_coexp The underlying `bixverse_base_class` class, see
+#' [bixverse::bulk_coexp()].
+#'
+plot_hvgs <- S7::new_generic(
+  "plot_hvgs",
+  "bulk_coexp",
+  fun = function(bulk_coexp, bins = 50L) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_hvgs bulk_coexp
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(plot_hvgs, bulk_coexp) <- function(bulk_coexp, bins = 50L) {
+  # Checks
+  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::qassert(bins, "I1")
+  # Early return
+  if(is.null(S7::prop(bulk_coexp, "params")[['preprocessing']])) {
+    warning("No pre-processing data found. Returning NULL.")
+    return(NULL)
+  }
+  plot_df <- S7::prop(bulk_coexp, "processed_data")[['feature_meta']]
+
+  p <- ggplot(data = plot_df, mapping = aes(x = MAD)) +
+    geom_histogram(mapping = aes(fill = hvg),
+                   bins = 50L,
+                   color = 'black',
+                   alpha = 0.7) +
+    scale_fill_manual(values = setNames(c('orange', 'grey'), c(TRUE, FALSE))) +
+    ggtitle("Distribution of MAD across the genes", subtitle = "And included genes") +
+    theme_minimal()
+
+  mad_threshold <- S7::prop(bulk_coexp, "params")[['preprocessing']][['mad_threshold']]
+
+  if (mad_threshold != "not applicable") {
+    p <- p + geom_vline(xintercept = mad_threshold,
+                        linetype = 'dashed',
+                        color = 'darkred')
+  }
+
+  return(p)
+}

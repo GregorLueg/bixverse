@@ -1,6 +1,6 @@
 # class - symmetric cor matrix ----
 
-#' @title Class for symmetric cor matrices
+#' @title Class for symmetric correlation matrices
 #'
 #' @description
 #' The class allows to store the upper triangular matrix of a symmetric
@@ -84,6 +84,26 @@ upper_triangular_cor_mat <- R6::R6Class(
       data.table::setDT(data)
 
       return(data)
+    },
+
+    #' @description Return the full correlation matrix.
+    #'
+    #' @param .verbose Boolean. Controls verbosity.
+    #'
+    #' @return Returns the initialised class
+    get_cor_matrix = function(.verbose = TRUE) {
+      checkmate::qassert(.verbose, "B1")
+
+      if (.verbose)
+        message("Generating the full matrix format of the correlation matrix.")
+
+      n <- length(private$features)
+      shift <- private$shift
+
+      mat <- rs_upper_triangle_to_dense(private$correlations, shift = shift, n = n)
+      colnames(mat) <- rownames(mat) <- private$features
+
+      return(mat)
     }
   ),
   # Private
