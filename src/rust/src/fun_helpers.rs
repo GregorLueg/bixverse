@@ -17,6 +17,8 @@ use crate::utils_r_rust::faer_to_r_matrix;
 /// reconstructed.
 /// 
 /// @return 
+/// 
+/// @export
 #[extendr]
 fn rs_upper_triangle_to_dense(
   cor_vector: Vec<f64>,
