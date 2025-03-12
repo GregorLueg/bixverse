@@ -12,6 +12,8 @@ get_diffcor_graph(
 )
 }
 \arguments{
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
 \item{min_cor}{Float. The minimum absolute correlation that needs to be
 present in either data set.}
 
@@ -19,8 +21,6 @@ present in either data set.}
 generation of the graph.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
-
-\item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 A list with the following elements:

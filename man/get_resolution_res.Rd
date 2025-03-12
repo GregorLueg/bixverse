@@ -7,7 +7,7 @@
 get_resolution_res(bulk_coexp)
 }
 \arguments{
-\item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 If resolution results were found, returns the data.table. Otherwise,

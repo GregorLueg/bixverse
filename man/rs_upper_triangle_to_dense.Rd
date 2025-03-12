@@ -16,6 +16,9 @@ values = 0; or excluded the diagonal values = 1.}
 \item{n}{Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 reconstructed.}
 }
+\value{
+The dense R matrix.
+}
 \description{
 This function takes a flattened vector of the upper triangle
 from a symmetric matrix (think correlation matrix) and reconstructs the full

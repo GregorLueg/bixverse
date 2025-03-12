@@ -11,14 +11,14 @@ cor_module_processing(
 )
 }
 \arguments{
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this class.}
+
 \item{correlation_method}{String. Option of \code{c("pearson", "spearman")}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
-should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this class.
-
 The class with added data to the properties for subsequent usage.
 }
 \description{

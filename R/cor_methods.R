@@ -8,7 +8,7 @@
 #' use the raw data). The data will be stored in a memory-efficient format
 #' in the properties of the class.
 #'
-#' @return `bulk_coexp` The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this class.
 #' @param correlation_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -86,9 +86,9 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' score based on the delta. The function will automatically subset into shared
 #' features between the two data sets.
 #'
-#' @return `bulk_coexp` The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this class.
-#' @param background_data Numerical matrix. The background data set.
+#' @param background_mat Numerical matrix. The background data set.
 #' @param correlation_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -148,7 +148,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
   if (.verbose)
     message(
       sprintf(
-        "A total of %i shared features were identified and used for differential correlation",
+        "A total of %i shared features were identified and used for differential correlation.",
         length(shared_features)
       )
 
@@ -191,36 +191,26 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' single correlation or differential correlation methods. Briefly, in the case
 #' of single correlation, the graph is generated based on the absolute
 #' correlation coefficients that are subjected to a Gaussian affinity kernel.
-#' TODO: Write what is being done for differential correlation methods.
 #' This reduces spurious correlations and leaves a sparsely connected graph.
-#' Subsequently, Leiden community detection is applied through a range of
-#' resolutions that the user can define. The function then returns meta
-#' information about the resolutions (which can also be plotted) to identify
-#' the best suitable resolution parameter to identify co-expression modules.
+#' In the case of differential correlations, the graph is generated based on
+#' significant differential correlations if one of the two correlations reached
+#' the defined minimum thresholds.\cr
+#' Subsequently, Leiden community detection is applied on the respective graph
+#' through a range of resolutions that the user can define. The function then
+#' returns meta information about the resolutions (which can also be plotted) to
+#' identify the best suitable resolution parameter to identify co-expression modules.
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
-#' @param min_res Numeric. The minimum resolution to test for the Leiden
-#' community detection.
-#' @param max_res Numeric. The maximum resolution to test for the Leiden
-#' community detection.
-#' @param number_res Integer. Number of resolutions to test.
-#' The resolutions will be spread in a logarithmic fashion over `min_res` to
-#' `max_res`.
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param resolution_params List. Parameters for the resolution search.
+#' Should contain the desired `min_res`, `max_res`, and the `number_res` to test.
+#' @param graph_params List. Parameters for the generation of the (differential)
+#' correlation graph. `kernel_bandwidth` defines the bandwidth of the Gaussian
+#' kernel to generate the affinities, `min_affinity` the minimum affinity to keep
+#' the edge. These two parameters will be used for the correlation-based graph.
+#' `min_cor` defines the minimum absolute correlation you want to see in either
+#' data set in the differential correlation. `fdr_threshold` to define the max
+#' FDR to remove non-significant differential correlation.
 #' @param random_seed Integer. Random seed.
-#' @param kernel_bandwidth Numeric. The bandwidth for the affinity kernel. Needs
-#' to be value between 0 and 1. *!This parameter is only relevant for simple*
-#' *correlation modules!*
-#' @param min_affinity Numeric. This parameter will remove edges below this
-#' affinity threshold. Needs to be a value between 0 and 1. *!This parameter is*
-#' *only relevant for simple correlation modules!*
-#' @param min_cor Numeric. This parameter will remove edges in the differential
-#' correlation approach where none of the two gene correlations reach this abs
-#' threshold. *!This parameter is only relevant for differential correlation*
-#' *module detection!*
-#' @param fdr_threshold Numeric. This parameter will remove edges in the
-#' differential correlation approach that are above the specified threshold.
-#' *!This parameter is only relevant for differential correlation module*
-#' *detection!*
 #' @param min_genes Integer. Minimum number of genes that should be in a
 #' community.
 #' @param parallel Boolean. Parallelise the Leiden clustering.
@@ -235,14 +225,16 @@ cor_module_check_res <- S7::new_generic(
   name = "cor_module_check_res",
   dispatch_args = "bulk_coexp",
   fun = function(bulk_coexp,
-                 min_res = 0.1,
-                 max_res = 10,
-                 number_res = 15L,
+                 resolution_params = list(min_res = 0.1,
+                                          max_res = 10,
+                                          number_res = 15L),
+                 graph_params = list(
+                   kernel_bandwidth = 0.2,
+                   min_affinity = 0.001,
+                   min_cor = 0.2,
+                   fdr_threshold = 0.05
+                 ),
                  random_seed = 123L,
-                 kernel_bandwidth = 0.2,
-                 min_affinity = 0.001,
-                 min_cor = 0.2,
-                 fdr_threshold = 0.05,
                  min_genes = 10L,
                  parallel = TRUE,
                  max_workers = as.integer(parallel::detectCores() / 2),
@@ -260,28 +252,25 @@ cor_module_check_res <- S7::new_generic(
 #'
 #' @method cor_module_check_res bulk_coexp
 S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
-                                                         min_res = 0.1,
-                                                         max_res = 10,
-                                                         number_res = 15L,
+                                                         resolution_params = list(min_res = 0.1,
+                                                                                  max_res = 10,
+                                                                                  number_res = 15L),
+                                                         graph_params = list(
+                                                           kernel_bandwidth = 0.2,
+                                                           min_affinity = 0.001,
+                                                           min_cor = 0.2,
+                                                           fdr_threshold = 0.05
+                                                         ),
                                                          random_seed = 123L,
-                                                         kernel_bandwidth = 0.2,
-                                                         min_affinity = 0.001,
-                                                         min_cor = 0.2,
-                                                         fdr_threshold = 0.05,
                                                          min_genes = 10L,
                                                          parallel = TRUE,
                                                          max_workers = as.integer(parallel::detectCores() / 2),
                                                          .verbose = TRUE) {
+
   # Checks
   checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
-  checkmate::qassert(min_res, "N1")
-  checkmate::qassert(max_res, "N1")
-  checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(kernel_bandwidth, "R1[0,1]")
-  checkmate::qassert(min_affinity, "R1[0,1]")
-  checkmate::qassert(min_cor, "R1[0,1]")
-  checkmate::qassert(fdr_threshold, "R1[0,1]")
-  checkmate::qassert(number_res, "I1")
+  assertCorGraphParams(graph_params)
+  assertCorResParams(resolution_params)
   checkmate::qassert(min_genes, "I1")
   checkmate::qassert(parallel, "B1")
   checkmate::qassert(max_workers, "I1")
@@ -301,7 +290,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
     return(bulk_coexp)
   }
 
-  c(graph, graph_params) %<-% switch(
+  graph_params[['.verbose']] <- .verbose
+
+  c(graph, graph_params) %<-% with(graph_params, switch(
     detection_method,
     "correlation-based" = get_cor_graph(
       bulk_coexp = bulk_coexp,
@@ -315,9 +306,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
       fdr_threshold = fdr_threshold,
       .verbose = .verbose
     )
-  )
+  ))
 
-  resolutions <- exp(seq(log(min_res), log(max_res), length.out = number_res))
+  resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
 
   if (.verbose)
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
@@ -405,7 +396,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
 #' their respective sub graphs, akin to the approach taken by Barrio-Hernandez,
 #' et al.
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
 #' it will use the optimal one identified by [bixverse::cor_module_check_res()].
 #' If nothing can be found, will default to 1.
@@ -414,14 +405,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
 #' @param subclustering Boolean. Shall after a first clustering communities that
 #' are too large be further sub clustered. Defaults to `TRUE`.
 #' @param random_seed Integer. Random seed.
-#' @param .kernel_bandwidth Numeric. A value between 0 and 1. *!This parameter*
-#' *only plays a role if you have not run [bixverse::cor_module_check_res()]!*
-#' @param .min_affinity Numeric. A value between 0 and 1. *This parameter only*
-#' *plays a role if you have not run [bixverse::cor_module_check_res()]!*
-#' @param .min_cor Numeric. A value between 0 and 1. *!This parameter*
-#' *only plays a role if you have not run [bixverse::cor_module_check_res()]!*
-#' @param .fdr_threshold Numeric. A value between 0 and 1. *!This parameter*
-#' *only plays a role if you have not run [bixverse::cor_module_check_res()]!*
+#' @param .graph_params List. These are the standard parameters from
+#' [bixverse::cor_module_check_res()] for the generation of the graph. This
+#' parameter is only relevant if you did *not* run [bixverse::cor_module_check_res()].
 #' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
 #' maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -440,10 +426,12 @@ cor_module_final_modules <- S7::new_generic(
                  max_size = 500L,
                  subclustering = TRUE,
                  random_seed = 123L,
-                 .kernel_bandwidth = 0.2,
-                 .min_affinity = 0.001,
-                 .min_cor = 0.2,
-                 .fdr_threshold = 0.05,
+                 .graph_params = list(
+                   kernel_bandwidth = 0.2,
+                   min_affinity = 0.001,
+                   min_cor = 0.2,
+                   fdr_threshold = 0.05
+                 ),
                  .max_iters = 100L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
@@ -463,10 +451,12 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
                                                              max_size = 500L,
                                                              subclustering = TRUE,
                                                              random_seed = 123L,
-                                                             .kernel_bandwidth = 0.2,
-                                                             .min_affinity = 0.001,
-                                                             .min_cor = 0.2,
-                                                             .fdr_threshold = 0.05,
+                                                             .graph_params = list(
+                                                               kernel_bandwidth = 0.2,
+                                                               min_affinity = 0.001,
+                                                               min_cor = 0.2,
+                                                               fdr_threshold = 0.05
+                                                             ),
                                                              .max_iters = 100L,
                                                              .verbose = TRUE) {
   # Checks
@@ -476,8 +466,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
   checkmate::qassert(max_size, "I1")
   checkmate::qassert(subclustering, "B1")
   checkmate::qassert(random_seed, "I1")
-  checkmate::qassert(.kernel_bandwidth, "R1[0,1]")
-  checkmate::qassert(.min_affinity, "R1[0,1]")
+  assertCorGraphParams(.graph_params)
   checkmate::qassert(.max_iters, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -506,7 +495,9 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
       )
     )
 
-    c(graph, graph_params) %<-% switch(
+    .graph_params[['.verbose']] <- .verbose
+
+    c(graph, graph_params) %<-% with(.graph_params, switch(
       detection_method,
       "correlation-based" = get_cor_graph(
         bulk_coexp = bulk_coexp,
@@ -520,7 +511,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
         fdr_threshold = fdr_threshold,
         .verbose = .verbose
       )
-    )
+    ))
 
     S7::prop(bulk_coexp, "params")[["correlation_graph"]] <- graph_params
     S7::prop(bulk_coexp, "outputs")[['cor_graph']] <- graph
@@ -637,7 +628,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Helper function to get a correlation-based igraph from the class
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
 #' @param kernel_bandwidth Numerical. The bandwidth to use for the affinity
 #' kernel
 #' @param min_affinity Numerical. Minimum affinity needed to keep the edge.
@@ -649,6 +640,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
 #'  \item params - A list that contains the parameters of the graph generation
 #'  and general graph information (node, edge numbers).
 #' }
+#'
+#' @export
 get_cor_graph <- S7::new_generic(
   name = 'get_cor_graph',
   dispatch_args = 'bulk_coexp',
@@ -660,6 +653,7 @@ get_cor_graph <- S7::new_generic(
   }
 )
 
+#' @export
 #' @method get_cor_graph bulk_coexp
 S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
                                                   kernel_bandwidth,
@@ -709,7 +703,7 @@ S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Helper function to get a differential correlation-based igraph from the class
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
 #' @param min_cor Float. The minimum absolute correlation that needs to be
 #' present in either data set.
 #' @param fdr_threshold Float. The maximum FDR that is tolerated for the
@@ -722,6 +716,8 @@ S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
 #'  \item params - A list that contains the parameters of the graph generation
 #'  and general graph information (node, edge numbers).
 #' }
+#'
+#' @export
 get_diffcor_graph <- S7::new_generic(
   name = 'get_diffcor_graph',
   dispatch_args = 'bulk_coexp',
@@ -733,6 +729,7 @@ get_diffcor_graph <- S7::new_generic(
   }
 )
 
+#' @export
 #' @method get_diffcor_graph bulk_coexp
 S7::method(get_diffcor_graph, bulk_coexp) <- function(bulk_coexp,
                                                       min_cor = 0.2,
@@ -787,7 +784,7 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Getter function to get the resolution results (if available).
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
 #'
 #' @return If resolution results were found, returns the data.table. Otherwise,
 #' throws a warning and returns NULL.
@@ -822,7 +819,9 @@ S7::method(get_resolution_res, bulk_coexp) <- function(bulk_coexp) {
 #' Plots the resolution results (if they can be found in the class). The x-axis
 #' reflects the
 #'
-#' @param `bulk_coexp` The class, see [bixverse::bulk_coexp()].
+#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param print_head Boolean. Print the Top5 resolution parameters and their
+#' meta data.
 #'
 #' @return If resolution results were found, returns the data.table. Otherwise,
 #' throws a warning and returns NULL.

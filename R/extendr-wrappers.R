@@ -191,6 +191,15 @@ rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, 
 #' @export
 rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
 
+#' Calculate a BH-based FDR
+#' 
+#' @description Rust implementation that will be faster if you have an 
+#' terrifying amount of p-values to adjust.
+#' 
+#' @param pvals Numeric vector. The p-values you wish to adjust.
+#' 
+#' @return The Benjamini-Hochberg adjusted p-values.
+#' 
 #' @export
 rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 
@@ -387,7 +396,7 @@ rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .C
 #' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 #' reconstructed.
 #' 
-#' @return 
+#' @return The dense R matrix.
 #' 
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)

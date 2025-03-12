@@ -51,7 +51,7 @@ fn rs_ot_harmonic_sum(
 /// @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
 /// reconstructed.
 /// 
-/// @return 
+/// @return The dense R matrix.
 /// 
 /// @export
 #[extendr]

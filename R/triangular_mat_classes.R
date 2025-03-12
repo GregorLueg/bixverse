@@ -215,7 +215,7 @@ upper_triangle_diffcor_mat <- R6::R6Class(
       checkmate::qassert(factor, "B1")
       checkmate::qassert(.verbose, "B1")
       if (.verbose)
-        message("Generating data.table format of the differential correlation data")
+        message("Generating data.table format of the differential correlation data.")
 
       data <- list(
         feature_a = super$get_feature_a(factor = factor),

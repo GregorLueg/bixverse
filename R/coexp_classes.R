@@ -317,8 +317,8 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
 #' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
 #' error otherwise.
 #'
-#' @param bulk_coexp The underlying `bixverse_base_class` class, see
-#' [bixverse::bulk_coexp()].
+#' @param bulk_coexp The underlying class, see [bixverse::bulk_coexp()].
+#' @param bins Integer. Number of bins to plot.
 #'
 plot_hvgs <- S7::new_generic(
   "plot_hvgs",

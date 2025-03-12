@@ -7,14 +7,14 @@
 get_cor_graph(bulk_coexp, kernel_bandwidth, min_affinity, .verbose)
 }
 \arguments{
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
 \item{kernel_bandwidth}{Numerical. The bandwidth to use for the affinity
 kernel}
 
 \item{min_affinity}{Numerical. Minimum affinity needed to keep the edge.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 A list with the following elements:
