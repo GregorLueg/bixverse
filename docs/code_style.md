@@ -47,10 +47,12 @@ section.
 data.frame. *"Yeah, but I like dplyr and the tidyverse."* We get it... But the 
 speed-ups, increased memory efficacy, feature richness of data.table are just 
 too big to not use. data.table also inherits all of the data.frame functionality
-and most dplyr code works with it, making
+and most dplyr code works with it, making it easy for users to jump to tidyverse
+when they want to. The point of the bixverse is to be fast, so let's stick with
+data.table.
 5. Be explicit in the code where possible. Simple example, if you provide 
 parameters to a function, write the parameter name. It makes reasoning and
-debugging code so much easier.
+debugging code so much easier. Try to use meaningful variable names.
 6. The good old for loop vs. lapply/map question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
 equivalent parallelised versionsvia [furrr](https://furrr.futureverse.org), i.e., 
