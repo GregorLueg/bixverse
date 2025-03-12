@@ -65,7 +65,9 @@ bulk_coexp <- S7::new_class(
   }
 )
 
-# getters ----------------------------------------------------------------------
+# utils ------------------------------------------------------------------------
+
+## getters ---------------------------------------------------------------------
 
 #' Return the outputs from bulk_coexp
 #'
@@ -102,8 +104,7 @@ S7::method(get_outputs, bulk_coexp) <-
     return(S7::prop(bulk_coexp, "outputs"))
   }
 
-
-# print ------------------------------------------------------------------------
+## print -----------------------------------------------------------------------
 
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object
@@ -163,7 +164,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   invisible(x)
 }
 
-# general methods --------------------------------------------------------------
+# methods ----------------------------------------------------------------------
 
 #' Process the raw data
 #'
@@ -306,3 +307,4 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
   bulk_coexp
 }
 
+# plots ------------------------------------------------------------------------

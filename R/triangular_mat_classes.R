@@ -100,7 +100,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       n <- length(private$features)
       shift <- private$shift
 
-      mat <- rs_upper_triangle_to_dense(vec, shift = shift, n = n)
+      mat <- rs_upper_triangle_to_dense(private$correlations, shift = shift, n = n)
       colnames(mat) <- rownames(mat) <- private$features
 
       return(mat)
