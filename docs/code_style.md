@@ -10,4 +10,5 @@ inheritance structures that feel smart but make debugging a huge pain, and the
 motto should be at all times **Keep it Simple, Stupid (KISS)**. 
 Please, just think about this meme in doubt:
 
-<img src="/misc/pics/stop_abstracting.png" alt="stop abstracting">
+<img src="/misc/pics/stop_abstracting.png" width="350" height="504" alt="stop abstracting">
+
