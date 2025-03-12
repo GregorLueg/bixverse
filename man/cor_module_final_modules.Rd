@@ -11,13 +11,15 @@ cor_module_final_modules(
   max_size = 500L,
   subclustering = TRUE,
   random_seed = 123L,
-  .kernel_bandwidth = 0.2,
-  .min_affinity = 0.001,
+  .graph_params = list(kernel_bandwidth = 0.2, min_affinity = 0.001, min_cor = 0.2,
+    fdr_threshold = 0.05),
   .max_iters = 100L,
   .verbose = TRUE
 )
 }
 \arguments{
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
 \item{resolution}{The Leiden resolution parameter you wish to use. If NULL,
 it will use the optimal one identified by \code{\link[=cor_module_check_res]{cor_module_check_res()}}.
 If nothing can be found, will default to 1.}
@@ -31,18 +33,14 @@ are too large be further sub clustered. Defaults to \code{TRUE}.}
 
 \item{random_seed}{Integer. Random seed.}
 
-\item{.kernel_bandwidth}{Numeric. A value between 0 and 1. !This parameter
-only plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!.}
-
-\item{.min_affinity}{Numeric. A value between 0 and 1. !This parameter only
-plays a role if you have not run \code{\link[=cor_module_check_res]{cor_module_check_res()}}!.}
+\item{.graph_params}{List. These are the standard parameters from
+\code{\link[=cor_module_check_res]{cor_module_check_res()}} for the generation of the graph. This
+parameter is only relevant if you did \emph{not} run \code{\link[=cor_module_check_res]{cor_module_check_res()}}.}
 
 \item{.max_iters}{Integer. If sub clustering is set to \code{TRUE}, what shall be the
 maximum number of iterations. Defaults to 100L.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
-
-\item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 The class with added data to the properties.

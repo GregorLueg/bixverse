@@ -7,8 +7,9 @@
 plot_hvgs(bulk_coexp, bins = 50L)
 }
 \arguments{
-\item{bulk_coexp}{The underlying \code{bixverse_base_class} class, see
-\code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{bulk_coexp}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
+\item{bins}{Integer. Number of bins to plot.}
 }
 \description{
 Plots the median-absolute deviation of the genes and applied thresholds.

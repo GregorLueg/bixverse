@@ -170,6 +170,10 @@ pub fn calculate_diff_correlation(
     cors_b.push(*mat_b.get(r, c));
   }
 
+  // Maybe save the original correlations... Note to myself.
+  let original_cor_a = cors_a.to_vec();
+  let original_cor_b = cors_b.to_vec();
+
   cors_a
     .par_iter_mut()
     .for_each(|x| *x = x.atanh());
@@ -179,7 +183,10 @@ pub fn calculate_diff_correlation(
 
   // Constant will depend on if Spearman or Pearson  
   let constant = if spearman { 1.06 } else { 1.0 } ;
-  let denominator = ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
+  let denominator = (
+    (constant / (no_sample_a as f64 - 3.0)) + 
+    (constant / (no_sample_b as f64 - 3.0))
+  ).sqrt();
 
   let z_scores: Vec<f64> = cors_a
     .par_iter()
@@ -194,8 +201,8 @@ pub fn calculate_diff_correlation(
   let p_values = z_scores_to_pval(&z_scores);
 
   DiffCorRes{
-    r_a: cors_a,
-    r_b: cors_b,
+    r_a: original_cor_a,
+    r_b: original_cor_b,
     z_score: z_scores,
     p_vals: p_values
   }

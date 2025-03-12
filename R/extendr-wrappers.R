@@ -139,17 +139,6 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
 
-#' Apply a Gaussian affinity kernel to a distance metric
-#' 
-#' @description Applies a Gaussian kernel to a vector of distances.
-#' 
-#' @param x The distance metric. Should be positive values only!
-#' @param bandwidth The bandwidth of the kernel. Smaller values will yield
-#' smaller affinities.
-#' 
-#' @export
-rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_affinity_kernel, x, bandwidth)
-
 #' Fast AUC calculation
 #' 
 #' @description This function calculates rapidly AUCs based on an approximation.
@@ -184,16 +173,6 @@ rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast
 #' @export
 rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
 
-#' Calculate the OT harmonic sum
-#' 
-#' @param x The numeric vector (should be between 0 and 1) for which to 
-#' calculate the harmonic sum
-#' 
-#' @return Returns the harmonic sum according to the OT calculation.
-#' 
-#' @export
-rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
-
 #' Calculate the Hedge's G effect
 #' 
 #' @description Calculates the Hedge's G effect for two sets of matrices. The
@@ -211,6 +190,18 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' 
 #' @export
 rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
+
+#' Calculate a BH-based FDR
+#' 
+#' @description Rust implementation that will be faster if you have an 
+#' terrifying amount of p-values to adjust.
+#' 
+#' @param pvals Numeric vector. The p-values you wish to adjust.
+#' 
+#' @return The Benjamini-Hochberg adjusted p-values.
+#' 
+#' @export
+rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 
 #' Generate reciprocal best hits based on set similarities
 #' 
@@ -392,7 +383,62 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' @export
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
 
+#' Reconstruct a matrix from a flattened upper triangle vector
+#' 
+#' @description This function takes a flattened vector of the upper triangle
+#' from a symmetric matrix (think correlation matrix) and reconstructs the full
+#' dense matrix for you. 
+#' 
+#' @param cor_vector Numeric vector. The vector of correlation coefficients 
+#' that you want to use to go back to a dense matrix.
+#' @param shift Integer. If you applied a shift, i.e. included the diagonal 
+#' values = 0; or excluded the diagonal values = 1.
+#' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
+#' reconstructed.
+#' 
+#' @return The dense R matrix.
+#' 
+#' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
+
+#' Calculate the OT harmonic sum
+#' 
+#' @param x The numeric vector (should be between 0 and 1) for which to 
+#' calculate the harmonic sum
+#' 
+#' @return Returns the harmonic sum according to the OT calculation.
+#' 
+#' @export
+rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
+
+#' Apply a Gaussian affinity kernel to a distance metric
+#' 
+#' @description Applies a Gaussian kernel to a vector of distances.
+#' 
+#' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
+#' onto. 
+#' @param bandwidth The bandwidth of the kernel. Smaller values will yield
+#' smaller affinities.
+#' 
+#' @return The affinities after the Kernel was applied.
+#' 
+#' @export
+rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_affinity_kernel, x, bandwidth)
+
+#' Apply a range normalisation on a vector.
+#' 
+#' @description Applies a range normalisation on an R vector.
+#' 
+#' @param x Numerical vector. The data to normalise.
+#' @param max_val Numeric. The upper bound value to normalise into. If set to 1,
+#' the function will be equal to a min-max normalisation.
+#' @param min_val Numeric. The lower bound value to normalise into. If set to 0,
+#' the function will equal a min-max normalisation.
+#' 
+#' @return Normalised values
+#' 
+#' @export
+rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
 
 
 # nolint end

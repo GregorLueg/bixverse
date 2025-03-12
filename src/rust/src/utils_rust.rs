@@ -1,4 +1,5 @@
 use faer::Mat;
+use rayon::iter::*;
 
 //////////////////
 // VECTOR STUFF //
@@ -15,27 +16,38 @@ pub fn flatten_vector<T>(
 pub fn array_f64_max(
   arr: &[f64]
 ) -> f64 {
-  let mut max_val = arr[0];
-  for number in arr{
-    if *number > max_val {
-      max_val = *number
-    }
-  }
-  max_val
+  arr
+    .par_iter()
+    .fold(|| f64::MAX, |max_so_far, &val| max_so_far.max(val))
+    .reduce(|| f64::MIN, |a, b| a.max(b))
 }
 
 /// Get the minimum value from an f64 array. 
 pub fn array_f64_min(
   arr: &[f64]
 ) -> f64 {
-  let mut min_val = arr[0];
-  for number in arr{
-    if *number < min_val {
-      min_val = *number
-    }
-  }
-  min_val
+  arr
+    .par_iter()
+    .fold(|| f64::MAX, |min_so_far, &val| min_so_far.min(val))
+    .reduce(|| f64::MAX, |a, b| a.min(b))
 }
+
+/// Get the maximum and minimum value. First element is minimum;
+/// second one is maximum.
+pub fn array_f64_max_min(
+  arr: &[f64]
+) -> (f64, f64) {
+  let res = arr
+    .par_iter()
+    .fold(|| (f64::MAX, f64::MIN), |acc, &val| {
+      (acc.0.min(val), acc.1.max(val))
+    })
+    .reduce(|| (f64::MAX, f64::MIN), |acc1, acc2| {
+      (acc1.0.min(acc2.0), acc1.1.max(acc2.1))
+    });
+  res
+}
+
 
 // Get the mean value from an f64 array
 // pub fn array_f64_mean(

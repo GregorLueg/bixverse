@@ -6,12 +6,10 @@
 \usage{
 cor_module_check_res(
   bulk_coexp,
-  min_res = 0.1,
-  max_res = 10,
-  number_res = 15L,
+  resolution_params = list(min_res = 0.1, max_res = 10, number_res = 15L),
+  graph_params = list(kernel_bandwidth = 0.2, min_affinity = 0.001, min_cor = 0.2,
+    fdr_threshold = 0.05),
   random_seed = 123L,
-  kernel_bandwidth = 0.2,
-  min_affinity = 0.001,
   min_genes = 10L,
   parallel = TRUE,
   max_workers = as.integer(parallel::detectCores()/2),
@@ -19,25 +17,20 @@ cor_module_check_res(
 )
 }
 \arguments{
-\item{min_res}{Numeric. The minimum resolution to test for the Leiden
-community detection.}
+\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
-\item{max_res}{Numeric. The maximum resolution to test for the Leiden
-community detection.}
+\item{resolution_params}{List. Parameters for the resolution search.
+Should contain the desired \code{min_res}, \code{max_res}, and the \code{number_res} to test.}
 
-\item{number_res}{Integer. Number of resolutions to test.
-The resolutions will be spread in a logarithmic fashion over \code{min_res} to
-\code{max_res}.}
+\item{graph_params}{List. Parameters for the generation of the (differential)
+correlation graph. \code{kernel_bandwidth} defines the bandwidth of the Gaussian
+kernel to generate the affinities, \code{min_affinity} the minimum affinity to keep
+the edge. These two parameters will be used for the correlation-based graph.
+\code{min_cor} defines the minimum absolute correlation you want to see in either
+data set in the differential correlation. \code{fdr_threshold} to define the max
+FDR to remove non-significant differential correlation.}
 
 \item{random_seed}{Integer. Random seed.}
-
-\item{kernel_bandwidth}{Numeric. !This parameter is only relevant for simple
-correlation modules!. The bandwidth for the affinity kernel. Needs to be
-value between 0 and 1.}
-
-\item{min_affinity}{Float. !This parameter is only relevant for simple
-correlation modules! This parameter will remove edges below this affinity
-threshold. Needs to be a value between 0 and 1.}
 
 \item{min_genes}{Integer. Minimum number of genes that should be in a
 community.}
@@ -48,8 +41,6 @@ community.}
 set to \code{TRUE}.}
 
 \item{.verbose}{Controls the verbosity of the function.}
-
-\item{`bulk_coexp`}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 The class with added data to the properties.
@@ -59,10 +50,12 @@ This function will identify gene modules based on affinity graphs from the
 single correlation or differential correlation methods. Briefly, in the case
 of single correlation, the graph is generated based on the absolute
 correlation coefficients that are subjected to a Gaussian affinity kernel.
-TODO: Write what is being done for differential correlation methods.
 This reduces spurious correlations and leaves a sparsely connected graph.
-Subsequently, Leiden community detection is applied through a range of
-resolutions that the user can define. The function then returns meta
-information about the resolutions (which can also be plotted) to identify
-the best suitable resolution parameter to identify co-expression modules.
+In the case of differential correlations, the graph is generated based on
+significant differential correlations if one of the two correlations reached
+the defined minimum thresholds.\cr
+Subsequently, Leiden community detection is applied on the respective graph
+through a range of resolutions that the user can define. The function then
+returns meta information about the resolutions (which can also be plotted) to
+identify the best suitable resolution parameter to identify co-expression modules.
 }

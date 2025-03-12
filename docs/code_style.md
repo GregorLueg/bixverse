@@ -57,8 +57,8 @@ future you when writing code. Will I still understand what a piece of code does
 in 12 months? If you are doubting yourself here, maybe rethink what you wrote.
 6. The good old for loop vs. lapply/map question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
-equivalent parallelised versionsvia [furrr](https://furrr.futureverse.org), i.e., 
-`future_map` derivatives) over the apply family functions. Areyou not writing 
+equivalent parallelised versions via [furrr](https://furrr.futureverse.org), i.e., 
+`future_map` derivatives) over the apply family functions. Are you not writing 
 below you want to avoid external dependencies? Yeah, but map allows to make 
 explicit code which is easier to reason over. `map_lgl()` is very clear that I 
 will get a logical vector back. With `unlist(lapply())` it is less

@@ -5,8 +5,8 @@
 \title{Class for symmetric correlation matrices}
 \description{
 The class allows to store the upper triangular matrix of a symmetric
-correlation matrix in an memory-efficient form and return data.table if need
-be.
+correlation matrix in an memory-efficient form and return a data.table or
+dense R matrix if need be.
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -104,7 +104,7 @@ Return the full correlation matrix.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns the initialised class
+Returns the correlation matrix as a dense R matrix.
 }
 }
 \if{html}{\out{<hr>}}
