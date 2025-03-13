@@ -5,7 +5,7 @@
 \title{Calculate the AUROC for a diffusion score}
 \usage{
 calculate_diffusion_auc(
-  network_diffusions,
+  object,
   hit_nodes,
   auc_iters = 10000L,
   random_aucs = 1000L,
@@ -14,8 +14,7 @@ calculate_diffusion_auc(
 )
 }
 \arguments{
-\item{network_diffusions}{The \code{network_diffusions} class, see
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{hit_nodes}{String vector. Which nodes in the graph are considered a
 'hit'.}

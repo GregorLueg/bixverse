@@ -4,10 +4,10 @@
 \alias{get_params}
 \title{Get the parameters that were used.}
 \usage{
-get_params(bixverse_base_class, to_json = FALSE, pretty_json = FALSE)
+get_params(object, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
-\item{bixverse_base_class}{The underlying \code{bixverse_base_class} class.}
+\item{object}{A class within bixverse that inherits from \code{\link[=bixverse_base_class]{bixverse_base_class()}}.}
 
 \item{to_json}{Shall the params be returned as a JSON string.}
 
@@ -17,6 +17,6 @@ get_params(bixverse_base_class, to_json = FALSE, pretty_json = FALSE)
 Depending on parameters either the R list or a (pretty) JSON string.
 }
 \description{
-Extracts params from the \code{bixverse_base_class} (or child)
-class and has options to return (pretty) JSONs
+Extracts parameters from the \code{bixverse_base_class} class (or child
+classes) and has options to return (pretty) JSONs.
 }

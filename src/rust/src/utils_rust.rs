@@ -16,20 +16,26 @@ pub fn flatten_vector<T>(
 pub fn array_f64_max(
   arr: &[f64]
 ) -> f64 {
-  arr
-    .par_iter()
-    .fold(|| f64::MAX, |max_so_far, &val| max_so_far.max(val))
-    .reduce(|| f64::MIN, |a, b| a.max(b))
+  let mut max_val = arr[0];
+  for number in arr{
+    if *number > max_val {
+      max_val = *number
+    }
+  }
+  max_val
 }
 
 /// Get the minimum value from an f64 array. 
 pub fn array_f64_min(
   arr: &[f64]
 ) -> f64 {
-  arr
-    .par_iter()
-    .fold(|| f64::MAX, |min_so_far, &val| min_so_far.min(val))
-    .reduce(|| f64::MAX, |a, b| a.min(b))
+  let mut min_val = arr[0];
+  for number in arr{
+    if *number < min_val {
+      min_val = *number
+    }
+  }
+  min_val
 }
 
 /// Get the maximum and minimum value. First element is minimum;

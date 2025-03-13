@@ -34,14 +34,12 @@ bixverse_base_class <- S7::new_class(
 
 ## getters ----
 
-?S7::new_generic
-
 #' Get the parameters that were used.
 #'
-#' @description Extracts params from the `bixverse_base_class` (or child)
-#' class and has options to return (pretty) JSONs
+#' @description Extracts parameters from the `bixverse_base_class` class (or child
+#' classes) and has options to return (pretty) JSONs.
 #'
-#' @param bixverse_base_class The underlying `bixverse_base_class` class.
+#' @param object A class within bixverse that inherits from [bixverse::bixverse_base_class()].
 #' @param to_json Shall the params be returned as a JSON string.
 #' @param pretty_json Shall the params be returned as a pretty JSON string.
 #'
@@ -50,8 +48,8 @@ bixverse_base_class <- S7::new_class(
 #' @export
 get_params <- S7::new_generic(
   name = "get_params",
-  dispatch_args = "bixverse_base_class",
-  fun = function(bixverse_base_class,
+  dispatch_args = "object",
+  fun = function(object,
                  to_json = FALSE,
                  pretty_json = FALSE) {
     S7::S7_dispatch()
@@ -60,18 +58,18 @@ get_params <- S7::new_generic(
 #' @method get_params bixverse_base_class
 #' @export
 S7::method(get_params, bixverse_base_class) <-
-  function(bixverse_base_class,
+  function(object,
            to_json = FALSE,
            pretty_json = FALSE) {
     # Checks
     checkmate::assertClass(
-      bixverse_base_class, "bixverse::bixverse_base_class"
+      object, "bixverse::bixverse_base_class"
     )
     checkmate::qassert(to_json, "B1")
     checkmate::qassert(pretty_json, "B1")
 
     # Body
-    to_ret <- S7::prop(bixverse_base_class, "params")
+    to_ret <- S7::prop(object, "params")
     if (to_json) {
       to_ret <- jsonlite::toJSON(to_ret)
     }
@@ -85,31 +83,32 @@ S7::method(get_params, bixverse_base_class) <-
 
 #' Get the final results from the class
 #'
-#' @description Get the final results from the a
-#' [bixverse::bixverse_base_class()] class.
+#' @description Get the final results from `bixverse_base_class` class (or child
+#' classes).
 #'
-#' @param bixverse_base_class The underlying [bixverse::bixverse_base_class()]
-#' class. This class is usually inherited by other classes.
+#' @param object The underlying [bixverse::bixverse_base_class()]
+#' class. The class functionality is usually inherited by other S7 classes in
+#' `bixverse`.
 #'
 #' @return Returns the final results if any have been stored in the class.
 #'
 #' @export
 get_results <- S7::new_generic(
   name = "get_results",
-  dispatch_args = "bixverse_base_class",
-  fun = function(bixverse_base_class) {
+  dispatch_args = "object",
+  fun = function(object) {
     S7::S7_dispatch()
   })
 
 #' @export
 #' @method get_results bixverse_generic_class
 S7::method(get_results, bixverse_base_class) <-
-  function(bixverse_base_class) {
+  function(object) {
     # Checks
     checkmate::assertClass(
-      bixverse_base_class, "bixverse::bixverse_base_class"
+      object, "bixverse::bixverse_base_class"
     )
 
     # Return
-    return(S7::prop(bixverse_base_class, "final_results"))
+    return(S7::prop(object, "final_results"))
   }

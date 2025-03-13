@@ -5,7 +5,7 @@
 \title{Diffuse seed genes in a tied manner over a network}
 \usage{
 tied_diffusion(
-  network_diffusions,
+  object,
   diffusion_vector_1,
   diffusion_vector_2,
   summarisation = c("max", "mean", "harmonic_sum"),
@@ -14,8 +14,7 @@ tied_diffusion(
 )
 }
 \arguments{
-\item{network_diffusions}{The \code{network_diffusions} class, see
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{diffusion_vector_1}{The first named vector with values to use for the
 reset parameter in the personalised page-rank diffusion. Names should

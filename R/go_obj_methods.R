@@ -10,8 +10,7 @@
 #' the genes from this term will be removed from all its ancestors. The function
 #' then proceeds to the next level of the ontology and repeats the process.
 #'
-#' @param gene_ontology_data The underlying `gene_ontology_data` class, see
-#' [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
 #' @param fdr_threshold Float. Threshold for maximum fdr to include in the
@@ -29,8 +28,8 @@
 #' @export
 gse_go_elim_method <- S7::new_generic(
   name = "gse_go_elim_method",
-  dispatch_args = "gene_ontology_data",
-  fun = function(gene_ontology_data,
+  dispatch_args = "object",
+  fun = function(object,
                  target_genes,
                  minimum_overlap = 3L,
                  fdr_threshold = 0.05,
@@ -49,7 +48,7 @@ gse_go_elim_method <- S7::new_generic(
 #'
 #' @method gse_go_elim_method gene_ontology_data
 S7::method(gse_go_elim_method, gene_ontology_data) <-
-  function(gene_ontology_data,
+  function(object,
            target_genes,
            minimum_overlap = 3L,
            fdr_threshold = 0.05,
@@ -59,7 +58,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     # Initial assignment
     `.` <- pvals <- fdr <- hits <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::gene_ontology_data")
     checkmate::qassert(target_genes, "S+")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -68,12 +67,12 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     checkmate::qassert(.debug, "B1")
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
-      min_genes <- S7::prop(gene_ontology_data, "min_genes")
+      min_genes <- S7::prop(object, "min_genes")
     }
-    go_to_genes <- S7::prop(gene_ontology_data, "go_to_genes")
-    ancestry <- S7::prop(gene_ontology_data, "ancestry")
-    levels <- S7::prop(gene_ontology_data, "levels")
-    go_info <- S7::prop(gene_ontology_data, "go_info")
+    go_to_genes <- S7::prop(object, "go_to_genes")
+    ancestry <- S7::prop(object, "ancestry")
+    levels <- S7::prop(object, "levels")
+    go_info <- S7::prop(object, "go_info")
 
     gene_universe_length <- length(unique(unlist(go_to_genes)))
 
@@ -127,8 +126,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' repeats the process. The class will leverage Rust threading to parallelise
 #' the process.
 #'
-#' @param gene_ontology_data The underlying `gene_ontology_data` class, see
-#' [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_gene_list List. The target genes list you wish to apply the
 #' gene set enrichment analysis over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
@@ -148,8 +146,8 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' @export
 gse_go_elim_method_list <- S7::new_generic(
   name = "gse_go_elim_method_list",
-  dispatch_args = "gene_ontology_data",
-  fun = function(gene_ontology_data,
+  dispatch_args = "object",
+  fun = function(object,
                  target_gene_list,
                  minimum_overlap = 3L,
                  fdr_threshold = 0.05,
@@ -168,7 +166,7 @@ gse_go_elim_method_list <- S7::new_generic(
 #'
 #' @method gse_go_elim_method_list gene_ontology_data
 S7::method(gse_go_elim_method_list, gene_ontology_data) <-
-  function(gene_ontology_data,
+  function(object,
            target_gene_list,
            minimum_overlap = 3L,
            fdr_threshold = 0.05,
@@ -178,7 +176,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     # Binding checks
     `.` <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
-    checkmate::assertClass(gene_ontology_data, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::gene_ontology_data")
     checkmate::assertList(target_gene_list, types = "character")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -187,12 +185,12 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     checkmate::qassert(.debug, "B1")
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
-      min_genes <- S7::prop(gene_ontology_data, "min_genes")
+      min_genes <- S7::prop(object, "min_genes")
     }
-    go_to_genes <- S7::prop(gene_ontology_data, "go_to_genes")
-    ancestry <- S7::prop(gene_ontology_data, "ancestry")
-    levels <- S7::prop(gene_ontology_data, "levels")
-    go_info <- S7::prop(gene_ontology_data, "go_info")
+    go_to_genes <- S7::prop(object, "go_to_genes")
+    ancestry <- S7::prop(object, "ancestry")
+    levels <- S7::prop(object, "levels")
+    go_info <- S7::prop(object, "go_info")
 
     gene_universe_length <- length(unique(unlist(go_to_genes)))
 

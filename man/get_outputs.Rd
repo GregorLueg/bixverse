@@ -4,10 +4,10 @@
 \alias{get_outputs}
 \title{Return the outputs from bulk_coexp}
 \usage{
-get_outputs(bulk_coexp)
+get_outputs(object)
 }
 \arguments{
-\item{bulk_coexp}{The underlying \code{bulk_coexp} class, see
+\item{object}{The underlying \code{bulk_coexp} class, see
 \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{

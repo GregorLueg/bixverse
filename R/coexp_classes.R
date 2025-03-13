@@ -75,7 +75,7 @@ bulk_coexp <- S7::new_class(
 #' Getter function to extract the outputs from the [bixverse::bulk_coexp()]
 #' class.
 #'
-#' @param bulk_coexp The underlying `bulk_coexp` class, see
+#' @param object The underlying `bulk_coexp` class, see
 #' [bixverse::bulk_coexp()].
 #'
 #' @return Returns the outputs stored in the class.
@@ -83,8 +83,8 @@ bulk_coexp <- S7::new_class(
 #' @export
 get_outputs <- S7::new_generic(
   name = "get_outputs",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp) {
+  dispatch_args = "object",
+  fun = function(object) {
     S7::S7_dispatch()
   }
 )
@@ -94,14 +94,14 @@ get_outputs <- S7::new_generic(
 #'
 #' @export
 S7::method(get_outputs, bulk_coexp) <-
-  function(bulk_coexp) {
+  function(object) {
     # Checks
     checkmate::assertClass(
-      bulk_coexp, "bixverse::bulk_coexp"
+      object, "bixverse::bulk_coexp"
     )
 
     # Return
-    return(S7::prop(bulk_coexp, "outputs"))
+    return(S7::prop(object, "outputs"))
   }
 
 ## print -----------------------------------------------------------------------
@@ -172,8 +172,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
 #' Function to do general pre-processing on top of the [bixverse::bulk_coexp()].
 #' Options to do scaling, HVG selection, etc.
 #'
-#' @param bulk_coexp The underlying `bulk_coexp` class, see
-#' [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param hvg Integer or float. If an integer, the top `hvg` genes will be
 #' included; if float, the float has to be between 0 and 1, representing the
 #' percentage of genes to include.
@@ -194,8 +193,8 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
 #' @importFrom magrittr `%$%`
 preprocess_bulk_coexp <- S7::new_generic(
   "preprocess_bulk_coexp",
-  "bulk_coexp",
-  fun = function(bulk_coexp,
+  "object",
+  fun = function(object,
                  hvg = NULL,
                  mad_threshold = NULL,
                  scaling = FALSE,
@@ -207,23 +206,23 @@ preprocess_bulk_coexp <- S7::new_generic(
 
 #' @method preprocess_bulk_coexp bulk_coexp
 #' @export
-S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
+S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(object,
                                                           hvg = NULL,
                                                           mad_threshold = NULL,
                                                           scaling = FALSE,
                                                           scaling_type = c("normal", "robust"),
                                                           .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(mad_threshold, c("R1", "0"))
-  nfeatures <- S7::prop(bulk_coexp, "params")[['original_dim']][2]
+  nfeatures <- S7::prop(object, "params")[['original_dim']][2]
   checkmate::qassert(hvg, c("R1[0,1]", sprintf("I1[0,%i]", nfeatures), "0"))
   checkmate::qassert(scaling, "B1")
   if (scaling) {
     checkmate::assertChoice(scaling_type, c("normal", "robust"))
   }
 
-  mat <- S7::prop(bulk_coexp, "raw_data")
+  mat <- S7::prop(object, "raw_data")
 
   feature_meta <- data.table::data.table(
     feature_name = colnames(mat),
@@ -297,15 +296,15 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
     }
   )
 
-  S7::prop(bulk_coexp, "params")[['preprocessing']] <-
+  S7::prop(object, "params")[['preprocessing']] <-
     processing_params
-  S7::prop(bulk_coexp, "processed_data")[['processed_data']] <-
+  S7::prop(object, "processed_data")[['processed_data']] <-
     matrix_processed
-  S7::prop(bulk_coexp, "processed_data")[['feature_meta']] <-
+  S7::prop(object, "processed_data")[['feature_meta']] <-
     feature_meta
 
   # Return
-  bulk_coexp
+  object
 }
 
 # plots ------------------------------------------------------------------------
@@ -317,13 +316,13 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(bulk_coexp,
 #' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
 #' error otherwise.
 #'
-#' @param bulk_coexp The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param bins Integer. Number of bins to plot.
 #'
 plot_hvgs <- S7::new_generic(
   "plot_hvgs",
-  "bulk_coexp",
-  fun = function(bulk_coexp, bins = 50L) {
+  "object",
+  fun = function(object, bins = 50L) {
     S7::S7_dispatch()
   }
 )
@@ -333,16 +332,16 @@ plot_hvgs <- S7::new_generic(
 #' @import ggplot2
 #'
 #' @export
-S7::method(plot_hvgs, bulk_coexp) <- function(bulk_coexp, bins = 50L) {
+S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(bins, "I1")
   # Early return
-  if(is.null(S7::prop(bulk_coexp, "params")[['preprocessing']])) {
+  if(is.null(S7::prop(object, "params")[['preprocessing']])) {
     warning("No pre-processing data found. Returning NULL.")
     return(NULL)
   }
-  plot_df <- S7::prop(bulk_coexp, "processed_data")[['feature_meta']]
+  plot_df <- S7::prop(object, "processed_data")[['feature_meta']]
 
   p <- ggplot(data = plot_df, mapping = aes(x = MAD)) +
     geom_histogram(mapping = aes(fill = hvg),
@@ -353,7 +352,7 @@ S7::method(plot_hvgs, bulk_coexp) <- function(bulk_coexp, bins = 50L) {
     ggtitle("Distribution of MAD across the genes", subtitle = "And included genes") +
     theme_minimal()
 
-  mad_threshold <- S7::prop(bulk_coexp, "params")[['preprocessing']][['mad_threshold']]
+  mad_threshold <- S7::prop(object, "params")[['preprocessing']][['mad_threshold']]
 
   if (mad_threshold != "not applicable") {
     p <- p + geom_vline(xintercept = mad_threshold,

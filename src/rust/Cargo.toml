@@ -16,6 +16,5 @@ extendr-api = { version = "*", features = ["ndarray"] }
 rayon = '*'
 rand = '*'
 statrs = '*'
-ndarray = '0.16.1'
 faer = '0.21.7'
 num-complex = '*'

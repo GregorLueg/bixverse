@@ -4,10 +4,10 @@
 \alias{get_resolution_res}
 \title{Return the resolution results}
 \usage{
-get_resolution_res(bulk_coexp)
+get_resolution_res(object)
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 }
 \value{
 If resolution results were found, returns the data.table. Otherwise,

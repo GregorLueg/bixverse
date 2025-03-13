@@ -78,7 +78,7 @@ gene_ontology_data <- S7::new_class(
 
 # print ------------------------------------------------------------------------
 
-#' @name print.bgene_ontology_data
+#' @name print.gene_ontology_data
 #' @title print Method for gene_ontology_data object
 #'
 #' @description

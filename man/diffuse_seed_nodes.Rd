@@ -5,14 +5,13 @@
 \title{Diffuse seed genes over a network}
 \usage{
 diffuse_seed_nodes(
-  network_diffusions,
+  object,
   diffusion_vector,
   summarisation = c("max", "mean", "harmonic_sum")
 )
 }
 \arguments{
-\item{network_diffusions}{The \code{network_diffusions} class, see
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{diffusion_vector}{A named vector with values to use for the reset
 parameter in the personalised page-rank diffusion. Names should represent

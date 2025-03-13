@@ -4,10 +4,10 @@
 \alias{plot_hvgs}
 \title{Plot the highly variable genes}
 \usage{
-plot_hvgs(bulk_coexp, bins = 50L)
+plot_hvgs(object, bins = 50L)
 }
 \arguments{
-\item{bulk_coexp}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{bins}{Integer. Number of bins to plot.}
 }

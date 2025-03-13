@@ -4,10 +4,10 @@
 \alias{get_cor_graph}
 \title{Get correlation-based graph}
 \usage{
-get_cor_graph(bulk_coexp, kernel_bandwidth, min_affinity, .verbose)
+get_cor_graph(object, kernel_bandwidth, min_affinity, .verbose)
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{kernel_bandwidth}{Numerical. The bandwidth to use for the affinity
 kernel}
