@@ -5,10 +5,11 @@ library(zeallot)
 devtools::document()
 rextendr::document()
 
+devtools::check()
 
 syn_data = synthetic_signal_matrix()
 
-X = t(syn_data$mat) # Artificial count matrix; transposed for rows = samples, cols = features
+
 
 meta_data = data.table::data.table(
   sample_id = names(syn_data$group),
@@ -25,76 +26,107 @@ c(X_norm, K) %<-% rs_prepare_whitening(X)
 
 dim(X_norm)
 
+dim(K)
+
 ica_res <- fast_ica_rust(
   X_norm,
   K,
-  n_icas = 90L,
+  n_icas = 10L,
   ica_fun = "logcosh",
   seed = 246L,
   .verbose = FALSE
 )
 
-results <- ica_res$A
+# Implement a Rust version that does the approach from the MSTD paper
 
-ica_res$A[1:10, ]
+rextendr::document()
 
-results[1:10, ]
+syn_data = synthetic_signal_matrix()
 
+X = t(syn_data$mat) # Artificial count matrix; transposed for rows = samples, cols = features
 
-ica_res
+c(X_norm, K) %<-% rs_prepare_whitening(X)
 
-dim(X_norm)
-
-nrow(X_norm)
-
-n_ica = 15
-
-K_2 <- matrix(K[1:n_ica, ], n_ica, dim(X_norm)[1])
-
-X1 <- K_2 %*% X_norm
-
-set.seed(10101)
-w.init <- matrix(rnorm(n_ica ^ 2), n_ica, n_ica)
-
-a = rs_fast_ica(
-  X1,
-  w.init,
+test <- rs_ica_iters(
+  x_whiten = X_norm,
+  k = K,
+  no_comp = 2L,
+  no_iters = 100L,
   maxit = 200L,
   alpha = 1,
   tol = 1e-04,
   ica_type = "logcosh",
-  verbose = TRUE
+  random_seed = 123L,
+  verbose = FALSE
 )
 
-w <- a$mixing %*% K_2
+pearson_r <- abs(rs_cor(test$s_combined, spearman = FALSE))
+
+pearson_r[1:5, 1:5]
+
+dim(test$s_combined)
+
+test$converged
+
+length(test$converged)
+
+n_icas = 2L
+
+ica_fun = "logcosh"
+seed = NULL
+maxit = 200L
+alpha = 1
+tol =  1e-04
+.verbose = FALSE
+
+K_red <- matrix(K[1:n_icas, ], n_icas, dim(X_norm)[1])
+
+all(matrix(K[1:n_icas, ], n_icas, dim(X_norm)[1]) == K[1:n_icas, ])
+
+dim(K[1:n_icas, ])
+
+dim(K_red)
+
+dim(K_red)
+
+seed = 245
+
+dim(X_norm)
+
+dim(X_norm)
+
+X1 <- K_red %*% X_norm
+
+dim(X1)
+
+set.seed(seed)
+w_init <- matrix(rnorm(n_icas * n_icas), nrow = n_icas, ncol = n_icas)
+
+c(a, converged) %<-% rs_fast_ica(
+  X1,
+  w_init,
+  maxit = maxit,
+  alpha = alpha,
+  tol = tol,
+  ica_type = ica_fun,
+  verbose = FALSE
+)
+
+dim(a)
+
+w <- a %*% K_red
 S <- w %*% X_norm
-A <- t(w) %*% solve(w %*% t(w))
 
-A
+to_solve = w %*% t(w)
 
-dim(w)
+solved <- solve(w %*% t(w))
 
-dim(S)
+A <- t(w) %*% solved
+
+cbind(A, A1)
+
+ A1 <- A
 
 dim(A)
 
-
-t(A)
-
-res$A[1:5, 1:5]
-
-# [,1]       [,2]       [,3]
-# [1,]  0.7677161 -0.3683827 -0.5243150
-# [2,] -0.1558387 -0.9010015  0.4048587
-# [3,] -0.6215515 -0.2291080 -0.7491216
-# Iteration 1 tol = 0.2508784
-# [,1]       [,2]        [,3]
-# [1,]  0.6673540 -0.7220799 -0.18231637
-# [2,] -0.7372638 -0.6751538 -0.02468729
-# [3,] -0.1052654  0.1508904 -0.98292995
-# Iteration 2 tol = 0.332646
-# [,1]        [,2]       [,3]
-# [1,]  0.98664947 -0.07880524 -0.1425221
-# [2,] -0.04167781 -0.96816819  0.2468062
-# [3,] -0.15743498 -0.23757122 -0.9585271
-# Iteration 3 tol = 0.04147293
+dim(A)

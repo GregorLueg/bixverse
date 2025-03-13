@@ -1,4 +1,61 @@
-# helpers ----
+# preprocessing ----------------------------------------------------------------
+
+#' @title Prepare class for ICA
+#'
+#' @description
+#' This is the generic function for doing the necessary preprocessing for
+#' running independent component analysis.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return `bulk_coexp` with the needed data for ICA in the
+#' properties of the class.
+#'
+#' @export
+ica_processing <- S7::new_generic(
+  name = "ica_processing",
+  dispatch_args = "object",
+  fun = function(object,
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+#' @importFrom zeallot `%<-%`
+#' @import data.table
+#'
+#' @method ica_processing bulk_coexp
+S7::method(ica_processing, bulk_coexp) <- function(object,
+                                                   .verbose = TRUE) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(.verbose, "B1")
+
+  # Function body
+  if(purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+    warning("No pre-processed data found. Defaulting to the raw data")
+    target_mat <- S7::prop(object, "raw_data")
+  } else {
+    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
+  }
+
+  # Whiten the data
+  c(X1, K) %<-% rs_prepare_whitening(target_mat)
+
+  S7::prop(object, "processed_data")[["X1"]] <- X1
+  S7::prop(object, "processed_data")[["K"]] <- K
+
+  return(object)
+}
+
+# helpers ----------------------------------------------------------------------
 
 #' Fast ICA via Rust
 #'
@@ -57,7 +114,7 @@ fast_ica_rust <- function(X_norm,
     maxit = maxit,
     alpha = alpha,
     tol = tol,
-    ica_type = "logcosh",
+    ica_type = ica_fun,
     verbose = .verbose
   )
 
@@ -75,63 +132,3 @@ fast_ica_rust <- function(X_norm,
   return(res)
 }
 
-
-# preprocessing ----
-
-#' Prepare class for ICA
-#'
-#' @description
-#' This is the generic function for doing the necessary preprocessing for
-#' running independent component analysis.
-#'
-#' @export
-ica_processing <- S7::new_generic(
-  "ica_processing",
-  "bulk_coexp"
-)
-
-#' @name ica_processing
-#'
-#' @description
-#' This function will prepare the `bulk_coexp` for subsequent usage of the
-#' contrastive ICA functions.
-#'
-#' @usage ...
-#'
-#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
-#' @param .verbose Boolean. Controls verbosity of the function.
-#'
-#' @return `bulk_coexp` with the needed data for ICA in the
-#' properties of the class.
-#'
-#' @export
-#'
-#'
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
-#' @importFrom zeallot `%<-%`
-#' @import data.table
-#'
-#' @method ica_processing bulk_coexp
-S7::method(ica_processing, bulk_coexp) <- function(bulk_coexp,
-                                                   .verbose = TRUE) {
-  # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
-  checkmate::qassert(.verbose, "B1")
-
-  # Function body
-  if(purrr::is_empty(S7::prop(bulk_coexp, "processed_data")[['processed_data']])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
-    target_mat <- S7::prop(bulk_coexp, "raw_data")
-  } else {
-    target_mat <- S7::prop(bulk_coexp, "processed_data")[['processed_data']]
-  }
-
-  # Transpose
-  c(X1, K) %<-% rs_prepare_whitening(target_mat)
-
-  S7::prop(bulk_coexp, "processed_data")[["X1"]] <- X1
-  S7::prop(bulk_coexp, "processed_data")[["K"]] <- K
-
-  return(bulk_coexp)
-}

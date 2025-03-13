@@ -1,6 +1,7 @@
 use extendr_api::prelude::*;
 
 use crate::helpers_linalg::*;
+use crate::helpers_ica::*;
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 
@@ -270,9 +271,6 @@ fn rs_prepare_whitening(
 /// @param tol Tolerance parameter.
 /// @param ica_type One of 'logcosh' or 'exp'.
 /// @param verbose Controls the verbosity of the function.
-/// @param debug Additional messages if desired.
-/// 
-/// @param x The matrix to whiten. The whitening will happen over the columns.
 /// 
 /// @return A list containing:
 ///  \itemize{
@@ -299,8 +297,8 @@ fn rs_fast_ica(
   let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
 
   let a = match ica_type {
-    IcaType::Exp => fast_ica_exp(x, w_init, tol, maxit, verbose),
-    IcaType::LogCosh => fast_ica_logcosh(x, w_init, tol, alpha, maxit, verbose),
+    IcaType::Exp => fast_ica_exp(&x, &w_init, tol, maxit, verbose),
+    IcaType::LogCosh => fast_ica_logcosh(&x, &w_init, tol, alpha, maxit, verbose),
   };
 
   Ok(list!
@@ -311,6 +309,40 @@ fn rs_fast_ica(
   )
 }
 
+/// @export
+#[extendr]
+fn rs_ica_iters(
+  x_whiten: RMatrix<f64>,
+  k: RMatrix<f64>,
+  no_comp: usize,
+  no_iters: usize,
+  maxit: usize,
+  alpha: f64,
+  tol: f64,
+  ica_type: &str,
+  random_seed: usize
+) -> List {
+  let x_whiten = r_matrix_to_faer(x_whiten);
+  let k = r_matrix_to_faer(k);
+
+  let (s_combined, converged) = stabilised_ica_iters(
+    x_whiten,
+    k,
+    no_comp,
+    no_iters,
+    maxit,
+    alpha,
+    tol,
+    ica_type,
+    random_seed,
+    false
+  );
+
+  list!(
+    s_combined = faer_to_r_matrix(s_combined),
+    converged = converged
+  )
+}
 
 extendr_module! {
   mod fun_linalg;
@@ -321,4 +353,5 @@ extendr_module! {
   fn rs_contrastive_pca;
   fn rs_prepare_whitening;
   fn rs_fast_ica;
+  fn rs_ica_iters;
 }

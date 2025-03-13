@@ -4,12 +4,11 @@
 \alias{ica_processing}
 \title{Prepare class for ICA}
 \usage{
-ica_processing(bulk_coexp, ...)
-
-...
+ica_processing(object, .verbose = TRUE)
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
@@ -20,7 +19,4 @@ properties of the class.
 \description{
 This is the generic function for doing the necessary preprocessing for
 running independent component analysis.
-
-This function will prepare the \code{bulk_coexp} for subsequent usage of the
-contrastive ICA functions.
 }

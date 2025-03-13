@@ -2,6 +2,7 @@ mod helpers_hypergeom;
 mod helpers_geom_elim;
 mod helpers_rbh;
 mod helpers_linalg;
+mod helpers_ica;
 
 mod fun_hypergeom;
 mod fun_stats;

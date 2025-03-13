@@ -21,10 +21,6 @@ converge.}
 \item{ica_type}{One of 'logcosh' or 'exp'.}
 
 \item{verbose}{Controls the verbosity of the function.}
-
-\item{debug}{Additional messages if desired.}
-
-\item{x}{The matrix to whiten. The whitening will happen over the columns.}
 }
 \value{
 A list containing:

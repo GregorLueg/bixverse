@@ -370,9 +370,6 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' @param tol Tolerance parameter.
 #' @param ica_type One of 'logcosh' or 'exp'.
 #' @param verbose Controls the verbosity of the function.
-#' @param debug Additional messages if desired.
-#' 
-#' @param x The matrix to whiten. The whitening will happen over the columns.
 #' 
 #' @return A list containing:
 #'  \itemize{
@@ -382,6 +379,9 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' 
 #' @export
 rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
+
+#' @export
+rs_ica_iters <- function(x_whiten, k, no_comp, no_iters, maxit, alpha, tol, ica_type, random_seed, verbose) .Call(wrap__rs_ica_iters, x_whiten, k, no_comp, no_iters, maxit, alpha, tol, ica_type, random_seed, verbose)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #' 

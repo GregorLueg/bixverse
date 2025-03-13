@@ -15,6 +15,7 @@ simd = []  # Or another SIMD implementation
 extendr-api = { version = "*", features = ["ndarray"] }
 rayon = '*'
 rand = '*'
+rand_distr = '0.5.1'
 statrs = '*'
 faer = '0.21.7'
 num-complex = '*'
