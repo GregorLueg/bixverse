@@ -5,7 +5,7 @@
 \title{Run gene ontology enrichment with elimination method over a list.}
 \usage{
 gse_go_elim_method_list(
-  gene_ontology_data,
+  object,
   target_gene_list,
   minimum_overlap = 3L,
   fdr_threshold = 0.05,
@@ -15,8 +15,7 @@ gse_go_elim_method_list(
 )
 }
 \arguments{
-\item{gene_ontology_data}{The underlying \code{gene_ontology_data} class, see
-\code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{object}{The underlying class, see \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{target_gene_list}{List. The target genes list you wish to apply the
 gene set enrichment analysis over.}

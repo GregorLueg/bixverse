@@ -6,7 +6,7 @@
 #' This function will prepare the `bulk_coexp` for subsequent usage of the
 #' contrastive PCA functions. This is based on the work of Abid, et al.
 #'
-#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param background_matrix Numeric matrix. The background matrix you wish to
 #' remove. You should apply any data transformation to this matrix, too!
 #' @param scale Boolean. Shall the data be scaled. Defaults to FALSE.
@@ -20,8 +20,8 @@
 #' @export
 contrastive_pca_processing <- S7::new_generic(
   name = "contrastive_pca_processing",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  background_matrix,
                  scale = FALSE,
                  .verbose = TRUE) {
@@ -37,22 +37,22 @@ contrastive_pca_processing <- S7::new_generic(
 #'
 #' @method contrastive_pca_processing bulk_coexp
 S7::method(contrastive_pca_processing, bulk_coexp) <-
-  function(bulk_coexp,
+  function(object,
            background_matrix,
            scale = FALSE,
            .verbose = TRUE) {
     # Checks
-    checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+    checkmate::assertClass(object, "bixverse::bulk_coexp")
     checkmate::assertMatrix(background_matrix, mode = "numeric")
     checkmate::qassert(scale, "B1")
     checkmate::qassert(.verbose, "B1")
 
     # Function body
-    if(purrr::is_empty(S7::prop(bulk_coexp_class, "processed_data")[['processed_data']])) {
+    if(purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
       warning("No pre-processed data found. Defaulting to the raw data")
-      target_mat <- S7::prop(bulk_coexp, "raw_data")
+      target_mat <- S7::prop(object, "raw_data")
     } else {
-      target_mat <- S7::prop(bulk_coexp_class, "processed_data")[['processed_data']]
+      target_mat <- S7::prop(object, "processed_data")[['processed_data']]
     }
 
     background_mat <- background_mat
@@ -88,22 +88,22 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     )
 
     # Data
-    S7::prop(bulk_coexp, "processed_data")[["target_mat"]] <-
+    S7::prop(object, "processed_data")[["target_mat"]] <-
       target_mat
-    S7::prop(bulk_coexp, "processed_data")[["background_mat"]] <-
+    S7::prop(object, "processed_data")[["background_mat"]] <-
       background_mat
     # Covariance matrices
-    S7::prop(bulk_coexp, "processed_data")[["target_covar"]] <-
+    S7::prop(object, "processed_data")[["target_covar"]] <-
       target_covar
-    S7::prop(bulk_coexp, "processed_data")[["background_covar"]] <-
+    S7::prop(object, "processed_data")[["background_covar"]] <-
       background_covar
 
     # Set the object to a cPCA analysis
-    S7::prop(bulk_coexp, "params")["detection_method"] <- "cPCA"
-    S7::prop(bulk_coexp, "params")[["cPCA_params"]] <- internal_params
+    S7::prop(object, "params")["detection_method"] <- "cPCA"
+    S7::prop(object, "params")[["cPCA_params"]] <- internal_params
 
     # Return
-    bulk_coexp
+    object
   }
 
 
@@ -115,7 +115,7 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
 #' Applies the contrastive PCA algorithm given a specified alpha and a number of
 #' contrastive principal components to extract.
 #'
-#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param alpha Alpha parameter to use.
 #' @param no_pcs Number of contrastive PCs to generate.
 #'
@@ -126,8 +126,8 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
 #' @export
 apply_contrastive_pca <- S7::new_generic(
   name = "apply_contrastive_pca",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp, alpha, no_pcs) {
+  dispatch_args = "object",
+  fun = function(object, alpha, no_pcs) {
     S7::S7_dispatch()
   }
 )
@@ -141,18 +141,18 @@ apply_contrastive_pca <- S7::new_generic(
 #'
 #' @method apply_contrastive_pca bulk_coexp
 S7::method(apply_contrastive_pca, bulk_coexp) <-
-  function(bulk_coexp, alpha, no_pcs) {
+  function(object, alpha, no_pcs) {
     # Checks
-    checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+    checkmate::assertClass(object, "bixverse::bulk_coexp")
     checkmate::qassert(alpha, "N1")
     checkmate::qassert(no_pcs, "I1")
-    detection_method <- S7::prop(bulk_coexp, "params")["detection_method"]
+    detection_method <- S7::prop(object, "params")["detection_method"]
     checkmate::assertTRUE(detection_method == "cPCA")
 
     # Extract data
-    target_covar <- S7::prop(bulk_coexp, "processed_data")[["target_covar"]]
-    background_covar <- S7::prop(bulk_coexp, "processed_data")[["background_covar"]]
-    target_mat <- S7::prop(bulk_coexp, "processed_data")[["target_mat"]]
+    target_covar <- S7::prop(object, "processed_data")[["target_covar"]]
+    background_covar <- S7::prop(object, "processed_data")[["background_covar"]]
+    target_mat <- S7::prop(object, "processed_data")[["target_mat"]]
 
     # Run cPCA
     c(factors, loadings) %<-% rs_contrastive_pca(
@@ -166,15 +166,15 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
 
     colnames(factors) <- colnames(loadings) <- sprintf("cPC_%i", seq(1:10))
     rownames(factors) <- rownames(target_mat)
-    rownames(loadings) <- S7::prop(bulk_coexp, "params")[["cPCA_params"]][["intersecting_features"]]
+    rownames(loadings) <- S7::prop(object, "params")[["cPCA_params"]][["intersecting_features"]]
 
-    S7::prop(bulk_coexp, "params")[["cPCA_params"]]['final_alpha'] <- alpha
-    S7::prop(bulk_coexp, "params")[["cPCA_params"]]['n_pcs'] <- no_pcs
+    S7::prop(object, "params")[["cPCA_params"]]['final_alpha'] <- alpha
+    S7::prop(object, "params")[["cPCA_params"]]['n_pcs'] <- no_pcs
 
-    S7::prop(bulk_coexp, "outputs")[['cPCA_factors']] <- factors
-    S7::prop(bulk_coexp, "outputs")[['cPCA_loadings']] <- loadings
+    S7::prop(object, "outputs")[['cPCA_factors']] <- factors
+    S7::prop(object, "outputs")[['cPCA_loadings']] <- loadings
 
-    return(bulk_coexp)
+    return(object)
   }
 
 # plotting ---------------------------------------------------------------------
@@ -185,7 +185,7 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
 #' This function will plot various alphas to highlight the most interesting
 #' alpha parameters akin to the implementation of contrastive PCA in Python.
 #'
-#' @param bulk_coexp `bulk_coexp` class, see [bixverse::bulk_coexp()]. You need
+#' @param object The underlying class, see [bixverse::bulk_coexp()]. You need
 #' to apply [bixverse::contrastive_pca_processing()] to the function for this
 #' method to work. Checkmate will raise errors otherwise.
 #' @param label_column An optional sample label column. Needs to exist in the
@@ -204,8 +204,8 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
 #' @export
 c_pca_plot_alphas <- S7::new_generic(
   name = "c_pca_plot_alphas",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  label_column = NULL,
                  min_alpha = .1,
                  max_alpha = 100,
@@ -225,26 +225,26 @@ c_pca_plot_alphas <- S7::new_generic(
 #' @import ggplot2
 #'
 #' @method c_pca_plot_alphas bulk_coexp
-S7::method(c_pca_plot_alphas, bulk_coexp) <- function(bulk_coexp,
+S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
                                                       label_column = NULL,
                                                       min_alpha = .1,
                                                       max_alpha = 100,
                                                       n_alphas = 10L,
                                                       .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(label_column, c("S1", "0"))
   checkmate::qassert(min_alpha, "N1")
   checkmate::qassert(max_alpha, sprintf("N1(%f,]", min_alpha))
   checkmate::qassert(n_alphas, "I1")
-  detection_method <- S7::prop(bulk_coexp, "params")["detection_method"]
+  detection_method <- S7::prop(object, "params")["detection_method"]
   checkmate::assertTRUE(detection_method == "cPCA")
 
   # Get data
-  target_covar <- S7::prop(bulk_coexp, "processed_data")[["target_covar"]]
-  background_covar <- S7::prop(bulk_coexp, "processed_data")[["background_covar"]]
-  target_mat <- S7::prop(bulk_coexp, "processed_data")[["target_mat"]]
-  meta_data <- S7::prop(bulk_coexp, "meta_data")
+  target_covar <- S7::prop(object, "processed_data")[["target_covar"]]
+  background_covar <- S7::prop(object, "processed_data")[["background_covar"]]
+  target_mat <- S7::prop(object, "processed_data")[["target_mat"]]
+  meta_data <- S7::prop(object, "meta_data")
 
   # Calculate the sequence of alphas
   alpha_seq <- c(0, exp(seq(

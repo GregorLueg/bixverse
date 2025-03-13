@@ -5,7 +5,7 @@
 \title{Identify privileged communities based on a given diffusion vector}
 \usage{
 community_detection(
-  network_diffusions,
+  object,
   diffusion_threshold,
   max_nodes = 300L,
   min_nodes = 10L,
@@ -17,8 +17,7 @@ community_detection(
 )
 }
 \arguments{
-\item{network_diffusions}{The \code{network_diffusions} class, see
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{diffusion_threshold}{How much of the network to keep based on the
 diffusion values. 0.25 for example would keep the 25\% nodes with the highest

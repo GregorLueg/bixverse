@@ -7,6 +7,7 @@ devtools::document()
 devtools::load_all()
 devtools::check()
 
+
 syn_data = synthetic_signal_matrix()
 
 X = t(syn_data$mat)
@@ -109,5 +110,6 @@ cor_test_2 = bulk_coexp(raw_data = data_1, meta_data = meta_data) %>%
   cor_module_check_res(.) %>%
   cor_module_final_modules(.)
 tictoc::toc()
+
 
 cor_test_2 <- cor_module_final_modules(cor_test_2)

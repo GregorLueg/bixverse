@@ -4,10 +4,10 @@
 \alias{plot_resolution_res}
 \title{Plot the resolution results.}
 \usage{
-plot_resolution_res(bulk_coexp, print_head = TRUE)
+plot_resolution_res(object, print_head = TRUE)
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{print_head}{Boolean. Print the Top5 resolution parameters and their
 meta data.}

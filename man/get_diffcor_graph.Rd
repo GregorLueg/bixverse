@@ -4,15 +4,10 @@
 \alias{get_diffcor_graph}
 \title{Get differential correlation-based graph}
 \usage{
-get_diffcor_graph(
-  bulk_coexp,
-  min_cor = 0.2,
-  fdr_threshold = 0.05,
-  .verbose = TRUE
-)
+get_diffcor_graph(object, min_cor = 0.2, fdr_threshold = 0.05, .verbose = TRUE)
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{min_cor}{Float. The minimum absolute correlation that needs to be
 present in either data set.}

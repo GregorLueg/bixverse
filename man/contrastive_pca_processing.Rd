@@ -5,14 +5,14 @@
 \title{Prepare class for contrastive PCA}
 \usage{
 contrastive_pca_processing(
-  bulk_coexp,
+  object,
   background_matrix,
   scale = FALSE,
   .verbose = TRUE
 )
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{background_matrix}{Numeric matrix. The background matrix you wish to
 remove. You should apply any data transformation to this matrix, too!}

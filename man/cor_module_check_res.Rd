@@ -5,7 +5,7 @@
 \title{Iterate through Leiden resolutions for graph-based community detection.}
 \usage{
 cor_module_check_res(
-  bulk_coexp,
+  object,
   resolution_params = list(min_res = 0.1, max_res = 10, number_res = 15L),
   graph_params = list(kernel_bandwidth = 0.2, min_affinity = 0.001, min_cor = 0.2,
     fdr_threshold = 0.05),
@@ -17,7 +17,7 @@ cor_module_check_res(
 )
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{resolution_params}{List. Parameters for the resolution search.
 Should contain the desired \code{min_res}, \code{max_res}, and the \code{number_res} to test.}

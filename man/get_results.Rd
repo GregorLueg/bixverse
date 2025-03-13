@@ -4,16 +4,17 @@
 \alias{get_results}
 \title{Get the final results from the class}
 \usage{
-get_results(bixverse_base_class)
+get_results(object)
 }
 \arguments{
-\item{bixverse_base_class}{The underlying \code{\link[=bixverse_base_class]{bixverse_base_class()}}
-class. This class is usually inherited by other classes.}
+\item{object}{The underlying \code{\link[=bixverse_base_class]{bixverse_base_class()}}
+class. The class functionality is usually inherited by other S7 classes in
+\code{bixverse}.}
 }
 \value{
 Returns the final results if any have been stored in the class.
 }
 \description{
-Get the final results from the a
-\code{\link[=bixverse_base_class]{bixverse_base_class()}} class.
+Get the final results from \code{bixverse_base_class} class (or child
+classes).
 }

@@ -4,10 +4,10 @@
 \alias{find_rbh_communities}
 \title{Find RBH communities}
 \usage{
-find_rbh_communities(rbh_graph)
+find_rbh_communities(object)
 }
 \arguments{
-\item{rbh_graph}{The \code{rbh_class} class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
+\item{object}{The underlying class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
 }
 \value{
 The class with added community detection results.

@@ -5,7 +5,7 @@
 \title{Identify correlation-based gene modules via graphs.}
 \usage{
 cor_module_final_modules(
-  bulk_coexp,
+  object,
   resolution = NULL,
   min_size = 10L,
   max_size = 500L,
@@ -18,7 +18,7 @@ cor_module_final_modules(
 )
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{resolution}{The Leiden resolution parameter you wish to use. If NULL,
 it will use the optimal one identified by \code{\link[=cor_module_check_res]{cor_module_check_res()}}.

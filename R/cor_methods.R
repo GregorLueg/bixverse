@@ -8,8 +8,8 @@
 #' use the raw data). The data will be stored in a memory-efficient format
 #' in the properties of the class.
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()]. Ideally, you
-#' should run [bixverse::preprocess_bulk_coexp()] before applying this class.
+#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param correlation_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -18,8 +18,8 @@
 #' @export
 cor_module_processing <- S7::new_generic(
   name = "cor_module_processing",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  correlation_method = c("pearson", "spearman"),
                  .verbose = TRUE) {
     S7::S7_dispatch()
@@ -30,20 +30,20 @@ cor_module_processing <- S7::new_generic(
 #' @export
 #'
 #' @method cor_module_processing bulk_coexp
-S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
+S7::method(cor_module_processing, bulk_coexp) <- function(object,
                                                           correlation_method = c("pearson", "spearman"),
                                                           .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if (purrr::is_empty(S7::prop(bulk_coexp, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
     warning("No pre-processed data found. Defaulting to the raw data")
-    target_mat <- S7::prop(bulk_coexp, "raw_data")
+    target_mat <- S7::prop(object, "raw_data")
   } else {
-    target_mat <- S7::prop(bulk_coexp, "processed_data")[['processed_data']]
+    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
   }
 
   spearman <- if (correlation_method == 'pearson') {
@@ -68,11 +68,11 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
 
   correlation_params <- list(spearman = spearman, type = 'simple')
 
-  S7::prop(bulk_coexp, "processed_data")[["correlation_res"]] <- cor_data
-  S7::prop(bulk_coexp, "params")[["correlation_params"]] <- correlation_params
-  S7::prop(bulk_coexp, "params")["detection_method"] <- "correlation-based"
+  S7::prop(object, "processed_data")[["correlation_res"]] <- cor_data
+  S7::prop(object, "params")[["correlation_params"]] <- correlation_params
+  S7::prop(object, "params")["detection_method"] <- "correlation-based"
 
-  return(bulk_coexp)
+  return(object)
 }
 
 # methods - differential correlations ------------------------------------------
@@ -86,8 +86,8 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' score based on the delta. The function will automatically subset into shared
 #' features between the two data sets.
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()]. Ideally, you
-#' should run [bixverse::preprocess_bulk_coexp()] before applying this class.
+#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param background_mat Numerical matrix. The background data set.
 #' @param correlation_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -97,8 +97,8 @@ S7::method(cor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' @export
 diffcor_module_processing <- S7::new_generic(
   name = "diffcor_module_processing",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  background_mat,
                  correlation_method = c("pearson", "spearman"),
                  .verbose = TRUE) {
@@ -109,22 +109,22 @@ diffcor_module_processing <- S7::new_generic(
 #' @export
 #'
 #' @method diffcor_module_processing bulk_coexp
-S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
+S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
                                                               background_mat,
                                                               correlation_method = c("pearson", "spearman"),
                                                               .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertMatrix(background_mat, mode = 'numeric')
   checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function
-  if (purrr::is_empty(S7::prop(bulk_coexp, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
     warning("No pre-processed data found. Defaulting to the raw data")
-    target_mat <- S7::prop(bulk_coexp, "raw_data")
+    target_mat <- S7::prop(object, "raw_data")
   } else {
-    target_mat <- S7::prop(bulk_coexp, "processed_data")[['processed_data']]
+    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
   }
 
   spearman <- if (correlation_method == 'pearson') {
@@ -143,7 +143,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
   # Early return if there are no shared features
   if (length(shared_features) == 0) {
     warning("No shared features identified. Returning class as is.")
-    return(bulk_coexp)
+    return(object)
   }
   if (.verbose)
     message(
@@ -173,12 +173,12 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
     no_intersecting_features = length(shared_features)
   )
 
-  S7::prop(bulk_coexp, "processed_data")[["differential_cor_res"]] <- cor_data
-  S7::prop(bulk_coexp, "processed_data")[["differential_cor_feature_meta"]] <- combined_mad_df
-  S7::prop(bulk_coexp, "params")[["correlation_params"]] <- correlation_params
-  S7::prop(bulk_coexp, "params")["detection_method"] <- "differential correlation-based"
+  S7::prop(object, "processed_data")[["differential_cor_res"]] <- cor_data
+  S7::prop(object, "processed_data")[["differential_cor_feature_meta"]] <- combined_mad_df
+  S7::prop(object, "params")[["correlation_params"]] <- correlation_params
+  S7::prop(object, "params")["detection_method"] <- "differential correlation-based"
 
-  bulk_coexp
+  object
 }
 
 
@@ -200,7 +200,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' returns meta information about the resolutions (which can also be plotted) to
 #' identify the best suitable resolution parameter to identify co-expression modules.
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution_params List. Parameters for the resolution search.
 #' Should contain the desired `min_res`, `max_res`, and the `number_res` to test.
 #' @param graph_params List. Parameters for the generation of the (differential)
@@ -223,8 +223,8 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(bulk_coexp,
 #' @export
 cor_module_check_res <- S7::new_generic(
   name = "cor_module_check_res",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  resolution_params = list(min_res = 0.1,
                                           max_res = 10,
                                           number_res = 15L),
@@ -251,7 +251,7 @@ cor_module_check_res <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_check_res bulk_coexp
-S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
+S7::method(cor_module_check_res, bulk_coexp) <- function(object,
                                                          resolution_params = list(min_res = 0.1,
                                                                                   max_res = 10,
                                                                                   number_res = 15L),
@@ -268,7 +268,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
                                                          .verbose = TRUE) {
 
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   assertCorGraphParams(graph_params)
   assertCorResParams(resolution_params)
   checkmate::qassert(min_genes, "I1")
@@ -276,7 +276,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
   checkmate::qassert(max_workers, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(bulk_coexp, "params")[["detection_method"]]
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
   if (is.null(detection_method) &&
@@ -287,7 +287,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
         "Returning class as is."
       )
     )
-    return(bulk_coexp)
+    return(object)
   }
 
   graph_params[['.verbose']] <- .verbose
@@ -295,13 +295,13 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
   c(graph, graph_params) %<-% with(graph_params, switch(
     detection_method,
     "correlation-based" = get_cor_graph(
-      bulk_coexp = bulk_coexp,
+      object = object,
       kernel_bandwidth = kernel_bandwidth,
       min_affinity = min_affinity,
       .verbose = .verbose
     ),
     "differential correlation-based" = get_diffcor_graph(
-      bulk_coexp = bulk_coexp,
+      object = object,
       min_cor = min_cor,
       fdr_threshold = fdr_threshold,
       .verbose = .verbose
@@ -381,11 +381,11 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
 
 
   # Assign stuff
-  S7::prop(bulk_coexp, "params")[["correlation_graph"]] <- graph_params
-  S7::prop(bulk_coexp, "outputs")[['resolution_results']] <- resolution_results
-  S7::prop(bulk_coexp, "outputs")[['cor_graph']] <- graph
+  S7::prop(object, "params")[["correlation_graph"]] <- graph_params
+  S7::prop(object, "outputs")[['resolution_results']] <- resolution_results
+  S7::prop(object, "outputs")[['cor_graph']] <- graph
 
-  return(bulk_coexp)
+  return(object)
 }
 
 #' @title Identify correlation-based gene modules via graphs.
@@ -396,7 +396,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
 #' their respective sub graphs, akin to the approach taken by Barrio-Hernandez,
 #' et al.
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
 #' it will use the optimal one identified by [bixverse::cor_module_check_res()].
 #' If nothing can be found, will default to 1.
@@ -419,8 +419,8 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(bulk_coexp,
 #' @export
 cor_module_final_modules <- S7::new_generic(
   name = "cor_module_final_modules",
-  dispatch_args = "bulk_coexp",
-  fun = function(bulk_coexp,
+  dispatch_args = "object",
+  fun = function(object,
                  resolution = NULL,
                  min_size = 10L,
                  max_size = 500L,
@@ -445,7 +445,7 @@ cor_module_final_modules <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_final_modules bulk_coexp
-S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
+S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
                                                              resolution = NULL,
                                                              min_size = 10L,
                                                              max_size = 500L,
@@ -460,7 +460,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
                                                              .max_iters = 100L,
                                                              .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(resolution, c("0", "N1"))
   checkmate::qassert(min_size, "I1")
   checkmate::qassert(max_size, "I1")
@@ -470,7 +470,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
   checkmate::qassert(.max_iters, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  detection_method <- S7::prop(bulk_coexp, "params")[["detection_method"]]
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
   if (is.null(detection_method) &&
@@ -481,11 +481,11 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
         "Returning class as is."
       )
     )
-    return(bulk_coexp)
+    return(object)
   }
 
   # Get the graph
-  if (is.null(S7::prop(bulk_coexp, "outputs")[["cor_graph"]])) {
+  if (is.null(S7::prop(object, "outputs")[["cor_graph"]])) {
     # Deal with the case a graph was not yet generated...
     warning(
       paste(
@@ -500,29 +500,29 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
     c(graph, graph_params) %<-% with(.graph_params, switch(
       detection_method,
       "correlation-based" = get_cor_graph(
-        bulk_coexp = bulk_coexp,
+        object = object,
         kernel_bandwidth = kernel_bandwidth,
         min_affinity = min_affinity,
         .verbose = .verbose
       ),
       "differential correlation-based" = get_diffcor_graph(
-        bulk_coexp = bulk_coexp,
+        object = object,
         min_cor = min_cor,
         fdr_threshold = fdr_threshold,
         .verbose = .verbose
       )
     ))
 
-    S7::prop(bulk_coexp, "params")[["correlation_graph"]] <- graph_params
-    S7::prop(bulk_coexp, "outputs")[['cor_graph']] <- graph
+    S7::prop(object, "params")[["correlation_graph"]] <- graph_params
+    S7::prop(object, "outputs")[['cor_graph']] <- graph
 
   } else {
-    graph <- S7::prop(bulk_coexp, "outputs")[["cor_graph"]]
+    graph <- S7::prop(object, "outputs")[["cor_graph"]]
   }
 
   # Final resolution
   if (is.null(resolution)) {
-    resolution_results <- S7::prop(bulk_coexp, "outputs")[["resolution_results"]]
+    resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
     final_resolution <- if (!is.null(resolution_results)) {
       if (.verbose)
         message("Using resolution with best modularity.")
@@ -613,9 +613,9 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
 
   final_clusters_filtered[, cluster_id := cluster_name_prettifier[cluster_id]]
 
-  S7::prop(bulk_coexp, "final_results") <- final_clusters_filtered
+  S7::prop(object, "final_results") <- final_clusters_filtered
 
-  return(bulk_coexp)
+  return(object)
 }
 
 
@@ -628,7 +628,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Helper function to get a correlation-based igraph from the class
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #' @param kernel_bandwidth Numerical. The bandwidth to use for the affinity
 #' kernel
 #' @param min_affinity Numerical. Minimum affinity needed to keep the edge.
@@ -644,8 +644,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(bulk_coexp,
 #' @export
 get_cor_graph <- S7::new_generic(
   name = 'get_cor_graph',
-  dispatch_args = 'bulk_coexp',
-  fun = function(bulk_coexp,
+  dispatch_args = 'object',
+  fun = function(object,
                  kernel_bandwidth,
                  min_affinity,
                  .verbose) {
@@ -655,17 +655,17 @@ get_cor_graph <- S7::new_generic(
 
 #' @export
 #' @method get_cor_graph bulk_coexp
-S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
+S7::method(get_cor_graph, bulk_coexp) <- function(object,
                                                   kernel_bandwidth,
                                                   min_affinity,
                                                   .verbose) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(kernel_bandwidth, "R1[0,1]")
   checkmate::qassert(min_affinity, "R1[0,1]")
   checkmate::qassert(.verbose, "B1")
   # Function body
-  cor_res <- S7::prop(bulk_coexp, "processed_data")$correlation_res
+  cor_res <- S7::prop(object, "processed_data")$correlation_res
   graph_df <- cor_res$get_data_table(.verbose = .verbose) %>%
     .[, cor_abs := abs(cor)] %>%
     .[, dist := 1 - cor_abs] %>%
@@ -703,7 +703,7 @@ S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Helper function to get a differential correlation-based igraph from the class
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #' @param min_cor Float. The minimum absolute correlation that needs to be
 #' present in either data set.
 #' @param fdr_threshold Float. The maximum FDR that is tolerated for the
@@ -720,8 +720,8 @@ S7::method(get_cor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @export
 get_diffcor_graph <- S7::new_generic(
   name = 'get_diffcor_graph',
-  dispatch_args = 'bulk_coexp',
-  fun = function(bulk_coexp,
+  dispatch_args = 'object',
+  fun = function(object,
                  min_cor = 0.2,
                  fdr_threshold = 0.05,
                  .verbose = TRUE) {
@@ -731,17 +731,17 @@ get_diffcor_graph <- S7::new_generic(
 
 #' @export
 #' @method get_diffcor_graph bulk_coexp
-S7::method(get_diffcor_graph, bulk_coexp) <- function(bulk_coexp,
+S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
                                                       min_cor = 0.2,
                                                       fdr_threshold = 0.05,
                                                       .verbose = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(min_cor, "R1[0,1]")
   checkmate::qassert(fdr_threshold, "R1[0,1]")
   checkmate::qassert(.verbose, "B1")
   # Function body
-  cor_res <- S7::prop(bulk_coexp, "processed_data")[["differential_cor_res"]]
+  cor_res <- S7::prop(object, "processed_data")[["differential_cor_res"]]
   graph_df <- cor_res$get_data_table(.verbose = .verbose) %>%
     .[, delta_cor := cor_a - cor_b] %>%
     .[, `:=`(
@@ -784,7 +784,7 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @description
 #' Getter function to get the resolution results (if available).
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #'
 #' @return If resolution results were found, returns the data.table. Otherwise,
 #' throws a warning and returns NULL.
@@ -792,19 +792,19 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(bulk_coexp,
 #' @export
 get_resolution_res <- S7::new_generic(
   name = 'get_resolution_res',
-  dispatch_args = 'bulk_coexp',
-  fun = function(bulk_coexp) {
+  dispatch_args = 'object',
+  fun = function(object) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 #' @method get_resolution_res bulk_coexp
-S7::method(get_resolution_res, bulk_coexp) <- function(bulk_coexp) {
+S7::method(get_resolution_res, bulk_coexp) <- function(object) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Body
-  resolution_results <- S7::prop(bulk_coexp, "outputs")[['resolution_results']]
+  resolution_results <- S7::prop(object, "outputs")[['resolution_results']]
   if (is.null(resolution_results))
     warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
 
@@ -819,7 +819,7 @@ S7::method(get_resolution_res, bulk_coexp) <- function(bulk_coexp) {
 #' Plots the resolution results (if they can be found in the class). The x-axis
 #' reflects the
 #'
-#' @param bulk_coexp The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::bulk_coexp()].
 #' @param print_head Boolean. Print the Top5 resolution parameters and their
 #' meta data.
 #'
@@ -829,8 +829,8 @@ S7::method(get_resolution_res, bulk_coexp) <- function(bulk_coexp) {
 #' @export
 plot_resolution_res <- S7::new_generic(
   name = 'plot_resolution_res',
-  dispatch_args = 'bulk_coexp',
-  fun = function(bulk_coexp, print_head = TRUE) {
+  dispatch_args = 'object',
+  fun = function(object, print_head = TRUE) {
     S7::S7_dispatch()
   }
 )
@@ -840,12 +840,12 @@ plot_resolution_res <- S7::new_generic(
 #' @import ggplot2
 #'
 #' @method plot_resolution_res bulk_coexp
-S7::method(plot_resolution_res, bulk_coexp) <- function(bulk_coexp, print_head = TRUE) {
+S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRUE) {
   # Checks
-  checkmate::assertClass(bulk_coexp, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(print_head, "B1")
   # Body
-  plot_df <- S7::prop(bulk_coexp, "outputs")[['resolution_results']]
+  plot_df <- S7::prop(object, "outputs")[['resolution_results']]
   if (is.null(plot_df)) {
     warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
     return(NULL)

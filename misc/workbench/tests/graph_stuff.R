@@ -31,8 +31,10 @@ test_class <- diffuse_seed_nodes(test_class, diffusion_vector, 'max')
 
 get_params(test_class, TRUE, TRUE)
 
+devtools::load_all()
+
 test_class <- tied_diffusion(
-  network_diffusions = test_class,
+  object = test_class,
   diffusion_vector_1 = diffusion_vector,
   diffusion_vector_2 = diffusion_vector.2,
   summarisation = 'max',
@@ -72,6 +74,7 @@ protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
 universe <- protein_coding_genes$id[1:500]
 
 sets_per_origin <- 100
+gene_sets_no <- 100
 
 gene_sets_no <- sets_per_origin * length(LETTERS)
 
@@ -114,7 +117,40 @@ rbh_class = rbh_graph(
   value_col = 'genes'
 )
 
-rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = .2, overlap_coefficient = T)
+
+rbh_class = generate_rbh_graph(rbh_class, minimum_similarity = 0.2, overlap_coefficient = T, .debug = FALSE)
+
+object <- rbh_class
+
+list_of_list <- S7::prop(object, "module_data")
+
+list_of_list <- list(
+  "dataset_A" = list(
+    "module_A" = c("A", "B", "C"),
+    "module_B" = c("D", "E", "H")
+  ),
+  "dataset_B" = list(
+    "module_A" = c("A", "B", "C"),
+    "module_B" = c("X", "A", "Z")
+  ),
+  "dateset_B" = list(
+    "test_A" = c("A", "B")
+  )
+)
+
+rbh_results <- rs_rbh_sets(
+  module_list = list_of_list,
+  overlap_coefficient = FALSE,
+  min_similarity = 0.2,
+  debug = TRUE
+)
+
+
+
+
+rextendr::document()
+
+rbh_results$similarity
 
 rbh_class@rbh_edge_df
 

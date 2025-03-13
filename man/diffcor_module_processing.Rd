@@ -5,15 +5,15 @@
 \title{Prepare differential correlation-based module detection}
 \usage{
 diffcor_module_processing(
-  bulk_coexp,
+  object,
   background_mat,
   correlation_method = c("pearson", "spearman"),
   .verbose = TRUE
 )
 }
 \arguments{
-\item{bulk_coexp}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
-should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this class.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{background_mat}{Numerical matrix. The background data set.}
 

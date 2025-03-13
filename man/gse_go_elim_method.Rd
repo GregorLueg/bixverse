@@ -5,7 +5,7 @@
 \title{Run gene ontology enrichment with elimination method.}
 \usage{
 gse_go_elim_method(
-  gene_ontology_data,
+  object,
   target_genes,
   minimum_overlap = 3L,
   fdr_threshold = 0.05,
@@ -15,8 +15,7 @@ gse_go_elim_method(
 )
 }
 \arguments{
-\item{gene_ontology_data}{The underlying \code{gene_ontology_data} class, see
-\code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{object}{The underlying class, see \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{target_genes}{String. The target genes you wish to apply the GSEA over.}
 

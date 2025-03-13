@@ -5,14 +5,14 @@
 \title{Generate an RBH graph.}
 \usage{
 generate_rbh_graph(
-  rbh_graph,
+  object,
   minimum_similarity,
   overlap_coefficient = FALSE,
   .debug = FALSE
 )
 }
 \arguments{
-\item{rbh_graph}{The \code{rbh_class} class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
+\item{object}{The underlying class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
 
 \item{minimum_similarity}{The minimum similarity to create an edge.}
 

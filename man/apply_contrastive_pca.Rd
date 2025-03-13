@@ -4,10 +4,10 @@
 \alias{apply_contrastive_pca}
 \title{Apply contrastive PCA.}
 \usage{
-apply_contrastive_pca(bulk_coexp, alpha, no_pcs)
+apply_contrastive_pca(object, alpha, no_pcs)
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{alpha}{Alpha parameter to use.}
 

@@ -5,7 +5,7 @@
 \title{Plot various alphas for the contrastive PCA}
 \usage{
 c_pca_plot_alphas(
-  bulk_coexp,
+  object,
   label_column = NULL,
   min_alpha = 0.1,
   max_alpha = 100,
@@ -14,7 +14,7 @@ c_pca_plot_alphas(
 )
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need
+\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need
 to apply \code{\link[=contrastive_pca_processing]{contrastive_pca_processing()}} to the function for this
 method to work. Checkmate will raise errors otherwise.}
 
