@@ -133,13 +133,9 @@ fn rs_hypergeom_test_list(
 /// checks are provided in the package.
 /// 
 /// @param target_genes A character vector representing the target gene set.
-/// @param go_to_genes A named list with the gene identifers as elements and
-/// gene ontology identifiers as names.
-/// @param ancestors A named list with the go identifiers of all ancestors as
-/// elements and the gene ontology identifiers as names.
-/// @param levels A named list with the go identifiers of that ontology level as
-/// elements and the level name as names. IMPORTANT! This list needs to be
-/// ordered in the right way!
+/// @param levels A character vector representing the levels to iterate through.
+/// The order will be the one the iterations are happening in.
+/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
 /// @param gene_universe_length The length of the gene universe.
 /// @param min_genes number of minimum genes for the gene ontology term to be
 /// tested.
@@ -161,34 +157,22 @@ fn rs_hypergeom_test_list(
 #[extendr]
 fn rs_gse_geom_elim(
     target_genes: Vec<String>,
-    go_to_genes: List,
-    ancestors: List,
-    levels: List,
+    levels: Vec<String>,
+    go_obj: Robj,
     gene_universe_length: u64,
     min_genes: i64,
     elim_threshold: f64,
     debug: bool,
 ) -> extendr_api::Result<List> {
-    let level_ids: Vec<String> = levels
-        .clone()
-        .iter()
-        .map(|(n, _)| {
-            n.to_string()
-        })
-        .collect();
-
-    // Destructure the tuple returned by prepare_go_data
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(
-        go_to_genes,
-        ancestors,
-        levels,
-    )?;  // The ? operator goes here, after prepare_go_data
+        go_obj
+    )?; 
 
     let mut go_obj = GeneOntology {
-        go_to_gene,         // Use the destructured values
+        go_to_gene,        
         ancestors: ancestors_map,
         levels: levels_map,
-    };  // No ? operator here
+    }; 
 
     let mut go_ids: Vec<Vec<String>> = Vec::new();
     let mut pvals: Vec<Vec<f64>> = Vec::new();
@@ -196,7 +180,7 @@ fn rs_gse_geom_elim(
     let mut hits: Vec<Vec<u64>> = Vec::new();
     let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
 
-    for level in level_ids.iter() {
+    for level in levels.iter() {
         let level_res = process_ontology_level(
             target_genes.clone(),
             level,
@@ -242,13 +226,9 @@ fn rs_gse_geom_elim(
 /// 
 /// @param target_genes_list A list of target genes against which to run the
 /// method.
-/// @param go_to_genes A named list with the gene identifers as elements and
-/// gene ontology identifiers as names.
-/// @param ancestors A named list with the go identifiers of all ancestors as
-/// elements and the gene ontology identifiers as names.
-/// @param levels A named list with the go identifiers of that ontology level as
-/// elements and the level name as names. IMPORTANT! This list needs to be
-/// ordered in the right way!
+/// @param levels A character vector representing the levels to iterate through.
+/// The order will be the one the iterations are happening in.
+/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
 /// @param gene_universe_length The length of the gene universe.
 /// @param min_genes number of minimum genes for the gene ontology term to be
 /// tested.
@@ -273,9 +253,8 @@ fn rs_gse_geom_elim(
 #[extendr]
 fn rs_gse_geom_elim_list(
   target_genes_list: List,
-  go_to_genes: List,
-  ancestors: List,
-  levels: List,
+  levels: Vec<String>,
+  go_obj: Robj,
   gene_universe_length: u64,
   min_genes: i64,
   elim_threshold: f64,
@@ -283,18 +262,10 @@ fn rs_gse_geom_elim_list(
 )  -> extendr_api::Result<List> {
   // Prepare various variables
   let target_genes_list = r_list_to_str_vec(target_genes_list)?;
-  let level_ids: Vec<String> = levels
-    .clone()
-    .iter()
-    .map(|(n, _)| {
-      n.to_string()
-    })
-    .collect();
+
   // Prepare the data
   let go_data = prepare_go_data(
-    go_to_genes,
-    ancestors,
-    levels,
+    go_obj
   )?;
 
   let res: Vec<GoElimLevelResultsIter> = target_genes_list
@@ -314,7 +285,7 @@ fn rs_gse_geom_elim_list(
       let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
 
       // Iterate over the levels
-      for level in level_ids.iter() {
+      for level in levels.iter() {
         let level_res = process_ontology_level(
           targets.clone(),
           level,

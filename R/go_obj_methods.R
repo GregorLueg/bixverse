@@ -69,26 +69,21 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     if (is.null(min_genes)) {
       min_genes <- S7::prop(object, "min_genes")
     }
-    go_to_genes <- S7::prop(object, "go_to_genes")
-    ancestry <- S7::prop(object, "ancestry")
-    levels <- S7::prop(object, "levels")
+    levels <- names(S7::prop(object, "levels"))
     go_info <- S7::prop(object, "go_info")
 
-    gene_universe_length <- length(unique(unlist(go_to_genes)))
+    gene_universe_length <- length(unique(unlist(S7::prop(object, "go_to_genes"))))
 
     results_go <- rs_gse_geom_elim(
       target_genes = target_genes,
-      go_to_genes = go_to_genes,
-      ancestors = ancestry,
       levels = levels,
+      go_obj = object,
       gene_universe_length = gene_universe_length,
       min_genes = min_genes,
       elim_threshold = elim_threshold,
       debug = .debug
     )
 
-    # Weird issue sometimes with pulling f64 back to Double and end up with
-    # negative p-values
     results_go_dt <- data.table(do.call(cbind, results_go[-1])) %>%
       .[, `:=`(
         go_id = results_go$go_ids,
@@ -187,18 +182,15 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     if (is.null(min_genes)) {
       min_genes <- S7::prop(object, "min_genes")
     }
-    go_to_genes <- S7::prop(object, "go_to_genes")
-    ancestry <- S7::prop(object, "ancestry")
-    levels <- S7::prop(object, "levels")
+    levels <- names(S7::prop(object, "levels"))
     go_info <- S7::prop(object, "go_info")
 
-    gene_universe_length <- length(unique(unlist(go_to_genes)))
+    gene_universe_length <- length(unique(unlist(S7::prop(object, "go_to_genes"))))
 
     results_go <- rs_gse_geom_elim_list(
-      target_genes = target_gene_list,
-      go_to_genes = go_to_genes,
-      ancestors = ancestry,
+      target_genes_list = target_gene_list,
       levels = levels,
+      go_obj = object,
       gene_universe_length = gene_universe_length,
       min_genes = min_genes,
       elim_threshold = elim_threshold,
@@ -212,7 +204,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
       }
     )
 
-    target_set_names <- unlist(target_set_names)
+    target_set_names <- do.call(c, target_set_names)
 
     cols_to_select <- c("pvals", "odds_ratios", "hits", "gene_set_lengths")
 

@@ -265,14 +265,20 @@ fn rs_prepare_whitening(
 /// 
 /// @param whiten The whitened matrix.
 /// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-/// @param maxit Maximum number of iterations to try if algorithm does not
-/// converge.
-/// @param alpha The alpha parameter for the LogCosh implementation of ICA.
-/// @param tol Tolerance parameter.
 /// @param ica_type One of 'logcosh' or 'exp'.
-/// @param verbose Controls the verbosity of the function.
+/// @param ica_params A list containing:
+///  \itemize{
+///   \item maxit - Integer. Maximum number of iterations for ICA.
+///   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+///   Should be between 1 to 2.
+///   \item max_tol - Maximum tolerance of the algorithm
+///   \item verbose - Verbosity of the function, i.e., shall individual iters
+///   be shown.
+/// }
+/// If the list is empty or the expected elements are not found, default values
+/// are used.
 /// 
-/// @return A list containing:
+/// @return A list with the following items:
 ///  \itemize{
 ///   \item mixing - The mixing matrix for subsequent usage.
 ///   \item converged - Boolean if the algorithm converged.
@@ -283,13 +289,11 @@ fn rs_prepare_whitening(
 fn rs_fast_ica(
   whiten: RMatrix<f64>,
   w_init: RMatrix<f64>,
-  maxit: usize,
-  alpha: f64,
-  tol: f64,
   ica_type: &str,
-  verbose: bool,
+  ica_params: List,
 ) -> extendr_api::Result<List> {
   // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
+  let ica_params = prepare_ica_params(ica_params);
 
   let x = r_matrix_to_faer(whiten);
   let w_init = r_matrix_to_faer(w_init);
@@ -297,14 +301,27 @@ fn rs_fast_ica(
   let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
 
   let a = match ica_type {
-    IcaType::Exp => fast_ica_exp(&x, &w_init, tol, maxit, verbose),
-    IcaType::LogCosh => fast_ica_logcosh(&x, &w_init, tol, alpha, maxit, verbose),
+    IcaType::Exp => fast_ica_exp(
+      &x, 
+      &w_init, 
+      ica_params.tol, 
+      ica_params.maxit, 
+      ica_params.verbose
+    ),
+    IcaType::LogCosh => fast_ica_logcosh(
+      &x, 
+      &w_init, 
+      ica_params.tol, 
+      ica_params.alpha, 
+      ica_params.maxit, 
+      ica_params.verbose
+    ),
   };
 
   Ok(list!
     (
       mixing = faer_to_r_matrix(a.0),
-      converged = a.1 < tol
+      converged = a.1 < ica_params.tol
     )
   )
 }
@@ -315,27 +332,24 @@ fn rs_ica_iters(
   x_whiten: RMatrix<f64>,
   k: RMatrix<f64>,
   no_comp: usize,
-  no_iters: usize,
-  maxit: usize,
-  alpha: f64,
-  tol: f64,
+  no_random_init: usize,
   ica_type: &str,
-  random_seed: usize
+  random_seed: usize,
+  ica_params: List,
 ) -> List {
   let x_whiten = r_matrix_to_faer(x_whiten);
   let k = r_matrix_to_faer(k);
+
+  let ica_params = prepare_ica_params(ica_params);
 
   let (s_combined, converged) = stabilised_ica_iters(
     x_whiten,
     k,
     no_comp,
-    no_iters,
-    maxit,
-    alpha,
-    tol,
+    no_random_init,
     ica_type,
+    ica_params,
     random_seed,
-    false
   );
 
   list!(

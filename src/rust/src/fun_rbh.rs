@@ -79,7 +79,7 @@ fn rs_rbh_sets(
         .unwrap();
 
       // Iterate over the remaining target modules
-      let res: Vec<RbhResult> =   target_modules
+      let res: Vec<RbhResult> = target_modules
         .iter()
         .map(|target| {
           let target_module_data = module_list

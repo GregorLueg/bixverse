@@ -12,7 +12,7 @@ default = []
 simd = []  # Or another SIMD implementation
 
 [dependencies]
-extendr-api = { version = "*", features = ["ndarray"] }
+extendr-api = "*"
 rayon = '*'
 rand = '*'
 rand_distr = '0.5.1'

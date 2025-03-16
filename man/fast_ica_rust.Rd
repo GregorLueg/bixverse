@@ -10,10 +10,7 @@ fast_ica_rust(
   n_icas,
   ica_fun = c("logcosh", "exp"),
   seed = NULL,
-  maxit = 200L,
-  alpha = 1,
-  tol = 1e-04,
-  .verbose = FALSE
+  ica_params = list(maxit = 200L, alpha = 1, max_tol = 1e-04, verbose = FALSE)
 )
 }
 \arguments{
@@ -27,15 +24,16 @@ fast_ica_rust(
 
 \item{seed}{Seed to ensure reproducible results.}
 
-\item{maxit}{Maximum iterations to run. Defaults to 200L.}
-
-\item{alpha}{Alpha parameters for the \code{"logcosh"} implementation. Defaults to
-1.}
-
-\item{tol}{Tolerance at which the algorithm is considered converged. Defaults
-to 1e-04.}
-
-\item{.verbose}{Boolean controlling the verbosity.}
+\item{ica_params}{A list containing:
+\itemize{
+\item maxit - Integer. Maximum number of iterations for ICA.
+\item alpha - Float. The alpha parameter for the logcosh version of ICA.
+Should be between 1 to 2.
+\item max_tol - Maximum tolerance of the algorithm.
+\item verbose - Controls verbosity of the function.
+}
+This list is optional. If a value cannot be found, default parameters will be
+used.}
 }
 \value{
 A list containing:

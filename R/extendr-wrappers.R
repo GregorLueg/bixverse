@@ -69,13 +69,9 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' checks are provided in the package.
 #' 
 #' @param target_genes A character vector representing the target gene set.
-#' @param go_to_genes A named list with the gene identifers as elements and
-#' gene ontology identifiers as names.
-#' @param ancestors A named list with the go identifiers of all ancestors as
-#' elements and the gene ontology identifiers as names.
-#' @param levels A named list with the go identifiers of that ontology level as
-#' elements and the level name as names. IMPORTANT! This list needs to be
-#' ordered in the right way!
+#' @param levels A character vector representing the levels to iterate through.
+#' The order will be the one the iterations are happening in.
+#' @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
 #' @param gene_universe_length The length of the gene universe.
 #' @param min_genes number of minimum genes for the gene ontology term to be
 #' tested.
@@ -94,7 +90,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' }
 #' 
 #' @export
-rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
 
 #' Run hypergeometric enrichment a list of target genes over the gene ontology
 #' 
@@ -109,13 +105,9 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' 
 #' @param target_genes_list A list of target genes against which to run the
 #' method.
-#' @param go_to_genes A named list with the gene identifers as elements and
-#' gene ontology identifiers as names.
-#' @param ancestors A named list with the go identifiers of all ancestors as
-#' elements and the gene ontology identifiers as names.
-#' @param levels A named list with the go identifiers of that ontology level as
-#' elements and the level name as names. IMPORTANT! This list needs to be
-#' ordered in the right way!
+#' @param levels A character vector representing the levels to iterate through.
+#' The order will be the one the iterations are happening in.
+#' @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
 #' @param gene_universe_length The length of the gene universe.
 #' @param min_genes number of minimum genes for the gene ontology term to be
 #' tested.
@@ -137,7 +129,7 @@ rs_gse_geom_elim <- function(target_genes, go_to_genes, ancestors, levels, gene_
 #' }
 #' 
 #' @export
-rs_gse_geom_elim_list <- function(target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, go_to_genes, ancestors, levels, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
 
 #' Fast AUC calculation
 #' 
@@ -364,24 +356,30 @@ rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
 #' 
 #' @param whiten The whitened matrix.
 #' @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-#' @param maxit Maximum number of iterations to try if algorithm does not
-#' converge.
-#' @param alpha The alpha parameter for the LogCosh implementation of ICA.
-#' @param tol Tolerance parameter.
 #' @param ica_type One of 'logcosh' or 'exp'.
-#' @param verbose Controls the verbosity of the function.
+#' @param ica_params A list containing:
+#'  \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
 #' 
-#' @return A list containing:
+#' @return A list with the following items:
 #'  \itemize{
 #'   \item mixing - The mixing matrix for subsequent usage.
 #'   \item converged - Boolean if the algorithm converged.
 #' }
 #' 
 #' @export
-rs_fast_ica <- function(whiten, w_init, maxit, alpha, tol, ica_type, verbose) .Call(wrap__rs_fast_ica, whiten, w_init, maxit, alpha, tol, ica_type, verbose)
+rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
 
 #' @export
-rs_ica_iters <- function(x_whiten, k, no_comp, no_iters, maxit, alpha, tol, ica_type, random_seed, verbose) .Call(wrap__rs_ica_iters, x_whiten, k, no_comp, no_iters, maxit, alpha, tol, ica_type, random_seed, verbose)
+rs_ica_iters <- function(x_whiten, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x_whiten, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #' 

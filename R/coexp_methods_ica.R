@@ -47,6 +47,8 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
   }
 
   # Whiten the data
+  if(.verbose)
+    message("Preparing the whitening of the data for ICA.")
   c(X1, K) %<-% rs_prepare_whitening(target_mat)
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
@@ -68,12 +70,16 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #' @param n_icas Number of ICAs
 #' @param ica_fun String, element of `c("logcosh", "exp")`.
 #' @param seed Seed to ensure reproducible results.
-#' @param maxit Maximum iterations to run. Defaults to 200L.
-#' @param alpha Alpha parameters for the `"logcosh"` implementation. Defaults to
-#' 1.
-#' @param tol Tolerance at which the algorithm is considered converged. Defaults
-#' to 1e-04.
-#' @param .verbose Boolean controlling the verbosity.
+#' @param ica_params A list containing:
+#' \itemize{
+#'  \item maxit - Integer. Maximum number of iterations for ICA.
+#'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'  Should be between 1 to 2.
+#'  \item max_tol - Maximum tolerance of the algorithm.
+#'  \item verbose - Controls verbosity of the function.
+#' }
+#' This list is optional. If a value cannot be found, default parameters will be
+#' used.
 #'
 #' @returns A list containing:
 #' \itemize{
@@ -91,17 +97,18 @@ fast_ica_rust <- function(X_norm,
                           n_icas,
                           ica_fun = c("logcosh", "exp"),
                           seed = NULL,
-                          maxit = 200L,
-                          alpha = 1,
-                          tol =  1e-04,
-                          .verbose = FALSE) {
+                          ica_params = list(
+                            maxit = 200L,
+                            alpha = 1.0,
+                            max_tol = 0.0001,
+                            verbose = FALSE
+                          )) {
   # Checks
   checkmate::assertMatrix(X_norm, mode = "numeric")
   checkmate::assertMatrix(K, mode = "numeric")
   checkmate::qassert(n_icas, sprintf("I1[2,%i]", ncol(X_norm)))
   checkmate::assertChoice(ica_fun, c("logcosh", "exp"))
   checkmate::qassert(seed, c("I1", "0"))
-  checkmate::qassert(.verbose, "B1")
   # Function
   K <- matrix(K[1:n_icas, ], n_icas, dim(X_norm)[1])
   X1 <- K %*% X_norm
@@ -111,11 +118,8 @@ fast_ica_rust <- function(X_norm,
   c(a, converged) %<-% rs_fast_ica(
     X1,
     w_init,
-    maxit = maxit,
-    alpha = alpha,
-    tol = tol,
     ica_type = ica_fun,
-    verbose = .verbose
+    ica_params = ica_params
   )
 
   w <- a %*% K

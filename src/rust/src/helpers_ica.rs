@@ -1,5 +1,6 @@
 use faer::{Mat,linalg::solvers::{Solve, PartialPivLu}};
 use rayon::iter::*;
+use extendr_api::prelude::*;
 use rand::prelude::*;
 use rand_distr::Normal;
 
@@ -20,9 +21,50 @@ pub enum IcaType {
 /// Type alias of the ICA results
 type IcaRes = (faer::Mat<f64>, f64);
 
+/// Structure to save ICA parameters
+#[derive(Clone, Debug)]
+pub struct IcaParams{
+  pub maxit: usize,
+  pub alpha: f64,
+  pub tol: f64,
+  pub verbose: bool
+}
+
 /////////
 // ICA //
 /////////
+
+/// Prepare ICA parameters
+pub fn prepare_ica_params(
+  r_list: List
+) -> IcaParams {
+  let ica_params = r_list.into_hashmap();
+
+  let maxit = ica_params
+    .get("maxit")
+    .and_then(|v| v.as_integer())
+    .unwrap_or(200) as usize; 
+  let alpha = ica_params
+    .get("alpha")
+    .and_then(|v| v.as_real())
+    .unwrap_or(1.0);
+  let tol = ica_params
+    .get("max_tol")
+    .and_then(|v| v.as_real())
+    .unwrap_or(1e-4);
+  let verbose = ica_params
+    .get("verbose")
+    .and_then(|v| v.as_bool())
+    .unwrap_or(false);
+
+  IcaParams{
+    maxit,
+    alpha,
+    tol,
+    verbose
+  }
+}
+
 
 /// Whiten a matrix. This is needed pre-processing for ICA.
 pub fn prepare_whitening(
@@ -41,6 +83,7 @@ pub fn prepare_whitening(
 
   // Get d
   let s = svd_res.S();
+
   let s = s
     .column_vector()
     .iter()
@@ -265,14 +308,10 @@ pub fn stabilised_ica_iters(
   k: Mat<f64>,
   no_comp: usize,
   no_iters: usize,
-  maxit: usize,
-  alpha: f64,
-  tol: f64,
   ica_type: &str,
+  ica_params: IcaParams,
   random_seed: usize,
-  verbose: bool,
 ) -> (Mat<f64>, Vec<bool>) {
-  // -> (Mat<f64>, Vec<bool>) 
   // Generate the random w_inits
   let w_inits: Vec<Mat<f64>> = (0..no_iters)
     .map(|iter| {
@@ -290,8 +329,21 @@ pub fn stabilised_ica_iters(
     .par_iter()
     .map(|w_init| {
       match ica_type {
-        IcaType::Exp => fast_ica_exp(&x1, w_init, tol, maxit, verbose),
-        IcaType::LogCosh => fast_ica_logcosh(&x1, w_init, tol, alpha, maxit, verbose),
+        IcaType::Exp => fast_ica_exp(
+          &x1, 
+          w_init, 
+          ica_params.tol, 
+          ica_params.maxit, 
+          ica_params.verbose
+        ),
+        IcaType::LogCosh => fast_ica_logcosh(
+          &x1, 
+          w_init, 
+          ica_params.tol, 
+          ica_params.alpha, 
+          ica_params.maxit, 
+          ica_params.verbose
+        ),
       }
     }).collect();
 
@@ -300,7 +352,7 @@ pub fn stabilised_ica_iters(
 
   for (a, final_tol) in iter_res {
     a_matrices.push(a);
-    convergence.push(final_tol < tol);
+    convergence.push(final_tol < ica_params.tol);
   };
 
   let s_matrices: Vec<Mat<f64>> = a_matrices
