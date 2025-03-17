@@ -1,11 +1,21 @@
 use faer::Mat;
 use rayon::iter::*;
+use rand::prelude::*;
+use rand_distr::Normal;
+
 use crate::utils_rust::*;
 use crate::utils_stats::z_scores_to_pval;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
 //////////////////////////////
+
+/// Structure for random SVD results
+pub struct RandomSvdResults {
+  pub u: faer::Mat<f64>,
+  pub v: faer::Mat<f64>,
+  pub s: Vec<f64>
+}
 
 /// Structure for DiffCor results
 pub struct DiffCorRes {
@@ -235,6 +245,49 @@ pub fn get_top_eigenvalues(
     .collect();
 
   res
+}
+
+
+/// Implementation of random Singular Value Decomposition to be faster
+/// and computationally WAY more efficient.
+pub fn randomised_svd(
+  x: &Mat<f64>, 
+  rank: usize,
+  seed: usize,
+  oversampling: Option<usize>,
+  n_power_iter: Option<usize>,
+) -> RandomSvdResults {
+  let ncol = x.ncols();
+  let nrow = x.nrows();
+
+  // Oversampling for better accuracy
+  let os = oversampling.unwrap_or(10);
+  let sample_size = (rank + os).min(ncol.min(nrow));
+  let n_iter = n_power_iter.unwrap_or(2);
+
+  // Create a random matrix
+  let mut rng = StdRng::seed_from_u64(seed as u64);
+  let normal = Normal::new(0.0, 1.0).unwrap();
+  let omega = Mat::from_fn(ncol, sample_size, |_, _| normal.sample(&mut rng));
+  // Multiply random matrix with original and use QR composition to get
+  // low rank approximation of x
+  let y = x * omega;
+
+  let mut q = y.qr().compute_thin_Q();
+  for _ in 0..n_iter {
+    let z = x.transpose() * q;
+    q = (x * z).qr().compute_thin_Q();
+  }
+
+  // Perform the SVD on the low-rank approximation
+  let b = q.transpose() * x;
+  let svd = b.thin_svd().unwrap();
+
+  RandomSvdResults {
+    u: q * svd.U(),
+    v: svd.V().cloned(), // Use clone instead of manual copying
+    s: svd.S().column_vector().iter().copied().collect(),
+  }
 }
 
 

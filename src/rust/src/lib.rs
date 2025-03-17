@@ -9,6 +9,7 @@ mod fun_stats;
 mod fun_rbh;
 mod fun_linalg;
 mod fun_helpers;
+mod fun_ica;
 
 mod utils_stats;
 mod utils_r_rust;
@@ -23,4 +24,5 @@ extendr_module! {
     use fun_rbh;
     use fun_linalg;
     use fun_helpers;
+    use fun_ica;
 }

@@ -255,6 +255,9 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' @export
+rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap__rs_random_svd, x, rank, seed, oversampling, n_power_iter)
+
 #' Calculate the column wise correlations.
 #' 
 #' @description Calculates the correlation matrix of the columns. This function
@@ -330,57 +333,6 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
-#' Prepare the data for whitening
-#' 
-#' @description Prepares the data for subsequent usag in ICA.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-#' functions with type checks are provided in the package.
-#' 
-#' @param x The matrix to whiten. The whitening will happen over the columns.
-#' 
-#' @return A list containing:
-#'  \itemize{
-#'   \item x - The transposed and scaled data for subsequent usage in ICA.
-#'   \item k - The K matrix.
-#' }
-#' 
-#' @export
-rs_prepare_whitening <- function(x) .Call(wrap__rs_prepare_whitening, x)
-
-#' Run the Rust implementation of fast ICA.
-#' 
-#' @description This function serves as a wrapper over the fast ICA
-#' implementations in Rust. It assumes a pre-whiten matrix and also an 
-#' intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
-#' around the Rust functions with type checks are provided in the package.
-#' 
-#' @param whiten The whitened matrix.
-#' @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-#' @param ica_type One of 'logcosh' or 'exp'.
-#' @param ica_params A list containing:
-#'  \itemize{
-#'   \item maxit - Integer. Maximum number of iterations for ICA.
-#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'   Should be between 1 to 2.
-#'   \item max_tol - Maximum tolerance of the algorithm
-#'   \item verbose - Verbosity of the function, i.e., shall individual iters
-#'   be shown.
-#' }
-#' If the list is empty or the expected elements are not found, default values
-#' are used.
-#' 
-#' @return A list with the following items:
-#'  \itemize{
-#'   \item mixing - The mixing matrix for subsequent usage.
-#'   \item converged - Boolean if the algorithm converged.
-#' }
-#' 
-#' @export
-rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
-
-#' @export
-rs_ica_iters <- function(x_whiten, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x_whiten, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
-
 #' Reconstruct a matrix from a flattened upper triangle vector
 #' 
 #' @description This function takes a flattened vector of the upper triangle
@@ -437,6 +389,108 @@ rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_af
 #' 
 #' @export
 rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
+
+#' Prepare the data for whitening
+#' 
+#' @description Prepares the data for subsequent usag in ICA. 
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+#' functions with type checks are provided in the package.
+#' 
+#' @param x The matrix to whiten. The whitening will happen over the columns.
+#' @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
+#' on larger data sets.
+#' @param seed Integer. Only relevant with fast_svd is set to `TRUE`.
+#' @param rank Integer. How many ranks to use for the fast SVD approximation.
+#' If you supply `NULL`, it will default to `10L`. Only relevant with 
+#' fast_svd is set to `TRUE`.
+#' @param oversampling Integer. Oversampling parameter to make the approximation
+#' more precise. If you supply `NULL`, it will default to `10L`. Only relevant
+#' with fast_svd is set to `TRUE`.
+#' @param n_power_iter Integer. How much shall the QR low rank approximation be
+#' powered. If you supply `NULL`, it will default to `2L`.
+#' 
+#' 
+#' @return A list containing:
+#'  \itemize{
+#'   \item x - The preprocessed matrix.
+#'   \item k - The pre-whitening matrix k.
+#' }
+#' 
+#' @export
+rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_iter) .Call(wrap__rs_prepare_whitening, x, fast_svd, seed, rank, oversampling, n_power_iter)
+
+#' Run the Rust implementation of fast ICA.
+#' 
+#' @description This function serves as a wrapper over the fast ICA
+#' implementations in Rust. It assumes a whitened matrix and also an 
+#' intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+#' around the Rust functions with type checks are provided in the package.
+#' 
+#' @param whiten Numerical matrix. The whitened matrix.
+#' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to 
+#' be equal to nrows of whiten.
+#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param ica_params A list containing:
+#'  \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
+#' 
+#' @return A list with the following items:
+#'  \itemize{
+#'   \item mixing - The mixing matrix for subsequent usage.
+#'   \item converged - Boolean if the algorithm converged.
+#' }
+#' 
+#' @export
+rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
+
+#' Run ICA over a given no_comp with random initilisations of w_init
+#' 
+#' @description This function implements a stabilised ICA like algorithm in 
+#' Rust. Briefly, it generates random w_init matrices (total number being
+#' no_random_init) and runs ICA given the x_processed and k data over these.
+#' The function returns combined S from the different runs and a boolean
+#' vector indicating if this specific run converged.
+#' 
+#' @param x_processed Numerical matrix. The processed matrix (but not yet 
+#' whitened!)
+#' @param k Numerical matrix. The whitening matrix.
+#' @param no_comp Integer. Number of independent components to return.
+#' @param no_random_init Integer. Number of random initialisations to test.
+#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param random_seed Integer. Seed for randomisations.
+#' @param ica_params A list containing:
+#' \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
+#' 
+#' @return A list containing:
+#' \itemize{
+#'   \item s_combined - The combined matrices for S. Dimensions are nrows = 
+#'   features; and ncols = ncomp * no_random_init.
+#'   \item converged - Boolean vector indicating if the respective run reached
+#'   convergence. Length = no_random_init
+#' }
+#' 
+#' @export
+rs_ica_iters <- function(x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
+
+#' @export
+rs_ica_iters_cv <- function(x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
 
 # nolint end

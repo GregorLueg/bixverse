@@ -229,9 +229,9 @@ dependencies = [
 
 [[package]]
 name = "faer"
-version = "0.21.7"
+version = "0.21.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d671941ab57443f46ebe3f153a9fc3ed6cce777926c14e5fdf5da178a35ea476"
+checksum = "b8b953354de727381e27672cf99dc8dde987f45e7ad7a40c4aac349f6b16a392"
 dependencies = [
  "bytemuck",
  "dyn-stack",
@@ -265,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "faer-traits"
-version = "0.21.0"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2d0172aefb5f869561e558d5390657f1aa98ca3c51a09be69a4687064ebfb9a"
+checksum = "1430e111b20872c7eaa82c7ada071bff1c3e3ac09cc6f4df676065fd2d41eb62"
 dependencies = [
  "bytemuck",
  "dyn-stack",

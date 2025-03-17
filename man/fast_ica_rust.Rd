@@ -14,15 +14,17 @@ fast_ica_rust(
 )
 }
 \arguments{
-\item{X_norm}{The scaled data. Output of \code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
+\item{X_norm}{Numeric matrix. Processed data. Output of
+\code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
 
-\item{K}{The K matrix. Output of \code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
+\item{K}{The K matrix. Whitening matrix. Output of
+\code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
 
-\item{n_icas}{Number of ICAs}
+\item{n_icas}{Integer. Number of independent components to recover.}
 
 \item{ica_fun}{String, element of \code{c("logcosh", "exp")}.}
 
-\item{seed}{Seed to ensure reproducible results.}
+\item{seed}{Integer. Seed to ensure reproducible results.}
 
 \item{ica_params}{A list containing:
 \itemize{
@@ -46,5 +48,6 @@ A list containing:
 }
 \description{
 This functions is a wrapper over the Rust implementation of fastICA. It has
-the same two options \code{c("logcosh", "exp")} to run ICA in the parallel modus.
+the same two options \code{c("logcosh", "exp")} to run ICA in parallel modus. This
+function expected
 }

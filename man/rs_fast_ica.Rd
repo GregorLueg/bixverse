@@ -7,11 +7,12 @@
 rs_fast_ica(whiten, w_init, ica_type, ica_params)
 }
 \arguments{
-\item{whiten}{The whitened matrix.}
+\item{whiten}{Numerical matrix. The whitened matrix.}
 
-\item{w_init}{The w_init matrix. ncols need to be equal to nrows of whiten.}
+\item{w_init}{Numerical matrix. The initial unmixing matrix. ncols need to
+be equal to nrows of whiten.}
 
-\item{ica_type}{One of 'logcosh' or 'exp'.}
+\item{ica_type}{String. One of 'logcosh' or 'exp'.}
 
 \item{ica_params}{A list containing:
 \itemize{
@@ -34,7 +35,7 @@ A list with the following items:
 }
 \description{
 This function serves as a wrapper over the fast ICA
-implementations in Rust. It assumes a pre-whiten matrix and also an
+implementations in Rust. It assumes a whitened matrix and also an
 intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
 around the Rust functions with type checks are provided in the package.
 }

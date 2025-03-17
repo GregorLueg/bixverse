@@ -8,6 +8,10 @@
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
+#' @param fast_svd Boolean. Shall randomised SVD be used for the whitening.
+#' This is faster and usually causes little precision loss.
+#' @param random_seed Integer. Seed for the randomised SVD. Only relevant, if
+#' fast_svd = `TRUE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return `bulk_coexp` with the needed data for ICA in the
@@ -18,6 +22,8 @@ ica_processing <- S7::new_generic(
   name = "ica_processing",
   dispatch_args = "object",
   fun = function(object,
+                 fast_svd = TRUE,
+                 random_seed = 123L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
   }
@@ -33,6 +39,8 @@ ica_processing <- S7::new_generic(
 #'
 #' @method ica_processing bulk_coexp
 S7::method(ica_processing, bulk_coexp) <- function(object,
+                                                   fast_svd = TRUE,
+                                                   random_seed = 123L,
                                                    .verbose = TRUE) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
@@ -49,27 +57,136 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
   # Whiten the data
   if(.verbose)
     message("Preparing the whitening of the data for ICA.")
-  c(X1, K) %<-% rs_prepare_whitening(target_mat)
+  if(fast_svd && .verbose)
+    message("Using randomised SVD for whitening (faster, but less precise)")
+  if(!fast_svd && .verbose)
+    message("Using full SVD for whitening (slowed, but more precise)")
+  c(X1, K) %<-% rs_prepare_whitening(
+    x = target_mat,
+    fast_svd = fast_svd,
+    seed = random_seed,
+    rank = nrow(target_mat),
+    oversampling = NULL,
+    n_power_iter = NULL
+  )
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
   S7::prop(object, "processed_data")[["K"]] <- K
+  S7::prop(object, "params")["detection_method"] <- "ICA-based"
 
   return(object)
 }
 
+# component identification -----------------------------------------------------
+
+
+ica_evaluate_comp <- S7::new_generic(
+  name = "ica_evaluate_comp",
+  dispatch_args = "object",
+  fun = function() {
+
+  }
+)
+
+S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
+                                                      ica_type = c("logcosh", "exp"),
+                                                      iter_params = list(
+                                                        bootstrap = FALSE,
+                                                        random_init = 50L,
+                                                        folds = 10L,
+                                                      ),
+                                                      ncomp_params = list(
+                                                        max_comp = 100L,
+                                                        steps = 5L,
+                                                        custom_seq = NULL
+                                                      ),
+                                                      ica_params = list(
+                                                        maxit = 200L,
+                                                        alpha = 1.0,
+                                                        max_tol = 0.0001,
+                                                        verbose = FALSE
+                                                      ),
+                                                      random_seed = 42L,
+                                                      .verbose = TRUE) {
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertChoice(ica_fun, c("logcosh", "exp"))
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
+  # Early return
+  if (is.null(detection_method) &&
+      detection_method != "ICA-based") {
+    warning(
+      paste(
+        "This class does not seem to be set for ICA-based module detection",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  # Prepare the n_comp vector
+  n_comp_vector <- if (is.null(ncomp_params$custom_seq)) {
+    with(ncomp_params, c(2, 3, 4, seq(
+      from = 5, to = max_comp, by = steps
+    )))
+  } else {
+    ncomp_params$custom_seq
+  }
+  if (.verbose)
+    message(sprintf("Using a total of %i different n_comp parameters", length(n_comp_vector)))
+
+  # Set up the loop
+  if (iter_params$bootstrap) {
+    no_ica_runs <- iter_params$random_init * iter_params$folds * length(n_comp_vector)
+    if (.verbose)
+      message(
+        sprintf(
+          "Using bootstrapping with %i folds and %i random initialisations for a total of %i ICA runs",
+          iter_params$folds,
+          iter_params$random_init,
+          no_ica_runs
+        )
+      )
+  } else {
+    no_ica_runs <- iter_params$random_init * length(n_comp_vector)
+    if (.verbose)
+      message(
+        sprintf(
+          "Using %i random initialisations for a total of %i ICA runs",
+          iter_params$random_init,
+          no_ica_runs
+        )
+      )
+  }
+
+  all_scores <- c()
+  all_convergence <- c()
+
+
+
+}
+
+
 # helpers ----------------------------------------------------------------------
+
+## general ICA function --------------------------------------------------------
 
 #' Fast ICA via Rust
 #'
 #' @description
 #' This functions is a wrapper over the Rust implementation of fastICA. It has
-#' the same two options `c("logcosh", "exp")` to run ICA in the parallel modus.
+#' the same two options `c("logcosh", "exp")` to run ICA in parallel modus. This
+#' function expected
 #'
-#' @param X_norm The scaled data. Output of [bixverse::rs_prepare_whitening()].
-#' @param K The K matrix. Output of [bixverse::rs_prepare_whitening()].
-#' @param n_icas Number of ICAs
+#' @param X_norm Numeric matrix. Processed data. Output of
+#' [bixverse::rs_prepare_whitening()].
+#' @param K The K matrix. Whitening matrix. Output of
+#' [bixverse::rs_prepare_whitening()].
+#' @param n_icas Integer. Number of independent components to recover.
 #' @param ica_fun String, element of `c("logcosh", "exp")`.
-#' @param seed Seed to ensure reproducible results.
+#' @param seed Integer. Seed to ensure reproducible results.
 #' @param ica_params A list containing:
 #' \itemize{
 #'  \item maxit - Integer. Maximum number of iterations for ICA.

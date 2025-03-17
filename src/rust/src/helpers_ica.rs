@@ -5,7 +5,7 @@ use rand::prelude::*;
 use rand_distr::Normal;
 
 use crate::utils_rust::*;
-use crate::helpers_linalg::scale_matrix_col;
+use crate::helpers_linalg::{scale_matrix_col, randomised_svd};
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
@@ -67,37 +67,50 @@ pub fn prepare_ica_params(
 
 
 /// Whiten a matrix. This is needed pre-processing for ICA.
+/// Has the option to use randomised SVD for faster computations.
+/// Returns the scaled data and the pre-whitening matrix K.
 pub fn prepare_whitening(
-  x: Mat<f64>
+  x: &Mat<f64>,
+  fast_svd: bool,
+  seed: usize,
+  rank: usize,
+  oversampling: Option<usize>,
+  n_power_iter: Option<usize>,
 ) -> (faer::Mat<f64>, faer::Mat<f64>) {
   let n = x.nrows();  
-
-  let centered = scale_matrix_col(&x, false);
+  
+  let centered = scale_matrix_col(x, false);
 
   let centered = centered.transpose();
 
   let v =  centered * centered.transpose() / n as f64;
 
-  // SVD
-  let svd_res = v.svd().unwrap();
-
-  // Get d
-  let s = svd_res.S();
-
-  let s = s
-    .column_vector()
-    .iter()
-    .map(|x| {1_f64 / x.sqrt()})
-    .collect::<Vec<_>>();
-
-  let d = faer_diagonal_from_vec(s);
-
-  // Get k
-  let u = svd_res.U();
-
-  let u_transpose = u.transpose();
-
-  let k = d * u_transpose;
+  let k = if fast_svd {
+    let svd_res = randomised_svd(
+      &v, 
+      rank, 
+      seed, 
+      oversampling, 
+      n_power_iter
+    );
+    let s: Vec<f64> = svd_res.s
+      .iter()
+      .map(|x| {1_f64 / x.sqrt()})
+      .collect();
+    let d = faer_diagonal_from_vec(s);
+    d * svd_res.u.transpose()
+  } else {
+    let svd_res = v.thin_svd().unwrap();
+    let s = svd_res.S()
+      .column_vector()
+      .iter()
+      .map(|x| {1_f64 / x.sqrt()})
+      .collect::<Vec<_>>();
+    let d = faer_diagonal_from_vec(s);
+    let u = svd_res.U();
+    let u_t = u.transpose();
+    d * u_t
+  };
 
   (centered.cloned(), k)
 }
@@ -302,9 +315,10 @@ pub fn fast_ica_exp(
 }
 
 
-/// Iterate through a set of 
+/// Iterate through a set of random initialisations with a given pre-whitened
+/// matrix, the whitening matrix k and the respective ICA parameters.
 pub fn stabilised_ica_iters(
-  x_whiten: Mat<f64>,
+  x_pre_whiten: Mat<f64>,
   k: Mat<f64>,
   no_comp: usize,
   no_iters: usize,
@@ -320,9 +334,9 @@ pub fn stabilised_ica_iters(
       )
     })
     .collect();
-  let k_ncol = k.nrows();  
+  let k_ncol = k.ncols();  
   let k_red = k.get(0..no_comp, 0..k_ncol);
-  let x1 = k_red * x_whiten;
+  let x_whiten = k_red * x_pre_whiten;
 
   let ica_type = parse_ica_type(ica_type).unwrap();
   let iter_res: Vec<(Mat<f64>, f64)>  = w_inits
@@ -330,14 +344,14 @@ pub fn stabilised_ica_iters(
     .map(|w_init| {
       match ica_type {
         IcaType::Exp => fast_ica_exp(
-          &x1, 
+          &x_whiten, 
           w_init, 
           ica_params.tol, 
           ica_params.maxit, 
           ica_params.verbose
         ),
         IcaType::LogCosh => fast_ica_logcosh(
-          &x1, 
+          &x_whiten, 
           w_init, 
           ica_params.tol, 
           ica_params.alpha, 
@@ -370,4 +384,101 @@ pub fn stabilised_ica_iters(
   let s_combined = colbind_matrices(s_matrices);
 
   (s_combined, convergence)
+}
+
+
+pub fn stabilised_ica_cv(
+  x: Mat<f64>,
+  no_comp: usize,
+  num_folds: usize,
+  no_iters: usize,
+  ica_type: &str,
+  ica_params: IcaParams,
+  seed: usize,
+) -> (Mat<f64>, Vec<bool>) {
+  // Create random row indices for cross-validation
+  let no_samples = x.nrows();
+  let no_features = x.ncols();
+  let mut indices: Vec<usize> = (0..no_samples).collect();
+  let mut rng = StdRng::seed_from_u64(seed as u64);
+  indices.shuffle(&mut rng);
+
+
+  let fold_size = no_samples / num_folds;
+  let remainder = no_samples % num_folds;
+
+  let mut folds = Vec::with_capacity(num_folds);
+  let mut start = 0;
+
+  for idx in 0..num_folds {
+    let current_fold_size = if idx < remainder {
+      fold_size + 1
+    } else {
+      fold_size
+    };
+
+    let end = start + current_fold_size;
+    folds.push(indices[start..end].to_vec());
+    start = end;
+  }
+
+  
+  // Create bootstrapped samples
+  let cv_matrices: Vec<Mat<f64>> = folds
+    .par_iter()
+    .map(|test_indices| {
+      let train_indices: Vec<usize> = indices
+        .iter()
+        .filter(|&idx| !test_indices.contains(idx))
+        .cloned()
+        .collect();
+      let mut x_i = Mat::<f64>::zeros(train_indices.len(), no_features);
+      for (new_row, old_row) in train_indices.iter().enumerate() {
+        for j in 0..no_features{
+          x_i[(new_row, j)] = x[(*old_row, j)];
+        }
+      }
+      x_i
+    })
+    .collect();
+
+  // Iterate through bootstrapped samples
+  let cv_res: Vec<(Mat<f64>, Vec<bool>)> = cv_matrices
+    .par_iter()
+    .map(|x_i| {
+      let (x_whiten_i, k_i) = prepare_whitening(
+        x_i,
+        true, 
+        seed + 1,
+        no_comp,
+        None,
+        None
+      );
+
+      let (s_i, converged_i) = stabilised_ica_iters(
+        x_whiten_i,
+        k_i,
+        no_comp,
+        no_iters,
+        ica_type,
+        ica_params.clone(),
+        seed + 2,
+      );
+
+      (s_i, converged_i)
+    })
+    .collect();
+
+  let mut s_final = Vec::new();
+  let mut converged_final = Vec::new();
+
+  for (s_i, converged_i) in cv_res{
+    s_final.push(s_i);
+    converged_final.push(converged_i);
+  }
+
+  let s_final = colbind_matrices(s_final);
+  let converged_final = flatten_vector(converged_final);
+
+  (s_final, converged_final)
 }

@@ -1,7 +1,6 @@
 use extendr_api::prelude::*;
 
 use crate::helpers_linalg::*;
-use crate::helpers_ica::*;
 use crate::utils_r_rust::{r_matrix_to_faer, faer_to_r_matrix};
 use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 
@@ -227,145 +226,43 @@ fn rs_contrastive_pca(
   }
 }
 
-/// Prepare the data for whitening
-/// 
-/// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
-/// 
-/// @param x The matrix to whiten. The whitening will happen over the columns.
-/// 
-/// @return A list containing:
-///  \itemize{
-///   \item x - The transposed and scaled data for subsequent usage in ICA.
-///   \item k - The K matrix.
-/// }
-/// 
+
+
+
+
+
 /// @export
 #[extendr]
-fn rs_prepare_whitening(
+fn rs_random_svd(
   x: RMatrix<f64>,
+  rank: usize,
+  seed: usize,
+  oversampling: Option<usize>,
+  n_power_iter: Option<usize>,
 ) -> List {
   let x = r_matrix_to_faer(x);
-  
-  let (x, k) = prepare_whitening(x);
-
-  list!(
-    x = faer_to_r_matrix(x),
-    k = faer_to_r_matrix(k)
-  )
-}
-
-/// Run the Rust implementation of fast ICA.
-/// 
-/// @description This function serves as a wrapper over the fast ICA
-/// implementations in Rust. It assumes a pre-whiten matrix and also an 
-/// intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
-/// around the Rust functions with type checks are provided in the package.
-/// 
-/// @param whiten The whitened matrix.
-/// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-/// @param ica_type One of 'logcosh' or 'exp'.
-/// @param ica_params A list containing:
-///  \itemize{
-///   \item maxit - Integer. Maximum number of iterations for ICA.
-///   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-///   Should be between 1 to 2.
-///   \item max_tol - Maximum tolerance of the algorithm
-///   \item verbose - Verbosity of the function, i.e., shall individual iters
-///   be shown.
-/// }
-/// If the list is empty or the expected elements are not found, default values
-/// are used.
-/// 
-/// @return A list with the following items:
-///  \itemize{
-///   \item mixing - The mixing matrix for subsequent usage.
-///   \item converged - Boolean if the algorithm converged.
-/// }
-/// 
-/// @export
-#[extendr]
-fn rs_fast_ica(
-  whiten: RMatrix<f64>,
-  w_init: RMatrix<f64>,
-  ica_type: &str,
-  ica_params: List,
-) -> extendr_api::Result<List> {
-  // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
-  let ica_params = prepare_ica_params(ica_params);
-
-  let x = r_matrix_to_faer(whiten);
-  let w_init = r_matrix_to_faer(w_init);
-
-  let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
-
-  let a = match ica_type {
-    IcaType::Exp => fast_ica_exp(
-      &x, 
-      &w_init, 
-      ica_params.tol, 
-      ica_params.maxit, 
-      ica_params.verbose
-    ),
-    IcaType::LogCosh => fast_ica_logcosh(
-      &x, 
-      &w_init, 
-      ica_params.tol, 
-      ica_params.alpha, 
-      ica_params.maxit, 
-      ica_params.verbose
-    ),
-  };
-
-  Ok(list!
-    (
-      mixing = faer_to_r_matrix(a.0),
-      converged = a.1 < ica_params.tol
-    )
-  )
-}
-
-/// @export
-#[extendr]
-fn rs_ica_iters(
-  x_whiten: RMatrix<f64>,
-  k: RMatrix<f64>,
-  no_comp: usize,
-  no_random_init: usize,
-  ica_type: &str,
-  random_seed: usize,
-  ica_params: List,
-) -> List {
-  let x_whiten = r_matrix_to_faer(x_whiten);
-  let k = r_matrix_to_faer(k);
-
-  let ica_params = prepare_ica_params(ica_params);
-
-  let (s_combined, converged) = stabilised_ica_iters(
-    x_whiten,
-    k,
-    no_comp,
-    no_random_init,
-    ica_type,
-    ica_params,
-    random_seed,
+  let random_svd_res = randomised_svd(
+    &x, 
+    rank, 
+    seed,
+    oversampling,
+    n_power_iter
   );
 
   list!(
-    s_combined = faer_to_r_matrix(s_combined),
-    converged = converged
+    u = faer_to_r_matrix(random_svd_res.u),
+    v = faer_to_r_matrix(random_svd_res.v),
+    s = random_svd_res.s
   )
 }
+
 
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_random_svd;
   fn rs_cor_upper_triangle;
   fn rs_differential_cor;
   fn rs_contrastive_pca;
-  fn rs_prepare_whitening;
-  fn rs_fast_ica;
-  fn rs_ica_iters;
 }

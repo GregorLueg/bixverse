@@ -152,6 +152,7 @@ d <- edgeR::cpm(d, log = TRUE)
 
 d <- as.matrix(d)
 
+devtools::document()
 devtools::load_all()
 
 new_meta_data <- data.table::data.table(
@@ -160,40 +161,46 @@ new_meta_data <- data.table::data.table(
   gtex_subgrp = coldata$gtex.smtsd
 )
 
-samples_to_keep <- new_meta_data[gtex_subgrp == "Brain - Hippocampus", sample_id]
+samples_to_keep <- new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)", sample_id]
 data_1 = t(d)[samples_to_keep, ]
-meta_data = new_meta_data[gtex_subgrp == "Brain - Hippocampus"]
+meta_data = new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
 
 ica_test = bulk_coexp(raw_data = data_1, meta_data = meta_data)
 ica_test = preprocess_bulk_coexp(ica_test, mad_threshold = 1)
-
-names(attributes(ica_test))
-
-X <- ica_test@processed_data$processed_data
+ica_test = ica_processing(ica_test)
 
 # Rust version
-c(X_norm, K) %<-% rs_prepare_whitening(X)
+tictoc::tic()
+c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, rank = 100, NULL, NULL)
+tictoc::toc()
 
-n_ica_vec <- c(2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 45, 50)
+rextendr::document()
+
+dim(test_2$s_combined)
+
+length(test_2$converged)
+
+max_components <- 100
+
+n_ica_vec <- c(2, 3, 4, seq(from = 5, to = max_components, by = 5))
 
 length(n_ica_vec)
 
-no_randomisations <- 50L
-
 all_scores <- c()
 all_convergence <- c()
-all_loadings <- vector(mode = 'list', length = length(n_ica_vec))
+# all_loadings <- vector(mode = 'list', length = length(n_ica_vec))
 
+tictoc::tic()
 pb = txtProgressBar(initial = 0, max = length(n_ica_vec), style = 3)
 
 stepi = 1
 
 for (no_comp in n_ica_vec) {
-  ica_res <- rs_ica_iters(
-    x_whiten = X_norm,
-    k = K,
+  ica_res <- rs_ica_iters_cv(
+    x_raw = X,
     no_comp = no_comp,
-    no_random_init = no_randomisations,
+    no_folds = 10L,
+    no_random_init = 5L,
     ica_type = "exp",
     random_seed = 123L,
     ica_params = list(
@@ -224,14 +231,17 @@ for (no_comp in n_ica_vec) {
 
   all_scores <- append(all_scores, sort(scores, decreasing = TRUE))
   all_convergence <- append(all_convergence, ica_res$converged)
-  all_loadings[[stepi]] <- ica_res$s_combined
+  # all_loadings[[stepi]] <- ica_res$s_combined
 
   setTxtProgressBar(pb, stepi)
 
   stepi <- stepi + 1
 }
+tictoc::toc()
 
-close(pb)
+sum(n_ica_vec)
+
+length(all_scores)
 
 sum(all_convergence) / length(all_convergence)
 
@@ -250,7 +260,8 @@ ica_stability_res <- list(
 ) %>% data.table::setDT()
 
 
-ica_stability_res[, .(mean_stab = mean(stability)), no_components]
+ica_res_sum = ica_stability_res[, .(mean_stability = mean(stability), sd_stability = sd(stability)), no_components] %>%
+  .[, effect := mean_stability / sd_stability]
 
 ggplot(data = ica_stability_res,
        mapping = aes(x = component_rank,
@@ -277,6 +288,30 @@ ggplot(ica_stability_res,
 
 
 all_loadings_mat <- purrr::reduce(all_loadings, cbind)
+
+## hc method -------
+
+pearson_r <- abs(rs_cor(all_loadings_mat, spearman = FALSE))
+
+dist <- as.dist(1 - pearson_r)
+
+clusters <- hclust(dist)
+
+clusterCut <- cutree(clusters, max(n_ica_vec))
+
+scores <- vector(mode = 'double', length = max(n_ica_vec))
+
+for (cluster in seq_len(max(n_ica_vec))) {
+  cluster_indx <- which(clusterCut == cluster)
+  not_cluster_indx <- which(clusterCut != cluster)
+  within_cluster <- sum(pearson_r[cluster_indx, cluster_indx]) / length(cluster_indx) ^ 2
+  outside_cluster <- sum(pearson_r[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
+  scores[cluster] <- within_cluster - outside_cluster
+}
+
+all_scores <- append(all_scores, sort(scores, decreasing = TRUE))
+
+## graph based method ----------
 
 dim(all_loadings_mat)
 
@@ -454,8 +489,10 @@ S <- cbind(sin((1:1000) / 20), rep((((
 A <- matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
 X <- S %*% A
 
-c(X_norm, K) %<-% rs_prepare_whitening(X)
+c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
 
+rextendr::document()
+rextendr::clean()
 devtools::load_all()
 
 ?fast_ica_rust

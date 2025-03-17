@@ -135,6 +135,7 @@ fn rs_range_norm(
     .collect()
 }
 
+
 extendr_module! {
     mod fun_helpers;
     fn rs_upper_triangle_to_dense;
