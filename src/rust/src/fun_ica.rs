@@ -200,6 +200,39 @@ fn rs_ica_iters(
   )
 }
 
+
+
+/// Run ICA with cross-validation and random initialsiation
+/// 
+/// @description This function will split the data into `no_folds` and apply
+/// ICA with `no_random_inits` over that fold.
+/// 
+/// @param x_raw Numeric matrix. The processed data (no whitening function has
+/// been applied yet.)
+/// @param no_comp Integer. Number of components to test for.
+/// @param no_random_init Integer. Number of random initialisations. 
+/// @param ica_type String. Which type of ICA shall be run. 
+/// @param random_seed Integer. For reproducibility.
+/// @param ica_params A list containing:
+/// \itemize{
+///   \item maxit - Integer. Maximum number of iterations for ICA.
+///   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+///   Should be between 1 to 2.
+///   \item max_tol - Maximum tolerance of the algorithm
+///   \item verbose - Verbosity of the function, i.e., shall individual iters
+///   be shown.
+/// }
+/// If the list is empty or the expected elements are not found, default values
+/// are used.
+/// 
+/// @return A list containing:
+/// \itemize{
+///   \item s_combined - The combined matrices for S. Dimensions are nrows = 
+///   features; and ncols = ncomp * no_random_init.
+///   \item converged - Boolean vector indicating if the respective run reached
+///   convergence. Length = no_random_init
+/// }
+/// 
 /// @export
 #[extendr]
 fn rs_ica_iters_cv(

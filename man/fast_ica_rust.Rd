@@ -26,16 +26,14 @@ fast_ica_rust(
 
 \item{seed}{Integer. Seed to ensure reproducible results.}
 
-\item{ica_params}{A list containing:
+\item{ica_params}{List. The ICA parameters, a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.
 \item alpha - Float. The alpha parameter for the logcosh version of ICA.
 Should be between 1 to 2.
 \item max_tol - Maximum tolerance of the algorithm.
 \item verbose - Controls verbosity of the function.
-}
-This list is optional. If a value cannot be found, default parameters will be
-used.}
+}}
 }
 \value{
 A list containing:

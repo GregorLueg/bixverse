@@ -152,7 +152,10 @@ d <- edgeR::cpm(d, log = TRUE)
 
 d <- as.matrix(d)
 
+rextendr::clean()
+rextendr::document()
 devtools::document()
+devtools::check()
 devtools::load_all()
 
 new_meta_data <- data.table::data.table(
@@ -168,149 +171,143 @@ meta_data = new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
 ica_test = bulk_coexp(raw_data = data_1, meta_data = meta_data)
 ica_test = preprocess_bulk_coexp(ica_test, mad_threshold = 1)
 ica_test = ica_processing(ica_test)
-
-# Rust version
-tictoc::tic()
-c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, rank = 100, NULL, NULL)
-tictoc::toc()
-
-rextendr::document()
-
-dim(test_2$s_combined)
-
-length(test_2$converged)
-
-max_components <- 100
-
-n_ica_vec <- c(2, 3, 4, seq(from = 5, to = max_components, by = 5))
-
-length(n_ica_vec)
-
-all_scores <- c()
-all_convergence <- c()
-# all_loadings <- vector(mode = 'list', length = length(n_ica_vec))
-
-tictoc::tic()
-pb = txtProgressBar(initial = 0, max = length(n_ica_vec), style = 3)
-
-stepi = 1
-
-?rs_ica_iters()
-
-no_comp = 2L
-
-
-get_stability_scores <- function(s, ncomp) {
-
-}
-
-
-c(s_combined, converged) %<-% rs_ica_iters_cv(
-  x_raw = X,
-  no_comp = no_comp,
-  no_folds = 10L,
-  no_random_init = 5L,
-  ica_type = "exp",
-  random_seed = 123L,
+ica_test = ica_evaluate_comp(
+  ica_test,
+  ica_type = 'logcosh',
   ica_params = list(
     maxit = 200L,
     alpha = 1.0,
     max_tol = 0.0001,
     verbose = FALSE
+  ),
+  iter_params = list(
+    cross_validate = FALSE,
+    random_init = 50L,
+    folds = 10L
   )
 )
 
-n_comp = 2L
-s <- s_combined
-return_centrotypes = TRUE
+?ica_evaluate_comp
 
-abs_cor <- abs(rs_cor(s, spearman = FALSE))
-dist <- as.dist(1 - abs_cor)
+get_params(ica_test, TRUE, TRUE)
 
-clusters <- hclust(dist)
+object = ica_test
+ica_type = 'logcosh'
+ncomp_params = list(
+  max_comp = 100L,
+  steps = 5L,
+  custom_seq = NULL
+)
+iter_params = list(
+  bootstrap = FALSE,
+  random_init = 50L,
+  folds = 10L
+)
+ica_params = list(
+  maxit = 200L,
+  alpha = 1.0,
+  max_tol = 0.0001,
+  verbose = FALSE
+)
+random_seed = 42L
+.verbose = TRUE
 
-clusterCut <- cutree(tree = clusters, k = no_comp)
+detection_method <- S7::prop(object, "params")[["detection_method"]]
 
-scores <- vector(mode = 'double', length = no_comp)
+X_raw <- S7::prop(object, "processed_data")[['processed_data']]
+X1 <- S7::prop(object, "processed_data")[["X1"]]
+K <- S7::prop(object, "processed_data")[["K"]]
 
-for (cluster in seq_len(no_comp)) {
-  cluster_indx <- which(clusterCut == cluster)
-  not_cluster_indx <- which(clusterCut != cluster)
-  within_cluster <- sum(abs_cor[cluster_indx, cluster_indx]) / length(cluster_indx) ^ 2
-  outside_cluster <- sum(abs_cor[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
-  scores[cluster] <- within_cluster - outside_cluster
+n_comp_vector <- if (is.null(ncomp_params$custom_seq)) {
+  with(ncomp_params, c(2, 3, 4, seq(
+    from = 5, to = max_comp, by = steps
+  )))
+} else {
+  ncomp_params$custom_seq
 }
 
-cluster <- 2L
+if (.verbose)
+  message(sprintf("Using a total of %i different n_comp parameters", length(n_comp_vector)))
 
-cluster_indx <- which(clusterCut == cluster)
-not_cluster_indx <- which(clusterCut != cluster)
-
-max_similarity <- which(rowSums(abs_cor[cluster_indx, cluster_indx]) == max(rowSums(abs_cor[cluster_indx, cluster_indx])))
-
-abs_cor[cluster_indx, cluster_indx][1:5, 1:5]
-
-
-
-s_combined[, cluster_indx[max_similarity], drop = FALSE]
-
-for (no_comp in n_ica_vec) {
-  c(s_combined, converged) %<-% rs_ica_iters_cv(
-    x_raw = X,
-    no_comp = no_comp,
-    no_folds = 10L,
-    no_random_init = 5L,
-    ica_type = "exp",
-    random_seed = 123L,
-    ica_params = list(
-      maxit = 200L,
-      alpha = 1.0,
-      max_tol = 0.0001,
-      verbose = FALSE
+# Set up the loop
+if (iter_params$bootstrap) {
+  total_randomisations <- iter_params$random_init * iter_params$folds
+  no_ica_runs <- total_randomisations * length(n_comp_vector)
+  if (.verbose)
+    message(
+      sprintf(
+        "Using bootstrapping with %i folds and %i random initialisations for a total of %i ICA runs",
+        iter_params$folds,
+        iter_params$random_init,
+        no_ica_runs
+      )
     )
+} else {
+  total_randomisations <- iter_params$random_init
+  no_ica_runs <- iter_params$random_init * length(n_comp_vector)
+  if (.verbose)
+    message(
+      sprintf(
+        "Using %i random initialisations for a total of %i ICA runs",
+        iter_params$random_init,
+        no_ica_runs
+      )
+    )
+}
+
+all_scores <- c()
+all_convergence <- c()
+
+pb = txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
+
+for (i in seq_along(n_comp_vector)) {
+  no_comp <- n_comp_vector[[i]]
+  # Get the combined S matrix and convergence information
+  c(s_combined, converged) %<-% with(iter_params, switch(
+    as.integer(iter_params$bootstrap) + 1,
+    rs_ica_iters(
+      x_processed = X1,
+      k = K,
+      no_comp = no_comp,
+      no_random_init = random_init,
+      ica_type = ica_type,
+      random_seed = random_seed,
+      ica_params = ica_params
+    ),
+    rs_ica_iters_cv(
+      x_raw = X_raw,
+      no_comp = no_comp,
+      no_folds = folds,
+      no_random_init = random_init,
+      ica_type = ica_type,
+      random_seed = random_seed,
+      ica_params = ica_params
+    )
+  ))
+
+  c(stability_scores, centrotype) %<-% .community_stability(
+    no_comp = as.integer(no_comp),
+    s = s_combined,
+    return_centrotype = FALSE
   )
 
-  pearson_r <- abs(rs_cor(ica_res$s_combined, spearman = FALSE))
+  all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
+  all_convergence <- append(all_convergence, converged)
 
-  dist <- as.dist(1 - pearson_r)
-
-  clusters <- hclust(dist)
-
-  clusterCut <- cutree(clusters, no_comp)
-
-  scores <- vector(mode = 'double', length = no_comp)
-
-  for (cluster in seq_len(no_comp)) {
-    cluster_indx <- which(clusterCut == cluster)
-    not_cluster_indx <- which(clusterCut != cluster)
-    within_cluster <- sum(pearson_r[cluster_indx, cluster_indx]) / length(cluster_indx) ^ 2
-    outside_cluster <- sum(pearson_r[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
-    scores[cluster] <- within_cluster - outside_cluster
-  }
-
-  all_scores <- append(all_scores, sort(scores, decreasing = TRUE))
-  all_convergence <- append(all_convergence, ica_res$converged)
-  # all_loadings[[stepi]] <- ica_res$s_combined
-
-  setTxtProgressBar(pb, stepi)
-
-  stepi <- stepi + 1
+  setTxtProgressBar(pb, i)
 }
-tictoc::toc()
 
-sum(n_ica_vec)
+close(pb)
 
-length(all_scores)
-
-sum(all_convergence) / length(all_convergence)
-
-ica_comps_rep <- do.call(c, purrr::map(n_ica_vec, \(x) {
+ica_comps_rep <- unlist(purrr::map(n_comp_vector, \(x) {
   rep(x, x)
 }))
-
-ica_comps_no <- do.call(c, purrr::map(n_ica_vec, \(x) {
+ica_comps_no <- unlist(purrr::map(n_comp_vector, \(x) {
   seq_len(x)
 }))
+
+convergence_split <- split(all_convergence, ceiling(seq_along(all_convergence)/total_randomisations))
+names(convergence_split) <- n_comp_vector
 
 ica_stability_res <- list(
   component_rank = ica_comps_no,
@@ -318,163 +315,15 @@ ica_stability_res <- list(
   stability = all_scores
 ) %>% data.table::setDT()
 
+prop_converged <- purrr::imap_dfr(convergence_split, \(bool, x) {
+  total_converged <- sum(bool) / length(bool)
+  data.table(no_components = as.integer(x), converged = total_converged)
+})
 
-ica_res_sum = ica_stability_res[, .(mean_stability = mean(stability), sd_stability = sd(stability)), no_components] %>%
-  .[, effect := mean_stability / sd_stability]
-
-ggplot(data = ica_stability_res,
-       mapping = aes(x = component_rank,
-                     y = stability)) +
-  geom_line(mapping = aes(color = factor(no_components)), linewidth = 1) +
-  scale_color_viridis_d(option = "C") +
-  theme_minimal() +
-  labs(color = "No ICAs") +
-  ylim(0, 1) +
-  xlab("Component rank") +
-  ylab("Stability index")
+ica_res_sum = ica_stability_res[, .(mean_stability = mean(stability)), no_components] %>%
+  merge(., prop_converged, by = 'no_components')
 
 
-ggplot(ica_stability_res,
-       aes(x = component_rank,
-           y = stability)) +
-  geom_point(mapping = aes(colour = factor(no_components))) +
-  scale_color_viridis_d(option = "C") +
-  theme_minimal() +
-  labs(color = "No ICAs") +
-  ylim(0, 1) +
-  xlab("Component rank") +
-  ylab("Stability index")
-
-
-all_loadings_mat <- purrr::reduce(all_loadings, cbind)
-
-## hc method -------
-
-pearson_r <- abs(rs_cor(all_loadings_mat, spearman = FALSE))
-
-dist <- as.dist(1 - pearson_r)
-
-clusters <- hclust(dist)
-
-clusterCut <- cutree(clusters, max(n_ica_vec))
-
-scores <- vector(mode = 'double', length = max(n_ica_vec))
-
-for (cluster in seq_len(max(n_ica_vec))) {
-  cluster_indx <- which(clusterCut == cluster)
-  not_cluster_indx <- which(clusterCut != cluster)
-  within_cluster <- sum(pearson_r[cluster_indx, cluster_indx]) / length(cluster_indx) ^ 2
-  outside_cluster <- sum(pearson_r[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
-  scores[cluster] <- within_cluster - outside_cluster
-}
-
-all_scores <- append(all_scores, sort(scores, decreasing = TRUE))
-
-## graph based method ----------
-
-dim(all_loadings_mat)
-
-pearson_r_upper_triangle = rs_cor_upper_triangle(all_loadings_mat, shift = 1L, spearman = FALSE)
-
-feature_names <- purrr::map2(n_ica_vec, no_randomisations, \(comp, iters) {
-  sprintf(
-    "IC_%i_ncomp_%i_iter_%i",
-    seq_len(comp),
-    comp,
-    rep(seq_len(no_randomisations), each = comp)
-  )
-}) %>%
-  do.call(c, .)
-
-ica_cor_results = upper_triangular_cor_mat$new(
-  cor_coef = pearson_r_upper_triangle,
-  features = feature_names,
-  shift = 1L
-)
-
-.verbose = TRUE
-kernel_bandwidth = .15
-min_affinity = 0.01
-
-graph_df <- ica_cor_results$get_data_table(.verbose = .verbose) %>%
-  .[, cor_abs := abs(cor)] %>%
-  .[, dist := 1 - cor_abs] %>%
-  .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
-  .[, affinity := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
-  .[affinity >= min_affinity] %>%
-  .[, c("feature_a", "feature_b", "affinity")] %>%
-  data.table::setnames(
-    .,
-    old = c("feature_a", "feature_b", "affinity"),
-    new = c("from", "to", "weight")
-  )
-
-correlation_examples <- 1 - seq(from = 0, to = 1, length.out = 101)
-
-kernel <- rs_gaussian_affinity_kernel(correlation_examples, bandwidth = .15)
-
-1 - max(correlation_examples[which(kernel > 0.01)])
-
-par(mfcol = c(1, 1))
-
-plot(correlation_examples, kernel)
-
-ica_graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
-ica_graph <- igraph::simplify(ica_graph)
-
-resolution_params = list(min_res = 0.1,
-                         max_res = 10,
-                         number_res = 15L)
-
-resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
-
-.temp_workers <- 5L
-
-future::plan(future::multisession(workers = .temp_workers))
-
-modularity_scores <- furrr::future_map_dbl(
-  resolutions,
-  \(res) {
-    set.seed(123L)
-    ica_communities <- igraph::cluster_leiden(
-      ica_graph,
-      objective_function = 'modularity',
-      resolution = res,
-      n_iterations = 5L
-    )
-
-    modularity <- igraph::modularity(x = ica_graph, membership = ica_communities$membership)
-
-    return(modularity)
-  },
-  .progress = TRUE,
-  .options = furrr::furrr_options(seed = TRUE)
-)
-
-modularity_scores
-
-final_res = resolutions[which(modularity_scores == max(modularity_scores))]
-
-ica_communities <- igraph::cluster_leiden(
-  ica_graph,
-  objective_function = 'modularity',
-  resolution = final_res,
-  n_iterations = 5L
-)
-
-table(ica_communities$membership)
-
-sum(n_ica_vec) * 50L
-
-final_data <- list(
-  node_name = ica_communities$names,
-  membership = ica_communities$membership
-) %>% setDT()
-
-final_data[membership == 20]
-
-modularity <- igraph::modularity(x = ica_graph, membership = ica_communities$membership)
-modularity
 
 # Is my ICA implementation correct ... ? ---------------------------------------
 
