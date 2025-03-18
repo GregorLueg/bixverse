@@ -6,6 +6,10 @@
 
 <img src="/misc/pics/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
 
+</br>
+
+**THIS IS THE ALPHA VERSION OF THE PACKAGE**
+
 ## *Description* 
 
 This package contains various bioinformatics and computational biology workflows
