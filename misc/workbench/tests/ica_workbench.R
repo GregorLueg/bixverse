@@ -195,8 +195,67 @@ pb = txtProgressBar(initial = 0, max = length(n_ica_vec), style = 3)
 
 stepi = 1
 
+?rs_ica_iters()
+
+no_comp = 2L
+
+
+get_stability_scores <- function(s, ncomp) {
+
+}
+
+
+c(s_combined, converged) %<-% rs_ica_iters_cv(
+  x_raw = X,
+  no_comp = no_comp,
+  no_folds = 10L,
+  no_random_init = 5L,
+  ica_type = "exp",
+  random_seed = 123L,
+  ica_params = list(
+    maxit = 200L,
+    alpha = 1.0,
+    max_tol = 0.0001,
+    verbose = FALSE
+  )
+)
+
+n_comp = 2L
+s <- s_combined
+return_centrotypes = TRUE
+
+abs_cor <- abs(rs_cor(s, spearman = FALSE))
+dist <- as.dist(1 - abs_cor)
+
+clusters <- hclust(dist)
+
+clusterCut <- cutree(tree = clusters, k = no_comp)
+
+scores <- vector(mode = 'double', length = no_comp)
+
+for (cluster in seq_len(no_comp)) {
+  cluster_indx <- which(clusterCut == cluster)
+  not_cluster_indx <- which(clusterCut != cluster)
+  within_cluster <- sum(abs_cor[cluster_indx, cluster_indx]) / length(cluster_indx) ^ 2
+  outside_cluster <- sum(abs_cor[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
+  scores[cluster] <- within_cluster - outside_cluster
+}
+
+cluster <- 2L
+
+cluster_indx <- which(clusterCut == cluster)
+not_cluster_indx <- which(clusterCut != cluster)
+
+max_similarity <- which(rowSums(abs_cor[cluster_indx, cluster_indx]) == max(rowSums(abs_cor[cluster_indx, cluster_indx])))
+
+abs_cor[cluster_indx, cluster_indx][1:5, 1:5]
+
+
+
+s_combined[, cluster_indx[max_similarity], drop = FALSE]
+
 for (no_comp in n_ica_vec) {
-  ica_res <- rs_ica_iters_cv(
+  c(s_combined, converged) %<-% rs_ica_iters_cv(
     x_raw = X,
     no_comp = no_comp,
     no_folds = 10L,

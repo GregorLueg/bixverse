@@ -126,6 +126,12 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     return(object)
   }
 
+  # Get data
+  X_raw <- S7::prop(object, "processed_data")[['processed_data']]
+  X1 <- S7::prop(object, "processed_data")[["X1"]]
+  K <- S7::prop(object, "processed_data")[["K"]]
+
+
   # Prepare the n_comp vector
   n_comp_vector <- if (is.null(ncomp_params$custom_seq)) {
     with(ncomp_params, c(2, 3, 4, seq(
@@ -164,12 +170,37 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   all_scores <- c()
   all_convergence <- c()
 
-
-
+  for (i in seq_along(no_ica_runs)) {
+    no_comp <- no_ica_runs[[i]]
+    # Get the combined S matrix and convergence information
+    c(s_combined, converged) %<-% with(iter_params, switch(
+      as.integer(iter_params$bootstrap) + 1,
+      rs_ica_iters(
+        x_processed = X1,
+        k = K,
+        no_comp = no_comp,
+        no_random_init = random_init,
+        ica_type = ica_type,
+        random_seed = random_seed,
+        ica_params = ica_params
+      ),
+      rs_ica_iters_cv(
+        x_raw = X_raw,
+        no_comp = no_comp,
+        no_folds = folds,
+        no_random_init = random_init,
+        ica_type = ica_type,
+        random_seed = random_seed,
+        ica_params = ica_params
+      )
+    ))
+  }
 }
 
 
 # helpers ----------------------------------------------------------------------
+
+## component stability ---------------------------------------------------------
 
 ## general ICA function --------------------------------------------------------
 

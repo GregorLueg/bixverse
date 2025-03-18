@@ -131,6 +131,8 @@ plot(sqrt(results_rs$s), sqrt(result_random$Sigma))
 
 plot(sqrt(results_rs$s), sqrt(result_random$Sigma))
 
+x <- FALSE
+switch(as.integer(x) + 1, "No", "Yes")
 
 tictoc::tic()
 result_real <- La.svd(v)
@@ -185,4 +187,10 @@ result_real$u
 
 plot(sqrt(result_random$Sigma), sqrt(result_real$d[1:n]))
 
+
+a <- "A"
+
+params = list(b = "B", c = "C", d = "D")
+
+with(params, paste0(a, b, c, d))
 
