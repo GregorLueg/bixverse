@@ -40,8 +40,10 @@ structure of gene loadings for matrix factorisation-based co-expression module d
 This is a mid/longer term project to leverage Rust to keep the sparse count matrices
 on disk (via h5?) and leverage Rust for fast on-disk computations of the data 
 and avoid loading unnecessary data into memory where avoidable for single cell
-and spatial datasets. Think  [BPCell](https://bnprks.github.io/BPCells/index.html) 
-with Rust instead of C++. This would allow analyses of much larger datasets on local infrastructure.
+and spatial datasets.  Think  [BPCell](https://bnprks.github.io/BPCells/index.html) 
+with Rust instead of C++. The base class structure would be inspired on the annddata structure
+but with Rust implementation allow analyses of much larger datasets on local infrastructure.
+
 Core functionality to be implemented:
 
 - On disk normalisation and rapid retrieval of count data via CSC and CSR format
