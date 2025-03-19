@@ -5,7 +5,7 @@
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
 niche algorithms that have not been battle-tested, but provide simple and fast
-core function/methods.
+core function/methods that are broadly used.
 
 ## Usability of the package
 
@@ -37,10 +37,11 @@ structure of gene loadings for matrix factorisation-based co-expression module d
 
 ## Single cell class and methods 
 
-This is a mid/longer term project to leverage Rust to keep the count matrices
+This is a mid/longer term project to leverage Rust to keep the sparse count matrices
 on disk (via h5?) and leverage Rust for fast on-disk computations of the data 
-and avoid loading unnecessary data into memory where avoidable. Think 
-[BPCell](https://bnprks.github.io/BPCells/index.html) with Rust instead of C++. 
+and avoid loading unnecessary data into memory where avoidable for single cell
+and spatial datasets. Think  [BPCell](https://bnprks.github.io/BPCells/index.html) 
+with Rust instead of C++. This would allow analyses of much larger datasets on local infrastructure.
 Core functionality to be implemented:
 
 - On disk normalisation and rapid retrieval of count data via CSC and CSR format
@@ -49,3 +50,5 @@ Core functionality to be implemented:
 - Rapid kNN (sNN?) graph generation for community detection and 2D visualisations
 - Wrappers to quickly do (pseudo-bulked) DGE via appropriate methods and Wilcox-
 based DGEs.
+- Wrappers to provide guidelines on coexpression module detection and upstream
+regulator prediction (e.g. [hdWGCNA](https://smorabit.github.io/hdWGCNA)).
