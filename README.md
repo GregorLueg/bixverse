@@ -14,9 +14,9 @@
 
 This package contains various bioinformatics and computational biology workflows
 that are being routinely used, ranging from gene set enrichment analyses, to 
-network-based approaches to module detection in bulk RNAseq. The package tries
-to implement bare bone versions of most of the functionalities, leveraging Rust
-in any computational bottlenecks to go *brrrrrrr* (i.e., fast).
+network-based approaches for module detection in bulk RNAseq. The package provides
+useful, bare bone versions of most bioinformatics functionalities and leverages Rust
+to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Installation*
 
