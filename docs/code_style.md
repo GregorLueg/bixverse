@@ -2,9 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 19.03.2025*
-
-</br></br>
+*Last update: 19.03.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -23,9 +21,9 @@ complexity. Class inheritance structures that feel smart initially but make debu
 a huge pain, 8 layers of abstractions to actually find the function that is 
 causing the bug or weird convoluted data structures. The motto should be at all
 times: 
-</br></br> 
+</br>
 **Keep it Simple, Stupid (KISS)**. 
-</br></br> 
+</br>
 A good way to think about all of this is that there is a complexity budget to 
 any code base and we would like to not spend too much energy on unnecessary 
 abstractions over making key functionalities blazingly fast and memory-efficient.
