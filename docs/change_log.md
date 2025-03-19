@@ -4,7 +4,7 @@
 
 ### Version **0.0.1.0**
 
-*Alpha release* Package initialisation and first functionalities added.
+**Alpha release** Package initialisation and first functionalities added.
 
 #### New features
 
