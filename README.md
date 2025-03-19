@@ -8,7 +8,7 @@
 
 </br>
 
-**THIS IS THE ALPHA VERSION OF THE PACKAGE**
+**THIS IS THE ALPHA VERSION OF THE PACKAGE WHICH IS NOW PUBLIC**
 
 ## *Description* 
 
@@ -16,9 +16,19 @@ This package contains various bioinformatics and computational biology workflows
 that are being routinely used, ranging from gene set enrichment analyses, to 
 network-based approaches to module detection in bulk RNAseq. The package tries
 to implement bare bone versions of most of the functionalities, leveraging Rust
-in any computational bottlenecks to go *brrrrrrr*. 
+in any computational bottlenecks to go *brrrrrrr* (i.e., fast).
 
 ## *Installation*
+
+You will need Rust on your system to have the package working. An installation
+guide is provided [here](https://www.rust-lang.org/tools/install).
+
+## *Docs*
+
+- [Why Rust](/docs/why_rust.md)
+- [Code Style](/docs/code_style.md)
+- [Roadmap](/docs/code_style.md)
+- [Change log](/docs/change_log.md)
 
 
 
