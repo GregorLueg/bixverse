@@ -5,7 +5,7 @@
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
 niche algorithms that have not been battle-tested, but provide simple and fast
-core function/methods that are broadly used.
+core function/methods.
 
 ## Usability of the package
 
@@ -37,22 +37,17 @@ structure of gene loadings for matrix factorisation-based co-expression module d
 
 ## Single cell class and methods 
 
-This is a mid/longer term project to leverage Rust to keep the sparse count matrices
+This is a mid/longer term project to leverage Rust to keep the count matrices
 on disk (via h5?) and leverage Rust for fast on-disk computations of the data 
-and avoid loading unnecessary data into memory where avoidable for single cell
-and spatial datasets.  Think  [BPCell](https://bnprks.github.io/BPCells/index.html) 
-with Rust instead of C++. The base class structure would be inspired on the annddata structure
-but with Rust implementation allow analyses of much larger datasets on local infrastructure.
-
+and avoid loading unnecessary data into memory where avoidable. Think 
+[BPCell](https://bnprks.github.io/BPCells/index.html) with Rust instead of C++. 
 Core functionality to be implemented:
 
 - On disk normalisation and rapid retrieval of count data via CSC and CSR format
 - On disk HVG detection
 - On disk scaling and PCA for dimension reduction
 - Rapid kNN (sNN?) graph generation for community detection and 2D visualisations
-- Implementation of ambient RNA correction?
-- Wrapper for batch correction implementation e.g. [Harmony](https://www.nature.com/articles/s41592-019-0619-0)
-- Wrappers to quickly do (pseudo-bulked) DGE via appropriate methods and Wilcox-
-based DGEs.
-- Wrappers to provide guidelines on coexpression module detection and upstream
-regulator prediction (e.g. [hdWGCNA](https://smorabit.github.io/hdWGCNA)).
+- Wrappers to quickly do (pseudo-bulked) DGE via appropriate methods and Wilcox-based 
+DGEs.
+- [AUCell like calculations](https://www.nature.com/articles/nmeth.4463) for 
+enrichment of gene sets on a per cell basis.
