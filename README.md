@@ -27,7 +27,7 @@ guide is provided [here](https://www.rust-lang.org/tools/install).
 
 - [Why Rust](/docs/why_rust.md)
 - [Code Style](/docs/code_style.md)
-- [Roadmap](/docs/code_style.md)
+- [Roadmap](/docs/roadmap.md)
 - [Change log](/docs/change_log.md)
 
 
