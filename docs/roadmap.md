@@ -50,6 +50,8 @@ Core functionality to be implemented:
 - On disk HVG detection
 - On disk scaling and PCA for dimension reduction
 - Rapid kNN (sNN?) graph generation for community detection and 2D visualisations
+- Implementation of ambient RNA correction?
+- Wrapper for batch correction implementation e.g. [Harmony](https://www.nature.com/articles/s41592-019-0619-0)
 - Wrappers to quickly do (pseudo-bulked) DGE via appropriate methods and Wilcox-
 based DGEs.
 - Wrappers to provide guidelines on coexpression module detection and upstream
