@@ -74,7 +74,7 @@ fn rs_upper_triangle_to_dense(
     }
   }
 
-  faer_to_r_matrix(mat)
+  faer_to_r_matrix(mat.as_ref())
 }
 
 /// Apply a Gaussian affinity kernel to a distance metric

@@ -20,10 +20,10 @@ use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 fn rs_covariance(
   x: RMatrix<f64>
 ) -> extendr_api::RArray<f64, [usize; 2]> {
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
   let covar = column_covariance(&mat);
 
-  faer_to_r_matrix(covar)
+  faer_to_r_matrix(covar.as_ref())
 }
 
 /// Calculate the column wise correlations.
@@ -44,14 +44,14 @@ fn rs_cor(
   x: RMatrix<f64>,
   spearman: bool
 ) -> extendr_api::RArray<f64, [usize; 2]> {
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
 
   let cor = column_correlation(
     &mat,
     spearman
   );
 
-  faer_to_r_matrix(cor)
+  faer_to_r_matrix(cor.as_ref())
 }
 
 /// Calculate the column wise correlations.
@@ -78,7 +78,7 @@ fn rs_cor_upper_triangle(
   shift: usize,
 ) -> Vec<f64> {
   // Calculate the correlations
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
   let cor = column_correlation(
     &mat,
     spearman
@@ -135,8 +135,8 @@ fn rs_differential_cor(
   );
   let n_sample_a = x_a.nrows();
   let n_sample_b = x_b.nrows();
-  let mat_a = r_matrix_to_faer(x_a);
-  let mat_b = r_matrix_to_faer(x_b);
+  let mat_a = r_matrix_to_faer(&x_a);
+  let mat_b = r_matrix_to_faer(&x_b);
 
   let cor_a = column_correlation(&mat_a, spearman);
   let cor_b = column_correlation(&mat_b, spearman);
@@ -193,9 +193,9 @@ fn rs_contrastive_pca(
   n_pcs: usize,
   return_loadings: bool
 ) -> List {
-  let target_covar = r_matrix_to_faer(target_covar);
-  let background_covar = r_matrix_to_faer(background_covar);
-  let target_mat = r_matrix_to_faer(target_mat);
+  let target_covar = r_matrix_to_faer(&target_covar);
+  let background_covar = r_matrix_to_faer(&background_covar);
+  let target_mat = r_matrix_to_faer(&target_mat);
 
   let final_covar = target_covar - alpha * background_covar;
 
@@ -215,12 +215,12 @@ fn rs_contrastive_pca(
 
   if return_loadings {
     list!(
-      factors = faer_to_r_matrix(c_pca_factors),
-      loadings = faer_to_r_matrix(c_pca_loadings)
+      factors = faer_to_r_matrix(c_pca_factors.as_ref()),
+      loadings = faer_to_r_matrix(c_pca_loadings.as_ref())
     )
   } else {
     list!(
-      factors = faer_to_r_matrix(c_pca_factors),
+      factors = faer_to_r_matrix(c_pca_factors.as_ref()),
       loadings = r!(NULL)
     )
   }
@@ -240,7 +240,7 @@ fn rs_random_svd(
   oversampling: Option<usize>,
   n_power_iter: Option<usize>,
 ) -> List {
-  let x = r_matrix_to_faer(x);
+  let x = r_matrix_to_faer(&x);
   let random_svd_res = randomised_svd(
     &x, 
     rank, 
@@ -250,8 +250,8 @@ fn rs_random_svd(
   );
 
   list!(
-    u = faer_to_r_matrix(random_svd_res.u),
-    v = faer_to_r_matrix(random_svd_res.v),
+    u = faer_to_r_matrix(random_svd_res.u.as_ref()),
+    v = faer_to_r_matrix(random_svd_res.v.as_ref()),
     s = random_svd_res.s
   )
 }

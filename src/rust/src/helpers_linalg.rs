@@ -71,46 +71,48 @@ pub fn scale_matrix_col(
   scale_sd: bool
 ) -> Mat<f64>{
   let n_rows = mat.nrows();
-  let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
-  let means = (ones.transpose() * mat) / n_rows as f64;
-  let centered = mat - &ones * &means;
-
-  if !scale_sd {
-    return centered;
-  }
-
-  let squared_diff = Mat::from_fn(
-    centered.nrows(),
-    centered.ncols(),
-  |i, j| {
-      let x = centered.get(i, j);
-      x.powi(2)
+    let n_cols = mat.ncols();
+    
+    let mut means = vec![0.0; n_cols];
+    for j in 0..n_cols {
+        for i in 0..n_rows {
+            means[j] += mat[(i, j)];
+        }
+        means[j] /= n_rows as f64;
     }
-  );
-
-  let sum_squared_diff = ones.transpose() * squared_diff;
-  let variances = sum_squared_diff / (n_rows as f64 - 1.0);
-
-  let standard_dev = Mat::from_fn(
-    variances.nrows(),
-    variances.ncols(),
-    |i, j| {
-      let x = variances.get(i, j);
-      let x = x.sqrt();
-      if x < 1e-10 { 1.0 } else { x }
+    
+    let mut result = mat.clone();
+    for j in 0..n_cols {
+        let mean = means[j];
+        for i in 0..n_rows {
+            result[(i, j)] -= mean;
+        }
     }
-  );
-
-  let mut scaled = centered.clone();
-  let n_cols = mat.ncols();
-
-  for j in 0..n_cols {
-    for i in 0..n_rows {
-      scaled[(i, j)] = centered[(i, j)] / standard_dev[(0, j)];
+    
+    if !scale_sd {
+        return result;
     }
-  }
-  
-  scaled
+    
+    let mut std_devs = vec![0.0; n_cols];
+    for j in 0..n_cols {
+        for i in 0..n_rows {
+            let val = result[(i, j)];
+            std_devs[j] += val * val;
+        }
+        std_devs[j] = (std_devs[j] / (n_rows as f64 - 1.0)).sqrt();
+        if std_devs[j] < 1e-10 {
+            std_devs[j] = 1.0;
+        }
+    }
+    
+    for j in 0..n_cols {
+        let std_dev = std_devs[j];
+        for i in 0..n_rows {
+            result[(i, j)] /= std_dev;
+        }
+    }
+    
+    result
 }
 
 /// Calculate the column-wise co-variance
@@ -148,6 +150,7 @@ pub fn column_correlation(
 
   cor
 }
+
 
 /// Calculate differential correlations
 pub fn calculate_diff_correlation(
