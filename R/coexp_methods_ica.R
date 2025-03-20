@@ -89,8 +89,9 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
 #' @param ica_type String, element of `c("logcosh", "exp")`.
-#' @param iter_params List. This list controls the randomisation parameters
-#' for estimating the stability of the components. Has the following elements:
+#' @param iter_params List. This list controls the randomisation parameters for
+#' the ICA runs, see [bixverse::ica_randomisation_params()] for estimating
+#' stability. Has the following elements:
 #' \itemize{
 #'  \item cross_validate - Boolean. Shall the data be split into different
 #'  chunks on which ICA is run. This will slow down the function substantially,
@@ -101,16 +102,18 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #'  used. To note, you will run per ncomp random_init * fold ICA runs which
 #'  can quickly increase.
 #' }
-#' @param ncomp_params List. Parameters for the ncomp to iterate through. In the
-#' standard setting, `c(2, 3, 4, 5)` will be tested and then in steps until
-#' max_no_comp will be tested, i.e., `c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)`.
+#' @param ncomp_params List. Parameters for the ncomp to iterate through, see
+#' [bixverse::ica_ncomp_params()]. In the standard setting, `c(2, 3, 4, 5)` will
+#' be tested and then in steps until max_no_comp will be tested, i.e.,
+#' `c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)`.
 #' \itemize{
 #'  \item max_no_comp - Maximum number of ncomp to test.
 #'  \item steps - Integer. In which steps to move from 5 onwards.
 #'  \item custom_seq - An integer vector. If you wish to provide a custom version
 #'  of no_comp to iterate through.
 #' }
-#' @param ica_params List. The ICA parameters, a list containing:
+#' @param ica_params List. The ICA parameters, see [bixverse::ica_general_params()]
+#' wrapper function. This function generates a list containing:
 #' \itemize{
 #'  \item maxit - Integer. Maximum number of iterations for ICA.
 #'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
@@ -130,22 +133,9 @@ ica_evaluate_comp <- S7::new_generic(
   dispatch_args = "object",
   fun = function(object,
                  ica_type = c("logcosh", "exp"),
-                 iter_params = list(
-                   cross_validate = FALSE,
-                   random_init = 50L,
-                   folds = 10L
-                 ),
-                 ncomp_params = list(
-                   max_no_comp = 100L,
-                   steps = 5L,
-                   custom_seq = NULL
-                 ),
-                 ica_params = list(
-                   maxit = 200L,
-                   alpha = 1.0,
-                   max_tol = 0.0001,
-                   verbose = FALSE
-                 ),
+                 iter_params = ica_randomisation_params(),
+                 ncomp_params = ica_ncomp_params(),
+                 ica_params = ica_general_params(),
                  random_seed = 42L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
@@ -155,22 +145,9 @@ ica_evaluate_comp <- S7::new_generic(
 #' @method ica_evaluate_comp bulk_coexp
 S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
                                                       ica_type = c("logcosh", "exp"),
-                                                      iter_params = list(
-                                                        cross_validate = FALSE,
-                                                        random_init = 50L,
-                                                        folds = 10L
-                                                      ),
-                                                      ncomp_params = list(
-                                                        max_no_comp = 100L,
-                                                        steps = 5L,
-                                                        custom_seq = NULL
-                                                      ),
-                                                      ica_params = list(
-                                                        maxit = 200L,
-                                                        alpha = 1.0,
-                                                        max_tol = 0.0001,
-                                                        verbose = FALSE
-                                                      ),
+                                                      iter_params = ica_randomisation_params(),
+                                                      ncomp_params = ica_ncomp_params(),
+                                                      ica_params = ica_general_params(),
                                                       random_seed = 42L,
                                                       .verbose = TRUE) {
   checkmate::assertClass(object, "bixverse::bulk_coexp")
@@ -400,7 +377,8 @@ S7::method(plot_ica_stability, bulk_coexp) <- function(object) {
 #' @param n_icas Integer. Number of independent components to recover.
 #' @param ica_fun String, element of `c("logcosh", "exp")`.
 #' @param seed Integer. Seed to ensure reproducible results.
-#' @param ica_params List. The ICA parameters, a list containing:
+#' @param ica_params List. The ICA parameters, see [bixverse::ica_general_params()]
+#' wrapper function. This function generates a list containing:
 #' \itemize{
 #'  \item maxit - Integer. Maximum number of iterations for ICA.
 #'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
@@ -425,12 +403,7 @@ fast_ica_rust <- function(X_norm,
                           n_icas,
                           ica_fun = c("logcosh", "exp"),
                           seed = NULL,
-                          ica_params = list(
-                            maxit = 200L,
-                            alpha = 1.0,
-                            max_tol = 0.0001,
-                            verbose = FALSE
-                          )) {
+                          ica_params = ica_general_params()) {
   # Checks
   checkmate::assertMatrix(X_norm, mode = "numeric")
   checkmate::assertMatrix(K, mode = "numeric")

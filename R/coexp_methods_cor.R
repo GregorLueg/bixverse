@@ -201,15 +201,28 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
 #' identify the best suitable resolution parameter to identify co-expression modules.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
-#' @param resolution_params List. Parameters for the resolution search.
-#' Should contain the desired `min_res`, `max_res`, and the `number_res` to test.
+#' @param resolution_params List. Parameters for the resolution search, see
+#' [bixverse::graph_resolution_params()]. Contains:
+#' \itemize{
+#'  \item min_res - Float. Minimum resolution to test.
+#'  \item max_res - Float. Maximum resolution to test.
+#'  \item number_res - Integer. Number of resolutions to test between the
+#'  `max_res` and `min_res.`
+#' }
 #' @param graph_params List. Parameters for the generation of the (differential)
-#' correlation graph. `kernel_bandwidth` defines the bandwidth of the Gaussian
-#' kernel to generate the affinities, `min_affinity` the minimum affinity to keep
-#' the edge. These two parameters will be used for the correlation-based graph.
-#' `min_cor` defines the minimum absolute correlation you want to see in either
-#' data set in the differential correlation. `fdr_threshold` to define the max
-#' FDR to remove non-significant differential correlation.
+#' correlation graph, see [bixverse::cor_graph_params()]. Contains:
+#' \itemize{
+#'  \item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
+#'  kernel to generate the affinities. Relevant for single correlation-based
+#'  graphs.
+#'  \item min_affinity - Float. Minimum affinity before the edge gets dropped.
+#'  Relevant for single correlation-based graphs.
+#'  \item min_cor - Float. Minimum absolute correlation that needs to be
+#'  observed in either data set. Only relevant for differential correlation-based
+#'  graphs.
+#'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
+#'  p-value.
+#' }
 #' @param random_seed Integer. Random seed.
 #' @param min_genes Integer. Minimum number of genes that should be in a
 #' community.
@@ -225,15 +238,8 @@ cor_module_check_res <- S7::new_generic(
   name = "cor_module_check_res",
   dispatch_args = "object",
   fun = function(object,
-                 resolution_params = list(min_res = 0.1,
-                                          max_res = 10,
-                                          number_res = 15L),
-                 graph_params = list(
-                   kernel_bandwidth = 0.2,
-                   min_affinity = 0.001,
-                   min_cor = 0.2,
-                   fdr_threshold = 0.05
-                 ),
+                 resolution_params = graph_resolution_params(),
+                 graph_params = cor_graph_params(),
                  random_seed = 123L,
                  min_genes = 10L,
                  parallel = TRUE,
@@ -252,15 +258,8 @@ cor_module_check_res <- S7::new_generic(
 #'
 #' @method cor_module_check_res bulk_coexp
 S7::method(cor_module_check_res, bulk_coexp) <- function(object,
-                                                         resolution_params = list(min_res = 0.1,
-                                                                                  max_res = 10,
-                                                                                  number_res = 15L),
-                                                         graph_params = list(
-                                                           kernel_bandwidth = 0.2,
-                                                           min_affinity = 0.001,
-                                                           min_cor = 0.2,
-                                                           fdr_threshold = 0.05
-                                                         ),
+                                                         resolution_params = graph_resolution_params(),
+                                                         graph_params = cor_graph_params(),
                                                          random_seed = 123L,
                                                          min_genes = 10L,
                                                          parallel = TRUE,
@@ -405,8 +404,20 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 #' @param subclustering Boolean. Shall after a first clustering communities that
 #' are too large be further sub clustered. Defaults to `TRUE`.
 #' @param random_seed Integer. Random seed.
-#' @param .graph_params List. These are the standard parameters from
-#' [bixverse::cor_module_check_res()] for the generation of the graph. This
+#' @param .graph_params List. Parameters for the generation of the (differential)
+#' correlation graph, see [bixverse::cor_graph_params()].
+#' \itemize{
+#'  \item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
+#'  kernel to generate the affinities. Relevant for single correlation-based
+#'  graphs.
+#'  \item min_affinity - Float. Minimum affinity before the edge gets dropped.
+#'  Relevant for single correlation-based graphs.
+#'  \item min_cor - Float. Minimum absolute correlation that needs to be
+#'  observed in either data set. Only relevant for differential correlation-based
+#'  graphs.
+#'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
+#'  p-value.
+#' }This
 #' parameter is only relevant if you did *not* run [bixverse::cor_module_check_res()].
 #' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
 #' maximum number of iterations. Defaults to 100L.
@@ -426,12 +437,7 @@ cor_module_final_modules <- S7::new_generic(
                  max_size = 500L,
                  subclustering = TRUE,
                  random_seed = 123L,
-                 .graph_params = list(
-                   kernel_bandwidth = 0.2,
-                   min_affinity = 0.001,
-                   min_cor = 0.2,
-                   fdr_threshold = 0.05
-                 ),
+                 .graph_params = cor_graph_params(),
                  .max_iters = 100L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
@@ -451,12 +457,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
                                                              max_size = 500L,
                                                              subclustering = TRUE,
                                                              random_seed = 123L,
-                                                             .graph_params = list(
-                                                               kernel_bandwidth = 0.2,
-                                                               min_affinity = 0.001,
-                                                               min_cor = 0.2,
-                                                               fdr_threshold = 0.05
-                                                             ),
+                                                             .graph_params = cor_graph_params(),
                                                              .max_iters = 100L,
                                                              .verbose = TRUE) {
   # Checks
