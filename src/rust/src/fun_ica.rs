@@ -39,7 +39,7 @@ fn rs_prepare_whitening(
   oversampling: Option<usize>,
   n_power_iter: Option<usize>,
 ) -> List {
-  let x = r_matrix_to_faer(x);
+  let x = r_matrix_to_faer(&x);
   let rank = rank.unwrap_or(10);
 
   let (x, k) = prepare_whitening(
@@ -52,8 +52,8 @@ fn rs_prepare_whitening(
   );
 
   list!(
-    x = faer_to_r_matrix(x),
-    k = faer_to_r_matrix(k)
+    x = faer_to_r_matrix(x.as_ref()),
+    k = faer_to_r_matrix(k.as_ref())
   )
 }
 
@@ -98,8 +98,8 @@ fn rs_fast_ica(
   // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
   let ica_params = prepare_ica_params(ica_params);
 
-  let x = r_matrix_to_faer(whiten);
-  let w_init = r_matrix_to_faer(w_init);
+  let x = r_matrix_to_faer(&whiten);
+  let w_init = r_matrix_to_faer(&w_init);
 
   let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
 
@@ -123,7 +123,7 @@ fn rs_fast_ica(
 
   Ok(list!
     (
-      mixing = faer_to_r_matrix(a.0),
+      mixing = faer_to_r_matrix(a.0.as_ref()),
       converged = a.1 < ica_params.tol
     )
   )
@@ -179,8 +179,8 @@ fn rs_ica_iters(
   if k.nrows() < no_comp {
     panic!("Number of rows in k ({}) must be at least as large as no_comp ({})", k.nrows(), no_comp);
   }
-  let x_processed = r_matrix_to_faer(x_processed);
-  let k = r_matrix_to_faer(k);
+  let x_processed = r_matrix_to_faer(&x_processed);
+  let k = r_matrix_to_faer(&k);
 
   let ica_params = prepare_ica_params(ica_params);
 
@@ -195,7 +195,7 @@ fn rs_ica_iters(
   );
 
   list!(
-    s_combined = faer_to_r_matrix(s_combined),
+    s_combined = faer_to_r_matrix(s_combined.as_ref()),
     converged = converged
   )
 }
@@ -244,7 +244,7 @@ fn rs_ica_iters_cv(
   random_seed: usize,
   ica_params: List,
 ) -> List {
-  let x_raw = r_matrix_to_faer(x_raw);
+  let x_raw = r_matrix_to_faer(&x_raw);
   let ica_params = prepare_ica_params(ica_params);
 
   let (s_combined, converged) = stabilised_ica_cv(
@@ -258,7 +258,7 @@ fn rs_ica_iters_cv(
   );
 
   list!(
-    s_combined = faer_to_r_matrix(s_combined),
+    s_combined = faer_to_r_matrix(s_combined.as_ref()),
     converged = converged
   )
 }
