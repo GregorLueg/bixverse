@@ -11,8 +11,7 @@ cor_module_final_modules(
   max_size = 500L,
   subclustering = TRUE,
   random_seed = 123L,
-  .graph_params = list(kernel_bandwidth = 0.2, min_affinity = 0.001, min_cor = 0.2,
-    fdr_threshold = 0.05),
+  .graph_params = cor_graph_params(),
   .max_iters = 100L,
   .verbose = TRUE
 )
@@ -33,8 +32,20 @@ are too large be further sub clustered. Defaults to \code{TRUE}.}
 
 \item{random_seed}{Integer. Random seed.}
 
-\item{.graph_params}{List. These are the standard parameters from
-\code{\link[=cor_module_check_res]{cor_module_check_res()}} for the generation of the graph. This
+\item{.graph_params}{List. Parameters for the generation of the (differential)
+correlation graph, see \code{\link[=cor_graph_params]{cor_graph_params()}}.
+\itemize{
+\item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
+kernel to generate the affinities. Relevant for single correlation-based
+graphs.
+\item min_affinity - Float. Minimum affinity before the edge gets dropped.
+Relevant for single correlation-based graphs.
+\item min_cor - Float. Minimum absolute correlation that needs to be
+observed in either data set. Only relevant for differential correlation-based
+graphs.
+\item fdr_threshold - Float. Maximum FDR for the differential correlation
+p-value.
+}This
 parameter is only relevant if you did \emph{not} run \code{\link[=cor_module_check_res]{cor_module_check_res()}}.}
 
 \item{.max_iters}{Integer. If sub clustering is set to \code{TRUE}, what shall be the

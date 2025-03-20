@@ -7,9 +7,9 @@
 ica_evaluate_comp(
   object,
   ica_type = c("logcosh", "exp"),
-  iter_params = list(cross_validate = FALSE, random_init = 50L, folds = 10L),
-  ncomp_params = list(max_no_comp = 100L, steps = 5L, custom_seq = NULL),
-  ica_params = list(maxit = 200L, alpha = 1, max_tol = 1e-04, verbose = FALSE),
+  iter_params = ica_randomisation_params(),
+  ncomp_params = ica_ncomp_params(),
+  ica_params = ica_general_params(),
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -20,8 +20,9 @@ ica_evaluate_comp(
 
 \item{ica_type}{String, element of \code{c("logcosh", "exp")}.}
 
-\item{iter_params}{List. This list controls the randomisation parameters
-for estimating the stability of the components. Has the following elements:
+\item{iter_params}{List. This list controls the randomisation parameters for
+the ICA runs, see \code{\link[=ica_randomisation_params]{ica_randomisation_params()}} for estimating
+stability. Has the following elements:
 \itemize{
 \item cross_validate - Boolean. Shall the data be split into different
 chunks on which ICA is run. This will slow down the function substantially,
@@ -33,9 +34,10 @@ used. To note, you will run per ncomp random_init * fold ICA runs which
 can quickly increase.
 }}
 
-\item{ncomp_params}{List. Parameters for the ncomp to iterate through. In the
-standard setting, \code{c(2, 3, 4, 5)} will be tested and then in steps until
-max_no_comp will be tested, i.e., \code{c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)}.
+\item{ncomp_params}{List. Parameters for the ncomp to iterate through, see
+\code{\link[=ica_ncomp_params]{ica_ncomp_params()}}. In the standard setting, \code{c(2, 3, 4, 5)} will
+be tested and then in steps until max_no_comp will be tested, i.e.,
+\code{c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)}.
 \itemize{
 \item max_no_comp - Maximum number of ncomp to test.
 \item steps - Integer. In which steps to move from 5 onwards.
@@ -43,7 +45,8 @@ max_no_comp will be tested, i.e., \code{c(2, 3, 4, 5, 10, 15, ..., max_no_comp -
 of no_comp to iterate through.
 }}
 
-\item{ica_params}{List. The ICA parameters, a list containing:
+\item{ica_params}{List. The ICA parameters, see \code{\link[=ica_general_params]{ica_general_params()}}
+wrapper function. This function generates a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.
 \item alpha - Float. The alpha parameter for the logcosh version of ICA.

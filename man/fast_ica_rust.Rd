@@ -10,7 +10,7 @@ fast_ica_rust(
   n_icas,
   ica_fun = c("logcosh", "exp"),
   seed = NULL,
-  ica_params = list(maxit = 200L, alpha = 1, max_tol = 1e-04, verbose = FALSE)
+  ica_params = ica_general_params()
 )
 }
 \arguments{
@@ -26,7 +26,8 @@ fast_ica_rust(
 
 \item{seed}{Integer. Seed to ensure reproducible results.}
 
-\item{ica_params}{List. The ICA parameters, a list containing:
+\item{ica_params}{List. The ICA parameters, see \code{\link[=ica_general_params]{ica_general_params()}}
+wrapper function. This function generates a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.
 \item alpha - Float. The alpha parameter for the logcosh version of ICA.
