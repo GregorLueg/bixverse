@@ -327,6 +327,63 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
 
 # helpers ----------------------------------------------------------------------
 
+## plotting --------------------------------------------------------------------
+
+
+#' @title Plot the stability of the ICA components
+#'
+#' @description
+#' ...
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' [bixverse::ica_evaluate_comp()] before running this function.
+#'
+#' @export
+plot_ica_stability <- S7::new_generic(
+  name = "plot_ica_stability",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_ica_stability bulk_coexp
+S7::method(plot_ica_stability, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  # Function body
+  plot_df <- S7::prop(object, "outputs")[['ica_stability_res']]
+  if (is.null(plot_df)) {
+    warning("No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL.")
+    return(NULL)
+  }
+
+  p1 <- ggplot(data = plot_df,
+               mapping = aes(x = component_rank, y = stability)) +
+    geom_line(mapping = aes(color = factor(no_components)), linewidth = 1) +
+    scale_color_viridis_d(option = "C") +
+    theme_minimal() +
+    labs(color = "No ICAs") +
+    ylim(0, 1) +
+    xlab("Component rank") +
+    ylab("Stability index")
+
+
+  p2 <- ggplot(data = plot_df, aes(x = component_rank, y = stability)) +
+    geom_point(mapping = aes(colour = factor(no_components))) +
+    scale_color_viridis_d(option = "C") +
+    theme_minimal() +
+    labs(color = "No ICAs") +
+    ylim(0, 1) +
+    xlab("Component rank") +
+    ylab("Stability index")
+
+  p1 + p2 + patchwork::plot_annotation(
+    title = "Stability of independent components",
+    subtitle = "Over different ncomps and randomisations"
+  )
+}
+
 ## general ICA function --------------------------------------------------------
 
 #' Fast ICA via Rust
@@ -408,7 +465,6 @@ fast_ica_rust <- function(X_norm,
   return(res)
 }
 
-## plotting --------------------------------------------------------------------
 
 ## component stability ---------------------------------------------------------
 
