@@ -41,8 +41,8 @@ This is a mid/longer term project to leverage Rust to keep the sparse count matr
 on disk (via h5?) and leverage Rust for fast on-disk computations of the data 
 and avoid loading unnecessary data into memory where avoidable for single cell
 and spatial datasets. Think  [BPCell](https://bnprks.github.io/BPCells/index.html) 
-with Rust instead of C++. This would allow analyses of much larger datasets on local infrastructure.
-Core functionality to be implemented:
+with Rust instead of C++. This would allow analyses of much larger datasets on 
+local infrastructure. Core functionality to be implemented:
 
 - On disk normalisation and rapid retrieval of count data via CSC and CSR format
 - On disk HVG detection
