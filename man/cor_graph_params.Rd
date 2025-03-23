@@ -21,6 +21,8 @@ graphs.}
 
 \item{fdr_threshold}{Float. Maximum FDR for the differential correlation
 p-value.}
+
+\item{verbose}{Boolean. Controls verbosity of the graph generation function.}
 }
 \value{
 List with parameters for usage in subsequent function.

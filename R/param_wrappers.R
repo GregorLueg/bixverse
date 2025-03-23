@@ -99,6 +99,7 @@ ica_randomisation_params <- function(cross_validate = FALSE,
 #' graphs.
 #' @param fdr_threshold Float. Maximum FDR for the differential correlation
 #' p-value.
+#' @param verbose Boolean. Controls verbosity of the graph generation function.
 #'
 #' @returns List with parameters for usage in subsequent function.
 #'

@@ -88,7 +88,9 @@ fn rs_cor_upper_triangle(
     shift
   );
   let mut cor_flat = Vec::new();
-  for (&r, &c) in upper_triangle_indices.0.iter().zip(upper_triangle_indices.1.iter()) {
+  for (&r, &c) in upper_triangle_indices.0
+    .iter()
+    .zip(upper_triangle_indices.1.iter()) {
     cor_flat.push(*cor.get(r, c));
   }
 
@@ -227,10 +229,26 @@ fn rs_contrastive_pca(
 }
 
 
-
-
-
-
+/// Run randomised SVD over a matrix
+/// 
+/// @description Runs a randomised singular value decomposition over a matrix.
+/// This implementation is faster than the full SVD on large data sets, with 
+/// slight loss in precision.
+/// 
+/// @param x Numeric matrix. Rows = samples, columns = features.
+/// @param rank Integer. The rank to use.
+/// @param seed Integer. Random seed for reproducibility.
+/// @param oversampling Integer. Defaults to `10L` if nothing is provided.
+/// @param n_power_iter Integer. How often shall the QR decomposition be 
+/// applied. Defaults to `2L` if nothing is provided.
+/// 
+/// @return A list with:
+/// \itemize{
+///   \item u - u matrix of the SVD.
+///   \item v - v matrix of the SVD.
+///   \item s - Eigenvalues of the SVD.
+/// }
+/// 
 /// @export
 #[extendr]
 fn rs_random_svd(
@@ -256,7 +274,29 @@ fn rs_random_svd(
   )
 }
 
-
+/// Helper to identify the right epsilon parameter
+/// 
+/// @description This function will take a distance vector from the upper 
+/// triangle of a symmetric distance matrix and apply the desired RBF with the
+/// supplied epsilon from epsilon vec. Subsequently, the column sums will be
+/// measured to identify the total similarity of each feature with other 
+/// features. This data can be used to see if the data follows scale-free
+/// topology for example to identify the right epsilon parameter with the given
+/// RBF.
+/// 
+/// @param dist Numeric vector. The distances you wish to apply the RBF function
+/// to.
+/// @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
+/// @param original_dim Integer. The original dimensions of the symmetric 
+/// distance matrix.
+/// @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
+/// diagonal not incldued).
+/// @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
+/// implemented RBF function.
+/// 
+/// @return A matrix with rows being the epsilons tested, and columns 
+/// representing the summed affinity to other features.
+/// 
 /// @export
 #[extendr]
 fn rs_rbf_iterate_epsilons(

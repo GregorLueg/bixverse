@@ -740,9 +740,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 #' Helper function to get a correlation-based igraph from the class
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
-#' @param kernel_bandwidth Numerical. The bandwidth to use for the affinity
-#' kernel
-#' @param min_affinity Numerical. Minimum affinity needed to keep the edge.
+#' @param epsilon Float. The epsilon parameter for the RBF function, in this
+#' case the bump function.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the following elements:

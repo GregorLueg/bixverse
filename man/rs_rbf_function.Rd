@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_rbf_function}
 \alias{rs_rbf_function}
-\title{Apply a Gaussian affinity kernel to a distance metric}
+\title{Apply a Radial Basis Function}
 \usage{
 rs_rbf_function(x, epsilon, rbf_type)
 }
@@ -10,12 +10,14 @@ rs_rbf_function(x, epsilon, rbf_type)
 \item{x}{Numeric vector. The distances you wish to apply the Gaussian kernel
 onto.}
 
-\item{bandwidth}{The bandwidth of the kernel. Smaller values will yield
-smaller affinities.}
+\item{epsilon}{Float. Epsilon parameter for the RBF.}
+
+\item{rbf_type}{String. Needs to be from \verb{c("gaussian", "bump)}.}
 }
 \value{
 The affinities after the Kernel was applied.
 }
 \description{
-Applies a Gaussian kernel to a vector of distances.
+Applies a radial basis function (RBF) to a given distance
+vector. Has at the moment a Gaussian version and a Bump version.
 }

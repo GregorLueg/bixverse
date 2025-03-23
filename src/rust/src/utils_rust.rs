@@ -173,7 +173,7 @@ pub fn upper_triangle_indices(
 pub fn upper_triangle_to_sym_faer(
   data: &[f64],
   shift: usize,
-  n: usize,
+  n: usize
 ) -> faer::Mat<f64> {
   let mut mat = Mat::<f64>::zeros(n, n);
   let mut idx = 0;

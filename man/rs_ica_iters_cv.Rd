@@ -20,6 +20,8 @@ been applied yet.)}
 
 \item{no_comp}{Integer. Number of components to test for.}
 
+\item{no_folds}{Integer. Number of folds to use for the cross-validation.}
+
 \item{no_random_init}{Integer. Number of random initialisations.}
 
 \item{ica_type}{String. Which type of ICA shall be run.}

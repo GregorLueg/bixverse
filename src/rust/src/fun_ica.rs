@@ -211,6 +211,7 @@ fn rs_ica_iters(
 /// been applied yet.)
 /// @param no_comp Integer. Number of components to test for.
 /// @param no_random_init Integer. Number of random initialisations. 
+/// @param no_folds Integer. Number of folds to use for the cross-validation.
 /// @param ica_type String. Which type of ICA shall be run. 
 /// @param random_seed Integer. For reproducibility.
 /// @param ica_params A list containing:
