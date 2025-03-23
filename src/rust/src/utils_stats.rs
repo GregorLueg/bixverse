@@ -111,6 +111,63 @@ pub fn z_scores_to_pval(
     .collect()
 }
 
+////////////////////////////
+// Radial Basis functions //
+////////////////////////////
+
+/// Enum for the RBF function
+#[derive(Debug)]
+pub enum RbfType {
+  Gaussian,
+  Bump,
+}
+
+
+/// Parsing the RBF function
+pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
+  match s.to_lowercase().as_str() {
+    "gaussian" => Some(RbfType::Gaussian),
+    "bump" => Some(RbfType::Bump),
+    _ => None,
+  }
+}
+
+
+/// Gaussian Radial Basis function
+pub fn rbf_gaussian(
+  dist: &[f64],
+  epsilon: &f64
+) -> Vec<f64> {
+  dist
+    .par_iter()
+    .map(|x| {
+      f64::exp(
+        -((x * *epsilon).powi(2))
+      )
+    })
+    .collect()
+}
+
+/// Bump Radial Basis function
+/// Will set dist >= 1 / epsilon to 0
+pub fn rbf_bump(
+  dist: &[f64],
+  epsilon: &f64
+) -> Vec<f64> {
+  dist
+    .par_iter()
+    .map(|x| {
+      if *x < (1.0 / epsilon) {
+        f64::exp(
+          -(1_f64 / (1_f64 - (*epsilon * x).powi(2))) + 1_f64
+        )
+      } else {
+        0_f64
+      }
+    })
+    .collect()
+}
+
 // /// Calculate the Jaccard or Set similarity over a vector of HashSets.
 // pub fn set_similarity_iter(
 //   s_1: HashSet<String>,

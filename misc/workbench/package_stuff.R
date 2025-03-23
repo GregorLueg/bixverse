@@ -26,7 +26,9 @@ use_package("rlang")
 use_package("dplyr")
 use_package("purrr")
 use_package("ggplot2")
+use_package("patchwork")
 use_package("R6")
+use_package("matrixStats")
 
 ## Functions / R stuff ----
 

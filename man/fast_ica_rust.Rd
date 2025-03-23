@@ -10,32 +10,31 @@ fast_ica_rust(
   n_icas,
   ica_fun = c("logcosh", "exp"),
   seed = NULL,
-  maxit = 200L,
-  alpha = 1,
-  tol = 1e-04,
-  .verbose = FALSE
+  ica_params = ica_general_params()
 )
 }
 \arguments{
-\item{X_norm}{The scaled data. Output of \code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
+\item{X_norm}{Numeric matrix. Processed data. Output of
+\code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
 
-\item{K}{The K matrix. Output of \code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
+\item{K}{The K matrix. Whitening matrix. Output of
+\code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
 
-\item{n_icas}{Number of ICAs}
+\item{n_icas}{Integer. Number of independent components to recover.}
 
 \item{ica_fun}{String, element of \code{c("logcosh", "exp")}.}
 
-\item{seed}{Seed to ensure reproducible results.}
+\item{seed}{Integer. Seed to ensure reproducible results.}
 
-\item{maxit}{Maximum iterations to run. Defaults to 200L.}
-
-\item{alpha}{Alpha parameters for the \code{"logcosh"} implementation. Defaults to
-1.}
-
-\item{tol}{Tolerance at which the algorithm is considered converged. Defaults
-to 1e-04.}
-
-\item{.verbose}{Boolean controlling the verbosity.}
+\item{ica_params}{List. The ICA parameters, see \code{\link[=ica_general_params]{ica_general_params()}}
+wrapper function. This function generates a list containing:
+\itemize{
+\item maxit - Integer. Maximum number of iterations for ICA.
+\item alpha - Float. The alpha parameter for the logcosh version of ICA.
+Should be between 1 to 2.
+\item max_tol - Maximum tolerance of the algorithm.
+\item verbose - Controls verbosity of the function.
+}}
 }
 \value{
 A list containing:
@@ -48,5 +47,6 @@ A list containing:
 }
 \description{
 This functions is a wrapper over the Rust implementation of fastICA. It has
-the same two options \code{c("logcosh", "exp")} to run ICA in the parallel modus.
+the same two options \code{c("logcosh", "exp")} to run ICA in parallel modus. This
+function expected
 }

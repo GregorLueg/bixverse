@@ -168,5 +168,79 @@ pub fn upper_triangle_indices(
   (row_indices, col_indices)
 }
 
+/// Create from the upper triangle values for a symmetric matrix the full
+/// dense faer matrix.
+pub fn upper_triangle_to_sym_faer(
+  data: &[f64],
+  shift: usize,
+  n: usize,
+) -> faer::Mat<f64> {
+  let mut mat = Mat::<f64>::zeros(n, n);
+  let mut idx = 0;
+  for i in 0..n {
+    for j in i..n {
+      if shift == 1 && i == j {
+        mat[(i, j)] = 1_f64
+      } else {
+        mat[(i, j)] = data[idx];
+        mat[(j, i)] = data[idx];
+        idx += 1;
+      }
+    }
+  }
 
+  mat
+}
+
+
+// /// Rowbind a vector of faer Matrices, assuming same column length for all of
+// /// them
+// pub fn rowbind_matrices(
+//   matrices: Vec<Mat<f64>>
+// ) -> Mat<f64> {
+//   let ncols = matrices[0].ncols();
+//   let total_row = matrices
+//     .iter()
+//     .map(|m| m.nrows())
+//     .sum();
+//   let mut result: Mat<f64> = Mat::zeros(total_row, ncols);
+//   let mut row_offset = 0;
+//   for matrix in matrices{
+//     assert_eq!(matrix.ncols(), ncols, "All matrices must have the same number of columns");
+//     let nrows = matrix.nrows();
+//     for i in 0..nrows {
+//       for j in 0..ncols {
+//         result[(row_offset + i, j)] = matrix[(i, j)]
+//       }
+//     }
+//     row_offset += nrows;
+//   }
+
+//   result
+// }
+
+
+pub fn colbind_matrices(
+  matrices: Vec<Mat<f64>>
+) -> Mat<f64> {
+  let nrows = matrices[0].nrows();
+  let total_col = matrices
+    .iter()
+    .map(|m| m.ncols())
+    .sum();
+  let mut result: Mat<f64> = Mat::zeros(nrows, total_col);
+  let mut col_offset = 0;
+  for matrix in matrices{
+    assert_eq!(matrix.nrows(), nrows, "All matrices must have the same number of columns");
+    let ncols = matrix.ncols();
+    for i in 0..nrows {
+      for j in 0..ncols {
+        result[(i, col_offset + j)] = matrix[(i, j)]
+      }
+    }
+    col_offset += ncols;
+  }
+
+  result
+}
 

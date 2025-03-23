@@ -18,6 +18,8 @@ Imports:
     ggplot2,
     igraph,
     magrittr,
+    matrixStats,
+    patchwork,
     purrr,
     R6,
     rextendr,

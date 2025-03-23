@@ -5,7 +5,7 @@ library(magrittr)
 rextendr::document()
 devtools::document()
 devtools::load_all()
-devtools::check()
+# devtools::check()
 
 
 syn_data = synthetic_signal_matrix()
@@ -24,29 +24,24 @@ cor_test = preprocess_bulk_coexp(cor_test)
 
 cor_test = cor_module_processing(cor_test, correlation_method = 'spearman')
 
-rm(list = c("assertCorGraphParams", "checkCorGraphParams"))
+tictoc::tic()
+cor_test = bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+  preprocess_bulk_coexp(., hvg = 10000L) %>%
+  cor_module_processing(., correlation_method = 'spearman') %>%
+  cor_module_check_epsilon(.)
 
-devtools::document()
+plot_epsilon_res(cor_test)
 
-cor_test@processed_data$correlation_res$get_data_table()
+options(future.globals.maxSize= 2000*1024^2)
 
-cor_test = cor_module_identification(cor_test)
+cor_test = cor_module_check_res(cor_test, graph_params = cor_graph_params(epsilon = 1.5))
 
-cor_test@outputs$cluser_quality
+plot_resolution_res(cor_test)
 
-plot_df <- cor_test@outputs$cluser_quality
+cor_test = cor_module_final_modules(cor_test)
 
-head(plot_df)
-
-ggplot(data = plot_df,
-       mapping = aes(x = res, y = r_median_of_adjust)) +
-  geom_point(mapping = aes(size = log10(median_size), fill = r_weighted_median),
-             shape = 21) +
-  theme_minimal() +
-  xlab("Leiden resolution") +
-  ylab("Median adjusted r")
-
-plot_df
+x <- get_results(cor_test)
+tictoc::toc()
 
 # Test on real data ----
 
@@ -79,22 +74,19 @@ samples_to_keep <- new_meta_data[gtex_subgrp == "Brain - Hippocampus", sample_id
 samples_to_keep_2 <- new_meta_data[gtex_subgrp == "Brain - Amygdala", sample_id]
 data_1 = t(d)[samples_to_keep, ]
 data_2 = t(d)[samples_to_keep_2, ]
-meta_data = new_meta_data[gtex_subgrp == "Brain - Hippocampus"]
+meta_data_1 = new_meta_data[gtex_subgrp == "Brain - Hippocampus"]
+meta_data_2 = new_meta_data[gtex_subgrp == "Brain - Amygdala"]
 
-cor_test = bulk_coexp(raw_data = data_1, meta_data = meta_data)
+cor_test = bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+  preprocess_bulk_coexp(., mad_threshold = 1) %>%
+  cor_module_processing(., correlation_method = 'spearman')
 
 devtools::load_all()
 devtools::document()
 
-tictoc::tic()
-cor_test = bulk_coexp(raw_data = data_1, meta_data = meta_data) %>%
+cor_test = bulk_coexp(raw_data = data_2, meta_data = meta_data_2) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
-  cor_module_processing(., correlation_method = 'spearman') %>%
-  cor_module_check_res(.) %>%
-  cor_module_final_modules(.)
-tictoc::toc()
-
-?cor_module_check_res
+  cor_module_processing(., correlation_method = 'spearman')
 
 # Differential correlation -----
 
@@ -104,12 +96,11 @@ devtools::document()
 dim(data_1)
 
 tictoc::tic()
-cor_test_2 = bulk_coexp(raw_data = data_1, meta_data = meta_data) %>%
+cor_test_2 = bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   diffcor_module_processing(., background_mat = data_2, correlation_method = 'spearman') %>%
   cor_module_check_res(.) %>%
   cor_module_final_modules(.)
-tictoc::toc()
-
 
 cor_test_2 <- cor_module_final_modules(cor_test_2)
+tictoc::toc()

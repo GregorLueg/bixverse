@@ -20,10 +20,10 @@ use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 fn rs_covariance(
   x: RMatrix<f64>
 ) -> extendr_api::RArray<f64, [usize; 2]> {
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
   let covar = column_covariance(&mat);
 
-  faer_to_r_matrix(covar)
+  faer_to_r_matrix(covar.as_ref())
 }
 
 /// Calculate the column wise correlations.
@@ -44,14 +44,14 @@ fn rs_cor(
   x: RMatrix<f64>,
   spearman: bool
 ) -> extendr_api::RArray<f64, [usize; 2]> {
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
 
   let cor = column_correlation(
     &mat,
     spearman
   );
 
-  faer_to_r_matrix(cor)
+  faer_to_r_matrix(cor.as_ref())
 }
 
 /// Calculate the column wise correlations.
@@ -78,7 +78,7 @@ fn rs_cor_upper_triangle(
   shift: usize,
 ) -> Vec<f64> {
   // Calculate the correlations
-  let mat = r_matrix_to_faer(x);
+  let mat = r_matrix_to_faer(&x);
   let cor = column_correlation(
     &mat,
     spearman
@@ -135,8 +135,8 @@ fn rs_differential_cor(
   );
   let n_sample_a = x_a.nrows();
   let n_sample_b = x_b.nrows();
-  let mat_a = r_matrix_to_faer(x_a);
-  let mat_b = r_matrix_to_faer(x_b);
+  let mat_a = r_matrix_to_faer(&x_a);
+  let mat_b = r_matrix_to_faer(&x_b);
 
   let cor_a = column_correlation(&mat_a, spearman);
   let cor_b = column_correlation(&mat_b, spearman);
@@ -193,9 +193,9 @@ fn rs_contrastive_pca(
   n_pcs: usize,
   return_loadings: bool
 ) -> List {
-  let target_covar = r_matrix_to_faer(target_covar);
-  let background_covar = r_matrix_to_faer(background_covar);
-  let target_mat = r_matrix_to_faer(target_mat);
+  let target_covar = r_matrix_to_faer(&target_covar);
+  let background_covar = r_matrix_to_faer(&background_covar);
+  let target_mat = r_matrix_to_faer(&target_mat);
 
   let final_covar = target_covar - alpha * background_covar;
 
@@ -215,100 +215,66 @@ fn rs_contrastive_pca(
 
   if return_loadings {
     list!(
-      factors = faer_to_r_matrix(c_pca_factors),
-      loadings = faer_to_r_matrix(c_pca_loadings)
+      factors = faer_to_r_matrix(c_pca_factors.as_ref()),
+      loadings = faer_to_r_matrix(c_pca_loadings.as_ref())
     )
   } else {
     list!(
-      factors = faer_to_r_matrix(c_pca_factors),
+      factors = faer_to_r_matrix(c_pca_factors.as_ref()),
       loadings = r!(NULL)
     )
   }
 }
 
-/// Prepare the data for whitening
-/// 
-/// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
-/// 
-/// @param x The matrix to whiten. The whitening will happen over the columns.
-/// 
-/// @return A list containing:
-///  \itemize{
-///   \item x - The transposed and scaled data for subsequent usage in ICA.
-///   \item k - The K matrix.
-/// }
-/// 
+
+
+
+
+
 /// @export
 #[extendr]
-fn rs_prepare_whitening(
+fn rs_random_svd(
   x: RMatrix<f64>,
+  rank: usize,
+  seed: usize,
+  oversampling: Option<usize>,
+  n_power_iter: Option<usize>,
 ) -> List {
-  let x = r_matrix_to_faer(x);
-  
-  let (x, k) = prepare_whitening(x);
+  let x = r_matrix_to_faer(&x);
+  let random_svd_res = randomised_svd(
+    &x, 
+    rank, 
+    seed,
+    oversampling,
+    n_power_iter
+  );
 
   list!(
-    x = faer_to_r_matrix(x),
-    k = faer_to_r_matrix(k)
+    u = faer_to_r_matrix(random_svd_res.u.as_ref()),
+    v = faer_to_r_matrix(random_svd_res.v.as_ref()),
+    s = random_svd_res.s
   )
 }
 
-/// Run the Rust implementation of fast ICA.
-/// 
-/// @description This function serves as a wrapper over the fast ICA
-/// implementations in Rust. It assumes a pre-whiten matrix and also an 
-/// intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
-/// around the Rust functions with type checks are provided in the package.
-/// 
-/// @param whiten The whitened matrix.
-/// @param w_init The w_init matrix. ncols need to be equal to nrows of whiten.
-/// @param maxit Maximum number of iterations to try if algorithm does not
-/// converge.
-/// @param alpha The alpha parameter for the LogCosh implementation of ICA.
-/// @param tol Tolerance parameter.
-/// @param ica_type One of 'logcosh' or 'exp'.
-/// @param verbose Controls the verbosity of the function.
-/// @param debug Additional messages if desired.
-/// 
-/// @param x The matrix to whiten. The whitening will happen over the columns.
-/// 
-/// @return A list containing:
-///  \itemize{
-///   \item mixing - The mixing matrix for subsequent usage.
-///   \item converged - Boolean if the algorithm converged.
-/// }
-/// 
+
 /// @export
 #[extendr]
-fn rs_fast_ica(
-  whiten: RMatrix<f64>,
-  w_init: RMatrix<f64>,
-  maxit: usize,
-  alpha: f64,
-  tol: f64,
-  ica_type: &str,
-  verbose: bool,
-) -> extendr_api::Result<List> {
-  // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
+fn rs_rbf_iterate_epsilons(
+  dist: &[f64],
+  epsilon_vec: &[f64],
+  original_dim: usize,
+  shift: usize,
+  rbf_type: &str,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+  let band_width_data = rbf_iterate_epsilons(
+    dist,
+    epsilon_vec,
+    original_dim,
+    shift,
+    rbf_type
+  )?;
 
-  let x = r_matrix_to_faer(whiten);
-  let w_init = r_matrix_to_faer(w_init);
-
-  let ica_type = parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
-
-  let a = match ica_type {
-    IcaType::Exp => fast_ica_exp(x, w_init, tol, maxit, verbose),
-    IcaType::LogCosh => fast_ica_logcosh(x, w_init, tol, alpha, maxit, verbose),
-  };
-
-  Ok(list!
-    (
-      mixing = faer_to_r_matrix(a.0),
-      converged = a.1 < tol
-    )
-  )
+  Ok(faer_to_r_matrix(band_width_data.as_ref()))
 }
 
 
@@ -316,9 +282,9 @@ extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_random_svd;
   fn rs_cor_upper_triangle;
+  fn rs_rbf_iterate_epsilons;
   fn rs_differential_cor;
   fn rs_contrastive_pca;
-  fn rs_prepare_whitening;
-  fn rs_fast_ica;
 }

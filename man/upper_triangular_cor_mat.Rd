@@ -15,6 +15,7 @@ dense R matrix if need be.
 \item \href{#method-upper_triangular_cor_mat-print}{\code{upper_triangular_cor_mat$print()}}
 \item \href{#method-upper_triangular_cor_mat-get_data_table}{\code{upper_triangular_cor_mat$get_data_table()}}
 \item \href{#method-upper_triangular_cor_mat-get_cor_matrix}{\code{upper_triangular_cor_mat$get_cor_matrix()}}
+\item \href{#method-upper_triangular_cor_mat-get_cor_vector}{\code{upper_triangular_cor_mat$get_cor_vector()}}
 \item \href{#method-upper_triangular_cor_mat-clone}{\code{upper_triangular_cor_mat$clone()}}
 }
 }
@@ -105,6 +106,24 @@ Return the full correlation matrix.
 }
 \subsection{Returns}{
 Returns the correlation matrix as a dense R matrix.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-upper_triangular_cor_mat-get_cor_vector"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangular_cor_mat-get_cor_vector}{}}}
+\subsection{Method \code{get_cor_vector()}}{
+Return the correlation data and shift
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{upper_triangular_cor_mat$get_cor_vector()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A list with
+\itemize{
+\item cor_data - Numeric vector. The correlations.
+\item n_features - Integer. Number of initial features.
+\item shift - Integer. The applied shift.
+}
 }
 }
 \if{html}{\out{<hr>}}

@@ -1,21 +1,21 @@
 use faer::Mat;
 use rayon::iter::*;
+use rand::prelude::*;
+use rand_distr::Normal;
+
 use crate::utils_rust::*;
-use crate::utils_stats::z_scores_to_pval;
+use crate::utils_stats::*;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
 //////////////////////////////
 
-/// Enum for the ICA types
-#[derive(Debug)]
-pub enum IcaType {
-  Exp,
-  LogCosh,
+/// Structure for random SVD results
+pub struct RandomSvdResults {
+  pub u: faer::Mat<f64>,
+  pub v: faer::Mat<f64>,
+  pub s: Vec<f64>
 }
-
-/// Type alias of the ICA results
-type IcaRes = (faer::Mat<f64>, f64);
 
 /// Structure for DiffCor results
 pub struct DiffCorRes {
@@ -39,6 +39,17 @@ pub fn col_means(
   let means = (ones.transpose() * mat) / n_rows as f64;
 
   means.row(0).iter().cloned().collect()
+}
+
+/// Calculates the column sums of a matrix and returns it as Vec<f64>
+pub fn col_sums(
+  mat: &Mat<f64>
+) -> Vec<f64> {
+  let n_rows = mat.nrows();
+  let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
+  let col_sums = ones.transpose() * mat;
+
+  col_sums.row(0).iter().cloned().collect()
 }
 
 /// Calculate the column standard deviations
@@ -71,46 +82,48 @@ pub fn scale_matrix_col(
   scale_sd: bool
 ) -> Mat<f64>{
   let n_rows = mat.nrows();
-  let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
-  let means = (ones.transpose() * mat) / n_rows as f64;
-  let centered = mat - &ones * &means;
-
-  if !scale_sd {
-    return centered;
-  }
-
-  let squared_diff = Mat::from_fn(
-    centered.nrows(),
-    centered.ncols(),
-  |i, j| {
-      let x = centered.get(i, j);
-      x.powi(2)
-    }
-  );
-
-  let sum_squared_diff = ones.transpose() * squared_diff;
-  let variances = sum_squared_diff / (n_rows as f64 - 1.0);
-
-  let standard_dev = Mat::from_fn(
-    variances.nrows(),
-    variances.ncols(),
-    |i, j| {
-      let x = variances.get(i, j);
-      let x = x.sqrt();
-      if x < 1e-10 { 1.0 } else { x }
-    }
-  );
-
-  let mut scaled = centered.clone();
   let n_cols = mat.ncols();
-
+    
+  let mut means = vec![0.0; n_cols];
   for j in 0..n_cols {
     for i in 0..n_rows {
-      scaled[(i, j)] = centered[(i, j)] / standard_dev[(0, j)];
+      means[j] += mat[(i, j)];
+    }
+    means[j] /= n_rows as f64;
+  }
+    
+  let mut result = mat.clone();
+  for j in 0..n_cols {
+    let mean = means[j];
+    for i in 0..n_rows {
+      result[(i, j)] -= mean;
     }
   }
-  
-  scaled
+    
+  if !scale_sd {
+    return result;
+  }
+    
+  let mut std_devs = vec![0.0; n_cols];
+  for j in 0..n_cols {
+    for i in 0..n_rows {
+      let val = result[(i, j)];
+      std_devs[j] += val * val;
+    }
+    std_devs[j] = (std_devs[j] / (n_rows as f64 - 1.0)).sqrt();
+    if std_devs[j] < 1e-10 {
+      std_devs[j] = 1.0;
+    }
+  }
+    
+  for j in 0..n_cols {
+    let std_dev = std_devs[j];
+    for i in 0..n_rows {
+      result[(i, j)] /= std_dev;
+    }
+  }
+    
+  result
 }
 
 /// Calculate the column-wise co-variance
@@ -148,6 +161,7 @@ pub fn column_correlation(
 
   cor
 }
+
 
 /// Calculate differential correlations
 pub fn calculate_diff_correlation(
@@ -247,228 +261,71 @@ pub fn get_top_eigenvalues(
   res
 }
 
-/////////
-// ICA //
-/////////
 
-/// Whiten a matrix. This is needed pre-processing for ICA.
-pub fn prepare_whitening(
-  x: Mat<f64>
-) -> (faer::Mat<f64>, faer::Mat<f64>) {
-  let n = x.nrows();  
+/// Implementation of random Singular Value Decomposition to be faster
+/// and computationally WAY more efficient.
+pub fn randomised_svd(
+  x: &Mat<f64>, 
+  rank: usize,
+  seed: usize,
+  oversampling: Option<usize>,
+  n_power_iter: Option<usize>,
+) -> RandomSvdResults {
+  let ncol = x.ncols();
+  let nrow = x.nrows();
 
-  let centered = scale_matrix_col(&x, false);
+  // Oversampling for better accuracy
+  let os = oversampling.unwrap_or(10);
+  let sample_size = (rank + os).min(ncol.min(nrow));
+  let n_iter = n_power_iter.unwrap_or(2);
 
-  let centered = centered.transpose();
+  // Create a random matrix
+  let mut rng = StdRng::seed_from_u64(seed as u64);
+  let normal = Normal::new(0.0, 1.0).unwrap();
+  let omega = Mat::from_fn(ncol, sample_size, |_, _| normal.sample(&mut rng));
+  // Multiply random matrix with original and use QR composition to get
+  // low rank approximation of x
+  let y = x * omega;
 
-  let v =  centered * centered.transpose() / n as f64;
+  let mut q = y.qr().compute_thin_Q();
+  for _ in 0..n_iter {
+    let z = x.transpose() * q;
+    q = (x * z).qr().compute_thin_Q();
+  }
 
-  // SVD
-  let svd_res = v.svd().unwrap();
+  // Perform the SVD on the low-rank approximation
+  let b = q.transpose() * x;
+  let svd = b.thin_svd().unwrap();
 
-  // Get d
-  let s = svd_res.S();
-  let s = s
-    .column_vector()
-    .iter()
-    .map(|x| {1_f64 / x.sqrt()})
-    .collect::<Vec<_>>();
-
-  let d = faer_diagonal_from_vec(s);
-
-  // Get k
-  let u = svd_res.U();
-
-  let u_transpose = u.transpose();
-
-  let k = d * u_transpose;
-
-  (centered.cloned(), k)
+  RandomSvdResults {
+    u: q * svd.U(),
+    v: svd.V().cloned(), // Use clone instead of manual copying
+    s: svd.S().column_vector().iter().copied().collect(),
+  }
 }
 
 
-/// Update the mixing matrix for ICA
-pub fn update_mix_mat(
-  w: Mat<f64>
-) -> faer::Mat<f64> {
-  // SVD
-  let svd_res = w.svd().unwrap();
-
-  let s = svd_res.S();
-  let u = svd_res.U();
-  let s = s
-    .column_vector()
-    .iter()
-    .map(|x| {
-      1_f64 / x
+pub fn rbf_iterate_epsilons(
+    dist: &[f64],
+    epsilons: &[f64],
+    n: usize,
+    shift: usize,
+    rbf_type: &str,
+) -> Result<faer::Mat<f64>, String> {  // Now specifying String as the error type
+  let rbf_fun = parse_rbf_types(rbf_type)
+    .ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+        
+  let k_res: Vec<Vec<f64>> = epsilons
+    .par_iter()
+    .map(|epsilon| {
+      let affinity_adj = match rbf_fun {
+        RbfType::Gaussian => rbf_gaussian(dist, epsilon),
+        RbfType::Bump => rbf_bump(dist, epsilon)
+      };
+      let affinity_adj_mat = upper_triangle_to_sym_faer(&affinity_adj, shift, n);
+      col_sums(&affinity_adj_mat)
     })
-    .collect::<Vec<_>>();
-  let d = faer_diagonal_from_vec(s);
-
-  u * d * u.transpose() * w
-}
-
-
-/// Parsing the ICA types
-pub fn parse_ica_type(s: &str) -> Option<IcaType> {
-  match s.to_lowercase().as_str() {
-    "exp" => Some(IcaType::Exp),
-    "logcosh" => Some(IcaType::LogCosh),
-    _ => None,
-  }
-}
-
-/// Fast ICA implementation based on logcosh.
-pub fn fast_ica_logcosh(
-  x: Mat<f64>,
-  w_init: Mat<f64>,
-  tol: f64,
-  alpha: f64,
-  maxit: usize,
-  verbose: bool,
-) -> IcaRes {
-  let p = x.ncols();
-  let mut w = update_mix_mat(w_init);
-  let mut lim = vec![1000_f64; maxit];
-
-  let mut it = 0;
-
-  while it < maxit && lim[it] > tol {
-    let wx: Mat<f64> = &w * &x;
-
-    let gwx = Mat::from_fn(
-      wx.nrows(),
-      wx.ncols(),
-    |i, j| {
-        let x = wx.get(i, j);
-        (alpha * x).tanh()
-      }
-    );
-
-    let v1 = &gwx * x.transpose() / p as f64; 
-
-    let gwx_2 = alpha * Mat::from_fn(
-      gwx.nrows(),
-      gwx.ncols(),
-    |i, j| {
-        let x = gwx.get(i, j);
-        1_f64 - x.powi(2)
-      }
-    );
-
-    let ones = Mat::from_fn(p, 1, |_, _| 1.0);
-    let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);
-
-    let row_means_vec: Vec<f64> = row_means.as_ref().col_iter()
-      .flat_map(|col| col.iter())
-      .copied()
-      .collect();
-
-    let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
-
-    let w1 = update_mix_mat(v1 - v2);
-
-    let w1_up = w1.clone() * w.transpose();
-
-    let tol_it = w1_up.diagonal()
-      .column_vector()
-      .iter()
-      .map(|x| (x.abs() - 1.0).abs())
-      .fold(f64::NEG_INFINITY, f64::max);
-
-    if it + 1 < maxit {
-      lim[it + 1] = tol_it
-    }
-
-    if verbose {
-      println!("Iteration: {:?}, tol: {:?}", it + 1, tol_it)
-    }
-
-    w = w1;
-
-    it += 1;
-  }
-
-  let min_tol = array_f64_min(&lim);
-
-  (w, min_tol)
-}
-
-
-/// Fast ICA implementation based on exp.
-pub fn fast_ica_exp(
-  x: Mat<f64>,
-  w_init: Mat<f64>,
-  tol: f64,
-  maxit: usize,
-  verbose: bool,
-) -> IcaRes {
-  let p = x.ncols();
-  let mut w = update_mix_mat(w_init);
-  let mut lim = vec![1000_f64; maxit];
-
-  let mut it = 0;
-  while it < maxit && lim[it] > tol {
-    let wx: Mat<f64> = &w * &x;
-
-    let gwx = Mat::from_fn(
-      wx.nrows(),
-      wx.ncols(),
-    |i, j| {
-        let x = wx.get(i, j);
-        x * (-x.powi(2) / 2.0).exp()
-      }
-    );
-
-    let v1 = &gwx * x.transpose() / p as f64;   
-
-    let gwx_2 = Mat::from_fn(
-      wx.nrows(),
-      wx.ncols(),
-    |i, j| {
-        let x = wx.get(i, j);
-        (1.0 - x.powi(2)) * (-x.powi(2) / 2.0).exp()
-      }
-    );
-
-    let ones = Mat::from_fn(p, 1, |_, _| 1.0);
-    let row_means = (&gwx_2 * &ones) * (1.0 / p as f64);
-
-    let row_means_vec: Vec<f64> = row_means.as_ref().col_iter()
-      .flat_map(|col| col.iter())
-      .copied()
-      .collect();
-
-    let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
-
-    let w1 = update_mix_mat(v1 - v2);
-
-    let w1_up = w1.clone() * w.transpose();
+    .collect();
     
-    let tol_it = w1_up.diagonal()
-      .column_vector()
-      .iter()
-      .map(|x| (x.abs() - 1.0).abs())
-      .fold(f64::NEG_INFINITY, f64::max);
-    
-    if it + 1 < maxit {
-      lim[it + 1] = tol_it
-    }
-
-    if verbose {
-      println!("Iteration: {:?}, tol: {:?}", it + 1, tol_it)
-    }
-
-    w = w1;
-
-    it += 1;
-  }
-
-  let min_tol = array_f64_min(&lim);
-
-  (w, min_tol)
+    Ok(nested_vector_to_faer_mat(k_res))
 }
-
-
-
-

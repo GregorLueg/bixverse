@@ -31,6 +31,7 @@ dependencies = [
  "faer",
  "num-complex",
  "rand 0.9.0",
+ "rand_distr 0.5.1",
  "rayon",
  "statrs",
 ]
@@ -211,7 +212,6 @@ checksum = "67505d96c7faa49d20e749dba7ba2447db52c40a788fd88cc2b6bef02c02277a"
 dependencies = [
  "extendr-macros",
  "libR-sys",
- "ndarray",
  "once_cell",
  "paste",
 ]
@@ -229,9 +229,9 @@ dependencies = [
 
 [[package]]
 name = "faer"
-version = "0.21.7"
+version = "0.21.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d671941ab57443f46ebe3f153a9fc3ed6cce777926c14e5fdf5da178a35ea476"
+checksum = "b8b953354de727381e27672cf99dc8dde987f45e7ad7a40c4aac349f6b16a392"
 dependencies = [
  "bytemuck",
  "dyn-stack",
@@ -247,7 +247,7 @@ dependencies = [
  "num-traits",
  "pulp",
  "rand 0.8.5",
- "rand_distr",
+ "rand_distr 0.4.3",
  "rayon",
  "reborrow",
 ]
@@ -265,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "faer-traits"
-version = "0.21.0"
+version = "0.21.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2d0172aefb5f869561e558d5390657f1aa98ca3c51a09be69a4687064ebfb9a"
+checksum = "1430e111b20872c7eaa82c7ada071bff1c3e3ac09cc6f4df676065fd2d41eb62"
 dependencies = [
  "bytemuck",
  "dyn-stack",
@@ -502,7 +502,7 @@ dependencies = [
  "num-rational",
  "num-traits",
  "rand 0.8.5",
- "rand_distr",
+ "rand_distr 0.4.3",
  "simba",
  "typenum",
 ]
@@ -575,19 +575,6 @@ checksum = "bc1e619ed04d801809e1f63e61b669d380c4119e8b0cdd6ed184c6b111f046d8"
 dependencies = [
  "nano-gemm-codegen",
  "nano-gemm-core",
-]
-
-[[package]]
-name = "ndarray"
-version = "0.15.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adb12d4e967ec485a5f71c6311fe28158e9d6f4bc4a447b474184d0f91a8fa32"
-dependencies = [
- "matrixmultiply",
- "num-complex",
- "num-integer",
- "num-traits",
- "rawpointer",
 ]
 
 [[package]]
@@ -832,6 +819,16 @@ checksum = "32cb0b9bc82b0a0876c2dd994a7e7a2683d3e7390ca40e6886785ef0c7e3ee31"
 dependencies = [
  "num-traits",
  "rand 0.8.5",
+]
+
+[[package]]
+name = "rand_distr"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a8615d50dcf34fa31f7ab52692afec947c4dd0ab803cc87cb3b0b4570ff7463"
+dependencies = [
+ "num-traits",
+ "rand 0.9.0",
 ]
 
 [[package]]

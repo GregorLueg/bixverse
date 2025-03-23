@@ -73,18 +73,22 @@ pub fn r_nested_list_to_rust(
 
 /// Transform an R matrix to a Faer one
 pub fn r_matrix_to_faer(
-  x: RMatrix<f64>
+  x: &RMatrix<f64>
 ) -> faer::Mat<f64> {
   let ncol = x.ncols();
   let nrow = x.nrows();
   let data = x.data();
 
-  Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
+  Mat::from_fn(
+    nrow, 
+    ncol, 
+    |i, j| data[i + j * nrow]
+  ) 
 }
 
 /// Transform a faer into an R matrix
 pub fn faer_to_r_matrix(
-  x: faer::Mat<f64>
+  x: faer::MatRef<f64>
 ) -> extendr_api::RArray<f64, [usize; 2]> {
   let nrow = x.nrows();
   let ncol = x.ncols();

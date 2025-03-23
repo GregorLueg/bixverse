@@ -6,9 +6,8 @@
 \usage{
 rs_gse_geom_elim_list(
   target_genes_list,
-  go_to_genes,
-  ancestors,
   levels,
+  go_obj,
   gene_universe_length,
   min_genes,
   elim_threshold,
@@ -19,15 +18,10 @@ rs_gse_geom_elim_list(
 \item{target_genes_list}{A list of target genes against which to run the
 method.}
 
-\item{go_to_genes}{A named list with the gene identifers as elements and
-gene ontology identifiers as names.}
+\item{levels}{A character vector representing the levels to iterate through.
+The order will be the one the iterations are happening in.}
 
-\item{ancestors}{A named list with the go identifiers of all ancestors as
-elements and the gene ontology identifiers as names.}
-
-\item{levels}{A named list with the go identifiers of that ontology level as
-elements and the level name as names. IMPORTANT! This list needs to be
-ordered in the right way!}
+\item{go_obj}{The gene_ontology_data S7 class. See \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{gene_universe_length}{The length of the gene universe.}
 

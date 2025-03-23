@@ -74,6 +74,8 @@ go_data_dt <- get_go_human_data()
 
 go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
 
+names(attributes(go_data_s7))
+
 go_data_s7
 
 number_levels <- length(S7::prop(S7_obj, "levels"))
@@ -92,6 +94,9 @@ cat(paste(
 ?network_diffusions
 
 ?gse_go_elim_method
+
+devtools::document()
+rextendr::document()
 
 tictoc::tic()
 t3 <- gse_go_elim_method(go_data_s7,

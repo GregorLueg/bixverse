@@ -4,30 +4,30 @@
 \alias{rs_fast_ica}
 \title{Run the Rust implementation of fast ICA.}
 \usage{
-rs_fast_ica(whiten, w_init, maxit, alpha, tol, ica_type, verbose)
+rs_fast_ica(whiten, w_init, ica_type, ica_params)
 }
 \arguments{
-\item{whiten}{The whitened matrix.}
+\item{whiten}{Numerical matrix. The whitened matrix.}
 
-\item{w_init}{The w_init matrix. ncols need to be equal to nrows of whiten.}
+\item{w_init}{Numerical matrix. The initial unmixing matrix. ncols need to
+be equal to nrows of whiten.}
 
-\item{maxit}{Maximum number of iterations to try if algorithm does not
-converge.}
+\item{ica_type}{String. One of 'logcosh' or 'exp'.}
 
-\item{alpha}{The alpha parameter for the LogCosh implementation of ICA.}
-
-\item{tol}{Tolerance parameter.}
-
-\item{ica_type}{One of 'logcosh' or 'exp'.}
-
-\item{verbose}{Controls the verbosity of the function.}
-
-\item{debug}{Additional messages if desired.}
-
-\item{x}{The matrix to whiten. The whitening will happen over the columns.}
+\item{ica_params}{A list containing:
+\itemize{
+\item maxit - Integer. Maximum number of iterations for ICA.
+\item alpha - Float. The alpha parameter for the logcosh version of ICA.
+Should be between 1 to 2.
+\item max_tol - Maximum tolerance of the algorithm
+\item verbose - Verbosity of the function, i.e., shall individual iters
+be shown.
+}
+If the list is empty or the expected elements are not found, default values
+are used.}
 }
 \value{
-A list containing:
+A list with the following items:
 \itemize{
 \item mixing - The mixing matrix for subsequent usage.
 \item converged - Boolean if the algorithm converged.
@@ -35,7 +35,7 @@ A list containing:
 }
 \description{
 This function serves as a wrapper over the fast ICA
-implementations in Rust. It assumes a pre-whiten matrix and also an
+implementations in Rust. It assumes a whitened matrix and also an
 intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
 around the Rust functions with type checks are provided in the package.
 }

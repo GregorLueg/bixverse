@@ -9,12 +9,15 @@ name = 'bixverse'
 
 [features]
 default = []
-simd = []  # Or another SIMD implementation
+
+[profile.dev.package.faer]
+opt-level = 3
 
 [dependencies]
-extendr-api = { version = "*", features = ["ndarray"] }
+extendr-api = "*"
 rayon = '*'
 rand = '*'
+rand_distr = '0.5.1'
 statrs = '*'
-faer = '0.21.7'
+faer = '0.21.8'
 num-complex = '*'

@@ -104,6 +104,27 @@ upper_triangular_cor_mat <- R6::R6Class(
       colnames(mat) <- rownames(mat) <- private$features
 
       return(mat)
+    },
+
+
+    #' @description Return the correlation data and shift
+    #'
+    #' @return A list with
+    #' \itemize{
+    #'  \item cor_data - Numeric vector. The correlations.
+    #'  \item n_features - Integer. Number of initial features.
+    #'  \item shift - Integer. The applied shift.
+    #' }
+    get_cor_vector = function() {
+      shift <- private$shift
+      cor_data <- private$correlations
+      return(
+        list(
+          cor_data = cor_data,
+          n_features = length(private$features),
+          shift = shift
+        )
+      )
     }
   ),
   # Private

@@ -23,6 +23,7 @@ dense R matrix for a given parameter if need be.
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_cor_mat" data-id="get_cor_vector"><a href='../../bixverse/html/upper_triangular_cor_mat.html#method-upper_triangular_cor_mat-get_cor_vector'><code>bixverse::upper_triangular_cor_mat$get_cor_vector()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_cor_mat" data-id="print"><a href='../../bixverse/html/upper_triangular_cor_mat.html#method-upper_triangular_cor_mat-print'><code>bixverse::upper_triangular_cor_mat$print()</code></a></span></li>
 </ul>
 </details>

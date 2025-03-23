@@ -69,18 +69,21 @@ impl GeneOntology {
   /// Get the genes based on an array of Strings.
   pub fn get_genes_list(
     &self,
-    ids: Vec<String>,
+    ids: &[String],
   ) -> (Vec<String>, Vec<&HashSet<String>>) {
     let keys: HashSet<String> = self.go_to_gene
       .clone()
       .into_keys()
       .collect();
 
-    let id_keys: HashSet<_> = ids.into_iter().collect();
+    let id_keys: HashSet<_> = ids
+      .iter()
+      .cloned()
+      .collect();
 
-    let ids_final: Vec<String>= id_keys
+    let ids_final: Vec<String> = id_keys
       .intersection(&keys)
-      .map(|s| s.to_string())
+      .cloned()
       .collect();
 
     let gene_sets: Vec<_> = ids_final
@@ -106,12 +109,27 @@ impl GeneOntology {
 // Functions //
 ///////////////
 
-/// Prepare the data for ingestion into a GO object
+/// Take the S7 go_data_class and return the necessary Rust types for further
+/// processing.
 pub fn prepare_go_data(
-  go_to_genes: List,
-  ancestors: List,
-  levels: List,
- ) -> extendr_api::Result<(GeneMap, AncestorMap, LevelMap)> {
+  go_obj: Robj,
+) -> extendr_api::Result<(GeneMap, AncestorMap, LevelMap)> {
+  let go_to_genes = go_obj
+    .get_attrib("go_to_genes")
+    .unwrap()
+    .as_list()
+    .unwrap();
+  let ancestors = go_obj
+    .get_attrib("ancestry")
+    .unwrap()
+    .as_list()
+    .unwrap();
+  let levels = go_obj
+    .get_attrib("levels")
+    .unwrap()
+    .as_list()
+    .unwrap();
+
   let go_to_genes = r_list_to_hashmap_set(go_to_genes)?;
   let ancestors = r_list_to_hashmap(ancestors)?;
   let levels = r_list_to_hashmap(levels)?;
@@ -131,7 +149,7 @@ pub fn process_ontology_level(
 ) -> GoElimLevelResults {
   // Get the identfiers of that level and clean everything up
   let go_ids = go_obj.get_level_ids(level);
-  let go_ids_final: Vec<String> = go_ids.cloned().unwrap_or_default();
+  let go_ids_final: &Vec<String> = go_ids.unwrap();
   let level_data = go_obj.get_genes_list(go_ids_final);
   let mut go_identifiers = level_data.0;
   let mut go_gene_sets = level_data.1;

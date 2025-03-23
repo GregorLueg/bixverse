@@ -4,16 +4,32 @@
 \alias{rs_prepare_whitening}
 \title{Prepare the data for whitening}
 \usage{
-rs_prepare_whitening(x)
+rs_prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter)
 }
 \arguments{
 \item{x}{The matrix to whiten. The whitening will happen over the columns.}
+
+\item{fast_svd}{Boolean. Shall a randomised SVD be used. This is way faster
+on larger data sets.}
+
+\item{seed}{Integer. Only relevant with fast_svd is set to \code{TRUE}.}
+
+\item{rank}{Integer. How many ranks to use for the fast SVD approximation.
+If you supply \code{NULL}, it will default to \code{10L}. Only relevant with
+fast_svd is set to \code{TRUE}.}
+
+\item{oversampling}{Integer. Oversampling parameter to make the approximation
+more precise. If you supply \code{NULL}, it will default to \code{10L}. Only relevant
+with fast_svd is set to \code{TRUE}.}
+
+\item{n_power_iter}{Integer. How much shall the QR low rank approximation be
+powered. If you supply \code{NULL}, it will default to \code{2L}.}
 }
 \value{
 A list containing:
 \itemize{
-\item x - The transposed and scaled data for subsequent usage in ICA.
-\item k - The K matrix.
+\item x - The preprocessed matrix.
+\item k - The pre-whitening matrix k.
 }
 }
 \description{

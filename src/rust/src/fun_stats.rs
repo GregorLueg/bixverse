@@ -118,8 +118,8 @@ fn rs_hedges_g(
   mat_b: RMatrix<f64>,
   small_sample_correction: bool,
 ) -> List {
-  let mat_a: faer::Mat<f64> = r_matrix_to_faer(mat_a);
-  let mat_b: faer::Mat<f64> = r_matrix_to_faer(mat_b);
+  let mat_a: faer::Mat<f64> = r_matrix_to_faer(&mat_a);
+  let mat_b: faer::Mat<f64> = r_matrix_to_faer(&mat_b);
 
   let n_a = mat_a.nrows();
   let n_b = mat_b.nrows();

@@ -4,12 +4,17 @@
 \alias{ica_processing}
 \title{Prepare class for ICA}
 \usage{
-ica_processing(bulk_coexp, ...)
-
-...
+ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 }
 \arguments{
-\item{bulk_coexp}{\code{bulk_coexp} class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
+
+\item{fast_svd}{Boolean. Shall randomised SVD be used for the whitening.
+This is faster and usually causes little precision loss.}
+
+\item{random_seed}{Integer. Seed for the randomised SVD. Only relevant, if
+fast_svd = \code{TRUE}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
@@ -20,7 +25,4 @@ properties of the class.
 \description{
 This is the generic function for doing the necessary preprocessing for
 running independent component analysis.
-
-This function will prepare the \code{bulk_coexp} for subsequent usage of the
-contrastive ICA functions.
 }

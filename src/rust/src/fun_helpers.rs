@@ -5,6 +5,7 @@ use rayon::prelude::*;
 
 use crate::utils_r_rust::faer_to_r_matrix;
 use crate::utils_rust::array_f64_max_min;
+use crate::utils_stats::*;
 
 
 /// Calculate the OT harmonic sum
@@ -74,7 +75,7 @@ fn rs_upper_triangle_to_dense(
     }
   }
 
-  faer_to_r_matrix(mat)
+  faer_to_r_matrix(mat.as_ref())
 }
 
 /// Apply a Gaussian affinity kernel to a distance metric
@@ -90,18 +91,20 @@ fn rs_upper_triangle_to_dense(
 /// 
 /// @export
 #[extendr]
-fn rs_gaussian_affinity_kernel(
+fn rs_rbf_function(
   x: &[f64],
-  bandwidth: f64
-) -> Vec<f64> {
-  let res: Vec<f64> = x.par_iter()
-    .map(|val| {
-      f64::exp(
-        -(val.powi(2)) / bandwidth.powi(2)
-      )
-    })
-    .collect();
-  res
+  epsilon: f64,
+  rbf_type: &str,
+) -> extendr_api::Result<Vec<f64>> {
+  let rbf_fun = parse_rbf_types(rbf_type)
+    .ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+
+  let res: Vec<f64> = match rbf_fun {
+    RbfType::Gaussian => rbf_gaussian(x, &epsilon),
+    RbfType::Bump => rbf_bump(x, &epsilon)
+  };
+
+  Ok(res)
 }
 
 /// Apply a range normalisation on a vector.
@@ -135,10 +138,11 @@ fn rs_range_norm(
     .collect()
 }
 
+
 extendr_module! {
     mod fun_helpers;
     fn rs_upper_triangle_to_dense;
     fn rs_ot_harmonic_sum;
-    fn rs_gaussian_affinity_kernel;
+    fn rs_rbf_function;
     fn rs_range_norm;
 }
