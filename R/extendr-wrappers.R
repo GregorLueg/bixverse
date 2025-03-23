@@ -277,6 +277,9 @@ rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap_
 #' @export
 rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
 
+#' @export
+rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_type) .Call(wrap__rs_rbf_iterate_epsilons, dist, epsilon_vec, original_dim, shift, rbf_type)
+
 #' Calculate the column wise differential correlation between two sets of data.
 #' 
 #' @description This function calculates the differential correlation based on
@@ -373,7 +376,7 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' @return The affinities after the Kernel was applied.
 #' 
 #' @export
-rs_gaussian_affinity_kernel <- function(x, bandwidth) .Call(wrap__rs_gaussian_affinity_kernel, x, bandwidth)
+rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
 
 #' Apply a range normalisation on a vector.
 #' 

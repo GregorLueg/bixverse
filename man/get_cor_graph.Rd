@@ -4,17 +4,17 @@
 \alias{get_cor_graph}
 \title{Get correlation-based graph}
 \usage{
-get_cor_graph(object, kernel_bandwidth, min_affinity, .verbose)
+get_cor_graph(object, epsilon, .verbose)
 }
 \arguments{
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 
 \item{kernel_bandwidth}{Numerical. The bandwidth to use for the affinity
 kernel}
 
 \item{min_affinity}{Numerical. Minimum affinity needed to keep the edge.}
-
-\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the following elements:

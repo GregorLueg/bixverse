@@ -168,6 +168,31 @@ pub fn upper_triangle_indices(
   (row_indices, col_indices)
 }
 
+/// Create from the upper triangle values for a symmetric matrix the full
+/// dense faer matrix.
+pub fn upper_triangle_to_sym_faer(
+  data: &[f64],
+  shift: usize,
+  n: usize,
+) -> faer::Mat<f64> {
+  let mut mat = Mat::<f64>::zeros(n, n);
+  let mut idx = 0;
+  for i in 0..n {
+    for j in i..n {
+      if shift == 1 && i == j {
+        mat[(i, j)] = 1_f64
+      } else {
+        mat[(i, j)] = data[idx];
+        mat[(j, i)] = data[idx];
+        idx += 1;
+      }
+    }
+  }
+
+  mat
+}
+
+
 // /// Rowbind a vector of faer Matrices, assuming same column length for all of
 // /// them
 // pub fn rowbind_matrices(

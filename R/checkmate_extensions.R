@@ -14,24 +14,26 @@ checkCorGraphParams <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res))
     return(res)
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "kernel_bandwidth",
-      "min_affinity",
-      "min_cor",
-      "fdr_threshold"
-    )
-  )
+  res <- checkmate::checkNames(names(x),
+                               must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose"))
   if (!isTRUE(res))
     return(res)
-  res <- purrr::map_lgl(x, .f = checkmate::qtest, rules = "R1[0, 1]")
+  rules <- list(
+    "epsilon" = "R1",
+    "min_cor" = "R1[0, 1]",
+    "fdr_threshold" = "R1[0, 1]",
+    "verbose" = "B1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
         "The following element `%s` in graph params does not conform the expected format. \
-        Needs to be doubles between 0 and 1",
+        min_cor and fdr_threshold need to be between 0 and 1, epsilon a double. and .verbose \
+        a boolean.",
         broken_elem
       )
     )

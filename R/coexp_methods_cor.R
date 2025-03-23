@@ -184,6 +184,93 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
 
 # methods - graph-based gene module detection ----------------------------------
 
+#' @title Iterate through different epsilon parameters
+#'
+#' @description
+#' This functions iterates through a set of provided epsilons and checks for
+#' each one to what extend the underlying affinity matrix will follow a power
+#' law distribution.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to run
+#' [bixverse::diffcor_module_processing()] before running this function.
+#' @param epsilons Vector of floats. The different epsilon parameters you
+#' would like to run.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @export
+cor_module_check_epsilon <- S7::new_generic(
+  name = "cor_module_check_epsilon",
+  dispatch_args = "object",
+  fun = function(object,
+                 epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%->%`
+#' @import data.table
+#'
+#' @method cor_module_check_epsilon bulk_coexp
+S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
+                                                             epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+                                                             .verbose = TRUE) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(epsilons, "R+")
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
+  # Early return
+  if (is.null(detection_method) ||
+      detection_method != "correlation-based") {
+    warning(
+      paste(
+        "This class does not seem to be set for correlation-based module detection",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  # Pull out the correlation results
+  cor_res <- S7::prop(object, "processed_data")$correlation_res
+  c(cor_vector, n_features, shift) %<-% cor_res$get_cor_vector()
+
+  # Prepare everything for iterating through the epsilons
+  epsilons <- sort(epsilons, decreasing = TRUE)
+  dist_vec <- 1 - abs(cor_vector)
+  dist_vec <- data.table::fifelse(dist_vec < 0, 0, dist_vec)
+
+  if (.verbose)
+    message(sprintf("Testing %i epsilons.", length(epsilons)))
+
+  epsilon_data <- rs_rbf_iterate_epsilons(
+    dist = dist_vec,
+    epsilon_vec = epsilons,
+    original_dim = n_features,
+    shift = shift,
+    rbf_type = "bump"
+  )
+
+  r_square_vals <- apply(epsilon_data, 2, .scale_free_fit)
+
+  r_square_data <- list(epsilon = epsilons, r2_vals = r_square_vals) %>%
+    data.table::setDT()
+
+  S7::prop(object, "outputs")[['epsilon_data']] <- r_square_data
+
+  return(object)
+
+}
+
+
 #' @title Iterate through Leiden resolutions for graph-based community detection.
 #'
 #' @description
@@ -212,16 +299,14 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
 #' @param graph_params List. Parameters for the generation of the (differential)
 #' correlation graph, see [bixverse::cor_graph_params()]. Contains:
 #' \itemize{
-#'  \item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
-#'  kernel to generate the affinities. Relevant for single correlation-based
-#'  graphs.
-#'  \item min_affinity - Float. Minimum affinity before the edge gets dropped.
-#'  Relevant for single correlation-based graphs.
+#'  \item Epsilon - Defines the epsilon parameter for the radial basis
+#'  function. Defaults to 1, but should be ideally optimised.
 #'  \item min_cor - Float. Minimum absolute correlation that needs to be
 #'  observed in either data set. Only relevant for differential correlation-based
 #'  graphs.
 #'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
 #'  p-value.
+#'  \item verbose - Boolean. Controls verbosity of the graph generation.
 #' }
 #' @param random_seed Integer. Random seed.
 #' @param min_genes Integer. Minimum number of genes that should be in a
@@ -278,8 +363,8 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) &&
-      detection_method %in% c("correlation-based", "differential correlation-based")) {
+  if (is.null(detection_method) ||
+      !detection_method %in% c("correlation-based", "differential correlation-based")) {
     warning(
       paste(
         "This class does not seem to be set for correlation-based module detection",
@@ -289,21 +374,18 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
     return(object)
   }
 
-  graph_params[['.verbose']] <- .verbose
-
   c(graph, graph_params) %<-% with(graph_params, switch(
     detection_method,
     "correlation-based" = get_cor_graph(
       object = object,
-      kernel_bandwidth = kernel_bandwidth,
-      min_affinity = min_affinity,
-      .verbose = .verbose
+      epsilon = epsilon,
+      .verbose = verbose
     ),
     "differential correlation-based" = get_diffcor_graph(
       object = object,
       min_cor = min_cor,
       fdr_threshold = fdr_threshold,
-      .verbose = .verbose
+      .verbose = verbose
     )
   ))
 
@@ -405,20 +487,19 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 #' are too large be further sub clustered. Defaults to `TRUE`.
 #' @param random_seed Integer. Random seed.
 #' @param .graph_params List. Parameters for the generation of the (differential)
-#' correlation graph, see [bixverse::cor_graph_params()].
+#' correlation graph, see [bixverse::cor_graph_params()]. Contains:
 #' \itemize{
-#'  \item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
-#'  kernel to generate the affinities. Relevant for single correlation-based
-#'  graphs.
-#'  \item min_affinity - Float. Minimum affinity before the edge gets dropped.
-#'  Relevant for single correlation-based graphs.
+#'  \item Epsilon - Defines the epsilon parameter for the radial basis
+#'  function. Defaults to 2, but should be ideally optimised.
 #'  \item min_cor - Float. Minimum absolute correlation that needs to be
 #'  observed in either data set. Only relevant for differential correlation-based
 #'  graphs.
 #'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
 #'  p-value.
-#' }This
-#' parameter is only relevant if you did *not* run [bixverse::cor_module_check_res()].
+#'  \item verbose - Boolean. Controls verbosity of the graph generation.
+#' }
+#' This parameter is only relevant if you did *not* run
+#' [bixverse::cor_module_check_res()].
 #' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
 #' maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -496,21 +577,19 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
       )
     )
 
-    .graph_params[['.verbose']] <- .verbose
-
     c(graph, graph_params) %<-% with(.graph_params, switch(
       detection_method,
       "correlation-based" = get_cor_graph(
         object = object,
         kernel_bandwidth = kernel_bandwidth,
         min_affinity = min_affinity,
-        .verbose = .verbose
+        .verbose = verbose
       ),
       "differential correlation-based" = get_diffcor_graph(
         object = object,
         min_cor = min_cor,
         fdr_threshold = fdr_threshold,
-        .verbose = .verbose
+        .verbose = verbose
       )
     ))
 
@@ -622,6 +701,37 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 
 # methods - helpers ------------------------------------------------------------
 
+## power law calculations ------------------------------------------------------
+
+#' Calculate the goodness of fit for a power law distribution.
+#'
+#' @param k Numeric vector. The vector of
+#' @param breaks Integer. Number of breaks for fitting the data.
+#' @param plot Boolean. Shall the log-log plot be generated.
+#'
+#' @returns The R2 value of of the goodness of fit.
+.scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
+  # Checks
+  checkmate::qassert(k, "R>=50")
+  checkmate::qassert(breaks, "I1")
+  checkmate::qassert(plot, "B1")
+  # Deal with stupid case that someone supplies something small here
+  if (breaks > length(k)) {
+    breaks <- ceiling(k / 10L)
+  }
+  k_discrete <- cut(k, breaks)
+  dk <- tapply(k, k_discrete, mean)
+  dk_p <- tapply(k, k_discrete, length) / length(k)
+  log_dk <- log10(dk)
+  log_dk_p <- log10(dk_p)
+
+  if (plot) {
+    plot(x = log_dk, y = log_dk_p)
+  }
+
+  summary(lm(log_dk ~ log_dk_p))$r.squared
+}
+
 ## graph generation ------------------------------------------------------------
 
 #' @title Get correlation-based graph
@@ -647,23 +757,19 @@ get_cor_graph <- S7::new_generic(
   name = 'get_cor_graph',
   dispatch_args = 'object',
   fun = function(object,
-                 kernel_bandwidth,
-                 min_affinity,
+                 epsilon,
                  .verbose) {
     S7::S7_dispatch()
   }
 )
 
+
 #' @export
 #' @method get_cor_graph bulk_coexp
-S7::method(get_cor_graph, bulk_coexp) <- function(object,
-                                                  kernel_bandwidth,
-                                                  min_affinity,
-                                                  .verbose) {
+S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::qassert(kernel_bandwidth, "R1[0,1]")
-  checkmate::qassert(min_affinity, "R1[0,1]")
+  checkmate::qassert(epsilon, "R1")
   checkmate::qassert(.verbose, "B1")
   # Function body
   cor_res <- S7::prop(object, "processed_data")$correlation_res
@@ -671,8 +777,10 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object,
     .[, cor_abs := abs(cor)] %>%
     .[, dist := 1 - cor_abs] %>%
     .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
-    .[, affinity := rs_gaussian_affinity_kernel(x = dist, bandwidth = kernel_bandwidth)] %>%
-    .[affinity >= min_affinity] %>%
+    .[, affinity := rs_rbf_function(x = dist,
+                                    epsilon = epsilon,
+                                    rbf_type = "bump")] %>%
+    .[affinity > 0] %>%
     .[, c("feature_a", "feature_b", "affinity")] %>%
     data.table::setnames(
       .,
@@ -681,22 +789,21 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object,
     )
 
   if (.verbose)
-    message("Generating correlation-based graph.")
+    message(sprintf(
+      "Generating correlation-based graph with %i edges.",
+      nrow(graph_df)
+    ))
 
   graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
   graph <- igraph::simplify(graph)
 
   graph_params <- list(
-    kernel_bandwidth = kernel_bandwidth,
-    min_affinity = min_affinity,
+    epsilon = epsilon,
     no_nodes = length(igraph::V(graph)),
     no_edges = length(igraph::E(graph))
   )
 
-  list(
-    graph = graph,
-    params = graph_params
-  )
+  list(graph = graph, params = graph_params)
 }
 
 #' @title Get differential correlation-based graph
@@ -760,7 +867,10 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
     )
 
   if (.verbose)
-    message("Generating differential correlation-based graph.")
+    message(sprintf(
+      "Generating differential correlation-based graph with %i edges.",
+      nrow(graph_df)
+    ))
 
   graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
   graph <- igraph::simplify(graph)
@@ -818,13 +928,14 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
 #'
 #' @description
 #' Plots the resolution results (if they can be found in the class). The x-axis
-#' reflects the
+#' reflects the different resolutions and the y axis the modularity observed
+#' with that resolution.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param print_head Boolean. Print the Top5 resolution parameters and their
 #' meta data.
 #'
-#' @return If resolution results were found, returns the data.table. Otherwise,
+#' @return Plots the result, if the results were found in the class. Otherwise,
 #' throws a warning and returns NULL.
 #'
 #' @export
@@ -854,8 +965,8 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRU
 
   plot_df <- data.table::setorder(plot_df, -modularity)
 
-  # if (print_head)
-  #   print(head(plot_df))
+  if (print_head)
+    print(head(plot_df))
 
   p <- ggplot(data = plot_df,
               mapping =  aes(x = resolution, y = modularity)) +
@@ -874,3 +985,57 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRU
 
   p
 }
+
+
+#' @title Plot the epsilon vs. power law goodness of fit result
+#'
+#' @description
+#' Plots the epsilon results (if they can be found in the class). The x-axis
+#' reflects the different epsilon parameters for the radial basis function,
+#' and the y-axis the R2 value that the resulting networks follows a power law
+#' distribution (i.e., scale free topology).
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If epsilon results were found, returns the ggplot. Otherwise, throws
+#' a warning and returns NULL.
+#'
+#' @export
+plot_epsilon_res <- S7::new_generic(
+  name = 'plot_epsilon_res',
+  dispatch_args = 'object',
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import ggplot2
+#'
+#' @method plot_epsilon_res bulk_coexp
+S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  # Body
+  plot_df <- S7::prop(object, "outputs")[['epsilon_data']]
+  if (is.null(plot_df)) {
+    warning(
+      "No resolution results found. Did you run cor_module_check_epsilon()? Returning NULL."
+    )
+    return(NULL)
+  }
+
+  p <- ggplot(data = plot_df, aes(x = epsilon, y = r2_vals)) +
+    geom_point(size = 3, shape = 21) +
+    geom_line() +
+    theme_minimal() +
+    ylim(0, 1) +
+    xlab("Epsilon") +
+    ylab("Goodness of fit (R2)") +
+    ggtitle("Epsilon vs. scale free topology",
+            subtitle = "Goodness of fit for log(connectivity) ~ log(p(connectivity)")
+
+  p
+}
+

@@ -5,19 +5,15 @@
 \title{Wrapper function for graph generation}
 \usage{
 cor_graph_params(
-  kernel_bandwidth = 0.2,
-  min_affinity = 0.001,
+  epsilon = 2,
   min_cor = 0.2,
-  fdr_threshold = 0.05
+  fdr_threshold = 0.05,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{kernel_bandwidth}{Float. Defines the bandwidth of the Gaussian
-kernel to generate the affinities. Relevant for single correlation-based
-graphs.}
-
-\item{min_affinity}{Float. Minimum affinity before the edge gets dropped.
-Relevant for single correlation-based graphs.}
+\item{epsilon}{Float. Defines the epsilon parameter for the radial basis
+function. Defaults to 2, but should be ideally optimised.}
 
 \item{min_cor}{Float. Minimum absolute correlation that needs to be
 observed in either data set. Only relevant for differential correlation-based

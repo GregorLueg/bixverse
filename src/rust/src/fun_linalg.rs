@@ -257,12 +257,34 @@ fn rs_random_svd(
 }
 
 
+/// @export
+#[extendr]
+fn rs_rbf_iterate_epsilons(
+  dist: &[f64],
+  epsilon_vec: &[f64],
+  original_dim: usize,
+  shift: usize,
+  rbf_type: &str,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+  let band_width_data = rbf_iterate_epsilons(
+    dist,
+    epsilon_vec,
+    original_dim,
+    shift,
+    rbf_type
+  )?;
+
+  Ok(faer_to_r_matrix(band_width_data.as_ref()))
+}
+
+
 extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
   fn rs_random_svd;
   fn rs_cor_upper_triangle;
+  fn rs_rbf_iterate_epsilons;
   fn rs_differential_cor;
   fn rs_contrastive_pca;
 }

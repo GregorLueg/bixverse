@@ -33,20 +33,19 @@ are too large be further sub clustered. Defaults to \code{TRUE}.}
 \item{random_seed}{Integer. Random seed.}
 
 \item{.graph_params}{List. Parameters for the generation of the (differential)
-correlation graph, see \code{\link[=cor_graph_params]{cor_graph_params()}}.
+correlation graph, see \code{\link[=cor_graph_params]{cor_graph_params()}}. Contains:
 \itemize{
-\item kernel_bandwidth - Float. Defines the bandwidth of the Gaussian
-kernel to generate the affinities. Relevant for single correlation-based
-graphs.
-\item min_affinity - Float. Minimum affinity before the edge gets dropped.
-Relevant for single correlation-based graphs.
+\item Epsilon - Defines the epsilon parameter for the radial basis
+function. Defaults to 2, but should be ideally optimised.
 \item min_cor - Float. Minimum absolute correlation that needs to be
 observed in either data set. Only relevant for differential correlation-based
 graphs.
 \item fdr_threshold - Float. Maximum FDR for the differential correlation
 p-value.
-}This
-parameter is only relevant if you did \emph{not} run \code{\link[=cor_module_check_res]{cor_module_check_res()}}.}
+\item verbose - Boolean. Controls verbosity of the graph generation.
+}
+This parameter is only relevant if you did \emph{not} run
+\code{\link[=cor_module_check_res]{cor_module_check_res()}}.}
 
 \item{.max_iters}{Integer. If sub clustering is set to \code{TRUE}, what shall be the
 maximum number of iterations. Defaults to 100L.}

@@ -13,10 +13,11 @@ plot_resolution_res(object, print_head = TRUE)
 meta data.}
 }
 \value{
-If resolution results were found, returns the data.table. Otherwise,
+Plots the result, if the results were found in the class. Otherwise,
 throws a warning and returns NULL.
 }
 \description{
 Plots the resolution results (if they can be found in the class). The x-axis
-reflects the
+reflects the different resolutions and the y axis the modularity observed
+with that resolution.
 }

@@ -92,11 +92,8 @@ ica_randomisation_params <- function(cross_validate = FALSE,
 
 #' Wrapper function for graph generation
 #'
-#' @param kernel_bandwidth Float. Defines the bandwidth of the Gaussian
-#' kernel to generate the affinities. Relevant for single correlation-based
-#' graphs.
-#' @param min_affinity Float. Minimum affinity before the edge gets dropped.
-#' Relevant for single correlation-based graphs.
+#' @param epsilon Float. Defines the epsilon parameter for the radial basis
+#' function. Defaults to 2, but should be ideally optimised.
 #' @param min_cor Float. Minimum absolute correlation that needs to be
 #' observed in either data set. Only relevant for differential correlation-based
 #' graphs.
@@ -106,22 +103,22 @@ ica_randomisation_params <- function(cross_validate = FALSE,
 #' @returns List with parameters for usage in subsequent function.
 #'
 #' @export
-cor_graph_params <- function(kernel_bandwidth = 0.2,
-                             min_affinity = 0.001,
+cor_graph_params <- function(epsilon = 2,
                              min_cor = 0.2,
-                             fdr_threshold = 0.05) {
+                             fdr_threshold = 0.05,
+                             verbose = TRUE) {
   # Checks
-  checkmate::qassert(kernel_bandwidth, "I1[0, 1]")
-  checkmate::qassert(min_affinity, "I1[0, 1]")
-  checkmate::qassert(min_cor, "I1[0, 1]")
-  checkmate::qassert(fdr_threshold, "I1[0, 1]")
+  checkmate::qassert(epsilon, "R1")
+  checkmate::qassert(min_cor, "R1[0, 1]")
+  checkmate::qassert(fdr_threshold, "R1[0, 1]")
+  checkmate::qassert(verbose, "B1")
   # Return
   return(
     list(
-      kernel_bandwidth = kernel_bandwidth,
-      min_affinity = min_affinity,
+      epsilon = epsilon,
       min_cor = min_cor,
-      fdr_threshold = fdr_threshold
+      fdr_threshold = fdr_threshold,
+      verbose = verbose
     )
   )
 }

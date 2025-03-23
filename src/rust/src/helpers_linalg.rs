@@ -4,7 +4,7 @@ use rand::prelude::*;
 use rand_distr::Normal;
 
 use crate::utils_rust::*;
-use crate::utils_stats::z_scores_to_pval;
+use crate::utils_stats::*;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
@@ -41,6 +41,17 @@ pub fn col_means(
   means.row(0).iter().cloned().collect()
 }
 
+/// Calculates the column sums of a matrix and returns it as Vec<f64>
+pub fn col_sums(
+  mat: &Mat<f64>
+) -> Vec<f64> {
+  let n_rows = mat.nrows();
+  let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
+  let col_sums = ones.transpose() * mat;
+
+  col_sums.row(0).iter().cloned().collect()
+}
+
 /// Calculate the column standard deviations
 pub fn col_sds(mat: &Mat<f64>) -> Vec<f64> {
     let n = mat.nrows() as f64;
@@ -71,48 +82,48 @@ pub fn scale_matrix_col(
   scale_sd: bool
 ) -> Mat<f64>{
   let n_rows = mat.nrows();
-    let n_cols = mat.ncols();
+  let n_cols = mat.ncols();
     
-    let mut means = vec![0.0; n_cols];
-    for j in 0..n_cols {
-        for i in 0..n_rows {
-            means[j] += mat[(i, j)];
-        }
-        means[j] /= n_rows as f64;
+  let mut means = vec![0.0; n_cols];
+  for j in 0..n_cols {
+    for i in 0..n_rows {
+      means[j] += mat[(i, j)];
     }
+    means[j] /= n_rows as f64;
+  }
     
-    let mut result = mat.clone();
-    for j in 0..n_cols {
-        let mean = means[j];
-        for i in 0..n_rows {
-            result[(i, j)] -= mean;
-        }
+  let mut result = mat.clone();
+  for j in 0..n_cols {
+    let mean = means[j];
+    for i in 0..n_rows {
+      result[(i, j)] -= mean;
     }
+  }
     
-    if !scale_sd {
-        return result;
+  if !scale_sd {
+    return result;
+  }
+    
+  let mut std_devs = vec![0.0; n_cols];
+  for j in 0..n_cols {
+    for i in 0..n_rows {
+      let val = result[(i, j)];
+      std_devs[j] += val * val;
     }
-    
-    let mut std_devs = vec![0.0; n_cols];
-    for j in 0..n_cols {
-        for i in 0..n_rows {
-            let val = result[(i, j)];
-            std_devs[j] += val * val;
-        }
-        std_devs[j] = (std_devs[j] / (n_rows as f64 - 1.0)).sqrt();
-        if std_devs[j] < 1e-10 {
-            std_devs[j] = 1.0;
-        }
+    std_devs[j] = (std_devs[j] / (n_rows as f64 - 1.0)).sqrt();
+    if std_devs[j] < 1e-10 {
+      std_devs[j] = 1.0;
     }
+  }
     
-    for j in 0..n_cols {
-        let std_dev = std_devs[j];
-        for i in 0..n_rows {
-            result[(i, j)] /= std_dev;
-        }
+  for j in 0..n_cols {
+    let std_dev = std_devs[j];
+    for i in 0..n_rows {
+      result[(i, j)] /= std_dev;
     }
+  }
     
-    result
+  result
 }
 
 /// Calculate the column-wise co-variance
@@ -294,3 +305,27 @@ pub fn randomised_svd(
 }
 
 
+pub fn rbf_iterate_epsilons(
+    dist: &[f64],
+    epsilons: &[f64],
+    n: usize,
+    shift: usize,
+    rbf_type: &str,
+) -> Result<faer::Mat<f64>, String> {  // Now specifying String as the error type
+  let rbf_fun = parse_rbf_types(rbf_type)
+    .ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+        
+  let k_res: Vec<Vec<f64>> = epsilons
+    .par_iter()
+    .map(|epsilon| {
+      let affinity_adj = match rbf_fun {
+        RbfType::Gaussian => rbf_gaussian(dist, epsilon),
+        RbfType::Bump => rbf_bump(dist, epsilon)
+      };
+      let affinity_adj_mat = upper_triangle_to_sym_faer(&affinity_adj, shift, n);
+      col_sums(&affinity_adj_mat)
+    })
+    .collect();
+    
+    Ok(nested_vector_to_faer_mat(k_res))
+}
