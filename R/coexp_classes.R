@@ -37,7 +37,7 @@ bulk_coexp <- S7::new_class(
     processed_data = S7::class_list,
     outputs = S7::class_list,
     params = S7::class_list,
-    final_results = S7::class_data.frame
+    final_results = S7::class_any
   ),
 
 

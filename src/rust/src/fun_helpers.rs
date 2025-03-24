@@ -78,14 +78,15 @@ fn rs_upper_triangle_to_dense(
   faer_to_r_matrix(mat.as_ref())
 }
 
-/// Apply a Gaussian affinity kernel to a distance metric
+/// Apply a Radial Basis Function
 /// 
-/// @description Applies a Gaussian kernel to a vector of distances.
+/// @description Applies a radial basis function (RBF) to a given distance
+/// vector. Has at the moment a Gaussian version and a Bump version.
 /// 
 /// @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 /// onto. 
-/// @param bandwidth The bandwidth of the kernel. Smaller values will yield
-/// smaller affinities.
+/// @param epsilon Float. Epsilon parameter for the RBF.
+/// @param rbf_type String. Needs to be from `c("gaussian", "bump)`.
 /// 
 /// @return The affinities after the Kernel was applied.
 /// 

@@ -9,12 +9,10 @@ get_cor_graph(object, epsilon, .verbose)
 \arguments{
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
+\item{epsilon}{Float. The epsilon parameter for the RBF function, in this
+case the bump function.}
+
 \item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{kernel_bandwidth}{Numerical. The bandwidth to use for the affinity
-kernel}
-
-\item{min_affinity}{Numerical. Minimum affinity needed to keep the edge.}
 }
 \value{
 A list with the following elements:

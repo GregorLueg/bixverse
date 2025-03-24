@@ -255,6 +255,26 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' Run randomised SVD over a matrix
+#' 
+#' @description Runs a randomised singular value decomposition over a matrix.
+#' This implementation is faster than the full SVD on large data sets, with 
+#' slight loss in precision.
+#' 
+#' @param x Numeric matrix. Rows = samples, columns = features.
+#' @param rank Integer. The rank to use.
+#' @param seed Integer. Random seed for reproducibility.
+#' @param oversampling Integer. Defaults to `10L` if nothing is provided.
+#' @param n_power_iter Integer. How often shall the QR decomposition be 
+#' applied. Defaults to `2L` if nothing is provided.
+#' 
+#' @return A list with:
+#' \itemize{
+#'   \item u - u matrix of the SVD.
+#'   \item v - v matrix of the SVD.
+#'   \item s - Eigenvalues of the SVD.
+#' }
+#' 
 #' @export
 rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap__rs_random_svd, x, rank, seed, oversampling, n_power_iter)
 
@@ -277,6 +297,29 @@ rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap_
 #' @export
 rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
 
+#' Helper to identify the right epsilon parameter
+#' 
+#' @description This function will take a distance vector from the upper 
+#' triangle of a symmetric distance matrix and apply the desired RBF with the
+#' supplied epsilon from epsilon vec. Subsequently, the column sums will be
+#' measured to identify the total similarity of each feature with other 
+#' features. This data can be used to see if the data follows scale-free
+#' topology for example to identify the right epsilon parameter with the given
+#' RBF.
+#' 
+#' @param dist Numeric vector. The distances you wish to apply the RBF function
+#' to.
+#' @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
+#' @param original_dim Integer. The original dimensions of the symmetric 
+#' distance matrix.
+#' @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
+#' diagonal not incldued).
+#' @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
+#' implemented RBF function.
+#' 
+#' @return A matrix with rows being the epsilons tested, and columns 
+#' representing the summed affinity to other features.
+#' 
 #' @export
 rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_type) .Call(wrap__rs_rbf_iterate_epsilons, dist, epsilon_vec, original_dim, shift, rbf_type)
 
@@ -364,14 +407,15 @@ rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_uppe
 #' @export
 rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 
-#' Apply a Gaussian affinity kernel to a distance metric
+#' Apply a Radial Basis Function
 #' 
-#' @description Applies a Gaussian kernel to a vector of distances.
+#' @description Applies a radial basis function (RBF) to a given distance
+#' vector. Has at the moment a Gaussian version and a Bump version.
 #' 
 #' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 #' onto. 
-#' @param bandwidth The bandwidth of the kernel. Smaller values will yield
-#' smaller affinities.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump)`.
 #' 
 #' @return The affinities after the Kernel was applied.
 #' 
@@ -462,7 +506,7 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' The function returns combined S from the different runs and a boolean
 #' vector indicating if this specific run converged.
 #' 
-#' @param x_processed Numerical matrix. The processed matrix (but not yet 
+#' @param x1 Numerical matrix. The processed matrix (but not yet 
 #' whitened!)
 #' @param k Numerical matrix. The whitening matrix.
 #' @param no_comp Integer. Number of independent components to return.
@@ -490,17 +534,18 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' }
 #' 
 #' @export
-rs_ica_iters <- function(x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
+rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
 #' Run ICA with cross-validation and random initialsiation
 #' 
 #' @description This function will split the data into `no_folds` and apply
 #' ICA with `no_random_inits` over that fold.
 #' 
-#' @param x_raw Numeric matrix. The processed data (no whitening function has
+#' @param x Numeric matrix. The processed data (no whitening function has
 #' been applied yet.)
 #' @param no_comp Integer. Number of components to test for.
 #' @param no_random_init Integer. Number of random initialisations. 
+#' @param no_folds Integer. Number of folds to use for the cross-validation.
 #' @param ica_type String. Which type of ICA shall be run. 
 #' @param random_seed Integer. For reproducibility.
 #' @param ica_params A list containing:
@@ -524,7 +569,7 @@ rs_ica_iters <- function(x_processed, k, no_comp, no_random_init, ica_type, rand
 #' }
 #' 
 #' @export
-rs_ica_iters_cv <- function(x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
+rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
 
 # nolint end

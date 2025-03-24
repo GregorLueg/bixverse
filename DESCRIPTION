@@ -25,4 +25,5 @@ Imports:
     rextendr,
     rlang,
     S7,
-    zeallot
+    zeallot,
+    MASS

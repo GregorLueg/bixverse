@@ -49,7 +49,7 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if(purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
     warning("No pre-processed data found. Defaulting to the raw data")
     target_mat <- S7::prop(object, "raw_data")
   } else {
@@ -57,11 +57,11 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
   }
 
   # Whiten the data
-  if(.verbose)
+  if (.verbose)
     message("Preparing the whitening of the data for ICA.")
-  if(fast_svd && .verbose)
+  if (fast_svd && .verbose)
     message("Using randomised SVD for whitening (faster, but less precise)")
-  if(!fast_svd && .verbose)
+  if (!fast_svd && .verbose)
     message("Using full SVD for whitening (slowed, but more precise)")
   c(X1, K) %<-% rs_prepare_whitening(
     x = target_mat,
@@ -84,13 +84,16 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #' @title Iterate over different ncomp parameters for ICA
 #'
 #' @description
-#' ...
+#' This function allows to iterate over a vector of ncomp to identify which
+#' ncomp parameter to choose for your data set. The idea is to generate stability
+#' profiles over the different ncomps and identify a 'sweet spot' of good
+#' stability of the identified independent components
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
 #' @param ica_type String, element of `c("logcosh", "exp")`.
 #' @param iter_params List. This list controls the randomisation parameters for
-#' the ICA runs, see [bixverse::ica_randomisation_params()] for estimating
+#' the ICA runs, see [bixverse::params_ica_randomisation()] for estimating
 #' stability. Has the following elements:
 #' \itemize{
 #'  \item cross_validate - Boolean. Shall the data be split into different
@@ -103,7 +106,7 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #'  can quickly increase.
 #' }
 #' @param ncomp_params List. Parameters for the ncomp to iterate through, see
-#' [bixverse::ica_ncomp_params()]. In the standard setting, `c(2, 3, 4, 5)` will
+#' [bixverse::params_ica_ncomp()]. In the standard setting, `c(2, 3, 4, 5)` will
 #' be tested and then in steps until max_no_comp will be tested, i.e.,
 #' `c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)`.
 #' \itemize{
@@ -112,7 +115,7 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 #'  \item custom_seq - An integer vector. If you wish to provide a custom version
 #'  of no_comp to iterate through.
 #' }
-#' @param ica_params List. The ICA parameters, see [bixverse::ica_general_params()]
+#' @param ica_params List. The ICA parameters, see [bixverse::params_ica_general()]
 #' wrapper function. This function generates a list containing:
 #' \itemize{
 #'  \item maxit - Integer. Maximum number of iterations for ICA.
@@ -133,23 +136,30 @@ ica_evaluate_comp <- S7::new_generic(
   dispatch_args = "object",
   fun = function(object,
                  ica_type = c("logcosh", "exp"),
-                 iter_params = ica_randomisation_params(),
-                 ncomp_params = ica_ncomp_params(),
-                 ica_params = ica_general_params(),
+                 iter_params = params_ica_randomisation(),
+                 ncomp_params = params_ica_ncomp(),
+                 ica_params = params_ica_general(),
                  random_seed = 42L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
 
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%<-%`
+#'
+#' @export
+#'
 #' @method ica_evaluate_comp bulk_coexp
 S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
                                                       ica_type = c("logcosh", "exp"),
-                                                      iter_params = ica_randomisation_params(),
-                                                      ncomp_params = ica_ncomp_params(),
-                                                      ica_params = ica_general_params(),
+                                                      iter_params = params_ica_randomisation(),
+                                                      ncomp_params = params_ica_ncomp(),
+                                                      ica_params = params_ica_general(),
                                                       random_seed = 42L,
                                                       .verbose = TRUE) {
+  # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaParams(ica_params)
@@ -171,13 +181,10 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     return(object)
   }
 
-  # TODO Control the max_no_comp rate pending the number of samples.
-
   # Get data
-  X_raw <- S7::prop(object, "processed_data")[['processed_data']]
+  X <- S7::prop(object, "processed_data")[['processed_data']]
   X1 <- S7::prop(object, "processed_data")[["X1"]]
   K <- S7::prop(object, "processed_data")[["K"]]
-
 
   # Prepare the n_comp vector
   n_comp_vector <- if (is.null(ncomp_params$custom_seq)) {
@@ -188,8 +195,13 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     ncomp_params$custom_seq
   }
 
+  # TODO Control the max_no_comp rate pending the number of samples.
+
   if (.verbose)
-    message(sprintf("Using a total of %i different n_comp parameters", length(n_comp_vector)))
+    message(sprintf(
+      "Using a total of %i different n_comp parameters",
+      length(n_comp_vector)
+    ))
 
   # Set up the loop
   if (iter_params$cross_validate) {
@@ -198,7 +210,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     if (.verbose)
       message(
         sprintf(
-          "Using cross_validateping with %i folds and %i random initialisations for a total of %i ICA runs",
+          "Using a CV-like approach with %i folds and %i random initialisations for a total of %i ICA runs",
           iter_params$folds,
           iter_params$random_init,
           no_ica_runs
@@ -220,7 +232,9 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   all_scores <- c()
   all_convergence <- c()
 
-  pb = txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
+  pb = txtProgressBar(initial = 0,
+                      max = length(n_comp_vector),
+                      style = 3)
 
   for (i in seq_along(n_comp_vector)) {
     no_comp <- n_comp_vector[[i]]
@@ -228,7 +242,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     c(s_combined, converged) %<-% with(iter_params, switch(
       as.integer(iter_params$cross_validate) + 1,
       rs_ica_iters(
-        x_processed = X1,
+        x1 = X1,
         k = K,
         no_comp = no_comp,
         no_random_init = random_init,
@@ -237,7 +251,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
         ica_params = ica_params
       ),
       rs_ica_iters_cv(
-        x_raw = X_raw,
+        x = X_raw,
         no_comp = no_comp,
         no_folds = folds,
         no_random_init = random_init,
@@ -261,14 +275,17 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
 
   close(pb)
 
-  ica_comps_rep <- unlist(purrr::map(n_comp_vector, \(x) {
+  ica_comps_rep <- purrr::map(n_comp_vector, \(x) {
     rep(x, x)
-  }))
-  ica_comps_no <- unlist(purrr::map(n_comp_vector, \(x) {
+  })
+  ica_comps_rep <- do.call(c, ica_comps_rep)
+  ica_comps_no <- purrr::map(n_comp_vector, \(x) {
     seq_len(x)
-  }))
+  })
+  ica_comps_no <- do.call(c, ica_comps_no)
 
-  convergence_split <- split(all_convergence, ceiling(seq_along(all_convergence)/total_randomisations))
+  convergence_split <- split(all_convergence, ceiling(seq_along(all_convergence) /
+                                                        total_randomisations))
   names(convergence_split) <- n_comp_vector
 
   ica_stability_res <- list(
@@ -282,7 +299,11 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
     data.table(no_components = as.integer(x), converged = total_converged)
   })
 
-  ica_stability_res_sum = ica_stability_res[, .(mean_stability = mean(stability)), no_components] %>%
+  ica_stability_res_sum = ica_stability_res[, .(
+    median_stability = median(stability),
+    max_stability = max(stability),
+    percentile_75 = quantile(stability, 0.75)
+  ), .(no_components)] %>%
     merge(., prop_converged, by = 'no_components')
 
   stability_params <- list(
@@ -302,30 +323,271 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
 }
 
 
-# helpers ----------------------------------------------------------------------
-
-## plotting --------------------------------------------------------------------
-
-
-#' @title Plot the stability of the ICA components
+#' @title Run stabilised ICA with a given number of components
 #'
 #' @description
 #' ...
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' [bixverse::ica_processing()] before running this function.
+#' @param no_comp Integer. Number of components you wish to use for the ICA
+#' run. [bixverse::ica_evaluate_comp()] can give you an idea in terms of
+#' stability of the number of components at different levels.
+#' @param ica_type String, element of `c("logcosh", "exp")`.
+#' @param iter_params List. This list controls the randomisation parameters for
+#' the ICA runs, see [bixverse::params_ica_randomisation()] for estimating
+#' stability. Has the following elements:
+#' \itemize{
+#'  \item cross_validate - Boolean. Shall the data be split into different
+#'  chunks on which ICA is run. This will slow down the function substantially,
+#'  as every chunk needs to whitened again.
+#'  \item random_init - Integer. How many random initialisations shall be used
+#'  for the ICA runs.
+#'  \item folds - If `cross_validate` is set to `TRUE` how many chunks shall be
+#'  used. To note, you will run per ncomp random_init * fold ICA runs which
+#'  can quickly increase.
+#' }
+#' @param ica_params List. The ICA parameters, see [bixverse::params_ica_general()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item maxit - Integer. Maximum number of iterations for ICA.
+#'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'  Should be between 1 to 2.
+#'  \item max_tol - Maximum tolerance of the algorithm.
+#'  \item verbose - Controls verbosity of the function.
+#' }
+#' @param random_seed Integer. For reproducibility.
+#' @param consistent_sign Boolean. If set to `TRUE`, for each source the absolute
+#' maximum value will be positive, i.e., the sign will be inverted so that the
+#' absolute bigger tail is set to positive floats.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return `bulk_coexp` with the the source matrix S, mixing matrix A and other
+#' parameters added to the slots.
+#'
+#' @export
+ica_stabilised_results <- S7::new_generic(
+  name = "ica_stabilised_results",
+  dispatch_args = "object",
+  fun = function(object,
+                 no_comp,
+                 ica_type = c("logcosh", "exp"),
+                 iter_params = params_ica_randomisation(),
+                 ica_params = params_ica_general(),
+                 random_seed = 42L,
+                 consistent_sign = TRUE,
+                 .verbose = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%<-%`
+#'
+#' @method ica_stabilised_results bulk_coexp
+S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
+                                                           no_comp,
+                                                           ica_type = c("logcosh", "exp"),
+                                                           iter_params = params_ica_randomisation(),
+                                                           ica_params = params_ica_general(),
+                                                           random_seed = 42L,
+                                                           consistent_sign = TRUE,
+                                                           .verbose = TRUE) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(no_comp, "I1")
+  checkmate::assertChoice(ica_type, c("logcosh", "exp"))
+  assertIcaIterParams(iter_params)
+  assertIcaParams(ica_params)
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(consistent_sign, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
+  # Early return
+  if (is.null(detection_method) &&
+      detection_method != "ICA-based") {
+    warning(
+      paste(
+        "This class does not seem to be set for ICA-based module detection",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  # Get the attributes
+  X <- S7::prop(object, "processed_data")[['processed_data']]
+  X1 <- S7::prop(object, "processed_data")[["X1"]]
+  K <- S7::prop(object, "processed_data")[["K"]]
+
+  # Get the combined S matrix and convergence information
+  c(s_combined, converged) %<-% with(iter_params, switch(
+    as.integer(iter_params$cross_validate) + 1,
+    rs_ica_iters(
+      x1 = X1,
+      k = K,
+      no_comp = no_comp,
+      no_random_init = random_init,
+      ica_type = ica_type,
+      random_seed = random_seed,
+      ica_params = ica_params
+    ),
+    rs_ica_iters_cv(
+      x = X_raw,
+      no_comp = no_comp,
+      no_folds = folds,
+      no_random_init = random_init,
+      ica_type = ica_type,
+      random_seed = random_seed,
+      ica_params = ica_params
+    )
+  ))
+
+  print(s_combined[1:5, 1:5])
+
+  # Get the component stability and centrotypes
+  c(stability_scores, centrotype) %<-% .community_stability(
+    no_comp = as.integer(no_comp),
+    s = s_combined,
+    return_centrotype = TRUE
+  )
+
+  colnames(centrotype) <- sprintf("IC_%i", 1:no_comp)
+  rownames(centrotype) <- colnames(X)
+
+  if (consistent_sign) {
+    centrotype <- apply(centrotype, 2, .flip_ica_loading_signs)
+  }
+
+  S <- t(centrotype)
+  A <- t(X1) %*% MASS::ginv(S)
+  rownames(A) <- rownames(X)
+  colnames(A) <- rownames(S)
+
+  ica_meta <- list(component = sprintf("IC_%i", 1:no_comp),
+                   stability = stability_scores) %>% data.table::setDT()
+
+  result <- list(S = S, A = A, ica_meta = ica_meta)
+
+  result_params <- list(
+    no_comp = no_comp,
+    ica_type = ica_type,
+    iter_params = iter_params,
+    ica_params = ica_params,
+    random_seed = random_seed,
+    consistent_sign = consistent_sign,
+    converged = converged
+  )
+
+  S7::prop(object, "final_results") <- result
+  S7::prop(object, "params")[["ica_final_gen"]] <- result_params
+
+  return(object)
+}
+
+
+# general ICA function --------------------------------------------------------
+
+#' Fast ICA via Rust
+#'
+#' @description
+#' This functions is a wrapper over the Rust implementation of fastICA. It has
+#' the same two options `c("logcosh", "exp")` to run ICA in parallel modus. This
+#' function expected
+#'
+#' @param X Numeric matrix. Processed data. Output of
+#' [bixverse::rs_prepare_whitening()].
+#' @param K The K matrix. Whitening matrix. Output of
+#' [bixverse::rs_prepare_whitening()].
+#' @param n_icas Integer. Number of independent components to recover.
+#' @param ica_fun String, element of `c("logcosh", "exp")`.
+#' @param seed Integer. Seed to ensure reproducible results.
+#' @param ica_params List. The ICA parameters, see [bixverse::params_ica_general()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item maxit - Integer. Maximum number of iterations for ICA.
+#'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'  Should be between 1 to 2.
+#'  \item max_tol - Maximum tolerance of the algorithm.
+#'  \item verbose - Controls verbosity of the function.
+#' }
+#'
+#' @returns A list containing:
+#' \itemize{
+#'  \item w The mixing matrix w.
+#'  \item A ICA results matrix A.
+#'  \item S ICA results matrix S.
+#'  \item converged Boolean indicating if algorithm converged.
+#' }
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+fast_ica_rust <- function(X,
+                          K,
+                          n_icas,
+                          ica_fun = c("logcosh", "exp"),
+                          seed = NULL,
+                          ica_params = params_ica_general()) {
+  # Checks
+  checkmate::assertMatrix(X, mode = "numeric")
+  checkmate::assertMatrix(K, mode = "numeric")
+  checkmate::qassert(n_icas, sprintf("I1[2,%i]", ncol(X)))
+  checkmate::assertChoice(ica_fun, c("logcosh", "exp"))
+  checkmate::qassert(seed, c("I1", "0"))
+  assertIcaParams(ica_params)
+  # Function
+  K <- matrix(K[1:n_icas, ], n_icas, dim(X)[1])
+  X1 <- K %*% X
+  set.seed(seed)
+  w_init <- matrix(rnorm(n_icas * n_icas), nrow = n_icas, ncol = n_icas)
+
+  c(a, converged) %<-% rs_fast_ica(X1, w_init, ica_type = ica_fun, ica_params = ica_params)
+
+  w <- a %*% K
+  S <- w %*% X
+  A <- t(w) %*% solve(w %*% t(w))
+
+  res <- list(
+    w = w,
+    A = A,
+    S = S,
+    converged = converged
+  )
+
+  return(res)
+}
+
+# helpers ----------------------------------------------------------------------
+
+## plotting --------------------------------------------------------------------
+
+#' @title Plot the stability of the ICA components
+#'
+#' @description
+#' Helper function to plot the individual stability profiles over the tested
+#' ncomps.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #'
 #' @export
-plot_ica_stability <- S7::new_generic(
-  name = "plot_ica_stability",
+plot_ica_stability_individual <- S7::new_generic(
+  name = "plot_ica_stability_individual",
   dispatch_args = "object",
   fun = function(object) {
     S7::S7_dispatch()
   }
 )
 
-#' @method plot_ica_stability bulk_coexp
-S7::method(plot_ica_stability, bulk_coexp) <- function(object) {
+#' @method plot_ica_stability_individual bulk_coexp
+S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Function body
@@ -355,89 +617,65 @@ S7::method(plot_ica_stability, bulk_coexp) <- function(object) {
     xlab("Component rank") +
     ylab("Stability index")
 
-  p1 + p2 + patchwork::plot_annotation(
-    title = "Stability of independent components",
-    subtitle = "Over different ncomps and randomisations"
-  )
+  p1 + p2 + patchwork::plot_annotation(title = "Stability of independent components", subtitle = "Over different ncomps and randomisations")
 }
 
-## general ICA function --------------------------------------------------------
-
-#' Fast ICA via Rust
+#' @title Plot the maximum and 75 %ile of the stability.
 #'
 #' @description
-#' This functions is a wrapper over the Rust implementation of fastICA. It has
-#' the same two options `c("logcosh", "exp")` to run ICA in parallel modus. This
-#' function expected
+#' Helper function to plot the individual maximum and 75th percentile in terms
+#' of stability over the tested ncomp to identify inflection points in the
+#' stability profiles.
 #'
-#' @param X_norm Numeric matrix. Processed data. Output of
-#' [bixverse::rs_prepare_whitening()].
-#' @param K The K matrix. Whitening matrix. Output of
-#' [bixverse::rs_prepare_whitening()].
-#' @param n_icas Integer. Number of independent components to recover.
-#' @param ica_fun String, element of `c("logcosh", "exp")`.
-#' @param seed Integer. Seed to ensure reproducible results.
-#' @param ica_params List. The ICA parameters, see [bixverse::ica_general_params()]
-#' wrapper function. This function generates a list containing:
-#' \itemize{
-#'  \item maxit - Integer. Maximum number of iterations for ICA.
-#'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'  Should be between 1 to 2.
-#'  \item max_tol - Maximum tolerance of the algorithm.
-#'  \item verbose - Controls verbosity of the function.
-#' }
-#'
-#' @returns A list containing:
-#' \itemize{
-#'  \item w The mixing matrix w.
-#'  \item A ICA results matrix A.
-#'  \item S ICA results matrix S.
-#'  \item converged Boolean indicating if algorithm converged.
-#' }
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' [bixverse::ica_evaluate_comp()] before running this function.
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-fast_ica_rust <- function(X_norm,
-                          K,
-                          n_icas,
-                          ica_fun = c("logcosh", "exp"),
-                          seed = NULL,
-                          ica_params = ica_general_params()) {
+plot_ica_stability_summarised <- S7::new_generic(
+  name = "plot_ica_stability_summarised",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_ica_stability_summarised bulk_coexp
+S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   # Checks
-  checkmate::assertMatrix(X_norm, mode = "numeric")
-  checkmate::assertMatrix(K, mode = "numeric")
-  checkmate::qassert(n_icas, sprintf("I1[2,%i]", ncol(X_norm)))
-  checkmate::assertChoice(ica_fun, c("logcosh", "exp"))
-  checkmate::qassert(seed, c("I1", "0"))
-  assertIcaParams(ica_params)
-  # Function
-  K <- matrix(K[1:n_icas, ], n_icas, dim(X_norm)[1])
-  X1 <- K %*% X_norm
-  set.seed(seed)
-  w_init <- matrix(rnorm(n_icas * n_icas), nrow = n_icas, ncol = n_icas)
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  # Function body
+  plot_df <- S7::prop(object, "outputs")[['ica_stability_res_sum']]
+  if (is.null(plot_df)) {
+    warning("No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL.")
+    return(NULL)
+  }
 
-  c(a, converged) %<-% rs_fast_ica(
-    X1,
-    w_init,
-    ica_type = ica_fun,
-    ica_params = ica_params
-  )
+  p <- ggplot(data = plot_df,
+              mapping = aes(x = no_components, y = max_stability)) +
+    geom_point(
+      mapping = aes(fill = percentile_75),
+      shape = 21,
+      size = 3,
+      alpha = .75
+    ) +
+    ylim(0, 1) +
+    xlab("Component rank") +
+    ylab("Max stability index") +
+    scale_fill_viridis_c(option = "G") +
+    labs(fill = "Stability 75%-ile:") +
+    theme_minimal() +
+    ggtitle(label = "Maximum and 75th %-ile component stability") +
+    stat_smooth(
+      method = "loess",
+      se = FALSE,
+      span = 0.5,
+      color = "darkred",
+      linetype = "dashed",
+      linewidth = 0.5
+    )
 
-  w <- a %*% K
-  S <- w %*% X_norm
-  A <- t(w) %*% solve(w %*% t(w))
-
-  res <- list(
-    w = w,
-    A = A,
-    S = S,
-    converged = converged
-  )
-
-  return(res)
+  p
 }
-
 
 ## component stability ---------------------------------------------------------
 
@@ -489,7 +727,7 @@ fast_ica_rust <- function(X_norm,
     if (return_centrotype) {
       max_similarity <- max(rowSums(abs_cor[cluster_indx, cluster_indx]))
       temp <- which(rowSums(abs_cor[cluster_indx, cluster_indx]) == max_similarity)
-      centrotypes[[cluster]] <- s_combined[, cluster_indx[temp], drop = FALSE]
+      centrotypes[[cluster]] <- s[, cluster_indx[temp], drop = FALSE]
     }
   }
 
@@ -502,3 +740,25 @@ fast_ica_rust <- function(X_norm,
   res
 }
 
+## sign flipping ---------------------------------------------------------------
+
+
+#' Flips the ICA source sign
+#'
+#' @description
+#' Makes sure that the largest absolute value in the ICA source matrix S will
+#' be positive.
+#'
+#' @param x Numeric vector. The source signal for that independent component.
+#'
+#' @returns Returns a consistent ICA feature loading
+.flip_ica_loading_signs = function(x) {
+  feature_sign <- sign(x)
+  max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]
+  y <- if (max_val_sign == 1) {
+    x
+  } else {
+    -x
+  }
+  y
+}

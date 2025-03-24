@@ -4,18 +4,10 @@
 \alias{rs_ica_iters}
 \title{Run ICA over a given no_comp with random initilisations of w_init}
 \usage{
-rs_ica_iters(
-  x_processed,
-  k,
-  no_comp,
-  no_random_init,
-  ica_type,
-  random_seed,
-  ica_params
-)
+rs_ica_iters(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 }
 \arguments{
-\item{x_processed}{Numerical matrix. The processed matrix (but not yet
+\item{x1}{Numerical matrix. The processed matrix (but not yet
 whitened!)}
 
 \item{k}{Numerical matrix. The whitening matrix.}

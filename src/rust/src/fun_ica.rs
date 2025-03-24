@@ -138,7 +138,7 @@ fn rs_fast_ica(
 /// The function returns combined S from the different runs and a boolean
 /// vector indicating if this specific run converged.
 /// 
-/// @param x_processed Numerical matrix. The processed matrix (but not yet 
+/// @param x1 Numerical matrix. The processed matrix (but not yet 
 /// whitened!)
 /// @param k Numerical matrix. The whitening matrix.
 /// @param no_comp Integer. Number of independent components to return.
@@ -168,7 +168,7 @@ fn rs_fast_ica(
 /// @export
 #[extendr]
 fn rs_ica_iters(
-  x_processed: RMatrix<f64>,
+  x1: RMatrix<f64>,
   k: RMatrix<f64>,
   no_comp: usize,
   no_random_init: usize,
@@ -179,14 +179,14 @@ fn rs_ica_iters(
   if k.nrows() < no_comp {
     panic!("Number of rows in k ({}) must be at least as large as no_comp ({})", k.nrows(), no_comp);
   }
-  let x_processed = r_matrix_to_faer(&x_processed);
+  let x_processed = r_matrix_to_faer(&x1);
   let k = r_matrix_to_faer(&k);
 
   let ica_params = prepare_ica_params(ica_params);
 
   let (s_combined, converged) = stabilised_ica_iters(
-    x_processed,
-    k,
+    &x_processed,
+    &k,
     no_comp,
     no_random_init,
     ica_type,
@@ -207,10 +207,11 @@ fn rs_ica_iters(
 /// @description This function will split the data into `no_folds` and apply
 /// ICA with `no_random_inits` over that fold.
 /// 
-/// @param x_raw Numeric matrix. The processed data (no whitening function has
+/// @param x Numeric matrix. The processed data (no whitening function has
 /// been applied yet.)
 /// @param no_comp Integer. Number of components to test for.
 /// @param no_random_init Integer. Number of random initialisations. 
+/// @param no_folds Integer. Number of folds to use for the cross-validation.
 /// @param ica_type String. Which type of ICA shall be run. 
 /// @param random_seed Integer. For reproducibility.
 /// @param ica_params A list containing:
@@ -236,7 +237,7 @@ fn rs_ica_iters(
 /// @export
 #[extendr]
 fn rs_ica_iters_cv(
-  x_raw: RMatrix<f64>,
+  x: RMatrix<f64>,
   no_comp: usize,
   no_folds: usize,
   no_random_init: usize,
@@ -244,16 +245,17 @@ fn rs_ica_iters_cv(
   random_seed: usize,
   ica_params: List,
 ) -> List {
-  let x_raw = r_matrix_to_faer(&x_raw);
+  let x = r_matrix_to_faer(&x);
   let ica_params = prepare_ica_params(ica_params);
 
   let (s_combined, converged) = stabilised_ica_cv(
-    x_raw,
+    x,
     no_comp,
     no_folds,
     no_random_init,
     ica_type,
     ica_params,
+    None,
     random_seed
   );
 

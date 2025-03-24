@@ -289,7 +289,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution_params List. Parameters for the resolution search, see
-#' [bixverse::graph_resolution_params()]. Contains:
+#' [bixverse::params_graph_resolution()]. Contains:
 #' \itemize{
 #'  \item min_res - Float. Minimum resolution to test.
 #'  \item max_res - Float. Maximum resolution to test.
@@ -297,7 +297,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
 #'  `max_res` and `min_res.`
 #' }
 #' @param graph_params List. Parameters for the generation of the (differential)
-#' correlation graph, see [bixverse::cor_graph_params()]. Contains:
+#' correlation graph, see [bixverse::params_cor_graph()]. Contains:
 #' \itemize{
 #'  \item Epsilon - Defines the epsilon parameter for the radial basis
 #'  function. Defaults to 1, but should be ideally optimised.
@@ -323,8 +323,8 @@ cor_module_check_res <- S7::new_generic(
   name = "cor_module_check_res",
   dispatch_args = "object",
   fun = function(object,
-                 resolution_params = graph_resolution_params(),
-                 graph_params = cor_graph_params(),
+                 resolution_params = params_graph_resolution(),
+                 graph_params = params_cor_graph(),
                  random_seed = 123L,
                  min_genes = 10L,
                  parallel = TRUE,
@@ -343,8 +343,8 @@ cor_module_check_res <- S7::new_generic(
 #'
 #' @method cor_module_check_res bulk_coexp
 S7::method(cor_module_check_res, bulk_coexp) <- function(object,
-                                                         resolution_params = graph_resolution_params(),
-                                                         graph_params = cor_graph_params(),
+                                                         resolution_params = params_graph_resolution(),
+                                                         graph_params = params_cor_graph(),
                                                          random_seed = 123L,
                                                          min_genes = 10L,
                                                          parallel = TRUE,
@@ -487,7 +487,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 #' are too large be further sub clustered. Defaults to `TRUE`.
 #' @param random_seed Integer. Random seed.
 #' @param .graph_params List. Parameters for the generation of the (differential)
-#' correlation graph, see [bixverse::cor_graph_params()]. Contains:
+#' correlation graph, see [bixverse::params_cor_graph()]. Contains:
 #' \itemize{
 #'  \item Epsilon - Defines the epsilon parameter for the radial basis
 #'  function. Defaults to 2, but should be ideally optimised.
@@ -518,7 +518,7 @@ cor_module_final_modules <- S7::new_generic(
                  max_size = 500L,
                  subclustering = TRUE,
                  random_seed = 123L,
-                 .graph_params = cor_graph_params(),
+                 .graph_params = params_cor_graph(),
                  .max_iters = 100L,
                  .verbose = TRUE) {
     S7::S7_dispatch()
@@ -538,7 +538,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
                                                              max_size = 500L,
                                                              subclustering = TRUE,
                                                              random_seed = 123L,
-                                                             .graph_params = cor_graph_params(),
+                                                             .graph_params = params_cor_graph(),
                                                              .max_iters = 100L,
                                                              .verbose = TRUE) {
   # Checks
@@ -693,7 +693,16 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 
   final_clusters_filtered[, cluster_id := cluster_name_prettifier[cluster_id]]
 
+  results_param <- list(
+    resolution = resolution,
+    seed = random_seed,
+    min_size = min_size,
+    max_size = max_size,
+    max_iters = .max_iters
+  )
+
   S7::prop(object, "final_results") <- final_clusters_filtered
+  S7::prop(object, "params")[["module_final_gen"]] <- result_params
 
   return(object)
 }
@@ -740,9 +749,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 #' Helper function to get a correlation-based igraph from the class
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
-#' @param kernel_bandwidth Numerical. The bandwidth to use for the affinity
-#' kernel
-#' @param min_affinity Numerical. Minimum affinity needed to keep the edge.
+#' @param epsilon Float. The epsilon parameter for the RBF function, in this
+#' case the bump function.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the following elements:

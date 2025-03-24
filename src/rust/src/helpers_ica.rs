@@ -30,6 +30,14 @@ pub struct IcaParams{
   pub verbose: bool
 }
 
+
+/// Structure to save ICA CV results
+#[derive(Clone, Debug)]
+pub struct IcaCvData{
+  pub pre_white_matrices: Vec<Mat<f64>>,
+  pub k_matrices: Vec<Mat<f64>>,
+}
+
 /////////
 // ICA //
 /////////
@@ -318,8 +326,8 @@ pub fn fast_ica_exp(
 /// Iterate through a set of random initialisations with a given pre-whitened
 /// matrix, the whitening matrix k and the respective ICA parameters.
 pub fn stabilised_ica_iters(
-  x_pre_whiten: Mat<f64>,
-  k: Mat<f64>,
+  x_pre_whiten: &Mat<f64>,
+  k: &Mat<f64>,
   no_comp: usize,
   no_iters: usize,
   ica_type: &str,
@@ -387,22 +395,20 @@ pub fn stabilised_ica_iters(
 }
 
 
-pub fn stabilised_ica_cv(
-  x: Mat<f64>,
-  no_comp: usize,
+
+pub fn create_ica_cv_data(
+  x: &Mat<f64>,
   num_folds: usize,
-  no_iters: usize,
-  ica_type: &str,
-  ica_params: IcaParams,
   seed: usize,
-) -> (Mat<f64>, Vec<bool>) {
-  // Create random row indices for cross-validation
+  rank: Option<usize>,
+) -> IcaCvData {
   let no_samples = x.nrows();
   let no_features = x.ncols();
   let mut indices: Vec<usize> = (0..no_samples).collect();
   let mut rng = StdRng::seed_from_u64(seed as u64);
   indices.shuffle(&mut rng);
 
+  let svd_rank = rank.unwrap_or(no_features);
 
   let fold_size = no_samples / num_folds;
   let remainder = no_samples % num_folds;
@@ -422,9 +428,7 @@ pub fn stabilised_ica_cv(
     start = end;
   }
 
-  
-  // Create bootstrapped samples
-  let cv_matrices: Vec<Mat<f64>> = folds
+  let k_x_matrices: Vec<(Mat<f64>, Mat<f64>)> = folds
     .par_iter()
     .map(|test_indices| {
       let train_indices: Vec<usize> = indices
@@ -432,31 +436,67 @@ pub fn stabilised_ica_cv(
         .filter(|&idx| !test_indices.contains(idx))
         .cloned()
         .collect();
-      let mut x_i = Mat::<f64>::zeros(train_indices.len(), no_features);
+      let mut x_i = Mat::<f64>::zeros(
+        train_indices.len(), 
+        no_features
+      );
+
       for (new_row, old_row) in train_indices.iter().enumerate() {
         for j in 0..no_features{
           x_i[(new_row, j)] = x[(*old_row, j)];
         }
       }
-      x_i
+      
+      prepare_whitening(
+        &x_i,
+        true, 
+        seed + 1,
+        svd_rank,
+        None,
+        None
+      )
     })
     .collect();
 
-  // Iterate through bootstrapped samples
-  let cv_res: Vec<(Mat<f64>, Vec<bool>)> = cv_matrices
-    .par_iter()
-    .map(|x_i| {
-      let (x_whiten_i, k_i) = prepare_whitening(
-        x_i,
-        true, 
-        seed + 1,
-        no_comp,
-        None,
-        None
-      );
+  let mut pre_white_matrices = Vec::with_capacity(num_folds);
+  let mut k_matrices = Vec::with_capacity(num_folds);
 
+  for (x_i, k_i) in k_x_matrices {
+    pre_white_matrices.push(x_i);
+    k_matrices.push(k_i);
+  }
+
+  IcaCvData{
+    pre_white_matrices,
+    k_matrices
+  }
+}
+
+
+#[allow(clippy::too_many_arguments)]
+pub fn stabilised_ica_cv(
+  x: Mat<f64>,
+  no_comp: usize,
+  num_folds: usize,
+  no_iters: usize,
+  ica_type: &str,
+  ica_params: IcaParams,
+  ica_cv_data: Option<IcaCvData>,
+  seed: usize,
+) -> (Mat<f64>, Vec<bool>) {
+  // Generate cross-validation data if not provided
+  let cv_data = match ica_cv_data {
+    Some(data) => data, // Use the provided data
+    None => create_ica_cv_data(&x, num_folds, seed, Some(no_comp)), // Generate new data
+  };
+
+  // Iterate through bootstrapped samples
+  let cv_res: Vec<(Mat<f64>, Vec<bool>)> = cv_data.k_matrices
+    .par_iter()
+    .zip(cv_data.pre_white_matrices)
+    .map(|(k_i, x_i)| {
       let (s_i, converged_i) = stabilised_ica_iters(
-        x_whiten_i,
+        &x_i,
         k_i,
         no_comp,
         no_iters,

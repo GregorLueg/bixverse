@@ -6,8 +6,8 @@
 \usage{
 cor_module_check_res(
   object,
-  resolution_params = graph_resolution_params(),
-  graph_params = cor_graph_params(),
+  resolution_params = params_graph_resolution(),
+  graph_params = params_cor_graph(),
   random_seed = 123L,
   min_genes = 10L,
   parallel = TRUE,
@@ -19,7 +19,7 @@ cor_module_check_res(
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
 
 \item{resolution_params}{List. Parameters for the resolution search, see
-\code{\link[=graph_resolution_params]{graph_resolution_params()}}. Contains:
+\code{\link[=params_graph_resolution]{params_graph_resolution()}}. Contains:
 \itemize{
 \item min_res - Float. Minimum resolution to test.
 \item max_res - Float. Maximum resolution to test.
@@ -28,7 +28,7 @@ cor_module_check_res(
 }}
 
 \item{graph_params}{List. Parameters for the generation of the (differential)
-correlation graph, see \code{\link[=cor_graph_params]{cor_graph_params()}}. Contains:
+correlation graph, see \code{\link[=params_cor_graph]{params_cor_graph()}}. Contains:
 \itemize{
 \item Epsilon - Defines the epsilon parameter for the radial basis
 function. Defaults to 1, but should be ideally optimised.
