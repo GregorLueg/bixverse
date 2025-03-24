@@ -5,16 +5,16 @@
 \title{Fast ICA via Rust}
 \usage{
 fast_ica_rust(
-  X_norm,
+  X,
   K,
   n_icas,
   ica_fun = c("logcosh", "exp"),
   seed = NULL,
-  ica_params = ica_general_params()
+  ica_params = params_ica_general()
 )
 }
 \arguments{
-\item{X_norm}{Numeric matrix. Processed data. Output of
+\item{X}{Numeric matrix. Processed data. Output of
 \code{\link[=rs_prepare_whitening]{rs_prepare_whitening()}}.}
 
 \item{K}{The K matrix. Whitening matrix. Output of
@@ -26,7 +26,7 @@ fast_ica_rust(
 
 \item{seed}{Integer. Seed to ensure reproducible results.}
 
-\item{ica_params}{List. The ICA parameters, see \code{\link[=ica_general_params]{ica_general_params()}}
+\item{ica_params}{List. The ICA parameters, see \code{\link[=params_ica_general]{params_ica_general()}}
 wrapper function. This function generates a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.

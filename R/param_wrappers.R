@@ -14,7 +14,7 @@
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
 #' @export
-ica_general_params <- function(maxit = 200L,
+params_ica_general <- function(maxit = 200L,
                                alpha = 1.0,
                                max_tol = 0.0001,
                                verbose = FALSE) {
@@ -47,13 +47,13 @@ ica_general_params <- function(maxit = 200L,
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
 #' @export
-ica_ncomp_params <- function(max_no_comp = 100L,
+params_ica_ncomp <- function(max_no_comp = 100L,
                              steps = 5L,
                              custom_seq = NULL) {
   # Checks
   checkmate::qassert(max_no_comp, "I1")
   checkmate::qassert(steps, "I1")
-  checkmate::qassert(custom_seq, c("N", "I+"))
+  checkmate::qassert(custom_seq, c("0", "I+"))
   return(list(
     max_no_comp = max_no_comp,
     steps = steps,
@@ -74,7 +74,7 @@ ica_ncomp_params <- function(max_no_comp = 100L,
 #' @returns A list with the parameters for usage in the subsequent functions.
 #'
 #' @export
-ica_randomisation_params <- function(cross_validate = FALSE,
+params_ica_randomisation <- function(cross_validate = FALSE,
                                      random_init = 50L,
                                      folds = 10L) {
   # Checks
@@ -104,7 +104,7 @@ ica_randomisation_params <- function(cross_validate = FALSE,
 #' @returns List with parameters for usage in subsequent function.
 #'
 #' @export
-cor_graph_params <- function(epsilon = 2,
+params_cor_graph <- function(epsilon = 2,
                              min_cor = 0.2,
                              fdr_threshold = 0.05,
                              verbose = TRUE) {
@@ -135,7 +135,7 @@ cor_graph_params <- function(epsilon = 2,
 #' @returns List with parameters for usage in subsequent function.
 #'
 #' @export
-graph_resolution_params <- function(min_res = 0.1,
+params_graph_resolution <- function(min_res = 0.1,
                                     max_res = 10,
                                     number_res = 15L) {
   # Checks

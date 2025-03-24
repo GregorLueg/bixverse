@@ -11,7 +11,7 @@ cor_module_final_modules(
   max_size = 500L,
   subclustering = TRUE,
   random_seed = 123L,
-  .graph_params = cor_graph_params(),
+  .graph_params = params_cor_graph(),
   .max_iters = 100L,
   .verbose = TRUE
 )
@@ -33,7 +33,7 @@ are too large be further sub clustered. Defaults to \code{TRUE}.}
 \item{random_seed}{Integer. Random seed.}
 
 \item{.graph_params}{List. Parameters for the generation of the (differential)
-correlation graph, see \code{\link[=cor_graph_params]{cor_graph_params()}}. Contains:
+correlation graph, see \code{\link[=params_cor_graph]{params_cor_graph()}}. Contains:
 \itemize{
 \item Epsilon - Defines the epsilon parameter for the radial basis
 function. Defaults to 2, but should be ideally optimised.

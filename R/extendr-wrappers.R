@@ -506,7 +506,7 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' The function returns combined S from the different runs and a boolean
 #' vector indicating if this specific run converged.
 #' 
-#' @param x_processed Numerical matrix. The processed matrix (but not yet 
+#' @param x1 Numerical matrix. The processed matrix (but not yet 
 #' whitened!)
 #' @param k Numerical matrix. The whitening matrix.
 #' @param no_comp Integer. Number of independent components to return.
@@ -534,14 +534,14 @@ rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fas
 #' }
 #' 
 #' @export
-rs_ica_iters <- function(x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x_processed, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
+rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
 
 #' Run ICA with cross-validation and random initialsiation
 #' 
 #' @description This function will split the data into `no_folds` and apply
 #' ICA with `no_random_inits` over that fold.
 #' 
-#' @param x_raw Numeric matrix. The processed data (no whitening function has
+#' @param x Numeric matrix. The processed data (no whitening function has
 #' been applied yet.)
 #' @param no_comp Integer. Number of components to test for.
 #' @param no_random_init Integer. Number of random initialisations. 
@@ -569,7 +569,7 @@ rs_ica_iters <- function(x_processed, k, no_comp, no_random_init, ica_type, rand
 #' }
 #' 
 #' @export
-rs_ica_iters_cv <- function(x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x_raw, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
+rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
 
 # nolint end

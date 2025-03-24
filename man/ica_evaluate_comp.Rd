@@ -7,9 +7,9 @@
 ica_evaluate_comp(
   object,
   ica_type = c("logcosh", "exp"),
-  iter_params = ica_randomisation_params(),
-  ncomp_params = ica_ncomp_params(),
-  ica_params = ica_general_params(),
+  iter_params = params_ica_randomisation(),
+  ncomp_params = params_ica_ncomp(),
+  ica_params = params_ica_general(),
   random_seed = 42L,
   .verbose = TRUE
 )
@@ -21,7 +21,7 @@ ica_evaluate_comp(
 \item{ica_type}{String, element of \code{c("logcosh", "exp")}.}
 
 \item{iter_params}{List. This list controls the randomisation parameters for
-the ICA runs, see \code{\link[=ica_randomisation_params]{ica_randomisation_params()}} for estimating
+the ICA runs, see \code{\link[=params_ica_randomisation]{params_ica_randomisation()}} for estimating
 stability. Has the following elements:
 \itemize{
 \item cross_validate - Boolean. Shall the data be split into different
@@ -35,7 +35,7 @@ can quickly increase.
 }}
 
 \item{ncomp_params}{List. Parameters for the ncomp to iterate through, see
-\code{\link[=ica_ncomp_params]{ica_ncomp_params()}}. In the standard setting, \code{c(2, 3, 4, 5)} will
+\code{\link[=params_ica_ncomp]{params_ica_ncomp()}}. In the standard setting, \code{c(2, 3, 4, 5)} will
 be tested and then in steps until max_no_comp will be tested, i.e.,
 \code{c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)}.
 \itemize{
@@ -45,7 +45,7 @@ be tested and then in steps until max_no_comp will be tested, i.e.,
 of no_comp to iterate through.
 }}
 
-\item{ica_params}{List. The ICA parameters, see \code{\link[=ica_general_params]{ica_general_params()}}
+\item{ica_params}{List. The ICA parameters, see \code{\link[=params_ica_general]{params_ica_general()}}
 wrapper function. This function generates a list containing:
 \itemize{
 \item maxit - Integer. Maximum number of iterations for ICA.

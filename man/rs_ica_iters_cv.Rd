@@ -5,7 +5,7 @@
 \title{Run ICA with cross-validation and random initialsiation}
 \usage{
 rs_ica_iters_cv(
-  x_raw,
+  x,
   no_comp,
   no_folds,
   no_random_init,
@@ -15,7 +15,7 @@ rs_ica_iters_cv(
 )
 }
 \arguments{
-\item{x_raw}{Numeric matrix. The processed data (no whitening function has
+\item{x}{Numeric matrix. The processed data (no whitening function has
 been applied yet.)}
 
 \item{no_comp}{Integer. Number of components to test for.}
