@@ -39,8 +39,6 @@ new_meta_data <- data.table::data.table(
   gtex_subgrp = coldata$gtex.smtsd
 )
 
-params_ica_ncomp()
-
 samples_to_keep <- new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)", sample_id]
 data_1 = t(d)[samples_to_keep, ]
 meta_data = new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
@@ -49,16 +47,29 @@ ica_test = bulk_coexp(raw_data = data_1, meta_data = meta_data)
 ica_test = preprocess_bulk_coexp(ica_test, mad_threshold = 1)
 ica_test = ica_processing(ica_test)
 
-?ica_evaluate_comp
-
-tictoc::tic()
 ica_test = ica_evaluate_comp(
   ica_test,
-  ica_type = 'logcosh'
+  ica_type = 'logcosh',
+  ncomp_params = params_ica_ncomp(max_no_comp = 75L)
 )
-tictoc::toc()
 
-plot_ica_stability(ica_test)
+plot_ica_stability_individual(ica_test)
+
+plot_ica_stability_summarised(ica_test)
+
+devtools::load_all()
+
+ica_test <- ica_stabilised_results(ica_test, no_comp = 40L, ica_type = "logcosh")
+
+outputs <- get_results(ica_test)
+
+outputs$S[1:5, 1:5]
+
+outputs$A[1:5, 1:5]
+
+outputs$ica_meta
+
+get_results(ica_test)
 
 # Write a final component function
 

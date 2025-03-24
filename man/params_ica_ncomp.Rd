@@ -4,7 +4,7 @@
 \alias{params_ica_ncomp}
 \title{Wrapper function for ICA ncomp iterations}
 \usage{
-params_ica_ncomp(max_no_comp = 100L, steps = 5L, custom_seq = NULL)
+params_ica_ncomp(max_no_comp = 75L, steps = 5L, custom_seq = NULL)
 }
 \arguments{
 \item{max_no_comp}{Integer. Maximum number of ncomp to test.}

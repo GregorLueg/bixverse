@@ -47,7 +47,7 @@ params_ica_general <- function(maxit = 200L,
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
 #' @export
-params_ica_ncomp <- function(max_no_comp = 100L,
+params_ica_ncomp <- function(max_no_comp = 75L,
                              steps = 5L,
                              custom_seq = NULL) {
   # Checks

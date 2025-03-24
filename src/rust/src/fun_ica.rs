@@ -185,8 +185,8 @@ fn rs_ica_iters(
   let ica_params = prepare_ica_params(ica_params);
 
   let (s_combined, converged) = stabilised_ica_iters(
-    x_processed,
-    k,
+    &x_processed,
+    &k,
     no_comp,
     no_random_init,
     ica_type,
@@ -255,6 +255,7 @@ fn rs_ica_iters_cv(
     no_random_init,
     ica_type,
     ica_params,
+    None,
     random_seed
   );
 
