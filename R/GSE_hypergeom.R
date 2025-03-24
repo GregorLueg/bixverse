@@ -17,7 +17,7 @@
 #' specifically the gene universe. If set to NULL, the function will default to
 #' all represented genes in the `gene_set_list`.
 #' @param threshold Float between 0 and 1 to filter on the fdr. Default: 0.05.
-#' If NULL everything is returned.
+#' If 1 everything is returned.
 #' @param minimum_overlap Number of minimum overlap between the target genes
 #' and the respective gene set.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -62,10 +62,8 @@ gse_hypergeometric <- function(target_genes,
     gene_universe = gene_universe
   )
 
-  # Imprecision in floats can yield negative p-values. Make these positive
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
     .[, `:=`(gene_set_name = names(gene_set_list),
              fdr = p.adjust(pvals, method = "BH"))] %>%
     data.table::setcolorder(.,
@@ -133,7 +131,7 @@ gse_hypergeometric_list <- function(target_genes_list,
   if (is.null(gene_universe)) {
     if (.verbose) {
       message(
-        "No gene universe given. Function will use the represented genes in the 
+        "No gene universe given. Function will use the represented genes in the
         pathways/gene sets as reference."
       )
     }
@@ -148,7 +146,6 @@ gse_hypergeometric_list <- function(target_genes_list,
 
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, pvals := data.table::fifelse(pvals < 0, pvals * -1, pvals)] %>%
     .[, `:=`(
       gene_set_name  = rep(names(gene_set_list), length(target_genes_list)),
       target_set_name = rep(

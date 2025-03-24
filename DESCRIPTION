@@ -1,9 +1,9 @@
 Package: bixverse
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: Rust-accelerated standard bioinformatics workflows
+Version: 0.0.1.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Gregor", "Lueg", , "gregorlueg@me.com", role = c("aut", "cre"))
+Description: ...
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -15,10 +15,15 @@ Imports:
     data.table,
     dplyr,
     foreach,
+    ggplot2,
     igraph,
     magrittr,
+    matrixStats,
+    patchwork,
     purrr,
+    R6,
     rextendr,
     rlang,
     S7,
-    zeallot
+    zeallot,
+    MASS

@@ -11,19 +11,21 @@ rs_hypergeom_test(target_genes, gene_sets, gene_universe)
 
 \item{gene_sets}{A list of strings that represent the gene sets to test against.}
 
-\item{gene_universe}{A character vector representing the gene universe from which the target genes
-and gene sets are sampled from.}
+\item{gene_universe}{A character vector representing the gene universe from
+which the target genes and gene sets are sampled from.}
 }
 \value{
-A list with the following elements:
+A list containing:
 \itemize{
-\item pvals, the p-values from the hypergeometric test
-\item odds ratios, the calculated odds ratios
-\item overlap, the size of the overlap,
-\item gene_set_lengths, the length of the gene sets.
+\item pvals - The p-values from the hypergeometric test
+\item odds_ratios - The calculated odds ratios
+\item overlap - The size of the overlap
+\item gene_set_lengths - The length of the gene sets.
 }
 }
 \description{
-Given a set of target genes, this is a Rust implementation of an hypergeometric test testing for overenrichment
-of the target genes in the gene sets.
+Given a set of target genes, this is a Rust implementation of
+an hypergeometric test testing for overenrichment of the target genes in the
+gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around
+the Rust functions with type checks are provided in the package.
 }

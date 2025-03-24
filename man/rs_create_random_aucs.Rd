@@ -13,15 +13,17 @@ rs_create_random_aucs(score_vec, size_pos, random_iters, auc_iters, seed)
 
 \item{random_iters}{Number of random AUCs to generate.}
 
-\item{auc_iters}{Number of random iterations to approximate the AUCs.}
+\item{auc_iters}{Number of random iterations to approximate the AUCs.
+Recommended size: 10000L.}
 
 \item{seed}{Seed.}
 }
 \value{
-A vector of random AUCs based the score vector and size of the positive set.
+A vector of random AUCs based the score vector and size of the
+positive set.
 }
 \description{
-This function creates a random set of AUCs based on a score vector and
-a size of the positive set. This can be used for permutation-based estimation
-of Z-scores and subsequently p-values.
+This function creates a random set of AUCs based on a score
+vector and a size of the positive set. This can be used for permutation-
+based estimation of Z-scores and subsequently p-values.
 }

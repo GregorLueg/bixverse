@@ -7,9 +7,17 @@ edition = '2021'
 crate-type = [ 'staticlib' ]
 name = 'bixverse'
 
+[features]
+default = []
+
+[profile.dev.package.faer]
+opt-level = 3
+
 [dependencies]
-extendr-api = '*'
+extendr-api = "*"
 rayon = '*'
 rand = '*'
+rand_distr = '0.5.1'
 statrs = '*'
-ndarray = '*'
+faer = '0.21.8'
+num-complex = '*'

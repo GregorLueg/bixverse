@@ -6,9 +6,8 @@
 \usage{
 rs_gse_geom_elim(
   target_genes,
-  go_to_genes,
-  ancestors,
   levels,
+  go_obj,
   gene_universe_length,
   min_genes,
   elim_threshold,
@@ -18,36 +17,38 @@ rs_gse_geom_elim(
 \arguments{
 \item{target_genes}{A character vector representing the target gene set.}
 
-\item{go_to_genes}{A named list with the gene identifers as elements and gene ontology identifiers as
-names.}
+\item{levels}{A character vector representing the levels to iterate through.
+The order will be the one the iterations are happening in.}
 
-\item{ancestors}{A named list with the go identifiers of all ancestors as elements and the gene ontology
-identifiers as names.}
-
-\item{levels}{A named list with the go identifiers of that ontology level as elements and the level name
-as names. IMPORTANT! This list needs to be ordered in the right way!}
+\item{go_obj}{The gene_ontology_data S7 class. See \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{gene_universe_length}{The length of the gene universe.}
 
-\item{min_genes}{number of minimum genes for the gene ontology term to be tested.}
+\item{min_genes}{number of minimum genes for the gene ontology term to be
+tested.}
 
-\item{elim_threshold}{p-value below which the elimination procedure shall be applied to the ancestors.}
+\item{elim_threshold}{p-value below which the elimination procedure shall be
+applied to the ancestors.}
 
-\item{debug}{boolean that will provide additional console information for debugging purposes.}
+\item{debug}{boolean that will provide additional console information for
+debugging purposes.}
 }
 \value{
-A list with the following elements:
+A list containing:
 \itemize{
-\item go_ids, the gene ontology identifier
-\item pvals, the p-values from the hypergeometric test
-\item odds ratios, the calculated odds ratios
-\item overlap, the size of the overlap,
-\item gene_set_lengths, the length of the gene sets.
+\item go_ids - The gene ontology identifier.
+\item pvals - The calculated odds ratios.
+\item odds_ratios - The calculated odds ratios.
+\item overlap - The size of the overlap.
+\item gene_set_lengths - The length of the gene sets.
 }
 }
 \description{
-This function implements a Rust version of the gene ontology enrichment with elimination:
-the starting point are the leaves of the ontology and hypergeometric tests will first conducted there.
-Should the hypergeometric test p-value be below a certain threshold, the genes of that gene ontology
-term will be removed from all ancestors.
+This function implements a Rust version of the gene ontology
+enrichment with elimination: the starting point are the leafs of the
+ontology and hypergeometric tests will first conducted there. Should the
+hypergeometric test p-value be below a certain threshold, the genes of that
+gene ontology term will be removed from all ancestors. WARNING! Incorrect
+use can cause kernel crashes. Wrapper around the Rust functions with type
+checks are provided in the package.
 }
