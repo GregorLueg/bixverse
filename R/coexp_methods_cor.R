@@ -720,6 +720,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 #'
 #' @returns The R2 value of of the goodness of fit.
 .scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
+  # Visible global function stuff...
+  lm <- NULL
   # Checks
   checkmate::qassert(k, "R>=50")
   checkmate::qassert(breaks, "I1")

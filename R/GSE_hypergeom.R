@@ -139,7 +139,7 @@ gse_hypergeometric_list <- function(target_genes_list,
   }
 
   gse_results <- rs_hypergeom_test_list(
-    target_genes = target_genes_list,
+    target_genes_list = target_genes_list,
     gene_sets = gene_set_list,
     gene_universe = gene_universe
   )
