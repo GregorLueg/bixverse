@@ -1,8 +1,12 @@
 Package: bixverse
-Title: Rust-accelerated standard bioinformatics workflows
+Title: Rust-accelerated standard bioinformatics, computational biology workflows
 Version: 0.0.1.0
 Authors@R: 
-    person("Gregor", "Lueg", , "gregorlueg@me.com", role = c("aut", "cre"))
+    c(
+      person("Gregor", "Lueg", email = "gregorlueg@me.com", role = c("aut", "cre")),
+      person("Liesbeth", "Francois", email = "francois.liesbeth@gmail.com", role = "aut"),
+      person("Andrew", "Skelton", email = "Ajskelton@proton.me", role = "aut")
+      )
 Description: ...
 License: MIT + file LICENSE
 Encoding: UTF-8

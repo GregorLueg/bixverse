@@ -701,6 +701,8 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
 #'  \item centrotype - The centrotype component of each cluster.
 #' }
 .community_stability <- function(no_comp, s, return_centrotype) {
+  # Visible global function stuff...
+  as.dist <- hclust <- cutree <- NULL
   # Checks
   checkmate::qassert(no_comp, "I1")
   checkmate::assertMatrix(s, mode = "numeric")

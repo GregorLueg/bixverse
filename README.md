@@ -21,7 +21,9 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 ## *Installation*
 
 You will need Rust on your system to have the package working. An installation
-guide is provided [here](https://www.rust-lang.org/tools/install).
+guide is provided [here](https://www.rust-lang.org/tools/install). There is a 
+bunch of further help [here](https://extendr.github.io/rextendr/index.html). 
+This package uses rextendr as the interface into Rust.
 
 ## *Docs*
 

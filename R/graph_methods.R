@@ -737,6 +737,8 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object) {
 #' @importFrom magrittr `%$%`
 .summarise_scores <- function(x,
                               summarisation = c("max", "mean", "harmonic_sum")) {
+  # devtools::check() stuff
+  value <- . <- node_name <- setNames <- NULL
   # Checks
   checkmate::assertNumeric(x)
   checkmate::assertNamed(x, .var.name = "x")
