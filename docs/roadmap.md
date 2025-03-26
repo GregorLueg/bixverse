@@ -1,11 +1,15 @@
 # *bixverse* roadmap
 
-*Last update: 19.03.2025* </br>
+*Last update: 26.03.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
 niche algorithms that have not been battle-tested, but provide simple and fast
 core function/methods that are broadly used.
+
+## Stability of the package
+
+- Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).
 
 ## Usability of the package
 
@@ -33,7 +37,8 @@ methods.
 annotations of modules, etc.
 - [Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 
 structure of gene loadings for matrix factorisation-based co-expression module detection.
-- Implement [sparse dictionary learning](https://pubmed.ncbi.nlm.nih.gov/35085500/).
+- Implement [sparse dictionary learning](https://pubmed.ncbi.nlm.nih.gov/35085500/)
+as a bi-clustering type of version.
 
 ## Single cell class and methods 
 
