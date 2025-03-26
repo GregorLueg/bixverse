@@ -22,8 +22,9 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 You will need Rust on your system to have the package working. An installation
 guide is provided [here](https://www.rust-lang.org/tools/install). There is a 
-bunch of further help [here](https://extendr.github.io/rextendr/index.html) 
-written by the rextendr guys in terms of Rust setup. 
+bunch of further help written [here](https://extendr.github.io/rextendr/index.html)
+by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interface
+with Rust.)
 
 ## *Docs*
 
