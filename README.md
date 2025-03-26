@@ -38,13 +38,16 @@ written by the rextendr guys in terms of Rust setup.
 
 Good question, why this package? Basically, there are three reasons for this:
 1. Initially, the package was born out of the desire to harmonise in a single 
-package lots and lots of different packages. And while doing so, slim the 
-functionality down to the bare bone essentials and remove barely used options.
-2. Moreover, after having reimplemented for the 3rd time some version of a 
-hypergeometric test for some project, you are just freaking tired of it. Same
-for other established methods that need some internal reimplementation for 
-reasons... Which brings us to the last point:
-3. Rust makes everything so much faster, that we just wished to share the joy.
+package lots and lots of different packages. (One package to rule them all.) 
+And while doing so, slim the functionality down to the bare bone essentials and
+remove barely used options.
+2. After having reimplemented for the 3rd time some version of a 
+hypergeometric test for some project, one is just tired of it. The same applies 
+to other established methods in the field that need some internal reimplementation
+(with maybe some tweaks here and there) for reasons... ? Better to do it once
+properly and make it public.
+3. Rust makes everything in R so much faster, that we just wished to share the 
+joy.
 
 *Last update to the read-me: 26.03.2025*
 
