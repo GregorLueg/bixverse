@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 19.03.2025* </br>
+*Last update: 26.03.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -14,8 +14,8 @@ on the same code base.
 The general idea is to leverage modern R language features (for example using 
 the new [S7 OOP system](https://github.com/RConsortium/S7) to have a more "R 
 like" feeling to objects and classes, while avoiding some of the short falls of 
-S3/S4). To make key computations as fast as possible we use the [rextendr](https://github.com/extendr/rextendr) interface 
-into Rust. </br>
+S3/S4). To make key computations as fast as possible we use the [rextendr](https://github.com/extendr/rextendr)
+interface into Rust. </br>
 
 Born out of experience, the package creators want to avoid unnecessary 
 complexity. Class inheritance structures that feel smart initially but make debugging
@@ -54,24 +54,26 @@ be able to provide wrong arguments without getting an informative (!) error by
 the function. This allows for quite defensive coding and one avoids a several 
 minute debug session just to realise one has provided the wrong input. Also,
 brings us back to point 1. If the function parameter is not covered by checkmate,
-just right an extension, see [here](https://mllg.github.io/checkmate/articles/checkmate.html#extending-checkmate).
+just write an extension, see [here](https://mllg.github.io/checkmate/articles/checkmate.html#extending-checkmate).
+There is a [file](/R/checkmate_extensions.R) that contains the package-internal
+checkmate extensions.
 3. If the function does something beyond 'simple' transformation, aggregation of
-data, renaming, plotting, etc. go to [Rust](https://www.rust-lang.org) and use the 
+data, renaming, plotting, etc. go to [Rust](https://www.rust-lang.org) via the 
 [rextendr](https://github.com/extendr/rextendr) interface to make computations 
-go **brrrrrr** (i.e., fast). Some libraries such as [igraph](https://r.igraph.org) 
-are very fast by their nature to go low level themselves, so no need to
-reinvent wheels here. Nonetheless, the speed-ups you can gain from using Rust can
-be incredible. Rust functions should start with *rs_*, and ideally an R wrapper
-should exist to use them. Please refer to the [Why Rust](/docs/why_rust.md)
-section. While we are very keen on Rust, we understand that not everyone
-can/will be able to recode the function into Rust, please refer to the next
-points for additional suggestions on code improvements that can already go
-a long way to make workflows more efficient (though not as **brrrrrr** as using
-Rust).
-4. Use [data.table](https://github.com/Rdatatable/data.table) over tibble and
-data.frame. *"Yeah, but I like dplyr and the tidyverse."* We get it... But the 
-speed-ups, increased memory efficacy, feature richness of data.table are just 
-too big to not use when writing codebases from broader usage.
+go **brrrrrr** (i.e., fast). Some libraries such as [igraph](https://r.igraph.org)
+or [data.table](https://github.com/Rdatatable/data.table) are very fast by their
+nature to go low level themselves, so no need to reinvent wheels here. Nonetheless, 
+the speed-ups you can gain from using Rust can be incredible. Rust functions should 
+start with *rs_*, and ideally an R wrapper should exist to use them. Please refer
+to the [Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
+understand that not everyone can or will be able to recode the function into Rust, 
+please refer to the next points for additional suggestions on code improvements 
+that can already go a long way to make workflows more efficient (though not as 
+**brrrrrr** as using Rust).
+4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
+over tibble and/or data.frame. *"Yeah, but I like dplyr and the tidyverse."* 
+We get it... But thespeed-ups, increased memory efficacy, feature richness of
+data.table are just too big to not use when writing code bases from broader usage.
 data.table also inherits all of the data.frame functionality and most dplyr code
 works with it, making it easy for users to jump to tidyverse when they want to.
 The point of the bixverse is to be fast, so let's stick with data.table.
@@ -83,10 +85,11 @@ piece of code does in 12 months? If you are doubting yourself here, maybe rethin
 what you wrote. For the latter, i.e., defensive, leverage early returns, asserts
 (see point 2)
 6. Avoid external dependencies if not absolutely necessary. The point of the 
-package **is to rewrite functions from other packages into very fast, simple
- Rust-accelerated code** and reducing the (code) bloat that affects some packages 
-in bioinformatics and computational biology.
-7. The good old for loop vs. lapply/map question... Generally speaking, our
+package **is to rewrite functions from other packages into very fast, simple **
+**Rust-accelerated code** and reducing the (code) bloat that affects some packages 
+in bioinformatics and computational biology. A good primer for this is the
+[tinyverse](https://www.tinyverse.org).
+7. The good old `for loop` vs. `lapply/map` question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
 equivalent parallelised versions via [furrr](https://furrr.futureverse.org), i.e., 
 `future_map` derivatives) over the apply family functions. Did you not just write 
