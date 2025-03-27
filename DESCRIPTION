@@ -31,3 +31,4 @@ Imports:
     S7,
     zeallot,
     MASS
+Suggests: tinytest
