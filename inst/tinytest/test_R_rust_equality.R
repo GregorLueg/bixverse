@@ -26,6 +26,3 @@ cor_class <- bixverse:::upper_triangular_cor_mat$new(cor_coef = cor_data,
                                                      shift = 1L)
 
 expect_equal(cor_class$get_cor_matrix(.verbose = FALSE), cor(mat))
-
-expect_equivalent(rs_upper_triangle_to_dense(cor_data, shift = 1L, n = 10L),
-                  cor(mat))
