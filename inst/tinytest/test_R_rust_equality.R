@@ -1,6 +1,6 @@
 # correlation, covariance, equality tests --------------------------------------
 
-## simple version --------------------------------------------------------------
+## simple versions -------------------------------------------------------------
 
 set.seed(123)
 mat <- matrix(data = rnorm(100),
