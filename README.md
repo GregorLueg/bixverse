@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.0-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.1.1-orange) 
 
 </br>
 
@@ -50,6 +50,6 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 26.03.2025*
+*Last update to the read-me: 28.03.2025*
 
 
