@@ -56,7 +56,15 @@ network_diffusions <- S7::new_class(
     checkmate::qassert(weighted, "B1")
     checkmate::qassert(directed, "B1")
     # Function body
-    graph <- igraph::graph_from_data_frame(edge_data_frame, directed = directed)
+    graph <- if (weighted) {
+      igraph::graph_from_data_frame(edge_data_frame, directed = directed)
+    } else {
+      igraph::graph_from_data_frame(edge_data_frame[, c("from", "to")], directed = directed)
+    }
+
+    if(!weighted)
+
+
     params <- list(
       "directed_graph" = igraph::is_directed(graph),
       "weighted_graph" = igraph::is_weighted(graph)
