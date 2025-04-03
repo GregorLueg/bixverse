@@ -203,7 +203,7 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' @param object The underlying class [bixverse::network_diffusions()].
 #' @param diffusion_threshold Float. How much of the network to keep based on
 #' the diffusion values. 0.25 for example would keep the 25% nodes with the
-#' highest scores.
+#' highest scores. This was the default in the original paper.
 #' @param community_params List. Parameters for the community detection within
 #' the reduced network, see [bixverse::params_community_detection()]. A list
 #' with the following items:
@@ -213,7 +213,7 @@ S7::method(tied_diffusion, network_diffusions) <-
 #'  \item min_nodes - Integer. Minimum number of nodes per community.
 #'  \item min_seed_nodes - Integer. Minimum number of seed genes that have to
 #'  be found in a given community.
-#'  \item intial_res - Float. Initial resolution parameter for the Leiden
+#'  \item initial_res - Float. Initial resolution parameter for the Leiden
 #'  clustering.
 #' }
 #' @param seed Random seed.
@@ -231,7 +231,7 @@ community_detection <- S7::new_generic(
   name = "community_detection",
   dispatch_args = "object",
   fun = function(object,
-                 diffusion_threshold,
+                 diffusion_threshold = 0.25,
                  community_params = params_community_detection(),
                  seed = 42L,
                  .verbose = FALSE,
@@ -248,7 +248,7 @@ community_detection <- S7::new_generic(
 #'
 #' @method community_detection network_diffusions
 S7::method(community_detection, network_diffusions) <- function(object,
-                                                                diffusion_threshold,
+                                                                diffusion_threshold = 0.25,
                                                                 community_params = params_community_detection(),
                                                                 seed = 42L,
                                                                 .verbose = FALSE,

@@ -166,19 +166,19 @@ params_graph_resolution <- function(min_res = 0.1,
 params_community_detection <- function(max_nodes = 300L,
                                        min_nodes = 10L,
                                        min_seed_nodes = 2L,
-                                       intial_res = 0.5) {
+                                       initial_res = 0.5) {
   # Checks
   checkmate::qassert(max_nodes, sprintf("I1[%i,)", min_nodes))
   checkmate::qassert(min_nodes, "I1")
   checkmate::qassert(min_seed_nodes, "I1")
-  checkmate::qassert(intial_res, "N1")
+  checkmate::qassert(initial_res, "N1")
   # Return
   return(
     list(
       max_nodes = max_nodes,
       min_nodes = min_nodes,
       min_seed_nodes = min_seed_nodes,
-      intial_res = intial_res
+      initial_res = initial_res
     )
   )
 }

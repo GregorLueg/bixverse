@@ -211,7 +211,7 @@ checkCommunityParams <- function(x) {
     return(res)
   res <- checkmate::checkNames(
     names(x),
-    must.include = c("max_nodes", "min_nodes", "min_seed_nodes", "intial_res")
+    must.include = c("max_nodes", "min_nodes", "min_seed_nodes", "initial_res")
   )
   if (!isTRUE(res))
     return(res)
@@ -219,7 +219,7 @@ checkCommunityParams <- function(x) {
     "max_nodes" = sprintf("I1[%i,)", x$min_nodes),
     "min_nodes" = "I1",
     "min_seed_nodes" = "I1",
-    "intial_res" = "N1"
+    "initial_res" = "N1"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     checkmate::qtest(x, rules[[name]])

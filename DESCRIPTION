@@ -25,6 +25,8 @@ Imports:
     matrixStats,
     patchwork,
     purrr,
+    furrr,
+    future,
     R6,
     rextendr,
     rlang,

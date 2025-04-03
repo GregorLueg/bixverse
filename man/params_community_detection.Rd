@@ -8,7 +8,7 @@ params_community_detection(
   max_nodes = 300L,
   min_nodes = 10L,
   min_seed_nodes = 2L,
-  intial_res = 0.5
+  initial_res = 0.5
 )
 }
 \arguments{
