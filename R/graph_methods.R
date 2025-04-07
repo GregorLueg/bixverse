@@ -702,21 +702,26 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
 
   graph <- S7::prop(object, "rbh_graph")
 
+  resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
+
   if (.verbose)
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
-
-  resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
 
   if (parallel) {
     if (.verbose)
       message(sprintf("Using parallel computation over %i cores.", max_workers))
 
-    future::plan(future::multisession(workers = max_workers))
+    # future plan funkiness
+    assign(".temp_workers", max_workers, envir = .GlobalEnv)
+    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+
+    plan(future::multisession(workers = .temp_workers))
   } else {
     if (.verbose)
       message("Using sequential computation.")
     future::plan(future::sequential())
   }
+
 
   community_df_res <- furrr::future_map(
     resolutions,
