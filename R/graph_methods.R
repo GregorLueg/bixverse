@@ -291,7 +291,7 @@ S7::method(community_detection, network_diffusions) <- function(object,
   final_clusters <- with(community_params, {
     first_clusters <- igraph::cluster_leiden(
       red_graph,
-      resolution = intial_res,
+      resolution = initial_res,
       n_iterations = 5,
       objective_function = "modularity"
     )
@@ -322,7 +322,7 @@ S7::method(community_detection, network_diffusions) <- function(object,
 
         clusters_red <- igraph::cluster_leiden(
           red_graph_l,
-          resolution = intial_res + l * 0.05,
+          resolution = initial_res + l * 0.05,
           n_iterations = 5,
           objective_function = "modularity"
         )
