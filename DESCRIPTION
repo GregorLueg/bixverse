@@ -32,5 +32,6 @@ Imports:
     rlang,
     S7,
     zeallot,
-    MASS
+    MASS,
+    polars
 Suggests: tinytest
