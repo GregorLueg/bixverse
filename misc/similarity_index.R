@@ -1,7 +1,15 @@
 
+library(Matrix)
+library(tictoc)
+library(igraph)
+library(reshape2)
 library(polars)
 library(data.table)
 library(dplyr)
+library(igraph)
+library(purrr)
+library(furrr)
+
 data_path = "/Users/liesbeth/Datascience/data/processed/OpenTargets_platform"
 
 ontology = pl$read_parquet(file.path(data_path,"OT_edges_disease_hierarchy.parquet"))$
@@ -45,10 +53,25 @@ calculate_information_content <- function(ontology_ancestors){
 
 information_content = calculate_information_content(ontology_ancestors)
 
+library(bixverse)
+terms = as.data.table(nodes)$id
+ancestor_list = as.data.table(ontology_ancestors)
+ancestor_list = split(ancestor_list$from, ancestor_list$to)
+ic_list = split(as.data.table(information_content)$ic, as.data.table(information_content)$id)
+tic()
+bxv_sim <- rs_onto_similarity_both(terms = terms,
+                   ancestor_list = ancestor_list,
+                   ic_list = ic_list,
+                   max_ic = max(unlist(ic_list)))
+toc()
 
+bxv_sim_mat <- bixverse:::upper_triangular_cor_mat$new(
+  cor_coef = bxv_sim$resnik_sim,
+  features = bxv_sim$terms,
+  shift = 1L
+)$get_cor_matrix()
 
-term1 = "EFO_0000474"
-term2 = "MONDO_0005301"
+## some functions for the R function
 get_index <- function(name, graph){
   match(name, V(graph)$name)
 }
@@ -61,10 +84,6 @@ LCA = function(distance, n1, n2){
     names(d[which.min(d)])
   }
 }
-ontology = ontology$filter(pl$col("relation") == "parent_of") %>% as.data.table()
-nodes = nodes %>% as.data.table()
-
-library(igraph)
 get_distances <- function(ontology){
   graph = igraph::graph_from_data_frame(ontology )
   distance = igraph::distances(graph, V(graph), mode="out")
@@ -80,14 +99,13 @@ get_similarity <- function(information_content, ontology, term1, term2){
 
   return(data.table(term1 = term1, term2 = term2, resnik = resnik, lin.ic = lin))
 }
+# run it in R only
+ontology = ontology$filter(pl$col("relation") == "parent_of") %>% as.data.table()
+nodes = nodes %>% as.data.table()
 
-library(Matrix)
-library(tictoc)
-library(igraph)
-library(reshape2)
-
+tic()
 d = get_distances(ontology)
-md = melt(d)
+md = reshape2::melt(d)
 
 seq.int <- seq(1, nrow(md), 2000000)
 results = list()
@@ -107,11 +125,6 @@ for(i in 1:length(seq.int)){
 results <- do.call(rbind, results)
 
 ## so now we have all disease pairs that connect somewhere in the tree
-
-library(purrr)
-library(furrr)
-
-
 plan(multisession, workers = 5)
 options(future.globals.maxSize = 6 * 1024^3)
 
@@ -129,6 +142,12 @@ results_pl <- pl$DataFrame(results)$
   join(information_content$select("id", "ic")$rename("ic" = "ic_var2"), left_on = "node2", right_on = "id")$
   with_columns(((2*pl$col("resnik"))$div(pl$col("ic_var1") + pl$col("ic_var2")))$alias("lin"))$
   select("node1", "node2", "lca", "resnik", "norm_resnik", "lin")
+toc()
 
 
+n1 = "MONDO_0008648"
+n2 = "Orphanet_7"
+lca = LCA(d, n1, n2)
+lca
+information_content$filter(pl$col("id") == lca)
 
