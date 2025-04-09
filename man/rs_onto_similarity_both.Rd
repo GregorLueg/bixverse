@@ -4,7 +4,7 @@
 \alias{rs_onto_similarity_both}
 \title{Calculate the Resnik and Lin semantic similarity}
 \usage{
-rs_onto_similarity_both(terms, ancestor_list, ic_list, max_ic)
+rs_onto_similarity_both(terms, ancestor_list, ic_list)
 }
 \arguments{
 \item{terms}{Vector of strings. The terms in the ontology you wish to screen.}
@@ -14,9 +14,6 @@ of the ancestors.}
 
 \item{ic_list}{R list with the names being the term and the elements the information content
 of this given term. Needs to be a single float!}
-
-\item{max_ic}{Double. The maximum information content observed in the data. This will return
-normalised Resnik (i.e., scaled between 0 and 1). If set to 1, it will return the Resnik distance.}
 }
 \value{
 A list with:

@@ -18,7 +18,7 @@ pub fn parse_onto_sim(s: &str) -> Option<OntoSimType> {
 }
 
 /// Get the most informative common ancestor
-fn get_mica(
+pub fn resnik_similarity(
     t1: &str,
     t2: &str,
     ancestor_map: &HashMap<String, HashSet<String>>,
@@ -42,39 +42,23 @@ pub fn lin_similarity(
     ancestor_map: &HashMap<String, HashSet<String>>,
     info_content_map: &HashMap<String, f64>,
 ) -> f64 {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let max_value = f64::max(*t1_ic, *t2_ic);
-    mica / max_value
-}
-
-/// Calculate the Resnik similarity (normalised)
-pub fn resnik_similarity(
-    t1: &str,
-    t2: &str,
-    max_ic: &f64,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
-) -> f64 {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    mica / max_ic
+    let mica = resnik_similarity(t1, t2, ancestor_map, info_content_map);
+    let t1_ic = info_content_map.get(t1).unwrap_or(&0.0);
+    let t2_ic = info_content_map.get(t2).unwrap_or(&0.0);
+    2.0 * mica / (t1_ic + t2_ic)
 }
 
 /// Calculate the Resnik and Lin similarity in one go
 pub fn resnik_and_lin_sim(
     t1: &str,
     t2: &str,
-    max_ic: &f64,
     ancestor_map: &HashMap<String, HashSet<String>>,
     info_content_map: &HashMap<String, f64>,
 ) -> (f64, f64) {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
+    let resnik_sim = resnik_similarity(t1, t2, ancestor_map, info_content_map);
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
     let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let max_value = f64::max(*t1_ic, *t2_ic);
-    let lin_sim = mica / max_value;
-    let resnik_sim = mica / max_ic;
+    let lin_sim = 2.0 * resnik_sim / (t1_ic + t2_ic);
     (resnik_sim, lin_sim)
 }
 
