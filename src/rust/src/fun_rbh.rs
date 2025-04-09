@@ -57,13 +57,10 @@ fn rs_rbh_sets(
 
     // Sliding window approach to generate tuples to iterate over in parallel with Rayon
     // Likely not super memmory efficient, but does the job and allows for subsequent parallelisation.
-    let origins_split: Vec<(String, Vec<String>)> = origins
+    let origins_split: Vec<(String, &[String])> = origins
         .iter()
         .enumerate()
-        .map(|(i, first)| {
-            let rest: Vec<String> = origins.iter().skip(i + 1).map(|s| s.to_string()).collect();
-            (first.to_string(), rest)
-        })
+        .map(|(i, first)| (first.clone(), &origins[i + 1..]))
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
