@@ -39,28 +39,26 @@ fn rs_onto_similarity(
     let sim_type = parse_onto_sim(similarity_type)
         .ok_or_else(|| format!("Invalid Ontological similarity chosen: {}", similarity_type))?;
 
-    let terms_split: Vec<(String, Vec<String>)> = terms
+    let terms_split: Vec<(String, &[String])> = terms
         .iter()
         .enumerate()
-        .map(|(i, first)| {
-            let rest: Vec<String> = terms.iter().skip(i + 1).map(|s| s.to_string()).collect();
-            (first.to_string(), rest)
-        })
+        .map(|(i, first)| (first.clone(), &terms[i + 1..]))
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
     let onto_sim: Vec<Vec<f64>> = terms_split
         .par_iter()
         .map(|(t1, others)| {
-            let sim_vec: Vec<f64> = others
-                .par_iter()
-                .map(|t2| match sim_type {
+            let mut sim_vec = Vec::with_capacity(others.len());
+            others.iter().for_each(|t2| {
+                let sim = match sim_type {
                     OntoSimType::Lin => lin_similarity(t1, t2, &ancestors_map, &ic_map),
                     OntoSimType::Resnik => {
                         resnik_similarity(t1, t2, &max_ic, &ancestors_map, &ic_map)
                     }
-                })
-                .collect();
+                };
+                sim_vec.push(sim);
+            });
             sim_vec
         })
         .collect();
@@ -101,31 +99,29 @@ fn rs_onto_similarity_both(
     let ancestors_map = r_list_to_hashmap_set(ancestor_list)?;
     let ic_map = ic_list_to_ic_hashmap(ic_list);
 
-    let terms_split: Vec<(String, Vec<String>)> = terms
+    let terms_split: Vec<(String, &[String])> = terms
         .iter()
         .enumerate()
-        .map(|(i, first)| {
-            let rest: Vec<String> = terms.iter().skip(i + 1).map(|s| s.to_string()).collect();
-            (first.to_string(), rest)
-        })
+        .map(|(i, first)| (first.clone(), &terms[i + 1..]))
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
     let onto_sim: Vec<Vec<(f64, f64)>> = terms_split
         .par_iter()
         .map(|(t1, others)| {
-            let sim_vec: Vec<(f64, f64)> = others
-                .par_iter()
-                .map(|t2| resnik_and_lin_sim(t1, t2, &max_ic, &ancestors_map, &ic_map))
-                .collect();
+            let mut sim_vec = Vec::with_capacity(others.len());
+            others.iter().for_each(|t2| {
+                let sim = resnik_and_lin_sim(t1, t2, &max_ic, &ancestors_map, &ic_map);
+                sim_vec.push(sim);
+            });
             sim_vec
         })
         .collect();
 
     let onto_sim = flatten_vector(onto_sim);
 
-    let mut resnik_sim = Vec::new();
-    let mut lin_sim = Vec::new();
+    let mut resnik_sim = Vec::with_capacity(onto_sim.len());
+    let mut lin_sim = Vec::with_capacity(onto_sim.len());
 
     for (res, lin) in onto_sim.into_iter() {
         resnik_sim.push(res);
