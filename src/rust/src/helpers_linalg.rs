@@ -255,6 +255,7 @@ pub fn randomised_svd(
     let mut rng = StdRng::seed_from_u64(seed as u64);
     let normal = Normal::new(0.0, 1.0).unwrap();
     let omega = Mat::from_fn(ncol, sample_size, |_, _| normal.sample(&mut rng));
+
     // Multiply random matrix with original and use QR composition to get
     // low rank approximation of x
     let y = x * omega;
@@ -276,6 +277,8 @@ pub fn randomised_svd(
     }
 }
 
+/// Iterate over a distance vector with given RBF function and epsilon parameter
+/// and return the column sums for the matrices based on the epsilons.
 pub fn rbf_iterate_epsilons(
     dist: &[f64],
     epsilons: &[f64],

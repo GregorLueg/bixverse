@@ -20,7 +20,7 @@ A list with:
 \itemize{
 \item term1 - String, the first term.
 \item term2 - String, the second term.
-\item res_sim - Float, the unnormalised Resnik similarity.
+\item resnik_sim - Float, the unnormalised Resnik similarity.
 \item lin_sim - Float, the Lin similarity.
 }
 }

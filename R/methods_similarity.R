@@ -141,11 +141,12 @@ get_ontology_ancestors <- function(parent_child_dt) {
     stack() %>%
     rev() %>%
     setNames(names(edge_df)) %>%
-    as.data.table() %>%
+    data.table::as.data.table() %>%
     .[from != to] %>%
-    dplyr::mutate_all(as.character)
+    .[, lapply(.SD, as.character)]
 
   result <- split(ancestor_DT$from, ancestor_DT$to)
+
   return(result)
 }
 

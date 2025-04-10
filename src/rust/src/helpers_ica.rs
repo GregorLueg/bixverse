@@ -117,7 +117,7 @@ pub fn prepare_whitening(
 /// Update the mixing matrix for ICA
 pub fn update_mix_mat(w: &Mat<f64>) -> faer::Mat<f64> {
     // SVD
-    let svd_res = w.svd().unwrap();
+    let svd_res = w.thin_svd().unwrap();
 
     let s = svd_res.S();
     let u = svd_res.U();
@@ -357,6 +357,7 @@ pub fn stabilised_ica_iters(
     (s_combined, convergence)
 }
 
+/// Generate cross-validation like data for ICA.
 pub fn create_ica_cv_data(
     x: &Mat<f64>,
     num_folds: usize,

@@ -585,7 +585,7 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' \itemize{
 #'   \item term1 - String, the first term.
 #'   \item term2 - String, the second term.
-#'   \item res_sim - Float, the unnormalised Resnik similarity.
+#'   \item resnik_sim - Float, the unnormalised Resnik similarity.
 #'   \item lin_sim - Float, the Lin similarity.
 #' }
 #'

@@ -88,10 +88,10 @@ fn rs_hypergeom_test_list(
         })
         .collect();
 
-    let mut pvals = Vec::new();
-    let mut odds_ratios = Vec::new();
-    let mut hits = Vec::new();
-    let mut gene_set_lengths = Vec::new();
+    let mut pvals = Vec::with_capacity(res.len());
+    let mut odds_ratios = Vec::with_capacity(res.len());
+    let mut hits = Vec::with_capacity(res.len());
+    let mut gene_set_lengths = Vec::with_capacity(res.len());
 
     for (pval, odds_ratio, hit, gene_set_length) in res {
         pvals.push(pval);
@@ -163,15 +163,15 @@ fn rs_gse_geom_elim(
         levels: levels_map,
     };
 
-    let mut go_ids: Vec<Vec<String>> = Vec::new();
-    let mut pvals: Vec<Vec<f64>> = Vec::new();
-    let mut odds_ratios: Vec<Vec<f64>> = Vec::new();
-    let mut hits: Vec<Vec<u64>> = Vec::new();
-    let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
+    let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
+    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut hits: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
+    let mut gene_set_lengths: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
 
     for level in levels.iter() {
         let level_res = process_ontology_level(
-            target_genes.clone(),
+            &target_genes,
             level,
             &mut go_obj,
             min_genes,
@@ -264,16 +264,16 @@ fn rs_gse_geom_elim_list(
                 levels: go_data.2.clone(),
             };
 
-            let mut go_ids: Vec<Vec<String>> = Vec::new();
-            let mut pvals: Vec<Vec<f64>> = Vec::new();
-            let mut odds_ratios: Vec<Vec<f64>> = Vec::new();
-            let mut hits: Vec<Vec<u64>> = Vec::new();
-            let mut gene_set_lengths: Vec<Vec<u64>> = Vec::new();
+            let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
+            let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+            let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+            let mut hits: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
+            let mut gene_set_lengths: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
 
             // Iterate over the levels
             for level in levels.iter() {
                 let level_res = process_ontology_level(
-                    targets.clone(),
+                    targets,
                     level,
                     &mut go_obj,
                     min_genes,
@@ -300,12 +300,12 @@ fn rs_gse_geom_elim_list(
         })
         .collect();
 
-    let mut go_ids_final: Vec<Vec<_>> = Vec::new();
-    let mut pvals_final = Vec::new();
-    let mut odds_ratios_final = Vec::new();
-    let mut hits_final = Vec::new();
-    let mut gene_set_lengths_final = Vec::new();
-    let mut no_tests = Vec::new();
+    let mut go_ids_final: Vec<Vec<_>> = Vec::with_capacity(res.len());
+    let mut pvals_final = Vec::with_capacity(res.len());
+    let mut odds_ratios_final = Vec::with_capacity(res.len());
+    let mut hits_final = Vec::with_capacity(res.len());
+    let mut gene_set_lengths_final = Vec::with_capacity(res.len());
+    let mut no_tests = Vec::with_capacity(res.len());
 
     for (go_ids, pval, odds_ratio, hit, gene_set_length) in res {
         no_tests.push(go_ids.len());

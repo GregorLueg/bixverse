@@ -97,7 +97,7 @@ pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMa
 
 /// Process a given ontology level
 pub fn process_ontology_level(
-    target_genes: Vec<String>,
+    target_genes: &[String],
     level: &String,
     go_obj: &mut GeneOntology,
     min_genes: i64,
@@ -128,13 +128,13 @@ pub fn process_ontology_level(
         go_gene_sets.push(set);
     }
 
-    let trials = target_genes.clone().into_iter().collect::<Vec<_>>().len() as u64;
+    let trials = target_genes.iter().collect::<Vec<_>>().len() as u64;
     let gene_set_lengths = go_gene_sets
         .clone()
         .into_iter()
         .map(|s| s.len() as u64)
         .collect::<Vec<u64>>();
-    let hits = count_hits_hash(go_gene_sets, &target_genes);
+    let hits = count_hits_hash(go_gene_sets, target_genes);
 
     // Calculate p-values and odds ratios
     let pvals: Vec<f64> = hits
