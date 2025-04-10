@@ -4,7 +4,7 @@
 \alias{rs_onto_similarity}
 \title{Calculate the semantic similarity in an ontology}
 \usage{
-rs_onto_similarity(terms, ancestor_list, ic_list, similarity_type)
+rs_onto_similarity(terms, ancestor_list, ic_list)
 }
 \arguments{
 \item{terms}{Vector of strings. The terms in the ontology you wish to screen.}
@@ -14,16 +14,16 @@ of the ancestors.}
 
 \item{ic_list}{R list with the names being the term and the elements the information content
 of this given term. Needs to be a single float!}
-
-\item{similarity_type}{String. Need to be one of \code{c("resnik", "lin")}.}
 }
 \value{
 A list with:
 \itemize{
-\item terms - The supplied iterated terms.
-\item similarities - Numeric vector of the similarities.
+\item term1 - String, the first term.
+\item term2 - String, the second term.
+\item res_sim - Float, the unnormalised Resnik similarity.
+\item lin_sim - Float, the Lin similarity.
 }
 }
 \description{
-This function calculates the Resnik or Lin similarity for a given ontology.
+This function calculates the Resnik and Lin similarity for a given ontology.
 }

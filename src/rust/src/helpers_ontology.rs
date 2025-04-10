@@ -1,65 +1,40 @@
 use extendr_api::prelude::*;
 use std::collections::{HashMap, HashSet};
 
-/// Enum for the OntoSim types
-#[derive(Debug)]
-pub enum OntoSimType {
-    Resnik,
-    Lin,
+/// Structure to store the Ontology similarity results
+pub struct OntoSimRes<'a> {
+    pub t1: &'a str,
+    pub t2: &'a str,
+    pub resnik_sim: f64,
+    pub lin_sim: f64,
 }
 
-/// Parsing the OntoSim types
-pub fn parse_onto_sim(s: &str) -> Option<OntoSimType> {
-    match s.to_lowercase().as_str() {
-        "resnik" => Some(OntoSimType::Resnik),
-        "lin" => Some(OntoSimType::Lin),
-        _ => None,
-    }
-}
-
-/// Get the most informative common ancestor
-pub fn resnik_similarity(
-    t1: &str,
-    t2: &str,
+/// Calculate the semantic similarity. Return Resnik and Lin similarity in one go.
+pub fn onto_sim<'a>(
+    t1: &'a str,
+    t2: &'a str,
     ancestor_map: &HashMap<String, HashSet<String>>,
     info_content_map: &HashMap<String, f64>,
-) -> f64 {
+) -> OntoSimRes<'a> {
     // Default Hashmap to avoid all types of tests here...
     let default_hash: HashSet<String> =
         HashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
     let ancestor_1 = ancestor_map.get(t1).unwrap_or(&default_hash);
     let ancestor_2 = ancestor_map.get(t2).unwrap_or(&default_hash);
-    ancestor_1
+    let mica = ancestor_1
         .intersection(ancestor_2)
         .map(|ancestor| info_content_map.get(ancestor).cloned().unwrap_or(0.0))
-        .fold(0.0, f64::max)
-}
-
-/// Calculate the Lin similarity
-pub fn lin_similarity(
-    t1: &str,
-    t2: &str,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
-) -> f64 {
-    let mica = resnik_similarity(t1, t2, ancestor_map, info_content_map);
+        .fold(0.0, f64::max);
     let t1_ic = info_content_map.get(t1).unwrap_or(&0.0);
     let t2_ic = info_content_map.get(t2).unwrap_or(&0.0);
-    2.0 * mica / (t1_ic + t2_ic)
-}
+    let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
 
-/// Calculate the Resnik and Lin similarity in one go
-pub fn resnik_and_lin_sim(
-    t1: &str,
-    t2: &str,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
-) -> (f64, f64) {
-    let resnik_sim = resnik_similarity(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let lin_sim = 2.0 * resnik_sim / (t1_ic + t2_ic);
-    (resnik_sim, lin_sim)
+    OntoSimRes {
+        t1,
+        t2,
+        resnik_sim: mica,
+        lin_sim,
+    }
 }
 
 /// Transform an R list that hopefully contains the IC into a HashMap

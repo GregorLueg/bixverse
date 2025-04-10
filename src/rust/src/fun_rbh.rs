@@ -55,8 +55,6 @@ fn rs_rbh_sets(
     // Pull out all the keys
     let origins: Vec<String> = module_list.clone().into_keys().collect();
 
-    // Sliding window approach to generate tuples to iterate over in parallel with Rayon
-    // Likely not super memmory efficient, but does the job and allows for subsequent parallelisation.
     let origins_split: Vec<(String, &[String])> = origins
         .iter()
         .enumerate()

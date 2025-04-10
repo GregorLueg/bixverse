@@ -7,15 +7,17 @@
 calculate_information_content(ancestor_list)
 }
 \arguments{
-\item{ancestor_list}{List. named list of terms with ancestor identifiers as their values}
+\item{ancestor_list}{List. Named list of terms with ancestor identifiers as
+their values}
 }
 \value{
-a named list of each term and their information content as values.
+A named list of each term and their information content as values.
 }
 \description{
-this function will calculate the information content of each provided term based on a
-list of ancestors, which is a named list of terms with ancestor identifiers as their values. Can be
-calculated using \code{\link[=get_ancestors]{get_ancestors()}}.
-The information content is calculated as -log2(number descendant/total terms in the ontology). More information
+this function will calculate the information content of each
+provided term based on a list of ancestors, which is a named list of terms
+with ancestor identifiers as their values. Can be calculated using
+\code{\link[=get_ancestors]{get_ancestors()}}. The information content is calculated as
+\verb{-log2(number descendant/total terms in the ontology)}. More information
 can be found \href{https://yulab-smu.top/biomedical-knowledge-mining-book/semantic-similarity-overview.html}{here}.
 }
