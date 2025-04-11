@@ -95,17 +95,17 @@ fn rs_create_random_aucs(
 /// @export
 #[extendr]
 fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction: bool) -> List {
-    let mat_a: faer::Mat<f64> = r_matrix_to_faer(&mat_a);
-    let mat_b: faer::Mat<f64> = r_matrix_to_faer(&mat_b);
+    let mat_a = r_matrix_to_faer(&mat_a);
+    let mat_b = r_matrix_to_faer(&mat_b);
 
     let n_a = mat_a.nrows();
     let n_b = mat_b.nrows();
 
-    let mean_a = col_means(&mat_a);
-    let mean_b = col_means(&mat_b);
+    let mean_a = col_means(mat_a);
+    let mean_b = col_means(mat_b);
 
-    let std_a = col_sds(&mat_a);
-    let std_b = col_sds(&mat_b);
+    let std_a = col_sds(mat_a);
+    let std_b = col_sds(mat_b);
 
     let (es, se) = hedge_g_effect(
         &mean_a,

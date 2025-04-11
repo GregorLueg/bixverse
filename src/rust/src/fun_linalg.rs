@@ -47,7 +47,7 @@ fn rs_cor(
   let mat = r_matrix_to_faer(&x);
 
   let cor = column_correlation(
-    &mat,
+    mat,
     spearman
   );
 
@@ -80,7 +80,7 @@ fn rs_cor_upper_triangle(
   // Calculate the correlations
   let mat = r_matrix_to_faer(&x);
   let cor = column_correlation(
-    &mat,
+    mat,
     spearman
   );
   let upper_triangle_indices = upper_triangle_indices(
@@ -140,8 +140,8 @@ fn rs_differential_cor(
   let mat_a = r_matrix_to_faer(&x_a);
   let mat_b = r_matrix_to_faer(&x_b);
 
-  let cor_a = column_correlation(&mat_a, spearman);
-  let cor_b = column_correlation(&mat_b, spearman);
+  let cor_a = column_correlation(mat_a, spearman);
+  let cor_b = column_correlation(mat_b, spearman);
 
   let diff_cor = calculate_diff_correlation(
     &cor_a,
@@ -260,7 +260,7 @@ fn rs_random_svd(
 ) -> List {
   let x = r_matrix_to_faer(&x);
   let random_svd_res = randomised_svd(
-    &x, 
+    x, 
     rank, 
     seed,
     oversampling,

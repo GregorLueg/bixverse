@@ -399,7 +399,11 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
     if (.verbose)
       message(sprintf("Using parallel computation over %i cores.", max_workers))
 
-    future::plan(future::multisession(workers = max_workers))
+    # future plan funkiness
+    assign(".temp_workers", max_workers, envir = .GlobalEnv)
+    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+
+    plan(future::multisession(workers = .temp_workers))
   } else {
     if (.verbose)
       message("Using sequential computation.")
