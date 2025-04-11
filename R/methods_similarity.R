@@ -98,9 +98,9 @@ calculate_semantic_sim <- function(terms, ancestor_list, ic_list, max_ic) {
   # Checks
   checkmate::qassert(terms, "S+")
   checkmate::assertList(ancestor_list, types = "character")
-  checkmate::assert_named(ancestor_list)
+  checkmate::assertNames(names(ancestor_list), must.include = terms)
   checkmate::assertList(ic_list, types =  "double")
-  checkmate::assert_named(ic_list)
+  checkmate::assertNames(names(ic_list), must.include = terms)
   checkmate::qassert(max_ic, "N1")
 
   onto_similarities <- rs_onto_similarity(terms = terms,
@@ -142,7 +142,6 @@ get_ontology_ancestors <- function(parent_child_dt) {
     rev() %>%
     setNames(names(edge_df)) %>%
     data.table::as.data.table() %>%
-    .[from != to] %>%
     .[, lapply(.SD, as.character)]
 
   result <- split(ancestor_DT$from, ancestor_DT$to)
@@ -171,19 +170,14 @@ get_ontology_ancestors <- function(parent_child_dt) {
 #' @importFrom magrittr `%>%`
 calculate_information_content <- function(ancestor_list) {
   checkmate::assertList(ancestor_list)
+  checkmate::assertNamed(ancestor_list)
 
-  total_terms = length(unique(c(
-    unlist(ancestor_list), names(ancestor_list)
-  )))
-  ic = as.data.table(stack(ancestor_list)) %>%
-    .[, `:=`(values = as.character(values), ind = as.character(ind))] %>%
-    setnames(., c("values", "ind"), c("ancestor", "descendant")) %>%
-    unique() %>%
-    .[, nb_desc := .N, by = ancestor] %>%
-    .[, ic := -log2(nb_desc / total_terms)] %>%
-    setnames(., "ancestor", "id")
+  tab <- table(factor(
+    unlist(ancestor_list, use.names = FALSE),
+    levels = names(ancestor_list)
+  ))
+  information_content <- setNames(-log(tab / length(ancestor_list)), names(ancestor_list))
+  information_content <- as.list(information_content)
 
-  result <- as.list(setNames(ic$ic, ic$id))
-
-  return(result)
+  return(information_content)
 }
