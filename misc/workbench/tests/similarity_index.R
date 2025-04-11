@@ -17,17 +17,26 @@ library(polars)
 library(data.table)
 data_path = "/Users/liesbeth/Datascience/data/processed/OpenTargets_platform"
 
-ontology = pl$read_parquet(file.path(data_path,"OT_edges_disease_hierarchy.parquet"))$
+ontology_df = pl$read_parquet(file.path(data_path,"OT_edges_disease_hierarchy.parquet"))$
   filter(pl$col("source:string") == "efo")$
   rename(":END_ID" = "to",
          ":START_ID" = "from",
          "relation_type:string" = "relation")$
   select("from", "to", "relation")
 
-ontology = parent_child = as.data.table(ontology$
+parent_child = as.data.table(ontology_df$
                                filter(pl$col("relation") == "parent_of")$
                                rename("from" = "parent", "to" = "child")$
                                select("parent", "child"))
+
+tic()
+ontology_obj = bixverse::ontology(parent_child)
+ontology_obj = calculate_semantic_sim_onto(ontology_obj)
+similarities = get_semantic_similarities(ontology_obj)
+toc()
+
+
+
 
 ancestor_list = get_ancestors(ontology)
 ic_list = calculate_information_content(ancestor_list)
