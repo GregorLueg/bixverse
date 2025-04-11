@@ -573,48 +573,24 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 
 #' Calculate the semantic similarity in an ontology
 #'
-#' @description This function calculates the Resnik or Lin similarity for a given ontology.
+#' @description This function calculates the Resnik and Lin similarity for a given ontology.
 #'
 #' @param terms Vector of strings. The terms in the ontology you wish to screen.
 #' @param ancestor_list R list with names being the term and the elements in the list the names
 #' of the ancestors.
 #' @param ic_list R list with the names being the term and the elements the information content
 #' of this given term. Needs to be a single float!
-#' @param similarity_type String. Need to be one of `c("resnik", "lin")`.
-#' @param max_ic Double. The maximum information content observed in the data. This will return
-#' normalised Resnik (i.e., scaled between 0 and 1). If set to 1, it will return the Resnik distance.
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item terms - The supplied iterated terms.
-#'   \item similarities - Numeric vector of the similarities.
+#'   \item term1 - String, the first term.
+#'   \item term2 - String, the second term.
+#'   \item resnik_sim - Float, the unnormalised Resnik similarity.
+#'   \item lin_sim - Float, the Lin similarity.
 #' }
 #'
 #' @export
-rs_onto_similarity <- function(terms, ancestor_list, ic_list, similarity_type, max_ic) .Call(wrap__rs_onto_similarity, terms, ancestor_list, ic_list, similarity_type, max_ic)
-
-#' Calculate the Resnik and Lin semantic similarity
-#'
-#' @description This function calculates the Resnik and Lin similarity for a given ontology in
-#' one call.
-#'
-#' @param terms Vector of strings. The terms in the ontology you wish to screen.
-#' @param ancestor_list R list with names being the term and the elements in the list the names
-#' of the ancestors.
-#' @param ic_list R list with the names being the term and the elements the information content
-#' of this given term. Needs to be a single float!
-#' @param max_ic Double. The maximum information content observed in the data. This will return
-#' normalised Resnik (i.e., scaled between 0 and 1). If set to 1, it will return the Resnik distance.
-#'
-#' @return A list with:
-#' \itemize{
-#'   \item terms - The supplied iterated terms.
-#'   \item resnik_sim - The Resnic similarities.
-#'   \item lin_sim - The Lin similarities.
-#' }
-#'
-#' @export
-rs_onto_similarity_both <- function(terms, ancestor_list, ic_list, max_ic) .Call(wrap__rs_onto_similarity_both, terms, ancestor_list, ic_list, max_ic)
+rs_onto_similarity <- function(terms, ancestor_list, ic_list) .Call(wrap__rs_onto_similarity, terms, ancestor_list, ic_list)
 
 
 # nolint end

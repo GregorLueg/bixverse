@@ -166,4 +166,3 @@ toc()
 # lca = LCA(d, n1, n2)
 # lca
 # information_content$filter(pl$col("id") == lca)
-
