@@ -10,6 +10,8 @@ ontology(parent_child_dt, .verbose = TRUE)
 \item{parent_child_dt}{A data.table that contains the ontological information
 in terms of parent child relationships. Need to contain the
 \code{c("parent", "child")} columns.}
+
+\item{.verbose}{Boolean. Controls the verbosity of the class}
 }
 \value{
 Returns the class for subsequent usage.
@@ -26,7 +28,9 @@ ontological information.
 \item{information_content_list}{List. Contains the information content
 of each individual term.}
 \item{ancestor_list}{List. Contains the ancestors for each ontology term.}
-\tiem{semantic_similarities}{data.table. Contains the semantic similarities
+\item{descendants_list}{List. Contains the descendants for each ontology
+term.}
+\item{semantic_similarities}{data.table. Contains the semantic similarities
 if calculated.}
 }
 }

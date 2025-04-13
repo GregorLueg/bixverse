@@ -4,22 +4,33 @@
 \alias{calculate_semantic_sim_onto}
 \title{Calculate the Resnik and Lin semantic similarity for an ontology.}
 \usage{
-calculate_semantic_sim_onto(object, terms = NULL, .verbose = TRUE)
+calculate_semantic_sim_onto(
+  object,
+  sim_type,
+  alpha = 0.01,
+  random_sample_no = 100000L,
+  seed = 42L
+)
 }
 \arguments{
 \item{object}{\verb{ontology class}. See \code{\link[=ontology]{ontology()}}.}
 
-\item{terms}{Character vector or NULL. The function will calculate the
-the semantic similarities for these terms. If NULL, the semantic similarity
-for everything will be calculated.}
+\item{sim_type}{String. One of \code{c("resnik", "lin", "combined")}.}
 
-\item{.verbose}{}
+\item{alpha}{Float. Between 0 and 1. A value of 0.01 indicates that the
+critical value is at the 1\% quantile of the random sample of similarities.}
+
+\item{random_sample_no}{Integer. Number of random samples to use to estimate
+the critical value.}
+
+\item{seed}{Integer. Random seed for sampling reproducibility.}
 }
 \value{
 The class with added semantic similarities to the properties.
 }
 \description{
-This function calculates the semantic similarities based on
-Resnik and Lin similarity for a given ontology. In this case, the ontology
-is stored within an \code{\link[=ontology]{ontology()}} class.
+This function calculates the specified semantic similarities for
+the whole ontology, calculate a critical values based on \code{random_sample_no}
+(based on a user-specified alpha) and return all the term-term pairs above
+that threshold.
 }
