@@ -573,24 +573,50 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 
 #' Calculate the semantic similarity in an ontology
 #'
-#' @description This function calculates the Resnik and Lin similarity for a given ontology.
+#' @description This function calculates the specified semantic similarity and
+#' returns the full vector (only calculating the upper triangle) for the given
+#' similarity.
 #'
 #' @param terms Vector of strings. The terms in the ontology you wish to screen.
-#' @param ancestor_list R list with names being the term and the elements in the list the names
-#' of the ancestors.
-#' @param ic_list R list with the names being the term and the elements the information content
-#' of this given term. Needs to be a single float!
+#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
+#' @param ancestor_list R list with names being the term and the elements in the
+#' list the names of the ancestors.
+#' @param ic_list R list with the names being the term and the elements the
+#' information content of this given term. Needs to be a single float!
+#'
+#' @return A vector containing all the desired similarity scores. This is
+#' equivalent of the upper triangle of the similarity matrix.
+#'
+#' @export
+rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_similarity, terms, sim_type, ancestor_list, ic_list)
+
+#' Calculate the semantic similarity in an ontology
+#'
+#' @description This function calculates the specified semantic similarity and
+#' returns the full vector (only calculating the upper triangle) for the given
+#' similarity.
+#'
+#' @param terms Vector of strings. The terms in the ontology you wish to screen.
+#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
+#' @param alpha Float. Must be between 0 to 1. The alpha parameter for calculating
+#' the critival value.
+#' @param ancestor_list R list with names being the term and the elements in the
+#' list the names of the ancestors.
+#' @param ic_list R list with the names being the term and the elements the
+#' information content of this given term. Needs to be a single float!
+#' @param iters Integer. Number of random iterations to use to estimate the
+#' critical value.
+#' @param seed Integer. Random seed for reproducibility purposes.
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item term1 - String, the first term.
-#'   \item term2 - String, the second term.
-#'   \item resnik_sim - Float, the unnormalised Resnik similarity.
-#'   \item lin_sim - Float, the Lin similarity.
+#'   \item term1 - Term 1
+#'   \item v - v matrix of the SVD.
+#'   \item s - Eigenvalues of the SVD.
 #' }
 #'
 #' @export
-rs_onto_similarity <- function(terms, ancestor_list, ic_list) .Call(wrap__rs_onto_similarity, terms, ancestor_list, ic_list)
+rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
 
 
 # nolint end

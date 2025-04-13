@@ -1,5 +1,5 @@
 use extendr_api::prelude::*;
-use faer::Mat;
+use faer::MatRef;
 use std::collections::{HashMap, HashSet};
 
 /// A double nested HashMap
@@ -78,12 +78,12 @@ pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedH
 }
 
 /// Transform an R matrix to a Faer one
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::Mat<f64> {
+pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();
 
-    Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
+    MatRef::from_column_major_slice(data, nrow, ncol)
 }
 
 /// Transform a faer into an R matrix

@@ -1,6 +1,14 @@
 # *bixverse* change log
 
-*Last update: 19.03.2025* </br>
+*Last update: 12.04.2025* </br>
+
+### Version **0.0.1.1**
+
+**Beta release** Package initialisation and first functionalities added.
+
+#### New features
+
+-
 
 ### Version **0.0.1.0**
 

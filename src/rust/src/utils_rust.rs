@@ -191,7 +191,7 @@ pub fn upper_triangle_to_sym_faer(data: &[f64], shift: usize, n: usize) -> faer:
 //   result
 // }
 
-pub fn colbind_matrices(matrices: Vec<Mat<f64>>) -> Mat<f64> {
+pub fn colbind_matrices(matrices: &[Mat<f64>]) -> Mat<f64> {
     let nrows = matrices[0].nrows();
     let total_col = matrices.iter().map(|m| m.ncols()).sum();
     let mut result: Mat<f64> = Mat::zeros(nrows, total_col);

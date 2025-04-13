@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
-    Mat,
+    Mat, MatRef
 };
 use rand::prelude::*;
 use rand_distr::Normal;
@@ -77,7 +77,7 @@ pub fn prepare_ica_params(r_list: List) -> IcaParams {
 /// Has the option to use randomised SVD for faster computations.
 /// Returns the scaled data and the pre-whitening matrix K.
 pub fn prepare_whitening(
-    x: &Mat<f64>,
+    x: MatRef<f64>,
     fast_svd: bool,
     seed: usize,
     rank: usize,
@@ -93,7 +93,7 @@ pub fn prepare_whitening(
     let v = centered * centered.transpose() / n as f64;
 
     let k = if fast_svd {
-        let svd_res = randomised_svd(&v, rank, seed, oversampling, n_power_iter);
+        let svd_res = randomised_svd(v.as_ref(), rank, seed, oversampling, n_power_iter);
         let s: Vec<f64> = svd_res.s.iter().map(|x| 1_f64 / x.sqrt()).collect();
         let d = faer_diagonal_from_vec(s);
         d * svd_res.u.transpose()
@@ -115,7 +115,7 @@ pub fn prepare_whitening(
 }
 
 /// Update the mixing matrix for ICA
-pub fn update_mix_mat(w: &Mat<f64>) -> faer::Mat<f64> {
+pub fn update_mix_mat(w: MatRef<f64>) -> faer::Mat<f64> {
     // SVD
     let svd_res = w.thin_svd().unwrap();
 
@@ -152,8 +152,8 @@ pub fn parse_ica_type(s: &str) -> Option<IcaType> {
 
 /// Fast ICA implementation based on logcosh.
 pub fn fast_ica_logcosh(
-    x: &Mat<f64>,
-    w_init: &Mat<f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     alpha: f64,
     maxit: usize,
@@ -193,7 +193,7 @@ pub fn fast_ica_logcosh(
 
         let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
 
-        let w1 = update_mix_mat(&(v1 - v2));
+        let w1 = update_mix_mat((v1 - v2).as_ref());
 
         let w1_up = w1.clone() * w.transpose();
 
@@ -224,8 +224,8 @@ pub fn fast_ica_logcosh(
 
 /// Fast ICA implementation based on exp.
 pub fn fast_ica_exp(
-    x: &Mat<f64>,
-    w_init: &Mat<f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     maxit: usize,
     verbose: bool,
@@ -262,7 +262,7 @@ pub fn fast_ica_exp(
 
         let v2 = faer_diagonal_from_vec(row_means_vec) * w.clone();
 
-        let w1 = update_mix_mat(&(v1 - v2));
+        let w1 = update_mix_mat((v1 - v2).as_ref());
 
         let w1_up = w1.clone() * w.transpose();
 
@@ -294,8 +294,8 @@ pub fn fast_ica_exp(
 /// Iterate through a set of random initialisations with a given pre-whitened
 /// matrix, the whitening matrix k and the respective ICA parameters.
 pub fn stabilised_ica_iters(
-    x_pre_whiten: &Mat<f64>,
-    k: &Mat<f64>,
+    x_pre_whiten: MatRef<f64>,
+    k: MatRef<f64>,
     no_comp: usize,
     no_iters: usize,
     ica_type: &str,
@@ -315,15 +315,15 @@ pub fn stabilised_ica_iters(
         .par_iter()
         .map(|w_init| match ica_type {
             IcaType::Exp => fast_ica_exp(
-                &x_whiten,
-                w_init,
+                x_whiten.as_ref(),
+                w_init.as_ref(),
                 ica_params.tol,
                 ica_params.maxit,
                 ica_params.verbose,
             ),
             IcaType::LogCosh => fast_ica_logcosh(
-                &x_whiten,
-                w_init,
+                x_whiten.as_ref(),
+                w_init.as_ref(),
                 ica_params.tol,
                 ica_params.alpha,
                 ica_params.maxit,
@@ -352,14 +352,14 @@ pub fn stabilised_ica_iters(
         })
         .collect();
 
-    let s_combined = colbind_matrices(s_matrices);
+    let s_combined = colbind_matrices(&s_matrices);
 
     (s_combined, convergence)
 }
 
 /// Generate cross-validation like data for ICA.
 pub fn create_ica_cv_data(
-    x: &Mat<f64>,
+    x: MatRef<f64>,
     num_folds: usize,
     seed: usize,
     rank: Option<usize>,
@@ -406,7 +406,7 @@ pub fn create_ica_cv_data(
                 }
             }
 
-            prepare_whitening(&x_i, true, seed + 1, svd_rank, None, None)
+            prepare_whitening(x_i.as_ref(), true, seed + 1, svd_rank, None, None)
         })
         .collect();
 
@@ -426,7 +426,7 @@ pub fn create_ica_cv_data(
 
 #[allow(clippy::too_many_arguments)]
 pub fn stabilised_ica_cv(
-    x: Mat<f64>,
+    x: MatRef<f64>,
     no_comp: usize,
     num_folds: usize,
     no_iters: usize,
@@ -438,7 +438,7 @@ pub fn stabilised_ica_cv(
     // Generate cross-validation data if not provided
     let cv_data = match ica_cv_data {
         Some(data) => data, // Use the provided data
-        None => create_ica_cv_data(&x, num_folds, seed, Some(no_comp)), // Generate new data
+        None => create_ica_cv_data(x, num_folds, seed, Some(no_comp)), // Generate new data
     };
 
     // Iterate through bootstrapped samples
@@ -448,8 +448,8 @@ pub fn stabilised_ica_cv(
         .zip(cv_data.pre_white_matrices)
         .map(|(k_i, x_i)| {
             let (s_i, converged_i) = stabilised_ica_iters(
-                &x_i,
-                k_i,
+                x_i.as_ref(),
+                k_i.as_ref(),
                 no_comp,
                 no_iters,
                 ica_type,
@@ -469,7 +469,7 @@ pub fn stabilised_ica_cv(
         converged_final.push(converged_i);
     }
 
-    let s_final = colbind_matrices(s_final);
+    let s_final = colbind_matrices(&s_final);
     let converged_final = flatten_vector(converged_final);
 
     (s_final, converged_final)

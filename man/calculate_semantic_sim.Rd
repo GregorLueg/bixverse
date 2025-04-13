@@ -4,31 +4,23 @@
 \alias{calculate_semantic_sim}
 \title{Calculate the Resnik and Lin semantic similarity}
 \usage{
-calculate_semantic_sim(terms, ancestor_list, ic_list, max_ic)
+calculate_semantic_sim(terms, similarity_type, ancestor_list, ic_list)
 }
 \arguments{
 \item{terms}{Vector of strings. The terms in the ontology you wish to screen.}
 
+\item{similarity_type}{String. One of \code{c("resnik", "lin", "combined")}.}
+
 \item{ancestor_list}{List. Names being the term and the elements in the
-list the names of the ancestors, see \code{\link[=get_ontology_ancestors]{get_ontology_ancestors()}}.}
+list the names of the ancestors, see \code{\link[=get_ontology_ancestry]{get_ontology_ancestry()}}.}
 
 \item{ic_list}{List. The names being the term and the elements the
 information content of this given term. Needs to be a single float! See
 \code{\link[=calculate_information_content]{calculate_information_content()}}.}
-
-\item{max_ic}{Double. The maximum information content observed in the data.
-This value will be used to calculate the normalised Resnik similarity.}
 }
 \value{
-data.table with the following columns:
-\itemize{
-\item term1 - String, the first term.
-\item term2 - String, the second term.
-\item resnik_sim - Float, the unnormalised Resnik similarity.
-\item lin_sim - Float, the Lin similarity.
-\item resnik_sim_norm - Float, the normalised Resnik similarity (i.e.,
-divided by max information content observed.)
-}
+The symmetric similarity matrix for the specified terms and semantic
+similarity measure you chose. Self similarity is set to 0.
 }
 \description{
 This function calculates the semantic similarities based on

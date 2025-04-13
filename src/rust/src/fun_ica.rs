@@ -42,7 +42,7 @@ fn rs_prepare_whitening(
     let x = r_matrix_to_faer(&x);
     let rank = rank.unwrap_or(10);
 
-    let (x, k) = prepare_whitening(&x, fast_svd, seed, rank, oversampling, n_power_iter);
+    let (x, k) = prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter);
 
     list!(
         x = faer_to_r_matrix(x.as_ref()),
@@ -98,15 +98,15 @@ fn rs_fast_ica(
 
     let a = match ica_type {
         IcaType::Exp => fast_ica_exp(
-            &x,
-            &w_init,
+            x,
+            w_init,
             ica_params.tol,
             ica_params.maxit,
             ica_params.verbose,
         ),
         IcaType::LogCosh => fast_ica_logcosh(
-            &x,
-            &w_init,
+            x,
+            w_init,
             ica_params.tol,
             ica_params.alpha,
             ica_params.maxit,
@@ -179,8 +179,8 @@ fn rs_ica_iters(
     let ica_params = prepare_ica_params(ica_params);
 
     let (s_combined, converged) = stabilised_ica_iters(
-        &x_processed,
-        &k,
+        x_processed,
+        k,
         no_comp,
         no_random_init,
         ica_type,

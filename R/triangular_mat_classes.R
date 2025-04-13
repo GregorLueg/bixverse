@@ -73,7 +73,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       checkmate::qassert(factor, "B1")
       checkmate::qassert(.verbose, "B1")
       if (.verbose)
-        message("Generating data.table format of the correlation matrix.")
+        message("Generating data.table format of the symmetric matrix.")
 
       data <- list(
         feature_a = private$get_feature_a(factor = factor),
@@ -95,7 +95,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       checkmate::qassert(.verbose, "B1")
 
       if (.verbose)
-        message("Generating the full matrix format of the correlation matrix.")
+        message("Generating the full matrix format of the symmetric matrix.")
 
       n <- length(private$features)
       shift <- private$shift

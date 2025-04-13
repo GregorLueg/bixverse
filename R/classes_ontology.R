@@ -120,6 +120,7 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #' @param parent_child_dt A data.table that contains the ontological information
 #' in terms of parent child relationships. Need to contain the
 #' `c("parent", "child")` columns.
+#' @param .verbose Boolean. Controls the verbosity of the class
 #'
 #' @section Properties:
 #' \describe{
@@ -127,7 +128,9 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #'   \item{information_content_list}{List. Contains the information content
 #'   of each individual term.}
 #'   \item{ancestor_list}{List. Contains the ancestors for each ontology term.}
-#'   \tiem{semantic_similarities}{data.table. Contains the semantic similarities
+#'   \item{descendants_list}{List. Contains the descendants for each ontology
+#'   term.}
+#'   \item{semantic_similarities}{data.table. Contains the semantic similarities
 #'   if calculated.}
 #' }
 #'
@@ -136,6 +139,7 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #' @export
 ontology <- S7::new_class(
   # Names, parents
+  parent = bixverse_base_class,
   name = "ontology",
 
   # Properties, i.e., slots
@@ -143,7 +147,10 @@ ontology <- S7::new_class(
     parent_child_dt = S7::class_data.frame,
     information_content_list = S7::class_list,
     ancestor_list = S7::class_list,
-    semantic_similarities = S7::class_data.frame
+    descendants_list = S7::class_list,
+    semantic_similarities = S7::class_data.frame,
+    params = S7::class_list,
+    final_results = S7::class_any
   ),
 
 
@@ -155,18 +162,25 @@ ontology <- S7::new_class(
 
     if (.verbose)
       message("Identifying the ancestors in the ontology.")
-    ancestor_list <- get_ontology_ancestors(parent_child_dt)
+    c(ancestors, descendants) %<-% get_ontology_ancestry(parent_child_dt)
     if (.verbose)
       message("Calculating the information content of each term")
-    information_content <- calculate_information_content(ancestor_list)
+    information_content <- calculate_information_content(descendants)
+
+    params <- list(ontology_data = list(
+      total_size = length(information_content)
+    ))
 
     # Finalise object
     S7::new_object(
       S7::S7_object(),
       parent_child_dt = parent_child_dt,
       information_content_list = information_content,
-      ancestor_list = ancestor_list,
-      semantic_similarities = data.table::data.table()
+      ancestor_list = ancestors,
+      descendants_list = descendants,
+      semantic_similarities = data.table::data.table(),
+      params = params,
+      final_results = NULL
     )
   }
 )

@@ -251,7 +251,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
         ica_params = ica_params
       ),
       rs_ica_iters_cv(
-        x = X_raw,
+        x = X,
         no_comp = no_comp,
         no_folds = folds,
         no_random_init = random_init,

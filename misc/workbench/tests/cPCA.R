@@ -42,16 +42,10 @@ bulk_coexp_class = bulk_coexp(raw_data = raw_data, meta_data = sample_meta)
 
 bulk_coexp_class = preprocess_bulk_coexp(bulk_coexp_class)
 
-bulk_coexp_class
-
-x = bulk_coexp_class
-
-S7::prop(x, "params")["detection_method"]
 
 # If this is run without pre-processing it will throw a warning
 bulk_coexp_class = contrastive_pca_processing(bulk_coexp_class, background_mat = background_mat)
 
-?c_pca_plot_alphas
 
 c_pca_plot_alphas(bulk_coexp_class, label_column = 'grp', n_alphas = 10L, max_alpha = 100)
 
