@@ -79,12 +79,14 @@ gene_ontology_data <- S7::new_class(
 ## print ------------------------------------------------------------------------
 
 #' @name print.gene_ontology_data
+#'
 #' @title print Method for gene_ontology_data object
 #'
 #' @description
 #' Print a gene_ontology_data object.
 #'
-#' @param x An object of class `gene_ontology_data`.
+#' @param x An object of class `gene_ontology_data`, see
+#' [bixverse::gene_ontology_data()].
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
@@ -97,7 +99,7 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
   min_genes <- S7::prop(x, "min_genes")
 
   cat(paste(
-    "Gene ontology class:",
+    "Gene ontology enrichment class:",
     sprintf(" Contains %i gene ontology terms.", number_gene_sets),
     sprintf(" Total of %i levels represented in the ontology.", number_levels),
     sprintf(" Minimum genes per term set to %i.", min_genes),
@@ -132,6 +134,9 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #'   term.}
 #'   \item{semantic_similarities}{data.table. Contains the semantic similarities
 #'   if calculated.}
+#'   \item{params}{A (nested) list that will store all the parameters of the
+#'   applied function.}
+#'   \item{final_results}{Final results stored in the class.}
 #' }
 #'
 #' @return Returns the class for subsequent usage.
@@ -184,6 +189,37 @@ ontology <- S7::new_class(
     )
   }
 )
+
+## print -----------------------------------------------------------------------
+
+#' @name print.ontology
+#'
+#' @title print Method for ontology object
+#'
+#' @description
+#' Print a ontology object.
+#'
+#' @param x An object of class `ontology`, see [bixverse::ontology()].
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @method print ontology
+S7::method(print, ontology) <- function(x, ...) {
+  # Get necessary parameters
+  ontology_size <- S7::prop(x, "params")[['ontology_data']][['total_size']]
+  semantic_similarities <- S7::prop(x, "semantic_similarities")
+  semantic_calculated <- ifelse(nrow(semantic_similarities) == 0, "No.", "Yes.")
+
+  cat(paste(
+    "Ontology class:",
+    sprintf(" Size of the ontology: %i.", ontology_size),
+    sprintf(" Semantic similarities calculated: %s", semantic_calculated),
+    sep = "\n"
+  ))
+
+  invisible(x)
+}
 
 ## getters ---------------------------------------------------------------------
 

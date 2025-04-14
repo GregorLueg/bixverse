@@ -4,7 +4,8 @@
 \alias{print.gene_ontology_data}
 \title{print Method for gene_ontology_data object}
 \arguments{
-\item{x}{An object of class \code{gene_ontology_data}.}
+\item{x}{An object of class \code{gene_ontology_data}, see
+\code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
 \item{...}{Additional arguments (currently not used).}
 }
