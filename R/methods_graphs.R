@@ -489,18 +489,6 @@ S7::method(community_detection, network_diffusions) <- function(
       cluster_id = as.character(cluster_id)
     )]
 
-  if (diffusion_type == "single") {
-    seed_nodes <- S7::prop(object, "params")$seed_nodes
-    final_result[, seed_node := node_id %in% seed_nodes]
-  } else {
-    seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
-    seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
-    final_result[, `:=`(
-      seed_node_a = node_id %in% seed_nodes_set_1,
-      seed_node_b = node_id %in% seed_nodes_set_2
-    )]
-  }
-
   cluster_name_prettifier <- setNames(
     paste(
       "cluster",
@@ -829,12 +817,14 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
     exp(seq(log(min_res), log(max_res), length.out = number_res))
   )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
+  }
 
   if (parallel) {
-    if (.verbose)
+    if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
+    }
 
     # future plan funkiness
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
@@ -852,7 +842,7 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
       set.seed(random_seed)
       community <- igraph::cluster_leiden(
         graph,
-        objective_function = 'modularity',
+        objective_function = "modularity",
         resolution = res,
         n_iterations = 5L
       )
