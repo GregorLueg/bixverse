@@ -21,9 +21,8 @@ ignored.
 \dontrun{
 
 set.seed(123)
-x = rnorm(10)
+x <- rnorm(10)
 
-x.scaled = robust_scaling(x)
-
+x.scaled <- robust_scaling(x)
 }
 }

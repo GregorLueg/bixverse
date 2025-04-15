@@ -1,37 +1,25 @@
-install.packages("anndata")
-
-install.packages("precommit")
-
 library("anndata")
 library(data.table)
 library(magrittr)
-
-install.packages("precommit")
-
-precommit::use_precommit()
 
 ad <- read_h5ad("~/Desktop/geo_data/GSE65832/final/GSE65832_anndata.h5ad")
 
 counts <- t(ad$X)
 
-counts[1:5, 1:5]
+h5_file <- "~/Desktop/geo_data/GSE65832/final/GSE65832_anndata.h5ad"
 
-to_keep <- edgeR::filterByExpr(counts)
+h5_content <- rhdf5::h5ls(
+  h5_file
+) %>%
+  setDT()
 
-wrongly_written
 
-incorrectly_formattad_code <- "the piglet stinks"
+obs_grps <- h5_content[group %like% "/obs/"] %>%
+  .[, full_path := paste(group, name, sep = "/")]
 
+categories_paths <- obs_grps[name == "categories"]
+codes_paths <- obs_grps[name == "codes"]
 
-filtered_counts <- counts[to_keep, ]
+rhdf5::h5read(file = h5_file, name = file.path(group, "feature_meta"))
 
-sum(to_keep)
-
-obs <- ad$obs %>%
-  as.data.table(keep.rownames = TRUE) %>%
-  setnames(old = "rn", new = "sample_id")
-
-head(obs)
-var <- ad$var
-
-counts[1:5, 1:5]
+test_obj <- bulk_dge(raw_counts = counts, obs)

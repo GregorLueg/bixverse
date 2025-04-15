@@ -44,7 +44,7 @@ Steps for installation:
 ## *Docs*
 
 - [Why Rust](/docs/why_rust.md)
-- [Code Style](/docs/code_style.md)
+- [Code Style](/docs/code_style.md) (If you want to contribute).
 - [Roadmap](/docs/roadmap.md)
 - [Change log](/docs/change_log.md)
 
@@ -65,4 +65,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 28.03.2025*
+*Last update to the read-me: 15.04.2025*
