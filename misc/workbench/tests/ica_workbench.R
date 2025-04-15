@@ -47,11 +47,14 @@ ica_test = bulk_coexp(raw_data = data_1, meta_data = meta_data)
 ica_test = preprocess_bulk_coexp(ica_test, mad_threshold = 1)
 ica_test = ica_processing(ica_test)
 
+
+tictoc::tic()
 ica_test = ica_evaluate_comp(
   ica_test,
   ica_type = 'logcosh',
-  ncomp_params = params_ica_ncomp(max_no_comp = 75L)
+  ncomp_params = params_ica_ncomp(max_no_comp = 100L)
 )
+tictoc::toc()
 
 plot_ica_stability_individual(ica_test)
 
@@ -216,19 +219,18 @@ X <- S %*% A
 
 c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
 
-rextendr::document()
-rextendr::clean()
-devtools::load_all()
-
-?fast_ica_rust
+# rextendr::document()
+# rextendr::clean()
+# devtools::load_all()
+#
+# ?fast_ica_rust
 
 ica_res_rs <- fast_ica_rust(
   X_norm,
   K,
   n_icas = 2L,
   ica_fun = "logcosh",
-  seed = 42L,
-  ica_params = list("x" = 515)
+  seed = 42L
 )
 
 par(mfcol = c(2, 3))

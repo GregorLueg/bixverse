@@ -16,7 +16,7 @@ opt-level = 3
 [dependencies]
 extendr-api = "*"
 rayon = '*'
-rand = '*'
+rand = { version = "*", features = ["std"] }
 rand_distr = '0.5.1'
 statrs = '*'
 faer = '0.21.8'
