@@ -21,11 +21,13 @@
 calculate_semantic_sim_onto <- S7::new_generic(
   name = "calculate_semantic_sim_onto",
   dispatch_args = "object",
-  fun = function(object,
-                 sim_type,
-                 alpha = 0.01,
-                 random_sample_no = 100000L,
-                 seed = 42L) {
+  fun = function(
+    object,
+    sim_type,
+    alpha = 0.01,
+    random_sample_no = 100000L,
+    seed = 42L
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -37,11 +39,13 @@ calculate_semantic_sim_onto <- S7::new_generic(
 #'
 #' @method calculate_semantic_sim_onto ontology
 S7::method(calculate_semantic_sim_onto, ontology) <-
-  function(object,
-           sim_type,
-           alpha = 0.01,
-           random_sample_no = 100000L,
-           seed = 42L) {
+  function(
+    object,
+    sim_type,
+    alpha = 0.01,
+    random_sample_no = 100000L,
+    seed = 42L
+  ) {
     # Checks
     checkmate::assertClass(object, "bixverse::ontology")
     checkmate::assertChoice(sim_type, c("resnik", "lin", "combined"))
@@ -71,7 +75,7 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
       sim_type = sim_type
     )
 
-    similarities_dt <- setDT(similarities[c('term1', 'term2', 'filtered_sim')])
+    similarities_dt <- setDT(similarities[c("term1", "term2", "filtered_sim")])
 
     S7::prop(object, "semantic_similarities") <- similarities_dt
     S7::prop(object, "params")[["semantic_similarity"]] <- params
@@ -102,10 +106,12 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
 #' @export
 #'
 #' @import data.table
-calculate_semantic_sim <- function(terms,
-                                   similarity_type,
-                                   ancestor_list,
-                                   ic_list) {
+calculate_semantic_sim <- function(
+  terms,
+  similarity_type,
+  ancestor_list,
+  ic_list
+) {
   # Checks
   checkmate::qassert(terms, "S+")
   checkmate::assertChoice(similarity_type, c("resnik", "lin", "combined"))
@@ -122,9 +128,11 @@ calculate_semantic_sim <- function(terms,
   )
 
   # Using this one to deal with this
-  matrix <- rs_upper_triangle_to_dense(cor_vector = onto_similarities,
-                                       shift = 1L,
-                                       n = length(terms))
+  matrix <- rs_upper_triangle_to_dense(
+    cor_vector = onto_similarities,
+    shift = 1L,
+    n = length(terms)
+  )
   diag(matrix) <- 0
   colnames(matrix) <- rownames(matrix) <- terms
 
@@ -193,7 +201,10 @@ calculate_information_content <- function(ancestor_list) {
   checkmate::assertNamed(ancestor_list)
 
   tab <- purrr::map_dbl(ancestor_list, length)
-  information_content <- setNames(-log(as.integer(tab) / length(ancestor_list)), nm = names(ancestor_list))
+  information_content <- setNames(
+    -log(as.integer(tab) / length(ancestor_list)),
+    nm = names(ancestor_list)
+  )
   information_content <- as.list(information_content)
 
   return(information_content)

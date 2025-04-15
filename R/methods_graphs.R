@@ -23,9 +23,11 @@
 diffuse_seed_nodes <- S7::new_generic(
   name = "diffuse_seed_nodes",
   dispatch_args = "object",
-  fun = function(object,
-                 diffusion_vector,
-                 summarisation = c("max", "mean", "harmonic_sum")) {
+  fun = function(
+    object,
+    diffusion_vector,
+    summarisation = c("max", "mean", "harmonic_sum")
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -37,9 +39,11 @@ diffuse_seed_nodes <- S7::new_generic(
 #'
 #' @method diffuse_seed_nodes network_diffusions
 S7::method(diffuse_seed_nodes, network_diffusions) <-
-  function(object,
-           diffusion_vector,
-           summarisation = c("max", "mean", "harmonic_sum")) {
+  function(
+    object,
+    diffusion_vector,
+    summarisation = c("max", "mean", "harmonic_sum")
+  ) {
     # Checks
     checkmate::assertClass(object, "bixverse::network_diffusions")
     checkmate::assertNumeric(diffusion_vector)
@@ -48,7 +52,10 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 
     # Body
     ## Create the diffusion vector
-    diffusion_vector <- .summarise_scores(diffusion_vector, summarisation = summarisation)
+    diffusion_vector <- .summarise_scores(
+      diffusion_vector,
+      summarisation = summarisation
+    )
     nodes_names <- igraph::V(S7::prop(object, "graph"))$name
     seed_nodes <- intersect(names(diffusion_vector), nodes_names)
     diff_vec <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
@@ -57,12 +64,17 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
     }
 
     if (sum(diff_vec) == 0) {
-      stop("No scores found to diffuse over the network. Please check the names
-      and/or values.")
+      stop(
+        "No scores found to diffuse over the network. Please check the names
+      and/or values."
+      )
     }
 
     ## Create the page-rank diffusion
-    page_rank_score <- igraph::page_rank(S7::prop(object, "graph"), personalized = diff_vec)
+    page_rank_score <- igraph::page_rank(
+      S7::prop(object, "graph"),
+      personalized = diff_vec
+    )
 
     ## Assign and return
     S7::prop(object, "diffusion_res") <- page_rank_score$vector
@@ -98,12 +110,14 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 tied_diffusion <- S7::new_generic(
   name = "tied_diffusion",
   dispatch_args = "object",
-  fun = function(object,
-                 diffusion_vector_1,
-                 diffusion_vector_2,
-                 summarisation = c("max", "mean", "harmonic_sum"),
-                 score_aggregation = c("min", "max", "mean"),
-                 .verbose = FALSE) {
+  fun = function(
+    object,
+    diffusion_vector_1,
+    diffusion_vector_2,
+    summarisation = c("max", "mean", "harmonic_sum"),
+    score_aggregation = c("min", "max", "mean"),
+    .verbose = FALSE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -115,12 +129,14 @@ tied_diffusion <- S7::new_generic(
 #'
 #' @method tied_diffusion network_diffusions
 S7::method(tied_diffusion, network_diffusions) <-
-  function(object,
-           diffusion_vector_1,
-           diffusion_vector_2,
-           summarisation = c("max", "mean", "harmonic_sum"),
-           score_aggregation = c("min", "max", "mean"),
-           .verbose = FALSE) {
+  function(
+    object,
+    diffusion_vector_1,
+    diffusion_vector_2,
+    summarisation = c("max", "mean", "harmonic_sum"),
+    score_aggregation = c("min", "max", "mean"),
+    .verbose = FALSE
+  ) {
     # Checks
     checkmate::assertClass(object, "bixverse::network_diffusions")
     checkmate::assertNumeric(diffusion_vector_1)
@@ -133,8 +149,14 @@ S7::method(tied_diffusion, network_diffusions) <-
 
     # Body
     ## Create the diffusion vectors
-    diffusion_vector_1 <- .summarise_scores(diffusion_vector_1, summarisation = summarisation)
-    diffusion_vector_2 <- .summarise_scores(diffusion_vector_2, summarisation = summarisation)
+    diffusion_vector_1 <- .summarise_scores(
+      diffusion_vector_1,
+      summarisation = summarisation
+    )
+    diffusion_vector_2 <- .summarise_scores(
+      diffusion_vector_2,
+      summarisation = summarisation
+    )
     nodes_names <- igraph::V(S7::prop(object, "graph"))$name
     seed_nodes_1 <- intersect(names(diffusion_vector_1), nodes_names)
     seed_nodes_2 <- intersect(names(diffusion_vector_2), nodes_names)
@@ -154,7 +176,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     }
 
     ## First diffusion
-    score_1 <- igraph::page_rank(S7::prop(object, "graph"), personalized = diff_vec_1)$vector
+    score_1 <- igraph::page_rank(
+      S7::prop(object, "graph"),
+      personalized = diff_vec_1
+    )$vector
 
     ## Second diffusion
     directed <- S7::prop(object, "params")[["directed_graph"]]
@@ -171,10 +196,15 @@ S7::method(tied_diffusion, network_diffusions) <-
       igraph::page_rank(igraph_obj_t, personalized = diff_vec_2)$vector
     } else {
       if (.verbose) {
-        message("Undirected graph found. Using graph as is for second
-        diffusion.")
+        message(
+          "Undirected graph found. Using graph as is for second
+        diffusion."
+        )
       }
-      igraph::page_rank(S7::prop(object, "graph"), personalized = diff_vec_2)$vector
+      igraph::page_rank(
+        S7::prop(object, "graph"),
+        personalized = diff_vec_2
+      )$vector
     }
 
     ## Summarise the scores
@@ -188,7 +218,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     ## Assign and return
     S7::prop(object, "diffusion_res") <- final_tiedie_diffusion
     S7::prop(object, "params")["diffusion_type"] <- "tied"
-    S7::prop(object, "params")[["seed_nodes"]] <- list("set_1" = seed_nodes_1, "set_2" = seed_nodes_2)
+    S7::prop(object, "params")[["seed_nodes"]] <- list(
+      "set_1" = seed_nodes_1,
+      "set_2" = seed_nodes_2
+    )
 
     return(object)
   }
@@ -230,12 +263,14 @@ S7::method(tied_diffusion, network_diffusions) <-
 community_detection <- S7::new_generic(
   name = "community_detection",
   dispatch_args = "object",
-  fun = function(object,
-                 diffusion_threshold = 0.25,
-                 community_params = params_community_detection(),
-                 seed = 42L,
-                 .verbose = FALSE,
-                 .max_iters = 100L) {
+  fun = function(
+    object,
+    diffusion_threshold = 0.25,
+    community_params = params_community_detection(),
+    seed = 42L,
+    .verbose = FALSE,
+    .max_iters = 100L
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -247,12 +282,14 @@ community_detection <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #'
 #' @method community_detection network_diffusions
-S7::method(community_detection, network_diffusions) <- function(object,
-                                                                diffusion_threshold = 0.25,
-                                                                community_params = params_community_detection(),
-                                                                seed = 42L,
-                                                                .verbose = FALSE,
-                                                                .max_iters = 100L) {
+S7::method(community_detection, network_diffusions) <- function(
+  object,
+  diffusion_threshold = 0.25,
+  community_params = params_community_detection(),
+  seed = 42L,
+  .verbose = FALSE,
+  .max_iters = 100L
+) {
   # Bindings
   `.` <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
     seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- NULL
@@ -279,7 +316,10 @@ S7::method(community_detection, network_diffusions) <- function(object,
     sort(decreasing = TRUE) %>%
     .[1:ceiling(diffusion_threshold * length(diffusion_score))]
 
-  red_graph <- igraph::subgraph(S7::prop(object, "graph"), names(nodes_to_include))
+  red_graph <- igraph::subgraph(
+    S7::prop(object, "graph"),
+    names(nodes_to_include)
+  )
 
   ## First clustering
   set.seed(seed)
@@ -296,8 +336,10 @@ S7::method(community_detection, network_diffusions) <- function(object,
       objective_function = "modularity"
     )
 
-    clusters_df <- data.table::data.table(node_id = first_clusters$names,
-                                          cluster_id = first_clusters$membership)
+    clusters_df <- data.table::data.table(
+      node_id = first_clusters$names,
+      cluster_id = first_clusters$membership
+    )
 
     node_frequency <- clusters_df[, .N, .(cluster_id)]
 
@@ -317,8 +359,10 @@ S7::method(community_detection, network_diffusions) <- function(object,
         if (.verbose) {
           message("Cluster ", i, " gets subclustered. Iter: ", l)
         }
-        red_graph_l <- igraph::subgraph(red_graph,
-                                        data.table::chmatch(nodes_in_cluster, igraph::V(red_graph)$name))
+        red_graph_l <- igraph::subgraph(
+          red_graph,
+          data.table::chmatch(nodes_in_cluster, igraph::V(red_graph)$name)
+        )
 
         clusters_red <- igraph::cluster_leiden(
           red_graph_l,
@@ -327,13 +371,24 @@ S7::method(community_detection, network_diffusions) <- function(object,
           objective_function = "modularity"
         )
 
-        subclusters <- data.table(node_id = clusters_red$names,
-                                  cluster_id = clusters_red$membership)
+        subclusters <- data.table(
+          node_id = clusters_red$names,
+          cluster_id = clusters_red$membership
+        )
         subclusters_frequency <- subclusters[, .N, .(cluster_id)]
-        clusters_small_enough <- subclusters_frequency[N <= max_nodes, cluster_id]
+        clusters_small_enough <- subclusters_frequency[
+          N <= max_nodes,
+          cluster_id
+        ]
 
         good_clusters <- subclusters[cluster_id %in% clusters_small_enough] %>%
-          dplyr::mutate(cluster_id = paste0(i, paste(rep("sub", l), collapse = ""), cluster_id))
+          dplyr::mutate(
+            cluster_id = paste0(
+              i,
+              paste(rep("sub", l), collapse = ""),
+              cluster_id
+            )
+          )
 
         finalised_clusters <- rbind(finalised_clusters, good_clusters)
 
@@ -358,38 +413,52 @@ S7::method(community_detection, network_diffusions) <- function(object,
     if (diffusion_type == "single") {
       seed_nodes <- S7::prop(object, "params")$seed_nodes
 
-      final_clusters[, .(
-        cluster_size = length(node_id),
-        seed_nodes_no = sum(node_id %in% seed_nodes)
-      ), .(cluster_id)]
+      final_clusters[,
+        .(
+          cluster_size = length(node_id),
+          seed_nodes_no = sum(node_id %in% seed_nodes)
+        ),
+        .(cluster_id)
+      ]
     } else {
       seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
       seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
 
-      final_clusters[, .(
-        cluster_size = length(node_id),
-        seed_nodes_1 = sum(node_id %in% seed_nodes_set_1),
-        seed_nodes_2 = sum(node_id %in% seed_nodes_set_2)
-      ), .(cluster_id)]
+      final_clusters[,
+        .(
+          cluster_size = length(node_id),
+          seed_nodes_1 = sum(node_id %in% seed_nodes_set_1),
+          seed_nodes_2 = sum(node_id %in% seed_nodes_set_2)
+        ),
+        .(cluster_id)
+      ]
     }
   })
 
   ## Finalise the clusters
   clusters_to_take <- with(community_params, {
     if (diffusion_type == "single") {
-      final_node_frequency[cluster_size >= min_nodes &
-                             seed_nodes_no >= min_seed_nodes, cluster_id]
+      final_node_frequency[
+        cluster_size >= min_nodes &
+          seed_nodes_no >= min_seed_nodes,
+        cluster_id
+      ]
     } else {
-      final_node_frequency[cluster_size >= min_nodes &
-                             seed_nodes_1 >= min_seed_nodes &
-                             seed_nodes_2 >= min_seed_nodes, cluster_id]
+      final_node_frequency[
+        cluster_size >= min_nodes &
+          seed_nodes_1 >= min_seed_nodes &
+          seed_nodes_2 >= min_seed_nodes,
+        cluster_id
+      ]
     }
   })
 
   # Early return
   if (length(clusters_to_take) == 0) {
-    warning("No communities found with the given parameters.
-    Returning class as is.")
+    warning(
+      "No communities found with the given parameters.
+    Returning class as is."
+    )
     return(object)
   }
 
@@ -400,23 +469,36 @@ S7::method(community_detection, network_diffusions) <- function(object,
   for (i in seq_along(clusters_to_take)) {
     cluster <- clusters_to_take[i]
     cluster_nodes <- finalised_clusters_clean[cluster_id == cluster, node_id]
-    ks <- suppressWarnings(ks.test(diffusion_score[cluster_nodes], diffusion_score[which(!names(diffusion_score) %in% cluster_nodes)], alternative = "less"))
+    ks <- suppressWarnings(ks.test(
+      diffusion_score[cluster_nodes],
+      diffusion_score[which(!names(diffusion_score) %in% cluster_nodes)],
+      alternative = "less"
+    ))
     ks_vals[i] <- ks$p.value
   }
 
   ks_val_df <- data.table(cluster_id = clusters_to_take, ks_pval = ks_vals)
 
-  final_result <- purrr::reduce(list(finalised_clusters_clean, ks_val_df, final_node_frequency),
-                                merge,
-                                by = "cluster_id") %>%
-    .[, `:=`(diffusion_score = diffusion_score[node_id],
-             cluster_id = as.character(cluster_id))]
+  final_result <- purrr::reduce(
+    list(finalised_clusters_clean, ks_val_df, final_node_frequency),
+    merge,
+    by = "cluster_id"
+  ) %>%
+    .[, `:=`(
+      diffusion_score = diffusion_score[node_id],
+      cluster_id = as.character(cluster_id)
+    )]
 
-
-  cluster_name_prettifier <- setNames(paste("cluster", seq_along(unique(
-    final_result$cluster_id
-  )), sep = "_"),
-  unique(final_result$cluster_id))
+  cluster_name_prettifier <- setNames(
+    paste(
+      "cluster",
+      seq_along(unique(
+        final_result$cluster_id
+      )),
+      sep = "_"
+    ),
+    unique(final_result$cluster_id)
+  )
 
   final_result[, cluster_id := cluster_name_prettifier[cluster_id]]
 
@@ -462,12 +544,14 @@ S7::method(community_detection, network_diffusions) <- function(object,
 calculate_diffusion_auc <- S7::new_generic(
   name = "calculate_diffusion_auc",
   dispatch_args = "object",
-  fun = function(object,
-                 hit_nodes,
-                 auc_iters = 10000L,
-                 random_aucs = 1000L,
-                 permutation_test = FALSE,
-                 seed = 42L) {
+  fun = function(
+    object,
+    hit_nodes,
+    auc_iters = 10000L,
+    random_aucs = 1000L,
+    permutation_test = FALSE,
+    seed = 42L
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -479,12 +563,14 @@ calculate_diffusion_auc <- S7::new_generic(
 #'
 #' @method tied_diffusion network_diffusions
 S7::method(calculate_diffusion_auc, network_diffusions) <-
-  function(object,
-           hit_nodes,
-           auc_iters = 10000L,
-           random_aucs = 1000L,
-           permutation_test = FALSE,
-           seed = 42L) {
+  function(
+    object,
+    hit_nodes,
+    auc_iters = 10000L,
+    random_aucs = 1000L,
+    permutation_test = FALSE,
+    seed = 42L
+  ) {
     # Checks
     checkmate::assertClass(object, "bixverse::network_diffusions")
     checkmate::qassert(hit_nodes, "S+")
@@ -553,10 +639,12 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
 generate_rbh_graph <- S7::new_generic(
   name = "generate_rbh_graph",
   dispatch_args = "object",
-  fun = function(object,
-                 minimum_similarity,
-                 overlap_coefficient = FALSE,
-                 .debug = FALSE) {
+  fun = function(
+    object,
+    minimum_similarity,
+    overlap_coefficient = FALSE,
+    .debug = FALSE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -568,10 +656,12 @@ generate_rbh_graph <- S7::new_generic(
 #'
 #' @method generate_rbh_graph rbh_graph
 S7::method(generate_rbh_graph, rbh_graph) <-
-  function(object,
-           minimum_similarity,
-           overlap_coefficient = FALSE,
-           .debug = FALSE) {
+  function(
+    object,
+    minimum_similarity,
+    overlap_coefficient = FALSE,
+    .debug = FALSE
+  ) {
     # Assigns
     origin_modules <- `.` <- similiarity <- origin <- target <-
       target_modules <- NULL
@@ -594,13 +684,21 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     rbh_results$origin_modules[rbh_results$origin_modules == "NA"] <- NA
     rbh_results$target_modules[rbh_results$target_modules == "NA"] <- NA
 
-    origin_vector <- unlist(purrr::map2(rbh_results$origin, rbh_results$comparisons, ~ {
-      rep(.x, each = .y)
-    }))
+    origin_vector <- unlist(purrr::map2(
+      rbh_results$origin,
+      rbh_results$comparisons,
+      ~ {
+        rep(.x, each = .y)
+      }
+    ))
 
-    target_vector <- unlist(purrr::map2(rbh_results$target, rbh_results$comparisons, ~ {
-      rep(.x, each = .y)
-    }))
+    target_vector <- unlist(purrr::map2(
+      rbh_results$target,
+      rbh_results$comparisons,
+      ~ {
+        rep(.x, each = .y)
+      }
+    ))
 
     rbh_results_dt <- data.table::data.table(
       origin = origin_vector,
@@ -609,14 +707,20 @@ S7::method(generate_rbh_graph, rbh_graph) <-
       target_modules = rbh_results$target_modules,
       similiarity = rbh_results$similarity
     ) %>%
-      .[!is.na(origin_modules) &
-          similiarity >= minimum_similarity] %>%
+      .[
+        !is.na(origin_modules) &
+          similiarity >= minimum_similarity
+      ] %>%
       .[, `:=`(
         combined_origin = paste(origin, origin_modules, sep = "_"),
         combined_target = paste(target, target_modules, sep = "_")
       )]
 
-    edge_dt <- rbh_results_dt[, c("combined_origin", "combined_target", "similiarity")] %>%
+    edge_dt <- rbh_results_dt[, c(
+      "combined_origin",
+      "combined_target",
+      "similiarity"
+    )] %>%
       data.table::setnames(
         .,
         old = c("combined_origin", "combined_target", "similiarity"),
@@ -628,8 +732,10 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     ## Assign and return
     S7::prop(object, "rbh_edge_df") <- rbh_results_dt
     S7::prop(object, "rbh_graph") <- rbh_igraph
-    S7::prop(object, "params")[["rbh_graph_gen"]] <- list(minimum_similarity = minimum_similarity,
-                                                          overlap_coefficient = overlap_coefficient)
+    S7::prop(object, "params")[["rbh_graph_gen"]] <- list(
+      minimum_similarity = minimum_similarity,
+      overlap_coefficient = overlap_coefficient
+    )
 
     return(object)
   }
@@ -664,12 +770,14 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 find_rbh_communities <- S7::new_generic(
   name = "find_rbh_communities",
   dispatch_args = "object",
-  fun = function(object,
-                 resolution_params = params_graph_resolution(),
-                 max_workers = as.integer(parallel::detectCores() / 2),
-                 parallel = TRUE,
-                 random_seed = 42L,
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    resolution_params = params_graph_resolution(),
+    max_workers = as.integer(parallel::detectCores() / 2),
+    parallel = TRUE,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -682,12 +790,14 @@ find_rbh_communities <- S7::new_generic(
 #' @import data.table
 #'
 #' @method find_rbh_communities rbh_graph
-S7::method(find_rbh_communities, rbh_graph) <- function(object,
-                                                        resolution_params = params_graph_resolution(),
-                                                        max_workers = as.integer(parallel::detectCores() / 2),
-                                                        parallel = TRUE,
-                                                        random_seed = 42L,
-                                                        .verbose = TRUE) {
+S7::method(find_rbh_communities, rbh_graph) <- function(
+  object,
+  resolution_params = params_graph_resolution(),
+  max_workers = as.integer(parallel::detectCores() / 2),
+  parallel = TRUE,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::rbh_graph")
   assertGraphResParams(resolution_params)
@@ -702,14 +812,19 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
 
   graph <- S7::prop(object, "rbh_graph")
 
-  resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
+  resolutions <- with(
+    resolution_params,
+    exp(seq(log(min_res), log(max_res), length.out = number_res))
+  )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
+  }
 
   if (parallel) {
-    if (.verbose)
+    if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
+    }
 
     # future plan funkiness
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
@@ -717,11 +832,9 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
 
     plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose)
-      message("Using sequential computation.")
+    if (.verbose) message("Using sequential computation.")
     future::plan(future::sequential())
   }
-
 
   community_df_res <- furrr::future_map(
     resolutions,
@@ -729,12 +842,15 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
       set.seed(random_seed)
       community <- igraph::cluster_leiden(
         graph,
-        objective_function = 'modularity',
+        objective_function = "modularity",
         resolution = res,
         n_iterations = 5L
       )
 
-      modularity <- igraph::modularity(x = graph, membership = community$membership)
+      modularity <- igraph::modularity(
+        x = graph,
+        membership = community$membership
+      )
 
       community_df <- data.table::data.table(
         resolution = res,
@@ -745,7 +861,8 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
     },
     .progress = .verbose,
     .options = furrr::furrr_options(seed = TRUE)
-  ) %>% data.table::rbindlist(.)
+  ) %>%
+    data.table::rbindlist(.)
 
   community_df_res[, best_modularity := modularity == max(modularity)]
 
@@ -769,8 +886,10 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
 #' @export
 #'
 #' @importFrom magrittr `%$%`
-.summarise_scores <- function(x,
-                              summarisation = c("max", "mean", "harmonic_sum")) {
+.summarise_scores <- function(
+  x,
+  summarisation = c("max", "mean", "harmonic_sum")
+) {
   # devtools::check() stuff
   value <- . <- node_name <- setNames <- NULL
   # Checks
@@ -786,7 +905,10 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
     rlang::expr(bixverse::ot_harmonic_score(value)) # Default case
   )
   res <-
-    rlang::eval_tidy(rlang::quo(dt[, .(value = !!summary_fun), .(node_name)])) %$%
+    rlang::eval_tidy(rlang::quo(dt[,
+      .(value = !!summary_fun),
+      .(node_name)
+    ])) %$%
     setNames(value, node_name)
   res
 }
@@ -798,22 +920,25 @@ S7::method(find_rbh_communities, rbh_graph) <- function(object,
 #' @import ggplot2
 #'
 #' @method plot_resolution_res rbh_graph
-S7::method(plot_resolution_res, rbh_graph) <- function(object, print_head = TRUE, ...) {
+S7::method(plot_resolution_res, rbh_graph) <- function(
+  object,
+  print_head = TRUE,
+  ...
+) {
   checkmate::assertClass(object, "bixverse::rbh_graph")
   # Ignoring print_head for this class
 
   plot_df <- S7::prop(object, "final_results")
   if (is.null(plot_df)) {
-    warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
+    warning(
+      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+    )
     return(NULL)
   }
   plot_df <- plot_df[, c("resolution", "modularity")] %>%
     unique()
-  p <- ggplot(data = plot_df,
-              mapping =  aes(x = resolution, y = modularity)) +
-    geom_point(size = 3,
-               shape = 21,
-               alpha = .7) +
+  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
+    geom_point(size = 3, shape = 21, alpha = .7) +
     xlab("Leiden cluster resolution") +
     ylab("Modularity") +
     theme_minimal() +

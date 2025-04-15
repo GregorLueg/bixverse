@@ -1,4 +1,3 @@
-
 library(Matrix)
 library(tictoc)
 library(igraph)
@@ -15,43 +14,45 @@ library(rlang)
 library(bixverse)
 library(polars)
 library(data.table)
-data_path = "/Users/liesbeth/Datascience/data/processed/OpenTargets_platform"
+data_path <- "/Users/liesbeth/Datascience/data/processed/OpenTargets_platform"
 
-ontology_df = pl$read_parquet(file.path(data_path,"OT_edges_disease_hierarchy.parquet"))$
-  filter(pl$col("source:string") == "efo")$
-  rename(":END_ID" = "to",
-         ":START_ID" = "from",
-         "relation_type:string" = "relation")$
-  select("from", "to", "relation")
+ontology_df <- pl$read_parquet(file.path(
+  data_path,
+  "OT_edges_disease_hierarchy.parquet"
+))$filter(pl$col("source:string") == "efo")$rename(
+  ":END_ID" = "to",
+  ":START_ID" = "from",
+  "relation_type:string" = "relation"
+)$select("from", "to", "relation")
 
-parent_child = as.data.table(ontology_df$
-                               filter(pl$col("relation") == "parent_of")$
-                               rename("from" = "parent", "to" = "child")$
-                               select("parent", "child"))
+parent_child <- as.data.table(ontology_df$filter(
+  pl$col("relation") == "parent_of"
+)$rename("from" = "parent", "to" = "child")$select("parent", "child"))
 
 tic()
-ontology_obj = bixverse::ontology(parent_child)
-ontology_obj = calculate_semantic_sim_onto(ontology_obj)
-similarities = get_semantic_similarities(ontology_obj)
+ontology_obj <- bixverse::ontology(parent_child)
+ontology_obj <- calculate_semantic_sim_onto(ontology_obj)
+similarities <- get_semantic_similarities(ontology_obj)
 toc()
 
 
+ancestor_list <- get_ancestors(ontology)
+ic_list <- calculate_information_content(ancestor_list)
+terms <- names(ancestor_list)
+max_ic <- -log2(1 / length(ancestor_list))
 
-
-ancestor_list = get_ancestors(ontology)
-ic_list = calculate_information_content(ancestor_list)
-terms = names(ancestor_list)
-max_ic = -log2(1/length(ancestor_list))
-
-sim_matrix <- get_similarity_matrix(terms, ancestor_list, ic_list, similarity_type = c("resnik", "lin"), return_matrix = T)
+sim_matrix <- get_similarity_matrix(
+  terms,
+  ancestor_list,
+  ic_list,
+  similarity_type = c("resnik", "lin"),
+  return_matrix = T
+)
 
 ## what happens if mac_ic != 1 to the lin similarity? should we not give a third matrix back, resnik, lin and norm_resnik?
 ## the message needs to be changed: "Generating the full matrix format of the correlation matrix."
 
-
-
 ## testing ontologysimilarity package
-
 
 library(ontologyIndex)
 library(ontologySimilarity)
@@ -72,19 +73,25 @@ toc()
 
 library(bixverse)
 library(polars)
-terms = hpo$id
-ancestor_list = hpo$ancestors
-ontology_ancestors = pl$DataFrame(stack(ancestor_list) %>%
-  mutate_if(is.factor, as.character) %>%
-  rename(from = values,
-         to = ind))
-information_content = calculate_information_content(ontology_ancestors)
-ic_list = split(as.data.table(information_content)$ic, as.data.table(information_content)$id)
+terms <- hpo$id
+ancestor_list <- hpo$ancestors
+ontology_ancestors <- pl$DataFrame(
+  stack(ancestor_list) %>%
+    mutate_if(is.factor, as.character) %>%
+    rename(from = values, to = ind)
+)
+information_content <- calculate_information_content(ontology_ancestors)
+ic_list <- split(
+  as.data.table(information_content)$ic,
+  as.data.table(information_content)$id
+)
 tic()
-bxv_sim <- rs_onto_similarity_both(terms = terms,
-                                   ancestor_list = ancestor_list,
-                                   ic_list = ic_list,
-                                   max_ic = max(unlist(ic_list)))
+bxv_sim <- rs_onto_similarity_both(
+  terms = terms,
+  ancestor_list = ancestor_list,
+  ic_list = ic_list,
+  max_ic = max(unlist(ic_list))
+)
 
 bxv_sim_mat <- bixverse:::upper_triangular_cor_mat$new(
   cor_coef = bxv_sim$resnik_sim,
@@ -92,8 +99,6 @@ bxv_sim_mat <- bixverse:::upper_triangular_cor_mat$new(
   shift = 1L
 )$get_cor_matrix()
 toc()
-
-
 
 #
 # ## some functions for the R function

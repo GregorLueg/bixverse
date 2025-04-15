@@ -27,11 +27,11 @@ by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interfa
 with Rust.)
 
 Steps for installation: 
-1. in the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
+1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
    ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
    
-2. in R, install [rextendr](https://extendr.github.io/rextendr/index.html):
+2. In R, install [rextendr](https://extendr.github.io/rextendr/index.html):
 
    ```install.packages("rextendr")```
 
@@ -66,5 +66,3 @@ properly and make it public.
 joy.
 
 *Last update to the read-me: 28.03.2025*
-
-

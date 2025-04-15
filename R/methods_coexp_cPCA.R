@@ -21,10 +21,7 @@
 contrastive_pca_processing <- S7::new_generic(
   name = "contrastive_pca_processing",
   dispatch_args = "object",
-  fun = function(object,
-                 background_matrix,
-                 scale = FALSE,
-                 .verbose = TRUE) {
+  fun = function(object, background_matrix, scale = FALSE, .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
@@ -37,10 +34,7 @@ contrastive_pca_processing <- S7::new_generic(
 #'
 #' @method contrastive_pca_processing bulk_coexp
 S7::method(contrastive_pca_processing, bulk_coexp) <-
-  function(object,
-           background_matrix,
-           scale = FALSE,
-           .verbose = TRUE) {
+  function(object, background_matrix, scale = FALSE, .verbose = TRUE) {
     # Checks
     checkmate::assertClass(object, "bixverse::bulk_coexp")
     checkmate::assertMatrix(background_matrix, mode = "numeric")
@@ -48,11 +42,13 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     checkmate::qassert(.verbose, "B1")
 
     # Function body
-    if(purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+    if (
+      purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])
+    ) {
       warning("No pre-processed data found. Defaulting to the raw data")
       target_mat <- S7::prop(object, "raw_data")
     } else {
-      target_mat <- S7::prop(object, "processed_data")[['processed_data']]
+      target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
     }
 
     background_mat <- background_mat
@@ -79,8 +75,12 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     target_covar <- rs_covariance(target_mat)
     background_covar <- rs_covariance(background_mat)
 
-    rownames(target_covar) <- rownames(background_covar) <- intersecting_features
-    colnames(target_covar) <- colnames(background_covar) <- intersecting_features
+    rownames(target_covar) <- rownames(
+      background_covar
+    ) <- intersecting_features
+    colnames(target_covar) <- colnames(
+      background_covar
+    ) <- intersecting_features
 
     internal_params <- list(
       "intersecting_features" = intersecting_features,
@@ -155,24 +155,27 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
     target_mat <- S7::prop(object, "processed_data")[["target_mat"]]
 
     # Run cPCA
-    c(factors, loadings) %<-% rs_contrastive_pca(
-      target_covar = target_covar,
-      background_covar = background_covar,
-      target_mat = target_mat,
-      alpha = alpha,
-      n_pcs = no_pcs,
-      return_loadings = TRUE
-    )
+    c(factors, loadings) %<-%
+      rs_contrastive_pca(
+        target_covar = target_covar,
+        background_covar = background_covar,
+        target_mat = target_mat,
+        alpha = alpha,
+        n_pcs = no_pcs,
+        return_loadings = TRUE
+      )
 
     colnames(factors) <- colnames(loadings) <- sprintf("cPC_%i", seq(1:10))
     rownames(factors) <- rownames(target_mat)
-    rownames(loadings) <- S7::prop(object, "params")[["cPCA_params"]][["intersecting_features"]]
+    rownames(loadings) <- S7::prop(object, "params")[["cPCA_params"]][[
+      "intersecting_features"
+    ]]
 
-    S7::prop(object, "params")[["cPCA_params"]]['final_alpha'] <- alpha
-    S7::prop(object, "params")[["cPCA_params"]]['n_pcs'] <- no_pcs
+    S7::prop(object, "params")[["cPCA_params"]]["final_alpha"] <- alpha
+    S7::prop(object, "params")[["cPCA_params"]]["n_pcs"] <- no_pcs
 
-    S7::prop(object, "outputs")[['cPCA_factors']] <- factors
-    S7::prop(object, "outputs")[['cPCA_loadings']] <- loadings
+    S7::prop(object, "outputs")[["cPCA_factors"]] <- factors
+    S7::prop(object, "outputs")[["cPCA_loadings"]] <- loadings
 
     return(object)
   }
@@ -205,15 +208,17 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
 c_pca_plot_alphas <- S7::new_generic(
   name = "c_pca_plot_alphas",
   dispatch_args = "object",
-  fun = function(object,
-                 label_column = NULL,
-                 min_alpha = .1,
-                 max_alpha = 100,
-                 n_alphas = 10L,
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    label_column = NULL,
+    min_alpha = .1,
+    max_alpha = 100,
+    n_alphas = 10L,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
-  })
-
+  }
+)
 
 
 #' @export
@@ -225,12 +230,14 @@ c_pca_plot_alphas <- S7::new_generic(
 #' @import ggplot2
 #'
 #' @method c_pca_plot_alphas bulk_coexp
-S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
-                                                      label_column = NULL,
-                                                      min_alpha = .1,
-                                                      max_alpha = 100,
-                                                      n_alphas = 10L,
-                                                      .verbose = TRUE) {
+S7::method(c_pca_plot_alphas, bulk_coexp) <- function(
+  object,
+  label_column = NULL,
+  min_alpha = .1,
+  max_alpha = 100,
+  n_alphas = 10L,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(label_column, c("S1", "0"))
@@ -247,28 +254,35 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
   meta_data <- S7::prop(object, "meta_data")
 
   # Calculate the sequence of alphas
-  alpha_seq <- c(0, exp(seq(
-    log(min_alpha),
-    log(max_alpha),
-    length.out = n_alphas - 1
-  )))
+  alpha_seq <- c(
+    0,
+    exp(seq(
+      log(min_alpha),
+      log(max_alpha),
+      length.out = n_alphas - 1
+    ))
+  )
 
   # Calculate the contrastive PCs...
-  cpcs_list <- purrr::map(alpha_seq, ~ {
-    # Rust baby...
-    c(factors, loadings) %<-% rs_contrastive_pca(
-      target_covar = target_covar,
-      background_covar = background_covar,
-      target_mat = target_mat,
-      alpha = .x,
-      n_pcs = 2,
-      return_loadings = FALSE
-    )
+  cpcs_list <- purrr::map(
+    alpha_seq,
+    ~ {
+      # Rust baby...
+      c(factors, loadings) %<-%
+        rs_contrastive_pca(
+          target_covar = target_covar,
+          background_covar = background_covar,
+          target_mat = target_mat,
+          alpha = .x,
+          n_pcs = 2,
+          return_loadings = FALSE
+        )
 
-    colnames(factors) <- c("cPC1", "cPC2")
+      colnames(factors) <- c("cPC1", "cPC2")
 
-    factors
-  }) %>%
+      factors
+    }
+  ) %>%
     `names<-`(paste0("Alpha: ", round(alpha_seq, digits = 2)))
 
   plot_df <- purrr::imap_dfr(
@@ -284,8 +298,10 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
   )
   data.table::setDT(plot_df)
 
-  if (!is.null(label_column) &&
-    label_column %in% names(meta_data)) {
+  if (
+    !is.null(label_column) &&
+      label_column %in% names(meta_data)
+  ) {
     if (.verbose) {
       message(
         "Found the ",
@@ -298,13 +314,20 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
     add_labels <- T
   } else {
     if (.verbose) {
-      message("Either no label column was provided or could not be found.
-              No labels added to the graph")
+      message(
+        "Either no label column was provided or could not be found.
+              No labels added to the graph"
+      )
     }
     add_labels <- F
   }
 
-  plot_df[, alpha := factor(alpha, levels = paste0("Alpha: ", round(alpha_seq, digits = 2)))]
+  plot_df[,
+    alpha := factor(
+      alpha,
+      levels = paste0("Alpha: ", round(alpha_seq, digits = 2))
+    )
+  ]
 
   plot <- ggplot(
     plot_df,
@@ -313,10 +336,9 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(object,
       y = cPC2
     )
   ) +
-    facet_wrap(~alpha,
-      scales = "free"
-    ) +
-    ggtitle("Alpha parameter iteration.",
+    facet_wrap(~alpha, scales = "free") +
+    ggtitle(
+      "Alpha parameter iteration.",
       subtitle = "Impact on first 2 cPCs:"
     ) +
     theme_minimal() +

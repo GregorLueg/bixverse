@@ -7,8 +7,10 @@ library(zeallot)
 
 ## expected values -------------------------------------------------------------
 
-test_onto <- data.table::data.table(parent = c("a", "b", "b", "b", "c"),
-                                    child = c("b", "c", "d", "e", "f"))
+test_onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
 
 expected_ancestors <- list(
   a = "a",
@@ -55,13 +57,17 @@ expected_critval <- 1.098612
 
 c(ancestors, descendants) %<-% get_ontology_ancestry(test_onto)
 
-expect_equivalent(current = ancestors[names(expected_ancestors)],
-                  target = expected_ancestors,
-                  info = "Ontology similarity ancestors test")
+expect_equivalent(
+  current = ancestors[names(expected_ancestors)],
+  target = expected_ancestors,
+  info = "Ontology similarity ancestors test"
+)
 
-expect_equivalent(current = descendants[names(expected_descendants)],
-                  target = expected_descendants,
-                  info = "Ontology similarity descendants test")
+expect_equivalent(
+  current = descendants[names(expected_descendants)],
+  target = expected_descendants,
+  info = "Ontology similarity descendants test"
+)
 
 ### information content --------------------------------------------------------
 

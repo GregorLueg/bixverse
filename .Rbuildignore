@@ -1,4 +1,5 @@
-^bixverse\.Rproj$
-^\.Rproj\.user$
-^src/\.cargo$
 ^LICENSE\.md$
+^\.Rproj\.user$
+^\.pre-commit-config\.yaml$
+^bixverse\.Rproj$
+^src/\.cargo$

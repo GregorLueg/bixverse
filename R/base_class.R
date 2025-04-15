@@ -20,7 +20,6 @@ bixverse_base_class <- S7::new_class(
   # Name
   name = "bixverse_base_class",
   properties = list(params = S7::class_list),
-
   constructor = function() {
     S7::new_object(
       S7::S7_object(),
@@ -49,21 +48,19 @@ bixverse_base_class <- S7::new_class(
 get_params <- S7::new_generic(
   name = "get_params",
   dispatch_args = "object",
-  fun = function(object,
-                 to_json = FALSE,
-                 pretty_json = FALSE) {
+  fun = function(object, to_json = FALSE, pretty_json = FALSE) {
     S7::S7_dispatch()
-  })
+  }
+)
 
 #' @method get_params bixverse_base_class
 #' @export
 S7::method(get_params, bixverse_base_class) <-
-  function(object,
-           to_json = FALSE,
-           pretty_json = FALSE) {
+  function(object, to_json = FALSE, pretty_json = FALSE) {
     # Checks
     checkmate::assertClass(
-      object, "bixverse::bixverse_base_class"
+      object,
+      "bixverse::bixverse_base_class"
     )
     checkmate::qassert(to_json, "B1")
     checkmate::qassert(pretty_json, "B1")
@@ -98,7 +95,8 @@ get_results <- S7::new_generic(
   dispatch_args = "object",
   fun = function(object) {
     S7::S7_dispatch()
-  })
+  }
+)
 
 #' @export
 #' @method get_results bixverse_generic_class
@@ -106,7 +104,8 @@ S7::method(get_results, bixverse_base_class) <-
   function(object) {
     # Checks
     checkmate::assertClass(
-      object, "bixverse::bixverse_base_class"
+      object,
+      "bixverse::bixverse_base_class"
     )
 
     # Return

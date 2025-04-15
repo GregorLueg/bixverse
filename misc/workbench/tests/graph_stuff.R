@@ -8,7 +8,7 @@ devtools::check()
 
 # Community detections ----
 
-edge_data = arrow::read_parquet("~/Desktop/string_clean.parquet") %>%
+edge_data <- arrow::read_parquet("~/Desktop/string_clean.parquet") %>%
   as.data.table()
 #
 # edge_data_clean = edge_data %>%
@@ -17,18 +17,17 @@ edge_data = arrow::read_parquet("~/Desktop/string_clean.parquet") %>%
 
 devtools::load_all()
 
-test_class = network_diffusions(edge_data, weighted = FALSE, directed = FALSE)
-
+test_class <- network_diffusions(edge_data, weighted = FALSE, directed = FALSE)
 
 
 set.seed(123)
-genes = sample(igraph::V(test_class@graph)$name, 10)
-genes.2 = sample(igraph::V(test_class@graph)$name, 10)
-genes.3 = sample(igraph::V(test_class@graph)$name, 25)
-diffusion_vector = rep(1, 10) %>% `names<-`(genes)
-diffusion_vector.2 = rep(1, 10) %>% `names<-`(genes.2)
+genes <- sample(igraph::V(test_class@graph)$name, 10)
+genes.2 <- sample(igraph::V(test_class@graph)$name, 10)
+genes.3 <- sample(igraph::V(test_class@graph)$name, 25)
+diffusion_vector <- rep(1, 10) %>% `names<-`(genes)
+diffusion_vector.2 <- rep(1, 10) %>% `names<-`(genes.2)
 
-test_class <- diffuse_seed_nodes(test_class, diffusion_vector, 'max')
+test_class <- diffuse_seed_nodes(test_class, diffusion_vector, "max")
 
 get_params(test_class, TRUE, TRUE)
 
@@ -38,8 +37,8 @@ test_class <- tied_diffusion(
   object = test_class,
   diffusion_vector_1 = diffusion_vector,
   diffusion_vector_2 = diffusion_vector.2,
-  summarisation = 'max',
-  score_aggregation = 'min'
+  summarisation = "max",
+  score_aggregation = "min"
 )
 
 get_results(test_class)
@@ -72,47 +71,61 @@ gene_sets_no <- sets_per_origin * length(LETTERS)
 seed <- 123
 set.seed(seed)
 
-gene_sets <- purrr::map(1:gene_sets_no, ~ {
-  set.seed(seed + .x + 1)
-  size <- sample(20:100, 1)
-  sample(universe, size, replace = FALSE)
-})
+gene_sets <- purrr::map(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    size <- sample(20:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
 
-names(gene_sets) <- purrr::map_chr(1:gene_sets_no, ~ {
-  set.seed(seed + .x + 1)
-  paste(sample(LETTERS, 5), collapse = "")
-})
+names(gene_sets) <- purrr::map_chr(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(LETTERS, 5), collapse = "")
+  }
+)
 
-gene_sets_df <- purrr::imap(gene_sets, ~{
-  data.table::data.table(
-    genes = .x,
-    name = .y
-  )
-})
+gene_sets_df <- purrr::imap(
+  gene_sets,
+  ~ {
+    data.table::data.table(
+      genes = .x,
+      name = .y
+    )
+  }
+)
 
 origins <- rep(LETTERS, each = sets_per_origin)
 
-gene_sets_df <- purrr::map2(gene_sets_df, origins, ~{
-  .x[, origin := .y]
-}) %>% rbindlist
-
-module_df = gene_sets_df
-
-rbh_class = rbh_graph(
+gene_sets_df <- purrr::map2(
   gene_sets_df,
-  dataset_col = 'origin',
-  module_col = 'name',
-  value_col = 'genes'
+  origins,
+  ~ {
+    .x[, origin := .y]
+  }
+) %>%
+  rbindlist()
+
+module_df <- gene_sets_df
+
+rbh_class <- rbh_graph(
+  gene_sets_df,
+  dataset_col = "origin",
+  module_col = "name",
+  value_col = "genes"
 )
 
 
-rbh_class = generate_rbh_graph(
+rbh_class <- generate_rbh_graph(
   rbh_class,
   minimum_similarity = 0.2,
   overlap_coefficient = T,
   .debug = FALSE
 )
 
-rbh_class = find_rbh_communities(rbh_class)
+rbh_class <- find_rbh_communities(rbh_class)
 
 plot_resolution_res(rbh_class)

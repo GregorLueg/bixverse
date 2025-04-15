@@ -19,9 +19,11 @@
 cor_module_processing <- S7::new_generic(
   name = "cor_module_processing",
   dispatch_args = "object",
-  fun = function(object,
-                 correlation_method = c("pearson", "spearman"),
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    correlation_method = c("pearson", "spearman"),
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -30,34 +32,38 @@ cor_module_processing <- S7::new_generic(
 #' @export
 #'
 #' @method cor_module_processing bulk_coexp
-S7::method(cor_module_processing, bulk_coexp) <- function(object,
-                                                          correlation_method = c("pearson", "spearman"),
-                                                          .verbose = TRUE) {
+S7::method(cor_module_processing, bulk_coexp) <- function(
+  object,
+  correlation_method = c("pearson", "spearman"),
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
     warning("No pre-processed data found. Defaulting to the raw data")
     target_mat <- S7::prop(object, "raw_data")
   } else {
-    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
+    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == 'pearson') {
-    if (.verbose)
-      message("Using Pearson correlations.")
+  spearman <- if (correlation_method == "pearson") {
+    if (.verbose) message("Using Pearson correlations.")
     FALSE
   } else {
-    if (.verbose)
-      message("Using Spearman correlations.")
+    if (.verbose) message("Using Spearman correlations.")
     TRUE
   }
 
   # Calculate the upper triangle of correlation matrix
-  cor_diagonal <- rs_cor_upper_triangle(target_mat, spearman = spearman, shift = 1L)
+  cor_diagonal <- rs_cor_upper_triangle(
+    target_mat,
+    spearman = spearman,
+    shift = 1L
+  )
 
   # Save data to memory friendly R6 class
   cor_data <- upper_triangular_cor_mat$new(
@@ -66,7 +72,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(object,
     shift = 1L
   )
 
-  correlation_params <- list(spearman = spearman, type = 'simple')
+  correlation_params <- list(spearman = spearman, type = "simple")
 
   S7::prop(object, "processed_data")[["correlation_res"]] <- cor_data
   S7::prop(object, "params")[["correlation_params"]] <- correlation_params
@@ -98,10 +104,12 @@ S7::method(cor_module_processing, bulk_coexp) <- function(object,
 diffcor_module_processing <- S7::new_generic(
   name = "diffcor_module_processing",
   dispatch_args = "object",
-  fun = function(object,
-                 background_mat,
-                 correlation_method = c("pearson", "spearman"),
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    background_mat,
+    correlation_method = c("pearson", "spearman"),
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -109,31 +117,31 @@ diffcor_module_processing <- S7::new_generic(
 #' @export
 #'
 #' @method diffcor_module_processing bulk_coexp
-S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
-                                                              background_mat,
-                                                              correlation_method = c("pearson", "spearman"),
-                                                              .verbose = TRUE) {
+S7::method(diffcor_module_processing, bulk_coexp) <- function(
+  object,
+  background_mat,
+  correlation_method = c("pearson", "spearman"),
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::assertMatrix(background_mat, mode = 'numeric')
+  checkmate::assertMatrix(background_mat, mode = "numeric")
   checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function
-  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
     warning("No pre-processed data found. Defaulting to the raw data")
     target_mat <- S7::prop(object, "raw_data")
   } else {
-    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
+    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == 'pearson') {
-    if (.verbose)
-      message("Using Pearson correlations.")
+  spearman <- if (correlation_method == "pearson") {
+    if (.verbose) message("Using Pearson correlations.")
     FALSE
   } else {
-    if (.verbose)
-      message("Using Spearman correlations.")
+    if (.verbose) message("Using Spearman correlations.")
     TRUE
   }
 
@@ -145,14 +153,14 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
     warning("No shared features identified. Returning class as is.")
     return(object)
   }
-  if (.verbose)
+  if (.verbose) {
     message(
       sprintf(
         "A total of %i shared features were identified and used for differential correlation.",
         length(shared_features)
       )
-
     )
+  }
 
   target_mat <- target_mat[, shared_features]
   background_mat <- background_mat[, shared_features]
@@ -161,22 +169,34 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
     feature = shared_features,
     MAD_target = matrixStats::colMads(target_mat),
     MAD_background = matrixStats::colMads(background_mat)
-  ) %>% data.table::setDT()
+  ) %>%
+    data.table::setDT()
 
-  diff_cor_res <- rs_differential_cor(target_mat, background_mat, spearman = spearman)
+  diff_cor_res <- rs_differential_cor(
+    target_mat,
+    background_mat,
+    spearman = spearman
+  )
 
-  cor_data <- upper_triangle_diffcor_mat$new(diff_cor_res = diff_cor_res, features = shared_features)
+  cor_data <- upper_triangle_diffcor_mat$new(
+    diff_cor_res = diff_cor_res,
+    features = shared_features
+  )
 
   correlation_params <- list(
     spearman = spearman,
-    type = 'differential correlation',
+    type = "differential correlation",
     no_intersecting_features = length(shared_features)
   )
 
   S7::prop(object, "processed_data")[["differential_cor_res"]] <- cor_data
-  S7::prop(object, "processed_data")[["differential_cor_feature_meta"]] <- combined_mad_df
+  S7::prop(object, "processed_data")[[
+    "differential_cor_feature_meta"
+  ]] <- combined_mad_df
   S7::prop(object, "params")[["correlation_params"]] <- correlation_params
-  S7::prop(object, "params")["detection_method"] <- "differential correlation-based"
+  S7::prop(object, "params")[
+    "detection_method"
+  ] <- "differential correlation-based"
 
   object
 }
@@ -203,9 +223,11 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(object,
 cor_module_check_epsilon <- S7::new_generic(
   name = "cor_module_check_epsilon",
   dispatch_args = "object",
-  fun = function(object,
-                 epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -217,9 +239,11 @@ cor_module_check_epsilon <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_check_epsilon bulk_coexp
-S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
-                                                             epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
-                                                             .verbose = TRUE) {
+S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
+  object,
+  epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(epsilons, "R+")
@@ -228,8 +252,10 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) ||
-      detection_method != "correlation-based") {
+  if (
+    is.null(detection_method) ||
+      detection_method != "correlation-based"
+  ) {
     warning(
       paste(
         "This class does not seem to be set for correlation-based module detection",
@@ -248,8 +274,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
   dist_vec <- 1 - abs(cor_vector)
   dist_vec <- data.table::fifelse(dist_vec < 0, 0, dist_vec)
 
-  if (.verbose)
-    message(sprintf("Testing %i epsilons.", length(epsilons)))
+  if (.verbose) message(sprintf("Testing %i epsilons.", length(epsilons)))
 
   epsilon_data <- rs_rbf_iterate_epsilons(
     dist = dist_vec,
@@ -264,10 +289,9 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
   r_square_data <- list(epsilon = epsilons, r2_vals = r_square_vals) %>%
     data.table::setDT()
 
-  S7::prop(object, "outputs")[['epsilon_data']] <- r_square_data
+  S7::prop(object, "outputs")[["epsilon_data"]] <- r_square_data
 
   return(object)
-
 }
 
 
@@ -322,14 +346,16 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(object,
 cor_module_check_res <- S7::new_generic(
   name = "cor_module_check_res",
   dispatch_args = "object",
-  fun = function(object,
-                 resolution_params = params_graph_resolution(),
-                 graph_params = params_cor_graph(),
-                 random_seed = 123L,
-                 min_genes = 10L,
-                 parallel = TRUE,
-                 max_workers = as.integer(parallel::detectCores() / 2),
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    resolution_params = params_graph_resolution(),
+    graph_params = params_cor_graph(),
+    random_seed = 123L,
+    min_genes = 10L,
+    parallel = TRUE,
+    max_workers = as.integer(parallel::detectCores() / 2),
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -343,15 +369,16 @@ cor_module_check_res <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_check_res bulk_coexp
-S7::method(cor_module_check_res, bulk_coexp) <- function(object,
-                                                         resolution_params = params_graph_resolution(),
-                                                         graph_params = params_cor_graph(),
-                                                         random_seed = 123L,
-                                                         min_genes = 10L,
-                                                         parallel = TRUE,
-                                                         max_workers = as.integer(parallel::detectCores() / 2),
-                                                         .verbose = TRUE) {
-
+S7::method(cor_module_check_res, bulk_coexp) <- function(
+  object,
+  resolution_params = params_graph_resolution(),
+  graph_params = params_cor_graph(),
+  random_seed = 123L,
+  min_genes = 10L,
+  parallel = TRUE,
+  max_workers = as.integer(parallel::detectCores() / 2),
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   assertCorGraphParams(graph_params)
@@ -364,8 +391,11 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) ||
-      !detection_method %in% c("correlation-based", "differential correlation-based")) {
+  if (
+    is.null(detection_method) ||
+      !detection_method %in%
+        c("correlation-based", "differential correlation-based")
+  ) {
     warning(
       paste(
         "This class does not seem to be set for correlation-based module detection",
@@ -375,29 +405,38 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
     return(object)
   }
 
-  c(graph, graph_params) %<-% with(graph_params, switch(
-    detection_method,
-    "correlation-based" = get_cor_graph(
-      object = object,
-      epsilon = epsilon,
-      .verbose = verbose
-    ),
-    "differential correlation-based" = get_diffcor_graph(
-      object = object,
-      min_cor = min_cor,
-      fdr_threshold = fdr_threshold,
-      .verbose = verbose
+  c(graph, graph_params) %<-%
+    with(
+      graph_params,
+      switch(
+        detection_method,
+        "correlation-based" = get_cor_graph(
+          object = object,
+          epsilon = epsilon,
+          .verbose = verbose
+        ),
+        "differential correlation-based" = get_diffcor_graph(
+          object = object,
+          min_cor = min_cor,
+          fdr_threshold = fdr_threshold,
+          .verbose = verbose
+        )
+      )
     )
-  ))
 
-  resolutions <- with(resolution_params, exp(seq(log(min_res), log(max_res), length.out = number_res)))
+  resolutions <- with(
+    resolution_params,
+    exp(seq(log(min_res), log(max_res), length.out = number_res))
+  )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
+  }
 
   if (parallel) {
-    if (.verbose)
+    if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
+    }
 
     # future plan funkiness
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
@@ -405,8 +444,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 
     plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose)
-      message("Using sequential computation.")
+    if (.verbose) message("Using sequential computation.")
     future::plan(future::sequential())
   }
 
@@ -416,12 +454,15 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
       set.seed(random_seed)
       community <- igraph::cluster_leiden(
         graph,
-        objective_function = 'modularity',
+        objective_function = "modularity",
         resolution = res,
         n_iterations = 5L
       )
 
-      modularity <- igraph::modularity(x = graph, membership = community$membership)
+      modularity <- igraph::modularity(
+        x = graph,
+        membership = community$membership
+      )
 
       community_df <- data.table::data.table(
         resolution = res,
@@ -432,11 +473,11 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
     },
     .progress = .verbose,
     .options = furrr::furrr_options(seed = TRUE)
-  ) %>% data.table::rbindlist(.)
+  ) %>%
+    data.table::rbindlist(.)
 
   # To make the message trace prettier, if set to verbose
-  if (.verbose)
-    message("")
+  if (.verbose) message("")
 
   future::plan(future::sequential())
   gc()
@@ -445,27 +486,39 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 
   cluster_summary <- community_df_res[, .N, combined_id] %>%
     .[, good_clusters := N >= min_genes] %>%
-    data.table::merge.data.table(.,
-                                 unique(community_df_res[, c('resolution', 'combined_id')]),
-                                 by.x = 'combined_id',
-                                 by.y = 'combined_id',
+    data.table::merge.data.table(
+      .,
+      unique(community_df_res[, c("resolution", "combined_id")]),
+      by.x = "combined_id",
+      by.y = "combined_id",
     ) %>%
-    .[, .(
-      good_clusters = sum(good_clusters),
-      avg_size = mean(N),
-      max_size = max(N)
-    ), resolution]
+    .[,
+      .(
+        good_clusters = sum(good_clusters),
+        avg_size = mean(N),
+        max_size = max(N)
+      ),
+      resolution
+    ]
 
-  resolution_results <- community_df_res[, .(no_clusters = length(unique(membership)),
-                                             modularity = unique(modularity)), resolution] %>%
-    data.table::merge.data.table(., cluster_summary, by.x = 'resolution', by.y = 'resolution')
-
-
+  resolution_results <- community_df_res[,
+    .(
+      no_clusters = length(unique(membership)),
+      modularity = unique(modularity)
+    ),
+    resolution
+  ] %>%
+    data.table::merge.data.table(
+      .,
+      cluster_summary,
+      by.x = "resolution",
+      by.y = "resolution"
+    )
 
   # Assign stuff
   S7::prop(object, "params")[["correlation_graph"]] <- graph_params
-  S7::prop(object, "outputs")[['resolution_results']] <- resolution_results
-  S7::prop(object, "outputs")[['cor_graph']] <- graph
+  S7::prop(object, "outputs")[["resolution_results"]] <- resolution_results
+  S7::prop(object, "outputs")[["cor_graph"]] <- graph
 
   return(object)
 }
@@ -513,15 +566,17 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(object,
 cor_module_final_modules <- S7::new_generic(
   name = "cor_module_final_modules",
   dispatch_args = "object",
-  fun = function(object,
-                 resolution = NULL,
-                 min_size = 10L,
-                 max_size = 500L,
-                 subclustering = TRUE,
-                 random_seed = 123L,
-                 .graph_params = params_cor_graph(),
-                 .max_iters = 100L,
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    resolution = NULL,
+    min_size = 10L,
+    max_size = 500L,
+    subclustering = TRUE,
+    random_seed = 123L,
+    .graph_params = params_cor_graph(),
+    .max_iters = 100L,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -533,15 +588,17 @@ cor_module_final_modules <- S7::new_generic(
 #' @import data.table
 #'
 #' @method cor_module_final_modules bulk_coexp
-S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
-                                                             resolution = NULL,
-                                                             min_size = 10L,
-                                                             max_size = 500L,
-                                                             subclustering = TRUE,
-                                                             random_seed = 123L,
-                                                             .graph_params = params_cor_graph(),
-                                                             .max_iters = 100L,
-                                                             .verbose = TRUE) {
+S7::method(cor_module_final_modules, bulk_coexp) <- function(
+  object,
+  resolution = NULL,
+  min_size = 10L,
+  max_size = 500L,
+  subclustering = TRUE,
+  random_seed = 123L,
+  .graph_params = params_cor_graph(),
+  .max_iters = 100L,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(resolution, c("0", "N1"))
@@ -556,8 +613,11 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) &&
-      detection_method %in% c("correlation-based", "differential correlation-based")) {
+  if (
+    is.null(detection_method) &&
+      detection_method %in%
+        c("correlation-based", "differential correlation-based")
+  ) {
     warning(
       paste(
         "This class does not seem to be set for correlation-based module detection",
@@ -578,25 +638,28 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
       )
     )
 
-    c(graph, graph_params) %<-% with(.graph_params, switch(
-      detection_method,
-      "correlation-based" = get_cor_graph(
-        object = object,
-        kernel_bandwidth = kernel_bandwidth,
-        min_affinity = min_affinity,
-        .verbose = verbose
-      ),
-      "differential correlation-based" = get_diffcor_graph(
-        object = object,
-        min_cor = min_cor,
-        fdr_threshold = fdr_threshold,
-        .verbose = verbose
+    c(graph, graph_params) %<-%
+      with(
+        .graph_params,
+        switch(
+          detection_method,
+          "correlation-based" = get_cor_graph(
+            object = object,
+            kernel_bandwidth = kernel_bandwidth,
+            min_affinity = min_affinity,
+            .verbose = verbose
+          ),
+          "differential correlation-based" = get_diffcor_graph(
+            object = object,
+            min_cor = min_cor,
+            fdr_threshold = fdr_threshold,
+            .verbose = verbose
+          )
+        )
       )
-    ))
 
     S7::prop(object, "params")[["correlation_graph"]] <- graph_params
-    S7::prop(object, "outputs")[['cor_graph']] <- graph
-
+    S7::prop(object, "outputs")[["cor_graph"]] <- graph
   } else {
     graph <- S7::prop(object, "outputs")[["cor_graph"]]
   }
@@ -605,11 +668,12 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
   if (is.null(resolution)) {
     resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
     final_resolution <- if (!is.null(resolution_results)) {
-      if (.verbose)
-        message("Using resolution with best modularity.")
+      if (.verbose) message("Using resolution with best modularity.")
       resolution_results[modularity == max(modularity), resolution]
     } else {
-      warning("No resolution results found and none provided. Will default to a resolution of 1.")
+      warning(
+        "No resolution results found and none provided. Will default to a resolution of 1."
+      )
       1
     }
   }
@@ -619,20 +683,25 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 
   final_gene_communities <- igraph::cluster_leiden(
     graph,
-    objective_function = 'modularity',
+    objective_function = "modularity",
     resolution = final_resolution,
     n_iterations = 5L
   )
 
-  clusters_df <- data.table::data.table(node_id = final_gene_communities$names,
-                                        cluster_id = final_gene_communities$membership)
+  clusters_df <- data.table::data.table(
+    node_id = final_gene_communities$names,
+    cluster_id = final_gene_communities$membership
+  )
 
   node_frequency <- clusters_df[, .N, .(cluster_id)]
 
   # If sub clustering is active, do that
   if (subclustering) {
-    if (.verbose)
-      message("Sub-clustering larger communities until they are below max_size.")
+    if (.verbose) {
+      message(
+        "Sub-clustering larger communities until they are below max_size."
+      )
+    }
     clusters_with_too_many_nodes <- node_frequency[N > max_size, cluster_id]
     final_clusters <- clusters_df[!cluster_id %in% clusters_with_too_many_nodes]
 
@@ -646,20 +715,36 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
       while (length(nodes_in_cluster) != 0) {
         set.seed(random_seed + l)
 
-        sub_graph_l <- igraph::subgraph(graph,
-                                        data.table::chmatch(nodes_in_cluster, igraph::V(graph)$name))
+        sub_graph_l <- igraph::subgraph(
+          graph,
+          data.table::chmatch(nodes_in_cluster, igraph::V(graph)$name)
+        )
 
         # Restarting at a very small resolution
-        clusters_red <- igraph::cluster_leiden(sub_graph_l, resolution = 0.1 + l * 0.05)
+        clusters_red <- igraph::cluster_leiden(
+          sub_graph_l,
+          resolution = 0.1 + l * 0.05
+        )
 
-        subclusters <- data.table(node_id = clusters_red$names,
-                                  cluster_id = clusters_red$membership)
+        subclusters <- data.table(
+          node_id = clusters_red$names,
+          cluster_id = clusters_red$membership
+        )
 
         subclusters_frequency <- subclusters[, .N, .(cluster_id)]
-        clusters_small_enough <- subclusters_frequency[N <= max_size, cluster_id]
+        clusters_small_enough <- subclusters_frequency[
+          N <= max_size,
+          cluster_id
+        ]
 
         good_clusters <- subclusters[cluster_id %in% clusters_small_enough] %>%
-          dplyr::mutate(cluster_id = paste0(i, paste(rep("sub", l), collapse = ""), cluster_id))
+          dplyr::mutate(
+            cluster_id = paste0(
+              i,
+              paste(rep("sub", l), collapse = ""),
+              cluster_id
+            )
+          )
 
         finalised_clusters <- rbind(finalised_clusters, good_clusters)
 
@@ -681,14 +766,21 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
   }
 
   # Finalise the data
-  final_communities <- node_frequency_updated[N <= max_size &
-                                                N >= min_size, cluster_id]
+  final_communities <- node_frequency_updated[
+    N <= max_size &
+      N >= min_size,
+    cluster_id
+  ]
   final_clusters_filtered <- final_clusters[cluster_id %in% final_communities]
 
   cluster_name_prettifier <- setNames(
-    paste("cluster", seq_along(
-      unique(final_clusters_filtered$cluster_id)
-    ), sep = "_"),
+    paste(
+      "cluster",
+      seq_along(
+        unique(final_clusters_filtered$cluster_id)
+      ),
+      sep = "_"
+    ),
     unique(final_clusters_filtered$cluster_id)
   )
 
@@ -765,11 +857,9 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(object,
 #'
 #' @export
 get_cor_graph <- S7::new_generic(
-  name = 'get_cor_graph',
-  dispatch_args = 'object',
-  fun = function(object,
-                 epsilon,
-                 .verbose) {
+  name = "get_cor_graph",
+  dispatch_args = "object",
+  fun = function(object, epsilon, .verbose) {
     S7::S7_dispatch()
   }
 )
@@ -788,9 +878,13 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
     .[, cor_abs := abs(cor)] %>%
     .[, dist := 1 - cor_abs] %>%
     .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
-    .[, affinity := rs_rbf_function(x = dist,
-                                    epsilon = epsilon,
-                                    rbf_type = "bump")] %>%
+    .[,
+      affinity := rs_rbf_function(
+        x = dist,
+        epsilon = epsilon,
+        rbf_type = "bump"
+      )
+    ] %>%
     .[affinity > 0] %>%
     .[, c("feature_a", "feature_b", "affinity")] %>%
     data.table::setnames(
@@ -799,11 +893,12 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
       new = c("from", "to", "weight")
     )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "Generating correlation-based graph with %i edges.",
       nrow(graph_df)
     ))
+  }
 
   graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
   graph <- igraph::simplify(graph)
@@ -838,22 +933,21 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
 #'
 #' @export
 get_diffcor_graph <- S7::new_generic(
-  name = 'get_diffcor_graph',
-  dispatch_args = 'object',
-  fun = function(object,
-                 min_cor = 0.2,
-                 fdr_threshold = 0.05,
-                 .verbose = TRUE) {
+  name = "get_diffcor_graph",
+  dispatch_args = "object",
+  fun = function(object, min_cor = 0.2, fdr_threshold = 0.05, .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
 
 #' @export
 #' @method get_diffcor_graph bulk_coexp
-S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
-                                                      min_cor = 0.2,
-                                                      fdr_threshold = 0.05,
-                                                      .verbose = TRUE) {
+S7::method(get_diffcor_graph, bulk_coexp) <- function(
+  object,
+  min_cor = 0.2,
+  fdr_threshold = 0.05,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(min_cor, "R1[0,1]")
@@ -869,7 +963,9 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
       fdr = rs_fdr_adjustment(p_val)
     )] %>%
     .[fdr <= fdr_threshold & (cor_a >= min_cor | cor_b >= min_cor)] %>%
-    .[, weight := rs_range_norm(abs(delta_cor), max_val = 1, min_val = 0.05)] %>%
+    .[,
+      weight := rs_range_norm(abs(delta_cor), max_val = 1, min_val = 0.05)
+    ] %>%
     .[, c("feature_a", "feature_b")] %>%
     data.table::setnames(
       .,
@@ -877,11 +973,12 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
       new = c("from", "to")
     )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "Generating differential correlation-based graph with %i edges.",
       nrow(graph_df)
     ))
+  }
 
   graph <- igraph::graph_from_data_frame(graph_df, directed = FALSE)
   graph <- igraph::simplify(graph)
@@ -913,8 +1010,8 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(object,
 #'
 #' @export
 get_resolution_res <- S7::new_generic(
-  name = 'get_resolution_res',
-  dispatch_args = 'object',
+  name = "get_resolution_res",
+  dispatch_args = "object",
   fun = function(object) {
     S7::S7_dispatch()
   }
@@ -926,9 +1023,12 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Body
-  resolution_results <- S7::prop(object, "outputs")[['resolution_results']]
-  if (is.null(resolution_results))
-    warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
+  resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
+  if (is.null(resolution_results)) {
+    warning(
+      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+    )
+  }
 
   resolution_results
 }
@@ -942,21 +1042,25 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
 #' @import ggplot2
 #'
 #' @method plot_resolution_res bulk_coexp
-S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRUE, ...) {
+S7::method(plot_resolution_res, bulk_coexp) <- function(
+  object,
+  print_head = TRUE,
+  ...
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(print_head, "B1")
   # Body
-  plot_df <- S7::prop(object, "outputs")[['resolution_results']]
+  plot_df <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(plot_df)) {
-    warning("No resolution results found. Did you run cor_module_check_res()? Returning NULL.")
+    warning(
+      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+    )
     return(NULL)
   }
   plot_df <- data.table::setorder(plot_df, -modularity)
-  if (print_head)
-    print(head(plot_df))
-  p <- ggplot(data = plot_df,
-              mapping =  aes(x = resolution, y = modularity)) +
+  if (print_head) print(head(plot_df))
+  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
     geom_point(
       mapping = aes(size = log10(good_clusters), fill = log10(avg_size)),
       shape = 21,
@@ -967,8 +1071,14 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRU
     theme_minimal() +
     scale_fill_viridis_c() +
     scale_size_continuous(range = c(2, 8)) +
-    labs(size = "Number of good clusters (log10)", fill = "Average cluster size (log10)") +
-    ggtitle("Resolution vs. modularity", subtitle = 'With cluster number and size')
+    labs(
+      size = "Number of good clusters (log10)",
+      fill = "Average cluster size (log10)"
+    ) +
+    ggtitle(
+      "Resolution vs. modularity",
+      subtitle = "With cluster number and size"
+    )
   p
 }
 
@@ -988,8 +1098,8 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(object, print_head = TRU
 #'
 #' @export
 plot_epsilon_res <- S7::new_generic(
-  name = 'plot_epsilon_res',
-  dispatch_args = 'object',
+  name = "plot_epsilon_res",
+  dispatch_args = "object",
   fun = function(object) {
     S7::S7_dispatch()
   }
@@ -1004,7 +1114,7 @@ S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Body
-  plot_df <- S7::prop(object, "outputs")[['epsilon_data']]
+  plot_df <- S7::prop(object, "outputs")[["epsilon_data"]]
   if (is.null(plot_df)) {
     warning(
       "No resolution results found. Did you run cor_module_check_epsilon()? Returning NULL."
@@ -1019,9 +1129,10 @@ S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
     ylim(0, 1) +
     xlab("Epsilon") +
     ylab("Goodness of fit (R2)") +
-    ggtitle("Epsilon vs. scale free topology",
-            subtitle = "Goodness of fit for log(connectivity) ~ log(p(connectivity)")
+    ggtitle(
+      "Epsilon vs. scale free topology",
+      subtitle = "Goodness of fit for log(connectivity) ~ log(p(connectivity)"
+    )
 
   p
 }
-

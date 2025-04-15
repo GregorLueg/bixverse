@@ -21,10 +21,7 @@
 ica_processing <- S7::new_generic(
   name = "ica_processing",
   dispatch_args = "object",
-  fun = function(object,
-                 fast_svd = TRUE,
-                 random_seed = 123L,
-                 .verbose = TRUE) {
+  fun = function(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
@@ -38,10 +35,12 @@ ica_processing <- S7::new_generic(
 #' @import data.table
 #'
 #' @method ica_processing bulk_coexp
-S7::method(ica_processing, bulk_coexp) <- function(object,
-                                                   fast_svd = TRUE,
-                                                   random_seed = 123L,
-                                                   .verbose = TRUE) {
+S7::method(ica_processing, bulk_coexp) <- function(
+  object,
+  fast_svd = TRUE,
+  random_seed = 123L,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(fast_svd, "B1")
@@ -49,28 +48,30 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
   checkmate::qassert(.verbose, "B1")
 
   # Function body
-  if (purrr::is_empty(S7::prop(object, "processed_data")[['processed_data']])) {
+  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
     warning("No pre-processed data found. Defaulting to the raw data")
     target_mat <- S7::prop(object, "raw_data")
   } else {
-    target_mat <- S7::prop(object, "processed_data")[['processed_data']]
+    target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
   # Whiten the data
-  if (.verbose)
-    message("Preparing the whitening of the data for ICA.")
-  if (fast_svd && .verbose)
+  if (.verbose) message("Preparing the whitening of the data for ICA.")
+  if (fast_svd && .verbose) {
     message("Using randomised SVD for whitening (faster, but less precise)")
-  if (!fast_svd && .verbose)
+  }
+  if (!fast_svd && .verbose) {
     message("Using full SVD for whitening (slowed, but more precise)")
-  c(X1, K) %<-% rs_prepare_whitening(
-    x = target_mat,
-    fast_svd = fast_svd,
-    seed = random_seed,
-    rank = nrow(target_mat),
-    oversampling = NULL,
-    n_power_iter = NULL
-  )
+  }
+  c(X1, K) %<-%
+    rs_prepare_whitening(
+      x = target_mat,
+      fast_svd = fast_svd,
+      seed = random_seed,
+      rank = nrow(target_mat),
+      oversampling = NULL,
+      n_power_iter = NULL
+    )
 
   S7::prop(object, "processed_data")[["X1"]] <- X1
   S7::prop(object, "processed_data")[["K"]] <- K
@@ -134,13 +135,15 @@ S7::method(ica_processing, bulk_coexp) <- function(object,
 ica_evaluate_comp <- S7::new_generic(
   name = "ica_evaluate_comp",
   dispatch_args = "object",
-  fun = function(object,
-                 ica_type = c("logcosh", "exp"),
-                 iter_params = params_ica_randomisation(),
-                 ncomp_params = params_ica_ncomp(),
-                 ica_params = params_ica_general(),
-                 random_seed = 42L,
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    ica_type = c("logcosh", "exp"),
+    iter_params = params_ica_randomisation(),
+    ncomp_params = params_ica_ncomp(),
+    ica_params = params_ica_general(),
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -152,13 +155,15 @@ ica_evaluate_comp <- S7::new_generic(
 #' @export
 #'
 #' @method ica_evaluate_comp bulk_coexp
-S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
-                                                      ica_type = c("logcosh", "exp"),
-                                                      iter_params = params_ica_randomisation(),
-                                                      ncomp_params = params_ica_ncomp(),
-                                                      ica_params = params_ica_general(),
-                                                      random_seed = 42L,
-                                                      .verbose = TRUE) {
+S7::method(ica_evaluate_comp, bulk_coexp) <- function(
+  object,
+  ica_type = c("logcosh", "exp"),
+  iter_params = params_ica_randomisation(),
+  ncomp_params = params_ica_ncomp(),
+  ica_params = params_ica_general(),
+  random_seed = 42L,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
@@ -170,8 +175,10 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) &&
-      detection_method != "ICA-based") {
+  if (
+    is.null(detection_method) &&
+      detection_method != "ICA-based"
+  ) {
     warning(
       paste(
         "This class does not seem to be set for ICA-based module detection",
@@ -182,32 +189,43 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   }
 
   # Get data
-  X <- S7::prop(object, "processed_data")[['processed_data']]
+  X <- S7::prop(object, "processed_data")[["processed_data"]]
   X1 <- S7::prop(object, "processed_data")[["X1"]]
   K <- S7::prop(object, "processed_data")[["K"]]
 
   # Prepare the n_comp vector
   n_comp_vector <- if (is.null(ncomp_params$custom_seq)) {
-    with(ncomp_params, c(2, 3, 4, seq(
-      from = 5, to = max_no_comp, by = steps
-    )))
+    with(
+      ncomp_params,
+      c(
+        2,
+        3,
+        4,
+        seq(
+          from = 5,
+          to = max_no_comp,
+          by = steps
+        )
+      )
+    )
   } else {
     ncomp_params$custom_seq
   }
 
   # TODO Control the max_no_comp rate pending the number of samples.
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "Using a total of %i different n_comp parameters",
       length(n_comp_vector)
     ))
+  }
 
   # Set up the loop
   if (iter_params$cross_validate) {
     total_randomisations <- iter_params$random_init * iter_params$folds
     no_ica_runs <- total_randomisations * length(n_comp_vector)
-    if (.verbose)
+    if (.verbose) {
       message(
         sprintf(
           "Using a CV-like approach with %i folds and %i random initialisations for a total of %i ICA runs",
@@ -216,10 +234,11 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
           no_ica_runs
         )
       )
+    }
   } else {
     total_randomisations <- iter_params$random_init
     no_ica_runs <- iter_params$random_init * length(n_comp_vector)
-    if (.verbose)
+    if (.verbose) {
       message(
         sprintf(
           "Using %i random initialisations for a total of %i ICA runs",
@@ -227,45 +246,49 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
           no_ica_runs
         )
       )
+    }
   }
 
   all_scores <- c()
   all_convergence <- c()
 
-  pb = txtProgressBar(initial = 0,
-                      max = length(n_comp_vector),
-                      style = 3)
+  pb <- txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
 
   for (i in seq_along(n_comp_vector)) {
     no_comp <- n_comp_vector[[i]]
     # Get the combined S matrix and convergence information
-    c(s_combined, converged) %<-% with(iter_params, switch(
-      as.integer(iter_params$cross_validate) + 1,
-      rs_ica_iters(
-        x1 = X1,
-        k = K,
-        no_comp = no_comp,
-        no_random_init = random_init,
-        ica_type = ica_type,
-        random_seed = random_seed,
-        ica_params = ica_params
-      ),
-      rs_ica_iters_cv(
-        x = X,
-        no_comp = no_comp,
-        no_folds = folds,
-        no_random_init = random_init,
-        ica_type = ica_type,
-        random_seed = random_seed,
-        ica_params = ica_params
+    c(s_combined, converged) %<-%
+      with(
+        iter_params,
+        switch(
+          as.integer(iter_params$cross_validate) + 1,
+          rs_ica_iters(
+            x1 = X1,
+            k = K,
+            no_comp = no_comp,
+            no_random_init = random_init,
+            ica_type = ica_type,
+            random_seed = random_seed,
+            ica_params = ica_params
+          ),
+          rs_ica_iters_cv(
+            x = X,
+            no_comp = no_comp,
+            no_folds = folds,
+            no_random_init = random_init,
+            ica_type = ica_type,
+            random_seed = random_seed,
+            ica_params = ica_params
+          )
+        )
       )
-    ))
 
-    c(stability_scores, centrotype) %<-% .community_stability(
-      no_comp = as.integer(no_comp),
-      s = s_combined,
-      return_centrotype = FALSE
-    )
+    c(stability_scores, centrotype) %<-%
+      .community_stability(
+        no_comp = as.integer(no_comp),
+        s = s_combined,
+        return_centrotype = FALSE
+      )
 
     all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
     all_convergence <- append(all_convergence, converged)
@@ -284,27 +307,36 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   })
   ica_comps_no <- do.call(c, ica_comps_no)
 
-  convergence_split <- split(all_convergence, ceiling(seq_along(all_convergence) /
-                                                        total_randomisations))
+  convergence_split <- split(
+    all_convergence,
+    ceiling(
+      seq_along(all_convergence) /
+        total_randomisations
+    )
+  )
   names(convergence_split) <- n_comp_vector
 
   ica_stability_res <- list(
     component_rank = ica_comps_no,
     no_components = ica_comps_rep,
     stability = all_scores
-  ) %>% data.table::setDT()
+  ) %>%
+    data.table::setDT()
 
   prop_converged <- purrr::imap_dfr(convergence_split, \(bool, x) {
     total_converged <- sum(bool) / length(bool)
     data.table(no_components = as.integer(x), converged = total_converged)
   })
 
-  ica_stability_res_sum = ica_stability_res[, .(
-    median_stability = median(stability),
-    max_stability = max(stability),
-    percentile_75 = quantile(stability, 0.75)
-  ), .(no_components)] %>%
-    merge(., prop_converged, by = 'no_components')
+  ica_stability_res_sum <- ica_stability_res[,
+    .(
+      median_stability = median(stability),
+      max_stability = max(stability),
+      percentile_75 = quantile(stability, 0.75)
+    ),
+    .(no_components)
+  ] %>%
+    merge(., prop_converged, by = "no_components")
 
   stability_params <- list(
     ica_type = ica_type,
@@ -315,8 +347,10 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
   )
 
   # Assign stuff
-  S7::prop(object, "outputs")[['ica_stability_res']] <- ica_stability_res
-  S7::prop(object, "outputs")[['ica_stability_res_sum']] <- ica_stability_res_sum
+  S7::prop(object, "outputs")[["ica_stability_res"]] <- ica_stability_res
+  S7::prop(object, "outputs")[[
+    "ica_stability_res_sum"
+  ]] <- ica_stability_res_sum
   S7::prop(object, "params")[["ica_stability_assessment"]] <- stability_params
 
   return(object)
@@ -369,14 +403,16 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(object,
 ica_stabilised_results <- S7::new_generic(
   name = "ica_stabilised_results",
   dispatch_args = "object",
-  fun = function(object,
-                 no_comp,
-                 ica_type = c("logcosh", "exp"),
-                 iter_params = params_ica_randomisation(),
-                 ica_params = params_ica_general(),
-                 random_seed = 42L,
-                 consistent_sign = TRUE,
-                 .verbose = TRUE) {
+  fun = function(
+    object,
+    no_comp,
+    ica_type = c("logcosh", "exp"),
+    iter_params = params_ica_randomisation(),
+    ica_params = params_ica_general(),
+    random_seed = 42L,
+    consistent_sign = TRUE,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -389,14 +425,16 @@ ica_stabilised_results <- S7::new_generic(
 #' @importFrom zeallot `%<-%`
 #'
 #' @method ica_stabilised_results bulk_coexp
-S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
-                                                           no_comp,
-                                                           ica_type = c("logcosh", "exp"),
-                                                           iter_params = params_ica_randomisation(),
-                                                           ica_params = params_ica_general(),
-                                                           random_seed = 42L,
-                                                           consistent_sign = TRUE,
-                                                           .verbose = TRUE) {
+S7::method(ica_stabilised_results, bulk_coexp) <- function(
+  object,
+  no_comp,
+  ica_type = c("logcosh", "exp"),
+  iter_params = params_ica_randomisation(),
+  ica_params = params_ica_general(),
+  random_seed = 42L,
+  consistent_sign = TRUE,
+  .verbose = TRUE
+) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(no_comp, "I1")
@@ -410,8 +448,10 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
   # Early return
-  if (is.null(detection_method) &&
-      detection_method != "ICA-based") {
+  if (
+    is.null(detection_method) &&
+      detection_method != "ICA-based"
+  ) {
     warning(
       paste(
         "This class does not seem to be set for ICA-based module detection",
@@ -422,39 +462,44 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
   }
 
   # Get the attributes
-  X <- S7::prop(object, "processed_data")[['processed_data']]
+  X <- S7::prop(object, "processed_data")[["processed_data"]]
   X1 <- S7::prop(object, "processed_data")[["X1"]]
   K <- S7::prop(object, "processed_data")[["K"]]
 
   # Get the combined S matrix and convergence information
-  c(s_combined, converged) %<-% with(iter_params, switch(
-    as.integer(iter_params$cross_validate) + 1,
-    rs_ica_iters(
-      x1 = X1,
-      k = K,
-      no_comp = no_comp,
-      no_random_init = random_init,
-      ica_type = ica_type,
-      random_seed = random_seed,
-      ica_params = ica_params
-    ),
-    rs_ica_iters_cv(
-      x = X_raw,
-      no_comp = no_comp,
-      no_folds = folds,
-      no_random_init = random_init,
-      ica_type = ica_type,
-      random_seed = random_seed,
-      ica_params = ica_params
+  c(s_combined, converged) %<-%
+    with(
+      iter_params,
+      switch(
+        as.integer(iter_params$cross_validate) + 1,
+        rs_ica_iters(
+          x1 = X1,
+          k = K,
+          no_comp = no_comp,
+          no_random_init = random_init,
+          ica_type = ica_type,
+          random_seed = random_seed,
+          ica_params = ica_params
+        ),
+        rs_ica_iters_cv(
+          x = X_raw,
+          no_comp = no_comp,
+          no_folds = folds,
+          no_random_init = random_init,
+          ica_type = ica_type,
+          random_seed = random_seed,
+          ica_params = ica_params
+        )
+      )
     )
-  ))
 
   # Get the component stability and centrotypes
-  c(stability_scores, centrotype) %<-% .community_stability(
-    no_comp = as.integer(no_comp),
-    s = s_combined,
-    return_centrotype = TRUE
-  )
+  c(stability_scores, centrotype) %<-%
+    .community_stability(
+      no_comp = as.integer(no_comp),
+      s = s_combined,
+      return_centrotype = TRUE
+    )
 
   colnames(centrotype) <- sprintf("IC_%i", 1:no_comp)
   rownames(centrotype) <- colnames(X)
@@ -468,8 +513,11 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
   rownames(A) <- rownames(X)
   colnames(A) <- rownames(S)
 
-  ica_meta <- list(component = sprintf("IC_%i", 1:no_comp),
-                   stability = stability_scores) %>% data.table::setDT()
+  ica_meta <- list(
+    component = sprintf("IC_%i", 1:no_comp),
+    stability = stability_scores
+  ) %>%
+    data.table::setDT()
 
   result <- list(S = S, A = A, ica_meta = ica_meta)
 
@@ -527,12 +575,14 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(object,
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
-fast_ica_rust <- function(X,
-                          K,
-                          n_icas,
-                          ica_fun = c("logcosh", "exp"),
-                          seed = NULL,
-                          ica_params = params_ica_general()) {
+fast_ica_rust <- function(
+  X,
+  K,
+  n_icas,
+  ica_fun = c("logcosh", "exp"),
+  seed = NULL,
+  ica_params = params_ica_general()
+) {
   # Checks
   checkmate::assertMatrix(X, mode = "numeric")
   checkmate::assertMatrix(K, mode = "numeric")
@@ -546,7 +596,8 @@ fast_ica_rust <- function(X,
   set.seed(seed)
   w_init <- matrix(rnorm(n_icas * n_icas), nrow = n_icas, ncol = n_icas)
 
-  c(a, converged) %<-% rs_fast_ica(X1, w_init, ica_type = ica_fun, ica_params = ica_params)
+  c(a, converged) %<-%
+    rs_fast_ica(X1, w_init, ica_type = ica_fun, ica_params = ica_params)
 
   w <- a %*% K
   S <- w %*% X
@@ -589,14 +640,18 @@ S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Function body
-  plot_df <- S7::prop(object, "outputs")[['ica_stability_res']]
+  plot_df <- S7::prop(object, "outputs")[["ica_stability_res"]]
   if (is.null(plot_df)) {
-    warning("No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL.")
+    warning(
+      "No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL."
+    )
     return(NULL)
   }
 
-  p1 <- ggplot(data = plot_df,
-               mapping = aes(x = component_rank, y = stability)) +
+  p1 <- ggplot(
+    data = plot_df,
+    mapping = aes(x = component_rank, y = stability)
+  ) +
     geom_line(mapping = aes(color = factor(no_components)), linewidth = 1) +
     scale_color_viridis_d(option = "C") +
     theme_minimal() +
@@ -604,7 +659,6 @@ S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
     ylim(0, 1) +
     xlab("Component rank") +
     ylab("Stability index")
-
 
   p2 <- ggplot(data = plot_df, aes(x = component_rank, y = stability)) +
     geom_point(mapping = aes(colour = factor(no_components))) +
@@ -615,7 +669,12 @@ S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
     xlab("Component rank") +
     ylab("Stability index")
 
-  p1 + p2 + patchwork::plot_annotation(title = "Stability of independent components", subtitle = "Over different ncomps and randomisations")
+  p1 +
+    p2 +
+    patchwork::plot_annotation(
+      title = "Stability of independent components",
+      subtitle = "Over different ncomps and randomisations"
+    )
 }
 
 #' @title Plot the maximum and 75 %ile of the stability.
@@ -642,14 +701,18 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   # Function body
-  plot_df <- S7::prop(object, "outputs")[['ica_stability_res_sum']]
+  plot_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
   if (is.null(plot_df)) {
-    warning("No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL.")
+    warning(
+      "No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL."
+    )
     return(NULL)
   }
 
-  p <- ggplot(data = plot_df,
-              mapping = aes(x = no_components, y = max_stability)) +
+  p <- ggplot(
+    data = plot_df,
+    mapping = aes(x = no_components, y = max_stability)
+  ) +
     geom_point(
       mapping = aes(fill = percentile_75),
       shape = 21,
@@ -713,7 +776,7 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
 
   clusterCut <- cutree(tree = clusters, k = no_comp)
 
-  scores <- vector(mode = 'double', length = no_comp)
+  scores <- vector(mode = "double", length = no_comp)
   if (return_centrotype) {
     centrotypes <- vector(mode = "list", length = no_comp)
   }
@@ -721,27 +784,33 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   for (cluster in seq_len(no_comp)) {
     cluster_indx <- which(clusterCut == cluster)
     not_cluster_indx <- which(clusterCut != cluster)
-    within_cluster <- sum(abs_cor[cluster_indx, cluster_indx]) / length(cluster_indx)^2
-    outside_cluster <- sum(abs_cor[cluster_indx, not_cluster_indx]) / (length(cluster_indx) * length(not_cluster_indx))
+    within_cluster <- sum(abs_cor[cluster_indx, cluster_indx]) /
+      length(cluster_indx)^2
+    outside_cluster <- sum(abs_cor[cluster_indx, not_cluster_indx]) /
+      (length(cluster_indx) * length(not_cluster_indx))
     scores[cluster] <- within_cluster - outside_cluster
     if (return_centrotype) {
       max_similarity <- max(rowSums(abs_cor[cluster_indx, cluster_indx]))
-      temp <- which(rowSums(abs_cor[cluster_indx, cluster_indx]) == max_similarity)
+      temp <- which(
+        rowSums(abs_cor[cluster_indx, cluster_indx]) == max_similarity
+      )
       centrotypes[[cluster]] <- s[, cluster_indx[temp], drop = FALSE]
     }
   }
 
-  res <- list(stability_scores = scores, centrotype = if (return_centrotype) {
-    do.call(cbind, centrotypes)
-  } else {
-    NULL
-  })
+  res <- list(
+    stability_scores = scores,
+    centrotype = if (return_centrotype) {
+      do.call(cbind, centrotypes)
+    } else {
+      NULL
+    }
+  )
 
   res
 }
 
 ## sign flipping ---------------------------------------------------------------
-
 
 #' Flips the ICA source sign
 #'
@@ -752,7 +821,7 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
 #' @param x Numeric vector. The source signal for that independent component.
 #'
 #' @returns Returns a consistent ICA feature loading
-.flip_ica_loading_signs = function(x) {
+.flip_ica_loading_signs <- function(x) {
   feature_sign <- sign(x)
   max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]
   y <- if (max_val_sign == 1) {

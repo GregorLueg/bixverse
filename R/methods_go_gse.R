@@ -29,13 +29,15 @@
 gse_go_elim_method <- S7::new_generic(
   name = "gse_go_elim_method",
   dispatch_args = "object",
-  fun = function(object,
-                 target_genes,
-                 minimum_overlap = 3L,
-                 fdr_threshold = 0.05,
-                 elim_threshold = 0.05,
-                 min_genes = NULL,
-                 .debug = FALSE) {
+  fun = function(
+    object,
+    target_genes,
+    minimum_overlap = 3L,
+    fdr_threshold = 0.05,
+    elim_threshold = 0.05,
+    min_genes = NULL,
+    .debug = FALSE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -48,13 +50,15 @@ gse_go_elim_method <- S7::new_generic(
 #'
 #' @method gse_go_elim_method gene_ontology_data
 S7::method(gse_go_elim_method, gene_ontology_data) <-
-  function(object,
-           target_genes,
-           minimum_overlap = 3L,
-           fdr_threshold = 0.05,
-           elim_threshold = 0.05,
-           min_genes = NULL,
-           .debug = FALSE) {
+  function(
+    object,
+    target_genes,
+    minimum_overlap = 3L,
+    fdr_threshold = 0.05,
+    elim_threshold = 0.05,
+    min_genes = NULL,
+    .debug = FALSE
+  ) {
     # Initial assignment
     `.` <- pvals <- fdr <- hits <- NULL
     # First check
@@ -72,7 +76,10 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     levels <- names(S7::prop(object, "levels"))
     go_info <- S7::prop(object, "go_info")
 
-    gene_universe_length <- length(unique(unlist(S7::prop(object, "go_to_genes"))))
+    gene_universe_length <- length(unique(unlist(S7::prop(
+      object,
+      "go_to_genes"
+    ))))
 
     results_go <- rs_gse_geom_elim(
       target_genes = target_genes,
@@ -142,13 +149,15 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 gse_go_elim_method_list <- S7::new_generic(
   name = "gse_go_elim_method_list",
   dispatch_args = "object",
-  fun = function(object,
-                 target_gene_list,
-                 minimum_overlap = 3L,
-                 fdr_threshold = 0.05,
-                 elim_threshold = 0.05,
-                 min_genes = NULL,
-                 .debug = FALSE) {
+  fun = function(
+    object,
+    target_gene_list,
+    minimum_overlap = 3L,
+    fdr_threshold = 0.05,
+    elim_threshold = 0.05,
+    min_genes = NULL,
+    .debug = FALSE
+  ) {
     S7::S7_dispatch()
   }
 )
@@ -161,13 +170,15 @@ gse_go_elim_method_list <- S7::new_generic(
 #'
 #' @method gse_go_elim_method_list gene_ontology_data
 S7::method(gse_go_elim_method_list, gene_ontology_data) <-
-  function(object,
-           target_gene_list,
-           minimum_overlap = 3L,
-           fdr_threshold = 0.05,
-           elim_threshold = 0.05,
-           min_genes = NULL,
-           .debug = FALSE) {
+  function(
+    object,
+    target_gene_list,
+    minimum_overlap = 3L,
+    fdr_threshold = 0.05,
+    elim_threshold = 0.05,
+    min_genes = NULL,
+    .debug = FALSE
+  ) {
     # Binding checks
     `.` <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
@@ -185,7 +196,10 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     levels <- names(S7::prop(object, "levels"))
     go_info <- S7::prop(object, "go_info")
 
-    gene_universe_length <- length(unique(unlist(S7::prop(object, "go_to_genes"))))
+    gene_universe_length <- length(unique(unlist(S7::prop(
+      object,
+      "go_to_genes"
+    ))))
 
     results_go <- rs_gse_geom_elim_list(
       target_genes_list = target_gene_list,
@@ -198,7 +212,8 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     )
 
     target_set_names <- purrr::map2(
-      names(target_gene_list), results_go$no_test,
+      names(target_gene_list),
+      results_go$no_test,
       ~ {
         rep(.x, each = .y)
       }

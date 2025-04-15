@@ -228,131 +228,131 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
 
 #' Calculate the column-wise co-variance.
-#' 
+#'
 #' @description Calculates the co-variance of the columns.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
 #' functions with type checks are provided in the package.
-#' 
+#'
 #' @param x R matrix with doubles.
-#' 
+#'
 #' @returns The co-variance matrix.
-#' 
+#'
 #' @export
 rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 
 #' Calculate the column wise correlations.
-#' 
+#'
 #' @description Calculates the correlation matrix of the columns.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
 #' functions with type checks are provided in the package.
-#' 
+#'
 #' @param x R matrix with doubles.
-#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
-#' 
+#'
 #' @returns The correlation matrix.
-#' 
+#'
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
 #' Run randomised SVD over a matrix
-#' 
+#'
 #' @description Runs a randomised singular value decomposition over a matrix.
-#' This implementation is faster than the full SVD on large data sets, with 
+#' This implementation is faster than the full SVD on large data sets, with
 #' slight loss in precision.
-#' 
+#'
 #' @param x Numeric matrix. Rows = samples, columns = features.
 #' @param rank Integer. The rank to use.
 #' @param seed Integer. Random seed for reproducibility.
 #' @param oversampling Integer. Defaults to `10L` if nothing is provided.
-#' @param n_power_iter Integer. How often shall the QR decomposition be 
+#' @param n_power_iter Integer. How often shall the QR decomposition be
 #' applied. Defaults to `2L` if nothing is provided.
-#' 
+#'
 #' @return A list with:
 #' \itemize{
 #'   \item u - u matrix of the SVD.
 #'   \item v - v matrix of the SVD.
 #'   \item s - Eigenvalues of the SVD.
 #' }
-#' 
+#'
 #' @export
 rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap__rs_random_svd, x, rank, seed, oversampling, n_power_iter)
 
 #' Calculate the column wise correlations.
-#' 
+#'
 #' @description Calculates the correlation matrix of the columns. This function
-#' will return the upper triangle. WARNING! Incorrect use can cause kernel 
+#' will return the upper triangle. WARNING! Incorrect use can cause kernel
 #' crashes. Wrapper around the Rust functions with type checks are provided in
 #' the package.
-#' 
+#'
 #' @param x R matrix with doubles.
-#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
 #' @param shift Shall a shift be applied to the matrix. 0 = the diagonal will
 #' be included. 1 = the diagonal will not be included.
-#' 
+#'
 #' @returns The upper triangle of the correlation matrix iterating through the
 #' rows, shifted by one (the diagonal will not be returned).
-#' 
+#'
 #' @export
 rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_triangle, x, spearman, shift)
 
 #' Helper to identify the right epsilon parameter
-#' 
-#' @description This function will take a distance vector from the upper 
+#'
+#' @description This function will take a distance vector from the upper
 #' triangle of a symmetric distance matrix and apply the desired RBF with the
 #' supplied epsilon from epsilon vec. Subsequently, the column sums will be
-#' measured to identify the total similarity of each feature with other 
+#' measured to identify the total similarity of each feature with other
 #' features. This data can be used to see if the data follows scale-free
 #' topology for example to identify the right epsilon parameter with the given
 #' RBF.
-#' 
+#'
 #' @param dist Numeric vector. The distances you wish to apply the RBF function
 #' to.
 #' @param epsilon_vec Numeric vector. The epsilons you wish to use/test.
-#' @param original_dim Integer. The original dimensions of the symmetric 
+#' @param original_dim Integer. The original dimensions of the symmetric
 #' distance matrix.
 #' @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
 #' diagonal not incldued).
 #' @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
 #' implemented RBF function.
-#' 
-#' @return A matrix with rows being the epsilons tested, and columns 
+#'
+#' @return A matrix with rows being the epsilons tested, and columns
 #' representing the summed affinity to other features.
-#' 
+#'
 #' @export
 rs_rbf_iterate_epsilons <- function(dist, epsilon_vec, original_dim, shift, rbf_type) .Call(wrap__rs_rbf_iterate_epsilons, dist, epsilon_vec, original_dim, shift, rbf_type)
 
 #' Calculate the column wise differential correlation between two sets of data.
-#' 
+#'
 #' @description This function calculates the differential correlation based on
 #' the Fisher method. For speed purposes, the function will only calculate the
 #' differential correlation on the upper triangle of the two correlation
 #' matrices.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust 
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
 #' functions with type checks are provided in the package.
-#' 
+#'
 #' @param x_a R matrix a to be used for the differential correlation analysis.
 #' @param x_b R matrix a to be used for the differential correlation analysis.
-#' @param spearman Shall the Spearman correlation be calculated instead of 
+#' @param spearman Shall the Spearman correlation be calculated instead of
 #' Pearson.
-#' 
+#'
 #' @return A list containing:
 #'  \itemize{
-#'   \item r_a - The correlation coefficients in the upper triangle of 
+#'   \item r_a - The correlation coefficients in the upper triangle of
 #'   matrix a.
-#'   \item r_b - The correlation coefficients in the upper triangle of 
+#'   \item r_b - The correlation coefficients in the upper triangle of
 #'   matrix b.
-#'   \item z_score - The z-scores of the difference in correlation 
-#'   coefficients. 
+#'   \item z_score - The z-scores of the difference in correlation
+#'   coefficients.
 #'   \item p_val - The z-scores transformed to p-values.
 #' }
-#' 
+#'
 #' @export
 rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_cor, x_a, x_b, spearman)
 
 #' Calculate the contrastive PCA
-#' 
+#'
 #' @description This function calculate the contrastive PCA given a target
 #' covariance matrix and the background covariance matrix you wish to subtract.
 #' The alpha parameter controls how much of the background covariance you wish
@@ -360,7 +360,7 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #' specificy the number of cPCAs to return. WARNING! Incorrect use can cause
 #' kernel crashes. Wrapper around the Rust functions with type checks are
 #' provided in the package.
-#' 
+#'
 #' @param target_covar The co-variance matrix of the target data set.
 #' @param background_covar The co-variance matrix of the background data set.
 #' @param target_mat The original values of the target matrix.
@@ -368,14 +368,14 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #' @param n_pcs How many contrastive PCs to return
 #' @param return_loadings Shall the loadings be returned from the contrastive
 #' PCA
-#' 
+#'
 #' @return A list containing:
 #'  \itemize{
 #'   \item factors - The factors of the contrastive PCA.
-#'   \item loadings - The loadings of the contrastive PCA. Will be NULL if 
+#'   \item loadings - The loadings of the contrastive PCA. Will be NULL if
 #'    return_loadings is set to FALSE.
 #' }
-#' 
+#'
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
