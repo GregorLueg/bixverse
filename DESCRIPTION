@@ -34,5 +34,6 @@ Imports:
     S7,
     zeallot,
     MASS,
-    edgeR
+    edgeR,
+    rhdf5
 Suggests: tinytest

@@ -4,11 +4,11 @@
 \alias{bulk_dge}
 \title{Bulk RNAseq differential gene expression class}
 \usage{
-bulk_dge(raw_counts, meta_data, .verbose, ...)
+bulk_dge(raw_counts, meta_data, .verbose = TRUE, ...)
 }
 \arguments{
-\item{raw_counts}{matrix. The raw count matrix. Rows = genes, columns = samples.
-Note: this is different from the \code{\link[=bulk_coexp]{bulk_coexp()}} class!}
+\item{raw_counts}{matrix. The raw count matrix. Rows = genes, columns =
+samples. Note: this is different from the \code{\link[=bulk_coexp]{bulk_coexp()}} class!}
 
 \item{meta_data}{data.table. Metadata information on the samples. It expects
 to have a column sample_id and case_control column.}
