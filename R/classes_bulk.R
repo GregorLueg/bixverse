@@ -1,6 +1,6 @@
 # bulk co-exp ------------------------------------------------------------------
 
-## class -----------------------------------------------------------------------
+## classes ---------------------------------------------------------------------
 
 #' @title Bulk RNAseq co-expression modules
 #'
@@ -67,9 +67,176 @@ bulk_coexp <- S7::new_class(
   }
 )
 
+#' @title Bulk RNAseq differential gene expression class
+#'
+#' @description
+#' Class for coordinating differential gene expression analyses with subsequent
+#' GSE in a structured format. The class will automatically generated a filtered
+#' count matrix in which lowly expressed genes are removed.
+#'
+#' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
+#' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
+#' @param meta_data data.table. Metadata information on the samples. It expects
+#' to have a column sample_id and case_control column.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param ... Parameters to forward to [edgeR::filterByExpr()].
+#'
+#' @section Properties:
+#' \describe{
+#'   \item{raw_counts}{A numerical matrix of the provided raw data.}
+#'   \item{filtered_counts}{A numerical matrix with the filtered counts by
+#'   minimum expression.}
+#'   \item{meta_data}{A data.table with the meta-information about the samples.}
+#'   \item{params}{A (nested) list that will store all the parameters of the
+#'   applied function.}
+#'   \item{final_results}{A list in which final results will be stored.}
+#' }
+#'
+#' @return Returns the `bulk_coexp` class for further operations.
+#'
+#' @export
+bulk_dge <- S7::new_class(
+  # Names, parents
+  name = "bulk_dge",
+  parent = bixverse_base_class,
+
+  # Properties
+  properties = list(
+    raw_counts = S7::class_numeric,
+    filtered_counts = S7::class_numeric,
+    meta_data = S7::class_data.frame,
+    params = S7::class_list,
+    final_results = S7::class_any
+  ),
+  constructor = function(
+    raw_counts,
+    meta_data,
+    .verbose = TRUE,
+    ...
+  ) {
+    # Checks
+    checkmate::assertMatrix(raw_counts, mode = "numeric")
+    checkmate::assertDataTable(meta_data)
+    checkmate::assertNames(
+      names(meta_data),
+      must.include = c("sample_id")
+    )
+    checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
+
+    to_keep <- edgeR::filterByExpr(raw_counts, ...)
+
+    if (.verbose)
+      message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+
+    filtered_counts <- raw_counts[to_keep, ]
+
+    params <- list(
+      original_dim = dim(raw_counts),
+      filtered_dim = dim(filtered_counts)
+    )
+
+    S7::new_object(
+      S7::S7_object(),
+      raw_counts = raw_counts,
+      filtered_counts = filtered_counts,
+      meta_data = meta_data,
+      params = params,
+      final_results = list()
+    )
+  }
+)
+
+## additional constructors -----------------------------------------------------
+
+#' Wrapper function to generate bulk_dge object from h5ad
+#'
+#' @description
+#' This is a helper function that can be used to create a `bulk_dge` object
+#' (see [bixverse::bulk_dge()]) directly from h5ad objects.
+#'
+#' @param h5_path String. Path to the h5ad object.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param ... Further parameters that are forwarded to [edgeR::filterByExpr()]
+#' during class generation. For more details, refer to [bixverse::bulk_dge()].
+#'
+#' @returns `bulk_dge` object.
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+bulk_dge_from_h5ad <- function(h5_path, .verbose = TRUE, ...) {
+  checkmate::qassert(h5_path, "S1")
+  checkmate::assertFileExists(h5_path)
+  checkmate::qassert(.verbose, "B1")
+  h5_obj <- anndata_parser$new(h5_path)
+  if (.verbose) message("Loading data from the h5ad object")
+  c(meta_data, counts) %<-% h5_obj$get_bulk_data()
+  bulk_dge_obj <- bulk_dge(
+    raw_counts = counts,
+    meta_data = meta_data,
+    .verbose = .verbose,
+    ...
+  )
+  return(bulk_dge_obj)
+}
+
 ## utils -----------------------------------------------------------------------
 
-### getters --------------------------------------------------------------------
+### common getters -------------------------------------------------------------
+
+#' Return the metadata
+#'
+#' @description
+#' Getter function to extract the metadata from the [bixverse::bulk_coexp()] or
+#' [bixverse::bulk_dge()].
+#'
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return Returns the metadata stored in the class.
+#'
+#' @export
+get_metadata <- S7::new_generic(
+  name = "get_metadata",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_metadata bulk_coexp
+#'
+#' @export
+S7::method(get_metadata, bulk_coexp) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_coexp"
+    )
+
+    # Return
+    return(S7::prop(object, "meta_data"))
+  }
+
+
+#' @method get_metadata bulk_dge
+#'
+#' @export
+S7::method(get_metadata, bulk_dge) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    # Return
+    return(S7::prop(object, "meta_data"))
+  }
+
+### individual getters ---------------------------------------------------------
 
 #' Return the outputs from bulk_coexp
 #'
@@ -107,7 +274,7 @@ S7::method(get_outputs, bulk_coexp) <-
     return(S7::prop(object, "outputs"))
   }
 
-### print ----------------------------------------------------------------------
+### prints ---------------------------------------------------------------------
 
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object
@@ -175,7 +342,9 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   invisible(x)
 }
 
-### methods --------------------------------------------------------------------
+# TODO write print for bulk_dge
+
+### general methods ------------------------------------------------------------
 
 #' Process the raw data
 #'
@@ -393,117 +562,21 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 
 ## class -----------------------------------------------------------------------
 
-#' @title Bulk RNAseq differential gene expression class
-#'
-#' @description
-#' Class for coordinating differential gene expression analyses with subsequent
-#' GSE in a structured format. The class will automatically generated a filtered
-#' count matrix in which lowly expressed genes are removed.
-#'
-#' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
-#' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
-#' @param meta_data data.table. Metadata information on the samples. It expects
-#' to have a column sample_id and case_control column.
-#' @param .verbose Boolean. Controls verbosity of the function.
-#' @param ... Parameters to forward to [edgeR::filterByExpr()].
-#'
-#' @section Properties:
-#' \describe{
-#'   \item{raw_counts}{A numerical matrix of the provided raw data.}
-#'   \item{filtered_counts}{A numerical matrix with the filtered counts by
-#'   minimum expression.}
-#'   \item{meta_data}{A data.table with the meta-information about the samples.}
-#'   \item{params}{A (nested) list that will store all the parameters of the
-#'   applied function.}
-#'   \item{final_results}{A list in which final results will be stored.}
-#' }
-#'
-#' @return Returns the `bulk_coexp` class for further operations.
-#'
-#' @export
-bulk_dge <- S7::new_class(
-  # Names, parents
-  name = "bulk_dge",
-  parent = bixverse_base_class,
-
-  # Properties
-  properties = list(
-    raw_counts = S7::class_numeric,
-    filtered_counts = S7::class_numeric,
-    meta_data = S7::class_data.frame,
-    params = S7::class_list,
-    final_results = S7::class_any
-  ),
-  constructor = function(
-    raw_counts,
-    meta_data,
-    .verbose = TRUE,
-    ...
-  ) {
-    # Checks
-    checkmate::assertMatrix(raw_counts, mode = "numeric")
-    checkmate::assertDataTable(meta_data)
-    checkmate::assertNames(
-      names(meta_data),
-      must.include = c("sample_id")
-    )
-    checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
-
-    to_keep <- edgeR::filterByExpr(raw_counts, ...)
-
-    if (.verbose)
-      message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-    filtered_counts <- raw_counts[to_keep, ]
-
-    params <- list(
-      original_dim = dim(raw_counts),
-      filtered_dim = dim(filtered_counts)
-    )
-
-    S7::new_object(
-      S7::S7_object(),
-      raw_counts = raw_counts,
-      filtered_counts = filtered_counts,
-      meta_data = meta_data,
-      params = params,
-      final_results = list()
-    )
-  }
-)
-
 ## utils -----------------------------------------------------------------------
 
-### additional constructors ----------------------------------------------------
+### getters --------------------------------------------------------------------
 
-#' Wrapper function to generate bulk_dge object from h5ad
-#'
-#' @description
-#' This is a helper function that can be used to create a `bulk_dge` object
-#' (see [bixverse::bulk_dge()]) directly from h5ad objects.
-#'
-#' @param h5_path String. Path to the h5ad object.
-#' @param .verbose Boolean. Controls verbosity of the function.
-#' @param ... Further parameters that are forwarded to [edgeR::filterByExpr()]
-#' during class generation. For more details, refer to [bixverse::bulk_dge()].
-#'
-#' @returns `bulk_dge` object.
+#' @method get_outputs bulk_coexp
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-bulk_dge_from_h5ad <- function(h5_path, .verbose = TRUE, ...) {
-  checkmate::qassert(h5_path, "S1")
-  checkmate::assertFileExists(h5_path)
-  checkmate::qassert(.verbose, "B1")
-  h5_obj <- anndata_parser$new(h5_path)
-  if (.verbose) message("Loading data from the h5ad object")
-  c(meta_data, counts) %<-% h5_obj$get_bulk_data()
-  bulk_dge_obj <- bulk_dge(
-    raw_counts = counts,
-    meta_data = meta_data,
-    .verbose = .verbose,
-    ...
-  )
-  return(bulk_dge_obj)
-}
+S7::method(get_outputs, bulk_coexp) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_coexp"
+    )
+
+    # Return
+    return(S7::prop(object, "outputs"))
+  }
