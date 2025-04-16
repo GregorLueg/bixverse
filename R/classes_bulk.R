@@ -428,8 +428,8 @@ bulk_dge <- S7::new_class(
 
   # Properties
   properties = list(
-    raw_counts = S7::class_double,
-    filtered_counts = S7::class_double,
+    raw_counts = S7::class_numeric,
+    filtered_counts = S7::class_numeric,
     meta_data = S7::class_data.frame,
     params = S7::class_list,
     final_results = S7::class_any
@@ -474,4 +474,36 @@ bulk_dge <- S7::new_class(
 
 ## utils -----------------------------------------------------------------------
 
-### constructors ---------------------------------------------------------------
+### additional constructors ----------------------------------------------------
+
+#' Wrapper function to generate bulk_dge object from h5ad
+#'
+#' @description
+#' This is a helper function that can be used to create a `bulk_dge` object
+#' (see [bixverse::bulk_dge()]) directly from h5ad objects.
+#'
+#' @param h5_path String. Path to the h5ad object.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#' @param ... Further parameters that are forwarded to [edgeR::filterByExpr()]
+#' during class generation. For more details, refer to [bixverse::bulk_dge()].
+#'
+#' @returns `bulk_dge` object.
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+bulk_dge_from_h5ad <- function(h5_path, .verbose = TRUE, ...) {
+  checkmate::qassert(h5_path, "S1")
+  checkmate::assertFileExists(h5_path)
+  checkmate::qassert(.verbose, "B1")
+  h5_obj <- anndata_parser$new(h5_path)
+  if (.verbose) message("Loading data from the h5ad object")
+  c(meta_data, counts) %<-% h5_obj$get_bulk_data()
+  bulk_dge_obj <- bulk_dge(
+    raw_counts = counts,
+    meta_data = meta_data,
+    .verbose = .verbose,
+    ...
+  )
+  return(bulk_dge_obj)
+}

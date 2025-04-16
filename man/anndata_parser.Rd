@@ -4,14 +4,16 @@
 \alias{anndata_parser}
 \title{Class for Anndata}
 \description{
-This class helps dealing with h5ad objects from Python AnnData.
+This class helps dealing with h5ad objects from Python AnnData. You have
+several options will allow for retrieval of the underlying data.
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-anndata_parser-new}{\code{anndata_parser$new()}}
-\item \href{#method-anndata_parser-get_obs_data}{\code{anndata_parser$get_obs_data()}}
+\item \href{#method-anndata_parser-get_obs_table}{\code{anndata_parser$get_obs_table()}}
 \item \href{#method-anndata_parser-get_raw_counts}{\code{anndata_parser$get_raw_counts()}}
+\item \href{#method-anndata_parser-get_bulk_data}{\code{anndata_parser$get_bulk_data()}}
 \item \href{#method-anndata_parser-clone}{\code{anndata_parser$clone()}}
 }
 }
@@ -36,13 +38,13 @@ Returns the initialised class.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-anndata_parser-get_obs_data"></a>}}
-\if{latex}{\out{\hypertarget{method-anndata_parser-get_obs_data}{}}}
-\subsection{Method \code{get_obs_data()}}{
+\if{html}{\out{<a id="method-anndata_parser-get_obs_table"></a>}}
+\if{latex}{\out{\hypertarget{method-anndata_parser-get_obs_table}{}}}
+\subsection{Method \code{get_obs_table()}}{
 Returns the observation table with all the data from the
 h5ad file.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_obs_data()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_obs_table()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
@@ -64,6 +66,24 @@ anndata object.
 \subsection{Returns}{
 Returns the count matrix with samples = columns and rows =
 features.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-anndata_parser-get_bulk_data"></a>}}
+\if{latex}{\out{\hypertarget{method-anndata_parser-get_bulk_data}{}}}
+\subsection{Method \code{get_bulk_data()}}{
+Wrapper function that returns a list of the stored count
+data and the metadata found in the h5ad file.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_bulk_data()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+List with following elements:
+\itemize{
+\item metadata - metadata from the respective h5ad object.
+\item counts - counts that were found in the h5ad object.
+}
 }
 }
 \if{html}{\out{<hr>}}

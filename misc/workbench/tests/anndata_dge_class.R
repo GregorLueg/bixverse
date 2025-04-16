@@ -21,6 +21,11 @@ h5_content <- rhdf5::h5ls(
 
 devtools::document()
 
+devtools::load_all()
+
+
+test <- bulk_dge_from_h5ad(h5_file)
+
 # Obs
 
 obs_index = h5_content[group == "/obs" & otype == "H5I_DATASET"] %>%

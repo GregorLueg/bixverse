@@ -62,8 +62,8 @@ anndata_parser <- R6::R6Class(
         }) %>%
           data.table::setDT() %>%
           `colnames<-`(colnames) %>%
-          .[, sample_ids := obs_index] %>%
-          .[, c("sample_ids", colnames), with = FALSE]
+          .[, sample_id := obs_index] %>%
+          .[, c("sample_id", colnames), with = FALSE]
       } else {
         obs <- data.table(
           sample_id = obs_index
@@ -90,6 +90,24 @@ anndata_parser <- R6::R6Class(
         `colnames<-`(obs_names)
 
       return(raw_counts)
+    },
+    #' @description Wrapper function that returns a list of the stored count
+    #' data and the metadata found in the h5ad file.
+    #'
+    #' @return List with following elements:
+    #' \itemize{
+    #'  \item metadata - metadata from the respective h5ad object.
+    #'  \item counts - counts that were found in the h5ad object.
+    #' }
+    get_bulk_data = function() {
+      counts <- self$get_raw_counts()
+      meta_data <- self$get_obs_table()
+      return(
+        list(
+          metadata = meta_data,
+          counts = counts
+        )
+      )
     }
   ),
 
