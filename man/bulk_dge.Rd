@@ -4,7 +4,7 @@
 \alias{bulk_dge}
 \title{Bulk RNAseq differential gene expression class}
 \usage{
-bulk_dge(raw_counts, meta_data, .verbose = TRUE, ...)
+bulk_dge(raw_counts, meta_data, variable_info = NULL, .verbose = TRUE, ...)
 }
 \arguments{
 \item{raw_counts}{matrix. The raw count matrix. Rows = genes, columns =
@@ -12,6 +12,9 @@ samples. Note: this is different from the \code{\link[=bulk_coexp]{bulk_coexp()}
 
 \item{meta_data}{data.table. Metadata information on the samples. It expects
 to have a column sample_id and case_control column.}
+
+\item{variable_info}{data.table. Metadata information on the features. This
+is an optional table.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 
@@ -32,6 +35,7 @@ count matrix in which lowly expressed genes are removed.
 \item{filtered_counts}{A numerical matrix with the filtered counts by
 minimum expression.}
 \item{meta_data}{A data.table with the meta-information about the samples.}
+\item{variable_info}{An optional data.table containing the variable info.}
 \item{params}{A (nested) list that will store all the parameters of the
 applied function.}
 \item{final_results}{A list in which final results will be stored.}

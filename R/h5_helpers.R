@@ -29,6 +29,7 @@ anndata_parser <- R6::R6Class(
         h5_path
       ) %>%
         data.table::setDT()
+      rhdf5::H5close()
       # Populate the slots
       private$h5_content <- h5_content
       private$h5_path <- h5_path
@@ -37,8 +38,8 @@ anndata_parser <- R6::R6Class(
     #' h5ad file.
     #'
     #' @return data.table. The found observations are returned. The pandas index
-    #' will be named `sample_id`. Remaining columns will be returned as factors
-    #' due to the way the data is stored in h5.
+    #' will be named `sample_id`. Remaining columns (if found) will be returned
+    #' as factors due to the way the data is stored in h5.
     get_obs_table = function() {
       obs_index <- private$get_obs_index()
       obs_grps <- private$h5_content[group %like% "/obs/"] %>%
@@ -70,7 +71,51 @@ anndata_parser <- R6::R6Class(
         )
       }
 
+      rhdf5::H5close()
+
       return(obs)
+    },
+    #' @description Returns the variable table with all the data from the
+    #' h5ad file.
+    #'
+    #' @return data.table. The found observations are returned. The pandas index
+    #' will be named `var_id`. Remaining columns (if found) will be returned as
+    #' factors due to the way the data is stored in h5.
+    get_var_info = function() {
+      var_index <- private$get_var_index()
+      var_grps <- private$h5_content[group %like% "/var/"] %>%
+        .[, full_path := paste(group, name, sep = "/")]
+
+      categories_paths <- var_grps[name == "categories", full_path]
+      codes_paths <- var_grps[name == "codes", full_path]
+
+      categories <- purrr::map(categories_paths, \(path) {
+        as.character(rhdf5::h5read(file = private$h5_path, name = path))
+      })
+      codes <- purrr::map(codes_paths, \(path) {
+        as.integer(rhdf5::h5read(file = private$h5_path, name = path)) + 1
+      })
+
+      colnames <- unique(gsub("/var/", "", var_grps[["group"]]))
+
+      if (length(colnames) > 0) {
+        vars <- purrr::map2(categories, codes, \(cat, code) {
+          code[code == 0] <- NA
+          factor(cat[code], levels = cat)
+        }) %>%
+          data.table::setDT() %>%
+          `colnames<-`(colnames) %>%
+          .[, var_id := var_index] %>%
+          .[, c("var_id", colnames), with = FALSE]
+      } else {
+        vars <- data.table(
+          var_id = var_index
+        )
+      }
+
+      rhdf5::H5close()
+
+      return(vars)
     },
     #' @description Returns the counts that are stored in `X` slot of the
     #' anndata object.
@@ -89,6 +134,8 @@ anndata_parser <- R6::R6Class(
         `rownames<-`(var_names) %>%
         `colnames<-`(obs_names)
 
+      rhdf5::H5close()
+
       return(raw_counts)
     },
     #' @description Wrapper function that returns a list of the stored count
@@ -96,15 +143,19 @@ anndata_parser <- R6::R6Class(
     #'
     #' @return List with following elements:
     #' \itemize{
-    #'  \item metadata - metadata from the respective h5ad object.
-    #'  \item counts - counts that were found in the h5ad object.
+    #'  \item metadata - metadata from the respective h5ad file
+    #'  \item var_info - metadata on the variables from the respective h5ad
+    #'  file.
+    #'  \item counts - counts that were found in the h5ad file.
     #' }
-    get_bulk_data = function() {
+    get_key_data = function() {
       counts <- self$get_raw_counts()
       meta_data <- self$get_obs_table()
+      var_info <- self$get_var_info()
       return(
         list(
           metadata = meta_data,
+          var_info = var_info,
           counts = counts
         )
       )
@@ -126,6 +177,8 @@ anndata_parser <- R6::R6Class(
         name = obs_index
       ))
 
+      rhdf5::H5close()
+
       return(sample_ids)
     },
     # Returns the index stored for the variables
@@ -140,6 +193,8 @@ anndata_parser <- R6::R6Class(
         file = private$h5_path,
         name = var_index
       ))
+
+      rhdf5::H5close()
 
       return(var_ids)
     }

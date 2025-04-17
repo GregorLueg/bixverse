@@ -12,8 +12,9 @@ several options will allow for retrieval of the underlying data.
 \itemize{
 \item \href{#method-anndata_parser-new}{\code{anndata_parser$new()}}
 \item \href{#method-anndata_parser-get_obs_table}{\code{anndata_parser$get_obs_table()}}
+\item \href{#method-anndata_parser-get_var_info}{\code{anndata_parser$get_var_info()}}
 \item \href{#method-anndata_parser-get_raw_counts}{\code{anndata_parser$get_raw_counts()}}
-\item \href{#method-anndata_parser-get_bulk_data}{\code{anndata_parser$get_bulk_data()}}
+\item \href{#method-anndata_parser-get_key_data}{\code{anndata_parser$get_key_data()}}
 \item \href{#method-anndata_parser-clone}{\code{anndata_parser$clone()}}
 }
 }
@@ -49,8 +50,24 @@ h5ad file.
 
 \subsection{Returns}{
 data.table. The found observations are returned. The pandas index
-will be named \code{sample_id}. Remaining columns will be returned as factors
-due to the way the data is stored in h5.
+will be named \code{sample_id}. Remaining columns (if found) will be returned
+as factors due to the way the data is stored in h5.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-anndata_parser-get_var_info"></a>}}
+\if{latex}{\out{\hypertarget{method-anndata_parser-get_var_info}{}}}
+\subsection{Method \code{get_var_info()}}{
+Returns the variable table with all the data from the
+h5ad file.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_var_info()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+data.table. The found observations are returned. The pandas index
+will be named \code{var_id}. Remaining columns (if found) will be returned as
+factors due to the way the data is stored in h5.
 }
 }
 \if{html}{\out{<hr>}}
@@ -69,20 +86,22 @@ features.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-anndata_parser-get_bulk_data"></a>}}
-\if{latex}{\out{\hypertarget{method-anndata_parser-get_bulk_data}{}}}
-\subsection{Method \code{get_bulk_data()}}{
+\if{html}{\out{<a id="method-anndata_parser-get_key_data"></a>}}
+\if{latex}{\out{\hypertarget{method-anndata_parser-get_key_data}{}}}
+\subsection{Method \code{get_key_data()}}{
 Wrapper function that returns a list of the stored count
 data and the metadata found in the h5ad file.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_bulk_data()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{anndata_parser$get_key_data()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 List with following elements:
 \itemize{
-\item metadata - metadata from the respective h5ad object.
-\item counts - counts that were found in the h5ad object.
+\item metadata - metadata from the respective h5ad file
+\item var_info - metadata on the variables from the respective h5ad
+file.
+\item counts - counts that were found in the h5ad file.
 }
 }
 }

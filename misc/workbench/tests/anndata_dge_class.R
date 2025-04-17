@@ -4,79 +4,73 @@ library(magrittr)
 
 ad <- read_h5ad("~/Desktop/geo_data/GSE65832/final/GSE65832_anndata.h5ad")
 
+ad$var
+
 counts <- t(ad$X)
 
 obs_original = ad$obs
 
-h5_file <- "~/Desktop/geo_data/GSE65832/final/GSE65832_anndata.h5ad"
-
-h5_class = anndata_parser$new(h5_file)
-
-h5_class$get_obs_data()
-
-h5_content <- rhdf5::h5ls(
-  h5_file
-) %>%
-  setDT()
+h5_file <- "~/Desktop/geo_data/GSE157194/final/GSE157194_anndata.h5ad"
 
 devtools::document()
 
 devtools::load_all()
 
-
 test <- bulk_dge_from_h5ad(h5_file)
 
+counts <- test@filtered_counts
 
-# Obs
+dim(counts)
 
-obs_index = h5_content[group == "/obs" & otype == "H5I_DATASET"] %>%
-  .[, path := paste(group, name, sep = "/")] %>%
-  .[, path]
+meta_data <- get_metadata(test)
 
-sample_ids <- c(rhdf5::h5read(
-  file = h5_file,
-  name = obs_index
-))
+colnames(meta_data)
 
-obs_grps <- h5_content[group %like% "/obs/"] %>%
-  .[, full_path := paste(group, name, sep = "/")]
+dge_list <- edgeR::DGEList(counts)
+dge_list <- edgeR::calcNormFactors(dge_list, method = "TMM")
+model_matrix <- model.matrix(~Sample_characteristics_ch1_4, data = meta_data)
+voom_obj <- limma::voom(counts = dge_list, design = model_matrix, plot = TRUE)
+limma_fit <- limma::lmFit(voom_obj, model_matrix)
 
-categories_paths <- obs_grps[name == "categories", full_path]
-codes_paths <- obs_grps[name == "codes", full_path]
 
-categories <- purrr::map(categories_paths, \(path) {
-  as.character(rhdf5::h5read(file = h5_file, name = path))
+all_contrasts <- function(group, delim = "vs") {
+  group <- unique(as.character(group))
+  cb <- combn(group, 2, FUN = function(x) {
+    paste0(sprintf("`%s`", x[1]), "-", sprintf("`%s`", x[2]))
+  })
+  contrasts <- limma::makeContrasts(contrasts = cb, levels = group)
+  colnames(contrasts) <- gsub("-", delim, colnames(contrasts))
+  return(contrasts)
+}
+
+group <- meta_data$Sample_characteristics_ch1_4
+
+group <- unique(as.character(group))
+
+cb <- combn(group, 2, FUN = function(x) {
+  paste0(x[1], "-", x[2])
 })
-codes <- purrr::map(codes_paths, \(path) {
-  as.integer(rhdf5::h5read(file = h5_file, name = path)) + 1
-})
 
-colnames <- unique(gsub("/obs/", "", obs_grps[["group"]]))
+all_contrasts(c("a", "b", "c"))
 
-obs = purrr::map2(categories, codes, \(cat, code) {
-  factor(cat[code], levels = cat)
-}) %>%
+
+limma_fit <- limma::eBayes(limma_fit)
+
+targ_coefs = setdiff(colnames(model_matrix), "(Intercept)")
+
+dge_res <- limma::topTable(
+  limma_fit,
+  coef = targ_coefs,
+  number = Inf,
+  sort.by = "t",
+  genelist = rownames(counts)
+) %>%
   setDT() %>%
-  `colnames<-`(colnames) %>%
-  .[, sample_ids := sample_ids] %>%
-  .[, c("sample_ids", colnames), with = FALSE]
+  .[, ensembl_id := entrez_ensembl[ID]] %>%
+  setorder(logFC)
 
-# Vars
 
-var_index = h5_content[group == "/var" & otype == "H5I_DATASET"] %>%
-  .[, path := paste(group, name, sep = "/")] %>%
-  .[, path]
+dge_res[ensembl_id == "ENSG00000153563"]
 
-var_ids <- c(rhdf5::h5read(
-  file = h5_file,
-  name = var_index
-))
 
-# X
-
-X <- rhdf5::h5read(
-  file = h5_file,
-  name = "/X"
-)
-
-dim(t(X))
+head(coef(limma_fit))

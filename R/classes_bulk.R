@@ -9,13 +9,16 @@
 #' bulk RNAseq data.
 #'
 #' @param raw_data The raw count matrix. Rows = samples, columns = features.
-#' @param meta_data Metadata information on the samples. It expects to have a
-#' column sample_id and case_control column.
+#' @param meta_data data.table Metadata information on the samples. Expects to
+#' have a `sample_id` column.
+#' @param variable_info data.table. Metadata information on the features. This
+#' is an optional table.
 #'
 #' @section Properties:
 #' \describe{
 #'   \item{raw_data}{A numerical matrix of the provided raw data.}
 #'   \item{meta_data}{A data.table with the meta-information about the samples.}
+#'   \item{variable_info}{An optional data.table containing the variable info.}
 #'   \item{processed_data}{A list in which various types of processed data will
 #'   be stored.}
 #'   \item{outputs}{A list in which key outputs will be stored.}
@@ -36,18 +39,23 @@ bulk_coexp <- S7::new_class(
   properties = list(
     raw_data = S7::class_double,
     meta_data = S7::class_data.frame,
+    variable_info = S7::class_any,
     processed_data = S7::class_list,
     outputs = S7::class_list,
     params = S7::class_list,
     final_results = S7::class_any
   ),
-  constructor = function(raw_data, meta_data) {
+  constructor = function(raw_data, meta_data, variable_info = NULL) {
     # Checks
     checkmate::assertMatrix(raw_data, mode = "numeric")
-    checkmate::assertDataFrame(meta_data)
+    checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),
       must.include = c("sample_id", "case_control")
+    )
+    checkmate::assert(
+      checkmate::checkDataTable(variable_info),
+      checkmate::checkNull(variable_info)
     )
     checkmate::assertTRUE(all(rownames(raw_data) %in% meta_data$sample_id))
 
@@ -58,7 +66,8 @@ bulk_coexp <- S7::new_class(
     S7::new_object(
       S7::S7_object(),
       raw_data = raw_data,
-      meta_data = data.table::as.data.table(meta_data),
+      meta_data = meta_data,
+      variable_info = variable_info,
       processed_data = list(),
       outputs = list(),
       params = params,
@@ -78,6 +87,8 @@ bulk_coexp <- S7::new_class(
 #' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
 #' @param meta_data data.table. Metadata information on the samples. It expects
 #' to have a column sample_id and case_control column.
+#' @param variable_info data.table. Metadata information on the features. This
+#' is an optional table.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #' @param ... Parameters to forward to [edgeR::filterByExpr()].
 #'
@@ -87,6 +98,7 @@ bulk_coexp <- S7::new_class(
 #'   \item{filtered_counts}{A numerical matrix with the filtered counts by
 #'   minimum expression.}
 #'   \item{meta_data}{A data.table with the meta-information about the samples.}
+#'   \item{variable_info}{An optional data.table containing the variable info.}
 #'   \item{params}{A (nested) list that will store all the parameters of the
 #'   applied function.}
 #'   \item{final_results}{A list in which final results will be stored.}
@@ -105,12 +117,14 @@ bulk_dge <- S7::new_class(
     raw_counts = S7::class_numeric,
     filtered_counts = S7::class_numeric,
     meta_data = S7::class_data.frame,
+    variable_info = S7::class_any,
     params = S7::class_list,
     final_results = S7::class_any
   ),
   constructor = function(
     raw_counts,
     meta_data,
+    variable_info = NULL,
     .verbose = TRUE,
     ...
   ) {
@@ -122,6 +136,10 @@ bulk_dge <- S7::new_class(
       must.include = c("sample_id")
     )
     checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
+    checkmate::assert(
+      checkmate::checkDataTable(variable_info),
+      checkmate::checkNull(variable_info)
+    )
 
     to_keep <- edgeR::filterByExpr(raw_counts, ...)
 
@@ -140,6 +158,7 @@ bulk_dge <- S7::new_class(
       raw_counts = raw_counts,
       filtered_counts = filtered_counts,
       meta_data = meta_data,
+      variable_info = variable_info,
       params = params,
       final_results = list()
     )
@@ -170,10 +189,11 @@ bulk_dge_from_h5ad <- function(h5_path, .verbose = TRUE, ...) {
   checkmate::qassert(.verbose, "B1")
   h5_obj <- anndata_parser$new(h5_path)
   if (.verbose) message("Loading data from the h5ad object")
-  c(meta_data, counts) %<-% h5_obj$get_bulk_data()
+  c(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
   bulk_dge_obj <- bulk_dge(
     raw_counts = counts,
     meta_data = meta_data,
+    variable_info = var_info,
     .verbose = .verbose,
     ...
   )
@@ -557,26 +577,3 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 
   return(p)
 }
-
-# bulk dges --------------------------------------------------------------------
-
-## class -----------------------------------------------------------------------
-
-## utils -----------------------------------------------------------------------
-
-### getters --------------------------------------------------------------------
-
-#' @method get_outputs bulk_coexp
-#'
-#' @export
-S7::method(get_outputs, bulk_coexp) <-
-  function(object) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::bulk_coexp"
-    )
-
-    # Return
-    return(S7::prop(object, "outputs"))
-  }
