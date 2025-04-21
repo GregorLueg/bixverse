@@ -32,10 +32,11 @@ count matrix in which lowly expressed genes are removed.
 
 \describe{
 \item{raw_counts}{A numerical matrix of the provided raw data.}
+\item{meta_data}{A data.table with the meta-information about the samples.}
 \item{filtered_counts}{A numerical matrix with the filtered counts by
 minimum expression.}
-\item{meta_data}{A data.table with the meta-information about the samples.}
 \item{variable_info}{An optional data.table containing the variable info.}
+\item{outputs}{A list in which key outputs will be stored.}
 \item{params}{A (nested) list that will store all the parameters of the
 applied function.}
 \item{final_results}{A list in which final results will be stored.}

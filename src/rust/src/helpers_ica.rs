@@ -1,9 +1,10 @@
 use extendr_api::prelude::*;
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
-    Mat, MatRef
+    Mat, MatRef,
 };
 use rand::prelude::*;
+use rand_distr::Distribution;
 use rand_distr::Normal;
 use rayon::iter::*;
 

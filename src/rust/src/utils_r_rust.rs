@@ -90,5 +90,6 @@ pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
 pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let nrow = x.nrows();
     let ncol = x.ncols();
+
     RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
 }

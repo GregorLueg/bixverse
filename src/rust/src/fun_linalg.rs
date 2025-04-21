@@ -274,6 +274,42 @@ fn rs_random_svd(
   )
 }
 
+
+/// Rust implementation of prcomp
+/// 
+/// @description Runs the singular value decomposition over the matrix x. 
+/// Assumes that samples = rows, and columns = features.
+/// 
+/// @param x Numeric matrix. Rows = samples, columns = features.
+/// @param scale Boolean. Shall the columns additionally be scaled.
+/// 
+/// @return A list with:
+/// \itemize{
+///   \item scores - The product of x (centred and potentially scaled) with v.
+///   \item v - v matrix of the SVD.
+///   \item s - Eigenvalues of the SVD.
+///   \item scaled - Boolean. Was the matrix scaled.
+/// }
+/// 
+/// @export
+#[extendr]
+fn rs_prcomp(
+  x: RMatrix<f64>,
+  scale: bool,
+) -> List {
+  let x = r_matrix_to_faer(&x);
+  let x_scaled = scale_matrix_col(x.as_ref(), scale);
+  let svd_res = x_scaled.thin_svd().unwrap();
+  let scores = x_scaled * svd_res.V();
+
+  list!(
+    scores = faer_to_r_matrix(scores.as_ref()),
+    v = faer_to_r_matrix(svd_res.V().as_ref()),
+    s = svd_res.S().column_vector().iter().cloned().collect::<Vec<f64>>(),
+    scaled = scale,
+  )
+}
+
 /// Helper to identify the right epsilon parameter
 /// 
 /// @description This function will take a distance vector from the upper 
@@ -322,6 +358,7 @@ extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_prcomp;
   fn rs_random_svd;
   fn rs_cor_upper_triangle;
   fn rs_rbf_iterate_epsilons;

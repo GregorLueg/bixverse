@@ -49,8 +49,15 @@ anndata_parser <- R6::R6Class(
       codes_paths <- obs_grps[name == "codes", full_path]
 
       categories <- purrr::map(categories_paths, \(path) {
-        as.character(rhdf5::h5read(file = private$h5_path, name = path))
+        cats <- as.character(rhdf5::h5read(file = private$h5_path, name = path))
+        cats <- if (length(cats) == 0) {
+          ""
+        } else {
+          cats
+        }
+        return(cats)
       })
+
       codes <- purrr::map(codes_paths, \(path) {
         as.integer(rhdf5::h5read(file = private$h5_path, name = path)) + 1
       })
@@ -59,6 +66,7 @@ anndata_parser <- R6::R6Class(
 
       if (length(colnames) > 0) {
         obs <- purrr::map2(categories, codes, \(cat, code) {
+          code[code == 0] <- NA
           factor(cat[code], levels = cat)
         }) %>%
           data.table::setDT() %>%

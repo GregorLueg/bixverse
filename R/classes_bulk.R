@@ -95,10 +95,11 @@ bulk_coexp <- S7::new_class(
 #' @section Properties:
 #' \describe{
 #'   \item{raw_counts}{A numerical matrix of the provided raw data.}
-#'   \item{filtered_counts}{A numerical matrix with the filtered counts by
-#'   minimum expression.}
 #'   \item{meta_data}{A data.table with the meta-information about the samples.}
+#'    \item{filtered_counts}{A numerical matrix with the filtered counts by
+#'   minimum expression.}
 #'   \item{variable_info}{An optional data.table containing the variable info.}
+#'   \item{outputs}{A list in which key outputs will be stored.}
 #'   \item{params}{A (nested) list that will store all the parameters of the
 #'   applied function.}
 #'   \item{final_results}{A list in which final results will be stored.}
@@ -118,6 +119,7 @@ bulk_dge <- S7::new_class(
     filtered_counts = S7::class_numeric,
     meta_data = S7::class_data.frame,
     variable_info = S7::class_any,
+    outputs = S7::class_list,
     params = S7::class_list,
     final_results = S7::class_any
   ),
@@ -159,6 +161,7 @@ bulk_dge <- S7::new_class(
       filtered_counts = filtered_counts,
       meta_data = meta_data,
       variable_info = variable_info,
+      outputs = list(),
       params = params,
       final_results = list()
     )
