@@ -346,17 +346,17 @@ S7::method(get_outputs, bulk_dge) <-
 get_dge_list <- S7::new_generic(
   name = "get_dge_list",
   dispatch_args = "object",
-  fun = function(object, ...) {
+  fun = function(object) {
     S7::S7_dispatch()
   }
 )
 
 
-#' @method get_outputs bulk_dge
+#' @method get_dge_list bulk_dge
 #'
 #' @export
-S7::method(get_outputs, bulk_dge) <-
-  function(object, ...) {
+S7::method(get_dge_list, bulk_dge) <-
+  function(object) {
     # Checks
     checkmate::assertClass(
       object,

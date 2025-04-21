@@ -4,7 +4,7 @@
 \alias{get_outputs}
 \title{Return the outputs}
 \usage{
-get_outputs(object)
+get_outputs(object, ...)
 }
 \arguments{
 \item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
