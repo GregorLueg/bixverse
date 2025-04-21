@@ -9,8 +9,7 @@ bulk_dge(
   meta_data,
   norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
   variable_info = NULL,
-  .verbose = TRUE,
-  ...
+  alternative_gene_id = NULL
 )
 }
 \arguments{
@@ -24,21 +23,18 @@ to have a column sample_id and case_control column.}
 \verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 
 \item{variable_info}{data.table. Metadata information on the features. This
-is an optional table.}
+is an optional table. Defaults to \code{NULL}.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{...}{Parameters to forward to \code{\link[edgeR:filterByExpr]{edgeR::filterByExpr()}}.}
+\item{alternative_gene_id}{String. Optional alternative gene identifier to
+be used. Must be a column of variable_info!}
 }
 \value{
 Returns the \code{bulk_coexp} class for further operations.
 }
 \description{
 Class for coordinating differential gene expression analyses with subsequent
-GSE in a structured format. The class will automatically generated a filtered
-count matrix in which lowly expressed genes are removed and calculate the
-normalisation factors based on the TMM method. You can however control this
-via the \code{norm_method} parameter.
+GSE in a structured format. Additionally, the class will store the counts in
+\code{\link[edgeR:DGEList]{edgeR::DGEList()}} for subsequent processing.
 }
 \section{Properties}{
 

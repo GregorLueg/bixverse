@@ -4,15 +4,17 @@
 \alias{bulk_dge_from_h5ad}
 \title{Wrapper function to generate bulk_dge object from h5ad}
 \usage{
-bulk_dge_from_h5ad(h5_path, .verbose = TRUE, ...)
+bulk_dge_from_h5ad(
+  h5_path,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{h5_path}{String. Path to the h5ad object.}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{...}{Further parameters that are forwarded to \code{\link[edgeR:filterByExpr]{edgeR::filterByExpr()}}
-during class generation. For more details, refer to \code{\link[=bulk_dge]{bulk_dge()}}.}
+\item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
+\verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 }
 \value{
 \code{bulk_dge} object.

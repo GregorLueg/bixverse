@@ -80,10 +80,8 @@ bulk_coexp <- S7::new_class(
 #'
 #' @description
 #' Class for coordinating differential gene expression analyses with subsequent
-#' GSE in a structured format. The class will automatically generated a filtered
-#' count matrix in which lowly expressed genes are removed and calculate the
-#' normalisation factors based on the TMM method. You can however control this
-#' via the `norm_method` parameter.
+#' GSE in a structured format. Additionally, the class will store the counts in
+#' [edgeR::DGEList()] for subsequent processing.
 #'
 #' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
 #' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
@@ -92,9 +90,9 @@ bulk_coexp <- S7::new_class(
 #' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
 #' ` "none")`. Please refer to [edgeR::normLibSizes()].
 #' @param variable_info data.table. Metadata information on the features. This
-#' is an optional table.
-#' @param .verbose Boolean. Controls verbosity of the function.
-#' @param ... Parameters to forward to [edgeR::filterByExpr()].
+#' is an optional table. Defaults to `NULL`.
+#' @param alternative_gene_id String. Optional alternative gene identifier to
+#' be used. Must be a column of variable_info!
 #'
 #' @section Properties:
 #' \describe{
@@ -131,8 +129,7 @@ bulk_dge <- S7::new_class(
     meta_data,
     norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
     variable_info = NULL,
-    .verbose = TRUE,
-    ...
+    alternative_gene_id = NULL
   ) {
     # Checks
     norm_method <- match.arg(norm_method)
@@ -152,18 +149,18 @@ bulk_dge <- S7::new_class(
       checkmate::checkDataTable(variable_info),
       checkmate::checkNull(variable_info)
     )
+    if (!is.null(alternative_gene_id)) {
+      checkmate::qassert(alternative_gene_id, "S")
+      checkmate::assertDataTable(variable_info)
+      checkmate::assertTRUE(alternative_gene_id %in% colnames(variable_info))
+      rownames(raw_counts) <- variable_info[[alternative_gene_id]]
+    }
 
-    to_keep <- edgeR::filterByExpr(raw_counts, ...)
-
-    if (.verbose)
-      message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-    dge_list <- edgeR::DGEList(raw_counts[to_keep, ])
+    dge_list <- edgeR::DGEList(raw_counts)
     dge_list <- edgeR::calcNormFactors(dge_list, method = norm_method)
 
     params <- list(
       original_dim = dim(raw_counts),
-      no_genes_kept = sum(to_keep),
       norm_method = norm_method
     )
 
@@ -188,28 +185,35 @@ bulk_dge <- S7::new_class(
 #' (see [bixverse::bulk_dge()]) directly from h5ad objects.
 #'
 #' @param h5_path String. Path to the h5ad object.
-#' @param .verbose Boolean. Controls verbosity of the function.
-#' @param ... Further parameters that are forwarded to [edgeR::filterByExpr()]
-#' during class generation. For more details, refer to [bixverse::bulk_dge()].
+#' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
+#' ` "none")`. Please refer to [edgeR::normLibSizes()].
 #'
 #' @returns `bulk_dge` object.
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
-bulk_dge_from_h5ad <- function(h5_path, .verbose = TRUE, ...) {
+bulk_dge_from_h5ad <- function(
+  h5_path,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  .verbose = TRUE
+) {
+  # Checks
+  norm_method <- match.arg(norm_method)
   checkmate::qassert(h5_path, "S1")
   checkmate::assertFileExists(h5_path)
-  checkmate::qassert(.verbose, "B1")
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+
   h5_obj <- anndata_parser$new(h5_path)
   if (.verbose) message("Loading data from the h5ad object")
   c(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
   bulk_dge_obj <- bulk_dge(
     raw_counts = counts,
     meta_data = meta_data,
-    variable_info = var_info,
-    .verbose = .verbose,
-    ...
+    variable_info = var_info
   )
   return(bulk_dge_obj)
 }
@@ -272,6 +276,8 @@ S7::method(get_metadata, bulk_dge) <-
 
 ### individual getters ---------------------------------------------------------
 
+#### bulk_coexp class ----------------------------------------------------------
+
 #' Return the outputs from bulk_coexp
 #'
 #' @description
@@ -307,6 +313,63 @@ S7::method(get_outputs, bulk_coexp) <-
     # Return
     return(S7::prop(object, "outputs"))
   }
+
+
+### individual setters ---------------------------------------------------------
+
+#### bulk dge class ------------------------------------------------------------
+
+#' Change the primary gene identifier of bulk_dge
+#'
+#' @description
+#' Changes the primary gene identifier in the bulk_dge class. To do so, you need
+#' to either provide a `variable_info` data.table with the alternative gene
+#' identifier you wish to use or it exists already in the object itself. If it
+#' exists in the object, that variable_info will be used.
+#'
+change_gene_identifier <- S7::new_generic(
+  name = "change_gene_identifier",
+  dispatch_args = "object",
+  fun = function(object, alternative_gene_id, variable_info = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method change_gene_identifier bulk_dge
+#'
+#' @export
+S7::method(change_gene_identifier, bulk_dge) <-
+  function(object, alternative_gene_id, variable_info = NULL) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    if (is.null(S7::prop(object, "variable_info"))) {
+      expected_nrows <- S7::prop(object, "params")[['original_dim']][1]
+      checkmate::assertDataTable(variable_info, nrows = expected_nrows)
+      S7::prop(object, "variable_info") <- variable_info
+    }
+
+    variable_info <- S7::prop(object, "variable_info")
+    checkmate::assertTRUE(alternative_gene_id %in% colnames(variable_info))
+
+    norm_method <- S7::prop(object, "params")[['norm_method']]
+
+    rownames(S7::prop(object, "raw_counts")) <- variable_info[[
+      alternative_gene_id
+    ]]
+
+    rownames(S7::prop(object, "outputs")[['dge_list']]) <- variable_info[[
+      alternative_gene_id
+    ]]
+
+    # Return
+    return(object)
+  }
+
 
 ### prints ---------------------------------------------------------------------
 
