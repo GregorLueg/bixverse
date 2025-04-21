@@ -275,18 +275,16 @@ S7::method(get_metadata, bulk_dge) <-
     return(S7::prop(object, "meta_data"))
   }
 
-## individual getters ----------------------------------------------------------
 
-### bulk_coexp class -----------------------------------------------------------
-
-#' Return the outputs from bulk_coexp
+#' Return the outputs
 #'
 #' @description
-#' Getter function to extract the outputs from the [bixverse::bulk_coexp()]
-#' class.
+#' Getter function to extract the outputs from the [bixverse::bulk_coexp()] or
+#' [bixverse::bulk_dge()].
 #'
-#' @param object The underlying `bulk_coexp` class, see
-#' [bixverse::bulk_coexp()].
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param ... Additional arguments to parse to the functions.
 #'
 #' @return Returns the outputs stored in the class.
 #'
@@ -294,7 +292,7 @@ S7::method(get_metadata, bulk_dge) <-
 get_outputs <- S7::new_generic(
   name = "get_outputs",
   dispatch_args = "object",
-  fun = function(object) {
+  fun = function(object, ...) {
     S7::S7_dispatch()
   }
 )
@@ -304,7 +302,7 @@ get_outputs <- S7::new_generic(
 #'
 #' @export
 S7::method(get_outputs, bulk_coexp) <-
-  function(object) {
+  function(object, ...) {
     # Checks
     checkmate::assertClass(
       object,
@@ -313,6 +311,60 @@ S7::method(get_outputs, bulk_coexp) <-
 
     # Return
     return(S7::prop(object, "outputs"))
+  }
+
+
+#' @method get_outputs bulk_dge
+#'
+#' @export
+S7::method(get_outputs, bulk_dge) <-
+  function(object, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    # Return
+    return(S7::prop(object, "outputs"))
+  }
+
+## individual getters ----------------------------------------------------------
+
+### bulk dge class -------------------------------------------------------------
+
+#' Return the DGEList
+#'
+#' @description
+#' Getter function to extract the DGEList from the [bixverse::bulk_dge()] class.
+#'
+#' @param object `bulk_dge` class.
+#'
+#' @return Returns the DGEList stored in the class.
+#'
+#' @export
+get_dge_list <- S7::new_generic(
+  name = "get_dge_list",
+  dispatch_args = "object",
+  fun = function(object, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method get_outputs bulk_dge
+#'
+#' @export
+S7::method(get_outputs, bulk_dge) <-
+  function(object, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    # Return
+    return(S7::prop(object, "outputs")[['dge_list']])
   }
 
 ## individual setters ----------------------------------------------------------

@@ -2,18 +2,20 @@
 % Please edit documentation in R/classes_bulk.R
 \name{get_outputs}
 \alias{get_outputs}
-\title{Return the outputs from bulk_coexp}
+\title{Return the outputs}
 \usage{
 get_outputs(object)
 }
 \arguments{
-\item{object}{The underlying \code{bulk_coexp} class, see
-\code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
+\code{bixverse::bulk_dge}.}
+
+\item{...}{Additional arguments to parse to the functions.}
 }
 \value{
 Returns the outputs stored in the class.
 }
 \description{
-Getter function to extract the outputs from the \code{\link[=bulk_coexp]{bulk_coexp()}}
-class.
+Getter function to extract the outputs from the \code{\link[=bulk_coexp]{bulk_coexp()}} or
+\code{\link[=bulk_dge]{bulk_dge()}}.
 }

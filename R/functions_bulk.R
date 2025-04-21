@@ -99,7 +99,7 @@ run_limma_voom <- function(
     paste(variables, collapse = " + ")
   )
 
-  model_matrix <- model.matrix(as.formula(model_formula), data = meta_data_red)
+  model_matrix <- model.matrix(as.formula(model_formula), data = meta_info)
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
   # Filter lowly expressed genes
@@ -190,7 +190,7 @@ hedges_g_dge_list <- function(
   )
 
   to_keep <- suppressWarnings(edgeR::filterByExpr(
-    dge_list_red,
+    dge_list,
     design = NULL
   ))
 
@@ -199,14 +199,14 @@ hedges_g_dge_list <- function(
   # TODO Implement the DESeq VST into Rust...
   # The heteroskedasticity is not fixed here atm...
 
-  voom_obj <- limma::voom(counts = dge_list_red[to_keep, ])
+  voom_obj <- limma::voom(counts = dge_list[to_keep, ])
 
   res <- purrr::map(combinations_to_test, \(combination) {
-    grpA <- meta_data_red[
+    grpA <- meta_info[
       eval(parse(text = paste0(main_contrast, " == '", combination[[1]], "'"))),
       sample_id
     ]
-    grpB <- meta_data_red[
+    grpB <- meta_info[
       eval(parse(text = paste0(main_contrast, " == '", combination[[2]], "'"))),
       sample_id
     ]
