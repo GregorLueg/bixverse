@@ -34,97 +34,13 @@ bulk_dge(raw_counts = counts, meta_data = meta_data, variable_info = var_info)
 object <- bulk_dge_from_h5ad(h5_file)
 
 devtools::load_all()
+devtools::document()
 
 object <- calculate_pca_bulk_dge(object)
 
-object@outputs$pca_dt
+plot_pca_res(object)
 
-object@variable_info
-
-# PCA code ----
-
-object <- object
-top_hgv <- 2500L
-
-mat <- S7::prop(object, "filtered_counts")
-
-?edgeR::calcNormFactors
-
-dge_list <- edgeR::DGEList(mat)
-dge_list <- edgeR::calcNormFactors(dge_list, method = "TMM")
-
-cpm <- edgeR::cpm(dge_list, log = TRUE)
-
-hvg_data <- data.table::setDT(
-  list(
-    gene_id = rownames(cpm),
-    mad = matrixStats::rowMads(cpm)
-  )
-) %>%
-  data.table::setorder(-mad)
-
-hvg_genes <- hvg_data[1:top_hgv, gene_id]
-
-input_genes <- t(cpm[hvg_genes, ])
-
-
-tictoc::tic()
-pca_results <- prcomp(t(cpm), scale. = FALSE)
-tictoc::toc()
-
-tictoc::tic()
-rs_pca_results <- rs_prcomp(t(cpm), scale = FALSE)
-tictoc::toc()
-
-
-rs_pca_results$v
-
-rs_pca_results$scores[1:5, 1:5]
-
-
-pca_results$x[1:5, 1:5]
-
-x <- input_genes
-
-x <- as.matrix(x)
-x <- scale(x, center = TRUE, scale = FALSE)
-
-s <- svd(x, nu = 0)
-
-scores <- x %*% s$v
-
-scores[1:10, 1:10]
-
-pca_results$x[1:10, 1:10]
-
-
-scores_2 <- x %*% rs_pca_results$v
-
-
-scores_2[1:10, 1:10]
-
-rs_pca_results$s
-
-test_x <- input_genes %*% rs_pca_results$v
-
-test_x <- rs_pca_results$v %*% diag(rs_pca_results$s)
-
-plot(rs_pca_results$scores[1, ], pca_results$x[1, ])
-
-pca_results$x[1:5, 1:5]
-
-test_x[1:5, 1:5]
-
-plot(pca_results$sdev, rs_pca_results$s)
-
-rs_pca_results$v[1:10, 1:10]
-
-pca_results$rotation[1:10, 1:10]
-
-rs_pca_results$s
-
-pca_results$sdev
-
+get_metadata(object)
 
 # DGE code ----
 

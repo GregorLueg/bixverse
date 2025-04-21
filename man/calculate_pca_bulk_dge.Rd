@@ -4,13 +4,7 @@
 \alias{calculate_pca_bulk_dge}
 \title{Calculate PCA on the expression.}
 \usage{
-calculate_pca_bulk_dge(
-  object,
-  scale = FALSE,
-  pcs = 10L,
-  hvg_genes = 2500L,
-  .verbose = TRUE
-)
+calculate_pca_bulk_dge(object, scale = FALSE, pcs = 10L, no_hvg_genes = 2500L)
 }
 \arguments{
 \item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
@@ -21,8 +15,6 @@ calculation. Defaults to \code{FALSE}.}
 \item{pcs}{Integer. Number of PCs to return and add to the outputs slot.}
 
 \item{hvg_genes}{Integer. Number of highly variable genes to include.}
-
-\item{.verbose}{Boolean.}
 }
 \value{
 Returns the class with additional data added to the outputs.
