@@ -418,8 +418,6 @@ S7::method(change_gene_identifier, bulk_dge) <-
     variable_info <- S7::prop(object, "variable_info")
     checkmate::assertTRUE(alternative_gene_id %in% colnames(variable_info))
 
-    norm_method <- S7::prop(object, "params")[['norm_method']]
-
     rownames(S7::prop(object, "raw_counts")) <- variable_info[[
       alternative_gene_id
     ]]

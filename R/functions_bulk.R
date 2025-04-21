@@ -106,6 +106,7 @@ run_limma_voom <- function(
   to_keep <- edgeR::filterByExpr(
     y = dge_list,
     design = model_matrix,
+    min.prop = 0.2,
     ...
   )
   if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
@@ -191,7 +192,9 @@ hedges_g_dge_list <- function(
 
   to_keep <- suppressWarnings(edgeR::filterByExpr(
     dge_list,
-    design = NULL
+    design = NULL,
+    min.prop = 0.2,
+    ...
   ))
 
   if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))

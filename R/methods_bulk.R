@@ -48,15 +48,14 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   checkmate::qassert(pcs, "I1")
   checkmate::qassert(no_hvg_genes, "I1")
 
-  dge_list <- S7::prop(object, "outputs")[['dge_list']]
-  cpm <- edgeR::cpm(dge_list, log = TRUE)
+  different_name <- S7::prop(object, "outputs")[['dge_list']]
+  cpm <- as.matrix(edgeR::cpm(different_name, log = TRUE))
 
-  hvg_data <- data.table::setDT(
-    list(
-      gene_id = rownames(cpm),
-      mad = matrixStats::rowMads(cpm)
-    )
+  hvg_data <- list(
+    gene_id = rownames(cpm),
+    mad = matrixStats::rowMads(cpm)
   ) %>%
+    data.table::as.data.table() %>%
     data.table::setorder(-mad)
 
   hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
