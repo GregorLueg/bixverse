@@ -2,7 +2,7 @@ library("anndata")
 library(data.table)
 library(magrittr)
 
-ad <- read_h5ad("~/Desktop/geo_data/GSE65832/final/GSE65832_anndata.h5ad")
+ad <- read_h5ad("~/Desktop/geo_data/GSE65832/final/GSE154773_anndata.h5ad")
 
 ad$var
 
@@ -18,12 +18,28 @@ h5_file <- "~/Desktop/geo_data/GSE154773_anndata.h5ad"
 h5_path <- h5_file
 
 h5_obj <- anndata_parser$new(h5_path)
+
+h5_obj$.__enclos_env__$private$h5_content
+
+
 if (.verbose) message("Loading data from the h5ad object")
-c(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
+c(meta_data, var_info, counts)
+h5_contentc(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
+
+
+h5_obj$get_var_info()
 
 bulk_dge(raw_counts = counts, meta_data = meta_data, variable_info = var_info)
 
 object <- bulk_dge_from_h5ad(h5_file)
+
+devtools::load_all()
+
+object <- calculate_pca_bulk_dge(object)
+
+object@outputs$pca_dt
+
+object@variable_info
 
 # PCA code ----
 
@@ -32,12 +48,12 @@ top_hgv <- 2500L
 
 mat <- S7::prop(object, "filtered_counts")
 
+?edgeR::calcNormFactors
+
 dge_list <- edgeR::DGEList(mat)
 dge_list <- edgeR::calcNormFactors(dge_list, method = "TMM")
 
 cpm <- edgeR::cpm(dge_list, log = TRUE)
-
-voom_obj <- limma::voom(dge_list, design = NULL, )
 
 hvg_data <- data.table::setDT(
   list(
@@ -51,16 +67,17 @@ hvg_genes <- hvg_data[1:top_hgv, gene_id]
 
 input_genes <- t(cpm[hvg_genes, ])
 
-rextendr::document()
 
 tictoc::tic()
-pca_results <- prcomp(input_genes, scale. = FALSE)
+pca_results <- prcomp(t(cpm), scale. = FALSE)
 tictoc::toc()
 
 tictoc::tic()
-rs_pca_results <- rs_svd(input_genes, scale = FALSE)
+rs_pca_results <- rs_prcomp(t(cpm), scale = FALSE)
 tictoc::toc()
 
+
+rs_pca_results$v
 
 rs_pca_results$scores[1:5, 1:5]
 
@@ -92,7 +109,7 @@ test_x <- input_genes %*% rs_pca_results$v
 
 test_x <- rs_pca_results$v %*% diag(rs_pca_results$s)
 
-plot(test_x[1, ], pca_results$x[1, ])
+plot(rs_pca_results$scores[1, ], pca_results$x[1, ])
 
 pca_results$x[1:5, 1:5]
 

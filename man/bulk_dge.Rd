@@ -4,7 +4,14 @@
 \alias{bulk_dge}
 \title{Bulk RNAseq differential gene expression class}
 \usage{
-bulk_dge(raw_counts, meta_data, variable_info = NULL, .verbose = TRUE, ...)
+bulk_dge(
+  raw_counts,
+  meta_data,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  variable_info = NULL,
+  .verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{raw_counts}{matrix. The raw count matrix. Rows = genes, columns =
@@ -12,6 +19,9 @@ samples. Note: this is different from the \code{\link[=bulk_coexp]{bulk_coexp()}
 
 \item{meta_data}{data.table. Metadata information on the samples. It expects
 to have a column sample_id and case_control column.}
+
+\item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
+\verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 
 \item{variable_info}{data.table. Metadata information on the features. This
 is an optional table.}
@@ -26,7 +36,9 @@ Returns the \code{bulk_coexp} class for further operations.
 \description{
 Class for coordinating differential gene expression analyses with subsequent
 GSE in a structured format. The class will automatically generated a filtered
-count matrix in which lowly expressed genes are removed.
+count matrix in which lowly expressed genes are removed and calculate the
+normalisation factors based on the TMM method. You can however control this
+via the \code{norm_method} parameter.
 }
 \section{Properties}{
 

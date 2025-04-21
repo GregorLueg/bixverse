@@ -81,12 +81,16 @@ bulk_coexp <- S7::new_class(
 #' @description
 #' Class for coordinating differential gene expression analyses with subsequent
 #' GSE in a structured format. The class will automatically generated a filtered
-#' count matrix in which lowly expressed genes are removed.
+#' count matrix in which lowly expressed genes are removed and calculate the
+#' normalisation factors based on the TMM method. You can however control this
+#' via the `norm_method` parameter.
 #'
 #' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
 #' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
 #' @param meta_data data.table. Metadata information on the samples. It expects
 #' to have a column sample_id and case_control column.
+#' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
+#' ` "none")`. Please refer to [edgeR::normLibSizes()].
 #' @param variable_info data.table. Metadata information on the features. This
 #' is an optional table.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -116,7 +120,6 @@ bulk_dge <- S7::new_class(
   # Properties
   properties = list(
     raw_counts = S7::class_numeric,
-    filtered_counts = S7::class_numeric,
     meta_data = S7::class_data.frame,
     variable_info = S7::class_any,
     outputs = S7::class_list,
@@ -126,16 +129,23 @@ bulk_dge <- S7::new_class(
   constructor = function(
     raw_counts,
     meta_data,
+    norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
     variable_info = NULL,
     .verbose = TRUE,
     ...
   ) {
     # Checks
+    norm_method <- match.arg(norm_method)
+
     checkmate::assertMatrix(raw_counts, mode = "numeric")
     checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),
       must.include = c("sample_id")
+    )
+    checkmate::assertChoice(
+      norm_method,
+      c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
     )
     checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
     checkmate::assert(
@@ -148,20 +158,21 @@ bulk_dge <- S7::new_class(
     if (.verbose)
       message(sprintf("A total of %i genes are kept.", sum(to_keep)))
 
-    filtered_counts <- raw_counts[to_keep, ]
+    dge_list <- edgeR::DGEList(raw_counts[to_keep, ])
+    dge_list <- edgeR::calcNormFactors(dge_list, method = norm_method)
 
     params <- list(
       original_dim = dim(raw_counts),
-      filtered_dim = dim(filtered_counts)
+      no_genes_kept = sum(to_keep),
+      norm_method = norm_method
     )
 
     S7::new_object(
       S7::S7_object(),
       raw_counts = raw_counts,
-      filtered_counts = filtered_counts,
       meta_data = meta_data,
       variable_info = variable_info,
-      outputs = list(),
+      outputs = list(dge_list = dge_list),
       params = params,
       final_results = list()
     )
