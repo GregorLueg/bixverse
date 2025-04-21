@@ -7,7 +7,7 @@
 plot_pca_res(
   object,
   cols_to_plot = c("contrast_info", "sample_source"),
-  PCs_to_plot = c("PC_1", "PC_2")
+  pcs_to_plot = c("PC_1", "PC_2")
 )
 }
 \arguments{

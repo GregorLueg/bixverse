@@ -34,5 +34,6 @@ Imports:
     zeallot,
     MASS,
     edgeR,
+    limma,
     rhdf5
 Suggests: tinytest

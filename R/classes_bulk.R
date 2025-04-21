@@ -1,6 +1,4 @@
-# bulk co-exp ------------------------------------------------------------------
-
-## classes ---------------------------------------------------------------------
+# classes ---------------------------------------------------------------------
 
 #' @title Bulk RNAseq co-expression modules
 #'
@@ -176,7 +174,9 @@ bulk_dge <- S7::new_class(
   }
 )
 
-## additional constructors -----------------------------------------------------
+# additional constructors ------------------------------------------------------
+
+## bulk_dge --------------------------------------------------------------------
 
 #' Wrapper function to generate bulk_dge object from h5ad
 #'
@@ -187,6 +187,7 @@ bulk_dge <- S7::new_class(
 #' @param h5_path String. Path to the h5ad object.
 #' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
 #' ` "none")`. Please refer to [edgeR::normLibSizes()].
+#' @param .verbose Controls verbosity of the function
 #'
 #' @returns `bulk_dge` object.
 #'
@@ -218,9 +219,9 @@ bulk_dge_from_h5ad <- function(
   return(bulk_dge_obj)
 }
 
-## utils -----------------------------------------------------------------------
+# utils ------------------------------------------------------------------------
 
-### common getters -------------------------------------------------------------
+## common getters --------------------------------------------------------------
 
 #' Return the metadata
 #'
@@ -238,7 +239,7 @@ bulk_dge_from_h5ad <- function(
 get_metadata <- S7::new_generic(
   name = "get_metadata",
   dispatch_args = "object",
-  fun = function(object) {
+  fun = function(object, ...) {
     S7::S7_dispatch()
   }
 )
@@ -247,7 +248,7 @@ get_metadata <- S7::new_generic(
 #'
 #' @export
 S7::method(get_metadata, bulk_coexp) <-
-  function(object) {
+  function(object, ...) {
     # Checks
     checkmate::assertClass(
       object,
@@ -274,9 +275,9 @@ S7::method(get_metadata, bulk_dge) <-
     return(S7::prop(object, "meta_data"))
   }
 
-### individual getters ---------------------------------------------------------
+## individual getters ----------------------------------------------------------
 
-#### bulk_coexp class ----------------------------------------------------------
+### bulk_coexp class -----------------------------------------------------------
 
 #' Return the outputs from bulk_coexp
 #'
@@ -314,10 +315,9 @@ S7::method(get_outputs, bulk_coexp) <-
     return(S7::prop(object, "outputs"))
   }
 
+## individual setters ----------------------------------------------------------
 
-### individual setters ---------------------------------------------------------
-
-#### bulk dge class ------------------------------------------------------------
+### bulk dge class -------------------------------------------------------------
 
 #' Change the primary gene identifier of bulk_dge
 #'
@@ -327,6 +327,16 @@ S7::method(get_outputs, bulk_coexp) <-
 #' identifier you wish to use or it exists already in the object itself. If it
 #' exists in the object, that variable_info will be used.
 #'
+#' @param object `bulk_dge` class, see [bixverse::bulk_dge].
+#' @param alternative_gene_id String. The column containing the alternative gene
+#' identifier. Must be present in the provided `variable_info` data.table or
+#' within the class attributes.
+#' @param variable_info Optional data.table with variable information. If
+#' `variable_info` is in an attribute of the class, that one will be used.
+#'
+#' @return The class with modified primary gene identifier.
+#'
+#' @export
 change_gene_identifier <- S7::new_generic(
   name = "change_gene_identifier",
   dispatch_args = "object",
@@ -371,7 +381,7 @@ S7::method(change_gene_identifier, bulk_dge) <-
   }
 
 
-### prints ---------------------------------------------------------------------
+## prints ----------------------------------------------------------------------
 
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object
@@ -441,7 +451,9 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
 
 # TODO write print for bulk_dge
 
-### general methods ------------------------------------------------------------
+# general methods --------------------------------------------------------------
+
+## bulk_coexp ------------------------------------------------------------------
 
 #' Process the raw data
 #'
@@ -589,7 +601,9 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   object
 }
 
-### plots ----------------------------------------------------------------------
+# plots ------------------------------------------------------------------------
+
+## bulk_coexp ------------------------------------------------------------------
 
 #' @title Plot the highly variable genes
 #'

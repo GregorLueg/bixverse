@@ -14,7 +14,8 @@ calculation. Defaults to \code{FALSE}.}
 
 \item{pcs}{Integer. Number of PCs to return and add to the outputs slot.}
 
-\item{hvg_genes}{Integer. Number of highly variable genes to include.}
+\item{no_hvg_genes}{Integer. Number of highly variable genes to include.
+Defaults to 2500.}
 }
 \value{
 Returns the class with additional data added to the outputs.

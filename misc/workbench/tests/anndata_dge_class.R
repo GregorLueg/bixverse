@@ -57,128 +57,65 @@ source_col <- 'sample_source'
 
 unique(meta_data$sample_source)
 
+## Limma Voom ----
 
-meta_data_red <- meta_data[sample_source == "whole blood"]
+meta_data_red <- meta_data[sample_source == "skin"]
 dge_list_red <- dge_list[genes_to_filter, meta_data_red$sample_id]
-variables <- c(main_contrast, co_variates)
 
-class(dge_list)
+main_contrast <- "contrast_info"
 
-edgeR::DGEList()
-
-run_limma_voom <- function(
-  meta_info,
-  main_contrast,
-  dge_list,
-  co_variates = NULL,
-  ...,
-  .verbose = TRUE
-) {
-  variabales <- c(main_contrast, co_variates)
-  # Checks
-  checkmate::assertDataFrame(meta_info)
-  checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(dge_list, "DGEList")
-  checkmate::qassert(co_variates, c("S+", "0"))
-  checkmate::assertNames(
-    names(meta_info),
-    must.include = variabales
-  )
-  checkmate::qassert(.verbose, "B1")
-
-  # Fix any names
-  meta_info[,
-    (variables) := lapply(.SD, fix_contrast_names),
-    .SDcols = variables
-  ]
-  if (.verbose)
-    message(paste(
-      "Fixing any naming issues for the selected main contrast",
-      "and any co-variates."
-    ))
-
-  model_matrix <- model.matrix(as.formula(model_formula), data = meta_data_red)
-  colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
-
-  # Filter lowly expressed genes
-  to_keep <- edgeR::filterByExpr(
-    y = dge_list,
-    design = model_matrix,
-    ...
-  )
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-  voom_obj <- limma::voom(
-    counts = dge_list[to_keep, ],
-    design = model_matrix,
-    normalize.method = "quantile",
-    plot = TRUE
-  )
-  limma_fit <- limma::lmFit(voom_obj, model_matrix)
-
-  contrasts <- all_contrasts(limma_fit)
-
-  final_fit <- limma::contrasts.fit(limma_fit, contrasts)
-  final_fit <- limma::eBayes(final_fit)
-
-  tested_contrasts <- attributes(contrasts)$dimnames$Contrasts
-
-  all_dge_res <- purrr::map(tested_contrasts, \(coef) {
-    top.table <- as.data.table(
-      limma::topTable(fit = fit2, coef = coef, sort.by = "P", n = Inf),
-      keep.rownames = TRUE
-    ) %>%
-      setnames(old = 'rn', new = 'gene_id') %>%
-      .[, contrast := gsub("-", "_vs_", coef)]
-  }) %>%
-    rbindlist()
-
-  return(all_dge_res)
-}
-
-
-run_limma_voom(
+dge_results <- run_limma_voom(
   meta_info = meta_data_red,
   main_contrast = main_contrast,
   dge_list = dge_list_red
 )
 
-meta_data_red[,
-  (variables) := lapply(.SD, fix_contrast_names),
-  .SDcols = variables
-]
-if (.verbose)
-  message(paste(
-    "Fixing any naming issues for the selected main contrast",
-    "and any co-variates."
-  ))
+## Effect sizes ----
 
-model_formula <- sprintf("~ 0 + %s", paste(variables, collapse = " + "))
+groups <- as.character(unique(meta_data_red[['contrast_info']]))
 
-model_matrix <- model.matrix(as.formula(model_formula), data = meta_data_red)
-colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
-
-to_keep <- edgeR::filterByExpr(
-  dge_list_red,
-  design = model_matrix,
-  ...
+combinations_to_test <- combn(
+  x = groups,
+  m = 2,
+  FUN = function(x) {
+    c(x[[1]], x[[2]])
+  },
+  simplify = FALSE
 )
 
 
-voom_obj <- limma::voom(
-  counts = dge_list_red[to_keep, ],
-  design = model_matrix,
-  normalize.method = "quantile",
-  plot = TRUE
-)
-limma_fit <- limma::lmFit(voom_obj, model_matrix)
+combination <- combinations_to_test[[1]]
 
-contrasts <- all_contrasts(limma_fit)
+res <- purrr::map(combinations_to_test, \(combination) {
+  grpA <- meta_data_red[
+    eval(parse(text = paste0(main_contrast, " == '", combination[[1]], "'"))),
+    sample_id
+  ]
+  grpB <- meta_data_red[
+    eval(parse(text = paste0(main_contrast, " == '", combination[[2]], "'"))),
+    sample_id
+  ]
 
-fit2 <- limma::contrasts.fit(limma_fit, contrasts)
-fit2 <- limma::eBayes(fit2)
+  to_keep <- suppressWarnings(edgeR::filterByExpr(dge_list_red, design = NULL))
 
-tested_contrasts <- attributes(contrasts)$dimnames$Contrasts
+  voom_obj <- limma::voom(counts = dge_list_red[to_keep, ])
+
+  mat_a <- t(voom_obj$E[, grpA])
+  mat_b <- t(voom_obj$E[, grpB])
+
+  hedges_g_effect <- calculate_effect_size(mat_a = mat_a, mat_b = mat_b) %>%
+    data.table::setDT() %>%
+    .[, `:=`(
+      gene_id = colnames(mat_a),
+      combination = paste(combination[[1]], combination[[2]], sep = "_vs_")
+    )]
+
+  hedges_g_effect
+})
 
 
-?limma::topTable
+sum(to_keep)
+
+model_formula
+
+rm(model_formula)

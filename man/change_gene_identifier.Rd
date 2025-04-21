@@ -6,6 +6,19 @@
 \usage{
 change_gene_identifier(object, alternative_gene_id, variable_info = NULL)
 }
+\arguments{
+\item{object}{\code{bulk_dge} class, see \link{bulk_dge}.}
+
+\item{alternative_gene_id}{String. The column containing the alternative gene
+identifier. Must be present in the provided \code{variable_info} data.table or
+within the class attributes.}
+
+\item{variable_info}{Optional data.table with variable information. If
+\code{variable_info} is in an attribute of the class, that one will be used.}
+}
+\value{
+The class with modified primary gene identifier.
+}
 \description{
 Changes the primary gene identifier in the bulk_dge class. To do so, you need
 to either provide a \code{variable_info} data.table with the alternative gene

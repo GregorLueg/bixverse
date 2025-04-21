@@ -4,7 +4,7 @@
 \alias{get_metadata}
 \title{Return the metadata}
 \usage{
-get_metadata(object)
+get_metadata(object, ...)
 }
 \arguments{
 \item{object}{The underlying object, either \code{bixverse::bulk_coexp} or

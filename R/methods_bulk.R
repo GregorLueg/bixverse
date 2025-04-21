@@ -10,7 +10,8 @@
 #' @param scale Boolean. Shall the log(cpm) counts be scaled prior the PCA
 #' calculation. Defaults to `FALSE`.
 #' @param pcs Integer. Number of PCs to return and add to the outputs slot.
-#' @param hvg_genes Integer. Number of highly variable genes to include.
+#' @param no_hvg_genes Integer. Number of highly variable genes to include.
+#' Defaults to 2500.
 #'
 #' @return Returns the class with additional data added to the outputs.
 #'
@@ -110,7 +111,7 @@ plot_pca_res <- S7::new_generic(
   fun = function(
     object,
     cols_to_plot = c('contrast_info', 'sample_source'),
-    PCs_to_plot = c("PC_1", "PC_2")
+    pcs_to_plot = c("PC_1", "PC_2")
   ) {
     S7::S7_dispatch()
   }
@@ -121,12 +122,12 @@ plot_pca_res <- S7::new_generic(
 S7::method(plot_pca_res, bulk_dge) <- function(
   object,
   cols_to_plot = c('contrast_info', 'sample_source'),
-  PCs_to_plot = c("PC_1", "PC_2")
+  pcs_to_plot = c("PC_1", "PC_2")
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(cols_to_plot, "S2")
-  checkmate::qassert(PCs_to_plot, "S+")
+  checkmate::qassert(pcs_to_plot, "S+")
 
   pca_dt <- S7::prop(object, "outputs")[['pca_dt']]
   meta_data <- S7::prop(object, "meta_data")
@@ -142,7 +143,7 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 
   checkmate::assertNames(
     names(pca_dt),
-    must.include = PCs_to_plot
+    must.include = pcs_to_plot
   )
   checkmate::assertNames(
     names(meta_data),
@@ -150,16 +151,16 @@ S7::method(plot_pca_res, bulk_dge) <- function(
   )
 
   plot_df <- data.table::merge.data.table(
-    pca_dt[, c('sample_id', PCs_to_plot), with = FALSE],
+    pca_dt[, c('sample_id', pcs_to_plot), with = FALSE],
     meta_data[, c('sample_id', cols_to_plot), with = FALSE],
     by.x = 'sample_id',
     by.y = 'sample_id'
   ) %>%
-    data.table::melt(id.vars = c('sample_id', PCs_to_plot))
+    data.table::melt(id.vars = c('sample_id', pcs_to_plot))
 
   p <- ggplot(
     data = plot_df,
-    mapping = aes(x = .data[[PCs_to_plot[1]]], y = .data[[PCs_to_plot[2]]])
+    mapping = aes(x = .data[[pcs_to_plot[1]]], y = .data[[pcs_to_plot[2]]])
   ) +
     geom_point(mapping = aes(col = value)) +
     facet_wrap(facets = ~variable, ncol = 3L) +
@@ -170,128 +171,4 @@ S7::method(plot_pca_res, bulk_dge) <- function(
     labs(colour = "Groups:")
 
   return(p)
-}
-
-# helpers ----------------------------------------------------------------------
-
-## general helpers -------------------------------------------------------------
-
-#' Fixes contrast names for DGEs
-#'
-#' @param x Vector of strings or factors.
-#'
-#' @returns Vector with fixed naming based on R conventions.
-#'
-#' @export
-fix_contrast_names <- function(x) {
-  checkmate::qassert(x, c("S+", "F+"))
-  as.factor(gsub("\\.", "_", make.names(gsub("[[:punct:]]", "", x))))
-}
-
-
-#' Create all limma contrasts
-#'
-#' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
-#'
-#' @returns The Limma contrasts for further usage.
-#'
-#' @export
-all_contrasts <- function(limma_fit) {
-  checkmate::assertClass(limma_fit, "MArrayLM")
-  coefs_fit <- colnames(coef(limma_fit))
-  cb <- combn(coefs_fit, 2, FUN = function(x) {
-    paste0(x[[1]], "-", x[[2]])
-  })
-  contrasts <- limma::makeContrasts(contrasts = cb, levels = coefs_fit)
-  return(contrasts)
-}
-
-## dge helpers -----------------------------------------------------------------
-
-#' Run Limma Voom
-#'
-#' @description
-#' Wrapper function to run Limma Voom workflows.
-#'
-#'
-#' @param meta_info data.table. The meta information.
-#' @param main_contrast String. Which column contains the main groups you want
-#' to test dge for.
-#' @param dge_list DGEList, see [edgeR::DGEList()].
-#' @param co_variates String or NULL. Optional co-variates you wish to consider
-#' during model fitting.
-#' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
-#' @param .verbose Boolean. Controls verbosity of the function.
-#'
-#' @returns A data.table with all the DGE results by the identified contrasts.
-#'
-#' @export
-run_limma_voom <- function(
-  meta_info,
-  main_contrast,
-  dge_list,
-  co_variates = NULL,
-  ...,
-  .verbose = TRUE
-) {
-  variabales <- c(main_contrast, co_variates)
-  # Checks
-  checkmate::assertDataFrame(meta_info)
-  checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(dge_list, "DGEList")
-  checkmate::qassert(co_variates, c("S+", "0"))
-  checkmate::assertNames(
-    names(meta_info),
-    must.include = variabales
-  )
-  checkmate::qassert(.verbose, "B1")
-
-  # Fix any names
-  meta_info[,
-    (variables) := lapply(.SD, fix_contrast_names),
-    .SDcols = variables
-  ]
-  if (.verbose)
-    message(paste(
-      "Fixing any naming issues for the selected main contrast",
-      "and any co-variates."
-    ))
-
-  model_matrix <- model.matrix(as.formula(model_formula), data = meta_data_red)
-  colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
-
-  # Filter lowly expressed genes
-  to_keep <- edgeR::filterByExpr(
-    y = dge_list,
-    design = model_matrix,
-    ...
-  )
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-  voom_obj <- limma::voom(
-    counts = dge_list[to_keep, ],
-    design = model_matrix,
-    normalize.method = "quantile",
-    plot = TRUE
-  )
-  limma_fit <- limma::lmFit(voom_obj, model_matrix)
-
-  contrasts <- all_contrasts(limma_fit)
-
-  final_fit <- limma::contrasts.fit(limma_fit, contrasts)
-  final_fit <- limma::eBayes(final_fit)
-
-  tested_contrasts <- attributes(contrasts)$dimnames$Contrasts
-
-  all_dge_res <- purrr::map(tested_contrasts, \(coef) {
-    top.table <- as.data.table(
-      limma::topTable(fit = fit2, coef = coef, sort.by = "P", n = Inf),
-      keep.rownames = TRUE
-    ) %>%
-      setnames(old = 'rn', new = 'gene_id') %>%
-      .[, contrast := gsub("-", "_vs_", coef)]
-  }) %>%
-    rbindlist()
-
-  return(all_dge_res)
 }

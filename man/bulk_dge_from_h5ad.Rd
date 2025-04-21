@@ -15,6 +15,8 @@ bulk_dge_from_h5ad(
 
 \item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
 \verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
+
+\item{.verbose}{Controls verbosity of the function}
 }
 \value{
 \code{bulk_dge} object.
