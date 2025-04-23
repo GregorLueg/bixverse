@@ -3,6 +3,7 @@ use rand::prelude::*;
 use rayon::prelude::*;
 // use std::sync::{Arc, Mutex};
 
+use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
 use crate::utils_r_rust::r_matrix_to_faer;
 use crate::utils_stats::{hedge_g_effect, split_vector_randomly};
@@ -164,6 +165,21 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
     adj_pvals
 }
 
+/// Calculate the hypergeometric rest in Rust
+///
+/// @param q Number of white balls drawn out of urn.
+/// @param m Number of white balls in the urn.
+/// @param n Number of black balls in the urn.
+/// @param k The number of balls drawn out of the urn.
+///
+/// @return P-value (with lower.tail set to False)
+///
+/// @export
+#[extendr]
+fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
+    hypergeom_pval(q, m, n, k)
+}
+
 // /// Set similarities
 // ///
 // /// This function calculates the Jaccard or similarity index between a given
@@ -217,4 +233,5 @@ extendr_module! {
     fn rs_create_random_aucs;
     fn rs_hedges_g;
     fn rs_fdr_adjustment;
+    fn rs_phyper;
 }

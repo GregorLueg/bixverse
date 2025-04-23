@@ -29,12 +29,14 @@
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
 #' @import data.table
-gse_hypergeometric <- function(target_genes,
-                               gene_set_list,
-                               gene_universe = NULL,
-                               threshold = 0.05,
-                               minimum_overlap = 3L,
-                               .verbose = FALSE) {
+gse_hypergeometric <- function(
+  target_genes,
+  gene_set_list,
+  gene_universe = NULL,
+  threshold = 0.05,
+  minimum_overlap = 3L,
+  .verbose = FALSE
+) {
   # Avoid check issues
   `.` <- pvals <- fdr <- hits <- NULL
   # Input checks
@@ -64,17 +66,21 @@ gse_hypergeometric <- function(target_genes,
 
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, `:=`(gene_set_name = names(gene_set_list),
-             fdr = p.adjust(pvals, method = "BH"))] %>%
-    data.table::setcolorder(.,
-                            c(
-                              "gene_set_name",
-                              "odds_ratios",
-                              "pvals",
-                              "fdr",
-                              "hits",
-                              "gene_set_lengths"
-                            )) %>%
+    .[, `:=`(
+      gene_set_name = names(gene_set_list),
+      fdr = p.adjust(pvals, method = "BH")
+    )] %>%
+    data.table::setcolorder(
+      .,
+      c(
+        "gene_set_name",
+        "odds_ratios",
+        "pvals",
+        "fdr",
+        "hits",
+        "gene_set_lengths"
+      )
+    ) %>%
     .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals)
 
@@ -110,12 +116,14 @@ gse_hypergeometric <- function(target_genes,
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
 #' @import data.table
-gse_hypergeometric_list <- function(target_genes_list,
-                                    gene_set_list,
-                                    gene_universe = NULL,
-                                    threshold = 0.05,
-                                    minimum_overlap = 3L,
-                                    .verbose = FALSE) {
+gse_hypergeometric_list <- function(
+  target_genes_list,
+  gene_set_list,
+  gene_universe = NULL,
+  threshold = 0.05,
+  minimum_overlap = 3L,
+  .verbose = FALSE
+) {
   # Avoid check issues
   `.` <- pvals <- fdr <- target_set_name <- NULL
   # Input checks
@@ -147,7 +155,7 @@ gse_hypergeometric_list <- function(target_genes_list,
   gse_results <-
     data.table::data.table(do.call(cbind, gse_results)) %>%
     .[, `:=`(
-      gene_set_name  = rep(names(gene_set_list), length(target_genes_list)),
+      gene_set_name = rep(names(gene_set_list), length(target_genes_list)),
       target_set_name = rep(
         names(target_genes_list),
         each = length(gene_set_list)
@@ -165,6 +173,7 @@ gse_hypergeometric_list <- function(target_genes_list,
         "gene_set_lengths"
       )
     ) %>%
+    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals)
 
   gse_results

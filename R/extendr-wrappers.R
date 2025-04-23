@@ -195,6 +195,18 @@ rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_he
 #' @export
 rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 
+#' Calculate the hypergeometric rest in Rust
+#'
+#' @param q Number of white balls drawn out of urn.
+#' @param m Number of white balls in the urn.
+#' @param n Number of black balls in the urn.
+#' @param k The number of balls drawn out of the urn.
+#'
+#' @return P-value (with lower.tail set to False)
+#'
+#' @export
+rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
+
 #' Generate reciprocal best hits based on set similarities
 #'
 #' @description This function takes a nested list that contains gene modules/
