@@ -32,6 +32,9 @@ of each individual term.}
 term.}
 \item{semantic_similarities}{data.table. Contains the semantic similarities
 if calculated.}
+\item{params}{A (nested) list that will store all the parameters of the
+applied function.}
+\item{final_results}{Final results stored in the class.}
 }
 }
 
