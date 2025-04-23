@@ -1,4 +1,4 @@
-use statrs::distribution::{Discrete, Hypergeometric};
+// use statrs::distribution::{Discrete, Hypergeometric};
 use statrs::function::gamma::ln_gamma;
 use std::collections::HashSet;
 
@@ -19,41 +19,48 @@ pub fn hypergeom_pval(q: u64, m: u64, n: u64, k: u64) -> f64 {
         1.0
     } else {
         let population = m + n;
-        let successes = m;
-        let draws = k;
 
-        // For the extreme case where hits equals gene_set_length
-        if q == m && q <= k {
-            // Calculate survival function directly in log space
-            // I needed to do this with help of Claude to deal with precision problems
+        // Always use logarithmic calculation to avoid numerical issues
+        // Convert to f64 once at the start
+        let (n_f, m_f, k_f) = (n as f64, m as f64, k as f64);
+        let population_f = population as f64;
 
-            // Convert to f64 once at the start
-            let (n_f, m_f, k_f, q_f) = (n as f64, m as f64, k as f64, q as f64);
-            let population_f = population as f64;
+        // Calculate P(X > q) in log space
+        let upper = k.min(m);
 
-            // ln(P(X ≥ q)) calculation
-            let log_prob = ln_gamma(m_f + 1.0)
+        // Use log space to compute probabilities for each value i > q
+        let mut log_probs = Vec::new();
+        for i in (q + 1)..=upper {
+            let i_f = i as f64;
+
+            // Calculate log(PMF(i)) using logarithms
+            let log_pmf = ln_gamma(m_f + 1.0) - ln_gamma(i_f + 1.0) - ln_gamma(m_f - i_f + 1.0)
                 + ln_gamma(n_f + 1.0)
-                + ln_gamma(k_f + 1.0)
-                + ln_gamma(population_f - k_f + 1.0)
-                - ln_gamma(q_f + 1.0)
-                - ln_gamma(m_f - q_f + 1.0)
-                - ln_gamma(k_f - q_f + 1.0)
-                - ln_gamma(n_f - (k_f - q_f) + 1.0)
-                - ln_gamma(population_f + 1.0);
+                - ln_gamma(k_f - i_f + 1.0)
+                - ln_gamma(n_f - (k_f - i_f) + 1.0)
+                - (ln_gamma(population_f + 1.0)
+                    - ln_gamma(k_f + 1.0)
+                    - ln_gamma(population_f - k_f + 1.0));
 
-            log_prob.exp()
-        } else {
-            // For non-extreme cases, use survival function
-            let dist = Hypergeometric::new(population, successes, draws).unwrap();
-            let mut sum = 0.0;
-            // Sum P(X = i) for i from q to min(k, m)
-            let upper = k.min(m);
-            for i in q..=upper {
-                sum += dist.pmf(i);
-            }
-            sum
+            log_probs.push(log_pmf);
         }
+
+        // If there are no probabilities to sum, return 0
+        if log_probs.is_empty() {
+            return 0.0;
+        }
+
+        // Use log-sum-exp trick to calculate sum without overflow
+        let max_log_prob = log_probs.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+
+        // Sum with adjustment to avoid numerical issues
+        let mut sum = 0.0;
+        for log_p in log_probs {
+            sum += (log_p - max_log_prob).exp();
+        }
+
+        // Final result
+        sum * max_log_prob.exp()
     }
 }
 

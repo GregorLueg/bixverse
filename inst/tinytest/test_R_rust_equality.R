@@ -42,3 +42,41 @@ expect_equal(
   target = cor(mat),
   info = "Upper triangle class test Rust <> R"
 )
+
+# hypergeom distributions ------------------------------------------------------
+
+m <- 10
+n <- 7
+k <- 8
+x <- 0:(k + 1)
+
+rust_vals <- purrr::map_dbl(
+  x,
+  ~ {
+    rs_phyper(
+      q = .x,
+      m = m,
+      n = n,
+      k = k
+    )
+  }
+)
+
+r_vals <- purrr::map_dbl(
+  x,
+  ~ {
+    phyper(
+      q = .x,
+      m = m,
+      n = n,
+      k = k,
+      lower.tail = F
+    )
+  }
+)
+
+expect_equal(
+  current = rust_vals,
+  target = r_vals,
+  info = "Hypergeometric test values for Rust <> R."
+)

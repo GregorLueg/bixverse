@@ -489,6 +489,18 @@ S7::method(community_detection, network_diffusions) <- function(
       cluster_id = as.character(cluster_id)
     )]
 
+  if (diffusion_type == "single") {
+    seed_nodes <- S7::prop(object, "params")$seed_nodes
+    final_result[, seed_node := node_id %in% seed_nodes]
+  } else {
+    seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
+    seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
+    final_result[, `:=`(
+      seed_node_a = node_id %in% seed_nodes_set_1,
+      seed_node_b = node_id %in% seed_nodes_set_2
+    )]
+  }
+
   cluster_name_prettifier <- setNames(
     paste(
       "cluster",

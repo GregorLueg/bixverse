@@ -173,6 +173,7 @@ gse_hypergeometric_list <- function(
         "gene_set_lengths"
       )
     ) %>%
+    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals)
 
   gse_results
