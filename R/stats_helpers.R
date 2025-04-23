@@ -36,10 +36,9 @@ ot_harmonic_score <- function(x) {
 #' \dontrun{
 #'
 #' set.seed(123)
-#' x = rnorm(10)
+#' x <- rnorm(10)
 #'
-#' x.scaled = robust_scaling(x)
-#'
+#' x.scaled <- robust_scaling(x)
 #' }
 robust_scale <- function(x) {
   # Checks
@@ -65,19 +64,15 @@ robust_scale <- function(x) {
 #' @return x, robustly scaled.
 #'
 #' @export
-calculate_effect_size <- function(mat_a,
-                                  mat_b,
-                                  small_sample_correction = NULL,
-                                  .verbose = TRUE) {
+calculate_effect_size <- function(
+  mat_a,
+  mat_b,
+  small_sample_correction = NULL,
+  .verbose = TRUE
+) {
   # Checks
-  checkmate::assertMatrix(mat_a,
-                          mode = 'numeric',
-                          min.rows = 3L,
-                          min.cols = 1L)
-  checkmate::assertMatrix(mat_b,
-                          mode = 'numeric',
-                          min.rows = 3L,
-                          min.cols = 1L)
+  checkmate::assertMatrix(mat_a, mode = "numeric", min.rows = 3L, min.cols = 1L)
+  checkmate::assertMatrix(mat_b, mode = "numeric", min.rows = 3L, min.cols = 1L)
   checkmate::qassert(small_sample_correction, c("B1", "0"))
   # Function
   intersecting_features <- intersect(colnames(mat_a), colnames(mat_b))
@@ -98,12 +93,12 @@ calculate_effect_size <- function(mat_a,
     )
   }
 
-  if(.verbose)
-    message(message_text)
-  small_sample_correction <- if (is.null(small_sample_correction))
+  if (.verbose) message(message_text)
+  small_sample_correction <- if (is.null(small_sample_correction)) {
     total_n <= 50
-  else
+  } else {
     small_sample_correction
+  }
 
   # TO DO: implement Glass effect size estimation
 

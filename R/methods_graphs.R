@@ -829,12 +829,14 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
     exp(seq(log(min_res), log(max_res), length.out = number_res))
   )
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf("Iterating through %i resolutions", length(resolutions)))
+  }
 
   if (parallel) {
-    if (.verbose)
+    if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
+    }
 
     # future plan funkiness
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
@@ -852,7 +854,7 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
       set.seed(random_seed)
       community <- igraph::cluster_leiden(
         graph,
-        objective_function = 'modularity',
+        objective_function = "modularity",
         resolution = res,
         n_iterations = 5L
       )

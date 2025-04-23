@@ -204,7 +204,8 @@ pub fn calculate_diff_correlation(
     }
 }
 
-/// Get the eigenvalues and vectors from a symmetric matrix
+/// Get the eigenvalues and vectors from a symmetric co-variance or correlation
+/// matrix
 pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64>)> {
     // Ensure the matrix is square
     assert!(matrix.nrows() == matrix.ncols(), "Matrix must be square");

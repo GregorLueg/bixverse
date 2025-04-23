@@ -6,8 +6,8 @@
 #'
 #' @export
 get_go_human_data <- function() {
-  path <- system.file("extdata", 'go_data_hs.parquet', package = "bixverse")
-  if (path != '') {
+  path <- system.file("extdata", "go_data_hs.parquet", package = "bixverse")
+  if (path != "") {
     go_data_dt <- arrow::read_parquet(path) %>%
       data.table::setDT()
 

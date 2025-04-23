@@ -111,4 +111,3 @@ intuitive. Inheritance can be quite useful in certain cases to abstract out
 common generics/methods, but try to avoid deeply layered inheritance where 
 possible. This is not the most complex software we are writing here, so there
 should be no need for 8+ layers of inheritance.
-

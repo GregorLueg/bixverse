@@ -27,11 +27,11 @@ by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interfa
 with Rust.)
 
 Steps for installation: 
-1. in the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
+1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
    ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
    
-2. in R, install [rextendr](https://extendr.github.io/rextendr/index.html):
+2. In R, install [rextendr](https://extendr.github.io/rextendr/index.html):
 
    ```install.packages("rextendr")```
 
@@ -44,7 +44,7 @@ Steps for installation:
 ## *Docs*
 
 - [Why Rust](/docs/why_rust.md)
-- [Code Style](/docs/code_style.md)
+- [Code Style](/docs/code_style.md) (If you want to contribute).
 - [Roadmap](/docs/roadmap.md)
 - [Change log](/docs/change_log.md)
 
@@ -65,6 +65,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 28.03.2025*
-
-
+*Last update to the read-me: 15.04.2025*

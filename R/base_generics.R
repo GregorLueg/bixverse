@@ -15,8 +15,8 @@
 #'
 #' @export
 plot_resolution_res <- S7::new_generic(
-  name = 'plot_resolution_res',
-  dispatch_args = 'object',
+  name = "plot_resolution_res",
+  dispatch_args = "object",
   fun = function(object, print_head = TRUE, ...) {
     S7::S7_dispatch()
   }

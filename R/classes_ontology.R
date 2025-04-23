@@ -37,8 +37,6 @@ gene_ontology_data <- S7::new_class(
     levels = S7::class_list,
     min_genes = S7::class_integer
   ),
-
-
   constructor = function(go_data_dt, min_genes) {
     # Checks
     checkmate::assertDataTable(go_data_dt)
@@ -157,24 +155,22 @@ ontology <- S7::new_class(
     params = S7::class_list,
     final_results = S7::class_any
   ),
-
-
   constructor = function(parent_child_dt, .verbose = TRUE) {
     # Checks
     checkmate::assertDataTable(parent_child_dt)
     checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
     checkmate::qassert(.verbose, "B1")
 
-    if (.verbose)
-      message("Identifying the ancestors in the ontology.")
+    if (.verbose) message("Identifying the ancestors in the ontology.")
     c(ancestors, descendants) %<-% get_ontology_ancestry(parent_child_dt)
-    if (.verbose)
-      message("Calculating the information content of each term")
+    if (.verbose) message("Calculating the information content of each term")
     information_content <- calculate_information_content(descendants)
 
-    params <- list(ontology_data = list(
-      total_size = length(information_content)
-    ))
+    params <- list(
+      ontology_data = list(
+        total_size = length(information_content)
+      )
+    )
 
     # Finalise object
     S7::new_object(
@@ -207,7 +203,7 @@ ontology <- S7::new_class(
 #' @method print ontology
 S7::method(print, ontology) <- function(x, ...) {
   # Get necessary parameters
-  ontology_size <- S7::prop(x, "params")[['ontology_data']][['total_size']]
+  ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]
   semantic_similarities <- S7::prop(x, "semantic_similarities")
   semantic_calculated <- ifelse(nrow(semantic_similarities) == 0, "No.", "Yes.")
 

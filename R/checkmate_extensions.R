@@ -12,12 +12,16 @@
 checkCorGraphParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "epsilon" = "R1",
     "min_cor" = "R1[0, 1]",
@@ -52,14 +56,17 @@ checkCorGraphParams <- function(x) {
 checkGraphResParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x), must.include = c("min_res", "max_res", "number_res"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("min_res", "max_res", "number_res")
+  )
+  if (!isTRUE(res)) {
     return(res)
-  rules <- list("min_res" = "R1",
-                "max_res" = "R1",
-                "number_res" = "I1")
+  }
+  rules <- list("min_res" = "R1", "max_res" = "R1", "number_res" = "I1")
   res <- purrr::imap_lgl(x, \(x, name) {
     checkmate::qtest(x, rules[[name]])
   })
@@ -88,12 +95,16 @@ checkGraphResParams <- function(x) {
 checkIcaParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("maxit", "alpha", "max_tol", "verbose"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("maxit", "alpha", "max_tol", "verbose")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "maxit" = "I1",
     "alpha" = "R1[1, 2]",
@@ -129,11 +140,16 @@ checkIcaParams <- function(x) {
 checkIcaNcomps <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x), must.include = c("max_no_comp", "steps", "custom_seq"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("max_no_comp", "steps", "custom_seq")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "max_no_comp" = "I1",
     "steps" = "I1",
@@ -167,12 +183,16 @@ checkIcaNcomps <- function(x) {
 checkIcaIterParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("cross_validate", "random_init", "folds"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("cross_validate", "random_init", "folds")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "cross_validate" = "B1",
     "random_init" = "I1",
@@ -207,14 +227,16 @@ checkIcaIterParams <- function(x) {
 checkCommunityParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
+  }
   res <- checkmate::checkNames(
     names(x),
     must.include = c("max_nodes", "min_nodes", "min_seed_nodes", "initial_res")
   )
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "max_nodes" = sprintf("I1[%i,)", x$min_nodes),
     "min_nodes" = "I1",
@@ -334,4 +356,3 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
-

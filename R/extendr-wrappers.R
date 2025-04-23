@@ -267,6 +267,25 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' Rust implementation of prcomp
+#' 
+#' @description Runs the singular value decomposition over the matrix x. 
+#' Assumes that samples = rows, and columns = features.
+#' 
+#' @param x Numeric matrix. Rows = samples, columns = features.
+#' @param scale Boolean. Shall the columns additionally be scaled.
+#' 
+#' @return A list with:
+#' \itemize{
+#'   \item scores - The product of x (centred and potentially scaled) with v.
+#'   \item v - v matrix of the SVD.
+#'   \item s - Eigenvalues of the SVD.
+#'   \item scaled - Boolean. Was the matrix scaled.
+#' }
+#' 
+#' @export
+rs_prcomp <- function(x, scale) .Call(wrap__rs_prcomp, x, scale)
+
 #' Run randomised SVD over a matrix
 #' 
 #' @description Runs a randomised singular value decomposition over a matrix.

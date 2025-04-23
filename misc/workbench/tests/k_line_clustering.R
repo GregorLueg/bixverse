@@ -126,13 +126,16 @@ generate_line_data <- function(n_points = 100, k = 2, noise = 0.5) {
   points_per_line <- n_points / k
 
   for (i in 1:k) {
-    idx_start <- round((i-1) * points_per_line) + 1
+    idx_start <- round((i - 1) * points_per_line) + 1
     idx_end <- round(i * points_per_line)
     n_line_points <- idx_end - idx_start + 1
 
     x_range <- runif(n_line_points, -10, 10)
     x[idx_start:idx_end] <- x_range
-    y[idx_start:idx_end] <- slopes[i] * x_range + intercepts[i] + rnorm(n_line_points, 0, noise)
+    y[idx_start:idx_end] <- slopes[i] *
+      x_range +
+      intercepts[i] +
+      rnorm(n_line_points, 0, noise)
     true_clusters[idx_start:idx_end] <- i
   }
 
@@ -156,11 +159,13 @@ example_data <- generate_line_data(n_points = 200, k = 2, noise = 0.8)
 result <- kline_clustering(example_data$data, k = 2)
 
 
-
 as.matrix(ica_stability_res[, c("component_rank", "stability")])
 
 
-result_ica <- kline_clustering(data = as.matrix(ica_stability_res[, c("component_rank", "stability")]), k = 2)
+result_ica <- kline_clustering(
+  data = as.matrix(ica_stability_res[, c("component_rank", "stability")]),
+  k = 2
+)
 
 
 # Plot the results
@@ -173,8 +178,7 @@ plot_data <- data.frame(
   cluster = as.factor(result$clusters)
 )
 
-ggplot(data = plot_data,
-       mapping = aes(x = x, y = y)) +
+ggplot(data = plot_data, mapping = aes(x = x, y = y)) +
   geom_point(aes(col = cluster))
 
 # Generate line points for plotting
@@ -184,7 +188,11 @@ for (i in 1:2) {
   b <- result$lines[i, "intercept"]
   x_range <- seq(min(plot_data$x), max(plot_data$x), length.out = 100)
   y_range <- m * x_range + b
-  line_points[[i]] <- data.frame(x = x_range, y = y_range, cluster = as.factor(i))
+  line_points[[i]] <- data.frame(
+    x = x_range,
+    y = y_range,
+    cluster = as.factor(i)
+  )
 }
 line_df <- do.call(rbind, line_points)
 
@@ -197,4 +205,3 @@ p <- ggplot(plot_data, aes(x = x, y = y, color = cluster)) +
   labs(x = "X", y = "Y", color = "Cluster")
 
 print(p)
-

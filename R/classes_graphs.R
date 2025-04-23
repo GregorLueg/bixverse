@@ -42,8 +42,6 @@ network_diffusions <- S7::new_class(
     final_results = S7::class_data.frame,
     params = S7::class_list
   ),
-
-
   constructor = function(edge_data_frame, weighted, directed) {
     # Checks
     needed_cols <- if (weighted) {
@@ -59,16 +57,18 @@ network_diffusions <- S7::new_class(
     graph <- if (weighted) {
       igraph::graph_from_data_frame(edge_data_frame, directed = directed)
     } else {
-      igraph::graph_from_data_frame(edge_data_frame[, c("from", "to")], directed = directed)
+      igraph::graph_from_data_frame(
+        edge_data_frame[, c("from", "to")],
+        directed = directed
+      )
     }
 
-    if(!weighted)
-
-
-    params <- list(
-      "directed_graph" = igraph::is_directed(graph),
-      "weighted_graph" = igraph::is_weighted(graph)
-    )
+    if (!weighted) {
+      params <- list(
+        "directed_graph" = igraph::is_directed(graph),
+        "weighted_graph" = igraph::is_weighted(graph)
+      )
+    }
 
     # Finalise object
     S7::new_object(
@@ -114,8 +114,9 @@ S7::method(get_diffusion_vector, network_diffusions) <- function(object) {
   checkmate::assertClass(object, "bixverse::network_diffusions")
   # Get the data
   diffusion_vec <- S7::prop(object, "diffusion_res")
-  if (is.null(diffusion_vec))
+  if (is.null(diffusion_vec)) {
     warning("No diffusion results found. Returning NULL.")
+  }
   diffusion_vec
 }
 
@@ -163,15 +164,13 @@ rbh_graph <- S7::new_class(
   #' @return Returns the `rbh_graph` class for further operations.
   #'
   #' @export
-  constructor = function(module_results,
-                         dataset_col,
-                         module_col,
-                         value_col) {
+  constructor = function(module_results, dataset_col, module_col, value_col) {
     checkmate::assertDataTable(module_results)
     checkmate::qassert(dataset_col, "S1")
     checkmate::qassert(module_col, "S1")
     checkmate::qassert(value_col, "S1")
-    checkmate::assertNames(names(module_results),
+    checkmate::assertNames(
+      names(module_results),
       must.include = c(dataset_col, module_col, value_col)
     )
     # Function body
@@ -179,10 +178,13 @@ rbh_graph <- S7::new_class(
       module_results %>% dplyr::select(!!module_col, !!value_col),
       module_results[, ..dataset_col]
     ) %>%
-      purrr::map(., ~ {
-        df <- .
-        split(unlist(df[, ..value_col]), unlist(df[, ..module_col]))
-      })
+      purrr::map(
+        .,
+        ~ {
+          df <- .
+          split(unlist(df[, ..value_col]), unlist(df[, ..module_col]))
+        }
+      )
 
     # Finalise object
     S7::new_object(

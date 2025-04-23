@@ -44,17 +44,19 @@
 #' synthetic_GEX <- create_synthetic_signal_matrix()
 #' synthetic_signal_mat <- synthetic_GEX$mat
 #' }
-synthetic_signal_matrix <- function(no_grps = 3,
-                                           per_group = 30,
-                                           total_genes = 1000L,
-                                           mean_initial = 5,
-                                           variance_initial = 5,
-                                           mean_up = 10,
-                                           variance_up = 5,
-                                           no_genes_up = 100L,
-                                           add_small_group = TRUE,
-                                           size_small_grp = 5L,
-                                           seed = 10101L) {
+synthetic_signal_matrix <- function(
+  no_grps = 3,
+  per_group = 30,
+  total_genes = 1000L,
+  mean_initial = 5,
+  variance_initial = 5,
+  mean_up = 10,
+  variance_up = 5,
+  no_genes_up = 100L,
+  add_small_group = TRUE,
+  size_small_grp = 5L,
+  seed = 10101L
+) {
   # Input validation
   checkmate::qassert(no_grps, "R1(0,)")
   checkmate::qassert(per_group, "R1(0,)")
@@ -160,17 +162,17 @@ synthetic_cPCA_data <- function(seed = 10101L) {
 
   # Background matrix
   background <- matrix(0, nrow = 400, ncol = 30)
-  background[, 1:10]  <- matrix(rnorm(400 * 10, mean = 0, sd = 10), ncol = 10)
+  background[, 1:10] <- matrix(rnorm(400 * 10, mean = 0, sd = 10), ncol = 10)
   background[, 11:20] <- matrix(rnorm(400 * 10, mean = 0, sd = 3), ncol = 10)
   background[, 21:30] <- matrix(rnorm(400 * 10, mean = 0, sd = 1), ncol = 10)
 
   # Target matrix with 4 clusters
   target <- matrix(0, nrow = 400, ncol = 30)
-  target[, 1:10]  <- matrix(rnorm(400 * 10, mean = 0, sd = 10), ncol = 10)
+  target[, 1:10] <- matrix(rnorm(400 * 10, mean = 0, sd = 10), ncol = 10)
 
   # Group 1
-  target[1:100, 11:20]  <- matrix(rnorm(100 * 10, mean = 0, sd = 1), ncol = 10)
-  target[1:100, 21:30]  <- matrix(rnorm(100 * 10, mean = 0, sd = 1), ncol = 10)
+  target[1:100, 11:20] <- matrix(rnorm(100 * 10, mean = 0, sd = 1), ncol = 10)
+  target[1:100, 21:30] <- matrix(rnorm(100 * 10, mean = 0, sd = 1), ncol = 10)
 
   # Group 2
   target[101:200, 11:20] <- matrix(rnorm(100 * 10, mean = 0, sd = 1), ncol = 10)

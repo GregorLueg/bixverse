@@ -26,27 +26,39 @@ universe <- protein_coding_genes
 gene_sets_no <- 5000
 target_gene_sets_no <- 100
 
-gene_sets <- purrr::map(1:gene_sets_no, ~ {
-  set.seed(seed + .x + 1)
-  size <- sample(20:100, 1)
-  sample(universe, size, replace = FALSE)
-})
+gene_sets <- purrr::map(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    size <- sample(20:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
 
-names(gene_sets) <- purrr::map_chr(1:gene_sets_no, ~ {
-  set.seed(seed + .x + 1)
-  paste(sample(LETTERS, 3), collapse = "")
-})
+names(gene_sets) <- purrr::map_chr(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(LETTERS, 3), collapse = "")
+  }
+)
 
-target_gene_sets <- purrr::map(1:target_gene_sets_no, ~ {
-  set.seed(.x * seed)
-  size <- sample(50:100, 1)
-  sample(universe, size, replace = FALSE)
-})
+target_gene_sets <- purrr::map(
+  1:target_gene_sets_no,
+  ~ {
+    set.seed(.x * seed)
+    size <- sample(50:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
 
-names(target_gene_sets) <- purrr::map_chr(1:target_gene_sets_no, ~ {
-  set.seed(seed + .x + 1)
-  paste(sample(letters, 3), collapse = "")
-})
+names(target_gene_sets) <- purrr::map_chr(
+  1:target_gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(letters, 3), collapse = "")
+  }
+)
 
 target_genes <- target_gene_sets[[1]]
 
@@ -71,9 +83,7 @@ tictoc::toc()
 
 system.file("extdata", package = "bixverse") |> list.files()
 
-system.file("extdata", 'go_data_hs.parquet', package = "bixverse")
-
-
+system.file("extdata", "go_data_hs.parquet", package = "bixverse")
 
 
 number_levels <- length(S7::prop(S7_obj, "levels"))
@@ -97,10 +107,12 @@ devtools::document()
 rextendr::document()
 
 tictoc::tic()
-t3 <- gse_go_elim_method(go_data_s7,
-                         target_genes,
-                         minimum_overlap = 0L,
-                         fdr_threshold = 1)
+t3 <- gse_go_elim_method(
+  go_data_s7,
+  target_genes,
+  minimum_overlap = 0L,
+  fdr_threshold = 1
+)
 tictoc::toc()
 
 ?gse_go_elim_method_list
@@ -113,6 +125,3 @@ t4 <- gse_go_elim_method_list(
   fdr_threshold = 1
 )
 tictoc::toc()
-
-
-
