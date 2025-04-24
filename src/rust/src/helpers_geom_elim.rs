@@ -141,12 +141,17 @@ pub fn process_ontology_level(
         .iter()
         .zip(gene_set_lengths.iter())
         .map(|(hit, gene_set_length)| {
-            hypergeom_pval(
-                *hit,
-                *gene_set_length,
-                gene_universe_length - *gene_set_length,
-                trials,
-            )
+            let q = *hit as i64 - 1;
+            if q > 0 {
+                hypergeom_pval(
+                    q as u64,
+                    *gene_set_length,
+                    gene_universe_length - *gene_set_length,
+                    trials,
+                )
+            } else {
+                1.0
+            }
         })
         .collect();
     let odds_ratios: Vec<f64> = hits
