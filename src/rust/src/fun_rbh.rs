@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 
 use crate::helpers_rbh::*;
-use crate::utils_r_rust::{r_nested_list_to_rust, NestedHashMap};
+use crate::utils_r_rust::{r_nested_list_to_btree_nest, NestedBtreeMap};
 use crate::utils_rust::flatten_vector;
 
 /// Structure to store the RBH results.
@@ -51,7 +51,7 @@ fn rs_rbh_sets(
     min_similarity: f64,
     debug: bool,
 ) -> extendr_api::Result<List> {
-    let module_list: NestedHashMap = r_nested_list_to_rust(module_list)?;
+    let module_list: NestedBtreeMap = r_nested_list_to_btree_nest(module_list)?;
     // Pull out all the keys
     let origins: Vec<String> = module_list.clone().into_keys().collect();
 
@@ -74,7 +74,7 @@ fn rs_rbh_sets(
                 .map(|target| {
                     let target_module_data = module_list.get(target).unwrap();
 
-                    let rbh_res: RbhTriplet = calculate_rbh_set(
+                    let rbh_res = calculate_rbh_set(
                         origin_module_data,
                         target_module_data,
                         overlap_coefficient,
@@ -82,14 +82,14 @@ fn rs_rbh_sets(
                         debug,
                     );
 
-                    let mut origin_modules = Vec::new();
-                    let mut target_modules = Vec::new();
-                    let mut similarities = Vec::new();
+                    let mut origin_modules = Vec::with_capacity(rbh_res.len());
+                    let mut target_modules = Vec::with_capacity(rbh_res.len());
+                    let mut similarities = Vec::with_capacity(rbh_res.len());
 
-                    for (origin, target, similarity) in rbh_res {
-                        origin_modules.push(origin);
-                        target_modules.push(target);
-                        similarities.push(similarity)
+                    for res in rbh_res {
+                        origin_modules.push(res.t1.to_string());
+                        target_modules.push(res.t2.to_string());
+                        similarities.push(res.sim);
                     }
 
                     RbhResult {

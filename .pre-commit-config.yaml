@@ -28,6 +28,5 @@ repos:
         entry: air format .
         language: system
         files: \.R$
-
 ci:
     autoupdate_schedule: monthly

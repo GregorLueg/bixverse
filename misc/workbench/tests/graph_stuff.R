@@ -59,69 +59,55 @@ x
 
 # RBH graph ----
 
-protein_coding_genes <- data.table::fread("~/Desktop/protein_coding_genes.csv")
+set.seed(123)
 
-universe <- protein_coding_genes$id[1:500]
-
-sets_per_origin <- 100
-gene_sets_no <- 100
-
-gene_sets_no <- sets_per_origin * length(LETTERS)
-
-seed <- 123
-set.seed(seed)
-
-gene_sets <- purrr::map(
-  1:gene_sets_no,
+modules_set_a <- purrr::map(
+  1:5,
   ~ {
-    set.seed(seed + .x + 1)
-    size <- sample(20:100, 1)
-    sample(universe, size, replace = FALSE)
+    sample(letters, 10)
   }
 )
+names(modules_set_a) <- LETTERS[1:5]
+data_a <- data.table::setDT(stack(modules_set_a))[, `:=`(
+  origin = "set_A",
+  ind = as.character(ind)
+)]
 
-names(gene_sets) <- purrr::map_chr(
-  1:gene_sets_no,
+modules_set_b <- purrr::map(
+  1:3,
   ~ {
-    set.seed(seed + .x + 1)
-    paste(sample(LETTERS, 5), collapse = "")
+    sample(letters, 8)
   }
 )
+names(modules_set_b) <- LETTERS[1:3]
+data_b <- data.table::setDT(stack(modules_set_b))[, `:=`(
+  origin = "set_B",
+  ind = as.character(ind)
+)]
 
-gene_sets_df <- purrr::imap(
-  gene_sets,
-  ~ {
-    data.table::data.table(
-      genes = .x,
-      name = .y
-    )
-  }
-)
-
-origins <- rep(LETTERS, each = sets_per_origin)
-
-gene_sets_df <- purrr::map2(
-  gene_sets_df,
-  origins,
-  ~ {
-    .x[, origin := .y]
-  }
-) %>%
-  rbindlist()
-
-module_df <- gene_sets_df
+full_data <- rbindlist(list(data_a, data_b))
 
 rbh_class <- rbh_graph(
-  gene_sets_df,
+  full_data,
   dataset_col = "origin",
-  module_col = "name",
-  value_col = "genes"
+  module_col = "ind",
+  value_col = "values"
 )
 
+module_data <- rbh_class@module_data
+
+rextendr::document()
+
+test <- rs_rbh_sets(
+  module_list = module_data,
+  overlap_coefficient = TRUE,
+  min_similarity = 0,
+  debug = TRUE
+)
 
 rbh_class <- generate_rbh_graph(
   rbh_class,
-  minimum_similarity = 0.2,
+  minimum_similarity = 0,
   overlap_coefficient = T,
   .debug = FALSE
 )
