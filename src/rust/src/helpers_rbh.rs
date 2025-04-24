@@ -1,31 +1,30 @@
 use faer::Mat;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
 use crate::utils_rust::*;
 use crate::utils_stats::set_similarity;
 
-/// RBH containing module name 1, module name 2 and the similarity
-pub type RbhTriplet = Vec<(String, String, f64)>;
+pub struct RbhTripletStruc<'a> {
+    pub t1: &'a str,
+    pub t2: &'a str,
+    pub sim: f64,
+}
 
 /// Calculates the reciprocal best hits based on set similarities.
-pub fn calculate_rbh_set(
-    origin_modules: &HashMap<String, HashSet<String>>,
-    target_modules: &HashMap<String, HashSet<String>>,
+pub fn calculate_rbh_set<'a>(
+    origin_modules: &'a BTreeMap<String, HashSet<String>>,
+    target_modules: &'a BTreeMap<String, HashSet<String>>,
     overlap_coefficient: bool,
     min_similarity: f64,
     debug: bool,
-) -> RbhTriplet {
+) -> Vec<RbhTripletStruc<'a>> {
     let similarities: Vec<Vec<f64>> = origin_modules
-        .clone()
-        .into_values()
+        .values()
         .map(|module_i| {
-            let res_i: Vec<f64> = target_modules
-                .clone()
-                .into_values()
-                .map(|module_l| set_similarity(&module_i, &module_l, overlap_coefficient))
-                .collect();
-
-            res_i
+            target_modules
+                .values()
+                .map(|module_l| set_similarity(module_i, module_l, overlap_coefficient))
+                .collect()
         })
         .collect();
 
@@ -48,7 +47,11 @@ pub fn calculate_rbh_set(
         if debug {
             println!("No similarity passed the threshold.\n\n")
         }
-        vec![("NA".to_string(), "NA".to_string(), -1.0)]
+        vec![RbhTripletStruc {
+            t1: "NA",
+            t2: "NA",
+            sim: 0.0,
+        }]
     } else {
         let nrow = names_origin.len();
         let ncol = names_targets.len();
@@ -71,17 +74,22 @@ pub fn calculate_rbh_set(
             })
             .collect();
 
-        let mut matching_pairs: Vec<(String, String, f64)> = Vec::new();
+        let mut matching_pairs: Vec<RbhTripletStruc> = Vec::new();
 
         for r in 0..nrow {
             for c in 0..ncol {
                 let value = sim_mat[(r, c)];
                 if value == row_maxima[r] && value == col_maxima[c] {
-                    matching_pairs.push((
-                        names_origin[r].to_string(),
-                        names_targets[c].to_string(),
-                        value,
-                    ));
+                    // matching_pairs.push((
+                    //     names_origin[r].to_string(),
+                    //     names_targets[c].to_string(),
+                    //     value,
+                    // ));
+                    matching_pairs.push(RbhTripletStruc {
+                        t1: names_origin[r],
+                        t2: names_targets[c],
+                        sim: value,
+                    })
                 }
             }
         }
@@ -96,7 +104,11 @@ pub fn calculate_rbh_set(
         if !matching_pairs.is_empty() {
             matching_pairs
         } else {
-            vec![("NA".to_string(), "NA".to_string(), -1.0)]
+            vec![RbhTripletStruc {
+                t1: "NA",
+                t2: "NA",
+                sim: 0.0,
+            }]
         }
     };
 

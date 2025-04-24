@@ -204,7 +204,39 @@ rbh_graph <- S7::new_class(
 
 ### getters --------------------------------------------------------------------
 
-# TODO
+#' Get the RBH results
+#'
+#' @description Pulls out the RBH results if you ran
+#' [bixverse::generate_rbh_graph()]
+#'
+#' @param object The underlying class [bixverse::rbh_graph()].
+#'
+#' @return The data.table with the RBH result if found, otherwise NULL.
+#'
+#' @export
+get_rbh_res <- S7::new_generic(
+  name = "get_rbh_res",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_rbh_res rbh_graph
+S7::method(get_rbh_res, rbh_graph) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::rbh_graph")
+  # Get the data
+  edge_dt <- S7::prop(object, "rbh_edge_df")
+  if (is.null(edge_dt)) {
+    warning("No RBH results were found. Returning NULL.")
+  }
+  edge_dt
+}
 
 ### print ----------------------------------------------------------------------
 
