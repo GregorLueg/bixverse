@@ -58,6 +58,8 @@ gse_hypergeometric <- function(
     gene_universe <- unique(unlist(gene_set_list))
   }
 
+  target_set_lengths = sapply(target_genes_list, length)
+
   gse_results <- rs_hypergeom_test(
     target_genes = target_genes,
     gene_sets = gene_set_list,
@@ -82,7 +84,13 @@ gse_hypergeometric <- function(
       )
     ) %>%
     .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
-    data.table::setorder(., pvals)
+    data.table::setorder(., pvals) %>%
+    .[,
+      target_set_lengths := target_set_lengths[match(
+        target_set_name,
+        names(target_set_lengths)
+      )]
+    ]
 
   gse_results
 }
@@ -146,6 +154,8 @@ gse_hypergeometric_list <- function(
     gene_universe <- unique(unlist(gene_set_list))
   }
 
+  target_set_lengths = sapply(target_genes_list, length)
+
   gse_results <- rs_hypergeom_test_list(
     target_genes_list = target_genes_list,
     gene_sets = gene_set_list,
@@ -174,7 +184,13 @@ gse_hypergeometric_list <- function(
       )
     ) %>%
     .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
-    data.table::setorder(., pvals)
+    data.table::setorder(., pvals) %>%
+    .[,
+      target_set_lengths := target_set_lengths[match(
+        target_set_name,
+        names(target_set_lengths)
+      )]
+    ]
 
   gse_results
 }
