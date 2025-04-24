@@ -82,14 +82,16 @@ fn rs_rbh_sets(
                         debug,
                     );
 
-                    let mut origin_modules = Vec::with_capacity(rbh_res.len());
-                    let mut target_modules = Vec::with_capacity(rbh_res.len());
-                    let mut similarities = Vec::with_capacity(rbh_res.len());
+                    let mut origin_modules = Vec::new();
+                    let mut target_modules = Vec::new();
+                    let mut similarities = Vec::new();
 
                     for res in rbh_res {
-                        origin_modules.push(res.t1.to_string());
-                        target_modules.push(res.t2.to_string());
-                        similarities.push(res.sim);
+                        if res.sim > min_similarity {
+                            origin_modules.push(res.t1.to_string());
+                            target_modules.push(res.t2.to_string());
+                            similarities.push(res.sim);
+                        }
                     }
 
                     RbhResult {

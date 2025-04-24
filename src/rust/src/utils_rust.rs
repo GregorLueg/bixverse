@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use faer::Mat;
 use rayon::iter::*;
 
@@ -46,6 +48,16 @@ pub fn array_f64_max_min(arr: &[f64]) -> (f64, f64) {
             |acc1, acc2| (acc1.0.min(acc2.0), acc1.1.max(acc2.1)),
         );
     res
+}
+
+pub fn string_vec_to_set(
+    x: &[String]
+) -> HashSet<String> {
+    let mut set = HashSet::with_capacity(x.len());
+    for s in x {
+        set.insert(s.clone());
+    };
+    set
 }
 
 // Get the mean value from an f64 array
