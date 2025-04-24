@@ -56,19 +56,16 @@ impl GeneOntology {
     }
 
     /// Get the genes based on an array of Strings.
-    pub fn get_genes_list(&self, ids: &[String]) -> (Vec<String>, Vec<&HashSet<String>>) {
-        let keys: HashSet<String> = self.go_to_gene.clone().into_keys().collect();
+    pub fn get_genes_list(&self, ids: &[String]) -> HashMap<String, &HashSet<String>> {
+        let mut to_ret = HashMap::new();
 
-        let id_keys: HashSet<_> = ids.iter().cloned().collect();
+        for id in ids.iter() {
+            if self.go_to_gene.contains_key(id) {
+                to_ret.insert(id.to_string(), self.go_to_gene.get(id).unwrap());
+            }
+        }
 
-        let ids_final: Vec<String> = id_keys.intersection(&keys).cloned().collect();
-
-        let gene_sets: Vec<_> = ids_final
-            .iter()
-            .filter_map(|s| self.go_to_gene.get(s))
-            .collect();
-
-        (ids_final, gene_sets)
+        to_ret
     }
 
     /// Get the genes for one specific ID
@@ -100,7 +97,7 @@ pub fn process_ontology_level(
     target_genes: &[String],
     level: &String,
     go_obj: &mut GeneOntology,
-    min_genes: i64,
+    min_genes: usize,
     gene_universe_length: u64,
     elim_threshold: f64,
     debug: bool,
@@ -109,68 +106,69 @@ pub fn process_ontology_level(
     let go_ids = go_obj.get_level_ids(level);
     let go_ids_final: &Vec<String> = go_ids.unwrap();
     let level_data = go_obj.get_genes_list(go_ids_final);
-    let mut go_identifiers = level_data.0;
-    let mut go_gene_sets = level_data.1;
 
-    // Remove gene ontology terms that do not have a minimum of genes
-    let filtered_sets: Vec<(String, &HashSet<String>)> = go_identifiers
-        .iter()
-        .zip(go_gene_sets.iter())
-        .filter(|(_, set)| set.len() as i64 >= min_genes)
-        .map(|(string, set)| (string.clone(), *set))
-        .collect();
+    let mut level_data_final = HashMap::new();
 
-    go_identifiers.clear();
-    go_gene_sets.clear();
-
-    for (string, set) in filtered_sets {
-        go_identifiers.push(string);
-        go_gene_sets.push(set);
+    for (key, value) in &level_data {
+        if value.len() < min_genes {
+            level_data_final.insert(key.clone(), value);
+        }
     }
 
-    let trials = target_genes.iter().collect::<Vec<_>>().len() as u64;
-    let gene_set_lengths = go_gene_sets
-        .clone()
-        .into_iter()
-        .map(|s| s.len() as u64)
-        .collect::<Vec<u64>>();
-    let hits = count_hits_hash(go_gene_sets, target_genes);
+    let trials = target_genes.len() as u64;
+    let mut target_set = HashSet::new();
+    for s in target_genes {
+        target_set.insert(s.clone());
+    }
 
-    // Calculate p-values and odds ratios
-    let pvals: Vec<f64> = hits
-        .iter()
-        .zip(gene_set_lengths.iter())
-        .map(|(hit, gene_set_length)| {
-            let q = *hit as i64 - 1;
-            if q > 0 {
-                hypergeom_pval(
-                    q as u64,
-                    *gene_set_length,
-                    gene_universe_length - *gene_set_length,
-                    trials,
-                )
-            } else {
-                1.0
-            }
-        })
-        .collect();
-    let odds_ratios: Vec<f64> = hits
-        .iter()
-        .zip(gene_set_lengths.iter())
-        .map(|(hit, gene_set_length)| {
-            hypergeom_odds_ratio(
-                *hit,
-                *gene_set_length - *hit,
-                trials - *hit,
-                gene_universe_length - *gene_set_length - trials + *hit,
+    let size = level_data_final.len();
+
+    let mut go_ids = Vec::with_capacity(size);
+    let mut hits_vec = Vec::with_capacity(size);
+    let mut pvals = Vec::with_capacity(size);
+    let mut odds_ratios = Vec::with_capacity(size);
+    let mut gene_set_lengths = Vec::with_capacity(size);
+
+    for (key, value) in level_data_final {
+        let gene_set_length = value.len() as u64;
+        let hits = target_set.intersection(value).count() as u64;
+        let q = hits as i64 - 1;
+        let pval = if q > 0 {
+            hypergeom_pval(
+                q as u64,
+                gene_set_length,
+                gene_universe_length - gene_set_length,
+                trials,
             )
-        })
-        .collect();
+        } else {
+            1.0
+        };
+        let odds_ratio = hypergeom_odds_ratio(
+            hits,
+            gene_set_length - hits,
+            trials - hits,
+            gene_universe_length - gene_set_length - trials + hits,
+        );
+        go_ids.push(key.clone());
+        hits_vec.push(hits);
+        pvals.push(pval);
+        odds_ratios.push(odds_ratio);
+        gene_set_lengths.push(gene_set_length);
+    }
+
+    let res = GoElimLevelResults {
+        go_ids,
+        pvals,
+        odds_ratios,
+        hits: hits_vec,
+        gene_set_lengths,
+    };
 
     // Identify the GO terms were to apply the elimination on (if any)
-    let go_to_remove: Vec<String> = go_identifiers
+    let go_to_remove: &Vec<_> = &res
+        .go_ids
         .iter()
-        .zip(pvals.iter())
+        .zip(&res.pvals)
         .filter(|(_, pval)| pval <= &&elim_threshold)
         .map(|(string, _)| string.clone())
         .collect();
@@ -193,11 +191,5 @@ pub fn process_ontology_level(
         }
     }
 
-    GoElimLevelResults {
-        go_ids: go_identifiers,
-        pvals,
-        odds_ratios,
-        hits,
-        gene_set_lengths,
-    }
+    res
 }

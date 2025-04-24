@@ -151,7 +151,7 @@ fn rs_gse_geom_elim(
     levels: Vec<String>,
     go_obj: Robj,
     gene_universe_length: u64,
-    min_genes: i64,
+    min_genes: usize,
     elim_threshold: f64,
     debug: bool,
 ) -> extendr_api::Result<List> {
@@ -244,7 +244,7 @@ fn rs_gse_geom_elim_list(
     levels: Vec<String>,
     go_obj: Robj,
     gene_universe_length: u64,
-    min_genes: i64,
+    min_genes: usize,
     elim_threshold: f64,
     debug: bool,
 ) -> extendr_api::Result<List> {
