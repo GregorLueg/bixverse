@@ -103,23 +103,32 @@ pub fn hypergeom_helper(
     gene_sets: &[Vec<String>],
     gene_universe: &[String],
 ) -> HypergeomResult {
-    let gene_universe_length = gene_universe.iter().collect::<Vec<_>>().len() as u64;
-    let trials = target_genes.iter().collect::<Vec<_>>().len() as u64;
+    let gene_universe_length = gene_universe.len() as u64;
+
+    let trials = target_genes.len() as u64;
+
     let gene_set_lengths = gene_sets
         .iter()
         .map(|s| s.len() as u64)
         .collect::<Vec<u64>>();
+
     let hits = count_hits(gene_sets, target_genes);
+
     let pvals: Vec<f64> = hits
         .iter()
         .zip(gene_set_lengths.iter())
         .map(|(hit, gene_set_length)| {
-            hypergeom_pval(
-                *hit,
-                *gene_set_length,
-                gene_universe_length - *gene_set_length,
-                trials,
-            )
+            let q = *hit as i64 - 1;
+            if q > 0 {
+                hypergeom_pval(
+                    q as u64,
+                    *gene_set_length,
+                    gene_universe_length - *gene_set_length,
+                    trials,
+                )
+            } else {
+                1.0
+            }
         })
         .collect();
     let odds_ratios: Vec<f64> = hits
