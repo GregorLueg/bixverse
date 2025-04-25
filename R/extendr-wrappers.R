@@ -131,6 +131,30 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' @export
 rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
 
+#' Set similarities over list
+#'
+#' This function calculates the Jaccard or similarity index between a one given
+#' string vector and list of vectors.
+#'
+#' @param s_1 The String vector against which to calculate the set similarities.
+#' @param s_2_list A List of vector against which to calculate the set similarities.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+#'
+#' @export
+rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
+
+#' Set similarities
+#'
+#' This function calculates the Jaccard or similarity index between a two given
+#' string vector and a  of other string vectors.
+#'
+#' @param s_1 The String vector against which to calculate the set similarities.
+#' @param s_2 The String vector against which to calculate the set similarities.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+#'
+#' @export
+rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
+
 #' Fast AUC calculation
 #'
 #' @description This function calculates rapidly AUCs based on an approximation.

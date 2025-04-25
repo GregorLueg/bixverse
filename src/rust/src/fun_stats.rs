@@ -1,12 +1,15 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
+use std::collections::HashSet;
 // use std::sync::{Arc, Mutex};
 
 use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
-use crate::utils_r_rust::r_matrix_to_faer;
-use crate::utils_stats::{hedge_g_effect, split_vector_randomly};
+use crate::utils_r_rust::{r_matrix_to_faer, r_list_to_str_vec};
+use crate::utils_stats::{hedge_g_effect, split_vector_randomly, set_similarity};
+use crate::utils_rust::{flatten_vector, string_vec_to_set};
+
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
 
@@ -180,55 +183,93 @@ fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
     hypergeom_pval(q, m, n, k)
 }
 
-// /// Set similarities
-// ///
-// /// This function calculates the Jaccard or similarity index between a given
-// /// string vector and a list of other string vectors.
-// ///
-// /// @param string The String vector against which to calculate the setsimilarities.
-// /// @param string_list The list of character vectors for which to calculate the set similarities.
-// /// @param similarity_index Shall the similarity index instead of the Jaccard similarity be calculated.
-// ///
-// /// @export
-// #[extendr]
-// fn rs_set_sim_list(
-//   string: Vec<String>,
-//   string_list: List,
-//   similarity_index: bool,
-// ) -> Vec<f64> {
-//     let string_vec = r_list_to_str_vec(string_list);
-//     let string: HashSet<_> = string
-//       .iter()
-//       .collect();
-//     let values: Vec<(u64, u64)> = string_vec
-//       .iter()
-//       .map(|s| {
-//         let s_hash: HashSet<_> = s
-//         .iter()
-//         .collect();
-//         let i = s_hash.intersection(&string).count() as u64;
-//         let u = if similarity_index {
-//           std::cmp::min(s_hash.len(), string.len()) as u64
-//         } else {
-//           s_hash.union(&string).count() as u64
-//         };
-//         (i, u)
-//       })
-//       .collect();
+/// Set similarities
+///
+/// This function calculates the Jaccard or similarity index between a two given
+/// string vector and a  of other string vectors.
+///
+/// @param s_1 The String vector against which to calculate the set similarities.
+/// @param s_2 The String vector against which to calculate the set similarities.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+///
+/// @export
+#[extendr]
+fn rs_set_similarity(
+    s_1: Vec<String>,
+    s_2: Vec<String>,
+    overlap_coefficient: bool,
+) -> f64 {
 
-//     let mut sim: Vec<f64> = Vec::new();
+    let mut s_hash1 = HashSet::with_capacity(s_1.len());
+    let mut s_hash2 = HashSet::with_capacity(s_2.len());
 
-//     for (i, u) in values {
-//       let sim_i: f64 = (i as f64) / (u as f64);
-//       sim.push(sim_i)
-//     }
+    for item in s_1 {
+        s_hash1.insert(item);
+    }
+    for item in s_2 {
+        s_hash2.insert(item);
+    }
 
-//     sim
-//   }
+    set_similarity(&s_hash1, &s_hash2, overlap_coefficient)
+
+  }
+
+/// Set similarities over list
+///
+/// This function calculates the Jaccard or similarity index between a one given
+/// string vector and list of vectors.
+///
+/// @param s_1 The String vector against which to calculate the set similarities.
+/// @param s_2_list A List of vector against which to calculate the set similarities.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+///
+/// @export
+#[extendr]
+fn rs_set_similarity_list(
+    s_1_list: List,
+    s_2_list: List,
+    overlap_coefficient: bool
+) -> extendr_api::Result<Vec<f64>> {
+    // let res: Vec<GoElimLevelResultsIter> = s_1_list
+    //     .par_iter()
+    //     .map(|targets| {
+
+    let s1_vec = r_list_to_str_vec(s_1_list)?;
+    let s2_vec = r_list_to_str_vec(s_2_list)?;
+
+    let s_hash1: Vec<HashSet<String>> = s1_vec.iter().map(
+        |s| {
+            string_vec_to_set(s)
+        }
+    ).collect();
+    let s_hash2: Vec<HashSet<String>>  = s2_vec.iter().map(
+        |s| {
+            string_vec_to_set(s)
+        }
+    ).collect();
+
+    let res: Vec<Vec<f64>> = s_hash1.into_iter().map(
+        |s|{
+            let subres: Vec<f64>= s_hash2.iter().map(
+                |s2| {
+                    set_similarity(&s, s2, overlap_coefficient)
+                }
+            ).collect();
+            subres
+        }
+    ).collect();
+
+    let res = flatten_vector(res);
+
+    Ok(res)
+}
+
+
 
 extendr_module! {
     mod fun_stats;
-    // fn rs_set_sim_list;
+    fn rs_set_similarity_list;
+    fn rs_set_similarity;
     fn rs_fast_auc;
     fn rs_create_random_aucs;
     fn rs_hedges_g;
