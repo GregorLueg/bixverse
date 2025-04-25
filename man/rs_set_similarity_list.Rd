@@ -7,11 +7,11 @@
 rs_set_similarity_list(s_1_list, s_2_list, overlap_coefficient)
 }
 \arguments{
+\item{s_1_list}{The String vector against which to calculate the set similarities.}
+
 \item{s_2_list}{A List of vector against which to calculate the set similarities.}
 
 \item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.}
-
-\item{s_1}{The String vector against which to calculate the set similarities.}
 }
 \description{
 This function calculates the Jaccard or similarity index between a one given

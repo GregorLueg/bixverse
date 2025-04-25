@@ -127,7 +127,10 @@ expect_equal(
 
 ### data -----------------------------------------------------------------------
 
-go_target_genes <- letters[2:4]
+go_target_genes <- list(
+  first_test = letters[2:4],
+  second_test = letters[6:10]
+)
 
 toy_go_data <- data.table::data.table(
   go_id = sprintf("go_%i", 1:3),
@@ -137,74 +140,217 @@ toy_go_data <- data.table::data.table(
     c("go_1", "go_2"),
     c("go_1", "go_2", "go_3")
   ),
-  ensembl_id = list(c(letters[1:10]), c(letters[1:6]), c(letters[1:3])),
+  ensembl_id = list(c(letters[1:10]), c(letters[c(1:6, 11)]), c(letters[1:3])),
   depth = c(1, 2, 3)
 ) %>%
   data.table::setorder(-depth)
 
 object <- gene_ontology_data(toy_go_data, min_genes = 1L)
 
-expected_pval_no_elim <- c(1, 0.1666667, 0.1833333)
-expected_hits_no_elim <- c(3, 3, 2)
+#### scenario 1 data -----------------------------------------------------------
 
-expected_pval_with_elim <- c(1, 1, 0.1833333)
-expected_hits_with_elim <- c(0, 1, 2)
+expected_pval_no_elim_v1 <- c(0.7272727, 0.2121212, 0.1515152)
+expected_hits_no_elim_v1 <- c(3, 3, 2)
+
+expected_pval_with_elim_v1 <- c(1, 1, 0.1515152)
+expected_hits_with_elim_v1 <- c(1, 1, 2)
+
+#### scenario 2 data -----------------------------------------------------------
+
+# Should be the same, because no elimination should happen
+expected_pval_no_elim_v2 <- expected_pval_with_elim_v2 <- c(0.5454545, 1, 1)
+expected_hits_no_elim_v2 <- expected_hits_with_elim_v2 <- c(5, 1, 0)
 
 ### without elimination --------------------------------------------------------
 
-go_results_no_elim <- gse_go_elim_method(
+#### scenario 1 ----------------------------------------------------------------
+
+go_results_no_elim_v1 <- gse_go_elim_method(
   object = object,
-  target_genes = go_target_genes,
+  target_genes = go_target_genes$first_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
   elim_threshold = 0,
   .debug = FALSE
 ) %>%
-  setorder(go_id)
+  data.table::setorder(go_id)
 
 expect_equal(
-  current = go_results_no_elim$hits,
-  target = expected_hits_no_elim,
+  current = go_results_no_elim_v1$hits,
+  target = expected_hits_no_elim_v1,
   info = paste(
-    "Gene ontology elimination GSE: no hits, no elimination"
+    "Gene ontology elimination GSE: hits, no elim (v1)"
   )
 )
 
 expect_equal(
-  current = go_results_no_elim$pvals,
-  target = expected_pval_no_elim,
+  current = go_results_no_elim_v1$pvals,
+  target = expected_pval_no_elim_v1,
   info = paste(
-    "Gene ontology elimination GSE: pvals, no elimination"
+    "Gene ontology elimination GSE: pvals, no elim (v1)"
   ),
   tolerance = 10e-6
 )
 
-### with elimination -----------------------------------------------------------
+#### scenario 2 ----------------------------------------------------------------
 
-go_results_with_elim <- gse_go_elim_method(
+go_results_no_elim_v2 <- gse_go_elim_method(
   object = object,
-  target_genes = go_target_genes,
+  target_genes = go_target_genes$second_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 1,
+  elim_threshold = 0,
   .debug = FALSE
 ) %>%
   data.table::setorder(go_id)
 
 
 expect_equal(
-  current = go_results_with_elim$hits,
-  target = expected_hits_with_elim,
+  current = go_results_no_elim_v2$hits,
+  target = expected_hits_no_elim_v2,
   info = paste(
-    "Gene ontology elimination GSE: no hits, no elimination"
+    "Gene ontology elimination GSE: hits, no elim (v2)"
   )
 )
 
 expect_equal(
-  current = go_results_with_elim$pvals,
-  target = expected_pval_with_elim,
+  current = go_results_no_elim_v2$pvals,
+  target = expected_pval_no_elim_v2,
   info = paste(
-    "Gene ontology elimination GSE: pvals, no elimination"
+    "Gene ontology elimination GSE: pvals, no elim (v2)"
+  ),
+  tolerance = 10e-6
+)
+
+### with elimination -----------------------------------------------------------
+
+#### scenario 1 ----------------------------------------------------------------
+
+go_results_with_elim_v1 <- gse_go_elim_method(
+  object = object,
+  target_genes = go_target_genes$first_test,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 0.95,
+  .debug = FALSE
+) %>%
+  data.table::setorder(go_id)
+
+expect_equal(
+  current = go_results_with_elim_v1$hits,
+  target = expected_hits_with_elim_v1,
+  info = paste(
+    "Gene ontology elimination GSE: hits, with elim (v1)"
+  )
+)
+
+expect_equal(
+  current = go_results_with_elim_v1$pvals,
+  target = expected_pval_with_elim_v1,
+  info = paste(
+    "Gene ontology elimination GSE: pvals, with elim (v1)"
+  ),
+  tolerance = 10e-6
+)
+
+#### scenario 2 ----------------------------------------------------------------
+
+go_results_with_elim_v2 <- gse_go_elim_method(
+  object = object,
+  target_genes = go_target_genes$second_test,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 0.95,
+  .debug = FALSE
+) %>%
+  data.table::setorder(go_id)
+
+expect_equal(
+  current = go_results_with_elim_v2$hits,
+  target = expected_hits_with_elim_v2,
+  info = paste(
+    "Gene ontology elimination GSE: hits, with elim (v2)"
+  )
+)
+
+expect_equal(
+  current = go_results_with_elim_v2$pvals,
+  target = expected_pval_with_elim_v2,
+  info = paste(
+    "Gene ontology elimination GSE: pvals, with elim (v2)"
+  ),
+  tolerance = 10e-6
+)
+
+### multiple gene sets ---------------------------------------------------------
+
+#### with elimination ----------------------------------------------------------
+
+expected_pval_multi_elim <- c(0.1515152, 1, 1, 1, 1, 0.5454545)
+expected_hits_multi_elim <- c(2, 1, 1, 0, 1, 5)
+
+go_results_with_multiple_elim <- gse_go_elim_method_list(
+  object = object,
+  target_gene_list = go_target_genes,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 0.95
+) %>%
+  data.table::setorder(target_set_name, -go_id)
+
+expect_equal(
+  current = go_results_with_multiple_elim$hits,
+  target = expected_hits_multi_elim,
+  info = paste(
+    "Gene ontology elimination GSE - list with elim (hits)"
+  )
+)
+
+expect_equal(
+  current = go_results_with_multiple_elim$pvals,
+  target = expected_pval_multi_elim,
+  info = paste(
+    "Gene ontology elimination GSE - list with elim (pvals)"
+  ),
+  tolerance = 10e-6
+)
+
+
+#### without elimination -------------------------------------------------------
+
+expected_pval_multi_no_elim <- c(
+  0.1515152,
+  0.2121212,
+  0.7272727,
+  1,
+  1,
+  0.5454545
+)
+expected_hits_multi_no_elim <- c(2, 3, 3, 0, 1, 5)
+
+go_results_with_multiple <- gse_go_elim_method_list(
+  object = object,
+  target_gene_list = go_target_genes,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 0,
+  .debug = FALSE
+) %>%
+  data.table::setorder(target_set_name, -go_id)
+
+expect_equal(
+  current = go_results_with_multiple$hits,
+  target = expected_hits_multi_no_elim,
+  info = paste(
+    "Gene ontology elimination GSE - list no elim (hits)"
+  )
+)
+
+expect_equal(
+  current = go_results_with_multiple$pvals,
+  target = expected_pval_multi_no_elim,
+  info = paste(
+    "Gene ontology elimination GSE - list no elim (pvals)"
   ),
   tolerance = 10e-6
 )

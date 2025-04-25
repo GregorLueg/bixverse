@@ -136,7 +136,7 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #' This function calculates the Jaccard or similarity index between a one given
 #' string vector and list of vectors.
 #'
-#' @param s_1 The String vector against which to calculate the set similarities.
+#' @param s_1_list The String vector against which to calculate the set similarities.
 #' @param s_2_list A List of vector against which to calculate the set similarities.
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
 #'

@@ -1,24 +1,29 @@
 # *bixverse* change log
 
-*Last update: 13.04.2025* </br>
+*Last update: 25.04.2025* </br>
 
 ### Version **0.0.1.1**
 
-**Beta release** Package initialisation and first functionalities added.
+**Beta release** Improved stability and bug fixes.
 
 #### New features
 
 - Semantic similarities for ontologies added.
-- Speed improvements in various functions due to less unnecessary copying of 
-data in memory in the Rust back-end.
-- First set of tests for package stability and quick identification of 
-unexpected behaviour via [tinytest](https://github.com/markvanderloo/tinytest).
+- Speed improvements in various (Rust) functions due to less unnecessary copying
+of data in memory in the Rust back-end and leverage of lifetimes. 
+- Stability of the package massively improved with various test, powered by
+[tinytest](https://github.com/markvanderloo/tinytest).
+- Set similarities rust functions exposed.
+- DGE class for leveraging Limma Voom to do differential gene expression 
+calculations.
+- Wrapper functions into h5ad objects to load data into R memory.
 
 #### Bug fixes, documentation updates
 
 - Various documentation updates, fixes in spelling etc.
 - Bug fix for the `future::plan()` for iterating over different resolutions in
 the reciprocal best hit graph generation.
+- Bug fix in the hypergeometric calculations and RBH graph.
 
 #### Breaking changes
 

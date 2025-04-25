@@ -50,13 +50,11 @@ pub fn array_f64_max_min(arr: &[f64]) -> (f64, f64) {
     res
 }
 
-pub fn string_vec_to_set(
-    x: &[String]
-) -> HashSet<String> {
+pub fn string_vec_to_set(x: &[String]) -> HashSet<String> {
     let mut set = HashSet::with_capacity(x.len());
     for s in x {
         set.insert(s.clone());
-    };
+    }
     set
 }
 

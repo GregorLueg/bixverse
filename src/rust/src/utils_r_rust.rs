@@ -53,6 +53,7 @@ pub fn r_list_to_hashmap_set(
 }
 
 // Transforms an Robj nested list into a nested hashmap
+#[allow(dead_code)]
 pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
     let mut result = HashMap::with_capacity(r_nested_list.len());
     for (n, obj) in r_nested_list {
