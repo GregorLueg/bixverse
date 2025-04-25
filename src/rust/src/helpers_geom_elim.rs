@@ -103,14 +103,15 @@ pub fn process_ontology_level(
     debug: bool,
 ) -> GoElimLevelResults {
     // Get the identfiers of that level and clean everything up
-    let go_ids = go_obj.get_level_ids(level);
-    let go_ids_final: &Vec<String> = go_ids.unwrap();
-    let level_data = go_obj.get_genes_list(go_ids_final);
+    let default = vec!["string".to_string()];
+    let go_ids = go_obj.get_level_ids(level).unwrap_or(&default);
+
+    let level_data = go_obj.get_genes_list(go_ids);
 
     let mut level_data_final = HashMap::new();
 
     for (key, value) in &level_data {
-        if value.len() < min_genes {
+        if value.len() >= min_genes {
             level_data_final.insert(key.clone(), value);
         }
     }
