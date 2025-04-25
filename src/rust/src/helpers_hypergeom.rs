@@ -84,18 +84,18 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
     hits
 }
 
-/// Count the number of hits for the hypergeometric tests (against HashSets)
-pub fn count_hits_hash(gene_set_list: Vec<&HashSet<String>>, target_genes: &[String]) -> Vec<u64> {
-    let target_genes_hash: HashSet<String> = target_genes.iter().cloned().collect();
-    let hits: Vec<u64> = gene_set_list
-        .into_iter()
-        .map(|s| {
-            let intersection = s.intersection(&target_genes_hash).count() as u64;
-            intersection
-        })
-        .collect();
-    hits
-}
+// /// Count the number of hits for the hypergeometric tests (against HashSets)
+// pub fn count_hits_hash(gene_set_list: Vec<&HashSet<String>>, target_genes: &[String]) -> Vec<u64> {
+//     let target_genes_hash: HashSet<String> = target_genes.iter().cloned().collect();
+//     let hits: Vec<u64> = gene_set_list
+//         .into_iter()
+//         .map(|s| {
+//             let intersection = s.intersection(&target_genes_hash).count() as u64;
+//             intersection
+//         })
+//         .collect();
+//     hits
+// }
 
 /// Helper function for the hypergeometric test
 pub fn hypergeom_helper(

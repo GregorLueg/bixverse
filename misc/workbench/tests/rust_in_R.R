@@ -81,31 +81,6 @@ t2 <- gse_hypergeometric_list(
 )
 tictoc::toc()
 
-system.file("extdata", package = "bixverse") |> list.files()
-
-system.file("extdata", "go_data_hs.parquet", package = "bixverse")
-
-
-number_levels <- length(S7::prop(S7_obj, "levels"))
-number_gene_sets <- length(S7::prop(S7_obj, "go_to_genes"))
-min_genes <- S7::prop(S7_obj, "min_genes")
-
-cat(paste(
-  "Gene ontology class:",
-  sprintf(" Contains %i gene ontology terms.", number_gene_sets),
-  sprintf(" Total of %i levels represented in the ontology.", number_levels),
-  sprintf(" Minimum genes per term set to %i.", min_genes),
-  sep = "\n"
-))
-
-
-?network_diffusions
-
-?gse_go_elim_method
-
-devtools::document()
-rextendr::document()
-
 tictoc::tic()
 t3 <- gse_go_elim_method(
   go_data_s7,
@@ -114,8 +89,6 @@ t3 <- gse_go_elim_method(
   fdr_threshold = 1
 )
 tictoc::toc()
-
-?gse_go_elim_method_list
 
 tictoc::tic()
 t4 <- gse_go_elim_method_list(

@@ -58,7 +58,7 @@ gse_hypergeometric <- function(
     gene_universe <- unique(unlist(gene_set_list))
   }
 
-  target_set_lengths = sapply(target_genes_list, length)
+  target_genes_length <- length(target_genes)
 
   gse_results <- rs_hypergeom_test(
     target_genes = target_genes,
@@ -86,10 +86,7 @@ gse_hypergeometric <- function(
     .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals) %>%
     .[,
-      target_set_lengths := target_set_lengths[match(
-        target_set_name,
-        names(target_set_lengths)
-      )]
+      target_set_lengths := target_genes_length
     ]
 
   gse_results
