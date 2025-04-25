@@ -50,39 +50,14 @@ pub fn array_f64_max_min(arr: &[f64]) -> (f64, f64) {
     res
 }
 
-pub fn string_vec_to_set(x: &[String]) -> HashSet<String> {
+/// String vector to HashSet
+pub fn string_vec_to_set(x: &[String]) -> HashSet<&String> {
     let mut set = HashSet::with_capacity(x.len());
     for s in x {
-        set.insert(s.clone());
+        set.insert(s);
     }
     set
 }
-
-// Get the mean value from an f64 array
-// pub fn array_f64_mean(
-//   x: &[f64]
-// ) -> f64 {
-//   let len_x = x.len();
-//   let sum_x: f64 = x
-//     .iter()
-//     .sum();
-//   sum_x / len_x as f64
-// }
-
-// Get the variance from an f64 array
-// pub fn array_f64_var(
-//   x: &[f64]
-// ) -> f64 {
-//   let mean_a = array_f64_mean(x);
-//   let var: f64 = x
-//     .iter()
-//     .map(|x| {
-//       (x - mean_a).powi(2)
-//     })
-//     .sum();
-
-//   var / (x.len() - 1) as f64
-// }
 
 /// Generate the rank of a vector with tie correction.
 pub fn rank_vector(vec: &[f64]) -> Vec<f64> {

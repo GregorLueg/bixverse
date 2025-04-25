@@ -11,6 +11,7 @@ use crate::utils_stats::*;
 //////////////////////////////
 
 /// Structure for random SVD results
+#[derive(Clone, Debug)]
 pub struct RandomSvdResults {
     pub u: faer::Mat<f64>,
     pub v: faer::Mat<f64>,
@@ -18,6 +19,7 @@ pub struct RandomSvdResults {
 }
 
 /// Structure for DiffCor results
+#[derive(Clone, Debug)]
 pub struct DiffCorRes {
     pub r_a: Vec<f64>,
     pub r_b: Vec<f64>,

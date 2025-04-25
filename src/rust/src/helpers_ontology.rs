@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 
 /// Structure to store the Ontology similarity results
+#[derive(Clone, Debug)]
 pub struct OntoSimRes<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
@@ -12,6 +13,7 @@ pub struct OntoSimRes<'a> {
 }
 
 /// Enum to store the different similarity types
+#[derive(Clone, Debug)]
 pub enum OntoSimType {
     Resnik,
     Lin,

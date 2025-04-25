@@ -4,7 +4,8 @@ use std::collections::{BTreeMap, HashSet};
 use crate::utils_rust::*;
 use crate::utils_stats::set_similarity;
 
-#[derive(Debug)]
+/// Structure for an Rbh triplet Result
+#[derive(Clone, Debug)]
 pub struct RbhTripletStruc<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
@@ -33,9 +34,13 @@ pub fn calculate_rbh_set<'a>(
     let similarities_flat: Vec<Vec<f64>> = origin_modules
         .values()
         .map(|v1| {
+            let v1_refs: HashSet<&String> = v1.iter().collect();
             target_modules
                 .values()
-                .map(|v2| set_similarity(v1, v2, overlap_coefficient))
+                .map(|v2| {
+                    let v2_refs: HashSet<&String> = v2.iter().collect();
+                    set_similarity(&v1_refs, &v2_refs, overlap_coefficient)
+                })
                 .collect()
         })
         .collect();

@@ -170,7 +170,7 @@ fn rs_gse_geom_elim(
     let mut gene_set_lengths: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
 
     for level in levels.iter() {
-        let level_res = process_ontology_level(
+        let level_res: GoElimLevelResults = process_ontology_level(
             &target_genes,
             level,
             &mut go_obj,
@@ -272,7 +272,7 @@ fn rs_gse_geom_elim_list(
 
             // Iterate over the levels
             for level in levels.iter() {
-                let level_res = process_ontology_level(
+                let level_res: GoElimLevelResults = process_ontology_level(
                     targets,
                     level,
                     &mut go_obj,

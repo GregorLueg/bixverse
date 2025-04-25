@@ -77,7 +77,7 @@ expect_equivalent(
   current = ic_data[names(expected_ic_data)],
   target = expected_ic_data,
   info = "Ontology similarity test for information content.",
-  tolerance = 1e-5
+  tolerance = 1e-6
 )
 
 ### semantic similarity --------------------------------------------------------
@@ -107,21 +107,21 @@ expect_equivalent(
   current = resnik,
   target = expected_resnik,
   info = "Ontology similarity test for semantic semilarity (Resnik).",
-  tolerance = 1e-5
+  tolerance = 1e-6
 )
 
 expect_equivalent(
   current = lin,
   target = expected_lin,
   info = "Ontology similarity test for semantic semilarity (Lin).",
-  tolerance = 1e-5
+  tolerance = 1e-6
 )
 
 expect_equivalent(
   current = combined,
   target = expected_combined,
   info = "Ontology similarity test for semantic semilarity (combined type).",
-  tolerance = 1e-5
+  tolerance = 1e-6
 )
 
 ## class -----------------------------------------------------------------------
@@ -137,13 +137,19 @@ semantic_similarity_filtered <- get_semantic_similarities(test_class)
 expect_equivalent(
   current = semantic_similarity_filtered,
   target = expected_sim_filtered,
-  info = "Ontology similarity test for class with filtering on crit value - similarities",
-  tolerance = 1e-5
+  info = paste(
+    "Ontology similarity test for class with filtering on crit value",
+    "- similarities"
+  ),
+  tolerance = 1e-6
 )
 
 expect_equivalent(
   current = crit_val,
   target = expected_critval,
-  info = "Ontology similarity test for class with filtering on crit value - critical value",
-  tolerance = 1e-5
+  info = paste(
+    "Ontology similarity test for class with filtering on crit value",
+    "- critical value"
+  ),
+  tolerance = 1e-6
 )

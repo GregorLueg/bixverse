@@ -8,7 +8,7 @@ use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
 use crate::utils_r_rust::{r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils_rust::{flatten_vector, string_vec_to_set};
-use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly};
+use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly, EffectSizeRes};
 
 // use std::collections::HashSet;
 // use crate::utils_r_rust::r_list_to_str_vec;
@@ -111,7 +111,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
     let std_a = col_sds(mat_a);
     let std_b = col_sds(mat_b);
 
-    let (es, se) = hedge_g_effect(
+    let (es, se): EffectSizeRes = hedge_g_effect(
         &mean_a,
         &mean_b,
         &std_a,
@@ -198,10 +198,10 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
     let mut s_hash1 = HashSet::with_capacity(s_1.len());
     let mut s_hash2 = HashSet::with_capacity(s_2.len());
 
-    for item in s_1 {
+    for item in &s_1 {
         s_hash1.insert(item);
     }
-    for item in s_2 {
+    for item in &s_2 {
         s_hash2.insert(item);
     }
 
@@ -227,8 +227,8 @@ fn rs_set_similarity_list(
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
-    let s_hash1: Vec<HashSet<String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
-    let s_hash2: Vec<HashSet<String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash1: Vec<HashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash2: Vec<HashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
     let res: Vec<Vec<f64>> = s_hash1
         .into_iter()
