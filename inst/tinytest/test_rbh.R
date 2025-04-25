@@ -5,24 +5,24 @@
 set.seed(123)
 
 modules_set_a <- purrr::map(
-  1:5,
+  1:3,
   ~ {
     sample(letters, 10)
   }
 )
-names(modules_set_a) <- LETTERS[1:5]
+names(modules_set_a) <- LETTERS[1:3]
 data_a <- data.table::setDT(stack(modules_set_a))[, `:=`(
   origin = "set_A",
   ind = as.character(ind)
 )]
 
 modules_set_b <- purrr::map(
-  1:3,
+  1:2,
   ~ {
     sample(letters, 8)
   }
 )
-names(modules_set_b) <- LETTERS[1:3]
+names(modules_set_b) <- letters[1:2]
 data_b <- data.table::setDT(stack(modules_set_b))[, `:=`(
   origin = "set_B",
   ind = as.character(ind)
@@ -32,10 +32,10 @@ full_data <- data.table::rbindlist(list(data_a, data_b))
 
 ## expected similarities -------------------------------------------------------
 
-overlap_coef_sims <- c(0.5, 0.375, 0.375, 0.375, 0.375)
-jaccard_sim <- c(0.2857143, 0.2, 0.2, 0.2, 0.2)
-origin <- c("set_A_A", "set_A_B", "set_A_C", "set_A_C", "set_A_E")
-targets <- c("set_B_B", "set_B_A", "set_B_A", "set_B_C", "set_B_C")
+overlap_coef_sims <- c(0.625, 0.375)
+jaccard_sim <- c(0.3846154, 0.2)
+origin <- c("set_A_C", "set_A_A")
+targets <- c("set_B_a", "set_B_b")
 
 ## test class ------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ object <- generate_rbh_graph(
   .debug = FALSE
 )
 
-overlap_res <- get_rbh_res(object)
+overlap_res <- get_rbh_res(object) %>% data.table::setorder(-similiarity)
 
 expect_equivalent(
   current = overlap_res$combined_origin,
@@ -82,7 +82,7 @@ object <- generate_rbh_graph(
   .debug = FALSE
 )
 
-overlap_res <- get_rbh_res(object)
+overlap_res <- get_rbh_res(object) %>% data.table::setorder(-similiarity)
 
 expect_equivalent(
   current = overlap_res$similiarity,

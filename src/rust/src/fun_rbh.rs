@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 
 use crate::helpers_rbh::*;
-use crate::utils_r_rust::{r_nested_list_to_btree_nest, NestedBtreeMap};
+use crate::utils_r_rust::{r_nested_list_to_rust, NestedHashMap};
 use crate::utils_rust::flatten_vector;
 
 /// Structure to store the RBH results.
@@ -51,9 +51,14 @@ fn rs_rbh_sets(
     min_similarity: f64,
     debug: bool,
 ) -> extendr_api::Result<List> {
-    let module_list: NestedBtreeMap = r_nested_list_to_btree_nest(module_list)?;
+    let module_list: NestedHashMap = r_nested_list_to_rust(module_list)?;
     // Pull out all the keys
-    let origins: Vec<String> = module_list.clone().into_keys().collect();
+    let mut origins: Vec<String> = module_list.clone().into_keys().collect();
+    origins.sort();
+
+    if debug {
+        println!("Origins are: {:?}", origins)
+    };
 
     let origins_split: Vec<(String, &[String])> = origins
         .iter()
@@ -62,9 +67,17 @@ fn rs_rbh_sets(
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
+    if debug {
+        println!("What are you splitted into? {:?}", origins_split)
+    };
+
     let rbh_results: Vec<Vec<RbhResult>> = origins_split
         .par_iter()
         .map(|(origin_module, target_modules)| {
+            if debug {
+                println!("What is the origin here? {:?}", origin_module)
+            };
+
             // Parallel iterator starts here
             let origin_module_data = module_list.get(origin_module).unwrap();
 
