@@ -42,7 +42,7 @@ gene_ontology_data <- S7::new_class(
     checkmate::assertDataTable(go_data_dt)
     checkmate::qassert(min_genes, "I1")
     go_data_dt <-
-      go_data_dt[, `:=`(
+      copy(go_data_dt)[, `:=`(
         no_genes = purrr::map_dbl(ensembl_id, length),
         depth = sprintf("%02d", depth)
       )]

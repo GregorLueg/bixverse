@@ -1,5 +1,7 @@
 # gse tests --------------------------------------------------------------------
 
+library(magrittr)
+
 ## simple version --------------------------------------------------------------
 
 ### data -----------------------------------------------------------------------
@@ -124,3 +126,85 @@ expect_equal(
 ## gene ontology elimination methods -------------------------------------------
 
 ### data -----------------------------------------------------------------------
+
+go_target_genes <- letters[2:4]
+
+toy_go_data <- data.table::data.table(
+  go_id = sprintf("go_%i", 1:3),
+  go_name = sprintf("go_name_%s", letters[1:3]),
+  ancestors = list(
+    c("go_1"),
+    c("go_1", "go_2"),
+    c("go_1", "go_2", "go_3")
+  ),
+  ensembl_id = list(c(letters[1:10]), c(letters[1:6]), c(letters[1:3])),
+  depth = c(1, 2, 3)
+) %>%
+  data.table::setorder(-depth)
+
+object <- gene_ontology_data(toy_go_data, min_genes = 1L)
+
+expected_pval_no_elim <- c(1, 0.1666667, 0.1833333)
+expected_hits_no_elim <- c(3, 3, 2)
+
+expected_pval_with_elim <- c(1, 1, 0.1833333)
+expected_hits_with_elim <- c(0, 1, 2)
+
+### without elimination --------------------------------------------------------
+
+go_results_no_elim <- gse_go_elim_method(
+  object = object,
+  target_genes = go_target_genes,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 0,
+  .debug = FALSE
+) %>%
+  setorder(go_id)
+
+expect_equal(
+  current = go_results_no_elim$hits,
+  target = expected_hits_no_elim,
+  info = paste(
+    "Gene ontology elimination GSE: no hits, no elimination"
+  )
+)
+
+expect_equal(
+  current = go_results_no_elim$pvals,
+  target = expected_pval_no_elim,
+  info = paste(
+    "Gene ontology elimination GSE: pvals, no elimination"
+  ),
+  tolerance = 10e-6
+)
+
+### with elimination -----------------------------------------------------------
+
+go_results_with_elim <- gse_go_elim_method(
+  object = object,
+  target_genes = go_target_genes,
+  minimum_overlap = 0L,
+  fdr_threshold = 1,
+  elim_threshold = 1,
+  .debug = FALSE
+) %>%
+  setorder(go_id)
+
+
+expect_equal(
+  current = go_results_with_elim$hits,
+  target = expected_hits_with_elim,
+  info = paste(
+    "Gene ontology elimination GSE: no hits, no elimination"
+  )
+)
+
+expect_equal(
+  current = go_results_with_elim$pvals,
+  target = expected_pval_with_elim,
+  info = paste(
+    "Gene ontology elimination GSE: pvals, no elimination"
+  ),
+  tolerance = 10e-6
+)
