@@ -90,6 +90,8 @@ t3 <- gse_go_elim_method(
 )
 tictoc::toc()
 
+length(target_gene_sets)
+
 tictoc::tic()
 t4 <- gse_go_elim_method_list(
   go_data_s7,

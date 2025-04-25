@@ -159,8 +159,8 @@ fn rs_gse_geom_elim(
 
     let mut go_obj = GeneOntology {
         go_to_gene,
-        ancestors: ancestors_map,
-        levels: levels_map,
+        ancestors: &ancestors_map,
+        levels: &levels_map,
     };
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
@@ -260,8 +260,8 @@ fn rs_gse_geom_elim_list(
             // Create necessary mutables
             let mut go_obj = GeneOntology {
                 go_to_gene: go_data.0.clone(),
-                ancestors: go_data.1.clone(),
-                levels: go_data.2.clone(),
+                ancestors: &go_data.1,
+                levels: &go_data.2,
             };
 
             let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());

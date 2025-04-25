@@ -210,7 +210,7 @@ pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64
     // Ensure the matrix is square
     assert!(matrix.nrows() == matrix.ncols(), "Matrix must be square");
 
-    let eigendecomp = matrix.eigen_from_real().unwrap();
+    let eigendecomp = matrix.eigen().unwrap();
 
     let s = eigendecomp.S();
     let u = eigendecomp.U();

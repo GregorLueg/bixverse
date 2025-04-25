@@ -26,27 +26,22 @@ pub struct GoElimLevelResults {
     pub gene_set_lengths: Vec<u64>,
 }
 
-/// Structure that contains the gene ontology and key functions to do apply the
-/// elimination method.
-pub struct GeneOntology {
-    pub go_to_gene: GeneMap,
-    pub ancestors: AncestorMap,
-    pub levels: LevelMap,
+pub struct GeneOntology<'a> {
+    pub go_to_gene: HashMap<String, HashSet<String>>,
+    pub ancestors: &'a HashMap<String, Vec<String>>,
+    pub levels: &'a HashMap<String, Vec<String>>,
 }
 
-impl GeneOntology {
+impl GeneOntology<'_> {
     /// Returns the ancestors of a given gene ontology term identifier
     pub fn get_ancestors(&self, id: &String) -> Option<&Vec<String>> {
         self.ancestors.get(id)
     }
 
-    /// Returns the gene ontology term identifiers for a given level of the
-    /// ontology.
     pub fn get_level_ids(&self, id: &String) -> Option<&Vec<String>> {
         self.levels.get(id)
     }
 
-    /// Remove genes from defined sets of genes
     pub fn remove_genes(&mut self, ids: &[String], genes_to_remove: &HashSet<String>) {
         for id in ids.iter() {
             if let Some(gene_set) = self.go_to_gene.get_mut(id) {
@@ -121,10 +116,6 @@ pub fn process_ontology_level(
     for s in target_genes {
         target_set.insert(s.clone());
     }
-
-    if debug {
-        println!("These are the target gene sets: {:?}", target_set)
-    };
 
     let size = level_data_final.len();
 
