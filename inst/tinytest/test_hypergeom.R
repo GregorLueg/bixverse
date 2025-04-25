@@ -189,7 +189,7 @@ go_results_with_elim <- gse_go_elim_method(
   elim_threshold = 1,
   .debug = FALSE
 ) %>%
-  setorder(go_id)
+  data.table::setorder(go_id)
 
 
 expect_equal(
