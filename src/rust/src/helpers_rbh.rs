@@ -1,9 +1,10 @@
 use faer::Mat;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use crate::utils_rust::*;
 use crate::utils_stats::set_similarity;
 
+#[derive(Debug)]
 pub struct RbhTripletStruc<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
@@ -12,36 +13,40 @@ pub struct RbhTripletStruc<'a> {
 
 /// Calculates the reciprocal best hits based on set similarities.
 pub fn calculate_rbh_set<'a>(
-    origin_modules: &'a BTreeMap<String, HashSet<String>>,
-    target_modules: &'a BTreeMap<String, HashSet<String>>,
+    origin_modules: &'a HashMap<String, HashSet<String>>,
+    target_modules: &'a HashMap<String, HashSet<String>>,
     overlap_coefficient: bool,
     min_similarity: f64,
     debug: bool,
 ) -> Vec<RbhTripletStruc<'a>> {
-    let similarities: Vec<Vec<f64>> = origin_modules
+    let names_targets: Vec<&String> = target_modules.keys().collect();
+    let names_origin: Vec<&String> = origin_modules.keys().collect();
+
+    if debug {
+        println!("Target names: {:?}", names_targets)
+    }
+
+    if debug {
+        println!("Origin names: {:?}", names_origin)
+    }
+
+    let similarities_flat: Vec<Vec<f64>> = origin_modules
         .values()
-        .map(|module_i| {
-            target_modules
-                .values()
-                .map(|module_l| set_similarity(module_i, module_l, overlap_coefficient))
+        .map(|v| {
+            names_targets
+                .iter()
+                .map(|k2| set_similarity(v, target_modules.get(*k2).unwrap(), overlap_coefficient))
                 .collect()
         })
         .collect();
 
-    let names_origin: Vec<&String> = origin_modules.keys().collect();
-
-    let names_targets: Vec<&String> = target_modules.keys().collect();
-
-    let mat_data: Vec<f64> = flatten_vector(similarities);
-
-    let max_sim = array_f64_max(&mat_data);
+    let mat_data: Vec<f64> = flatten_vector(similarities_flat);
 
     if debug {
-        println!(
-            "The observed max_similarity was {}.\nThe values are {:?}",
-            max_sim, mat_data,
-        );
-    }
+        println!("Flat data {:?}", mat_data)
+    };
+
+    let max_sim = array_f64_max(&mat_data);
 
     let result = if max_sim < min_similarity {
         if debug {
@@ -56,7 +61,11 @@ pub fn calculate_rbh_set<'a>(
         let nrow = names_origin.len();
         let ncol = names_targets.len();
 
-        let sim_mat = Mat::from_fn(nrow, ncol, |i, j| mat_data[i + j * nrow]);
+        let sim_mat = Mat::from_fn(nrow, ncol, |i, j| mat_data[j + i * ncol]);
+
+        if debug {
+            println!("The matrix looks like: {:?}", sim_mat)
+        };
 
         let row_maxima: Vec<f64> = sim_mat
             .row_iter()
@@ -80,16 +89,17 @@ pub fn calculate_rbh_set<'a>(
             for c in 0..ncol {
                 let value = sim_mat[(r, c)];
                 if value == row_maxima[r] && value == col_maxima[c] {
-                    // matching_pairs.push((
-                    //     names_origin[r].to_string(),
-                    //     names_targets[c].to_string(),
-                    //     value,
-                    // ));
-                    matching_pairs.push(RbhTripletStruc {
+                    let triplet = RbhTripletStruc {
                         t1: names_origin[r],
                         t2: names_targets[c],
                         sim: value,
-                    })
+                    };
+
+                    if debug {
+                        println!("What are the matching pairs?: {:?}", triplet)
+                    };
+
+                    matching_pairs.push(triplet)
                 }
             }
         }
