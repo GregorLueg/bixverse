@@ -23,7 +23,10 @@ pub fn calculate_rbh_set<'a>(
         .map(|module_i| {
             target_modules
                 .values()
-                .map(|module_l| set_similarity(module_i, module_l, overlap_coefficient))
+                .map(|module_l| {
+                    let sim = set_similarity(module_i, module_l, overlap_coefficient);
+                    sim
+                })
                 .collect()
         })
         .collect();
@@ -56,7 +59,7 @@ pub fn calculate_rbh_set<'a>(
         let nrow = names_origin.len();
         let ncol = names_targets.len();
 
-        let sim_mat = Mat::from_fn(nrow, ncol, |i, j| mat_data[i + j * nrow]);
+        let sim_mat = Mat::from_fn(nrow, ncol, |j, i| mat_data[i + j * ncol]);
 
         let row_maxima: Vec<f64> = sim_mat
             .row_iter()
