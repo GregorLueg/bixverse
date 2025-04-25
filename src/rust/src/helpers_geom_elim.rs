@@ -18,6 +18,7 @@ type AncestorMap = HashMap<String, Vec<String>>;
 type LevelMap = HashMap<String, Vec<String>>;
 
 /// Return structure of the `process_ontology_level()` ontology function.
+#[derive(Clone, Debug)]
 pub struct GoElimLevelResults {
     pub go_ids: Vec<String>,
     pub pvals: Vec<f64>,
@@ -26,6 +27,7 @@ pub struct GoElimLevelResults {
     pub gene_set_lengths: Vec<u64>,
 }
 
+#[derive(Clone, Debug)]
 pub struct GeneOntology<'a> {
     pub go_to_gene: HashMap<String, HashSet<String>>,
     pub ancestors: &'a HashMap<String, Vec<String>>,

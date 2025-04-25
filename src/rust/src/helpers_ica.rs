@@ -16,7 +16,7 @@ use crate::utils_rust::*;
 //////////////////////////////
 
 /// Enum for the ICA types
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IcaType {
     Exp,
     LogCosh,

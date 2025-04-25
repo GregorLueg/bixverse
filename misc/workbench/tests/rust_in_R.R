@@ -24,7 +24,7 @@ set.seed(seed)
 
 universe <- protein_coding_genes
 gene_sets_no <- 5000
-target_gene_sets_no <- 100
+target_gene_sets_no <- 150
 
 gene_sets <- purrr::map(
   1:gene_sets_no,

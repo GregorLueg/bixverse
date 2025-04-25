@@ -4,6 +4,13 @@ use rayon::prelude::*;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::collections::HashSet;
 
+///////////
+// Types //
+///////////
+
+/// A type alias that can be returned by the par_iter() functions.
+pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
+
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
 pub fn split_vector_randomly(vec: Vec<f64>, x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
     let mut rng = StdRng::seed_from_u64(seed);
@@ -19,8 +26,8 @@ pub fn split_vector_randomly(vec: Vec<f64>, x: usize, seed: u64) -> (Vec<f64>, V
 /// Calculate the set similarity. Options are Jaccard (similarity_index = False)
 /// or the similarity index calculation.
 pub fn set_similarity(
-    s_1: &HashSet<String>,
-    s_2: &HashSet<String>,
+    s_1: &HashSet<&String>,
+    s_2: &HashSet<&String>,
     overlap_coefficient: bool,
 ) -> f64 {
     let i = s_1.intersection(s_2).count() as u64;
@@ -41,7 +48,7 @@ pub fn hedge_g_effect(
     n_a: usize,
     n_b: usize,
     small_sample_correction: bool,
-) -> (Vec<f64>, Vec<f64>) {
+) -> EffectSizeRes {
     let total_n = (n_a + n_b) as f64;
     let res: Vec<(f64, f64)> = mean_a
         .par_iter()
@@ -68,8 +75,8 @@ pub fn hedge_g_effect(
         })
         .collect();
 
-    let mut effect_sizes: Vec<f64> = Vec::new();
-    let mut standard_errors: Vec<f64> = Vec::new();
+    let mut effect_sizes: Vec<f64> = Vec::with_capacity(res.len());
+    let mut standard_errors: Vec<f64> = Vec::with_capacity(res.len());
 
     for (effect_size, standard_error) in res {
         effect_sizes.push(effect_size);

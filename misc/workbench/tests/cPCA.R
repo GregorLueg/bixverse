@@ -11,22 +11,6 @@ cPCA_data <- synthetic_cPCA_data()
 
 cPCA_data$target[1:5, 1:5]
 
-## CoVar tests ----
-
-ncol <- 10000
-nrow <- 100
-
-set.seed(123)
-x <- matrix(rnorm(ncol * nrow), nrow, ncol)
-
-tictoc::tic()
-y_1 <- cov(x)
-tictoc::toc()
-
-tictoc::tic()
-y_2 <- rs_covariance(x)
-tictoc::toc()
-
 ## Class tests ----
 
 raw_data <- t(cPCA_data$target)

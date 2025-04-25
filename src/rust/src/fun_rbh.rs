@@ -6,6 +6,7 @@ use crate::utils_r_rust::{r_nested_list_to_btree_nest, NestedBtreeMap};
 use crate::utils_rust::flatten_vector;
 
 /// Structure to store the RBH results.
+#[derive(Clone, Debug)]
 pub struct RbhResult {
     pub origin: String,
     pub target: String,
