@@ -122,6 +122,10 @@ pub fn process_ontology_level(
         target_set.insert(s.clone());
     }
 
+    if debug {
+        println!("These are the target gene sets: {:?}", target_set)
+    };
+
     let size = level_data_final.len();
 
     let mut go_ids = Vec::with_capacity(size);
@@ -131,8 +135,14 @@ pub fn process_ontology_level(
     let mut gene_set_lengths = Vec::with_capacity(size);
 
     for (key, value) in level_data_final {
+        if debug {
+            println!("This genes are being tested: {:?}", value)
+        };
         let gene_set_length = value.len() as u64;
         let hits = target_set.intersection(value).count() as u64;
+        if debug {
+            println!("Number of hits: {:?}", hits)
+        };
         let q = hits as i64 - 1;
         let pval = if q > 0 {
             hypergeom_pval(
@@ -177,8 +187,8 @@ pub fn process_ontology_level(
     if debug {
         let no_terms = go_to_remove.len();
         println!(
-            "At level {} a total of {} gene ontology terms will be affected by elimination.",
-            level, no_terms
+            "At level {} a total of {} gene ontology terms will be affected by elimination: {:?}",
+            level, no_terms, go_to_remove
         );
     }
 
@@ -186,9 +196,30 @@ pub fn process_ontology_level(
         let ancestors = go_obj.get_ancestors(term);
         let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
 
+        if debug {
+            println!(
+                "The following ancestors are affected: {:?}",
+                ancestors_final
+            )
+        }
+
         if let Some(genes_to_remove) = go_obj.get_genes(term) {
             let genes_to_remove = genes_to_remove.clone();
+            if debug {
+                println!("The following genes will be removed: {:?}", genes_to_remove)
+            }
             go_obj.remove_genes(&ancestors_final, &genes_to_remove);
+        }
+
+        if debug {
+            for ancestor in &ancestors_final {
+                let mut binding = HashSet::with_capacity(1);
+                binding.insert("no genes left".to_string());
+                let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
+                if debug {
+                    println!("The following genes remain: {:?}", new_genes)
+                }
+            }
         }
     }
 
