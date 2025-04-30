@@ -46,11 +46,11 @@ all_limma_contrasts <- function(limma_fit) {
 #' @description
 #' Wrapper function to run Limma Voom workflows.
 #'
-#' @param meta_info data.table. The meta information about the experiment in
+#' @param meta_data data.table. The meta information about the experiment in
 #' which the contrast info (and potential co-variates) can be found.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to test differential gene expression with the Limma-Voom workflow for.
-#' @param dge_list DGEList, see [edgeR::DGEList()].
+#' @param normalized_counts matrix, normalized count matrix.
 #' @param co_variates String or NULL. Optional co-variates you wish to consider
 #' during model fitting.
 #' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
@@ -64,27 +64,29 @@ all_limma_contrasts <- function(limma_fit) {
 #' @import data.table
 #' @importFrom magrittr `%>%`
 run_limma_voom <- function(
-  meta_info,
+  meta_data,
   main_contrast,
-  dge_list,
+  normalized_counts,
   co_variates = NULL,
   ...,
   .verbose = TRUE
 ) {
   variables <- c(main_contrast, co_variates)
   # Checks
-  checkmate::assertDataFrame(meta_info)
-  checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(dge_list, "DGEList")
+  checkmate::assertDataFrame(meta_data)
+  checkmate::assertNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalized_counts"
+  )
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::assertNames(
-    names(meta_info),
+    names(meta_data),
     must.include = variables
   )
   checkmate::qassert(.verbose, "B1")
 
   # Fix any names
-  meta_info[,
+  meta_data[,
     (variables) := lapply(.SD, fix_contrast_names),
     .SDcols = variables
   ]
@@ -99,25 +101,13 @@ run_limma_voom <- function(
     paste(variables, collapse = " + ")
   )
 
-  model_matrix <- model.matrix(as.formula(model_formula), data = meta_info)
+  model_matrix <- model.matrix(as.formula(model_formula), data = meta_data)
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
-  # Filter lowly expressed genes
-  to_keep <- edgeR::filterByExpr(
-    y = dge_list,
-    design = model_matrix,
-    min.prop = 0.2,
-    ...
+  limma_fit <- limma::lmFit(
+    normalized_counts[, meta_data$sample_id],
+    model_matrix
   )
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-  voom_obj <- limma::voom(
-    counts = dge_list[to_keep, ],
-    design = model_matrix,
-    normalize.method = "quantile",
-    plot = TRUE
-  )
-  limma_fit <- limma::lmFit(voom_obj, model_matrix)
 
   contrasts <- all_limma_contrasts(limma_fit)
 
@@ -125,6 +115,11 @@ run_limma_voom <- function(
   final_fit <- limma::eBayes(final_fit)
 
   tested_contrasts <- attributes(contrasts)$dimnames$Contrasts
+  if (.verbose)
+    message(paste(
+      "Tested these contrasts:",
+      paste(tested_contrasts, collapse = ", ")
+    ))
 
   all_dge_res <- purrr::map(tested_contrasts, \(coef) {
     top.table <- as.data.table(
@@ -148,12 +143,12 @@ run_limma_voom <- function(
 
 #' Calculate the effect
 #'
-#' @param meta_info data.table. The meta information about the experiment in
+#' @param meta_data data.table. The meta information about the experiment in
 #' which the contrast info can be found.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to calculate the Hedge's G effect for. Every permutation of the groups
 #' will be tested.
-#' @param dge_list DGEList, see [edgeR::DGEList()].
+#' @param normalized_counts normalized count matrix.
 #' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
 #' @param .verbose Controls verbosity of the function.
 #'
@@ -165,22 +160,22 @@ run_limma_voom <- function(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 hedges_g_dge_list <- function(
-  meta_info,
+  meta_data,
   main_contrast,
-  dge_list,
+  normalized_counts,
   ...,
   .verbose = TRUE
 ) {
   # Checks
-  checkmate::assertDataFrame(meta_info)
+  checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(dge_list, "DGEList")
+  checkmate::assertClass(normalized_counts, "matrix")
   checkmate::assertNames(
-    names(meta_info),
+    names(meta_data),
     must.include = main_contrast
   )
   # Function
-  groups <- as.character(unique(meta_info[[main_contrast]]))
+  groups <- as.character(unique(meta_data[[main_contrast]]))
   combinations_to_test <- combn(
     x = groups,
     m = 2,
@@ -190,32 +185,18 @@ hedges_g_dge_list <- function(
     simplify = FALSE
   )
 
-  to_keep <- suppressWarnings(edgeR::filterByExpr(
-    dge_list,
-    design = NULL,
-    min.prop = 0.2,
-    ...
-  ))
-
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
-
-  # TODO Implement the DESeq VST into Rust...
-  # The heteroskedasticity is not fixed here atm...
-
-  voom_obj <- limma::voom(counts = dge_list[to_keep, ])
-
   res <- purrr::map(combinations_to_test, \(combination) {
-    grpA <- meta_info[
+    grpA <- meta_data[
       eval(parse(text = paste0(main_contrast, " == '", combination[[1]], "'"))),
       sample_id
     ]
-    grpB <- meta_info[
+    grpB <- meta_data[
       eval(parse(text = paste0(main_contrast, " == '", combination[[2]], "'"))),
       sample_id
     ]
 
-    mat_a <- t(voom_obj$E[, grpA])
-    mat_b <- t(voom_obj$E[, grpB])
+    mat_a <- t(normalized_counts[, grpA])
+    mat_b <- t(normalized_counts[, grpB])
 
     hedges_g_effect <- calculate_effect_size(
       mat_a = mat_a,

@@ -4,17 +4,23 @@
 \alias{hedges_g_dge_list}
 \title{Calculate the effect}
 \usage{
-hedges_g_dge_list(meta_info, main_contrast, dge_list, ..., .verbose = TRUE)
+hedges_g_dge_list(
+  meta_data,
+  main_contrast,
+  normalized_counts,
+  ...,
+  .verbose = TRUE
+)
 }
 \arguments{
-\item{meta_info}{data.table. The meta information about the experiment in
+\item{meta_data}{data.table. The meta information about the experiment in
 which the contrast info can be found.}
 
 \item{main_contrast}{String. Which column contains the main groups you want
 to calculate the Hedge's G effect for. Every permutation of the groups
 will be tested.}
 
-\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
+\item{normalized_counts}{normalized count matrix.}
 
 \item{...}{Additional parameters to forward to \code{\link[edgeR:filterByExpr]{edgeR::filterByExpr()}}.}
 
