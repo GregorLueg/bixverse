@@ -10,6 +10,49 @@
 #' @useDynLib bixverse, .registration = TRUE
 NULL
 
+#' @export
+rs_calc_es_idx <- function(ranks, pathway_r) .Call(wrap__rs_calc_es_idx, ranks, pathway_r)
+
+#' Helper function to rapidly retrieve the indices of the gene set members
+#'
+#' @param gene_universe Character Vector. The genes represented in the gene universe.
+#' @param pathway_list List. A named list with each element containing the genes for this
+#' pathway.
+#'
+#' @return Returns a list with the index positions of the gene set genes in the gene universe.
+#'
+#' @export
+rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs_indices, gene_universe, pathway_list)
+
+#' @export
+rs_calc_es <- function(ranks, vec_name, pathway_r) .Call(wrap__rs_calc_es, ranks, vec_name, pathway_r)
+
+#' @export
+rs_gsea_traditional <- function(ranks, vec_name, iters, pathway_list, seed) .Call(wrap__rs_gsea_traditional, ranks, vec_name, iters, pathway_list, seed)
+
+#' Rust implementation of the fgsea::calcGseaStat() function
+#'
+#' @param stats Numeric vector. The gene level statistic. Needs to
+#' sorted in descending nature.
+#' @param gs_idx Integer vector. The indices of the gene set genes.
+#' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+#' @param return_leading_edge Boolean. Return the leading edge indices.
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item gene_stat Enrichment score for that gene set
+#'     \item leading_edge Indicies of the leading edge genes.
+#' }
+#'
+#' @export
+rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge)
+
+#' @export
+rs_calc_gsea_stat_cumulative <- function(stats, gs_indices, gsea_param) .Call(wrap__rs_calc_gsea_stat_cumulative, stats, gs_indices, gsea_param)
+
+#' @export
+rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)
+
 #' Run a single hypergeometric test.
 #'
 #' @description Given a set of target genes, this is a Rust implementation of

@@ -51,7 +51,7 @@ pub fn calculate_rbh_set<'a>(
         println!("Flat data {:?}", mat_data)
     };
 
-    let max_sim = array_f64_max(&mat_data);
+    let max_sim = array_max(&mat_data);
 
     let result = if max_sim < min_similarity {
         if debug {
@@ -76,7 +76,7 @@ pub fn calculate_rbh_set<'a>(
             .row_iter()
             .map(|x| {
                 let row: Vec<f64> = x.iter().cloned().collect();
-                array_f64_max(&row)
+                array_max(&row)
             })
             .collect();
 
@@ -84,7 +84,7 @@ pub fn calculate_rbh_set<'a>(
             .col_iter()
             .map(|x| {
                 let col: Vec<f64> = x.iter().cloned().collect();
-                array_f64_max(&col)
+                array_max(&col)
             })
             .collect();
 
