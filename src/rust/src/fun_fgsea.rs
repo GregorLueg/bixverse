@@ -5,25 +5,46 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 use crate::helpers_fgsea::*;
-use crate::utils_r_rust::r_list_to_str_vec;
+use crate::utils_r_rust::{r_list_to_str_vec, r_named_vec_data};
 use crate::utils_rust::{array_max, array_min, cumsum};
 
-/// @export
-#[extendr]
-fn rs_calc_es_idx(ranks: &[f64], pathway_r: &[i32]) -> f64 {
-    let incremented: Vec<usize> = pathway_r.iter().map(|&x| x as usize + 1).collect();
-    calculate_es(ranks, &incremented)
-}
+//////////////////////
+// Helper functions //
+//////////////////////
 
+/// Calculates the traditional GSEA enrichment score
+///
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param pathway_r String vector. The genes in the pathway.
+///
+/// @return The enrichment score
+///
 /// @export
 #[extendr]
-fn rs_calc_es(ranks: &[f64], vec_name: Vec<String>, pathway_r: Vec<String>) -> f64 {
-    let index: Vec<usize> = vec_name
+fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
+    let vec_data = r_named_vec_data(stats)?;
+
+    let index: Vec<usize> = vec_data
+        .0
         .iter()
         .enumerate()
         .filter_map(|(a, b)| if pathway_r.contains(b) { Some(a) } else { None })
         .collect();
-    calculate_es(ranks, &index)
+
+    Ok(calculate_es(&vec_data.1, &index))
+}
+
+/// @export
+#[extendr]
+pub fn rs_calc_gsea_stat_cumulative(
+    stats: &[f64],
+    gs_indices: &[i32],
+    gsea_param: f64,
+) -> Vec<f64> {
+    // Convert indices from R - keep as 1-based for algorithm
+    let gs_indices_1: Vec<usize> = gs_indices.iter().map(|x| *x as usize).collect();
+
+    calc_gsea_stat_cumulative(stats, &gs_indices_1, gsea_param)
 }
 
 /// Helper function to rapidly retrieve the indices of the gene set members
@@ -36,35 +57,30 @@ fn rs_calc_es(ranks: &[f64], vec_name: Vec<String>, pathway_r: Vec<String>) -> f
 ///
 /// @export
 #[extendr]
-fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> Result<List> {
-    // Create a hashmap for O(1) lookups
+fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_api::Result<List> {
+    // HashMap for fast look ups
     let gene_map: HashMap<&str, usize> = gene_universe
         .iter()
         .enumerate()
         .map(|(i, gene)| (gene.as_str(), i))
         .collect();
 
-    // Create result list
     let mut result_list = List::new(pathway_list.len());
     if let Some(names) = pathway_list.names() {
         result_list.set_names(names)?;
     }
 
-    // Process each pathway using parallel iterators
     for i in 0..pathway_list.len() {
         let element = pathway_list.elt(i)?;
         if let Some(internal_vals) = element.as_string_vector() {
-            // Use with_capacity to avoid reallocations
             let mut indices = Vec::with_capacity(internal_vals.len());
 
-            // Direct push instead of collect+map
             for gene in &internal_vals {
                 if let Some(&idx) = gene_map.get(gene.as_str()) {
                     indices.push((idx as i32) + 1);
                 }
             }
 
-            // Sort for consistent output
             indices.sort_unstable();
             result_list.set_elt(i, Robj::from(indices))?;
         } else {
@@ -75,22 +91,45 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> Result<L
     Ok(result_list)
 }
 
+////////////////////
+// Core functions //
+////////////////////
+
+/// Traditional Gene Set Enrichment analysis (in Rust)
+///
+/// @description This function serves as an internal control. It implements the
+/// gene set enrichment analysis in the traditional way without the convex approximations
+/// used in fgsea implementations.
+///
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param iters Integer. Number of permutations to test for.
+/// @param pathway_list List. A named list with each element containing the genes for this
+/// pathway.
+/// @param seed Integer. For reproducibility purposes
+///
+/// @return List with the following elements
+/// \itemize{
+///     \item es Enrichment scores for the gene sets
+///     \item nes Normalised enrichment scores for the gene sets
+///     \item pvals The calculated p-values.
+/// }
+///
 /// @export
 #[extendr]
 fn rs_gsea_traditional(
-    ranks: &[f64],
-    vec_name: Vec<String>,
+    stats: Robj,
     iters: usize,
     pathway_list: List,
     seed: u64,
 ) -> extendr_api::Result<List> {
+    let vec_data = r_named_vec_data(stats)?;
     // Transform to  Vec of Vecs
     let gene_sets = r_list_to_str_vec(pathway_list)?;
 
     // Get the indices
     let gene_set_idx: Vec<Vec<usize>> = gene_sets
         .iter()
-        .map(|s| get_gene_set_indices(&vec_name, s))
+        .map(|s| get_gene_set_indices(&vec_data.0, s))
         .collect();
 
     // Max length
@@ -100,16 +139,16 @@ fn rs_gsea_traditional(
         .max()
         .unwrap_or(0);
 
-    let shared_perm = create_random_gs_indices(iters, max_length, ranks.len(), seed, false);
+    let shared_perm = create_random_gs_indices(iters, max_length, vec_data.1.len(), seed, false);
 
     let results: Vec<(f64, f64, f64)> = gene_set_idx
         .par_iter()
         .map(|x| {
             let pathway_length = x.len();
-            let actual_es = calculate_es(ranks, x);
+            let actual_es = calculate_es(&vec_data.1, x);
             let perm_es: Vec<f64> = shared_perm
                 .iter()
-                .map(|perm| calculate_es(ranks, &perm[..pathway_length]))
+                .map(|perm| calculate_es(&vec_data.1, &perm[..pathway_length]))
                 .collect();
             let (pval, nes) = if actual_es >= 0.0 {
                 let pval = calculate_pval(actual_es, &perm_es, iters, true);
@@ -234,19 +273,6 @@ fn rs_calc_gsea_stats(
 
 /// @export
 #[extendr]
-pub fn rs_calc_gsea_stat_cumulative(
-    stats: &[f64],
-    gs_indices: &[i32],
-    gsea_param: f64,
-) -> Vec<f64> {
-    // Convert indices from R - keep as 1-based for algorithm
-    let gs_indices_1: Vec<usize> = gs_indices.iter().map(|x| *x as usize).collect();
-
-    calc_gsea_stat_cumulative(stats, &gs_indices_1, gsea_param)
-}
-
-/// @export
-#[extendr]
 pub fn rs_calc_gsea_stat_cumulative_batch(
     stats: &[f64],
     pathway_scores: &[f64],
@@ -279,7 +305,6 @@ pub fn rs_calc_gsea_stat_cumulative_batch(
 
 extendr_module! {
     mod fun_fgsea;
-    fn rs_calc_es_idx;
     fn rs_get_gs_indices;
     fn rs_calc_es;
     fn rs_gsea_traditional;

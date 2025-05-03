@@ -10,9 +10,6 @@
 #' @useDynLib bixverse, .registration = TRUE
 NULL
 
-#' @export
-rs_calc_es_idx <- function(ranks, pathway_r) .Call(wrap__rs_calc_es_idx, ranks, pathway_r)
-
 #' Helper function to rapidly retrieve the indices of the gene set members
 #'
 #' @param gene_universe Character Vector. The genes represented in the gene universe.
@@ -24,11 +21,37 @@ rs_calc_es_idx <- function(ranks, pathway_r) .Call(wrap__rs_calc_es_idx, ranks, 
 #' @export
 rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs_indices, gene_universe, pathway_list)
 
+#' Calculates the traditional GSEA enrichment score
+#'
+#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param pathway_r String vector. The genes in the pathway.
+#'
+#' @return The enrichment score
+#'
 #' @export
-rs_calc_es <- function(ranks, vec_name, pathway_r) .Call(wrap__rs_calc_es, ranks, vec_name, pathway_r)
+rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_r)
 
+#' Traditional Gene Set Enrichment analysis
+#'
+#' @description This function serves as an internal control. It implements the
+#' gene set enrichment analysis in the traditional way without the convex approximations
+#' used in fgsea implementations.
+#'
+#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param iters Integer. Number of permutations to test for.
+#' @param pathway_list List. A named list with each element containing the genes for this
+#' pathway.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item es Enrichment scores for the gene sets
+#'     \item nes Normalised enrichment scores for the gene sets
+#'     \item pvals The calculated p-values.
+#' }
+#'
 #' @export
-rs_gsea_traditional <- function(ranks, vec_name, iters, pathway_list, seed) .Call(wrap__rs_gsea_traditional, ranks, vec_name, iters, pathway_list, seed)
+rs_gsea_traditional <- function(stats, iters, pathway_list, seed) .Call(wrap__rs_gsea_traditional, stats, iters, pathway_list, seed)
 
 #' Rust implementation of the fgsea::calcGseaStat() function
 #'

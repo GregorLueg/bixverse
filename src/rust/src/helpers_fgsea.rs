@@ -9,16 +9,8 @@ use crate::utils_rust::array_max;
 // Structures //
 ////////////////
 
-/// Structure from the fgsea algorithm
-pub struct SegmentTree<T> {
-    t: Vec<T>,
-    b: Vec<T>,
-    n: usize,
-    k2: usize,
-    log_k: usize,
-    block_mask: usize,
-}
-
+/// Structure for results from the Batch GSEA algorithm
+#[derive(Clone, Debug)]
 pub struct GseaBatchResults {
     pub le_es: Vec<usize>,
     pub ge_es: Vec<usize>,
@@ -26,6 +18,17 @@ pub struct GseaBatchResults {
     pub ge_zero: Vec<usize>,
     pub le_zero_sum: Vec<f64>,
     pub ge_zero_sum: Vec<f64>,
+}
+
+/// Structure from the fgsea algorithm
+#[derive(Clone, Debug)]
+pub struct SegmentTree<T> {
+    t: Vec<T>,
+    b: Vec<T>,
+    n: usize,
+    k2: usize,
+    log_k: usize,
+    block_mask: usize,
 }
 
 /////////////////////
@@ -63,6 +66,7 @@ where
     }
 
     /// Increment the value at position p by delta
+    /// p NEEDS to be mutable...
     pub fn increment(&mut self, mut p: usize, delta: T) {
         let block_end = p - (p & self.block_mask) + self.block_mask + 1;
         while p < block_end && p < self.n {
@@ -86,7 +90,11 @@ where
     }
 }
 
-/// The ranks from order function from the fgsea implementation
+//////////////////////
+// Helper functions //
+//////////////////////
+
+/// The ranks from order function from the fgsea C++ implementation
 pub fn ranks_from_order(order: &[usize]) -> Vec<i32> {
     let mut res = vec![0; order.len()];
     for (i, _) in order.iter().enumerate() {
@@ -97,6 +105,7 @@ pub fn ranks_from_order(order: &[usize]) -> Vec<i32> {
 }
 
 /// Returns a vector of indices that would sort the input slice
+/// Implementation of the C++ code
 pub fn fgsea_order<T>(x: &[T]) -> Vec<usize>
 where
     T: PartialOrd,
@@ -119,6 +128,126 @@ fn subvector(from: &[f64], indices: &[usize]) -> Result<Vec<f64>, String> {
         })
         .collect()
 }
+
+/// Get the indices of a given gene set. Assumes that gene universe
+/// is based on the sorted gene level statistics
+pub fn get_gene_set_indices(gene_universe: &[String], gs_genes: &[String]) -> Vec<usize> {
+    let gs_set: HashSet<&String> = gs_genes.iter().collect();
+    gene_universe
+        .iter()
+        .enumerate()
+        .filter_map(|(a, b)| if gs_set.contains(b) { Some(a) } else { None })
+        .collect()
+}
+
+/// Generate random gene set indices.
+pub fn create_random_gs_indices(
+    iter_number: usize,
+    max_len: usize,
+    universe_length: usize,
+    seed: u64,
+    one_indexed: bool,
+) -> Vec<Vec<usize>> {
+    // Parallelize creation of random samples
+    (0..iter_number)
+        .into_par_iter()
+        .map(|i| {
+            // Create a unique seed for each iteration
+            let iter_seed = seed.wrapping_add(i as u64);
+            let mut rng = StdRng::seed_from_u64(iter_seed);
+
+            // Fisher-Yates shuffle for efficient sampling without replacement
+            let adjusted_universe = universe_length - 1;
+            let actual_len = std::cmp::min(max_len, adjusted_universe);
+
+            // Create array of indices
+            let mut indices: Vec<usize> = (0..adjusted_universe).collect();
+
+            // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
+            for i in 0..actual_len {
+                let j = rng.random_range(i..indices.len());
+                indices.swap(i, j);
+            }
+
+            // Take only the shuffled portion and adjust indexing if needed
+            indices.truncate(actual_len);
+
+            // Deal with R's 1-index, if need be
+            if one_indexed {
+                indices.iter_mut().for_each(|x| *x += 1);
+            }
+
+            indices
+        })
+        .collect()
+}
+
+////////////////////
+// Main functions //
+////////////////////
+
+////////////////////////////////////////////
+// Classical Gene Set enrichment analysis //
+////////////////////////////////////////////
+
+/// Calculate the Enrichment score. The function assumes
+/// that stats is sorted and pathway are the index positions
+/// of the genes in the pathway
+pub fn calculate_es(stats: &[f64], pathway: &[usize]) -> f64 {
+    // stats and p must be sorted
+    let no_genes = stats.len();
+    let p_total = pathway.len();
+    let mut nr = 0.0;
+    for p in pathway {
+        nr += stats[*p].abs()
+    }
+    let weight_hit = 1.0 / nr;
+    let weight_miss = 1.0 / (no_genes - p_total) as f64;
+    let mut running_sum = 0.0;
+    let mut max_run_sum = 0.0;
+    let mut min_run_sum = 0.0;
+    for (i, x) in stats.iter().enumerate() {
+        if pathway.contains(&i) {
+            running_sum += x.abs() * weight_hit
+        } else {
+            running_sum -= weight_miss
+        }
+        max_run_sum = f64::max(running_sum, max_run_sum);
+        min_run_sum = f64::min(running_sum, min_run_sum);
+    }
+    if max_run_sum > min_run_sum.abs() {
+        max_run_sum
+    } else {
+        min_run_sum
+    }
+}
+
+/// Calculate the p-value given a permutation es vector and the normalised enrichment score.
+/// This is the approach to calculate the p-values in the traditional GSEA.
+pub fn calculate_pval(actual_es: f64, perm_es: &[f64], n_perm: usize, pos: bool) -> f64 {
+    let count = if pos {
+        perm_es.iter().filter(|val| val >= &&actual_es).count()
+    } else {
+        perm_es.iter().filter(|val| val <= &&actual_es).count()
+    };
+    (count as f64 + 1.0) / (n_perm as f64 + 1.0) * 2.0
+}
+
+/// Calculate the normalised enrichment score
+pub fn calculate_nes(actual_es: f64, perm_es: &[f64], pos: bool) -> f64 {
+    let filtered: Vec<f64> = if pos {
+        perm_es.iter().filter(|x| x >= &&0.0).copied().collect()
+    } else {
+        perm_es.iter().filter(|x| x <= &&0.0).copied().collect()
+    };
+    let sum: f64 = filtered.iter().sum();
+    let mean = (sum / filtered.len() as f64).abs();
+    actual_es / mean
+}
+
+//////////////////
+// FGSEA simple //
+//////////////////
 
 /// Crazy approximation from the fgsea paper leveraging a square root heuristic
 /// and convex hull updates translated into Rust
@@ -318,8 +447,8 @@ pub fn gsea_stats_sq(
     res
 }
 
-/// Translated from their code
-/// Selected stats needs to be one-indexed!!!
+/// Calculate the cumulative enrichment scores via the
+/// block-wise approximation
 pub fn calc_gsea_stat_cumulative(
     stats: &[f64],
     selected_stats: &[usize],
@@ -426,6 +555,14 @@ pub fn calc_gsea_stat_cumulative_batch(
     })
 }
 
+//////////////////////
+// FGSEA multilevel //
+//////////////////////
+
+///////////////
+// Dead code //
+///////////////
+
 #[allow(dead_code)]
 /// Helper function to extract the maximum absolute ES while preserving the sign
 pub fn get_max_es(es_vec: &[f64]) -> f64 {
@@ -440,111 +577,4 @@ pub fn get_max_es(es_vec: &[f64]) -> f64 {
         .unwrap();
 
     max_val
-}
-
-/// Get the indices of a given gene set. Assumes that vec_names are the names
-/// of the original R vector and gs_genes are the gene set genes. It will
-/// return a vector of usizes.
-pub fn get_gene_set_indices(gene_universe: &[String], gs_genes: &[String]) -> Vec<usize> {
-    let gs_set: HashSet<&String> = gs_genes.iter().collect();
-    gene_universe
-        .iter()
-        .enumerate()
-        .filter_map(|(a, b)| if gs_set.contains(b) { Some(a) } else { None })
-        .collect()
-}
-
-/// Calculate the Enrichment score. The function assumes
-/// that stats is sorted and pathway are the index positions
-/// of the genes in the pathway
-pub fn calculate_es(stats: &[f64], pathway: &[usize]) -> f64 {
-    // stats and p must be sorted
-    let no_genes = stats.len();
-    let p_total = pathway.len();
-    let mut nr = 0.0;
-    for p in pathway {
-        nr += stats[*p].abs()
-    }
-    let weight_hit = 1.0 / nr;
-    let weight_miss = 1.0 / (no_genes - p_total) as f64;
-    let mut running_sum = 0.0;
-    let mut max_run_sum = 0.0;
-    let mut min_run_sum = 0.0;
-    for (i, x) in stats.iter().enumerate() {
-        if pathway.contains(&i) {
-            running_sum += x.abs() * weight_hit
-        } else {
-            running_sum -= weight_miss
-        }
-        max_run_sum = f64::max(running_sum, max_run_sum);
-        min_run_sum = f64::min(running_sum, min_run_sum);
-    }
-    if max_run_sum > min_run_sum.abs() {
-        max_run_sum
-    } else {
-        min_run_sum
-    }
-}
-
-/// Calculate the p-value given a permutation es vector and the normalised enrichment score.
-/// This is the approach to calculate the p-values in the traditional GSEA.
-pub fn calculate_pval(actual_es: f64, perm_es: &[f64], n_perm: usize, pos: bool) -> f64 {
-    let count = if pos {
-        perm_es.iter().filter(|val| val >= &&actual_es).count()
-    } else {
-        perm_es.iter().filter(|val| val <= &&actual_es).count()
-    };
-    (count as f64 + 1.0) / (n_perm as f64 + 1.0) * 2.0
-}
-
-/// Calculate the normalised enrichment score
-pub fn calculate_nes(actual_es: f64, perm_es: &[f64], pos: bool) -> f64 {
-    let filtered: Vec<f64> = if pos {
-        perm_es.iter().filter(|x| x >= &&0.0).copied().collect()
-    } else {
-        perm_es.iter().filter(|x| x <= &&0.0).copied().collect()
-    };
-    let sum: f64 = filtered.iter().sum();
-    let mean = (sum / filtered.len() as f64).abs();
-    actual_es / mean
-}
-
-/// Create random indices vector without duplicates
-pub fn create_random_gs_indices(
-    iter_number: usize,
-    max_len: usize,
-    universe_length: usize,
-    seed: u64,
-    one_indexed: bool,
-) -> Vec<Vec<usize>> {
-    // Parallelize creation of random samples
-    (0..iter_number)
-        .into_par_iter()
-        .map(|i| {
-            // Create a unique seed for each iteration
-            let iter_seed = seed.wrapping_add(i as u64);
-            let mut rng = StdRng::seed_from_u64(iter_seed);
-
-            // Fisher-Yates shuffle for efficient sampling without replacement
-            let adjusted_universe = universe_length - 1;
-            let actual_len = std::cmp::min(max_len, adjusted_universe);
-
-            // Create array of indices
-            let mut indices: Vec<usize> = (0..adjusted_universe).collect();
-
-            // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
-            for i in 0..actual_len {
-                let j = rng.random_range(i..indices.len());
-                indices.swap(i, j);
-            }
-
-            // Take only the shuffled portion and adjust indexing if needed
-            indices.truncate(actual_len);
-            if one_indexed {
-                indices.iter_mut().for_each(|x| *x += 1);
-            }
-
-            indices
-        })
-        .collect()
 }

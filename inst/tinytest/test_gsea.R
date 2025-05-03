@@ -28,56 +28,48 @@ pathway_list <- list(
   random_p3 = pathway_random[[3]]
 )
 
+rs_calc_es(
+  stats = stats,
+  pathway_r = pathway_neg
+)
+
 ## general functionality -------------------------------------------------------
+
+### enrichment scores ----------------------------------------------------------
+
+rs_es_pos <- rs_calc_es(
+  stats = stats,
+  pathway_r = pathway_pos
+)
+
+rs_es_neg <- rs_calc_es(
+  stats = stats,
+  pathway_r = pathway_neg
+)
+
+expect_equal(
+  current = rs_es_pos,
+  target = 0.8730964,
+  info = paste(
+    "gsea: es calculation positive"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = rs_es_neg,
+  target = -0.8600201,
+  info = paste(
+    "gsea: es calculation negative"
+  ),
+  tolerance = 10e-6
+)
 
 ### gene set indices -----------------------------------------------------------
 
-expected_pos_idx <- c(
-  18,
-  30,
-  32,
-  36,
-  37,
-  46,
-  49,
-  51,
-  70,
-  82,
-  110,
-  112,
-  127,
-  131,
-  140
-)
-expected_neg_idx <- c(855, 860, 919, 964, 972, 979, 980)
-expected_rnd1_idx <- c(203, 225, 255, 354, 457, 554, 561, 577, 651, 946)
-expected_rnd2_idx <- c(
-  37,
-  113,
-  138,
-  223,
-  232,
-  242,
-  318,
-  473,
-  511,
-  526,
-  605,
-  856,
-  873,
-  974,
-  980
-)
-expected_rnd3_idx <- c(
-  49,
-  564,
-  662,
-  684,
-  767,
-  779,
-  967,
-  992
-)
+pathway_indices_r <- purrr::map(pathway_list, \(genes) {
+  which(gene_universe %in% genes)
+})
 
 rs_indices <- rs_get_gs_indices(
   gene_universe = gene_universe,
@@ -86,7 +78,7 @@ rs_indices <- rs_get_gs_indices(
 
 expect_equal(
   current = rs_indices$pathway_pos,
-  target = expected_pos_idx,
+  target = pathway_indices_r$pathway_pos,
   info = paste(
     "fgsea: positive gene set indices"
   )
@@ -94,23 +86,15 @@ expect_equal(
 
 expect_equal(
   current = rs_indices$pathway_neg,
-  target = expected_neg_idx,
+  target = pathway_indices_r$pathway_neg,
   info = paste(
     "fgsea: negative gene set indices"
   )
 )
 
 expect_equal(
-  current = rs_indices$pathway_pos,
-  target = expected_pos_idx,
-  info = paste(
-    "fgsea: positive gene set indices"
-  )
-)
-
-expect_equal(
   current = rs_indices$random_p1,
-  target = expected_rnd1_idx,
+  target = pathway_indices_r$random_p1,
   info = paste(
     "fgsea: random gene set indices (set1)"
   )
@@ -118,7 +102,7 @@ expect_equal(
 
 expect_equal(
   current = rs_indices$random_p2,
-  target = expected_rnd2_idx,
+  target = pathway_indices_r$random_p2,
   info = paste(
     "fgsea: random gene set indices (set2)"
   )
@@ -126,7 +110,7 @@ expect_equal(
 
 expect_equal(
   current = rs_indices$random_p3,
-  target = expected_rnd3_idx,
+  target = pathway_indices_r$random_p3,
   info = paste(
     "fgsea: random gene set indices (set3)"
   )
@@ -192,7 +176,7 @@ expect_equal(
   current = rs_gsea_stats_pos$gene_stat,
   target = expected_gsea_stats_pos,
   info = paste(
-    "fgsea: gsea stat pos"
+    "gsea: gsea stat pos"
   ),
   tolerance = 1e-6
 )
@@ -201,7 +185,7 @@ expect_equal(
   current = rs_gsea_stats_pos_v2$gene_stat,
   target = expected_gsea_stats_pos,
   info = paste(
-    "fgsea: gsea stat pos (with leading edge)"
+    "gsea: gsea stat pos (with leading edge)"
   ),
   tolerance = 1e-6
 )
@@ -210,7 +194,7 @@ expect_equal(
   current = rs_gsea_stats_pos_v2$leading_edge,
   target = expected_gsea_pos_leading_edge,
   info = paste(
-    "fgsea: gsea stat pos: leading edge"
+    "gsea: gsea stat pos: leading edge"
   ),
   tolerance = 1e-6
 )
@@ -221,7 +205,7 @@ expect_equal(
   current = rs_gsea_stats_neg$gene_stat,
   target = expected_gsea_stats_neg,
   info = paste(
-    "fgsea: gsea stat neg"
+    "gsea: gsea stat neg"
   ),
   tolerance = 1e-6
 )
@@ -230,9 +214,62 @@ expect_equal(
   current = rs_gsea_stats_neg$leading_edge,
   target = expected_gsea_neg_leading_edge,
   info = paste(
-    "fgsea: gsea stat pos: leading edge"
+    "gsea: gsea stat pos: leading edge"
   ),
   tolerance = 1e-6
+)
+
+## traditional gsea vs simple fgsea --------------------------------------------
+
+# generally speaking this should yield the same
+
+internal_gsea_simple_res <- fgsea_simple(
+  stats = stats,
+  pathways = pathway_list,
+  nperm = 100L
+)
+
+traditional_gsea_results <- rs_gsea_traditional(
+  stats = stats,
+  iters = 100L,
+  pathway_list = pathway_list,
+  seed = 123L
+)
+
+correlation_traditional_vs_fgsea_es <- cor(
+  internal_gsea_simple_res$ES,
+  traditional_gsea_results$es
+)
+
+correlation_traditional_vs_fgsea_nes <- cor(
+  internal_gsea_simple_res$NES,
+  traditional_gsea_results$nes
+)
+
+correlation_traditional_vs_fgsea_pval <- cor(
+  internal_gsea_simple_res$pval,
+  traditional_gsea_results$pvals
+)
+
+expect_true(
+  correlation_traditional_vs_fgsea_es >= 0.97,
+  info = paste(
+    "correlation internal fgsea vs official (ES)"
+  )
+)
+
+expect_true(
+  correlation_traditional_vs_fgsea_nes >= 0.97,
+  info = paste(
+    "correlation internal fgsea vs official (NES)"
+  )
+)
+
+expect_true(
+  correlation_traditional_vs_fgsea_pval >= 0.97,
+  info = paste(
+    "correlation internal fgsea vs official (pval)"
+  )
 )
 
 ## direct comparison fgsea vs internak -----------------------------------------
@@ -243,27 +280,21 @@ fgsea_scores <- fgsea::fgseaSimple(
   nperm = 100
 )
 
-bixverse_scores <- fgsea_simple(
-  stats = stats,
-  pathways = pathway_list,
-  nperm = 100L
-)
-
 correlation_fgsea_internal_pval <- cor(
   x = fgsea_scores$pval,
-  y = bixverse_scores$pval,
+  y = internal_gsea_simple_res$pval,
   method = "pearson"
 )
 
 correlation_fgsea_internal_es <- cor(
   x = fgsea_scores$ES,
-  y = bixverse_scores$ES,
+  y = internal_gsea_simple_res$ES,
   method = "pearson"
 )
 
 correlation_fgsea_internal_nes <- cor(
   x = fgsea_scores$NES,
-  y = bixverse_scores$NES,
+  y = internal_gsea_simple_res$NES,
   method = "pearson"
 )
 
