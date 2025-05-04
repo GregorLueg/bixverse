@@ -27,5 +27,5 @@ List with the following elements
 \description{
 This function serves as an internal control. It implements the
 gene set enrichment analysis in the traditional way without the convex approximations
-used in fgsea implementations.
+used in fgsea implementations. TODO: should also return leading edge genes.
 }

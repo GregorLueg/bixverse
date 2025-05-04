@@ -13,17 +13,26 @@ fgsea_simple(
 )
 }
 \arguments{
-\item{stats}{...}
+\item{stats}{Named numeric vector. The gene level statistic.}
 
-\item{pathways}{...}
+\item{pathways}{List. A named list with each element containing the genes for
+this pathway.}
 
-\item{nperm}{...}
+\item{nperm}{Integer. Number of permutation tests. Defaults to \code{2000L}.}
 
-\item{gsea_param}{...}
+\item{gsea_params}{List. The GSEA parameters, see \code{\link[=params_gsea]{params_gsea()}}
+wrapper function. This function generates a list containing:
+\itemize{
+\item min_size - Integer. Minimum size for the gene sets.
+\item max_size - Integer. Maximum size for the gene sets.
+\item gsea_param - Float. The GSEA parameter. Defaults to \code{1.0}.
+}}
+
+\item{seed}{Random seed for reproducibility.}
 }
 \value{
-...
+To be written.
 }
 \description{
-Bixverse implementation of the simple fgsea algorithm
+Rust-based version of the fgsea simple algorithm.
 }

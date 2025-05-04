@@ -35,7 +35,7 @@ rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_
 #'
 #' @description This function serves as an internal control. It implements the
 #' gene set enrichment analysis in the traditional way without the convex approximations
-#' used in fgsea implementations.
+#' used in fgsea implementations. TODO: should also return leading edge genes.
 #'
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 #' @param iters Integer. Number of permutations to test for.
@@ -70,6 +70,27 @@ rs_gsea_traditional <- function(stats, iters, pathway_list, seed) .Call(wrap__rs
 #' @export
 rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge)
 
+#' Helper function to generate fgsea simple-based permutations
+#'
+#' @param stats Numeric vector. The gene level statistic. Needs to
+#' sorted in descending nature.
+#' @param pathway_scores Numeric vector. The enrichment scores for the
+#' pathways
+#' @param pathway_sizes Integer vector. The sizes of the pathways.
+#' @param iters Integer. Number of permutations.
+#' @param gsea_param Float. The Gene Set Enrichment parameter.
+#' @param seed Integer For
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item le_es ...
+#'     \item ge_es ...
+#'     \item le_zero ...
+#'     \item ge_zero ...
+#'     \item le_zero_sum ...
+#'     \item ge_zero_sum ...
+#' }
+#'
 #' @export
 rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)
 

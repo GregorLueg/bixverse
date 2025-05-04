@@ -195,8 +195,8 @@ params_community_detection <- function(
 
 #' Wrapper function to generate GSEA parameters
 #'
-#' @param min_genes Integer. Minimum number of genes per gene set.
-#' @param max_genes Integer. Maximum number of genes per gene set.
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
 #' @param gsea_param  Float. GSEA parameter. Defaults to `1.0`.
 #'
 #' @returns List with parameters for usage in subsequent function.

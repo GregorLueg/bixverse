@@ -198,16 +198,29 @@ gse_hypergeometric_list <- function(
 
 #### original implementations --------------------------------------------------
 
+# TODO Implement wrapper around the more traditional GSEA function
+
 #### simple implementation -----------------------------------------------------
 
 #' Bixverse implementation of the simple fgsea algorithm
 #'
-#' @param stats ...
-#' @param pathways ...
-#' @param nperm ...
-#' @param gsea_param ...
+#' @description
+#' Rust-based version of the fgsea simple algorithm.
 #'
-#' @returns ...
+#' @param stats Named numeric vector. The gene level statistic.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param nperm Integer. Number of permutation tests. Defaults to `2000L`.
+#' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#' }
+#' @param seed Random seed for reproducibility.
+#'
+#' @returns To be written.
 #'
 #' @export
 fgsea_simple = function(
@@ -224,29 +237,28 @@ fgsea_simple = function(
   checkmate::assertNames(names(pathways))
   assertGSEAParams(gsea_params)
 
-  # Function body
-  min_size <- gsea_params$min_size
-  max_size <- gsea_params$max_size
-  gsea_param <- gsea_params$gsea_param
-
-  ## Prepare the data
   c(stats, pathways_clean, pathway_sizes) %<-%
-    prep_stats_pathways(
-      stats = stats,
-      pathways = pathways,
-      min_size = min_size,
-      max_size = max_size
+    with(
+      gsea_params,
+      prep_stats_pathways(
+        stats = stats,
+        pathways = pathways,
+        min_size = min_size,
+        max_size = max_size
+      )
     )
 
-  ## Calculate the actual enrichment
-  gsea_stat_res <- do.call(
-    rbind,
-    lapply(
-      pathways_clean,
-      rs_calc_gsea_stats,
-      stats = stats,
-      gsea_param = 1,
-      return_leading_edge = TRUE
+  gsea_stat_res <- with(
+    gsea_params,
+    do.call(
+      rbind,
+      lapply(
+        pathways_clean,
+        rs_calc_gsea_stats,
+        stats = stats,
+        gsea_param = gsea_param,
+        return_leading_edge = TRUE
+      )
     )
   )
 
@@ -257,48 +269,57 @@ fgsea_simple = function(
     SIMPLIFY = FALSE
   )
 
-  pathway_scores <- unlist(gsea_stat_res[, "gene_stat"])
+  pathway_scores <- unlist(gsea_stat_res[, "es"])
 
-  results_dt <- rs_calc_gsea_stat_cumulative_batch(
-    stats = stats,
-    pathway_scores = pathway_scores,
-    pathway_sizes = as.integer(pathway_sizes),
-    iters = nperm,
-    seed = seed,
-    gsea_param = 1
+  permutations_res <- with(
+    gsea_params,
+    rs_calc_gsea_stat_cumulative_batch(
+      stats = stats,
+      pathway_scores = pathway_scores,
+      pathway_sizes = as.integer(pathway_sizes),
+      iters = nperm,
+      seed = seed,
+      gsea_param = gsea_param
+    )
+  )
+
+  le_zero_mean <- permutations_res$le_zero_sum / permutations_res$le_zero
+  ge_zero_mean <- permutations_res$ge_zero_sum / permutations_res$ge_zero
+
+  nes <- data.table::fifelse(
+    (pathway_scores > 0 & ge_zero_mean != 0) |
+      (pathway_scores < 0 & le_zero_mean != 0),
+    pathway_scores /
+      data.table::fifelse(
+        pathway_scores > 0,
+        ge_zero_mean,
+        abs(le_zero_mean)
+      ),
+    NA
+  )
+
+  pvals <- pmin(
+    (1 + permutations_res$le_es) / (1 + permutations_res$le_zero),
+    (1 + permutations_res$ge_es) / (1 + permutations_res$ge_zero)
+  )
+
+  final_res <- data.table::as.data.table(
+    gsea_stat_res,
+    keep.rownames = "pathway"
   ) %>%
-    data.table::as.data.table() %>%
-    .[, pathway := seq_along(pathway_scores)] %>%
     .[, `:=`(
-      le_zero_mean = le_zero_sum / le_zero,
-      ge_zero_mean = ge_zero_sum / ge_zero
+      nes = nes,
+      pval = pvals,
+      leading_edge = leading_edges,
+      es = unlist(es)
     )]
 
-  results_dt[, ES := pathway_scores[pathway]]
-
-  results_dt[, NES := as.numeric(NA)]
-
-  results_dt[
-    (ES > 0 & ge_zero_mean != 0) | (ES <= 0 & le_zero_mean != 0),
-    NES := ES / ifelse(ES > 0, ge_zero_mean, abs(le_zero_mean))
-  ]
-
-  results_dt[, pval := as.numeric(NA)]
-  results_dt[
-    !is.na(NES),
-    pval := pmin((1 + le_es) / (1 + le_zero), (1 + ge_es) / (1 + ge_zero))
-  ]
-
-  results_dt[,
-    `:=`(
-      pathway = names(pathway),
-      pathway_size = as.integer(pathway_sizes),
-      leading_edges = leading_edges
-    )
-  ]
-
-  return(results_dt)
+  return(final_res)
 }
+
+#### multi level implementation ------------------------------------------------
+
+# TODO Needs to be implemented
 
 #### helpers -------------------------------------------------------------------
 

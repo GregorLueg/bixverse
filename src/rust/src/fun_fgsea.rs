@@ -1,7 +1,5 @@
 use extendr_api::prelude::*;
 
-use rayon::prelude::*;
-
 use std::collections::HashMap;
 
 use crate::helpers_fgsea::*;
@@ -86,7 +84,7 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 ///
 /// @description This function serves as an internal control. It implements the
 /// gene set enrichment analysis in the traditional way without the convex approximations
-/// used in fgsea implementations.
+/// used in fgsea implementations. TODO: should also return leading edge genes.
 ///
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
 /// @param iters Integer. Number of permutations to test for.
@@ -113,43 +111,7 @@ fn rs_gsea_traditional(
     // Transform to  Vec of Vecs
     let gene_sets = r_list_to_str_vec(pathway_list)?;
 
-    // Get the indices
-    let gene_set_idx: Vec<Vec<usize>> = gene_sets
-        .iter()
-        .map(|s| get_gene_set_indices(&vec_data.0, s))
-        .collect();
-
-    // Max length
-    let max_length = gene_set_idx
-        .iter()
-        .map(|inner_vec| inner_vec.len())
-        .max()
-        .unwrap_or(0);
-
-    let shared_perm = create_random_gs_indices(iters, max_length, vec_data.1.len(), seed, false);
-
-    let results: Vec<(f64, f64, f64)> = gene_set_idx
-        .par_iter()
-        .map(|x| {
-            let pathway_length = x.len();
-            let actual_es = calculate_es(&vec_data.1, x);
-            let perm_es: Vec<f64> = shared_perm
-                .iter()
-                .map(|perm| calculate_es(&vec_data.1, &perm[..pathway_length]))
-                .collect();
-            let (pval, nes) = if actual_es >= 0.0 {
-                let pval = calculate_pval(actual_es, &perm_es, iters, true);
-                let nes = calculate_nes(actual_es, &perm_es, true);
-                (pval, nes)
-            } else {
-                let pval = calculate_pval(actual_es, &perm_es, iters, false);
-                let nes = calculate_nes(actual_es, &perm_es, false);
-                (pval, nes)
-            };
-
-            (actual_es, nes, pval)
-        })
-        .collect();
+    let results = calc_gsea_traditional(&vec_data.1, &vec_data.0, gene_sets, iters, seed);
 
     let mut es_vec = Vec::with_capacity(results.len());
     let mut nes_vec = Vec::with_capacity(results.len());
@@ -255,9 +217,30 @@ fn rs_calc_gsea_stats(
         Vec::new()
     };
 
-    list!(gene_stat = gene_stat, leading_edge = leading_edge)
+    list!(es = gene_stat, leading_edge = leading_edge)
 }
 
+/// Helper function to generate fgsea simple-based permutations
+///
+/// @param stats Numeric vector. The gene level statistic. Needs to
+/// sorted in descending nature.
+/// @param pathway_scores Numeric vector. The enrichment scores for the
+/// pathways
+/// @param pathway_sizes Integer vector. The sizes of the pathways.
+/// @param iters Integer. Number of permutations.
+/// @param gsea_param Float. The Gene Set Enrichment parameter.
+/// @param seed Integer For
+///
+/// @return List with the following elements
+/// \itemize{
+///     \item le_es ...
+///     \item ge_es ...
+///     \item le_zero ...
+///     \item ge_zero ...
+///     \item le_zero_sum ...
+///     \item ge_zero_sum ...
+/// }
+///
 /// @export
 #[extendr]
 pub fn rs_calc_gsea_stat_cumulative_batch(

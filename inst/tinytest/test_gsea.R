@@ -28,11 +28,6 @@ pathway_list <- list(
   random_p3 = pathway_random[[3]]
 )
 
-rs_calc_es(
-  stats = stats,
-  pathway_r = pathway_neg
-)
-
 ## general functionality -------------------------------------------------------
 
 ### enrichment scores ----------------------------------------------------------
@@ -173,7 +168,7 @@ rs_gsea_stats_neg = rs_calc_gsea_stats(
 #### positive ------------------------------------------------------------------
 
 expect_equal(
-  current = rs_gsea_stats_pos$gene_stat,
+  current = rs_gsea_stats_pos$es,
   target = expected_gsea_stats_pos,
   info = paste(
     "gsea: gsea stat pos"
@@ -182,7 +177,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = rs_gsea_stats_pos_v2$gene_stat,
+  current = rs_gsea_stats_pos_v2$es,
   target = expected_gsea_stats_pos,
   info = paste(
     "gsea: gsea stat pos (with leading edge)"
@@ -202,7 +197,7 @@ expect_equal(
 #### negative ------------------------------------------------------------------
 
 expect_equal(
-  current = rs_gsea_stats_neg$gene_stat,
+  current = rs_gsea_stats_neg$es,
   target = expected_gsea_stats_neg,
   info = paste(
     "gsea: gsea stat neg"
@@ -237,12 +232,12 @@ traditional_gsea_results <- rs_gsea_traditional(
 )
 
 correlation_traditional_vs_fgsea_es <- cor(
-  internal_gsea_simple_res$ES,
+  internal_gsea_simple_res$es,
   traditional_gsea_results$es
 )
 
 correlation_traditional_vs_fgsea_nes <- cor(
-  internal_gsea_simple_res$NES,
+  internal_gsea_simple_res$nes,
   traditional_gsea_results$nes
 )
 
@@ -291,12 +286,12 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
   )
   correlation_fgsea_internal_es <- cor(
     x = fgsea_scores$ES,
-    y = internal_gsea_simple_res$ES,
+    y = internal_gsea_simple_res$es,
     method = "pearson"
   )
   correlation_fgsea_internal_nes <- cor(
     x = fgsea_scores$NES,
-    y = internal_gsea_simple_res$NES,
+    y = internal_gsea_simple_res$nes,
     method = "pearson"
   )
 

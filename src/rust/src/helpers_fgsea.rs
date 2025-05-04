@@ -1,9 +1,16 @@
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-use crate::utils_rust::array_max;
+use crate::utils_rust::{array_max, unique};
+
+//////////////////
+// Type aliases //
+//////////////////
+
+/// Type alias for the gene set enrichment results
+pub type GseaTraditionalResult = Vec<(f64, f64, f64)>;
 
 ////////////////
 // Structures //
@@ -245,6 +252,74 @@ pub fn calculate_nes(actual_es: f64, perm_es: &[f64], pos: bool) -> f64 {
     actual_es / mean
 }
 
+/// Calculate once for each size the permutation-based enrichment scores.
+pub fn create_perm_es(
+    stats: &[f64],
+    gene_set_sizes: &[usize],
+    shared_perms: &[Vec<usize>],
+) -> HashMap<usize, Vec<f64>> {
+    let mut shared_perm_es = HashMap::with_capacity(gene_set_sizes.len());
+    for size in gene_set_sizes {
+        let perm_es: Vec<f64> = shared_perms
+            .into_par_iter()
+            .map(|perm| calculate_es(stats, &perm[..*size]))
+            .collect();
+        shared_perm_es.insert(*size, perm_es);
+    }
+    shared_perm_es
+}
+
+/// Calculate the traditional GSEA
+/// Has one speed up that it checks for uniquely sized pathways and generated one hashmap of these for speed
+/// improvements.
+pub fn calc_gsea_traditional(
+    stats: &[f64],
+    stats_names: &[String],
+    gene_sets: Vec<Vec<String>>,
+    iters: usize,
+    seed: u64,
+) -> GseaTraditionalResult {
+    // Get the indices
+    let gene_set_idx: Vec<Vec<usize>> = gene_sets
+        .iter()
+        .map(|s| get_gene_set_indices(stats_names, s))
+        .collect();
+
+    let pathway_lengths: Vec<usize> = gene_set_idx
+        .iter()
+        .map(|inner_vec| inner_vec.len())
+        .collect();
+
+    // Max length
+    let max_length = array_max(&pathway_lengths);
+
+    let shared_perm = create_random_gs_indices(iters, max_length, stats.len(), seed, false);
+
+    let unique_lengths = unique(&pathway_lengths);
+
+    let shared_perm_es = create_perm_es(stats, &unique_lengths, &shared_perm);
+
+    let results: GseaTraditionalResult = gene_set_idx
+        .par_iter()
+        .map(|gs| {
+            let es = calculate_es(stats, gs);
+            let perm_es = shared_perm_es.get(&gs.len()).unwrap();
+            let (pval, nes) = if es >= 0.0 {
+                let pval = calculate_pval(es, perm_es, iters, true);
+                let nes = calculate_nes(es, perm_es, true);
+                (pval, nes)
+            } else {
+                let pval = calculate_pval(es, perm_es, iters, false);
+                let nes = calculate_nes(es, perm_es, false);
+                (pval, nes)
+            };
+
+            (es, nes, pval)
+        })
+        .collect();
+
+    results
+}
 //////////////////
 // FGSEA simple //
 //////////////////
@@ -477,6 +552,7 @@ pub fn calc_gsea_stat_cumulative(
     final_res
 }
 
+/// Calculate random scores batch-wise
 pub fn calc_gsea_stat_cumulative_batch(
     stats: &[f64],
     pathway_scores: &[f64],
@@ -558,6 +634,8 @@ pub fn calc_gsea_stat_cumulative_batch(
 //////////////////////
 // FGSEA multilevel //
 //////////////////////
+
+// TODO
 
 ///////////////
 // Dead code //
