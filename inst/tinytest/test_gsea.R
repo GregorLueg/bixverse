@@ -272,52 +272,55 @@ expect_true(
   )
 )
 
-## direct comparison fgsea vs internak -----------------------------------------
+## direct comparison fgsea vs internal -----------------------------------------
 
-fgsea_scores <- fgsea::fgseaSimple(
-  pathways = pathway_list,
-  stats = stats,
-  nperm = 100
-)
+### simple method --------------------------------------------------------------
 
-correlation_fgsea_internal_pval <- cor(
-  x = fgsea_scores$pval,
-  y = internal_gsea_simple_res$pval,
-  method = "pearson"
-)
-
-correlation_fgsea_internal_es <- cor(
-  x = fgsea_scores$ES,
-  y = internal_gsea_simple_res$ES,
-  method = "pearson"
-)
-
-correlation_fgsea_internal_nes <- cor(
-  x = fgsea_scores$NES,
-  y = internal_gsea_simple_res$NES,
-  method = "pearson"
-)
-
-# There should be a very high correlation, despite random initialisation
-expect_true(
-  correlation_fgsea_internal_pval >= 0.97,
-  info = paste(
-    "correlation internal fgsea vs official (pval)"
+# Check if fgsea is installed
+if (requireNamespace("fgsea", quietly = TRUE)) {
+  fgsea_scores <- fgsea::fgseaSimple(
+    pathways = pathway_list,
+    stats = stats,
+    nperm = 100
   )
-)
 
-# There should be a very high correlation, despite random initialisation
-expect_true(
-  correlation_fgsea_internal_es >= 0.97,
-  info = paste(
-    "correlation internal fgsea vs official (ES)"
+  correlation_fgsea_internal_pval <- cor(
+    x = fgsea_scores$pval,
+    y = internal_gsea_simple_res$pval,
+    method = "pearson"
   )
-)
+  correlation_fgsea_internal_es <- cor(
+    x = fgsea_scores$ES,
+    y = internal_gsea_simple_res$ES,
+    method = "pearson"
+  )
+  correlation_fgsea_internal_nes <- cor(
+    x = fgsea_scores$NES,
+    y = internal_gsea_simple_res$NES,
+    method = "pearson"
+  )
 
-# There should be a very high correlation, despite random initialisation
-expect_true(
-  correlation_fgsea_internal_nes >= 0.97,
-  info = paste(
-    "correlation internal fgsea vs official (NES)"
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_internal_pval >= 0.97,
+    info = paste(
+      "correlation internal fgsea vs official (pval)"
+    )
   )
-)
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_internal_es >= 0.97,
+    info = paste(
+      "correlation internal fgsea vs official (ES)"
+    )
+  )
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_internal_nes >= 0.97,
+    info = paste(
+      "correlation internal fgsea vs official (NES)"
+    )
+  )
+} else {
+  exit_file("fgsea package not available for comparison tests")
+}

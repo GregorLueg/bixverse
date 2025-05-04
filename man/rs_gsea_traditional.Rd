@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_gsea_traditional}
 \alias{rs_gsea_traditional}
-\title{Traditional Gene Set Enrichment analysis}
+\title{Traditional Gene Set Enrichment analysis (in Rust)}
 \usage{
 rs_gsea_traditional(stats, iters, pathway_list, seed)
 }

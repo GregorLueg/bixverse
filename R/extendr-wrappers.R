@@ -31,7 +31,7 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @export
 rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_r)
 
-#' Traditional Gene Set Enrichment analysis
+#' Traditional Gene Set Enrichment analysis (in Rust)
 #'
 #' @description This function serves as an internal control. It implements the
 #' gene set enrichment analysis in the traditional way without the convex approximations
@@ -69,9 +69,6 @@ rs_gsea_traditional <- function(stats, iters, pathway_list, seed) .Call(wrap__rs
 #'
 #' @export
 rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge)
-
-#' @export
-rs_calc_gsea_stat_cumulative <- function(stats, gs_indices, gsea_param) .Call(wrap__rs_calc_gsea_stat_cumulative, stats, gs_indices, gsea_param)
 
 #' @export
 rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)

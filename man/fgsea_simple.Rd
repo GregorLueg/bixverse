@@ -4,7 +4,13 @@
 \alias{fgsea_simple}
 \title{Bixverse implementation of the simple fgsea algorithm}
 \usage{
-fgsea_simple(stats, pathways, nperm = 2000L, gsea_params = params_gsea())
+fgsea_simple(
+  stats,
+  pathways,
+  nperm = 2000L,
+  gsea_params = params_gsea(),
+  seed = 123L
+)
 }
 \arguments{
 \item{stats}{...}
@@ -12,10 +18,6 @@ fgsea_simple(stats, pathways, nperm = 2000L, gsea_params = params_gsea())
 \item{pathways}{...}
 
 \item{nperm}{...}
-
-\item{min_size}{...}
-
-\item{max_size}{...}
 
 \item{gsea_param}{...}
 }

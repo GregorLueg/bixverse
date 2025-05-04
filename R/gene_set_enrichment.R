@@ -204,8 +204,6 @@ gse_hypergeometric_list <- function(
 #'
 #' @param stats ...
 #' @param pathways ...
-#' @param min_size ...
-#' @param max_size ...
 #' @param nperm ...
 #' @param gsea_param ...
 #'
@@ -216,7 +214,8 @@ fgsea_simple = function(
   stats,
   pathways,
   nperm = 2000L,
-  gsea_params = params_gsea()
+  gsea_params = params_gsea(),
+  seed = 123L
 ) {
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -265,7 +264,7 @@ fgsea_simple = function(
     pathway_scores = pathway_scores,
     pathway_sizes = as.integer(pathway_sizes),
     iters = nperm,
-    seed = 123,
+    seed = seed,
     gsea_param = 1
   ) %>%
     data.table::as.data.table() %>%

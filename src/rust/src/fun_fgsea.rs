@@ -34,19 +34,6 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
     Ok(calculate_es(&vec_data.1, &index))
 }
 
-/// @export
-#[extendr]
-pub fn rs_calc_gsea_stat_cumulative(
-    stats: &[f64],
-    gs_indices: &[i32],
-    gsea_param: f64,
-) -> Vec<f64> {
-    // Convert indices from R - keep as 1-based for algorithm
-    let gs_indices_1: Vec<usize> = gs_indices.iter().map(|x| *x as usize).collect();
-
-    calc_gsea_stat_cumulative(stats, &gs_indices_1, gsea_param)
-}
-
 /// Helper function to rapidly retrieve the indices of the gene set members
 ///
 /// @param gene_universe Character Vector. The genes represented in the gene universe.
@@ -309,6 +296,5 @@ extendr_module! {
     fn rs_calc_es;
     fn rs_gsea_traditional;
     fn rs_calc_gsea_stats;
-    fn rs_calc_gsea_stat_cumulative;
     fn rs_calc_gsea_stat_cumulative_batch;
 }
