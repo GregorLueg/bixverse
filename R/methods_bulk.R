@@ -47,13 +47,17 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   checkmate::qassert(scale, "B1")
   checkmate::qassert(pcs, "I1")
   checkmate::qassert(no_hvg_genes, "I1")
+  checkmate::assertNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalized_counts"
+  )
 
-  different_name <- S7::prop(object, "outputs")[['dge_list']]
-  cpm <- as.matrix(edgeR::cpm(different_name, log = TRUE))
+  normalized_counts <- S7::prop(object, "outputs")[['normalized_counts']]
+  meta_data <- S7::prop(object, "meta_data")
 
   hvg_data <- list(
-    gene_id = rownames(cpm),
-    mad = matrixStats::rowMads(cpm)
+    gene_id = rownames(normalized_counts),
+    mad = matrixStats::rowMads(normalized_counts)
   ) %>%
     data.table::as.data.table() %>%
     data.table::setorder(-mad)
@@ -65,7 +69,7 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     S7::prop(object, "variable_info")[, hvg := var_id %in% hvg_genes]
   }
 
-  input_genes <- t(cpm[hvg_genes, ])
+  input_genes <- t(normalized_counts[hvg_genes, ])
   pca_results <- rs_prcomp(input_genes, scale = scale)
   pcs_to_take <- min(pcs, ncol(pca_results$scores))
   pca_dt <- pca_results$scores[, 1:pcs_to_take] %>%
@@ -74,15 +78,51 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     .[, sample_id := rownames(input_genes)] %>%
     .[, c("sample_id", sprintf("PC_%i", 1:pcs_to_take)), with = FALSE]
 
+  ## plot
+  plot_df <- data.table::merge.data.table(
+    pca_dt,
+    meta_data[, c('sample_id', "case_control"), with = FALSE],
+    by.x = 'sample_id',
+    by.y = 'sample_id'
+  )
+
+  p5_pca_case_control <- ggplot(
+    data = plot_df,
+    mapping = aes(x = PC_1, y = PC_2)
+  ) +
+    geom_point(mapping = aes(col = case_control)) +
+    xlab("PC1") +
+    ylab("PC2") +
+    theme_minimal() +
+    ggtitle("PCA with key columns") +
+    labs(colour = "Groups:")
+
+  ## check association with case_control
+  if (length(unique(plot_df$case_control)) > 1) {
+    pc1 = anova(lm(plot_df$PC_1 ~ plot_df$case_control))$`Pr(>F)`[1] < 0.05
+    pc2 = anova(lm(plot_df$PC_2 ~ plot_df$case_control))$`Pr(>F)`[1] < 0.05
+    pca_anova = data.table(
+      PC1_pvalue = pc1,
+      PC2_value = pc2
+    )
+  } else {
+    pca_anova = data.table(
+      PC1_pvalue = NA,
+      PC2_value = NA
+    )
+  }
+
+  ## params
   pca_params <- list(
     hvg_genes = hvg_genes,
     scale = scale,
     pcs_taken = pcs_to_take
   )
 
-  S7::prop(object, "params")[["pca"]] <-
-    pca_params
-  S7::prop(object, "outputs")[['pca_dt']] <- pca_dt
+  S7::prop(object, "params")[["pca"]] <- pca_params
+  S7::prop(object, "outputs")[['pca']] <- pca_dt
+  S7::prop(object, "outputs")[['pca_anova']] <- pca_anova
+  S7::prop(object, "plots")[['p5_pca_case_control']] <- p5_pca_case_control
 
   return(object)
 }
@@ -115,8 +155,6 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
 #' sub groupings, this can be provided here. An example could be different
 #' sampled tissues and you wish to run the DGE analyses within each tissue
 #' separately.
-#' @param gene_filter Optional String vector. You can provide a vector of
-#' strings for genes you wish to filter for, e.g., protein-coding genes.
 #' @param co_variates Optional String vector. Any co-variates you wish to
 #' consider during the Limma Voom modelling.
 #' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
@@ -132,7 +170,6 @@ calculate_all_dges <- S7::new_generic(
     object,
     contrast_column,
     filter_column = NULL,
-    gene_filter = NULL,
     co_variates = NULL,
     ...,
     .verbose = TRUE
@@ -153,45 +190,45 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   contrast_column,
   filter_column = NULL,
   co_variates = NULL,
-  gene_filter = NULL,
   ...,
   .verbose = TRUE
 ) {
   # First checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
-  meta_data <- S7::prop(object, "meta_data")
   checkmate::qassert(contrast_column, "S+")
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::qassert(filter_column, c("S+", "0"))
   checkmate::qassert(gene_filter, c("S+", "F+", "0"))
+  checkmate::assertNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalized_counts"
+  )
+
+  ## get objects
   all_specified_columns <- c(contrast_column, co_variates, filter_column)
-  checkmate::assertTRUE(all(all_specified_columns %in% colnames(meta_data)))
-  dge_list <- S7::prop(object, "outputs")[['dge_list']]
+  sample_info <- S7::prop(object, "outputs")[["sample_info"]]
+  normalized_counts <- S7::prop(object, "outputs")[['normalized_counts']]
+  checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
 
-  if (!is.null(gene_filter)) {
+  if (is.null(filter_column)) {
     if (.verbose)
-      message("Using the provided gene filter on the DGEList object")
-    dge_list <- dge_list[gene_filter, ]
-  }
-
-  if (is.null(gene_filter)) {
-    if (.verbose) message("Calculating the Limma Voom DGE results.")
+      message("Calculating the differential expression with limma results.")
     limma_results_final <- run_limma_voom(
-      meta_info = meta_data,
+      meta_data = sample_info,
       main_contrast = contrast_column,
-      dge_list = dge_list,
+      normalized_counts = normalized_counts,
       co_variates = co_variates,
-      ...,
+      # ...,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
 
     if (.verbose) message("Calculating the Hedge's G effect sizes.")
     hedges_g_results_final <- hedges_g_dge_list(
-      meta_info = meta_data,
+      meta_data = sample_info,
       main_contrast = contrast_column,
-      dge_list = dge_list,
-      ...,
+      normalized_counts = normalized_counts,
+      # ...,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -202,21 +239,21 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         "Method will run Limma Voom and Hedge's G on the individual data sets."
       ))
     # Iterate through the grps
-    groups <- unique(meta_data[[filter_column]])
+    groups <- unique(sample_info[[filter_column]])
     results <- purrr::map(groups, \(group) {
       # Filter the meta data and dge list
-      meta_data_red <- meta_data[
+      sample_info_red <- sample_info[
         eval(parse(
           text = paste0(filter_column, " == '", group, "'")
         ))
       ]
-      dge_list_red <- dge_list[, meta_data_red$sample_id]
+      normalized_counts_red <- dge_list[, sample_info_red$sample_id]
 
       # Limma Voom
       limma_results <- run_limma_voom(
-        meta_info = data.table::copy(meta_data_red),
+        meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        dge_list = dge_list_red,
+        normalized_counts = normalized_counts_red,
         co_variates = co_variates,
         ...,
         .verbose = .verbose
@@ -224,9 +261,9 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         .[, subgroup := group]
 
       hedges_g_results <- hedges_g_dge_list(
-        meta_info = data.table::copy(meta_data_red),
+        meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        dge_list = dge_list_red,
+        normalized_counts = normalized_counts_red,
         ...,
         .verbose = .verbose
       ) %>%
@@ -259,8 +296,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   dge_params <- list(
     contrast_column = contrast_column,
     filter_column = filter_column,
-    co_variates = co_variates,
-    gene_filter = gene_filter
+    co_variates = co_variates
+    # gene_filter = gene_filter
   )
 
   S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
@@ -280,6 +317,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 #' Will default to `c("PC_1", "PC_2")`.
 #' @param cols_to_plot String vector. The columns within the meta-data to plot.
 #' Defaults to `c('contrast_info', 'sample_source')`
+#' @param ... additional parameters
 #'
 #' @return A plot if the PCA information was found. `NULL` if no PCA was found.
 #'
@@ -290,7 +328,8 @@ plot_pca_res <- S7::new_generic(
   fun = function(
     object,
     cols_to_plot = c('contrast_info', 'sample_source'),
-    pcs_to_plot = c("PC_1", "PC_2")
+    pcs_to_plot = c("PC_1", "PC_2"),
+    ...
   ) {
     S7::S7_dispatch()
   }
@@ -307,14 +346,15 @@ plot_pca_res <- S7::new_generic(
 S7::method(plot_pca_res, bulk_dge) <- function(
   object,
   cols_to_plot = c('contrast_info', 'sample_source'),
-  pcs_to_plot = c("PC_1", "PC_2")
+  pcs_to_plot = c("PC_1", "PC_2"),
+  ...
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(cols_to_plot, "S2")
   checkmate::qassert(pcs_to_plot, "S+")
 
-  pca_dt <- S7::prop(object, "outputs")[['pca_dt']]
+  pca_dt <- S7::prop(object, "outputs")[['pca']]
   meta_data <- S7::prop(object, "meta_data")
 
   if (is.null(pca_dt)) {

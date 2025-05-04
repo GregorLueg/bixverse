@@ -8,6 +8,7 @@ bulk_dge(
   raw_counts,
   meta_data,
   norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  outlier_threshold = 2,
   variable_info = NULL,
   alternative_gene_id = NULL
 )
@@ -21,6 +22,8 @@ to have a column sample_id and case_control column.}
 
 \item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
 \verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
+
+\item{outlier_threshold}{Integer. Outliers are detected using the percentage of genes detected, default threshold is 2*SD.}
 
 \item{variable_info}{data.table. Metadata information on the features. This
 is an optional table. Defaults to \code{NULL}.}
@@ -45,6 +48,7 @@ GSE in a structured format. Additionally, the class will store the counts in
 minimum expression.}
 \item{variable_info}{An optional data.table containing the variable info.}
 \item{outputs}{A list in which key outputs will be stored.}
+\item{plots}{A list with the plots that are generated during the initialization and processing of the data.}
 \item{params}{A (nested) list that will store all the parameters of the
 applied function.}
 \item{final_results}{A list in which final results will be stored.}

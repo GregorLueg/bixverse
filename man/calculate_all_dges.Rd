@@ -8,7 +8,6 @@ calculate_all_dges(
   object,
   contrast_column,
   filter_column = NULL,
-  gene_filter = NULL,
   co_variates = NULL,
   ...,
   .verbose = TRUE
@@ -24,9 +23,6 @@ are stored. Needs to be found in the meta_data within the properties.}
 sub groupings, this can be provided here. An example could be different
 sampled tissues and you wish to run the DGE analyses within each tissue
 separately.}
-
-\item{gene_filter}{Optional String vector. You can provide a vector of
-strings for genes you wish to filter for, e.g., protein-coding genes.}
 
 \item{co_variates}{Optional String vector. Any co-variates you wish to
 consider during the Limma Voom modelling.}

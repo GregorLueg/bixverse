@@ -87,6 +87,7 @@ bulk_coexp <- S7::new_class(
 #' to have a column sample_id and case_control column.
 #' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
 #' ` "none")`. Please refer to [edgeR::normLibSizes()].
+#' @param outlier_threshold Integer. Outliers are detected using the percentage of genes detected, default threshold is 2*SD.
 #' @param variable_info data.table. Metadata information on the features. This
 #' is an optional table. Defaults to `NULL`.
 #' @param alternative_gene_id String. Optional alternative gene identifier to
@@ -100,6 +101,7 @@ bulk_coexp <- S7::new_class(
 #'   minimum expression.}
 #'   \item{variable_info}{An optional data.table containing the variable info.}
 #'   \item{outputs}{A list in which key outputs will be stored.}
+#'   \item{plots}{A list with the plots that are generated during the initialization and processing of the data.}
 #'   \item{params}{A (nested) list that will store all the parameters of the
 #'   applied function.}
 #'   \item{final_results}{A list in which final results will be stored.}
@@ -120,12 +122,14 @@ bulk_dge <- S7::new_class(
     variable_info = S7::class_any,
     outputs = S7::class_list,
     params = S7::class_list,
+    plots = S7::class_list,
     final_results = S7::class_any
   ),
   constructor = function(
     raw_counts,
     meta_data,
     norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+    outlier_threshold = 2,
     variable_info = NULL,
     alternative_gene_id = NULL
   ) {
@@ -147,6 +151,9 @@ bulk_dge <- S7::new_class(
       checkmate::checkDataTable(variable_info),
       checkmate::checkNull(variable_info)
     )
+    if (!is.null(variable_info)) {
+      checkmate::checkNames(colnames(variable_info), must.include = "var_id")
+    }
     if (!is.null(alternative_gene_id)) {
       checkmate::qassert(alternative_gene_id, "S")
       checkmate::assertDataTable(variable_info)
@@ -154,12 +161,115 @@ bulk_dge <- S7::new_class(
       rownames(raw_counts) <- variable_info[[alternative_gene_id]]
     }
 
+    # if (!is.null(gene_filter)) {
+    #   if (.verbose)
+    #     message("Using the provided gene filter on the DGEList object")
+    #   dge_list <- dge_list[gene_filter, ]
+    # }
+
+    ## First we need to filter out outliers
+    detected_genes_nb <- data.table::as.data.table(
+      apply(
+        raw_counts,
+        2,
+        function(x) sum(x > 0)
+      ),
+      keep.rownames = "sample_id"
+    ) %>%
+      setnames(c("V1", "V2"), c("sample_id", "nb_detected_genes"))
+
+    samples = merge(meta_data, detected_genes_nb, by = "sample_id") %>%
+      .[, `:=`(perc_detected_genes = nb_detected_genes / nrow(raw_counts))]
+
+    p1_nb_genes_cohort = ggplot(
+      samples,
+      aes(x = phenotype, y = nb_detected_genes, fill = phenotype)
+    ) +
+      geom_boxplot(alpha = 0.5) +
+      labs(
+        x = "Cohorts",
+        y = "Number of genes detected",
+        title = "Number of genes by cohort"
+      ) +
+      theme_classic() +
+      theme(legend.position = "bottom")
+
+    ## Remove samples that are outliers (mean +/- 2*sd)
+    print("outlier detection")
+    sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
+    min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
+      outlier_threshold * sd_samples
+    max_perc = mean(samples$perc_detected_genes, na.rm = TRUE) +
+      outlier_threshold * sd_samples
+
+    p2_outliers <- ggplot(
+      samples,
+      aes(x = 1, y = perc_detected_genes, color = phenotype)
+    ) +
+      geom_beeswarm() +
+      geom_hline(yintercept = min_perc) +
+      geom_hline(yintercept = max_perc) +
+      labs(
+        x = "",
+        y = "Percentage of genes detected",
+        title = "Outlier samples based on %genes detected"
+      ) +
+      theme_classic() +
+      theme(legend.position = "bottom", axis.text.x = element_blank())
+
+    outliers <- samples[perc_detected_genes < min_perc, ]
+    if (.verbose)
+      message(sprintf(
+        "A total of %i samples are detected as outlier.",
+        length(outliers)
+      ))
+
+    samples <- samples[perc_detected_genes >= min_perc, ]
+    if (.verbose)
+      message(sprintf("A total of %i samples are kept.", nrow(samples)))
+
+    raw_counts <- raw_counts[, unique(samples$sample_id)]
+
+    ## Voom normalization
     dge_list <- edgeR::DGEList(raw_counts)
-    dge_list <- edgeR::calcNormFactors(dge_list, method = norm_method)
+
+    # Filter lowly expressed genes
+    to_keep <- edgeR::filterByExpr(
+      y = dge_list,
+      min.prop = 0.2,
+      group = samples$case_control
+    )
+    if (.verbose)
+      message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+
+    dge_list <- edgeR::calcNormFactors(
+      dge_list[to_keep, ],
+      method = norm_method
+    )
+
+    design <- model.matrix(~ 0 + samples$case_control)
+
+    voom_obj <- limma::voom(
+      counts = dge_list,
+      design = design,
+      normalize.method = "quantile",
+      plot = TRUE
+    )
+    p3_voom_normalization <- recordPlot()
+    dev.off()
+
+    boxplot(
+      voom_obj$E,
+      col = as.factor(samples$case_control),
+      main = "Boxplot of normalized gene expression across samples"
+    )
+    p4_boxplot_normalization <- recordPlot()
+    dev.off()
 
     params <- list(
       original_dim = dim(raw_counts),
-      norm_method = norm_method
+      norm_method = norm_method,
+      outlier_threshold = outlier_threshold
     )
 
     S7::new_object(
@@ -167,7 +277,17 @@ bulk_dge <- S7::new_class(
       raw_counts = raw_counts,
       meta_data = meta_data,
       variable_info = variable_info,
-      outputs = list(dge_list = dge_list),
+      outputs = list(
+        dge_list = dge_list,
+        sample_info = samples,
+        normalized_counts = voom_obj$E
+      ),
+      plots = list(
+        p1_nb_genes_cohort = p1_nb_genes_cohort,
+        p2_outliers = p2_outliers,
+        p3_voom_normalization = p3_voom_normalization,
+        p4_boxplot_normalization = p4_boxplot_normalization
+      ),
       params = params,
       final_results = list()
     )

@@ -7,7 +7,8 @@
 plot_pca_res(
   object,
   cols_to_plot = c("contrast_info", "sample_source"),
-  pcs_to_plot = c("PC_1", "PC_2")
+  pcs_to_plot = c("PC_1", "PC_2"),
+  ...
 )
 }
 \arguments{
@@ -18,6 +19,8 @@ Defaults to \code{c('contrast_info', 'sample_source')}}
 
 \item{pcs_to_plot}{String vector of length 2.
 Will default to \code{c("PC_1", "PC_2")}.}
+
+\item{...}{additional parameters}
 }
 \value{
 A plot if the PCA information was found. \code{NULL} if no PCA was found.
