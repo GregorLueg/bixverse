@@ -11,6 +11,10 @@ use std::collections::HashSet;
 /// A type alias that can be returned by the par_iter() functions.
 pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 
+///////////////////////
+// Generic functions //
+///////////////////////
+
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
 pub fn split_vector_randomly(vec: Vec<f64>, x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
     let mut rng = StdRng::seed_from_u64(seed);
@@ -38,6 +42,10 @@ pub fn set_similarity(
     };
     i as f64 / u as f64
 }
+
+//////////////////
+// Effect sizes //
+//////////////////
 
 /// Calculate the Hedge's g effect size and its standard error
 pub fn hedge_g_effect(
@@ -145,19 +153,3 @@ pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
         })
         .collect()
 }
-
-// /// Calculate the Jaccard or Set similarity over a vector of HashSets.
-// pub fn set_similarity_iter(
-//   s_1: HashSet<String>,
-//   other_s: Vec<HashSet<String>>,
-//   similarity_index: bool,
-// ) -> Vec<f64>{
-//   let sims: Vec<f64>= other_s
-//     .into_iter()
-//     .map(|hash_i| {
-//       set_similarity(hash_i, &s_1, similarity_index)
-//     })
-//     .collect();
-
-//   sims
-// }

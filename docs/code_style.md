@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 26.03.2025* </br>
+*Last update: 05.05.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -111,3 +111,7 @@ intuitive. Inheritance can be quite useful in certain cases to abstract out
 common generics/methods, but try to avoid deeply layered inheritance where 
 possible. This is not the most complex software we are writing here, so there
 should be no need for 8+ layers of inheritance.
+9. Test expected behaviour of key functions via [tinytest](https://github.com/markvanderloo/tinytest).
+If you implement something that should behave like functions from a different 
+package make sure that you compare the your version against the established 
+ones.

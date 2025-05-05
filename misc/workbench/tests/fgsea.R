@@ -1,48 +1,55 @@
-seed <- 10101
+# Rust implementation of fgsea ----
 
-set.seed(seed)
+set.seed(123)
 
-gene_sets_no <- 50
+stat_size <- 20000
 
-ranks <- rnorm(100)
-names(ranks) <- paste0("a", 1:100)
+stats <- setNames(
+  sort(rnorm(stat_size), decreasing = TRUE),
+  paste0("gene", 1:stat_size)
+)
 
-universe <- names(ranks)
+number_gene_sets <- 5000
+min_size <- 50
+max_size <- 250
 
-gene_sets <- purrr::map(
-  1:gene_sets_no,
+pathway_random <- purrr::map(
+  seq_len(number_gene_sets),
   ~ {
-    set.seed(seed * .x + 1)
-    size <- sample(5:20, 1)
-    sample(universe, size, replace = FALSE)
+    sample(names(stats), sample(min_size:max_size, 1))
   }
 )
 
-names(gene_sets) <- purrr::map_chr(
-  1:gene_sets_no,
-  ~ {
-    set.seed(seed + .x + 1)
-    paste(sample(LETTERS, 3), collapse = "")
-  }
+names(pathway_random) <- paste0("pathway", 1:number_gene_sets)
+
+devtools::load_all()
+
+tictoc::tic()
+results_traditional <- calc_gsea_traditional(
+  stats = stats,
+  pathways = pathway_random
 )
+tictoc::toc()
 
-any(duplicated(names(gene_sets)))
 
-new_order <- names(sort(purrr::map_dbl(gene_sets, length)))
-gene_sets <- gene_sets[new_order]
+tictoc::tic()
+results_simple_fgsea <- calc_fgsea_simple(
+  stats = stats,
+  pathways = pathway_random
+)
+tictoc::toc()
 
-ranks_sorted <- sort(ranks)
 
-ranks_sorted
+tictoc::tic()
+fgsea_scores_original <- fgsea::fgseaSimple(
+  pathways = pathway_random,
+  stats = stats,
+  nperm = 2000L
+)
+tictoc::toc()
 
-gene_set_i <- gene_sets[[1]]
+plot(results_traditional$es, results_simple_fgsea$es)
 
-gene_set_i <- c("a93", "a46", "a33", "a27", "a35")
+plot(results_traditional$pvals, results_simple_fgsea$pvals)
 
-N_r <- sum(abs(ranks_sorted[gene_set_i]))
-
-P_hit <- sum(ranks_sorted[gene_set_i]) / N_r
-
-P_miss <- 1 / (100 - length(gene_set_i))
-
-ES <- P_hit - P_miss
+plot(fgsea_scores_original$pval, results_simple_fgsea$pvals)

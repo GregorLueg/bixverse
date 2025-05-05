@@ -7,7 +7,6 @@
 bulk_dge(
   raw_counts,
   meta_data,
-  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
   variable_info = NULL,
   alternative_gene_id = NULL
 )
@@ -18,9 +17,6 @@ samples. Note: this is different from the \code{\link[=bulk_coexp]{bulk_coexp()}
 
 \item{meta_data}{data.table. Metadata information on the samples. It expects
 to have a column sample_id and case_control column.}
-
-\item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
-\verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 
 \item{variable_info}{data.table. Metadata information on the features. This
 is an optional table. Defaults to \code{NULL}.}
@@ -41,10 +37,10 @@ GSE in a structured format. Additionally, the class will store the counts in
 \describe{
 \item{raw_counts}{A numerical matrix of the provided raw data.}
 \item{meta_data}{A data.table with the meta-information about the samples.}
-\item{filtered_counts}{A numerical matrix with the filtered counts by
-minimum expression.}
 \item{variable_info}{An optional data.table containing the variable info.}
 \item{outputs}{A list in which key outputs will be stored.}
+\item{plots}{A list with the plots that are generated during subsequent
+QC steps.}
 \item{params}{A (nested) list that will store all the parameters of the
 applied function.}
 \item{final_results}{A list in which final results will be stored.}

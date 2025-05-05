@@ -190,3 +190,33 @@ params_community_detection <- function(
     )
   )
 }
+
+## fgsea -----------------------------------------------------------------------
+
+#' Wrapper function to generate GSEA parameters
+#'
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param gsea_param  Float. GSEA parameter. Defaults to `1.0`.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_gsea <- function(
+  min_size = 5L,
+  max_size = 500L,
+  gsea_param = 1.0
+) {
+  # Checks
+  checkmate::qassert(min_size, "I1[3,)")
+  checkmate::qassert(max_size, "I1[4,)")
+  checkmate::qassert(gsea_param, "N1")
+  # Returns
+  return(
+    list(
+      min_size = min_size,
+      max_size = max_size,
+      gsea_param = gsea_param
+    )
+  )
+}

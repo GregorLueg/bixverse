@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 29.03.2025* </br>
+*Last update: 25.05.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -9,7 +9,8 @@ core function/methods that are broadly used.
 
 ## Stability of the package
 
-- Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).
+- ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~
+(Test coverage is slowly but surely increasing.)
 
 ## Usability of the package
 
@@ -19,12 +20,14 @@ method implementation.
 
 ## General methods
 
-- Gene set enrichment analysis on top of continuous data based on 
+- ~~Gene set enrichment analysis on top of continuous data based on 
 [blitzGSEA](https://academic.oup.com/bioinformatics/article/38/8/2356/6526383) 
-and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).
-- Wrapper class/functions for differential gene expression analyses with 
+and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).~~ (Part of
+the methods implented now.)
+- ~~Wrapper class/functions for differential gene expression analyses with 
 [limma/voom](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2014-15-2-r29)
-to generate structured objects.
+to generate structured objects.~~
+- ~~Semantic similarities for ontologies.~~
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
 

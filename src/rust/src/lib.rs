@@ -1,3 +1,4 @@
+mod helpers_fgsea;
 mod helpers_geom_elim;
 mod helpers_hypergeom;
 mod helpers_ica;
@@ -5,6 +6,7 @@ mod helpers_linalg;
 mod helpers_ontology;
 mod helpers_rbh;
 
+mod fun_fgsea;
 mod fun_helpers;
 mod fun_hypergeom;
 mod fun_ica;
@@ -21,6 +23,7 @@ use extendr_api::prelude::*;
 
 extendr_module! {
     mod bixverse;
+    use fun_fgsea;
     use fun_hypergeom;
     use fun_stats;
     use fun_rbh;

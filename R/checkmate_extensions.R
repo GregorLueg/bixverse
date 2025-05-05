@@ -260,6 +260,51 @@ checkCommunityParams <- function(x) {
   return(TRUE)
 }
 
+## gsea ------------------------------------------------------------------------
+
+#' Check GSEA parameters
+#'
+#' @description Checkmate extension for checking the gene set enrichment
+#' analysis (GSEA) parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkGSEAParams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("min_size", "max_size", "gsea_param")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "min_size" = "I1[3,)",
+    "max_size" = "I1[4,)",
+    "gsea_param" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        "The following element `%s` in GSEA params does not conform the expected format. \
+        min_size and max_size need to be intger (with max_size > min_size and min_size >= 3L) \
+        and gsea_param being a double.",
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## correlation params ----------------------------------------------------------
@@ -356,3 +401,20 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
+
+## gsea ------------------------------------------------------------------------
+
+#' Assert GSEA parameter
+#'
+#' @description Checkmate extension for asserting the gene set enrichment
+#' analysis (GSEA) parameters.
+#'
+#' @inheritParams checkGSEAParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)

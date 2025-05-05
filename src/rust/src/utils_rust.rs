@@ -1,4 +1,7 @@
+use std::cmp::PartialOrd;
 use std::collections::HashSet;
+use std::fmt::Debug;
+use std::hash::Hash;
 
 use faer::Mat;
 use rayon::iter::*;
@@ -12,8 +15,8 @@ pub fn flatten_vector<T>(vec: Vec<Vec<T>>) -> Vec<T> {
     vec.into_iter().flatten().collect()
 }
 
-/// Get the maximum value from an f64 array.
-pub fn array_f64_max(arr: &[f64]) -> f64 {
+/// Get the maximum value of an array
+pub fn array_max<T: PartialOrd + Copy>(arr: &[T]) -> T {
     let mut max_val = arr[0];
     for number in arr {
         if *number > max_val {
@@ -23,8 +26,8 @@ pub fn array_f64_max(arr: &[f64]) -> f64 {
     max_val
 }
 
-/// Get the minimum value from an f64 array.
-pub fn array_f64_min(arr: &[f64]) -> f64 {
+/// Get the minimum value of an array
+pub fn array_min<T: PartialOrd + Copy>(arr: &[T]) -> T {
     let mut min_val = arr[0];
     for number in arr {
         if *number < min_val {
@@ -92,6 +95,31 @@ pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
     }
 
     ranks
+}
+
+#[allow(dead_code)]
+/// Get unique elements from a slice of any hashable, equatable numeric type.
+pub fn unique<T>(vec: &[T]) -> Vec<T>
+where
+    T: Copy + Eq + Hash + Debug,
+{
+    let mut set = HashSet::new();
+    vec.iter()
+        .filter(|&&item| set.insert(item))
+        .cloned()
+        .collect()
+}
+
+/// Calculate the cumulative sum over a vector
+pub fn cumsum(values: &[f64]) -> Vec<f64> {
+    let mut sum = 0.0;
+    values
+        .iter()
+        .map(|&x| {
+            sum += x;
+            sum
+        })
+        .collect()
 }
 
 //////////////////

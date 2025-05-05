@@ -5,22 +5,22 @@
 \title{Wrapper for a Limma Voom analysis}
 \usage{
 run_limma_voom(
-  meta_info,
+  meta_data,
   main_contrast,
-  dge_list,
+  normalized_counts,
   co_variates = NULL,
   ...,
   .verbose = TRUE
 )
 }
 \arguments{
-\item{meta_info}{data.table. The meta information about the experiment in
+\item{meta_data}{data.table. The meta information about the experiment in
 which the contrast info (and potential co-variates) can be found.}
 
 \item{main_contrast}{String. Which column contains the main groups you want
 to test differential gene expression with the Limma-Voom workflow for.}
 
-\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
+\item{normalized_counts}{matrix, normalized count matrix.}
 
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}

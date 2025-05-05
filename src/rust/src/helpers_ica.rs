@@ -218,7 +218,7 @@ pub fn fast_ica_logcosh(
         it += 1;
     }
 
-    let min_tol = array_f64_min(&lim);
+    let min_tol = array_min(&lim);
 
     (w, min_tol)
 }
@@ -287,7 +287,7 @@ pub fn fast_ica_exp(
         it += 1;
     }
 
-    let min_tol = array_f64_min(&lim);
+    let min_tol = array_min(&lim);
 
     (w, min_tol)
 }
