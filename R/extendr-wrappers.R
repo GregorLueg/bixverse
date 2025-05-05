@@ -10,17 +10,6 @@
 #' @useDynLib bixverse, .registration = TRUE
 NULL
 
-#' Helper function to rapidly retrieve the indices of the gene set members
-#'
-#' @param gene_universe Character Vector. The genes represented in the gene universe.
-#' @param pathway_list List. A named list with each element containing the genes for this
-#' pathway.
-#'
-#' @return Returns a list with the index positions of the gene set genes in the gene universe.
-#'
-#' @export
-rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs_indices, gene_universe, pathway_list)
-
 #' Calculates the traditional GSEA enrichment score
 #'
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
@@ -31,27 +20,17 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @export
 rs_calc_es <- function(stats, pathway_r) .Call(wrap__rs_calc_es, stats, pathway_r)
 
-#' Traditional Gene Set Enrichment analysis (in Rust)
+#' Helper function to rapidly retrieve the indices of the gene set members
 #'
-#' @description This function serves as an internal control. It implements the
-#' gene set enrichment analysis in the traditional way without the convex approximations
-#' used in fgsea implementations. TODO: should also return leading edge genes.
-#'
-#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
-#' @param iters Integer. Number of permutations to test for.
+#' @param gene_universe Character Vector. The genes represented in the gene universe.
 #' @param pathway_list List. A named list with each element containing the genes for this
 #' pathway.
-#' @param seed Integer. For reproducibility purposes
 #'
-#' @return List with the following elements
-#' \itemize{
-#'     \item es Enrichment scores for the gene sets
-#'     \item nes Normalised enrichment scores for the gene sets
-#'     \item pvals The calculated p-values.
-#' }
+#' @return Returns a list with the index positions of the gene set genes in the gene universe.
+#' Importantly, these are indexed to R's 1-indexing!
 #'
 #' @export
-rs_gsea_traditional <- function(stats, iters, pathway_list, seed) .Call(wrap__rs_gsea_traditional, stats, iters, pathway_list, seed)
+rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs_indices, gene_universe, pathway_list)
 
 #' Rust implementation of the fgsea::calcGseaStat() function
 #'
@@ -79,20 +58,39 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #' @param pathway_sizes Integer vector. The sizes of the pathways.
 #' @param iters Integer. Number of permutations.
 #' @param gsea_param Float. The Gene Set Enrichment parameter.
-#' @param seed Integer For
+#' @param seed Integer For reproducibility purposes
 #'
 #' @return List with the following elements
 #' \itemize{
-#'     \item le_es ...
-#'     \item ge_es ...
-#'     \item le_zero ...
-#'     \item ge_zero ...
-#'     \item le_zero_sum ...
-#'     \item ge_zero_sum ...
+#'     \item es The enrichment scores for the pathway
+#'     \item nes The normalised enrichment scores for the pathway
+#'     \item pvals The p-values for this pathway based on permutation
+#'     testing
+#'     \item size The pathway sizes.
 #' }
 #'
 #' @export
 rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)
+
+#' Helper function to generate traditional GSEA-based permutations
+#'
+#' @param stats Numeric vector. The gene level statistic. Needs to
+#' sorted in descending nature.
+#' @param pathway_scores Numeric vector. The enrichment scores for the
+#' pathways
+#' @param pathway_sizes Integer vector. The sizes of the pathways.
+#' @param iters Integer. Number of permutations.
+#' @param seed Integer For reproducibility purposes
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item es Enrichment scores for the gene sets
+#'     \item nes Normalised enrichment scores for the gene sets
+#'     \item pvals The calculated p-values.
+#' }
+#'
+#' @export
+rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
 
 #' Run a single hypergeometric test.
 #'

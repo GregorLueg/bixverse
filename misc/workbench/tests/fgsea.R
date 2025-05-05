@@ -2,116 +2,54 @@
 
 set.seed(123)
 
-stat_size <- 1000
+stat_size <- 20000
 
 stats <- setNames(
   sort(rnorm(stat_size), decreasing = TRUE),
   paste0("gene", 1:stat_size)
 )
 
-random_sizes <- c(10, 15, 8)
+number_gene_sets <- 5000
+min_size <- 50
+max_size <- 250
+
 pathway_random <- purrr::map(
-  random_sizes,
+  seq_len(number_gene_sets),
   ~ {
-    sample(names(stats), .x)
+    sample(names(stats), sample(min_size:max_size, 1))
   }
 )
-pathway_pos <- sample(names(stats)[1:150], 15)
-pathway_neg <- sample(names(stats)[851:1000], 7)
-gene_universe <- names(stats)
 
-pathway_list <- list(
-  pathway_pos = pathway_pos,
-  pathway_neg = pathway_neg,
-  random_p1 = pathway_random[[1]],
-  random_p2 = pathway_random[[2]],
-  random_p3 = pathway_random[[3]]
+names(pathway_random) <- paste0("pathway", 1:number_gene_sets)
+
+devtools::load_all()
+
+tictoc::tic()
+results_traditional <- calc_gsea_traditional(
+  stats = stats,
+  pathways = pathway_random
 )
+tictoc::toc()
 
-rextendr::document()
 
-## Dissect the function ----
-
-stats = stats
-pathways = pathway_list
-nperm = 2000L
-gsea_params = params_gsea()
-seed = 123L
-
-checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
-checkmate::assertNames(names(stats))
-checkmate::assertList(pathways, types = "character")
-checkmate::assertNames(names(pathways))
-assertGSEAParams(gsea_params)
-
-c(stats, pathways_clean, pathway_sizes) %<-%
-  with(
-    gsea_params,
-    prep_stats_pathways(
-      stats = stats,
-      pathways = pathways,
-      min_size = min_size,
-      max_size = max_size
-    )
-  )
-
-gsea_stat_res <- with(
-  gsea_params,
-  do.call(
-    rbind,
-    lapply(
-      pathways_clean,
-      rs_calc_gsea_stats,
-      stats = stats,
-      gsea_param = gsea_param,
-      return_leading_edge = TRUE
-    )
-  )
+tictoc::tic()
+results_simple_fgsea <- calc_fgsea_simple(
+  stats = stats,
+  pathways = pathway_random
 )
+tictoc::toc()
 
-leading_edges <- mapply(
-  "[",
-  list(names(stats)),
-  gsea_stat_res[, "leading_edge"],
-  SIMPLIFY = FALSE
+
+tictoc::tic()
+fgsea_scores_original <- fgsea::fgseaSimple(
+  pathways = pathway_random,
+  stats = stats,
+  nperm = 2000L
 )
+tictoc::toc()
 
-pathway_scores <- unlist(gsea_stat_res[, "es"])
+plot(results_traditional$es, results_simple_fgsea$es)
 
-permutations_res <- with(
-  gsea_params,
-  rs_calc_gsea_stat_cumulative_batch(
-    stats = stats,
-    pathway_scores = pathway_scores,
-    pathway_sizes = as.integer(pathway_sizes),
-    iters = nperm,
-    seed = seed,
-    gsea_param = gsea_param
-  )
-)
+plot(results_traditional$pvals, results_simple_fgsea$pvals)
 
-le_zero_mean <- permutations_res$le_zero_sum / permutations_res$le_zero
-ge_zero_mean <- permutations_res$ge_zero_sum / permutations_res$ge_zero
-
-nes <- data.table::fifelse(
-  (pathway_scores > 0 & ge_zero_mean != 0) |
-    (pathway_scores < 0 & le_zero_mean != 0),
-  pathway_scores /
-    data.table::fifelse(
-      pathway_scores > 0,
-      ge_zero_mean,
-      abs(le_zero_mean)
-    ),
-  NA
-)
-
-pvals <- pmin(
-  (1 + permutations_res$le_es) / (1 + permutations_res$le_zero),
-  (1 + permutations_res$ge_es) / (1 + permutations_res$ge_zero)
-)
-
-final_res <- data.table::as.data.table(
-  gsea_stat_res,
-  keep.rownames = "pathway"
-) %>%
-  .[, `:=`(nes = nes, pval = pvals, leading_edge = leading_edges)]
+plot(fgsea_scores_original$pval, results_simple_fgsea$pvals)

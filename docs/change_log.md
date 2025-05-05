@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 25.04.2025* </br>
+*Last update: 05.05.2025* </br>
 
 ### Version **0.0.1.1**
 
@@ -17,6 +17,8 @@ of data in memory in the Rust back-end and leverage of lifetimes.
 - DGE class for leveraging Limma Voom to do differential gene expression 
 calculations.
 - Wrapper functions into h5ad objects to load data into R memory.
+- Traditional gene set enrichment analysis and the simple version from the fgsea
+package ported into Rust.
 
 #### Bug fixes, documentation updates
 

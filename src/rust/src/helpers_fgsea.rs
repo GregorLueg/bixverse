@@ -1,7 +1,7 @@
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::utils_rust::{array_max, unique};
 
@@ -9,14 +9,22 @@ use crate::utils_rust::{array_max, unique};
 // Type aliases //
 //////////////////
 
-/// Type alias for the gene set enrichment results
-pub type GseaTraditionalResult = Vec<(f64, f64, f64)>;
-
 ////////////////
 // Structures //
 ////////////////
 
-/// Structure for results from the Batch GSEA algorithm
+/// Structure for final GSEA results from any
+/// algorithm
+#[derive(Clone, Debug)]
+pub struct GseaResults {
+    pub es: Vec<f64>,
+    pub nes: Vec<Option<f64>>,
+    pub pvals: Vec<f64>,
+    pub size: Vec<usize>,
+}
+
+/// Structure for results from the different GSEA
+/// permutation methods
 #[derive(Clone, Debug)]
 pub struct GseaBatchResults {
     pub le_es: Vec<usize>,
@@ -136,17 +144,6 @@ fn subvector(from: &[f64], indices: &[usize]) -> Result<Vec<f64>, String> {
         .collect()
 }
 
-/// Get the indices of a given gene set. Assumes that gene universe
-/// is based on the sorted gene level statistics
-pub fn get_gene_set_indices(gene_universe: &[String], gs_genes: &[String]) -> Vec<usize> {
-    let gs_set: HashSet<&String> = gs_genes.iter().collect();
-    gene_universe
-        .iter()
-        .enumerate()
-        .filter_map(|(a, b)| if gs_set.contains(b) { Some(a) } else { None })
-        .collect()
-}
-
 /// Generate random gene set indices.
 pub fn create_random_gs_indices(
     iter_number: usize,
@@ -189,6 +186,59 @@ pub fn create_random_gs_indices(
         .collect()
 }
 
+/// Transform the batch results into final GSEA results,
+/// i.e., es, nes, pval and size
+pub fn calculate_nes_es_pval(
+    pathway_scores: &[f64],
+    pathway_sizes: &[usize],
+    gsea_res: GseaBatchResults,
+) -> GseaResults {
+    let le_zero_mean: Vec<f64> = gsea_res
+        .le_zero_sum
+        .iter()
+        .zip(gsea_res.le_zero.iter())
+        .map(|(a, b)| a / *b as f64)
+        .collect();
+
+    let ge_zero_mean: Vec<f64> = gsea_res
+        .ge_zero_sum
+        .iter()
+        .zip(gsea_res.ge_zero.iter())
+        .map(|(a, b)| a / *b as f64)
+        .collect();
+
+    let nes: Vec<Option<f64>> = pathway_scores
+        .iter()
+        .zip(ge_zero_mean.iter().zip(le_zero_mean.iter()))
+        .map(|(&score, (&ge_mean, &le_mean))| {
+            if (score > 0.0 && ge_mean != 0.0) || (score < 0.0 && le_mean != 0.0) {
+                Some(score / if score > 0.0 { ge_mean } else { le_mean.abs() })
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let pvals: Vec<f64> = gsea_res
+        .le_es
+        .iter()
+        .zip(gsea_res.le_zero.iter())
+        .zip(gsea_res.ge_es.iter())
+        .zip(gsea_res.ge_zero.iter())
+        .map(|(((le_es, le_zero), ge_es), ge_zero)| {
+            ((1 + le_es) as f64 / (1 + le_zero) as f64)
+                .min((1 + ge_es) as f64 / (1 + ge_zero) as f64)
+        })
+        .collect();
+
+    GseaResults {
+        es: pathway_scores.to_vec(),
+        nes,
+        pvals,
+        size: pathway_sizes.to_vec(),
+    }
+}
+
 ////////////////////
 // Main functions //
 ////////////////////
@@ -229,29 +279,6 @@ pub fn calculate_es(stats: &[f64], pathway: &[usize]) -> f64 {
     }
 }
 
-/// Calculate the p-value given a permutation es vector and the normalised enrichment score.
-/// This is the approach to calculate the p-values in the traditional GSEA.
-pub fn calculate_pval(actual_es: f64, perm_es: &[f64], n_perm: usize, pos: bool) -> f64 {
-    let count = if pos {
-        perm_es.iter().filter(|val| val >= &&actual_es).count()
-    } else {
-        perm_es.iter().filter(|val| val <= &&actual_es).count()
-    };
-    (count as f64 + 1.0) / (n_perm as f64 + 1.0) * 2.0
-}
-
-/// Calculate the normalised enrichment score
-pub fn calculate_nes(actual_es: f64, perm_es: &[f64], pos: bool) -> f64 {
-    let filtered: Vec<f64> = if pos {
-        perm_es.iter().filter(|x| x >= &&0.0).copied().collect()
-    } else {
-        perm_es.iter().filter(|x| x <= &&0.0).copied().collect()
-    };
-    let sum: f64 = filtered.iter().sum();
-    let mean = (sum / filtered.len() as f64).abs();
-    actual_es / mean
-}
-
 /// Calculate once for each size the permutation-based enrichment scores.
 pub fn create_perm_es(
     stats: &[f64],
@@ -269,57 +296,58 @@ pub fn create_perm_es(
     shared_perm_es
 }
 
-/// Calculate the traditional GSEA
-/// Has one speed up that it checks for uniquely sized pathways and generated one hashmap of these for speed
-/// improvements.
-pub fn calc_gsea_traditional(
+/// Calculate the permutations in the 'traditional' way.
+pub fn calc_gsea_stat_traditional_batch(
     stats: &[f64],
-    stats_names: &[String],
-    gene_sets: Vec<Vec<String>>,
+    pathway_scores: &[f64],
+    pathway_sizes: &[usize],
     iters: usize,
+    // gsea_param: f64,
     seed: u64,
-) -> GseaTraditionalResult {
-    // Get the indices
-    let gene_set_idx: Vec<Vec<usize>> = gene_sets
-        .iter()
-        .map(|s| get_gene_set_indices(stats_names, s))
-        .collect();
+) -> GseaBatchResults {
+    let n = stats.len();
+    let k = array_max(pathway_sizes);
+    let k_unique = unique(pathway_sizes);
 
-    let pathway_lengths: Vec<usize> = gene_set_idx
-        .iter()
-        .map(|inner_vec| inner_vec.len())
-        .collect();
+    let m = pathway_scores.len();
 
-    // Max length
-    let max_length = array_max(&pathway_lengths);
+    let shared_perm = create_random_gs_indices(iters, k, n, seed, false);
 
-    let shared_perm = create_random_gs_indices(iters, max_length, stats.len(), seed, false);
+    let shared_perm_es = create_perm_es(stats, &k_unique, &shared_perm);
 
-    let unique_lengths = unique(&pathway_lengths);
+    let mut le_es = Vec::with_capacity(m);
+    let mut ge_es = Vec::with_capacity(m);
+    let mut le_zero = Vec::with_capacity(m);
+    let mut ge_zero = Vec::with_capacity(m);
+    let mut le_zero_sum = Vec::with_capacity(m);
+    let mut ge_zero_sum = Vec::with_capacity(m);
 
-    let shared_perm_es = create_perm_es(stats, &unique_lengths, &shared_perm);
+    for (es, size) in pathway_scores.iter().zip(pathway_sizes.iter()) {
+        let random_es = shared_perm_es.get(size).unwrap();
+        let le_es_i = random_es.iter().filter(|x| x <= &es).count();
+        let ge_es_i = iters - le_es_i;
+        let le_zero_i = random_es.iter().filter(|x| x <= &&0.0).count();
+        let ge_zero_i = iters - le_zero_i;
+        let le_zero_sum_i: f64 = random_es.iter().map(|x| x.min(0.0)).sum();
+        let ge_zero_sum_i: f64 = random_es.iter().map(|x| x.max(0.0)).sum();
+        le_es.push(le_es_i);
+        ge_es.push(ge_es_i);
+        le_zero.push(le_zero_i);
+        ge_zero.push(ge_zero_i);
+        le_zero_sum.push(le_zero_sum_i);
+        ge_zero_sum.push(ge_zero_sum_i);
+    }
 
-    let results: GseaTraditionalResult = gene_set_idx
-        .par_iter()
-        .map(|gs| {
-            let es = calculate_es(stats, gs);
-            let perm_es = shared_perm_es.get(&gs.len()).unwrap();
-            let (pval, nes) = if es >= 0.0 {
-                let pval = calculate_pval(es, perm_es, iters, true);
-                let nes = calculate_nes(es, perm_es, true);
-                (pval, nes)
-            } else {
-                let pval = calculate_pval(es, perm_es, iters, false);
-                let nes = calculate_nes(es, perm_es, false);
-                (pval, nes)
-            };
-
-            (es, nes, pval)
-        })
-        .collect();
-
-    results
+    GseaBatchResults {
+        le_es,
+        ge_es,
+        le_zero,
+        ge_zero,
+        le_zero_sum,
+        ge_zero_sum,
+    }
 }
+
 //////////////////
 // FGSEA simple //
 //////////////////
@@ -636,23 +664,3 @@ pub fn calc_gsea_stat_cumulative_batch(
 //////////////////////
 
 // TODO
-
-///////////////
-// Dead code //
-///////////////
-
-#[allow(dead_code)]
-/// Helper function to extract the maximum absolute ES while preserving the sign
-pub fn get_max_es(es_vec: &[f64]) -> f64 {
-    let (max_val, _) = es_vec
-        .iter()
-        .map(|&x| (x, x.abs()))
-        .max_by(|(_, abs_a), (_, abs_b)| {
-            abs_a
-                .partial_cmp(abs_b)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-        .unwrap();
-
-    max_val
-}

@@ -14,6 +14,7 @@ pathway.}
 }
 \value{
 Returns a list with the index positions of the gene set genes in the gene universe.
+Importantly, these are indexed to R's 1-indexing!
 }
 \description{
 Helper function to rapidly retrieve the indices of the gene set members

@@ -218,17 +218,16 @@ expect_equal(
 
 # generally speaking this should yield the same
 
-internal_gsea_simple_res <- fgsea_simple(
+internal_gsea_simple_res <- calc_fgsea_simple(
   stats = stats,
   pathways = pathway_list,
   nperm = 100L
 )
 
-traditional_gsea_results <- rs_gsea_traditional(
+traditional_gsea_results <- calc_gsea_traditional(
   stats = stats,
-  iters = 100L,
-  pathway_list = pathway_list,
-  seed = 123L
+  pathways = pathway_list,
+  nperm = 100L
 )
 
 correlation_traditional_vs_fgsea_es <- cor(
@@ -297,21 +296,21 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
 
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_pval >= 0.97,
+    correlation_fgsea_internal_pval >= 0.98,
     info = paste(
       "correlation internal fgsea vs official (pval)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_es >= 0.97,
+    correlation_fgsea_internal_es >= 0.98,
     info = paste(
       "correlation internal fgsea vs official (ES)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_nes >= 0.97,
+    correlation_fgsea_internal_nes >= 0.98,
     info = paste(
       "correlation internal fgsea vs official (NES)"
     )
