@@ -25,6 +25,8 @@ included.
 
 <img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
 
+Future releases will be more frequent with less within one version.
+
 ## *Installation*
 
 You will need Rust on your system to have the package working. An installation
