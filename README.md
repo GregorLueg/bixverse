@@ -57,10 +57,10 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 
 ## *Docs*
 
-- [Why Rust](/docs/why_rust.md)
-- [Code Style](/docs/code_style.md) (If you want to contribute).
 - [Roadmap](/docs/roadmap.md)
 - [Change log](/docs/change_log.md)
+- [Why Rust](/docs/why_rust.md)
+- [Code Style](/docs/code_style.md) (If you want to contribute).
 
 ## *Aim*
 
