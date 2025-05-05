@@ -225,9 +225,14 @@ ica_res_rs <- fast_ica_rust(
   X_norm,
   K,
   n_icas = 2L,
-  ica_fun = "logcosh",
-  seed = 42L
+  ica_fun = "exp",
+  seed = 10101L
 )
+
+plot(x = S[, 1], y = ica_res_rs$S[1, ])
+
+
+par(mfcol = c(1, 1))
 
 par(mfcol = c(2, 3))
 plot(
