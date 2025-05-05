@@ -206,7 +206,7 @@ fn rs_calc_gsea_stat_traditional_batch(
     let batch_res: GseaBatchResults =
         calc_gsea_stat_traditional_batch(stats, pathway_scores, &pathway_sizes, iters, seed);
 
-    let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, batch_res);
+    let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
     Ok(list!(
         es = gsea_res.es,
@@ -258,7 +258,7 @@ pub fn rs_calc_gsea_stat_cumulative_batch(
         seed,
     )?;
 
-    let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, batch_res);
+    let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
     Ok(list!(
         es = gsea_res.es,

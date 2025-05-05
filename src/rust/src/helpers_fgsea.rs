@@ -16,11 +16,11 @@ use crate::utils_rust::{array_max, unique};
 /// Structure for final GSEA results from any
 /// algorithm
 #[derive(Clone, Debug)]
-pub struct GseaResults {
-    pub es: Vec<f64>,
+pub struct GseaResults<'a> {
+    pub es: &'a [f64],
     pub nes: Vec<Option<f64>>,
     pub pvals: Vec<f64>,
-    pub size: Vec<usize>,
+    pub size: &'a [usize],
 }
 
 /// Structure for results from the different GSEA
@@ -156,7 +156,6 @@ pub fn create_random_gs_indices(
     (0..iter_number)
         .into_par_iter()
         .map(|i| {
-            // Create a unique seed for each iteration
             let iter_seed = seed.wrapping_add(i as u64);
             let mut rng = StdRng::seed_from_u64(iter_seed);
 
@@ -164,7 +163,6 @@ pub fn create_random_gs_indices(
             let adjusted_universe = universe_length - 1;
             let actual_len = std::cmp::min(max_len, adjusted_universe);
 
-            // Create array of indices
             let mut indices: Vec<usize> = (0..adjusted_universe).collect();
 
             // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
@@ -188,11 +186,11 @@ pub fn create_random_gs_indices(
 
 /// Transform the batch results into final GSEA results,
 /// i.e., es, nes, pval and size
-pub fn calculate_nes_es_pval(
-    pathway_scores: &[f64],
-    pathway_sizes: &[usize],
-    gsea_res: GseaBatchResults,
-) -> GseaResults {
+pub fn calculate_nes_es_pval<'a>(
+    pathway_scores: &'a [f64],
+    pathway_sizes: &'a [usize],
+    gsea_res: &GseaBatchResults,
+) -> GseaResults<'a> {
     let le_zero_mean: Vec<f64> = gsea_res
         .le_zero_sum
         .iter()
@@ -232,10 +230,10 @@ pub fn calculate_nes_es_pval(
         .collect();
 
     GseaResults {
-        es: pathway_scores.to_vec(),
+        es: pathway_scores,
         nes,
         pvals,
-        size: pathway_sizes.to_vec(),
+        size: pathway_sizes,
     }
 }
 
@@ -566,7 +564,7 @@ pub fn calc_gsea_stat_cumulative(
     let res_down = gsea_stats_sq(stats, selected_stats, &selected_order, gsea_param, true);
 
     // Combine results (take max magnitude with sign)
-    let mut final_res = vec![0.0; res.len()];
+    let mut final_res = Vec::with_capacity(res.len());
     for i in 0..res.len() {
         if res[i] == res_down[i] {
             final_res[i] = 0.0;
