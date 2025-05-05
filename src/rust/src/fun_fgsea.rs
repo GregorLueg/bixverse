@@ -258,14 +258,16 @@ pub fn rs_calc_gsea_stat_cumulative_batch(
         seed,
     )?;
 
-    let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
+    // let gsea_res: GseaResults = calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
-    Ok(list!(
-        es = gsea_res.es,
-        nes = gsea_res.nes,
-        pvals = gsea_res.pvals,
-        size = gsea_res.size
-    ))
+    // Ok(list!(
+    //     es = gsea_res.es,
+    //     nes = gsea_res.nes,
+    //     pvals = gsea_res.pvals,
+    //     size = gsea_res.size
+    // ))
+
+    Ok(list!(es = vec![0, 5]))
 }
 
 extendr_module! {
