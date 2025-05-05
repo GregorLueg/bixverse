@@ -39,21 +39,21 @@ with Rust.)
 Steps for installation: 
 1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
-  ```
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-  ```
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
    
 2. In R, install [rextendr](https://extendr.github.io/rextendr/index.html):
 
-   ```
-   install.packages("rextendr")
-   ```
+```
+install.packages("rextendr")
+```
 
 3. Finally install bixverse:
 
-   ```
-   devtools::install_github("https://github.com/GregorLueg/bixverse")
-   ```
+```
+devtools::install_github("https://github.com/GregorLueg/bixverse")
+```
 
 ## *Docs*
 
