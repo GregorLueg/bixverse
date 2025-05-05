@@ -8,8 +8,6 @@
 
 </br>
 
-**THIS IS THE ALPHA VERSION OF THE PACKAGE WHICH IS NOW PUBLIC**
-
 ## *Description* 
 
 This package contains various bioinformatics and computational biology workflows
@@ -17,6 +15,15 @@ that are being routinely used, ranging from gene set enrichment analyses, to
 network-based approaches for module detection in bulk RNAseq. The package provides
 useful, bare bone versions of most bioinformatics functionalities and leverages Rust
 to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
+
+## *Release notes*
+
+We have approached the **0.0.1.1** release. With this release, we approach the
+beta release of the package. Test coverage has increased, "features" (i.e., bugs)
+have been removed, the Rust code was made faster, and new features have been
+included.
+
+<img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" alt="celebration">
 
 ## *Installation*
 
@@ -29,17 +36,21 @@ with Rust.)
 Steps for installation: 
 1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
-   ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
+  ```
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
    
 2. In R, install [rextendr](https://extendr.github.io/rextendr/index.html):
 
-   ```install.packages("rextendr")```
+   ```
+   install.packages("rextendr")
+   ```
 
 3. Finally install bixverse:
 
-   ```devtools::install_github("https://github.com/GregorLueg/bixverse")```
-
-
+   ```
+   devtools::install_github("https://github.com/GregorLueg/bixverse")
+   ```
 
 ## *Docs*
 
@@ -65,4 +76,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 15.04.2025*
+*Last update to the read-me: 05.05.2025*
