@@ -85,10 +85,10 @@ piece of code does in 12 months? If you are doubting yourself here, maybe rethin
 what you wrote. For the latter, i.e., defensive, leverage early returns, asserts
 (see point 2)
 6. Avoid external dependencies if not absolutely necessary. The point of the 
-package **is to rewrite functions from other packages into very fast, simple **
-**Rust-accelerated code** and reducing the (code) bloat that affects some packages 
-in bioinformatics and computational biology. A good primer for this is the
-[tinyverse](https://www.tinyverse.org).
+package is to rewrite functions from other packages into
+**very fast, simple Rust-accelerated code** and reducing the (code) bloat that
+affects some packages  in bioinformatics and computational biology. A good 
+primer for this is the [tinyverse](https://www.tinyverse.org).
 7. The good old `for loop` vs. `lapply/map` question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
 equivalent parallelised versions via [furrr](https://furrr.futureverse.org), i.e., 
@@ -98,20 +98,23 @@ explicit code which is easier to reason over. `map_lgl()` is very clear that I
 will get a logical vector back. With `unlist(lapply())` it is less
 obvious what is going on. For loops in R have a very bad reputation, but this is 
 usually because people grow objects in memory in the loop which is a bad 
-practice indeed (it is the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf).
+practice indeed (refer to the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf).
 8. In terms of object-oriented programming, [S7](https://github.com/RConsortium/S7)
 provides a way to write very R-like OOP (the methods belong to generics). For 
 user-facing key methods and workflows, we recommend using this one, as most R
 users will feel very familiar with it and it allows for (familiar) piping of various 
-functions. In  certain cases, you might want to write a more Java or Python-like 
+functions. In certain cases, you might want to write a more Java or Python-like 
 type of classes (i.e., encapsulated OOP), which gives you a lot of control in
-terms of public vs. private methods and attributes. We recommend [R6](https://r6.r-lib.org/articles/Introduction.html)
-here, but be aware that the average R users might find the R6 classes not very
-intuitive. Inheritance can be quite useful in certain cases to abstract out
-common generics/methods, but try to avoid deeply layered inheritance where 
-possible. This is not the most complex software we are writing here, so there
-should be no need for 8+ layers of inheritance.
+terms of public vs. private methods and attributes. We recommend 
+[R6](https://r6.r-lib.org/articles/Introduction.html) here, but be aware that 
+the average R users might find the R6 classes not very intuitive. Inheritance 
+can be quite useful in certain cases to abstract out common generics/methods, 
+but try to avoid deeply layered inheritance where possible. This is not the most
+complex software we are writing here, so there should be no need for 8+ layers 
+of inheritance.
 9. Test expected behaviour of key functions via [tinytest](https://github.com/markvanderloo/tinytest).
 If you implement something that should behave like functions from a different 
 package make sure that you compare the your version against the established 
-ones.
+ones. Also, double check that any Rust version of an R-internal version returns
+the same results. The idea should be always: 
+*Make It Work, Make It Right, Make It Fast.*

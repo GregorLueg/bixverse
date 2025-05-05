@@ -6,13 +6,15 @@ X <- S %*% A
 
 ## ica -------------------------------------------------------------------------
 
+### whitening ------------------------------------------------------------------
+
 expected_k <- matrix(c(-0.8243566, -2.2245938, -1.7226241, 1.0645727), 2, 2)
 
 # prepare the whitening
-c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
+whitening_res <- rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
 
 expect_equal(
-  current = K,
+  current = whitening_res$k,
   target = expected_k,
   tolerance = 10e-6,
   info = paste(
@@ -27,8 +29,8 @@ random_seed <- as.integer(sample(1:1000, 1))
 
 # logcosh implementation
 rs_ica_res_logcosh <- fast_ica_rust(
-  X_norm,
-  K,
+  whitening_res$x,
+  whitening_res$k,
   n_icas = 2L,
   ica_fun = "logcosh",
   seed = random_seed
@@ -66,8 +68,8 @@ expect_true(
 
 # exp implementation
 rs_ica_res_exp <- fast_ica_rust(
-  X_norm,
-  K,
+  whitening_res$x,
+  whitening_res$k,
   n_icas = 2L,
   ica_fun = "exp",
   seed = random_seed

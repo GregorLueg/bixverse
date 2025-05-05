@@ -231,6 +231,7 @@ ica_res_rs <- fast_ica_rust(
 
 plot(x = S[, 1], y = ica_res_rs$S[1, ])
 
+cor()
 
 par(mfcol = c(1, 1))
 
