@@ -23,7 +23,7 @@ beta release of the package. Test coverage has increased, "features" (i.e., bugs
 have been removed, the Rust code was made faster, and new features have been
 included.
 
-<img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" alt="celebration">
+<img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
 
 ## *Installation*
 
