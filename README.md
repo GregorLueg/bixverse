@@ -25,7 +25,8 @@ included.
 
 <img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
 
-Future releases will be more frequent with less within one version.
+Future releases will be more frequent with less features within one version for
+faster updates.
 
 ## *Installation*
 
