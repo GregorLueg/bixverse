@@ -156,6 +156,7 @@ pub fn create_random_gs_indices(
     (0..iter_number)
         .into_par_iter()
         .map(|i| {
+            // Create a unique seed for each iteration
             let iter_seed = seed.wrapping_add(i as u64);
             let mut rng = StdRng::seed_from_u64(iter_seed);
 
@@ -163,6 +164,7 @@ pub fn create_random_gs_indices(
             let adjusted_universe = universe_length - 1;
             let actual_len = std::cmp::min(max_len, adjusted_universe);
 
+            // Create array of indices
             let mut indices: Vec<usize> = (0..adjusted_universe).collect();
 
             // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
@@ -564,7 +566,7 @@ pub fn calc_gsea_stat_cumulative(
     let res_down = gsea_stats_sq(stats, selected_stats, &selected_order, gsea_param, true);
 
     // Combine results (take max magnitude with sign)
-    let mut final_res = Vec::with_capacity(res.len());
+    let mut final_res = vec![0.0; res.len()];
     for i in 0..res.len() {
         if res[i] == res_down[i] {
             final_res[i] = 0.0;
