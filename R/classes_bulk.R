@@ -134,7 +134,7 @@ bulk_dge <- S7::new_class(
       names(meta_data),
       must.include = c("sample_id")
     )
-    checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
+    checkmate::assertTRUE(all(colnames(raw_counts) %in% meta_data$sample_id))
     checkmate::assert(
       checkmate::checkDataTable(variable_info),
       checkmate::checkNull(variable_info)
@@ -204,6 +204,58 @@ bulk_dge_from_h5ad <- function(
 }
 
 # utils ------------------------------------------------------------------------
+
+## object manipulation ---------------------------------------------------------
+
+#' Remove samples from object
+#'
+#' @description
+#' This function allows to remove certain samples from the object
+#'
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param samples_to_remove Character vector. The sample identifiers to remove.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return Returns the object with the samples removed. This will regenerated
+#' the object from the start and remove any data in it.
+#'
+#' @export
+remove_samples <- S7::new_generic(
+  name = "remove_samples",
+  dispatch_args = "object",
+  fun = function(object, samples_to_remove, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method remove_samples bulk_dge
+#'
+#' @export
+S7::method(remove_samples, bulk_dge) <-
+  function(object, samples_to_remove, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    # Data
+    meta_data <- S7::prop(object, "meta_data")
+    raw_counts <- S7::prop(object, "raw_counts")
+    variable_info <- S7::prop(object, "variable_info")
+
+    meta_data_new <- meta_data[!sample_id %in% samples_to_remove]
+    raw_counts_new <- raw_counts[, meta_data_new$sample_id]
+
+    object_new <- bulk_dge(
+      raw_counts = raw_counts_new,
+      meta_data = meta_data_new,
+      variable_info = var_info
+    )
+
+    # Return
+    return(object_new)
+  }
 
 ## common getters --------------------------------------------------------------
 
@@ -482,6 +534,30 @@ S7::method(change_gene_identifier, bulk_dge) <-
     return(object)
   }
 
+
+#' @method add_new_metadata bulk_dge
+#'
+#' @export
+S7::method(add_new_metadata, bulk_dge) <-
+  function(object, new_metadata, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::assertNames(
+      names(new_metadata),
+      must.include = c("sample_id")
+    )
+
+    raw_counts <- S7::prop(object, "raw_counts")
+
+    checkmate::assertTRUE(all(colnames(raw_counts) %in% meta_data$sample_id))
+
+    S7::prop(object, "meta_data") <- new_metadata
+
+    return(object)
+  }
 
 ## prints ----------------------------------------------------------------------
 

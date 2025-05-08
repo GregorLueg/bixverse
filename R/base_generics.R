@@ -21,3 +21,23 @@ plot_resolution_res <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
+#' @title Replace the meta data
+#'
+#' @description
+#' This function will replace the meta data within the given object
+#'
+#' @param object The class
+#' @param new_metadata data.table. The new meta data you wish to add.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return The object with updated metadata.
+#'
+#' @export
+add_new_metadata <- S7::new_generic(
+  name = "add_new_metadata",
+  dispatch_args = "object",
+  fun = function(object, new_metadata, ...) {
+    S7::S7_dispatch()
+  }
+)

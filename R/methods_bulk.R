@@ -140,7 +140,7 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     geom_point(mapping = aes(col = .data[[contrast_info]])) +
     xlab("PC1") +
     ylab("PC2") +
-    theme_minimal() +
+    theme_bw() +
     ggtitle("PCA with key columns") +
     labs(colour = "Groups:")
 
@@ -474,7 +474,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         ))
       ]
       dge_list_red <- dge_list[, sample_info_red$sample_id]
-      norm_counts_red <- dge_list[, sample_info_red$sample_id]
+      norm_counts_red <- norm_counts[, sample_info_red$sample_id]
 
       # Limma Voom
       limma_results <- run_limma_voom(
@@ -490,7 +490,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
       hedges_g_results <- hedges_g_dge(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        normalized_counts = norm_counts_red,
+        normalised_counts = norm_counts_red,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
