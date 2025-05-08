@@ -27,7 +27,8 @@ separately.}
 \item{co_variates}{Optional String vector. Any co-variates you wish to
 consider during the Limma Voom modelling.}
 
-\item{...}{Additional parameters to forward to \code{\link[edgeR:filterByExpr]{edgeR::filterByExpr()}}.}
+\item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
+\code{\link[limma:voom]{limma::voom()}}.}
 
 \item{.verbose}{Controls verbosity of the function.}
 }

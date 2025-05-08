@@ -1,5 +1,43 @@
 # methods ----------------------------------------------------------------------
 
+## helpers ---------------------------------------------------------------------
+
+#' Helper function to check if PC1/2 distinguish groups
+#'
+#' @description
+#' Runs an ANOVA for the group variable vs PC1 and PC2 and checks if either
+#' principal component can separate the groups.
+#'
+#' @param pc1 Numeric vector. The values of PC1.
+#' @param pc2 Numeric vector. The values of PC2.
+#' @param grps Factor or character vector. The group vector.
+#'
+#' @returns A data.table with two columns
+.check_pca_grp_differences <- function(pc1, pc2, grps) {
+  # Checks
+  checkmate::qassert(pc1, "N+")
+  checkmate::qassert(pc2, "N+")
+  checkmate::qassert(grps, c("F+", "S+"))
+  # Function body
+  pca_anova_dt <- if (length(unique(grps)) > 1) {
+    pc1_anova_pval <- anova(lm(pc1 ~ grps))$`Pr(>F)`[1]
+    pc2_anova_pval <- anova(lm(pc2 ~ grps))$`Pr(>F)`[1]
+    data.table(
+      pc = c("PC1", "PC2"),
+      pvalue = c(pc1_anova_pval, pc2_anova_pval)
+    )
+  } else {
+    data.table(
+      pc = c("PC1", "PC2"),
+      pvalue = c(NA, NA)
+    )
+  }
+
+  return(pca_anova_dt)
+}
+
+## pca -------------------------------------------------------------------------
+
 #' Calculate PCA on the expression.
 #'
 #' @description
@@ -7,7 +45,7 @@
 #' adds the information of the first 10 principal components to the outputs.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
-#' @param scale Boolean. Shall the log(cpm) counts be scaled prior the PCA
+#' @param scale_genes Boolean. Shall the log(cpm) counts be scaled prior the PCA
 #' calculation. Defaults to `FALSE`.
 #' @param pcs Integer. Number of PCs to return and add to the outputs slot.
 #' @param no_hvg_genes Integer. Number of highly variable genes to include.
@@ -21,7 +59,7 @@ calculate_pca_bulk_dge <- S7::new_generic(
   "object",
   fun = function(
     object,
-    scale = FALSE,
+    scale_genes = FALSE,
     pcs = 10L,
     no_hvg_genes = 2500L
   ) {
@@ -38,39 +76,49 @@ calculate_pca_bulk_dge <- S7::new_generic(
 #' @importFrom magrittr `%$%`
 S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   object,
-  scale = FALSE,
+  scale_genes = FALSE,
   pcs = 10L,
   no_hvg_genes = 2500L
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
-  checkmate::qassert(scale, "B1")
+  checkmate::qassert(scale_genes, "B1")
   checkmate::qassert(pcs, "I1")
   checkmate::qassert(no_hvg_genes, "I1")
-  checkmate::assertNames(
+
+  # Early return
+  normalised_counts_present <- checkmate::testNames(
     names(S7::prop(object, "outputs")),
-    must.include = "normalized_counts"
+    must.include = "normalised_counts"
   )
 
-  normalized_counts <- S7::prop(object, "outputs")[['normalized_counts']]
-  meta_data <- S7::prop(object, "meta_data")
+  if (!normalised_counts_present) {
+    warning(paste(
+      "No normalised counts found. Did you run preprocess_bulk_dge()?",
+      "Returning object as is"
+    ))
+    return(object)
+  }
+
+  normalised_counts <- S7::prop(object, "outputs")[['normalised_counts']]
+  contrast_info <- S7::prop(object, "outputs")[['group_col']]
+  sample_info <- S7::prop(object, "outputs")[["sample_info"]]
 
   hvg_data <- list(
-    gene_id = rownames(normalized_counts),
-    mad = matrixStats::rowMads(normalized_counts)
+    gene_id = rownames(normalised_counts),
+    mad = matrixStats::rowMads(normalised_counts)
   ) %>%
     data.table::as.data.table() %>%
     data.table::setorder(-mad)
 
   hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
 
-  # Add the information to the table
   if (!is.null(S7::prop(object, "variable_info"))) {
     S7::prop(object, "variable_info")[, hvg := var_id %in% hvg_genes]
   }
 
-  input_genes <- t(normalized_counts[hvg_genes, ])
-  pca_results <- rs_prcomp(input_genes, scale = scale)
+  input_genes <- t(normalised_counts[hvg_genes, ])
+  pca_results <- rs_prcomp(input_genes, scale = scale_genes)
   pcs_to_take <- min(pcs, ncol(pca_results$scores))
   pca_dt <- pca_results$scores[, 1:pcs_to_take] %>%
     `colnames<-`(sprintf("PC_%i", 1:pcs_to_take)) %>%
@@ -78,10 +126,9 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     .[, sample_id := rownames(input_genes)] %>%
     .[, c("sample_id", sprintf("PC_%i", 1:pcs_to_take)), with = FALSE]
 
-  ## plot
   plot_df <- data.table::merge.data.table(
     pca_dt,
-    meta_data[, c('sample_id', "case_control"), with = FALSE],
+    sample_info[, c('sample_id', contrast_info), with = FALSE],
     by.x = 'sample_id',
     by.y = 'sample_id'
   )
@@ -90,27 +137,18 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     data = plot_df,
     mapping = aes(x = PC_1, y = PC_2)
   ) +
-    geom_point(mapping = aes(col = case_control)) +
+    geom_point(mapping = aes(col = .data[[contrast_info]])) +
     xlab("PC1") +
     ylab("PC2") +
     theme_minimal() +
     ggtitle("PCA with key columns") +
     labs(colour = "Groups:")
 
-  ## check association with case_control
-  if (length(unique(plot_df$case_control)) > 1) {
-    pc1 = anova(lm(plot_df$PC_1 ~ plot_df$case_control))$`Pr(>F)`[1] < 0.05
-    pc2 = anova(lm(plot_df$PC_2 ~ plot_df$case_control))$`Pr(>F)`[1] < 0.05
-    pca_anova = data.table(
-      PC1_pvalue = pc1,
-      PC2_value = pc2
-    )
-  } else {
-    pca_anova = data.table(
-      PC1_pvalue = NA,
-      PC2_value = NA
-    )
-  }
+  pca_anova <- .check_pca_grp_differences(
+    pc1 = plot_df$PC_1,
+    pc2 = plot_df$PC_2,
+    grps = plot_df[[contrast_info]]
+  )
 
   ## params
   pca_params <- list(
@@ -127,6 +165,170 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   return(object)
 }
 
+## batch correction ------------------------------------------------------------
+
+#' Run a linear batch correction
+#'
+#' @description
+#' Runs a linear batch correction over the data regressing out batch effects
+#' and adding `normalised_counts_corrected` to the object. Should these counts
+#' be found by [bixverse::calculate_all_dges()], they will be used for
+#' calculations of effect sizes based on Hedge's G.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param contrast_column String. The contrast column in which the groupings
+#' are stored. Needs to be found in the meta_data within the properties.
+#' @param batch_col String. The column in which the batch effect groups can
+#' be found.
+#' @param scale_genes Boolean. Shall the log(cpm) counts be scaled prior the PCA
+#' calculation. Defaults to `FALSE`.
+#' @param no_hvg_genes Integer. Number of highly variable genes to include.
+#' Defaults to 2500.
+#'
+#' @return Returns the class with additional data added to the outputs.
+#'
+#' @export
+batch_correction_bulk_dge <- S7::new_generic(
+  "batch_correction_bulk_dge",
+  "object",
+  fun = function(
+    object,
+    contrast_column,
+    batch_col,
+    scale_genes = FALSE,
+    no_hvg_genes = 2500L
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method batch_correction_bulk_dge bulk_dge
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
+  object,
+  contrast_column,
+  batch_col,
+  scale_genes = FALSE,
+  no_hvg_genes = 2500L
+) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::qassert(contrast_column, "S1")
+  checkmate::qassert(batch_col, "S1")
+  checkmate::qassert(scale_genes, "B1")
+  checkmate::qassert(no_hvg_genes, "I1")
+
+  # Body
+  # Early return
+  normalised_counts_present <- checkmate::testNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalised_counts"
+  )
+
+  if (!normalised_counts_present) {
+    warning(paste(
+      "No normalised counts found. Did you run preprocess_bulk_dge()?",
+      "Returning object as is"
+    ))
+    return(object)
+  }
+
+  pca_present <- !is.null(S7::prop(object, "outputs")[['pca']])
+
+  if (!pca_present) {
+    message("No PCA data found. Running PCA with default parameters now.")
+    object <- calculate_pca_bulk_dge(object)
+  }
+
+  normalised_counts <- S7::prop(object, "outputs")[['normalised_counts']]
+  sample_info <- S7::prop(object, "outputs")[["sample_info"]]
+  pca_dt <- S7::prop(object, "outputs")[['pca']]
+
+  batch_data <- factor(sample_info[[batch_col]])
+
+  normalised_counts_corrected <- limma::removeBatchEffect(
+    x = normalised_counts,
+    batch = batch_data
+  )
+
+  # TODO abstract out the HVG genes and PCA calculations into one single
+  # function
+
+  hvg_data <- list(
+    gene_id = rownames(normalised_counts_corrected),
+    mad = matrixStats::rowMads(normalised_counts_corrected)
+  ) %>%
+    data.table::as.data.table() %>%
+    data.table::setorder(-mad)
+
+  hvg_genes <- hvg_data[1:no_hvg_genes, gene_id]
+
+  input_genes <- t(normalised_counts_corrected[hvg_genes, ])
+  pca_results <- rs_prcomp(input_genes, scale = scale_genes)
+
+  pca_dt_cor <- pca_results$scores[, 1:2] %>%
+    `colnames<-`(sprintf("PC_%i", 1:2)) %>%
+    data.table::as.data.table() %>%
+    .[, sample_id := rownames(input_genes)] %>%
+    merge(
+      .,
+      sample_info[, c("sample_id", contrast_column), with = FALSE],
+      by = 'sample_id'
+    )
+
+  pca_dt_uncor <- pca_dt[, c("PC_1", "PC_2", "sample_id"), with = FALSE] %>%
+    merge(
+      .,
+      sample_info[, c("sample_id", contrast_column), with = FALSE],
+      by = 'sample_id'
+    )
+
+  plot_uncor <- ggplot(data = pca_dt_uncor, mapping = aes(x = PC_1, y = PC_2)) +
+    geom_point(mapping = aes(col = .data[[contrast_column]])) +
+    theme_bw() +
+    ggtitle("Pre batch correction") +
+    xlab("PC1") +
+    ylab("PC2")
+
+  plot_cor <- ggplot(data = pca_dt_cor, mapping = aes(x = PC_1, y = PC_2)) +
+    geom_point(mapping = aes(col = .data[[contrast_column]])) +
+    theme_bw() +
+    ggtitle("Post batch correction") +
+    xlab("PC1") +
+    ylab("PC2")
+
+  p6_batch_correction_plot <- plot_uncor +
+    plot_cor +
+    patchwork::plot_annotation(
+      title = 'PCA plots pre and post batch effect correction',
+      subtitle = 'Batch effect correction via limma::removeBatchEffect()'
+    )
+
+  ## params
+  batch_cor_params <- list(
+    batch_effect_col = batch_col,
+    batches = batch_data
+  )
+
+  S7::prop(object, "outputs")[[
+    'normalised_counts_corrected'
+  ]] <- normalised_counts_corrected
+  S7::prop(object, "plots")[[
+    'p6_batch_correction_plot'
+  ]] <- p6_batch_correction_plot
+  S7::prop(object, "params")[['batch_cor_params']] <- batch_cor_params
+
+  return(object)
+}
+
+
+## differential gene expression ------------------------------------------------
 
 #' Calculate all possible DGE variants
 #'
@@ -157,7 +359,8 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
 #' separately.
 #' @param co_variates Optional String vector. Any co-variates you wish to
 #' consider during the Limma Voom modelling.
-#' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
+#' @param ... Additional parameters to forward to [limma::eBayes()] or
+#' [limma::voom()].
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
@@ -198,17 +401,41 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   checkmate::qassert(contrast_column, "S+")
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::qassert(filter_column, c("S+", "0"))
-  checkmate::qassert(gene_filter, c("S+", "F+", "0"))
-  checkmate::assertNames(
+
+  # Early return
+  dge_list_present <- checkmate::testNames(
     names(S7::prop(object, "outputs")),
-    must.include = "normalized_counts"
+    must.include = "dge_list"
   )
+
+  if (!dge_list_present) {
+    warning(paste(
+      "No dge_list found. Did you run preprocess_bulk_dge()?",
+      "Returning object as is"
+    ))
+    return(object)
+  }
 
   ## get objects
   all_specified_columns <- c(contrast_column, co_variates, filter_column)
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
-  normalized_counts <- S7::prop(object, "outputs")[['normalized_counts']]
+  dge_list <- S7::prop(object, "outputs")[['dge_list']]
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
+
+  counts_batch_cor <- S7::prop(object, "outputs")[[
+    'normalised_counts_corrected'
+  ]]
+
+  norm_counts <- if (is.null(counts_batch_cor)) {
+    S7::prop(object, "outputs")[['normalised_counts']]
+  } else {
+    if (.verbose)
+      message(paste(
+        "Found batch corrected counts.",
+        "These will be used for effect size calculations"
+      ))
+    counts_batch_cor
+  }
 
   if (is.null(filter_column)) {
     if (.verbose)
@@ -216,19 +443,18 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     limma_results_final <- run_limma_voom(
       meta_data = sample_info,
       main_contrast = contrast_column,
-      normalized_counts = normalized_counts,
+      dge_list = dge_list,
       co_variates = co_variates,
-      # ...,
+      ...,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
 
     if (.verbose) message("Calculating the Hedge's G effect sizes.")
-    hedges_g_results_final <- hedges_g_dge_list(
+    hedges_g_results_final <- hedges_g_dge(
       meta_data = sample_info,
       main_contrast = contrast_column,
-      normalized_counts = normalized_counts,
-      # ...,
+      normalised_counts = norm_counts,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -247,24 +473,24 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
           text = paste0(filter_column, " == '", group, "'")
         ))
       ]
-      normalized_counts_red <- dge_list[, sample_info_red$sample_id]
+      dge_list_red <- dge_list[, sample_info_red$sample_id]
+      norm_counts_red <- dge_list[, sample_info_red$sample_id]
 
       # Limma Voom
       limma_results <- run_limma_voom(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        normalized_counts = normalized_counts_red,
+        dge_list = dge_list_red,
         co_variates = co_variates,
         ...,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
 
-      hedges_g_results <- hedges_g_dge_list(
+      hedges_g_results <- hedges_g_dge(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
-        normalized_counts = normalized_counts_red,
-        ...,
+        normalized_counts = norm_counts_red,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
@@ -297,7 +523,6 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     contrast_column = contrast_column,
     filter_column = filter_column,
     co_variates = co_variates
-    # gene_filter = gene_filter
   )
 
   S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
@@ -351,8 +576,8 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
-  checkmate::qassert(cols_to_plot, "S2")
-  checkmate::qassert(pcs_to_plot, "S+")
+  checkmate::qassert(cols_to_plot, "S+")
+  checkmate::qassert(pcs_to_plot, "S2")
 
   pca_dt <- S7::prop(object, "outputs")[['pca']]
   meta_data <- S7::prop(object, "meta_data")

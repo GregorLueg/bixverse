@@ -7,8 +7,6 @@
 #' @param x Vector of strings or factors.
 #'
 #' @returns Vector with fixed naming based on R conventions.
-#'
-#' @export
 fix_contrast_names <- function(x) {
   checkmate::qassert(x, c("S+", "F+", "N+"))
   if (checkmate::qtest(x, c("S+", "F+"))) {
@@ -23,18 +21,35 @@ fix_contrast_names <- function(x) {
 #' Create all limma contrasts
 #'
 #' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
+#' @param contrast_grps String vector. The contrast groups of interest. If NULL
+#' all co-variate comparisons will be returned.
 #'
 #' @returns The Limma contrasts for further usage.
-#'
-#' @export
-all_limma_contrasts <- function(limma_fit) {
+all_limma_contrasts <- function(limma_fit, contrast_grps) {
+  # Checks
   checkmate::assertClass(limma_fit, "MArrayLM")
+  checkmate::qassert(contrast_grps, c("S+", "F+", "0"))
   coefs_fit <- colnames(coef(limma_fit))
-  cb <- combn(x = coefs_fit, m = 2, FUN = function(x) {
+  if (!is.null(contrast_grps)) {
+    coefs_fit <- coefs_fit[coefs_fit %in% contrast_grps]
+  }
+  contrast_combs <- c(combn(x = coefs_fit, m = 2, FUN = function(x) {
     paste0(x[[1]], "-", x[[2]])
-  })
-  contrasts <- limma::makeContrasts(contrasts = cb, levels = coefs_fit)
-  return(contrasts)
+  }))
+
+  all_contrasts <- vector(mode = "list", length = length(contrast_combs))
+
+  # makeContrasts is WILD...
+  for (i in seq_along(contrast_combs)) {
+    value <- contrast_combs[[i]]
+    contrast_i <- limma::makeContrasts(
+      contrasts = value,
+      levels = colnames(coef(limma_fit))
+    )
+    all_contrasts[[i]] <- contrast_i
+  }
+
+  return(all_contrasts)
 }
 
 # dge functions ----------------------------------------------------------------
@@ -50,10 +65,11 @@ all_limma_contrasts <- function(limma_fit) {
 #' which the contrast info (and potential co-variates) can be found.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to test differential gene expression with the Limma-Voom workflow for.
-#' @param normalized_counts matrix, normalized count matrix.
+#' @param dge_list DGEList, see [edgeR::DGEList()].
 #' @param co_variates String or NULL. Optional co-variates you wish to consider
 #' during model fitting.
-#' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
+#' @param ... Additional parameters to forward to [limma::eBayes()] or
+#' [limma::voom()].
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A data.table with all the DGE results from [limma::topTable()] for
@@ -66,7 +82,7 @@ all_limma_contrasts <- function(limma_fit) {
 run_limma_voom <- function(
   meta_data,
   main_contrast,
-  normalized_counts,
+  dge_list,
   co_variates = NULL,
   ...,
   .verbose = TRUE
@@ -74,10 +90,8 @@ run_limma_voom <- function(
   variables <- c(main_contrast, co_variates)
   # Checks
   checkmate::assertDataFrame(meta_data)
-  checkmate::assertNames(
-    names(S7::prop(object, "outputs")),
-    must.include = "normalized_counts"
-  )
+  checkmate::qassert(main_contrast, "S1")
+  checkmate::assertClass(dge_list, "DGEList")
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::assertNames(
     names(meta_data),
@@ -85,7 +99,6 @@ run_limma_voom <- function(
   )
   checkmate::qassert(.verbose, "B1")
 
-  # Fix any names
   meta_data[,
     (variables) := lapply(.SD, fix_contrast_names),
     .SDcols = variables
@@ -104,35 +117,38 @@ run_limma_voom <- function(
   model_matrix <- model.matrix(as.formula(model_formula), data = meta_data)
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
-  limma_fit <- limma::lmFit(
-    normalized_counts[, meta_data$sample_id],
-    model_matrix
+  voom_obj <- limma::voom(
+    counts = dge_list,
+    design = model_matrix,
+    normalize.method = "quantile",
+    plot = TRUE,
+    ...
   )
 
-  contrasts <- all_limma_contrasts(limma_fit)
+  limma_fit <- limma::lmFit(voom_obj, model_matrix)
+  contrast_grps <- unique(meta_data[[main_contrast]])
 
-  final_fit <- limma::contrasts.fit(limma_fit, contrasts)
-  final_fit <- limma::eBayes(final_fit)
+  limma_contrasts <- all_limma_contrasts(
+    limma_fit = limma_fit,
+    contrast_grps = contrast_grps
+  )
 
-  tested_contrasts <- attributes(contrasts)$dimnames$Contrasts
-  if (.verbose)
-    message(paste(
-      "Tested these contrasts:",
-      paste(tested_contrasts, collapse = ", ")
-    ))
+  all_dge_res <- purrr::map(limma_contrasts, \(contrast_obj) {
+    final_fit <- limma::contrasts.fit(limma_fit, contrast_obj)
+    final_fit <- limma::eBayes(final_fit, ...)
 
-  all_dge_res <- purrr::map(tested_contrasts, \(coef) {
+    coef_name <- colnames(coef(final_fit))
+
     top.table <- as.data.table(
       limma::topTable(
         fit = final_fit,
-        coef = coef,
         sort.by = "P",
         n = Inf,
         confint = TRUE
       ),
       keep.rownames = "gene_id"
     ) %>%
-      .[, contrast := gsub("-", "_vs_", coef)]
+      .[, contrast := gsub("-", "_vs_", coef_name)]
   }) %>%
     rbindlist()
 
@@ -148,9 +164,8 @@ run_limma_voom <- function(
 #' @param main_contrast String. Which column contains the main groups you want
 #' to calculate the Hedge's G effect for. Every permutation of the groups
 #' will be tested.
-#' @param normalized_counts normalized count matrix.
-#' @param ... Additional parameters to forward to [edgeR::filterByExpr()].
-#' @param .verbose Controls verbosity of the function.
+#' @param normalised_counts Numeric Matrix. The normalized count matrix.
+#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A data.table with the effect sizes and standard errors based on the
 #' Hedge's G effect size for all found permutations of the groups.
@@ -159,17 +174,16 @@ run_limma_voom <- function(
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
-hedges_g_dge_list <- function(
+hedges_g_dge <- function(
   meta_data,
   main_contrast,
-  normalized_counts,
-  ...,
+  normalised_counts,
   .verbose = TRUE
 ) {
   # Checks
   checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(normalized_counts, "matrix")
+  checkmate::assertClass(normalised_counts, "matrix")
   checkmate::assertNames(
     names(meta_data),
     must.include = main_contrast
@@ -195,8 +209,8 @@ hedges_g_dge_list <- function(
       sample_id
     ]
 
-    mat_a <- t(normalized_counts[, grpA])
-    mat_b <- t(normalized_counts[, grpB])
+    mat_a <- t(normalised_counts[, grpA])
+    mat_b <- t(normalised_counts[, grpB])
 
     hedges_g_effect <- calculate_effect_size(
       mat_a = mat_a,

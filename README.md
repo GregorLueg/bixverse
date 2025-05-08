@@ -18,14 +18,14 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have approached the **0.0.1.1** release. With this release, we approach the
-beta release of the package. Test coverage has increased, "features" (i.e., bugs)
-have been removed, the Rust code was made faster, and new features have been
-included.
+We have now officially released version **0.0.1.1**. With this release, we are
+now at a beta stage of the package. Test coverage has increased, "features" 
+(i.e., bugs) have been removed, the Rust code was made faster, and new features 
+have been included (see Change log below).
 
 <img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
 
-Future releases will be more frequent with less features within one version for
+Future version releases will be more frequent with less features to allow for
 faster updates.
 
 ## *Installation*

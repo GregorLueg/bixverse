@@ -4,12 +4,17 @@
 \alias{calculate_pca_bulk_dge}
 \title{Calculate PCA on the expression.}
 \usage{
-calculate_pca_bulk_dge(object, scale = FALSE, pcs = 10L, no_hvg_genes = 2500L)
+calculate_pca_bulk_dge(
+  object,
+  scale_genes = FALSE,
+  pcs = 10L,
+  no_hvg_genes = 2500L
+)
 }
 \arguments{
 \item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
 
-\item{scale}{Boolean. Shall the log(cpm) counts be scaled prior the PCA
+\item{scale_genes}{Boolean. Shall the log(cpm) counts be scaled prior the PCA
 calculation. Defaults to \code{FALSE}.}
 
 \item{pcs}{Integer. Number of PCs to return and add to the outputs slot.}
