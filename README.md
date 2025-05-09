@@ -37,6 +37,7 @@ by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interfa
 with Rust.)
 
 Steps for installation: 
+
 1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
 ```
@@ -54,7 +55,6 @@ install.packages("rextendr")
 ```
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
-
 ## *Docs*
 
 - [Roadmap](/docs/roadmap.md)
