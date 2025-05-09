@@ -1,14 +1,12 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.0-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.1.1-orange) 
 
 </br>
 
 <img src="/misc/pics/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
 
 </br>
-
-**THIS IS THE ALPHA VERSION OF THE PACKAGE WHICH IS NOW PUBLIC**
 
 ## *Description* 
 
@@ -17,6 +15,18 @@ that are being routinely used, ranging from gene set enrichment analyses, to
 network-based approaches for module detection in bulk RNAseq. The package provides
 useful, bare bone versions of most bioinformatics functionalities and leverages Rust
 to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
+
+## *Release notes*
+
+We have now officially released version **0.0.1.1**. With this release, we are
+now at a beta stage of the package. Test coverage has increased, "features" 
+(i.e., bugs) have been removed, the Rust code was made faster, and new features 
+have been included (see Change log below).
+
+<img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
+
+Future version releases will be more frequent with less features to allow for
+faster updates.
 
 ## *Installation*
 
@@ -27,26 +37,30 @@ by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interfa
 with Rust.)
 
 Steps for installation: 
-1. in the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
-   ```curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh```
+1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
    
-2. in R, install [rextendr](https://extendr.github.io/rextendr/index.html):
+2. In R, install [rextendr](https://extendr.github.io/rextendr/index.html):
 
-   ```install.packages("rextendr")```
+```
+install.packages("rextendr")
+```
 
 3. Finally install bixverse:
 
-   ```devtools::install_github("https://github.com/GregorLueg/bixverse")```
-
-
-
+```
+devtools::install_github("https://github.com/GregorLueg/bixverse")
+```
 ## *Docs*
 
-- [Why Rust](/docs/why_rust.md)
-- [Code Style](/docs/code_style.md)
 - [Roadmap](/docs/roadmap.md)
 - [Change log](/docs/change_log.md)
+- [Why Rust](/docs/why_rust.md)
+- [Code Style](/docs/code_style.md) (If you want to contribute).
 
 ## *Aim*
 
@@ -65,6 +79,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 26.03.2025*
-
-
+*Last update to the read-me: 05.05.2025*

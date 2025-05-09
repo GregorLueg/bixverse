@@ -41,17 +41,20 @@ upper_triangular_cor_mat <- R6::R6Class(
       private$shift <- shift
     },
 
-
     #' @description Print the class
     #'
     #' @return Returns the initialised class
     print = function() {
-      cat("R6-based class for storing upper triangular, symmetric matrices",
-          sep = "")
-      cat(" Size of the numerical vector: ",
-          length(private$correlations),
-          ".\n",
-          sep = "")
+      cat(
+        "R6-based class for storing upper triangular, symmetric matrices",
+        sep = ""
+      )
+      cat(
+        " Size of the numerical vector: ",
+        length(private$correlations),
+        ".\n",
+        sep = ""
+      )
       cat(" Applied shift: ", private$shift, ".", sep = "")
     },
 
@@ -72,8 +75,9 @@ upper_triangular_cor_mat <- R6::R6Class(
       # Checks
       checkmate::qassert(factor, "B1")
       checkmate::qassert(.verbose, "B1")
-      if (.verbose)
-        message("Generating data.table format of the correlation matrix.")
+      if (.verbose) {
+        message("Generating data.table format of the symmetric matrix.")
+      }
 
       data <- list(
         feature_a = private$get_feature_a(factor = factor),
@@ -94,18 +98,22 @@ upper_triangular_cor_mat <- R6::R6Class(
     get_cor_matrix = function(.verbose = TRUE) {
       checkmate::qassert(.verbose, "B1")
 
-      if (.verbose)
-        message("Generating the full matrix format of the correlation matrix.")
+      if (.verbose) {
+        message("Generating the full matrix format of the symmetric matrix.")
+      }
 
       n <- length(private$features)
       shift <- private$shift
 
-      mat <- rs_upper_triangle_to_dense(private$correlations, shift = shift, n = n)
+      mat <- rs_upper_triangle_to_dense(
+        private$correlations,
+        shift = shift,
+        n = n
+      )
       colnames(mat) <- rownames(mat) <- private$features
 
       return(mat)
     },
-
 
     #' @description Return the correlation data and shift
     #'
@@ -145,12 +153,10 @@ upper_triangular_cor_mat <- R6::R6Class(
         rep(private$features[idx], total_len - idx + 1 - shift)
       })
       feature_a <- do.call(c, feature_a)
-      if (factor)
-        feature_a <- factor(feature_a)
+      if (factor) feature_a <- factor(feature_a)
 
       return(feature_a)
     },
-
     get_feature_b = function(factor = FALSE) {
       # Checks
       checkmate::qassert(factor, "B1")
@@ -159,14 +165,14 @@ upper_triangular_cor_mat <- R6::R6Class(
       shift <- private$shift
       feature_b <- purrr::map(1:total_len, \(idx) {
         start_point <- idx + shift
-        if (start_point <= total_len)
+        if (start_point <= total_len) {
           private$features[start_point:total_len]
-        else
+        } else {
           character(0)
+        }
       })
       feature_b <- do.call(c, feature_b)
-      if (factor)
-        feature_b <- factor(do.call(c, feature_b))
+      if (factor) feature_b <- factor(do.call(c, feature_b))
 
       return(feature_b)
     }
@@ -175,7 +181,6 @@ upper_triangular_cor_mat <- R6::R6Class(
 
 
 # class - symmetric differential cor matrix ----
-
 
 #' @title Class for symmetric differential correlation matrices
 #'
@@ -187,7 +192,6 @@ upper_triangle_diffcor_mat <- R6::R6Class(
   # Class name
   inherit = upper_triangular_cor_mat,
   classname = "upper_triangular_diffcor_mat",
-
   public = list(
     #' @description Initialises the R6 class.
     #'
@@ -197,17 +201,23 @@ upper_triangle_diffcor_mat <- R6::R6Class(
     #' @return Returns the initialised class.
     initialize = function(diff_cor_res, features) {
       # Checks
-      checkmate::assertList(diff_cor_res, types = 'double')
-      checkmate::assertNames(names(diff_cor_res),
-                             must.include = c("r_a", "r_b", "z_score", "p_val"))
-      checkmate::assertTRUE(length(unique(purrr::map_dbl(
-        diff_cor_res, length
-      ))) == 1)
+      checkmate::assertList(diff_cor_res, types = "double")
+      checkmate::assertNames(
+        names(diff_cor_res),
+        must.include = c("r_a", "r_b", "z_score", "p_val")
+      )
+      checkmate::assertTRUE(
+        length(unique(purrr::map_dbl(
+          diff_cor_res,
+          length
+        ))) ==
+          1
+      )
       # New
-      private$correlation_a <- diff_cor_res[['r_a']]
-      private$correlation_b <- diff_cor_res[['r_b']]
-      private$z_scores <- diff_cor_res[['z_score']]
-      private$p_val <- diff_cor_res[['p_val']]
+      private$correlation_a <- diff_cor_res[["r_a"]]
+      private$correlation_b <- diff_cor_res[["r_b"]]
+      private$z_scores <- diff_cor_res[["z_score"]]
+      private$p_val <- diff_cor_res[["p_val"]]
       # From the parent class
       private$features <- features
       private$shift <- 1L
@@ -235,8 +245,11 @@ upper_triangle_diffcor_mat <- R6::R6Class(
       # Checks
       checkmate::qassert(factor, "B1")
       checkmate::qassert(.verbose, "B1")
-      if (.verbose)
-        message("Generating data.table format of the differential correlation data.")
+      if (.verbose) {
+        message(
+          "Generating data.table format of the differential correlation data."
+        )
+      }
 
       data <- list(
         feature_a = super$get_feature_a(factor = factor),
@@ -263,13 +276,13 @@ upper_triangle_diffcor_mat <- R6::R6Class(
     #' @param .verbose Boolean. Controls verbosity.
     #'
     #' @return Returns the specified correlation matrix as a dense R matrix.
-    get_cor_matrix = function(to_ret = c("cor_a", "cor_b"),
-                              .verbose = TRUE) {
+    get_cor_matrix = function(to_ret = c("cor_a", "cor_b"), .verbose = TRUE) {
       checkmate::assertChoice(to_ret, choices = c("cor_a", "cor_b"))
       checkmate::qassert(.verbose, "B1")
 
-      if (.verbose)
+      if (.verbose) {
         message("Generating the full matrix format of the desired data.")
+      }
 
       n <- length(private$features)
       shift <- private$shift
@@ -286,7 +299,6 @@ upper_triangle_diffcor_mat <- R6::R6Class(
       return(mat)
     }
   ),
-
   private = list(
     correlation_a = NULL,
     correlation_b = NULL,
@@ -294,4 +306,3 @@ upper_triangle_diffcor_mat <- R6::R6Class(
     p_val = NULL
   )
 )
-

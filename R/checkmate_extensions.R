@@ -12,12 +12,16 @@
 checkCorGraphParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("epsilon", "min_cor", "fdr_threshold", "verbose")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "epsilon" = "R1",
     "min_cor" = "R1[0, 1]",
@@ -43,22 +47,26 @@ checkCorGraphParams <- function(x) {
 
 #' Check resolution graph parameters
 #'
-#' @description Checkmate extension for checking the resolution parameters.
+#' @description Checkmate extension for checking the resolution parameters for
+#' community detection with Leiden.
 #'
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
-checkCorResParams <- function(x) {
+checkGraphResParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x), must.include = c("min_res", "max_res", "number_res"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("min_res", "max_res", "number_res")
+  )
+  if (!isTRUE(res)) {
     return(res)
-  rules <- list("min_res" = "R1",
-                "max_res" = "R1",
-                "number_res" = "I1")
+  }
+  rules <- list("min_res" = "R1", "max_res" = "R1", "number_res" = "I1")
   res <- purrr::imap_lgl(x, \(x, name) {
     checkmate::qtest(x, rules[[name]])
   })
@@ -87,12 +95,16 @@ checkCorResParams <- function(x) {
 checkIcaParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("maxit", "alpha", "max_tol", "verbose"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("maxit", "alpha", "max_tol", "verbose")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "maxit" = "I1",
     "alpha" = "R1[1, 2]",
@@ -128,11 +140,16 @@ checkIcaParams <- function(x) {
 checkIcaNcomps <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x), must.include = c("max_no_comp", "steps", "custom_seq"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("max_no_comp", "steps", "custom_seq")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "max_no_comp" = "I1",
     "steps" = "I1",
@@ -166,12 +183,16 @@ checkIcaNcomps <- function(x) {
 checkIcaIterParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
-  if (!isTRUE(res))
+  if (!isTRUE(res)) {
     return(res)
-  res <- checkmate::checkNames(names(x),
-                               must.include = c("cross_validate", "random_init", "folds"))
-  if (!isTRUE(res))
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("cross_validate", "random_init", "folds")
+  )
+  if (!isTRUE(res)) {
     return(res)
+  }
   rules <- list(
     "cross_validate" = "B1",
     "random_init" = "I1",
@@ -186,6 +207,97 @@ checkIcaIterParams <- function(x) {
       sprintf(
         "The following element `%s` in resolution params does not conform the expected format. \
         random_init and steps folds to be an integer, and cross_validate a boolean",
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+## community detections --------------------------------------------------------
+
+#' Check community detection parameters
+#'
+#' @description Checkmate extension for checking the community detection
+#' parameters for identifying genetically privileged communities.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCommunityParams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("max_nodes", "min_nodes", "min_seed_nodes", "initial_res")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "max_nodes" = sprintf("I1[%i,)", x$min_nodes),
+    "min_nodes" = "I1",
+    "min_seed_nodes" = "I1",
+    "initial_res" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        "The following element `%s` in community params does not conform the expected format. \
+        min_nodes, max_nodes and min_seed_genes need to be integers (with max_nodes > min_nodes) \
+        and initial resolution a double.",
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+## gsea ------------------------------------------------------------------------
+
+#' Check GSEA parameters
+#'
+#' @description Checkmate extension for checking the gene set enrichment
+#' analysis (GSEA) parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkGSEAParams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("min_size", "max_size", "gsea_param")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "min_size" = "I1[3,)",
+    "max_size" = "I1[4,)",
+    "gsea_param" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        "The following element `%s` in GSEA params does not conform the expected format. \
+        min_size and max_size need to be intger (with max_size > min_size and min_size >= 3L) \
+        and gsea_param being a double.",
         broken_elem
       )
     )
@@ -214,9 +326,10 @@ assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
 
 #' Assert resolution graph parameters
 #'
-#' @description Checkmate extension for asserting the resolution parameters.
+#' @description Checkmate extension for asserting the resolution parameters for
+#' community detection with Leiden.
 #'
-#' @inheritParams checkCorResParams
+#' @inheritParams checkGraphResParams
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -224,7 +337,7 @@ assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
-assertCorResParams <- checkmate::makeAssertionFunction(checkCorResParams)
+assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
 
 ## ica params ------------------------------------------------------------------
 
@@ -242,10 +355,9 @@ assertCorResParams <- checkmate::makeAssertionFunction(checkCorResParams)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
 
-
 #' Assert ICA no of component parameters
 #'
-#' @description Checkmate extension for checking the ICA number of component
+#' @description Checkmate extension for asserting the ICA number of component
 #' parameters.
 #'
 #' @inheritParams checkIcaNcomps
@@ -258,11 +370,10 @@ assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
 
-
 #' Assert ICA randomisation parameters
 #'
-#' @description Checkmate extension for checking the ICA randomisation parameters
-#' for a version of stabilised ICA.
+#' @description Checkmate extension for asserting the ICA randomisation
+#' parameters for a version of stabilised ICA.
 #'
 #' @inheritParams checkIcaIterParams
 #'
@@ -273,3 +384,37 @@ assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
+
+## community detections --------------------------------------------------------
+
+#' Assert community detection parameter
+#'
+#' @description Checkmate extension for asserting the community detection
+#' parameters for identifying genetically privileged communities.
+#'
+#' @inheritParams checkCommunityParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
+
+## gsea ------------------------------------------------------------------------
+
+#' Assert GSEA parameter
+#'
+#' @description Checkmate extension for asserting the gene set enrichment
+#' analysis (GSEA) parameters.
+#'
+#' @inheritParams checkGSEAParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)

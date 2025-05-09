@@ -1,10 +1,10 @@
 [package]
 name = 'bixverse'
-version = '0.1.0'
+version = '0.1.1'
 edition = '2021'
 
 [lib]
-crate-type = [ 'staticlib' ]
+crate-type = ['staticlib']
 name = 'bixverse'
 
 [features]
@@ -14,10 +14,10 @@ default = []
 opt-level = 3
 
 [dependencies]
-extendr-api = "*"
+extendr-api = "0.8.0"
 rayon = '*'
-rand = '*'
-rand_distr = '0.5.1'
+rand = "0.9.0"
+rand_distr = "0.5.0"
 statrs = '*'
-faer = '0.21.8'
+faer = '0.22.4'
 num-complex = '*'

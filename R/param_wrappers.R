@@ -14,10 +14,12 @@
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
 #' @export
-params_ica_general <- function(maxit = 200L,
-                               alpha = 1.0,
-                               max_tol = 0.0001,
-                               verbose = FALSE) {
+params_ica_general <- function(
+  maxit = 200L,
+  alpha = 1.0,
+  max_tol = 0.0001,
+  verbose = FALSE
+) {
   # Checks
   checkmate::qassert(maxit, "I1")
   checkmate::qassert(alpha, "R1[1, 2]")
@@ -47,9 +49,7 @@ params_ica_general <- function(maxit = 200L,
 #' @returns A list with the parameters for usage in subsequent functions.
 #'
 #' @export
-params_ica_ncomp <- function(max_no_comp = 75L,
-                             steps = 5L,
-                             custom_seq = NULL) {
+params_ica_ncomp <- function(max_no_comp = 75L, steps = 5L, custom_seq = NULL) {
   # Checks
   checkmate::qassert(max_no_comp, "I1")
   checkmate::qassert(steps, "I1")
@@ -74,9 +74,11 @@ params_ica_ncomp <- function(max_no_comp = 75L,
 #' @returns A list with the parameters for usage in the subsequent functions.
 #'
 #' @export
-params_ica_randomisation <- function(cross_validate = FALSE,
-                                     random_init = 50L,
-                                     folds = 10L) {
+params_ica_randomisation <- function(
+  cross_validate = FALSE,
+  random_init = 50L,
+  folds = 10L
+) {
   # Checks
   checkmate::qassert(cross_validate, "B1")
   checkmate::qassert(random_init, "I1")
@@ -104,10 +106,12 @@ params_ica_randomisation <- function(cross_validate = FALSE,
 #' @returns List with parameters for usage in subsequent function.
 #'
 #' @export
-params_cor_graph <- function(epsilon = 2,
-                             min_cor = 0.2,
-                             fdr_threshold = 0.05,
-                             verbose = TRUE) {
+params_cor_graph <- function(
+  epsilon = 2,
+  min_cor = 0.2,
+  fdr_threshold = 0.05,
+  verbose = TRUE
+) {
   # Checks
   checkmate::qassert(epsilon, "R1")
   checkmate::qassert(min_cor, "R1[0, 1]")
@@ -135,9 +139,11 @@ params_cor_graph <- function(epsilon = 2,
 #' @returns List with parameters for usage in subsequent function.
 #'
 #' @export
-params_graph_resolution <- function(min_res = 0.1,
-                                    max_res = 10,
-                                    number_res = 15L) {
+params_graph_resolution <- function(
+  min_res = 0.1,
+  max_res = 10,
+  number_res = 15L
+) {
   # Checks
   checkmate::qassert(min_res, "R1")
   checkmate::qassert(max_res, "R1")
@@ -148,4 +154,69 @@ params_graph_resolution <- function(min_res = 0.1,
     max_res = max_res,
     number_res = number_res
   ))
+}
+
+## community detections --------------------------------------------------------
+
+#' Wrapper function to generate community detection parameters
+#'
+#' @param max_nodes Integer. Maximum number of nodes in a given community.
+#' @param min_nodes Integer. Minimum number of nodes in a given community.
+#' @param min_seed_nodes Integer. Minimum number of seed nodes within a
+#' community.
+#' @param initial_res Float. Initial resolution parameter to start with.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_community_detection <- function(
+  max_nodes = 300L,
+  min_nodes = 10L,
+  min_seed_nodes = 2L,
+  initial_res = 0.5
+) {
+  # Checks
+  checkmate::qassert(max_nodes, sprintf("I1[%i,)", min_nodes))
+  checkmate::qassert(min_nodes, "I1")
+  checkmate::qassert(min_seed_nodes, "I1")
+  checkmate::qassert(initial_res, "N1")
+  # Return
+  return(
+    list(
+      max_nodes = max_nodes,
+      min_nodes = min_nodes,
+      min_seed_nodes = min_seed_nodes,
+      initial_res = initial_res
+    )
+  )
+}
+
+## fgsea -----------------------------------------------------------------------
+
+#' Wrapper function to generate GSEA parameters
+#'
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param gsea_param  Float. GSEA parameter. Defaults to `1.0`.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_gsea <- function(
+  min_size = 5L,
+  max_size = 500L,
+  gsea_param = 1.0
+) {
+  # Checks
+  checkmate::qassert(min_size, "I1[3,)")
+  checkmate::qassert(max_size, "I1[4,)")
+  checkmate::qassert(gsea_param, "N1")
+  # Returns
+  return(
+    list(
+      min_size = min_size,
+      max_size = max_size,
+      gsea_param = gsea_param
+    )
+  )
 }

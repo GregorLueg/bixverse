@@ -1,4 +1,3 @@
-
 rextendr::document()
 
 feature_names <- c("A", "B", "C", "D", "E")
@@ -12,7 +11,11 @@ feature_a <- do.call(c, feature_a)
 
 feature_b <- purrr::map(1:total_len, \(idx) {
   start_point <- idx + shift
-  if (start_point <= total_len) feature_names[start_point:total_len] else character(0)
+  if (start_point <= total_len) {
+    feature_names[start_point:total_len]
+  } else {
+    character(0)
+  }
 })
 feature_b <- do.call(c, feature_b)
 
