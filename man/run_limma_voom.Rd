@@ -7,7 +7,7 @@
 run_limma_voom(
   meta_data,
   main_contrast,
-  normalized_counts,
+  dge_list,
   co_variates = NULL,
   ...,
   .verbose = TRUE
@@ -20,12 +20,13 @@ which the contrast info (and potential co-variates) can be found.}
 \item{main_contrast}{String. Which column contains the main groups you want
 to test differential gene expression with the Limma-Voom workflow for.}
 
-\item{normalized_counts}{matrix, normalized count matrix.}
+\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
 
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}
 
-\item{...}{Additional parameters to forward to \code{\link[edgeR:filterByExpr]{edgeR::filterByExpr()}}.}
+\item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
+\code{\link[limma:voom]{limma::voom()}}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

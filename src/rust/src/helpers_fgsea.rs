@@ -16,11 +16,11 @@ use crate::utils_rust::{array_max, unique};
 /// Structure for final GSEA results from any
 /// algorithm
 #[derive(Clone, Debug)]
-pub struct GseaResults {
-    pub es: Vec<f64>,
+pub struct GseaResults<'a> {
+    pub es: &'a [f64],
     pub nes: Vec<Option<f64>>,
     pub pvals: Vec<f64>,
-    pub size: Vec<usize>,
+    pub size: &'a [usize],
 }
 
 /// Structure for results from the different GSEA
@@ -188,11 +188,11 @@ pub fn create_random_gs_indices(
 
 /// Transform the batch results into final GSEA results,
 /// i.e., es, nes, pval and size
-pub fn calculate_nes_es_pval(
-    pathway_scores: &[f64],
-    pathway_sizes: &[usize],
-    gsea_res: GseaBatchResults,
-) -> GseaResults {
+pub fn calculate_nes_es_pval<'a>(
+    pathway_scores: &'a [f64],
+    pathway_sizes: &'a [usize],
+    gsea_res: &GseaBatchResults,
+) -> GseaResults<'a> {
     let le_zero_mean: Vec<f64> = gsea_res
         .le_zero_sum
         .iter()
@@ -232,10 +232,10 @@ pub fn calculate_nes_es_pval(
         .collect();
 
     GseaResults {
-        es: pathway_scores.to_vec(),
+        es: pathway_scores,
         nes,
         pvals,
-        size: pathway_sizes.to_vec(),
+        size: pathway_sizes,
     }
 }
 

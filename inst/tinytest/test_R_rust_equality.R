@@ -80,3 +80,28 @@ expect_equal(
   target = r_vals,
   info = "Hypergeometric test values for Rust <> R."
 )
+
+# pca --------------------------------------------------------------------------
+
+r_pca_res <- prcomp(mat)
+
+rs_pca_res <- rs_prcomp(mat, scale = FALSE)
+
+# Absolute as signs can flip
+expect_equivalent(
+  current = abs(rs_pca_res$scores),
+  target = abs(r_pca_res$x),
+  info = "Factors for PCA (via SVD) for Rust <> R."
+)
+
+expect_equivalent(
+  current = abs(rs_pca_res$v),
+  target = abs(r_pca_res$rotation),
+  info = "Loadings/rotation for PCA (via SVD) for Rust <> R."
+)
+
+expect_equal(
+  current = rs_pca_res$s,
+  target = r_pca_res$sdev,
+  info = "Standard deviation of the eigenvalues for PCA (via SVD) for Rust <> R."
+)

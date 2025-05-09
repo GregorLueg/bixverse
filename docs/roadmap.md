@@ -30,13 +30,23 @@ to generate structured objects.~~
 - ~~Semantic similarities for ontologies.~~
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
+- Gene ontology enrichment with elimination/pruning for continuous values.
+
+## Rust
+
+- ~~Make usage of borrowing/lifetimes where possible to avoid expensive 
+in-memory copying.~~ (This has been implemented now in a lot of function.
+Potentially some smart stuff with smart pointers could be done?)
+- Write tests for key functions within Rust. Some of this will be captured by
+writing tinytests for R/Rust equivalence, but some checks here/there would be 
+useful.
 
 ## Gene module detection
 
 - Eigengene calculations for correlation-based methods (especially the single
 correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
 - Hierarchical clustering-based gene module detection on top of correlation-based
-methods.
+methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).
 - Interpretation layers on top of gene modules, i.e., upstream regulators, 
 annotations of modules (wrappers over pathway enrichment function), etc.
 - [Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 

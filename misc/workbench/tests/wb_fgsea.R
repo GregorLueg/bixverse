@@ -31,7 +31,6 @@ results_traditional <- calc_gsea_traditional(
 )
 tictoc::toc()
 
-
 tictoc::tic()
 results_simple_fgsea <- calc_fgsea_simple(
   stats = stats,

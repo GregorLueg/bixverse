@@ -4,10 +4,13 @@
 \alias{all_limma_contrasts}
 \title{Create all limma contrasts}
 \usage{
-all_limma_contrasts(limma_fit)
+all_limma_contrasts(limma_fit, contrast_grps)
 }
 \arguments{
 \item{limma_fit}{The fitted limma model, i.e., output of \code{\link[limma:lmFit]{limma::lmFit()}}.}
+
+\item{contrast_grps}{String vector. The contrast groups of interest. If NULL
+all co-variate comparisons will be returned.}
 }
 \value{
 The Limma contrasts for further usage.

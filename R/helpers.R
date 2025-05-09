@@ -1,3 +1,30 @@
+# user options -----------------------------------------------------------------
+
+#' Helper function for user option selection
+#'
+#' @param options Character vector. The options the user has to choose from.
+#'
+#' @returns The chosen option
+select_user_option <- function(options) {
+  cat("Please select an option:\n")
+  for (i in seq_along(options)) {
+    cat(i, ": ", options[i], "\n")
+  }
+
+  while (TRUE) {
+    cat("\nEnter the number of your choice: ")
+    user_choice <- as.integer(readLines(n = 1))
+
+    if (
+      !is.na(user_choice) && user_choice > 0 && user_choice <= length(options)
+    ) {
+      return(options[user_choice])
+    } else {
+      cat("Invalid selection. Please try again.\n")
+    }
+  }
+}
+
 # gene set libraries -----------------------------------------------------------
 
 #' Get the Gene Ontology data human

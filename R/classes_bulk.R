@@ -128,15 +128,13 @@ bulk_dge <- S7::new_class(
     alternative_gene_id = NULL
   ) {
     # Checks
-    norm_method <- match.arg(norm_method)
-
     checkmate::assertMatrix(raw_counts, mode = "numeric")
     checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),
       must.include = c("sample_id")
     )
-    checkmate::assertTRUE(all(rownames("sample_id") %in% meta_data$sample_id))
+    checkmate::assertTRUE(all(colnames(raw_counts) %in% meta_data$sample_id))
     checkmate::assert(
       checkmate::checkDataTable(variable_info),
       checkmate::checkNull(variable_info)
@@ -206,6 +204,58 @@ bulk_dge_from_h5ad <- function(
 }
 
 # utils ------------------------------------------------------------------------
+
+## object manipulation ---------------------------------------------------------
+
+#' Remove samples from object
+#'
+#' @description
+#' This function allows to remove certain samples from the object
+#'
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param samples_to_remove Character vector. The sample identifiers to remove.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return Returns the object with the samples removed. This will regenerated
+#' the object from the start and remove any data in it.
+#'
+#' @export
+remove_samples <- S7::new_generic(
+  name = "remove_samples",
+  dispatch_args = "object",
+  fun = function(object, samples_to_remove, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method remove_samples bulk_dge
+#'
+#' @export
+S7::method(remove_samples, bulk_dge) <-
+  function(object, samples_to_remove, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    # Data
+    meta_data <- S7::prop(object, "meta_data")
+    raw_counts <- S7::prop(object, "raw_counts")
+    variable_info <- S7::prop(object, "variable_info")
+
+    meta_data_new <- meta_data[!sample_id %in% samples_to_remove]
+    raw_counts_new <- raw_counts[, meta_data_new$sample_id]
+
+    object_new <- bulk_dge(
+      raw_counts = raw_counts_new,
+      meta_data = meta_data_new,
+      variable_info = variable_info
+    )
+
+    # Return
+    return(object_new)
+  }
 
 ## common getters --------------------------------------------------------------
 
@@ -353,6 +403,78 @@ S7::method(get_dge_list, bulk_dge) <-
     return(S7::prop(object, "outputs")[['dge_list']])
   }
 
+
+#' Return the Limma Voom results
+#'
+#' @description
+#' Getter function to extract the Limma Voom results from the
+#' [bixverse::bulk_dge()] class.
+#'
+#' @param object `bulk_dge` class.
+#'
+#' @return Returns the Limma Voom results. (If found.)
+#'
+#' @export
+get_dge_limma_voom <- S7::new_generic(
+  name = "get_dge_limma_voom",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method get_dge_limma_voom bulk_dge
+#'
+#' @export
+S7::method(get_dge_limma_voom, bulk_dge) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    # Return
+    return(S7::prop(object, "outputs")[['limma_voom_res']])
+  }
+
+
+#' Return the effect size results
+#'
+#' @description
+#' Getter function to extract the Effect size results from the
+#' [bixverse::bulk_dge()] class.
+#'
+#' @param object `bulk_dge` class.
+#'
+#' @return Returns the effect size results.  (If found.)
+#'
+#' @export
+get_dge_effect_sizes <- S7::new_generic(
+  name = "get_dge_effect_sizes",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method get_dge_effect_sizes bulk_dge
+#'
+#' @export
+S7::method(get_dge_effect_sizes, bulk_dge) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    # Return
+    return(S7::prop(object, "outputs")[['hedges_g_res']])
+  }
+
 ## individual setters ----------------------------------------------------------
 
 ### bulk dge class -------------------------------------------------------------
@@ -408,14 +530,34 @@ S7::method(change_gene_identifier, bulk_dge) <-
       alternative_gene_id
     ]]
 
-    rownames(S7::prop(object, "outputs")[['dge_list']]) <- variable_info[[
-      alternative_gene_id
-    ]]
-
     # Return
     return(object)
   }
 
+
+#' @method add_new_metadata bulk_dge
+#'
+#' @export
+S7::method(add_new_metadata, bulk_dge) <-
+  function(object, new_metadata, ...) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::assertNames(
+      names(new_metadata),
+      must.include = c("sample_id")
+    )
+
+    raw_counts <- S7::prop(object, "raw_counts")
+
+    checkmate::assertTRUE(all(colnames(raw_counts) %in% meta_data$sample_id))
+
+    S7::prop(object, "meta_data") <- new_metadata
+
+    return(object)
+  }
 
 ## prints ----------------------------------------------------------------------
 
@@ -692,7 +834,6 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   .verbose = TRUE
 ) {
   norm_method <- match.arg(norm_method)
-
   # Checks
   checkmate::assertClass(
     object,
@@ -715,8 +856,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   # Sample outlier removal
   if (.verbose) message("Detecting sample outliers.")
   detected_genes_nb <- data.table::data.table(
-    sample_id <- colnames(raw_counts),
-    nb_detected_genes <- matrixStats::colSums2(raw_counts > 0)
+    sample_id = colnames(raw_counts),
+    nb_detected_genes = matrixStats::colSums2(raw_counts > 0)
   )
 
   samples <- merge(meta_data, detected_genes_nb, by = "sample_id") %>%
@@ -737,9 +878,11 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
       title = "Number of genes by cohort"
     ) +
     theme_classic() +
-    theme(legend.position = "bottom")
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+      legend.position = "none"
+    )
 
-  ## Remove samples that are outliers (mean +/- 2*outlier_threshold)
   sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
   min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
     outlier_threshold * sd_samples
@@ -751,10 +894,12 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     aes(x = 1, y = perc_detected_genes, color = .data[[group_col]])
   ) +
     geom_point(
-      position = position_jitter(width = 0.2, height = 0, seed = 123)
+      position = position_jitter(width = 0.2, height = 0, seed = 123),
+      size = 3,
+      alpha = 0.7
     ) +
-    geom_hline(yintercept = min_perc) +
-    geom_hline(yintercept = max_perc) +
+    geom_hline(yintercept = min_perc, color = "red", linetype = "dashed") +
+    geom_hline(yintercept = max_perc, color = "red", linetype = "dashed") +
     labs(
       x = "",
       y = "Percentage of genes detected",
@@ -763,18 +908,15 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     theme_classic() +
     theme(legend.position = "bottom", axis.text.x = element_blank())
 
-  outliers <- samples[perc_detected_genes < min_perc, ]
+  outliers <- samples$perc_detected_genes <= min_perc
   if (.verbose)
     message(sprintf(
       "A total of %i samples are detected as outlier.",
-      length(outliers)
+      sum(outliers)
     ))
 
-  samples <- samples[perc_detected_genes >= min_perc, ]
-  if (.verbose)
-    message(sprintf("A total of %i samples are kept.", nrow(samples)))
-
-  raw_counts <- raw_counts[, unique(samples$sample_id)]
+  samples_red <- samples[!(outliers), ]
+  raw_counts <- raw_counts[, unique(samples_red$sample_id)]
 
   ## Voom normalization
   if (.verbose)
@@ -794,7 +936,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     method = norm_method
   )
 
-  design <- model.matrix(~ 0 + samples[[group_col]])
+  samples <- samples_red[[group_col]]
+
+  design <- model.matrix(~ 0 + samples)
 
   voom_obj <- limma::voom(
     counts = dge_list,
@@ -802,12 +946,13 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     normalize.method = "quantile",
     plot = TRUE
   )
+
   p3_voom_normalization <- recordPlot()
   dev.off()
 
   boxplot(
     voom_obj$E,
-    col = as.factor(samples[[group_col]]),
+    col = as.factor(samples),
     main = "Boxplot of normalized gene expression across samples"
   )
   p4_boxplot_normalization <- recordPlot()
@@ -822,8 +967,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 
   S7::prop(object, "outputs") <- list(
     dge_list = dge_list,
-    sample_info = samples,
-    normalized_counts = voom_obj$E
+    sample_info = samples_red,
+    normalised_counts = voom_obj$E,
+    group_col = group_col
   )
 
   S7::prop(object, "params")[["QC_params"]] <- list(
@@ -903,3 +1049,66 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 
   return(p)
 }
+
+## bulk dge --------------------------------------------------------------------
+
+#' Return QC plots
+#'
+#' @description
+#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
+#' class. These are added when you run for example
+#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
+#' `NULL` and provide input when prompted, or you provide the name. The possible
+#' plots that might be in the class
+#' \itemize{
+#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
+#'  respective cohorts
+#'  \item p2_outliers An outlier plot based on the data from p1
+#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
+#'  lowly expressed genes
+#'  \item p4_boxplot_normalization Expression levels after normalisation
+#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
+#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
+#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
+#'  with the case-control category overlayed. Added if [bixverse::batch_correction_bulk_dge()]
+#'  is run.
+#' }
+#'
+#' @param object `bulk_dge` class.
+#' @param plot_choice Optional string or integer. Index or name of the plate.
+#'
+#' @return Returns the DGEList stored in the class.
+#'
+#' @export
+get_dge_qc_plot <- S7::new_generic(
+  name = "get_dge_qc_plot",
+  dispatch_args = "object",
+  fun = function(object, plot_choice = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_dge_qc_plot bulk_dge
+#'
+#' @export
+S7::method(get_dge_qc_plot, bulk_dge) <-
+  function(object, plot_choice = NULL) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
+
+    plots <- S7::prop(object, "plots")
+    plot_names <- names(plots)
+
+    user_choice <- ifelse(
+      is.null(plot_choice),
+      select_user_option(plot_names),
+      plot_choice
+    )
+
+    # Return
+    return(plots[[user_choice]])
+  }
