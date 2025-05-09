@@ -137,7 +137,11 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     data = plot_df,
     mapping = aes(x = PC_1, y = PC_2)
   ) +
-    geom_point(mapping = aes(col = .data[[contrast_info]])) +
+    geom_point(
+      mapping = aes(col = .data[[contrast_info]]),
+      size = 3,
+      alpha = 0.7
+    ) +
     xlab("PC1") +
     ylab("PC2") +
     theme_bw() +
@@ -290,14 +294,27 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
     )
 
   plot_uncor <- ggplot(data = pca_dt_uncor, mapping = aes(x = PC_1, y = PC_2)) +
-    geom_point(mapping = aes(col = .data[[contrast_column]])) +
+    geom_point(
+      mapping = aes(col = .data[[contrast_column]]),
+      size = 3,
+      alpha = 0.7
+    ) +
     theme_bw() +
     ggtitle("Pre batch correction") +
     xlab("PC1") +
     ylab("PC2")
 
-  plot_cor <- ggplot(data = pca_dt_cor, mapping = aes(x = PC_1, y = PC_2)) +
-    geom_point(mapping = aes(col = .data[[contrast_column]])) +
+  plot_cor <- ggplot(
+    data = pca_dt_cor,
+    mapping = aes(x = PC_1, y = PC_2),
+    size = 3,
+    alpha = 0.7
+  ) +
+    geom_point(
+      mapping = aes(col = .data[[contrast_column]]),
+      size = 3,
+      alpha = 0.7
+    ) +
     theme_bw() +
     ggtitle("Post batch correction") +
     xlab("PC1") +
@@ -612,7 +629,7 @@ S7::method(plot_pca_res, bulk_dge) <- function(
     data = plot_df,
     mapping = aes(x = .data[[pcs_to_plot[1]]], y = .data[[pcs_to_plot[2]]])
   ) +
-    geom_point(mapping = aes(col = value)) +
+    geom_point(mapping = aes(col = value), size = 3, alpha = 0.7) +
     facet_wrap(facets = ~variable, ncol = 3L) +
     xlab("PC1") +
     ylab("PC2") +

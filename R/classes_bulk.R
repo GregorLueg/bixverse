@@ -250,7 +250,7 @@ S7::method(remove_samples, bulk_dge) <-
     object_new <- bulk_dge(
       raw_counts = raw_counts_new,
       meta_data = meta_data_new,
-      variable_info = var_info
+      variable_info = variable_info
     )
 
     # Return
@@ -878,9 +878,10 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
       title = "Number of genes by cohort"
     ) +
     theme_classic() +
-    theme(legend.position = "bottom")
-
-  p1_nb_genes_cohort
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+      legend.position = "none"
+    )
 
   sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
   min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
@@ -893,7 +894,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     aes(x = 1, y = perc_detected_genes, color = .data[[group_col]])
   ) +
     geom_point(
-      position = position_jitter(width = 0.2, height = 0, seed = 123)
+      position = position_jitter(width = 0.2, height = 0, seed = 123),
+      size = 3,
+      alpha = 0.7
     ) +
     geom_hline(yintercept = min_perc, color = "red", linetype = "dashed") +
     geom_hline(yintercept = max_perc, color = "red", linetype = "dashed") +
