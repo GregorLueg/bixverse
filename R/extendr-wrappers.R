@@ -92,6 +92,11 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #' @export
 rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
 
+#' Run fgsea simple method for gene ontology with elimination method
+#'
+#' @export
+rs_geom_elim_fgse <- function(stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed) .Call(wrap__rs_geom_elim_fgse, stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed)
+
 #' Run a single hypergeometric test.
 #'
 #' @description Given a set of target genes, this is a Rust implementation of

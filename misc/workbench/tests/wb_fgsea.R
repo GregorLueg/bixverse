@@ -52,3 +52,42 @@ plot(results_traditional$es, results_simple_fgsea$es)
 plot(results_traditional$pvals, results_simple_fgsea$pvals)
 
 plot(fgsea_scores_original$pval, results_simple_fgsea$pvals)
+
+# Elimination method for the gene ontology -------------------------------------
+
+go_data_dt <- get_go_human_data()
+
+go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+
+protein_coding_genes <- unique(unlist(go_data_s7@go_to_genes))
+
+stats <- setNames(
+  sort(rnorm(length(protein_coding_genes)), decreasing = TRUE),
+  protein_coding_genes
+)
+
+levels <- names(S7::prop(go_data_s7, "levels"))
+
+test_1 <- rs_geom_elim_fgse(
+  stats = stats,
+  levels = levels,
+  go_obj = go_data_s7,
+  gsea_param = 1.0,
+  elim_threshold = 0.05,
+  min_size = 5,
+  max_size = 2000,
+  iters = 2000,
+  seed = 42
+)
+
+test_2 <- rs_geom_elim_fgse(
+  stats = stats,
+  levels = levels,
+  go_obj = go_data_s7,
+  gsea_param = 1.0,
+  elim_threshold = 0.95,
+  min_size = 5,
+  max_size = 2000,
+  iters = 2000,
+  seed = 42
+)

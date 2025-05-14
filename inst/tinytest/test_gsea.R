@@ -165,7 +165,16 @@ rs_gsea_stats_neg = rs_calc_gsea_stats(
   return_leading_edge = TRUE
 )
 
+
 #### positive ------------------------------------------------------------------
+
+expect_equal(
+  current = rs_gsea_stats_pos$leading_edge,
+  target = vector(mode = "integer"),
+  info = paste(
+    "gsea: no leading edge genes returned"
+  )
+)
 
 expect_equal(
   current = rs_gsea_stats_pos$es,
@@ -266,9 +275,45 @@ expect_true(
   )
 )
 
-## direct comparison fgsea vs internal -----------------------------------------
+# direct comparison fgsea vs internal ------------------------------------------
 
-### simple method --------------------------------------------------------------
+## calc gsea stats -------------------------------------------------------------
+
+if (requireNamespace("fgsea", quietly = TRUE)) {
+  fgsea_result_calc_gsea_stats_pos <- fgsea::calcGseaStat(
+    stats = stats,
+    selectedStats = pathway_indices_r$pathway_pos,
+    returnLeadingEdge = TRUE
+  ) %>%
+    `names<-`(c("es", "leading_edge"))
+
+  fgsea_result_calc_gsea_stats_neg <- fgsea::calcGseaStat(
+    stats = stats,
+    selectedStats = pathway_indices_r$pathway_neg,
+    returnLeadingEdge = TRUE
+  ) %>%
+    `names<-`(c("es", "leading_edge"))
+
+  expect_equal(
+    current = rs_gsea_stats_pos_v2,
+    target = fgsea_result_calc_gsea_stats_pos,
+    info = paste(
+      "calc gsea stats fgsea vs internal: positive"
+    )
+  )
+
+  expect_equal(
+    current = rs_gsea_stats_neg,
+    target = fgsea_result_calc_gsea_stats_neg,
+    info = paste(
+      "calc gsea stats fgsea vs internal: positive"
+    )
+  )
+} else {
+  exit_file("fgsea package not available for comparison tests")
+}
+
+## simple method ---------------------------------------------------------------
 
 # Check if fgsea is installed
 if (requireNamespace("fgsea", quietly = TRUE)) {
