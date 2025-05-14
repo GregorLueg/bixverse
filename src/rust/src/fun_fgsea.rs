@@ -160,7 +160,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// @param pathway_sizes Integer vector. The sizes of the pathways.
 /// @param iters Integer. Number of permutations.
 /// @param gsea_param Float. The Gene Set Enrichment parameter.
-/// @param seed Integer For reproducibility purposes
+/// @param seed Integer. For reproducibility purposes
 ///
 /// @return List with the following elements
 /// \itemize{
@@ -206,10 +206,36 @@ fn rs_calc_gsea_stat_cumulative_batch(
 
 /// Run fgsea simple method for gene ontology with elimination method
 ///
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param levels A character vector representing the levels to iterate through.
+/// The order will be the one the iterations are happening in.
+/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+/// @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+/// @param elim_threshold p-value below which the elimination procedure shall be
+/// applied to the ancestors.
+/// @param min_size Minimum size of the gene ontology term for testing.
+/// @param max_size Maximum size of the gene ontology term for testing. Setting this
+/// parameter to large values will slow the function down.
+/// @param iters Integer. Number of random permutations for the fgsea simple method
+/// to use
+/// @param seed Integer. For reproducibility purposes.
+///
+/// @return List with the following elements
+/// \itemize{
+///     \item go_ids The name of the tested gene ontology identifer.
+///     \item es The enrichment scores for the pathway
+///     \item nes The normalised enrichment scores for the pathway
+///     \item size The pathway sizes (after elimination!).
+///     \item pvals The p-values for this pathway based on permutation
+///     testing
+///     \item leading_edge A list of the index positions of the leading edge
+///     genes for this given GO term.
+/// }
+///
 /// @export
 #[allow(clippy::too_many_arguments)]
 #[extendr]
-fn rs_geom_elim_fgsea(
+fn rs_geom_elim_fgsea_simple(
     stats: Robj,
     levels: Vec<String>,
     go_obj: Robj,
@@ -234,6 +260,13 @@ fn rs_geom_elim_fgsea(
 
     let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
 
+    let stat_name_indices: HashMap<&String, usize> = vec_data
+        .0
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name, i))
+        .collect();
+
     if debug {
         println!("Shared permutations generated");
     }
@@ -252,7 +285,7 @@ fn rs_geom_elim_fgsea(
 
         let level_res = process_ontology_level_fgsea_simple(
             &vec_data.1,
-            &vec_data.0,
+            &stat_name_indices,
             gsea_param,
             &level,
             &mut go_obj,
@@ -301,5 +334,5 @@ extendr_module! {
     fn rs_calc_gsea_stats;
     fn rs_calc_gsea_stat_cumulative_batch;
     fn rs_calc_gsea_stat_traditional_batch;
-    fn rs_geom_elim_fgsea;
+    fn rs_geom_elim_fgsea_simple;
 }

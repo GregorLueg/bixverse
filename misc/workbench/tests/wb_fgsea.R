@@ -73,14 +73,14 @@ stats <- setNames(
 levels <- names(S7::prop(go_data_s7, "levels"))
 
 tictoc::tic()
-test_1 <- rs_geom_elim_fgsea(
+test_1 <- rs_geom_elim_fgsea_simple(
   stats = stats,
   levels = levels,
   go_obj = go_data_s7,
   gsea_param = 1.0,
-  elim_threshold = 0.001,
+  elim_threshold = 0.05,
   min_size = 5,
-  max_size = 1000,
+  max_size = 2000,
   iters = 10000,
   seed = 10101,
   debug = FALSE

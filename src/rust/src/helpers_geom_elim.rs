@@ -35,7 +35,7 @@ pub struct GoElimLevelResults {
     pub gene_set_lengths: Vec<u64>,
 }
 
-/// Return structure of the `process_ontology_level()` ontology function.
+/// Return structure of the `process_ontology_level_fgsea_simple()` ontology function.
 #[derive(Clone, Debug)]
 pub struct GoElimLevelResultsGsea {
     pub go_ids: Vec<String>,
@@ -291,7 +291,7 @@ pub fn process_ontology_level(
 #[allow(clippy::too_many_arguments)]
 pub fn process_ontology_level_fgsea_simple(
     stats: &[f64],
-    stat_names: &[String],
+    stat_name_indices: &HashMap<&String, usize>,
     gsea_param: f64,
     level: &String,
     go_obj: &mut GeneOntology,
@@ -302,8 +302,8 @@ pub fn process_ontology_level_fgsea_simple(
     debug: bool,
 ) -> Result<GoElimLevelResultsGsea> {
     // Get the identfiers of that level and clean everything up
-    let default = vec!["string".to_string()];
-    let go_ids = go_obj.get_level_ids(level).unwrap_or(&default);
+    let binding: Vec<String> = Vec::new();
+    let go_ids = go_obj.get_level_ids(level).unwrap_or(&binding);
 
     // BTreeMap to make sure the order is determistic
     let mut level_data_es: BTreeMap<String, GoIntermediaryRes> = BTreeMap::new();
@@ -312,16 +312,9 @@ pub fn process_ontology_level_fgsea_simple(
         if let Some(genes) = go_obj.get_genes(go_id) {
             if genes.len() >= min_size && genes.len() <= max_size {
                 // Convert gene names to indices in one step
-                let indices: Vec<i32> = stat_names
+                let indices: Vec<i32> = genes
                     .iter()
-                    .enumerate()
-                    .filter_map(|(i, s)| {
-                        if genes.contains(s) {
-                            Some(i as i32)
-                        } else {
-                            None
-                        }
-                    })
+                    .filter_map(|gene| stat_name_indices.get(gene).map(|&i| i as i32))
                     .collect();
 
                 if !indices.is_empty() {
@@ -361,7 +354,7 @@ pub fn process_ontology_level_fgsea_simple(
         .pvals
         .iter()
         .zip(level_data_es.keys())
-        .filter(|(pval, _)| pval <= &&elim_threshold)
+        .filter(|(pval, _)| *pval <= &elim_threshold) // Fixed double reference and typo
         .map(|(_, go_id)| go_id)
         .collect();
 
@@ -387,7 +380,7 @@ pub fn process_ontology_level_fgsea_simple(
     }
 
     Ok(GoElimLevelResultsGsea {
-        go_ids: level_data_es.keys().cloned().collect(),
+        go_ids: level_data_es.into_keys().collect(),
         es: pathway_scores.clone(),
         nes: level_res.nes,
         size: pathway_sizes.clone(),
