@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use crate::helpers_fgsea::*;
 use crate::helpers_geom_elim::*;
 use crate::utils_r_rust::r_named_vec_data;
-use crate::utils_rust::{array_max, flatten_vector};
+use crate::utils_rust::flatten_vector;
 
 //////////////////////
 // Helper functions //
@@ -209,7 +209,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @export
 #[allow(clippy::too_many_arguments)]
 #[extendr]
-fn rs_geom_elim_fgse(
+fn rs_geom_elim_fgsea(
     stats: Robj,
     levels: Vec<String>,
     go_obj: Robj,
@@ -219,31 +219,24 @@ fn rs_geom_elim_fgse(
     max_size: usize,
     iters: usize,
     seed: u64,
+    debug: bool,
 ) -> extendr_api::Result<List> {
     let vec_data = r_named_vec_data(stats)?;
 
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
 
-    let pathway_sizes: Vec<usize> = go_to_gene
-        .values()
-        .filter_map(|vec| {
-            let len = vec.len();
-            if len <= max_size {
-                Some(len)
-            } else {
-                None
-            }
-        })
-        .collect();
-
     let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 
     let n = vec_data.1.len();
-    let k = array_max(&pathway_sizes);
 
-    let shared_perm = create_perm_es_simple(&vec_data.1, gsea_param, iters, k, n, seed, true);
+    let shared_perm =
+        create_perm_es_simple(&vec_data.1, gsea_param, iters, max_size, n, seed, true);
 
     let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
+
+    if debug {
+        println!("Shared permutations generated");
+    }
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
     let mut es: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
@@ -253,6 +246,10 @@ fn rs_geom_elim_fgse(
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
+        if debug {
+            println!("I am processing level: {:?}?", level);
+        }
+
         let level_res = process_ontology_level_fgsea_simple(
             &vec_data.1,
             &vec_data.0,
@@ -263,6 +260,7 @@ fn rs_geom_elim_fgse(
             min_size,
             max_size,
             elim_threshold,
+            debug,
         )?;
 
         go_ids.push(level_res.go_ids);
@@ -303,5 +301,5 @@ extendr_module! {
     fn rs_calc_gsea_stats;
     fn rs_calc_gsea_stat_cumulative_batch;
     fn rs_calc_gsea_stat_traditional_batch;
-    fn rs_geom_elim_fgse;
+    fn rs_geom_elim_fgsea;
 }

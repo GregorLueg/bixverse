@@ -244,10 +244,10 @@ pub fn create_random_gs_indices(
             let mut rng = StdRng::seed_from_u64(iter_seed);
 
             // Fisher-Yates shuffle for efficient sampling without replacement
+            // Also deal with potential issues in indexing here
             let adjusted_universe = universe_length - 1;
             let actual_len = std::cmp::min(max_len, adjusted_universe);
 
-            // Create array of indices
             let mut indices: Vec<usize> = (0..adjusted_universe).collect();
 
             // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
@@ -256,7 +256,6 @@ pub fn create_random_gs_indices(
                 indices.swap(i, j);
             }
 
-            // Take only the shuffled portion and adjust indexing if needed
             indices.truncate(actual_len);
 
             // Deal with R's 1-index, if need be
@@ -699,42 +698,28 @@ pub fn calc_gsea_stats_helper(
     let mut le_zero_sum = vec![0.0; m];
     let mut ge_zero_sum = vec![0.0; m];
 
+    // Process each permutation
     for rand_es_i in shared_perm {
+        // Get the subvector once
         let rand_es_p = subvector(rand_es_i, pathway_sizes)?;
 
-        let aux: Vec<bool> = rand_es_p
-            .iter()
-            .zip(pathway_scores.iter())
-            .map(|(a, b)| a <= b)
-            .collect();
-
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 1 } else { 0 }).collect();
+        // Process all stats in a single pass for each pathway
         for i in 0..m {
-            le_es[i] += diff[i];
-        }
+            // Compare with pathway score
+            if rand_es_p[i] <= pathway_scores[i] {
+                le_es[i] += 1;
+            } else {
+                ge_es[i] += 1;
+            }
 
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 0 } else { 1 }).collect();
-        for i in 0..m {
-            ge_es[i] += diff[i];
-        }
-
-        let aux: Vec<bool> = rand_es_p.iter().map(|&a| a <= 0.0).collect();
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 1 } else { 0 }).collect();
-        for i in 0..m {
-            le_zero[i] += diff[i];
-        }
-
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 0 } else { 1 }).collect();
-        for i in 0..m {
-            ge_zero[i] += diff[i];
-        }
-
-        for i in 0..m {
-            le_zero_sum[i] += rand_es_p[i].min(0.0);
-        }
-
-        for i in 0..m {
-            ge_zero_sum[i] += rand_es_p[i].max(0.0);
+            // Compare with zero
+            if rand_es_p[i] <= 0.0 {
+                le_zero[i] += 1;
+                le_zero_sum[i] += rand_es_p[i]; // Already negative or zero
+            } else {
+                ge_zero[i] += 1;
+                ge_zero_sum[i] += rand_es_p[i]; // Already positive
+            }
         }
     }
 

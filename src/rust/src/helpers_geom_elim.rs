@@ -299,6 +299,7 @@ pub fn process_ontology_level_fgsea_simple(
     min_size: usize,
     max_size: usize,
     elim_threshold: f64,
+    debug: bool,
 ) -> Result<GoElimLevelResultsGsea> {
     // Get the identfiers of that level and clean everything up
     let default = vec!["string".to_string()];
@@ -332,6 +333,10 @@ pub fn process_ontology_level_fgsea_simple(
         }
     }
 
+    if debug {
+        println!("Generated successful the BTreeMap for level: {:?}", level);
+    }
+
     let mut pathway_scores: Vec<f64> = Vec::with_capacity(level_data_es.len());
     let mut pathway_sizes: Vec<usize> = Vec::with_capacity(level_data_es.len());
     let mut leading_edge_indices = Vec::with_capacity(level_data_es.len());
@@ -344,6 +349,13 @@ pub fn process_ontology_level_fgsea_simple(
 
     let level_res: GseaResults<'_> =
         go_random_perms.get_gsea_res_simple(&pathway_scores, &pathway_sizes)?;
+
+    if debug {
+        println!(
+            "I calculated successfully the random permutations for level: {:?}",
+            level
+        );
+    }
 
     let go_to_remove: Vec<&String> = level_res
         .pvals
@@ -360,6 +372,17 @@ pub fn process_ontology_level_fgsea_simple(
         if let Some(genes_to_remove) = go_obj.get_genes(term) {
             let genes_to_remove = genes_to_remove.clone();
             go_obj.remove_genes(&ancestors_final, &genes_to_remove);
+        }
+
+        if debug {
+            for ancestor in &ancestors_final {
+                let mut binding = HashSet::with_capacity(1);
+                binding.insert("no genes left".to_string());
+                let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
+                if debug {
+                    println!("The following genes remain: {:?}", new_genes)
+                }
+            }
         }
     }
 

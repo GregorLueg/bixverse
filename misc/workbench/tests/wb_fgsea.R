@@ -55,6 +55,10 @@ plot(fgsea_scores_original$pval, results_simple_fgsea$pvals)
 
 # Elimination method for the gene ontology -------------------------------------
 
+devtools::load_all()
+
+rextendr::document()
+
 go_data_dt <- get_go_human_data()
 
 go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
@@ -68,18 +72,24 @@ stats <- setNames(
 
 levels <- names(S7::prop(go_data_s7, "levels"))
 
-test_1 <- rs_geom_elim_fgse(
+tictoc::tic()
+test_1 <- rs_geom_elim_fgsea(
   stats = stats,
   levels = levels,
   go_obj = go_data_s7,
   gsea_param = 1.0,
-  elim_threshold = 0.05,
+  elim_threshold = 0.001,
   min_size = 5,
-  max_size = 2000,
-  iters = 2000,
-  seed = 42
+  max_size = 1000,
+  iters = 10000,
+  seed = 10101,
+  debug = FALSE
 )
+tictoc::toc()
 
+str(test_1)
+
+tictoc::tic()
 test_2 <- rs_geom_elim_fgse(
   stats = stats,
   levels = levels,
@@ -91,3 +101,6 @@ test_2 <- rs_geom_elim_fgse(
   iters = 2000,
   seed = 42
 )
+tictoc::toc()
+
+str(test_2)
