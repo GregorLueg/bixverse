@@ -219,6 +219,8 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @param iters Integer. Number of random permutations for the fgsea simple method
 /// to use
 /// @param seed Integer. For reproducibility purposes.
+/// @param debug Boolean that will provide additional console information for
+/// debugging purposes.
 ///
 /// @return List with the following elements
 /// \itemize{

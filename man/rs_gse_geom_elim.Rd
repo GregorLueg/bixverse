@@ -30,7 +30,7 @@ tested.}
 \item{elim_threshold}{p-value below which the elimination procedure shall be
 applied to the ancestors.}
 
-\item{debug}{boolean that will provide additional console information for
+\item{debug}{Boolean that will provide additional console information for
 debugging purposes.}
 }
 \value{

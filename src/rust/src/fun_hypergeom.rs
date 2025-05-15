@@ -132,7 +132,7 @@ fn rs_hypergeom_test_list(
 /// tested.
 /// @param elim_threshold p-value below which the elimination procedure shall be
 /// applied to the ancestors.
-/// @param debug boolean that will provide additional console information for
+/// @param debug Boolean that will provide additional console information for
 /// debugging purposes.
 ///
 /// @return A list containing:

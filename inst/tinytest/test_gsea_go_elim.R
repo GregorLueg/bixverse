@@ -13,7 +13,6 @@ stats <- setNames(
   sprintf("gene_%03d", 1:stat_size)
 )
 
-
 pathway_pos_l3 <- sort(sample(names(stats)[1:150], 100))
 pathway_pos_l2 <- unique(c(pathway_pos_l3[1:50], sample(names(stats), 15)))
 pathway_pos_l1 <- unique(c(pathway_pos_l2[1:25], sample(names(stats), 10)))

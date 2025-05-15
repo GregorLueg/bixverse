@@ -107,6 +107,8 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' @param iters Integer. Number of random permutations for the fgsea simple method
 #' to use
 #' @param seed Integer. For reproducibility purposes.
+#' @param debug Boolean that will provide additional console information for
+#' debugging purposes.
 #'
 #' @return List with the following elements
 #' \itemize{
@@ -190,7 +192,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param debug boolean that will provide additional console information for
+#' @param debug Boolean that will provide additional console information for
 #' debugging purposes.
 #'
 #' @return A list containing:

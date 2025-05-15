@@ -39,6 +39,9 @@ parameter to large values will slow the function down.}
 to use}
 
 \item{seed}{Integer. For reproducibility purposes.}
+
+\item{debug}{Boolean that will provide additional console information for
+debugging purposes.}
 }
 \value{
 List with the following elements

@@ -1,5 +1,7 @@
 # (fast) gsea tests ------------------------------------------------------------
 
+library(magrittr)
+
 set.seed(123)
 
 stat_size <- 1000
