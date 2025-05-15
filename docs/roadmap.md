@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 25.05.2025* </br>
+*Last update: 15.05.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -30,7 +30,8 @@ to generate structured objects.~~
 - ~~Semantic similarities for ontologies.~~
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
-- Gene ontology enrichment with elimination/pruning for continuous values.
+- ~~Gene ontology enrichment with elimination/pruning for continuous values.~~ 
+(First version implemented with fgsea simple.)
 
 ## Rust
 

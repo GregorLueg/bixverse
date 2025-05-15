@@ -1,4 +1,4 @@
-# Gene Set Enrichment versions ----
+# hypergeometric versions ------------------------------------------------------
 
 #' Run gene ontology enrichment with elimination method.
 #'
@@ -248,4 +248,119 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
       .[(fdr <= fdr_threshold) & (hits >= minimum_overlap)]
 
     results_go_dt
+  }
+
+# continuous versions ----------------------------------------------------------
+
+#' Run GO enrichment with elimination method over a continuous vectors
+#'
+#' @description
+#' This method takes the gene_ontology_data and a vector of gene level
+#' statistics to perform fgsea (simple) leveraging ontological information.
+#' It starts at the lowest levels of the ontology and tests if there is
+#' significant enrichment for any GO terms. If the threshold of the p-value is
+#' below the elimination threshold, the genes from this term will be removed
+#' from all its ancestors. The function then proceeds to the next level of the
+#' ontology and repeats the process.
+#'
+#' @param object The underlying class, see [bixverse::gene_ontology_data()].
+#' @param stats Named numeric vector. The gene level statistic.
+#' @param elim_threshold Float. Threshold from which p-value onwards the
+#' elimination on the ancestors shall be conducted.
+#' @param nperm Integer. Number of permutation tests. Defaults to `2000L`
+#' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#' }
+#' @param seed Random seed for reproducibility.
+#' @param .debug Boolean. Shall information from the Rust function be displayed.
+#' For debugging purposes. Warning: should you run this command over a large
+#' list, you will have a large print output!
+#'
+#' @return data.table with enrichment results.
+#'
+#' @export
+fgsea_simple_go_elim <- S7::new_generic(
+  name = "fgsea_simple_go_elim",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    stats,
+    elim_threshold = 0.05,
+    nperm = 2000L,
+    gsea_params = params_gsea(max_size = 2000L),
+    seed = 42L,
+    .debug = FALSE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#'
+#' @method fgsea_simple_go_elim gene_ontology_data
+S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
+  function(
+    object,
+    stats,
+    elim_threshold = 0.05,
+    nperm = 2000L,
+    gsea_params = params_gsea(max_size = 2000L),
+    seed = 42L,
+    .debug = FALSE
+  ) {
+    # Checks
+    checkmate::assertClass(object, "bixverse::gene_ontology_data")
+    checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
+    checkmate::assertNames(names(stats))
+    checkmate::qassert(elim_threshold, "R+[0,1]")
+    checkmate::qassert(nperm, "I1")
+    checkmate::qassert(seed, "I1")
+    assertGSEAParams(gsea_params)
+    checkmate::qassert(.debug, "B1")
+
+    # Function body
+    stats <- sort(stats, decreasing = TRUE)
+
+    levels <- names(S7::prop(object, "levels"))
+    go_info <- S7::prop(object, "go_info")
+
+    rust_res <- with(
+      gsea_params,
+      rs_geom_elim_fgsea_simple(
+        stats = stats,
+        levels = levels,
+        go_obj = object,
+        gsea_param = gsea_param,
+        elim_threshold = elim_threshold,
+        min_size = min_size,
+        max_size = max_size,
+        iters = nperm,
+        seed = seed,
+        debug = .debug
+      )
+    )
+
+    leading_edges <- mapply(
+      "[",
+      list(names(stats)),
+      rust_res$leading_edge,
+      SIMPLIFY = FALSE
+    )
+
+    res_dt <- data.table::setDT(rust_res[c(
+      "go_id",
+      "es",
+      "nes",
+      "size",
+      "pvals"
+    )]) %>%
+      .[, leading_edge := leading_edges] %>%
+      merge(., go_info, by = "go_id")
   }

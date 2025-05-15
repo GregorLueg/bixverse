@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::helpers_fgsea::{
-    calc_gsea_stats, calc_gsea_stats_helper, calculate_nes_es_pval, GseaResults,
+    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaResults,
 };
 use crate::helpers_hypergeom::*;
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
@@ -119,7 +119,7 @@ impl<'a> GeneOntologyRandomPerm<'a> {
     ) -> Result<GseaResults<'b>> {
         // Dual lifetimes fun...
         let gsea_batch_res =
-            calc_gsea_stats_helper(pathway_scores, pathway_sizes, self.random_perm)?;
+            calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, self.random_perm)?;
 
         let gsea_res = calculate_nes_es_pval(pathway_scores, pathway_sizes, &gsea_batch_res);
 
@@ -162,27 +162,24 @@ pub fn process_ontology_level(
     min_genes: usize,
     gene_universe_length: u64,
     elim_threshold: f64,
-    debug: bool,
+    debug: bool, // This is embarassing, but this function gives me a HEADACHE
 ) -> GoElimLevelResults {
-    // Get the identfiers of that level and clean everything up
-    let default = vec!["string".to_string()];
-    let go_ids = go_obj.get_level_ids(level).unwrap_or(&default);
+    // Get the identifiers of that level and clean everything up
+    let binding: Vec<String> = Vec::new();
 
-    let level_data = go_obj.get_genes_list(go_ids);
+    let level_ids = go_obj.get_level_ids(level).unwrap_or(&binding);
+    let level_data = go_obj.get_genes_list(level_ids);
 
-    let mut level_data_final = HashMap::new();
+    // Filter data based on minimum gene requirement
+    let level_data_final: HashMap<_, _> = level_data
+        .iter()
+        .filter(|(_, value)| value.len() >= min_genes)
+        .map(|(key, value)| (key.clone(), value))
+        .collect();
 
-    for (key, value) in &level_data {
-        if value.len() >= min_genes {
-            level_data_final.insert(key.clone(), value);
-        }
-    }
-
+    // Convert target genes to a HashSet for efficient lookup
     let trials = target_genes.len() as u64;
-    let mut target_set = HashSet::new();
-    for s in target_genes {
-        target_set.insert(s.clone());
-    }
+    let target_set: HashSet<_> = target_genes.iter().cloned().collect();
 
     let size = level_data_final.len();
 
@@ -288,6 +285,8 @@ pub fn process_ontology_level(
 // Continuous test //
 /////////////////////
 
+/// This function uses the fgsea simple method to do the gene ontology enrichment with
+/// elimination.
 #[allow(clippy::too_many_arguments)]
 pub fn process_ontology_level_fgsea_simple(
     stats: &[f64],
@@ -299,7 +298,7 @@ pub fn process_ontology_level_fgsea_simple(
     min_size: usize,
     max_size: usize,
     elim_threshold: f64,
-    debug: bool,
+    debug: bool, // This is embarassing, but this function gives me a HEADACHE...
 ) -> Result<GoElimLevelResultsGsea> {
     // Get the identfiers of that level and clean everything up
     let binding: Vec<String> = Vec::new();
@@ -312,10 +311,12 @@ pub fn process_ontology_level_fgsea_simple(
         if let Some(genes) = go_obj.get_genes(go_id) {
             if genes.len() >= min_size && genes.len() <= max_size {
                 // Convert gene names to indices in one step
-                let indices: Vec<i32> = genes
+                let mut indices: Vec<i32> = genes
                     .iter()
                     .filter_map(|gene| stat_name_indices.get(gene).map(|&i| i as i32))
                     .collect();
+
+                indices.sort();
 
                 if !indices.is_empty() {
                     let es_res = calc_gsea_stats(stats, &indices, gsea_param, true, false);
@@ -332,7 +333,7 @@ pub fn process_ontology_level_fgsea_simple(
 
     let mut pathway_scores: Vec<f64> = Vec::with_capacity(level_data_es.len());
     let mut pathway_sizes: Vec<usize> = Vec::with_capacity(level_data_es.len());
-    let mut leading_edge_indices = Vec::with_capacity(level_data_es.len());
+    let mut leading_edge_indices: Vec<Vec<i32>> = Vec::with_capacity(level_data_es.len());
 
     for v in level_data_es.values() {
         pathway_scores.push(v.0);
@@ -358,9 +359,21 @@ pub fn process_ontology_level_fgsea_simple(
         .map(|(_, go_id)| go_id)
         .collect();
 
+    if debug {
+        let no_terms = go_to_remove.len();
+        println!(
+            "At level {} a total of {} gene ontology terms will be affected by elimination: {:?}",
+            level, no_terms, go_to_remove
+        );
+    }
+
     for term in go_to_remove.iter() {
         let ancestors = go_obj.get_ancestors(term);
         let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
+
+        if debug {
+            println!("What are the ancestors here: {:?}", ancestors_final);
+        }
 
         if let Some(genes_to_remove) = go_obj.get_genes(term) {
             let genes_to_remove = genes_to_remove.clone();

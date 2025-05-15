@@ -80,27 +80,30 @@ test_1 <- rs_geom_elim_fgsea_simple(
   gsea_param = 1.0,
   elim_threshold = 0.05,
   min_size = 5,
-  max_size = 2000,
-  iters = 10000,
+  max_size = 500,
+  iters = 2000,
   seed = 10101,
   debug = FALSE
 )
 tictoc::toc()
 
-str(test_1)
-
-tictoc::tic()
-test_2 <- rs_geom_elim_fgse(
-  stats = stats,
-  levels = levels,
-  go_obj = go_data_s7,
-  gsea_param = 1.0,
-  elim_threshold = 0.95,
-  min_size = 5,
-  max_size = 2000,
-  iters = 2000,
-  seed = 42
+leading_edges <- mapply(
+  "[",
+  list(names(stats)),
+  test_1$leading_edge,
+  SIMPLIFY = FALSE
 )
-tictoc::toc()
 
-str(test_2)
+names(test_1)
+
+
+res_dt <- data.table::setDT(test_1[c(
+  "go_id",
+  "es",
+  "nes",
+  "size",
+  "pvals"
+)]) %>%
+  .[, leading_edge := leading_edges]
+
+test_1

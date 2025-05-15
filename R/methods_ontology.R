@@ -141,15 +141,19 @@ calculate_semantic_sim <- function(
 
 ## helpers ---------------------------------------------------------------------
 
-#' Return ancestor terms from an ontology
+#' Return ancestry terms from an ontology
 #'
-#' @description this function will return all ancestor terms based on a provided
-#' data.table with parent-child terms
+#' @description This function will return all ancestors and descendants based on
+#' a provided data.table with parent-child terms
 #'
 #' @param parent_child_dt data.table. The data.table with column parent and
 #' child.
 #'
-#' @return A named list with ancestor terms as values
+#' @return A list with
+#' \itemize{
+#'  \item ancestors A list with all ancestor terms.
+#'  \item descendants A list with all descendant terms.
+#' }
 #'
 #' @export
 get_ontology_ancestry <- function(parent_child_dt) {

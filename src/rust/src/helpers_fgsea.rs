@@ -684,7 +684,8 @@ pub fn create_perm_es_simple(
     rand_es
 }
 
-pub fn calc_gsea_stats_helper(
+/// Abstraction wrapper to be used in different parts of the package
+pub fn calc_gsea_stats_wrapper(
     pathway_scores: &[f64],
     pathway_sizes: &[usize],
     shared_perm: &Vec<Vec<f64>>,
@@ -747,7 +748,7 @@ pub fn calc_gsea_stat_cumulative_batch(
 
     let shared_perm = create_perm_es_simple(stats, gsea_param, iters, k, n, seed, true);
 
-    calc_gsea_stats_helper(pathway_scores, pathway_sizes, &shared_perm)
+    calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, &shared_perm)
 }
 
 //////////////////////
