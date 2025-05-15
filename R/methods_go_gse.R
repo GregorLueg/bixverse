@@ -362,5 +362,8 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
       "pvals"
     )]) %>%
       .[, leading_edge := leading_edges] %>%
-      merge(., go_info, by = "go_id")
+      merge(., go_info, by = "go_id") %>%
+      .[, fdr := p.adjust(pvals, method = "fdr")]
+
+    return(res_dt)
   }

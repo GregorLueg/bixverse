@@ -141,3 +141,82 @@ expect_equal(
   ),
   tolerance = 10e-6
 )
+
+## test R into Rust implementation ---------------------------------------------
+
+### without elimination --------------------------------------------------------
+
+# order is different due to merging
+r_expected_size_without_elim <- c(100, 64, 35, 125, 97, 40)
+r_expected_nes_without_elim <- c(
+  4.060339,
+  3.472927,
+  2.970346,
+  -4.188695,
+  -3.759593,
+  -3.515364
+)
+
+r_results_without_elim <- fgsea_simple_go_elim(
+  object = object,
+  stats = stats,
+  nperm = 100L,
+  seed = 10101L,
+  elim_threshold = 0.0001
+)
+
+expect_equal(
+  current = r_results_without_elim$size,
+  target = r_expected_size_without_elim,
+  info = paste(
+    "fgsea with go elim (R function): sizes in without elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = r_results_without_elim$nes,
+  target = r_expected_nes_without_elim,
+  info = paste(
+    "fgsea with go elim (R function): nes in with elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+### with elimination -----------------------------------------------------------
+
+r_expected_size_with_elim <- c(50, 39, 35, 46, 62, 40)
+r_expected_nes_with_elim <- c(
+  3.248230,
+  2.689328,
+  2.970346,
+  -3.340476,
+  -3.014979,
+  -3.515364
+)
+
+r_results_with_elim <- fgsea_simple_go_elim(
+  object = object,
+  stats = stats,
+  nperm = 100L,
+  seed = 10101L,
+  elim_threshold = 0.05
+)
+
+expect_equal(
+  current = r_results_with_elim$size,
+  target = r_expected_size_with_elim,
+  info = paste(
+    "fgsea with go elim (R function): sizes in with elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = r_results_with_elim$nes,
+  target = r_expected_nes_with_elim,
+  info = paste(
+    "fgsea with go elim (R function): nes in with elimination case"
+  ),
+  tolerance = 10e-6
+)

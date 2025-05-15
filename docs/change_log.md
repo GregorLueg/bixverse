@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 12.05.2025* </br>
+*Last update: 15.05.2025* </br>
 
 ### Version **0.0.1.2**
 
@@ -14,7 +14,7 @@ copying.
 
 #### Bug fixes, documentation updates
 
-- Minor documentation updates
+- Minor documentation updates and fixes.
 
 ### Version **0.0.1.1**
 
