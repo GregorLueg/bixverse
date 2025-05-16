@@ -3,7 +3,7 @@ use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
 use std::collections::HashMap;
 
-use crate::utils_rust::{array_max, unique};
+use crate::utils_rust::{array_max, array_min, cumsum, unique};
 
 //////////////////
 // Type aliases //
@@ -109,6 +109,89 @@ where
 // Helper functions //
 //////////////////////
 
+/// Calculate the ES and leading edge genes
+pub fn calc_gsea_stats(
+    stats: &[f64],
+    gs_idx: &[i32],
+    gsea_param: f64,
+    return_leading_edge: bool,
+    one_indexed: bool,
+) -> (f64, Vec<i32>) {
+    let n = stats.len();
+    let m = gs_idx.len();
+    let r_adj: Vec<f64> = gs_idx
+        .iter()
+        .map(|i| {
+            let idx = if one_indexed { *i - 1 } else { *i } as usize;
+            stats[idx].abs().powf(gsea_param)
+        })
+        .collect();
+    let nr: f64 = r_adj.iter().sum();
+    let r_cum_sum: Vec<f64> = if nr == 0.0 {
+        gs_idx
+            .iter()
+            .enumerate()
+            .map(|(i, _)| i as f64 / r_adj.len() as f64)
+            .collect()
+    } else {
+        cumsum(&r_adj).iter().map(|x| x / nr).collect()
+    };
+    let top_tmp: Vec<f64> = gs_idx
+        .iter()
+        .enumerate()
+        .map(|(i, x)| (*x as f64 - (i + 1) as f64) / (n as f64 - m as f64))
+        .collect();
+    let tops: Vec<f64> = r_cum_sum
+        .iter()
+        .zip(top_tmp.iter())
+        .map(|(x1, x2)| x1 - x2)
+        .collect();
+    let bottoms: Vec<f64> = if nr == 0.0 {
+        tops.iter().map(|x| x - (1.0 / m as f64)).collect()
+    } else {
+        tops.iter()
+            .zip(r_adj.iter())
+            .map(|(top, adj)| top - (adj / nr))
+            .collect()
+    };
+    let max_p = array_max(&tops);
+    let min_p = array_min(&bottoms);
+
+    let gene_stat = if max_p == -min_p {
+        0.0
+    } else if max_p > -min_p {
+        max_p
+    } else {
+        min_p
+    };
+    let leading_edge = if return_leading_edge {
+        if max_p > -min_p {
+            let max_idx = bottoms
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(idx, _)| idx)
+                .unwrap_or(0);
+
+            gs_idx.iter().take(max_idx + 1).cloned().collect()
+        } else if max_p < -min_p {
+            let min_idx = bottoms
+                .iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(idx, _)| idx)
+                .unwrap_or(0);
+            gs_idx.iter().skip(min_idx).cloned().rev().collect()
+        } else {
+            Vec::new()
+        }
+    } else {
+        Vec::new()
+    };
+
+    (gene_stat, leading_edge)
+}
+
 /// The ranks from order function from the fgsea C++ implementation
 pub fn ranks_from_order(order: &[usize]) -> Vec<i32> {
     let mut res = vec![0; order.len()];
@@ -161,10 +244,10 @@ pub fn create_random_gs_indices(
             let mut rng = StdRng::seed_from_u64(iter_seed);
 
             // Fisher-Yates shuffle for efficient sampling without replacement
+            // Also deal with potential issues in indexing here
             let adjusted_universe = universe_length - 1;
             let actual_len = std::cmp::min(max_len, adjusted_universe);
 
-            // Create array of indices
             let mut indices: Vec<usize> = (0..adjusted_universe).collect();
 
             // Perform partial Fisher-Yates shuffle (we only need actual_len elements)
@@ -173,7 +256,6 @@ pub fn create_random_gs_indices(
                 indices.swap(i, j);
             }
 
-            // Take only the shuffled portion and adjust indexing if needed
             indices.truncate(actual_len);
 
             // Deal with R's 1-index, if need be
@@ -580,6 +662,78 @@ pub fn calc_gsea_stat_cumulative(
     final_res
 }
 
+/// Create the permutations for the fgsea simple method
+pub fn create_perm_es_simple(
+    stats: &[f64],
+    gsea_param: f64,
+    iters: usize,
+    max_len: usize,
+    universe_length: usize,
+    seed: u64,
+    one_indexed: bool,
+) -> Vec<Vec<f64>> {
+    let shared_perm = create_random_gs_indices(iters, max_len, universe_length, seed, one_indexed);
+
+    let rand_es: Vec<Vec<f64>> = shared_perm
+        .par_iter()
+        .map(|selected_genes_random| {
+            calc_gsea_stat_cumulative(stats, selected_genes_random, gsea_param)
+        })
+        .collect();
+
+    rand_es
+}
+
+/// Abstraction wrapper to be used in different parts of the package
+pub fn calc_gsea_stats_wrapper(
+    pathway_scores: &[f64],
+    pathway_sizes: &[usize],
+    shared_perm: &Vec<Vec<f64>>,
+) -> Result<GseaBatchResults, String> {
+    let m = pathway_scores.len();
+
+    let mut le_es = vec![0; m];
+    let mut ge_es = vec![0; m];
+    let mut le_zero = vec![0; m];
+    let mut ge_zero = vec![0; m];
+    let mut le_zero_sum = vec![0.0; m];
+    let mut ge_zero_sum = vec![0.0; m];
+
+    // Process each permutation
+    for rand_es_i in shared_perm {
+        // Get the subvector once
+        let rand_es_p = subvector(rand_es_i, pathway_sizes)?;
+
+        // Process all stats in a single pass for each pathway
+        for i in 0..m {
+            // Compare with pathway score
+            if rand_es_p[i] <= pathway_scores[i] {
+                le_es[i] += 1;
+            } else {
+                ge_es[i] += 1;
+            }
+
+            // Compare with zero
+            if rand_es_p[i] <= 0.0 {
+                le_zero[i] += 1;
+                le_zero_sum[i] += rand_es_p[i]; // Already negative or zero
+            } else {
+                ge_zero[i] += 1;
+                ge_zero_sum[i] += rand_es_p[i]; // Already positive
+            }
+        }
+    }
+
+    Ok(GseaBatchResults {
+        le_es,
+        ge_es,
+        le_zero,
+        ge_zero,
+        le_zero_sum,
+        ge_zero_sum,
+    })
+}
+
 /// Calculate random scores batch-wise
 pub fn calc_gsea_stat_cumulative_batch(
     stats: &[f64],
@@ -592,71 +746,9 @@ pub fn calc_gsea_stat_cumulative_batch(
     let n = stats.len();
     let k = array_max(pathway_sizes);
 
-    let m = pathway_scores.len();
+    let shared_perm = create_perm_es_simple(stats, gsea_param, iters, k, n, seed, true);
 
-    let shared_perm = create_random_gs_indices(iters, k, n, seed, true);
-
-    let rand_es: Vec<Vec<f64>> = shared_perm
-        .par_iter()
-        .map(|selected_genes_random| {
-            calc_gsea_stat_cumulative(stats, selected_genes_random, gsea_param)
-        })
-        .collect();
-
-    let mut le_es = vec![0; m];
-    let mut ge_es = vec![0; m];
-    let mut le_zero = vec![0; m];
-    let mut ge_zero = vec![0; m];
-    let mut le_zero_sum = vec![0.0; m];
-    let mut ge_zero_sum = vec![0.0; m];
-
-    for rand_es_i in rand_es {
-        let rand_es_p = subvector(&rand_es_i, pathway_sizes)?;
-
-        let aux: Vec<bool> = rand_es_p
-            .iter()
-            .zip(pathway_scores.iter())
-            .map(|(a, b)| a <= b)
-            .collect();
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 1 } else { 0 }).collect();
-        for i in 0..m {
-            le_es[i] += diff[i];
-        }
-
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 0 } else { 1 }).collect();
-        for i in 0..m {
-            ge_es[i] += diff[i];
-        }
-
-        let aux: Vec<bool> = rand_es_p.iter().map(|&a| a <= 0.0).collect();
-
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 1 } else { 0 }).collect();
-        for i in 0..m {
-            le_zero[i] += diff[i];
-        }
-
-        let diff: Vec<usize> = aux.iter().map(|&x| if x { 0 } else { 1 }).collect();
-        for i in 0..m {
-            ge_zero[i] += diff[i];
-        }
-
-        for i in 0..m {
-            le_zero_sum[i] += rand_es_p[i].min(0.0);
-        }
-
-        for i in 0..m {
-            ge_zero_sum[i] += rand_es_p[i].max(0.0);
-        }
-    }
-
-    Ok(GseaBatchResults {
-        le_es,
-        ge_es,
-        le_zero,
-        ge_zero,
-        le_zero_sum,
-        ge_zero_sum,
-    })
+    calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, &shared_perm)
 }
 
 //////////////////////

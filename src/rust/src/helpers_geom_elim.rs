@@ -1,6 +1,9 @@
 use extendr_api::prelude::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
+use crate::helpers_fgsea::{
+    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaResults,
+};
 use crate::helpers_hypergeom::*;
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
 
@@ -17,6 +20,11 @@ type AncestorMap = HashMap<String, Vec<String>>;
 /// Type alias for the ontology level to go identifier HashMap
 type LevelMap = HashMap<String, Vec<String>>;
 
+/// Type alias for intermediary results
+/// The first value is the ES score, the second the size and the third
+/// the indices of the potential leading edge genes
+type GoIntermediaryRes = (f64, usize, Vec<i32>);
+
 /// Return structure of the `process_ontology_level()` ontology function.
 #[derive(Clone, Debug)]
 pub struct GoElimLevelResults {
@@ -27,14 +35,33 @@ pub struct GoElimLevelResults {
     pub gene_set_lengths: Vec<u64>,
 }
 
+/// Return structure of the `process_ontology_level_fgsea_simple()` ontology function.
 #[derive(Clone, Debug)]
-pub struct GeneOntology<'a> {
-    pub go_to_gene: HashMap<String, HashSet<String>>,
-    pub ancestors: &'a HashMap<String, Vec<String>>,
-    pub levels: &'a HashMap<String, Vec<String>>,
+pub struct GoElimLevelResultsGsea {
+    pub go_ids: Vec<String>,
+    pub es: Vec<f64>,
+    pub nes: Vec<Option<f64>>,
+    pub size: Vec<usize>,
+    pub pvals: Vec<f64>,
+    pub leading_edge: Vec<Vec<i32>>,
 }
 
-impl GeneOntology<'_> {
+#[derive(Clone, Debug)]
+pub struct GeneOntology<'a> {
+    pub go_to_gene: GeneMap,
+    pub ancestors: &'a AncestorMap,
+    pub levels: &'a LevelMap,
+}
+
+impl<'a> GeneOntology<'a> {
+    pub fn new(gene_map: GeneMap, ancestor_map: &'a AncestorMap, levels_map: &'a LevelMap) -> Self {
+        GeneOntology {
+            go_to_gene: gene_map,
+            ancestors: ancestor_map,
+            levels: levels_map,
+        }
+    }
+
     /// Returns the ancestors of a given gene ontology term identifier
     pub fn get_ancestors(&self, id: &String) -> Option<&Vec<String>> {
         self.ancestors.get(id)
@@ -71,13 +98,47 @@ impl GeneOntology<'_> {
     }
 }
 
+/// Structure to hold random permutations for the continuous (fgsea) based
+/// enrichment with elimination.
+#[derive(Clone, Debug)]
+pub struct GeneOntologyRandomPerm<'a> {
+    pub random_perm: &'a Vec<Vec<f64>>,
+}
+
+impl<'a> GeneOntologyRandomPerm<'a> {
+    pub fn new(perm_es: &'a Vec<Vec<f64>>) -> Self {
+        GeneOntologyRandomPerm {
+            random_perm: perm_es,
+        }
+    }
+
+    pub fn get_gsea_res_simple<'b>(
+        &self,
+        pathway_scores: &'b [f64],
+        pathway_sizes: &'b [usize],
+    ) -> Result<GseaResults<'b>> {
+        // Dual lifetimes fun...
+        let gsea_batch_res =
+            calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, self.random_perm)?;
+
+        let gsea_res = calculate_nes_es_pval(pathway_scores, pathway_sizes, &gsea_batch_res);
+
+        Ok(gsea_res)
+    }
+}
+
 ///////////////
 // Functions //
 ///////////////
 
+/////////////
+// Helpers //
+/////////////
+
 /// Take the S7 go_data_class and return the necessary Rust types for further
 /// processing.
 pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMap, LevelMap)> {
+    // TODO: Need to do better error handling here... Future me problem
     let go_to_genes = go_obj.get_attrib("go_to_genes").unwrap().as_list().unwrap();
     let ancestors = go_obj.get_attrib("ancestry").unwrap().as_list().unwrap();
     let levels = go_obj.get_attrib("levels").unwrap().as_list().unwrap();
@@ -89,6 +150,10 @@ pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMa
     Ok((go_to_genes, ancestors, levels))
 }
 
+/////////////////////
+// Hypergeom tests //
+/////////////////////
+
 /// Process a given ontology level
 pub fn process_ontology_level(
     target_genes: &[String],
@@ -97,27 +162,24 @@ pub fn process_ontology_level(
     min_genes: usize,
     gene_universe_length: u64,
     elim_threshold: f64,
-    debug: bool,
+    debug: bool, // This is embarassing, but this function gives me a HEADACHE
 ) -> GoElimLevelResults {
-    // Get the identfiers of that level and clean everything up
-    let default = vec!["string".to_string()];
-    let go_ids = go_obj.get_level_ids(level).unwrap_or(&default);
+    // Get the identifiers of that level and clean everything up
+    let binding: Vec<String> = Vec::new();
 
-    let level_data = go_obj.get_genes_list(go_ids);
+    let level_ids = go_obj.get_level_ids(level).unwrap_or(&binding);
+    let level_data = go_obj.get_genes_list(level_ids);
 
-    let mut level_data_final = HashMap::new();
+    // Filter data based on minimum gene requirement
+    let level_data_final: HashMap<_, _> = level_data
+        .iter()
+        .filter(|(_, value)| value.len() >= min_genes)
+        .map(|(key, value)| (key.clone(), value))
+        .collect();
 
-    for (key, value) in &level_data {
-        if value.len() >= min_genes {
-            level_data_final.insert(key.clone(), value);
-        }
-    }
-
+    // Convert target genes to a HashSet for efficient lookup
     let trials = target_genes.len() as u64;
-    let mut target_set = HashSet::new();
-    for s in target_genes {
-        target_set.insert(s.clone());
-    }
+    let target_set: HashSet<_> = target_genes.iter().cloned().collect();
 
     let size = level_data_final.len();
 
@@ -217,4 +279,125 @@ pub fn process_ontology_level(
     }
 
     res
+}
+
+/////////////////////
+// Continuous test //
+/////////////////////
+
+/// This function uses the fgsea simple method to do the gene ontology enrichment with
+/// elimination.
+#[allow(clippy::too_many_arguments)]
+pub fn process_ontology_level_fgsea_simple(
+    stats: &[f64],
+    stat_name_indices: &HashMap<&String, usize>,
+    gsea_param: f64,
+    level: &String,
+    go_obj: &mut GeneOntology,
+    go_random_perms: &GeneOntologyRandomPerm,
+    min_size: usize,
+    max_size: usize,
+    elim_threshold: f64,
+    debug: bool, // This is embarassing, but this function gives me a HEADACHE...
+) -> Result<GoElimLevelResultsGsea> {
+    // Get the identfiers of that level and clean everything up
+    let binding: Vec<String> = Vec::new();
+    let go_ids = go_obj.get_level_ids(level).unwrap_or(&binding);
+
+    // BTreeMap to make sure the order is determistic
+    let mut level_data_es: BTreeMap<String, GoIntermediaryRes> = BTreeMap::new();
+
+    for go_id in go_ids {
+        if let Some(genes) = go_obj.get_genes(go_id) {
+            if genes.len() >= min_size && genes.len() <= max_size {
+                // Convert gene names to indices in one step
+                let mut indices: Vec<i32> = genes
+                    .iter()
+                    .filter_map(|gene| stat_name_indices.get(gene).map(|&i| i as i32))
+                    .collect();
+
+                indices.sort();
+
+                if !indices.is_empty() {
+                    let es_res = calc_gsea_stats(stats, &indices, gsea_param, true, false);
+                    let size = indices.len();
+                    level_data_es.insert(go_id.clone(), (es_res.0, size, es_res.1));
+                }
+            }
+        }
+    }
+
+    if debug {
+        println!("Generated successful the BTreeMap for level: {:?}", level);
+    }
+
+    let mut pathway_scores: Vec<f64> = Vec::with_capacity(level_data_es.len());
+    let mut pathway_sizes: Vec<usize> = Vec::with_capacity(level_data_es.len());
+    let mut leading_edge_indices: Vec<Vec<i32>> = Vec::with_capacity(level_data_es.len());
+
+    for v in level_data_es.values() {
+        pathway_scores.push(v.0);
+        pathway_sizes.push(v.1);
+        leading_edge_indices.push(v.2.clone());
+    }
+
+    let level_res: GseaResults<'_> =
+        go_random_perms.get_gsea_res_simple(&pathway_scores, &pathway_sizes)?;
+
+    if debug {
+        println!(
+            "I calculated successfully the random permutations for level: {:?}",
+            level
+        );
+    }
+
+    let go_to_remove: Vec<&String> = level_res
+        .pvals
+        .iter()
+        .zip(level_data_es.keys())
+        .filter(|(pval, _)| *pval <= &elim_threshold) // Fixed double reference and typo
+        .map(|(_, go_id)| go_id)
+        .collect();
+
+    if debug {
+        let no_terms = go_to_remove.len();
+        println!(
+            "At level {} a total of {} gene ontology terms will be affected by elimination: {:?}",
+            level, no_terms, go_to_remove
+        );
+    }
+
+    for term in go_to_remove.iter() {
+        let ancestors = go_obj.get_ancestors(term);
+        let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
+
+        if debug {
+            println!("What are the ancestors here: {:?}", ancestors_final);
+        }
+
+        if let Some(genes_to_remove) = go_obj.get_genes(term) {
+            let genes_to_remove = genes_to_remove.clone();
+            go_obj.remove_genes(&ancestors_final, &genes_to_remove);
+        }
+
+        if debug {
+            for ancestor in &ancestors_final {
+                let mut binding = HashSet::with_capacity(1);
+                binding.insert("no genes left".to_string());
+                let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
+                if debug {
+                    println!("The following genes remain: {:?}", new_genes)
+                }
+            }
+        }
+    }
+
+    Ok(GoElimLevelResultsGsea {
+        go_ids: level_data_es.into_keys().collect(),
+        es: pathway_scores.clone(),
+        nes: level_res.nes,
+        size: pathway_sizes.clone(),
+        pvals: level_res.pvals,
+        leading_edge: leading_edge_indices,
+    })
 }

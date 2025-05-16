@@ -3,8 +3,9 @@ use extendr_api::prelude::*;
 use std::collections::HashMap;
 
 use crate::helpers_fgsea::*;
+use crate::helpers_geom_elim::*;
 use crate::utils_r_rust::r_named_vec_data;
-use crate::utils_rust::{array_max, array_min, cumsum};
+use crate::utils_rust::flatten_vector;
 
 //////////////////////
 // Helper functions //
@@ -103,76 +104,9 @@ fn rs_calc_gsea_stats(
     gsea_param: f64,
     return_leading_edge: bool,
 ) -> List {
-    let n = stats.len();
-    let m = gs_idx.len();
-    let r_adj: Vec<f64> = gs_idx
-        .iter()
-        .map(|i| stats[(*i - 1) as usize].abs().powf(gsea_param))
-        .collect();
-    let nr: f64 = r_adj.iter().sum();
-    let r_cum_sum: Vec<f64> = if nr == 0.0 {
-        gs_idx
-            .iter()
-            .enumerate()
-            .map(|(i, _)| i as f64 / r_adj.len() as f64)
-            .collect()
-    } else {
-        cumsum(&r_adj).iter().map(|x| x / nr).collect()
-    };
-    let top_tmp: Vec<f64> = gs_idx
-        .iter()
-        .enumerate()
-        .map(|(i, x)| (*x as f64 - (i + 1) as f64) / (n as f64 - m as f64))
-        .collect();
-    let tops: Vec<f64> = r_cum_sum
-        .iter()
-        .zip(top_tmp.iter())
-        .map(|(x1, x2)| x1 - x2)
-        .collect();
-    let bottoms: Vec<f64> = if nr == 0.0 {
-        tops.iter().map(|x| x - (1.0 / m as f64)).collect()
-    } else {
-        tops.iter()
-            .zip(r_adj.iter())
-            .map(|(top, adj)| top - (adj / nr))
-            .collect()
-    };
-    let max_p = array_max(&tops);
-    let min_p = array_min(&bottoms);
+    let res = calc_gsea_stats(stats, gs_idx, gsea_param, return_leading_edge, true);
 
-    let gene_stat = if max_p == -min_p {
-        0.0
-    } else if max_p > -min_p {
-        max_p
-    } else {
-        min_p
-    };
-    let leading_edge = if return_leading_edge {
-        if max_p > -min_p {
-            let max_idx = bottoms
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(idx, _)| idx)
-                .unwrap_or(0);
-
-            gs_idx.iter().take(max_idx + 1).cloned().collect()
-        } else if max_p < -min_p {
-            let min_idx = bottoms
-                .iter()
-                .enumerate()
-                .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(idx, _)| idx)
-                .unwrap_or(0);
-            gs_idx.iter().skip(min_idx).cloned().rev().collect()
-        } else {
-            Vec::new()
-        }
-    } else {
-        Vec::new()
-    };
-
-    list!(es = gene_stat, leading_edge = leading_edge)
+    list!(es = res.0, leading_edge = res.1)
 }
 
 /// Helper function to generate traditional GSEA-based permutations
@@ -226,7 +160,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// @param pathway_sizes Integer vector. The sizes of the pathways.
 /// @param iters Integer. Number of permutations.
 /// @param gsea_param Float. The Gene Set Enrichment parameter.
-/// @param seed Integer For reproducibility purposes
+/// @param seed Integer. For reproducibility purposes
 ///
 /// @return List with the following elements
 /// \itemize{
@@ -239,7 +173,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 ///
 /// @export
 #[extendr]
-pub fn rs_calc_gsea_stat_cumulative_batch(
+fn rs_calc_gsea_stat_cumulative_batch(
     stats: &[f64],
     pathway_scores: &[f64],
     pathway_sizes: &[i32],
@@ -270,6 +204,131 @@ pub fn rs_calc_gsea_stat_cumulative_batch(
     ))
 }
 
+/// Run fgsea simple method for gene ontology with elimination method
+///
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param levels A character vector representing the levels to iterate through.
+/// The order will be the one the iterations are happening in.
+/// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+/// @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+/// @param elim_threshold p-value below which the elimination procedure shall be
+/// applied to the ancestors.
+/// @param min_size Minimum size of the gene ontology term for testing.
+/// @param max_size Maximum size of the gene ontology term for testing. Setting this
+/// parameter to large values will slow the function down.
+/// @param iters Integer. Number of random permutations for the fgsea simple method
+/// to use
+/// @param seed Integer. For reproducibility purposes.
+/// @param debug Boolean that will provide additional console information for
+/// debugging purposes.
+///
+/// @return List with the following elements
+/// \itemize{
+///     \item go_ids The name of the tested gene ontology identifer.
+///     \item es The enrichment scores for the pathway
+///     \item nes The normalised enrichment scores for the pathway
+///     \item size The pathway sizes (after elimination!).
+///     \item pvals The p-values for this pathway based on permutation
+///     testing
+///     \item leading_edge A list of the index positions of the leading edge
+///     genes for this given GO term.
+/// }
+///
+/// @export
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_geom_elim_fgsea_simple(
+    stats: Robj,
+    levels: Vec<String>,
+    go_obj: Robj,
+    gsea_param: f64,
+    elim_threshold: f64,
+    min_size: usize,
+    max_size: usize,
+    iters: usize,
+    seed: u64,
+    debug: bool,
+) -> extendr_api::Result<List> {
+    let vec_data = r_named_vec_data(stats)?;
+
+    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
+
+    let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
+
+    let n = vec_data.1.len();
+
+    let shared_perm =
+        create_perm_es_simple(&vec_data.1, gsea_param, iters, max_size, n, seed, true);
+
+    let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
+
+    let stat_name_indices: HashMap<&String, usize> = vec_data
+        .0
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name, i))
+        .collect();
+
+    if debug {
+        println!("Shared permutations generated");
+    }
+
+    let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
+    let mut es: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut nes: Vec<Vec<Option<f64>>> = Vec::with_capacity(levels.len());
+    let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
+
+    for level in levels {
+        if debug {
+            println!("I am processing level: {:?}?", level);
+        }
+
+        let level_res = process_ontology_level_fgsea_simple(
+            &vec_data.1,
+            &stat_name_indices,
+            gsea_param,
+            &level,
+            &mut go_obj,
+            &go_shared_perm,
+            min_size,
+            max_size,
+            elim_threshold,
+            debug,
+        )?;
+
+        go_ids.push(level_res.go_ids);
+        es.push(level_res.es);
+        nes.push(level_res.nes);
+        size.push(level_res.size);
+        pvals.push(level_res.pvals);
+        leading_edge.push(level_res.leading_edge);
+    }
+
+    let go_ids: Vec<String> = flatten_vector(go_ids);
+    let es: Vec<f64> = flatten_vector(es);
+    let nes: Vec<Option<f64>> = flatten_vector(nes);
+    let size: Vec<usize> = flatten_vector(size);
+    let pvals: Vec<f64> = flatten_vector(pvals);
+    let leading_edge: Vec<Vec<i32>> = flatten_vector(leading_edge);
+
+    let mut leading_edge_list = List::new(leading_edge.len());
+
+    for (i, x) in leading_edge.iter().enumerate() {
+        leading_edge_list.set_elt(i, Robj::from(x.clone()))?;
+    }
+
+    Ok(list!(
+        go_id = go_ids,
+        es = es,
+        nes = nes,
+        size = size,
+        pvals = pvals,
+        leading_edge = leading_edge_list
+    ))
+}
+
 extendr_module! {
     mod fun_fgsea;
     fn rs_calc_es;
@@ -277,4 +336,5 @@ extendr_module! {
     fn rs_calc_gsea_stats;
     fn rs_calc_gsea_stat_cumulative_batch;
     fn rs_calc_gsea_stat_traditional_batch;
+    fn rs_geom_elim_fgsea_simple;
 }

@@ -1,6 +1,20 @@
 # *bixverse* change log
 
-*Last update: 05.05.2025* </br>
+*Last update: 15.05.2025* </br>
+
+### Version **0.0.1.2**
+
+**Beta release v2** 
+
+#### New features
+
+- Implementation for fgsea simple on the gene ontology with elimination method.
+- Improvement in the gene ontology elimination methods to reduce unneeded 
+copying.
+
+#### Bug fixes, documentation updates
+
+- Minor documentation updates and fixes.
 
 ### Version **0.0.1.1**
 

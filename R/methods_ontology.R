@@ -75,7 +75,11 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
       sim_type = sim_type
     )
 
-    similarities_dt <- setDT(similarities[c("term1", "term2", "filtered_sim")])
+    similarities_dt <- data.table::setDT(similarities[c(
+      "term1",
+      "term2",
+      "filtered_sim"
+    )])
 
     S7::prop(object, "semantic_similarities") <- similarities_dt
     S7::prop(object, "params")[["semantic_similarity"]] <- params
@@ -141,18 +145,24 @@ calculate_semantic_sim <- function(
 
 ## helpers ---------------------------------------------------------------------
 
-#' Return ancestor terms from an ontology
+#' Return ancestry terms from an ontology
 #'
-#' @description this function will return all ancestor terms based on a provided
-#' data.table with parent-child terms
+#' @description This function will return all ancestors and descendants based on
+#' a provided data.table with parent-child terms
 #'
 #' @param parent_child_dt data.table. The data.table with column parent and
 #' child.
 #'
-#' @return A named list with ancestor terms as values
+#' @return A list with
+#' \itemize{
+#'  \item ancestors A list with all ancestor terms.
+#'  \item descendants A list with all descendant terms.
+#' }
 #'
 #' @export
 get_ontology_ancestry <- function(parent_child_dt) {
+  . <- NULL
+
   checkmate::assertDataTable(parent_child_dt)
   checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
 

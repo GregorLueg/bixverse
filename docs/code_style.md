@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 05.05.2025* </br>
+*Last update: 15.05.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -72,7 +72,7 @@ that can already go a long way to make workflows more efficient (though not as
 **brrrrrr** as using Rust).
 4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
 over tibble and/or data.frame. *"Yeah, but I like dplyr and the tidyverse."* 
-We get it... But thespeed-ups, increased memory efficacy, feature richness of
+We get it... But the speed-ups, increased memory efficacy, feature richness of
 data.table are just too big to not use when writing code bases from broader usage.
 data.table also inherits all of the data.frame functionality and most dplyr code
 works with it, making it easy for users to jump to tidyverse when they want to.

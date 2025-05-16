@@ -132,7 +132,7 @@ fn rs_hypergeom_test_list(
 /// tested.
 /// @param elim_threshold p-value below which the elimination procedure shall be
 /// applied to the ancestors.
-/// @param debug boolean that will provide additional console information for
+/// @param debug Boolean that will provide additional console information for
 /// debugging purposes.
 ///
 /// @return A list containing:
@@ -157,11 +157,7 @@ fn rs_gse_geom_elim(
 ) -> extendr_api::Result<List> {
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
 
-    let mut go_obj = GeneOntology {
-        go_to_gene,
-        ancestors: &ancestors_map,
-        levels: &levels_map,
-    };
+    let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
@@ -258,11 +254,7 @@ fn rs_gse_geom_elim_list(
         .par_iter()
         .map(|targets| {
             // Create necessary mutables
-            let mut go_obj = GeneOntology {
-                go_to_gene: go_data.0.clone(),
-                ancestors: &go_data.1,
-                levels: &go_data.2,
-            };
+            let mut go_obj = GeneOntology::new(go_data.0.clone(), &go_data.1, &go_data.2);
 
             let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
             let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());

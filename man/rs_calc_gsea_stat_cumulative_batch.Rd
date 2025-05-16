@@ -26,7 +26,7 @@ pathways}
 
 \item{gsea_param}{Float. The Gene Set Enrichment parameter.}
 
-\item{seed}{Integer For reproducibility purposes}
+\item{seed}{Integer. For reproducibility purposes}
 }
 \value{
 List with the following elements
