@@ -75,7 +75,11 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
       sim_type = sim_type
     )
 
-    similarities_dt <- setDT(similarities[c("term1", "term2", "filtered_sim")])
+    similarities_dt <- data.table::setDT(similarities[c(
+      "term1",
+      "term2",
+      "filtered_sim"
+    )])
 
     S7::prop(object, "semantic_similarities") <- similarities_dt
     S7::prop(object, "params")[["semantic_similarity"]] <- params
@@ -157,6 +161,8 @@ calculate_semantic_sim <- function(
 #'
 #' @export
 get_ontology_ancestry <- function(parent_child_dt) {
+  . <- NULL
+
   checkmate::assertDataTable(parent_child_dt)
   checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
 

@@ -18,7 +18,7 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.1.1**. With this release, we are
+We have now officially released version **0.0.1.2**. With this release, we are
 now at a beta stage of the package. Test coverage has increased, "features" 
 (i.e., bugs) have been removed, the Rust code was made faster, and new features 
 have been included (see Change log below).
