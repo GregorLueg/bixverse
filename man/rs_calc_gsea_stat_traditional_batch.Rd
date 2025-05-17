@@ -31,6 +31,9 @@ List with the following elements
 \item es Enrichment scores for the gene sets
 \item nes Normalised enrichment scores for the gene sets
 \item pvals The calculated p-values.
+\item n_more_extreme Number of times the enrichment score was
+bigger than the permutation.
+\item size Pathway size.
 }
 }
 \description{

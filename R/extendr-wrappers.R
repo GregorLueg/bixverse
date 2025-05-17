@@ -62,11 +62,12 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #'
 #' @return List with the following elements
 #' \itemize{
-#'     \item es The enrichment scores for the pathway
-#'     \item nes The normalised enrichment scores for the pathway
-#'     \item pvals The p-values for this pathway based on permutation
-#'     testing
-#'     \item size The pathway sizes.
+#'     \item es Enrichment scores for the gene sets
+#'     \item nes Normalised enrichment scores for the gene sets
+#'     \item pvals The calculated p-values.
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger than the permutation.
+#'     \item size Pathway size.
 #' }
 #'
 #' @export
@@ -87,10 +88,16 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #'     \item es Enrichment scores for the gene sets
 #'     \item nes Normalised enrichment scores for the gene sets
 #'     \item pvals The calculated p-values.
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger than the permutation.
+#'     \item size Pathway size.
 #' }
 #'
 #' @export
 rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
+
+#' @export
+rs_calc_multi_level <- function(es, stats, pathway_size, sample_size, seed, eps, sign) .Call(wrap__rs_calc_multi_level, es, stats, pathway_size, sample_size, seed, eps, sign)
 
 #' Run fgsea simple method for gene ontology with elimination method
 #'

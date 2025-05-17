@@ -47,63 +47,219 @@ fgsea_scores_original <- fgsea::fgseaSimple(
 )
 tictoc::toc()
 
-plot(results_traditional$es, results_simple_fgsea$es)
 
-plot(results_traditional$pvals, results_simple_fgsea$pvals)
+# Original fgsea multi level code -----
 
-plot(fgsea_scores_original$pval, results_simple_fgsea$pvals)
+set.seed(123)
 
-# Elimination method for the gene ontology -------------------------------------
+stat_size <- 20000
 
-devtools::load_all()
+stats <- setNames(
+  sort(rnorm(stat_size), decreasing = TRUE),
+  paste0("gene", 1:stat_size)
+)
+
+number_gene_sets <- 25
+min_size <- 50
+max_size <- 250
+
+pathway_random <- purrr::map(
+  seq_len(number_gene_sets),
+  ~ {
+    sample(names(stats), sample(min_size:max_size, 1))
+  }
+)
+
+names(pathway_random) <- paste0("pathway", 1:number_gene_sets)
+
+
+pathways = pathway_random
+stats = stats
+sampleSize = 101
+minSize = 1
+maxSize = length(stats) - 1
+eps = 1e-50
+scoreType = "std"
+nproc = 0
+gseaParam = 1
+BPPARAM = NULL
+nPermSimple = 1000
+absEps = NULL
+
+pp <- fgsea:::preparePathwaysAndStats(
+  pathways,
+  stats,
+  minSize,
+  maxSize,
+  gseaParam,
+  scoreType
+)
+
+pathwaysFiltered <- pp$filtered
+pathwaysSizes <- pp$sizes
+stats <- pp$stats
+m <- length(pathwaysFiltered)
+
+minSize <- max(minSize, 1)
+eps <- max(0, min(1, eps))
+
+if (sampleSize %% 2 == 0) {
+  sampleSize <- sampleSize + 1
+}
+
+gseaStatRes <- do.call(
+  rbind,
+  lapply(
+    pathwaysFiltered,
+    fgsea::calcGseaStat,
+    stats = stats,
+    returnLeadingEdge = TRUE,
+    scoreType = scoreType
+  )
+)
+
+leadingEdges <- mapply(
+  "[",
+  list(names(stats)),
+  gseaStatRes[, "leadingEdge"],
+  SIMPLIFY = FALSE
+)
+pathwayScores <- unlist(gseaStatRes[, "res"])
+
+seeds <- sample.int(10^9, 1)
+# BPPARAM <- setUpBPPARAM(nproc = nproc, BPPARAM = BPPARAM)
+
+simpleFgseaRes <- fgsea:::fgseaSimpleImpl(
+  pathwayScores = pathwayScores,
+  pathwaysSizes = pathwaysSizes,
+  pathwaysFiltered = pathwaysFiltered,
+  leadingEdges = leadingEdges,
+  permPerProc = nPermSimple,
+  seeds = seeds,
+  toKeepLength = m,
+  stats = stats,
+  BPPARAM = BiocParallel::SerialParam(),
+  scoreType = scoreType
+)
+
+switch(
+  scoreType,
+  std = simpleFgseaRes[, modeFraction := ifelse(ES >= 0, nGeZero, nLeZero)],
+  pos = simpleFgseaRes[, modeFraction := nGeZero],
+  neg = simpleFgseaRes[, modeFraction := nLeZero]
+)
+
+simpleFgseaRes[, leZeroMean := NULL]
+simpleFgseaRes[, geZeroMean := NULL]
+simpleFgseaRes[, nLeEs := NULL]
+simpleFgseaRes[, nGeEs := NULL]
+simpleFgseaRes[, nLeZero := NULL]
+simpleFgseaRes[, nGeZero := NULL]
+
+
+leftBorder <- log2(qbeta(
+  0.025,
+  shape1 = simpleFgseaRes$nMoreExtreme,
+  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme + 1
+))
+
+rightBorder <- log2(qbeta(
+  1 - 0.025,
+  shape1 = simpleFgseaRes$nMoreExtreme + 1,
+  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme
+))
+
+crudeEstimator <- log2((simpleFgseaRes$nMoreExtreme + 1) / (nPermSimple + 1))
+
+simpleError <- 0.5 *
+  pmax(crudeEstimator - leftBorder, rightBorder - crudeEstimator)
+
+
+multError <- sapply(
+  (simpleFgseaRes$nMoreExtreme + 1) / (nPermSimple + 1),
+  fgsea::multilevelError,
+  sampleSize
+)
+
+# We do not bother taking these forward as the pvals >= 0.05
+dtSimpleFgsea <- simpleFgseaRes[multError >= simpleError]
+dtSimpleFgsea[,
+  log2err := 1 /
+    log(2) *
+    sqrt(trigamma(nMoreExtreme + 1) - trigamma(nPermSimple + 1))
+]
+dtSimpleFgsea[, modeFraction := NULL]
+
+
+dtMultilevel <- simpleFgseaRes[multError < simpleError]
+dtMultilevel[, "denomProb" := (modeFraction + 1) / (nPermSimple + 1)]
+
+multilevelPathwaysList <- split(dtMultilevel, by = "size")
+
+indxs <- sample(1:length(multilevelPathwaysList))
+multilevelPathwaysList <- multilevelPathwaysList[indxs]
+
+seed = sample.int(1e9, size = 1)
+
+sign <- if (scoreType %in% c("pos", "neg")) TRUE else FALSE
+
+# This is where the magic is happening...
+
+multilevelPathwaysList
+
+cpp.res <- fgsea:::multilevelImpl(
+  multilevelPathwaysList,
+  stats,
+  sampleSize,
+  seed,
+  eps,
+  sign = sign,
+  BPPARAM = BiocParallel::SerialParam()
+)
+
+## Sub function
+
+x = multilevelPathwaysList[[2]]
+
+eps_2 <- eps * min(x$denomProb)
+
+library(qs2)
+
+intermediate_res = list(
+  x = x,
+  stats = stats,
+  sampleSize = sampleSize,
+  seed = 42L,
+  eps = eps_2,
+  sign = sign
+)
+
+qs2::qs_save(intermediate_res, "~/Desktop/test.qs2")
+
+rccp_fun_res = fgsea:::fgseaMultilevelCpp(
+  x[, ES],
+  stats,
+  unique(x[, size]),
+  sampleSize,
+  seed,
+  eps_2,
+  sign
+)
 
 rextendr::document()
 
-go_data_dt <- get_go_human_data()
+tmp <- qs2::qs_read("~/Desktop/test.qs2")
 
-go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+purrr::iwalk(tmp, \(val, name) {
+  assign(name, val, envir = .GlobalEnv)
+})
 
-protein_coding_genes <- unique(unlist(go_data_s7@go_to_genes))
-
-stats <- setNames(
-  sort(rnorm(length(protein_coding_genes)), decreasing = TRUE),
-  protein_coding_genes
-)
-
-levels <- names(S7::prop(go_data_s7, "levels"))
-
-tictoc::tic()
-test_1 <- rs_geom_elim_fgsea_simple(
+rs_res = rs_calc_multi_level(
+  es = x[, ES],
   stats = stats,
-  levels = levels,
-  go_obj = go_data_s7,
-  gsea_param = 1.0,
-  elim_threshold = 0.05,
-  min_size = 5,
-  max_size = 500,
-  iters = 2000,
-  seed = 10101,
-  debug = FALSE
+  pathway_size = unique(x[, size]),
+  sample_size = sampleSize,
+  seed = seed,
+  eps = eps,
+  sign = sign
 )
-tictoc::toc()
-
-leading_edges <- mapply(
-  "[",
-  list(names(stats)),
-  test_1$leading_edge,
-  SIMPLIFY = FALSE
-)
-
-names(test_1)
-
-
-res_dt <- data.table::setDT(test_1[c(
-  "go_id",
-  "es",
-  "nes",
-  "size",
-  "pvals"
-)]) %>%
-  .[, leading_edge := leading_edges]
-
-test_1

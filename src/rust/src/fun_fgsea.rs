@@ -124,6 +124,9 @@ fn rs_calc_gsea_stats(
 ///     \item es Enrichment scores for the gene sets
 ///     \item nes Normalised enrichment scores for the gene sets
 ///     \item pvals The calculated p-values.
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger than the permutation.
+///     \item size Pathway size.
 /// }
 ///
 /// @export
@@ -147,6 +150,7 @@ fn rs_calc_gsea_stat_traditional_batch(
         es = gsea_res.es,
         nes = gsea_res.nes,
         pvals = gsea_res.pvals,
+        n_more_extreme = gsea_res.n_more_extreme,
         size = gsea_res.size
     ))
 }
@@ -164,11 +168,12 @@ fn rs_calc_gsea_stat_traditional_batch(
 ///
 /// @return List with the following elements
 /// \itemize{
-///     \item es The enrichment scores for the pathway
-///     \item nes The normalised enrichment scores for the pathway
-///     \item pvals The p-values for this pathway based on permutation
-///     testing
-///     \item size The pathway sizes.
+///     \item es Enrichment scores for the gene sets
+///     \item nes Normalised enrichment scores for the gene sets
+///     \item pvals The calculated p-values.
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger than the permutation.
+///     \item size Pathway size.
 /// }
 ///
 /// @export
@@ -200,8 +205,28 @@ fn rs_calc_gsea_stat_cumulative_batch(
         es = gsea_res.es,
         nes = gsea_res.nes,
         pvals = gsea_res.pvals,
+        n_more_extreme = gsea_res.n_more_extreme,
         size = gsea_res.size
     ))
+}
+
+/// @export
+#[extendr]
+fn rs_calc_multi_level(
+    es: &[f64],
+    stats: Robj,
+    pathway_size: usize,
+    sample_size: usize,
+    seed: u64,
+    eps: f64,
+    sign: bool,
+) -> extendr_api::Result<List> {
+    let (_, ranks) = r_named_vec_data(stats)?;
+
+    let res: GseaMultiLevelresults =
+        fgsea_multilevel(es, &ranks, pathway_size, sample_size, seed, eps, sign);
+
+    Ok(list!(pvals = res.pvals, is_cp_ge_half = res.is_cp_ge_half))
 }
 
 /// Run fgsea simple method for gene ontology with elimination method
@@ -336,5 +361,6 @@ extendr_module! {
     fn rs_calc_gsea_stats;
     fn rs_calc_gsea_stat_cumulative_batch;
     fn rs_calc_gsea_stat_traditional_batch;
+    fn rs_calc_multi_level;
     fn rs_geom_elim_fgsea_simple;
 }

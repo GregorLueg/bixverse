@@ -31,11 +31,12 @@ pathways}
 \value{
 List with the following elements
 \itemize{
-\item es The enrichment scores for the pathway
-\item nes The normalised enrichment scores for the pathway
-\item pvals The p-values for this pathway based on permutation
-testing
-\item size The pathway sizes.
+\item es Enrichment scores for the gene sets
+\item nes Normalised enrichment scores for the gene sets
+\item pvals The calculated p-values.
+\item n_more_extreme Number of times the enrichment score was
+bigger than the permutation.
+\item size Pathway size.
 }
 }
 \description{
