@@ -127,7 +127,6 @@ leadingEdges <- mapply(
 pathwayScores <- unlist(gseaStatRes[, "res"])
 
 seeds <- sample.int(10^9, 1)
-# BPPARAM <- setUpBPPARAM(nproc = nproc, BPPARAM = BPPARAM)
 
 simpleFgseaRes <- fgsea:::fgseaSimpleImpl(
   pathwayScores = pathwayScores,
@@ -156,17 +155,24 @@ simpleFgseaRes[, nGeEs := NULL]
 simpleFgseaRes[, nLeZero := NULL]
 simpleFgseaRes[, nGeZero := NULL]
 
+rextendr::document()
+
+rs_err_res <- rs_simple_and_multi_err(
+  n_more_extreme = n_more_extreme,
+  nperm = nperm,
+  sample_size = sample_size
+)
 
 leftBorder <- log2(qbeta(
   0.025,
-  shape1 = simpleFgseaRes$nMoreExtreme,
-  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme + 1
+  shape1 = n_more_extreme,
+  shape2 = nperm - n_more_extreme + 1
 ))
 
 rightBorder <- log2(qbeta(
   1 - 0.025,
-  shape1 = simpleFgseaRes$nMoreExtreme + 1,
-  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme
+  shape1 = n_more_extreme + 1,
+  shape2 = nperm - n_more_extreme
 ))
 
 crudeEstimator <- log2((simpleFgseaRes$nMoreExtreme + 1) / (nPermSimple + 1))
@@ -180,6 +186,18 @@ multError <- sapply(
   fgsea::multilevelError,
   sampleSize
 )
+
+plot(
+  rs_err_res$simple_err,
+  simpleError
+)
+
+plot(
+  rs_err_res$multi_err,
+  multError
+)
+
+simpleError
 
 # We do not bother taking these forward as the pvals >= 0.05
 dtSimpleFgsea <- simpleFgseaRes[multError >= simpleError]

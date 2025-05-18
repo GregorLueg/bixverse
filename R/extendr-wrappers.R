@@ -152,6 +152,22 @@ rs_calc_multi_level <- function(es, stats, pathway_size, sample_size, seed, eps,
 #' @export
 rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug)
 
+#' Calculates the simple and multi error for fgsea multi level
+#'
+#' @param n_more_extreme Integer vector. The number of times the ES was larger than the
+#' permutations.
+#' @param nperm Integer. Number of permutations.
+#' @param sample_size Integer. Number of samples.
+#'
+#' @return List with the following elements:
+#' \itemize{
+#'     \item simple_err Vector of simple errors.
+#'     \item multi_err Vector of multi errors.
+#' }
+#'
+#' @export
+rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wrap__rs_simple_and_multi_err, n_more_extreme, nperm, sample_size)
+
 #' Run a single hypergeometric test.
 #'
 #' @description Given a set of target genes, this is a Rust implementation of

@@ -3,20 +3,28 @@ use rand::rngs::StdRng;
 use rand::{seq::SliceRandom, Rng, SeedableRng};
 use rand_distr::Distribution;
 use rayon::prelude::*;
+use statrs::distribution::{Beta, ContinuousCDF};
 use statrs::function::gamma::digamma;
 use std::collections::HashMap;
 
 use crate::utils_rust::{array_max, array_min, cumsum, unique};
+use crate::utils_stats::trigamma;
 
 //////////////////
 // Type aliases //
 //////////////////
 
+/// Type alias for multi level error calculations.
+/// First value is the simple error, second value the multi error.
+pub type MultiLevelErrRes = (Vec<f64>, Vec<f64>);
+
 ////////////////
 // Structures //
 ////////////////
 
-// Results
+/////////////
+// Results //
+/////////////
 
 /// Structure for final GSEA results from any algorithm
 #[derive(Clone, Debug)]
@@ -46,7 +54,9 @@ pub struct GseaMultiLevelresults {
     pub is_cp_ge_half: Vec<bool>,
 }
 
-// Actual structures with implementations
+//////////////////////
+// Struct with impl //
+//////////////////////
 
 /// Structure from the fgsea simple algorithm
 #[derive(Clone, Debug)]
@@ -1339,8 +1349,16 @@ fn calc_log_correction(
     }
 }
 
+/// Calculates multilevel error for a given p-value and sample size
+fn multilevel_error(pval: &f64, sample_size: &f64) -> f64 {
+    let floor_term = (-pval.log2() + 1.0).floor();
+    let trigamma_diff = trigamma((sample_size + 1.0) / 2.0) - trigamma(sample_size + 1.0);
+
+    (floor_term * trigamma_diff).sqrt() / f64::ln(2.0)
+}
+
 /// Function to do the multi-level magic in fgsea
-pub fn fgsea_multilevel(
+pub fn fgsea_multilevel_helper(
     enrichment_scores: &[f64],
     ranks: &[f64],
     pathway_size: usize,
@@ -1390,4 +1408,55 @@ pub fn fgsea_multilevel(
         pvals: pval_res,
         is_cp_ge_half,
     }
+}
+
+/// Calculates the simple and multi error in Rust
+pub fn calc_simple_and_multi_error(
+    n_more_extreme: &[usize],
+    nperm: usize,
+    sample_size: usize,
+) -> MultiLevelErrRes {
+    let no_tests = n_more_extreme.len();
+    let n_more_extreme_f64: Vec<f64> = n_more_extreme.iter().map(|x| *x as f64).collect();
+    let nperm_f64 = nperm as f64;
+    let sample_size_f64 = sample_size as f64;
+
+    let mut left_border = Vec::with_capacity(no_tests);
+    let mut right_border = Vec::with_capacity(no_tests);
+    let mut crude_est = Vec::with_capacity(no_tests);
+    for n in &n_more_extreme_f64 {
+        // Left border
+        if n > &0.0 {
+            let beta = Beta::new(*n, nperm_f64 - n + 1.0).unwrap();
+            left_border.push(beta.inverse_cdf(0.025).log2());
+        } else {
+            // Need to deal with special case of n = 0; this then becomes neg infinity
+            left_border.push(f64::NEG_INFINITY);
+        }
+        // Right broder
+        let beta = Beta::new(n + 1.0, nperm_f64 - n).unwrap();
+        right_border.push(beta.inverse_cdf(1.0 - 0.025).log2());
+        // Crude
+        crude_est.push(((n + 1.0) / (nperm_f64 + 1.0)).log2());
+    }
+
+    let mut simple_err = Vec::with_capacity(no_tests);
+    for i in 0..no_tests {
+        simple_err.push(
+            0.5 * f64::max(
+                crude_est[i] - left_border[i],
+                right_border[i] - crude_est[i],
+            ),
+        );
+    }
+
+    let multi_err: Vec<f64> = n_more_extreme_f64
+        .iter()
+        .map(|n| {
+            let pval = (*n + 1.0) / (nperm_f64 + 1.0);
+            multilevel_error(&pval, &sample_size_f64)
+        })
+        .collect();
+
+    (simple_err, multi_err)
 }

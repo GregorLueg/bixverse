@@ -242,10 +242,38 @@ fn rs_calc_multi_level(
     let (_, ranks) = r_named_vec_data(stats)?;
 
     let res: GseaMultiLevelresults =
-        fgsea_multilevel(es, &ranks, pathway_size, sample_size, seed, eps, sign);
+        fgsea_multilevel_helper(es, &ranks, pathway_size, sample_size, seed, eps, sign);
 
     Ok(list!(pvals = res.pvals, is_cp_ge_half = res.is_cp_ge_half))
 }
+
+/// Calculates the simple and multi error for fgsea multi level
+///
+/// @param n_more_extreme Integer vector. The number of times the ES was larger than the
+/// permutations.
+/// @param nperm Integer. Number of permutations.
+/// @param sample_size Integer. Number of samples.
+///
+/// @return List with the following elements:
+/// \itemize{
+///     \item simple_err Vector of simple errors.
+///     \item multi_err Vector of multi errors.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: usize) -> List {
+    // Conversion needed
+    let n_more_extreme: Vec<usize> = n_more_extreme.iter().map(|x| *x as usize).collect();
+
+    let res: MultiLevelErrRes = calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
+
+    list!(simple_err = res.0, multi_err = res.1)
+}
+
+/////////////////////////
+// Core elim functions //
+/////////////////////////
 
 /// Run fgsea simple method for gene ontology with elimination method
 ///
@@ -387,4 +415,5 @@ extendr_module! {
     fn rs_calc_gsea_stat_traditional_batch;
     fn rs_calc_multi_level;
     fn rs_geom_elim_fgsea_simple;
+    fn rs_simple_and_multi_err;
 }
