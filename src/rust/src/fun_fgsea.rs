@@ -125,7 +125,7 @@ fn rs_calc_gsea_stats(
 ///     \item nes Normalised enrichment scores for the gene sets
 ///     \item pvals The calculated p-values.
 ///     \item n_more_extreme Number of times the enrichment score was
-///     bigger than the permutation.
+///     bigger or smaller than the permutation (pending sign).
 ///     \item size Pathway size.
 /// }
 ///
@@ -172,7 +172,7 @@ fn rs_calc_gsea_stat_traditional_batch(
 ///     \item nes Normalised enrichment scores for the gene sets
 ///     \item pvals The calculated p-values.
 ///     \item n_more_extreme Number of times the enrichment score was
-///     bigger than the permutation.
+///     bigger or smaller than the permutation (pending sign).
 ///     \item size Pathway size.
 /// }
 ///
@@ -210,6 +210,24 @@ fn rs_calc_gsea_stat_cumulative_batch(
     ))
 }
 
+/// Calculates p-values for pre-processed data
+///
+/// @param es Numerical vector. The enrichment scores of the pathways of that specific size
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param pathway_size Integer. The size of the pathways to test.
+/// @param sample_size Integer. The size of the random gene sets to test against.
+/// @param seed Integer. Random seed.
+/// @param eps Float. Boundary for calculating the p-value.
+/// @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
+/// `This option will be used in future implementations.`, but is used in the function.
+///
+/// @return List with the following elements:
+/// \itemize{
+///     \item pvals The pvalues.
+///     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+///     overesimation of the p-values.
+/// }
+///
 /// @export
 #[extendr]
 fn rs_calc_multi_level(
@@ -255,6 +273,8 @@ fn rs_calc_multi_level(
 ///     \item size The pathway sizes (after elimination!).
 ///     \item pvals The p-values for this pathway based on permutation
 ///     testing
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger or smaller than the permutation (pending sign).
 ///     \item leading_edge A list of the index positions of the leading edge
 ///     genes for this given GO term.
 /// }
@@ -303,6 +323,7 @@ fn rs_geom_elim_fgsea_simple(
     let mut nes: Vec<Vec<Option<f64>>> = Vec::with_capacity(levels.len());
     let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut n_more_extreme: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
@@ -328,6 +349,7 @@ fn rs_geom_elim_fgsea_simple(
         nes.push(level_res.nes);
         size.push(level_res.size);
         pvals.push(level_res.pvals);
+        n_more_extreme.push(level_res.n_more_extreme);
         leading_edge.push(level_res.leading_edge);
     }
 
@@ -336,6 +358,7 @@ fn rs_geom_elim_fgsea_simple(
     let nes: Vec<Option<f64>> = flatten_vector(nes);
     let size: Vec<usize> = flatten_vector(size);
     let pvals: Vec<f64> = flatten_vector(pvals);
+    let n_more_extreme: Vec<usize> = flatten_vector(n_more_extreme);
     let leading_edge: Vec<Vec<i32>> = flatten_vector(leading_edge);
 
     let mut leading_edge_list = List::new(leading_edge.len());
@@ -350,6 +373,7 @@ fn rs_geom_elim_fgsea_simple(
         nes = nes,
         size = size,
         pvals = pvals,
+        n_more_extreme = n_more_extreme,
         leading_edge = leading_edge_list
     ))
 }

@@ -66,7 +66,7 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #'     \item nes Normalised enrichment scores for the gene sets
 #'     \item pvals The calculated p-values.
 #'     \item n_more_extreme Number of times the enrichment score was
-#'     bigger than the permutation.
+#'     bigger or smaller than the permutation (pending sign).
 #'     \item size Pathway size.
 #' }
 #'
@@ -89,13 +89,31 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #'     \item nes Normalised enrichment scores for the gene sets
 #'     \item pvals The calculated p-values.
 #'     \item n_more_extreme Number of times the enrichment score was
-#'     bigger than the permutation.
+#'     bigger or smaller than the permutation (pending sign).
 #'     \item size Pathway size.
 #' }
 #'
 #' @export
 rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
 
+#' Calculates p-values for pre-processed data
+#'
+#' @param es Numerical vector. The enrichment scores of the pathways of that specific size
+#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param pathway_size Integer. The size of the pathways to test.
+#' @param sample_size Integer. The size of the random gene sets to test against.
+#' @param seed Integer. Random seed.
+#' @param eps Float. Boundary for calculating the p-value.
+#' @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
+#' `This option will be used in future implementations.`, but is used in the function.
+#'
+#' @return List with the following elements:
+#' \itemize{
+#'     \item pvals The pvalues.
+#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+#'     overesimation of the p-values.
+#' }
+#'
 #' @export
 rs_calc_multi_level <- function(es, stats, pathway_size, sample_size, seed, eps, sign) .Call(wrap__rs_calc_multi_level, es, stats, pathway_size, sample_size, seed, eps, sign)
 
@@ -125,6 +143,8 @@ rs_calc_multi_level <- function(es, stats, pathway_size, sample_size, seed, eps,
 #'     \item size The pathway sizes (after elimination!).
 #'     \item pvals The p-values for this pathway based on permutation
 #'     testing
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger or smaller than the permutation (pending sign).
 #'     \item leading_edge A list of the index positions of the leading edge
 #'     genes for this given GO term.
 #' }

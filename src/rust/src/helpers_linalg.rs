@@ -299,6 +299,7 @@ pub fn rbf_iterate_epsilons(
             let affinity_adj = match rbf_fun {
                 RbfType::Gaussian => rbf_gaussian(dist, epsilon),
                 RbfType::Bump => rbf_bump(dist, epsilon),
+                RbfType::InverseQuadratic => rbf_inverse_quadratic(dist, epsilon),
             };
             let affinity_adj_mat = upper_triangle_to_sym_faer(&affinity_adj, shift, n);
             col_sums(&affinity_adj_mat)

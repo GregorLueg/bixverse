@@ -16,6 +16,8 @@ use crate::utils_rust::{array_max, array_min, cumsum, unique};
 // Structures //
 ////////////////
 
+// Results
+
 /// Structure for final GSEA results from any algorithm
 #[derive(Clone, Debug)]
 pub struct GseaResults<'a> {
@@ -43,6 +45,8 @@ pub struct GseaMultiLevelresults {
     pub pvals: Vec<f64>,
     pub is_cp_ge_half: Vec<bool>,
 }
+
+// Actual structures with implementations
 
 /// Structure from the fgsea simple algorithm
 #[derive(Clone, Debug)]

@@ -1,6 +1,19 @@
 # *bixverse* change log
 
-*Last update: 15.05.2025* </br>
+*Last update: 17.05.2025* </br>
+
+### Version **0.0.1.3**
+
+**Beta release v3** 
+
+#### New features
+
+- Implementation for fgsea multi level method. Additionally, n_more_extreme
+is now being returned by the GSEA functions.
+
+#### Bug fixes, documentation updates
+
+...
 
 ### Version **0.0.1.2**
 

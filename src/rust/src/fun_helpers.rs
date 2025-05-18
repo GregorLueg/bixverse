@@ -94,6 +94,7 @@ fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Resu
     let res: Vec<f64> = match rbf_fun {
         RbfType::Gaussian => rbf_gaussian(x, &epsilon),
         RbfType::Bump => rbf_bump(x, &epsilon),
+        RbfType::InverseQuadratic => rbf_inverse_quadratic(x, &epsilon),
     };
 
     Ok(res)

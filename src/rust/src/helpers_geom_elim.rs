@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::helpers_fgsea::{
-    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaResults,
+    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaResults,
 };
 use crate::helpers_hypergeom::*;
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
@@ -43,6 +43,7 @@ pub struct GoElimLevelResultsGsea {
     pub nes: Vec<Option<f64>>,
     pub size: Vec<usize>,
     pub pvals: Vec<f64>,
+    pub n_more_extreme: Vec<usize>,
     pub leading_edge: Vec<Vec<i32>>,
 }
 
@@ -118,10 +119,11 @@ impl<'a> GeneOntologyRandomPerm<'a> {
         pathway_sizes: &'b [usize],
     ) -> Result<GseaResults<'b>> {
         // Dual lifetimes fun...
-        let gsea_batch_res =
+        let gsea_batch_res: GseaBatchResults =
             calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, self.random_perm)?;
 
-        let gsea_res = calculate_nes_es_pval(pathway_scores, pathway_sizes, &gsea_batch_res);
+        let gsea_res: GseaResults<'_> =
+            calculate_nes_es_pval(pathway_scores, pathway_sizes, &gsea_batch_res);
 
         Ok(gsea_res)
     }
@@ -398,6 +400,7 @@ pub fn process_ontology_level_fgsea_simple(
         nes: level_res.nes,
         size: pathway_sizes.clone(),
         pvals: level_res.pvals,
+        n_more_extreme: level_res.n_more_extreme,
         leading_edge: leading_edge_indices,
     })
 }

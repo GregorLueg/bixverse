@@ -122,6 +122,7 @@ pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
 pub enum RbfType {
     Gaussian,
     Bump,
+    InverseQuadratic,
 }
 
 /// Parsing the RBF function
@@ -129,6 +130,7 @@ pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
     match s.to_lowercase().as_str() {
         "gaussian" => Some(RbfType::Gaussian),
         "bump" => Some(RbfType::Bump),
+        "inverse_quadratic" => Some(RbfType::InverseQuadratic),
         _ => None,
     }
 }
@@ -141,7 +143,7 @@ pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Bump Radial Basis function
-/// Will set dist >= 1 / epsilon to 0
+/// Will set dist >= 1 / epsilon to 0, i.e., is a sparse RBF
 pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| {
@@ -151,5 +153,12 @@ pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
                 0_f64
             }
         })
+        .collect()
+}
+
+/// Inverse quadratic RBF
+pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
+    dist.par_iter()
+        .map(|x| 1.0 / (1.0 + (*epsilon * x).powi(2)))
         .collect()
 }

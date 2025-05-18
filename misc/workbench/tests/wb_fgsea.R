@@ -59,7 +59,7 @@ stats <- setNames(
   paste0("gene", 1:stat_size)
 )
 
-number_gene_sets <- 25
+number_gene_sets <- 500
 min_size <- 50
 max_size <- 250
 
@@ -205,46 +205,66 @@ sign <- if (scoreType %in% c("pos", "neg")) TRUE else FALSE
 
 # This is where the magic is happening...
 
+pathways = unlist(purrr::map(
+  multilevelPathwaysList,
+  ~ {
+    .x$pathway
+  }
+))
+
 multilevelPathwaysList
 
 cpp.res <- fgsea:::multilevelImpl(
   multilevelPathwaysList,
   stats,
-  sampleSize,
+  201,
   seed,
   eps,
   sign = sign,
   BPPARAM = BiocParallel::SerialParam()
 )
 
-## Sub function
+library(data.table)
+library(magrittr)
 
-x = multilevelPathwaysList[[2]]
+cpp_res <- purrr::imap_dfr(cpp.res, \(val, name) {
+  val <- data.table::as.data.table(val)
+  val[, size := name]
+}) %>%
+  as.data.table()
 
-eps_2 <- eps * min(x$denomProb)
+length(pathways)
 
-library(qs2)
+cpp_res[, pathway := pathways]
 
-intermediate_res = list(
-  x = x,
-  stats = stats,
-  sampleSize = sampleSize,
-  seed = 42L,
-  eps = eps_2,
-  sign = sign
-)
+rs_res <- purrr::map(multilevelPathwaysList, \(x) {
+  as.data.table(rs_calc_multi_level(
+    es = x[, ES],
+    stats = stats,
+    pathway_size = unique(x[, size]),
+    sample_size = 201,
+    seed = 10101L,
+    eps = eps,
+    sign = sign
+  ))
+})
 
-qs2::qs_save(intermediate_res, "~/Desktop/test.qs2")
+rs_res_dt = rbindlist(rs_res)[, pathway := pathways]
 
-rccp_fun_res = fgsea:::fgseaMultilevelCpp(
-  x[, ES],
-  stats,
-  unique(x[, size]),
-  sampleSize,
-  seed,
-  eps_2,
-  sign
-)
+rs_res_dt
+
+cpp_res
+
+plot(cpp_res$cppMPval, rs_res_dt$pvals)
+
+cor(cpp_res$cppMPval, rs_res_dt$pvals, method = 'spearman')
+
+names(rs_res)
+
+rs_res[["106"]]
+
+cpp.res[["106"]]
+
 
 rextendr::document()
 
@@ -263,3 +283,20 @@ rs_res = rs_calc_multi_level(
   eps = eps,
   sign = sign
 )
+
+cors <- seq(from = 0, to = 1, by = 0.01)
+dist <- 1 - cors
+
+gaussian <- rs_rbf_function(dist, 2, "gaussian")
+
+plot(dist, gaussian)
+
+bump <- rs_rbf_function(dist, 2, "bump")
+
+plot(dist, bump)
+
+quadratic <- rs_rbf_function(dist, 2, "inverse_quadratic")
+
+plot(dist, quadratic)
+
+cors
