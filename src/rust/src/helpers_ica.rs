@@ -87,7 +87,7 @@ pub fn prepare_whitening(
 ) -> (faer::Mat<f64>, faer::Mat<f64>) {
     let n = x.nrows();
 
-    let centered = scale_matrix_col(x, false);
+    let centered = scale_matrix_col(&x, false);
 
     let centered = centered.transpose();
 

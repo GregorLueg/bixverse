@@ -32,7 +32,7 @@ pub struct DiffCorRes {
 //////////////////////////////
 
 /// Calculates the columns means of a matrix and returns it as Vec<f64>
-pub fn col_means(mat: MatRef<f64>) -> Vec<f64> {
+pub fn col_means(mat: MatRef<'_, f64>) -> Vec<f64> {
     let n_rows = mat.nrows();
     let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
     let means = (ones.transpose() * mat) / n_rows as f64;
@@ -50,7 +50,7 @@ pub fn col_sums(mat: &Mat<f64>) -> Vec<f64> {
 }
 
 /// Calculate the column standard deviations
-pub fn col_sds(mat: MatRef<f64>) -> Vec<f64> {
+pub fn col_sds(mat: MatRef<'_, f64>) -> Vec<f64> {
     let n = mat.nrows() as f64;
     let n_cols = mat.ncols();
 
@@ -76,7 +76,7 @@ pub fn col_sds(mat: MatRef<f64>) -> Vec<f64> {
 }
 
 /// Scale a matrix by its mean (column wise)
-pub fn scale_matrix_col(mat: MatRef<f64>, scale_sd: bool) -> Mat<f64> {
+pub fn scale_matrix_col(mat: &MatRef<'_, f64>, scale_sd: bool) -> Mat<f64> {
     let n_rows = mat.nrows();
     let n_cols = mat.ncols();
 
@@ -123,16 +123,16 @@ pub fn scale_matrix_col(mat: MatRef<f64>, scale_sd: bool) -> Mat<f64> {
 }
 
 /// Calculate the column-wise co-variance
-pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
+pub fn column_covariance(mat: &MatRef<'_, f64>) -> Mat<f64> {
     let n_rows = mat.nrows();
-    let centered = scale_matrix_col(*mat, false);
+    let centered = scale_matrix_col(mat, false);
     let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
 
     covariance
 }
 
 /// Calculate the column-wise correlation. Option to use spearman.
-pub fn column_correlation(mat: MatRef<f64>, spearman: bool) -> Mat<f64> {
+pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
     let mat = if spearman {
         let ranked_vecs: Vec<Vec<f64>> = mat
             .par_col_iter()
@@ -147,13 +147,34 @@ pub fn column_correlation(mat: MatRef<f64>, spearman: bool) -> Mat<f64> {
         mat.cloned()
     };
 
-    let scaled = scale_matrix_col(mat.as_ref(), true);
+    let scaled = scale_matrix_col(&mat.as_ref(), true);
 
     let nrow = scaled.nrows() as f64;
 
     let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
 
     cor
+}
+
+/// Co-variance to cor
+pub fn cov2cor(mat: MatRef<'_, f64>) -> Mat<f64> {
+    let diag_elems = mat.diagonal();
+    let std_devs: Vec<f64> = diag_elems
+        .column_vector()
+        .iter()
+        .map(|x| x.sqrt())
+        .collect();
+    let d = faer_diagonal_from_vec(std_devs);
+
+    let d_inv = Mat::from_fn(d.nrows(), d.ncols(), |i, j| {
+        if i == j {
+            1.0 / d.get(i, j)
+        } else {
+            0.0
+        }
+    });
+
+    &d_inv * mat * &d_inv
 }
 
 /// Calculate differential correlations
@@ -240,7 +261,7 @@ pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64
 /// Implementation of random Singular Value Decomposition to be faster
 /// and computationally WAY more efficient.
 pub fn randomised_svd(
-    x: MatRef<f64>,
+    x: MatRef<'_, f64>,
     rank: usize,
     seed: usize,
     oversampling: Option<usize>,

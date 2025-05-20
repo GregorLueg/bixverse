@@ -40,7 +40,26 @@ fn rs_covariance(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
-    let cor = column_correlation(mat, spearman);
+    let cor = column_correlation(&mat, spearman);
+
+    faer_to_r_matrix(cor.as_ref())
+}
+
+/// Calculates the correlation matrix from the co-variance matrix
+///
+/// @description Calculates the correlation matrix from a co-variance
+/// matrix
+///
+/// @param x R matrix with doubles that is the co-variance matrix
+///
+/// @returns The correlation matrix.
+///
+/// @export
+#[extendr]
+fn rs_cov2cor(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
+    let mat = r_matrix_to_faer(&x);
+
+    let cor = cov2cor(mat);
 
     faer_to_r_matrix(cor.as_ref())
 }
@@ -66,7 +85,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2
 fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: usize) -> Vec<f64> {
     // Calculate the correlations
     let mat = r_matrix_to_faer(&x);
-    let cor = column_correlation(mat, spearman);
+    let cor = column_correlation(&mat, spearman);
     let upper_triangle_indices = upper_triangle_indices(mat.ncols(), shift);
     let mut cor_flat = Vec::new();
     for (&r, &c) in upper_triangle_indices
@@ -119,8 +138,8 @@ fn rs_differential_cor(x_a: RMatrix<f64>, x_b: RMatrix<f64>, spearman: bool) -> 
     let mat_a = r_matrix_to_faer(&x_a);
     let mat_b = r_matrix_to_faer(&x_b);
 
-    let cor_a = column_correlation(mat_a, spearman);
-    let cor_b = column_correlation(mat_b, spearman);
+    let cor_a = column_correlation(&mat_a, spearman);
+    let cor_b = column_correlation(&mat_b, spearman);
 
     let diff_cor = calculate_diff_correlation(&cor_a, &cor_b, n_sample_a, n_sample_b, spearman);
 
@@ -253,7 +272,7 @@ fn rs_random_svd(
 #[extendr]
 fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> List {
     let x = r_matrix_to_faer(&x);
-    let x_scaled = scale_matrix_col(x.as_ref(), scale);
+    let x_scaled = scale_matrix_col(&x.as_ref(), scale);
     let nrow = x_scaled.nrows() as f64;
     let svd_res = x_scaled.thin_svd().unwrap();
     let scores = x_scaled * svd_res.V();
@@ -314,6 +333,7 @@ extendr_module! {
   mod fun_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_cov2cor;
   fn rs_prcomp;
   fn rs_random_svd;
   fn rs_cor_upper_triangle;

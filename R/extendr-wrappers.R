@@ -449,6 +449,18 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' Calculates the correlation matrix from the co-variance matrix
+#'
+#' @description Calculates the correlation matrix from a co-variance
+#' matrix
+#'
+#' @param x R matrix with doubles that is the co-variance matrix
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.

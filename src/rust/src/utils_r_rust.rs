@@ -169,7 +169,7 @@ pub fn r_named_vec_data(named_vec: Robj) -> extendr_api::Result<NamedNumericVec>
 //////////////
 
 /// Transform an R matrix to a Faer one
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
+pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<'_, f64> {
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();

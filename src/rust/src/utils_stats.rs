@@ -94,25 +94,6 @@ pub fn hedge_g_effect(
     (effect_sizes, standard_errors)
 }
 
-/// Transform Z-scores into p-values (assuming normality).
-pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
-    let normal = Normal::new(0.0, 1.0).unwrap();
-    z_scores
-        .iter()
-        .map(|&z| {
-            let abs_z = z.abs();
-            if abs_z > 6.0 {
-                // Deal with numeric precision problems for very large z-scores.
-                let pdf = normal.pdf(abs_z);
-                let p = pdf / abs_z * (1.0 - 1.0 / (abs_z * abs_z));
-                2.0 * p
-            } else {
-                2.0 * (1.0 - normal.cdf(abs_z))
-            }
-        })
-        .collect()
-}
-
 ////////////////////////////
 // Radial Basis functions //
 ////////////////////////////
@@ -192,4 +173,23 @@ pub fn trigamma(x: f64) -> f64 {
     result += -1.0 / (30.0 * xxx * x) + 1.0 / (42.0 * xxx * xx * x) - 1.0 / (30.0 * xxx * xxx * x);
 
     result
+}
+
+/// Transform Z-scores into p-values (assuming normality).
+pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
+    let normal = Normal::new(0.0, 1.0).unwrap();
+    z_scores
+        .iter()
+        .map(|&z| {
+            let abs_z = z.abs();
+            if abs_z > 6.0 {
+                // Deal with numeric precision problems for very large z-scores.
+                let pdf = normal.pdf(abs_z);
+                let p = pdf / abs_z * (1.0 - 1.0 / (abs_z * abs_z));
+                2.0 * p
+            } else {
+                2.0 * (1.0 - normal.cdf(abs_z))
+            }
+        })
+        .collect()
 }

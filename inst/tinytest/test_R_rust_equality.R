@@ -43,6 +43,17 @@ expect_equal(
   info = "Upper triangle class test Rust <> R"
 )
 
+## covariance to cor -----------------------------------------------------------
+
+cov_data <- rs_covariance(mat)
+
+expect_equivalent(
+  current = rs_cov2cor(cov_data),
+  target = cor(mat),
+  info = "cov2cor equivalence test Rust <> R"
+)
+
+
 # hypergeom distributions ------------------------------------------------------
 
 m <- 10
