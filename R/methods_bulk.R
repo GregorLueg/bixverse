@@ -13,6 +13,8 @@
 #' @param grps Factor or character vector. The group vector.
 #'
 #' @returns A data.table with two columns
+#'
+#' @import data.table
 .check_pca_grp_differences <- function(pc1, pc2, grps) {
   # Checks
   checkmate::qassert(pc1, "N+")
@@ -22,12 +24,12 @@
   pca_anova_dt <- if (length(unique(grps)) > 1) {
     pc1_anova_pval <- anova(lm(pc1 ~ grps))$`Pr(>F)`[1]
     pc2_anova_pval <- anova(lm(pc2 ~ grps))$`Pr(>F)`[1]
-    data.table(
+    data.table::data.table(
       pc = c("PC1", "PC2"),
       pvalue = c(pc1_anova_pval, pc2_anova_pval)
     )
   } else {
-    data.table(
+    data.table::data.table(
       pc = c("PC1", "PC2"),
       pvalue = c(NA, NA)
     )
@@ -214,6 +216,8 @@ batch_correction_bulk_dge <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
+#' @import patchwork
+#' @import ggplot2
 S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   object,
   contrast_column,
@@ -293,6 +297,9 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
       by = 'sample_id'
     )
 
+  # Otherwise it continues bugging...
+  library(patchwork)
+
   plot_uncor <- ggplot(data = pca_dt_uncor, mapping = aes(x = PC_1, y = PC_2)) +
     geom_point(
       mapping = aes(col = .data[[contrast_column]]),
@@ -306,9 +313,7 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 
   plot_cor <- ggplot(
     data = pca_dt_cor,
-    mapping = aes(x = PC_1, y = PC_2),
-    size = 3,
-    alpha = 0.7
+    mapping = aes(x = PC_1, y = PC_2)
   ) +
     geom_point(
       mapping = aes(col = .data[[contrast_column]]),

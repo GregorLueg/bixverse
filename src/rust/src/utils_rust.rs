@@ -97,7 +97,6 @@ pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
     ranks
 }
 
-#[allow(dead_code)]
 /// Get unique elements from a slice of any hashable, equatable numeric type.
 pub fn unique<T>(vec: &[T]) -> Vec<T>
 where

@@ -16,15 +16,14 @@ pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 ///////////////////////
 
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
-pub fn split_vector_randomly(vec: Vec<f64>, x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
+pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
     let mut rng = StdRng::seed_from_u64(seed);
-    let mut shuffled = vec.clone();
+    let mut shuffled = vec.to_vec();
     shuffled.shuffle(&mut rng);
 
-    let first_set = shuffled[..x].to_vec();
-    let second_set = shuffled[x..].to_vec();
+    let (first_set, second_set) = shuffled.split_at(x);
 
-    (first_set, second_set)
+    (first_set.to_vec(), second_set.to_vec())
 }
 
 /// Calculate the set similarity. Options are Jaccard (similarity_index = False)
