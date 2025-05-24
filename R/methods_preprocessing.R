@@ -55,7 +55,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   .verbose = TRUE
 ) {
   # Scope checks
-  . <- NULL
+  . <- `:=` <- NULL
   norm_method <- match.arg(norm_method)
   # Checks
   checkmate::assertClass(
@@ -86,7 +86,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   samples <- merge(meta_data, detected_genes_nb, by = "sample_id") %>%
     .[, `:=`(perc_detected_genes = nb_detected_genes / nrow(raw_counts))]
 
-  p1_nb_genes_cohort <- ggplot(
+  p1_nb_genes_cohort <- ggplot2::ggplot(
     samples,
     aes(
       x = .data[[group_col]],
@@ -94,14 +94,17 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
       fill = .data[[group_col]]
     )
   ) +
-    geom_boxplot(alpha = 0.5) +
-    labs(
+    ggplot2::geom_boxplot(alpha = 0.5) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
       x = "Groups",
       y = "Number of genes detected",
       title = "Number of genes by cohort"
     ) +
-    theme_classic() +
-    theme(
+    ggplot2::theme_classic() +
+    ggplot2::theme(
       axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
       legend.position = "none"
     )
@@ -112,7 +115,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   max_perc = mean(samples$perc_detected_genes, na.rm = TRUE) +
     outlier_threshold * sd_samples
 
-  p2_outliers <- ggplot(
+  p2_outliers <- ggplot2::ggplot(
     samples,
     aes(
       x = .data[[group_col]],
@@ -120,20 +123,34 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
       color = .data[[group_col]]
     )
   ) +
-    geom_point(
+    ggplot2::geom_point(
       position = position_jitter(width = 0.2, height = 0, seed = 123),
       size = 3,
       alpha = 0.7
     ) +
-    geom_hline(yintercept = min_perc, color = "red", linetype = "dashed") +
-    geom_hline(yintercept = max_perc, color = "red", linetype = "dashed") +
-    labs(
-      x = "",
+    ggplot2::geom_hline(
+      yintercept = min_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::geom_hline(
+      yintercept = max_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
+      x = "Groups",
       y = "Percentage of genes detected",
       title = "Outlier samples based on %genes detected"
     ) +
-    theme_classic() +
-    theme(legend.position = "bottom", axis.text.x = element_blank())
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    )
 
   outliers <- samples$perc_detected_genes <= min_perc
   if (.verbose)
@@ -395,19 +412,21 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
   }
   plot_df <- S7::prop(object, "processed_data")[["feature_meta"]]
 
-  p <- ggplot(data = plot_df, mapping = aes(x = MAD)) +
-    geom_histogram(
+  p <- ggplot2::ggplot(data = plot_df, mapping = aes(x = MAD)) +
+    ggplot2::geom_histogram(
       mapping = aes(fill = hvg),
       bins = 50L,
       color = "black",
       alpha = 0.7
     ) +
-    scale_fill_manual(values = setNames(c("orange", "grey"), c(TRUE, FALSE))) +
-    ggtitle(
+    ggplot2::scale_fill_manual(
+      values = setNames(c("orange", "grey"), c(TRUE, FALSE))
+    ) +
+    ggplot2::ggtitle(
       "Distribution of MAD across the genes",
       subtitle = "And included genes"
     ) +
-    theme_minimal()
+    ggplot2::theme_minimal()
 
   mad_threshold <- S7::prop(object, "params")[["preprocessing"]][[
     "mad_threshold"
@@ -415,7 +434,7 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 
   if (mad_threshold != "not applicable") {
     p <- p +
-      geom_vline(
+      ggplot2::geom_vline(
         xintercept = mad_threshold,
         linetype = "dashed",
         color = "darkred"

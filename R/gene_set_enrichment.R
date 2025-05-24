@@ -38,7 +38,7 @@ gse_hypergeometric <- function(
   .verbose = FALSE
 ) {
   # Avoid check issues
-  . <- pvals <- fdr <- hits <- target_set_lengths <- NULL
+  . <- `:=` <- pvals <- fdr <- hits <- target_set_lengths <- NULL
   # Input checks
   checkmate::qassert(target_genes, "S+")
   checkmate::assertList(gene_set_list, types = "character")
@@ -130,7 +130,7 @@ gse_hypergeometric_list <- function(
   .verbose = FALSE
 ) {
   # Avoid check issues
-  . <- pvals <- fdr <- target_set_name <- hits <- NULL
+  . <- `:=` <- pvals <- fdr <- target_set_name <- hits <- NULL
   # Input checks
   checkmate::assertList(target_genes_list, types = "character")
   checkmate::qassert(names(target_genes_list), "S+")
@@ -227,14 +227,14 @@ calc_gsea_traditional = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- NULL
+  . <- `:=` <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
   checkmate::assertNames(names(stats))
   checkmate::assertList(pathways, types = "character")
   checkmate::assertNames(names(pathways))
-  assertGSEAParams(gsea_params)
+  bixverse::assertGSEAParams(gsea_params)
 
   c(stats, pathways_clean, pathway_sizes) %<-%
     with(
@@ -317,14 +317,14 @@ calc_fgsea_simple = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- NULL
+  . <- `:=` <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
   checkmate::assertNames(names(stats))
   checkmate::assertList(pathways, types = "character")
   checkmate::assertNames(names(pathways))
-  assertGSEAParams(gsea_params)
+  bixverse::assertGSEAParams(gsea_params)
 
   c(stats, pathways_clean, pathway_sizes) %<-%
     with(
