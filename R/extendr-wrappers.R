@@ -58,7 +58,7 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #' @param pathway_sizes Integer vector. The sizes of the pathways.
 #' @param iters Integer. Number of permutations.
 #' @param gsea_param Float. The Gene Set Enrichment parameter.
-#' @param seed Integer For reproducibility purposes
+#' @param seed Integer. For reproducibility purposes
 #'
 #' @return List with the following elements
 #' \itemize{
@@ -91,6 +91,39 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #'
 #' @export
 rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
+
+#' Run fgsea simple method for gene ontology with elimination method
+#'
+#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param levels A character vector representing the levels to iterate through.
+#' The order will be the one the iterations are happening in.
+#' @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
+#' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+#' @param elim_threshold p-value below which the elimination procedure shall be
+#' applied to the ancestors.
+#' @param min_size Minimum size of the gene ontology term for testing.
+#' @param max_size Maximum size of the gene ontology term for testing. Setting this
+#' parameter to large values will slow the function down.
+#' @param iters Integer. Number of random permutations for the fgsea simple method
+#' to use
+#' @param seed Integer. For reproducibility purposes.
+#' @param debug Boolean that will provide additional console information for
+#' debugging purposes.
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item go_ids The name of the tested gene ontology identifer.
+#'     \item es The enrichment scores for the pathway
+#'     \item nes The normalised enrichment scores for the pathway
+#'     \item size The pathway sizes (after elimination!).
+#'     \item pvals The p-values for this pathway based on permutation
+#'     testing
+#'     \item leading_edge A list of the index positions of the leading edge
+#'     genes for this given GO term.
+#' }
+#'
+#' @export
+rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug)
 
 #' Run a single hypergeometric test.
 #'
@@ -159,7 +192,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param debug boolean that will provide additional console information for
+#' @param debug Boolean that will provide additional console information for
 #' debugging purposes.
 #'
 #' @return A list containing:
