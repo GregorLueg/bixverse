@@ -10,7 +10,11 @@ use faer::Mat;
 //////////////////
 
 /// Flatten a nested vector
-pub fn flatten_vector<T>(vec: Vec<Vec<T>>) -> Vec<T> {
+pub fn flatten_vector<I, T>(vec: I) -> Vec<T>
+where
+    I: IntoIterator,
+    I::Item: IntoIterator<Item = T>,
+{
     vec.into_iter().flatten().collect()
 }
 

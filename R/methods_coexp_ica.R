@@ -41,6 +41,8 @@ S7::method(ica_processing, bulk_coexp) <- function(
   random_seed = 123L,
   .verbose = TRUE
 ) {
+  # Scope checks
+  X1 <- K <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(fast_svd, "B1")
@@ -164,6 +166,9 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
   random_seed = 42L,
   .verbose = TRUE
 ) {
+  # Scope checks
+  . <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
@@ -583,6 +588,8 @@ fast_ica_rust <- function(
   seed = NULL,
   ica_params = params_ica_general()
 ) {
+  # Scope check
+  a <- NULL
   # Checks
   checkmate::assertMatrix(X, mode = "numeric")
   checkmate::assertMatrix(K, mode = "numeric")

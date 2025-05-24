@@ -30,7 +30,7 @@ lowly expressed genes
 \item p5_pca_case_control A PCA plot with the chosen case control category.
 Added if \code{\link[=calculate_pca_bulk_dge]{calculate_pca_bulk_dge()}} is run.
 \item p6_batch_correction_plot A PCA plot pre and post batch correction
-with the case-control category overlayed. Added if \code{\link[=batch_correction_bulk_dge]{batch_correction_bulk_dge()}}
-is run.
+with the case-control category overlayed. Added if
+\code{\link[=batch_correction_bulk_dge]{batch_correction_bulk_dge()}} is run.
 }
 }

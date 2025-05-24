@@ -291,8 +291,8 @@ S7::method(community_detection, network_diffusions) <- function(
   .max_iters = 100L
 ) {
   # Bindings
-  `.` <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
-    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- NULL
+  . <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
+    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::network_diffusions")
   checkmate::qassert(diffusion_threshold, "R1[0,1]")
@@ -675,7 +675,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     .debug = FALSE
   ) {
     # Assigns
-    origin_modules <- `.` <- similiarity <- origin <- target <-
+    origin_modules <- . <- similiarity <- origin <- target <-
       target_modules <- NULL
     # Checks
     checkmate::assertClass(object, "bixverse::rbh_graph")
@@ -810,6 +810,8 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
   random_seed = 42L,
   .verbose = TRUE
 ) {
+  # Scope checks
+  best_modularity <- modularity <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::rbh_graph")
   assertGraphResParams(resolution_params)

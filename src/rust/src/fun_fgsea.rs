@@ -347,7 +347,7 @@ fn rs_geom_elim_fgsea_simple(
     }
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
-    let mut es: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut es = Vec::with_capacity(levels.len());
     let mut nes: Vec<Vec<Option<f64>>> = Vec::with_capacity(levels.len());
     let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());

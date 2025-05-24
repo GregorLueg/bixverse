@@ -40,6 +40,6 @@ get_go_human_data <- function() {
 
     return(go_data_dt)
   } else {
-    error("The expected .parquet file was not found.")
+    stop("The expected .parquet file was not found.")
   }
 }

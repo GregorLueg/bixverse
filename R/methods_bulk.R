@@ -82,6 +82,9 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   pcs = 10L,
   no_hvg_genes = 2500L
 ) {
+  gene_id <- hvg <- var_id <- sample_id <- . <-
+    NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(scale_genes, "B1")
@@ -225,6 +228,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   scale_genes = FALSE,
   no_hvg_genes = 2500L
 ) {
+  gene_id <- . <- sample_id <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(contrast_column, "S1")
@@ -418,6 +423,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   ...,
   .verbose = TRUE
 ) {
+  . <- subgroup <- NULL
+
   # First checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(contrast_column, "S+")

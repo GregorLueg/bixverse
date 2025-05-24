@@ -54,6 +54,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   min_prop = 0.2,
   .verbose = TRUE
 ) {
+  # Scope checks
+  . <- NULL
   norm_method <- match.arg(norm_method)
   # Checks
   checkmate::assertClass(
@@ -258,6 +260,8 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   scaling_type = c("normal", "robust"),
   .verbose = TRUE
 ) {
+  # Scope checks
+  feature_name <- MAD <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(mad_threshold, c("R1", "0"))
@@ -441,8 +445,8 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 #'  \item p5_pca_case_control A PCA plot with the chosen case control category.
 #'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
 #'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
-#'  with the case-control category overlayed. Added if [bixverse::batch_correction_bulk_dge()]
-#'  is run.
+#'  with the case-control category overlayed. Added if
+#' [bixverse::batch_correction_bulk_dge()] is run.
 #' }
 #'
 #' @param object `bulk_dge` class.

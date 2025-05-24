@@ -234,6 +234,7 @@ remove_samples <- S7::new_generic(
 #' @export
 S7::method(remove_samples, bulk_dge) <-
   function(object, samples_to_remove, ...) {
+    sample_id <- NULL
     # Checks
     checkmate::assertClass(
       object,
@@ -574,6 +575,7 @@ S7::method(add_new_metadata, bulk_dge) <-
 #'
 #' @method print bulk_coexp
 S7::method(print, bulk_coexp) <- function(x, ...) {
+  . <- hvg <- NULL
   # Pre-processing
   preprocessed <- !is.null(S7::prop(x, "processed_data")[["processed_data"]])
   features <- if (preprocessed) {
