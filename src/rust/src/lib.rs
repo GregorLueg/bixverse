@@ -12,6 +12,7 @@ mod fun_helpers;
 mod fun_hypergeom;
 mod fun_ica;
 mod fun_linalg;
+mod fun_nmf;
 mod fun_ontology;
 mod fun_rbh;
 mod fun_stats;
