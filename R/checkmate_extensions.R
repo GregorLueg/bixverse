@@ -278,7 +278,7 @@ checkGSEAParams <- function(x) {
   }
   res <- checkmate::checkNames(
     names(x),
-    must.include = c("min_size", "max_size", "gsea_param")
+    must.include = c("min_size", "max_size", "gsea_param", "sample_size", "eps")
   )
   if (!isTRUE(res)) {
     return(res)
@@ -286,7 +286,9 @@ checkGSEAParams <- function(x) {
   rules <- list(
     "min_size" = "I1[3,)",
     "max_size" = "I1[4,)",
-    "gsea_param" = "N1"
+    "gsea_param" = "N1",
+    "sample_size" = "I1",
+    "eps" = "N1"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     checkmate::qtest(x, rules[[name]])
@@ -297,7 +299,7 @@ checkGSEAParams <- function(x) {
       sprintf(
         "The following element `%s` in GSEA params does not conform the expected format. \
         min_size and max_size need to be intger (with max_size > min_size and min_size >= 3L) \
-        and gsea_param being a double.",
+        , gsea_param being a double, sample_size an integer and eps a float.",
         broken_elem
       )
     )

@@ -2,6 +2,8 @@ use extendr_api::prelude::*;
 
 use std::collections::HashMap;
 
+use rayon::prelude::*;
+
 use crate::helpers_fgsea::*;
 use crate::helpers_geom_elim::*;
 use crate::utils_r_rust::r_named_vec_data;
@@ -164,6 +166,8 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// @param pathway_sizes Integer vector. The sizes of the pathways.
 /// @param iters Integer. Number of permutations.
 /// @param gsea_param Float. The Gene Set Enrichment parameter.
+/// @param return_add_stats Boolean. Returns additional statistics
+/// necessary for the multi-level calculations.
 /// @param seed Integer. For reproducibility purposes
 ///
 /// @return List with the following elements
@@ -176,6 +180,13 @@ fn rs_calc_gsea_stat_traditional_batch(
 ///     \item size Pathway size.
 /// }
 ///
+/// If `return_add_stats` is set to true, there is additional elements in the
+/// list:
+/// \itemize{
+///     \item le_zero Number of times the permutation was less than zero.
+///     \item ge_zero Number of times the permutation was greater than zero.
+/// }
+///
 /// @export
 #[extendr]
 fn rs_calc_gsea_stat_cumulative_batch(
@@ -184,6 +195,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
     pathway_sizes: &[i32],
     iters: usize,
     gsea_param: f64,
+    return_add_stats: bool,
     seed: u64,
 ) -> extendr_api::Result<List> {
     // Convert indices from R - keep as 1-based for algorithm
@@ -201,19 +213,33 @@ fn rs_calc_gsea_stat_cumulative_batch(
     let gsea_res: GseaResults<'_> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
-    Ok(list!(
-        es = gsea_res.es,
-        nes = gsea_res.nes,
-        pvals = gsea_res.pvals,
-        n_more_extreme = gsea_res.n_more_extreme,
-        size = gsea_res.size
-    ))
+    let res = if return_add_stats {
+        list!(
+            es = gsea_res.es,
+            nes = gsea_res.nes,
+            pvals = gsea_res.pvals,
+            n_more_extreme = gsea_res.n_more_extreme,
+            le_zero = gsea_res.le_zero,
+            ge_zero = gsea_res.ge_zero,
+            size = gsea_res.size
+        )
+    } else {
+        list!(
+            es = gsea_res.es,
+            nes = gsea_res.nes,
+            pvals = gsea_res.pvals,
+            n_more_extreme = gsea_res.n_more_extreme,
+            size = gsea_res.size
+        )
+    };
+
+    Ok(res)
 }
 
 /// Calculates p-values for pre-processed data
 ///
-/// @param es Numerical vector. The enrichment scores of the pathways of that specific size
 /// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param es Numerical vector. The enrichment scores of the pathways of that specific size
 /// @param pathway_size Integer. The size of the pathways to test.
 /// @param sample_size Integer. The size of the random gene sets to test against.
 /// @param seed Integer. Random seed.
@@ -231,20 +257,41 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @export
 #[extendr]
 fn rs_calc_multi_level(
-    es: &[f64],
     stats: Robj,
-    pathway_size: usize,
+    es: &[f64],
+    pathway_size: &[i32],
     sample_size: usize,
     seed: u64,
     eps: f64,
     sign: bool,
 ) -> extendr_api::Result<List> {
     let (_, ranks) = r_named_vec_data(stats)?;
+    let pathway_size: Vec<usize> = pathway_size
+        .iter()
+        .map(|&x| x.try_into().unwrap_or(0))
+        .collect();
 
-    let res: GseaMultiLevelresults =
-        fgsea_multilevel_helper(es, &ranks, pathway_size, sample_size, seed, eps, sign);
+    let res: Vec<GseaMultiLevelresults> = es
+        .par_iter()
+        .zip(pathway_size.par_iter())
+        .map(|(es_i, size_i)| {
+            let es_vec = vec![*es_i];
+            fgsea_multilevel_helper(&es_vec, &ranks, *size_i, sample_size, seed, eps, sign)
+        })
+        .collect();
 
-    Ok(list!(pvals = res.pvals, is_cp_ge_half = res.is_cp_ge_half))
+    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(res.len());
+    let mut is_cp_ge_half: Vec<Vec<bool>> = Vec::with_capacity(res.len());
+
+    for res_i in res {
+        pvals.push(res_i.pvals);
+        is_cp_ge_half.push(res_i.is_cp_ge_half);
+    }
+
+    let pvals = flatten_vector(pvals);
+    let is_cp_ge_half = flatten_vector(is_cp_ge_half);
+
+    Ok(list!(pvals = pvals, is_cp_ge_half = is_cp_ge_half))
 }
 
 /// Calculates the simple and multi error for fgsea multi level

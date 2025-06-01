@@ -198,6 +198,10 @@ params_community_detection <- function(
 #' @param min_size Integer. Minimum number of genes per gene set.
 #' @param max_size Integer. Maximum number of genes per gene set.
 #' @param gsea_param  Float. GSEA parameter. Defaults to `1.0`.
+#' @param sample_size Integer. Number of samples to iterate through for the
+#' multi-level implementation of fgsea.
+#' @param eps Float. Boundary for calculating the p-value. Used for the multi-
+#' level implementation of fgsea.
 #'
 #' @returns List with parameters for usage in subsequent function.
 #'
@@ -205,18 +209,24 @@ params_community_detection <- function(
 params_gsea <- function(
   min_size = 5L,
   max_size = 500L,
-  gsea_param = 1.0
+  gsea_param = 1.0,
+  sample_size = 121L,
+  eps = 1e-50
 ) {
   # Checks
   checkmate::qassert(min_size, "I1[3,)")
   checkmate::qassert(max_size, "I1[4,)")
   checkmate::qassert(gsea_param, "N1")
+  checkmate::qassert(sample_size, "N1")
+  checkmate::qassert(eps, "N1")
   # Returns
   return(
     list(
       min_size = min_size,
       max_size = max_size,
-      gsea_param = gsea_param
+      gsea_param = gsea_param,
+      sample_size = sample_size,
+      eps = eps
     )
   )
 }

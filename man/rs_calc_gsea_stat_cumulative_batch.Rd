@@ -10,6 +10,7 @@ rs_calc_gsea_stat_cumulative_batch(
   pathway_sizes,
   iters,
   gsea_param,
+  return_add_stats,
   seed
 )
 }
@@ -26,6 +27,9 @@ pathways}
 
 \item{gsea_param}{Float. The Gene Set Enrichment parameter.}
 
+\item{return_add_stats}{Boolean. Returns additional statistics
+necessary for the multi-level calculations.}
+
 \item{seed}{Integer. For reproducibility purposes}
 }
 \value{
@@ -37,6 +41,13 @@ List with the following elements
 \item n_more_extreme Number of times the enrichment score was
 bigger or smaller than the permutation (pending sign).
 \item size Pathway size.
+}
+
+If \code{return_add_stats} is set to true, there is additional elements in the
+list:
+\itemize{
+\item le_zero Number of times the permutation was less than zero.
+\item ge_zero Number of times the permutation was greater than zero.
 }
 }
 \description{

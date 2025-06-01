@@ -1,6 +1,6 @@
 use rand::distr::Uniform;
 use rand::rngs::StdRng;
-use rand::{seq::SliceRandom, Rng, SeedableRng};
+use rand::{Rng, SeedableRng};
 use rand_distr::Distribution;
 use rayon::prelude::*;
 use statrs::distribution::{Beta, ContinuousCDF};
@@ -33,6 +33,8 @@ pub struct GseaResults<'a> {
     pub nes: Vec<Option<f64>>,
     pub pvals: Vec<f64>,
     pub n_more_extreme: Vec<usize>,
+    pub le_zero: Vec<usize>,
+    pub ge_zero: Vec<usize>,
     pub size: &'a [usize],
 }
 
@@ -832,56 +834,35 @@ pub fn calculate_nes_es_pval<'a>(
         nes,
         pvals,
         n_more_extreme,
+        le_zero: gsea_res.le_zero.clone(),
+        ge_zero: gsea_res.ge_zero.clone(),
         size: pathway_sizes,
     }
 }
 
 /// Generate k random numbers from [a, b] (inclusive range)
-/// Uses different algorithms for sparse (k < n/2) and dense (k >= n/2) sampling
+/// Uses Fisher-Yates shuffle approach similar to typical C++ implementations
 fn combination(a: usize, b: usize, k: usize, rng: &mut impl Rng) -> Vec<usize> {
     let n = b - a + 1;
     if k > n {
         panic!("k cannot be greater than range size n");
     }
 
-    let mut v = Vec::with_capacity(k);
-    let mut used = vec![false; n];
+    // Create a vector with all possible values
+    let mut indices: Vec<usize> = (a..=b).collect();
 
-    if (k as f64) < (n as f64) * 0.5 {
-        // Sparse sampling: randomly select k unique elements
-        let range = Uniform::new_inclusive(a, b).unwrap();
-
-        for _ in 0..k {
-            // Try up to 100 times to find an unused element
-            for _ in 0..100 {
-                let x = range.sample(rng);
-                if !used[x - a] {
-                    v.push(x);
-                    used[x - a] = true;
-                    break;
-                }
-            }
-        }
-    } else {
-        // Dense sampling: sample n-k positions to exclude
-        for r in (n - k)..n {
-            let range = Uniform::new(0, r as i32).unwrap();
-            let x = range.sample(rng) as usize;
-
-            if !used[x] {
-                v.push(a + x);
-                used[x] = true;
-            } else {
-                v.push(a + r);
-                used[r] = true;
-            }
-        }
-
-        // Shuffle the resulting vector
-        v.shuffle(rng);
+    // Use Fisher-Yates shuffle to get k random elements
+    // This is equivalent to partial_shuffle in C++
+    for i in 0..k {
+        let j = rng.random_range(i..n);
+        indices.swap(i, j);
     }
 
-    v
+    // Take first k elements and sort them
+    let mut result: Vec<usize> = indices.into_iter().take(k).collect();
+    result.sort_unstable();
+
+    result
 }
 
 /// Rearranges array so nth element is in its sorted position

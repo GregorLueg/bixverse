@@ -58,6 +58,8 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #' @param pathway_sizes Integer vector. The sizes of the pathways.
 #' @param iters Integer. Number of permutations.
 #' @param gsea_param Float. The Gene Set Enrichment parameter.
+#' @param return_add_stats Boolean. Returns additional statistics
+#' necessary for the multi-level calculations.
 #' @param seed Integer. For reproducibility purposes
 #'
 #' @return List with the following elements
@@ -70,8 +72,15 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #'     \item size Pathway size.
 #' }
 #'
+#' If `return_add_stats` is set to true, there is additional elements in the
+#' list:
+#' \itemize{
+#'     \item le_zero Number of times the permutation was less than zero.
+#'     \item ge_zero Number of times the permutation was greater than zero.
+#' }
+#'
 #' @export
-rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)
+rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, return_add_stats, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, return_add_stats, seed)
 
 #' Helper function to generate traditional GSEA-based permutations
 #'
@@ -98,8 +107,8 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 
 #' Calculates p-values for pre-processed data
 #'
-#' @param es Numerical vector. The enrichment scores of the pathways of that specific size
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param es Numerical vector. The enrichment scores of the pathways of that specific size
 #' @param pathway_size Integer. The size of the pathways to test.
 #' @param sample_size Integer. The size of the random gene sets to test against.
 #' @param seed Integer. Random seed.
@@ -115,7 +124,7 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' }
 #'
 #' @export
-rs_calc_multi_level <- function(es, stats, pathway_size, sample_size, seed, eps, sign) .Call(wrap__rs_calc_multi_level, es, stats, pathway_size, sample_size, seed, eps, sign)
+rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps, sign) .Call(wrap__rs_calc_multi_level, stats, es, pathway_size, sample_size, seed, eps, sign)
 
 #' Run fgsea simple method for gene ontology with elimination method
 #'

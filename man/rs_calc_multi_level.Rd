@@ -4,12 +4,12 @@
 \alias{rs_calc_multi_level}
 \title{Calculates p-values for pre-processed data}
 \usage{
-rs_calc_multi_level(es, stats, pathway_size, sample_size, seed, eps, sign)
+rs_calc_multi_level(stats, es, pathway_size, sample_size, seed, eps, sign)
 }
 \arguments{
-\item{es}{Numerical vector. The enrichment scores of the pathways of that specific size}
-
 \item{stats}{Named numerical vector. Needs to be sorted. The gene level statistics.}
+
+\item{es}{Numerical vector. The enrichment scores of the pathways of that specific size}
 
 \item{pathway_size}{Integer. The size of the pathways to test.}
 
