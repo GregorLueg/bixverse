@@ -1,3 +1,4 @@
+use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
@@ -115,11 +116,21 @@ pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
     }
 }
 
-/// Gaussian Radial Basis function
+/// Gaussian Radial Basis function for vectors
 pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| f64::exp(-((x * *epsilon).powi(2))))
         .collect()
+}
+
+/// Gaussian Radial Basis function for matrices.
+pub fn rbf_gaussian_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        -((x * *epsilon).powi(2))
+    })
 }
 
 /// Bump Radial Basis function
@@ -136,11 +147,35 @@ pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
         .collect()
 }
 
+/// Bump Radial Basis function for matrices
+pub fn rbf_bump_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        if *x < (1.0 / epsilon) {
+            f64::exp(-(1_f64 / (1_f64 - (*epsilon * x).powi(2))) + 1_f64)
+        } else {
+            0_f64
+        }
+    })
+}
+
 /// Inverse quadratic RBF
 pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| 1.0 / (1.0 + (*epsilon * x).powi(2)))
         .collect()
+}
+
+/// Inverse quadratic RBF for matrices
+pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        1.0 / (1.0 + (*epsilon * x).powi(2))
+    })
 }
 
 /////////////////////////////////////

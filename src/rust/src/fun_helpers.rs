@@ -3,7 +3,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rayon::prelude::*;
 
-use crate::utils_r_rust::faer_to_r_matrix;
+use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
 use crate::utils_rust::array_f64_max_min;
 use crate::utils_stats::*;
 
@@ -76,12 +76,13 @@ fn rs_upper_triangle_to_dense(
 /// Apply a Radial Basis Function
 ///
 /// @description Applies a radial basis function (RBF) to a given distance
-/// vector. Has at the moment a Gaussian version and a Bump version.
+/// vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+/// RBF.
 ///
 /// @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 /// onto.
 /// @param epsilon Float. Epsilon parameter for the RBF.
-/// @param rbf_type String. Needs to be from `c("gaussian", "bump)`.
+/// @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
 ///
 /// @return The affinities after the Kernel was applied.
 ///
@@ -96,6 +97,42 @@ fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Resu
         RbfType::Bump => rbf_bump(x, &epsilon),
         RbfType::InverseQuadratic => rbf_inverse_quadratic(x, &epsilon),
     };
+
+    Ok(res)
+}
+
+/// Apply a Radial Basis Function (to a matrix)
+///
+/// @description Applies a radial basis function (RBF) to a given distance
+/// matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+/// RBF.
+///
+/// @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
+/// onto.
+/// @param epsilon Float. Epsilon parameter for the RBF.
+/// @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+///
+/// @return The affinities after the Kernel was applied.
+///
+/// @export
+#[extendr]
+fn rs_rbf_function_mat(
+    x: RMatrix<f64>,
+    epsilon: f64,
+    rbf_type: &str,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+    let x = r_matrix_to_faer(&x);
+
+    let rbf_fun =
+        parse_rbf_types(rbf_type).ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+
+    let res: Mat<f64> = match rbf_fun {
+        RbfType::Gaussian => rbf_gaussian_mat(x, &epsilon),
+        RbfType::Bump => rbf_bump_mat(x, &epsilon),
+        RbfType::InverseQuadratic => rbf_inverse_quadratic_mat(x, &epsilon),
+    };
+
+    let res = faer_to_r_matrix(res.as_ref());
 
     Ok(res)
 }
@@ -128,5 +165,6 @@ extendr_module! {
     fn rs_upper_triangle_to_dense;
     fn rs_ot_harmonic_sum;
     fn rs_rbf_function;
+    fn rs_rbf_function_mat;
     fn rs_range_norm;
 }

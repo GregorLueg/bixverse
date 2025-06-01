@@ -158,21 +158,22 @@ simpleFgseaRes[, nGeZero := NULL]
 rextendr::document()
 
 rs_err_res <- rs_simple_and_multi_err(
-  n_more_extreme = n_more_extreme,
-  nperm = nperm,
-  sample_size = sample_size
+  n_more_extreme = as.integer(simpleFgseaRes$nMoreExtreme),
+  nperm = 1000L,
+  sample_size = 121L
 )
+
 
 leftBorder <- log2(qbeta(
   0.025,
-  shape1 = n_more_extreme,
-  shape2 = nperm - n_more_extreme + 1
+  shape1 = simpleFgseaRes$nMoreExtreme,
+  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme + 1
 ))
 
 rightBorder <- log2(qbeta(
   1 - 0.025,
-  shape1 = n_more_extreme + 1,
-  shape2 = nperm - n_more_extreme
+  shape1 = simpleFgseaRes$nMoreExtreme + 1,
+  shape2 = nPermSimple - simpleFgseaRes$nMoreExtreme
 ))
 
 crudeEstimator <- log2((simpleFgseaRes$nMoreExtreme + 1) / (nPermSimple + 1))
@@ -255,6 +256,10 @@ length(pathways)
 
 cpp_res[, pathway := pathways]
 
+cpp_res$cppIsCpGeHalf
+
+rs_res_dt$is_cp_ge_half
+
 rs_res <- purrr::map(multilevelPathwaysList, \(x) {
   as.data.table(rs_calc_multi_level(
     es = x[, ES],
@@ -273,7 +278,7 @@ rs_res_dt
 
 cpp_res
 
-plot(cpp_res$cppMPval, rs_res_dt$pvals)
+plot(cpp_res$cppMPval, rs_res_dt$pvals, ylim = c(0, 0.05))
 
 cor(cpp_res$cppMPval, rs_res_dt$pvals, method = 'spearman')
 

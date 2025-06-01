@@ -216,7 +216,19 @@ gse_hypergeometric_list <- function(
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @returns To be written.
+#' @returns A data.table with the results from the GSEA with the following
+#' columns:
+#' \itemize{
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score for this pathway.
+#'  \item pvals - Float. The p-value for this pathway.
+#'  \item n_more_extreme - Integer. Number of permutation that had more extreme
+#'  enrichment scores than the actual.
+#'  \item size - Integer. The size of the pathway.
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#'  \item fdr - Float. The adjusted pval.
+#' }
 #'
 #' @export
 calc_gsea_traditional = function(
@@ -234,7 +246,7 @@ calc_gsea_traditional = function(
   checkmate::assertNames(names(stats))
   checkmate::assertList(pathways, types = "character")
   checkmate::assertNames(names(pathways))
-  bixverse::assertGSEAParams(gsea_params)
+  assertGSEAParams(gsea_params)
 
   c(stats, pathways_clean, pathway_sizes) %<-%
     with(
@@ -280,7 +292,8 @@ calc_gsea_traditional = function(
     data.table::setDT() %>%
     .[, `:=`(
       pathway_name = rownames(gsea_stat_res),
-      leading_edge = leading_edges
+      leading_edge = leading_edges,
+      fdr = p.ajdust(pvals, method = "fdr")
     )]
 
   return(permutations_res_traditional)
@@ -306,7 +319,19 @@ calc_gsea_traditional = function(
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @returns To be written.
+#' @returns A data.table with the results from the GSEA with the following
+#' columns:
+#' \itemize{
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score for this pathway.
+#'  \item pvals - Float. The p-value for this pathway.
+#'  \item n_more_extreme - Integer. Number of permutation that had more extreme
+#'  enrichment scores than the actual.
+#'  \item size - Integer. The size of the pathway.
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#'  \item fdr - Float. The adjusted pval.
+#' }
 #'
 #' @export
 calc_fgsea_simple = function(
@@ -324,7 +349,7 @@ calc_fgsea_simple = function(
   checkmate::assertNames(names(stats))
   checkmate::assertList(pathways, types = "character")
   checkmate::assertNames(names(pathways))
-  bixverse::assertGSEAParams(gsea_params)
+  assertGSEAParams(gsea_params)
 
   c(stats, pathways_clean, pathway_sizes) %<-%
     with(
@@ -374,7 +399,8 @@ calc_fgsea_simple = function(
     data.table::setDT() %>%
     .[, `:=`(
       pathway_name = rownames(gsea_stat_res),
-      leading_edge = leading_edges
+      leading_edge = leading_edges,
+      fdr = p.ajdust(pvals, method = "fdr")
     )]
 
   return(permutations_res_simple)

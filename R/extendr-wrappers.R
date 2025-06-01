@@ -635,17 +635,34 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' Apply a Radial Basis Function
 #'
 #' @description Applies a radial basis function (RBF) to a given distance
-#' vector. Has at the moment a Gaussian version and a Bump version.
+#' vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
 #'
 #' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 #' onto.
 #' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from `c("gaussian", "bump)`.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
 #'
 #' @return The affinities after the Kernel was applied.
 #'
 #' @export
 rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
+
+#' Apply a Radial Basis Function (to a matrix)
+#'
+#' @description Applies a radial basis function (RBF) to a given distance
+#' matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
+#'
+#' @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
+#' onto.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+#'
+#' @return The affinities after the Kernel was applied.
+#'
+#' @export
+rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
 
 #' Apply a range normalisation on a vector.
 #'
