@@ -213,6 +213,8 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to run
 #' [bixverse::diffcor_module_processing()] before running this function.
+#' @param rbf_func The type of RBF function you want to apply. A choice of
+#' `c('bump', 'gaussian', 'inverse_quadratic')`.
 #' @param epsilons Vector of floats. The different epsilon parameters you
 #' would like to run.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -225,6 +227,7 @@ cor_module_check_epsilon <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
     epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
     .verbose = TRUE
   ) {
@@ -241,6 +244,7 @@ cor_module_check_epsilon <- S7::new_generic(
 #' @method cor_module_check_epsilon bulk_coexp
 S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   object,
+  rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
   epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
   .verbose = TRUE
 ) {
@@ -248,6 +252,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(epsilons, "R+")
   checkmate::qassert(.verbose, "B1")
+  checkmate::assertChoice(rbf_func, c('bump', 'gaussian', 'inverse_quadratic'))
 
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
@@ -281,7 +286,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
     epsilon_vec = epsilons,
     original_dim = n_features,
     shift = shift,
-    rbf_type = "bump"
+    rbf_type = rbf_func
   )
 
   r_square_vals <- apply(epsilon_data, 2, .scale_free_fit)
@@ -343,8 +348,8 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #' @return The class with added data to the properties.
 #'
 #' @export
-cor_module_check_res <- S7::new_generic(
-  name = "cor_module_check_res",
+cor_module_graph_check_res <- S7::new_generic(
+  name = "cor_module_graph_check_res",
   dispatch_args = "object",
   fun = function(
     object,
@@ -368,8 +373,8 @@ cor_module_check_res <- S7::new_generic(
 #' @importFrom future plan multisession sequential
 #' @import data.table
 #'
-#' @method cor_module_check_res bulk_coexp
-S7::method(cor_module_check_res, bulk_coexp) <- function(
+#' @method cor_module_graph_check_res bulk_coexp
+S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   object,
   resolution_params = params_graph_resolution(),
   graph_params = params_cor_graph(),
@@ -535,7 +540,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
-#' it will use the optimal one identified by [bixverse::cor_module_check_res()].
+#' it will use the optimal one identified by [bixverse::cor_module_graph_check_res()].
 #' If nothing can be found, will default to 1.
 #' @param min_size Integer. Minimum size of the communities.
 #' @param max_size Integer. Maximum size of the communities.
@@ -555,7 +560,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #'  \item verbose - Boolean. Controls verbosity of the graph generation.
 #' }
 #' This parameter is only relevant if you did *not* run
-#' [bixverse::cor_module_check_res()].
+#' [bixverse::cor_module_graph_check_res()].
 #' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
 #' maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -565,8 +570,8 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #' @references Barrio-Hernandez, et al., Nat Genet, 2023.
 #'
 #' @export
-cor_module_final_modules <- S7::new_generic(
-  name = "cor_module_final_modules",
+cor_module_graph_final_modules <- S7::new_generic(
+  name = "cor_module_graph_final_modules",
   dispatch_args = "object",
   fun = function(
     object,
@@ -589,8 +594,8 @@ cor_module_final_modules <- S7::new_generic(
 #' @importFrom zeallot `%->%`
 #' @import data.table
 #'
-#' @method cor_module_final_modules bulk_coexp
-S7::method(cor_module_final_modules, bulk_coexp) <- function(
+#' @method cor_module_graph_final_modules bulk_coexp
+S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   object,
   resolution = NULL,
   min_size = 10L,
@@ -636,7 +641,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
     # Deal with the case a graph was not yet generated...
     warning(
       paste(
-        "No correlation graph found. Did you run cor_module_check_res()?",
+        "No correlation graph found. Did you run cor_module_graph_check_res()?",
         "Generating correlation graph based on standard parameters.",
         sep = "\n"
       )
@@ -811,7 +816,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
 
 #' Calculate the goodness of fit for a power law distribution.
 #'
-#' @param k Numeric vector. The vector of
+#' @param k Numeric vector. The vector of node degrees.
 #' @param breaks Integer. Number of breaks for fitting the data.
 #' @param plot Boolean. Shall the log-log plot be generated.
 #'
@@ -1004,6 +1009,61 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
   )
 }
 
+## coremo ----------------------------------------------------------------------
+
+#' Measures the quality of the clusters
+#'
+#' @description
+#' Utility functions to give back the summary stats (median and mean R²) for
+#' each of the identified clusters.
+#'
+#' @param modules Named vector. The names reflect the gene of the associated
+#' module.
+#' @param cor_mat Numeric matrix. The original correlation matrix.
+#' @param random_seed Integer. Random seed to ensure consistency if sampling is
+#' used.
+#'
+#' @return A data.table with the quality measures of the cluster.
+coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
+  # Checks
+  checkmate::qassert(modules, c("S+", "I+"))
+  checkmate::assertNamed(modules)
+  checkmate::assertMatrix(cor_mat, mode = "numeric")
+  checkmate::qassert(random_seed, "I1")
+  # Function body
+  cluster_list <- split(
+    names(modules),
+    modules
+  )
+  res <- purrr::map(
+    cluster_list,
+    \(genes) {
+      n <- length(genes)
+      if (n < 2) {
+        c(r2med, r2mad) %<-% c(1, 0)
+      } else {
+        scluster <- if (n > 1000) {
+          set.seed(random_seed)
+          sample(genes, 1000, replace = F)
+        } else {
+          genes
+        }
+        cor_mat <- cor_mat[scluster, scluster]
+        r2 <- as.dist(cor_mat^2)
+        c(r2med, r2mad) %<-% c(median(r2), mad(r2))
+      }
+      res <- data.table::data.table(
+        size = n,
+        r2med = r2med,
+        r2mad = r2mad
+      )
+    }
+  ) %>%
+    data.table::rbindlist()
+
+  res
+}
+
 ## getters ---------------------------------------------------------------------
 
 #' @title Return the resolution results
@@ -1034,7 +1094,7 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
   resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(resolution_results)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      "No resolution results found. Did you run cor_module_graph_check_res()? Returning NULL."
     )
   }
 
@@ -1062,7 +1122,7 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
   plot_df <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      "No resolution results found. Did you run cor_module_graph_check_res()? Returning NULL."
     )
     return(NULL)
   }

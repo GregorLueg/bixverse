@@ -89,8 +89,8 @@ fn rs_upper_triangle_to_dense(
 /// @export
 #[extendr]
 fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Result<Vec<f64>> {
-    let rbf_fun =
-        parse_rbf_types(rbf_type).ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+    let rbf_fun = parse_rbf_types(rbf_type)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))?;
 
     let res: Vec<f64> = match rbf_fun {
         RbfType::Gaussian => rbf_gaussian(x, &epsilon),
@@ -123,8 +123,8 @@ fn rs_rbf_function_mat(
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let x = r_matrix_to_faer(&x);
 
-    let rbf_fun =
-        parse_rbf_types(rbf_type).ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+    let rbf_fun = parse_rbf_types(rbf_type)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))?;
 
     let res: Mat<f64> = match rbf_fun {
         RbfType::Gaussian => rbf_gaussian_mat(x, &epsilon),
@@ -135,6 +135,26 @@ fn rs_rbf_function_mat(
     let res = faer_to_r_matrix(res.as_ref());
 
     Ok(res)
+}
+
+/// Calculates the TOM over an affinity matrix
+///
+/// @description Calculates the topological overlap measure for a given affinity matrix
+/// x. Has the option to calculate the signed and unsigned version.
+///
+/// @param x Numerical matrix. Affinity matrix.
+/// @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
+/// should be ≥ 0.
+///
+/// @return Returns the TOM matrix.
+///
+/// @export
+#[extendr]
+fn rs_tom(x: RMatrix<f64>, signed: bool) -> extendr_api::RArray<f64, [usize; 2]> {
+    let x = r_matrix_to_faer(&x);
+    let tom_mat = calc_tom(x, signed);
+    let res = faer_to_r_matrix(tom_mat.as_ref());
+    res
 }
 
 /// Apply a range normalisation on a vector.
@@ -166,5 +186,6 @@ extendr_module! {
     fn rs_ot_harmonic_sum;
     fn rs_rbf_function;
     fn rs_rbf_function_mat;
+    fn rs_tom;
     fn rs_range_norm;
 }

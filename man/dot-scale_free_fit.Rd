@@ -7,7 +7,7 @@
 .scale_free_fit(k, breaks = 50L, plot = FALSE)
 }
 \arguments{
-\item{k}{Numeric vector. The vector of}
+\item{k}{Numeric vector. The vector of node degrees.}
 
 \item{breaks}{Integer. Number of breaks for fitting the data.}
 

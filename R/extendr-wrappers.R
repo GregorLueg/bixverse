@@ -113,13 +113,12 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' @param sample_size Integer. The size of the random gene sets to test against.
 #' @param seed Integer. Random seed.
 #' @param eps Float. Boundary for calculating the p-value.
-#' @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
-#' `This option will be used in future implementations.`, but is used in the function.
+#' @param sign Boolean. Used for the only positive or only negative score version.
 #'
 #' @return List with the following elements:
 #' \itemize{
 #'     \item pvals The pvalues.
-#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
 #'     overesimation of the p-values.
 #' }
 #'
@@ -672,6 +671,20 @@ rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x
 #'
 #' @export
 rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
+
+#' Calculates the TOM over an affinity matrix
+#'
+#' @description Calculates the topological overlap measure for a given affinity matrix
+#' x. Has the option to calculate the signed and unsigned version.
+#'
+#' @param x Numerical matrix. Affinity matrix.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
+#' should be ≥ 0.
+#'
+#' @return Returns the TOM matrix.
+#'
+#' @export
+rs_tom <- function(x, signed) .Call(wrap__rs_tom, x, signed)
 
 #' Apply a range normalisation on a vector.
 #'

@@ -5,6 +5,8 @@ use rayon::prelude::*;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use std::collections::HashSet;
 
+use crate::helpers_linalg::col_sums;
+
 ///////////
 // Types //
 ///////////
@@ -129,7 +131,7 @@ pub fn rbf_gaussian_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
     let nrow = dist.nrows();
     Mat::from_fn(nrow, ncol, |i, j| {
         let x = dist.get(i, j);
-        -((x * *epsilon).powi(2))
+        f64::exp(-((x * epsilon).powi(2)))
     })
 }
 
@@ -176,6 +178,47 @@ pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f6
         let x = dist.get(i, j);
         1.0 / (1.0 + (*epsilon * x).powi(2))
     })
+}
+
+/////////////////////////////////
+// Topological overlap measure //
+/////////////////////////////////
+
+/// Calculates the topological overlap measure for a given affinity matrix
+/// Assumes a symmetric affinity matrix. Has the option to calculate the
+/// signed and unsigned version.
+pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
+    let n = affinity_mat.nrows();
+    let mut tom_mat = Mat::<f64>::zeros(n, n);
+    let connectivity = col_sums(affinity_mat.as_ref());
+
+    // Pre-compute for speed-ups -> Massive difference and good call @Claude
+    let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
+
+    for i in 0..n {
+        // Only upper triangle for speed...
+        for j in (i + 1)..n {
+            let a_ij = affinity_mat.get(i, j);
+
+            // shared_neighbors = dot_product - excluded terms (k=i and k=j)
+            let shared_neighbours = dot_products.get(i, j)
+                - affinity_mat.get(i, i) * affinity_mat.get(i, j)
+                - affinity_mat.get(i, j) * affinity_mat.get(j, j);
+
+            let numerator = a_ij + shared_neighbours;
+            let f_ki_kj = connectivity[i].min(connectivity[j]);
+            let denominator = if signed {
+                f_ki_kj + 1.0 - a_ij.abs()
+            } else {
+                f_ki_kj + 1.0 - a_ij
+            };
+            let tom_value = numerator / denominator;
+
+            tom_mat[(i, j)] = tom_value;
+            tom_mat[(j, i)] = tom_value;
+        }
+    }
+    tom_mat
 }
 
 /////////////////////////////////////
