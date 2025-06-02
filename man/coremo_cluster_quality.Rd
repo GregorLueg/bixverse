@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_coexp_cor.R
 \name{coremo_cluster_quality}
 \alias{coremo_cluster_quality}
-\title{Measures the quality of the clusters}
+\title{Coremo: measures the quality of the clusters}
 \usage{
 coremo_cluster_quality(modules, cor_mat, random_seed = 10101L)
 }
@@ -20,5 +20,6 @@ A data.table with the quality measures of the cluster.
 }
 \description{
 Utility functions to give back the summary stats (median and mean R²) for
-each of the identified clusters.
+each of the identified clusters. Clusters over a size of 1000 genes will
+be randomly sampled.
 }

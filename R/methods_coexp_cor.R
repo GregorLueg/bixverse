@@ -1011,11 +1011,12 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
 
 ## coremo ----------------------------------------------------------------------
 
-#' Measures the quality of the clusters
+#' Coremo: measures the quality of the clusters
 #'
 #' @description
 #' Utility functions to give back the summary stats (median and mean R²) for
-#' each of the identified clusters.
+#' each of the identified clusters. Clusters over a size of 1000 genes will
+#' be randomly sampled.
 #'
 #' @param modules Named vector. The names reflect the gene of the associated
 #' module.
@@ -1060,6 +1061,81 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
     }
   ) %>%
     data.table::rbindlist()
+
+  res
+}
+
+#' Coremo: cuts a hierarchical cluster based on k (or h)
+#'
+#' @description
+#' This function uses a tree (output of [stats::hclust()]) and cuts it according
+#' to the parameter k (or optionally, the height parameter h). If a `min_size`
+#' is specified, modules are merged by their similarity of their eigen values
+#' in the distance matrix.
+#'
+#' @param tree hclust object. The hierarchical clustering of the correlation
+#' matrix (or the distance thereof).
+#' @param k Integer. Number of cuts on the tree.
+#' @param h Float. Optional parameter to provide the height to cut at.
+#' @param min_size Integer. Optional minimum size for the clusters.
+#' @param dist_mat Numerical matrix. The distance matrix that was used to
+#' compute the hierarchical clustering.
+#' @param correlation_method String. Which correlation method to use for
+#' optionally combining the small clusters. One of `c("pearson", "spearman")`.
+#'
+#' @return A vector with module membership.
+coremo_tree_cut <- function(
+  tree,
+  k,
+  h = NULL,
+  min_size = NULL,
+  dist_mat,
+  correlation_method = c("pearson", "spearman")
+) {
+  # Checks
+  checkmate::assertClass(tree, "hclust")
+  checkmate::qassert(k, c("I1", "0"))
+  checkmate::qassert(h, c("N1", "0"))
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertMatrix(dist_mat, mode = "numeric")
+  checkmate::assertChoice(
+    correlation_method,
+    c("pearson", "spearman")
+  )
+  # Function body
+  clusters <- cutree(tree, k = k, h = h)
+  # Early returns
+  if (is.null(min_size)) {
+    return(clusters)
+  }
+  cluster_size <- table(clusters)
+  if (min(cluster_size) >= min_size) {
+    return(clusters)
+  }
+  # Merge smaller clusters together
+  to_keep <- names(cluster_size)[which(cluster_size >= min_size)]
+  to_merge <- names(cluster_size)[which(cluster_size < min_size)]
+
+  eg <- purrr::map(
+    sort(unique(clusters)),
+    \(cluster_i) {
+      x <-
+        prcomp(t(d[names(clusters)[clusters == cluster_i], ]), 1)$x[, "PC1"]
+    }
+  ) %>%
+    do.call(rbind, .) %>%
+    `rownames<-`(sort(unique(clusters)))
+
+  spearman <- correlation_method == "spearman"
+
+  eg_cor <- rs_cor(x = t(eg), spearman = spearman)
+  eg_cor <-
+    abs(eg_cor[to_keep, toMerge, drop = FALSE])
+  res <- clusters
+  for (i in to_merge) {
+    sel_clust <- to_keep[which.max(eg_cor[, as.character(i)])]
+    res[which(res == as.numeric(i))] <- sel_clust
+  }
 
   res
 }
