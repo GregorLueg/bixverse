@@ -244,13 +244,12 @@ fn rs_calc_gsea_stat_cumulative_batch(
 /// @param sample_size Integer. The size of the random gene sets to test against.
 /// @param seed Integer. Random seed.
 /// @param eps Float. Boundary for calculating the p-value.
-/// @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
-/// `This option will be used in future implementations.`, but is used in the function.
+/// @param sign Boolean. Used for the only positive or only negative score version.
 ///
 /// @return List with the following elements:
 /// \itemize{
 ///     \item pvals The pvalues.
-///     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+///     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
 ///     overesimation of the p-values.
 /// }
 ///
@@ -275,6 +274,8 @@ fn rs_calc_multi_level(
         .par_iter()
         .zip(pathway_size.par_iter())
         .map(|(es_i, size_i)| {
+            // The original implementation used vectors here by pathway size
+            // This was faster to do
             let es_vec = vec![*es_i];
             fgsea_multilevel_helper(&es_vec, &ranks, *size_i, sample_size, seed, eps, sign)
         })

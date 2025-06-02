@@ -422,7 +422,9 @@ calc_fgsea_simple = function(
 #' Bixverse implementation of the fgsea algorithm
 #'
 #' @description
-#' Rust-based version of the fgsea simple and multi level algorithm.
+#' Rust-based version of the fgsea simple and multi-level algorithm. Initially,
+#' the simple method is run. For low p-values, the multi-level method is used
+#' to estimate lower p-values than possible just based on the permutations.
 #'
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param pathways List. A named list with each element containing the genes for
@@ -459,7 +461,7 @@ calc_fgsea_simple = function(
 calc_fgsea <- function(
   stats,
   pathways,
-  nperm = 2000L,
+  nperm = 1000L,
   gsea_params = params_gsea(),
   seed = 123L
 ) {
@@ -559,7 +561,7 @@ calc_fgsea <- function(
       sample_size = sample_size,
       seed = seed,
       eps = eps,
-      sign = sign_
+      sign = FALSE
     )
   )
 
@@ -582,7 +584,8 @@ calc_fgsea <- function(
       mode_fraction = NULL,
       denom_prob = NULL,
       fdr = p.adjust(pvals, method = "fdr")
-    )]
+    )] %>%
+    data.table::setorder(pvals)
 
   return(all_results)
 }

@@ -1356,12 +1356,8 @@ pub fn fgsea_multilevel_helper(
     let mut es_ruler_pos = EsRuler::new(&pos_ranks, sample_size, pathway_size);
     let mut es_ruler_neg = EsRuler::new(&neg_ranks, sample_size, pathway_size);
 
-    let max_es = enrichment_scores
-        .iter()
-        .fold(f64::NEG_INFINITY, |a, &b| a.max(b));
-    let min_es = enrichment_scores
-        .iter()
-        .fold(f64::INFINITY, |a, &b| a.min(b));
+    let max_es = array_max(enrichment_scores);
+    let min_es = array_min(enrichment_scores);
 
     if max_es >= 0.0 {
         es_ruler_pos.extend(max_es.abs(), seed, eps);

@@ -7,7 +7,7 @@
 calc_fgsea(
   stats,
   pathways,
-  nperm = 2000L,
+  nperm = 1000L,
   gsea_params = params_gsea(),
   seed = 123L
 )
@@ -50,5 +50,7 @@ enrichment scores than the actual.
 }
 }
 \description{
-Rust-based version of the fgsea simple and multi level algorithm.
+Rust-based version of the fgsea simple and multi-level algorithm. Initially,
+the simple method is run. For low p-values, the multi-level method is used
+to estimate lower p-values than possible just based on the permutations.
 }
