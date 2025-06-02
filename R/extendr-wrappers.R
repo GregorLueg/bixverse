@@ -630,6 +630,9 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
+#' @export
+rs_coremo_quality <- function(x) .Call(wrap__rs_coremo_quality, x)
+
 #' Calculate the OT harmonic sum
 #'
 #' @param x The numeric vector (should be between 0 and 1) for which to
@@ -678,13 +681,15 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' x. Has the option to calculate the signed and unsigned version.
 #'
 #' @param x Numerical matrix. Affinity matrix.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
+#' normalisation method will be used.
 #' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
 #' should be ≥ 0.
 #'
 #' @return Returns the TOM matrix.
 #'
 #' @export
-rs_tom <- function(x, signed) .Call(wrap__rs_tom, x, signed)
+rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 
 #' Apply a range normalisation on a vector.
 #'

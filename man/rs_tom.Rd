@@ -4,10 +4,13 @@
 \alias{rs_tom}
 \title{Calculates the TOM over an affinity matrix}
 \usage{
-rs_tom(x, signed)
+rs_tom(x, tom_type, signed)
 }
 \arguments{
 \item{x}{Numerical matrix. Affinity matrix.}
+
+\item{tom_type}{String. One of \code{c("v1", "v2")} - pending on choice, a different
+normalisation method will be used.}
 
 \item{signed}{Boolean. Shall the signed TOM be calculated. If set to \code{FALSE}, values
 should be ≥ 0.}

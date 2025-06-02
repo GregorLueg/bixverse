@@ -7,8 +7,8 @@
 coremo_tree_cut(
   tree,
   k,
-  min_size = NULL,
   dist_mat,
+  min_size = NULL,
   cor_method = c("pearson", "spearman")
 )
 }
@@ -18,10 +18,10 @@ matrix (or the distance thereof).}
 
 \item{k}{Integer. Number of cuts on the tree.}
 
-\item{min_size}{Integer. Optional minimum size for the clusters.}
-
 \item{dist_mat}{Numerical matrix. The distance matrix that was used to
 compute the hierarchical clustering.}
+
+\item{min_size}{Integer. Optional minimum size for the clusters.}
 
 \item{cor_method}{String. Which correlation method to use for
 optionally combining the small clusters. One of \code{c("pearson", "spearman")}.}

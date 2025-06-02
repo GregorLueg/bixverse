@@ -5,6 +5,7 @@ use rayon::prelude::*;
 
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
 use crate::utils_rust::array_f64_max_min;
+use crate::utils_rust::*;
 use crate::utils_stats::*;
 
 /// Calculate the OT harmonic sum
@@ -71,6 +72,27 @@ fn rs_upper_triangle_to_dense(
     }
 
     faer_to_r_matrix(mat.as_ref())
+}
+
+/// @export
+#[extendr]
+fn rs_coremo_quality(x: RMatrix<f64>, cluster_genes: List) -> List {
+    let n = x.ncols();
+    let upper_triangle_indices = upper_triangle_indices(n, 1);
+
+    let mut res = Vec::new();
+    for (&r, &c) in upper_triangle_indices
+        .0
+        .iter()
+        .zip(upper_triangle_indices.1.iter())
+    {
+        res.push(x[[r, c]])
+    }
+
+    let median = median(&res);
+    let mad = mad(&res);
+
+    list!(median = median, mad = mad)
 }
 
 /// Apply a Radial Basis Function
@@ -143,6 +165,8 @@ fn rs_rbf_function_mat(
 /// x. Has the option to calculate the signed and unsigned version.
 ///
 /// @param x Numerical matrix. Affinity matrix.
+/// @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
+/// normalisation method will be used.
 /// @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
 /// should be ≥ 0.
 ///
@@ -150,11 +174,24 @@ fn rs_rbf_function_mat(
 ///
 /// @export
 #[extendr]
-fn rs_tom(x: RMatrix<f64>, signed: bool) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_tom(
+    x: RMatrix<f64>,
+    tom_type: &str,
+    signed: bool,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let x = r_matrix_to_faer(&x);
-    let tom_mat = calc_tom(x, signed);
+    let tom_version = parse_tom_types(tom_type).ok_or_else(|| {
+        extendr_api::Error::Other(format!("Invalid TOM version type: {}", tom_type))
+    })?;
+
+    let tom_mat: Mat<f64> = match tom_version {
+        TomType::Version1 => calc_tom(x, signed),
+        TomType::Version2 => calc_tom_v2(x, signed),
+    };
+
     let res = faer_to_r_matrix(tom_mat.as_ref());
-    res
+
+    Ok(res)
 }
 
 /// Apply a range normalisation on a vector.
@@ -183,6 +220,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 extendr_module! {
     mod fun_helpers;
     fn rs_upper_triangle_to_dense;
+    fn rs_coremo_quality;
     fn rs_ot_harmonic_sum;
     fn rs_rbf_function;
     fn rs_rbf_function_mat;

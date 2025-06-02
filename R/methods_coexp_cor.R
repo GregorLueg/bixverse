@@ -1075,9 +1075,9 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 #' @param tree hclust object. The hierarchical clustering of the correlation
 #' matrix (or the distance thereof).
 #' @param k Integer. Number of cuts on the tree.
-#' @param min_size Integer. Optional minimum size for the clusters.
 #' @param dist_mat Numerical matrix. The distance matrix that was used to
 #' compute the hierarchical clustering.
+#' @param min_size Integer. Optional minimum size for the clusters.
 #' @param cor_method String. Which correlation method to use for
 #' optionally combining the small clusters. One of `c("pearson", "spearman")`.
 #'
@@ -1085,8 +1085,8 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 coremo_tree_cut <- function(
   tree,
   k,
-  min_size = NULL,
   dist_mat,
+  min_size = NULL,
   cor_method = c("pearson", "spearman")
 ) {
   # Checks
@@ -1176,7 +1176,7 @@ tree_cut_iter <- function(
   checkmate::assertChoice(cor_method, c("spearman", "pearson"))
   # Function body
   res <- purrr::map(
-    k.min:k.max,
+    k_min:k_max,
     \(k) {
       modules <-
         coremo_tree_cut(
@@ -1185,7 +1185,8 @@ tree_cut_iter <- function(
           min_size = min_size,
           dist_mat = dist_mat,
           cor_method = cor_method
-        )
+        ) %>%
+        `names<-`(rownames(cor_mat))
 
       qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
 

@@ -45,6 +45,35 @@ pub fn set_similarity(
     i as f64 / u as f64
 }
 
+//////////////////////
+// Vector functions //
+//////////////////////
+
+/// Get the median of a vector
+pub fn median(x: &[f64]) -> f64 {
+    let mut data = x.to_vec();
+    let len = data.len();
+    if len % 2 == 0 {
+        let (_, median1, right) =
+            data.select_nth_unstable_by(len / 2 - 1, |a, b| a.partial_cmp(b).unwrap());
+        let median2 = right
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        (*median1 + *median2) / 2.0
+    } else {
+        let (_, median, _) = data.select_nth_unstable_by(len / 2, |a, b| a.partial_cmp(b).unwrap());
+        *median
+    }
+}
+
+/// Calculate the median absolute deviation of a Vector
+pub fn mad(data: &[f64]) -> f64 {
+    let median_val = median(data);
+    let deviations: Vec<f64> = data.iter().map(|&x| (x - median_val).abs()).collect();
+    median(&deviations)
+}
+
 //////////////////
 // Effect sizes //
 //////////////////
@@ -184,6 +213,22 @@ pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f6
 // Topological overlap measure //
 /////////////////////////////////
 
+/// Enum for the RBF function
+#[derive(Debug)]
+pub enum TomType {
+    Version1,
+    Version2,
+}
+
+/// Parsing the RBF function
+pub fn parse_tom_types(s: &str) -> Option<TomType> {
+    match s.to_lowercase().as_str() {
+        "v1" => Some(TomType::Version1),
+        "v2" => Some(TomType::Version2),
+        _ => None,
+    }
+}
+
 /// Calculates the topological overlap measure for a given affinity matrix
 /// Assumes a symmetric affinity matrix. Has the option to calculate the
 /// signed and unsigned version.
@@ -218,6 +263,45 @@ pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
             tom_mat[(j, i)] = tom_value;
         }
     }
+
+    tom_mat
+}
+
+/// Calculates the topological overlap measure for a given affinity matrix
+/// Assumes a symmetric affinity matrix. Has the option to calculate the
+/// signed and unsigned version. This function implements a slightly different
+/// version with different normalisation.
+pub fn calc_tom_v2(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
+    let n = affinity_mat.nrows();
+    let mut tom_mat = Mat::<f64>::zeros(n, n);
+    let connectivity = col_sums(affinity_mat.as_ref());
+
+    // Pre-compute for speed-ups -> Massive difference and good call @Claude
+    let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
+
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let a_ij = affinity_mat.get(i, j);
+
+            let shared_neighbours = dot_products.get(i, j)
+                - affinity_mat.get(i, i) * affinity_mat.get(i, j)
+                - affinity_mat.get(i, j) * affinity_mat.get(j, j);
+
+            let f_ki_kj = connectivity[i].min(connectivity[j]);
+
+            let neighbours = if signed {
+                shared_neighbours / (f_ki_kj + a_ij.abs())
+            } else {
+                shared_neighbours / (f_ki_kj + a_ij)
+            };
+
+            let tom_value = 0.5 * (a_ij + neighbours);
+
+            tom_mat[(i, j)] = tom_value;
+            tom_mat[(j, i)] = tom_value;
+        }
+    }
+
     tom_mat
 }
 

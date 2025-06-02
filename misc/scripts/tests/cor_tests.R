@@ -45,7 +45,7 @@ meta_data_2 <- new_meta_data[gtex_subgrp == "Brain - Amygdala"]
 
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
-  cor_module_processing(., correlation_method = "spearman")
+  cor_module_processing(., cor_method = "spearman")
 
 devtools::document()
 
@@ -67,7 +67,7 @@ cor_test <- cor_module_final_modules(cor_test)
 
 cor_test <- bulk_coexp(raw_data = data_2, meta_data = meta_data_2) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
-  cor_module_processing(., correlation_method = "spearman")
+  cor_module_processing(., cor_method = "spearman")
 
 # Differential correlation -----------------------------------------------------
 
@@ -82,7 +82,7 @@ cor_test_2 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
   diffcor_module_processing(
     .,
     background_mat = data_2,
-    correlation_method = "spearman"
+    cor_method = "spearman"
   ) %>%
   cor_module_check_res(.) %>%
   cor_module_final_modules(.)
@@ -90,70 +90,117 @@ cor_test_2 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
 cor_test_2 <- cor_module_final_modules(cor_test_2)
 tictoc::toc()
 
-# write TOM into Rust ----------------------------------------------------------
+# CoReMo -----------------------------------------------------------------------
 
-# Claude explanation
-set.seed(123)
-n <- 100
+cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+  preprocess_bulk_coexp(., mad_threshold = 1) %>%
+  cor_module_processing(., cor_method = "spearman")
 
-adj_matrix <- abs(cor(X))[1:300, 1:300]
+cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
 
-dim(adj_matrix)
+plot_epsilon_res(cor_test)
 
-# Set diagonal to 0 (no self-connections)
-diag(adj_matrix) <- 0
+object = cor_test
+epsilon = 2.5
+rbf_func = "gaussian"
+cluster_method = "ward.D"
+cor_method = "spearman"
+k_min = 1L
+k_max = 100L
+min_size = NULL
+.verbose = FALSE
 
-adj <- adj_matrix
-TOMDenom <- "min"
+cor_res <- S7::prop(object, "processed_data")$correlation_res
+cor_mat <- cor_res$get_cor_matrix()
+dist_mat <- 1 - abs(cor_mat)
+aff_mat <- rs_rbf_function_mat(
+  x = dist_mat,
+  epsilon = epsilon,
+  rbf_type = rbf_func
+)
+dist_mat <- 1 - aff_mat
+
+tree <- stats::hclust(as.dist(dist_mat), method = cluster_method)
+
+devtools::load_all()
+
+cutOpt <- tree_cut_iter(
+  tree = tree,
+  cor_mat = cor_mat,
+  dist_mat = dist_mat,
+  k_min = k_min,
+  k_max = k_max,
+  min_size = min_size,
+  cor_method = cor_method
+)
+
+k = 125L
+tictoc::tic()
+modules <-
+  coremo_tree_cut(
+    tree = tree,
+    k = k,
+    min_size = min_size,
+    dist_mat = dist_mat,
+    cor_method = cor_method
+  ) %>%
+  `names<-`(rownames(cor_mat))
+tictoc::toc()
+
+cluster_list <- split(names(modules), modules)
+cluster_list_idx <- rs_get_gs_indices(rownames(cor_mat), cluster_list)
+
 
 tictoc::tic()
-n <- nrow(adj)
-TOM <- matrix(0, nrow = n, ncol = n)
+qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
+tictoc::toc()
 
-connectivity <- rowSums(adj)
+tictoc::tic()
+qc_2 <- coremo_cluster_quality_v2(modules = modules, cor_mat = cor_mat)
+tictoc::toc()
 
-# Calculate TOM for each pair of nodes
-for (i in 1:n) {
-  for (j in 1:n) {
-    if (i != j) {
-      # Calculate the numerator: aij + sum(aik * akj) for k != i,j
-      numerator <- adj[i, j]
 
-      # Sum over all k except i and j
-      shared_neighbors <- 0
-      for (k in 1:n) {
-        if (k != i && k != j) {
-          shared_neighbors <- shared_neighbors + adj[i, k] * adj[k, j]
-        }
+coremo_cluster_quality_v2 <- function(modules, cor_mat, random_seed = 10101L) {
+  # Checks
+  checkmate::qassert(modules, c("S+", "I+"))
+  checkmate::assertNamed(modules)
+  checkmate::assertMatrix(cor_mat, mode = "numeric")
+  checkmate::qassert(random_seed, "I1")
+  # Function body
+  cluster_list <- split(names(modules), modules)
+
+  n_clusters <- length(cluster_list)
+  result_list <- vector("list", n_clusters)
+
+  for (i in seq_len(n_clusters)) {
+    genes <- cluster_list[[i]]
+    n <- length(genes)
+    if (n < 2) {
+      result_list[[i]] <- data.table::data.table(
+        size = n,
+        r2med = 1,
+        r2mad = 0
+      )
+    } else {
+      # Sample genes if needed
+      scluster <- if (n > 1000) {
+        sample(genes, 1000, replace = FALSE)
+      } else {
+        genes
       }
-      numerator <- numerator + shared_neighbors
 
-      # Calculate the denominator: f(ki, kj) + 1 - aij
-      if (TOMDenom == "min") {
-        f_ki_kj <- min(connectivity[i], connectivity[j])
-      } else if (TOMDenom == "mean") {
-        f_ki_kj <- (connectivity[i] + connectivity[j]) / 2
-      }
+      # Extract submatrix more efficiently
+      sub_cor_sq <- cor_mat[scluster, scluster, drop = FALSE]^2
 
-      denominator <- f_ki_kj + 1 - adj[i, j]
+      r2_values <- rs_coremo_quality(sub_cor_sq)
 
-      # Calculate TOM
-      TOM[i, j] <- numerator / denominator
+      result_list[[i]] <- data.table::data.table(
+        size = n,
+        r2med = r2_values$median,
+        r2mad = r2_values$mad
+      )
     }
   }
+
+  data.table::rbindlist(result_list)
 }
-
-tictoc::toc()
-
-
-tictoc::tic()
-rs_res = rs_tom(adj)
-tictoc::toc()
-
-rextendr::document()
-
-summary(c(rs_res))
-
-rs_res[1:10, 1:10]
-
-TOM[1:10, 1:10]
