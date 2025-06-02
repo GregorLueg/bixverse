@@ -7,7 +7,7 @@
 diffcor_module_processing(
   object,
   background_mat,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 )
 }
@@ -17,7 +17,7 @@ should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before 
 
 \item{background_mat}{Numerical matrix. The background data set.}
 
-\item{correlation_method}{String. Option of \code{c("pearson", "spearman")}.}
+\item{cor_method}{String. Option of \code{c("pearson", "spearman")}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

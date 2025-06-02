@@ -2,15 +2,14 @@
 % Please edit documentation in R/methods_coexp_cor.R
 \name{coremo_tree_cut}
 \alias{coremo_tree_cut}
-\title{Coremo: cuts a hierarchical cluster based on k (or h)}
+\title{Coremo: cuts a hierarchical cluster based on k}
 \usage{
 coremo_tree_cut(
   tree,
   k,
-  h = NULL,
   min_size = NULL,
   dist_mat,
-  correlation_method = c("pearson", "spearman")
+  cor_method = c("pearson", "spearman")
 )
 }
 \arguments{
@@ -19,14 +18,12 @@ matrix (or the distance thereof).}
 
 \item{k}{Integer. Number of cuts on the tree.}
 
-\item{h}{Float. Optional parameter to provide the height to cut at.}
-
 \item{min_size}{Integer. Optional minimum size for the clusters.}
 
 \item{dist_mat}{Numerical matrix. The distance matrix that was used to
 compute the hierarchical clustering.}
 
-\item{correlation_method}{String. Which correlation method to use for
+\item{cor_method}{String. Which correlation method to use for
 optionally combining the small clusters. One of \code{c("pearson", "spearman")}.}
 }
 \value{
@@ -34,7 +31,6 @@ A vector with module membership.
 }
 \description{
 This function uses a tree (output of \code{\link[stats:hclust]{stats::hclust()}}) and cuts it according
-to the parameter k (or optionally, the height parameter h). If a \code{min_size}
-is specified, modules are merged by their similarity of their eigen values
-in the distance matrix.
+to the parameter k. If a \code{min_size} is specified, modules are merged by their
+similarity of their eigen values in the distance matrix.
 }

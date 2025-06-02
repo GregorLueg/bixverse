@@ -6,7 +6,7 @@
 \usage{
 cor_module_processing(
   object,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 )
 }
@@ -14,7 +14,7 @@ cor_module_processing(
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
-\item{correlation_method}{String. Option of \code{c("pearson", "spearman")}.}
+\item{cor_method}{String. Option of \code{c("pearson", "spearman")}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

@@ -10,7 +10,7 @@
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
-#' @param correlation_method String. Option of `c("pearson", "spearman")`.
+#' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added data to the properties for subsequent usage.
@@ -21,7 +21,7 @@ cor_module_processing <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    correlation_method = c("pearson", "spearman"),
+    cor_method = c("pearson", "spearman"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -34,12 +34,12 @@ cor_module_processing <- S7::new_generic(
 #' @method cor_module_processing bulk_coexp
 S7::method(cor_module_processing, bulk_coexp) <- function(
   object,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
+  checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function body
@@ -50,7 +50,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == "pearson") {
+  spearman <- if (cor_method == "pearson") {
     if (.verbose) message("Using Pearson correlations.")
     FALSE
   } else {
@@ -95,7 +95,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param background_mat Numerical matrix. The background data set.
-#' @param correlation_method String. Option of `c("pearson", "spearman")`.
+#' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added data to the properties for subsequent usage.
@@ -107,7 +107,7 @@ diffcor_module_processing <- S7::new_generic(
   fun = function(
     object,
     background_mat,
-    correlation_method = c("pearson", "spearman"),
+    cor_method = c("pearson", "spearman"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -120,13 +120,13 @@ diffcor_module_processing <- S7::new_generic(
 S7::method(diffcor_module_processing, bulk_coexp) <- function(
   object,
   background_mat,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertMatrix(background_mat, mode = "numeric")
-  checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
+  checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function
@@ -137,7 +137,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == "pearson") {
+  spearman <- if (cor_method == "pearson") {
     if (.verbose) message("Using Pearson correlations.")
     FALSE
   } else {
@@ -1065,45 +1065,41 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
   res
 }
 
-#' Coremo: cuts a hierarchical cluster based on k (or h)
+#' Coremo: cuts a hierarchical cluster based on k
 #'
 #' @description
 #' This function uses a tree (output of [stats::hclust()]) and cuts it according
-#' to the parameter k (or optionally, the height parameter h). If a `min_size`
-#' is specified, modules are merged by their similarity of their eigen values
-#' in the distance matrix.
+#' to the parameter k. If a `min_size` is specified, modules are merged by their
+#' similarity of their eigen values in the distance matrix.
 #'
 #' @param tree hclust object. The hierarchical clustering of the correlation
 #' matrix (or the distance thereof).
 #' @param k Integer. Number of cuts on the tree.
-#' @param h Float. Optional parameter to provide the height to cut at.
 #' @param min_size Integer. Optional minimum size for the clusters.
 #' @param dist_mat Numerical matrix. The distance matrix that was used to
 #' compute the hierarchical clustering.
-#' @param correlation_method String. Which correlation method to use for
+#' @param cor_method String. Which correlation method to use for
 #' optionally combining the small clusters. One of `c("pearson", "spearman")`.
 #'
 #' @return A vector with module membership.
 coremo_tree_cut <- function(
   tree,
   k,
-  h = NULL,
   min_size = NULL,
   dist_mat,
-  correlation_method = c("pearson", "spearman")
+  cor_method = c("pearson", "spearman")
 ) {
   # Checks
   checkmate::assertClass(tree, "hclust")
-  checkmate::qassert(k, c("I1", "0"))
-  checkmate::qassert(h, c("N1", "0"))
+  checkmate::qassert(k, "I1")
   checkmate::qassert(min_size, c("I1", "0"))
   checkmate::assertMatrix(dist_mat, mode = "numeric")
   checkmate::assertChoice(
-    correlation_method,
+    cor_method,
     c("pearson", "spearman")
   )
   # Function body
-  clusters <- cutree(tree, k = k, h = h)
+  clusters <- cutree(tree, k = k)
   # Early returns
   if (is.null(min_size)) {
     return(clusters)
@@ -1126,7 +1122,7 @@ coremo_tree_cut <- function(
     do.call(rbind, .) %>%
     `rownames<-`(sort(unique(clusters)))
 
-  spearman <- correlation_method == "spearman"
+  spearman <- cor_method == "spearman"
 
   eg_cor <- rs_cor(x = t(eg), spearman = spearman)
   eg_cor <-
@@ -1136,6 +1132,75 @@ coremo_tree_cut <- function(
     sel_clust <- to_keep[which.max(eg_cor[, as.character(i)])]
     res[which(res == as.numeric(i))] <- sel_clust
   }
+
+  res
+}
+
+#' Coremo: Iterate over k for gene module detection.
+#'
+#' @description
+#' This function uses a tree (output of [stats::hclust()]) and cuts it according
+#' across all values from k_min to k_max and returns the
+#'
+#' @param tree hclust object. The hierarchical clustering of the correlation
+#' matrix (or the distance thereof).
+#' @param cor_mat Numerical matrix. Correlation matrix.
+#' @param dist_mat Numerical matrix. Distance matrix.
+#' @param k_min,k_max Integer. The minimum and maximum number of cuts.
+#' @param min_size Integer. Optional minimum size of resulting modules.
+#' @param cor_method String. Method for the correlation function. One of
+#' `c("pearson", "spearman")`.
+#'
+#' @return a data.table with stats (median size of the clusters, median weighted
+#' R², and median R²) on the varying levels of k.
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+#' @import data.table
+tree_cut_iter <- function(
+  tree,
+  cor_mat,
+  dist_mat,
+  k_min = 1L,
+  k_max = 200L,
+  min_size = NULL,
+  cor_method = c("spearman", "pearson")
+) {
+  # Checks
+  checkmate::assertClass(tree, "hclust")
+  checkmate::assertMatrix(cor_mat, mode = "numeric")
+  checkmate::assertMatrix(dist_mat, mode = "numeric")
+  checkmate::qassert(k_min, "I1")
+  checkmate::qassert(k_max, "I1")
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertChoice(cor_method, c("spearman", "pearson"))
+  # Function body
+  res <- purrr::map(
+    k.min:k.max,
+    \(k) {
+      modules <-
+        coremo_tree_cut(
+          tree = tree,
+          k = k,
+          min_size = min_size,
+          dist_mat = dist_mat,
+          cor_method = cor_method
+        )
+
+      qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
+
+      res <- qc[, .(
+        k = k,
+        n = .N,
+        "size_median" = median(size),
+        "R2_weighted_median" = sum(r2med * size) / sum(size),
+        "R2_median" = median(r2med)
+      )]
+
+      res
+    }
+  ) %>%
+    data.table::rbindlist()
 
   res
 }
@@ -1170,7 +1235,10 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
   resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(resolution_results)) {
     warning(
-      "No resolution results found. Did you run cor_module_graph_check_res()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_graph_check_res()? Returning NULL."
+      )
     )
   }
 
@@ -1198,7 +1266,10 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
   plot_df <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_graph_check_res()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_graph_check_res()? Returning NULL."
+      )
     )
     return(NULL)
   }
