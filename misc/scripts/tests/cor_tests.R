@@ -122,8 +122,9 @@ dist_mat <- 1 - aff_mat
 
 tree <- stats::hclust(as.dist(dist_mat), method = cluster_method)
 
-devtools::load_all()
+# devtools::load_all()
 
+tictoc::tic()
 cutOpt <- tree_cut_iter(
   tree = tree,
   cor_mat = cor_mat,
@@ -133,8 +134,9 @@ cutOpt <- tree_cut_iter(
   min_size = min_size,
   cor_method = cor_method
 )
+tictoc::toc()
 
-k = 125L
+k = 25L
 tictoc::tic()
 modules <-
   coremo_tree_cut(
@@ -148,15 +150,20 @@ modules <-
 tictoc::toc()
 
 cluster_list <- split(names(modules), modules)
-cluster_list_idx <- rs_get_gs_indices(rownames(cor_mat), cluster_list)
 
+# rextendr::document()
 
 tictoc::tic()
 qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
 tictoc::toc()
 
 tictoc::tic()
-qc_2 <- coremo_cluster_quality_v2(modules = modules, cor_mat = cor_mat)
+qc_2 <- rs_coremo_quality(
+  cluster_genes = cluster_list,
+  cor_mat = cor_mat,
+  row_names = rownames(cor_mat),
+  seed = 10101L
+)
 tictoc::toc()
 
 

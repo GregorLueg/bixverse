@@ -631,7 +631,7 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
 #' @export
-rs_coremo_quality <- function(x) .Call(wrap__rs_coremo_quality, x)
+rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
 
 #' Calculate the OT harmonic sum
 #'
