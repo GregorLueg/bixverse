@@ -1129,7 +1129,8 @@ coremo_tree_cut <- function(
 #'
 #' @description
 #' This function uses a tree (output of [stats::hclust()]) and cuts it according
-#' across all values from k_min to k_max and returns the
+#' across all values from k_min to k_max and returns the quality at each
+#' individual cut.
 #'
 #' @param tree hclust object. The hierarchical clustering of the correlation
 #' matrix (or the distance thereof).
@@ -1141,7 +1142,7 @@ coremo_tree_cut <- function(
 #' `c("pearson", "spearman")`.
 #'
 #' @return a data.table with stats (median size of the clusters, median weighted
-#' R², and median R²) on the varying levels of k.
+#' R^2, and median R^2) on the varying levels of k.
 #'
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
@@ -1151,10 +1152,8 @@ tree_cut_iter <- function(
   cor_mat,
   dist_mat,
   k_min = 1L,
-  k_max = 200L,
+  k_max = 100L,
   min_size = NULL,
-  parallel = TRUE,
-  max_workers = NULL,
   cor_method = c("spearman", "pearson")
 ) {
   # Checks
@@ -1166,21 +1165,6 @@ tree_cut_iter <- function(
   checkmate::qassert(min_size, c("I1", "0"))
   checkmate::assertChoice(cor_method, c("spearman", "pearson"))
   # Function body
-
-  if (parallel) {
-    if (.verbose) {
-      message(sprintf("Using parallel computation over %i cores.", max_workers))
-    }
-
-    # future plan funkiness
-    assign(".temp_workers", max_workers, envir = .GlobalEnv)
-    on.exit(rm(".temp_workers", envir = .GlobalEnv))
-
-    plan(future::multisession(workers = .temp_workers))
-  } else {
-    if (.verbose) message("Using sequential computation.")
-    future::plan(future::sequential())
-  }
 
   res <- purrr::map(
     k_min:k_max,
@@ -1211,6 +1195,41 @@ tree_cut_iter <- function(
     data.table::rbindlist()
 
   res
+}
+
+#' Coremo: Identify the inflection point
+#'
+#' @description
+#' This function will identify the optimal cut based on a loess-function fitted
+#' to `k ~ R2_median` via the inflection point.
+#'
+#' @param x,y The k and R2_median values.
+#' @param span The span parameter for the loess function.
+#'
+#' @return Returns the inflection point.
+get_inflection_point <- function(x, y, span = 0.25) {
+  # Checks
+  checkmate::assertNumeric(x, len = length(y))
+  checkmate::assertNumeric(y, len = length(x))
+  checkmate::qassert(span, "R+[0,1]")
+  # Function body
+  span <- max(0.1, min(1.0, span_factor))
+  fit <- loess(y ~ x, span = span)
+  py <- predict(fit, x)
+
+  n <- length(x)
+  gradient <- numeric(n)
+  gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
+  gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
+
+  for (i in 2:(n - 1)) {
+    gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
+  }
+
+  gradient_change <- abs(diff(gradient))
+  inflection_idx <- which.max(gradient_change) + 1
+
+  return(inflection_idx)
 }
 
 ## getters ---------------------------------------------------------------------

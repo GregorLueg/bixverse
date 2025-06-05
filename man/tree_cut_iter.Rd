@@ -9,10 +9,8 @@ tree_cut_iter(
   cor_mat,
   dist_mat,
   k_min = 1L,
-  k_max = 200L,
+  k_max = 100L,
   min_size = NULL,
-  parallel = TRUE,
-  max_workers = NULL,
   cor_method = c("spearman", "pearson")
 )
 }

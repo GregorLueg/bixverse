@@ -251,12 +251,12 @@ params_gsea <- function(
 #' @export
 params_coremo <- function(
   k_min = 2L,
-  k_max = 100L,
+  k_max = 150L,
   min_size = NULL,
   rbf_func = c("gaussian", "inverse_quadratic", "bump"),
   cluster_method = c(
-    "ward.D",
     "ward.D2",
+    "ward.D",
     "single",
     "complete",
     "average",

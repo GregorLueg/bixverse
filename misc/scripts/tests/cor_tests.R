@@ -8,6 +8,8 @@ devtools::load_all()
 
 # Test on real data ------------------------------------------------------------
 
+?recount3::create_rse_manual
+
 gtex_brain <- recount3::create_rse_manual(
   project = "BRAIN",
   project_home = "data_sources/gtex",
@@ -92,8 +94,14 @@ tictoc::toc()
 
 # CoReMo -----------------------------------------------------------------------
 
+devtools::load_all()
+
+library(ggplot2)
+
+?preprocess_bulk_coexp
+
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
-  preprocess_bulk_coexp(., mad_threshold = 1) %>%
+  preprocess_bulk_coexp(., mad_threshold = 1.5) %>%
   cor_module_processing(., cor_method = "spearman")
 
 cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
@@ -102,41 +110,92 @@ plot_epsilon_res(cor_test)
 
 object = cor_test
 epsilon = 2.5
-rbf_func = "gaussian"
-cluster_method = "ward.D"
-cor_method = "spearman"
-k_min = 1L
-k_max = 100L
-min_size = NULL
-parallel = TRUE
-max_workers = as.integer(parallel::detectCores() / 2)
+params_coremo = params_coremo()
 .verbose = FALSE
+
+devtools::load_all()
 
 cor_res <- S7::prop(object, "processed_data")$correlation_res
 cor_mat <- cor_res$get_cor_matrix()
+
+cor_mat[1:5, 1:5]
+
 dist_mat <- 1 - abs(cor_mat)
-aff_mat <- rs_rbf_function_mat(
-  x = dist_mat,
-  epsilon = epsilon,
-  rbf_type = rbf_func
+
+dist_mat[1:5, 1:5]
+
+aff_mat <- with(
+  params_coremo,
+  rs_rbf_function_mat(
+    x = dist_mat,
+    epsilon = epsilon,
+    rbf_type = "gaussian"
+  )
 )
+
+aff_mat[1:5, 1:5]
+
 dist_mat <- 1 - aff_mat
 
-tree <- stats::hclust(as.dist(dist_mat), method = cluster_method)
+dist_mat[1:10, 1:10]
+
+summary(c(dist_mat))
+
+tree <- with(
+  params_coremo,
+  stats::hclust(as.dist(dist_mat), method = "ward.D2")
+)
+
+plot(tree)
 
 # devtools::load_all()
+rextendr::document()
 
 tictoc::tic()
-cutOpt <- tree_cut_iter(
-  tree = tree,
-  cor_mat = cor_mat,
-  dist_mat = dist_mat,
-  k_min = k_min,
-  k_max = k_max,
-  min_size = min_size,
-  cor_method = cor_method
+optimal_cuts <- with(
+  params_coremo,
+  tree_cut_iter(
+    tree = tree,
+    cor_mat = cor_mat,
+    dist_mat = dist_mat,
+    k_min = k_min,
+    k_max = k_max,
+    min_size = min_size,
+    cor_method = cor_method
+  )
 )
 tictoc::toc()
+
+plot(cutOpt$k, cutOpt$R2_median)
+
+cutOpt
+
+ggplot(data = cutOpt, mapping = aes(x = k, y = R2_median)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = TRUE, span = 0.25)
+
+inflection_dt <- cutOpt[, c("k", "R2_median")]
+span_factor <- 0.25
+
+x <- inflection_dt[[1]]
+y <- inflection_dt[[2]]
+
+span <- max(0.1, min(1.0, span_factor))
+fit <- loess(y ~ x, span = span)
+py <- predict(fit, x)
+
+n <- length(x)
+gradient <- numeric(n)
+gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
+gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
+
+for (i in 2:(n - 1)) {
+  gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
+}
+
+gradient_change <- abs(diff(gradient))
+inflection_idx <- which.max(gradient_change) + 1
+
 
 k = 75L
 tictoc::tic()

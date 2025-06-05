@@ -131,7 +131,7 @@ fn rs_coremo_quality(
 
     // Iterate through the clusters and get the data
     let res: Vec<(f64, f64)> = all_indices
-        .iter()
+        .par_iter()
         .map(|index_vec| {
             let n = index_vec.len();
 
