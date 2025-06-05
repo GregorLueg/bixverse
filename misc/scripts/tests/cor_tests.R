@@ -108,6 +108,8 @@ cor_method = "spearman"
 k_min = 1L
 k_max = 100L
 min_size = NULL
+parallel = TRUE
+max_workers = as.integer(parallel::detectCores() / 2)
 .verbose = FALSE
 
 cor_res <- S7::prop(object, "processed_data")$correlation_res
@@ -136,7 +138,7 @@ cutOpt <- tree_cut_iter(
 )
 tictoc::toc()
 
-k = 25L
+k = 75L
 tictoc::tic()
 modules <-
   coremo_tree_cut(
@@ -150,6 +152,8 @@ modules <-
 tictoc::toc()
 
 cluster_list <- split(names(modules), modules)
+
+devtools::load_all()
 
 # rextendr::document()
 
@@ -165,7 +169,6 @@ qc_2 <- rs_coremo_quality(
   seed = 10101L
 )
 tictoc::toc()
-
 
 coremo_cluster_quality_v2 <- function(modules, cor_mat, random_seed = 10101L) {
   # Checks

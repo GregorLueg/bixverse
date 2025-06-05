@@ -11,7 +11,7 @@ cor_module_graph_check_res(
   random_seed = 123L,
   min_genes = 10L,
   parallel = TRUE,
-  max_workers = as.integer(parallel::detectCores()/2),
+  max_workers = NULL,
   .verbose = TRUE
 )
 }
@@ -47,8 +47,9 @@ community.}
 
 \item{parallel}{Boolean. Parallelise the Leiden clustering.}
 
-\item{max_workers}{Integer. Maximum number of workers to use if parallel is
-set to \code{TRUE}.}
+\item{max_workers}{Optional Integer. Number of cores to use if parallel is
+set to \code{TRUE}. If set to \code{NULL} it will automatically detect the number
+of cores.}
 
 \item{.verbose}{Controls the verbosity of the function.}
 }

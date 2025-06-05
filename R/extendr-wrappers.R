@@ -630,7 +630,25 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
-#' @export
+#' Helper function to assess CoReMo cluster quality
+#'
+#' @description This function assesses the quality of the clusters
+#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
+#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
+#' to a random set of 1000 genes.
+#'
+#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
+#' @param row_names String vector. The row names (or column names) of the
+#' correlation matrix.
+#' @param seed Integer. Random seed for the sub sampling of genes.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item r2med - median R2 of the cluster.
+#'   \item r2mad - median absolute deviation of the R2 in the cluster.
+#'   \item size - size of the cluster.
+#' }
 rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
 
 #' Calculate the OT harmonic sum

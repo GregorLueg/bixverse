@@ -230,3 +230,77 @@ params_gsea <- function(
     )
   )
 }
+
+## coremo ----------------------------------------------------------------------
+
+#' Wrapper function to generate CoReMo parameters
+#'
+#' @param k_min,k_max Integer. Minimum and maximum number of cuts to use for the
+#' hierarchical clustering.
+#' @param min_size Optional integer. Minimum size of the clusters. Smaller
+#' clusters will be combined together.
+#' @param rbf_func String. Type of RBF you wish to apply to down-weigh weak
+#' correlations. Defaults to `"gaussian"`.
+#' @param cluster_method String. The type of clustering method you want to use
+#' for [stats::hclust()]. Defaults to `"ward.D"`.
+#' @param cor_method String. The type of correlation to use. Defaults to
+#' `"spearman"`.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_coremo <- function(
+  k_min = 2L,
+  k_max = 100L,
+  min_size = NULL,
+  rbf_func = c("gaussian", "inverse_quadratic", "bump"),
+  cluster_method = c(
+    "ward.D",
+    "ward.D2",
+    "single",
+    "complete",
+    "average",
+    "mcquitty",
+    "median",
+    "centroid"
+  ),
+  cor_method = c("spearman", "pearson")
+) {
+  # Standard choices
+  cluster_method <- match.arg(cluster_method)
+  cor_method <- match.arg(cor_method)
+  rbf_func <- match.arg(rbf_func)
+  # Checks
+  checkmate::qassert(k_min, "I1")
+  checkmate::qassert(k_max, "I1")
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertChoice(rbf_func, c("gaussian", "inverse_quadratic", "bump"))
+  checkmate::assertChoice(
+    cluster_method,
+    c(
+      "ward.D",
+      "ward.D2",
+      "single",
+      "complete",
+      "average",
+      "mcquitty",
+      "median",
+      "centroid"
+    )
+  )
+  checkmate::assertChoice(
+    cor_method,
+    c("spearman", "pearson")
+  )
+  # Returns
+  return(
+    list(
+      k_min = k_min,
+      k_max = k_max,
+      min_size = min_size,
+      rbf_func = rbf_func,
+      cluster_method = cluster_method,
+      cor_method = cor_method
+    )
+  )
+}

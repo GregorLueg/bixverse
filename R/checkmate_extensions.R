@@ -307,6 +307,85 @@ checkGSEAParams <- function(x) {
   return(TRUE)
 }
 
+## coremo ----------------------------------------------------------------------
+
+#' Check CoReMo parameters
+#'
+#' @description Checkmate extension for checking the CoReMo parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCoReMoParams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k_min",
+      "k_max",
+      "min_size",
+      "rbf_func",
+      "cluster_method",
+      "cor_method"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # qtest checks
+  qtest_rules <- list(
+    k_min = "I1",
+    k_max = "I1",
+    min_size = c("I1", "0")
+  )
+  q_test_res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, qtest_rules[[name]])
+  })
+  if (!isTRUE(all(q_test_res))) {
+    broken_elem <- names(q_test_res)[which(!q_test_res)][1]
+    return(
+      sprintf(
+        "The following element `%s` in CoReMo params does not conform the expected format. \
+        k_min and k_max need to be integers, min_size an integer or NULL.",
+        broken_elem
+      )
+    )
+  }
+  # test
+  test_choice_rules <- list(
+    rbf_func = c("gaussian", "inverse_quadratic", "bump"),
+    cluster_method = c(
+      "ward.D",
+      "ward.D2",
+      "single",
+      "complete",
+      "average",
+      "mcquitty",
+      "median",
+      "centroid"
+    ),
+    cor_method = c("spearman", "pearson")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::testChoice(x, test_choice_rules[[name]])
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        "The following element `%s` in CoReMo params does not use one of the
+        expected choices. Please double check the documentation.",
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## correlation params ----------------------------------------------------------
@@ -420,3 +499,19 @@ assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
+
+## coremo ----------------------------------------------------------------------
+
+#' Assert CoReMo parameter
+#'
+#' @description Checkmate extension for asserting the CoReMo parameters.
+#'
+#' @inheritParams checkCoReMoParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)

@@ -341,8 +341,9 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #' @param min_genes Integer. Minimum number of genes that should be in a
 #' community.
 #' @param parallel Boolean. Parallelise the Leiden clustering.
-#' @param max_workers Integer. Maximum number of workers to use if parallel is
-#' set to `TRUE`.
+#' @param max_workers Optional Integer. Number of cores to use if parallel is
+#' set to `TRUE`. If set to `NULL` it will automatically detect the number
+#' of cores.
 #' @param .verbose Controls the verbosity of the function.
 #'
 #' @return The class with added data to the properties.
@@ -358,7 +359,7 @@ cor_module_graph_check_res <- S7::new_generic(
     random_seed = 123L,
     min_genes = 10L,
     parallel = TRUE,
-    max_workers = as.integer(parallel::detectCores() / 2),
+    max_workers = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -381,7 +382,7 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   random_seed = 123L,
   min_genes = 10L,
   parallel = TRUE,
-  max_workers = as.integer(parallel::detectCores() / 2),
+  max_workers = NULL,
   .verbose = TRUE
 ) {
   combined_id <- . <- good_clusters <- N <- graph <- NULL
@@ -392,7 +393,7 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   assertGraphResParams(resolution_params)
   checkmate::qassert(min_genes, "I1")
   checkmate::qassert(parallel, "B1")
-  checkmate::qassert(max_workers, "I1")
+  checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
   detection_method <- S7::prop(object, "params")[["detection_method"]]
@@ -441,6 +442,9 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   }
 
   if (parallel) {
+    if (is.null(max_workers)) {
+      max_workers <- get_cores()
+    }
     if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
     }
@@ -681,7 +685,10 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
       resolution_results[modularity == max(modularity), resolution]
     } else {
       warning(
-        "No resolution results found and none provided. Will default to a resolution of 1."
+        paste(
+          "No resolution results found and none provided.",
+          "Will default to a resolution of 1."
+        )
       )
       1
     }
@@ -1036,31 +1043,13 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
     names(modules),
     modules
   )
-  res <- purrr::map(
-    cluster_list,
-    \(genes) {
-      n <- length(genes)
-      if (n < 2) {
-        c(r2med, r2mad) %<-% c(1, 0)
-      } else {
-        scluster <- if (n > 1000) {
-          set.seed(random_seed)
-          sample(genes, 1000, replace = F)
-        } else {
-          genes
-        }
-        cor_mat <- cor_mat[scluster, scluster]
-        r2 <- as.dist(cor_mat^2)
-        c(r2med, r2mad) %<-% c(median(r2), mad(r2))
-      }
-      res <- data.table::data.table(
-        size = n,
-        r2med = r2med,
-        r2mad = r2mad
-      )
-    }
+  res <- rs_coremo_quality(
+    cluster_genes = cluster_list,
+    cor_mat = cor_mat,
+    row_names = rownames(cor_mat),
+    seed = random_seed
   ) %>%
-    data.table::rbindlist()
+    data.table::setDT()
 
   res
 }
@@ -1164,6 +1153,8 @@ tree_cut_iter <- function(
   k_min = 1L,
   k_max = 200L,
   min_size = NULL,
+  parallel = TRUE,
+  max_workers = NULL,
   cor_method = c("spearman", "pearson")
 ) {
   # Checks
@@ -1175,6 +1166,22 @@ tree_cut_iter <- function(
   checkmate::qassert(min_size, c("I1", "0"))
   checkmate::assertChoice(cor_method, c("spearman", "pearson"))
   # Function body
+
+  if (parallel) {
+    if (.verbose) {
+      message(sprintf("Using parallel computation over %i cores.", max_workers))
+    }
+
+    # future plan funkiness
+    assign(".temp_workers", max_workers, envir = .GlobalEnv)
+    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+
+    plan(future::multisession(workers = .temp_workers))
+  } else {
+    if (.verbose) message("Using sequential computation.")
+    future::plan(future::sequential())
+  }
+
   res <- purrr::map(
     k_min:k_max,
     \(k) {
