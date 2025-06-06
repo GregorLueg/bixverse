@@ -109,9 +109,43 @@ cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
 
 plot_epsilon_res(cor_test)
 
+devtools::load_all()
+
+cor_test <- cor_module_coremo_clustering(object = cor_test, epsilon = 2)
+
+checkCoReMoParams(coremo_params)
+
+x <- coremo_params
+
+test_choice_rules <- list(
+  rbf_func = c("gaussian", "inverse_quadratic", "bump"),
+  cor_method = c("spearman", "pearson")
+)
+test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+  if (name %in% names(test_choice_rules)) {
+    checkmate::testChoice(x, test_choice_rules[[name]])
+  } else {
+    TRUE
+  }
+})
+
+qtest_rules <- list(
+  k_min = "I1",
+  k_max = "I1",
+  junk_module_threshold = "N1",
+  min_size = c("I1", "0")
+)
+q_test_res <- purrr::imap_lgl(x, \(x, name) {
+  if (name %in% names(qtest_rules)) {
+    checkmate::qtest(x, qtest_rules[[name]])
+  } else {
+    TRUE
+  }
+})
+
 object = cor_test
 epsilon = 2
-params_coremo = params_coremo()
+coremo_params = params_coremo()
 .verbose = FALSE
 .seed = 10101L
 

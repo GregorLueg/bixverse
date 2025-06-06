@@ -344,7 +344,11 @@ checkCoReMoParams <- function(x) {
     min_size = c("I1", "0")
   )
   q_test_res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, qtest_rules[[name]])
+    if (name %in% names(qtest_rules)) {
+      checkmate::qtest(x, qtest_rules[[name]])
+    } else {
+      TRUE
+    }
   })
   if (!isTRUE(all(q_test_res))) {
     broken_elem <- names(q_test_res)[which(!q_test_res)][1]
@@ -362,7 +366,11 @@ checkCoReMoParams <- function(x) {
     cor_method = c("spearman", "pearson")
   )
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::testChoice(x, test_choice_rules[[name]])
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
   })
   if (!isTRUE(all(test_choice_res))) {
     broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]

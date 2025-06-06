@@ -258,7 +258,6 @@ params_coremo <- function(
   cor_method = c("spearman", "pearson")
 ) {
   # Standard choices
-  cluster_method <- match.arg(cluster_method)
   cor_method <- match.arg(cor_method)
   rbf_func <- match.arg(rbf_func)
   # Checks

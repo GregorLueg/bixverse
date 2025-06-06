@@ -838,9 +838,9 @@ cor_module_coremo_clustering <- S7::new_generic(
   fun = function(
     object,
     epsilon = 2,
-    params_coremo = params_coremo(),
+    coremo_params = params_coremo(),
     seed = 42L,
-    .verbose = FALSE
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -856,16 +856,16 @@ cor_module_coremo_clustering <- S7::new_generic(
 S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   object,
   epsilon = 2,
-  params_coremo = params_coremo(),
+  coremo_params = params_coremo(),
   seed = 42L,
-  .verbose = FALSE
+  .verbose = TRUE
 ) {
   # Out of scope
   gradient_change <- r2med <- cluster_id <- . <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(epsilon, "N1")
-  assertCoReMoParams(params_coremo)
+  assertCoReMoParams(coremo_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -889,7 +889,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
 
   aff_mat <- with(
-    params_coremo,
+    coremo_params,
     rs_rbf_function_mat(
       x = 1 - abs(cor_mat),
       epsilon = epsilon,
@@ -903,7 +903,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
 
   if (.verbose) message("Identifying optimal number of cuts.")
   optimal_cuts <- with(
-    params_coremo,
+    coremo_params,
     tree_cut_iter(
       tree = tree,
       cor_mat = cor_mat,
@@ -927,7 +927,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
 
   if (.verbose) message("Finalising CoReMo clusters.")
   final_clusters <- with(
-    params_coremo,
+    coremo_params,
     coremo_tree_cut(
       tree = tree,
       k = as.integer(inflection_idx),
@@ -946,7 +946,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
     cluster_genes = cluster_list,
     cor_mat = cor_mat,
     row_names = rownames(cor_mat),
-    seed = .seed
+    seed = seed
   ) %>%
     data.table::setDT() %>%
     .[, cluster_id := names(cluster_list)]
@@ -964,7 +964,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
     merge(., final_quality, by = "cluster_id")
 
   coremo_param <- with(
-    params_coremo,
+    coremo_params,
     list(
       epsilon = epsilon,
       k_min = k_min,
