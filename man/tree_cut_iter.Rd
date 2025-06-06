@@ -11,7 +11,8 @@ tree_cut_iter(
   k_min = 1L,
   k_max = 100L,
   min_size = NULL,
-  cor_method = c("spearman", "pearson")
+  cor_method = c("spearman", "pearson"),
+  seed = 42L
 )
 }
 \arguments{
@@ -28,12 +29,15 @@ matrix (or the distance thereof).}
 
 \item{cor_method}{String. Method for the correlation function. One of
 \code{c("pearson", "spearman")}.}
+
+\item{seed}{Integer. For reproducibility purposes.}
 }
 \value{
 a data.table with stats (median size of the clusters, median weighted
-R², and median R²) on the varying levels of k.
+R^2, and median R^2) on the varying levels of k.
 }
 \description{
 This function uses a tree (output of \code{\link[stats:hclust]{stats::hclust()}}) and cuts it according
-across all values from k_min to k_max and returns the
+across all values from k_min to k_max and returns the quality at each
+individual cut.
 }

@@ -630,27 +630,6 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
-#' Helper function to assess CoReMo cluster quality
-#'
-#' @description This function assesses the quality of the clusters
-#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
-#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
-#' to a random set of 1000 genes.
-#'
-#' @param cluster_genes A list. Contains the cluster and their respective genes.
-#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
-#' @param row_names String vector. The row names (or column names) of the
-#' correlation matrix.
-#' @param seed Integer. Random seed for the sub sampling of genes.
-#'
-#' @return A list containing:
-#'  \itemize{
-#'   \item r2med - median R2 of the cluster.
-#'   \item r2mad - median absolute deviation of the R2 in the cluster.
-#'   \item size - size of the cluster.
-#' }
-rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
-
 #' Calculate the OT harmonic sum
 #'
 #' @param x The numeric vector (should be between 0 and 1) for which to
@@ -692,22 +671,6 @@ rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x
 #'
 #' @export
 rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
-
-#' Calculates the TOM over an affinity matrix
-#'
-#' @description Calculates the topological overlap measure for a given affinity matrix
-#' x. Has the option to calculate the signed and unsigned version.
-#'
-#' @param x Numerical matrix. Affinity matrix.
-#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
-#' normalisation method will be used.
-#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-#' should be ≥ 0.
-#'
-#' @return Returns the TOM matrix.
-#'
-#' @export
-rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 
 #' Apply a range normalisation on a vector.
 #'
@@ -904,6 +867,43 @@ rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wr
 #'
 #' @export
 rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
+
+#' Calculates the TOM over an affinity matrix
+#'
+#' @description Calculates the topological overlap measure for a given affinity matrix
+#' x. Has the option to calculate the signed and unsigned version.
+#'
+#' @param x Numerical matrix. Affinity matrix.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
+#' normalisation method will be used.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
+#' should be ≥ 0.
+#'
+#' @return Returns the TOM matrix.
+#'
+#' @export
+rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
+
+#' Helper function to assess CoReMo cluster quality
+#'
+#' @description This function assesses the quality of the clusters
+#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
+#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
+#' to a random set of 1000 genes.
+#'
+#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
+#' @param row_names String vector. The row names (or column names) of the
+#' correlation matrix.
+#' @param seed Integer. Random seed for the sub sampling of genes.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item r2med - median R2 of the cluster.
+#'   \item r2mad - median absolute deviation of the R2 in the cluster.
+#'   \item size - size of the cluster.
+#' }
+rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
 
 
 # nolint end

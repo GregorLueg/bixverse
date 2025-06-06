@@ -6,6 +6,7 @@ mod helpers_linalg;
 mod helpers_ontology;
 mod helpers_rbh;
 
+mod fun_coremo;
 mod fun_fgsea;
 mod fun_helpers;
 mod fun_hypergeom;
@@ -31,4 +32,5 @@ extendr_module! {
     use fun_helpers;
     use fun_ica;
     use fun_ontology;
+    use fun_coremo;
 }

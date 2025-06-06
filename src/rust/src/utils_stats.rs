@@ -213,14 +213,14 @@ pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f6
 // Topological overlap measure //
 /////////////////////////////////
 
-/// Enum for the RBF function
+/// Enum for the TOM function
 #[derive(Debug)]
 pub enum TomType {
     Version1,
     Version2,
 }
 
-/// Parsing the RBF function
+/// Parsing the TOM type
 pub fn parse_tom_types(s: &str) -> Option<TomType> {
     match s.to_lowercase().as_str() {
         "v1" => Some(TomType::Version1),
@@ -235,7 +235,13 @@ pub fn parse_tom_types(s: &str) -> Option<TomType> {
 pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
     let n = affinity_mat.nrows();
     let mut tom_mat = Mat::<f64>::zeros(n, n);
-    let connectivity = col_sums(affinity_mat.as_ref());
+    let connectivity = if signed {
+        (0..n)
+            .map(|i| (0..n).map(|j| affinity_mat.get(i, j).abs()).sum())
+            .collect::<Vec<f64>>()
+    } else {
+        col_sums(affinity_mat.as_ref())
+    };
 
     // Pre-compute for speed-ups -> Massive difference and good call @Claude
     let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
@@ -253,7 +259,11 @@ pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
             let numerator = a_ij + shared_neighbours;
             let f_ki_kj = connectivity[i].min(connectivity[j]);
             let denominator = if signed {
-                f_ki_kj + 1.0 - a_ij.abs()
+                if *a_ij >= 0.0 {
+                    f_ki_kj + 1.0 - a_ij
+                } else {
+                    f_ki_kj + 1.0 + a_ij
+                }
             } else {
                 f_ki_kj + 1.0 - a_ij
             };
@@ -274,7 +284,13 @@ pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
 pub fn calc_tom_v2(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
     let n = affinity_mat.nrows();
     let mut tom_mat = Mat::<f64>::zeros(n, n);
-    let connectivity = col_sums(affinity_mat.as_ref());
+    let connectivity = if signed {
+        (0..n)
+            .map(|i| (0..n).map(|j| affinity_mat.get(i, j).abs()).sum())
+            .collect::<Vec<f64>>()
+    } else {
+        col_sums(affinity_mat.as_ref())
+    };
 
     // Pre-compute for speed-ups -> Massive difference and good call @Claude
     let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
@@ -289,11 +305,17 @@ pub fn calc_tom_v2(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
 
             let f_ki_kj = connectivity[i].min(connectivity[j]);
 
-            let neighbours = if signed {
-                shared_neighbours / (f_ki_kj + a_ij.abs())
+            let divisor = if signed {
+                if *a_ij >= 0.0 {
+                    f_ki_kj + a_ij
+                } else {
+                    f_ki_kj - a_ij
+                }
             } else {
-                shared_neighbours / (f_ki_kj + a_ij)
+                f_ki_kj + a_ij
             };
+
+            let neighbours = shared_neighbours / divisor;
 
             let tom_value = 0.5 * (a_ij + neighbours);
 

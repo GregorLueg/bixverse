@@ -19,6 +19,7 @@ Imports:
     checkmate,
     data.table,
     dplyr,
+    fastcluster,
     ggplot2,
     igraph,
     magrittr,

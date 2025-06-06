@@ -263,7 +263,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection",
+        "This class does not seem to be set for correlation-based module detection.",
         "Returning class as is."
       )
     )
@@ -289,7 +289,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
     rbf_type = rbf_func
   )
 
-  r_square_vals <- apply(epsilon_data, 2, .scale_free_fit)
+  r_square_vals <- apply(epsilon_data, 2, scale_free_fit)
 
   r_square_data <- list(epsilon = epsilons, r2_vals = r_square_vals) %>%
     data.table::setDT()
@@ -816,6 +816,174 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   return(object)
 }
 
+## coremo ----------------------------------------------------------------------
+
+#' @title Generates CoReMo-based gene modules.
+#'
+#' @description
+#' ...
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param epsilon ...
+#' @param params_coremo ...
+#' @param seed ...
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @export
+cor_module_coremo_clustering <- S7::new_generic(
+  name = "cor_module_coremo_clustering",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    epsilon = 2,
+    params_coremo = params_coremo(),
+    seed = 42L,
+    .verbose = FALSE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%->%`
+#' @import data.table
+#'
+#' @method cor_module_coremo_clustering bulk_coexp
+S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
+  object,
+  epsilon = 2,
+  params_coremo = params_coremo(),
+  seed = 42L,
+  .verbose = FALSE
+) {
+  # Out of scope
+  gradient_change <- r2med <- cluster_id <- . <- NULL
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(epsilon, "N1")
+  assertCoReMoParams(params_coremo)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
+  # Early return
+  if (
+    is.null(detection_method) ||
+      detection_method != "correlation-based"
+  ) {
+    warning(
+      paste(
+        "This class does not seem to be set for correlation-based module detection.",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  cor_res <- S7::prop(object, "processed_data")[["correlation_res"]]
+  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+
+  aff_mat <- with(
+    params_coremo,
+    rs_rbf_function_mat(
+      x = 1 - abs(cor_mat),
+      epsilon = epsilon,
+      rbf_type = rbf_func
+    )
+  )
+  dist_mat <- 1 - aff_mat
+
+  if (.verbose) message("Generating the hierarchical clustering.")
+  tree <- fastcluster::hclust(as.dist(dist_mat), method = "ward.D")
+
+  if (.verbose) message("Identifying optimal number of cuts.")
+  optimal_cuts <- with(
+    params_coremo,
+    tree_cut_iter(
+      tree = tree,
+      cor_mat = cor_mat,
+      dist_mat = dist_mat,
+      k_min = k_min,
+      k_max = k_max,
+      min_size = min_size,
+      cor_method = cor_method,
+      seed = seed
+    )
+  )
+
+  c(inflection_idx, gradient_change) %<-%
+    get_inflection_point(
+      optimal_cuts$k,
+      optimal_cuts$R2_weighted_median,
+      span = 0.25
+    )
+
+  optimal_cuts[, gradient_change := c(0, gradient_change)]
+
+  if (.verbose) message("Finalising CoReMo clusters.")
+  final_clusters <- with(
+    params_coremo,
+    coremo_tree_cut(
+      tree = tree,
+      k = as.integer(inflection_idx),
+      dist_mat = dist_mat,
+      cor_method = cor_method
+    )
+  ) %>%
+    `names<-`(rownames(cor_mat))
+
+  cluster_list <- split(
+    names(final_clusters),
+    final_clusters
+  )
+
+  final_quality <- rs_coremo_quality(
+    cluster_genes = cluster_list,
+    cor_mat = cor_mat,
+    row_names = rownames(cor_mat),
+    seed = .seed
+  ) %>%
+    data.table::setDT() %>%
+    .[, cluster_id := names(cluster_list)]
+
+  junk_modules <- final_quality[r2med <= 0.05, cluster_id]
+
+  module_dt <- data.table::as.data.table(
+    stack(cluster_list)
+  ) %>%
+    data.table::setnames(
+      old = c("values", "ind"),
+      new = c("gene", "cluster_id")
+    ) %>%
+    .[!cluster_id %in% junk_modules] %>%
+    merge(., final_quality, by = "cluster_id")
+
+  coremo_param <- with(
+    params_coremo,
+    list(
+      epsilon = epsilon,
+      k_min = k_min,
+      k_max = k_max,
+      cor_method = cor_method,
+      min_size = min_size,
+      seed = seed,
+      rbf_func = rbf_func,
+      junk_module_threshold = junk_module_threshold
+    )
+  )
+
+  S7::prop(object, "params")[["coremo"]] <- coremo_param
+  S7::prop(object, "outputs")[["optimal_cuts"]] <- optimal_cuts
+  S7::prop(object, "outputs")[["final_modules"]] <- module_dt
+  S7::prop(object, "outputs")[["tree"]] <- tree
+
+  return(object)
+}
 
 # methods - helpers ------------------------------------------------------------
 
@@ -828,7 +996,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 #' @param plot Boolean. Shall the log-log plot be generated.
 #'
 #' @returns The R2 value of of the goodness of fit.
-.scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
+scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
   # Visible global function stuff...
   lm <- NULL
   # Checks
@@ -1016,7 +1184,7 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
   )
 }
 
-## coremo ----------------------------------------------------------------------
+## coremo helpers --------------------------------------------------------------
 
 #' Coremo: measures the quality of the clusters
 #'
@@ -1071,6 +1239,8 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 #' optionally combining the small clusters. One of `c("pearson", "spearman")`.
 #'
 #' @return A vector with module membership.
+#'
+#' @importFrom magrittr `%>%`
 coremo_tree_cut <- function(
   tree,
   k,
@@ -1140,12 +1310,12 @@ coremo_tree_cut <- function(
 #' @param min_size Integer. Optional minimum size of resulting modules.
 #' @param cor_method String. Method for the correlation function. One of
 #' `c("pearson", "spearman")`.
+#' @param seed Integer. For reproducibility purposes.
 #'
 #' @return a data.table with stats (median size of the clusters, median weighted
 #' R^2, and median R^2) on the varying levels of k.
 #'
 #' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
 #' @import data.table
 tree_cut_iter <- function(
   tree,
@@ -1154,7 +1324,8 @@ tree_cut_iter <- function(
   k_min = 1L,
   k_max = 100L,
   min_size = NULL,
-  cor_method = c("spearman", "pearson")
+  cor_method = c("spearman", "pearson"),
+  seed = 42L
 ) {
   # Checks
   checkmate::assertClass(tree, "hclust")
@@ -1179,7 +1350,11 @@ tree_cut_iter <- function(
         ) %>%
         `names<-`(rownames(cor_mat))
 
-      qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
+      qc <- coremo_cluster_quality(
+        modules = modules,
+        cor_mat = cor_mat,
+        random_seed = seed
+      )
 
       res <- qc[, .(
         k = k,
@@ -1201,9 +1376,9 @@ tree_cut_iter <- function(
 #'
 #' @description
 #' This function will identify the optimal cut based on a loess-function fitted
-#' to `k ~ R2_median` via the inflection point.
+#' to `k ~ R2_weighted_median` via the inflection point.
 #'
-#' @param x,y The k and R2_median values.
+#' @param x,y The k and R2_weighted_median values.
 #' @param span The span parameter for the loess function.
 #'
 #' @return Returns the inflection point.
@@ -1213,7 +1388,7 @@ get_inflection_point <- function(x, y, span = 0.25) {
   checkmate::assertNumeric(y, len = length(x))
   checkmate::qassert(span, "R+[0,1]")
   # Function body
-  span <- max(0.1, min(1.0, span_factor))
+  span <- max(0.1, min(1.0, span))
   fit <- loess(y ~ x, span = span)
   py <- predict(fit, x)
 
@@ -1229,7 +1404,9 @@ get_inflection_point <- function(x, y, span = 0.25) {
   gradient_change <- abs(diff(gradient))
   inflection_idx <- which.max(gradient_change) + 1
 
-  return(inflection_idx)
+  return(
+    list(inflection_idx = inflection_idx, gradient_change = gradient_change)
+  )
 }
 
 ## getters ---------------------------------------------------------------------

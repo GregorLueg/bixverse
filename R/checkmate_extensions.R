@@ -328,8 +328,8 @@ checkCoReMoParams <- function(x) {
       "k_min",
       "k_max",
       "min_size",
+      "junk_module_threshold",
       "rbf_func",
-      "cluster_method",
       "cor_method"
     )
   )
@@ -340,6 +340,7 @@ checkCoReMoParams <- function(x) {
   qtest_rules <- list(
     k_min = "I1",
     k_max = "I1",
+    junk_module_threshold = "N1",
     min_size = c("I1", "0")
   )
   q_test_res <- purrr::imap_lgl(x, \(x, name) {
@@ -358,16 +359,6 @@ checkCoReMoParams <- function(x) {
   # test
   test_choice_rules <- list(
     rbf_func = c("gaussian", "inverse_quadratic", "bump"),
-    cluster_method = c(
-      "ward.D",
-      "ward.D2",
-      "single",
-      "complete",
-      "average",
-      "mcquitty",
-      "median",
-      "centroid"
-    ),
     cor_method = c("spearman", "pearson")
   )
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {

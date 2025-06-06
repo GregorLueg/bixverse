@@ -3,12 +3,10 @@ library(ggplot2)
 library(magrittr)
 
 rextendr::document()
-devtools::document()
+# devtools::document()
 devtools::load_all()
 
 # Test on real data ------------------------------------------------------------
-
-?recount3::create_rse_manual
 
 gtex_brain <- recount3::create_rse_manual(
   project = "BRAIN",
@@ -35,15 +33,20 @@ new_meta_data <- data.table::data.table(
   gtex_subgrp = coldata$gtex.smtsd
 )
 
+table(new_meta_data$gtex_subgrp)
+
 samples_to_keep <- new_meta_data[
-  gtex_subgrp == "Brain - Hippocampus",
+  gtex_subgrp == "Brain - Caudate (basal ganglia)",
   sample_id
 ]
-samples_to_keep_2 <- new_meta_data[gtex_subgrp == "Brain - Amygdala", sample_id]
+samples_to_keep_2 <- new_meta_data[
+  gtex_subgrp == "Brain - Frontal Cortex (BA9)",
+  sample_id
+]
 data_1 <- t(d)[samples_to_keep, ]
 data_2 <- t(d)[samples_to_keep_2, ]
-meta_data_1 <- new_meta_data[gtex_subgrp == "Brain - Hippocampus"]
-meta_data_2 <- new_meta_data[gtex_subgrp == "Brain - Amygdala"]
+meta_data_1 <- new_meta_data[gtex_subgrp == "Brain - Caudate (basal ganglia)"]
+meta_data_2 <- new_meta_data[gtex_subgrp == "Brain - Frontal Cortex (BA9)"]
 
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
@@ -96,57 +99,61 @@ tictoc::toc()
 
 devtools::load_all()
 
-library(ggplot2)
-
-?preprocess_bulk_coexp
-
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
-  preprocess_bulk_coexp(., mad_threshold = 1.5) %>%
+  preprocess_bulk_coexp(., mad_threshold = 1) %>%
   cor_module_processing(., cor_method = "spearman")
+
+plot_hvgs(cor_test)
 
 cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
 
 plot_epsilon_res(cor_test)
 
 object = cor_test
-epsilon = 2.5
+epsilon = 2
 params_coremo = params_coremo()
 .verbose = FALSE
+.seed = 10101L
 
 devtools::load_all()
 
 cor_res <- S7::prop(object, "processed_data")$correlation_res
 cor_mat <- cor_res$get_cor_matrix()
 
-cor_mat[1:5, 1:5]
+rextendr::document()
 
-dist_mat <- 1 - abs(cor_mat)
-
-dist_mat[1:5, 1:5]
+tom_mat <- rs_tom(
+  cor_mat,
+  "v2",
+  TRUE
+)
 
 aff_mat <- with(
   params_coremo,
   rs_rbf_function_mat(
-    x = dist_mat,
+    x = 1 - abs(cor_mat),
     epsilon = epsilon,
     rbf_type = "gaussian"
   )
 )
 
-aff_mat[1:5, 1:5]
-
 dist_mat <- 1 - aff_mat
 
 dist_mat[1:10, 1:10]
 
-summary(c(dist_mat))
+tictoc::tic()
+tree <- stats::hclust(as.dist(dist_mat), method = "ward.D")
+tictoc::toc()
 
-tree <- with(
-  params_coremo,
-  stats::hclust(as.dist(dist_mat), method = "ward.D2")
-)
+tictoc::tic()
+ftree <- fastcluster::hclust(as.dist(dist_mat), method = "ward.D")
+tictoc::toc()
 
-plot(tree)
+class(ftree)
+
+class(tree)
+
+plot(tree, labels = FALSE)
 
 # devtools::load_all()
 rextendr::document()
@@ -155,7 +162,7 @@ tictoc::tic()
 optimal_cuts <- with(
   params_coremo,
   tree_cut_iter(
-    tree = tree,
+    tree = ftree,
     cor_mat = cor_mat,
     dist_mat = dist_mat,
     k_min = k_min,
@@ -166,36 +173,66 @@ optimal_cuts <- with(
 )
 tictoc::toc()
 
-plot(cutOpt$k, cutOpt$R2_median)
 
-cutOpt
+c(inflection_idx, gradient_change) %<-%
+  get_inflection_point(
+    optimal_cuts$k,
+    optimal_cuts$R2_weighted_median,
+    span = 0.5
+  )
 
-ggplot(data = cutOpt, mapping = aes(x = k, y = R2_median)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = TRUE, span = 0.25)
+optimal_cuts[, gradient_change := c(0, gradient_change)]
 
-inflection_dt <- cutOpt[, c("k", "R2_median")]
-span_factor <- 0.25
+final_clusters <- with(
+  params_coremo,
+  coremo_tree_cut(
+    tree = tree,
+    k = as.integer(inflection_idx),
+    dist_mat = dist_mat,
+    cor_method = cor_method
+  )
+) %>%
+  `names<-`(rownames(cor_mat))
 
-x <- inflection_dt[[1]]
-y <- inflection_dt[[2]]
+cluster_list <- split(
+  names(final_clusters),
+  final_clusters
+)
 
-span <- max(0.1, min(1.0, span_factor))
-fit <- loess(y ~ x, span = span)
-py <- predict(fit, x)
+final_quality <- rs_coremo_quality(
+  cluster_genes = cluster_list,
+  cor_mat = cor_mat,
+  row_names = rownames(cor_mat),
+  seed = .seed
+) %>%
+  data.table::setDT() %>%
+  .[, cluster_id := names(cluster_list)]
 
-n <- length(x)
-gradient <- numeric(n)
-gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
-gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
+junk_modules <- final_quality[r2med <= 0.05, cluster_id]
 
-for (i in 2:(n - 1)) {
-  gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
-}
+module_dt <- data.table::as.data.table(
+  stack(cluster_list)
+) %>%
+  data.table::setnames(
+    old = c("values", "ind"),
+    new = c("gene", "cluster_id")
+  ) %>%
+  .[!cluster_id %in% junk_modules] %>%
+  merge(., final_quality, by = "cluster_id")
 
-gradient_change <- abs(diff(gradient))
-inflection_idx <- which.max(gradient_change) + 1
 
+ggplot(data = optimal_cuts, mapping = aes(x = k, y = R2_weighted_median)) +
+  geom_point(
+    mapping = aes(fill = gradient_change),
+    size = 4,
+    alpha = .5,
+    shape = 21
+  ) +
+  geom_smooth(method = "loess", se = TRUE, span = 0.25) +
+  theme_bw() +
+  xlab("k cuts") +
+  ylab("Weighted R2 median") +
+  scale_fill_viridis_c()
 
 k = 75L
 tictoc::tic()

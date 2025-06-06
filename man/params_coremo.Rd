@@ -6,11 +6,10 @@
 \usage{
 params_coremo(
   k_min = 2L,
-  k_max = 100L,
+  k_max = 150L,
   min_size = NULL,
+  junk_module_threshold = 0.05,
   rbf_func = c("gaussian", "inverse_quadratic", "bump"),
-  cluster_method = c("ward.D", "ward.D2", "single", "complete", "average", "mcquitty",
-    "median", "centroid"),
   cor_method = c("spearman", "pearson")
 )
 }
@@ -21,11 +20,11 @@ hierarchical clustering.}
 \item{min_size}{Optional integer. Minimum size of the clusters. Smaller
 clusters will be combined together.}
 
+\item{junk_module_threshold}{Float. Threshold for the minimum correlation
+to be observed in a module. Defaults to \code{0.05}.}
+
 \item{rbf_func}{String. Type of RBF you wish to apply to down-weigh weak
 correlations. Defaults to \code{"gaussian"}.}
-
-\item{cluster_method}{String. The type of clustering method you want to use
-for \code{\link[stats:hclust]{stats::hclust()}}. Defaults to \code{"ward.D"}.}
 
 \item{cor_method}{String. The type of correlation to use. Defaults to
 \code{"spearman"}.}

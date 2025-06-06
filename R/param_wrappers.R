@@ -239,10 +239,10 @@ params_gsea <- function(
 #' hierarchical clustering.
 #' @param min_size Optional integer. Minimum size of the clusters. Smaller
 #' clusters will be combined together.
+#' @param junk_module_threshold Float. Threshold for the minimum correlation
+#' to be observed in a module. Defaults to `0.05`.
 #' @param rbf_func String. Type of RBF you wish to apply to down-weigh weak
 #' correlations. Defaults to `"gaussian"`.
-#' @param cluster_method String. The type of clustering method you want to use
-#' for [stats::hclust()]. Defaults to `"ward.D"`.
 #' @param cor_method String. The type of correlation to use. Defaults to
 #' `"spearman"`.
 #'
@@ -253,17 +253,8 @@ params_coremo <- function(
   k_min = 2L,
   k_max = 150L,
   min_size = NULL,
+  junk_module_threshold = 0.05,
   rbf_func = c("gaussian", "inverse_quadratic", "bump"),
-  cluster_method = c(
-    "ward.D2",
-    "ward.D",
-    "single",
-    "complete",
-    "average",
-    "mcquitty",
-    "median",
-    "centroid"
-  ),
   cor_method = c("spearman", "pearson")
 ) {
   # Standard choices
@@ -276,19 +267,6 @@ params_coremo <- function(
   checkmate::qassert(min_size, c("I1", "0"))
   checkmate::assertChoice(rbf_func, c("gaussian", "inverse_quadratic", "bump"))
   checkmate::assertChoice(
-    cluster_method,
-    c(
-      "ward.D",
-      "ward.D2",
-      "single",
-      "complete",
-      "average",
-      "mcquitty",
-      "median",
-      "centroid"
-    )
-  )
-  checkmate::assertChoice(
     cor_method,
     c("spearman", "pearson")
   )
@@ -298,8 +276,8 @@ params_coremo <- function(
       k_min = k_min,
       k_max = k_max,
       min_size = min_size,
+      junk_module_threshold = junk_module_threshold,
       rbf_func = rbf_func,
-      cluster_method = cluster_method,
       cor_method = cor_method
     )
   )
