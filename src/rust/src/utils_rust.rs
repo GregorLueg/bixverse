@@ -145,16 +145,27 @@ pub fn faer_diagonal_from_vec(vec: Vec<f64>) -> Mat<f64> {
 
 /// Get the index positions of the upper triangle of a symmetric matrix
 pub fn upper_triangle_indices(n_dim: usize, offset: usize) -> (Vec<usize>, Vec<usize>) {
-    let mut row_indices: Vec<usize> = Vec::new();
-    let mut col_indices: Vec<usize> = Vec::new();
+    if offset >= n_dim {
+        return (Vec::new(), Vec::new());
+    }
+
+    // Precise calculation of total elements
+    let total_elements: usize = (0..n_dim)
+        .map(|row| n_dim.saturating_sub(row + offset))
+        .sum();
+
+    let mut row_indices = Vec::with_capacity(total_elements);
+    let mut col_indices = Vec::with_capacity(total_elements);
 
     for row in 0..n_dim {
-        let start_col = std::cmp::max(row + offset, 0) as usize;
+        let start_col = row + offset;
         if start_col < n_dim {
-            for col in start_col..n_dim {
-                row_indices.push(row);
-                col_indices.push(col);
-            }
+            let end_col = n_dim;
+            let elements_in_row = end_col - start_col;
+
+            // Use extend with iterator for better performance
+            row_indices.extend(std::iter::repeat(row).take(elements_in_row));
+            col_indices.extend(start_col..end_col);
         }
     }
 

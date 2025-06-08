@@ -4,7 +4,7 @@ use faer::Mat;
 use rayon::prelude::*;
 
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
-use crate::utils_rust::array_f64_max_min;
+use crate::utils_rust::{array_f64_max_min, upper_triangle_indices};
 use crate::utils_stats::*;
 
 /// Calculate the OT harmonic sum
@@ -71,6 +71,18 @@ fn rs_upper_triangle_to_dense(
     }
 
     faer_to_r_matrix(mat.as_ref())
+}
+
+#[extendr]
+fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: usize) -> Vec<f64> {
+    let n = x.ncols();
+    let indices = upper_triangle_indices(n, shift);
+    let mut vals: Vec<f64> = Vec::new();
+    for (r, c) in indices.0.iter().zip(indices.1.iter()) {
+        vals.push(x[[*r, *c]])
+    }
+
+    vals
 }
 
 /// Apply a Radial Basis Function
@@ -163,6 +175,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 extendr_module! {
     mod fun_helpers;
     fn rs_upper_triangle_to_dense;
+    fn rs_dense_to_upper_triangle;
     fn rs_ot_harmonic_sum;
     fn rs_rbf_function;
     fn rs_rbf_function_mat;

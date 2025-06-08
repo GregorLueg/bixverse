@@ -113,35 +113,6 @@ devtools::load_all()
 
 cor_test <- cor_module_coremo_clustering(object = cor_test, epsilon = 2)
 
-checkCoReMoParams(coremo_params)
-
-x <- coremo_params
-
-test_choice_rules <- list(
-  rbf_func = c("gaussian", "inverse_quadratic", "bump"),
-  cor_method = c("spearman", "pearson")
-)
-test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-  if (name %in% names(test_choice_rules)) {
-    checkmate::testChoice(x, test_choice_rules[[name]])
-  } else {
-    TRUE
-  }
-})
-
-qtest_rules <- list(
-  k_min = "I1",
-  k_max = "I1",
-  junk_module_threshold = "N1",
-  min_size = c("I1", "0")
-)
-q_test_res <- purrr::imap_lgl(x, \(x, name) {
-  if (name %in% names(qtest_rules)) {
-    checkmate::qtest(x, qtest_rules[[name]])
-  } else {
-    TRUE
-  }
-})
 
 object = cor_test
 epsilon = 2
@@ -163,7 +134,7 @@ tom_mat <- rs_tom(
 )
 
 aff_mat <- with(
-  params_coremo,
+  coremo_params,
   rs_rbf_function_mat(
     x = 1 - abs(cor_mat),
     epsilon = epsilon,
@@ -173,14 +144,40 @@ aff_mat <- with(
 
 dist_mat <- 1 - aff_mat
 
-dist_mat[1:10, 1:10]
+rextendr::document()
 
 tictoc::tic()
-tree <- stats::hclust(as.dist(dist_mat), method = "ward.D")
+dist_obj_rs <- rs_dense_to_upper_triangle(dist_mat, 1L)
 tictoc::toc()
 
 tictoc::tic()
-ftree <- fastcluster::hclust(as.dist(dist_mat), method = "ward.D")
+dist_obj <- as.dist(dist_mat)
+tictoc::toc()
+
+attr(dist_obj_rs, "Size") <- ncol(dist_mat)
+attr(dist_obj_rs, "Diag") <- FALSE
+attr(dist_obj_rs, "Upper") <- FALSE
+class(dist_obj_rs) <- "dist"
+#   dist_mat[1:5, 1:5]
+
+str(dist_obj)
+
+class(dist_obj)
+
+str(dist_obj_rs)
+
+attributes(dist_obj)$call
+
+dist_obj[1:10]
+
+dist_mat[1:10, 1:10]
+
+tictoc::tic()
+tree <- stats::hclust(dist_obj_rs, method = "ward.D")
+tictoc::toc()
+
+tictoc::tic()
+ftree <- fastcluster::hclust(dist_obj_rs, method = "ward.D")
 tictoc::toc()
 
 class(ftree)

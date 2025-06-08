@@ -7,9 +7,9 @@
 cor_module_coremo_clustering(
   object,
   epsilon = 2,
-  params_coremo = params_coremo(),
+  coremo_params = params_coremo(),
   seed = 42L,
-  .verbose = FALSE
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -17,11 +17,11 @@ cor_module_coremo_clustering(
 
 \item{epsilon}{...}
 
-\item{params_coremo}{...}
-
 \item{seed}{...}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
+
+\item{params_coremo}{...}
 }
 \value{
 The class with added data to the properties for subsequent usage.
