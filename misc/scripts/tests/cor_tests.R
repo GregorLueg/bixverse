@@ -3,7 +3,7 @@ library(ggplot2)
 library(magrittr)
 
 rextendr::document()
-# devtools::document()
+devtools::document()
 devtools::load_all()
 
 # Test on real data ------------------------------------------------------------
@@ -99,6 +99,8 @@ tictoc::toc()
 
 devtools::load_all()
 
+
+tictoc::tic()
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   cor_module_processing(., cor_method = "spearman")
@@ -109,235 +111,90 @@ cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
 
 plot_epsilon_res(cor_test)
 
-devtools::load_all()
-
 cor_test <- cor_module_coremo_clustering(object = cor_test, epsilon = 2)
-
+tictoc::toc()
 
 object = cor_test
-epsilon = 2
-coremo_params = params_coremo()
-.verbose = FALSE
-.seed = 10101L
+data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+coremo_params <- get_params(object)[["coremo"]]
+chunk_size <- 30L
+
+epsilon <- coremo_params$epsilon
+
+rextendr::document()
+
+devtools::document()
+
+dim(data_mat)
 
 devtools::load_all()
 
-cor_res <- S7::prop(object, "processed_data")$correlation_res
-cor_mat <- cor_res$get_cor_matrix()
-
-rextendr::document()
-
-tom_mat <- rs_tom(
-  cor_mat,
-  "v2",
-  TRUE
-)
-
-aff_mat <- with(
-  coremo_params,
-  rs_rbf_function_mat(
-    x = 1 - abs(cor_mat),
-    epsilon = epsilon,
-    rbf_type = "gaussian"
-  )
-)
-
-dist_mat <- 1 - aff_mat
-
-rextendr::document()
-
 tictoc::tic()
-dist_obj_rs <- rs_dense_to_upper_triangle(dist_mat, 1L)
-tictoc::toc()
+chunk_size <- 15L
 
-tictoc::tic()
-dist_obj <- as.dist(dist_mat)
-tictoc::toc()
+total_samples <- seq_len(nrow(data_mat))
+no_total_samples <- length(total_samples)
+groups <- ceiling(seq_along(total_samples) / chunk_size)
+chunks <- split(total_samples, groups)
 
-attr(dist_obj_rs, "Size") <- ncol(dist_mat)
-attr(dist_obj_rs, "Diag") <- FALSE
-attr(dist_obj_rs, "Upper") <- FALSE
-class(dist_obj_rs) <- "dist"
-#   dist_mat[1:5, 1:5]
+all_results <- vector(mode = "list", length = length(chunks))
 
-str(dist_obj)
-
-class(dist_obj)
-
-str(dist_obj_rs)
-
-attributes(dist_obj)$call
-
-dist_obj[1:10]
-
-dist_mat[1:10, 1:10]
-
-tictoc::tic()
-tree <- stats::hclust(dist_obj_rs, method = "ward.D")
-tictoc::toc()
-
-tictoc::tic()
-ftree <- fastcluster::hclust(dist_obj_rs, method = "ward.D")
-tictoc::toc()
-
-class(ftree)
-
-class(tree)
-
-plot(tree, labels = FALSE)
-
-# devtools::load_all()
-rextendr::document()
-
-tictoc::tic()
-optimal_cuts <- with(
-  params_coremo,
-  tree_cut_iter(
-    tree = ftree,
-    cor_mat = cor_mat,
-    dist_mat = dist_mat,
-    k_min = k_min,
-    k_max = k_max,
-    min_size = min_size,
-    cor_method = cor_method
-  )
-)
-tictoc::toc()
-
-
-c(inflection_idx, gradient_change) %<-%
-  get_inflection_point(
-    optimal_cuts$k,
-    optimal_cuts$R2_weighted_median,
-    span = 0.5
+for (i in seq_along(chunks)) {
+  indices <- chunks[[i]]
+  chunk_res <- rs_coremo_stability(
+    data = data_mat,
+    indices = indices,
+    epsilon = coremo_params$epsilon,
+    rbf_type = coremo_params$rbf_func,
+    spearman = TRUE
   )
 
-optimal_cuts[, gradient_change := c(0, gradient_change)]
+  leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
+    dist_obj <- create_dist_obj(
+      x = chunk,
+      size = ncol(data_mat)
+    )
 
-final_clusters <- with(
-  params_coremo,
-  coremo_tree_cut(
-    tree = tree,
-    k = as.integer(inflection_idx),
-    dist_mat = dist_mat,
-    cor_method = cor_method
+    new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
+
+    clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
+
+    clusters
+  })
+
+  all_results[[i]] <- leave_one_out_clustering
+
+  message_txt <- sprintf(
+    "Chunk %i out of %i: Processed %i samples out of a total of %i samples.",
+    i,
+    length(chunks),
+    ifelse(chunk_size * i < no_total_samples, chunk_size * i, no_total_samples),
+    no_total_samples
   )
-) %>%
-  `names<-`(rownames(cor_mat))
 
-cluster_list <- split(
-  names(final_clusters),
-  final_clusters
-)
-
-final_quality <- rs_coremo_quality(
-  cluster_genes = cluster_list,
-  cor_mat = cor_mat,
-  row_names = rownames(cor_mat),
-  seed = .seed
-) %>%
-  data.table::setDT() %>%
-  .[, cluster_id := names(cluster_list)]
-
-junk_modules <- final_quality[r2med <= 0.05, cluster_id]
-
-module_dt <- data.table::as.data.table(
-  stack(cluster_list)
-) %>%
-  data.table::setnames(
-    old = c("values", "ind"),
-    new = c("gene", "cluster_id")
-  ) %>%
-  .[!cluster_id %in% junk_modules] %>%
-  merge(., final_quality, by = "cluster_id")
-
-
-ggplot(data = optimal_cuts, mapping = aes(x = k, y = R2_weighted_median)) +
-  geom_point(
-    mapping = aes(fill = gradient_change),
-    size = 4,
-    alpha = .5,
-    shape = 21
-  ) +
-  geom_smooth(method = "loess", se = TRUE, span = 0.25) +
-  theme_bw() +
-  xlab("k cuts") +
-  ylab("Weighted R2 median") +
-  scale_fill_viridis_c()
-
-k = 75L
-tictoc::tic()
-modules <-
-  coremo_tree_cut(
-    tree = tree,
-    k = k,
-    min_size = min_size,
-    dist_mat = dist_mat,
-    cor_method = cor_method
-  ) %>%
-  `names<-`(rownames(cor_mat))
-tictoc::toc()
-
-cluster_list <- split(names(modules), modules)
-
-devtools::load_all()
-
-# rextendr::document()
-
-tictoc::tic()
-qc <- coremo_cluster_quality(modules = modules, cor_mat = cor_mat)
-tictoc::toc()
-
-tictoc::tic()
-qc_2 <- rs_coremo_quality(
-  cluster_genes = cluster_list,
-  cor_mat = cor_mat,
-  row_names = rownames(cor_mat),
-  seed = 10101L
-)
-tictoc::toc()
-
-coremo_cluster_quality_v2 <- function(modules, cor_mat, random_seed = 10101L) {
-  # Checks
-  checkmate::qassert(modules, c("S+", "I+"))
-  checkmate::assertNamed(modules)
-  checkmate::assertMatrix(cor_mat, mode = "numeric")
-  checkmate::qassert(random_seed, "I1")
-  # Function body
-  cluster_list <- split(names(modules), modules)
-
-  n_clusters <- length(cluster_list)
-  result_list <- vector("list", n_clusters)
-
-  for (i in seq_len(n_clusters)) {
-    genes <- cluster_list[[i]]
-    n <- length(genes)
-    if (n < 2) {
-      result_list[[i]] <- data.table::data.table(
-        size = n,
-        r2med = 1,
-        r2mad = 0
-      )
-    } else {
-      # Sample genes if needed
-      scluster <- if (n > 1000) {
-        sample(genes, 1000, replace = FALSE)
-      } else {
-        genes
-      }
-
-      # Extract submatrix more efficiently
-      sub_cor_sq <- cor_mat[scluster, scluster, drop = FALSE]^2
-
-      r2_values <- rs_coremo_quality(sub_cor_sq)
-
-      result_list[[i]] <- data.table::data.table(
-        size = n,
-        r2med = r2_values$median,
-        r2mad = r2_values$mad
-      )
-    }
-  }
-
-  data.table::rbindlist(result_list)
+  message(message_txt)
 }
+
+tictoc::toc()
+
+chunk_res <- rs_coremo_stability(
+  data = data_mat,
+  indices = 1:25L,
+  epsilon = coremo_params$epsilon,
+  rbf_type = coremo_params$rbf_func,
+  spearman = TRUE
+)
+
+leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
+  dist_obj <- create_dist_obj(
+    x = chunk,
+    size = ncol(data_mat)
+  )
+
+  new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
+
+  clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
+
+  clusters
+})
+tictoc::toc()

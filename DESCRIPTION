@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.0.1.2
+Version: 0.0.1.4
 Authors@R: 
     c(
       person("Gregor", "Lueg", email = "gregorlueg@me.com", role = c("aut", "cre")),

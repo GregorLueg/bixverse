@@ -5,7 +5,9 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use std::collections::HashMap;
 
+use crate::helpers_linalg::column_correlation;
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils_rust::{mat_row_slice, upper_triangle_indices};
 use crate::utils_stats::*;
 
 /// Calculates the TOM over an affinity matrix
@@ -148,8 +150,72 @@ fn rs_coremo_quality(
     ))
 }
 
+/// Helper function to assess CoReMo cluster stability
+///
+/// @description This function is a helper for the leave-on-out stability
+/// assessment of CoReMo clusters. The function will generate the distance
+/// vectors based on leaving out the samples defined in indices one by one.
+///
+/// @param data Numeric matrix. The original processed matrix.
+/// @param indices Integer vector. The sample indices to remove to re-calculate
+/// the distances.
+/// @param epsilon Float. Epsilon parameter for the RBF.
+/// @param rbf_type String. Needs to be from
+/// `c("gaussian", "bump", "inverse_quadratic")`.
+/// @param spearman Boolean. Shall Spearman correlation be used.
+///
+/// @return A list with `length(indices)` elements, each containing the distance
+/// minus the given sample.
+#[extendr]
+fn rs_coremo_stability(
+    data: RMatrix<f64>,
+    indices: Vec<i32>,
+    epsilon: f64,
+    rbf_type: &str,
+    spearman: bool,
+) -> extendr_api::Result<List> {
+    let data = r_matrix_to_faer(&data);
+
+    let rbf_fun = parse_rbf_types(rbf_type)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))
+        .unwrap();
+
+    let results: Vec<Vec<f64>> = indices
+        .par_iter()
+        .map(|index| {
+            let index = *index as usize - 1;
+            let data_red = mat_row_slice(data, index);
+            let cor_red = column_correlation(&data_red.as_ref(), spearman);
+            // Flatten the data and apply the rbf function
+            let indices = upper_triangle_indices(cor_red.ncols(), 1);
+            let mut dist_flat = Vec::new();
+            for (r, c) in indices.0.iter().zip(indices.1.iter()) {
+                dist_flat.push(1_f64 - cor_red.get(*r, *c).abs())
+            }
+            let mut res: Vec<f64> = match rbf_fun {
+                RbfType::Gaussian => rbf_gaussian(&dist_flat, &epsilon),
+                RbfType::Bump => rbf_bump(&dist_flat, &epsilon),
+                RbfType::InverseQuadratic => rbf_inverse_quadratic(&dist_flat, &epsilon),
+            };
+
+            res.iter_mut().for_each(|x| *x = 1.0 - *x);
+
+            res
+        })
+        .collect();
+
+    let mut result_list = List::new(results.len());
+
+    for (i, data) in results.iter().enumerate() {
+        result_list.set_elt(i, Robj::from(data.clone()))?;
+    }
+
+    Ok(result_list)
+}
+
 extendr_module! {
     mod fun_coremo;
     fn rs_tom;
     fn rs_coremo_quality;
+    fn rs_coremo_stability;
 }

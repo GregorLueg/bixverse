@@ -951,7 +951,10 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
     data.table::setDT() %>%
     .[, cluster_id := names(cluster_list)]
 
-  junk_modules <- final_quality[r2med <= 0.05, cluster_id]
+  junk_modules <- final_quality[
+    r2med <= coremo_params$junk_module_threshold,
+    cluster_id
+  ]
 
   module_dt <- data.table::as.data.table(
     stack(cluster_list)
@@ -973,7 +976,8 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
       min_size = min_size,
       seed = seed,
       rbf_func = rbf_func,
-      junk_module_threshold = junk_module_threshold
+      junk_module_threshold = junk_module_threshold,
+      inflection_idx = inflection_idx
     )
   )
 
@@ -1407,6 +1411,26 @@ get_inflection_point <- function(x, y, span = 0.25) {
   return(
     list(inflection_idx = inflection_idx, gradient_change = gradient_change)
   )
+}
+
+#' Create distance object from a vector
+#'
+#' @param x Numerical vector. The upper-triangle values for which to generate
+#' the `dist` object.
+#'
+#' @return Returns the distance object
+create_dist_obj <- function(x, size) {
+  # checks
+  checkmate::qassert(x, "N+")
+  checkmate::qassert(size, "I1")
+  # body
+  res <- x
+  attr(res, "Size") <- size
+  attr(res, "Diag") <- FALSE
+  attr(res, "Upper") <- FALSE
+  class(res) <- "dist"
+
+  res
 }
 
 ## getters ---------------------------------------------------------------------
