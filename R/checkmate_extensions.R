@@ -325,6 +325,7 @@ checkCoReMoParams <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
+      "epsilon",
       "k_min",
       "k_max",
       "min_size",
@@ -338,6 +339,7 @@ checkCoReMoParams <- function(x) {
   }
   # qtest checks
   qtest_rules <- list(
+    epsilon = "N1",
     k_min = "I1",
     k_max = "I1",
     junk_module_threshold = "N1",
@@ -355,7 +357,8 @@ checkCoReMoParams <- function(x) {
     return(
       sprintf(
         "The following element `%s` in CoReMo params does not conform the expected format. \
-        k_min and k_max need to be integers, min_size an integer or NULL.",
+        k_min and k_max need to be integers, min_size an integer or NULL, junk_module_threshold \
+        a float and epsilon a float.",
         broken_elem
       )
     )

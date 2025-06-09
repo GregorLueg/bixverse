@@ -250,6 +250,7 @@ params_gsea <- function(
 #'
 #' @export
 params_coremo <- function(
+  epsilon = 2,
   k_min = 2L,
   k_max = 150L,
   min_size = NULL,
@@ -261,6 +262,7 @@ params_coremo <- function(
   cor_method <- match.arg(cor_method)
   rbf_func <- match.arg(rbf_func)
   # Checks
+  checkmate::qassert(epsilon, "N1")
   checkmate::qassert(k_min, "I1")
   checkmate::qassert(k_max, "I1")
   checkmate::qassert(min_size, c("I1", "0"))
@@ -272,6 +274,7 @@ params_coremo <- function(
   # Returns
   return(
     list(
+      epsilon = epsilon,
       k_min = k_min,
       k_max = k_max,
       min_size = min_size,

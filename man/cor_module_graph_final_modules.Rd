@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_coexp_cor.R
 \name{cor_module_graph_final_modules}
 \alias{cor_module_graph_final_modules}
-\title{Identify correlation-based gene modules via graphs.}
+\title{Identify correlation-based gene modules via graphs}
 \usage{
 cor_module_graph_final_modules(
   object,

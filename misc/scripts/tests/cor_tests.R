@@ -111,8 +111,15 @@ cor_test <- cor_module_check_epsilon(cor_test, rbf_func = "gaussian")
 
 plot_epsilon_res(cor_test)
 
-cor_test <- cor_module_coremo_clustering(object = cor_test, epsilon = 2)
+cor_test <- cor_module_coremo_clustering(
+  object = cor_test,
+  coremo_params = params_coremo(epsilon = 2)
+)
+
+cor_test <- cor_module_coremo_stability(object = cor_test)
 tictoc::toc()
+
+devtools::document()
 
 object = cor_test
 data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
@@ -176,6 +183,8 @@ for (i in seq_along(chunks)) {
 }
 
 tictoc::toc()
+
+all_results <- purrr::flatten(all_results)
 
 chunk_res <- rs_coremo_stability(
   data = data_mat,

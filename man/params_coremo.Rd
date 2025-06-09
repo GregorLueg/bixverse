@@ -5,6 +5,7 @@
 \title{Wrapper function to generate CoReMo parameters}
 \usage{
 params_coremo(
+  epsilon = 2,
   k_min = 2L,
   k_max = 150L,
   min_size = NULL,

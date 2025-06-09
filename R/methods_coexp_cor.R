@@ -44,7 +44,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 
   # Function body
   if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
+    warning("No pre-processed data found. Defaulting to the raw data.")
     target_mat <- S7::prop(object, "raw_data")
   } else {
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
@@ -131,7 +131,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
 
   # Function
   if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
+    warning("No pre-processed data found. Defaulting to the raw data.")
     target_mat <- S7::prop(object, "raw_data")
   } else {
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
@@ -534,7 +534,7 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   return(object)
 }
 
-#' @title Identify correlation-based gene modules via graphs.
+#' @title Identify correlation-based gene modules via graphs
 #'
 #' @description
 #' This function leverages graph-based clustering to identify gene co-expression
@@ -818,18 +818,39 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 
 ## coremo ----------------------------------------------------------------------
 
-#' @title Generates CoReMo-based gene modules.
+#' @title Generates CoReMo-based gene modules
 #'
 #' @description
-#' ...
+#' This function creates gene modules, based on the framework from Srivastava
+#' et al., 2018. Briefly, it applies an RBF function to the correlation matrix
+#' to reduce the impact of weak correlations, leverages hierarchical clustering
+#' for clustering the genes. It optimises the R2 (cor^2) within the clusters to
+#' identify the optimal cut. Gene modules with low R2 are being considered as
+#' the 'junk module'.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
-#' @param epsilon ...
-#' @param params_coremo ...
-#' @param seed ...
+#' @param coremo_params List. Parameters for the generation of the CoReMo
+#' modules, see [bixverse::params_coremo()]. Contains:
+#' \itemize{
+#'  \item epsilon - Float. The epsilon parameter for the RBF. You can optimise
+#'  that one with [bixverse::cor_module_check_epsilon()]. Defaults to `2`.
+#'  \item k_min - Integer. Minimum number of cuts. Defaults to `2L`.
+#'  \item k_max - Integer. Maximum number of cuts. Defaults to `150L`.
+#'  \item min_size - Optional integer. Minimum size of the clusters. If
+#'  provided, smaller clusters will be merged by eigengene similarity.
+#'  \item junk_module_threshold - Float. Minimum R2 median  value for a module
+#'  to not be considered a junk module. Defaults to `0.05`.
+#'  \item rbf_func - String. Type of RBF function to apply. Defaults to
+#'  `"gaussian"`.
+#'  \item cor_method - String. Type of correlation method to use for merging
+#'  the smaller cluster. Defaults to `"spearman"`.
+#' }
+#' @param seed Integer. Random seed for reproducibility purposes.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added data to the properties for subsequent usage.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018
 #'
 #' @export
 cor_module_coremo_clustering <- S7::new_generic(
@@ -837,7 +858,6 @@ cor_module_coremo_clustering <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    epsilon = 2,
     coremo_params = params_coremo(),
     seed = 42L,
     .verbose = TRUE
@@ -849,13 +869,12 @@ cor_module_coremo_clustering <- S7::new_generic(
 #' @export
 #'
 #' @importFrom magrittr `%>%`
-#' @importFrom zeallot `%->%`
+#' @importFrom zeallot `%<-%`
 #' @import data.table
 #'
 #' @method cor_module_coremo_clustering bulk_coexp
 S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   object,
-  epsilon = 2,
   coremo_params = params_coremo(),
   seed = 42L,
   .verbose = TRUE
@@ -981,12 +1000,130 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
     )
   )
 
+  # Assign the objects
   S7::prop(object, "params")[["coremo"]] <- coremo_param
   S7::prop(object, "outputs")[["optimal_cuts"]] <- optimal_cuts
   S7::prop(object, "outputs")[["final_modules"]] <- module_dt
   S7::prop(object, "outputs")[["tree"]] <- tree
 
   return(object)
+}
+
+#' @title Assesses CoReMo-based gene module stability
+#'
+#' @description
+#' The function assesses the stability of the CoReMo modules, leveraging a
+#' leave-one-out sample method. In each iteration, one of the samples is left
+#' out and the clustering is redone.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param chunk_size Integer. Chunk size in which to process the data. Defaults
+#' to `15L`, i.e., 15 samples are being processed in one go. You can use bigger
+#' values here, but be aware of memory pressure.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
+#' et al., Nat. Commun., 2024.
+#'
+#' @export
+cor_module_coremo_stability <- S7::new_generic(
+  name = "cor_module_coremo_stability",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    chunk_size = 15L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method cor_module_coremo_stability bulk_coexp
+S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
+  object,
+  chunk_size = 15L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(chunk_size, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function
+  # early return
+  if (is.null(get_params(object)[["coremo"]])) {
+    warning(paste(
+      "No CoReMo-data found. Did you run cor_module_coremo_clustering()?",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
+    warning("No pre-processed data found. Defaulting to the raw data.")
+    data_mat <- S7::prop(object, "raw_data")
+  } else {
+    data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  }
+
+  # pull out the needed parameters
+  coremo_params <- get_params(object)[["coremo"]]
+
+  total_samples <- seq_len(nrow(data_mat))
+  no_total_samples <- length(total_samples)
+  groups <- ceiling(seq_along(total_samples) / chunk_size)
+  chunks <- split(total_samples, groups)
+
+  if (.verbose)
+    message(sprintf(
+      "Running the leave-one-out stability assessment over %i chunks.",
+      length(chunks)
+    ))
+
+  all_results <- vector(mode = "list", length = length(chunks))
+
+  for (i in seq_along(chunks)) {
+    indices <- chunks[[i]]
+    chunk_res <- rs_coremo_stability(
+      data = data_mat,
+      indices = indices,
+      epsilon = coremo_params$epsilon,
+      rbf_type = coremo_params$rbf_func,
+      spearman = TRUE
+    )
+
+    leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
+      dist_obj <- create_dist_obj(
+        x = chunk,
+        size = ncol(data_mat)
+      )
+
+      new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
+
+      clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
+
+      clusters
+    })
+
+    all_results[[i]] <- leave_one_out_clustering
+
+    message_txt <- sprintf(
+      "Chunk %i out of %i: Processed %i samples out of a total of %i samples.",
+      i,
+      length(chunks),
+      ifelse(
+        chunk_size * i < no_total_samples,
+        chunk_size * i,
+        no_total_samples
+      ),
+      no_total_samples
+    )
+
+    if (.verbose) message(message_txt)
+  }
+
+  all_results <- purrr::flatten(all_results)
 }
 
 # methods - helpers ------------------------------------------------------------
