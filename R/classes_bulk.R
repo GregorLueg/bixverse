@@ -562,6 +562,8 @@ S7::method(add_new_metadata, bulk_dge) <-
 
 ## prints ----------------------------------------------------------------------
 
+# TODO These need updating.
+
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object
 #'

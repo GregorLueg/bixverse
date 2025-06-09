@@ -907,7 +907,38 @@ rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 #' }
 rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
 
+#' Helper function to assess CoReMo cluster stability
+#'
+#' @description This function is a helper for the leave-on-out stability
+#' assessment of CoReMo clusters. The function will generate the distance
+#' vectors based on leaving out the samples defined in indices one by one.
+#'
+#' @param data Numeric matrix. The original processed matrix.
+#' @param indices Integer vector. The sample indices to remove to re-calculate
+#' the distances.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from
+#' `c("gaussian", "bump", "inverse_quadratic")`.
+#' @param spearman Boolean. Shall Spearman correlation be used.
+#'
+#' @return A list with `length(indices)` elements, each containing the distance
+#' minus the given sample.
 rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Call(wrap__rs_coremo_stability, data, indices, epsilon, rbf_type, spearman)
+
+#' Helper function to assess cluster stability
+#'
+#' @param data Integer matrix. Assumes that each column represents a given
+#' resampling/bootstrap and the rows represent the features, while each integer
+#' indicates cluster membership.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item mean_jaccard - mean Jaccard similarities for this feature across all
+#'   the bootstraps, resamplings.
+#'   \item std_jaccard - the standard deviation of the Jaccard similarities for
+#'   this feature across all the bootstraps, resamplings.
+#' }
+rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
 
 # nolint end

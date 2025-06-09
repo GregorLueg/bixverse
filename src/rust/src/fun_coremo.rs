@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 use crate::helpers_linalg::column_correlation;
-use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
 use crate::utils_rust::{mat_row_slice, upper_triangle_indices};
 use crate::utils_stats::*;
 
@@ -213,9 +213,42 @@ fn rs_coremo_stability(
     Ok(result_list)
 }
 
+/// Helper function to assess cluster stability
+///
+/// @param data Integer matrix. Assumes that each column represents a given
+/// resampling/bootstrap and the rows represent the features, while each integer
+/// indicates cluster membership.
+///
+/// @return A list containing:
+///  \itemize{
+///   \item mean_jaccard - mean Jaccard similarities for this feature across all
+///   the bootstraps, resamplings.
+///   \item std_jaccard - the standard deviation of the Jaccard similarities for
+///   this feature across all the bootstraps, resamplings.
+/// }
+#[extendr]
+fn rs_cluster_stability(data: RMatrix<i32>) -> List {
+    let data = r_matrix_to_faer_i32(&data);
+
+    let n_features = data.nrows();
+
+    let res: Vec<(f64, f64)> = cluster_stability(&data);
+
+    let mut mean_jaccard: Vec<f64> = Vec::with_capacity(n_features);
+    let mut std_jaccard: Vec<f64> = Vec::with_capacity(n_features);
+
+    for (mean, std) in res {
+        mean_jaccard.push(mean);
+        std_jaccard.push(std);
+    }
+
+    list!(mean_jaccard = mean_jaccard, std_jaccard = std_jaccard)
+}
+
 extendr_module! {
     mod fun_coremo;
     fn rs_tom;
     fn rs_coremo_quality;
     fn rs_coremo_stability;
+    fn rs_cluster_stability;
 }

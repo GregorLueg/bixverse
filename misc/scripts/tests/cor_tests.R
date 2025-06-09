@@ -3,7 +3,7 @@ library(ggplot2)
 library(magrittr)
 
 rextendr::document()
-devtools::document()
+# devtools::document()
 devtools::load_all()
 
 # Test on real data ------------------------------------------------------------
@@ -32,8 +32,6 @@ new_meta_data <- data.table::data.table(
   case_control = "case",
   gtex_subgrp = coldata$gtex.smtsd
 )
-
-table(new_meta_data$gtex_subgrp)
 
 samples_to_keep <- new_meta_data[
   gtex_subgrp == "Brain - Caudate (basal ganglia)",
@@ -116,94 +114,82 @@ cor_test <- cor_module_coremo_clustering(
   coremo_params = params_coremo(epsilon = 2)
 )
 
-cor_test <- cor_module_coremo_stability(object = cor_test)
-tictoc::toc()
+params_coremo(epsilon = 2)
 
-devtools::document()
+cluster_data <- cor_module_coremo_stability(object = cor_test)
 
-object = cor_test
-data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-coremo_params <- get_params(object)[["coremo"]]
-chunk_size <- 30L
+object <- cor_test
 
-epsilon <- coremo_params$epsilon
+if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
+  warning("No pre-processed data found. Defaulting to the raw data.")
+  data_mat <- S7::prop(object, "raw_data")
+} else {
+  data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+}
+
+
+final_modules <- S7::prop(object = object, name = "outputs")[["final_modules"]]
+
+cluster_mat <- do.call(cbind, cluster_data) %>% `rownames<-`(colnames(data_mat))
+
+cluster_mat_red <- cluster_mat[final_modules$gene, ]
+
+stability <- rs_cluster_stability(cluster_mat_red)
+
+final_modules[, c("stability", "std_stability") := stability]
+
+hist(stability$mean_jaccard)
 
 rextendr::document()
 
+stability_test <- apply(cluster_mat_red, 1, FUN = function(x) {
+  sort(table(x), decreasing = TRUE)[[1]]
+})
+
+cluster_mat[1:10, 1:10]
+
+tictoc::toc()
+
 devtools::document()
 
-dim(data_mat)
+object <- cor_test
 
-devtools::load_all()
 
-tictoc::tic()
-chunk_size <- 15L
+plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
+  "optimal_cuts"
+]]) %>%
+  data.table::setorder(gradient_change)
 
-total_samples <- seq_len(nrow(data_mat))
-no_total_samples <- length(total_samples)
-groups <- ceiling(seq_along(total_samples) / chunk_size)
-chunks <- split(total_samples, groups)
-
-all_results <- vector(mode = "list", length = length(chunks))
-
-for (i in seq_along(chunks)) {
-  indices <- chunks[[i]]
-  chunk_res <- rs_coremo_stability(
-    data = data_mat,
-    indices = indices,
-    epsilon = coremo_params$epsilon,
-    rbf_type = coremo_params$rbf_func,
-    spearman = TRUE
-  )
-
-  leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
-    dist_obj <- create_dist_obj(
-      x = chunk,
-      size = ncol(data_mat)
-    )
-
-    new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
-
-    clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
-
-    clusters
-  })
-
-  all_results[[i]] <- leave_one_out_clustering
-
-  message_txt <- sprintf(
-    "Chunk %i out of %i: Processed %i samples out of a total of %i samples.",
-    i,
-    length(chunks),
-    ifelse(chunk_size * i < no_total_samples, chunk_size * i, no_total_samples),
-    no_total_samples
-  )
-
-  message(message_txt)
+if (is.null(plot_df)) {
+  warning(paste(
+    "No optimal_cuts data.table found.",
+    "Did you run cor_module_coremo_clustering()?",
+    "Returning NULL."
+  ))
 }
 
-tictoc::toc()
+optimal_cuts <- S7::prop(object = object, name = "params")[["coremo"]][[
+  "inflection_idx"
+]]
 
-all_results <- purrr::flatten(all_results)
-
-chunk_res <- rs_coremo_stability(
-  data = data_mat,
-  indices = 1:25L,
-  epsilon = coremo_params$epsilon,
-  rbf_type = coremo_params$rbf_func,
-  spearman = TRUE
-)
-
-leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
-  dist_obj <- create_dist_obj(
-    x = chunk,
-    size = ncol(data_mat)
-  )
-
-  new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
-
-  clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
-
-  clusters
-})
-tictoc::toc()
+ggplot2::ggplot(
+  data = plot_df,
+  mapping = ggplot2::aes(x = k, y = R2_weighted_median)
+) +
+  ggplot2::geom_point(
+    mapping = ggplot2::aes(fill = gradient_change),
+    shape = 21,
+    alpha = 0.7,
+    size = 3
+  ) +
+  ggplot2::scale_fill_viridis_c() +
+  ggplot2::theme_bw() +
+  ggplot2::xlab("k cuts") +
+  ggplot2::ylab("Median of median weighted R2") +
+  ggplot2::labs(fill = "Gradient change") +
+  ggplot2::geom_vline(
+    xintercept = optimal_cuts,
+    color = "darkgrey",
+    linetype = "dashed"
+  ) +
+  ggplot2::ggtitle("k cuts vs. change in R2")

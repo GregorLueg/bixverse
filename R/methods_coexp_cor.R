@@ -816,7 +816,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   return(object)
 }
 
-## coremo ----------------------------------------------------------------------
+# methods - coremo -------------------------------------------------------------
 
 #' @title Generates CoReMo-based gene modules
 #'
@@ -883,7 +883,6 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   gradient_change <- r2med <- cluster_id <- . <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::qassert(epsilon, "N1")
   assertCoReMoParams(coremo_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -1014,7 +1013,9 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
 #' @description
 #' The function assesses the stability of the CoReMo modules, leveraging a
 #' leave-one-out sample method. In each iteration, one of the samples is left
-#' out and the clustering is redone.
+#' out and the clustering is redone. Subsequently, the Jaccard similarity (as
+#' a surrogate for membership stability) is calculated for each feature across
+#' the different resamplings and added to the `final_modules` data.table.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param chunk_size Integer. Chunk size in which to process the data. Defaults
@@ -1053,7 +1054,7 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
 
   # function
   # early return
-  if (is.null(get_params(object)[["coremo"]])) {
+  if (is.null(S7::prop(object, "params")[["coremo"]])) {
     warning(paste(
       "No CoReMo-data found. Did you run cor_module_coremo_clustering()?",
       "Returning class as is."
@@ -1068,7 +1069,8 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   }
 
   # pull out the needed parameters
-  coremo_params <- get_params(object)[["coremo"]]
+  coremo_params <- S7::prop(object, "params")[["coremo"]]
+  final_modules <- S7::prop(object, "outputs")[["final_modules"]]
 
   total_samples <- seq_len(nrow(data_mat))
   no_total_samples <- length(total_samples)
@@ -1098,9 +1100,7 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
         x = chunk,
         size = ncol(data_mat)
       )
-
       new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
-
       clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
 
       clusters
@@ -1124,6 +1124,22 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   }
 
   all_results <- purrr::flatten(all_results)
+
+  cluster_mat <- do.call(cbind, all_results) %>%
+    `rownames<-`(colnames(data_mat))
+
+  if (.verbose)
+    message(
+      "Assessing stability of gene membership within leave-one-out resamling."
+    )
+
+  stability <- rs_cluster_stability(cluster_mat[final_modules$gene, ])
+
+  final_modules[, c("stability", "std_stability") := stability]
+
+  S7::prop(object, "outputs")[["final_modules"]] <- final_modules
+
+  return(object)
 }
 
 # methods - helpers ------------------------------------------------------------
@@ -1640,22 +1656,28 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
   }
   plot_df <- data.table::setorder(plot_df, -modularity)
   if (print_head) print(head(plot_df))
-  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
-    geom_point(
-      mapping = aes(size = log10(good_clusters), fill = log10(avg_size)),
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = ggplot2::aes(x = resolution, y = modularity)
+  ) +
+    ggplot2::geom_point(
+      mapping = ggplot2::aes(
+        size = log10(good_clusters),
+        fill = log10(avg_size)
+      ),
       shape = 21,
       alpha = .7
     ) +
-    xlab("Leiden cluster resolution") +
-    ylab("Modularity") +
-    theme_minimal() +
-    scale_fill_viridis_c() +
-    scale_size_continuous(range = c(2, 8)) +
-    labs(
+    ggplot2::xlab("Leiden cluster resolution") +
+    ggplot2::ylab("Modularity") +
+    ggplot2::theme_minimal() +
+    ggplot2::scale_fill_viridis_c() +
+    ggplot2::scale_size_continuous(range = c(2, 8)) +
+    ggplot2::labs(
       size = "Number of good clusters (log10)",
       fill = "Average cluster size (log10)"
     ) +
-    ggtitle(
+    ggplot2::ggtitle(
       "Resolution vs. modularity",
       subtitle = "With cluster number and size"
     )
@@ -1697,22 +1719,97 @@ S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
   plot_df <- S7::prop(object, "outputs")[["epsilon_data"]]
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_epsilon()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_check_epsilon()? Returning NULL."
+      )
     )
     return(NULL)
   }
 
-  p <- ggplot(data = plot_df, aes(x = epsilon, y = r2_vals)) +
-    geom_point(size = 3, shape = 21) +
-    geom_line() +
-    theme_minimal() +
-    ylim(0, 1) +
-    xlab("Epsilon") +
-    ylab("Goodness of fit (R2)") +
-    ggtitle(
+  p <- ggplot2::ggplot(data = plot_df, ggplot2::aes(x = epsilon, y = r2_vals)) +
+    ggplot2::geom_point(size = 3, shape = 21) +
+    ggplot2::geom_line() +
+    ggplot2::theme_minimal() +
+    ggplot2::ylim(0, 1) +
+    ggplot2::xlab("Epsilon") +
+    ggplot2::ylab("Goodness of fit (R2)") +
+    ggplot2::ggtitle(
       "Epsilon vs. scale free topology",
       subtitle = "Goodness of fit for log(connectivity) ~ log(p(connectivity)"
     )
+
+  p
+}
+
+
+#' @title Plot the k cuts vs median R2
+#'
+#' @description
+#' Plots the optimal k vs. median of median R2 graph to identify the optimal
+#' number of cuts.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If optimal cuts results were found, returns the ggplot. Otherwise,
+#' throws a warning and returns NULL.
+#'
+#' @export
+plot_optimal_cuts <- S7::new_generic(
+  name = "plot_optimal_cuts",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import ggplot2
+#'
+#' @method plot_optimal_cuts bulk_coexp
+S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+
+  plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
+    "optimal_cuts"
+  ]]) %>%
+    data.table::setorder(gradient_change)
+
+  if (is.null(plot_df)) {
+    warning(paste(
+      "No optimal_cuts data.table found.",
+      "Did you run cor_module_coremo_clustering()?",
+      "Returning NULL."
+    ))
+  }
+
+  optimal_cuts <- S7::prop(object = object, name = "params")[["coremo"]][[
+    "inflection_idx"
+  ]]
+
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = ggplot2::aes(x = k, y = R2_weighted_median)
+  ) +
+    ggplot2::geom_point(
+      mapping = ggplot2::aes(fill = gradient_change),
+      shape = 21,
+      alpha = 0.7,
+      size = 3
+    ) +
+    ggplot2::scale_fill_viridis_c() +
+    ggplot2::theme_minimal() +
+    ggplot2::xlab("k cuts") +
+    ggplot2::ylab("Median of median weighted R2") +
+    ggplot2::labs(fill = "Gradient change") +
+    ggplot2::geom_vline(
+      xintercept = optimal_cuts,
+      color = "darkgrey",
+      linetype = "dashed"
+    ) +
+    ggplot2::ggtitle("k cuts vs. change in R2")
 
   p
 }

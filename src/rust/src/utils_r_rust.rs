@@ -177,6 +177,15 @@ pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<'_, f64> {
     MatRef::from_column_major_slice(data, nrow, ncol)
 }
 
+/// Transform an R integer matrix to a faer one
+pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> faer::MatRef<'_, i32> {
+    let ncol = x.ncols();
+    let nrow = x.nrows();
+    let data = x.data();
+
+    MatRef::from_column_major_slice(data, nrow, ncol)
+}
+
 /// Transform a faer into an R matrix
 pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let nrow = x.nrows();
