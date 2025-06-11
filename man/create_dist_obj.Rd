@@ -9,6 +9,8 @@ create_dist_obj(x, size)
 \arguments{
 \item{x}{Numerical vector. The upper-triangle values for which to generate
 the \code{dist} object.}
+
+\item{size}{Integer. Nrow (or ncol) of the symmetric matrix.}
 }
 \value{
 Returns the distance object

@@ -96,7 +96,7 @@ expect_equal(
   tolerance = 10e-6
 )
 
-### wit elimination ------------------------------------------------------------
+### with elimination -----------------------------------------------------------
 
 # The elimination should yield smaller tested gs sizes and worse NES
 # for later gene sets

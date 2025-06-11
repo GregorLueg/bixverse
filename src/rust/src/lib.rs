@@ -20,6 +20,8 @@ mod utils_r_rust;
 mod utils_rust;
 mod utils_stats;
 
+mod macro_assertions;
+
 use extendr_api::prelude::*;
 
 extendr_module! {

@@ -15,6 +15,10 @@ params_coremo(
 )
 }
 \arguments{
+\item{epsilon}{Float. Epsilon parameter for the chosen RBF function, see
+\code{rbf_func}. The higher, the more aggressively low correlations will be
+shrunk.}
+
 \item{k_min, k_max}{Integer. Minimum and maximum number of cuts to use for the
 hierarchical clustering.}
 

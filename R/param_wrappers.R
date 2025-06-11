@@ -235,6 +235,9 @@ params_gsea <- function(
 
 #' Wrapper function to generate CoReMo parameters
 #'
+#' @param epsilon Float. Epsilon parameter for the chosen RBF function, see
+#' `rbf_func`. The higher, the more aggressively low correlations will be
+#' shrunk.
 #' @param k_min,k_max Integer. Minimum and maximum number of cuts to use for the
 #' hierarchical clustering.
 #' @param min_size Optional integer. Minimum size of the clusters. Smaller

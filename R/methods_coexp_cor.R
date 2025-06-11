@@ -1570,6 +1570,7 @@ get_inflection_point <- function(x, y, span = 0.25) {
 #'
 #' @param x Numerical vector. The upper-triangle values for which to generate
 #' the `dist` object.
+#' @param size Integer. Nrow (or ncol) of the symmetric matrix.
 #'
 #' @return Returns the distance object
 create_dist_obj <- function(x, size) {

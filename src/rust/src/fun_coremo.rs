@@ -5,6 +5,7 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use std::collections::HashMap;
 
+use crate::assert_symmetric_mat;
 use crate::helpers_linalg::column_correlation;
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
 use crate::utils_rust::{mat_row_slice, upper_triangle_indices};
@@ -31,6 +32,9 @@ fn rs_tom(
     signed: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let x = r_matrix_to_faer(&x);
+
+    assert_symmetric_mat!(x);
+
     let tom_version = parse_tom_types(tom_type).ok_or_else(|| {
         extendr_api::Error::Other(format!("Invalid TOM version type: {}", tom_type))
     })?;
@@ -128,8 +132,8 @@ fn rs_coremo_quality(
                 }
             }
 
-            let r2_med = median(&vals);
-            let r2_mad = mad(&vals);
+            let r2_med = median(&vals).unwrap_or(0.0);
+            let r2_mad = mad(&vals).unwrap_or(0.0);
 
             (r2_med, r2_mad)
         })
@@ -177,8 +181,7 @@ fn rs_coremo_stability(
     let data = r_matrix_to_faer(&data);
 
     let rbf_fun = parse_rbf_types(rbf_type)
-        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))
-        .unwrap();
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))?;
 
     let results: Vec<Vec<f64>> = indices
         .par_iter()

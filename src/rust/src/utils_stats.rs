@@ -50,7 +50,11 @@ pub fn set_similarity(
 //////////////////////
 
 /// Get the median of a vector
-pub fn median(x: &[f64]) -> f64 {
+pub fn median(x: &[f64]) -> Option<f64> {
+    if x.is_empty() {
+        return None;
+    }
+
     let mut data = x.to_vec();
     let len = data.len();
     if len % 2 == 0 {
@@ -60,16 +64,20 @@ pub fn median(x: &[f64]) -> f64 {
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
-        (*median1 + *median2) / 2.0
+        Some((*median1 + *median2) / 2.0)
     } else {
         let (_, median, _) = data.select_nth_unstable_by(len / 2, |a, b| a.partial_cmp(b).unwrap());
-        *median
+        Some(*median)
     }
 }
 
 /// Calculate the median absolute deviation of a Vector
-pub fn mad(data: &[f64]) -> f64 {
-    let median_val = median(data);
+pub fn mad(data: &[f64]) -> Option<f64> {
+    if data.is_empty() {
+        return None;
+    }
+
+    let median_val = median(data)?; // Early return if median is None
     let deviations: Vec<f64> = data.iter().map(|&x| (x - median_val).abs()).collect();
     median(&deviations)
 }

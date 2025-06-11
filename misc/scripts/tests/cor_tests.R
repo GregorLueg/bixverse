@@ -97,6 +97,7 @@ tictoc::toc()
 
 devtools::load_all()
 
+rextendr::document()
 
 tictoc::tic()
 cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
@@ -118,78 +119,35 @@ params_coremo(epsilon = 2)
 
 cluster_data <- cor_module_coremo_stability(object = cor_test)
 
-object <- cor_test
+devtools::load_all()
 
-if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-  warning("No pre-processed data found. Defaulting to the raw data.")
-  data_mat <- S7::prop(object, "raw_data")
-} else {
-  data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
-}
+syn_data <- synthetic_signal_matrix()
 
+data <- t(syn_data$mat)
 
-final_modules <- S7::prop(object = object, name = "outputs")[["final_modules"]]
+meta_data <- data.table::data.table(
+  sample_id = rownames(data),
+  case_control = syn_data$group
+)
 
-cluster_mat <- do.call(cbind, cluster_data) %>% `rownames<-`(colnames(data_mat))
-
-cluster_mat_red <- cluster_mat[final_modules$gene, ]
-
-stability <- rs_cluster_stability(cluster_mat_red)
-
-final_modules[, c("stability", "std_stability") := stability]
-
-hist(stability$mean_jaccard)
-
-rextendr::document()
-
-stability_test <- apply(cluster_mat_red, 1, FUN = function(x) {
-  sort(table(x), decreasing = TRUE)[[1]]
-})
-
-cluster_mat[1:10, 1:10]
-
-tictoc::toc()
-
-devtools::document()
-
-object <- cor_test
+cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
+  preprocess_bulk_coexp(., hvg = 0.5) %>%
+  cor_module_processing(., cor_method = "spearman") %>%
+  cor_module_check_epsilon(., rbf_func = "gaussian")
 
 
-plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
-  "optimal_cuts"
-]]) %>%
-  data.table::setorder(gradient_change)
+dim(cor_test@processed_data$correlation_res$get_cor_matrix(.verbose = TRUE))
 
-if (is.null(plot_df)) {
-  warning(paste(
-    "No optimal_cuts data.table found.",
-    "Did you run cor_module_coremo_clustering()?",
-    "Returning NULL."
-  ))
-}
+cor_test <- cor_module_coremo_clustering(
+  object = cor_test,
+  coremo_params = params_coremo(epsilon = 1)
+)
 
-optimal_cuts <- S7::prop(object = object, name = "params")[["coremo"]][[
-  "inflection_idx"
-]]
+saveRDS(
+  cor_test@processed_data$feature_meta,
+  "~/repos/shared/bixverse/inst/tinytest/test_data/hvg_data.rds"
+)
 
-ggplot2::ggplot(
-  data = plot_df,
-  mapping = ggplot2::aes(x = k, y = R2_weighted_median)
-) +
-  ggplot2::geom_point(
-    mapping = ggplot2::aes(fill = gradient_change),
-    shape = 21,
-    alpha = 0.7,
-    size = 3
-  ) +
-  ggplot2::scale_fill_viridis_c() +
-  ggplot2::theme_bw() +
-  ggplot2::xlab("k cuts") +
-  ggplot2::ylab("Median of median weighted R2") +
-  ggplot2::labs(fill = "Gradient change") +
-  ggplot2::geom_vline(
-    xintercept = optimal_cuts,
-    color = "darkgrey",
-    linetype = "dashed"
-  ) +
-  ggplot2::ggtitle("k cuts vs. change in R2")
+cor_test <- cor_module_coremo_stability(
+  object = cor_test
+)
