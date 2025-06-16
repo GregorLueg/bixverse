@@ -19,7 +19,10 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 ## *Release notes*
 
 We have now officially released version **0.0.1.4**. Test coverage has further increased,
-and more and more functionality has been added.
+and more and more functionality has been added. New features:
+
+- CoReMo-based clustering, based on [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).
+- TOM calculations, see [Yip and Horvath](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-22)
 
 ## *Installation*
 
