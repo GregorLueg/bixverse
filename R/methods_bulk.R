@@ -13,6 +13,8 @@
 #' @param grps Factor or character vector. The group vector.
 #'
 #' @returns A data.table with two columns
+#'
+#' @import data.table
 .check_pca_grp_differences <- function(pc1, pc2, grps) {
   # Checks
   checkmate::qassert(pc1, "N+")
@@ -22,12 +24,12 @@
   pca_anova_dt <- if (length(unique(grps)) > 1) {
     pc1_anova_pval <- anova(lm(pc1 ~ grps))$`Pr(>F)`[1]
     pc2_anova_pval <- anova(lm(pc2 ~ grps))$`Pr(>F)`[1]
-    data.table(
+    data.table::data.table(
       pc = c("PC1", "PC2"),
       pvalue = c(pc1_anova_pval, pc2_anova_pval)
     )
   } else {
-    data.table(
+    data.table::data.table(
       pc = c("PC1", "PC2"),
       pvalue = c(NA, NA)
     )
@@ -80,6 +82,9 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   pcs = 10L,
   no_hvg_genes = 2500L
 ) {
+  gene_id <- hvg <- var_id <- sample_id <- . <-
+    NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(scale_genes, "B1")
@@ -133,20 +138,20 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     by.y = 'sample_id'
   )
 
-  p5_pca_case_control <- ggplot(
+  p5_pca_case_control <- ggplot2::ggplot(
     data = plot_df,
     mapping = aes(x = PC_1, y = PC_2)
   ) +
-    geom_point(
+    ggplot2::geom_point(
       mapping = aes(col = .data[[contrast_info]]),
       size = 3,
       alpha = 0.7
     ) +
-    xlab("PC1") +
-    ylab("PC2") +
-    theme_bw() +
-    ggtitle("PCA with key columns") +
-    labs(colour = "Groups:")
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2") +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle("PCA with key columns") +
+    ggplot2::labs(colour = "Groups:")
 
   pca_anova <- .check_pca_grp_differences(
     pc1 = plot_df$PC_1,
@@ -214,6 +219,8 @@ batch_correction_bulk_dge <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
+#' @import patchwork
+#' @import ggplot2
 S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   object,
   contrast_column,
@@ -221,6 +228,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   scale_genes = FALSE,
   no_hvg_genes = 2500L
 ) {
+  gene_id <- . <- sample_id <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(contrast_column, "S1")
@@ -293,32 +302,36 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
       by = 'sample_id'
     )
 
-  plot_uncor <- ggplot(data = pca_dt_uncor, mapping = aes(x = PC_1, y = PC_2)) +
-    geom_point(
-      mapping = aes(col = .data[[contrast_column]]),
-      size = 3,
-      alpha = 0.7
-    ) +
-    theme_bw() +
-    ggtitle("Pre batch correction") +
-    xlab("PC1") +
-    ylab("PC2")
+  # Otherwise it continues bugging...
+  library(patchwork)
 
-  plot_cor <- ggplot(
-    data = pca_dt_cor,
-    mapping = aes(x = PC_1, y = PC_2),
-    size = 3,
-    alpha = 0.7
+  plot_uncor <- ggplot2::ggplot(
+    data = pca_dt_uncor,
+    mapping = aes(x = PC_1, y = PC_2)
   ) +
-    geom_point(
+    ggplot2::geom_point(
       mapping = aes(col = .data[[contrast_column]]),
       size = 3,
       alpha = 0.7
     ) +
-    theme_bw() +
-    ggtitle("Post batch correction") +
-    xlab("PC1") +
-    ylab("PC2")
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle("Pre batch correction") +
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2")
+
+  plot_cor <- ggplot2::ggplot(
+    data = pca_dt_cor,
+    mapping = aes(x = PC_1, y = PC_2)
+  ) +
+    ggplot2::geom_point(
+      mapping = aes(col = .data[[contrast_column]]),
+      size = 3,
+      alpha = 0.7
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle("Post batch correction") +
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2")
 
   p6_batch_correction_plot <- plot_uncor +
     plot_cor +
@@ -413,6 +426,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   ...,
   .verbose = TRUE
 ) {
+  . <- subgroup <- NULL
+
   # First checks
   checkmate::assertClass(object, "bixverse::bulk_dge")
   checkmate::qassert(contrast_column, "S+")
@@ -525,7 +540,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         .[['limma_results']]
       }
     ) %>%
-      rbindlist()
+      data.table::rbindlist()
 
     hedges_g_results_final <- purrr::map(
       results,
@@ -533,7 +548,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         .[['hedges_g_results']]
       }
     ) %>%
-      rbindlist()
+      data.table::rbindlist()
   }
 
   dge_params <- list(
@@ -625,17 +640,17 @@ S7::method(plot_pca_res, bulk_dge) <- function(
   ) %>%
     data.table::melt(id.vars = c('sample_id', pcs_to_plot))
 
-  p <- ggplot(
+  p <- ggplot2::ggplot(
     data = plot_df,
     mapping = aes(x = .data[[pcs_to_plot[1]]], y = .data[[pcs_to_plot[2]]])
   ) +
-    geom_point(mapping = aes(col = value), size = 3, alpha = 0.7) +
-    facet_wrap(facets = ~variable, ncol = 3L) +
-    xlab("PC1") +
-    ylab("PC2") +
-    theme_minimal() +
-    ggtitle("PCA with key columns") +
-    labs(colour = "Groups:")
+    ggplot2::geom_point(mapping = aes(col = value), size = 3, alpha = 0.7) +
+    ggplot2::facet_wrap(facets = ~variable, ncol = 3L) +
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2") +
+    ggplot2::theme_minimal() +
+    ggplot2::ggtitle("PCA with key columns") +
+    ggplot2::labs(colour = "Groups:")
 
   return(p)
 }

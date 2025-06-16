@@ -126,3 +126,121 @@ cor_test_2 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
 
 cor_test_2 <- cor_module_final_modules(cor_test_2)
 tictoc::toc()
+
+# write TOM into Rust ----------------------------------------------------------
+
+data <- X
+
+cor_res <- cor(data)
+
+cor_res[1:15, 1:15]
+
+a <- (cor_res + 1) / 2
+
+a_ <- sign(cor_res) * a^2
+
+a[1:5, 1:5]
+
+a_[1:5, 1:5]
+
+i = "gene1"
+j = "gene3"
+
+# This is alpha i, j
+a[i, j]
+
+# Claude explanation
+
+set.seed(123)
+n <- 10
+adj_matrix <- matrix(runif(n * n, 0, 1), nrow = n, ncol = n)
+
+# Make it symmetric (typical for undirected networks)
+adj_matrix <- (adj_matrix + t(adj_matrix)) / 2
+
+# Set diagonal to 0 (no self-connections)
+diag(adj_matrix) <- 0
+
+adj_matrix <- round(adj_matrix, 3)
+
+print("Original Adjacency Matrix:")
+print(adj_matrix)
+
+adj <- adj_matrix
+TOMDenom <- "min"
+
+n <- nrow(adj)
+TOM <- matrix(0, nrow = n, ncol = n)
+
+
+connectivity <- rowSums(adj)
+
+# Calculate TOM for each pair of nodes
+for (i in 1:n) {
+  for (j in 1:n) {
+    if (i != j) {
+      # Calculate the numerator: aij + sum(aik * akj) for k != i,j
+      numerator <- adj[i, j]
+
+      # Sum over all k except i and j
+      shared_neighbors <- 0
+      for (k in 1:n) {
+        if (k != i && k != j) {
+          shared_neighbors <- shared_neighbors + adj[i, k] * adj[k, j]
+        }
+      }
+      numerator <- numerator + shared_neighbors
+
+      # Calculate the denominator: f(ki, kj) + 1 - aij
+      if (TOMDenom == "min") {
+        f_ki_kj <- min(connectivity[i], connectivity[j])
+      } else if (TOMDenom == "mean") {
+        f_ki_kj <- (connectivity[i] + connectivity[j]) / 2
+      }
+
+      denominator <- f_ki_kj + 1 - adj[i, j]
+
+      # Calculate TOM
+      TOM[i, j] <- numerator / denominator
+
+      # Print calculation details for first few pairs
+      if (i <= 3 && j <= 3 && i != j) {
+        cat(sprintf("\nTOM[%d,%d] calculation:\n", i, j))
+        cat(sprintf("  aij = %.3f\n", adj[i, j]))
+        cat(sprintf("  Shared neighbors sum = %.3f\n", shared_neighbors))
+        cat(sprintf(
+          "  Numerator = %.3f + %.3f = %.3f\n",
+          adj[i, j],
+          shared_neighbors,
+          numerator
+        ))
+        cat(sprintf(
+          "  ki = %.3f, kj = %.3f\n",
+          connectivity[i],
+          connectivity[j]
+        ))
+        cat(sprintf(
+          "  f(ki,kj) = %s(%.3f, %.3f) = %.3f\n",
+          TOMDenom,
+          connectivity[i],
+          connectivity[j],
+          f_ki_kj
+        ))
+        cat(sprintf(
+          "  Denominator = %.3f + 1 - %.3f = %.3f\n",
+          f_ki_kj,
+          adj[i, j],
+          denominator
+        ))
+        cat(sprintf(
+          "  TOM[%d,%d] = %.3f / %.3f = %.3f\n",
+          i,
+          j,
+          numerator,
+          denominator,
+          TOM[i, j]
+        ))
+      }
+    }
+  }
+}

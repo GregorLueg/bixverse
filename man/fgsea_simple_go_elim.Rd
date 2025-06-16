@@ -30,6 +30,10 @@ wrapper function. This function generates a list containing:
 \item min_size - Integer. Minimum size for the gene sets.
 \item max_size - Integer. Maximum size for the gene sets.
 \item gsea_param - Float. The GSEA parameter. Defaults to \code{1.0}.
+\item sample_size - Integer. Number of samples to iterate through for the
+multi-level implementation of fgsea.
+\item eps - Float. Boundary for calculating the p-value. Used for the multi-
+level implementation of fgsea.
 }}
 
 \item{seed}{Random seed for reproducibility.}

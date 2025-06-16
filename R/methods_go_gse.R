@@ -59,8 +59,8 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     min_genes = NULL,
     .debug = FALSE
   ) {
-    # Initial assignment
-    `.` <- pvals <- fdr <- hits <- NULL
+    # Scope checks
+    . <- pvals <- fdr <- hits <- NULL
     # First check
     checkmate::assertClass(object, "bixverse::gene_ontology_data")
     checkmate::qassert(target_genes, "S+")
@@ -179,8 +179,8 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     min_genes = NULL,
     .debug = FALSE
   ) {
-    # Binding checks
-    `.` <- pvals <- fdr <- hits <- target_set_name <- NULL
+    # Scope checks
+    . <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
     checkmate::assertClass(object, "bixverse::gene_ontology_data")
     checkmate::assertList(target_gene_list, types = "character")
@@ -274,6 +274,10 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
 #'  \item min_size - Integer. Minimum size for the gene sets.
 #'  \item max_size - Integer. Maximum size for the gene sets.
 #'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#'  \item sample_size - Integer. Number of samples to iterate through for the
+#'  multi-level implementation of fgsea.
+#'  \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+#'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
 #' @param .debug Boolean. Shall information from the Rust function be displayed.
@@ -315,6 +319,8 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     seed = 42L,
     .debug = FALSE
   ) {
+    # Scope checks
+    . <- leading_edge <- fdr <- NULL
     # Checks
     checkmate::assertClass(object, "bixverse::gene_ontology_data")
     checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)

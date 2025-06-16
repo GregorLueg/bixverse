@@ -2,6 +2,8 @@ use extendr_api::prelude::*;
 
 use std::collections::HashMap;
 
+use rayon::prelude::*;
+
 use crate::helpers_fgsea::*;
 use crate::helpers_geom_elim::*;
 use crate::utils_r_rust::r_named_vec_data;
@@ -124,6 +126,9 @@ fn rs_calc_gsea_stats(
 ///     \item es Enrichment scores for the gene sets
 ///     \item nes Normalised enrichment scores for the gene sets
 ///     \item pvals The calculated p-values.
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger or smaller than the permutation (pending sign).
+///     \item size Pathway size.
 /// }
 ///
 /// @export
@@ -147,6 +152,7 @@ fn rs_calc_gsea_stat_traditional_batch(
         es = gsea_res.es,
         nes = gsea_res.nes,
         pvals = gsea_res.pvals,
+        n_more_extreme = gsea_res.n_more_extreme,
         size = gsea_res.size
     ))
 }
@@ -160,15 +166,25 @@ fn rs_calc_gsea_stat_traditional_batch(
 /// @param pathway_sizes Integer vector. The sizes of the pathways.
 /// @param iters Integer. Number of permutations.
 /// @param gsea_param Float. The Gene Set Enrichment parameter.
+/// @param return_add_stats Boolean. Returns additional statistics
+/// necessary for the multi-level calculations.
 /// @param seed Integer. For reproducibility purposes
 ///
 /// @return List with the following elements
 /// \itemize{
-///     \item es The enrichment scores for the pathway
-///     \item nes The normalised enrichment scores for the pathway
-///     \item pvals The p-values for this pathway based on permutation
-///     testing
-///     \item size The pathway sizes.
+///     \item es Enrichment scores for the gene sets
+///     \item nes Normalised enrichment scores for the gene sets
+///     \item pvals The calculated p-values.
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger or smaller than the permutation (pending sign).
+///     \item size Pathway size.
+/// }
+///
+/// If `return_add_stats` is set to true, there is additional elements in the
+/// list:
+/// \itemize{
+///     \item le_zero Number of times the permutation was less than zero.
+///     \item ge_zero Number of times the permutation was greater than zero.
 /// }
 ///
 /// @export
@@ -179,6 +195,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
     pathway_sizes: &[i32],
     iters: usize,
     gsea_param: f64,
+    return_add_stats: bool,
     seed: u64,
 ) -> extendr_api::Result<List> {
     // Convert indices from R - keep as 1-based for algorithm
@@ -196,13 +213,115 @@ fn rs_calc_gsea_stat_cumulative_batch(
     let gsea_res: GseaResults<'_> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
-    Ok(list!(
-        es = gsea_res.es,
-        nes = gsea_res.nes,
-        pvals = gsea_res.pvals,
-        size = gsea_res.size
-    ))
+    let res = if return_add_stats {
+        list!(
+            es = gsea_res.es,
+            nes = gsea_res.nes,
+            pvals = gsea_res.pvals,
+            n_more_extreme = gsea_res.n_more_extreme,
+            le_zero = gsea_res.le_zero,
+            ge_zero = gsea_res.ge_zero,
+            size = gsea_res.size
+        )
+    } else {
+        list!(
+            es = gsea_res.es,
+            nes = gsea_res.nes,
+            pvals = gsea_res.pvals,
+            n_more_extreme = gsea_res.n_more_extreme,
+            size = gsea_res.size
+        )
+    };
+
+    Ok(res)
 }
+
+/// Calculates p-values for pre-processed data
+///
+/// @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+/// @param es Numerical vector. The enrichment scores of the pathways of that specific size
+/// @param pathway_size Integer. The size of the pathways to test.
+/// @param sample_size Integer. The size of the random gene sets to test against.
+/// @param seed Integer. Random seed.
+/// @param eps Float. Boundary for calculating the p-value.
+/// @param sign Boolean. Used for the only positive or only negative score version.
+///
+/// @return List with the following elements:
+/// \itemize{
+///     \item pvals The pvalues.
+///     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
+///     overesimation of the p-values.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_calc_multi_level(
+    stats: Robj,
+    es: &[f64],
+    pathway_size: &[i32],
+    sample_size: usize,
+    seed: u64,
+    eps: f64,
+    sign: bool,
+) -> extendr_api::Result<List> {
+    let (_, ranks) = r_named_vec_data(stats)?;
+    let pathway_size: Vec<usize> = pathway_size
+        .iter()
+        .map(|&x| x.try_into().unwrap_or(0))
+        .collect();
+
+    let res: Vec<GseaMultiLevelresults> = es
+        .par_iter()
+        .zip(pathway_size.par_iter())
+        .map(|(es_i, size_i)| {
+            // The original implementation used vectors here by pathway size
+            // This was faster to do
+            let es_vec = vec![*es_i];
+            fgsea_multilevel_helper(&es_vec, &ranks, *size_i, sample_size, seed, eps, sign)
+        })
+        .collect();
+
+    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(res.len());
+    let mut is_cp_ge_half: Vec<Vec<bool>> = Vec::with_capacity(res.len());
+
+    for res_i in res {
+        pvals.push(res_i.pvals);
+        is_cp_ge_half.push(res_i.is_cp_ge_half);
+    }
+
+    let pvals = flatten_vector(pvals);
+    let is_cp_ge_half = flatten_vector(is_cp_ge_half);
+
+    Ok(list!(pvals = pvals, is_cp_ge_half = is_cp_ge_half))
+}
+
+/// Calculates the simple and multi error for fgsea multi level
+///
+/// @param n_more_extreme Integer vector. The number of times the ES was larger than the
+/// permutations.
+/// @param nperm Integer. Number of permutations.
+/// @param sample_size Integer. Number of samples.
+///
+/// @return List with the following elements:
+/// \itemize{
+///     \item simple_err Vector of simple errors.
+///     \item multi_err Vector of multi errors.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: usize) -> List {
+    // Conversion needed
+    let n_more_extreme: Vec<usize> = n_more_extreme.iter().map(|x| *x as usize).collect();
+
+    let res: MultiLevelErrRes = calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
+
+    list!(simple_err = res.0, multi_err = res.1)
+}
+
+/////////////////////////
+// Core elim functions //
+/////////////////////////
 
 /// Run fgsea simple method for gene ontology with elimination method
 ///
@@ -230,6 +349,8 @@ fn rs_calc_gsea_stat_cumulative_batch(
 ///     \item size The pathway sizes (after elimination!).
 ///     \item pvals The p-values for this pathway based on permutation
 ///     testing
+///     \item n_more_extreme Number of times the enrichment score was
+///     bigger or smaller than the permutation (pending sign).
 ///     \item leading_edge A list of the index positions of the leading edge
 ///     genes for this given GO term.
 /// }
@@ -274,10 +395,11 @@ fn rs_geom_elim_fgsea_simple(
     }
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
-    let mut es: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut es = Vec::with_capacity(levels.len());
     let mut nes: Vec<Vec<Option<f64>>> = Vec::with_capacity(levels.len());
     let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
+    let mut n_more_extreme: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
@@ -303,6 +425,7 @@ fn rs_geom_elim_fgsea_simple(
         nes.push(level_res.nes);
         size.push(level_res.size);
         pvals.push(level_res.pvals);
+        n_more_extreme.push(level_res.n_more_extreme);
         leading_edge.push(level_res.leading_edge);
     }
 
@@ -311,6 +434,7 @@ fn rs_geom_elim_fgsea_simple(
     let nes: Vec<Option<f64>> = flatten_vector(nes);
     let size: Vec<usize> = flatten_vector(size);
     let pvals: Vec<f64> = flatten_vector(pvals);
+    let n_more_extreme: Vec<usize> = flatten_vector(n_more_extreme);
     let leading_edge: Vec<Vec<i32>> = flatten_vector(leading_edge);
 
     let mut leading_edge_list = List::new(leading_edge.len());
@@ -325,6 +449,7 @@ fn rs_geom_elim_fgsea_simple(
         nes = nes,
         size = size,
         pvals = pvals,
+        n_more_extreme = n_more_extreme,
         leading_edge = leading_edge_list
     ))
 }
@@ -336,5 +461,7 @@ extendr_module! {
     fn rs_calc_gsea_stats;
     fn rs_calc_gsea_stat_cumulative_batch;
     fn rs_calc_gsea_stat_traditional_batch;
+    fn rs_calc_multi_level;
     fn rs_geom_elim_fgsea_simple;
+    fn rs_simple_and_multi_err;
 }

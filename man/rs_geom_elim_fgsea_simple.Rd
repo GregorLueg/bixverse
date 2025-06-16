@@ -52,6 +52,8 @@ List with the following elements
 \item size The pathway sizes (after elimination!).
 \item pvals The p-values for this pathway based on permutation
 testing
+\item n_more_extreme Number of times the enrichment score was
+bigger or smaller than the permutation (pending sign).
 \item leading_edge A list of the index positions of the leading edge
 genes for this given GO term.
 }

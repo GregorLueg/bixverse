@@ -1,3 +1,4 @@
+use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
@@ -16,15 +17,14 @@ pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 ///////////////////////
 
 /// Split a vector randomly into two chunks with one being [..x] and the other [x..]
-pub fn split_vector_randomly(vec: Vec<f64>, x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
+pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
     let mut rng = StdRng::seed_from_u64(seed);
-    let mut shuffled = vec.clone();
+    let mut shuffled = vec.to_vec();
     shuffled.shuffle(&mut rng);
 
-    let first_set = shuffled[..x].to_vec();
-    let second_set = shuffled[x..].to_vec();
+    let (first_set, second_set) = shuffled.split_at(x);
 
-    (first_set, second_set)
+    (first_set.to_vec(), second_set.to_vec())
 }
 
 /// Calculate the set similarity. Options are Jaccard (similarity_index = False)
@@ -94,6 +94,121 @@ pub fn hedge_g_effect(
     (effect_sizes, standard_errors)
 }
 
+////////////////////////////
+// Radial Basis functions //
+////////////////////////////
+
+/// Enum for the RBF function
+#[derive(Debug)]
+pub enum RbfType {
+    Gaussian,
+    Bump,
+    InverseQuadratic,
+}
+
+/// Parsing the RBF function
+pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
+    match s.to_lowercase().as_str() {
+        "gaussian" => Some(RbfType::Gaussian),
+        "bump" => Some(RbfType::Bump),
+        "inverse_quadratic" => Some(RbfType::InverseQuadratic),
+        _ => None,
+    }
+}
+
+/// Gaussian Radial Basis function for vectors
+pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
+    dist.par_iter()
+        .map(|x| f64::exp(-((x * *epsilon).powi(2))))
+        .collect()
+}
+
+/// Gaussian Radial Basis function for matrices.
+pub fn rbf_gaussian_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        -((x * *epsilon).powi(2))
+    })
+}
+
+/// Bump Radial Basis function
+/// Will set dist >= 1 / epsilon to 0, i.e., is a sparse RBF
+pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
+    dist.par_iter()
+        .map(|x| {
+            if *x < (1.0 / epsilon) {
+                f64::exp(-(1_f64 / (1_f64 - (*epsilon * x).powi(2))) + 1_f64)
+            } else {
+                0_f64
+            }
+        })
+        .collect()
+}
+
+/// Bump Radial Basis function for matrices
+pub fn rbf_bump_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        if *x < (1.0 / epsilon) {
+            f64::exp(-(1_f64 / (1_f64 - (*epsilon * x).powi(2))) + 1_f64)
+        } else {
+            0_f64
+        }
+    })
+}
+
+/// Inverse quadratic RBF
+pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
+    dist.par_iter()
+        .map(|x| 1.0 / (1.0 + (*epsilon * x).powi(2)))
+        .collect()
+}
+
+/// Inverse quadratic RBF for matrices
+pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+    let ncol = dist.ncols();
+    let nrow = dist.nrows();
+    Mat::from_fn(nrow, ncol, |i, j| {
+        let x = dist.get(i, j);
+        1.0 / (1.0 + (*epsilon * x).powi(2))
+    })
+}
+
+/////////////////////////////////////
+// Additional stat implementations //
+/////////////////////////////////////
+
+/// Implementation of the trigamma function (second derivative of ln(gamma(x)))
+pub fn trigamma(x: f64) -> f64 {
+    let mut x = x;
+    let mut result = 0.0;
+
+    // For small x, use recurrence to get to a larger value
+    if x <= 5.0 {
+        // Each step through this loop applies the recurrence relation
+        // trigamma(x) = trigamma(x+1) + 1/x^2
+        while x < 5.0 {
+            result += 1.0 / (x * x);
+            x += 1.0;
+        }
+    }
+
+    // For large x, use the asymptotic series
+    // Main term: 1/x + 1/(2*x^2) + ...
+    let xx = x * x;
+    result += 1.0 / x + 1.0 / (2.0 * xx) + 1.0 / (6.0 * xx * x);
+
+    // Add Bernoulli number terms for better precision
+    let xxx = xx * x;
+    result += -1.0 / (30.0 * xxx * x) + 1.0 / (42.0 * xxx * xx * x) - 1.0 / (30.0 * xxx * xxx * x);
+
+    result
+}
+
 /// Transform Z-scores into p-values (assuming normality).
 pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
     let normal = Normal::new(0.0, 1.0).unwrap();
@@ -108,47 +223,6 @@ pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
                 2.0 * p
             } else {
                 2.0 * (1.0 - normal.cdf(abs_z))
-            }
-        })
-        .collect()
-}
-
-////////////////////////////
-// Radial Basis functions //
-////////////////////////////
-
-/// Enum for the RBF function
-#[derive(Debug)]
-pub enum RbfType {
-    Gaussian,
-    Bump,
-}
-
-/// Parsing the RBF function
-pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
-    match s.to_lowercase().as_str() {
-        "gaussian" => Some(RbfType::Gaussian),
-        "bump" => Some(RbfType::Bump),
-        _ => None,
-    }
-}
-
-/// Gaussian Radial Basis function
-pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
-    dist.par_iter()
-        .map(|x| f64::exp(-((x * *epsilon).powi(2))))
-        .collect()
-}
-
-/// Bump Radial Basis function
-/// Will set dist >= 1 / epsilon to 0
-pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
-    dist.par_iter()
-        .map(|x| {
-            if *x < (1.0 / epsilon) {
-                f64::exp(-(1_f64 / (1_f64 - (*epsilon * x).powi(2))) + 1_f64)
-            } else {
-                0_f64
             }
         })
         .collect()

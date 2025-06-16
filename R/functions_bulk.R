@@ -150,7 +150,7 @@ run_limma_voom <- function(
     ) %>%
       .[, contrast := gsub("-", "_vs_", coef_name)]
   }) %>%
-    rbindlist()
+    data.table::rbindlist()
 
   return(all_dge_res)
 }

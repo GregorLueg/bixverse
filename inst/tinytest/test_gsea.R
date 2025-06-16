@@ -233,13 +233,15 @@ internal_gsea_simple_res <- calc_fgsea_simple(
   stats = stats,
   pathways = pathway_list,
   nperm = 100L
-)
+) %>%
+  data.table::setorder(pathway_name)
 
 traditional_gsea_results <- calc_gsea_traditional(
   stats = stats,
   pathways = pathway_list,
   nperm = 100L
-)
+) %>%
+  data.table::setorder(pathway_name)
 
 correlation_traditional_vs_fgsea_es <- cor(
   internal_gsea_simple_res$es,
@@ -274,6 +276,57 @@ expect_true(
   correlation_traditional_vs_fgsea_pval >= 0.97,
   info = paste(
     "correlation internal fgsea vs official (pval)"
+  )
+)
+
+## multi-level version ---------------------------------------------------------
+
+### comparison 1 ---------------------------------------------------------------
+
+# Due to the low number of permutations, all of the p-values from the
+# multi-level version should be lower here...
+
+internal_gsea_multi_level_res <- calc_fgsea(
+  stats = stats,
+  pathways = pathway_list,
+  nperm = 100L
+) %>%
+  data.table::setorder(pathway_name)
+
+expect_true(
+  all(internal_gsea_multi_level_res$pvals < internal_gsea_simple_res$pvals),
+  info = paste(
+    "simple fgsea vs multi-level fgsea comparison (low permutations)"
+  )
+)
+
+### comparison 2 ---------------------------------------------------------------
+
+# with higher number of permutations, the p-values for the random pathways
+# should be the same
+
+internal_gsea_simple_res_v2 <- calc_fgsea_simple(
+  stats = stats,
+  pathways = pathway_list,
+  nperm = 1000L
+) %>%
+  data.table::setorder(pathway_name)
+
+internal_gsea_multi_level_res_v2 <- calc_fgsea(
+  stats = stats,
+  pathways = pathway_list,
+  nperm = 1000L
+) %>%
+  data.table::setorder(pathway_name)
+
+matching_pvalues <- sum(
+  internal_gsea_simple_res_v2$pvals == internal_gsea_multi_level_res_v2$pvals
+)
+
+expect_true(
+  matching_pvalues == 3,
+  info = paste(
+    "simple fgsea vs multi-level fgsea comparison (high permutations)"
   )
 )
 
@@ -323,11 +376,12 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
     pathways = pathway_list,
     stats = stats,
     nperm = 100
-  )
+  ) %>%
+    data.table::setorder(pathway)
 
   correlation_fgsea_internal_pval <- cor(
-    x = fgsea_scores$pval,
-    y = internal_gsea_simple_res$pval,
+    x = log(fgsea_scores$pval),
+    y = log(internal_gsea_simple_res$pval),
     method = "pearson"
   )
   correlation_fgsea_internal_es <- cor(
@@ -364,4 +418,54 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
   )
 } else {
   exit_file("fgsea package not available for comparison tests")
+}
+
+## multi-level method ----------------------------------------------------------
+
+if (requireNamespace("fgsea", quietly = TRUE)) {
+  fgsea_scores_ml <- fgsea::fgsea(
+    pathways = pathway_list,
+    stats = stats
+  ) %>%
+    data.table::setorder(pathway)
+
+  correlation_fgsea_multilevel_pval <- cor(
+    x = log(fgsea_scores_ml$pval),
+    y = log(internal_gsea_multi_level_res_v2$pvals),
+    method = "pearson"
+  )
+
+  correlation_fgsea_multilevel_es <- cor(
+    x = fgsea_scores_ml$ES,
+    y = internal_gsea_multi_level_res_v2$es,
+    method = "pearson"
+  )
+
+  correlation_fgsea_multilevel_nes <- cor(
+    x = fgsea_scores_ml$NES,
+    y = internal_gsea_multi_level_res_v2$nes,
+    method = "pearson"
+  )
+
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_multilevel_pval >= 0.98,
+    info = paste(
+      "correlation internal fgsea vs official - multilevel (pval)"
+    )
+  )
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_multilevel_es >= 0.98,
+    info = paste(
+      "correlation internal fgsea vs official - multilevel (ES)"
+    )
+  )
+  # There should be a very high correlation, despite random initialisation
+  expect_true(
+    correlation_fgsea_multilevel_nes >= 0.98,
+    info = paste(
+      "correlation internal fgsea vs official - multilevel (NES)"
+    )
+  )
 }

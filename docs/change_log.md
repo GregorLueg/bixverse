@@ -1,6 +1,20 @@
 # *bixverse* change log
 
-*Last update: 15.05.2025* </br>
+*Last update: 02.06.2025* </br>
+
+### Version **0.0.1.3**
+
+**Beta release v3** 
+
+#### New features
+
+- Implementation for fgsea multi level method. Additionally, n_more_extreme
+is now being returned by the GSEA functions.
+- Implementations of the RBF function for R matrices.
+
+#### Bug fixes, documentation updates
+
+...
 
 ### Version **0.0.1.2**
 

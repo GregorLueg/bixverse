@@ -4,14 +4,17 @@ use std::fmt::Debug;
 use std::hash::Hash;
 
 use faer::Mat;
-use rayon::iter::*;
 
 //////////////////
 // VECTOR STUFF //
 //////////////////
 
 /// Flatten a nested vector
-pub fn flatten_vector<T>(vec: Vec<Vec<T>>) -> Vec<T> {
+pub fn flatten_vector<I, T>(vec: I) -> Vec<T>
+where
+    I: IntoIterator,
+    I::Item: IntoIterator<Item = T>,
+{
     vec.into_iter().flatten().collect()
 }
 
@@ -39,18 +42,19 @@ pub fn array_min<T: PartialOrd + Copy>(arr: &[T]) -> T {
 
 /// Get the maximum and minimum value. First element is minimum;
 /// second one is maximum.
-pub fn array_f64_max_min(arr: &[f64]) -> (f64, f64) {
-    let res = arr
-        .par_iter()
-        .fold(
-            || (f64::MAX, f64::MIN),
-            |acc, &val| (acc.0.min(val), acc.1.max(val)),
-        )
-        .reduce(
-            || (f64::MAX, f64::MIN),
-            |acc1, acc2| (acc1.0.min(acc2.0), acc1.1.max(acc2.1)),
-        );
-    res
+pub fn array_f64_max_min<T: PartialOrd + Copy>(arr: &[T]) -> (T, T) {
+    let mut min_val = arr[0];
+    let mut max_val = arr[0];
+    for number in arr {
+        if *number < min_val {
+            min_val = *number
+        }
+        if *number > max_val {
+            max_val = *number
+        }
+    }
+
+    (min_val, max_val)
 }
 
 /// String vector to HashSet
@@ -97,7 +101,6 @@ pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
     ranks
 }
 
-#[allow(dead_code)]
 /// Get unique elements from a slice of any hashable, equatable numeric type.
 pub fn unique<T>(vec: &[T]) -> Vec<T>
 where

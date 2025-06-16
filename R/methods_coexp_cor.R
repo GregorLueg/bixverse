@@ -379,6 +379,8 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
   max_workers = as.integer(parallel::detectCores() / 2),
   .verbose = TRUE
 ) {
+  combined_id <- . <- good_clusters <- N <- graph <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   assertCorGraphParams(graph_params)
@@ -599,6 +601,8 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
   .max_iters = 100L,
   .verbose = TRUE
 ) {
+  graph_params <- graph <- modularity <- . <- N <- cluster_id <- node_id <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(resolution, c("0", "N1"))
@@ -868,6 +872,8 @@ get_cor_graph <- S7::new_generic(
 #' @export
 #' @method get_cor_graph bulk_coexp
 S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
+  # Scope checks...
+  . <- cor_abs <- affinity <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(epsilon, "R1")
@@ -948,6 +954,8 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
   fdr_threshold = 0.05,
   .verbose = TRUE
 ) {
+  # Scope checks
+  . <- delta_cor <- cor_a <- cor_b <- fdr <- weight <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(min_cor, "R1[0,1]")

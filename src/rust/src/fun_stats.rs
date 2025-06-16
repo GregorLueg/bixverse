@@ -2,16 +2,12 @@ use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::collections::HashSet;
-// use std::sync::{Arc, Mutex};
 
 use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
 use crate::utils_r_rust::{r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils_rust::{flatten_vector, string_vec_to_set};
 use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly, EffectSizeRes};
-
-// use std::collections::HashSet;
-// use crate::utils_r_rust::r_list_to_str_vec;
 
 /// Fast AUC calculation
 ///
@@ -27,7 +23,7 @@ use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly, 
 ///
 /// @export
 #[extendr]
-fn rs_fast_auc(pos_scores: Vec<f64>, neg_scores: Vec<f64>, iters: usize, seed: u64) -> f64 {
+fn rs_fast_auc(pos_scores: &[f64], neg_scores: &[f64], iters: usize, seed: u64) -> f64 {
     let mut rng = StdRng::seed_from_u64(seed);
     let mut count = 0;
 
@@ -61,7 +57,7 @@ fn rs_fast_auc(pos_scores: Vec<f64>, neg_scores: Vec<f64>, iters: usize, seed: u
 /// @export
 #[extendr]
 fn rs_create_random_aucs(
-    score_vec: Vec<f64>,
+    score_vec: &[f64],
     size_pos: usize,
     random_iters: usize,
     auc_iters: usize,
@@ -72,9 +68,9 @@ fn rs_create_random_aucs(
     let random_aucs: Vec<_> = iter_vec
         .par_iter()
         .map(|x| {
-            let scores = split_vector_randomly(score_vec.clone(), size_pos, *x as u64 + seed);
+            let scores = split_vector_randomly(score_vec, size_pos, *x as u64 + seed);
 
-            rs_fast_auc(scores.0, scores.1, auc_iters, *x as u64 + 1 + seed)
+            rs_fast_auc(&scores.0, &scores.1, auc_iters, *x as u64 + 1 + seed)
         })
         .collect();
 

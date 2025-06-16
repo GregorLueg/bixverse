@@ -38,7 +38,7 @@ gse_hypergeometric <- function(
   .verbose = FALSE
 ) {
   # Avoid check issues
-  `.` <- pvals <- fdr <- hits <- NULL
+  . <- `:=` <- pvals <- fdr <- hits <- target_set_lengths <- NULL
   # Input checks
   checkmate::qassert(target_genes, "S+")
   checkmate::assertList(gene_set_list, types = "character")
@@ -130,7 +130,7 @@ gse_hypergeometric_list <- function(
   .verbose = FALSE
 ) {
   # Avoid check issues
-  `.` <- pvals <- fdr <- target_set_name <- NULL
+  . <- `:=` <- pvals <- fdr <- target_set_name <- hits <- NULL
   # Input checks
   checkmate::assertList(target_genes_list, types = "character")
   checkmate::qassert(names(target_genes_list), "S+")
@@ -213,10 +213,26 @@ gse_hypergeometric_list <- function(
 #'  \item min_size - Integer. Minimum size for the gene sets.
 #'  \item max_size - Integer. Maximum size for the gene sets.
 #'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#'  \item sample_size - Integer. Number of samples to iterate through for the
+#'  multi-level implementation of fgsea.
+#'  \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+#'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @returns To be written.
+#' @returns A data.table with the results from the GSEA with the following
+#' columns:
+#' \itemize{
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score for this pathway.
+#'  \item pvals - Float. The p-value for this pathway.
+#'  \item n_more_extreme - Integer. Number of permutation that had more extreme
+#'  enrichment scores than the actual.
+#'  \item size - Integer. The size of the pathway.
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#'  \item fdr - Float. The adjusted pval.
+#' }
 #'
 #' @export
 calc_gsea_traditional = function(
@@ -226,6 +242,9 @@ calc_gsea_traditional = function(
   gsea_params = params_gsea(),
   seed = 123L
 ) {
+  # Scope checks
+  . <- `:=` <- NULL
+
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
   checkmate::assertNames(names(stats))
@@ -277,7 +296,8 @@ calc_gsea_traditional = function(
     data.table::setDT() %>%
     .[, `:=`(
       pathway_name = rownames(gsea_stat_res),
-      leading_edge = leading_edges
+      leading_edge = leading_edges,
+      fdr = p.adjust(pvals, method = "fdr")
     )]
 
   return(permutations_res_traditional)
@@ -288,7 +308,9 @@ calc_gsea_traditional = function(
 #' Bixverse implementation of the simple fgsea algorithm
 #'
 #' @description
-#' Rust-based version of the fgsea simple algorithm.
+#' Rust-based version of the fgsea simple algorithm. This one is permutation-
+#' based and similar to the traditional implementation, but leverages some
+#' clear tricks to be way faster.
 #'
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param pathways List. A named list with each element containing the genes for
@@ -300,10 +322,26 @@ calc_gsea_traditional = function(
 #'  \item min_size - Integer. Minimum size for the gene sets.
 #'  \item max_size - Integer. Maximum size for the gene sets.
 #'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#'  \item sample_size - Integer. Number of samples to iterate through for the
+#'  multi-level implementation of fgsea.
+#'  \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+#'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
 #'
-#' @returns To be written.
+#' @returns A data.table with the results from the GSEA with the following
+#' columns:
+#' \itemize{
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score for this pathway.
+#'  \item pvals - Float. The p-value for this pathway.
+#'  \item n_more_extreme - Integer. Number of permutation that had more extreme
+#'  enrichment scores than the actual.
+#'  \item size - Integer. The size of the pathway.
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#'  \item fdr - Float. The adjusted pval.
+#' }
 #'
 #' @export
 calc_fgsea_simple = function(
@@ -313,6 +351,9 @@ calc_fgsea_simple = function(
   gsea_params = params_gsea(),
   seed = 123L
 ) {
+  # Scope checks
+  . <- `:=` <- NULL
+
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
   checkmate::assertNames(names(stats))
@@ -362,13 +403,15 @@ calc_fgsea_simple = function(
       pathway_sizes = as.integer(pathway_sizes),
       iters = nperm,
       seed = seed,
-      gsea_param = gsea_param
+      gsea_param = gsea_param,
+      return_add_stats = FALSE
     )
   ) %>%
     data.table::setDT() %>%
     .[, `:=`(
       pathway_name = rownames(gsea_stat_res),
-      leading_edge = leading_edges
+      leading_edge = leading_edges,
+      fdr = p.adjust(pvals, method = "fdr")
     )]
 
   return(permutations_res_simple)
@@ -376,7 +419,176 @@ calc_fgsea_simple = function(
 
 #### multi level implementation ------------------------------------------------
 
-# TODO Needs to be implemented
+#' Bixverse implementation of the fgsea algorithm
+#'
+#' @description
+#' Rust-based version of the fgsea simple and multi-level algorithm. Initially,
+#' the simple method is run. For low p-values, the multi-level method is used
+#' to estimate lower p-values than possible just based on the permutations.
+#'
+#' @param stats Named numeric vector. The gene level statistic.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param nperm Integer. Number of permutation tests. Defaults to `2000L`.
+#' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#'  \item sample_size - Integer. Number of samples to iterate through for the
+#'  multi-level implementation of fgsea.
+#'  \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+#'  level implementation of fgsea.
+#' }
+#' @param seed Random seed for reproducibility.
+#'
+#' @returns A data.table with the results from the GSEA with the following
+#' columns:
+#' \itemize{
+#'  \item es - Float. The enrichment score for this pathway.
+#'  \item nes - Float. The normalised enrichment score for this pathway.
+#'  \item pvals - Float. The p-value for this pathway.
+#'  \item n_more_extreme - Integer. Number of permutation that had more extreme
+#'  enrichment scores than the actual.
+#'  \item size - Integer. The size of the pathway.
+#'  \item pathway_name - Character. The name of the pathway.
+#'  \item leading_edge - List of character vectors with the leading edge genes.
+#'  \item fdr - Float. The adjusted pval.
+#' }
+#'
+#' @export
+calc_fgsea <- function(
+  stats,
+  pathways,
+  nperm = 1000L,
+  gsea_params = params_gsea(),
+  seed = 123L
+) {
+  # Scope checks
+  . <- `:=` <- mode_fraction <- pvals <- log2err <- NULL
+
+  # Checks
+  checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
+  checkmate::assertNames(names(stats))
+  checkmate::assertList(pathways, types = "character")
+  checkmate::assertNames(names(pathways))
+  assertGSEAParams(gsea_params)
+
+  c(stats, pathways_clean, pathway_sizes) %<-%
+    with(
+      gsea_params,
+      prep_stats_pathways(
+        stats = stats,
+        pathways = pathways,
+        min_size = min_size,
+        max_size = max_size
+      )
+    )
+
+  gsea_stat_res <- with(
+    gsea_params,
+    do.call(
+      rbind,
+      lapply(
+        pathways_clean,
+        rs_calc_gsea_stats,
+        stats = stats,
+        gsea_param = gsea_param,
+        return_leading_edge = TRUE
+      )
+    )
+  )
+
+  leading_edges <- mapply(
+    "[",
+    list(names(stats)),
+    gsea_stat_res[, "leading_edge"],
+    SIMPLIFY = FALSE
+  )
+
+  pathway_scores <- unlist(gsea_stat_res[, "es"])
+
+  permutations_res_simple <- with(
+    gsea_params,
+    rs_calc_gsea_stat_cumulative_batch(
+      stats = stats,
+      pathway_scores = pathway_scores,
+      pathway_sizes = as.integer(pathway_sizes),
+      iters = nperm,
+      seed = seed,
+      gsea_param = gsea_param,
+      return_add_stats = TRUE
+    )
+  ) %>%
+    data.table::setDT() %>%
+    .[, `:=`(
+      pathway_name = rownames(gsea_stat_res),
+      leading_edge = leading_edges,
+      mode_fraction = data.table::fifelse(es >= 0, ge_zero, le_zero)
+    )]
+
+  # Calculations for the multi-level version
+  rs_err_res <- with(
+    gsea_params,
+    rs_simple_and_multi_err(
+      n_more_extreme = as.integer(permutations_res_simple$n_more_extreme),
+      nperm = nperm,
+      sample_size = sample_size
+    )
+  )
+
+  dt_simple_gsea <- permutations_res_simple[
+    rs_err_res$multi_err >= rs_err_res$simple_err
+  ][,
+    `:=`(
+      log2err = 1 /
+        log(2) *
+        sqrt(trigamma(n_more_extreme + 1) - trigamma(nperm + 1))
+    )
+  ]
+
+  dt_multi_level <- permutations_res_simple[
+    rs_err_res$multi_err < rs_err_res$simple_err
+  ][, "denom_prob" := (mode_fraction + 1) / (nperm + 1)]
+
+  rs_res = with(
+    gsea_params,
+    rs_calc_multi_level(
+      stats = stats,
+      es = dt_multi_level$es,
+      pathway_size = as.integer(dt_multi_level$size),
+      sample_size = sample_size,
+      seed = seed,
+      eps = eps,
+      sign = FALSE
+    )
+  )
+
+  dt_multi_level = dt_multi_level[, pvals := rs_res$pvals] %>%
+    data.table::as.data.table() %>%
+    .[, pvals := pmin(1, pvals / denom_prob)] %>%
+    .[,
+      log2err := multilevel_error(pvals, sample_size = gsea_params$sample_size)
+    ] %>%
+    .[, log2err := data.table::fifelse(rs_res$is_cp_ge_half, log2err, NA)]
+
+  all_results <- list(
+    dt_simple_gsea,
+    dt_multi_level
+  ) %>%
+    data.table::rbindlist(fill = TRUE) %>%
+    .[, `:=`(
+      le_zero = NULL,
+      ge_zero = NULL,
+      mode_fraction = NULL,
+      denom_prob = NULL,
+      fdr = p.adjust(pvals, method = "fdr")
+    )] %>%
+    data.table::setorder(pvals)
+
+  return(all_results)
+}
 
 #### helpers -------------------------------------------------------------------
 
@@ -426,4 +638,25 @@ prep_stats_pathways <- function(
       pathway_sizes = pathway_sizes
     )
   )
+}
+
+#' Helper function to calculate the multi-level error
+#'
+#' @param pval Numerical vector. The p-values.
+#' @param sample_size Integer. The sample size.
+#'
+#' @return Returns the log2error
+multilevel_error <- function(pval, sample_size) {
+  # Checks
+  checkmate::qassert(pval, "N+")
+  checkmate::qassert(sample_size, "I1")
+
+  # Function body
+  res <- sqrt(
+    floor(-log2(pval) + 1) *
+      (trigamma((sample_size + 1) / 2) - trigamma(sample_size + 1))
+  ) /
+    log(2)
+
+  return(res)
 }

@@ -58,19 +58,29 @@ rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .
 #' @param pathway_sizes Integer vector. The sizes of the pathways.
 #' @param iters Integer. Number of permutations.
 #' @param gsea_param Float. The Gene Set Enrichment parameter.
+#' @param return_add_stats Boolean. Returns additional statistics
+#' necessary for the multi-level calculations.
 #' @param seed Integer. For reproducibility purposes
 #'
 #' @return List with the following elements
 #' \itemize{
-#'     \item es The enrichment scores for the pathway
-#'     \item nes The normalised enrichment scores for the pathway
-#'     \item pvals The p-values for this pathway based on permutation
-#'     testing
-#'     \item size The pathway sizes.
+#'     \item es Enrichment scores for the gene sets
+#'     \item nes Normalised enrichment scores for the gene sets
+#'     \item pvals The calculated p-values.
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger or smaller than the permutation (pending sign).
+#'     \item size Pathway size.
+#' }
+#'
+#' If `return_add_stats` is set to true, there is additional elements in the
+#' list:
+#' \itemize{
+#'     \item le_zero Number of times the permutation was less than zero.
+#'     \item ge_zero Number of times the permutation was greater than zero.
 #' }
 #'
 #' @export
-rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, seed)
+rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_sizes, iters, gsea_param, return_add_stats, seed) .Call(wrap__rs_calc_gsea_stat_cumulative_batch, stats, pathway_scores, pathway_sizes, iters, gsea_param, return_add_stats, seed)
 
 #' Helper function to generate traditional GSEA-based permutations
 #'
@@ -87,10 +97,34 @@ rs_calc_gsea_stat_cumulative_batch <- function(stats, pathway_scores, pathway_si
 #'     \item es Enrichment scores for the gene sets
 #'     \item nes Normalised enrichment scores for the gene sets
 #'     \item pvals The calculated p-values.
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger or smaller than the permutation (pending sign).
+#'     \item size Pathway size.
 #' }
 #'
 #' @export
 rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_sizes, iters, seed) .Call(wrap__rs_calc_gsea_stat_traditional_batch, stats, pathway_scores, pathway_sizes, iters, seed)
+
+#' Calculates p-values for pre-processed data
+#'
+#' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
+#' @param es Numerical vector. The enrichment scores of the pathways of that specific size
+#' @param pathway_size Integer. The size of the pathways to test.
+#' @param sample_size Integer. The size of the random gene sets to test against.
+#' @param seed Integer. Random seed.
+#' @param eps Float. Boundary for calculating the p-value.
+#' @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
+#' `This option will be used in future implementations.`, but is used in the function.
+#'
+#' @return List with the following elements:
+#' \itemize{
+#'     \item pvals The pvalues.
+#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+#'     overesimation of the p-values.
+#' }
+#'
+#' @export
+rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps, sign) .Call(wrap__rs_calc_multi_level, stats, es, pathway_size, sample_size, seed, eps, sign)
 
 #' Run fgsea simple method for gene ontology with elimination method
 #'
@@ -118,12 +152,30 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #'     \item size The pathway sizes (after elimination!).
 #'     \item pvals The p-values for this pathway based on permutation
 #'     testing
+#'     \item n_more_extreme Number of times the enrichment score was
+#'     bigger or smaller than the permutation (pending sign).
 #'     \item leading_edge A list of the index positions of the leading edge
 #'     genes for this given GO term.
 #' }
 #'
 #' @export
 rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug)
+
+#' Calculates the simple and multi error for fgsea multi level
+#'
+#' @param n_more_extreme Integer vector. The number of times the ES was larger than the
+#' permutations.
+#' @param nperm Integer. Number of permutations.
+#' @param sample_size Integer. Number of samples.
+#'
+#' @return List with the following elements:
+#' \itemize{
+#'     \item simple_err Vector of simple errors.
+#'     \item multi_err Vector of multi errors.
+#' }
+#'
+#' @export
+rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wrap__rs_simple_and_multi_err, n_more_extreme, nperm, sample_size)
 
 #' Run a single hypergeometric test.
 #'
@@ -406,6 +458,18 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' Calculates the correlation matrix from the co-variance matrix
+#'
+#' @description Calculates the correlation matrix from a co-variance
+#' matrix
+#'
+#' @param x R matrix with doubles that is the co-variance matrix
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.
@@ -580,17 +644,34 @@ rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
 #' Apply a Radial Basis Function
 #'
 #' @description Applies a radial basis function (RBF) to a given distance
-#' vector. Has at the moment a Gaussian version and a Bump version.
+#' vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
 #'
 #' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
 #' onto.
 #' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from `c("gaussian", "bump)`.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
 #'
 #' @return The affinities after the Kernel was applied.
 #'
 #' @export
 rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
+
+#' Apply a Radial Basis Function (to a matrix)
+#'
+#' @description Applies a radial basis function (RBF) to a given distance
+#' matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
+#'
+#' @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
+#' onto.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+#'
+#' @return The affinities after the Kernel was applied.
+#'
+#' @export
+rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
 
 #' Apply a range normalisation on a vector.
 #'

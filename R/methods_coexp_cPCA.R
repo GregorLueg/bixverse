@@ -142,6 +142,8 @@ apply_contrastive_pca <- S7::new_generic(
 #' @method apply_contrastive_pca bulk_coexp
 S7::method(apply_contrastive_pca, bulk_coexp) <-
   function(object, alpha, no_pcs) {
+    # Scope checks
+    factors <- loadings <- NULL
     # Checks
     checkmate::assertClass(object, "bixverse::bulk_coexp")
     checkmate::qassert(alpha, "N1")
@@ -238,6 +240,9 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(
   n_alphas = 10L,
   .verbose = TRUE
 ) {
+  # Scope checks
+  label <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(label_column, c("S1", "0"))

@@ -26,12 +26,28 @@ wrapper function. This function generates a list containing:
 \item min_size - Integer. Minimum size for the gene sets.
 \item max_size - Integer. Maximum size for the gene sets.
 \item gsea_param - Float. The GSEA parameter. Defaults to \code{1.0}.
+\item sample_size - Integer. Number of samples to iterate through for the
+multi-level implementation of fgsea.
+\item eps - Float. Boundary for calculating the p-value. Used for the multi-
+level implementation of fgsea.
 }}
 
 \item{seed}{Random seed for reproducibility.}
 }
 \value{
-To be written.
+A data.table with the results from the GSEA with the following
+columns:
+\itemize{
+\item es - Float. The enrichment score for this pathway.
+\item nes - Float. The normalised enrichment score for this pathway.
+\item pvals - Float. The p-value for this pathway.
+\item n_more_extreme - Integer. Number of permutation that had more extreme
+enrichment scores than the actual.
+\item size - Integer. The size of the pathway.
+\item pathway_name - Character. The name of the pathway.
+\item leading_edge - List of character vectors with the leading edge genes.
+\item fdr - Float. The adjusted pval.
+}
 }
 \description{
 Rust-based version of the traditional permutation-based GSEA algorithm.

@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 15.05.2025* </br>
+*Last update: 02.06.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -22,8 +22,8 @@ method implementation.
 
 - ~~Gene set enrichment analysis on top of continuous data based on 
 [blitzGSEA](https://academic.oup.com/bioinformatics/article/38/8/2356/6526383) 
-and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).~~ (Part of
-the methods implented now.)
+and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).~~ (The fgsea
+multi-level and simple method have been implemented.)
 - ~~Wrapper class/functions for differential gene expression analyses with 
 [limma/voom](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2014-15-2-r29)
 to generate structured objects.~~
@@ -48,6 +48,7 @@ useful.
 
 - NMF implementations as a different way to do matrix factorisations. TBD in 
 terms of algorithm.
+- TOM (topological overlap measure) for correlation-based methods.
 - Eigengene calculations for correlation-based methods (especially the single
 correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
 - Hierarchical clustering-based gene module detection on top of correlation-based
