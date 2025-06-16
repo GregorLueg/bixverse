@@ -630,6 +630,20 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
+#' Generate a vector-based representation of the upper triangle of a matrix
+#'
+#' @description This function generates a vector from the upper triangle of
+#' a given symmetric matrix. You have the option to remove the diagonal with
+#' setting shift to 1.
+#'
+#' @param cor_vector Numeric vector. The vector of correlation coefficients
+#' that you want to use to go back to a dense matrix.
+#' @param shift Integer. If you want to apply a shift, i.e. included the diagonal
+#' values = 0; or excluded the diagonal values = 1.
+#'
+#' @return The dense R matrix.
+#'
+#' @export
 rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
 
 #' Calculate the OT harmonic sum

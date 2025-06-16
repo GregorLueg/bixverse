@@ -13,7 +13,7 @@ cor_module_check_epsilon(
 }
 \arguments{
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to run
-\code{\link[=diffcor_module_processing]{diffcor_module_processing()}} before running this function.}
+\code{\link[=cor_module_processing]{cor_module_processing()}} before running this function.}
 
 \item{rbf_func}{The type of RBF function you want to apply. A choice of
 \code{c('bump', 'gaussian', 'inverse_quadratic')}.}

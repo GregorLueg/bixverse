@@ -39,10 +39,7 @@ fn rs_tom(
         extendr_api::Error::Other(format!("Invalid TOM version type: {}", tom_type))
     })?;
 
-    let tom_mat: Mat<f64> = match tom_version {
-        TomType::Version1 => calc_tom(x, signed),
-        TomType::Version2 => calc_tom_v2(x, signed),
-    };
+    let tom_mat: Mat<f64> = calc_tom(x, signed, tom_version);
 
     let res = faer_to_r_matrix(tom_mat.as_ref());
 

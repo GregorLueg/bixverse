@@ -51,10 +51,14 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   }
 
   spearman <- if (cor_method == "pearson") {
-    if (.verbose) message("Using Pearson correlations.")
+    if (.verbose) {
+      message("Using Pearson correlations.")
+    }
     FALSE
   } else {
-    if (.verbose) message("Using Spearman correlations.")
+    if (.verbose) {
+      message("Using Spearman correlations.")
+    }
     TRUE
   }
 
@@ -77,6 +81,94 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   S7::prop(object, "processed_data")[["correlation_res"]] <- cor_data
   S7::prop(object, "params")[["correlation_params"]] <- correlation_params
   S7::prop(object, "params")["detection_method"] <- "correlation-based"
+
+  return(object)
+}
+
+# methods - TOM ----------------------------------------------------------------
+
+#' @title Update the correlation matrix to a TOM
+#'
+#' @description
+#' This function will update the correlation matrix to a topological overlap
+#' matrix. It defaults to `"v2"` and the signed version, please see
+#' [bixverse::calculate_tom()] for details.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to have
+#' applied [bixverse::cor_module_processing()] before applying this function.
+#' @param signed Boolean. Do you want to use the signed or unsigned version.
+#' Defaults to `TRUE`.
+#' @param version String. One of `c("v2", "v1")`. Defaults to `"v2"`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @export
+cor_module_tom <- S7::new_generic(
+  name = "cor_module_tom",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    signed = TRUE,
+    version = c("v2", "v1"),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @method cor_module_tom bulk_coexp
+S7::method(cor_module_tom, bulk_coexp) <- function(
+  object,
+  signed = TRUE,
+  version = c("v2", "v1"),
+  .verbose = TRUE
+) {
+  version <- match.arg(version)
+
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(signed, "B1")
+  checkmate::assertChoice(version, c("v2", "v1"))
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+  if (
+    is.null(detection_method) ||
+      detection_method != "correlation-based"
+  ) {
+    warning(
+      paste(
+        "This class does not seem to be set for correlation-based module detection.",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  # pull out the correlation results
+  cor_res <- S7::prop(object, "processed_data")$correlation_res
+  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+
+  if (.verbose) {
+    message("Replacing the correlation matrix with a TOM.")
+  }
+
+  features <- rownames(cor_mat)
+  tom_mat <- rs_tom(x = cor_mat, tom_type = version, signed = signed)
+  tom_vec <- rs_dense_to_upper_triangle(tom_mat, 1L)
+
+  tom_res <- upper_triangular_cor_mat$new(
+    cor_coef = tom_vec,
+    features = features,
+    shift = 1L
+  )
+
+  S7::prop(object, "processed_data")[["correlation_res"]] <- tom_res
+  S7::prop(object, "params")[["correlation_params"]][["TOM"]] <- TRUE
 
   return(object)
 }
@@ -138,10 +230,14 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
   }
 
   spearman <- if (cor_method == "pearson") {
-    if (.verbose) message("Using Pearson correlations.")
+    if (.verbose) {
+      message("Using Pearson correlations.")
+    }
     FALSE
   } else {
-    if (.verbose) message("Using Spearman correlations.")
+    if (.verbose) {
+      message("Using Spearman correlations.")
+    }
     TRUE
   }
 
@@ -212,7 +308,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
 #' law distribution.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to run
-#' [bixverse::diffcor_module_processing()] before running this function.
+#' [bixverse::cor_module_processing()] before running this function.
 #' @param rbf_func The type of RBF function you want to apply. A choice of
 #' `c('bump', 'gaussian', 'inverse_quadratic')`.
 #' @param epsilons Vector of floats. The different epsilon parameters you
@@ -279,7 +375,9 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   dist_vec <- 1 - abs(cor_vector)
   dist_vec <- data.table::fifelse(dist_vec < 0, 0, dist_vec)
 
-  if (.verbose) message(sprintf("Testing %i epsilons.", length(epsilons)))
+  if (.verbose) {
+    message(sprintf("Testing %i epsilons.", length(epsilons)))
+  }
 
   epsilon_data <- rs_rbf_iterate_epsilons(
     dist = dist_vec,
@@ -455,7 +553,9 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
 
     plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose) message("Using sequential computation.")
+    if (.verbose) {
+      message("Using sequential computation.")
+    }
     future::plan(future::sequential())
   }
 
@@ -488,7 +588,9 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
     data.table::rbindlist(.)
 
   # To make the message trace prettier, if set to verbose
-  if (.verbose) message("")
+  if (.verbose) {
+    message("")
+  }
 
   future::plan(future::sequential())
   gc()
@@ -681,7 +783,9 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   if (is.null(resolution)) {
     resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
     final_resolution <- if (!is.null(resolution_results)) {
-      if (.verbose) message("Using resolution with best modularity.")
+      if (.verbose) {
+        message("Using resolution with best modularity.")
+      }
       resolution_results[modularity == max(modularity), resolution]
     } else {
       warning(
@@ -916,10 +1020,14 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   )
   dist_mat <- 1 - aff_mat
 
-  if (.verbose) message("Generating the hierarchical clustering.")
+  if (.verbose) {
+    message("Generating the hierarchical clustering.")
+  }
   tree <- fastcluster::hclust(as.dist(dist_mat), method = "ward.D")
 
-  if (.verbose) message("Identifying optimal number of cuts.")
+  if (.verbose) {
+    message("Identifying optimal number of cuts.")
+  }
   optimal_cuts <- with(
     coremo_params,
     tree_cut_iter(
@@ -943,7 +1051,9 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
 
   optimal_cuts[, gradient_change := c(0, gradient_change)]
 
-  if (.verbose) message("Finalising CoReMo clusters.")
+  if (.verbose) {
+    message("Finalising CoReMo clusters.")
+  }
   final_clusters <- with(
     coremo_params,
     coremo_tree_cut(
@@ -1077,11 +1187,12 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   groups <- ceiling(seq_along(total_samples) / chunk_size)
   chunks <- split(total_samples, groups)
 
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "Running the leave-one-out stability assessment over %i chunks.",
       length(chunks)
     ))
+  }
 
   all_results <- vector(mode = "list", length = length(chunks))
 
@@ -1128,10 +1239,11 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   cluster_mat <- do.call(cbind, all_results) %>%
     `rownames<-`(colnames(data_mat))
 
-  if (.verbose)
+  if (.verbose) {
     message(
       "Assessing stability of gene membership within leave-one-out resamling."
     )
+  }
 
   stability <- rs_cluster_stability(cluster_mat[final_modules$gene, ])
 
@@ -1656,7 +1768,9 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
     return(NULL)
   }
   plot_df <- data.table::setorder(plot_df, -modularity)
-  if (print_head) print(head(plot_df))
+  if (print_head) {
+    print(head(plot_df))
+  }
   p <- ggplot2::ggplot(
     data = plot_df,
     mapping = ggplot2::aes(x = resolution, y = modularity)

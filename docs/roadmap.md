@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 02.06.2025* </br>
+*Last update: 16.06.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -9,14 +9,12 @@ core function/methods that are broadly used.
 
 ## Stability of the package
 
-- ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~
-(Test coverage is slowly but surely increasing.)
+- ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~ (Test coverage is slowly but surely increasing.)
 
 ## Usability of the package
 
 - Various vignettes for workflows and (more) detailed documentation in terms of 
 method implementation.
-- Further code refactoring to ensure addition of parameters everywhere necessary.
 
 ## General methods
 
@@ -48,11 +46,11 @@ useful.
 
 - NMF implementations as a different way to do matrix factorisations. TBD in 
 terms of algorithm.
-- TOM (topological overlap measure) for correlation-based methods.
+- ~~TOM (topological overlap measure) for correlation-based methods.~~
 - Eigengene calculations for correlation-based methods (especially the single
 correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
-- Hierarchical clustering-based gene module detection on top of correlation-based
-methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).
+- ~~Hierarchical clustering-based gene module detection on top of correlation-based
+methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).~~
 - Interpretation layers on top of gene modules, i.e., upstream regulators, 
 annotations of modules (wrappers over pathway enrichment function), etc.
 - [Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 

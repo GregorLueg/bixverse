@@ -4,6 +4,108 @@ library(magrittr)
 
 ## data ------------------------------------------------------------------------
 
+cor_data <- c(0.7, 0.3, 0.2, -0.1, 0.25, -0.5)
+cor_mat <- rs_upper_triangle_to_dense(cor_data, 1L, 4)
+
+tom_signed_v1 <- c(
+  0.306382979,
+  0.05,
+  0.081818182,
+  -0.005357143,
+  0.162962963,
+  -0.19375
+)
+
+tom_signed_v2 <- c(
+  0.3536364,
+  0.1113636,
+  0.1058140,
+  -0.02875,
+  0.1681818,
+  -0.2427083
+)
+
+tom_unsigned_v1 <- c(
+  0.3319149,
+  0.1807692,
+  0.1909091,
+  0.1553571,
+  0.1629630,
+  0.2437500
+)
+
+tom_unsigned_v2 <- c(
+  0.3645455,
+  0.1886364,
+  0.1755814,
+  0.1337500,
+  0.1681818,
+  0.2677083
+)
+
+### tom ------------------------------------------------------------------------
+
+tom_v1_signed_mat <- calculate_tom(
+  cor_mat = cor_mat,
+  signed = TRUE,
+  version = "v1"
+)
+
+tom_v2_signed_mat <- calculate_tom(
+  cor_mat = cor_mat,
+  signed = TRUE,
+  version = "v2"
+)
+
+tom_v1_unsigned_mat <- calculate_tom(
+  cor_mat = cor_mat,
+  signed = FALSE,
+  version = "v1"
+)
+
+tom_v2_unsigned_mat <- calculate_tom(
+  cor_mat = cor_mat,
+  signed = FALSE,
+  version = "v2"
+)
+
+
+expect_equal(
+  current = rs_dense_to_upper_triangle(tom_v1_signed_mat, 1),
+  target = tom_signed_v1,
+  info = paste(
+    "TOM calculation version 1 - signed"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = rs_dense_to_upper_triangle(tom_v2_signed_mat, 1),
+  target = tom_signed_v2,
+  info = paste(
+    "TOM calculation version 2 - signed"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = rs_dense_to_upper_triangle(tom_v1_unsigned_mat, 1),
+  target = tom_unsigned_v1,
+  info = paste(
+    "TOM calculation version 1 - unsigned"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = rs_dense_to_upper_triangle(tom_v2_unsigned_mat, 1),
+  target = tom_unsigned_v2,
+  info = paste(
+    "TOM calculation version 2 - unsigned"
+  ),
+  tolerance = 10e-6
+)
+
 ### synthetic data -------------------------------------------------------------
 
 syn_data <- synthetic_signal_matrix()

@@ -4,7 +4,7 @@ use faer::Mat;
 use rayon::prelude::*;
 
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
-use crate::utils_rust::{array_f64_max_min, upper_triangle_indices};
+use crate::utils_rust::array_f64_max_min;
 use crate::utils_stats::*;
 
 /// Calculate the OT harmonic sum
@@ -73,13 +73,37 @@ fn rs_upper_triangle_to_dense(
     faer_to_r_matrix(mat.as_ref())
 }
 
+/// Generate a vector-based representation of the upper triangle of a matrix
+///
+/// @description This function generates a vector from the upper triangle of
+/// a given symmetric matrix. You have the option to remove the diagonal with
+/// setting shift to 1.
+///
+/// @param cor_vector Numeric vector. The vector of correlation coefficients
+/// that you want to use to go back to a dense matrix.
+/// @param shift Integer. If you want to apply a shift, i.e. included the diagonal
+/// values = 0; or excluded the diagonal values = 1.
+///
+/// @return The dense R matrix.
+///
+/// @export
 #[extendr]
 fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: usize) -> Vec<f64> {
     let n = x.ncols();
-    let indices = upper_triangle_indices(n, shift);
-    let mut vals: Vec<f64> = Vec::new();
-    for (r, c) in indices.0.iter().zip(indices.1.iter()) {
-        vals.push(x[[*r, *c]])
+
+    let total_elements = if shift == 0 {
+        n * (n + 1) / 2
+    } else {
+        n * (n - 1) / 2
+    };
+
+    let mut vals = Vec::with_capacity(total_elements);
+
+    for i in 0..n {
+        let start_j = i + shift;
+        for j in start_j..n {
+            vals.push(x[[i, j]]);
+        }
     }
 
     vals

@@ -239,10 +239,11 @@ pub fn parse_tom_types(s: &str) -> Option<TomType> {
 
 /// Calculates the topological overlap measure for a given affinity matrix
 /// Assumes a symmetric affinity matrix. Has the option to calculate the
-/// signed and unsigned version.
-pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
+/// signed and unsigned version. Supports both Version1 and Version2 algorithms.
+pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool, tom_type: TomType) -> Mat<f64> {
     let n = affinity_mat.nrows();
     let mut tom_mat = Mat::<f64>::zeros(n, n);
+
     let connectivity = if signed {
         (0..n)
             .map(|i| (0..n).map(|j| affinity_mat.get(i, j).abs()).sum())
@@ -264,68 +265,36 @@ pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
                 - affinity_mat.get(i, i) * affinity_mat.get(i, j)
                 - affinity_mat.get(i, j) * affinity_mat.get(j, j);
 
-            let numerator = a_ij + shared_neighbours;
-            let f_ki_kj = connectivity[i].min(connectivity[j]);
-            let denominator = if signed {
-                if *a_ij >= 0.0 {
-                    f_ki_kj + 1.0 - a_ij
-                } else {
-                    f_ki_kj + 1.0 + a_ij
-                }
-            } else {
-                f_ki_kj + 1.0 - a_ij
-            };
-            let tom_value = numerator / denominator;
-
-            tom_mat[(i, j)] = tom_value;
-            tom_mat[(j, i)] = tom_value;
-        }
-    }
-
-    tom_mat
-}
-
-/// Calculates the topological overlap measure for a given affinity matrix
-/// Assumes a symmetric affinity matrix. Has the option to calculate the
-/// signed and unsigned version. This function implements a slightly different
-/// version with different normalisation.
-pub fn calc_tom_v2(affinity_mat: MatRef<'_, f64>, signed: bool) -> Mat<f64> {
-    let n = affinity_mat.nrows();
-    let mut tom_mat = Mat::<f64>::zeros(n, n);
-    let connectivity = if signed {
-        (0..n)
-            .map(|i| (0..n).map(|j| affinity_mat.get(i, j).abs()).sum())
-            .collect::<Vec<f64>>()
-    } else {
-        col_sums(affinity_mat.as_ref())
-    };
-
-    // Pre-compute for speed-ups -> Massive difference and good call @Claude
-    let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
-
-    for i in 0..n {
-        for j in (i + 1)..n {
-            let a_ij = affinity_mat.get(i, j);
-
-            let shared_neighbours = dot_products.get(i, j)
-                - affinity_mat.get(i, i) * affinity_mat.get(i, j)
-                - affinity_mat.get(i, j) * affinity_mat.get(j, j);
-
             let f_ki_kj = connectivity[i].min(connectivity[j]);
 
-            let divisor = if signed {
-                if *a_ij >= 0.0 {
-                    f_ki_kj + a_ij
-                } else {
-                    f_ki_kj - a_ij
+            let tom_value = match tom_type {
+                TomType::Version1 => {
+                    let numerator = a_ij + shared_neighbours;
+                    let denominator = if signed {
+                        if *a_ij >= 0.0 {
+                            f_ki_kj + 1.0 - a_ij
+                        } else {
+                            f_ki_kj + 1.0 + a_ij
+                        }
+                    } else {
+                        f_ki_kj + 1.0 - a_ij
+                    };
+                    numerator / denominator
                 }
-            } else {
-                f_ki_kj + a_ij
+                TomType::Version2 => {
+                    let divisor = if signed {
+                        if *a_ij >= 0.0 {
+                            f_ki_kj + a_ij
+                        } else {
+                            f_ki_kj - a_ij
+                        }
+                    } else {
+                        f_ki_kj + a_ij
+                    };
+                    let neighbours = shared_neighbours / divisor;
+                    0.5 * (a_ij + neighbours)
+                }
             };
-
-            let neighbours = shared_neighbours / divisor;
-
-            let tom_value = 0.5 * (a_ij + neighbours);
 
             tom_mat[(i, j)] = tom_value;
             tom_mat[(j, i)] = tom_value;

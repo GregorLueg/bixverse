@@ -132,11 +132,13 @@ meta_data <- data.table::data.table(
 
 cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
   preprocess_bulk_coexp(., hvg = 0.5) %>%
-  cor_module_processing(., cor_method = "spearman") %>%
-  cor_module_check_epsilon(., rbf_func = "gaussian")
+  cor_module_processing(., cor_method = "spearman")
 
+cor_test@processed_data$correlation_res$get_cor_matrix()[1:5, 1:5]
 
-dim(cor_test@processed_data$correlation_res$get_cor_matrix(.verbose = TRUE))
+cor_test_2 <- cor_module_tom(cor_test)
+
+cor_test_2@processed_data$correlation_res$get_cor_matrix()[1:5, 1:5]
 
 cor_test <- cor_module_coremo_clustering(
   object = cor_test,
@@ -151,3 +153,5 @@ saveRDS(
 cor_test <- cor_module_coremo_stability(
   object = cor_test
 )
+
+cor_test@outputs$final_modules

@@ -1,4 +1,4 @@
-# class - symmetric cor matrix ----
+# class - symmetric cor matrix -------------------------------------------------
 
 #' @title Class for symmetric correlation matrices
 #'
@@ -153,7 +153,9 @@ upper_triangular_cor_mat <- R6::R6Class(
         rep(private$features[idx], total_len - idx + 1 - shift)
       })
       feature_a <- do.call(c, feature_a)
-      if (factor) feature_a <- factor(feature_a)
+      if (factor) {
+        feature_a <- factor(feature_a)
+      }
 
       return(feature_a)
     },
@@ -172,7 +174,9 @@ upper_triangular_cor_mat <- R6::R6Class(
         }
       })
       feature_b <- do.call(c, feature_b)
-      if (factor) feature_b <- factor(do.call(c, feature_b))
+      if (factor) {
+        feature_b <- factor(do.call(c, feature_b))
+      }
 
       return(feature_b)
     }
@@ -180,7 +184,7 @@ upper_triangular_cor_mat <- R6::R6Class(
 )
 
 
-# class - symmetric differential cor matrix ----
+# class - symmetric differential cor matrix ------------------------------------
 
 #' @title Class for symmetric differential correlation matrices
 #'

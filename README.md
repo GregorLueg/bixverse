@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.3-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.1.4-orange) 
 
 </br>
 
@@ -18,15 +18,8 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.1.3**. With this release, we are
-now at a beta stage of the package. Test coverage has increased, "features" 
-(i.e., bugs) have been removed, the Rust code was made faster, and new features 
-have been included (see Change log below).
-
-<img src="https://media1.tenor.com/m/65jRkhUA2MIAAAAd/yaaay-saturday-night-live.gif" width="320" height="320" alt="celebration">
-
-Future version releases will be more frequent with less features to allow for
-faster updates.
+We have now officially released version **0.0.1.4**. Test coverage has further increased,
+and more and more functionality has been added.
 
 ## *Installation*
 
@@ -79,4 +72,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 17.05.2025*
+*Last update to the read-me: 16.06.2025*
