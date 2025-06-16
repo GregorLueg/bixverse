@@ -636,8 +636,8 @@ rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_uppe
 #' a given symmetric matrix. You have the option to remove the diagonal with
 #' setting shift to 1.
 #'
-#' @param cor_vector Numeric vector. The vector of correlation coefficients
-#' that you want to use to go back to a dense matrix.
+#' @param x Numeric vector. The vector of correlation coefficients that you
+#' want to use to go back to a dense matrix.
 #' @param shift Integer. If you want to apply a shift, i.e. included the diagonal
 #' values = 0; or excluded the diagonal values = 1.
 #'

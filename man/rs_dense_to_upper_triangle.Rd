@@ -7,11 +7,11 @@
 rs_dense_to_upper_triangle(x, shift)
 }
 \arguments{
+\item{x}{Numeric vector. The vector of correlation coefficients that you
+want to use to go back to a dense matrix.}
+
 \item{shift}{Integer. If you want to apply a shift, i.e. included the diagonal
 values = 0; or excluded the diagonal values = 1.}
-
-\item{cor_vector}{Numeric vector. The vector of correlation coefficients
-that you want to use to go back to a dense matrix.}
 }
 \value{
 The dense R matrix.
