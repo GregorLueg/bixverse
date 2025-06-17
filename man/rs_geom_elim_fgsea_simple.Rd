@@ -8,10 +8,8 @@ rs_geom_elim_fgsea_simple(
   stats,
   levels,
   go_obj,
-  gsea_param,
+  gsea_params,
   elim_threshold,
-  min_size,
-  max_size,
   iters,
   seed,
   debug
@@ -25,15 +23,20 @@ The order will be the one the iterations are happening in.}
 
 \item{go_obj}{The gene_ontology_data S7 class. See \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
 
-\item{gsea_param}{Float. The GSEA parameter. Usually defaults to 1.0.}
+\item{gsea_params}{List. The GSEA parameters, see \code{\link[=params_gsea]{params_gsea()}}
+wrapper function. This function generates a list containing:
+\itemize{
+\item min_size - Integer. Minimum size for the gene sets.
+\item max_size - Integer. Maximum size for the gene sets.
+\item gsea_param - Float. The GSEA parameter. Defaults to \code{1.0}.
+\item sample_size - Integer. Number of samples to iterate through for the
+multi-level implementation of fgsea.
+\item eps - Float. Boundary for calculating the p-value. Used for the multi-
+level implementation of fgsea.
+}}
 
 \item{elim_threshold}{p-value below which the elimination procedure shall be
 applied to the ancestors.}
-
-\item{min_size}{Minimum size of the gene ontology term for testing.}
-
-\item{max_size}{Maximum size of the gene ontology term for testing. Setting this
-parameter to large values will slow the function down.}
 
 \item{iters}{Integer. Number of random permutations for the fgsea simple method
 to use}

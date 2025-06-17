@@ -337,20 +337,15 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     levels <- names(S7::prop(object, "levels"))
     go_info <- S7::prop(object, "go_info")
 
-    rust_res <- with(
-      gsea_params,
-      rs_geom_elim_fgsea_simple(
-        stats = stats,
-        levels = levels,
-        go_obj = object,
-        gsea_param = gsea_param,
-        elim_threshold = elim_threshold,
-        min_size = min_size,
-        max_size = max_size,
-        iters = nperm,
-        seed = seed,
-        debug = .debug
-      )
+    rust_res <- rs_geom_elim_fgsea_simple(
+      stats = stats,
+      levels = levels,
+      go_obj = object,
+      gsea_params = gsea_params,
+      elim_threshold = elim_threshold,
+      iters = nperm,
+      seed = seed,
+      debug = .debug
     )
 
     leading_edges <- mapply(
