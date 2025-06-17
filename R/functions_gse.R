@@ -243,7 +243,7 @@ calc_gsea_traditional = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- `:=` <- NULL
+  . <- `:=` <- pvals <- stats <- pathways_clean <- pathway_sizes <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -310,7 +310,7 @@ calc_gsea_traditional = function(
 #' @description
 #' Rust-based version of the fgsea simple algorithm. This one is permutation-
 #' based and similar to the traditional implementation, but leverages some
-#' clear tricks to be way faster.
+#' clear tricks to be way faster, see Korotkevich, et al.
 #'
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param pathways List. A named list with each element containing the genes for
@@ -344,6 +344,8 @@ calc_gsea_traditional = function(
 #' }
 #'
 #' @export
+#'
+#' @references Korotkevich, et al., bioRxiv
 calc_fgsea_simple = function(
   stats,
   pathways,
@@ -351,8 +353,9 @@ calc_fgsea_simple = function(
   gsea_params = params_gsea(),
   seed = 123L
 ) {
-  # Scope checks
-  . <- `:=` <- NULL
+  # Globals scope check
+  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <- NULL
+  pathway_sizes <- es <- ge_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -424,7 +427,8 @@ calc_fgsea_simple = function(
 #' @description
 #' Rust-based version of the fgsea simple and multi-level algorithm. Initially,
 #' the simple method is run. For low p-values, the multi-level method is used
-#' to estimate lower p-values than possible just based on the permutations.
+#' to estimate lower p-values than possible just based on the permutations, see
+#' Korotkevich, et al.
 #'
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param pathways List. A named list with each element containing the genes for
@@ -458,6 +462,8 @@ calc_fgsea_simple = function(
 #' }
 #'
 #' @export
+#'
+#' @references Korotkevich, et al., bioRxiv
 calc_fgsea <- function(
   stats,
   pathways,
@@ -465,8 +471,9 @@ calc_fgsea <- function(
   gsea_params = params_gsea(),
   seed = 123L
 ) {
-  # Scope checks
-  . <- `:=` <- mode_fraction <- pvals <- log2err <- NULL
+  # Globals scope check
+  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <- NULL
+  pathway_sizes <- es <- ge_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)

@@ -23,6 +23,8 @@ and more and more functionality has been added. New features:
 
 - CoReMo-based clustering, based on [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).
 - TOM calculations, see [Yip and Horvath](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-22)
+- Multi-level version of gsea also implemented for the gene ontology elimination
+method.
 
 ## *Installation*
 

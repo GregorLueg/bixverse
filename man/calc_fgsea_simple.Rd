@@ -52,5 +52,8 @@ enrichment scores than the actual.
 \description{
 Rust-based version of the fgsea simple algorithm. This one is permutation-
 based and similar to the traditional implementation, but leverages some
-clear tricks to be way faster.
+clear tricks to be way faster, see Korotkevich, et al.
+}
+\references{
+Korotkevich, et al., bioRxiv
 }

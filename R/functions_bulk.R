@@ -26,6 +26,9 @@ fix_contrast_names <- function(x) {
 #'
 #' @returns The Limma contrasts for further usage.
 all_limma_contrasts <- function(limma_fit, contrast_grps) {
+  # Globals
+  coef <- combn <- NULL
+
   # Checks
   checkmate::assertClass(limma_fit, "MArrayLM")
   checkmate::qassert(contrast_grps, c("S+", "F+", "0"))
@@ -103,11 +106,12 @@ run_limma_voom <- function(
     (variables) := lapply(.SD, fix_contrast_names),
     .SDcols = variables
   ]
-  if (.verbose)
+  if (.verbose) {
     message(paste(
       "Fixing any naming issues for the selected main contrast",
       "and any co-variates."
     ))
+  }
 
   model_formula <- sprintf(
     "~ 0 + %s",

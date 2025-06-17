@@ -52,5 +52,9 @@ enrichment scores than the actual.
 \description{
 Rust-based version of the fgsea simple and multi-level algorithm. Initially,
 the simple method is run. For low p-values, the multi-level method is used
-to estimate lower p-values than possible just based on the permutations.
+to estimate lower p-values than possible just based on the permutations, see
+Korotkevich, et al.
+}
+\references{
+Korotkevich, et al., bioRxiv
 }
