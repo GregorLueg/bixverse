@@ -358,6 +358,8 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
 ///     testing
 ///     \item n_more_extreme Number of times the enrichment score was
 ///     bigger or smaller than the permutation (pending sign).
+///     \item le_zero Number of times the permutation was less than zero.
+///     \item ge_zero Number of times the permutation was greater than zero.
 ///     \item leading_edge A list of the index positions of the leading edge
 ///     genes for this given GO term.
 /// }
@@ -414,6 +416,8 @@ fn rs_geom_elim_fgsea_simple(
     let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
     let mut n_more_extreme: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut ge_zero: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut le_zero: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
@@ -438,6 +442,8 @@ fn rs_geom_elim_fgsea_simple(
         size.push(level_res.size);
         pvals.push(level_res.pvals);
         n_more_extreme.push(level_res.n_more_extreme);
+        ge_zero.push(level_res.ge_zero);
+        le_zero.push(level_res.le_zero);
         leading_edge.push(level_res.leading_edge);
     }
 
@@ -447,6 +453,8 @@ fn rs_geom_elim_fgsea_simple(
     let size: Vec<usize> = flatten_vector(size);
     let pvals: Vec<f64> = flatten_vector(pvals);
     let n_more_extreme: Vec<usize> = flatten_vector(n_more_extreme);
+    let ge_zero: Vec<usize> = flatten_vector(ge_zero);
+    let le_zero: Vec<usize> = flatten_vector(le_zero);
     let leading_edge: Vec<Vec<i32>> = flatten_vector(leading_edge);
 
     let mut leading_edge_list = List::new(leading_edge.len());
@@ -462,6 +470,8 @@ fn rs_geom_elim_fgsea_simple(
         size = size,
         pvals = pvals,
         n_more_extreme = n_more_extreme,
+        ge_zero = ge_zero,
+        le_zero = le_zero,
         leading_edge = leading_edge_list
     ))
 }

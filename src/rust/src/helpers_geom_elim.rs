@@ -45,6 +45,8 @@ pub struct GoElimLevelResultsGsea {
     pub size: Vec<usize>,
     pub pvals: Vec<f64>,
     pub n_more_extreme: Vec<usize>,
+    pub ge_zero: Vec<usize>,
+    pub le_zero: Vec<usize>,
     pub leading_edge: Vec<Vec<i32>>,
 }
 
@@ -402,6 +404,8 @@ pub fn process_ontology_level_fgsea_simple(
         size: pathway_sizes.clone(),
         pvals: level_res.pvals,
         n_more_extreme: level_res.n_more_extreme,
+        ge_zero: level_res.ge_zero,
+        le_zero: level_res.le_zero,
         leading_edge: leading_edge_indices,
     })
 }

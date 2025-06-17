@@ -160,6 +160,8 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #'     testing
 #'     \item n_more_extreme Number of times the enrichment score was
 #'     bigger or smaller than the permutation (pending sign).
+#'     \item le_zero Number of times the permutation was less than zero.
+#'     \item ge_zero Number of times the permutation was greater than zero.
 #'     \item leading_edge A list of the index positions of the leading edge
 #'     genes for this given GO term.
 #' }
