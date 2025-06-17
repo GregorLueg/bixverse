@@ -10,7 +10,11 @@
 fix_contrast_names <- function(x) {
   checkmate::qassert(x, c("S+", "F+", "N+"))
   if (checkmate::qtest(x, c("S+", "F+"))) {
-    res <- as.factor(gsub("\\.", "_", make.names(gsub("[[:punct:]]", "", x))))
+    res <- as.factor(gsub(
+      "\\.",
+      "_",
+      make.names(gsub("[[:punct:]&&[^_]]", "", x))
+    ))
   } else {
     res <- x
   }
@@ -55,6 +59,33 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
   return(all_contrasts)
 }
 
+#' Create all limma contrasts from
+#'
+#' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
+#' @param contrast_list String vector. The list of contrast of interest.
+#'
+#' @returns The Limma contrasts for further usage.
+limma_contrasts <- function(limma_fit, contrast_list) {
+  # Checks
+  checkmate::assertClass(limma_fit, "MArrayLM")
+  checkmate::qassert(contrast_list, c("S+", "F+", "0"))
+
+  coefs_fit <- colnames(coef(limma_fit))
+  all_contrasts <- vector(mode = "list", length = length(contrast_list))
+
+  # makeContrasts is WILD...
+  for (i in seq_along(contrast_list)) {
+    value <- contrast_list[[i]]
+    contrast_i <- limma::makeContrasts(
+      contrasts = value,
+      levels = colnames(coef(limma_fit))
+    )
+    all_contrasts[[i]] <- contrast_i
+  }
+
+  return(all_contrasts)
+}
+
 # dge functions ----------------------------------------------------------------
 
 ## traditional dge -------------------------------------------------------------
@@ -69,8 +100,10 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
 #' @param main_contrast String. Which column contains the main groups you want
 #' to test differential gene expression with the Limma-Voom workflow for.
 #' @param dge_list DGEList, see [edgeR::DGEList()].
+#' @param normalised_counts Matrix. Normalised count matrix.
 #' @param co_variates String or NULL. Optional co-variates you wish to consider
 #' during model fitting.
+#' @param contrast_list String or NULL. Optional list of contrast formatted as contrast1-contrast2. Default NULL will create all contrast automatically.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -85,7 +118,9 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
 run_limma_voom <- function(
   meta_data,
   main_contrast,
-  dge_list,
+  contrast_list = NULL,
+  dge_list = NULL,
+  normalised_counts = NULL,
   co_variates = NULL,
   ...,
   .verbose = TRUE
@@ -94,13 +129,20 @@ run_limma_voom <- function(
   # Checks
   checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
-  checkmate::assertClass(dge_list, "DGEList")
+  checkmate::assert(
+    class(dge_list) == "DGEList", ## had troubles with the assert or check,.. didn't return T/F
+    checkmate::checkNull(dge_list),
+    combine = "or"
+  )
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::assertNames(
     names(meta_data),
     must.include = variables
   )
   checkmate::qassert(.verbose, "B1")
+  checkmate::qassert(contrast_list, c("S+", "0"))
+  checkmate::assert(all(grepl("-", contrast_list)))
+  checkmate::assertMatrix(normalised_counts)
 
   meta_data[,
     (variables) := lapply(.SD, fix_contrast_names),
@@ -121,21 +163,34 @@ run_limma_voom <- function(
   model_matrix <- model.matrix(as.formula(model_formula), data = meta_data)
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
-  voom_obj <- limma::voom(
-    counts = dge_list,
-    design = model_matrix,
-    normalize.method = "quantile",
-    plot = TRUE,
-    ...
-  )
+  if (is.null(dge_list)) {
+    counts = normalised_counts
+    limma_fit <- limma::lmFit(counts, model_matrix)
+  } else {
+    counts = dge_list
+    voom_obj <- limma::voom(
+      counts = counts,
+      design = model_matrix,
+      normalize.method = "quantile",
+      plot = TRUE,
+      ...
+    )
+    limma_fit <- limma::lmFit(voom_obj, model_matrix)
+  }
 
-  limma_fit <- limma::lmFit(voom_obj, model_matrix)
   contrast_grps <- unique(meta_data[[main_contrast]])
 
-  limma_contrasts <- all_limma_contrasts(
-    limma_fit = limma_fit,
-    contrast_grps = contrast_grps
-  )
+  if (is.null(contrast_list)) {
+    limma_contrasts <- all_limma_contrasts(
+      limma_fit = limma_fit,
+      contrast_grps = contrast_grps
+    )
+  } else {
+    limma_contrasts <- limma_contrasts(
+      limma_fit = limma_fit,
+      contrast_list = contrast_list
+    )
+  }
 
   all_dge_res <- purrr::map(limma_contrasts, \(contrast_obj) {
     final_fit <- limma::contrasts.fit(limma_fit, contrast_obj)
@@ -154,7 +209,7 @@ run_limma_voom <- function(
     ) %>%
       .[, contrast := gsub("-", "_vs_", coef_name)]
   }) %>%
-    data.table::rbindlist()
+    rbindlist()
 
   return(all_dge_res)
 }
@@ -181,6 +236,7 @@ run_limma_voom <- function(
 hedges_g_dge <- function(
   meta_data,
   main_contrast,
+  contrast_list = NULL,
   normalised_counts,
   .verbose = TRUE
 ) {
@@ -192,16 +248,28 @@ hedges_g_dge <- function(
     names(meta_data),
     must.include = main_contrast
   )
+  checkmate::qassert(contrast_list, c("S+", "0"))
+  checkmate::assert(all(grepl("-", contrast_list)))
+
   # Function
-  groups <- as.character(unique(meta_data[[main_contrast]]))
-  combinations_to_test <- combn(
-    x = groups,
-    m = 2,
-    FUN = function(x) {
-      c(x[[1]], x[[2]])
-    },
-    simplify = FALSE
-  )
+  if (is.null(contrast_list)) {
+    groups <- as.character(unique(meta_data[[main_contrast]]))
+    combinations_to_test <- combn(
+      x = groups,
+      m = 2,
+      FUN = function(x) {
+        c(x[[1]], x[[2]])
+      },
+      simplify = FALSE
+    )
+  } else {
+    combinations_to_test <- purrr::map_vec(
+      contrast_list,
+      ~ {
+        x = stringr::str_split(.x, pattern = "-")
+      }
+    )
+  }
 
   res <- purrr::map(combinations_to_test, \(combination) {
     grpA <- meta_data[
