@@ -7,6 +7,7 @@
 run_limma_voom(
   meta_data,
   main_contrast,
+  contrast_list = NULL,
   dge_list,
   co_variates = NULL,
   ...,
@@ -19,6 +20,8 @@ which the contrast info (and potential co-variates) can be found.}
 
 \item{main_contrast}{String. Which column contains the main groups you want
 to test differential gene expression with the Limma-Voom workflow for.}
+
+\item{contrast_list}{String or NULL. Optional list of contrast formatted as contrast1-contrast2. Default NULL will create all contrast automatically.}
 
 \item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
 
