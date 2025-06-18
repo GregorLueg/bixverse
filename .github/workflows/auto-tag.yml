@@ -1,29 +1,44 @@
 name: Auto Tag on Version Change
+
 on:
   push:
     branches: [ main ]
     paths: [ 'DESCRIPTION' ]
+
 permissions:
   contents: write
+  actions: read
+  metadata: read
+
 jobs:
   tag:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Extract version from DESCRIPTION
-      id: version
-      run: |
-        VERSION=$(grep "^Version:" DESCRIPTION | sed 's/Version: *//')
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-    
-    - name: Check if tag exists and create
-      uses: rickstaa/action-create-tag@v1
-      id: create_tag
-      with:
-        tag: ${{ steps.version.outputs.tag }}
-        tag_exists_error: false
-        message: "Release ${{ steps.version.outputs.tag }}"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract version from DESCRIPTION
+        id: version
+        run: |
+          VERSION=$(grep "^Version:" DESCRIPTION | sed 's/Version: *//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
