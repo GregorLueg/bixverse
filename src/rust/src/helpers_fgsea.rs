@@ -1,3 +1,4 @@
+use extendr_api::List;
 use rand::distr::Uniform;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -54,6 +55,44 @@ pub struct GseaBatchResults {
 pub struct GseaMultiLevelresults {
     pub pvals: Vec<f64>,
     pub is_cp_ge_half: Vec<bool>,
+}
+
+////////////
+// Params //
+////////////
+
+/// Structure to store GSEA params
+#[derive(Clone, Debug)]
+pub struct GseaParams {
+    pub gsea_param: f64,
+    pub max_size: usize,
+    pub min_size: usize,
+}
+
+/// Prepare GSEA parameters
+pub fn prepare_gsea_params(r_list: List) -> GseaParams {
+    let gsea_params = r_list.into_hashmap();
+
+    let gsea_param = gsea_params
+        .get("gsea_param")
+        .and_then(|v| v.as_real())
+        .unwrap_or(1.0);
+
+    let min_size = gsea_params
+        .get("min_size")
+        .and_then(|v| v.as_integer())
+        .unwrap_or(5) as usize;
+
+    let max_size = gsea_params
+        .get("max_size")
+        .and_then(|v| v.as_integer())
+        .unwrap_or(500) as usize;
+
+    GseaParams {
+        gsea_param,
+        max_size,
+        min_size,
+    }
 }
 
 //////////////////////

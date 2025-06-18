@@ -1,3 +1,22 @@
+# parallelisation stuff --------------------------------------------------------
+
+#' Helper function for core detection.
+#'
+#' @description
+#' Identifies the number of cores/workers to use for parallel tasks. Will
+#' default to half of the available cores, to a maximum of `abs_max_workers`.
+#'
+#' @param abs_max_workers Integer. Absolute maximum number of cores to use.
+#' Defaults to `8L`.
+#'
+#' @returns Integer. Number of cores to use.
+get_cores <- function(abs_max_workers = 8L) {
+  checkmate::qassert(abs_max_workers, "I1")
+  cores <- as.integer(parallel::detectCores() / 2)
+  cores <- ifelse(cores >= abs_max_workers, abs_max_workers, cores)
+  return(cores)
+}
+
 # user options -----------------------------------------------------------------
 
 #' Helper function for user option selection

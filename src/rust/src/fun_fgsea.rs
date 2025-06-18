@@ -329,12 +329,19 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
 /// @param levels A character vector representing the levels to iterate through.
 /// The order will be the one the iterations are happening in.
 /// @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
-/// @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+/// @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
+/// wrapper function. This function generates a list containing:
+/// \itemize{
+///     \item min_size - Integer. Minimum size for the gene sets.
+///     \item max_size - Integer. Maximum size for the gene sets.
+///     \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+///     \item sample_size - Integer. Number of samples to iterate through for the
+///     multi-level implementation of fgsea.
+///     \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+///     level implementation of fgsea.
+/// }
 /// @param elim_threshold p-value below which the elimination procedure shall be
 /// applied to the ancestors.
-/// @param min_size Minimum size of the gene ontology term for testing.
-/// @param max_size Maximum size of the gene ontology term for testing. Setting this
-/// parameter to large values will slow the function down.
 /// @param iters Integer. Number of random permutations for the fgsea simple method
 /// to use
 /// @param seed Integer. For reproducibility purposes.
@@ -351,6 +358,8 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
 ///     testing
 ///     \item n_more_extreme Number of times the enrichment score was
 ///     bigger or smaller than the permutation (pending sign).
+///     \item le_zero Number of times the permutation was less than zero.
+///     \item ge_zero Number of times the permutation was greater than zero.
 ///     \item leading_edge A list of the index positions of the leading edge
 ///     genes for this given GO term.
 /// }
@@ -362,10 +371,8 @@ fn rs_geom_elim_fgsea_simple(
     stats: Robj,
     levels: Vec<String>,
     go_obj: Robj,
-    gsea_param: f64,
+    gsea_params: List,
     elim_threshold: f64,
-    min_size: usize,
-    max_size: usize,
     iters: usize,
     seed: u64,
     debug: bool,
@@ -374,12 +381,21 @@ fn rs_geom_elim_fgsea_simple(
 
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
 
+    let gsea_params = prepare_gsea_params(gsea_params);
+
     let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 
     let n = vec_data.1.len();
 
-    let shared_perm =
-        create_perm_es_simple(&vec_data.1, gsea_param, iters, max_size, n, seed, true);
+    let shared_perm = create_perm_es_simple(
+        &vec_data.1,
+        gsea_params.gsea_param,
+        iters,
+        gsea_params.max_size,
+        n,
+        seed,
+        true,
+    );
 
     let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
 
@@ -400,6 +416,8 @@ fn rs_geom_elim_fgsea_simple(
     let mut size: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
     let mut n_more_extreme: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut ge_zero: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut le_zero: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
@@ -410,12 +428,10 @@ fn rs_geom_elim_fgsea_simple(
         let level_res = process_ontology_level_fgsea_simple(
             &vec_data.1,
             &stat_name_indices,
-            gsea_param,
             &level,
             &mut go_obj,
             &go_shared_perm,
-            min_size,
-            max_size,
+            &gsea_params,
             elim_threshold,
             debug,
         )?;
@@ -426,6 +442,8 @@ fn rs_geom_elim_fgsea_simple(
         size.push(level_res.size);
         pvals.push(level_res.pvals);
         n_more_extreme.push(level_res.n_more_extreme);
+        ge_zero.push(level_res.ge_zero);
+        le_zero.push(level_res.le_zero);
         leading_edge.push(level_res.leading_edge);
     }
 
@@ -435,6 +453,8 @@ fn rs_geom_elim_fgsea_simple(
     let size: Vec<usize> = flatten_vector(size);
     let pvals: Vec<f64> = flatten_vector(pvals);
     let n_more_extreme: Vec<usize> = flatten_vector(n_more_extreme);
+    let ge_zero: Vec<usize> = flatten_vector(ge_zero);
+    let le_zero: Vec<usize> = flatten_vector(le_zero);
     let leading_edge: Vec<Vec<i32>> = flatten_vector(leading_edge);
 
     let mut leading_edge_list = List::new(leading_edge.len());
@@ -450,6 +470,8 @@ fn rs_geom_elim_fgsea_simple(
         size = size,
         pvals = pvals,
         n_more_extreme = n_more_extreme,
+        ge_zero = ge_zero,
+        le_zero = le_zero,
         leading_edge = leading_edge_list
     ))
 }

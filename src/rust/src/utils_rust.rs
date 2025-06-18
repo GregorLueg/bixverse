@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use faer::Mat;
+use faer::{concat, Mat};
 
 //////////////////
 // VECTOR STUFF //
@@ -130,7 +130,7 @@ pub fn cumsum(values: &[f64]) -> Vec<f64> {
 //////////////////
 
 /// Transform a nested vector into a faer matrix
-pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>) -> faer::Mat<f64> {
+pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>) -> Mat<f64> {
     let nrow = nested_vec[0].len();
     let ncol = nested_vec.len();
     let data = flatten_vector(nested_vec);
@@ -145,16 +145,27 @@ pub fn faer_diagonal_from_vec(vec: Vec<f64>) -> Mat<f64> {
 
 /// Get the index positions of the upper triangle of a symmetric matrix
 pub fn upper_triangle_indices(n_dim: usize, offset: usize) -> (Vec<usize>, Vec<usize>) {
-    let mut row_indices: Vec<usize> = Vec::new();
-    let mut col_indices: Vec<usize> = Vec::new();
+    if offset >= n_dim {
+        return (Vec::new(), Vec::new());
+    }
+
+    // Precise calculation of total elements
+    let total_elements: usize = (0..n_dim)
+        .map(|row| n_dim.saturating_sub(row + offset))
+        .sum();
+
+    let mut row_indices = Vec::with_capacity(total_elements);
+    let mut col_indices = Vec::with_capacity(total_elements);
 
     for row in 0..n_dim {
-        let start_col = std::cmp::max(row + offset, 0) as usize;
+        let start_col = row + offset;
         if start_col < n_dim {
-            for col in start_col..n_dim {
-                row_indices.push(row);
-                col_indices.push(col);
-            }
+            let end_col = n_dim;
+            let elements_in_row = end_col - start_col;
+
+            // Use extend with iterator for better performance
+            row_indices.extend(std::iter::repeat(row).take(elements_in_row));
+            col_indices.extend(start_col..end_col);
         }
     }
 
@@ -179,6 +190,23 @@ pub fn upper_triangle_to_sym_faer(data: &[f64], shift: usize, n: usize) -> faer:
     }
 
     mat
+}
+
+/// Slice out a single row and return the remaining
+pub fn mat_row_slice(x: faer::MatRef<f64>, idx_to_remove: usize) -> Mat<f64> {
+    let total_rows = x.nrows();
+
+    let res = if idx_to_remove == 0 {
+        x.subrows(1, total_rows - 1).to_owned()
+    } else if idx_to_remove == total_rows - 1 {
+        x.subrows(0, total_rows - 1).to_owned()
+    } else {
+        let upper = x.subrows(0, idx_to_remove);
+        let lower = x.subrows(idx_to_remove + 1, total_rows - idx_to_remove - 1);
+        concat![[upper], [lower]]
+    };
+
+    res
 }
 
 // /// Rowbind a vector of faer Matrices, assuming same column length for all of

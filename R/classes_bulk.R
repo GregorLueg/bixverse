@@ -188,12 +188,17 @@ bulk_dge_from_h5ad <- function(
   h5_path,
   .verbose = TRUE
 ) {
+  # Globals
+  meta_data <- var_info <- counts <- NULL
+
   # Checks
   checkmate::qassert(h5_path, "S1")
   checkmate::assertFileExists(h5_path)
 
   h5_obj <- anndata_parser$new(h5_path)
-  if (.verbose) message("Loading data from the h5ad object")
+  if (.verbose) {
+    message("Loading data from the h5ad object")
+  }
   c(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
   bulk_dge_obj <- bulk_dge(
     raw_counts = counts,
@@ -561,6 +566,8 @@ S7::method(add_new_metadata, bulk_dge) <-
   }
 
 ## prints ----------------------------------------------------------------------
+
+# TODO These need updating.
 
 #' @name print.bulk_coexp
 #' @title print Method for bulk_coexp object

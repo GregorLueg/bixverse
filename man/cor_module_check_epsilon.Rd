@@ -6,13 +6,17 @@
 \usage{
 cor_module_check_epsilon(
   object,
+  rbf_func = c("bump", "gaussian", "inverse_quadratic"),
   epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
   .verbose = TRUE
 )
 }
 \arguments{
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to run
-\code{\link[=diffcor_module_processing]{diffcor_module_processing()}} before running this function.}
+\code{\link[=cor_module_processing]{cor_module_processing()}} before running this function.}
+
+\item{rbf_func}{The type of RBF function you want to apply. A choice of
+\code{c('bump', 'gaussian', 'inverse_quadratic')}.}
 
 \item{epsilons}{Vector of floats. The different epsilon parameters you
 would like to run.}

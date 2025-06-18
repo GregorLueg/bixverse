@@ -19,14 +19,13 @@ rs_calc_multi_level(stats, es, pathway_size, sample_size, seed, eps, sign)
 
 \item{eps}{Float. Boundary for calculating the p-value.}
 
-\item{sign}{Boolean. Bit unclear what this is supposed to do. Original documentation says
-\verb{This option will be used in future implementations.}, but is used in the function.}
+\item{sign}{Boolean. Used for the only positive or only negative score version.}
 }
 \value{
 List with the following elements:
 \itemize{
 \item pvals The pvalues.
-\item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+\item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
 overesimation of the p-values.
 }
 }

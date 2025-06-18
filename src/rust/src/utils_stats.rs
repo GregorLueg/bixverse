@@ -3,7 +3,9 @@ use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+
+use crate::helpers_linalg::col_sums;
 
 ///////////
 // Types //
@@ -41,6 +43,43 @@ pub fn set_similarity(
         s_1.union(s_2).count() as u64
     };
     i as f64 / u as f64
+}
+
+//////////////////////
+// Vector functions //
+//////////////////////
+
+/// Get the median of a vector
+pub fn median(x: &[f64]) -> Option<f64> {
+    if x.is_empty() {
+        return None;
+    }
+
+    let mut data = x.to_vec();
+    let len = data.len();
+    if len % 2 == 0 {
+        let (_, median1, right) =
+            data.select_nth_unstable_by(len / 2 - 1, |a, b| a.partial_cmp(b).unwrap());
+        let median2 = right
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        Some((*median1 + *median2) / 2.0)
+    } else {
+        let (_, median, _) = data.select_nth_unstable_by(len / 2, |a, b| a.partial_cmp(b).unwrap());
+        Some(*median)
+    }
+}
+
+/// Calculate the median absolute deviation of a Vector
+pub fn mad(data: &[f64]) -> Option<f64> {
+    if data.is_empty() {
+        return None;
+    }
+
+    let median_val = median(data)?; // Early return if median is None
+    let deviations: Vec<f64> = data.iter().map(|&x| (x - median_val).abs()).collect();
+    median(&deviations)
 }
 
 //////////////////
@@ -129,7 +168,7 @@ pub fn rbf_gaussian_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
     let nrow = dist.nrows();
     Mat::from_fn(nrow, ncol, |i, j| {
         let x = dist.get(i, j);
-        -((x * *epsilon).powi(2))
+        f64::exp(-((x * epsilon).powi(2)))
     })
 }
 
@@ -176,6 +215,189 @@ pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f6
         let x = dist.get(i, j);
         1.0 / (1.0 + (*epsilon * x).powi(2))
     })
+}
+
+/////////////////////////////////
+// Topological overlap measure //
+/////////////////////////////////
+
+/// Enum for the TOM function
+#[derive(Debug)]
+pub enum TomType {
+    Version1,
+    Version2,
+}
+
+/// Parsing the TOM type
+pub fn parse_tom_types(s: &str) -> Option<TomType> {
+    match s.to_lowercase().as_str() {
+        "v1" => Some(TomType::Version1),
+        "v2" => Some(TomType::Version2),
+        _ => None,
+    }
+}
+
+/// Calculates the topological overlap measure for a given affinity matrix
+/// Assumes a symmetric affinity matrix. Has the option to calculate the
+/// signed and unsigned version. Supports both Version1 and Version2 algorithms.
+pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool, tom_type: TomType) -> Mat<f64> {
+    let n = affinity_mat.nrows();
+    let mut tom_mat = Mat::<f64>::zeros(n, n);
+
+    let connectivity = if signed {
+        (0..n)
+            .map(|i| (0..n).map(|j| affinity_mat.get(i, j).abs()).sum())
+            .collect::<Vec<f64>>()
+    } else {
+        col_sums(affinity_mat.as_ref())
+    };
+
+    // Pre-compute for speed-ups -> Massive difference and good call @Claude
+    let dot_products = affinity_mat.as_ref() * affinity_mat.as_ref();
+
+    for i in 0..n {
+        // Only upper triangle for speed...
+        for j in (i + 1)..n {
+            let a_ij = affinity_mat.get(i, j);
+
+            // shared_neighbors = dot_product - excluded terms (k=i and k=j)
+            let shared_neighbours = dot_products.get(i, j)
+                - affinity_mat.get(i, i) * affinity_mat.get(i, j)
+                - affinity_mat.get(i, j) * affinity_mat.get(j, j);
+
+            let f_ki_kj = connectivity[i].min(connectivity[j]);
+
+            let tom_value = match tom_type {
+                TomType::Version1 => {
+                    let numerator = a_ij + shared_neighbours;
+                    let denominator = if signed {
+                        if *a_ij >= 0.0 {
+                            f_ki_kj + 1.0 - a_ij
+                        } else {
+                            f_ki_kj + 1.0 + a_ij
+                        }
+                    } else {
+                        f_ki_kj + 1.0 - a_ij
+                    };
+                    numerator / denominator
+                }
+                TomType::Version2 => {
+                    let divisor = if signed {
+                        if *a_ij >= 0.0 {
+                            f_ki_kj + a_ij
+                        } else {
+                            f_ki_kj - a_ij
+                        }
+                    } else {
+                        f_ki_kj + a_ij
+                    };
+                    let neighbours = shared_neighbours / divisor;
+                    0.5 * (a_ij + neighbours)
+                }
+            };
+
+            tom_mat[(i, j)] = tom_value;
+            tom_mat[(j, i)] = tom_value;
+        }
+    }
+
+    tom_mat
+}
+
+///////////////////////
+// Cluster stability //
+///////////////////////
+
+/// Helper functions to calculate the intersection of sorted usize vectors
+fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
+    let mut count = 0;
+    let mut i = 0;
+    let mut j = 0;
+
+    while i < a.len() && j < b.len() {
+        match a[i].cmp(&b[j]) {
+            std::cmp::Ordering::Equal => {
+                count += 1;
+                i += 1;
+                j += 1;
+            }
+            std::cmp::Ordering::Less => i += 1,
+            std::cmp::Ordering::Greater => j += 1,
+        }
+    }
+
+    count
+}
+
+/// Function that assesses the cluster stability. Assumes that the rows
+/// are the features and the columns the different resamples/bootstraps.
+/// Returns a vector of tuples with the first being the average Jaccard
+/// and the second the standard deviation.
+pub fn cluster_stability(cluster_matrix: &MatRef<i32>) -> Vec<(f64, f64)> {
+    let n_features = cluster_matrix.nrows();
+    let n_iter = cluster_matrix.ncols();
+
+    // Pre-compute cluster membership maps for all bootstraps
+    let bootstrap_cluster_maps: Vec<HashMap<i32, Vec<usize>>> = (0..n_iter)
+        .into_par_iter()
+        .map(|boot_idx| {
+            let mut clusters_map: HashMap<i32, Vec<usize>> = HashMap::new();
+            for feature_idx in 0..n_features {
+                let cluster_id = cluster_matrix[(feature_idx, boot_idx)];
+                clusters_map
+                    .entry(cluster_id)
+                    .or_default()
+                    .push(feature_idx);
+            }
+            clusters_map
+        })
+        .collect();
+
+    // Process features in parallel with optimized memory usage
+    (0..n_features)
+        .into_par_iter()
+        .map(|feature_idx| {
+            let n_pairs = (n_iter * (n_iter - 1)) / 2;
+            let mut jaccard_scores = Vec::with_capacity(n_pairs);
+
+            for i in 0..(n_iter - 1) {
+                for j in (i + 1)..n_iter {
+                    let cluster_i = cluster_matrix[(feature_idx, i)];
+                    let cluster_j = cluster_matrix[(feature_idx, j)];
+
+                    let members_i = bootstrap_cluster_maps[i]
+                        .get(&cluster_i)
+                        .map(|v| v.as_slice())
+                        .unwrap_or(&[]);
+
+                    let members_j = bootstrap_cluster_maps[j]
+                        .get(&cluster_j)
+                        .map(|v| v.as_slice())
+                        .unwrap_or(&[]);
+
+                    let intersection_size = intersection_size_sorted(members_i, members_j);
+                    let union_size = members_i.len() + members_j.len() - intersection_size;
+
+                    let jaccard = if union_size == 0 {
+                        0.0
+                    } else {
+                        intersection_size as f64 / union_size as f64
+                    };
+                    jaccard_scores.push(jaccard);
+                }
+            }
+
+            let mean_jaccard = jaccard_scores.iter().sum::<f64>() / jaccard_scores.len() as f64;
+            let variance = jaccard_scores
+                .iter()
+                .map(|x| (x - mean_jaccard).powi(2))
+                .sum::<f64>()
+                / jaccard_scores.len() as f64;
+            let std_jaccard = variance.sqrt();
+
+            (mean_jaccard, std_jaccard)
+        })
+        .collect()
 }
 
 /////////////////////////////////////

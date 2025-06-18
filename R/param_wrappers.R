@@ -230,3 +230,60 @@ params_gsea <- function(
     )
   )
 }
+
+## coremo ----------------------------------------------------------------------
+
+#' Wrapper function to generate CoReMo parameters
+#'
+#' @param epsilon Float. Epsilon parameter for the chosen RBF function, see
+#' `rbf_func`. The higher, the more aggressively low correlations will be
+#' shrunk.
+#' @param k_min,k_max Integer. Minimum and maximum number of cuts to use for the
+#' hierarchical clustering.
+#' @param min_size Optional integer. Minimum size of the clusters. Smaller
+#' clusters will be combined together.
+#' @param junk_module_threshold Float. Threshold for the minimum correlation
+#' to be observed in a module. Defaults to `0.05`.
+#' @param rbf_func String. Type of RBF you wish to apply to down-weigh weak
+#' correlations. Defaults to `"gaussian"`.
+#' @param cor_method String. The type of correlation to use. Defaults to
+#' `"spearman"`.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_coremo <- function(
+  epsilon = 2,
+  k_min = 2L,
+  k_max = 150L,
+  min_size = NULL,
+  junk_module_threshold = 0.05,
+  rbf_func = c("gaussian", "inverse_quadratic", "bump"),
+  cor_method = c("spearman", "pearson")
+) {
+  # Standard choices
+  cor_method <- match.arg(cor_method)
+  rbf_func <- match.arg(rbf_func)
+  # Checks
+  checkmate::qassert(epsilon, "N1")
+  checkmate::qassert(k_min, "I1")
+  checkmate::qassert(k_max, "I1")
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertChoice(rbf_func, c("gaussian", "inverse_quadratic", "bump"))
+  checkmate::assertChoice(
+    cor_method,
+    c("spearman", "pearson")
+  )
+  # Returns
+  return(
+    list(
+      epsilon = epsilon,
+      k_min = k_min,
+      k_max = k_max,
+      min_size = min_size,
+      junk_module_threshold = junk_module_threshold,
+      rbf_func = rbf_func,
+      cor_method = cor_method
+    )
+  )
+}

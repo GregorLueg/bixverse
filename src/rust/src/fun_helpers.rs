@@ -73,6 +73,42 @@ fn rs_upper_triangle_to_dense(
     faer_to_r_matrix(mat.as_ref())
 }
 
+/// Generate a vector-based representation of the upper triangle of a matrix
+///
+/// @description This function generates a vector from the upper triangle of
+/// a given symmetric matrix. You have the option to remove the diagonal with
+/// setting shift to 1.
+///
+/// @param x Numeric vector. The vector of correlation coefficients that you
+/// want to use to go back to a dense matrix.
+/// @param shift Integer. If you want to apply a shift, i.e. included the diagonal
+/// values = 0; or excluded the diagonal values = 1.
+///
+/// @return The dense R matrix.
+///
+/// @export
+#[extendr]
+fn rs_dense_to_upper_triangle(x: RMatrix<f64>, shift: usize) -> Vec<f64> {
+    let n = x.ncols();
+
+    let total_elements = if shift == 0 {
+        n * (n + 1) / 2
+    } else {
+        n * (n - 1) / 2
+    };
+
+    let mut vals = Vec::with_capacity(total_elements);
+
+    for i in 0..n {
+        let start_j = i + shift;
+        for j in start_j..n {
+            vals.push(x[[i, j]]);
+        }
+    }
+
+    vals
+}
+
 /// Apply a Radial Basis Function
 ///
 /// @description Applies a radial basis function (RBF) to a given distance
@@ -89,8 +125,8 @@ fn rs_upper_triangle_to_dense(
 /// @export
 #[extendr]
 fn rs_rbf_function(x: &[f64], epsilon: f64, rbf_type: &str) -> extendr_api::Result<Vec<f64>> {
-    let rbf_fun =
-        parse_rbf_types(rbf_type).ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+    let rbf_fun = parse_rbf_types(rbf_type)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))?;
 
     let res: Vec<f64> = match rbf_fun {
         RbfType::Gaussian => rbf_gaussian(x, &epsilon),
@@ -123,8 +159,8 @@ fn rs_rbf_function_mat(
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let x = r_matrix_to_faer(&x);
 
-    let rbf_fun =
-        parse_rbf_types(rbf_type).ok_or_else(|| format!("Invalid RBF function: {}", rbf_type))?;
+    let rbf_fun = parse_rbf_types(rbf_type)
+        .ok_or_else(|| extendr_api::Error::Other(format!("Invalid RBF function: {}", rbf_type)))?;
 
     let res: Mat<f64> = match rbf_fun {
         RbfType::Gaussian => rbf_gaussian_mat(x, &epsilon),
@@ -163,6 +199,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 extendr_module! {
     mod fun_helpers;
     fn rs_upper_triangle_to_dense;
+    fn rs_dense_to_upper_triangle;
     fn rs_ot_harmonic_sum;
     fn rs_rbf_function;
     fn rs_rbf_function_mat;

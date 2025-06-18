@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_go_gse.R
 \name{fgsea_simple_go_elim}
 \alias{fgsea_simple_go_elim}
-\title{Run GO enrichment with elimination method over a continuous vectors}
+\title{Run GO enrichment with elimination with fgsea simple}
 \usage{
 fgsea_simple_go_elim(
   object,

@@ -16,6 +16,9 @@
 #'
 #' @import data.table
 .check_pca_grp_differences <- function(pc1, pc2, grps) {
+  # Globals
+  lm <- anova <- NULL
+
   # Checks
   checkmate::qassert(pc1, "N+")
   checkmate::qassert(pc2, "N+")
@@ -461,17 +464,19 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   norm_counts <- if (is.null(counts_batch_cor)) {
     S7::prop(object, "outputs")[['normalised_counts']]
   } else {
-    if (.verbose)
+    if (.verbose) {
       message(paste(
         "Found batch corrected counts.",
         "These will be used for effect size calculations"
       ))
+    }
     counts_batch_cor
   }
 
   if (is.null(filter_column)) {
-    if (.verbose)
+    if (.verbose) {
       message("Calculating the differential expression with limma results.")
+    }
     limma_results_final <- run_limma_voom(
       meta_data = sample_info,
       main_contrast = contrast_column,
@@ -482,7 +487,9 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     ) %>%
       .[, subgroup := NA]
 
-    if (.verbose) message("Calculating the Hedge's G effect sizes.")
+    if (.verbose) {
+      message("Calculating the Hedge's G effect sizes.")
+    }
     hedges_g_results_final <- hedges_g_dge(
       meta_data = sample_info,
       main_contrast = contrast_column,
@@ -491,11 +498,12 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     ) %>%
       .[, subgroup := NA]
   } else {
-    if (.verbose)
+    if (.verbose) {
       message(paste(
         "Filtering column provided.",
         "Method will run Limma Voom and Hedge's G on the individual data sets."
       ))
+    }
     # Iterate through the grps
     groups <- unique(sample_info[[filter_column]])
     results <- purrr::map(groups, \(group) {

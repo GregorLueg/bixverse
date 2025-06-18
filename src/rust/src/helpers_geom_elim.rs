@@ -2,7 +2,8 @@ use extendr_api::prelude::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::helpers_fgsea::{
-    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaResults,
+    calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaParams,
+    GseaResults,
 };
 use crate::helpers_hypergeom::*;
 use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
@@ -44,9 +45,12 @@ pub struct GoElimLevelResultsGsea {
     pub size: Vec<usize>,
     pub pvals: Vec<f64>,
     pub n_more_extreme: Vec<usize>,
+    pub ge_zero: Vec<usize>,
+    pub le_zero: Vec<usize>,
     pub leading_edge: Vec<Vec<i32>>,
 }
 
+/// Structure for the GeneOntology data
 #[derive(Clone, Debug)]
 pub struct GeneOntology<'a> {
     pub go_to_gene: GeneMap,
@@ -293,12 +297,10 @@ pub fn process_ontology_level(
 pub fn process_ontology_level_fgsea_simple(
     stats: &[f64],
     stat_name_indices: &HashMap<&String, usize>,
-    gsea_param: f64,
     level: &String,
     go_obj: &mut GeneOntology,
     go_random_perms: &GeneOntologyRandomPerm,
-    min_size: usize,
-    max_size: usize,
+    gsea_params: &GseaParams,
     elim_threshold: f64,
     debug: bool, // This is embarassing, but this function gives me a HEADACHE...
 ) -> Result<GoElimLevelResultsGsea> {
@@ -311,7 +313,7 @@ pub fn process_ontology_level_fgsea_simple(
 
     for go_id in go_ids {
         if let Some(genes) = go_obj.get_genes(go_id) {
-            if genes.len() >= min_size && genes.len() <= max_size {
+            if genes.len() >= gsea_params.min_size && genes.len() <= gsea_params.max_size {
                 // Convert gene names to indices in one step
                 let mut indices: Vec<i32> = genes
                     .iter()
@@ -321,7 +323,8 @@ pub fn process_ontology_level_fgsea_simple(
                 indices.sort();
 
                 if !indices.is_empty() {
-                    let es_res = calc_gsea_stats(stats, &indices, gsea_param, true, false);
+                    let es_res =
+                        calc_gsea_stats(stats, &indices, gsea_params.gsea_param, true, false);
                     let size = indices.len();
                     level_data_es.insert(go_id.clone(), (es_res.0, size, es_res.1));
                 }
@@ -401,6 +404,8 @@ pub fn process_ontology_level_fgsea_simple(
         size: pathway_sizes.clone(),
         pvals: level_res.pvals,
         n_more_extreme: level_res.n_more_extreme,
+        ge_zero: level_res.ge_zero,
+        le_zero: level_res.le_zero,
         leading_edge: leading_edge_indices,
     })
 }

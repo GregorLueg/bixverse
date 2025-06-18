@@ -41,7 +41,7 @@ pub fn col_means(mat: MatRef<'_, f64>) -> Vec<f64> {
 }
 
 /// Calculates the column sums of a matrix and returns it as Vec<f64>
-pub fn col_sums(mat: &Mat<f64>) -> Vec<f64> {
+pub fn col_sums(mat: MatRef<'_, f64>) -> Vec<f64> {
     let n_rows = mat.nrows();
     let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
     let col_sums = ones.transpose() * mat;
@@ -323,7 +323,7 @@ pub fn rbf_iterate_epsilons(
                 RbfType::InverseQuadratic => rbf_inverse_quadratic(dist, epsilon),
             };
             let affinity_adj_mat = upper_triangle_to_sym_faer(&affinity_adj, shift, n);
-            col_sums(&affinity_adj_mat)
+            col_sums(affinity_adj_mat.as_ref())
         })
         .collect();
 

@@ -1,6 +1,22 @@
 # *bixverse* change log
 
-*Last update: 02.06.2025* </br>
+*Last update: 16.06.2025* </br>
+
+### Version **0.0.1.4**
+
+#### New features
+
+- Implementation of TOM in Rust for usage for correlation-based module detection.
+- CoReMo-based gene module detection has been added.
+
+#### Bug fixes, documentation updates
+
+...
+
+#### Breaking changes
+
+- Renaming of `cor_module_check_res()` to `cor_module_graph_check_res()` and
+`cor_module_final_modules()` to `cor_module_graph_final_modules()`.
 
 ### Version **0.0.1.3**
 

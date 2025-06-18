@@ -6,6 +6,7 @@ mod helpers_linalg;
 mod helpers_ontology;
 mod helpers_rbh;
 
+mod fun_coremo;
 mod fun_fgsea;
 mod fun_helpers;
 mod fun_hypergeom;
@@ -19,6 +20,8 @@ mod utils_r_rust;
 mod utils_rust;
 mod utils_stats;
 
+mod macro_assertions;
+
 use extendr_api::prelude::*;
 
 extendr_module! {
@@ -31,4 +34,5 @@ extendr_module! {
     use fun_helpers;
     use fun_ica;
     use fun_ontology;
+    use fun_coremo;
 }

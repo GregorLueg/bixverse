@@ -10,7 +10,7 @@
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
-#' @param correlation_method String. Option of `c("pearson", "spearman")`.
+#' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added data to the properties for subsequent usage.
@@ -21,7 +21,7 @@ cor_module_processing <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    correlation_method = c("pearson", "spearman"),
+    cor_method = c("pearson", "spearman"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -34,27 +34,31 @@ cor_module_processing <- S7::new_generic(
 #' @method cor_module_processing bulk_coexp
 S7::method(cor_module_processing, bulk_coexp) <- function(
   object,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
+  checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function body
   if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
+    warning("No pre-processed data found. Defaulting to the raw data.")
     target_mat <- S7::prop(object, "raw_data")
   } else {
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == "pearson") {
-    if (.verbose) message("Using Pearson correlations.")
+  spearman <- if (cor_method == "pearson") {
+    if (.verbose) {
+      message("Using Pearson correlations.")
+    }
     FALSE
   } else {
-    if (.verbose) message("Using Spearman correlations.")
+    if (.verbose) {
+      message("Using Spearman correlations.")
+    }
     TRUE
   }
 
@@ -81,6 +85,94 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   return(object)
 }
 
+# methods - TOM ----------------------------------------------------------------
+
+#' @title Update the correlation matrix to a TOM
+#'
+#' @description
+#' This function will update the correlation matrix to a topological overlap
+#' matrix. It defaults to `"v2"` and the signed version, please see
+#' [bixverse::calculate_tom()] for details.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to have
+#' applied [bixverse::cor_module_processing()] before applying this function.
+#' @param signed Boolean. Do you want to use the signed or unsigned version.
+#' Defaults to `TRUE`.
+#' @param version String. One of `c("v2", "v1")`. Defaults to `"v2"`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @export
+cor_module_tom <- S7::new_generic(
+  name = "cor_module_tom",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    signed = TRUE,
+    version = c("v2", "v1"),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @method cor_module_tom bulk_coexp
+S7::method(cor_module_tom, bulk_coexp) <- function(
+  object,
+  signed = TRUE,
+  version = c("v2", "v1"),
+  .verbose = TRUE
+) {
+  version <- match.arg(version)
+
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(signed, "B1")
+  checkmate::assertChoice(version, c("v2", "v1"))
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+  if (
+    is.null(detection_method) ||
+      detection_method != "correlation-based"
+  ) {
+    warning(
+      paste(
+        "This class does not seem to be set for correlation-based module detection.",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  # pull out the correlation results
+  cor_res <- S7::prop(object, "processed_data")$correlation_res
+  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+
+  if (.verbose) {
+    message("Replacing the correlation matrix with a TOM.")
+  }
+
+  features <- rownames(cor_mat)
+  tom_mat <- rs_tom(x = cor_mat, tom_type = version, signed = signed)
+  tom_vec <- rs_dense_to_upper_triangle(tom_mat, 1L)
+
+  tom_res <- upper_triangular_cor_mat$new(
+    cor_coef = tom_vec,
+    features = features,
+    shift = 1L
+  )
+
+  S7::prop(object, "processed_data")[["correlation_res"]] <- tom_res
+  S7::prop(object, "params")[["correlation_params"]][["TOM"]] <- TRUE
+
+  return(object)
+}
+
 # methods - differential correlations ------------------------------------------
 
 #' @title Prepare differential correlation-based module detection
@@ -95,7 +187,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param background_mat Numerical matrix. The background data set.
-#' @param correlation_method String. Option of `c("pearson", "spearman")`.
+#' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added data to the properties for subsequent usage.
@@ -107,7 +199,7 @@ diffcor_module_processing <- S7::new_generic(
   fun = function(
     object,
     background_mat,
-    correlation_method = c("pearson", "spearman"),
+    cor_method = c("pearson", "spearman"),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -120,28 +212,32 @@ diffcor_module_processing <- S7::new_generic(
 S7::method(diffcor_module_processing, bulk_coexp) <- function(
   object,
   background_mat,
-  correlation_method = c("pearson", "spearman"),
+  cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::assertMatrix(background_mat, mode = "numeric")
-  checkmate::assertChoice(correlation_method, c("pearson", "spearman"))
+  checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
   # Function
   if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
-    warning("No pre-processed data found. Defaulting to the raw data")
+    warning("No pre-processed data found. Defaulting to the raw data.")
     target_mat <- S7::prop(object, "raw_data")
   } else {
     target_mat <- S7::prop(object, "processed_data")[["processed_data"]]
   }
 
-  spearman <- if (correlation_method == "pearson") {
-    if (.verbose) message("Using Pearson correlations.")
+  spearman <- if (cor_method == "pearson") {
+    if (.verbose) {
+      message("Using Pearson correlations.")
+    }
     FALSE
   } else {
-    if (.verbose) message("Using Spearman correlations.")
+    if (.verbose) {
+      message("Using Spearman correlations.")
+    }
     TRUE
   }
 
@@ -212,7 +308,9 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
 #' law distribution.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to run
-#' [bixverse::diffcor_module_processing()] before running this function.
+#' [bixverse::cor_module_processing()] before running this function.
+#' @param rbf_func The type of RBF function you want to apply. A choice of
+#' `c('bump', 'gaussian', 'inverse_quadratic')`.
 #' @param epsilons Vector of floats. The different epsilon parameters you
 #' would like to run.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -225,6 +323,7 @@ cor_module_check_epsilon <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
     epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
     .verbose = TRUE
   ) {
@@ -241,6 +340,7 @@ cor_module_check_epsilon <- S7::new_generic(
 #' @method cor_module_check_epsilon bulk_coexp
 S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   object,
+  rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
   epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
   .verbose = TRUE
 ) {
@@ -248,6 +348,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   checkmate::assertClass(object, "bixverse::bulk_coexp")
   checkmate::qassert(epsilons, "R+")
   checkmate::qassert(.verbose, "B1")
+  checkmate::assertChoice(rbf_func, c('bump', 'gaussian', 'inverse_quadratic'))
 
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
@@ -258,7 +359,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection",
+        "This class does not seem to be set for correlation-based module detection.",
         "Returning class as is."
       )
     )
@@ -274,17 +375,19 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   dist_vec <- 1 - abs(cor_vector)
   dist_vec <- data.table::fifelse(dist_vec < 0, 0, dist_vec)
 
-  if (.verbose) message(sprintf("Testing %i epsilons.", length(epsilons)))
+  if (.verbose) {
+    message(sprintf("Testing %i epsilons.", length(epsilons)))
+  }
 
   epsilon_data <- rs_rbf_iterate_epsilons(
     dist = dist_vec,
     epsilon_vec = epsilons,
     original_dim = n_features,
     shift = shift,
-    rbf_type = "bump"
+    rbf_type = rbf_func
   )
 
-  r_square_vals <- apply(epsilon_data, 2, .scale_free_fit)
+  r_square_vals <- apply(epsilon_data, 2, scale_free_fit)
 
   r_square_data <- list(epsilon = epsilons, r2_vals = r_square_vals) %>%
     data.table::setDT()
@@ -336,15 +439,16 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #' @param min_genes Integer. Minimum number of genes that should be in a
 #' community.
 #' @param parallel Boolean. Parallelise the Leiden clustering.
-#' @param max_workers Integer. Maximum number of workers to use if parallel is
-#' set to `TRUE`.
+#' @param max_workers Optional Integer. Number of cores to use if parallel is
+#' set to `TRUE`. If set to `NULL` it will automatically detect the number
+#' of cores.
 #' @param .verbose Controls the verbosity of the function.
 #'
 #' @return The class with added data to the properties.
 #'
 #' @export
-cor_module_check_res <- S7::new_generic(
-  name = "cor_module_check_res",
+cor_module_graph_check_res <- S7::new_generic(
+  name = "cor_module_graph_check_res",
   dispatch_args = "object",
   fun = function(
     object,
@@ -353,7 +457,7 @@ cor_module_check_res <- S7::new_generic(
     random_seed = 123L,
     min_genes = 10L,
     parallel = TRUE,
-    max_workers = as.integer(parallel::detectCores() / 2),
+    max_workers = NULL,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -368,15 +472,15 @@ cor_module_check_res <- S7::new_generic(
 #' @importFrom future plan multisession sequential
 #' @import data.table
 #'
-#' @method cor_module_check_res bulk_coexp
-S7::method(cor_module_check_res, bulk_coexp) <- function(
+#' @method cor_module_graph_check_res bulk_coexp
+S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   object,
   resolution_params = params_graph_resolution(),
   graph_params = params_cor_graph(),
   random_seed = 123L,
   min_genes = 10L,
   parallel = TRUE,
-  max_workers = as.integer(parallel::detectCores() / 2),
+  max_workers = NULL,
   .verbose = TRUE
 ) {
   combined_id <- . <- good_clusters <- N <- graph <- NULL
@@ -387,7 +491,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
   assertGraphResParams(resolution_params)
   checkmate::qassert(min_genes, "I1")
   checkmate::qassert(parallel, "B1")
-  checkmate::qassert(max_workers, "I1")
+  checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
   detection_method <- S7::prop(object, "params")[["detection_method"]]
@@ -436,6 +540,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
   }
 
   if (parallel) {
+    if (is.null(max_workers)) {
+      max_workers <- get_cores()
+    }
     if (.verbose) {
       message(sprintf("Using parallel computation over %i cores.", max_workers))
     }
@@ -446,7 +553,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 
     plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose) message("Using sequential computation.")
+    if (.verbose) {
+      message("Using sequential computation.")
+    }
     future::plan(future::sequential())
   }
 
@@ -479,7 +588,9 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
     data.table::rbindlist(.)
 
   # To make the message trace prettier, if set to verbose
-  if (.verbose) message("")
+  if (.verbose) {
+    message("")
+  }
 
   future::plan(future::sequential())
   gc()
@@ -525,7 +636,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
   return(object)
 }
 
-#' @title Identify correlation-based gene modules via graphs.
+#' @title Identify correlation-based gene modules via graphs
 #'
 #' @description
 #' This function leverages graph-based clustering to identify gene co-expression
@@ -535,7 +646,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
-#' it will use the optimal one identified by [bixverse::cor_module_check_res()].
+#' it will use the optimal one identified by [bixverse::cor_module_graph_check_res()].
 #' If nothing can be found, will default to 1.
 #' @param min_size Integer. Minimum size of the communities.
 #' @param max_size Integer. Maximum size of the communities.
@@ -555,7 +666,7 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #'  \item verbose - Boolean. Controls verbosity of the graph generation.
 #' }
 #' This parameter is only relevant if you did *not* run
-#' [bixverse::cor_module_check_res()].
+#' [bixverse::cor_module_graph_check_res()].
 #' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
 #' maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -565,8 +676,8 @@ S7::method(cor_module_check_res, bulk_coexp) <- function(
 #' @references Barrio-Hernandez, et al., Nat Genet, 2023.
 #'
 #' @export
-cor_module_final_modules <- S7::new_generic(
-  name = "cor_module_final_modules",
+cor_module_graph_final_modules <- S7::new_generic(
+  name = "cor_module_graph_final_modules",
   dispatch_args = "object",
   fun = function(
     object,
@@ -589,8 +700,8 @@ cor_module_final_modules <- S7::new_generic(
 #' @importFrom zeallot `%->%`
 #' @import data.table
 #'
-#' @method cor_module_final_modules bulk_coexp
-S7::method(cor_module_final_modules, bulk_coexp) <- function(
+#' @method cor_module_graph_final_modules bulk_coexp
+S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   object,
   resolution = NULL,
   min_size = 10L,
@@ -636,7 +747,7 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
     # Deal with the case a graph was not yet generated...
     warning(
       paste(
-        "No correlation graph found. Did you run cor_module_check_res()?",
+        "No correlation graph found. Did you run cor_module_graph_check_res()?",
         "Generating correlation graph based on standard parameters.",
         sep = "\n"
       )
@@ -672,11 +783,16 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
   if (is.null(resolution)) {
     resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
     final_resolution <- if (!is.null(resolution_results)) {
-      if (.verbose) message("Using resolution with best modularity.")
+      if (.verbose) {
+        message("Using resolution with best modularity.")
+      }
       resolution_results[modularity == max(modularity), resolution]
     } else {
       warning(
-        "No resolution results found and none provided. Will default to a resolution of 1."
+        paste(
+          "No resolution results found and none provided.",
+          "Will default to a resolution of 1."
+        )
       )
       1
     }
@@ -804,6 +920,339 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
   return(object)
 }
 
+# methods - coremo -------------------------------------------------------------
+
+#' @title Generates CoReMo-based gene modules
+#'
+#' @description
+#' This function creates gene modules, based on the framework from Srivastava
+#' et al., 2018. Briefly, it applies an RBF function to the correlation matrix
+#' to reduce the impact of weak correlations, leverages hierarchical clustering
+#' for clustering the genes. It optimises the R2 (cor^2) within the clusters to
+#' identify the optimal cut. Gene modules with low R2 are being considered as
+#' the 'junk module'.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param coremo_params List. Parameters for the generation of the CoReMo
+#' modules, see [bixverse::params_coremo()]. Contains:
+#' \itemize{
+#'  \item epsilon - Float. The epsilon parameter for the RBF. You can optimise
+#'  that one with [bixverse::cor_module_check_epsilon()]. Defaults to `2`.
+#'  \item k_min - Integer. Minimum number of cuts. Defaults to `2L`.
+#'  \item k_max - Integer. Maximum number of cuts. Defaults to `150L`.
+#'  \item min_size - Optional integer. Minimum size of the clusters. If
+#'  provided, smaller clusters will be merged by eigengene similarity.
+#'  \item junk_module_threshold - Float. Minimum R2 median  value for a module
+#'  to not be considered a junk module. Defaults to `0.05`.
+#'  \item rbf_func - String. Type of RBF function to apply. Defaults to
+#'  `"gaussian"`.
+#'  \item cor_method - String. Type of correlation method to use for merging
+#'  the smaller cluster. Defaults to `"spearman"`.
+#' }
+#' @param seed Integer. Random seed for reproducibility purposes.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018
+#'
+#' @export
+cor_module_coremo_clustering <- S7::new_generic(
+  name = "cor_module_coremo_clustering",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    coremo_params = params_coremo(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%<-%`
+#' @import data.table
+#'
+#' @method cor_module_coremo_clustering bulk_coexp
+S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
+  object,
+  coremo_params = params_coremo(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # Out of scope
+  gradient_change <- r2med <- cluster_id <- . <- NULL
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  assertCoReMoParams(coremo_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
+  # Early return
+  if (
+    is.null(detection_method) ||
+      detection_method != "correlation-based"
+  ) {
+    warning(
+      paste(
+        "This class does not seem to be set for correlation-based module detection.",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  cor_res <- S7::prop(object, "processed_data")[["correlation_res"]]
+  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+
+  aff_mat <- with(
+    coremo_params,
+    rs_rbf_function_mat(
+      x = 1 - abs(cor_mat),
+      epsilon = epsilon,
+      rbf_type = rbf_func
+    )
+  )
+  dist_mat <- 1 - aff_mat
+
+  if (.verbose) {
+    message("Generating the hierarchical clustering.")
+  }
+  tree <- fastcluster::hclust(as.dist(dist_mat), method = "ward.D")
+
+  if (.verbose) {
+    message("Identifying optimal number of cuts.")
+  }
+  optimal_cuts <- with(
+    coremo_params,
+    tree_cut_iter(
+      tree = tree,
+      cor_mat = cor_mat,
+      dist_mat = dist_mat,
+      k_min = k_min,
+      k_max = k_max,
+      min_size = min_size,
+      cor_method = cor_method,
+      seed = seed
+    )
+  )
+
+  c(inflection_idx, gradient_change) %<-%
+    get_inflection_point(
+      optimal_cuts$k,
+      optimal_cuts$R2_weighted_median,
+      span = 0.25
+    )
+
+  optimal_cuts[, gradient_change := c(0, gradient_change)]
+
+  if (.verbose) {
+    message("Finalising CoReMo clusters.")
+  }
+  final_clusters <- with(
+    coremo_params,
+    coremo_tree_cut(
+      tree = tree,
+      k = as.integer(inflection_idx),
+      dist_mat = dist_mat,
+      cor_method = cor_method
+    )
+  ) %>%
+    `names<-`(rownames(cor_mat))
+
+  cluster_list <- split(
+    names(final_clusters),
+    final_clusters
+  )
+
+  final_quality <- rs_coremo_quality(
+    cluster_genes = cluster_list,
+    cor_mat = cor_mat,
+    row_names = rownames(cor_mat),
+    seed = seed
+  ) %>%
+    data.table::setDT() %>%
+    .[, cluster_id := names(cluster_list)]
+
+  junk_modules <- final_quality[
+    r2med <= coremo_params$junk_module_threshold,
+    cluster_id
+  ]
+
+  module_dt <- data.table::as.data.table(
+    stack(cluster_list)
+  ) %>%
+    data.table::setnames(
+      old = c("values", "ind"),
+      new = c("gene", "cluster_id")
+    ) %>%
+    .[!cluster_id %in% junk_modules] %>%
+    merge(., final_quality, by = "cluster_id")
+
+  coremo_param <- with(
+    coremo_params,
+    list(
+      epsilon = epsilon,
+      k_min = k_min,
+      k_max = k_max,
+      cor_method = cor_method,
+      min_size = min_size,
+      seed = seed,
+      rbf_func = rbf_func,
+      junk_module_threshold = junk_module_threshold,
+      inflection_idx = inflection_idx
+    )
+  )
+
+  # Assign the objects
+  S7::prop(object, "params")[["coremo"]] <- coremo_param
+  S7::prop(object, "outputs")[["optimal_cuts"]] <- optimal_cuts
+  S7::prop(object, "outputs")[["final_modules"]] <- module_dt
+  S7::prop(object, "outputs")[["tree"]] <- tree
+
+  return(object)
+}
+
+#' @title Assesses CoReMo-based gene module stability
+#'
+#' @description
+#' The function assesses the stability of the CoReMo modules, leveraging a
+#' leave-one-out sample method. In each iteration, one of the samples is left
+#' out and the clustering is redone. Subsequently, the Jaccard similarity (as
+#' a surrogate for membership stability) is calculated for each feature across
+#' the different resamplings and added to the `final_modules` data.table.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param chunk_size Integer. Chunk size in which to process the data. Defaults
+#' to `15L`, i.e., 15 samples are being processed in one go. You can use bigger
+#' values here, but be aware of memory pressure.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added data to the properties for subsequent usage.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
+#' et al., Nat. Commun., 2024.
+#'
+#' @export
+cor_module_coremo_stability <- S7::new_generic(
+  name = "cor_module_coremo_stability",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    chunk_size = 15L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method cor_module_coremo_stability bulk_coexp
+S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
+  object,
+  chunk_size = 15L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(chunk_size, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function
+  # early return
+  if (is.null(S7::prop(object, "params")[["coremo"]])) {
+    warning(paste(
+      "No CoReMo-data found. Did you run cor_module_coremo_clustering()?",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+  if (purrr::is_empty(S7::prop(object, "processed_data")[["processed_data"]])) {
+    warning("No pre-processed data found. Defaulting to the raw data.")
+    data_mat <- S7::prop(object, "raw_data")
+  } else {
+    data_mat <- S7::prop(object, "processed_data")[["processed_data"]]
+  }
+
+  # pull out the needed parameters
+  coremo_params <- S7::prop(object, "params")[["coremo"]]
+  final_modules <- S7::prop(object, "outputs")[["final_modules"]]
+
+  total_samples <- seq_len(nrow(data_mat))
+  no_total_samples <- length(total_samples)
+  groups <- ceiling(seq_along(total_samples) / chunk_size)
+  chunks <- split(total_samples, groups)
+
+  if (.verbose) {
+    message(sprintf(
+      "Running the leave-one-out stability assessment over %i chunks.",
+      length(chunks)
+    ))
+  }
+
+  all_results <- vector(mode = "list", length = length(chunks))
+
+  for (i in seq_along(chunks)) {
+    indices <- chunks[[i]]
+    chunk_res <- rs_coremo_stability(
+      data = data_mat,
+      indices = indices,
+      epsilon = coremo_params$epsilon,
+      rbf_type = coremo_params$rbf_func,
+      spearman = TRUE
+    )
+
+    leave_one_out_clustering <- purrr::map(chunk_res, \(chunk) {
+      dist_obj <- create_dist_obj(
+        x = chunk,
+        size = ncol(data_mat)
+      )
+      new_tree <- fastcluster::hclust(dist_obj, method = "ward.D")
+      clusters <- cutree(new_tree, k = coremo_params$inflection_idx)
+
+      clusters
+    })
+
+    all_results[[i]] <- leave_one_out_clustering
+
+    message_txt <- sprintf(
+      "Chunk %i out of %i: Processed %i samples out of a total of %i samples.",
+      i,
+      length(chunks),
+      ifelse(
+        chunk_size * i < no_total_samples,
+        chunk_size * i,
+        no_total_samples
+      ),
+      no_total_samples
+    )
+
+    if (.verbose) message(message_txt)
+  }
+
+  all_results <- purrr::flatten(all_results)
+
+  cluster_mat <- do.call(cbind, all_results) %>%
+    `rownames<-`(colnames(data_mat))
+
+  if (.verbose) {
+    message(
+      "Assessing stability of gene membership within leave-one-out resamling."
+    )
+  }
+
+  stability <- rs_cluster_stability(cluster_mat[final_modules$gene, ])
+
+  final_modules[, c("stability", "std_stability") := stability]
+
+  S7::prop(object, "outputs")[["final_modules"]] <- final_modules
+
+  return(object)
+}
 
 # methods - helpers ------------------------------------------------------------
 
@@ -811,12 +1260,12 @@ S7::method(cor_module_final_modules, bulk_coexp) <- function(
 
 #' Calculate the goodness of fit for a power law distribution.
 #'
-#' @param k Numeric vector. The vector of
+#' @param k Numeric vector. The vector of node degrees.
 #' @param breaks Integer. Number of breaks for fitting the data.
 #' @param plot Boolean. Shall the log-log plot be generated.
 #'
 #' @returns The R2 value of of the goodness of fit.
-.scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
+scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
   # Visible global function stuff...
   lm <- NULL
   # Checks
@@ -1004,6 +1453,252 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
   )
 }
 
+## coremo helpers --------------------------------------------------------------
+
+#' Coremo: measures the quality of the clusters
+#'
+#' @description
+#' Utility functions to give back the summary stats (median and mean R²) for
+#' each of the identified clusters. Clusters over a size of 1000 genes will
+#' be randomly sampled.
+#'
+#' @param modules Named vector. The names reflect the gene of the associated
+#' module.
+#' @param cor_mat Numeric matrix. The original correlation matrix.
+#' @param random_seed Integer. Random seed to ensure consistency if sampling is
+#' used.
+#'
+#' @return A data.table with the quality measures of the cluster.
+coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
+  # Checks
+  checkmate::qassert(modules, c("S+", "I+"))
+  checkmate::assertNamed(modules)
+  checkmate::assertMatrix(cor_mat, mode = "numeric")
+  checkmate::qassert(random_seed, "I1")
+  # Function body
+  cluster_list <- split(
+    names(modules),
+    modules
+  )
+  res <- rs_coremo_quality(
+    cluster_genes = cluster_list,
+    cor_mat = cor_mat,
+    row_names = rownames(cor_mat),
+    seed = random_seed
+  ) %>%
+    data.table::setDT()
+
+  res
+}
+
+#' Coremo: cuts a hierarchical cluster based on k
+#'
+#' @description
+#' This function uses a tree (output of [stats::hclust()]) and cuts it according
+#' to the parameter k. If a `min_size` is specified, modules are merged by their
+#' similarity of their eigen values in the distance matrix.
+#'
+#' @param tree hclust object. The hierarchical clustering of the correlation
+#' matrix (or the distance thereof).
+#' @param k Integer. Number of cuts on the tree.
+#' @param dist_mat Numerical matrix. The distance matrix that was used to
+#' compute the hierarchical clustering.
+#' @param min_size Integer. Optional minimum size for the clusters.
+#' @param cor_method String. Which correlation method to use for
+#' optionally combining the small clusters. One of `c("pearson", "spearman")`.
+#'
+#' @return A vector with module membership.
+#'
+#' @importFrom magrittr `%>%`
+coremo_tree_cut <- function(
+  tree,
+  k,
+  dist_mat,
+  min_size = NULL,
+  cor_method = c("pearson", "spearman")
+) {
+  # Checks
+  checkmate::assertClass(tree, "hclust")
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertMatrix(dist_mat, mode = "numeric")
+  checkmate::assertChoice(
+    cor_method,
+    c("pearson", "spearman")
+  )
+  # Function body
+  clusters <- cutree(tree, k = k)
+  # Early returns
+  if (is.null(min_size)) {
+    return(clusters)
+  }
+  cluster_size <- table(clusters)
+  if (min(cluster_size) >= min_size) {
+    return(clusters)
+  }
+  # Merge smaller clusters together
+  to_keep <- names(cluster_size)[which(cluster_size >= min_size)]
+  to_merge <- names(cluster_size)[which(cluster_size < min_size)]
+
+  eg <- purrr::map(
+    sort(unique(clusters)),
+    \(cluster_i) {
+      x <-
+        prcomp(t(d[names(clusters)[clusters == cluster_i], ]), 1)$x[, "PC1"]
+    }
+  ) %>%
+    do.call(rbind, .) %>%
+    `rownames<-`(sort(unique(clusters)))
+
+  spearman <- cor_method == "spearman"
+
+  eg_cor <- rs_cor(x = t(eg), spearman = spearman)
+  eg_cor <-
+    abs(eg_cor[to_keep, toMerge, drop = FALSE])
+  res <- clusters
+  for (i in to_merge) {
+    sel_clust <- to_keep[which.max(eg_cor[, as.character(i)])]
+    res[which(res == as.numeric(i))] <- sel_clust
+  }
+
+  res
+}
+
+#' Coremo: Iterate over k for gene module detection.
+#'
+#' @description
+#' This function uses a tree (output of [stats::hclust()]) and cuts it according
+#' across all values from k_min to k_max and returns the quality at each
+#' individual cut.
+#'
+#' @param tree hclust object. The hierarchical clustering of the correlation
+#' matrix (or the distance thereof).
+#' @param cor_mat Numerical matrix. Correlation matrix.
+#' @param dist_mat Numerical matrix. Distance matrix.
+#' @param k_min,k_max Integer. The minimum and maximum number of cuts.
+#' @param min_size Integer. Optional minimum size of resulting modules.
+#' @param cor_method String. Method for the correlation function. One of
+#' `c("pearson", "spearman")`.
+#' @param seed Integer. For reproducibility purposes.
+#'
+#' @return a data.table with stats (median size of the clusters, median weighted
+#' R^2, and median R^2) on the varying levels of k.
+#'
+#' @importFrom magrittr `%>%`
+#' @import data.table
+tree_cut_iter <- function(
+  tree,
+  cor_mat,
+  dist_mat,
+  k_min = 1L,
+  k_max = 100L,
+  min_size = NULL,
+  cor_method = c("spearman", "pearson"),
+  seed = 42L
+) {
+  # Checks
+  checkmate::assertClass(tree, "hclust")
+  checkmate::assertMatrix(cor_mat, mode = "numeric")
+  checkmate::assertMatrix(dist_mat, mode = "numeric")
+  checkmate::qassert(k_min, "I1")
+  checkmate::qassert(k_max, "I1")
+  checkmate::qassert(min_size, c("I1", "0"))
+  checkmate::assertChoice(cor_method, c("spearman", "pearson"))
+  # Function body
+
+  res <- purrr::map(
+    k_min:k_max,
+    \(k) {
+      modules <-
+        coremo_tree_cut(
+          tree = tree,
+          k = k,
+          min_size = min_size,
+          dist_mat = dist_mat,
+          cor_method = cor_method
+        ) %>%
+        `names<-`(rownames(cor_mat))
+
+      qc <- coremo_cluster_quality(
+        modules = modules,
+        cor_mat = cor_mat,
+        random_seed = seed
+      )
+
+      res <- qc[, .(
+        k = k,
+        n = .N,
+        "size_median" = median(size),
+        "R2_weighted_median" = sum(r2med * size) / sum(size),
+        "R2_median" = median(r2med)
+      )]
+
+      res
+    }
+  ) %>%
+    data.table::rbindlist()
+
+  res
+}
+
+#' Coremo: Identify the inflection point
+#'
+#' @description
+#' This function will identify the optimal cut based on a loess-function fitted
+#' to `k ~ R2_weighted_median` via the inflection point.
+#'
+#' @param x,y The k and R2_weighted_median values.
+#' @param span The span parameter for the loess function.
+#'
+#' @return Returns the inflection point.
+get_inflection_point <- function(x, y, span = 0.25) {
+  # Checks
+  checkmate::assertNumeric(x, len = length(y))
+  checkmate::assertNumeric(y, len = length(x))
+  checkmate::qassert(span, "R+[0,1]")
+  # Function body
+  span <- max(0.1, min(1.0, span))
+  fit <- loess(y ~ x, span = span)
+  py <- predict(fit, x)
+
+  n <- length(x)
+  gradient <- numeric(n)
+  gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
+  gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
+
+  for (i in 2:(n - 1)) {
+    gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
+  }
+
+  gradient_change <- abs(diff(gradient))
+  inflection_idx <- which.max(gradient_change) + 1
+
+  return(
+    list(inflection_idx = inflection_idx, gradient_change = gradient_change)
+  )
+}
+
+#' Create distance object from a vector
+#'
+#' @param x Numerical vector. The upper-triangle values for which to generate
+#' the `dist` object.
+#' @param size Integer. Nrow (or ncol) of the symmetric matrix.
+#'
+#' @return Returns the distance object
+create_dist_obj <- function(x, size) {
+  # checks
+  checkmate::qassert(x, "N+")
+  checkmate::qassert(size, "I1")
+  # body
+  res <- x
+  attr(res, "Size") <- size
+  attr(res, "Diag") <- FALSE
+  attr(res, "Upper") <- FALSE
+  class(res) <- "dist"
+
+  res
+}
+
 ## getters ---------------------------------------------------------------------
 
 #' @title Return the resolution results
@@ -1034,7 +1729,10 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
   resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(resolution_results)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_graph_check_res()? Returning NULL."
+      )
     )
   }
 
@@ -1062,28 +1760,39 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
   plot_df <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_graph_check_res()? Returning NULL."
+      )
     )
     return(NULL)
   }
   plot_df <- data.table::setorder(plot_df, -modularity)
-  if (print_head) print(head(plot_df))
-  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
-    geom_point(
-      mapping = aes(size = log10(good_clusters), fill = log10(avg_size)),
+  if (print_head) {
+    print(head(plot_df))
+  }
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = ggplot2::aes(x = resolution, y = modularity)
+  ) +
+    ggplot2::geom_point(
+      mapping = ggplot2::aes(
+        size = log10(good_clusters),
+        fill = log10(avg_size)
+      ),
       shape = 21,
       alpha = .7
     ) +
-    xlab("Leiden cluster resolution") +
-    ylab("Modularity") +
-    theme_minimal() +
-    scale_fill_viridis_c() +
-    scale_size_continuous(range = c(2, 8)) +
-    labs(
+    ggplot2::xlab("Leiden cluster resolution") +
+    ggplot2::ylab("Modularity") +
+    ggplot2::theme_minimal() +
+    ggplot2::scale_fill_viridis_c() +
+    ggplot2::scale_size_continuous(range = c(2, 8)) +
+    ggplot2::labs(
       size = "Number of good clusters (log10)",
       fill = "Average cluster size (log10)"
     ) +
-    ggtitle(
+    ggplot2::ggtitle(
       "Resolution vs. modularity",
       subtitle = "With cluster number and size"
     )
@@ -1125,22 +1834,97 @@ S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
   plot_df <- S7::prop(object, "outputs")[["epsilon_data"]]
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_epsilon()? Returning NULL."
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_check_epsilon()? Returning NULL."
+      )
     )
     return(NULL)
   }
 
-  p <- ggplot(data = plot_df, aes(x = epsilon, y = r2_vals)) +
-    geom_point(size = 3, shape = 21) +
-    geom_line() +
-    theme_minimal() +
-    ylim(0, 1) +
-    xlab("Epsilon") +
-    ylab("Goodness of fit (R2)") +
-    ggtitle(
+  p <- ggplot2::ggplot(data = plot_df, ggplot2::aes(x = epsilon, y = r2_vals)) +
+    ggplot2::geom_point(size = 3, shape = 21) +
+    ggplot2::geom_line() +
+    ggplot2::theme_minimal() +
+    ggplot2::ylim(0, 1) +
+    ggplot2::xlab("Epsilon") +
+    ggplot2::ylab("Goodness of fit (R2)") +
+    ggplot2::ggtitle(
       "Epsilon vs. scale free topology",
       subtitle = "Goodness of fit for log(connectivity) ~ log(p(connectivity)"
     )
+
+  p
+}
+
+
+#' @title Plot the k cuts vs median R2
+#'
+#' @description
+#' Plots the optimal k vs. median of median R2 graph to identify the optimal
+#' number of cuts.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If optimal cuts results were found, returns the ggplot. Otherwise,
+#' throws a warning and returns NULL.
+#'
+#' @export
+plot_optimal_cuts <- S7::new_generic(
+  name = "plot_optimal_cuts",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import ggplot2
+#'
+#' @method plot_optimal_cuts bulk_coexp
+S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+
+  plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
+    "optimal_cuts"
+  ]]) %>%
+    data.table::setorder(gradient_change)
+
+  if (is.null(plot_df)) {
+    warning(paste(
+      "No optimal_cuts data.table found.",
+      "Did you run cor_module_coremo_clustering()?",
+      "Returning NULL."
+    ))
+  }
+
+  optimal_cuts <- S7::prop(object = object, name = "params")[["coremo"]][[
+    "inflection_idx"
+  ]]
+
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = ggplot2::aes(x = k, y = R2_weighted_median)
+  ) +
+    ggplot2::geom_point(
+      mapping = ggplot2::aes(fill = gradient_change),
+      shape = 21,
+      alpha = 0.7,
+      size = 3
+    ) +
+    ggplot2::scale_fill_viridis_c() +
+    ggplot2::theme_minimal() +
+    ggplot2::xlab("k cuts") +
+    ggplot2::ylab("Median of median weighted R2") +
+    ggplot2::labs(fill = "Gradient change") +
+    ggplot2::geom_vline(
+      xintercept = optimal_cuts,
+      color = "darkgrey",
+      linetype = "dashed"
+    ) +
+    ggplot2::ggtitle("k cuts vs. change in R2")
 
   p
 }

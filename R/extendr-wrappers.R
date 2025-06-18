@@ -113,13 +113,12 @@ rs_calc_gsea_stat_traditional_batch <- function(stats, pathway_scores, pathway_s
 #' @param sample_size Integer. The size of the random gene sets to test against.
 #' @param seed Integer. Random seed.
 #' @param eps Float. Boundary for calculating the p-value.
-#' @param sign Boolean. Bit unclear what this is supposed to do. Original documentation says
-#' `This option will be used in future implementations.`, but is used in the function.
+#' @param sign Boolean. Used for the only positive or only negative score version.
 #'
 #' @return List with the following elements:
 #' \itemize{
 #'     \item pvals The pvalues.
-#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥0.5. Indicates
+#'     \item is_cp_ge_half Flag indicating if conditional probability is ≥ 0.5. Indicates
 #'     overesimation of the p-values.
 #' }
 #'
@@ -132,12 +131,19 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' @param levels A character vector representing the levels to iterate through.
 #' The order will be the one the iterations are happening in.
 #' @param go_obj The gene_ontology_data S7 class. See [bixverse::gene_ontology_data()].
-#' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
+#' @param gsea_params List. The GSEA parameters, see [bixverse::params_gsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'     \item min_size - Integer. Minimum size for the gene sets.
+#'     \item max_size - Integer. Maximum size for the gene sets.
+#'     \item gsea_param - Float. The GSEA parameter. Defaults to `1.0`.
+#'     \item sample_size - Integer. Number of samples to iterate through for the
+#'     multi-level implementation of fgsea.
+#'     \item eps - Float. Boundary for calculating the p-value. Used for the multi-
+#'     level implementation of fgsea.
+#' }
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param min_size Minimum size of the gene ontology term for testing.
-#' @param max_size Maximum size of the gene ontology term for testing. Setting this
-#' parameter to large values will slow the function down.
 #' @param iters Integer. Number of random permutations for the fgsea simple method
 #' to use
 #' @param seed Integer. For reproducibility purposes.
@@ -154,12 +160,14 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #'     testing
 #'     \item n_more_extreme Number of times the enrichment score was
 #'     bigger or smaller than the permutation (pending sign).
+#'     \item le_zero Number of times the permutation was less than zero.
+#'     \item ge_zero Number of times the permutation was greater than zero.
 #'     \item leading_edge A list of the index positions of the leading edge
 #'     genes for this given GO term.
 #' }
 #'
 #' @export
-rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_param, elim_threshold, min_size, max_size, iters, seed, debug)
+rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug)
 
 #' Calculates the simple and multi error for fgsea multi level
 #'
@@ -631,6 +639,22 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @export
 rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
 
+#' Generate a vector-based representation of the upper triangle of a matrix
+#'
+#' @description This function generates a vector from the upper triangle of
+#' a given symmetric matrix. You have the option to remove the diagonal with
+#' setting shift to 1.
+#'
+#' @param x Numeric vector. The vector of correlation coefficients that you
+#' want to use to go back to a dense matrix.
+#' @param shift Integer. If you want to apply a shift, i.e. included the diagonal
+#' values = 0; or excluded the diagonal values = 1.
+#'
+#' @return The dense R matrix.
+#'
+#' @export
+rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
+
 #' Calculate the OT harmonic sum
 #'
 #' @param x The numeric vector (should be between 0 and 1) for which to
@@ -868,6 +892,76 @@ rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wr
 #'
 #' @export
 rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
+
+#' Calculates the TOM over an affinity matrix
+#'
+#' @description Calculates the topological overlap measure for a given affinity matrix
+#' x. Has the option to calculate the signed and unsigned version.
+#'
+#' @param x Numerical matrix. Affinity matrix.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
+#' normalisation method will be used.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
+#' should be ≥ 0.
+#'
+#' @return Returns the TOM matrix.
+#'
+#' @export
+rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
+
+#' Helper function to assess CoReMo cluster quality
+#'
+#' @description This function assesses the quality of the clusters
+#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
+#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
+#' to a random set of 1000 genes.
+#'
+#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
+#' @param row_names String vector. The row names (or column names) of the
+#' correlation matrix.
+#' @param seed Integer. Random seed for the sub sampling of genes.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item r2med - median R2 of the cluster.
+#'   \item r2mad - median absolute deviation of the R2 in the cluster.
+#'   \item size - size of the cluster.
+#' }
+rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
+
+#' Helper function to assess CoReMo cluster stability
+#'
+#' @description This function is a helper for the leave-on-out stability
+#' assessment of CoReMo clusters. The function will generate the distance
+#' vectors based on leaving out the samples defined in indices one by one.
+#'
+#' @param data Numeric matrix. The original processed matrix.
+#' @param indices Integer vector. The sample indices to remove to re-calculate
+#' the distances.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from
+#' `c("gaussian", "bump", "inverse_quadratic")`.
+#' @param spearman Boolean. Shall Spearman correlation be used.
+#'
+#' @return A list with `length(indices)` elements, each containing the distance
+#' minus the given sample.
+rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Call(wrap__rs_coremo_stability, data, indices, epsilon, rbf_type, spearman)
+
+#' Helper function to assess cluster stability
+#'
+#' @param data Integer matrix. Assumes that each column represents a given
+#' resampling/bootstrap and the rows represent the features, while each integer
+#' indicates cluster membership.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item mean_jaccard - mean Jaccard similarities for this feature across all
+#'   the bootstraps, resamplings.
+#'   \item std_jaccard - the standard deviation of the Jaccard similarities for
+#'   this feature across all the bootstraps, resamplings.
+#' }
+rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
 
 # nolint end

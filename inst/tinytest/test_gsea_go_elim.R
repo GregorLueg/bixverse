@@ -1,4 +1,4 @@
-# (fast) gsea test for gene ontology elimination -------------------------------
+# gsea test for gene ontology elimination (simple) -----------------------------
 
 library(magrittr)
 
@@ -69,10 +69,8 @@ rust_res_wo_elim <- rs_geom_elim_fgsea_simple(
   stats = stats,
   levels = levels,
   go_obj = object,
-  gsea_param = 1.0,
+  gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.00001, # Threshold is so low, it cannot be passed
-  min_size = 3,
-  max_size = 250,
   iters = 100,
   seed = 10101,
   debug = FALSE
@@ -96,7 +94,7 @@ expect_equal(
   tolerance = 10e-6
 )
 
-### wit elimination ------------------------------------------------------------
+### with elimination -----------------------------------------------------------
 
 # The elimination should yield smaller tested gs sizes and worse NES
 # for later gene sets
@@ -114,10 +112,8 @@ rust_res_with_elim <- rs_geom_elim_fgsea_simple(
   stats = stats,
   levels = levels,
   go_obj = object,
-  gsea_param = 1.0,
+  gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.95, # This WILL be passed
-  min_size = 3,
-  max_size = 250,
   iters = 100,
   seed = 10101,
   debug = FALSE
@@ -216,6 +212,133 @@ expect_equal(
   target = r_expected_nes_with_elim,
   info = paste(
     "fgsea with go elim (R function): nes in with elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+# gsea test for gene ontology elimination (multi level) ------------------------
+
+## data ------------------------------------------------------------------------
+
+# data set with non-significant genes to test the
+# multi-level p-value calculations
+
+set.seed(123)
+
+stat_size <- 1000
+
+stats <- setNames(
+  sort(rnorm(stat_size), decreasing = TRUE),
+  sprintf("gene_%03d", 1:stat_size)
+)
+
+pathway_pos_l3 <- sort(sample(names(stats)[1:150], 100))
+pathway_pos_l2 <- unique(c(pathway_pos_l3[1:50], sample(names(stats), 15)))
+pathway_pos_l1 <- unique(c(pathway_pos_l2[1:25], sample(names(stats), 10)))
+
+pathway_neg_l3 <- sort(
+  sample(names(stats)[851:1000], 125),
+  decreasing = TRUE
+)
+pathway_neg_l2 <- unique(c(pathway_neg_l3[1:75], sample(names(stats), 25)))
+pathway_neg_l1 <- unique(c(pathway_neg_l2[1:35], sample(names(stats), 5)))
+
+pathway_random_l1.1 <- sample(names(stats), 40)
+pathway_random_l1.2 <- sample(names(stats), 50)
+
+toy_go_data <- data.table::data.table(
+  go_id = sprintf("go_%i", 1:8),
+  go_name = sprintf("go_name_%s", letters[1:8]),
+  ancestors = list(
+    c("go_1"),
+    c("go_1", "go_2"),
+    c("go_1", "go_2", "go_3"),
+    c("go_1", "go_2", "go_4"),
+    c("go_5"),
+    c("go_5", "go_6"),
+    c("go_5", "go_6", "go_7"),
+    c("go_5", "go_6", "go_8")
+  ),
+  ensembl_id = list(
+    pathway_pos_l3,
+    pathway_pos_l2,
+    pathway_pos_l1,
+    pathway_random_l1.1,
+    pathway_neg_l3,
+    pathway_neg_l2,
+    pathway_neg_l1,
+    pathway_random_l1.2
+  ),
+  depth = c(1, 2, 3, 3, 1, 2, 3, 3)
+) %>%
+  data.table::setorder(-depth)
+
+object <- gene_ontology_data(toy_go_data, min_genes = 3L)
+
+levels <- names(S7::prop(object, "levels"))
+
+## test R implementation -------------------------------------------------------
+
+### with elimination -----------------------------------------------------------
+
+# these are super significant due to the sampling...
+
+expected_sizes <- c(35, 48, 61, 44, 40, 38, 40, 50)
+expected_err <- c(NA, NA, NA, NA, NA, 1.00087305, 0.06299909, 0.03458907)
+
+r_results <- fgsea_go_elim(
+  object = object,
+  stats = stats,
+  elim_threshold = 0.95
+)
+
+expect_equal(
+  current = r_results$size,
+  target = expected_sizes,
+  info = paste(
+    "fgsea (multi level) with go elim (R function):",
+    "sizes in with elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = r_results$log2err,
+  target = expected_err,
+  info = paste(
+    "fgsea (multi level) with go elim (R function):",
+    "log2err in with elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+### without elimination --------------------------------------------------------
+
+expected_sizes <- c(35, 100, 64, 97, 40, 125, 40, 50)
+expected_err <- c(NA, NA, NA, NA, NA, NA, 0.06299909, 0.03458907)
+
+r_results <- fgsea_go_elim(
+  object = object,
+  stats = stats,
+  elim_threshold = 0.00001
+)
+
+expect_equal(
+  current = r_results$size,
+  target = expected_sizes,
+  info = paste(
+    "fgsea (multi level) with go elim (R function):",
+    "sizes in without elimination case"
+  ),
+  tolerance = 10e-6
+)
+
+expect_equal(
+  current = r_results$log2err,
+  target = expected_err,
+  info = paste(
+    "fgsea (multi level) with go elim (R function):",
+    "log2err in without elimination case"
   ),
   tolerance = 10e-6
 )
