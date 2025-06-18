@@ -1,9 +1,11 @@
 name: Auto Tag on Version Change
-
 on:
   push:
     branches: [ main ]
     paths: [ 'DESCRIPTION' ]
+
+permissions:
+  contents: write  # This allows pushing tags
 
 jobs:
   tag:
