@@ -9,6 +9,7 @@ permissions:
   contents: write
   actions: read
   metadata: read
+  workflows: write
 
 jobs:
   tag:
