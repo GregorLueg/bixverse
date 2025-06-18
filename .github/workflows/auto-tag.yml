@@ -3,10 +3,8 @@ on:
   push:
     branches: [ main ]
     paths: [ 'DESCRIPTION' ]
-
 permissions:
-  contents: write  # This allows pushing tags
-
+  contents: write
 jobs:
   tag:
     runs-on: ubuntu-latest
@@ -34,8 +32,10 @@ jobs:
     
     - name: Create and push tag
       if: steps.check_tag.outputs.exists == 'false'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
-        git push origin "${{ steps.version.outputs.tag }}"
+        gh release create "${{ steps.version.outputs.tag }}" --title "Release ${{ steps.version.outputs.tag }}" --notes "Auto-generated release for version ${{ steps.version.outputs.version }}"
