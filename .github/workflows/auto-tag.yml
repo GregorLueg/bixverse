@@ -4,12 +4,11 @@ on:
   push:
     branches: [ main ]
     paths: [ 'DESCRIPTION' ]
+  workflow_dispatch:
 
 permissions:
   contents: write
   actions: read
-  metadata: read
-  workflows: write
 
 jobs:
   tag:
@@ -42,4 +41,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push origin "${{ steps.version.outputs.tag }}"
