@@ -5,14 +5,14 @@ fn blockpivot(m1: Array2<f64>, m2: Array2<f64>) {
     let m1_t_m1 = m1.t().dot(&m1);
     let m1_t_m2 = m1.t().dot(&m2);
 
-
     let shape = m1_t_m2.shape();
     let (n, k) = (shape[0], shape[1]);
     let max_iter = n * 5;
+
     
     let x = Array2::<f64>::zeros((n, k));
+    // TODO - do we need to clone here?
     let y = -m1_t_m2.clone();
-
 
     let p_bar = 3;
     let mut pass_set = Array2::<bool>::from_elem((n, k), false);
@@ -26,7 +26,7 @@ fn blockpivot(m1: Array2<f64>, m2: Array2<f64>) {
 
     let not_opt_colset  = not_good.map(|x| *x > 0);
     let not_opt_cols: Vec<usize> = non_zero_indexes(&not_opt_colset);
-        
+
     let mut big_iter = 0;
     let mut success = true;
 
@@ -45,6 +45,7 @@ fn blockpivot(m1: Array2<f64>, m2: Array2<f64>) {
                 .map(|(&x, &y)| x < y)
                 .collect::<Array1<bool>>()
             );
+        
 
         let temp_1 = &not_opt_colset & (
             &not_good.iter()
@@ -119,10 +120,8 @@ fn blockpivot(m1: Array2<f64>, m2: Array2<f64>) {
 
         }
 
-        let m1_t_m2_slice = m1_t_m2.select(Axis(1), &not_opt_cols);
-        println!("m1_t_m1 shape: {:?}", m1_t_m1.shape());
-        println!("m1_t_m2_slice shape: {:?}", m1_t_m2_slice.shape());
-        // let Z = AtA.solve_into(m1_t_m2_slice).unwrap();
+        //let m1_t_m2_slice = m1_t_m2.select(Axis(1), &not_opt_cols).to_owned();
+        // let Z = m1_t_m1.solve(&m1_t_m2_slice).unwrap();
 
     } 
 }
@@ -139,6 +138,9 @@ fn non_zero_indexes(array: &Array1<bool>) -> Vec<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use faer::{mat, Mat, Col};
+    use faer::linalg::solvers::Solve;
+    use faer::linalg::solvers::PartialPivLu;
 
     #[test]
     fn test_group_cols() {
@@ -153,8 +155,27 @@ mod tests {
             [5.0, 3.0],
             [2.0, 4.0]
         ];
+        
+        let a = mat![
+            [38.0, 26.0],
+            [26.0, 26.0],
+        ];
 
-        blockpivot(w, a);
+        // Define a right-hand side vector b
+        let b = mat![
+            [51.0, 46.0, 46.0],
+            [39.0, 38.0, 40.0]
+        ];
+
+        // Compute the LU decomposition
+        let lu = PartialPivLu::new(a.as_ref());
+
+        // Solve the system
+        let x = lu.solve(&b);
+        println!("{:?}", x);
+
+        // blockpivot(w, a);
+        
 
     }
 }

@@ -22,4 +22,4 @@ statrs = '*'
 faer = '0.22.6'
 num-complex = '*'
 ndarray = "0.16.1"
-ndarray-linalg = { version = "0.16", features = ["openblas-static"] }
+ndarray-linalg = { version = "0.17", features = ["openblas"] }
