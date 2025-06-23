@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use crate::assert_symmetric_mat;
 use crate::helpers_linalg::column_correlation;
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
-use crate::utils_rust::{mat_row_slice, upper_triangle_indices};
+use crate::utils_rust::{mat_row_rm_row, upper_triangle_indices};
 use crate::utils_stats::*;
 
 /// Calculates the TOM over an affinity matrix
@@ -184,7 +184,7 @@ fn rs_coremo_stability(
         .par_iter()
         .map(|index| {
             let index = *index as usize - 1;
-            let data_red = mat_row_slice(data, index);
+            let data_red = mat_row_rm_row(data, index);
             let cor_red = column_correlation(&data_red.as_ref(), spearman);
             // Flatten the data and apply the rbf function
             let indices = upper_triangle_indices(cor_red.ncols(), 1);
