@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use faer::{concat, Mat};
+use faer::{concat, Mat, MatRef};
 
 //////////////////
 // VECTOR STUFF //
@@ -129,6 +129,48 @@ pub fn cumsum(values: &[f64]) -> Vec<f64> {
 // MATRIX STUFF //
 //////////////////
 
+/// Structure to generate a slice of the data.
+/// Key issue is that the data of the matrix is scattered in memory, thus,
+/// scattered data access and deep copying WILL be needed at some point...
+/// This structure will materialise the matrix ONLY when needed. Also, heavy
+/// use of life times, so individual vectors/data can outlive the rest.
+#[derive(Clone, Debug)]
+pub struct MatSliceView<'a, 'r, 'c> {
+    data: MatRef<'a, f64>,
+    row_indices: &'r [usize],
+    col_indices: &'c [usize],
+}
+
+impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
+    /// Generate a new MatSliceView
+    pub fn new(data: MatRef<'a, f64>, row_indices: &'r [usize], col_indices: &'c [usize]) -> Self {
+        Self {
+            data,
+            row_indices,
+            col_indices,
+        }
+    }
+
+    /// Return the number of rows
+    pub fn nrows(&self) -> usize {
+        self.row_indices.len()
+    }
+
+    /// Return the number of columns
+    pub fn ncols(&self) -> usize {
+        self.col_indices.len()
+    }
+
+    /// Return an owned matrix. Deep copying CANNOT be circumvented due to
+    /// memory accessing at this point. Subsequent matrix algebra needs a continouos
+    /// view into memory.
+    pub fn to_owned(&self) -> Mat<f64> {
+        Mat::from_fn(self.nrows(), self.ncols(), |i, j| {
+            self.data[(self.row_indices[i], self.col_indices[j])]
+        })
+    }
+}
+
 /// Transform a nested vector into a faer matrix
 pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>) -> Mat<f64> {
     let nrow = nested_vec[0].len();
@@ -193,7 +235,7 @@ pub fn upper_triangle_to_sym_faer(data: &[f64], shift: usize, n: usize) -> faer:
 }
 
 /// Slice out a single row and return the remaining
-pub fn mat_row_slice(x: faer::MatRef<f64>, idx_to_remove: usize) -> Mat<f64> {
+pub fn mat_row_rm_row(x: MatRef<f64>, idx_to_remove: usize) -> Mat<f64> {
     let total_rows = x.nrows();
 
     let res = if idx_to_remove == 0 {
@@ -256,4 +298,97 @@ pub fn colbind_matrices(matrices: &[Mat<f64>]) -> Mat<f64> {
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use faer::mat;
+
+    fn create_test_matrix_5x5() -> Mat<f64> {
+        Mat::from_fn(5, 5, |i, j| (i * 5 + j + 1) as f64)
+    }
+
+    #[test]
+    fn test_basic_slice_creation() {
+        let matrix = create_test_matrix_5x5();
+        let matrix_ref = matrix.as_ref();
+
+        let row_indices = [0, 2, 4];
+        let col_indices = [0, 2, 4];
+
+        let slice_view = MatSliceView::new(matrix_ref, &row_indices, &col_indices);
+
+        assert_eq!(slice_view.nrows(), 3);
+        assert_eq!(slice_view.ncols(), 3);
+    }
+
+    #[test]
+    fn test_slice_values() {
+        let matrix = create_test_matrix_5x5();
+        let matrix_ref = matrix.as_ref();
+
+        // Original matrix:
+        // [ 1.0,  2.0,  3.0,  4.0,  5.0]
+        // [ 6.0,  7.0,  8.0,  9.0, 10.0]
+        // [11.0, 12.0, 13.0, 14.0, 15.0]
+        // [16.0, 17.0, 18.0, 19.0, 20.0]
+        // [21.0, 22.0, 23.0, 24.0, 25.0]
+
+        let row_indices = [0, 2, 4];
+        let col_indices = [0, 2, 4];
+
+        let slice_view = MatSliceView::new(matrix_ref, &row_indices, &col_indices);
+        let sliced_matrix = slice_view.to_owned();
+
+        // Expected result:
+        // [ 1.0,  3.0,  5.0]
+        // [11.0, 13.0, 15.0]
+        // [21.0, 23.0, 25.0]
+
+        let expected_result = mat![[1.0, 3.0, 5.0], [11.0, 13.0, 15.0], [21.0, 23.0, 25.0]];
+
+        assert_eq!(sliced_matrix, expected_result);
+    }
+
+    #[test]
+    fn test_inverted_order() {
+        let matrix = create_test_matrix_5x5();
+        let matrix_ref = matrix.as_ref();
+
+        // Invert the order of indices
+        let row_indices = [4, 2, 0];
+        let col_indices = [4, 2, 0];
+
+        let slice_view = MatSliceView::new(matrix_ref, &row_indices, &col_indices);
+        let sliced_matrix = slice_view.to_owned();
+
+        // Create expected matrix (inverted):
+        // [25.0, 23.0, 21.0]
+        // [15.0, 13.0, 11.0]
+        // [ 5.0,  3.0,  1.0]
+        let expected = mat![[25.0, 23.0, 21.0], [15.0, 13.0, 11.0], [5.0, 3.0, 1.0]];
+
+        assert_eq!(sliced_matrix, expected);
+    }
+
+    #[test]
+    fn test_duplicated_indices() {
+        let matrix = create_test_matrix_5x5();
+        let matrix_ref = matrix.as_ref();
+
+        let row_indices: Vec<usize> = vec![0, 0, 2];
+        let col_indices: Vec<usize> = vec![1, 1, 3];
+
+        let slice_view = MatSliceView::new(matrix_ref, &row_indices, &col_indices);
+        let sliced_matrix = slice_view.to_owned();
+
+        // Create expected matrix (with duplicated indices):
+        // [ 2.0,  2.0,  4.0]
+        // [ 2.0,  2.0,  4.0]
+        // [12.0, 12.0, 14.0]
+        let expected = mat![[2.0, 2.0, 4.0], [2.0, 2.0, 4.0], [12.0, 12.0, 14.0]];
+
+        assert_eq!(sliced_matrix, expected);
+    }
 }
