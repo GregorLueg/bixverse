@@ -1,9 +1,38 @@
 use ndarray::{array, Array1, Array2, Axis, s, Ix1};
-use ndarray_linalg::Solve;
+use ndarray_linalg::{Solve, Norm};
+use ndarray_rand::RandomExt;
+use ndarray_rand::rand_distr::Uniform;
 
-fn blockpivot(m1: Array2<f64>, m2: Array2<f64>) -> Array2<f64> {
-    let m1_t_m1 = m1.t().dot(&m1);
-    let m1_t_m2 = m1.t().dot(&m2);
+fn nmf(a: &Array2<f64>, k: usize, max_iter: usize) -> (Array2<f64>, Array2<f64>) {
+    // let w: Array2<f64> = Array2::random((a.nrows(), k), Uniform::new(0., 1.));
+    let mut h: Array2<f64> = Array2::random((a.ncols(), k), Uniform::new(0., 1.));
+    let mut w = array![
+            [3.0, 1.0],
+            [5.0, 3.0],
+            [2.0, 4.0]
+        ];
+    
+
+    for _ in 0..max_iter {
+        println!("w: {:?}", w);
+        println!("h: {:?}", h);
+        (w, h) = iter_solver(a, &w, &h);
+    }
+
+    (w, h)
+}
+
+fn iter_solver(a: &Array2<f64>, w: &Array2<f64>, h: &Array2<f64>) -> (Array2<f64>, Array2<f64>) {
+    let h = blockpivot(w, a).t().to_owned();
+    let w = blockpivot(&h, &a.t().to_owned()).t().to_owned();
+
+    (w, h)
+}
+
+
+fn blockpivot(m1: &Array2<f64>, m2: &Array2<f64>) -> Array2<f64> {
+    let m1_t_m1 = m1.t().dot(m1);
+    let m1_t_m2 = m1.t().dot(m2);
 
     let shape = m1_t_m2.shape();
     let (n, k) = (shape[0], shape[1]);
@@ -155,7 +184,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_group_cols() {
+    fn test_nmf() {
+        let a = array![
+            [0.0, 1.0, 2.0],
+            [9.0, 7.0, 6.0],
+            [3.0, 4.0, 5.0],
+        ];
+
+        let k = 2;
+        let (w, h) = nmf(&a, k, 100);
+        let reconstructed_a = w.dot(&h.t());
+
+        let tol = 0.1;
+        assert!(
+            reconstructed_a.iter()
+            .zip(a.iter())
+            .all(|(x, y)| (*x - *y).abs() < tol)
+        );
+    }
+
+    #[test]
+    fn test_blockpivot() {
         let a = array![
             [0.0, 1.0, 2.0],
             [9.0, 7.0, 6.0],
@@ -177,7 +226,7 @@ mod tests {
         ];
 
 
-        let output= blockpivot(w, a);
+        let output= blockpivot(&w, &a);
 
         // Check output is very close to expected output.
         let tol = 1e-5;
