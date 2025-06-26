@@ -161,9 +161,13 @@ ontology <- S7::new_class(
     checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
     checkmate::qassert(.verbose, "B1")
 
-    if (.verbose) message("Identifying the ancestors in the ontology.")
+    if (.verbose) {
+      message("Identifying the ancestors in the ontology.")
+    }
     c(ancestors, descendants) %<-% get_ontology_ancestry(parent_child_dt)
-    if (.verbose) message("Calculating the information content of each term")
+    if (.verbose) {
+      message("Calculating the information content of each term")
+    }
     information_content <- calculate_information_content(descendants)
 
     params <- list(

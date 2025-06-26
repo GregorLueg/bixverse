@@ -1,8 +1,14 @@
 use crate::utils_rust::flatten_vector;
 use extendr_api::prelude::*;
+use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::Graph;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+
+///////////////////////////
+// Semantic similarities //
+///////////////////////////
 
 /// Structure to store the Ontology similarity results
 #[derive(Clone, Debug)]
@@ -34,11 +40,11 @@ fn parse_onto_sim_type(s: &str) -> Option<OntoSimType> {
 fn get_mica(
     t1: &str,
     t2: &str,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &FxHashMap<String, f64>,
 ) -> f64 {
-    let default_hash: HashSet<String> =
-        HashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
+    let default_hash: FxHashSet<String> =
+        FxHashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
     let ancestor_1 = ancestor_map.get(t1).unwrap_or(&default_hash);
     let ancestor_2 = ancestor_map.get(t2).unwrap_or(&default_hash);
     let mica = ancestor_1
@@ -53,8 +59,8 @@ fn get_mica(
 fn calculate_resnik<'a>(
     t1: &'a str,
     t2: &'a str,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &FxHashMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let sim = get_mica(t1, t2, ancestor_map, info_content_map);
     OntoSimRes { t1, t2, sim }
@@ -64,8 +70,8 @@ fn calculate_resnik<'a>(
 fn calculate_lin<'a>(
     t1: &'a str,
     t2: &'a str,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &FxHashMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let mica = get_mica(t1, t2, ancestor_map, info_content_map);
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
@@ -79,8 +85,8 @@ fn calculate_combined_sim<'a>(
     t1: &'a str,
     t2: &'a str,
     max_ic: &f64,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &FxHashMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let mica = get_mica(t1, t2, ancestor_map, info_content_map);
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
@@ -98,8 +104,8 @@ pub fn get_single_onto_sim<'a>(
     t2: &'a str,
     sim_type: &str,
     max_ic: &f64,
-    ancestor_map: &HashMap<String, HashSet<String>>,
-    info_content_map: &HashMap<String, f64>,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &FxHashMap<String, f64>,
 ) -> Result<OntoSimRes<'a>> {
     let onto_sim_type = parse_onto_sim_type(sim_type)
         .ok_or_else(|| format!("Invalid Ontology Similarity Type: {}", sim_type))?;
@@ -119,8 +125,8 @@ pub fn get_single_onto_sim<'a>(
 pub fn calculate_onto_sim<'a>(
     terms_split: &'a Vec<(String, &[String])>,
     sim_type: &str,
-    ancestors_map: HashMap<String, HashSet<String>>,
-    ic_map: HashMap<String, f64>,
+    ancestors_map: FxHashMap<String, FxHashSet<String>>,
+    ic_map: FxHashMap<String, f64>,
 ) -> Vec<OntoSimRes<'a>> {
     let max_ic = ic_map
         .values()
@@ -145,8 +151,8 @@ pub fn calculate_onto_sim<'a>(
 }
 
 /// Transform an R list that hopefully contains the IC into a HashMap of floats
-pub fn ic_list_to_ic_hashmap(r_list: List) -> HashMap<String, f64> {
-    let mut hashmap = HashMap::with_capacity(r_list.len());
+pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
+    let mut hashmap = FxHashMap::default();
     for (name, x) in r_list {
         let name = name.to_string();
         let ic_val = x.as_real().unwrap_or(0.0);
@@ -168,3 +174,7 @@ pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: 
     let index = (alpha * random_sample.len() as f64).ceil() as usize;
     random_sample[index + 1]
 }
+
+///////////////////////
+// DAG-based methods //
+///////////////////////

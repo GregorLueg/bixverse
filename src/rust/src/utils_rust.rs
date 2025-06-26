@@ -1,3 +1,4 @@
+use rustc_hash::FxHashSet;
 use std::cmp::PartialOrd;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -58,8 +59,8 @@ pub fn array_f64_max_min<T: PartialOrd + Copy>(arr: &[T]) -> (T, T) {
 }
 
 /// String vector to HashSet
-pub fn string_vec_to_set(x: &[String]) -> HashSet<&String> {
-    let mut set = HashSet::with_capacity(x.len());
+pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
+    let mut set = FxHashSet::default();
     for s in x {
         set.insert(s);
     }
@@ -135,12 +136,14 @@ pub fn cumsum(values: &[f64]) -> Vec<f64> {
 /// This structure will materialise the matrix ONLY when needed. Also, heavy
 /// use of life times, so individual vectors/data can outlive the rest.
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct MatSliceView<'a, 'r, 'c> {
     data: MatRef<'a, f64>,
     row_indices: &'r [usize],
     col_indices: &'c [usize],
 }
 
+#[allow(dead_code)]
 impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
     /// Generate a new MatSliceView
     pub fn new(data: MatRef<'a, f64>, row_indices: &'r [usize], col_indices: &'c [usize]) -> Self {

@@ -198,7 +198,7 @@ gse_hypergeometric_list <- function(
 
 #### original implementations --------------------------------------------------
 
-#' Bixverse implementation of the simple fgsea algorithm
+#' Bixverse implementation of the traditional GSEA algorithm
 #'
 #' @description
 #' Rust-based version of the traditional permutation-based GSEA algorithm.
@@ -243,7 +243,7 @@ calc_gsea_traditional = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- `:=` <- pvals <- stats <- pathways_clean <- pathway_sizes <- NULL
+  . <- `:=` <- pvals <- pathways_clean <- pathway_sizes <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)

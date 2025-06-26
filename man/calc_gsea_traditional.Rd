@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_gse.R
 \name{calc_gsea_traditional}
 \alias{calc_gsea_traditional}
-\title{Bixverse implementation of the simple fgsea algorithm}
+\title{Bixverse implementation of the traditional GSEA algorithm}
 \usage{
 calc_gsea_traditional(
   stats,

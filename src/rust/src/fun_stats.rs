@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 
 use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
@@ -191,8 +191,8 @@ fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
 /// @export
 #[extendr]
 fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bool) -> f64 {
-    let mut s_hash1 = HashSet::with_capacity(s_1.len());
-    let mut s_hash2 = HashSet::with_capacity(s_2.len());
+    let mut s_hash1 = FxHashSet::default();
+    let mut s_hash2 = FxHashSet::default();
 
     for item in &s_1 {
         s_hash1.insert(item);
@@ -223,8 +223,8 @@ fn rs_set_similarity_list(
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
-    let s_hash1: Vec<HashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
-    let s_hash2: Vec<HashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash1: Vec<FxHashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash2: Vec<FxHashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
     let res: Vec<Vec<f64>> = s_hash1
         .into_iter()
