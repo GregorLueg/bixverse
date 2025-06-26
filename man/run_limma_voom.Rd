@@ -8,7 +8,8 @@ run_limma_voom(
   meta_data,
   main_contrast,
   contrast_list = NULL,
-  dge_list,
+  dge_list = NULL,
+  normalised_counts = NULL,
   co_variates = NULL,
   ...,
   .verbose = TRUE
@@ -24,6 +25,8 @@ to test differential gene expression with the Limma-Voom workflow for.}
 \item{contrast_list}{String or NULL. Optional list of contrast formatted as contrast1-contrast2. Default NULL will create all contrast automatically.}
 
 \item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
+
+\item{normalised_counts}{Matrix. Normalised count matrix.}
 
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}

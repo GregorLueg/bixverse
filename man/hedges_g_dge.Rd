@@ -4,7 +4,14 @@
 \alias{hedges_g_dge}
 \title{Calculate the effect}
 \usage{
-hedges_g_dge(meta_data, main_contrast, normalised_counts, .verbose = TRUE)
+hedges_g_dge(
+  meta_data,
+  main_contrast,
+  contrast_list = NULL,
+  normalised_counts,
+  small_sample_correction = NULL,
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{meta_data}{data.table. The meta information about the experiment in
@@ -15,6 +22,9 @@ to calculate the Hedge's G effect for. Every permutation of the groups
 will be tested.}
 
 \item{normalised_counts}{Numeric Matrix. The normalized count matrix.}
+
+\item{small_sample_correction}{Can be NULL (automatic determination if a
+small sample size correction should be applied) or Boolean.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
