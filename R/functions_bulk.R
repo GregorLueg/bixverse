@@ -224,6 +224,8 @@ run_limma_voom <- function(
 #' to calculate the Hedge's G effect for. Every permutation of the groups
 #' will be tested.
 #' @param normalised_counts Numeric Matrix. The normalized count matrix.
+#' @param small_sample_correction Can be NULL (automatic determination if a
+#' small sample size correction should be applied) or Boolean.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A data.table with the effect sizes and standard errors based on the
@@ -238,6 +240,7 @@ hedges_g_dge <- function(
   main_contrast,
   contrast_list = NULL,
   normalised_counts,
+  small_sample_correction = NULL,
   .verbose = TRUE
 ) {
   # Checks
@@ -287,6 +290,7 @@ hedges_g_dge <- function(
     hedges_g_effect <- calculate_effect_size(
       mat_a = mat_a,
       mat_b = mat_b,
+      small_sample_correction = small_sample_correction,
       .verbose = .verbose
     ) %>%
       data.table::setDT() %>%

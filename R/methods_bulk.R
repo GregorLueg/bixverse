@@ -254,7 +254,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     dge_list = dge_list,
     sample_info = samples_red,
     normalised_counts = voom_obj$E,
-    group_col = group_col
+    group_col = group_col,
+    outliers = outliers
   )
 
   S7::prop(object, "params")[["QC_params"]] <- list(
@@ -628,6 +629,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 #' Default NULL will create all contrast automatically.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
+#' @param small_sample_correction Can be NULL (automatic determination if a
+#' small sample size correction should be applied) or Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
@@ -642,6 +645,7 @@ calculate_all_dges <- S7::new_generic(
     contrast_list = NULL,
     filter_column = NULL,
     co_variates = NULL,
+    small_sample_correction = NULL,
     ...,
     .verbose = TRUE
   ) {
@@ -662,6 +666,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
+  small_sample_correction = NULL,
   ...,
   .verbose = TRUE
 ) {
@@ -688,7 +693,10 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   }
 
   ## get objects
-  all_specified_columns <- c(contrast_column, co_variates, filter_column)
+  all_specified_columns <- setdiff(
+    c(contrast_column, co_variates, filter_column),
+    NULL
+  )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
   if (is.null(S7::prop(object, "outputs")[['dge_list']])) {
     dge_list = NULL
@@ -738,6 +746,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
       main_contrast = contrast_column,
       contrast_list = contrast_list,
       normalised_counts = norm_counts,
+      small_sample_correction = small_sample_correction,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -782,6 +791,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         main_contrast = contrast_column,
         normalised_counts = norm_counts_red,
         contrast_list = contrast_list,
+        small_sample_correction = small_sample_correction,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
