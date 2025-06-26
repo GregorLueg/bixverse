@@ -150,3 +150,13 @@ result_cd <- wang_similarity("c", "d", ancestors_list, test_onto, w = 0.8)
 
 
 sim_matrix <- create_similarity_matrix(test_onto, w = 0.8)
+
+
+test_onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c"),
+  child = c("b", "c", "d", "e", "f")
+)
+
+tictoc::tic()
+rs_onto_sim_wang(test_onto$parent, test_onto$child, w = 0.8)
+tictoc::toc()

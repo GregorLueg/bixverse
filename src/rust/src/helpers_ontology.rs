@@ -1,10 +1,13 @@
 use crate::utils_rust::flatten_vector;
+
 use extendr_api::prelude::*;
+use faer::Mat;
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::Graph;
 use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::VecDeque;
+use std::sync::Mutex;
 
 ///////////////////////////
 // Semantic similarities //
@@ -178,3 +181,194 @@ pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: 
 ///////////////////////
 // DAG-based methods //
 ///////////////////////
+
+#[derive(Clone, Debug)]
+pub struct FastOntology {
+    term_to_idx: FxHashMap<String, NodeIndex>, // term id to node index
+    idx_to_term: Vec<String>,
+    graph: DiGraph<String, ()>,           // directed graph: parent > child
+    ancestors: Vec<FxHashSet<NodeIndex>>, // ancestors
+    topo_order: Vec<NodeIndex>,           // pre-computing topological order
+}
+
+impl FastOntology {
+    /// Create a new ontology object from parents and child
+    pub fn new(parents: &[String], children: &[String]) -> Result<Self> {
+        if parents.len() != children.len() {
+            return Err("Parent and child vectors must have same length".into());
+        }
+
+        let mut graph = DiGraph::new();
+        let mut term_to_idx = FxHashMap::default();
+        let mut idx_to_term = Vec::new();
+
+        let mut all_terms = FxHashSet::default();
+        all_terms.extend(parents.iter().cloned());
+        all_terms.extend(children.iter().cloned());
+
+        for term in all_terms {
+            let idx = graph.add_node(term.clone());
+            term_to_idx.insert(term.clone(), idx);
+            idx_to_term.push(term);
+        }
+
+        for (parent, child) in parents.iter().zip(children.iter()) {
+            let parent_idx = *term_to_idx.get(parent).unwrap();
+            let child_idx = *term_to_idx.get(child).unwrap();
+            graph.add_edge(parent_idx, child_idx, ());
+        }
+
+        let ancestors = Self::compute_ancestors(&graph, &term_to_idx);
+
+        let topo_order = Self::compute_topological_order(&graph);
+
+        Ok(FastOntology {
+            term_to_idx,
+            idx_to_term,
+            graph,
+            ancestors,
+            topo_order,
+        })
+    }
+
+    /// Calculate Wang similarity between two terms
+    pub fn wang_sim(&self, term1: &str, term2: &str, w: f64) -> Option<f64> {
+        let term_idx_1 = *self.term_to_idx.get(term1)?;
+        let term_idx_2 = *self.term_to_idx.get(term2)?;
+
+        if term_idx_1 == term_idx_2 {
+            return Some(1.0);
+        }
+
+        let s_val_1 = self.calculate_s_values(term_idx_1, w);
+        let s_val_2 = self.calculate_s_values(term_idx_2, w);
+
+        let dag1_nodes = &self.ancestors[term_idx_1.index()];
+        let dag2_nodes = &self.ancestors[term_idx_2.index()];
+
+        let common_nodes: Vec<NodeIndex> = dag1_nodes.intersection(dag2_nodes).cloned().collect();
+
+        if common_nodes.is_empty() {
+            return Some(0.0);
+        }
+
+        let sv1: f64 = s_val_1.values().sum();
+        let sv2: f64 = s_val_2.values().sum();
+
+        let numerator: f64 = common_nodes
+            .iter()
+            .map(|&node_idx| {
+                s_val_1.get(&node_idx).unwrap_or(&0.0) + s_val_2.get(&node_idx).unwrap_or(&0.0)
+            })
+            .sum();
+
+        let denominator = sv1 + sv2;
+
+        if denominator > 0.0 {
+            Some(numerator / denominator)
+        } else {
+            Some(0.0)
+        }
+    }
+
+    /// Calculate the similarity matrix
+    pub fn calc_sim_matrix(&self, w: f64) -> Mat<f64> {
+        let n = self.idx_to_term.len();
+        let mut matrix: Mat<f64> = Mat::zeros(n, n);
+
+        let matrix_mutex = Mutex::new(&mut matrix);
+
+        (0..n).into_par_iter().for_each(|i| {
+            let mut row_sim = Vec::with_capacity(n - i);
+            for j in i..n {
+                let sim = if i == j {
+                    1.0
+                } else {
+                    let term1 = &self.idx_to_term[i];
+                    let term2 = &self.idx_to_term[j];
+                    self.wang_sim(term1, term2, w).unwrap_or(0.0)
+                };
+                row_sim.push((j, sim));
+            }
+
+            {
+                let mut matrix_guard = matrix_mutex.lock().unwrap();
+                for (j, sim) in row_sim {
+                    matrix_guard[(i, j)] = sim;
+                    if i != j {
+                        matrix_guard[(j, i)] = sim;
+                    }
+                }
+            }
+        });
+
+        matrix
+    }
+
+    /// Pre-compute the ancestors via a BFS
+    fn compute_ancestors(
+        graph: &DiGraph<String, ()>,
+        term_to_idx: &FxHashMap<String, NodeIndex>,
+    ) -> Vec<FxHashSet<NodeIndex>> {
+        let mut ancestors = vec![FxHashSet::default(); graph.node_count()];
+
+        for (_, &node_idx) in term_to_idx.iter() {
+            let mut visited = FxHashSet::default();
+            let mut queue = VecDeque::new();
+
+            queue.push_back(node_idx);
+            visited.insert(node_idx);
+
+            while let Some(current) = queue.pop_front() {
+                for parent_idx in graph.neighbors_directed(current, petgraph::Incoming) {
+                    if !visited.contains(&parent_idx) {
+                        visited.insert(parent_idx);
+                        queue.push_back(parent_idx);
+                    }
+                }
+            }
+
+            ancestors[node_idx.index()] = visited;
+        }
+
+        ancestors
+    }
+
+    /// Compute topological order
+    fn compute_topological_order(graph: &DiGraph<String, ()>) -> Vec<NodeIndex> {
+        petgraph::algo::toposort(graph, None)
+            .unwrap_or_else(|_| panic!("Ontology contains cycles"))
+            .into_iter()
+            .rev()
+            .collect()
+    }
+
+    /// Calculate the S-values for a specific term's DAG
+    fn calculate_s_values(&self, term_idx: NodeIndex, w: f64) -> FxHashMap<NodeIndex, f64> {
+        let dag_nodes = &self.ancestors[term_idx.index()];
+        let mut s_values = FxHashMap::default();
+
+        s_values.insert(term_idx, 1.0);
+
+        for &node_idx in &self.topo_order {
+            if !dag_nodes.contains(&node_idx) || node_idx == term_idx {
+                continue;
+            }
+
+            let mut max_contributions: f64 = 0.0;
+            for child_idx in self.graph.neighbors_directed(node_idx, petgraph::Outgoing) {
+                if dag_nodes.contains(&child_idx) {
+                    if let Some(&child_s_value) = s_values.get(&child_idx) {
+                        max_contributions = max_contributions.max(w * child_s_value);
+                    }
+                }
+            }
+
+            if max_contributions > 0.0 {
+                s_values.insert(node_idx, max_contributions);
+            }
+        }
+
+        s_values
+    }
+}

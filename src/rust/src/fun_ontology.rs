@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
 use crate::helpers_ontology::*;
-use crate::utils_r_rust::r_list_to_hashmap_set;
+use crate::utils_r_rust::{faer_to_r_matrix, r_list_to_hashmap_set};
 
 /// Calculate the semantic similarity in an ontology
 ///
@@ -124,8 +124,22 @@ fn rs_onto_similarity_filtered(
     ))
 }
 
+#[extendr]
+fn rs_onto_sim_wang(
+    parents: Vec<String>,
+    children: Vec<String>,
+    w: f64,
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+    let fast_onto = FastOntology::new(&parents, &children)?;
+
+    let sim_mat = fast_onto.calc_sim_matrix(w);
+
+    Ok(faer_to_r_matrix(sim_mat.as_ref()))
+}
+
 extendr_module! {
   mod fun_ontology;
   fn rs_onto_similarity;
   fn rs_onto_similarity_filtered;
+  fn rs_onto_sim_wang;
 }

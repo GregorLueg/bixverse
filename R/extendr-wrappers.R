@@ -893,6 +893,8 @@ rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wr
 #' @export
 rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
 
+rs_onto_sim_wang <- function(parents, children, w) .Call(wrap__rs_onto_sim_wang, parents, children, w)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description Calculates the topological overlap measure for a given affinity matrix
