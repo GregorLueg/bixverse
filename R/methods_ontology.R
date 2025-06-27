@@ -117,6 +117,13 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
     ]]
     terms <- names(ancestor_list)
 
+    if (.verbose) {
+      message(sprintf(
+        "Calculating the semantic similarities with type: %s.",
+        sim_type
+      ))
+    }
+
     similarities <- rs_onto_semantic_sim(
       terms = terms,
       sim_type = sim_type,
@@ -382,10 +389,25 @@ calculate_information_content <- function(ancestor_list) {
   return(information_content)
 }
 
+
+#' Calculates the critical value
+#'
+#' @description This function calculates the critical value for a given ontology
+#' similarity matrix
+#'
+#' @param x Numerical matrix or `ontology class`, see [bixverse::ontology()].
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param permutations Number of random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value.
+#'
+#' @export
 calculate_critical_value <- function(
   x,
   alpha,
-  permutations = 100000,
+  permutations = 100000L,
   seed = 10101L
 ) {
   # checks
@@ -393,6 +415,9 @@ calculate_critical_value <- function(
     checkmate::test_matrix(x, mode = "numeric"),
     checkmate::test_class(x, "bixverse::ontology")
   )
+  checkmate::qassert(alpha, "N1(0, 1)")
+  checkmate::qassert(permutations, "I1")
+  checkmate::qassert(seed, "I1")
 
   data <- if (checkmate::test_matrix(x)) {
     rs_dense_to_upper_triangle(x, 1L)
