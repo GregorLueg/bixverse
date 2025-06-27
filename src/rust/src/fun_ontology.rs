@@ -21,7 +21,7 @@ use crate::utils_r_rust::{faer_to_r_matrix, r_list_to_hashmap_set};
 ///
 /// @export
 #[extendr]
-fn rs_onto_similarity(
+fn rs_onto_semantic_sim(
     terms: Vec<String>,
     sim_type: String,
     ancestor_list: List,
@@ -68,14 +68,16 @@ fn rs_onto_similarity(
 ///
 /// @return A list with:
 /// \itemize{
-///   \item term1 - Term 1
-///   \item v - v matrix of the SVD.
-///   \item s - Eigenvalues of the SVD.
+///   \item term1 - term 1 names.
+///   \item term1 - term 2 names.
+///   \item filtered_sim - the specified (filtered) similarity between the two
+///   terms.
+///   \item critval - the critical value for the given alpha.
 /// }
 ///
 /// @export
 #[extendr]
-fn rs_onto_similarity_filtered(
+fn rs_onto_semantic_sim_critval(
     terms: Vec<String>,
     sim_type: String,
     alpha: f64,
@@ -124,22 +126,45 @@ fn rs_onto_similarity_filtered(
     ))
 }
 
+/// Calculate the Wang similarity for an ontology
+///
+/// @description This function calculates the Wang similarity for a given
+/// ontology.
+///
+/// @param parents String vector. The names of the parents.
+/// @param children String vector. The names of the childs. The length of
+/// `parents` needs to be equal to `children`.
+/// @param w Float. The w parameter for the ontology. Needs to be between
+/// `0 < w < 1`.
+///
+/// @return A list with:
+/// \itemize{
+///   \item sim_mat - the Wang similarity matrix.
+///   \item names - the row and column names for the calculated matrix.
+/// }
+///
+/// @export
 #[extendr]
 fn rs_onto_sim_wang(
     parents: Vec<String>,
     children: Vec<String>,
     w: f64,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
-    let fast_onto = FastOntology::new(&parents, &children)?;
+) -> extendr_api::Result<List> {
+    let fast_onto = WangSimOntology::new(&parents, &children)?;
 
-    let sim_mat = fast_onto.calc_sim_matrix(w);
+    let (sim_mat, names) = fast_onto.calc_sim_matrix(w);
 
-    Ok(faer_to_r_matrix(sim_mat.as_ref()))
+    fast_onto.clear_cache();
+
+    Ok(list!(
+        sim_mat = faer_to_r_matrix(sim_mat.as_ref()),
+        names = names
+    ))
 }
 
 extendr_module! {
   mod fun_ontology;
-  fn rs_onto_similarity;
-  fn rs_onto_similarity_filtered;
+  fn rs_onto_semantic_sim;
+  fn rs_onto_semantic_sim_critval;
   fn rs_onto_sim_wang;
 }

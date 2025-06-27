@@ -1,6 +1,21 @@
 # *bixverse* change log
 
-*Last update: 16.06.2025* </br>
+*Last update: 27.06.2025* </br>
+
+### Version **0.0.1.5**
+
+#### New features
+
+- Rework of the ontology class. Additionally, added Wang similarity as an 
+additional measure.
+
+#### Bug fixes, documentation updates
+
+...
+
+#### Breaking changes
+
+- Functions and methods related to the ontology class will be breaking.
 
 ### Version **0.0.1.4**
 

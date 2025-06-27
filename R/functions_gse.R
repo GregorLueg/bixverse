@@ -243,7 +243,7 @@ calc_gsea_traditional = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- `:=` <- pvals <- pathways_clean <- pathway_sizes <- NULL
+  . <- `:=` <- pvals <- pathways_clean <- pathway_sizes <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -472,8 +472,8 @@ calc_fgsea <- function(
   seed = 123L
 ) {
   # Globals scope check
-  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <- NULL
-  pathway_sizes <- es <- ge_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
+  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <-
+    pathway_sizes <- es <- ge_zero <- le_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)

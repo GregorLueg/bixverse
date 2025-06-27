@@ -863,7 +863,7 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' equivalent of the upper triangle of the similarity matrix.
 #'
 #' @export
-rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_similarity, terms, sim_type, ancestor_list, ic_list)
+rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
 
 #' Calculate the semantic similarity in an ontology
 #'
@@ -885,14 +885,34 @@ rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wr
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item term1 - Term 1
-#'   \item v - v matrix of the SVD.
-#'   \item s - Eigenvalues of the SVD.
+#'   \item term1 - term 1 names.
+#'   \item term1 - term 2 names.
+#'   \item filtered_sim - the specified (filtered) similarity between the two
+#'   terms.
+#'   \item critval - the critical value for the given alpha.
 #' }
 #'
 #' @export
-rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
+rs_onto_semantic_sim_critval <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_semantic_sim_critval, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
 
+#' Calculate the Wang similarity for an ontology
+#'
+#' @description This function calculates the Wang similarity for a given
+#' ontology.
+#'
+#' @param parents String vector. The names of the parents.
+#' @param children String vector. The names of the childs. The length of
+#' `parents` needs to be equal to `children`.
+#' @param w Float. The w parameter for the ontology. Needs to be between
+#' `0 < w < 1`.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item sim_mat - the Wang similarity matrix.
+#'   \item names - the row and column names for the calculated matrix.
+#' }
+#'
+#' @export
 rs_onto_sim_wang <- function(parents, children, w) .Call(wrap__rs_onto_sim_wang, parents, children, w)
 
 #' Calculates the TOM over an affinity matrix

@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use faer::MatRef;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
 ///////////////////
@@ -15,7 +15,7 @@ pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, FxHashSet<String>>>;
 
 /// Transforms a Robj List into a Hashmap
 pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, Vec<String>>> {
-    let mut result = FxHashMap::default();
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
 
     for (n, s) in r_list {
         let s_vec = s.as_string_vector().ok_or_else(|| {
@@ -34,7 +34,7 @@ pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, 
 pub fn r_list_to_hashmap_set(
     r_list: List,
 ) -> extendr_api::Result<FxHashMap<String, FxHashSet<String>>> {
-    let mut result = FxHashMap::default();
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
 
     for (n, s) in r_list {
         let s_vec = s.as_string_vector().ok_or_else(|| {
@@ -43,7 +43,7 @@ pub fn r_list_to_hashmap_set(
                 n
             ))
         })?;
-        let mut s_hash = FxHashSet::default();
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
         for item in s_vec {
             s_hash.insert(item);
         }
@@ -56,7 +56,7 @@ pub fn r_list_to_hashmap_set(
 // Transforms an Robj nested list into a nested hashmap
 #[allow(dead_code)]
 pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
-    let mut result = FxHashMap::default();
+    let mut result = FxHashMap::with_capacity_and_hasher(r_nested_list.len(), FxBuildHasher);
     for (n, obj) in r_nested_list {
         let inner_list = obj.as_list().ok_or_else(|| {
             Error::Other(format!("Failed to convert value for key '{}' to list", n))
@@ -80,7 +80,7 @@ pub fn r_list_to_btree_set(
                 n
             ))
         })?;
-        let mut s_hash = FxHashSet::default();
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
         for item in s_vec {
             s_hash.insert(item);
         }
