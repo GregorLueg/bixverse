@@ -4,7 +4,7 @@
 \alias{calculate_wang_sim}
 \title{Calculate the Wang similarity matrix}
 \usage{
-calculate_wang_sim(parent_child_dt, w)
+calculate_wang_sim(parent_child_dt, w = 0.8)
 }
 \arguments{
 \item{parent_child_dt}{data.table. The data.table with column parent and

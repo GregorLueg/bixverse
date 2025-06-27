@@ -4,7 +4,7 @@
 \alias{rs_onto_sim_wang}
 \title{Calculate the Wang similarity for an ontology}
 \usage{
-rs_onto_sim_wang(parents, children, w)
+rs_onto_sim_wang(parents, children, w, flat_matrix)
 }
 \arguments{
 \item{parents}{String vector. The names of the parents.}
@@ -14,6 +14,8 @@ rs_onto_sim_wang(parents, children, w)
 
 \item{w}{Float. The w parameter for the ontology. Needs to be between
 \verb{0 < w < 1}.}
+
+\item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
 }
 \value{
 A list with:

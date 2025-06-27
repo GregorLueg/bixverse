@@ -3,7 +3,6 @@ use crate::utils_rust::flatten_vector;
 use extendr_api::prelude::*;
 use faer::Mat;
 use petgraph::graph::{DiGraph, NodeIndex};
-use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::sync::{Arc, Mutex, RwLock};
@@ -14,6 +13,7 @@ use std::sync::{Arc, Mutex, RwLock};
 
 /// Structure to store the Ontology similarity results
 #[derive(Clone, Debug)]
+#[allow(dead_code)] // I did use t1 and t2 previously... I will keep them there
 pub struct OntoSimRes<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
@@ -161,20 +161,6 @@ pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
         hashmap.insert(name, ic_val);
     }
     hashmap
-}
-
-/// Calculates the critical value
-pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: usize) -> f64 {
-    let mut rng = StdRng::seed_from_u64(seed as u64);
-    let mut random_sample: Vec<f64> = (0..sample_size)
-        .map(|_| {
-            let index = rng.random_range(0..values.len());
-            values[index]
-        })
-        .collect();
-    random_sample.sort_by(|a, b| b.partial_cmp(a).unwrap());
-    let index = (alpha * random_sample.len() as f64).ceil() as usize;
-    random_sample[index + 1]
 }
 
 ///////////////////////

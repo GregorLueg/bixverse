@@ -237,6 +237,28 @@ pub fn upper_triangle_to_sym_faer(data: &[f64], shift: usize, n: usize) -> faer:
     mat
 }
 
+/// Create the upper triangle values as a flat vector from a faer matrix
+pub fn faer_mat_to_upper_triangle(x: MatRef<f64>, shift: usize) -> Vec<f64> {
+    let n = x.ncols();
+
+    let total_elements = if shift == 0 {
+        n * (n + 1) / 2
+    } else {
+        n * (n - 1) / 2
+    };
+
+    let mut vals = Vec::with_capacity(total_elements);
+
+    for i in 0..n {
+        let start_j = i + shift;
+        for j in start_j..n {
+            vals.push(*x.get(i, j));
+        }
+    }
+
+    vals
+}
+
 /// Slice out a single row and return the remaining
 pub fn mat_row_rm_row(x: MatRef<f64>, idx_to_remove: usize) -> Mat<f64> {
     let total_rows = x.nrows();

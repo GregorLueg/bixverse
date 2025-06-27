@@ -56,6 +56,8 @@ S7::method(pre_process_sim_onto, ontology) <- function(
 
 ## similarities ----------------------------------------------------------------
 
+### semantic similarities ------------------------------------------------------
+
 #' Calculate the Resnik or Lin semantic similarity for an ontology.
 #'
 #' @description This function calculates the specified semantic similarities for
@@ -133,10 +135,82 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
     )
 
     S7::prop(object, "sim_mat") <- final_sim
-    S7::prop(object, "params")[["semantic_similarity"]] <- params
+    S7::prop(object, "params")[["similarity"]] <- params
 
     return(object)
   }
+
+### wang similarity ------------------------------------------------------------
+
+#' Calculate the Wang similarity for an ontology.
+#'
+#' @description This function calculates the Wang similarity for the whole
+#' ontology and adds it to the class. The current implementation just allows for
+#' a single w for the relationships.
+#'
+#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param w Float. The value assigned to the respective edge. Defaults to `0.8`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return The class with added semantic similarities to the properties.
+#'
+#' @export
+calculate_wang_sim_onto <- S7::new_generic(
+  name = "calculate_wang_sim_onto",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    w = 0.8,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom zeallot `%<-%`
+#'
+#' @method calculate_wang_sim_onto ontology
+S7::method(calculate_wang_sim_onto, ontology) <- function(
+  object,
+  w = 0.8,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::ontology")
+  checkmate::qassert(.verbose, "B1")
+
+  # body
+  parent_child_dt <- S7::prop(object, "parent_child_dt")
+
+  c(sim_data, features) %<-%
+    rs_onto_sim_wang(
+      parent_child_dt$parent,
+      parent_child_dt$child,
+      w = w,
+      flat_matrix = TRUE
+    )
+
+  final_sim <- upper_triangular_cor_mat$new(
+    cor_coef = sim_data,
+    shift = 1L,
+    features = features
+  )
+
+  params <- list(
+    sim_type = "wang",
+    w = w
+  )
+
+  S7::prop(object, "sim_mat") <- final_sim
+  S7::prop(object, "params")[["similarity"]] <- params
+
+  return(object)
+}
 
 # individual functions ---------------------------------------------------------
 
@@ -211,7 +285,7 @@ calculate_semantic_sim <- function(
 #' @export
 #'
 #' @import data.table
-calculate_wang_sim <- function(parent_child_dt, w) {
+calculate_wang_sim <- function(parent_child_dt, w = 0.8) {
   # Checks
   checkmate::assertDataTable(parent_child_dt)
   checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
@@ -220,10 +294,11 @@ calculate_wang_sim <- function(parent_child_dt, w) {
   sim_wang <- rs_onto_sim_wang(
     parent_child_dt$parent,
     parent_child_dt$child,
-    w = w
+    w = w,
+    flat_matrix = FALSE
   )
 
-  sim_wang_mat <- sim_wang$sym_mat %>%
+  sim_wang_mat <- sim_wang$sim_mat %>%
     `colnames<-`(sim_wang$names) %>%
     `rownames<-`(sim_wang$names)
 
@@ -305,4 +380,37 @@ calculate_information_content <- function(ancestor_list) {
   information_content <- as.list(information_content)
 
   return(information_content)
+}
+
+calculate_critical_value <- function(
+  x,
+  alpha,
+  permutations = 100000,
+  seed = 10101L
+) {
+  # checks
+  checkmate::assert(
+    checkmate::test_matrix(x, mode = "numeric"),
+    checkmate::test_class(x, "bixverse::ontology")
+  )
+
+  data <- if (checkmate::test_matrix(x)) {
+    rs_dense_to_upper_triangle(x, 1L)
+  } else {
+    sim_mat <- S7::prop(x, "sim_mat")
+    if (is.null(sim_mat)) {
+      return(NULL)
+    } else {
+      sim_mat$get_cor_vector()[["cor_data"]]
+    }
+  }
+
+  crit_val <- rs_critval(
+    values = data,
+    iters = permutations,
+    alpha = alpha,
+    seed = seed
+  )
+
+  return(crit_val)
 }

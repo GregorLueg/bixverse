@@ -7,7 +7,7 @@ use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
 use crate::utils_r_rust::{r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils_rust::{flatten_vector, string_vec_to_set};
-use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly, EffectSizeRes};
+use crate::utils_stats::*;
 
 /// Fast AUC calculation
 ///
@@ -211,7 +211,10 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 ///
 /// @param s_1_list The String vector against which to calculate the set similarities.
 /// @param s_2_list A List of vector against which to calculate the set similarities.
-/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+/// Jaccard similarity be calculated.
+///
+/// @return Vector of set similarities (upper triangle) values.
 ///
 /// @export
 #[extendr]
@@ -242,6 +245,26 @@ fn rs_set_similarity_list(
     Ok(res)
 }
 
+/// Calculate the critical value
+///
+/// This function calculates the critical value for a given set based on random
+/// permutations and a given alpha value.
+///
+/// @param values Numeric vector. The full data set for which to calculate the
+/// critical value.
+/// @param iters Integer. Number of random permutations to use.
+/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
+/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param seed Integer. For reproducibility purposes
+///
+/// @return The critical value for the given parameters.
+///
+/// @export
+#[extendr]
+fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
+    calculate_critval(values, iters, &alpha, seed)
+}
+
 extendr_module! {
     mod fun_stats;
     fn rs_set_similarity_list;
@@ -251,4 +274,5 @@ extendr_module! {
     fn rs_hedges_g;
     fn rs_fdr_adjustment;
     fn rs_phyper;
+    fn rs_critval;
 }

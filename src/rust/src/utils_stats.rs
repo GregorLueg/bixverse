@@ -449,3 +449,17 @@ pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
         })
         .collect()
 }
+
+/// Calculates the critical value
+pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: usize) -> f64 {
+    let mut rng = StdRng::seed_from_u64(seed as u64);
+    let mut random_sample: Vec<f64> = (0..sample_size)
+        .map(|_| {
+            let index = rng.random_range(0..values.len());
+            values[index]
+        })
+        .collect();
+    random_sample.sort_by(|a, b| b.partial_cmp(a).unwrap());
+    let index = (alpha * random_sample.len() as f64).ceil() as usize;
+    random_sample[index + 1]
+}

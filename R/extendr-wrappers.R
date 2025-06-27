@@ -313,7 +313,10 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #'
 #' @param s_1_list The String vector against which to calculate the set similarities.
 #' @param s_2_list A List of vector against which to calculate the set similarities.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+#' Jaccard similarity be calculated.
+#'
+#' @return Vector of set similarities (upper triangle) values.
 #'
 #' @export
 rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
@@ -405,6 +408,23 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #'
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
+
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param values Numeric vector. The full data set for which to calculate the
+#' critical value.
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, values, iters, alpha, seed)
 
 #' Generate reciprocal best hits based on set similarities
 #'
@@ -865,36 +885,6 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @export
 rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
 
-#' Calculate the semantic similarity in an ontology
-#'
-#' @description This function calculates the specified semantic similarity and
-#' returns the full vector (only calculating the upper triangle) for the given
-#' similarity.
-#'
-#' @param terms Vector of strings. The terms in the ontology you wish to screen.
-#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-#' @param alpha Float. Must be between 0 to 1. The alpha parameter for calculating
-#' the critival value.
-#' @param ancestor_list R list with names being the term and the elements in the
-#' list the names of the ancestors.
-#' @param ic_list R list with the names being the term and the elements the
-#' information content of this given term. Needs to be a single float!
-#' @param iters Integer. Number of random iterations to use to estimate the
-#' critical value.
-#' @param seed Integer. Random seed for reproducibility purposes.
-#'
-#' @return A list with:
-#' \itemize{
-#'   \item term1 - term 1 names.
-#'   \item term1 - term 2 names.
-#'   \item filtered_sim - the specified (filtered) similarity between the two
-#'   terms.
-#'   \item critval - the critical value for the given alpha.
-#' }
-#'
-#' @export
-rs_onto_semantic_sim_critval <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_semantic_sim_critval, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
-
 #' Calculate the Wang similarity for an ontology
 #'
 #' @description This function calculates the Wang similarity for a given
@@ -905,6 +895,7 @@ rs_onto_semantic_sim_critval <- function(terms, sim_type, alpha, ancestor_list, 
 #' `parents` needs to be equal to `children`.
 #' @param w Float. The w parameter for the ontology. Needs to be between
 #' `0 < w < 1`.
+#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
 #' @return A list with:
 #' \itemize{
@@ -913,7 +904,7 @@ rs_onto_semantic_sim_critval <- function(terms, sim_type, alpha, ancestor_list, 
 #' }
 #'
 #' @export
-rs_onto_sim_wang <- function(parents, children, w) .Call(wrap__rs_onto_sim_wang, parents, children, w)
+rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang, parents, children, w, flat_matrix)
 
 #' Calculates the TOM over an affinity matrix
 #'
