@@ -5,6 +5,7 @@ mod helpers_ica;
 mod helpers_linalg;
 mod helpers_ontology;
 mod helpers_rbh;
+mod helpers_sparse;
 
 mod fun_coremo;
 mod fun_fgsea;
@@ -15,6 +16,7 @@ mod fun_linalg;
 mod fun_ontology;
 mod fun_rbh;
 mod fun_stats;
+mod fun_struct;
 
 mod utils_r_rust;
 mod utils_rust;
@@ -35,4 +37,5 @@ extendr_module! {
     use fun_ica;
     use fun_ontology;
     use fun_coremo;
+    use fun_struct;
 }

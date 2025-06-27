@@ -1012,5 +1012,8 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
+#' @export
+rs_upper_triangle_to_sparse <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, cor_vector, shift, n)
+
 
 # nolint end

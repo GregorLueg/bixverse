@@ -141,7 +141,7 @@ cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
 
 cor_matrix <- S7::prop(cor_test, "processed_data")[[
   "correlation_res"
-]]$get_cor_matrix(
+]]$get_sym_matrix(
   .verbose = FALSE
 )
 
