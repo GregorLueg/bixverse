@@ -426,6 +426,22 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' @export
 rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, values, iters, alpha, seed)
 
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param mat Numeric matrix. The (symmetric matrix with all of the values).
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
+
 #' Generate reciprocal best hits based on set similarities
 #'
 #' @description This function takes a nested list that contains gene modules/
@@ -905,6 +921,26 @@ rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(
 #'
 #' @export
 rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang, parents, children, w, flat_matrix)
+
+#' Filter the term similarities for a specific critical value
+#'
+#' @description This function takes the similarity values as the upper triangle,
+#' the row/column names and filtering the values down based on the threshold.
+#'
+#' @param sim_vals Numerical vector. The upper triangle of the similarity matrix
+#' as a flattened vector.
+#' @param names String vector. The row/col names of the similarity matrix.
+#' @param threshold Float. The filtering threshold.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item t1 - name of term 1.
+#'   \item t2 - name of term 2.
+#'   \item sim - the similarity between the two terms.
+#' }
+#'
+#' @export
+rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
 #' Calculates the TOM over an affinity matrix
 #'

@@ -95,8 +95,44 @@ fn rs_onto_sim_wang(
     ))
 }
 
+/// Filter the term similarities for a specific critical value
+///
+/// @description This function takes the similarity values as the upper triangle,
+/// the row/column names and filtering the values down based on the threshold.
+///
+/// @param sim_vals Numerical vector. The upper triangle of the similarity matrix
+/// as a flattened vector.
+/// @param names String vector. The row/col names of the similarity matrix.
+/// @param threshold Float. The filtering threshold.
+///
+/// @return A list with:
+/// \itemize{
+///   \item t1 - name of term 1.
+///   \item t2 - name of term 2.
+///   \item sim - the similarity between the two terms.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_filter_onto_sim(sim_vals: &[f64], names: Vec<String>, threshold: f64) -> List {
+    let filtered_results = filter_sims_critval(sim_vals, &names, threshold);
+
+    let mut terms1: Vec<String> = Vec::with_capacity(filtered_results.len());
+    let mut terms2: Vec<String> = Vec::with_capacity(filtered_results.len());
+    let mut sim: Vec<f64> = Vec::with_capacity(filtered_results.len());
+
+    for res in filtered_results {
+        terms1.push(res.t1.to_string());
+        terms2.push(res.t2.to_string());
+        sim.push(res.sim);
+    }
+
+    list!(t1 = terms1, t2 = terms2, sim = sim)
+}
+
 extendr_module! {
   mod fun_ontology;
   fn rs_onto_semantic_sim;
   fn rs_onto_sim_wang;
+  fn rs_filter_onto_sim;
 }

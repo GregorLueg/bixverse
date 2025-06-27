@@ -265,6 +265,32 @@ fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
     calculate_critval(values, iters, &alpha, seed)
 }
 
+/// Calculate the critical value
+///
+/// This function calculates the critical value for a given set based on random
+/// permutations and a given alpha value.
+///
+/// @param mat Numeric matrix. The (symmetric matrix with all of the values).
+/// @param iters Integer. Number of random permutations to use.
+/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
+/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param seed Integer. For reproducibility purposes
+///
+/// @return The critical value for the given parameters.
+///
+/// @export
+#[extendr]
+fn rs_critval_mat(mat: RMatrix<f64>, iters: usize, alpha: f64, seed: usize) -> f64 {
+    let mut values: Vec<f64> = Vec::new();
+    for r in 0..mat.nrows() {
+        for c in (r + 1)..mat.ncols() {
+            values.push(mat[[r, c]]);
+        }
+    }
+
+    calculate_critval(&values, iters, &alpha, seed)
+}
+
 extendr_module! {
     mod fun_stats;
     fn rs_set_similarity_list;
@@ -275,4 +301,5 @@ extendr_module! {
     fn rs_fdr_adjustment;
     fn rs_phyper;
     fn rs_critval;
+    fn rs_critval_mat;
 }

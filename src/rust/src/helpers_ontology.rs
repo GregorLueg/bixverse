@@ -13,7 +13,6 @@ use std::sync::{Arc, Mutex, RwLock};
 
 /// Structure to store the Ontology similarity results
 #[derive(Clone, Debug)]
-#[allow(dead_code)] // I did use t1 and t2 previously... I will keep them there
 pub struct OntoSimRes<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
@@ -491,4 +490,39 @@ impl WangSimOntology {
     //         Some(0.0)
     //     }
     // }
+}
+
+////////////
+// Others //
+////////////
+
+/// Filter the similarities based on some threshold
+pub fn filter_sims_critval<'a>(
+    sim_vals: &[f64],
+    names: &'a [String],
+    threshold: f64,
+) -> Vec<OntoSimRes<'a>> {
+    let n = names.len();
+    let mut results = Vec::new();
+    let mut idx = 0;
+
+    for i in 0..n {
+        for j in i..n {
+            if i != j {
+                if idx < sim_vals.len() {
+                    let sim = sim_vals[idx];
+                    if sim >= threshold {
+                        results.push(OntoSimRes {
+                            t1: &names[i],
+                            t2: &names[j],
+                            sim,
+                        })
+                    }
+                }
+                idx += 1;
+            }
+        }
+    }
+
+    results
 }

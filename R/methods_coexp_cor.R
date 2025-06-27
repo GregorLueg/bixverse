@@ -368,7 +368,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 
   # Pull out the correlation results
   cor_res <- S7::prop(object, "processed_data")$correlation_res
-  c(cor_vector, n_features, shift) %<-% cor_res$get_cor_vector()
+  c(cor_vector, features, n_features, shift) %<-% cor_res$get_cor_vector()
 
   # Prepare everything for iterating through the epsilons
   epsilons <- sort(epsilons, decreasing = TRUE)

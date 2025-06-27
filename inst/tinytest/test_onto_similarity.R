@@ -131,6 +131,12 @@ expected_data_table <- data.table::data.table(
   sim = expected_resnik
 )
 
+expected_filtered <- data.table::data.table(
+  t1 = "c",
+  t2 = "f",
+  sim = 1.098612
+)
+
 ## separate functions ----------------------------------------------------------
 
 ### ancestry ------------------------------------------------------------------
@@ -234,6 +240,25 @@ expect_equivalent(
 expect_equal(
   current = dt_result,
   target = expected_data_table,
+  info = paste(
+    "Ontology class semantic similarity - data.table version"
+  ),
+  tolerance = 1e-6
+)
+
+### filtering ------------------------------------------------------------------
+
+test_class <- filter_similarities(
+  object = test_class,
+  alpha = 0.01,
+  .verbose = FALSE
+)
+
+filtered_results <- get_results(test_class)
+
+expect_equal(
+  current = filtered_results,
+  target = expected_filtered,
   info = paste(
     "Ontology class semantic similarity - data.table version"
   ),
@@ -421,7 +446,7 @@ expect_equivalent(
 
 test_class <- ontology(test_onto, .verbose = FALSE)
 
-test_class <- calculate_wang_sim_onto(test_class)
+test_class <- calculate_wang_sim_onto(test_class, .verbose = FALSE)
 
 matrix_res <- get_sim_matrix(
   test_class,

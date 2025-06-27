@@ -174,7 +174,6 @@ calculate_wang_sim_onto <- S7::new_generic(
   }
 )
 
-
 #' @export
 #'
 #' @import data.table
@@ -193,6 +192,10 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
 
   # body
   parent_child_dt <- S7::prop(object, "parent_child_dt")
+
+  if (.verbose) {
+    message("Calculating the Wang similarity.")
+  }
 
   c(sim_data, features) %<-%
     rs_onto_sim_wang(
@@ -219,9 +222,109 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
   return(object)
 }
 
+## filtering -------------------------------------------------------------------
+
+#' Filter the calculated similarities
+#'
+#' @description This function calculates the critical value, see
+#' [bixverse::calculate_critical_value()] and filters subsequently all the
+#' term pairs to the ones with a value ≥ critical value.
+#'
+#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param permutations Number of random permutations.
+#' @param seed Integer. For reproducibility purposes.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with filtered results added to the respective slot.
+#'
+#' @export
+filter_similarities <- S7::new_generic(
+  name = "filter_similarities",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    alpha,
+    permutations = 100000L,
+    seed = 10101L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#'
+#' @method calculate_wang_sim_onto ontology
+S7::method(filter_similarities, ontology) <- function(
+  object,
+  alpha,
+  permutations = 100000L,
+  seed = 10101L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::ontology")
+  checkmate::qassert(alpha, "N1(0, 1)")
+  checkmate::qassert(permutations, "I1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  sim_mat <- S7::prop(object, "sim_mat")
+
+  if (is.null(sim_mat)) {
+    warning(paste(
+      "No similarity matrix found in the class. You need to run one of the methods",
+      "Returning class as is"
+    ))
+    return(object)
+  }
+
+  if (.verbose) {
+    message(sprintf("Calculating critical value with alpha: %.4f", alpha))
+  }
+
+  critval <- calculate_critical_value(
+    x = object,
+    alpha = alpha,
+    permutations = permutations,
+    seed = seed
+  )
+
+  data <- sim_mat$get_cor_vector()
+
+  if (.verbose) {
+    message(sprintf("Filtering data with critical value %.4f", critval))
+  }
+
+  filtered_data <- data.table::setDT(rs_filter_onto_sim(
+    sim_vals = data$cor_data,
+    names = data$features,
+    threshold = critval
+  ))
+
+  params <- list(
+    alpha = alpha,
+    permutations = permutations,
+    seed = seed,
+    crit_val = critval
+  )
+
+  S7::prop(object, "params")[["sim_filters"]] <- params
+  S7::prop(object, "final_results") <- filtered_data
+
+  return(object)
+}
+
 # individual functions ---------------------------------------------------------
 
-## main functions --------------------------------------------------------------
+## similarity calculations -----------------------------------------------------
 
 #' Calculate the Resnik or Lin semantic similarity
 #'
@@ -393,9 +496,10 @@ calculate_information_content <- function(ancestor_list) {
 #' Calculates the critical value
 #'
 #' @description This function calculates the critical value for a given ontology
-#' similarity matrix
+#' similarity matrix.
 #'
 #' @param x Numerical matrix or `ontology class`, see [bixverse::ontology()].
+#' This function tends to be slower on matrices compared to `ontology class`.
 #' @param alpha Float. The alpha value. For example, 0.001 would mean that the
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param permutations Number of random permutations.
@@ -419,23 +523,23 @@ calculate_critical_value <- function(
   checkmate::qassert(permutations, "I1")
   checkmate::qassert(seed, "I1")
 
-  data <- if (checkmate::test_matrix(x)) {
-    rs_dense_to_upper_triangle(x, 1L)
+  crit_val <- if (checkmate::test_matrix(x)) {
+    rs_critval_mat(mat = x, iters = permutations, alpha = alpha, seed = seed)
   } else {
     sim_mat <- S7::prop(x, "sim_mat")
     if (is.null(sim_mat)) {
+      warning("No sim_mat found in the object. Returning NULL.")
       return(NULL)
     } else {
-      sim_mat$get_cor_vector()[["cor_data"]]
+      data <- sim_mat$get_cor_vector()[["cor_data"]]
+      rs_critval(
+        values = data,
+        iters = permutations,
+        alpha = alpha,
+        seed = seed
+      )
     }
   }
-
-  crit_val <- rs_critval(
-    values = data,
-    iters = permutations,
-    alpha = alpha,
-    seed = seed
-  )
 
   return(crit_val)
 }
