@@ -4,8 +4,9 @@
 #'
 #' @description
 #' The class allows to store the upper triangular matrix of a symmetric
-#' correlation matrix in an memory-efficient form and return a data.table or
-#' dense R matrix if need be.
+#' matrix (think correlation matrix, distance matrix, etc.) in an
+#' memory-efficient form and return a data.table or dense (or sparse) R matrix
+#' if need be.
 upper_triangular_sym_mat <- R6::R6Class(
   # Class name
   classname = "upper_triangular_sym_mat",
@@ -115,6 +116,30 @@ upper_triangular_sym_mat <- R6::R6Class(
       return(mat)
     },
 
+    #' @description
+    #' Return a sparse version of the correlation matrix
+    #'
+    #' @param .verbose Boolean. Controls verbosity
+    #'
+    #' @return The sparse matrix.
+    get_sparse_matrix = function(.verbose = TRUE) {
+      checkmate::qassert(.verbose, "B1")
+
+      if (.verbose) {
+        message("Generating the sparse matrix format of the symmetric matrix.")
+      }
+
+      sparse_mat <- upper_triangle_to_sparse(
+        upper_triangle_vals = private$values,
+        shift = private$shift,
+        n = length(private$features)
+      ) %>%
+        `rownames<-`(private$features) %>%
+        `colnames<-`(private$features)
+
+      return(sparse_mat)
+    },
+
     #' @description Return the correlation data and shift
     #'
     #' @return A list with
@@ -196,8 +221,8 @@ upper_triangular_sym_mat <- R6::R6Class(
 #' dense R matrix for a given parameter if need be.
 upper_triangle_diffcor_mat <- R6::R6Class(
   # Class name
-  inherit = upper_triangular_cor_mat,
-  classname = "upper_triangular_diffcor_mat",
+  inherit = upper_triangular_sym_mat,
+  classname = "upper_triangle_diffcor_mat",
   public = list(
     #' @description Initialises the R6 class.
     #'
@@ -237,15 +262,15 @@ upper_triangle_diffcor_mat <- R6::R6Class(
     #'
     #' @return A data.table with three columns:
     #' \itemize{
-    #' \item feature_a: The name of the first feature in the correlation matrix.
-    #' \item feature_b: The name of the second feature in the correlation
-    #' matrix.
-    #' \item cor_a: The correlation coefficients for data set a between the
-    #' features.
-    #' \item cor_b: The correlation coefficients for data set b between the
-    #' features.
-    #' \item z_score: The differential correlation z-score.
-    #' \item p_val: The p-value of the differential correlation.
+    #'   \item feature_a: The name of the first feature in the correlation matrix.
+    #'   \item feature_b: The name of the second feature in the correlation
+    #'   matrix.
+    #'   \item cor_a: The correlation coefficients for data set a between the
+    #'   features.
+    #'   \item cor_b: The correlation coefficients for data set b between the
+    #'   features.
+    #'   \item z_score: The differential correlation z-score.
+    #'   \item p_val: The p-value of the differential correlation.
     #' }
     get_data_table = function(factor = FALSE, .verbose = TRUE) {
       # Checks

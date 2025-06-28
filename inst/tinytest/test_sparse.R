@@ -39,6 +39,29 @@ sparse_matrix <- upper_triangle_to_sparse(data, 1L, 4L)
 
 expect_equal(
   current = sparse_matrix,
-  target = sparse_matrix,
+  target = expected_sparse_matrix,
+  info = "Upper triangle to sparse via Rust"
+)
+
+## class test ------------------------------------------------------------------
+
+rownames(expected_sparse_matrix) <- colnames(expected_sparse_matrix) <- c(
+  "a",
+  "b",
+  "c",
+  "d"
+)
+
+upper_triangle_repr <- upper_triangular_sym_mat$new(
+  values = data,
+  features = c("a", "b", "c", "d"),
+  shift = 1L
+)
+
+sparse_matrix_class <- upper_triangle_repr$get_sparse_matrix(.verbose = FALSE)
+
+expect_equal(
+  current = sparse_matrix_class,
+  target = expected_sparse_matrix,
   info = "Upper triangle to sparse via Rust"
 )
