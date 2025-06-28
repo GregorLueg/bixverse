@@ -73,6 +73,8 @@ get_go_human_data <- function() {
 #' @param n Integer. Number of columns and rows of the symmetric matrix.
 #'
 #' @returns The sparse matrix.
+#'
+#' @export
 upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
   # checks
   checkmate::qassert(upper_triangle_vals, "N+")

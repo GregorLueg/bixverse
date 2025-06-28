@@ -222,10 +222,6 @@ mod tests {
         let dense = sparse.to_dense_matrix();
         let expected = mat![[1.0, 0.8, 0.6], [0.8, 1.0, 0.3], [0.6, 0.3, 1.0]];
 
-        for i in 0..3 {
-            for j in 0..3 {
-                assert_eq!(dense.get(i, j), expected.get(i, j));
-            }
-        }
+        assert_eq!(dense, expected);
     }
 }

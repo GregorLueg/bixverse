@@ -21,7 +21,7 @@ to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 We have now officially released version **0.0.1.5**. With this update, we have
 added:
 
-- Improved ontology class and more methods.
+- Improved ontology class and more methods for ontology similarities.
 
 ## *Installation*
 

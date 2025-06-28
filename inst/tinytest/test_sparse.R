@@ -52,7 +52,7 @@ rownames(expected_sparse_matrix) <- colnames(expected_sparse_matrix) <- c(
   "d"
 )
 
-upper_triangle_repr <- upper_triangular_sym_mat$new(
+upper_triangle_repr <- bixverse:::upper_triangular_sym_mat$new(
   values = data,
   features = c("a", "b", "c", "d"),
   shift = 1L
