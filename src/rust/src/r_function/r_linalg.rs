@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 
-use crate::helpers_linalg::*;
+use crate::helpers::linalg::*;
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
 use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
 
@@ -196,7 +196,7 @@ fn rs_contrastive_pca(
 
     let eigenvectors: Vec<Vec<f64>> = cpca_results.iter().map(|x| x.1.clone()).collect();
 
-    let c_pca_loadings = nested_vector_to_faer_mat(eigenvectors);
+    let c_pca_loadings = nested_vector_to_faer_mat(eigenvectors, true);
 
     let c_pca_factors = target_mat * c_pca_loadings.clone();
 
@@ -330,7 +330,7 @@ fn rs_rbf_iterate_epsilons(
 }
 
 extendr_module! {
-  mod fun_linalg;
+  mod r_linalg;
   fn rs_covariance;
   fn rs_cor;
   fn rs_cov2cor;

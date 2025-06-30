@@ -197,7 +197,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 }
 
 extendr_module! {
-    mod fun_helpers;
+    mod r_helpers;
     fn rs_upper_triangle_to_dense;
     fn rs_dense_to_upper_triangle;
     fn rs_ot_harmonic_sum;

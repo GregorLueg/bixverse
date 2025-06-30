@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 use crate::assert_symmetric_mat;
-use crate::helpers_linalg::column_correlation;
+use crate::helpers::linalg::column_correlation;
 use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
 use crate::utils_rust::{mat_row_rm_row, upper_triangle_indices};
 use crate::utils_stats::*;
@@ -246,7 +246,7 @@ fn rs_cluster_stability(data: RMatrix<i32>) -> List {
 }
 
 extendr_module! {
-    mod fun_coremo;
+    mod r_coremo;
     fn rs_tom;
     fn rs_coremo_quality;
     fn rs_coremo_stability;

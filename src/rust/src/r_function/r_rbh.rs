@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 
-use crate::helpers_rbh::*;
+use crate::helpers::rbh::*;
 use crate::utils_r_rust::{r_nested_list_to_btree_nest, NestedBtreeMap};
 use crate::utils_rust::flatten_vector;
 
@@ -151,6 +151,6 @@ fn rs_rbh_sets(
 }
 
 extendr_module! {
-    mod fun_rbh;
+    mod r_rbh;
     fn rs_rbh_sets;
 }

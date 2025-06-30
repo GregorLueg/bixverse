@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 
-use crate::helpers_linalg::col_sums;
+use crate::helpers::linalg::col_sums;
 
 ///////////
 // Types //

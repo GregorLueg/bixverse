@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use rayon::prelude::*;
 
-use crate::helpers_fgsea::*;
-use crate::helpers_geom_elim::*;
+use crate::helpers::fgsea::*;
+use crate::helpers::geom_elim::*;
 use crate::utils_r_rust::r_named_vec_data;
 use crate::utils_rust::flatten_vector;
 
@@ -477,7 +477,7 @@ fn rs_geom_elim_fgsea_simple(
 }
 
 extendr_module! {
-    mod fun_fgsea;
+    mod r_fgsea;
     fn rs_calc_es;
     fn rs_get_gs_indices;
     fn rs_calc_gsea_stats;

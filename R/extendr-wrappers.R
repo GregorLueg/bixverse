@@ -1012,5 +1012,33 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
+#' Helper function to calculate permutation-based page rank scores
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores List. The personalised vectors for the page rank reset
+#' values. Each element must sum to 1 and be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return The personalised page rank values.
+#'
+#' @export
+rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)
+
+#' Rust version of calcaluting the personalised page rank
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param personalised Numerical vector. The reset values. They must sum to 1 and
+#' be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return The personalised page rank values.
+#'
+#' @export
+rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+
 
 # nolint end

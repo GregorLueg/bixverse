@@ -1,8 +1,8 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 
-use crate::helpers_geom_elim::*;
-use crate::helpers_hypergeom::*;
+use crate::helpers::geom_elim::*;
+use crate::helpers::hypergeom::*;
 use crate::utils_r_rust::r_list_to_str_vec;
 use crate::utils_rust::flatten_vector;
 
@@ -325,7 +325,7 @@ fn rs_gse_geom_elim_list(
 }
 
 extendr_module! {
-    mod fun_hypergeom;
+    mod r_hypergeom;
     fn rs_hypergeom_test;
     fn rs_hypergeom_test_list;
     fn rs_gse_geom_elim;

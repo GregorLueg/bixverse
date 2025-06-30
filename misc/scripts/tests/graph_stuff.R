@@ -27,7 +27,7 @@ genes.3 <- sample(igraph::V(test_class@graph)$name, 25)
 diffusion_vector <- rep(1, 10) %>% `names<-`(genes)
 diffusion_vector.2 <- rep(1, 10) %>% `names<-`(genes.2)
 
-test_class <- diffuse_seed_nodes(test_class, diffusion_vector.2, "max")
+test_class <- diffuse_seed_nodes(test_class, diffusion_vector, "max")
 
 # write a permutation test...
 
@@ -39,10 +39,10 @@ graph <- S7::prop(object, "graph")
 diffusion_params <- S7::prop(object, "params")[["diffusion_params"]]
 diffusion_results <- S7::prop(object, "diffusion_res")
 
+no_nodes <- length(igraph::V(graph))
+
 nodes_names <- igraph::V(graph)$name
 diffusion_vector <- diffusion_params[["diffusion_vector"]]
-
-length(nodes_names)
 
 # create the randomised diffusion vectors accounting for node degree
 
@@ -72,13 +72,44 @@ randomised_sets <- purrr::map(1:perm_iter, \(i) {
     diff_vec_i[node] <- diffusion_vec_i[node]
   }
 
+  diff_vec_i <- diff_vec_i / sum(diff_vec_i)
+
   diff_vec_i
 })
+
+# Rust version ... ?
+
+edge_list <- igraph::as_edgelist(graph, names = TRUE)
+
+graph_names <- igraph::V(graph)$name
+
+rextendr::document()
+
+tictoc::tic()
+rs_test <- rs_page_rank_permutations(
+  node_names = graph_names,
+  from = edge_list[, 1],
+  to = edge_list[, 2],
+  diffusion_scores = randomised_sets,
+  undirected = TRUE
+)
+tictoc::toc()
+
+rextendr::document()
+
+r_res <- igraph::page_rank(
+  graph,
+  personalized = randomised_sets[[1]]
+)$vector
+
+plot(rs_test[[1]], r_res)
+
+rs_test[[1]]
 
 tictoc::tic()
 randomised_diffusion_vecs <- purrr::map(randomised_sets, \(rnd_diff_vec) {
   igraph::page_rank(
-    S7::prop(object, "graph"),
+    graph,
     personalized = rnd_diff_vec
   )$vector
 })
@@ -91,7 +122,7 @@ randomised_diffusion_vecs <- furrr::future_map(
   randomised_sets,
   \(rnd_diff_vec) {
     igraph::page_rank(
-      S7::prop(object, "graph"),
+      graph,
       personalized = rnd_diff_vec
     )$vector
   },
@@ -99,8 +130,11 @@ randomised_diffusion_vecs <- furrr::future_map(
 )
 tictoc::toc()
 
-col_means <- colMeans(do.call(rbind, randomised_diffusion_vecs))
-col_sds <- matrixStats::colSds(do.call(rbind, randomised_diffusion_vecs))
+
+plot(rs_test[[4]], randomised_diffusion_vecs[[4]])
+
+col_means <- colMeans(do.call(rbind, rs_test))
+col_sds <- matrixStats::colSds(do.call(rbind, rs_test))
 
 z_scores <- (diffusion_results - col_means) / (col_sds + 10^-32)
 
@@ -108,7 +142,11 @@ table(is.na(z_scores))
 
 summary(z_scores)
 
+hist(z_scores)
+
 pvals <- pnorm(abs(z_scores), lower.tail = F)
+
+hist(pvals)
 
 table(z_scores > 0)
 
