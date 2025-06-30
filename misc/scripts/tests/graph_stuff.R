@@ -3,8 +3,8 @@ library(data.table)
 
 devtools::document()
 rextendr::document()
-devtools::load_all()
-devtools::check()
+# devtools::load_all()
+# devtools::check()
 
 # Community detections ----
 
@@ -27,7 +27,94 @@ genes.3 <- sample(igraph::V(test_class@graph)$name, 25)
 diffusion_vector <- rep(1, 10) %>% `names<-`(genes)
 diffusion_vector.2 <- rep(1, 10) %>% `names<-`(genes.2)
 
-test_class <- diffuse_seed_nodes(test_class, diffusion_vector, "max")
+test_class <- diffuse_seed_nodes(test_class, diffusion_vector.2, "max")
+
+# write a permutation test...
+
+object <- test_class
+perm_iter <- 1000L
+cache <- TRUE
+
+graph <- S7::prop(object, "graph")
+diffusion_params <- S7::prop(object, "params")[["diffusion_params"]]
+diffusion_results <- S7::prop(object, "diffusion_res")
+
+nodes_names <- igraph::V(graph)$name
+diffusion_vector <- diffusion_params[["diffusion_vector"]]
+
+length(nodes_names)
+
+# create the randomised diffusion vectors accounting for node degree
+
+node_degree_distribution <- log(igraph::degree(graph))
+
+node_degree_discrete <- cut(node_degree_distribution, 25L) %>%
+  `names<-`(names(node_degree_distribution))
+
+diffusion_names <- names(diffusion_vector)
+
+degree_groups <- split(names(node_degree_discrete), node_degree_discrete)
+node_degrees <- node_degree_discrete[diffusion_names]
+
+randomised_sets <- purrr::map(1:perm_iter, \(i) {
+  set.seed(123L + i)
+
+  random_set_i <- purrr::map_chr(node_degrees, \(degree) {
+    sample(degree_groups[[as.character(degree)]], 1)
+  })
+
+  diffusion_vec_i <- diffusion_vector %>% `names<-`(random_set_i)
+
+  seed_nodes_i <- intersect(names(diffusion_vec_i), nodes_names)
+
+  diff_vec_i <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
+  for (node in seed_nodes_i) {
+    diff_vec_i[node] <- diffusion_vec_i[node]
+  }
+
+  diff_vec_i
+})
+
+tictoc::tic()
+randomised_diffusion_vecs <- purrr::map(randomised_sets, \(rnd_diff_vec) {
+  igraph::page_rank(
+    S7::prop(object, "graph"),
+    personalized = rnd_diff_vec
+  )$vector
+})
+tictoc::toc()
+
+future::plan(future::multisession(workers = 5L))
+
+tictoc::tic()
+randomised_diffusion_vecs <- furrr::future_map(
+  randomised_sets,
+  \(rnd_diff_vec) {
+    igraph::page_rank(
+      S7::prop(object, "graph"),
+      personalized = rnd_diff_vec
+    )$vector
+  },
+  .progress = TRUE
+)
+tictoc::toc()
+
+col_means <- colMeans(do.call(rbind, randomised_diffusion_vecs))
+col_sds <- matrixStats::colSds(do.call(rbind, randomised_diffusion_vecs))
+
+z_scores <- (diffusion_results - col_means) / (col_sds + 10^-32)
+
+table(is.na(z_scores))
+
+summary(z_scores)
+
+pvals <- pnorm(abs(z_scores), lower.tail = F)
+
+table(z_scores > 0)
+
+hist(z_scores)
+
+hist(node_degree_distribution)
 
 get_params(test_class, TRUE, TRUE)
 

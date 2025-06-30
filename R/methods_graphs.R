@@ -65,8 +65,10 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 
     if (sum(diff_vec) == 0) {
       stop(
-        "No scores found to diffuse over the network. Please check the names
-      and/or values."
+        paste(
+          "No scores found to diffuse over the network.",
+          "Please check the names and/or values."
+        )
       )
     }
 
@@ -76,10 +78,15 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
       personalized = diff_vec
     )
 
+    diffusion_params <- list(
+      "seed_nodes" = seed_nodes,
+      "diffusion_type" = "single",
+      "diffusion_vector" = diffusion_vector
+    )
+
     ## Assign and return
     S7::prop(object, "diffusion_res") <- page_rank_score$vector
-    S7::prop(object, "params")["diffusion_type"] <- "single"
-    S7::prop(object, "params")[["seed_nodes"]] <- seed_nodes
+    S7::prop(object, "params")[["diffusion_params"]] <- diffusion_params
 
     return(object)
   }
@@ -170,8 +177,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     }
     if ((sum(diff_vec_1) == 0) || (sum(diff_vec_1) == 0)) {
       stop(
-        "No scores found on first and/or second of the diffusion vectors.
-        Please check the names and/or values."
+        paste(
+          "No scores found on first and/or second of the diffusion vectors.",
+          "Please check the names and/or values."
+        )
       )
     }
 
@@ -186,8 +195,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     score_2 <- if (directed) {
       if (.verbose) {
         message(
-          "Directed graph found. Function will use transpose of adjacency for
-          second diffusion."
+          paste(
+            "Directed graph found.",
+            "Function will use transpose of adjacency for second diffusion."
+          )
         )
       }
       adj <- igraph::as_adjacency_matrix(S7::prop(object, "graph"))
@@ -197,8 +208,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     } else {
       if (.verbose) {
         message(
-          "Undirected graph found. Using graph as is for second
-        diffusion."
+          paste(
+            "Undirected graph found.",
+            "Using graph as is for second diffusion."
+          )
         )
       }
       igraph::page_rank(
@@ -292,7 +305,7 @@ S7::method(community_detection, network_diffusions) <- function(
 ) {
   # Bindings
   . <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
-    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- NULL
+    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- `:=` <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::network_diffusions")
   checkmate::qassert(diffusion_threshold, "R1[0,1]")
@@ -307,8 +320,10 @@ S7::method(community_detection, network_diffusions) <- function(
   # Early return
   if (length(diffusion_score) == 0) {
     warning(
-      "The diffusion score has length 0. Likely you did not run the diffusion
-      methods. Returning class as is."
+      paste(
+        "The diffusion score has length 0.",
+        "Likely you did not run the diffusion methods. Returning class as is."
+      )
     )
     return(object)
   }
@@ -456,8 +471,10 @@ S7::method(community_detection, network_diffusions) <- function(
   # Early return
   if (length(clusters_to_take) == 0) {
     warning(
-      "No communities found with the given parameters.
-    Returning class as is."
+      paste(
+        "No communities found with the given parameters.",
+        "Returning class as is."
+      )
     )
     return(object)
   }
@@ -477,7 +494,10 @@ S7::method(community_detection, network_diffusions) <- function(
     ks_vals[i] <- ks$p.value
   }
 
-  ks_val_df <- data.table(cluster_id = clusters_to_take, ks_pval = ks_vals)
+  ks_val_df <- data.table::data.table(
+    cluster_id = clusters_to_take,
+    ks_pval = ks_vals
+  )
 
   final_result <- purrr::reduce(
     list(finalised_clusters_clean, ks_val_df, final_node_frequency),
@@ -596,8 +616,10 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     diffusion_score <- S7::prop(object, "diffusion_res")
     if (length(diffusion_score) == 0) {
       warning(
-        "The diffusion score has length 0. Likely you did not run the diffusion
-        methods. Returning NULL."
+        paste(
+          "The diffusion score has length 0.",
+          "Likely you did not run the diffusion methods. Returning NULL."
+        )
       )
       return(NULL)
     }
@@ -628,9 +650,9 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     return(to_ret)
   }
 
-# rbh_graph ----
+# rbh_graph --------------------------------------------------------------------
 
-## graph generation ----
+## graph generation ------------------------------------------------------------
 
 #' Generate an RBH graph.
 #'
@@ -675,7 +697,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     .debug = FALSE
   ) {
     # Assigns
-    origin_modules <- . <- similiarity <- origin <- target <-
+    origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
       target_modules <- NULL
     # Checks
     checkmate::assertClass(object, "bixverse::rbh_graph")
@@ -844,9 +866,11 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
     on.exit(rm(".temp_workers", envir = .GlobalEnv))
 
-    plan(future::multisession(workers = .temp_workers))
+    future::plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose) message("Using sequential computation.")
+    if (.verbose) {
+      message("Using sequential computation.")
+    }
     future::plan(future::sequential())
   }
 
@@ -945,17 +969,24 @@ S7::method(plot_resolution_res, rbh_graph) <- function(
   plot_df <- S7::prop(object, "final_results")
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      paste(
+        "No resolution results found. Did you run cor_module_check_res()?",
+        "Returning NULL."
+      )
     )
     return(NULL)
   }
   plot_df <- plot_df[, c("resolution", "modularity")] %>%
     unique()
-  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
-    geom_point(size = 3, shape = 21, alpha = .7) +
-    xlab("Leiden cluster resolution") +
-    ylab("Modularity") +
-    theme_minimal() +
-    ggtitle("Resolution vs. modularity")
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = aes(x = resolution, y = modularity)
+  ) +
+    ggplot2::geom_point(size = 3, shape = 21, alpha = .7) +
+    ggplot2::xlab("Leiden cluster resolution") +
+    ggplot2::ylab("Modularity") +
+    ggplot2::theme_minimal() +
+    ggplot2::ggtitle("Resolution vs. modularity")
+
   p
 }
