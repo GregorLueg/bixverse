@@ -121,6 +121,7 @@ Return the correlation data and shift
 A list with
 \itemize{
 \item cor_data - Numeric vector. The correlations.
+\item features - String. The feature names.
 \item n_features - Integer. Number of initial features.
 \item shift - Integer. The applied shift.
 }

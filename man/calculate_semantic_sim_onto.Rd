@@ -2,14 +2,12 @@
 % Please edit documentation in R/methods_ontology.R
 \name{calculate_semantic_sim_onto}
 \alias{calculate_semantic_sim_onto}
-\title{Calculate the Resnik and Lin semantic similarity for an ontology.}
+\title{Calculate the Resnik or Lin semantic similarity for an ontology.}
 \usage{
 calculate_semantic_sim_onto(
   object,
-  sim_type,
-  alpha = 0.01,
-  random_sample_no = 100000L,
-  seed = 42L
+  sim_type = c("resnik", "lin", "combined"),
+  .verbose = TRUE
 )
 }
 \arguments{
@@ -17,20 +15,12 @@ calculate_semantic_sim_onto(
 
 \item{sim_type}{String. One of \code{c("resnik", "lin", "combined")}.}
 
-\item{alpha}{Float. Between 0 and 1. A value of 0.01 indicates that the
-critical value is at the 1\% quantile of the random sample of similarities.}
-
-\item{random_sample_no}{Integer. Number of random samples to use to estimate
-the critical value.}
-
-\item{seed}{Integer. Random seed for sampling reproducibility.}
+\item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 The class with added semantic similarities to the properties.
 }
 \description{
 This function calculates the specified semantic similarities for
-the whole ontology, calculate a critical values based on \code{random_sample_no}
-(based on a user-specified alpha) and return all the term-term pairs above
-that threshold.
+the whole ontology and adds it to the class.
 }

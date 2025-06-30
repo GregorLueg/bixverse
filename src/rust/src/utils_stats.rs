@@ -2,8 +2,8 @@ use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
+use rustc_hash::{FxHashMap, FxHashSet};
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
-use std::collections::{HashMap, HashSet};
 
 use crate::helpers_linalg::col_sums;
 
@@ -32,8 +32,8 @@ pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec
 /// Calculate the set similarity. Options are Jaccard (similarity_index = False)
 /// or the similarity index calculation.
 pub fn set_similarity(
-    s_1: &HashSet<&String>,
-    s_2: &HashSet<&String>,
+    s_1: &FxHashSet<&String>,
+    s_2: &FxHashSet<&String>,
     overlap_coefficient: bool,
 ) -> f64 {
     let i = s_1.intersection(s_2).count() as u64;
@@ -338,10 +338,10 @@ pub fn cluster_stability(cluster_matrix: &MatRef<i32>) -> Vec<(f64, f64)> {
     let n_iter = cluster_matrix.ncols();
 
     // Pre-compute cluster membership maps for all bootstraps
-    let bootstrap_cluster_maps: Vec<HashMap<i32, Vec<usize>>> = (0..n_iter)
+    let bootstrap_cluster_maps: Vec<FxHashMap<i32, Vec<usize>>> = (0..n_iter)
         .into_par_iter()
         .map(|boot_idx| {
-            let mut clusters_map: HashMap<i32, Vec<usize>> = HashMap::new();
+            let mut clusters_map: FxHashMap<i32, Vec<usize>> = FxHashMap::default();
             for feature_idx in 0..n_features {
                 let cluster_id = cluster_matrix[(feature_idx, boot_idx)];
                 clusters_map
@@ -448,4 +448,18 @@ pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
             }
         })
         .collect()
+}
+
+/// Calculates the critical value
+pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: usize) -> f64 {
+    let mut rng = StdRng::seed_from_u64(seed as u64);
+    let mut random_sample: Vec<f64> = (0..sample_size)
+        .map(|_| {
+            let index = rng.random_range(0..values.len());
+            values[index]
+        })
+        .collect();
+    random_sample.sort_by(|a, b| b.partial_cmp(a).unwrap());
+    let index = (alpha * random_sample.len() as f64).ceil() as usize;
+    random_sample[index + 1]
 }

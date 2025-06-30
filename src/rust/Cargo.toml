@@ -1,6 +1,6 @@
 [package]
 name = 'bixverse'
-version = '0.1.4'
+version = '0.1.5'
 edition = '2021'
 
 [lib]
@@ -21,3 +21,5 @@ rand_distr = "0.5.0"
 statrs = '*'
 faer = '0.22.6'
 num-complex = '*'
+petgraph = "*"
+rustc-hash = "2.1.1"

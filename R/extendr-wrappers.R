@@ -313,7 +313,10 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #'
 #' @param s_1_list The String vector against which to calculate the set similarities.
 #' @param s_2_list A List of vector against which to calculate the set similarities.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+#' Jaccard similarity be calculated.
+#'
+#' @return Vector of set similarities (upper triangle) values.
 #'
 #' @export
 rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
@@ -405,6 +408,39 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #'
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
+
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param values Numeric vector. The full data set for which to calculate the
+#' critical value.
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, values, iters, alpha, seed)
+
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param mat Numeric matrix. The (symmetric matrix with all of the values).
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
 
 #' Generate reciprocal best hits based on set similarities
 #'
@@ -863,35 +899,48 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' equivalent of the upper triangle of the similarity matrix.
 #'
 #' @export
-rs_onto_similarity <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_similarity, terms, sim_type, ancestor_list, ic_list)
+rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
 
-#' Calculate the semantic similarity in an ontology
+#' Calculate the Wang similarity for an ontology
 #'
-#' @description This function calculates the specified semantic similarity and
-#' returns the full vector (only calculating the upper triangle) for the given
-#' similarity.
+#' @description This function calculates the Wang similarity for a given
+#' ontology.
 #'
-#' @param terms Vector of strings. The terms in the ontology you wish to screen.
-#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
-#' @param alpha Float. Must be between 0 to 1. The alpha parameter for calculating
-#' the critival value.
-#' @param ancestor_list R list with names being the term and the elements in the
-#' list the names of the ancestors.
-#' @param ic_list R list with the names being the term and the elements the
-#' information content of this given term. Needs to be a single float!
-#' @param iters Integer. Number of random iterations to use to estimate the
-#' critical value.
-#' @param seed Integer. Random seed for reproducibility purposes.
+#' @param parents String vector. The names of the parents.
+#' @param children String vector. The names of the childs. The length of
+#' `parents` needs to be equal to `children`.
+#' @param w Float. The w parameter for the ontology. Needs to be between
+#' `0 < w < 1`.
+#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item term1 - Term 1
-#'   \item v - v matrix of the SVD.
-#'   \item s - Eigenvalues of the SVD.
+#'   \item sim_mat - the Wang similarity matrix.
+#'   \item names - the row and column names for the calculated matrix.
 #' }
 #'
 #' @export
-rs_onto_similarity_filtered <- function(terms, sim_type, alpha, ancestor_list, ic_list, iters, seed) .Call(wrap__rs_onto_similarity_filtered, terms, sim_type, alpha, ancestor_list, ic_list, iters, seed)
+rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang, parents, children, w, flat_matrix)
+
+#' Filter the term similarities for a specific critical value
+#'
+#' @description This function takes the similarity values as the upper triangle,
+#' the row/column names and filtering the values down based on the threshold.
+#'
+#' @param sim_vals Numerical vector. The upper triangle of the similarity matrix
+#' as a flattened vector.
+#' @param names String vector. The row/col names of the similarity matrix.
+#' @param threshold Float. The filtering threshold.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item t1 - name of term 1.
+#'   \item t2 - name of term 2.
+#'   \item sim - the similarity between the two terms.
+#' }
+#'
+#' @export
+rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
 #' Calculates the TOM over an affinity matrix
 #'

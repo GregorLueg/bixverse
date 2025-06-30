@@ -1,20 +1,21 @@
 use extendr_api::prelude::*;
 use faer::MatRef;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use std::collections::BTreeMap;
 
 ///////////////////
 // Maps and Sets //
 ///////////////////
 
 /// Type alias for a double nested HashMap
-pub type NestedHashMap = HashMap<String, HashMap<String, HashSet<String>>>;
+pub type NestedHashMap = FxHashMap<String, FxHashMap<String, FxHashSet<String>>>;
 
 /// Type alias for double nested BtreeMap
-pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, HashSet<String>>>;
+pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, FxHashSet<String>>>;
 
 /// Transforms a Robj List into a Hashmap
-pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<HashMap<String, Vec<String>>> {
-    let mut result = HashMap::with_capacity(r_list.len());
+pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, Vec<String>>> {
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
 
     for (n, s) in r_list {
         let s_vec = s.as_string_vector().ok_or_else(|| {
@@ -32,8 +33,8 @@ pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<HashMap<String, Ve
 /// Transforms a Robj List into a Hashmap with the values as Hashset
 pub fn r_list_to_hashmap_set(
     r_list: List,
-) -> extendr_api::Result<HashMap<String, HashSet<String>>> {
-    let mut result = HashMap::with_capacity(r_list.len());
+) -> extendr_api::Result<FxHashMap<String, FxHashSet<String>>> {
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
 
     for (n, s) in r_list {
         let s_vec = s.as_string_vector().ok_or_else(|| {
@@ -42,7 +43,7 @@ pub fn r_list_to_hashmap_set(
                 n
             ))
         })?;
-        let mut s_hash = HashSet::with_capacity(s_vec.len());
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
         for item in s_vec {
             s_hash.insert(item);
         }
@@ -55,7 +56,7 @@ pub fn r_list_to_hashmap_set(
 // Transforms an Robj nested list into a nested hashmap
 #[allow(dead_code)]
 pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
-    let mut result = HashMap::with_capacity(r_nested_list.len());
+    let mut result = FxHashMap::with_capacity_and_hasher(r_nested_list.len(), FxBuildHasher);
     for (n, obj) in r_nested_list {
         let inner_list = obj.as_list().ok_or_else(|| {
             Error::Other(format!("Failed to convert value for key '{}' to list", n))
@@ -68,7 +69,9 @@ pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedH
 
 /// Transform a Robj List into a BTreeMap with the values as HashSet
 /// Import where ordering of the values matters
-pub fn r_list_to_btree_set(r_list: List) -> extendr_api::Result<BTreeMap<String, HashSet<String>>> {
+pub fn r_list_to_btree_set(
+    r_list: List,
+) -> extendr_api::Result<BTreeMap<String, FxHashSet<String>>> {
     let mut result = BTreeMap::new();
     for (n, s) in r_list {
         let s_vec = s.as_string_vector().ok_or_else(|| {
@@ -77,7 +80,7 @@ pub fn r_list_to_btree_set(r_list: List) -> extendr_api::Result<BTreeMap<String,
                 n
             ))
         })?;
-        let mut s_hash = HashSet::with_capacity(s_vec.len());
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
         for item in s_vec {
             s_hash.insert(item);
         }

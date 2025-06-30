@@ -1,13 +1,13 @@
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 
 use crate::helpers_hypergeom::hypergeom_pval;
 use crate::helpers_linalg::{col_means, col_sds};
 use crate::utils_r_rust::{r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils_rust::{flatten_vector, string_vec_to_set};
-use crate::utils_stats::{hedge_g_effect, set_similarity, split_vector_randomly, EffectSizeRes};
+use crate::utils_stats::*;
 
 /// Fast AUC calculation
 ///
@@ -191,8 +191,8 @@ fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
 /// @export
 #[extendr]
 fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bool) -> f64 {
-    let mut s_hash1 = HashSet::with_capacity(s_1.len());
-    let mut s_hash2 = HashSet::with_capacity(s_2.len());
+    let mut s_hash1 = FxHashSet::default();
+    let mut s_hash2 = FxHashSet::default();
 
     for item in &s_1 {
         s_hash1.insert(item);
@@ -211,7 +211,10 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 ///
 /// @param s_1_list The String vector against which to calculate the set similarities.
 /// @param s_2_list A List of vector against which to calculate the set similarities.
-/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+/// Jaccard similarity be calculated.
+///
+/// @return Vector of set similarities (upper triangle) values.
 ///
 /// @export
 #[extendr]
@@ -223,8 +226,8 @@ fn rs_set_similarity_list(
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
-    let s_hash1: Vec<HashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
-    let s_hash2: Vec<HashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash1: Vec<FxHashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
+    let s_hash2: Vec<FxHashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
     let res: Vec<Vec<f64>> = s_hash1
         .into_iter()
@@ -242,6 +245,52 @@ fn rs_set_similarity_list(
     Ok(res)
 }
 
+/// Calculate the critical value
+///
+/// This function calculates the critical value for a given set based on random
+/// permutations and a given alpha value.
+///
+/// @param values Numeric vector. The full data set for which to calculate the
+/// critical value.
+/// @param iters Integer. Number of random permutations to use.
+/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
+/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param seed Integer. For reproducibility purposes
+///
+/// @return The critical value for the given parameters.
+///
+/// @export
+#[extendr]
+fn rs_critval(values: &[f64], iters: usize, alpha: f64, seed: usize) -> f64 {
+    calculate_critval(values, iters, &alpha, seed)
+}
+
+/// Calculate the critical value
+///
+/// This function calculates the critical value for a given set based on random
+/// permutations and a given alpha value.
+///
+/// @param mat Numeric matrix. The (symmetric matrix with all of the values).
+/// @param iters Integer. Number of random permutations to use.
+/// @param alpha Float. The alpha value. For example, 0.001 would mean that the
+/// critical value is smaller than 0.1 percentile of the random permutations.
+/// @param seed Integer. For reproducibility purposes
+///
+/// @return The critical value for the given parameters.
+///
+/// @export
+#[extendr]
+fn rs_critval_mat(mat: RMatrix<f64>, iters: usize, alpha: f64, seed: usize) -> f64 {
+    let mut values: Vec<f64> = Vec::new();
+    for r in 0..mat.nrows() {
+        for c in (r + 1)..mat.ncols() {
+            values.push(mat[[r, c]]);
+        }
+    }
+
+    calculate_critval(&values, iters, &alpha, seed)
+}
+
 extendr_module! {
     mod fun_stats;
     fn rs_set_similarity_list;
@@ -251,4 +300,6 @@ extendr_module! {
     fn rs_hedges_g;
     fn rs_fdr_adjustment;
     fn rs_phyper;
+    fn rs_critval;
+    fn rs_critval_mat;
 }

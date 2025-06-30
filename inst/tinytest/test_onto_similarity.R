@@ -39,17 +39,103 @@ expected_ic_data <- list(
   f = 1.791759
 )
 
-expected_resnik <- readRDS("./test_data/semantic_sim_resnik.rds")
-expected_lin <- readRDS("./test_data/semantic_sim_lin.rds")
-expected_combined <- readRDS("./test_data/semantic_sim_combined.rds")
-
-expected_sim_filtered <- data.table::data.table(
-  term1 = "c",
-  term2 = "f",
-  filtered_sim = 1.098612
+expected_resnik <- c(
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.1823216,
+  0.1823216,
+  0.1823216,
+  0.1823216,
+  0.1823216,
+  0.1823216,
+  1.0986123,
+  0.1823216,
+  0.1823216,
+  0.1823216
 )
 
-expected_critval <- 1.098612
+expected_lin <- c(
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.2846697,
+  0.1847154,
+  0.1847154,
+  0.1847154,
+  0.1261579,
+  0.1261579,
+  0.7601875,
+  0.1017556,
+  0.1017556,
+  0.1017556
+)
+
+expected_combined <- c(
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.1932127,
+  0.1432355,
+  0.1432355,
+  0.1432355,
+  0.1139567,
+  0.1139567,
+  0.6866674,
+  0.1017556,
+  0.1017556,
+  0.1017556
+)
+
+expected_data_table <- data.table::data.table(
+  feature_a = c(
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "b",
+    "b",
+    "b",
+    "c",
+    "c",
+    "c",
+    "d",
+    "d",
+    "e"
+  ),
+  feature_b = c(
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "c",
+    "d",
+    "e",
+    "f",
+    "d",
+    "e",
+    "f",
+    "e",
+    "f",
+    "f"
+  ),
+  sim = expected_resnik
+)
+
+expected_filtered <- data.table::data.table(
+  t1 = "c",
+  t2 = "f",
+  sim = 1.098612
+)
 
 ## separate functions ----------------------------------------------------------
 
@@ -104,21 +190,21 @@ combined <- calculate_semantic_sim(
 )
 
 expect_equivalent(
-  current = resnik,
+  current = rs_dense_to_upper_triangle(resnik, 1),
   target = expected_resnik,
   info = "Ontology similarity test for semantic semilarity (Resnik).",
   tolerance = 1e-6
 )
 
 expect_equivalent(
-  current = lin,
+  current = rs_dense_to_upper_triangle(lin, 1),
   target = expected_lin,
   info = "Ontology similarity test for semantic semilarity (Lin).",
   tolerance = 1e-6
 )
 
 expect_equivalent(
-  current = combined,
+  current = rs_dense_to_upper_triangle(combined, 1),
   target = expected_combined,
   info = "Ontology similarity test for semantic semilarity (combined type).",
   tolerance = 1e-6
@@ -128,28 +214,273 @@ expect_equivalent(
 
 test_class <- ontology(test_onto, .verbose = FALSE)
 
-test_class <- calculate_semantic_sim_onto(test_class, sim_type = "resnik")
+expect_warning(
+  current = calculate_semantic_sim_onto(test_class, sim_type = "resnik"),
+  info = paste("Ontology similarity - warning working")
+)
 
-crit_val <- get_params(test_class)$semantic_similarity$critval
+test_class <- pre_process_sim_onto(test_class, .verbose = FALSE)
 
-semantic_similarity_filtered <- get_semantic_similarities(test_class)
+test_class <- calculate_semantic_sim_onto(object = test_class, .verbose = FALSE)
+
+matrix_result <- get_sim_matrix(test_class, .verbose = FALSE)
+
+dt_result <- get_sim_matrix(test_class, as_data_table = TRUE, .verbose = FALSE)
+
 
 expect_equivalent(
-  current = semantic_similarity_filtered,
-  target = expected_sim_filtered,
+  current = rs_dense_to_upper_triangle(matrix_result, 1),
+  target = expected_resnik,
   info = paste(
-    "Ontology similarity test for class with filtering on crit value",
-    "- similarities"
+    "Ontology class semantic similarity - matrix version"
+  ),
+  tolerance = 1e-6
+)
+
+expect_equal(
+  current = dt_result,
+  target = expected_data_table,
+  info = paste(
+    "Ontology class semantic similarity - data.table version"
+  ),
+  tolerance = 1e-6
+)
+
+### filtering ------------------------------------------------------------------
+
+test_class <- filter_similarities(
+  object = test_class,
+  alpha = 0.01,
+  .verbose = FALSE
+)
+
+filtered_results <- get_results(test_class)
+
+expect_equal(
+  current = filtered_results,
+  target = expected_filtered,
+  info = paste(
+    "Ontology class semantic similarity - data.table version"
+  ),
+  tolerance = 1e-6
+)
+
+# test ontology wang similarity ------------------------------------------------
+
+## expected values -------------------------------------------------------------
+
+test_onto <- data.table::data.table(
+  parent = c("a", "b", "b", "b", "c", "g"),
+  child = c("b", "c", "d", "e", "f", "h")
+)
+
+expected_sims_w08 <- c(
+  0.4807122,
+  0,
+  0.6212121,
+  0.3825911,
+  0.8145401,
+  0,
+  0.4807122,
+  0,
+  0.7641509,
+  0.4767442,
+  0.5901639,
+  0,
+  0.5901639,
+  0,
+  0,
+  0,
+  0.6428571,
+  0,
+  0.6428571,
+  0.7641509,
+  0,
+  0.7641509,
+  0.4767442,
+  0,
+  0.4767442,
+  0,
+  0.5901639,
+  0
+)
+
+expected_sims_w06 <- c(
+  0.3713733,
+  0,
+  0.5762712,
+  0.3828715,
+  0.7582205,
+  0,
+  0.3713733,
+  0,
+  0.7191011,
+  0.4594595,
+  0.4897959,
+  0,
+  0.4897959,
+  0,
+  0,
+  0,
+  0.6153846,
+  0,
+  0.6153846,
+  0.7191011,
+  0,
+  0.7191011,
+  0.4594595,
+  0,
+  0.4594595,
+  0,
+  0.4897959,
+  0
+)
+
+expected_dt_w08 <- data.table::data.table(
+  feature_a = c(
+    "f",
+    "f",
+    "f",
+    "f",
+    "f",
+    "f",
+    "f",
+    "d",
+    "d",
+    "d",
+    "d",
+    "d",
+    "d",
+    "g",
+    "g",
+    "g",
+    "g",
+    "g",
+    "b",
+    "b",
+    "b",
+    "b",
+    "a",
+    "a",
+    "a",
+    "c",
+    "c",
+    "h"
+  ),
+  feature_b = c(
+    "d",
+    "g",
+    "b",
+    "a",
+    "c",
+    "h",
+    "e",
+    "g",
+    "b",
+    "a",
+    "c",
+    "h",
+    "e",
+    "b",
+    "a",
+    "c",
+    "h",
+    "e",
+    "a",
+    "c",
+    "h",
+    "e",
+    "c",
+    "h",
+    "e",
+    "h",
+    "e",
+    "e"
+  ),
+  sim = expected_sims_w08
+)
+
+expected_critval_w08 <- 0.7641509
+
+expected_critval_w06 <- 0.7191011
+
+## functions -------------------------------------------------------------------
+
+results_w08 <- calculate_wang_sim(test_onto, w = 0.8)
+
+results_w06 <- calculate_wang_sim(test_onto, w = 0.6)
+
+critval_w08 <- calculate_critical_value(results_w08, alpha = 0.1)
+
+critval_w06 <- calculate_critical_value(results_w06, alpha = 0.1)
+
+expect_equivalent(
+  current = rs_dense_to_upper_triangle(results_w08, 1L),
+  target = expected_sims_w08,
+  info = "Wang similarity w = 0.8 test",
+  tolerance = 1e-6
+)
+
+expect_equivalent(
+  current = rs_dense_to_upper_triangle(results_w06, 1L),
+  target = expected_sims_w06,
+  info = "Wang similarity w = 0.6 test",
+  tolerance = 1e-6
+)
+
+expect_equivalent(
+  current = critval_w08,
+  target = expected_critval_w08,
+  info = "Wang similarity w = 0.8 critical value",
+  tolerance = 1e-6
+)
+
+expect_equivalent(
+  current = critval_w06,
+  target = expected_critval_w06,
+  info = "Wang similarity w = 0.6 critical value",
+  tolerance = 1e-6
+)
+
+## class -----------------------------------------------------------------------
+
+test_class <- ontology(test_onto, .verbose = FALSE)
+
+test_class <- calculate_wang_sim_onto(test_class, .verbose = FALSE)
+
+matrix_res <- get_sim_matrix(
+  test_class,
+  as_data_table = FALSE,
+  .verbose = FALSE
+)
+
+dt_res <- get_sim_matrix(
+  test_class,
+  as_data_table = TRUE,
+  .verbose = FALSE
+)
+
+critval_class <- calculate_critical_value(test_class, alpha = 0.1)
+
+expect_equivalent(
+  current = rs_dense_to_upper_triangle(matrix_res, 1L),
+  target = expected_sims_w08,
+  info = "Ontology class wang similarity - matrix version",
+  tolerance = 1e-6
+)
+
+expect_equal(
+  current = dt_res,
+  target = expected_dt_w08,
+  info = paste(
+    "Ontology class wang similarity - data.table version"
   ),
   tolerance = 1e-6
 )
 
 expect_equivalent(
-  current = crit_val,
-  target = expected_critval,
-  info = paste(
-    "Ontology similarity test for class with filtering on crit value",
-    "- critical value"
-  ),
+  current = critval_class,
+  target = expected_critval_w08,
+  info = "Ontology class wang similarity - critical value",
   tolerance = 1e-6
 )

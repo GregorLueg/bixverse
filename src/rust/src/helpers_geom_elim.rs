@@ -1,5 +1,6 @@
 use extendr_api::prelude::*;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::{BTreeMap, HashMap};
 
 use crate::helpers_fgsea::{
     calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaParams,
@@ -13,13 +14,13 @@ use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
 ///////////////////////
 
 /// Type alias for the go identifier to gene Hashmap
-type GeneMap = HashMap<String, HashSet<String>>;
+type GeneMap = FxHashMap<String, FxHashSet<String>>;
 
 /// Type alias for the ancestor to go identifier HashMap
-type AncestorMap = HashMap<String, Vec<String>>;
+type AncestorMap = FxHashMap<String, Vec<String>>;
 
 /// Type alias for the ontology level to go identifier HashMap
-type LevelMap = HashMap<String, Vec<String>>;
+type LevelMap = FxHashMap<String, Vec<String>>;
 
 /// Type alias for intermediary results
 /// The first value is the ES score, the second the size and the third
@@ -76,7 +77,7 @@ impl<'a> GeneOntology<'a> {
         self.levels.get(id)
     }
 
-    pub fn remove_genes(&mut self, ids: &[String], genes_to_remove: &HashSet<String>) {
+    pub fn remove_genes(&mut self, ids: &[String], genes_to_remove: &FxHashSet<String>) {
         for id in ids.iter() {
             if let Some(gene_set) = self.go_to_gene.get_mut(id) {
                 gene_set.retain(|gene| !genes_to_remove.contains(gene));
@@ -85,8 +86,8 @@ impl<'a> GeneOntology<'a> {
     }
 
     /// Get the genes based on an array of Strings.
-    pub fn get_genes_list(&self, ids: &[String]) -> HashMap<String, &HashSet<String>> {
-        let mut to_ret = HashMap::new();
+    pub fn get_genes_list(&self, ids: &[String]) -> FxHashMap<String, &FxHashSet<String>> {
+        let mut to_ret = FxHashMap::default();
 
         for id in ids.iter() {
             if self.go_to_gene.contains_key(id) {
@@ -98,7 +99,7 @@ impl<'a> GeneOntology<'a> {
     }
 
     /// Get the genes for one specific ID
-    pub fn get_genes(&self, id: &String) -> Option<&HashSet<String>> {
+    pub fn get_genes(&self, id: &String) -> Option<&FxHashSet<String>> {
         self.go_to_gene.get(id)
     }
 }
@@ -185,7 +186,7 @@ pub fn process_ontology_level(
 
     // Convert target genes to a HashSet for efficient lookup
     let trials = target_genes.len() as u64;
-    let target_set: HashSet<_> = target_genes.iter().cloned().collect();
+    let target_set: FxHashSet<_> = target_genes.iter().cloned().collect();
 
     let size = level_data_final.len();
 
@@ -274,7 +275,7 @@ pub fn process_ontology_level(
 
         if debug {
             for ancestor in &ancestors_final {
-                let mut binding = HashSet::with_capacity(1);
+                let mut binding = FxHashSet::default();
                 binding.insert("no genes left".to_string());
                 let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
                 if debug {
@@ -387,7 +388,7 @@ pub fn process_ontology_level_fgsea_simple(
 
         if debug {
             for ancestor in &ancestors_final {
-                let mut binding = HashSet::with_capacity(1);
+                let mut binding = FxHashSet::default();
                 binding.insert("no genes left".to_string());
                 let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
                 if debug {

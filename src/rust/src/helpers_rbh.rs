@@ -1,5 +1,6 @@
 use faer::Mat;
-use std::collections::{BTreeMap, HashSet};
+use rustc_hash::FxHashSet;
+use std::collections::BTreeMap;
 
 use crate::utils_rust::*;
 use crate::utils_stats::set_similarity;
@@ -14,8 +15,8 @@ pub struct RbhTripletStruc<'a> {
 
 /// Calculates the reciprocal best hits based on set similarities.
 pub fn calculate_rbh_set<'a>(
-    origin_modules: &'a BTreeMap<String, HashSet<String>>,
-    target_modules: &'a BTreeMap<String, HashSet<String>>,
+    origin_modules: &'a BTreeMap<String, FxHashSet<String>>,
+    target_modules: &'a BTreeMap<String, FxHashSet<String>>,
     overlap_coefficient: bool,
     min_similarity: f64,
     debug: bool,
@@ -34,11 +35,11 @@ pub fn calculate_rbh_set<'a>(
     let similarities_flat: Vec<Vec<f64>> = origin_modules
         .values()
         .map(|v1| {
-            let v1_refs: HashSet<&String> = v1.iter().collect();
+            let v1_refs: FxHashSet<&String> = v1.iter().collect();
             target_modules
                 .values()
                 .map(|v2| {
-                    let v2_refs: HashSet<&String> = v2.iter().collect();
+                    let v2_refs: FxHashSet<&String> = v2.iter().collect();
                     set_similarity(&v1_refs, &v2_refs, overlap_coefficient)
                 })
                 .collect()

@@ -1,18 +1,20 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.0.1.4
+Version: 0.0.1.5
 Authors@R: 
     c(
       person("Gregor", "Lueg", email = "gregorlueg@me.com", role = c("aut", "cre")),
       person("Liesbeth", "Francois", email = "francois.liesbeth@gmail.com", role = "aut"),
       person("Andrew", "Skelton", email = "Ajskelton@proton.me", role = "aut")
       )
-Description: ...
+Description: 
+    Your favourite methods used in bioinformatics and computational biology made VERY
+    fast via Rust.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Config/rextendr/version: 0.3.1
+Config/rextendr/version: 0.4.1
 biocViews:
 Imports: 
     arrow,
@@ -38,3 +40,4 @@ Imports:
     limma,
     rhdf5
 Suggests: tinytest
+SystemRequirements: Cargo (Rust's package manager), rustc

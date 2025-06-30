@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_ontology.R
 \name{calculate_semantic_sim}
 \alias{calculate_semantic_sim}
-\title{Calculate the Resnik and Lin semantic similarity}
+\title{Calculate the Resnik or Lin semantic similarity}
 \usage{
 calculate_semantic_sim(terms, similarity_type, ancestor_list, ic_list)
 }
@@ -24,5 +24,6 @@ similarity measure you chose. Self similarity is set to 0.
 }
 \description{
 This function calculates the semantic similarities based on
-Resnik and Lin similarity for a given ontology.
+Resnik or Lin similarity for a given ontology. Has also the option to
+calculate a combined version of the two.
 }
