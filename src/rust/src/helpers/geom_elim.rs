@@ -7,7 +7,7 @@ use crate::helpers::fgsea::{
     GseaResults,
 };
 use crate::helpers::hypergeom::*;
-use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
+use crate::utils::r_rust_interface::{r_list_to_hashmap, r_list_to_hashmap_set};
 
 ///////////////////////
 // Types & Structure //

@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use crate::helpers::graph::*;
 use crate::helpers::linalg::{col_means, col_sds};
-use crate::utils_rust::nested_vector_to_faer_mat;
+use crate::utils::general::nested_vector_to_faer_mat;
 
 /// Rust version of calcaluting the personalised page rank
 ///

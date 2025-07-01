@@ -3,8 +3,8 @@ use rayon::prelude::*;
 
 use crate::helpers::geom_elim::*;
 use crate::helpers::hypergeom::*;
-use crate::utils_r_rust::r_list_to_str_vec;
-use crate::utils_rust::flatten_vector;
+use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::r_list_to_str_vec;
 
 /// A type alias that can be returned by par_iter() functions.
 type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);

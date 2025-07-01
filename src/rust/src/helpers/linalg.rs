@@ -3,8 +3,8 @@ use rand::prelude::*;
 use rand_distr::Normal;
 use rayon::iter::*;
 
-use crate::utils_rust::*;
-use crate::utils_stats::*;
+use crate::utils::general::*;
+use crate::utils::utils_stats::*;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //

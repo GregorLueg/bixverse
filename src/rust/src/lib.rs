@@ -1,11 +1,6 @@
 mod helpers;
 mod r_function;
-
-mod utils_r_rust;
-mod utils_rust;
-mod utils_stats;
-
-mod macro_assertions;
+mod utils;
 
 use extendr_api::prelude::*;
 

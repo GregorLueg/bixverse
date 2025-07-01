@@ -6,8 +6,8 @@ use rayon::prelude::*;
 
 use crate::helpers::fgsea::*;
 use crate::helpers::geom_elim::*;
-use crate::utils_r_rust::r_named_vec_data;
-use crate::utils_rust::flatten_vector;
+use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::r_named_vec_data;
 
 //////////////////////
 // Helper functions //

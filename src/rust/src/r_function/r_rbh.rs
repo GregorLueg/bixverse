@@ -2,8 +2,8 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 
 use crate::helpers::rbh::*;
-use crate::utils_r_rust::{r_nested_list_to_btree_nest, NestedBtreeMap};
-use crate::utils_rust::flatten_vector;
+use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::{r_nested_list_to_btree_nest, NestedBtreeMap};
 
 /// Structure to store the RBH results.
 #[derive(Clone, Debug)]

@@ -317,7 +317,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
     randomised_diffusions <- generate_perm_diffusion_vecs(
       graph = graph,
       diffusion_vec = diffusion_vector,
-      iters = perm_iter
+      iters = perm_iters
     )
 
     # use rust for fast calculations
@@ -325,7 +325,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
-      diffusion_scores = randomised_sets,
+      diffusion_scores = randomised_diffusions,
       undirected = !igraph::is_directed(graph)
     )
   } else {
@@ -594,8 +594,8 @@ S7::method(community_detection, network_diffusions) <- function(
         .(cluster_id)
       ]
     } else {
-      seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
-      seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
+      seed_nodes_set_1 <- diffusion_params$seed_nodes_1
+      seed_nodes_set_2 <- diffusion_params$seed_nodes_2
 
       final_clusters[,
         .(
@@ -849,7 +849,7 @@ generate_perm_diffusion_vecs <- function(
   diffusion_names <- names(diffusion_vec)
   node_degrees <- node_degree_discrete[diffusion_names]
 
-  randomised_diffusions <- purrr::map(1:perm_iter, \(i) {
+  randomised_diffusions <- purrr::map(1:iters, \(i) {
     set.seed(random_seed + i)
 
     random_set_i <- purrr::map_chr(node_degrees, \(degree) {

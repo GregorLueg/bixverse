@@ -1,8 +1,8 @@
 use extendr_api::prelude::*;
 
 use crate::helpers::linalg::*;
-use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
-use crate::utils_rust::{nested_vector_to_faer_mat, upper_triangle_indices};
+use crate::utils::general::{nested_vector_to_faer_mat, upper_triangle_indices};
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Calculate the column-wise co-variance.
 ///

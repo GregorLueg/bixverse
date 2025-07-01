@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
 use crate::helpers::ica::*;
-use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Prepare the data for whitening
 ///
