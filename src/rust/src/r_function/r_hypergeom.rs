@@ -1,10 +1,10 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 
-use crate::helpers_geom_elim::*;
-use crate::helpers_hypergeom::*;
-use crate::utils_r_rust::r_list_to_str_vec;
-use crate::utils_rust::flatten_vector;
+use crate::helpers::geom_elim::*;
+use crate::helpers::hypergeom::*;
+use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::r_list_to_str_vec;
 
 /// A type alias that can be returned by par_iter() functions.
 type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
@@ -325,7 +325,7 @@ fn rs_gse_geom_elim_list(
 }
 
 extendr_module! {
-    mod fun_hypergeom;
+    mod r_hypergeom;
     fn rs_hypergeom_test;
     fn rs_hypergeom_test_list;
     fn rs_gse_geom_elim;

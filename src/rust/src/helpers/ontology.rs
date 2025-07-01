@@ -1,4 +1,4 @@
-use crate::utils_rust::flatten_vector;
+use crate::utils::general::flatten_vector;
 
 use extendr_api::prelude::*;
 use faer::Mat;

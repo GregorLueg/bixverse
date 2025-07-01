@@ -3,8 +3,8 @@ use rand::prelude::*;
 use rand_distr::Normal;
 use rayon::iter::*;
 
-use crate::utils_rust::*;
-use crate::utils_stats::*;
+use crate::utils::general::*;
+use crate::utils::utils_stats::*;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
@@ -142,7 +142,7 @@ pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
             })
             .collect();
 
-        nested_vector_to_faer_mat(ranked_vecs)
+        nested_vector_to_faer_mat(ranked_vecs, true)
     } else {
         mat.cloned()
     };
@@ -327,5 +327,5 @@ pub fn rbf_iterate_epsilons(
         })
         .collect();
 
-    Ok(nested_vector_to_faer_mat(k_res))
+    Ok(nested_vector_to_faer_mat(k_res, true))
 }

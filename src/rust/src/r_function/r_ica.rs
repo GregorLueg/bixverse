@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
-use crate::helpers_ica::*;
-use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::helpers::ica::*;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Prepare the data for whitening
 ///
@@ -258,7 +258,7 @@ fn rs_ica_iters_cv(
 }
 
 extendr_module! {
-  mod fun_ica;
+  mod r_ica;
   fn rs_prepare_whitening;
   fn rs_fast_ica;
   fn rs_ica_iters;

@@ -1,41 +1,30 @@
-mod helpers_fgsea;
-mod helpers_geom_elim;
-mod helpers_hypergeom;
-mod helpers_ica;
-mod helpers_linalg;
-mod helpers_ontology;
-mod helpers_rbh;
-mod helpers_sparse;
-
-mod fun_coremo;
-mod fun_fgsea;
-mod fun_helpers;
-mod fun_hypergeom;
-mod fun_ica;
-mod fun_linalg;
-mod fun_ontology;
-mod fun_rbh;
-mod fun_stats;
-mod fun_struct;
-
-mod utils_r_rust;
-mod utils_rust;
-mod utils_stats;
-
-mod macro_assertions;
+mod helpers;
+mod r_function;
+mod utils;
 
 use extendr_api::prelude::*;
 
+pub use r_function::r_coremo;
+pub use r_function::r_fgsea;
+pub use r_function::r_graphs;
+pub use r_function::r_helpers;
+pub use r_function::r_hypergeom;
+pub use r_function::r_ica;
+pub use r_function::r_linalg;
+pub use r_function::r_ontology;
+pub use r_function::r_rbh;
+pub use r_function::r_stats;
+
 extendr_module! {
     mod bixverse;
-    use fun_fgsea;
-    use fun_hypergeom;
-    use fun_stats;
-    use fun_rbh;
-    use fun_linalg;
-    use fun_helpers;
-    use fun_ica;
-    use fun_ontology;
-    use fun_coremo;
-    use fun_struct;
+    use r_fgsea;
+    use r_hypergeom;
+    use r_stats;
+    use r_rbh;
+    use r_linalg;
+    use r_helpers;
+    use r_ica;
+    use r_ontology;
+    use r_coremo;
+    use r_graphs;
 }

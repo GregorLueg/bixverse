@@ -3,9 +3,9 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rayon::prelude::*;
 
-use crate::utils_r_rust::{faer_to_r_matrix, r_matrix_to_faer};
-use crate::utils_rust::array_f64_max_min;
-use crate::utils_stats::*;
+use crate::utils::general::array_f64_max_min;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils::utils_stats::*;
 
 /// Calculate the OT harmonic sum
 ///
@@ -197,7 +197,7 @@ fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
 }
 
 extendr_module! {
-    mod fun_helpers;
+    mod r_helpers;
     fn rs_upper_triangle_to_dense;
     fn rs_dense_to_upper_triangle;
     fn rs_ot_harmonic_sum;

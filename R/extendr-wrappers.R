@@ -1012,25 +1012,64 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
-#' Generate sparse data from an upper triangle
+#' Helper function to calculate permutation-based page rank scores
 #'
-#' @description This function takes the values from an upper triangle matrix
-#' the shift and the nrows/ncols and returns a list.
+#' @description Helper function to calculate permutation based page-rank scores.
 #'
-#' @param value Numeric vector. The upper triangle values.
-#' @param shift Integer Did you apply a shift to remove the diagonal values?
-#' @param n Integer. The number of columns/rows in the symmetric matrix.
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores List. The personalised vectors for the page rank reset
+#' values. Each element must sum to 1 and be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
 #'
 #' @return A list containing:
 #'  \itemize{
-#'   \item data - A vector of lists with the elements. (Related to the way
-#'   Robj are stored in Rust.)
-#'   \item row_indices - A vector of integers with the row indices.
-#'   \item col_ptr - A vector of integers with the column pointers.
+#'   \item means - The mean personalised page-rank scores based on the permutations.
+#'   \item sd - The standard deviation of the personalised page-rank scores based on
+#'   permutations.
 #' }
+rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)
+
+#' Rust version of calcaluting the personalised page rank
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param personalised Numerical vector. The reset values. They must sum to 1 and
+#' be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return The personalised page rank values.
 #'
 #' @export
-rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
+rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+
+#' Helper function to calculate permutation-based tied page rank scores
+#'
+#' @description Helper function to calculate permutation based tied page-rank
+#' scores.
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores_1 List. The first set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param diffusion_scores_2 List. The second set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param summarisation_fun String. One of `c("min", "max", "avg")`. Which type
+#' of summarisation function to use to calculate the tied diffusion.
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item means - The mean personalised page-rank scores based on the permutations.
+#'   \item sd - The standard deviation of the personalised page-rank scores based on
+#'   permutations.
+#' }
+rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_page_rank_permutations_tied, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
 
 # nolint end

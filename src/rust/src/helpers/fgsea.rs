@@ -8,8 +8,8 @@ use statrs::distribution::{Beta, ContinuousCDF};
 use statrs::function::gamma::digamma;
 use std::collections::HashMap;
 
-use crate::utils_rust::{array_max, array_min, cumsum, unique};
-use crate::utils_stats::trigamma;
+use crate::utils::general::{array_max, array_min, cumsum, unique};
+use crate::utils::utils_stats::trigamma;
 
 //////////////////
 // Type aliases //

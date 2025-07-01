@@ -8,7 +8,10 @@ params_community_detection(
   max_nodes = 300L,
   min_nodes = 10L,
   min_seed_nodes = 2L,
-  initial_res = 0.5
+  initial_res = 0.5,
+  threshold_type = c("prop_based", "pval_based"),
+  network_threshold = 0.5,
+  pval_threshold = 0.1
 )
 }
 \arguments{
@@ -20,6 +23,16 @@ params_community_detection(
 community.}
 
 \item{initial_res}{Float. Initial resolution parameter to start with.}
+
+\item{threshold_type}{String. One of \code{c("prop_based", "pval_based")}.
+You can chose to include a certain proportion of the network with the highest
+diffusion scores, or use p-values based on permutations.}
+
+\item{network_threshold}{Float. The proportion of the network to include.
+Used if \code{threshold_type = "prop_based"}.}
+
+\item{pval_threshold}{Float. The maximum p-value for nodes to be included.
+Used if \code{threshold_type = "pval_based"}.}
 }
 \value{
 List with parameters for usage in subsequent function.

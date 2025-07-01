@@ -2,12 +2,12 @@ use extendr_api::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::{BTreeMap, HashMap};
 
-use crate::helpers_fgsea::{
+use crate::helpers::fgsea::{
     calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaParams,
     GseaResults,
 };
-use crate::helpers_hypergeom::*;
-use crate::utils_r_rust::{r_list_to_hashmap, r_list_to_hashmap_set};
+use crate::helpers::hypergeom::*;
+use crate::utils::r_rust_interface::{r_list_to_hashmap, r_list_to_hashmap_set};
 
 ///////////////////////
 // Types & Structure //

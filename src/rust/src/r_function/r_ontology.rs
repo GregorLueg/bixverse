@@ -1,8 +1,8 @@
 use extendr_api::prelude::*;
 
-use crate::helpers_ontology::*;
-use crate::utils_r_rust::{faer_to_r_matrix, r_list_to_hashmap_set};
-use crate::utils_rust::faer_mat_to_upper_triangle;
+use crate::helpers::ontology::*;
+use crate::utils::general::faer_mat_to_upper_triangle;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_list_to_hashmap_set};
 
 /// Calculate the semantic similarity in an ontology
 ///
@@ -131,7 +131,7 @@ fn rs_filter_onto_sim(sim_vals: &[f64], names: Vec<String>, threshold: f64) -> L
 }
 
 extendr_module! {
-  mod fun_ontology;
+  mod r_ontology;
   fn rs_onto_semantic_sim;
   fn rs_onto_sim_wang;
   fn rs_filter_onto_sim;

@@ -165,6 +165,13 @@ params_graph_resolution <- function(
 #' @param min_seed_nodes Integer. Minimum number of seed nodes within a
 #' community.
 #' @param initial_res Float. Initial resolution parameter to start with.
+#' @param threshold_type String. One of `c("prop_based", "pval_based")`.
+#' You can chose to include a certain proportion of the network with the highest
+#' diffusion scores, or use p-values based on permutations.
+#' @param network_threshold Float. The proportion of the network to include.
+#' Used if `threshold_type = "prop_based"`.
+#' @param pval_threshold Float. The maximum p-value for nodes to be included.
+#' Used if `threshold_type = "pval_based"`.
 #'
 #' @returns List with parameters for usage in subsequent function.
 #'
@@ -173,20 +180,31 @@ params_community_detection <- function(
   max_nodes = 300L,
   min_nodes = 10L,
   min_seed_nodes = 2L,
-  initial_res = 0.5
+  initial_res = 0.5,
+  threshold_type = c("prop_based", "pval_based"),
+  network_threshold = 0.5,
+  pval_threshold = 0.1
 ) {
+  threshold_type <- match.arg(threshold_type)
+
   # Checks
   checkmate::qassert(max_nodes, sprintf("I1[%i,)", min_nodes))
   checkmate::qassert(min_nodes, "I1")
   checkmate::qassert(min_seed_nodes, "I1")
   checkmate::qassert(initial_res, "N1")
+  checkmate::assertChoice(threshold_type, c("prop_based", "pval_based"))
+  checkmate::qassert(network_threshold, "N1(0, 1]")
+  checkmate::qassert(pval_threshold, "N1(0, 1]")
   # Return
   return(
     list(
       max_nodes = max_nodes,
       min_nodes = min_nodes,
       min_seed_nodes = min_seed_nodes,
-      initial_res = initial_res
+      initial_res = initial_res,
+      threshold_type = threshold_type,
+      network_threshold = network_threshold,
+      pval_threshold = pval_threshold
     )
   )
 }

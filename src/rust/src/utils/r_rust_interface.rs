@@ -1,4 +1,4 @@
-use crate::helpers_sparse::SparseColumnMatrix;
+use crate::helpers::structs_sparse::SparseColumnMatrix;
 use extendr_api::prelude::*;
 use faer::MatRef;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};

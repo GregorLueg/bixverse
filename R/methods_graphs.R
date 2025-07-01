@@ -32,7 +32,6 @@ diffuse_seed_nodes <- S7::new_generic(
   }
 )
 
-
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -52,7 +51,7 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 
     # Body
     ## Create the diffusion vector
-    diffusion_vector <- .summarise_scores(
+    diffusion_vector <- summarise_scores(
       diffusion_vector,
       summarisation = summarisation
     )
@@ -65,8 +64,10 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 
     if (sum(diff_vec) == 0) {
       stop(
-        "No scores found to diffuse over the network. Please check the names
-      and/or values."
+        paste(
+          "No scores found to diffuse over the network.",
+          "Please check the names and/or values."
+        )
       )
     }
 
@@ -76,13 +77,19 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
       personalized = diff_vec
     )
 
+    diffusion_params <- list(
+      "seed_nodes" = seed_nodes,
+      "diffusion_type" = "single",
+      "diffusion_vector" = diffusion_vector
+    )
+
     ## Assign and return
     S7::prop(object, "diffusion_res") <- page_rank_score$vector
-    S7::prop(object, "params")["diffusion_type"] <- "single"
-    S7::prop(object, "params")[["seed_nodes"]] <- seed_nodes
+    S7::prop(object, "params")[["diffusion_params"]] <- diffusion_params
 
     return(object)
   }
+
 
 #' Diffuse seed genes in a tied manner over a network
 #'
@@ -122,7 +129,6 @@ tied_diffusion <- S7::new_generic(
   }
 )
 
-
 #' @export
 #'
 #' @importFrom magrittr `%>%`
@@ -149,11 +155,11 @@ S7::method(tied_diffusion, network_diffusions) <-
 
     # Body
     ## Create the diffusion vectors
-    diffusion_vector_1 <- .summarise_scores(
+    diffusion_vector_1 <- summarise_scores(
       diffusion_vector_1,
       summarisation = summarisation
     )
-    diffusion_vector_2 <- .summarise_scores(
+    diffusion_vector_2 <- summarise_scores(
       diffusion_vector_2,
       summarisation = summarisation
     )
@@ -170,8 +176,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     }
     if ((sum(diff_vec_1) == 0) || (sum(diff_vec_1) == 0)) {
       stop(
-        "No scores found on first and/or second of the diffusion vectors.
-        Please check the names and/or values."
+        paste(
+          "No scores found on first and/or second of the diffusion vectors.",
+          "Please check the names and/or values."
+        )
       )
     }
 
@@ -186,8 +194,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     score_2 <- if (directed) {
       if (.verbose) {
         message(
-          "Directed graph found. Function will use transpose of adjacency for
-          second diffusion."
+          paste(
+            "Directed graph found.",
+            "Function will use transpose of adjacency for second diffusion."
+          )
         )
       }
       adj <- igraph::as_adjacency_matrix(S7::prop(object, "graph"))
@@ -197,8 +207,10 @@ S7::method(tied_diffusion, network_diffusions) <-
     } else {
       if (.verbose) {
         message(
-          "Undirected graph found. Using graph as is for second
-        diffusion."
+          paste(
+            "Undirected graph found.",
+            "Using graph as is for second diffusion."
+          )
         )
       }
       igraph::page_rank(
@@ -215,16 +227,157 @@ S7::method(tied_diffusion, network_diffusions) <-
       rowMeans(cbind(score_1, score_2))
     )
 
+    diffusion_params <- list(
+      "seed_nodes_1" = seed_nodes_1,
+      "seed_nodes_2" = seed_nodes_2,
+      "diffusion_type" = "tied",
+      "diffusion_vector_1" = diffusion_vector_1,
+      "diffusion_vector_2" = diffusion_vector_2,
+      "score_aggregation" = score_aggregation
+    )
+
     ## Assign and return
     S7::prop(object, "diffusion_res") <- final_tiedie_diffusion
-    S7::prop(object, "params")["diffusion_type"] <- "tied"
-    S7::prop(object, "params")[["seed_nodes"]] <- list(
-      "set_1" = seed_nodes_1,
-      "set_2" = seed_nodes_2
-    )
+    S7::prop(object, "params")[[
+      "diffusion_params"
+    ]] <- diffusion_params
 
     return(object)
   }
+
+
+#' Generate permuation scores for the diffusion
+#'
+#' @description
+#' This function generate node-degree adjusted permutations of a given diffusion
+#' score and adds Z-scores to the object. The function will automatically
+#' determine if the original diffusion was a single or tied diffusion and
+#' construct permutations accordingly.
+#'
+#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param perm_iters Integer. Number of permutations to test for. Defaults to
+#' `1000L`.
+#' @param random_seed Integer. Random seed for determinism.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return The class with added diffusion score based on a single set of seed
+#' genes. Additionally, the seed genes are stored in the class.
+#'
+#' @export
+permute_seed_nodes <- S7::new_generic(
+  name = "permute_seed_nodes",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    perm_iters = 1000L,
+    random_seed = 10101L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method permute_seed_nodes network_diffusions
+S7::method(permute_seed_nodes, network_diffusions) <- function(
+  object,
+  perm_iters = 1000L,
+  random_seed = 10101L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::qassert(perm_iters, "I1")
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  graph <- S7::prop(object, "graph")
+  diffusion_params <- S7::prop(object, "params")[["diffusion_params"]]
+  diffusion_results <- S7::prop(object, "diffusion_res")
+  nodes_names <- igraph::V(graph)$name
+
+  # prepare data for rust
+  edge_list <- igraph::as_edgelist(graph, names = TRUE)
+  graph_names <- igraph::V(graph)$name
+
+  if (diffusion_params$diffusion_type == "single") {
+    if (.verbose) {
+      message(sprintf(
+        "Permutations for single diffusion with %i iters being generated.",
+        perm_iters
+      ))
+    }
+
+    # generate randomised diffusion vecs
+    diffusion_vector <- diffusion_params[["diffusion_vector"]]
+
+    randomised_diffusions <- generate_perm_diffusion_vecs(
+      graph = graph,
+      diffusion_vec = diffusion_vector,
+      iters = perm_iters
+    )
+
+    # use rust for fast calculations
+    page_rank_perm_res <- rs_page_rank_permutations(
+      node_names = graph_names,
+      from = edge_list[, 1],
+      to = edge_list[, 2],
+      diffusion_scores = randomised_diffusions,
+      undirected = !igraph::is_directed(graph)
+    )
+  } else {
+    if (.verbose) {
+      message(sprintf(
+        "Permutations for tied diffusion with %i iters being generated.",
+        perm_iters
+      ))
+    }
+    diffusion_vector_1 <- diffusion_params[["diffusion_vector_1"]]
+    diffusion_vector_2 <- diffusion_params[["diffusion_vector_2"]]
+
+    permutations_1 <- generate_perm_diffusion_vecs(
+      graph = graph,
+      diffusion_vec = diffusion_vector_1,
+      iters = perm_iters
+    )
+
+    permutations_2 <- generate_perm_diffusion_vecs(
+      graph = graph,
+      diffusion_vec = diffusion_vector_2,
+      iters = perm_iters
+    )
+
+    page_rank_perm_res <- rs_page_rank_permutations_tied(
+      node_names = graph_names,
+      from = edge_list[, 1],
+      to = edge_list[, 2],
+      diffusion_scores_1 = permutations_1,
+      diffusion_scores_2 = permutations_2,
+      summarisation_fun = diffusion_params$score_aggregation,
+      undirected = !igraph::is_directed(graph)
+    )
+  }
+
+  z_scores <- (diffusion_results - page_rank_perm_res$means) /
+    (page_rank_perm_res$sd + 10^-32)
+
+  diffusion_perm_params <- list(
+    "perm_iters" = perm_iters,
+    "random_seed" = random_seed,
+    "perm_mean" = page_rank_perm_res$means,
+    "perm_sds" = page_rank_perm_res$sd
+  )
+
+  S7::prop(object, "diffusion_perm") <- z_scores
+  S7::prop(object, "params")[["diffusion_perm_params"]] <- diffusion_perm_params
+
+  return(object)
+}
+
 
 ## community detection ---------------------------------------------------------
 
@@ -234,9 +387,6 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' nodes.
 #'
 #' @param object The underlying class [bixverse::network_diffusions()].
-#' @param diffusion_threshold Float. How much of the network to keep based on
-#' the diffusion values. 0.25 for example would keep the 25% nodes with the
-#' highest scores. This was the default in the original paper.
 #' @param community_params List. Parameters for the community detection within
 #' the reduced network, see [bixverse::params_community_detection()]. A list
 #' with the following items:
@@ -248,6 +398,14 @@ S7::method(tied_diffusion, network_diffusions) <-
 #'  be found in a given community.
 #'  \item initial_res - Float. Initial resolution parameter for the Leiden
 #'  clustering.
+#'  \item threshold_type - String. One of `c("prop_based", "pval_based")`.
+#'  You can chose to include a certain proportion of the network (like in the
+#'  original paper) with the highest diffusion scores, or use p-values based
+#'  on permutations. Defaults to `"prop_based"`.
+#'  \item network_threshold - Float. The proportion of the network to
+#'  include. Used if `threshold_type = "prop_based"`.
+#'  \item pval_threshold - Float. The maximum p-value for nodes to be included.
+#'  Used if `threshold_type = "pval_based"`.
 #' }
 #' @param seed Random seed.
 #' @param .verbose Controls the verbosity of the function.
@@ -265,7 +423,6 @@ community_detection <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    diffusion_threshold = 0.25,
     community_params = params_community_detection(),
     seed = 42L,
     .verbose = FALSE,
@@ -284,7 +441,6 @@ community_detection <- S7::new_generic(
 #' @method community_detection network_diffusions
 S7::method(community_detection, network_diffusions) <- function(
   object,
-  diffusion_threshold = 0.25,
   community_params = params_community_detection(),
   seed = 42L,
   .verbose = FALSE,
@@ -292,29 +448,43 @@ S7::method(community_detection, network_diffusions) <- function(
 ) {
   # Bindings
   . <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
-    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- NULL
+    seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- `:=` <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::network_diffusions")
-  checkmate::qassert(diffusion_threshold, "R1[0,1]")
   assertCommunityParams(community_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
   checkmate::qassert(.max_iters, "I1")
 
-  # Body
-  ## Reduce the graph
+  # reduce the graph
   diffusion_score <- S7::prop(object, "diffusion_res")
-  # Early return
+  # early return
   if (length(diffusion_score) == 0) {
     warning(
-      "The diffusion score has length 0. Likely you did not run the diffusion
-      methods. Returning class as is."
+      paste(
+        "The diffusion score has length 0.",
+        "Likely you did not run the diffusion methods. Returning class as is."
+      )
     )
     return(object)
   }
-  nodes_to_include <- diffusion_score %>%
-    sort(decreasing = TRUE) %>%
-    .[1:ceiling(diffusion_threshold * length(diffusion_score))]
+
+  # subset the graph
+  if (community_params$threshold_type == "prop_based") {
+    nodes_to_include <- diffusion_score %>%
+      sort(decreasing = TRUE) %>%
+      .[1:ceiling(community_params$network_threshold * length(diffusion_score))]
+  } else {
+    z_score <- S7::prop(object, "diffusion_perm")
+    if (is.null(z_score)) {
+      warning("No z-scores found. Will calculate these now.")
+      object <- permute_seed_nodes(object)
+      z_score <- S7::prop(object, "diffusion_perm")
+    }
+    p_vals <- pnorm(q = abs(z_score), lower.tail = FALSE)
+    to_include <- p_vals <= community_params$pval_threshold
+    nodes_to_include <- diffusion_score[to_include]
+  }
 
   red_graph <- igraph::subgraph(
     S7::prop(object, "graph"),
@@ -407,11 +577,15 @@ S7::method(community_detection, network_diffusions) <- function(
   })
 
   ## Add the seed node information based on diffusion type
-  diffusion_type <- S7::prop(object, "params")$diffusion_type
+  diffusion_params <- S7::prop(object, "params")[[
+    "diffusion_params"
+  ]]
+
+  diffusion_type <- diffusion_params$diffusion_type
 
   final_node_frequency <- with(community_params, {
     if (diffusion_type == "single") {
-      seed_nodes <- S7::prop(object, "params")$seed_nodes
+      seed_nodes <- diffusion_params$seed_nodes
 
       final_clusters[,
         .(
@@ -421,8 +595,8 @@ S7::method(community_detection, network_diffusions) <- function(
         .(cluster_id)
       ]
     } else {
-      seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
-      seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
+      seed_nodes_set_1 <- diffusion_params$seed_nodes_1
+      seed_nodes_set_2 <- diffusion_params$seed_nodes_2
 
       final_clusters[,
         .(
@@ -456,8 +630,10 @@ S7::method(community_detection, network_diffusions) <- function(
   # Early return
   if (length(clusters_to_take) == 0) {
     warning(
-      "No communities found with the given parameters.
-    Returning class as is."
+      paste(
+        "No communities found with the given parameters.",
+        "Returning class as is."
+      )
     )
     return(object)
   }
@@ -477,7 +653,10 @@ S7::method(community_detection, network_diffusions) <- function(
     ks_vals[i] <- ks$p.value
   }
 
-  ks_val_df <- data.table(cluster_id = clusters_to_take, ks_pval = ks_vals)
+  ks_val_df <- data.table::data.table(
+    cluster_id = clusters_to_take,
+    ks_pval = ks_vals
+  )
 
   final_result <- purrr::reduce(
     list(finalised_clusters_clean, ks_val_df, final_node_frequency),
@@ -490,11 +669,11 @@ S7::method(community_detection, network_diffusions) <- function(
     )]
 
   if (diffusion_type == "single") {
-    seed_nodes <- S7::prop(object, "params")$seed_nodes
+    seed_nodes <- diffusion_params$seed_nodes
     final_result[, seed_node := node_id %in% seed_nodes]
   } else {
-    seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
-    seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
+    seed_nodes_set_1 <- diffusion_params$seed_nodes_1
+    seed_nodes_set_2 <- diffusion_params$seed_nodes_2
     final_result[, `:=`(
       seed_node_a = node_id %in% seed_nodes_set_1,
       seed_node_b = node_id %in% seed_nodes_set_2
@@ -519,7 +698,9 @@ S7::method(community_detection, network_diffusions) <- function(
   S7::prop(object, "params")[["community_params"]] <- with(
     community_params,
     list(
-      diffusion_threshold = diffusion_threshold,
+      network_threshold = network_threshold,
+      pval_threshold = pval_threshold,
+      threshold_type = threshold_type,
       max_nodes = max_nodes,
       min_nodes = min_seed_nodes,
       min_seed_nodes = min_seed_nodes
@@ -596,8 +777,10 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     diffusion_score <- S7::prop(object, "diffusion_res")
     if (length(diffusion_score) == 0) {
       warning(
-        "The diffusion score has length 0. Likely you did not run the diffusion
-        methods. Returning NULL."
+        paste(
+          "The diffusion score has length 0.",
+          "Likely you did not run the diffusion methods. Returning NULL."
+        )
       )
       return(NULL)
     }
@@ -628,9 +811,105 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     return(to_ret)
   }
 
-# rbh_graph ----
+### helpers --------------------------------------------------------------------
 
-## graph generation ----
+##### random page-rank perms ---------------------------------------------------
+
+#' Generates random permutation vectors
+#'
+#' @param graph igraph. The graph for which to generate the random diffusion
+#' vectors
+#' @param diffusion_vec Named numeric. The initial diffusion vector.
+#' @param bins Integer. Number of bins to use for node degree aware sampling.
+#' @param iters Integer. Number of random permutations to generate.
+#' @param random_seed Integer. Random seed.
+#'
+#' @return List with the permutations.
+#'
+#' @importFrom magrittr `%$%`
+generate_perm_diffusion_vecs <- function(
+  graph,
+  diffusion_vec,
+  bins = 25L,
+  iters = 1000L,
+  random_seed = 10101L
+) {
+  # checks
+  checkmate::assertClass(graph, "igraph")
+  checkmate::assertNumeric(diffusion_vec, names = "named")
+  checkmate::qassert(bins, "I1")
+  checkmate::qassert(iters, "I1")
+  checkmate::qassert(random_seed, "I1")
+
+  nodes_names <- igraph::V(graph)$name
+  node_degree_distribution <- log(igraph::degree(graph))
+  node_degree_discrete <- cut(node_degree_distribution, bins) %>%
+    `names<-`(names(node_degree_distribution))
+
+  degree_groups <- split(names(node_degree_discrete), node_degree_discrete)
+  diffusion_names <- intersect(names(diffusion_vec), nodes_names)
+  node_degrees <- node_degree_discrete[diffusion_names]
+
+  randomised_diffusions <- purrr::map(1:iters, function(i) {
+    set.seed(random_seed + i)
+    random_set_i <- vapply(
+      node_degrees,
+      function(degree) {
+        sample(degree_groups[[as.character(degree)]], 1)
+      },
+      character(1)
+    )
+
+    diff_vec_i <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
+
+    diff_vec_i[random_set_i] <- diffusion_vec[names(random_set_i)]
+
+    diff_vec_i / sum(diff_vec_i)
+  })
+
+  return(randomised_diffusions)
+}
+
+#### utils ---------------------------------------------------------------------
+
+#' Summarise gene scores if they are duplicates.
+#'
+#' @param x Named numeric.
+#' @param summarisation String. Which summary function to use.
+#'
+#' @return Named numeric.
+#'
+#' @importFrom magrittr `%$%`
+summarise_scores <- function(
+  x,
+  summarisation = c("max", "mean", "harmonic_sum")
+) {
+  # devtools::check() stuff
+  value <- . <- node_name <- setNames <- NULL
+  # Checks
+  checkmate::assertNumeric(x)
+  checkmate::assertNamed(x, .var.name = "x")
+  checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
+  # Body
+  dt <- data.table::data.table(node_name = names(x), value = x)
+  summary_fun <- switch(
+    summarisation,
+    "mean" = rlang::expr(mean(value)),
+    "max" = rlang::expr(max(value)),
+    rlang::expr(bixverse::ot_harmonic_score(value)) # Default case
+  )
+  res <-
+    rlang::eval_tidy(rlang::quo(dt[,
+      .(value = !!summary_fun),
+      .(node_name)
+    ])) %$%
+    setNames(value, node_name)
+  res
+}
+
+# rbh_graph --------------------------------------------------------------------
+
+## graph generation ------------------------------------------------------------
 
 #' Generate an RBH graph.
 #'
@@ -675,7 +954,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     .debug = FALSE
   ) {
     # Assigns
-    origin_modules <- . <- similiarity <- origin <- target <-
+    origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
       target_modules <- NULL
     # Checks
     checkmate::assertClass(object, "bixverse::rbh_graph")
@@ -844,9 +1123,11 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
     assign(".temp_workers", max_workers, envir = .GlobalEnv)
     on.exit(rm(".temp_workers", envir = .GlobalEnv))
 
-    plan(future::multisession(workers = .temp_workers))
+    future::plan(future::multisession(workers = .temp_workers))
   } else {
-    if (.verbose) message("Using sequential computation.")
+    if (.verbose) {
+      message("Using sequential computation.")
+    }
     future::plan(future::sequential())
   }
 
@@ -888,45 +1169,6 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
 
 # helpers ----------------------------------------------------------------------
 
-## utils -----------------------------------------------------------------------
-
-#' Summarise gene scores if they are duplicates.
-#'
-#' @param x Named numeric.
-#' @param summarisation String. Which summary function to use.
-#'
-#' @return Named numeric.
-#'
-#' @export
-#'
-#' @importFrom magrittr `%$%`
-.summarise_scores <- function(
-  x,
-  summarisation = c("max", "mean", "harmonic_sum")
-) {
-  # devtools::check() stuff
-  value <- . <- node_name <- setNames <- NULL
-  # Checks
-  checkmate::assertNumeric(x)
-  checkmate::assertNamed(x, .var.name = "x")
-  checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
-  # Body
-  dt <- data.table::data.table(node_name = names(x), value = x)
-  summary_fun <- switch(
-    summarisation,
-    "mean" = rlang::expr(mean(value)),
-    "max" = rlang::expr(max(value)),
-    rlang::expr(bixverse::ot_harmonic_score(value)) # Default case
-  )
-  res <-
-    rlang::eval_tidy(rlang::quo(dt[,
-      .(value = !!summary_fun),
-      .(node_name)
-    ])) %$%
-    setNames(value, node_name)
-  res
-}
-
 ## plots -----------------------------------------------------------------------
 
 #' @export
@@ -945,17 +1187,24 @@ S7::method(plot_resolution_res, rbh_graph) <- function(
   plot_df <- S7::prop(object, "final_results")
   if (is.null(plot_df)) {
     warning(
-      "No resolution results found. Did you run cor_module_check_res()? Returning NULL."
+      paste(
+        "No resolution results found. Did you run cor_module_check_res()?",
+        "Returning NULL."
+      )
     )
     return(NULL)
   }
   plot_df <- plot_df[, c("resolution", "modularity")] %>%
     unique()
-  p <- ggplot(data = plot_df, mapping = aes(x = resolution, y = modularity)) +
-    geom_point(size = 3, shape = 21, alpha = .7) +
-    xlab("Leiden cluster resolution") +
-    ylab("Modularity") +
-    theme_minimal() +
-    ggtitle("Resolution vs. modularity")
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = aes(x = resolution, y = modularity)
+  ) +
+    ggplot2::geom_point(size = 3, shape = 21, alpha = .7) +
+    ggplot2::xlab("Leiden cluster resolution") +
+    ggplot2::ylab("Modularity") +
+    ggplot2::theme_minimal() +
+    ggplot2::ggtitle("Resolution vs. modularity")
+
   p
 }
