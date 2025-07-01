@@ -27,5 +27,5 @@ permutations.
 }
 }
 \description{
-Helper function to calculate permutation-based page rank scores
+Helper function to calculate permutation based page-rank scores.
 }

@@ -258,7 +258,7 @@ checkCommunityParams <- function(x) {
     return(res)
   }
   res <- checkmate::checkChoice(
-    res[['threshold_type']],
+    x[['threshold_type']],
     c("prop_based", "pval_based")
   )
   if (!isTRUE(res)) {

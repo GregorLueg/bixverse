@@ -4,13 +4,20 @@
 \alias{permute_seed_nodes}
 \title{Generate permuation scores for the diffusion}
 \usage{
-permute_seed_nodes(object, perm_iters = 1000L, random_seed = 10101L)
+permute_seed_nodes(
+  object,
+  perm_iters = 1000L,
+  random_seed = 10101L,
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{perm_iters}{Integer. Number of permutations to test for. Defaults to
 \code{1000L}.}
+
+\item{random_seed}{Integer. Random seed for determinism.}
 }
 \value{
 The class with added diffusion score based on a single set of seed
@@ -18,5 +25,7 @@ genes. Additionally, the seed genes are stored in the class.
 }
 \description{
 This function generate node-degree adjusted permutations of a given diffusion
-score and adds Z-scores to the object.
+score and adds Z-scores to the object. The function will automatically
+determine if the original diffusion was a single or tied diffusion and
+construct permutations accordingly.
 }

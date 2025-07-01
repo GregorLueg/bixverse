@@ -6,7 +6,6 @@
 \usage{
 community_detection(
   object,
-  diffusion_threshold = 0.25,
   community_params = params_community_detection(),
   seed = 42L,
   .verbose = FALSE,
@@ -15,10 +14,6 @@ community_detection(
 }
 \arguments{
 \item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
-
-\item{diffusion_threshold}{Float. How much of the network to keep based on
-the diffusion values. 0.25 for example would keep the 25\% nodes with the
-highest scores. This was the default in the original paper.}
 
 \item{community_params}{List. Parameters for the community detection within
 the reduced network, see \code{\link[=params_community_detection]{params_community_detection()}}. A list
@@ -31,6 +26,14 @@ communities will be recursively subclustered.
 be found in a given community.
 \item initial_res - Float. Initial resolution parameter for the Leiden
 clustering.
+\item threshold_type - String. One of \code{c("prop_based", "pval_based")}.
+You can chose to include a certain proportion of the network (like in the
+original paper) with the highest diffusion scores, or use p-values based
+on permutations. Defaults to \code{"prop_based"}.
+\item network_threshold - Float. The proportion of the network to
+include. Used if \code{threshold_type = "prop_based"}.
+\item pval_threshold - Float. The maximum p-value for nodes to be included.
+Used if \code{threshold_type = "pval_based"}.
 }}
 
 \item{seed}{Random seed.}

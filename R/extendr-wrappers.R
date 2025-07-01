@@ -1014,6 +1014,8 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
 #' Helper function to calculate permutation-based page rank scores
 #'
+#' @description Helper function to calculate permutation based page-rank scores.
+#'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
@@ -1027,8 +1029,6 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #'   \item sd - The standard deviation of the personalised page-rank scores based on
 #'   permutations.
 #' }
-#'
-#' @export
 rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)
 
 #' Rust version of calcaluting the personalised page rank
@@ -1044,6 +1044,32 @@ rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, un
 #'
 #' @export
 rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+
+#' Helper function to calculate permutation-based tied page rank scores
+#'
+#' @description Helper function to calculate permutation based tied page-rank
+#' scores.
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores_1 List. The first set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param diffusion_scores_2 List. The second set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param summarisation_fun String. One of `c("min", "max", "avg")`. Which type
+#' of summarisation function to use to calculate the tied diffusion.
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item means - The mean personalised page-rank scores based on the permutations.
+#'   \item sd - The standard deviation of the personalised page-rank scores based on
+#'   permutations.
+#' }
+rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_page_rank_permutations_tied, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
 
 # nolint end

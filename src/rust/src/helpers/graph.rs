@@ -74,6 +74,27 @@ impl NumericType for f32 {
     }
 }
 
+///////////
+// Enums //
+
+/// Enum for the ICA types
+#[derive(Clone, Debug)]
+pub enum TiedSumType {
+    Max,
+    Min,
+    Avg,
+}
+
+/// Parsing the tied summarisation types
+pub fn parse_tied_sum(s: &str) -> Option<TiedSumType> {
+    match s.to_lowercase().as_str() {
+        "max" => Some(TiedSumType::Max),
+        "min" => Some(TiedSumType::Min),
+        "mean" => Some(TiedSumType::Avg),
+        _ => None,
+    }
+}
+
 ////////////////////////////
 // Personalised page rank //
 ////////////////////////////
