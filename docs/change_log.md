@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 27.06.2025* </br>
+*Last update: 01.07.2025* </br>
 
 ### Version **0.0.1.5**
 
@@ -8,6 +8,8 @@
 
 - Rework of the ontology class. Additionally, added Wang similarity as an 
 additional measure.
+- Rework of the genetic community detection class and the diffusion methods. 
+This can break old code!
 
 #### Bug fixes, documentation updates
 
@@ -15,7 +17,9 @@ additional measure.
 
 #### Breaking changes
 
-- Functions and methods related to the ontology class will be breaking.
+- Functions and methods related to the ontology class could be breaking, as
+they have been moedified heavily. The same applies to the genetic community
+detection method.
 
 ### Version **0.0.1.4**
 

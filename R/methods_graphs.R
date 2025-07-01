@@ -669,11 +669,11 @@ S7::method(community_detection, network_diffusions) <- function(
     )]
 
   if (diffusion_type == "single") {
-    seed_nodes <- S7::prop(object, "params")$seed_nodes
+    seed_nodes <- diffusion_params$seed_nodes
     final_result[, seed_node := node_id %in% seed_nodes]
   } else {
-    seed_nodes_set_1 <- S7::prop(object, "params")$seed_nodes$set_1
-    seed_nodes_set_2 <- S7::prop(object, "params")$seed_nodes$set_2
+    seed_nodes_set_1 <- diffusion_params$seed_nodes_1
+    seed_nodes_set_2 <- diffusion_params$seed_nodes_2
     final_result[, `:=`(
       seed_node_a = node_id %in% seed_nodes_set_1,
       seed_node_b = node_id %in% seed_nodes_set_2
@@ -845,30 +845,26 @@ generate_perm_diffusion_vecs <- function(
   node_degree_distribution <- log(igraph::degree(graph))
   node_degree_discrete <- cut(node_degree_distribution, bins) %>%
     `names<-`(names(node_degree_distribution))
-  degree_groups <- split(names(node_degree_discrete), node_degree_discrete)
 
-  diffusion_names <- names(diffusion_vec)
+  degree_groups <- split(names(node_degree_discrete), node_degree_discrete)
+  diffusion_names <- intersect(names(diffusion_vec), nodes_names)
   node_degrees <- node_degree_discrete[diffusion_names]
 
-  randomised_diffusions <- purrr::map(1:iters, \(i) {
+  randomised_diffusions <- purrr::map(1:iters, function(i) {
     set.seed(random_seed + i)
-
-    random_set_i <- purrr::map_chr(node_degrees, \(degree) {
-      sample(degree_groups[[as.character(degree)]], 1)
-    })
-
-    diffusion_vec_i <- diffusion_vec %>% `names<-`(random_set_i)
-
-    seed_nodes_i <- intersect(names(diffusion_vec_i), nodes_names)
+    random_set_i <- vapply(
+      node_degrees,
+      function(degree) {
+        sample(degree_groups[[as.character(degree)]], 1)
+      },
+      character(1)
+    )
 
     diff_vec_i <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
-    for (node in seed_nodes_i) {
-      diff_vec_i[node] <- diffusion_vec_i[node]
-    }
 
-    diff_vec_i <- diff_vec_i / sum(diff_vec_i)
+    diff_vec_i[random_set_i] <- diffusion_vec[names(random_set_i)]
 
-    diff_vec_i
+    diff_vec_i / sum(diff_vec_i)
   })
 
   return(randomised_diffusions)

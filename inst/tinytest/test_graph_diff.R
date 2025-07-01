@@ -219,6 +219,13 @@ expect_equal(
   )
 )
 
+expect_true(
+  current = sum(single_com_res_v1$seed_node) == 3,
+  info = paste(
+    "single diffusion (v1) - communites, no seed nodes"
+  )
+)
+
 #### version 2 -----------------------------------------------------------------
 
 test_class <- community_detection(
@@ -254,6 +261,13 @@ expect_equal(
   target = expected_seed_genes_v2,
   info = paste(
     "single diffusion (v2) - communities, seed nodes"
+  )
+)
+
+expect_true(
+  current = sum(single_com_res_v2$seed_node) == 1,
+  info = paste(
+    "single diffusion (v2) - communites, no seed nodes"
   )
 )
 
@@ -342,6 +356,20 @@ expect_equal(
   )
 )
 
+expect_true(
+  current = sum(tied_com_res_v1$seed_node_a) == 3,
+  info = paste(
+    "tied diffusion (v1) - communities, no seed nodes set 1"
+  )
+)
+
+expect_true(
+  current = sum(tied_com_res_v1$seed_node_b) == 3,
+  info = paste(
+    "tied diffusion (v1) - communities, no seed nodes set 2"
+  )
+)
+
 #### version 2 -----------------------------------------------------------------
 
 test_class <- community_detection(
@@ -386,5 +414,19 @@ expect_equal(
   target = tied_expected_seed_nodes_2,
   info = paste(
     "tied diffusion (v2) - communities, seed nodes set 2"
+  )
+)
+
+expect_true(
+  current = sum(tied_com_res_v2$seed_node_a) == 0,
+  info = paste(
+    "tied diffusion (v2) - communities, no seed nodes set 1"
+  )
+)
+
+expect_true(
+  current = sum(tied_com_res_v2$seed_node_b) == 2,
+  info = paste(
+    "tied diffusion (v2) - communities, no seed nodes set 2"
   )
 )

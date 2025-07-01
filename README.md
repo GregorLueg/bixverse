@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.4-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.1.5-orange) 
 
 </br>
 
@@ -22,6 +22,8 @@ We have now officially released version **0.0.1.5**. With this update, we have
 added:
 
 - Improved ontology class and more methods.
+- Permutation-based tests for the genetic diffusion approaches that allow selection
+of significanlty enriched areas of the network (topology-aware).
 
 ## *Installation*
 
@@ -74,4 +76,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 16.06.2025*
+*Last update to the read-me: 01.07.2025*
