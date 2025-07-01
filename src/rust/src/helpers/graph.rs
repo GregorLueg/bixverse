@@ -88,7 +88,7 @@ pub fn personalized_page_rank<G, D>(
 ) -> Vec<D>
 where
     G: NodeCount + IntoEdges + NodeIndexable + Sync,
-    D: NumericType + std::iter::Sum,
+    D: NumericType + std::iter::Sum + std::ops::DivAssign,
 {
     let node_count = graph.node_count();
     if node_count == 0 {
@@ -155,12 +155,15 @@ where
             .map(|(new, old)| (*new - *old) * (*new - *old))
             .sum::<D>();
 
-        if squared_norm_2 <= tolerance {
-            return new_ranks;
-        }
-
         ranks = new_ranks;
+
+        if squared_norm_2 <= tolerance {
+            break;
+        }
     }
+
+    let sum: D = ranks.iter().copied().sum();
+    ranks.iter_mut().for_each(|x| *x /= sum);
 
     ranks
 }

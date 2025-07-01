@@ -91,6 +91,115 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
     return(object)
   }
 
+#' Generate permuation scores for the diffusion
+#'
+#' @description
+#' This function generate node-degree adjusted permutations of a given diffusion
+#' score and adds Z-scores to the object.
+#'
+#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param perm_iters Integer. Number of permutations to test for. Defaults to
+#' `1000L`.
+#'
+#' @return The class with added diffusion score based on a single set of seed
+#' genes. Additionally, the seed genes are stored in the class.
+#'
+#' @export
+permute_seed_nodes <- S7::new_generic(
+  name = "permute_seed_nodes",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    perm_iters = 1000L,
+    random_seed = 10101L
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method permute_seed_nodes network_diffusions
+S7::method(permute_seed_nodes, network_diffusions) <- function(
+  object,
+  perm_iters = 1000L,
+  random_seed = 10101L
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::qassert(perm_iters, "I1")
+  checkmate::qassert(random_seed, "I1")
+
+  # function body
+  graph <- S7::prop(object, "graph")
+  diffusion_params <- S7::prop(object, "params")[["diffusion_params"]]
+  diffusion_results <- S7::prop(object, "diffusion_res")
+
+  nodes_names <- igraph::V(graph)$name
+  diffusion_vector <- diffusion_params[["diffusion_vector"]]
+
+  # generate randomised diffusion vecs
+  node_degree_distribution <- log(igraph::degree(graph))
+  node_degree_discrete <- cut(node_degree_distribution, 25L) %>%
+    `names<-`(names(node_degree_distribution))
+
+  diffusion_names <- names(diffusion_vector)
+  degree_groups <- split(names(node_degree_discrete), node_degree_discrete)
+  node_degrees <- node_degree_discrete[diffusion_names]
+
+  randomised_diffusions <- purrr::map(1:perm_iter, \(i) {
+    set.seed(random_seed + i)
+
+    random_set_i <- purrr::map_chr(node_degrees, \(degree) {
+      sample(degree_groups[[as.character(degree)]], 1)
+    })
+
+    diffusion_vec_i <- diffusion_vector %>% `names<-`(random_set_i)
+
+    seed_nodes_i <- intersect(names(diffusion_vec_i), nodes_names)
+
+    diff_vec_i <- rep(0, length(nodes_names)) %>% `names<-`(nodes_names)
+    for (node in seed_nodes_i) {
+      diff_vec_i[node] <- diffusion_vec_i[node]
+    }
+
+    diff_vec_i <- diff_vec_i / sum(diff_vec_i)
+
+    diff_vec_i
+  })
+
+  # use rust for fast, parallelised page-ranks
+
+  edge_list <- igraph::as_edgelist(graph, names = TRUE)
+  graph_names <- igraph::V(graph)$name
+
+  page_rank_perm_res <- rs_page_rank_permutations(
+    node_names = graph_names,
+    from = edge_list[, 1],
+    to = edge_list[, 2],
+    diffusion_scores = randomised_sets,
+    undirected = TRUE
+  )
+
+  z_scores <- (diffusion_results - page_rank_perm_res$means) /
+    (page_rank_perm_res$sd + 10^-32)
+
+  diffusion_perm_params <- list(
+    "perm_iters" = perm_iters,
+    "random_seed" = random_seed,
+    "perm_mean" = page_rank_perm_res$means,
+    "perm_sds" = page_rank_perm_res$sd
+  )
+
+  S7::prop(object, "diffusion_perm") <- z_scores
+  S7::prop(object, "params")[["diffusion_perm_params"]] <- diffusion_perm_params
+
+  return(object)
+}
+
+
 #' Diffuse seed genes in a tied manner over a network
 #'
 #' @description

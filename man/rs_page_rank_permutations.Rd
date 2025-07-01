@@ -19,7 +19,12 @@ values. Each element must sum to 1 and be of same length of \code{node_names}!}
 \item{undirected}{Boolean. Is this an undirected graph.}
 }
 \value{
-The personalised page rank values.
+A list containing:
+\itemize{
+\item means - The mean personalised page-rank scores based on the permutations.
+\item sd - The standard deviation of the personalised page-rank scores based on
+permutations.
+}
 }
 \description{
 Helper function to calculate permutation-based page rank scores

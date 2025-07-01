@@ -1021,7 +1021,12 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #' values. Each element must sum to 1 and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return The personalised page rank values.
+#' @return A list containing:
+#'  \itemize{
+#'   \item means - The mean personalised page-rank scores based on the permutations.
+#'   \item sd - The standard deviation of the personalised page-rank scores based on
+#'   permutations.
+#' }
 #'
 #' @export
 rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)

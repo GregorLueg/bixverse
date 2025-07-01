@@ -80,12 +80,8 @@ randomised_sets <- purrr::map(1:perm_iter, \(i) {
 # Rust version ... ?
 
 edge_list <- igraph::as_edgelist(graph, names = TRUE)
-
 graph_names <- igraph::V(graph)$name
 
-rextendr::document()
-
-tictoc::tic()
 rs_test <- rs_page_rank_permutations(
   node_names = graph_names,
   from = edge_list[, 1],
@@ -93,60 +89,14 @@ rs_test <- rs_page_rank_permutations(
   diffusion_scores = randomised_sets,
   undirected = TRUE
 )
-tictoc::toc()
 
-rextendr::document()
-
-r_res <- igraph::page_rank(
-  graph,
-  personalized = randomised_sets[[1]]
-)$vector
-
-plot(rs_test[[1]], r_res)
-
-rs_test[[1]]
-
-tictoc::tic()
-randomised_diffusion_vecs <- purrr::map(randomised_sets, \(rnd_diff_vec) {
-  igraph::page_rank(
-    graph,
-    personalized = rnd_diff_vec
-  )$vector
-})
-tictoc::toc()
-
-future::plan(future::multisession(workers = 5L))
-
-tictoc::tic()
-randomised_diffusion_vecs <- furrr::future_map(
-  randomised_sets,
-  \(rnd_diff_vec) {
-    igraph::page_rank(
-      graph,
-      personalized = rnd_diff_vec
-    )$vector
-  },
-  .progress = TRUE
-)
-tictoc::toc()
-
-
-plot(rs_test[[4]], randomised_diffusion_vecs[[4]])
-
-col_means <- colMeans(do.call(rbind, rs_test))
-col_sds <- matrixStats::colSds(do.call(rbind, rs_test))
-
-z_scores <- (diffusion_results - col_means) / (col_sds + 10^-32)
-
-table(is.na(z_scores))
-
-summary(z_scores)
-
-hist(z_scores)
+z_scores <- (diffusion_results - rs_test$means) / (rs_test$sd + 10^-32)
 
 pvals <- pnorm(abs(z_scores), lower.tail = F)
 
 hist(pvals)
+
+table(pvals <= 0.05)
 
 table(z_scores > 0)
 

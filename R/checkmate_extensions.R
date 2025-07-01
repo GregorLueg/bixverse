@@ -35,9 +35,11 @@ checkCorGraphParams <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in graph params does not conform the expected format. \
-        min_cor and fdr_threshold need to be between 0 and 1, epsilon a double. and .verbose \
-        a boolean.",
+        paste(
+          "The following element `%s` in graph params does not conform to the",
+          "expected format. min_cor and fdr_threshold need to be between 0 and",
+          "1, epsilon a double and .verbose a boolean."
+        ),
         broken_elem
       )
     )
@@ -74,8 +76,11 @@ checkGraphResParams <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in resolution params does not conform the expected format. \
-        min_res and max_res need to be doubles and number res needs to be an integer",
+        paste(
+          "The following element `%s` in resolution params does not conform to",
+          "the expected format. min_res and max_res need to be doubles and",
+          "number res needs to be an integer."
+        ),
         broken_elem
       )
     )
@@ -118,9 +123,11 @@ checkIcaParams <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in resolution params does not conform the expected format. \
-        maxit needs to be an integer, alpha between 1 and 2, 0 < max_tol < 1 and verbose a \
-        boolean",
+        paste(
+          "The following element `%s` in resolution params does not conform to",
+          "the expected format. maxit needs to be an integer, alpha between 1",
+          "and 2, 0 < max_tol < 1, and verbose a boolean."
+        ),
         broken_elem
       )
     )
@@ -162,9 +169,11 @@ checkIcaNcomps <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in resolution params does not conform the expected format.
-        max_no_comp and steps need to be an integer, and custom sequence either NULL or a vector \
-        of integers",
+        paste(
+          "The following element `%s` in resolution params does not conform to",
+          "the expected format. max_no_comp and steps need to be integers, and",
+          "custom sequence either NULL or a vector of integers."
+        ),
         broken_elem
       )
     )
@@ -205,8 +214,11 @@ checkIcaIterParams <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in resolution params does not conform the expected format. \
-        random_init and steps folds to be an integer, and cross_validate a boolean",
+        paste(
+          "The following element `%s` in resolution params does not conform to",
+          "the expected format. random_init and steps folds need to be",
+          "integers, and cross_validate a boolean."
+        ),
         broken_elem
       )
     )
@@ -232,27 +244,52 @@ checkCommunityParams <- function(x) {
   }
   res <- checkmate::checkNames(
     names(x),
-    must.include = c("max_nodes", "min_nodes", "min_seed_nodes", "initial_res")
+    must.include = c(
+      "max_nodes",
+      "min_nodes",
+      "min_seed_nodes",
+      "initial_res",
+      "threshold_type",
+      "network_threshold",
+      "pval_threshold"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  rules <- list(
+  res <- checkmate::checkChoice(
+    res[['threshold_type']],
+    c("prop_based", "pval_based")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  q_rules <- list(
     "max_nodes" = sprintf("I1[%i,)", x$min_nodes),
     "min_nodes" = "I1",
     "min_seed_nodes" = "I1",
-    "initial_res" = "N1"
+    "initial_res" = "N1",
+    "network_threshold" = "N1(0, 1]",
+    "pval_threshold" = "N1(0, 1]"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
-    checkmate::qtest(x, rules[[name]])
+    if (name %in% names(q_rules)) {
+      checkmate::qtest(x, q_rules[[name]])
+    } else {
+      TRUE
+    }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in community params does not conform the expected format. \
-        min_nodes, max_nodes and min_seed_genes need to be integers (with max_nodes > min_nodes) \
-        and initial resolution a double.",
+        paste(
+          "The following element `%s` in community params does not conform to",
+          "the expected format. min_nodes, max_nodes and min_seed_genes need to",
+          "be integers (with max_nodes > min_nodes), initial resolution a",
+          "double, and network_threshold and pval_threshold doubles between 0 and 1."
+        ),
         broken_elem
       )
     )
@@ -297,9 +334,12 @@ checkGSEAParams <- function(x) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
-        "The following element `%s` in GSEA params does not conform the expected format. \
-        min_size and max_size need to be intger (with max_size > min_size and min_size >= 3L) \
-        , gsea_param being a double, sample_size an integer and eps a float.",
+        paste(
+          "The following element `%s` in GSEA params does not conform to the",
+          "expected format. min_size and max_size need to be integers (with",
+          "max_size > min_size and min_size >= 3L),",
+          "gsea_param being a double, sample_size an integer and eps a float."
+        ),
         broken_elem
       )
     )
@@ -356,9 +396,11 @@ checkCoReMoParams <- function(x) {
     broken_elem <- names(q_test_res)[which(!q_test_res)][1]
     return(
       sprintf(
-        "The following element `%s` in CoReMo params does not conform the expected format. \
-        k_min and k_max need to be integers, min_size an integer or NULL, junk_module_threshold \
-        a float and epsilon a float.",
+        paste(
+          "The following element `%s` in CoReMo params does not conform to the",
+          "expected format k_min and k_max need to be integers, min_size an",
+          "integer or NULL, junk_module_threshold a float and epsilon a float."
+        ),
         broken_elem
       )
     )
@@ -379,8 +421,10 @@ checkCoReMoParams <- function(x) {
     broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
     return(
       sprintf(
-        "The following element `%s` in CoReMo params does not use one of the
-        expected choices. Please double check the documentation.",
+        paste0(
+          "The following element `%s` in CoReMo params does not use one of the",
+          "expected choices. Please double check the documentation."
+        ),
         broken_elem
       )
     )
