@@ -154,6 +154,19 @@ test_class <- network_diffusions(edge_data, weighted = FALSE, directed = FALSE)
 
 test_class <- diffuse_seed_nodes(test_class, diffusion_vector_1, "max")
 
+expect_warning(
+  current = community_detection(
+    test_class,
+    community_params = params_community_detection(
+      min_seed_nodes = 0L,
+      min_nodes = 2L,
+      threshold_type = "pval_based",
+      pval_threshold = 0.1
+    )
+  ),
+  info = "diffusion class - warning when permutations were not calculated"
+)
+
 test_class <- permute_seed_nodes(
   test_class,
   perm_iters = 100L,

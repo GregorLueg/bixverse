@@ -476,7 +476,7 @@ S7::method(community_detection, network_diffusions) <- function(
       .[1:ceiling(community_params$network_threshold * length(diffusion_score))]
   } else {
     z_score <- S7::prop(object, "diffusion_perm")
-    if (is.null(z_score)) {
+    if (length(z_score) == 0) {
       warning("No z-scores found. Will calculate these now.")
       object <- permute_seed_nodes(object)
       z_score <- S7::prop(object, "diffusion_perm")
