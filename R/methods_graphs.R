@@ -258,6 +258,7 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' @param perm_iters Integer. Number of permutations to test for. Defaults to
 #' `1000L`.
 #' @param random_seed Integer. Random seed for determinism.
+#' @param .verbose Boolean. Controls verbosity.
 #'
 #' @return The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.

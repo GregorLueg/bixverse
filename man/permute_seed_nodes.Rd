@@ -18,6 +18,8 @@ permute_seed_nodes(
 \code{1000L}.}
 
 \item{random_seed}{Integer. Random seed for determinism.}
+
+\item{.verbose}{Boolean. Controls verbosity.}
 }
 \value{
 The class with added diffusion score based on a single set of seed
