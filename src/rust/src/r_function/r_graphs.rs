@@ -1,5 +1,6 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
+use std::sync::Arc;
 
 use crate::helpers::graph::*;
 use crate::helpers::linalg::{col_means, col_sds};
@@ -27,6 +28,7 @@ fn rs_page_rank(
 ) -> Vec<f64> {
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
+    // Arc version not needed here, as single run
     personalized_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
 }
 
@@ -57,21 +59,32 @@ fn rs_page_rank_permutations(
 ) -> extendr_api::Result<List> {
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
-    let mut personalise_vecs: Vec<Vec<f64>> = Vec::with_capacity(diffusion_scores.len());
+    // Pre-process graph once
+    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(&graph));
 
+    let mut personalise_vecs: Vec<Vec<f64>> = Vec::with_capacity(diffusion_scores.len());
     for i in 0..diffusion_scores.len() {
-        let data = diffusion_scores.elt(i).unwrap();
+        let data = diffusion_scores.elt(i)?;
         let vector_data: Vec<f64> = data.as_real_vector().unwrap();
         personalise_vecs.push(vector_data);
     }
 
+    // Process in parallel with thread-local working memory
     let page_rank_res: Vec<Vec<f64>> = personalise_vecs
         .par_iter()
-        .map(|diff| personalized_page_rank(&graph, 0.85, diff, 1000, Some(1e-7)))
+        .map_init(PageRankWorkingMemory::new, |working_memory, diff| {
+            personalized_page_rank_optimized(
+                &pagerank_graph,
+                0.85,
+                diff,
+                1000,
+                1e-7,
+                working_memory,
+            )
+        })
         .collect();
 
     let matrix_result = nested_vector_to_faer_mat(page_rank_res, false);
-
     let means = col_means(matrix_result.as_ref());
     let sds = col_sds(matrix_result.as_ref());
 
@@ -126,12 +139,16 @@ fn rs_page_rank_permutations_tied(
         graph_from_strings(&node_names, &from, &to, undirected)
     };
 
+    // Pre-process graph once
+    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(&graph_1));
+    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(&graph_2));
+
     let mut personalise_vecs_1 = Vec::with_capacity(diffusion_scores_1.len());
     let mut personalise_vecs_2 = Vec::with_capacity(diffusion_scores_1.len());
 
     for i in 0..diffusion_scores_1.len() {
-        personalise_vecs_1.push(diffusion_scores_1.elt(i).unwrap().as_real_vector().unwrap());
-        personalise_vecs_2.push(diffusion_scores_2.elt(i).unwrap().as_real_vector().unwrap());
+        personalise_vecs_1.push(diffusion_scores_1.elt(i)?.as_real_vector().unwrap());
+        personalise_vecs_2.push(diffusion_scores_2.elt(i)?.as_real_vector().unwrap());
     }
 
     let summarisation_type: TiedSumType = parse_tied_sum(&summarisation_fun).unwrap();
@@ -139,19 +156,36 @@ fn rs_page_rank_permutations_tied(
     let tied_res: Vec<Vec<f64>> = personalise_vecs_1
         .into_par_iter()
         .zip(personalise_vecs_2.into_par_iter())
-        .map(|(diff1, diff2)| {
-            let pr1 = personalized_page_rank(&graph_1, 0.85, &diff1, 1000, Some(1e-7));
-            let pr2 = personalized_page_rank(&graph_2, 0.85, &diff2, 1000, Some(1e-7));
+        .map_init(
+            || (PageRankWorkingMemory::new(), PageRankWorkingMemory::new()),
+            |(working_mem1, working_mem2), (diff1, diff2)| {
+                let pr1 = personalized_page_rank_optimized(
+                    &pagerank_graph_1,
+                    0.85,
+                    &diff1,
+                    1000,
+                    1e-7,
+                    working_mem1,
+                );
+                let pr2 = personalized_page_rank_optimized(
+                    &pagerank_graph_2,
+                    0.85,
+                    &diff2,
+                    1000,
+                    1e-7,
+                    working_mem2,
+                );
 
-            pr1.iter()
-                .zip(pr2.iter())
-                .map(|(v1, v2)| match summarisation_type {
-                    TiedSumType::Max => v1.max(*v2),
-                    TiedSumType::Min => v1.min(*v2),
-                    TiedSumType::Avg => (v1 + v2) * 0.5, // multiplication is faster
-                })
-                .collect()
-        })
+                pr1.iter()
+                    .zip(pr2.iter())
+                    .map(|(v1, v2)| match summarisation_type {
+                        TiedSumType::Max => v1.max(*v2),
+                        TiedSumType::Min => v1.min(*v2),
+                        TiedSumType::Avg => (v1 + v2) * 0.5, // multiplication is faster
+                    })
+                    .collect()
+            },
+        )
         .collect();
 
     let matrix_result = nested_vector_to_faer_mat(tied_res, false);
