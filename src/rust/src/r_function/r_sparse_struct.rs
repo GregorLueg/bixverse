@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
-use crate::helpers_sparse::SparseColumnMatrix;
-use crate::utils_r_rust::sparse_matrix_to_list;
+use crate::helpers::structs_sparse::SparseColumnMatrix;
+use crate::utils::r_rust_interface::sparse_matrix_to_list;
 
 /// Generate sparse data from an upper triangle
 ///
@@ -30,6 +30,6 @@ fn rs_upper_triangle_to_sparse(value: &[f64], shift: usize, n: usize) -> List {
 }
 
 extendr_module! {
-    mod fun_struct;
+    mod r_sparse_struct;
     fn rs_upper_triangle_to_sparse;
 }
