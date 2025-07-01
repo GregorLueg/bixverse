@@ -31,14 +31,14 @@ expect_equivalent(
 # Check if the upper triangle class behaves as expected
 cor_data <- rs_cor_upper_triangle(mat, spearman = FALSE, shift = 1L)
 
-cor_class <- bixverse:::upper_triangular_cor_mat$new(
-  cor_coef = cor_data,
+cor_class <- bixverse:::upper_triangular_sym_mat$new(
+  values = cor_data,
   features = colnames(mat),
   shift = 1L
 )
 
 expect_equal(
-  current = cor_class$get_cor_matrix(.verbose = FALSE),
+  current = cor_class$get_sym_matrix(.verbose = FALSE),
   target = cor(mat),
   info = "Upper triangle class test Rust <> R"
 )

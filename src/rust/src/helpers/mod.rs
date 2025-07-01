@@ -6,3 +6,4 @@ pub mod ica;
 pub mod linalg;
 pub mod ontology;
 pub mod rbh;
+pub mod structs_sparse;

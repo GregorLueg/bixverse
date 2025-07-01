@@ -70,8 +70,8 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
   )
 
   # Save data to memory friendly R6 class
-  cor_data <- upper_triangular_cor_mat$new(
-    cor_coef = cor_diagonal,
+  cor_data <- upper_triangular_sym_mat$new(
+    values = cor_diagonal,
     features = colnames(target_mat),
     shift = 1L
   )
@@ -151,7 +151,7 @@ S7::method(cor_module_tom, bulk_coexp) <- function(
 
   # pull out the correlation results
   cor_res <- S7::prop(object, "processed_data")$correlation_res
-  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+  cor_mat <- cor_res$get_sym_matrix(.verbose = .verbose)
 
   if (.verbose) {
     message("Replacing the correlation matrix with a TOM.")
@@ -161,8 +161,8 @@ S7::method(cor_module_tom, bulk_coexp) <- function(
   tom_mat <- rs_tom(x = cor_mat, tom_type = version, signed = signed)
   tom_vec <- rs_dense_to_upper_triangle(tom_mat, 1L)
 
-  tom_res <- upper_triangular_cor_mat$new(
-    cor_coef = tom_vec,
+  tom_res <- upper_triangular_sym_mat$new(
+    values = tom_vec,
     features = features,
     shift = 1L
   )
@@ -368,7 +368,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 
   # Pull out the correlation results
   cor_res <- S7::prop(object, "processed_data")$correlation_res
-  c(cor_vector, features, n_features, shift) %<-% cor_res$get_cor_vector()
+  c(cor_vector, features, n_features, shift) %<-% cor_res$get_data()
 
   # Prepare everything for iterating through the epsilons
   epsilons <- sort(epsilons, decreasing = TRUE)
@@ -1008,7 +1008,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   }
 
   cor_res <- S7::prop(object, "processed_data")[["correlation_res"]]
-  cor_mat <- cor_res$get_cor_matrix(.verbose = .verbose)
+  cor_mat <- cor_res$get_sym_matrix(.verbose = .verbose)
 
   aff_mat <- with(
     coremo_params,

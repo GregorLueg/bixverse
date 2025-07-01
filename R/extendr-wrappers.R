@@ -471,6 +471,7 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'   \item similarity - The similarities between the two respective gene
 #'   modules.
 #' }
+#' 
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
 
@@ -1070,6 +1071,26 @@ rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(w
 #'   permutations.
 #' }
 rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_page_rank_permutations_tied, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+
+#' Generate sparse data from an upper triangle
+#'
+#' @description This function takes the values from an upper triangle matrix
+#' the shift and the nrows/ncols and returns a list.
+#'
+#' @param value Numeric vector. The upper triangle values.
+#' @param shift Integer Did you apply a shift to remove the diagonal values?
+#' @param n Integer. The number of columns/rows in the symmetric matrix.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item data - A vector of lists with the elements. (Related to the way
+#'   Robj are stored in Rust.)
+#'   \item row_indices - A vector of integers with the row indices.
+#'   \item col_ptr - A vector of integers with the column pointers.
+#' }
+#'
+#' @export
+rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
 
 
 # nolint end

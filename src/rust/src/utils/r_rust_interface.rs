@@ -1,3 +1,4 @@
+use crate::helpers::structs_sparse::SparseColumnMatrix;
 use extendr_api::prelude::*;
 use faer::MatRef;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
@@ -195,4 +196,16 @@ pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize
     let ncol = x.ncols();
 
     RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
+}
+
+/// Transform a sparse matrix to an R list
+pub fn sparse_matrix_to_list<T>(sparse: SparseColumnMatrix<T>) -> List
+where
+    T: Into<Robj>,
+{
+    let data: Vec<Robj> = sparse.data.into_iter().map(|x| x.into()).collect();
+    let row_indices: Vec<usize> = sparse.row_indices;
+    let col_ptr: Vec<usize> = sparse.col_ptrs;
+
+    list![data = data, row_indices = row_indices, col_ptr = col_ptr]
 }

@@ -243,10 +243,9 @@ S7::method(get_sim_matrix, ontology) <-
       return(NULL)
     }
     res <- if (as_data_table) {
-      sim_mat$get_data_table(.verbose = .verbose) %>%
-        data.table::setnames(old = "cor", new = "sim")
+      sim_mat$get_data_table(.verbose = .verbose)
     } else {
-      sim_mat$get_cor_matrix(.verbose = .verbose)
+      sim_mat$get_sym_matrix(.verbose = .verbose)
     }
 
     return(res)

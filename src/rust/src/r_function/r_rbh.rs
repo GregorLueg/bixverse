@@ -44,6 +44,7 @@ pub struct RbhResult {
 ///   \item similarity - The similarities between the two respective gene
 ///   modules.
 /// }
+/// 
 /// @export
 #[extendr]
 fn rs_rbh_sets(
