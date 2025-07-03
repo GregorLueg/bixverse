@@ -468,4 +468,6 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
       "correlation internal fgsea vs official - multilevel (NES)"
     )
   )
+} else {
+  exit_file("fgsea package not available for comparison tests")
 }

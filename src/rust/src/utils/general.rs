@@ -175,11 +175,21 @@ impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
 }
 
 /// Transform a nested vector into a faer matrix
-pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>) -> Mat<f64> {
-    let nrow = nested_vec[0].len();
-    let ncol = nested_vec.len();
+/// col_wise: true = cbind (outer vectors are columns), false = rbind (outer vectors are rows)
+pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>, col_wise: bool) -> Mat<f64> {
+    let (nrow, ncol) = if col_wise {
+        (nested_vec[0].len(), nested_vec.len())
+    } else {
+        (nested_vec.len(), nested_vec[0].len())
+    };
+
     let data = flatten_vector(nested_vec);
-    Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
+
+    if col_wise {
+        Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
+    } else {
+        Mat::from_fn(nrow, ncol, |i, j| data[j + i * ncol])
+    }
 }
 
 /// Create a diagonal matrix with the vector values in the diagonal and the rest being 0's

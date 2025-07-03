@@ -3,11 +3,11 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
-use crate::helpers_hypergeom::hypergeom_pval;
-use crate::helpers_linalg::{col_means, col_sds};
-use crate::utils_r_rust::{r_list_to_str_vec, r_matrix_to_faer};
-use crate::utils_rust::{flatten_vector, string_vec_to_set};
-use crate::utils_stats::*;
+use crate::helpers::hypergeom::hypergeom_pval;
+use crate::helpers::linalg::{col_means, col_sds};
+use crate::utils::general::{flatten_vector, string_vec_to_set};
+use crate::utils::r_rust_interface::{r_list_to_str_vec, r_matrix_to_faer};
+use crate::utils::utils_stats::*;
 
 /// Fast AUC calculation
 ///
@@ -292,7 +292,7 @@ fn rs_critval_mat(mat: RMatrix<f64>, iters: usize, alpha: f64, seed: usize) -> f
 }
 
 extendr_module! {
-    mod fun_stats;
+    mod r_stats;
     fn rs_set_similarity_list;
     fn rs_set_similarity;
     fn rs_fast_auc;

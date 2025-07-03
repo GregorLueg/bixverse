@@ -39,6 +39,7 @@ network_diffusions <- S7::new_class(
   properties = list(
     graph = S7::class_any,
     diffusion_res = S7::class_numeric,
+    diffusion_perm = S7::class_numeric,
     final_results = S7::class_data.frame,
     params = S7::class_list
   ),
@@ -75,6 +76,7 @@ network_diffusions <- S7::new_class(
       S7::S7_object(),
       graph = graph,
       diffusion_res = vector(mode = "numeric"),
+      diffusion_perm = vector(mode = "numeric"),
       final_results = data.table(),
       params = params
     )

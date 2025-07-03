@@ -8,8 +8,8 @@ use rand_distr::Distribution;
 use rand_distr::Normal;
 use rayon::iter::*;
 
-use crate::helpers_linalg::{randomised_svd, scale_matrix_col};
-use crate::utils_rust::*;
+use crate::helpers::linalg::{randomised_svd, scale_matrix_col};
+use crate::utils::general::*;
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //

@@ -131,8 +131,8 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
       ic_list = information_content_list
     )
 
-    final_sim <- upper_triangular_cor_mat$new(
-      cor_coef = similarities,
+    final_sim <- upper_triangular_sym_mat$new(
+      values = similarities,
       shift = 1L,
       features = terms
     )
@@ -205,8 +205,8 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
       flat_matrix = TRUE
     )
 
-  final_sim <- upper_triangular_cor_mat$new(
-    cor_coef = sim_data,
+  final_sim <- upper_triangular_sym_mat$new(
+    values = sim_data,
     shift = 1L,
     features = features
   )
@@ -297,14 +297,14 @@ S7::method(filter_similarities, ontology) <- function(
     seed = seed
   )
 
-  data <- sim_mat$get_cor_vector()
+  data <- sim_mat$get_data()
 
   if (.verbose) {
     message(sprintf("Filtering data with critical value %.4f", critval))
   }
 
   filtered_data <- data.table::setDT(rs_filter_onto_sim(
-    sim_vals = data$cor_data,
+    sim_vals = data$data,
     names = data$features,
     threshold = critval
   ))
@@ -531,7 +531,7 @@ calculate_critical_value <- function(
       warning("No sim_mat found in the object. Returning NULL.")
       return(NULL)
     } else {
-      data <- sim_mat$get_cor_vector()[["cor_data"]]
+      data <- sim_mat$get_data()[["data"]]
       rs_critval(
         values = data,
         iters = permutations,

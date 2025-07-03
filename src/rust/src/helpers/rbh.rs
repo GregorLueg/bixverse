@@ -2,8 +2,8 @@ use faer::Mat;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 
-use crate::utils_rust::*;
-use crate::utils_stats::set_similarity;
+use crate::utils::general::*;
+use crate::utils::utils_stats::set_similarity;
 
 /// Structure for an Rbh triplet Result
 #[derive(Clone, Debug)]
