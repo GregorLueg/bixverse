@@ -69,34 +69,37 @@ pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
 
 /// Generate the rank of a vector with tie correction.
 pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
-    let mut vec_index: Vec<(f64, usize)> = vec
+    let n = vec.len();
+    if n == 0 {
+        return Vec::new();
+    }
+
+    let mut indexed_values: Vec<(f64, usize)> = vec
         .iter()
         .copied()
         .enumerate()
-        .map(|(i, x)| (x, i))
+        .map(|(i, v)| (v, i))
         .collect();
 
-    vec_index.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+    indexed_values
+        .sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
 
-    let mut ranks = vec![0.0; vec.len()];
+    let mut ranks = vec![0.0; n];
     let mut i = 0;
 
-    while i < vec_index.len() {
-        let value = vec_index[i].0;
-        let mut j = i + 1;
+    while i < n {
+        let current_value = indexed_values[i].0;
+        let start = i;
 
-        // Tie correction
-        while j < vec_index.len() && vec_index[j].0 == value {
-            j += 1;
+        while i < n && indexed_values[i].0 == current_value {
+            i += 1;
         }
 
-        let rank = (i + j - 1) as f64 / 2.0 + 1.0;
+        let avg_rank = (start + i + 1) as f64 / 2.0;
 
-        vec_index[i..j].iter().for_each(|&(_, original_index)| {
-            ranks[original_index] = rank;
-        });
-
-        i = j;
+        for j in start..i {
+            ranks[indexed_values[j].1] = avg_rank;
+        }
     }
 
     ranks

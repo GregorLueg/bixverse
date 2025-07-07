@@ -1641,42 +1641,6 @@ tree_cut_iter <- function(
   res
 }
 
-#' Coremo: Identify the inflection point
-#'
-#' @description
-#' This function will identify the optimal cut based on a loess-function fitted
-#' to `k ~ R2_weighted_median` via the inflection point.
-#'
-#' @param x,y The k and R2_weighted_median values.
-#' @param span The span parameter for the loess function.
-#'
-#' @return Returns the inflection point.
-get_inflection_point <- function(x, y, span = 0.25) {
-  # Checks
-  checkmate::assertNumeric(x, len = length(y))
-  checkmate::assertNumeric(y, len = length(x))
-  checkmate::qassert(span, "R+[0,1]")
-  # Function body
-  span <- max(0.1, min(1.0, span))
-  fit <- loess(y ~ x, span = span)
-  py <- predict(fit, x)
-
-  n <- length(x)
-  gradient <- numeric(n)
-  gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
-  gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
-
-  for (i in 2:(n - 1)) {
-    gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
-  }
-
-  gradient_change <- abs(diff(gradient))
-  inflection_idx <- which.max(gradient_change) + 1
-
-  return(
-    list(inflection_idx = inflection_idx, gradient_change = gradient_change)
-  )
-}
 
 #' Create distance object from a vector
 #'

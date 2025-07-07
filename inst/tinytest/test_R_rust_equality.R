@@ -26,6 +26,34 @@ expect_equivalent(
   info = "Covariance equivalence test Rust <> R"
 )
 
+if (requireNamespace("coop", quietly = TRUE)) {
+  expect_equivalent(
+    current = rs_cos(mat),
+    target = coop::cosine(mat),
+    info = "Cosne equivalence test Rust <> R"
+  )
+}
+
+## correlation two matrices ----------------------------------------------------
+
+set.seed(246)
+mat_2 <- matrix(data = rnorm(100), nrow = 10, ncol = 10)
+rownames(mat_2) <- sprintf("sample_%i", 1:10)
+colnames(mat_2) <- sprintf("feature_%i", 1:10)
+
+# Pearson - two matrices
+expect_equivalent(
+  current = rs_cor2(mat, mat_2, spearman = FALSE),
+  target = cor(mat, mat_2),
+  info = "Correlation equivalence test Rust <> R (two matrices)"
+)
+# Spearman
+expect_equivalent(
+  current = rs_cor2(mat, mat_2, spearman = TRUE),
+  target = cor(mat, mat_2, method = "spearman"),
+  info = "Spearman Correlation equivalence test Rust <> R (two matrices)"
+)
+
 ## upper triangle versions -----------------------------------------------------
 
 # Check if the upper triangle class behaves as expected

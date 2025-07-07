@@ -1,6 +1,6 @@
 use crate::helpers::structs_sparse::SparseColumnMatrix;
 use extendr_api::prelude::*;
-use faer::MatRef;
+use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
@@ -171,6 +171,77 @@ pub fn r_named_vec_data(named_vec: Robj) -> extendr_api::Result<NamedNumericVec>
 //////////////
 // Matrices //
 //////////////
+
+/// Structure to store named matrices and have utilies to select based on
+/// feature and sample names. Assumes features = columns and samples = rows.
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct NamedMatrix<'a> {
+    pub feature_names: FxHashMap<String, usize>,
+    pub sample_names: FxHashMap<String, usize>,
+    pub values: faer::MatRef<'a, f64>,
+}
+
+#[allow(dead_code)]
+impl<'a> NamedMatrix<'a> {
+    /// Generate a new matrix with the feature and sample names stored in the structure
+    pub fn new(x: &'a RMatrix<f64>) -> Self {
+        let col_names: FxHashMap<String, usize> = x
+            .get_colnames()
+            .unwrap()
+            .iter()
+            .enumerate()
+            .map(|(i, s)| (s.to_string(), i))
+            .collect();
+        let row_names: FxHashMap<String, usize> = x
+            .get_rownames()
+            .unwrap()
+            .iter()
+            .enumerate()
+            .map(|(i, s)| (s.to_string(), i))
+            .collect();
+        let mat = r_matrix_to_faer(x);
+        NamedMatrix {
+            feature_names: col_names,
+            sample_names: row_names,
+            values: mat,
+        }
+    }
+
+    /// Return a submatrix if available based on the row names and columns to select.
+    pub fn get_sub_mat(self, rows_to_select: &[&str], cols_to_select: &[&str]) -> Option<Mat<f64>> {
+        let mut row_indices: Vec<usize> = Vec::new();
+        let mut col_indices: Vec<usize> = Vec::new();
+
+        for s in rows_to_select {
+            if let Some(&index) = self.sample_names.get(*s) {
+                row_indices.push(index);
+            }
+        }
+
+        for s in cols_to_select {
+            if let Some(&index) = self.feature_names.get(*s) {
+                col_indices.push(index);
+            }
+        }
+
+        if row_indices.is_empty() || col_indices.is_empty() {
+            return None;
+        }
+
+        // Create new matrix by copying values
+        // No option to only return a matrix reference unfortunately
+        let mut result = faer::Mat::<f64>::zeros(row_indices.len(), col_indices.len());
+
+        for (new_row, &old_row) in row_indices.iter().enumerate() {
+            for (new_col, &old_col) in col_indices.iter().enumerate() {
+                result[(new_row, new_col)] = self.values[(old_row, old_col)];
+            }
+        }
+
+        Some(result)
+    }
+}
 
 /// Transform an R matrix to a Faer one
 pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<'_, f64> {

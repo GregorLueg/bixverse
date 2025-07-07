@@ -10,16 +10,20 @@
 additional measure.
 - Rework of the genetic community detection class and the diffusion methods. 
 This can break old code!
+- Rework of the ICA code. Some of the functions have been chaned and might
+break old code. Also, testing suite put in place for the ICA class. 
 
 #### Bug fixes, documentation updates
 
-...
+- Changes to the rextendr backend to avoid devtools:check() errors with
 
 #### Breaking changes
 
 - Functions and methods related to the ontology class could be breaking, as
 they have been moedified heavily. The same applies to the genetic community
 detection method.
+- Functions and methods to the ICA detection have been adopted. That might break
+some current code.
 
 ### Version **0.0.1.4**
 

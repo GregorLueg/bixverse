@@ -11,7 +11,14 @@ X <- S %*% A
 expected_k <- matrix(c(-0.8243566, -2.2245938, -1.7226241, 1.0645727), 2, 2)
 
 # prepare the whitening
-whitening_res <- rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
+whitening_res <- rs_prepare_whitening(
+  x = X,
+  fast_svd = TRUE,
+  seed = 42L,
+  rank = NULL,
+  oversampling = NULL,
+  n_power_iter = NULL
+)
 
 expect_equal(
   current = whitening_res$k,
@@ -28,9 +35,9 @@ expect_equal(
 random_seed <- as.integer(sample(1:1000, 1))
 
 # logcosh implementation
-rs_ica_res_logcosh <- fast_ica_rust(
-  whitening_res$x,
-  whitening_res$k,
+rs_ica_res_logcosh <- fast_ica_rust_helper(
+  X = whitening_res$x,
+  K = whitening_res$k,
   n_icas = 2L,
   ica_fun = "logcosh",
   seed = random_seed
@@ -67,9 +74,9 @@ expect_true(
 #### exp -----------------------------------------------------------------------
 
 # exp implementation
-rs_ica_res_exp <- fast_ica_rust(
-  whitening_res$x,
-  whitening_res$k,
+rs_ica_res_exp <- fast_ica_rust_helper(
+  X = whitening_res$x,
+  K = whitening_res$k,
   n_icas = 2L,
   ica_fun = "exp",
   seed = random_seed
@@ -97,4 +104,190 @@ expect_true(
   info = paste(
     "ICA signal identification with exp"
   )
+)
+
+### full version ---------------------------------------------------------------
+
+#### logcosh -------------------------------------------------------------------
+
+rs_ica_res_logcosh <- fast_ica_rust(
+  X = X,
+  n_icas = 2L,
+  ica_fun = "logcosh",
+  seed = random_seed,
+  fast_svd = TRUE
+)
+
+logcosh_correlation_signal_11 <- abs(cor(S[, 1], rs_ica_res_logcosh$S[1, ]))
+logcosh_correlation_signal_22 <- abs(cor(S[, 2], rs_ica_res_logcosh$S[2, ]))
+logcosh_correlation_signal_12 <- abs(cor(S[, 1], rs_ica_res_logcosh$S[2, ]))
+logcosh_correlation_signal_21 <- abs(cor(S[, 2], rs_ica_res_logcosh$S[1, ]))
+
+logcosh_correctly_reconstructed <- purrr::map_lgl(
+  c(
+    logcosh_correlation_signal_11,
+    logcosh_correlation_signal_22,
+    logcosh_correlation_signal_12,
+    logcosh_correlation_signal_21
+  ),
+  ~ {
+    .x > 0.99
+  }
+)
+
+expect_true(
+  sum(logcosh_correctly_reconstructed) == 2,
+  info = paste(
+    "ICA signal identification with logcosh (full)"
+  )
+)
+
+#### exp -----------------------------------------------------------------------
+
+rs_ica_res_exp <- fast_ica_rust(
+  X = X,
+  n_icas = 2L,
+  ica_fun = "exp",
+  seed = random_seed
+)
+
+exp_correlation_signal_11 <- abs(cor(S[, 1], rs_ica_res_exp$S[1, ]))
+exp_correlation_signal_22 <- abs(cor(S[, 2], rs_ica_res_exp$S[2, ]))
+exp_correlation_signal_12 <- abs(cor(S[, 1], rs_ica_res_exp$S[2, ]))
+exp_correlation_signal_21 <- abs(cor(S[, 2], rs_ica_res_exp$S[1, ]))
+
+exp_correctly_reconstructed <- purrr::map_lgl(
+  c(
+    exp_correlation_signal_11,
+    exp_correlation_signal_22,
+    exp_correlation_signal_12,
+    exp_correlation_signal_21
+  ),
+  ~ {
+    .x > 0.99
+  }
+)
+
+expect_true(
+  sum(exp_correctly_reconstructed) == 2,
+  info = paste(
+    "ICA signal identification with exp (full)"
+  )
+)
+
+## ica class -------------------------------------------------------------------
+
+### expected data --------------------------------------------------------------
+
+expected_ica_meta_logcosh <- data.table::data.table(
+  component = sprintf("IC_%i", 1:4),
+  stability = c(0.7642566, 0.7246840, 0.5724235, 0.7190692)
+)
+
+expected_ica_x1_mat <- qs2::qs_read("./test_data/ica_x1_package.qs")
+expected_ica_k_mat <- qs2::qs_read("./test_data/ica_k_package.qs")
+expected_ica_stability_res <- qs2::qs_read("./test_data/ica_stability_res.qs")
+expected_ica_s_logcosh_mat <- qs2::qs_read(
+  "./test_data/ica_s_matrix_logcosh.qs"
+)
+expected_ica_a_logcosh_mat <- qs2::qs_read(
+  "./test_data/ica_a_matrix_logcosh.qs"
+)
+expected_ica_s_exp_mat <- qs2::qs_read(
+  "./test_data/ica_s_matrix_exp.qs"
+)
+expected_ica_a_exp_mat <- qs2::qs_read(
+  "./test_data/ica_a_matrix_exp.qs"
+)
+
+### gex synthetic data ---------------------------------------------------------
+
+syn_data <- synthetic_signal_matrix()
+
+data <- t(syn_data$mat)
+
+meta_data <- data.table::data.table(
+  sample_id = rownames(data),
+  case_control = syn_data$group
+)
+
+### run the class (pre processing) ---------------------------------------------
+
+ica_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
+ica_test <- preprocess_bulk_coexp(ica_test, hvg = 0.5, .verbose = FALSE)
+ica_test <- ica_processing(ica_test, .verbose = FALSE)
+
+ica_test <- ica_evaluate_comp(
+  ica_test,
+  ica_type = "logcosh",
+  ncomp_params = params_ica_ncomp(steps = 3L, max_no_comp = 30L),
+  .verbose = FALSE
+)
+
+ica_test <- suppressWarnings(ica_optimal_ncomp(
+  ica_test,
+  .verbose = FALSE,
+  show_plot = FALSE
+))
+
+# this one should throw a warning, as the loess function looks ugly
+expect_warning(
+  current = ica_optimal_ncomp(ica_test, .verbose = FALSE, show_plot = FALSE),
+  info = paste("ICA class - warnings from loess")
+)
+
+expect_equal(
+  current = ica_test@processed_data$X1,
+  target = expected_ica_x1_mat,
+  info = paste("ICA class - X1 matrix")
+)
+
+expect_equal(
+  current = ica_test@processed_data$K,
+  target = expected_ica_k_mat,
+  info = paste("ICA class - K matrix")
+)
+
+ica_stability_res <- ica_test@outputs$ica_stability_res_sum
+
+expect_equal(
+  current = ica_test@outputs$ica_stability_res_sum,
+  target = expected_ica_stability_res,
+  info = paste("ICA class - Stability results")
+)
+
+### class (logcosh) ------------------------------------------------------------
+
+ica_test <- ica_stabilised_results(ica_test, no_comp = 4L, ica_type = "logcosh")
+
+results <- get_results(ica_test)
+
+expect_equal(
+  current = results$S,
+  target = expected_ica_s_logcosh_mat,
+  info = paste("ICA class - S matrix (logcosh)")
+)
+
+expect_equal(
+  current = results$A,
+  target = expected_ica_a_logcosh_mat,
+  info = paste("ICA class - A matrix (logcosh)")
+)
+
+### class (exp) ----------------------------------------------------------------
+
+ica_test <- ica_stabilised_results(ica_test, no_comp = 4L, ica_type = "exp")
+
+results <- get_results(ica_test)
+
+expect_equal(
+  current = results$S,
+  target = expected_ica_s_exp_mat,
+  info = paste("ICA class - S matrix (exp)")
+)
+
+expect_equal(
+  current = results$A,
+  target = expected_ica_a_exp_mat,
+  info = paste("ICA class - A matrix (exp)")
 )

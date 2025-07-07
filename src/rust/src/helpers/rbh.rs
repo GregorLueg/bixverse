@@ -13,6 +13,10 @@ pub struct RbhTripletStruc<'a> {
     pub sim: f64,
 }
 
+////////////////////
+// Set similarity //
+////////////////////
+
 /// Calculates the reciprocal best hits based on set similarities.
 pub fn calculate_rbh_set<'a>(
     origin_modules: &'a BTreeMap<String, FxHashSet<String>>,
@@ -73,18 +77,18 @@ pub fn calculate_rbh_set<'a>(
             println!("The matrix looks like: {:?}", sim_mat)
         };
 
-        let row_maxima: Vec<f64> = sim_mat
+        let row_maxima: Vec<&f64> = sim_mat
             .row_iter()
             .map(|x| {
-                let row: Vec<f64> = x.iter().cloned().collect();
+                let row: Vec<&f64> = x.iter().collect();
                 array_max(&row)
             })
             .collect();
 
-        let col_maxima: Vec<f64> = sim_mat
+        let col_maxima: Vec<&f64> = sim_mat
             .col_iter()
             .map(|x| {
-                let col: Vec<f64> = x.iter().cloned().collect();
+                let col: Vec<&f64> = x.iter().collect();
                 array_max(&col)
             })
             .collect();
@@ -94,7 +98,7 @@ pub fn calculate_rbh_set<'a>(
         for r in 0..nrow {
             for c in 0..ncol {
                 let value = sim_mat[(r, c)];
-                if value == row_maxima[r] && value == col_maxima[c] {
+                if value == *row_maxima[r] && value == *col_maxima[c] {
                     let triplet = RbhTripletStruc {
                         t1: names_origin[r],
                         t2: names_targets[c],

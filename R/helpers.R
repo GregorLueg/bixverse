@@ -93,3 +93,71 @@ upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
 
   return(matrix)
 }
+
+# inflection points ------------------------------------------------------------
+
+#' Identify the inflection point for elbow-like data
+#'
+#' @description
+#' This function will identify the index of the inflection point of an arbitrary
+#' series `x ~ y` via the biggest increase in the first derivative. Useful to
+#' identify key points in elbow plots.
+#'
+#' @param x,y The x and y values.
+#' @param span The span parameter for the loess function.
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item inflection_idx - Index of the inflection point
+#'   \item gradient_change - Absolute change in the first derivative
+#' }
+get_inflection_point <- function(x, y, span = 0.5) {
+  # Checks
+  checkmate::assertNumeric(x, len = length(y))
+  checkmate::assertNumeric(y, len = length(x))
+  checkmate::qassert(span, "R+[0,1]")
+  # Function body
+  span <- max(0.1, min(1.0, span))
+  fit <- tryCatch(
+    {
+      fit <- loess(
+        y ~ x,
+        span = span,
+        family = "gaussian",
+        degree = 2L,
+        normalize = TRUE
+      )
+      list(fit = fit, warning = FALSE)
+    },
+    warning = function(w) {
+      return(list(fit = NULL, warning = TRUE))
+    }
+  )
+
+  # early return if the inflection point function is unhappy
+  if (fit$warning) {
+    return(list(
+      inflection_idx = NULL,
+      gradient_change = NULL
+    ))
+  }
+
+  py <- predict(fit$fit, x)
+
+  n <- length(x)
+  gradient <- numeric(n)
+  gradient[1] <- (py[2] - py[1]) / (x[2] - x[1])
+  gradient[n] <- (py[n] - py[n - 1]) / (x[n] - x[n - 1])
+
+  for (i in 2:(n - 1)) {
+    gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
+  }
+
+  gradient_change <- diff(gradient)
+  # One after the point with the biggest delta
+  inflection_idx <- which.max(gradient_change) + 1
+
+  return(
+    list(inflection_idx = inflection_idx, gradient_change = gradient_change)
+  )
+}

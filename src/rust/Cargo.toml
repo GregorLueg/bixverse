@@ -2,6 +2,7 @@
 name = 'bixverse'
 version = '0.1.5'
 edition = '2021'
+rust-version = '1.65'
 
 [lib]
 crate-type = ['staticlib']
@@ -23,3 +24,6 @@ faer = '0.22.6'
 num-complex = '*'
 petgraph = { version = "0.8.2", features = ["rayon"] }
 rustc-hash = "2.1.1"
+
+[profile.release]
+panic = "abort"

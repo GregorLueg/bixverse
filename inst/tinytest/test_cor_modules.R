@@ -119,8 +119,8 @@ meta_data <- data.table::data.table(
 
 ### expected data --------------------------------------------------------------
 
-expected_modules <- readRDS("./test_data/coremo_modules.rds")
-expected_hvg_data <- readRDS("./test_data/hvg_data.rds")
+expected_modules <- qs2::qs_read("./test_data/coremo_modules.qs")
+expected_hvg_data <- qs2::qs_read("./test_data/hvg_data.qs")
 
 ## run coremo ------------------------------------------------------------------
 

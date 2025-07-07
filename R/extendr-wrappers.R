@@ -503,6 +503,32 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
 
+#' Calculate the column wise cosine similarities
+#'
+#' @description Calculates the cosyne similarity matrix of the columns.
+#'
+#' @param x R matrix with doubles.
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cos <- function(x) .Call(wrap__rs_cos, x)
+
+#' Calculate the column wise correlations.
+#'
+#' @description Calculates the correlation between the columns of two matrices.
+#' The number of rows need to be the same!
+#'
+#' @param x R matrix with doubles.
+#' @param y R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of
+#' Pearson.
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
+
 #' Calculates the correlation matrix from the co-variance matrix
 #'
 #' @description Calculates the correlation matrix from a co-variance
