@@ -24,6 +24,7 @@ added:
 - Improved ontology class and more methods.
 - Permutation-based tests for the genetic diffusion approaches that allow selection
 of significanlty enriched areas of the network (topology-aware).
+- Updates to the ICA detection approaches and correlation-based RBH.
 
 ## *Installation*
 
@@ -76,4 +77,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 01.07.2025*
+*Last update to the read-me: 08.07.2025*

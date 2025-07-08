@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 01.07.2025* </br>
+*Last update: 08.07.2025* </br>
 
 ### Version **0.0.1.5**
 
@@ -12,10 +12,13 @@ additional measure.
 This can break old code!
 - Rework of the ICA code. Some of the functions have been chaned and might
 break old code. Also, testing suite put in place for the ICA class. 
+- Added reciprocal best hit method based on correlations. You will need to
+provide now an additional parameter to the class specifying if you want to use
+set similarity or correlation-based similarity.
 
 #### Bug fixes, documentation updates
 
-- Changes to the rextendr backend to avoid devtools:check() errors with
+- ...
 
 #### Breaking changes
 

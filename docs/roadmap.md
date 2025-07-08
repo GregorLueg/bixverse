@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 16.06.2025* </br>
+*Last update: 08.07.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -53,8 +53,8 @@ correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.
 methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).~~
 - Interpretation layers on top of gene modules, i.e., upstream regulators, 
 annotations of modules (wrappers over pathway enrichment function), etc.
-- [Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 
-structure of gene loadings for matrix factorisation-based co-expression module detection.
+- ~~[Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 
+structure of gene loadings for matrix factorisation-based co-expression module detection.~~
 - Implement [sparse dictionary learning](https://pubmed.ncbi.nlm.nih.gov/35085500/)
 as a bi-clustering type of version.
 
