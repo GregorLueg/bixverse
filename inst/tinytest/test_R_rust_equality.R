@@ -247,3 +247,31 @@ if (requireNamespace("igraph", quietly = TRUE)) {
 } else {
   exit_file("igraph package not available for comparison tests")
 }
+
+# set similarities -------------------------------------------------------------
+
+## data ------------------------------------------------------------------------
+
+set_a <- letters[1:5]
+set_b <- letters[2:7]
+
+jaccard <- length(intersect(set_a, set_b)) / length(union(set_a, set_b))
+overlap_coef <- length(intersect(set_a, set_b)) /
+  min(c(length(set_a), length(set_b)))
+
+## results ---------------------------------------------------------------------
+
+rs_jaccard <- rs_set_similarity(set_a, set_b, overlap_coefficient = FALSE)
+rs_overlap_coef <- rs_set_similarity(set_a, set_b, overlap_coefficient = TRUE)
+
+expect_equal(
+  current = jaccard,
+  target = rs_jaccard,
+  info = "Jaccard similarity Rust <> R"
+)
+
+expect_equal(
+  current = overlap_coef,
+  target = rs_overlap_coef,
+  info = "Overlap coefficient Rust <> R"
+)

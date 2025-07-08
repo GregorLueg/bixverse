@@ -920,9 +920,12 @@ summarise_scores <- function(
 #'
 #' @param object The underlying class, see [bixverse::rbh_graph()].
 #' @param minimum_similarity The minimum similarity to create an edge.
-#' @param overlap_coefficient Shall the overlap coefficient be used instead of
-#' Jaccard similarity.
-#' @param .debug Debug flat that will create print messages from Rust.
+#' @param overlap_coefficient Boolean. Shall the overlap coefficient be used
+#' instead of Jaccard similarity. Only relevant if the underlying class is set
+#' to set similarity.
+#' @param spearman Boolean. Shall Spearman correlation be used. Only relevant
+#' if the underlying class is set to correlation-based similarity.
+#' @param .debug Debug flag that will create print messages from Rust.
 #'
 #' @return The class with added properties.
 #'
@@ -934,6 +937,7 @@ generate_rbh_graph <- S7::new_generic(
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
+    spearman = FALSE,
     .debug = FALSE
   ) {
     S7::S7_dispatch()
@@ -951,26 +955,40 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
+    spearman = FALSE,
     .debug = FALSE
   ) {
-    # Assigns
+    # scope checks
     origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
       target_modules <- NULL
-    # Checks
+    # checks
     checkmate::assertClass(object, "bixverse::rbh_graph")
     checkmate::qassert(minimum_similarity, "R[0, 1]")
     checkmate::qassert(overlap_coefficient, "B1")
+    checkmate::qassert(spearman, "B1")
     checkmate::qassert(.debug, "B1")
 
-    # Body
-    list_of_list <- S7::prop(object, "module_data")
+    # function body
+    rbh_type <- S7::prop(object, "params")[["rbh_type"]]
 
-    rbh_results <- rs_rbh_sets(
-      module_list = list_of_list,
-      overlap_coefficient = overlap_coefficient,
-      min_similarity = minimum_similarity,
-      debug = .debug
-    )
+    rbh_results <- if (rbh_type == "set") {
+      list_of_list <- S7::prop(object, "module_data")
+
+      rs_rbh_sets(
+        module_list = list_of_list,
+        overlap_coefficient = overlap_coefficient,
+        min_similarity = minimum_similarity,
+        debug = .debug
+      )
+    } else {
+      list_of_matrices <- S7::prop(object, "module_data")
+
+      rs_rbh_cor(
+        module_matrices = list_of_matrices,
+        spearman = spearman,
+        min_similarity = minimum_similarity
+      )
+    }
 
     rbh_results$origin_modules[rbh_results$origin_modules == "NA"] <- NA
     rbh_results$target_modules[rbh_results$target_modules == "NA"] <- NA
@@ -1025,7 +1043,8 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     S7::prop(object, "rbh_graph") <- rbh_igraph
     S7::prop(object, "params")[["rbh_graph_gen"]] <- list(
       minimum_similarity = minimum_similarity,
-      overlap_coefficient = overlap_coefficient
+      overlap_coefficient = overlap_coefficient,
+      spearman = spearman
     )
 
     return(object)
