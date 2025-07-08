@@ -1,8 +1,11 @@
-use faer::Mat;
+use extendr_api::prelude::*;
+use faer::{unzip, zip, Mat};
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 
+use crate::helpers::linalg::cor;
 use crate::utils::general::*;
+use crate::utils::r_rust_interface::NamedMatrix;
 use crate::utils::utils_stats::set_similarity;
 
 /// Structure for an Rbh triplet Result
@@ -133,4 +136,108 @@ pub fn calculate_rbh_set<'a>(
     };
 
     result
+}
+
+///////////////////////
+// Correlation based //
+///////////////////////
+
+/// Transforms a list of R matrices into a vector with name of the list
+/// and transforms the stored R object into an R matrix
+pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usize; 2]>)> {
+    matrix_list
+        .iter()
+        .map(|(n, obj)| (n.to_string(), obj.as_matrix().unwrap()))
+        .collect()
+}
+
+/// Takes a matrix vector and transforms it into a BTreeMap that contains the
+/// named matrix class
+pub fn r_matrix_vec_to_btree_list(
+    matrix_vector: &[(String, RArray<f64, [usize; 2]>)],
+) -> BTreeMap<String, NamedMatrix<'_>> {
+    let mut result = BTreeMap::new();
+    for (name, matrix) in matrix_vector {
+        let named_mat = NamedMatrix::new(matrix);
+        result.insert(name.clone(), named_mat);
+    }
+
+    result
+}
+
+/// Calculate the RBH based on correlation of two NamedMatrices
+pub fn calculate_rbh_cor<'a>(
+    x1: &'a NamedMatrix<'a>,
+    x2: &'a NamedMatrix<'a>,
+    spearman: bool,
+) -> Vec<RbhTripletStruc<'a>> {
+    let row_names_1: FxHashSet<String> = x1.row_names.keys().cloned().collect();
+    let row_names_2: FxHashSet<String> = x2.row_names.keys().cloned().collect();
+
+    // Now these references will live as long as 'a because they reference x1 and x2
+    let names_targets: Vec<&str> = x1.col_names.keys().map(|s| s.as_str()).collect();
+    let names_origin: Vec<&str> = x2.col_names.keys().map(|s| s.as_str()).collect();
+
+    let intersecting_rows: Vec<String> = row_names_1.intersection(&row_names_2).cloned().collect();
+
+    // Early return if there are no intersecting rows
+    if intersecting_rows.is_empty() {
+        return vec![RbhTripletStruc {
+            t1: "NA",
+            t2: "NA",
+            sim: 0.0,
+        }];
+    }
+
+    let row_refs: Vec<&str> = intersecting_rows.iter().map(|s| s.as_str()).collect();
+    let sub_x1 = x1.get_rows(&row_refs).unwrap();
+    let sub_x2 = x2.get_rows(&row_refs).unwrap();
+
+    let mut correlations = cor(&sub_x1.as_ref(), &sub_x2.as_ref(), spearman);
+
+    zip!(correlations.as_mut()).for_each(|unzip!(x)| *x = x.abs());
+
+    let row_maxima: Vec<&f64> = correlations
+        .row_iter()
+        .map(|x| {
+            let row: Vec<&f64> = x.iter().collect();
+            array_max(&row)
+        })
+        .collect();
+
+    let col_maxima: Vec<&f64> = correlations
+        .col_iter()
+        .map(|x| {
+            let col: Vec<&f64> = x.iter().collect();
+            array_max(&col)
+        })
+        .collect();
+
+    let mut matching_pairs: Vec<RbhTripletStruc<'a>> = Vec::new();
+    let nrow = names_targets.len();
+    let ncol = names_origin.len();
+
+    for r in 0..nrow {
+        for c in 0..ncol {
+            let value = correlations[(r, c)];
+            if value == *row_maxima[r] && value == *col_maxima[c] {
+                let triplet = RbhTripletStruc {
+                    t1: names_targets[r],
+                    t2: names_origin[c],
+                    sim: value,
+                };
+                matching_pairs.push(triplet);
+            }
+        }
+    }
+
+    if !matching_pairs.is_empty() {
+        matching_pairs
+    } else {
+        vec![RbhTripletStruc {
+            t1: "NA",
+            t2: "NA",
+            sim: 0.0,
+        }]
+    }
 }

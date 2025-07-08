@@ -471,9 +471,37 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'   \item similarity - The similarities between the two respective gene
 #'   modules.
 #' }
-#' 
+#'
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
+
+#' Generate reciprocal best hits based on correlations
+#'
+#' @description This function takes list of (named) matrices which represent
+#' for example matrix factorisation results you wish to identify reciprocal
+#' best hits (RBH) for. The rows need to represent the features and the columns
+#' the parts you wish to calculate the RBH for.
+#'
+#' @param module_matrices A list of named matrices. Rows represent features
+#' and columns the samples you wish to calculate the correlations for.
+#' @param spearman Shall Spearman correlation be used.
+#' @param min_similarity Minimum (absolute) correlations that needs to exist
+#' between two terms.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item origin - The name of the origin of the gene modules.
+#'   \item target - The name of the target of the gene modules.
+#'   \item comparisons - Integer vector indicating how many RBH hits were
+#'   identified in this comparison
+#'   \item origin_modules - Names of the gene modules from the origin.
+#'   \item target_modules - Names of the gene modules from the target.
+#'   \item similarity - The similarities between the two respective gene
+#'   modules.
+#' }
+#'
+#' @export
+rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
 #' Calculate the column-wise co-variance.
 #'

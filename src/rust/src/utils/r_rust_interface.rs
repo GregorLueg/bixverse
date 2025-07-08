@@ -175,10 +175,9 @@ pub fn r_named_vec_data(named_vec: Robj) -> extendr_api::Result<NamedNumericVec>
 /// Structure to store named matrices and have utilies to select based on
 /// feature and sample names. Assumes features = columns and samples = rows.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub struct NamedMatrix<'a> {
-    pub feature_names: FxHashMap<String, usize>,
-    pub sample_names: FxHashMap<String, usize>,
+    pub col_names: BTreeMap<String, usize>,
+    pub row_names: BTreeMap<String, usize>,
     pub values: faer::MatRef<'a, f64>,
 }
 
@@ -186,14 +185,14 @@ pub struct NamedMatrix<'a> {
 impl<'a> NamedMatrix<'a> {
     /// Generate a new matrix with the feature and sample names stored in the structure
     pub fn new(x: &'a RMatrix<f64>) -> Self {
-        let col_names: FxHashMap<String, usize> = x
+        let col_names: BTreeMap<String, usize> = x
             .get_colnames()
             .unwrap()
             .iter()
             .enumerate()
             .map(|(i, s)| (s.to_string(), i))
             .collect();
-        let row_names: FxHashMap<String, usize> = x
+        let row_names: BTreeMap<String, usize> = x
             .get_rownames()
             .unwrap()
             .iter()
@@ -202,37 +201,62 @@ impl<'a> NamedMatrix<'a> {
             .collect();
         let mat = r_matrix_to_faer(x);
         NamedMatrix {
-            feature_names: col_names,
-            sample_names: row_names,
+            col_names,
+            row_names,
             values: mat,
         }
     }
 
-    /// Return a submatrix if available based on the row names and columns to select.
-    pub fn get_sub_mat(self, rows_to_select: &[&str], cols_to_select: &[&str]) -> Option<Mat<f64>> {
-        let mut row_indices: Vec<usize> = Vec::new();
-        let mut col_indices: Vec<usize> = Vec::new();
-
-        for s in rows_to_select {
-            if let Some(&index) = self.sample_names.get(*s) {
-                row_indices.push(index);
+    /// Return a submatrix based on the row names and columns to select.
+    /// If no rows or columns are specified, returns the full matrix.
+    /// If empty slices are provided, returns None.
+    pub fn get_sub_mat(
+        &self,
+        rows_to_select: Option<&[&str]>,
+        cols_to_select: Option<&[&str]>,
+    ) -> Option<Mat<f64>> {
+        // Determine which rows to select
+        let row_indices: Vec<usize> = match rows_to_select {
+            None => (0..self.values.nrows()).collect(), // All rows
+            Some(rows) => {
+                if rows.is_empty() {
+                    return None;
+                }
+                let mut indices = Vec::new();
+                for &row_name in rows {
+                    if let Some(&index) = self.row_names.get(row_name) {
+                        indices.push(index);
+                    }
+                }
+                if indices.is_empty() {
+                    return None;
+                }
+                indices
             }
-        }
+        };
 
-        for s in cols_to_select {
-            if let Some(&index) = self.feature_names.get(*s) {
-                col_indices.push(index);
+        // Determine which columns to select
+        let col_indices: Vec<usize> = match cols_to_select {
+            None => (0..self.values.ncols()).collect(), // All columns
+            Some(cols) => {
+                if cols.is_empty() {
+                    return None;
+                }
+                let mut indices = Vec::new();
+                for &col_name in cols {
+                    if let Some(&index) = self.col_names.get(col_name) {
+                        indices.push(index);
+                    }
+                }
+                if indices.is_empty() {
+                    return None;
+                }
+                indices
             }
-        }
-
-        if row_indices.is_empty() || col_indices.is_empty() {
-            return None;
-        }
+        };
 
         // Create new matrix by copying values
-        // No option to only return a matrix reference unfortunately
-        let mut result = faer::Mat::<f64>::zeros(row_indices.len(), col_indices.len());
-
+        let mut result = Mat::<f64>::zeros(row_indices.len(), col_indices.len());
         for (new_row, &old_row) in row_indices.iter().enumerate() {
             for (new_col, &old_col) in col_indices.iter().enumerate() {
                 result[(new_row, new_col)] = self.values[(old_row, old_col)];
@@ -240,6 +264,31 @@ impl<'a> NamedMatrix<'a> {
         }
 
         Some(result)
+    }
+
+    /// Convenience method to get the full matrix
+    pub fn get_full_mat(&self) -> Mat<f64> {
+        self.get_sub_mat(None, None).unwrap()
+    }
+
+    /// Convenience method to get submatrix with only row selection
+    pub fn get_rows(&self, rows_to_select: &[&str]) -> Option<Mat<f64>> {
+        self.get_sub_mat(Some(rows_to_select), None)
+    }
+
+    /// Convenience method to get submatrix with only column selection
+    pub fn get_cols(&self, cols_to_select: &[&str]) -> Option<Mat<f64>> {
+        self.get_sub_mat(None, Some(cols_to_select))
+    }
+
+    /// Get column names as references (for temporary use within same scope)
+    pub fn get_col_names_refs(&self) -> Vec<&String> {
+        self.col_names.keys().collect()
+    }
+
+    /// Get row names as references (for temporary use within same scope)
+    pub fn get_row_names_refs(&self) -> Vec<&String> {
+        self.row_names.keys().collect()
     }
 }
 
