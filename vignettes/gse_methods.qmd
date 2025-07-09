@@ -267,20 +267,25 @@ plot(
 )
 ```
 
+The speed is very comparable with the Rcpp implementation of fgsea, indicating
+no issues in terms of performance.
+
 ```{r}
 #| label: benchmark
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
 microbenchmark::microbenchmark(
   fgsea = fgsea(
     pathways = examplePathways, 
     stats = exampleRanks,
-    minSize = 10,
+    minSize = 15,
     maxSize = 500
   ),
   rust = calc_fgsea(
     stats = exampleRanks,
     pathways = examplePathways,
-    gsea_params = params_gsea(min_size = 10L)
+    gsea_params = params_gsea(min_size = 15L)
   ),
-  times = 20L
+  times = 10L
 )
 ```
