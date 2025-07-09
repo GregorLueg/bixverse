@@ -261,4 +261,3 @@ plot(
   y = -log10(bixverse_fgsea$pvals)
 )
 ```
-

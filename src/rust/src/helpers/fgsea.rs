@@ -93,9 +93,9 @@ pub fn prepare_gsea_params(r_list: List) -> GseaParams {
     }
 }
 
-//////////////////////
-// Struct with impl //
-//////////////////////
+//////////////////
+// Segment tree //
+//////////////////
 
 /// Structure from the fgsea simple algorithm
 #[derive(Clone, Debug)]
@@ -107,35 +107,6 @@ pub struct SegmentTree<T> {
     log_k: usize,
     block_mask: usize,
 }
-
-/// Structure for fgsea multi-level
-/// Stores and manages chunked samples for efficient processing
-
-#[derive(Clone, Debug)]
-struct SampleChunks {
-    chunk_sum: Vec<f64>,
-    chunks: Vec<Vec<i32>>,
-}
-
-/// Further structure for fgsea multi-level
-/// This is EsRuler implementation
-
-#[derive(Clone, Debug)]
-struct EsRuler {
-    ranks: Vec<f64>,
-    sample_size: usize,
-    original_sample_size: usize,
-    pathway_size: usize,
-    current_samples: Vec<Vec<usize>>,
-    enrichment_scores: Vec<f64>,
-    prob_corrector: Vec<u32>, // ONLY CHANGE: was Vec<usize>, now Vec<u32>
-    chunks_number: i32,
-    chunk_last_element: Vec<i32>,
-}
-
-/////////////////////
-// Implementations //
-/////////////////////
 
 impl<T> SegmentTree<T>
 where
@@ -192,6 +163,19 @@ where
     }
 }
 
+///////////////////
+// Sample Chunks //
+///////////////////
+
+/// Structure for fgsea multi-level
+/// Stores and manages chunked samples for efficient processing
+
+#[derive(Clone, Debug)]
+struct SampleChunks {
+    chunk_sum: Vec<f64>,
+    chunks: Vec<Vec<i32>>,
+}
+
 impl SampleChunks {
     /// Creates new SampleChunks with specified number of chunks
     fn new(chunks_number: usize) -> Self {
@@ -200,6 +184,65 @@ impl SampleChunks {
             chunks: vec![Vec::new(); chunks_number],
         }
     }
+}
+
+///////////////////////////////
+// Different uniform sampler //
+///////////////////////////////
+
+/// Special implementation of the uniform distribution that samples better
+/// This is from the original C++ code.
+#[derive(Clone, Debug)]
+struct UidWrapper {
+    from: usize,
+    len: usize,
+    complete_part: u32,
+}
+
+/// Functions that this uniform distribution is using.
+impl UidWrapper {
+    /// Create a sampler
+    fn new(from: usize, to: usize) -> Self {
+        let len = to - from + 1;
+        let max_val = u32::MAX; // Maximum value for u32
+        let complete_part = max_val - max_val % (len as u32);
+        Self {
+            from,
+            len,
+            complete_part,
+        }
+    }
+
+    /// Generate a sample
+    fn sample(&self, rng: &mut Mt) -> usize {
+        loop {
+            let x = rng.next_u32(); // Raw RNG output
+            if x < self.complete_part {
+                return self.from + (x % self.len as u32) as usize;
+            }
+            // Reject and try again
+        }
+    }
+}
+
+//////////////
+// ES Ruler //
+//////////////
+
+/// Further structure for fgsea multi-level
+/// This is EsRuler implementation
+
+#[derive(Clone, Debug)]
+struct EsRuler {
+    ranks: Vec<f64>,
+    sample_size: usize,
+    original_sample_size: usize,
+    pathway_size: usize,
+    current_samples: Vec<Vec<usize>>,
+    enrichment_scores: Vec<f64>,
+    prob_corrector: Vec<usize>, // ONLY CHANGE: was Vec<usize>, now Vec<u32>
+    chunks_number: i32,
+    chunk_last_element: Vec<i32>,
 }
 
 impl EsRuler {
@@ -228,20 +271,20 @@ impl EsRuler {
         let mut pos_es_indxs: Vec<usize> = Vec::new();
         let mut total_pos_es_count: i32 = 0;
 
-        for sample_id in 0..self.sample_size {
+        for (sample_id, stat) in stats.iter_mut().enumerate().take(self.sample_size) {
             let sample_es_pos = calc_positive_es(&self.ranks, &self.current_samples[sample_id]);
             let sample_es = calc_es(&self.ranks, &self.current_samples[sample_id]);
             if sample_es > 0.0 {
                 total_pos_es_count += 1;
                 pos_es_indxs.push(sample_id);
             }
-            stats[sample_id] = (sample_es_pos, sample_id);
+            *stat = (sample_es_pos, sample_id);
         }
 
         stats.sort_by(|a, b| {
             a.0.partial_cmp(&b.0)
                 .unwrap_or(std::cmp::Ordering::Equal)
-                .then_with(|| a.1.cmp(&b.1)) // Tie-breaking
+                .then_with(|| a.1.cmp(&b.1))
         });
 
         let mut sample_id = 0;
@@ -250,7 +293,7 @@ impl EsRuler {
             if pos_es_indxs.contains(&stats[sample_id].1) {
                 total_pos_es_count -= 1;
             }
-            self.prob_corrector.push(total_pos_es_count as u32);
+            self.prob_corrector.push(total_pos_es_count as usize);
             sample_id += 1;
         }
 
@@ -266,6 +309,8 @@ impl EsRuler {
         new_sets.push(self.current_samples[stats[self.sample_size >> 1].1].clone());
 
         std::mem::swap(&mut self.current_samples, &mut new_sets);
+
+        // We need to update this here, to avoid potential out of index errors.
         self.sample_size = self.current_samples.len();
     }
 
@@ -563,7 +608,8 @@ impl EsRuler {
         }
     }
 
-    fn get_pval(&self, es: f64, _eps: f64, sign: bool) -> (f64, bool) {
+    /// Function to get the p-value
+    fn get_pval(&self, es: f64, sign: bool) -> (f64, bool) {
         let half_size = (self.original_sample_size + 1) / 2; // Use original sample_size here!
         let it_index;
         let mut good_error = true;
@@ -1379,7 +1425,7 @@ fn beta_mean_log(a: usize, b: usize) -> f64 {
 
 /// Calculates the log corrections
 fn calc_log_correction(
-    prob_corrector: &[u32], // ONLY CHANGE: was &[usize], now &[u32]
+    prob_corrector: &[usize],
     prob_corr_idx: usize,
     sample_size: usize,
 ) -> (f64, bool) {
@@ -1388,7 +1434,7 @@ fn calc_log_correction(
     let remainder = sample_size - (prob_corr_idx % half_size);
 
     // ONLY CHANGE: cast u32 to usize for beta_mean_log
-    let cond_prob = beta_mean_log(prob_corrector[prob_corr_idx] as usize + 1, remainder);
+    let cond_prob = beta_mean_log(prob_corrector[prob_corr_idx] + 1, remainder);
     result += cond_prob;
 
     if cond_prob.exp() >= 0.5 {
@@ -1440,9 +1486,9 @@ pub fn fgsea_multilevel_helper(
 
     for &current_es in enrichment_scores {
         let res_pair = if current_es >= 0.0 {
-            es_ruler_pos.get_pval(current_es.abs(), eps, sign)
+            es_ruler_pos.get_pval(current_es.abs(), sign)
         } else {
-            es_ruler_neg.get_pval(current_es.abs(), eps, sign)
+            es_ruler_neg.get_pval(current_es.abs(), sign)
         };
 
         pval_res.push(res_pair.0);
@@ -1504,41 +1550,4 @@ pub fn calc_simple_and_multi_error(
         .collect();
 
     (simple_err, multi_err)
-}
-
-//////////////////////
-// Additional stuff //
-//////////////////////
-
-/// Special implementation of the uniform distribution that samples better
-/// This is from the original C++ code.
-#[derive(Clone, Debug)]
-struct UidWrapper {
-    from: usize,
-    len: usize,
-    complete_part: u32,
-}
-
-/// Functions that this uniform distribution is using.
-impl UidWrapper {
-    fn new(from: usize, to: usize) -> Self {
-        let len = to - from + 1;
-        let max_val = u32::MAX; // Maximum value for u32
-        let complete_part = max_val - max_val % (len as u32);
-        Self {
-            from,
-            len,
-            complete_part,
-        }
-    }
-
-    fn sample(&self, rng: &mut Mt) -> usize {
-        loop {
-            let x = rng.next_u32(); // Raw RNG output
-            if x < self.complete_part {
-                return self.from + (x % self.len as u32) as usize;
-            }
-            // Reject and try again
-        }
-    }
 }

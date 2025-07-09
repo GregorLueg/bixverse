@@ -1,9 +1,9 @@
 ^LICENSE\.md$
+^Meta$
 ^\.Rproj\.user$
 ^\.pre-commit-config\.yaml$
 ^bixverse\.Rproj$
+^doc$
 ^src/\.cargo$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
-^doc$
-^Meta$
