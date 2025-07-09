@@ -238,8 +238,6 @@ fgsea_res <- fgsea(
 ) %>% setorder(pathway)
 
 head(fgsea_res)
-
-dim(fgsea_res)
 ```
 
 And this is how you run it via `bixverse`.
@@ -249,10 +247,8 @@ And this is how you run it via `bixverse`.
 bixverse_fgsea <- calc_fgsea(
   stats = exampleRanks,
   pathways = examplePathways,
-  gsea_params = params_gsea(min_size = 15L, eps = 1e-50)
+  gsea_params = params_gsea(min_size = 15L)
 ) %>% setorder(pathway_name)
-
-dim(bixverse_fgsea)
 
 head(bixverse_fgsea)
 ```
@@ -263,7 +259,10 @@ We can appreciate the (more or less) same p-values estimated by both methods.
 #| label: p-value comparison between fgsea and bixverse fgsea
 plot(
   x = -log10(fgsea_res$pval),
-  y = -log10(bixverse_fgsea$pvals)
+  y = -log10(bixverse_fgsea$pvals),
+  xlab = "-log10(pval) fgsea",
+  ylab = "-log10(pval) bixverse",
+  main = "fgsea and bixverse"
 )
 ```
 
@@ -271,7 +270,7 @@ The speed is very comparable with the Rcpp implementation of fgsea, indicating
 no issues in terms of performance.
 
 ```{r}
-#| label: benchmark
+#| label: comparison of speed fgsea vs. bixverse version
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
 
 microbenchmark::microbenchmark(

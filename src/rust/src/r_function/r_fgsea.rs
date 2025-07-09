@@ -208,7 +208,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
         iters,
         gsea_param,
         seed,
-    )?;
+    );
 
     let gsea_res: GseaResults<'_> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
@@ -281,9 +281,9 @@ fn rs_calc_multi_level(
     let mut pvals: Vec<f64> = Vec::with_capacity(res.len());
     let mut is_cp_ge_half: Vec<bool> = Vec::with_capacity(res.len());
 
-    for res_i in res {
-        pvals.push(res_i.0);
-        is_cp_ge_half.push(res_i.1);
+    for (pval, cp_flag) in res {
+        pvals.push(pval);
+        is_cp_ge_half.push(cp_flag);
     }
 
     Ok(list!(pvals = pvals, is_cp_ge_half = is_cp_ge_half))

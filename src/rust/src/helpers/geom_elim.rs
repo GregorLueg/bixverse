@@ -125,7 +125,7 @@ impl<'a> GeneOntologyRandomPerm<'a> {
     ) -> Result<GseaResults<'b>> {
         // Dual lifetimes fun...
         let gsea_batch_res: GseaBatchResults =
-            calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, self.random_perm)?;
+            calc_gsea_stats_wrapper(pathway_scores, pathway_sizes, self.random_perm);
 
         let gsea_res: GseaResults<'_> =
             calculate_nes_es_pval(pathway_scores, pathway_sizes, &gsea_batch_res);

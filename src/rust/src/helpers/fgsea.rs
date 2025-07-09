@@ -4,7 +4,7 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rand_distr::Distribution;
 use rayon::prelude::*;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use statrs::distribution::{Beta, ContinuousCDF};
 use statrs::function::gamma::digamma;
 
@@ -224,7 +224,7 @@ impl EsRuler {
     /// This is to drive the sampling process to higher and higher ES
     fn duplicate_samples(&mut self) {
         let mut stats: Vec<(f64, usize)> = vec![(0.0, 0); self.sample_size];
-        let mut pos_es_indxs: Vec<usize> = Vec::new();
+        let mut pos_es_indxs: FxHashSet<usize> = FxHashSet::default();
         let mut total_pos_es_count: i32 = 0;
 
         for (sample_id, stat) in stats.iter_mut().enumerate().take(self.sample_size) {
@@ -232,16 +232,21 @@ impl EsRuler {
             let sample_es = calc_es(&self.ranks, &self.current_samples[sample_id]);
             if sample_es > 0.0 {
                 total_pos_es_count += 1;
-                pos_es_indxs.push(sample_id);
+                pos_es_indxs.insert(sample_id);
             }
             *stat = (sample_es_pos, sample_id);
         }
 
-        stats.sort_by(|a, b| {
+        stats.sort_unstable_by(|a, b| {
             a.0.partial_cmp(&b.0)
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| a.1.cmp(&b.1))
         });
+
+        // Memory pre-allocation for speed
+        let half_size = self.sample_size / 2;
+        self.enrichment_scores.reserve(half_size);
+        self.prob_corrector.reserve(half_size);
 
         let mut sample_id = 0;
         while 2 * sample_id < self.sample_size {
@@ -253,7 +258,7 @@ impl EsRuler {
             sample_id += 1;
         }
 
-        let mut new_sets = Vec::new();
+        let mut new_sets = Vec::with_capacity(self.sample_size);
         let mut sample_id = 0;
         while 2 * sample_id < self.sample_size - 2 {
             for _ in 0..2 {
@@ -287,12 +292,7 @@ impl EsRuler {
         let uid_k = Uniform::new(0, k).unwrap();
 
         // Calculate initial rank sum
-        let mut ns = 0.0;
-        for i in 0..sample_chunks.chunks.len() {
-            for &pos in &sample_chunks.chunks[i] {
-                ns += ranks[pos as usize];
-            }
-        }
+        let mut ns: f64 = sample_chunks.chunk_sum.iter().sum();
 
         let q1 = 1.0 / (n as f64 - k as f64);
         let iters = std::cmp::max(1, (k as f64 * pert_prmtr) as i32);
@@ -669,13 +669,11 @@ pub fn calc_gsea_stats(
 ) -> (f64, Vec<i32>) {
     let n = stats.len();
     let m = gs_idx.len();
-    let r_adj: Vec<f64> = gs_idx
-        .iter()
-        .map(|i| {
-            let idx = if one_indexed { *i - 1 } else { *i } as usize;
-            stats[idx].abs().powf(gsea_param)
-        })
-        .collect();
+    let mut r_adj = Vec::with_capacity(m);
+    for &i in gs_idx {
+        let idx = if one_indexed { i - 1 } else { i } as usize;
+        r_adj.push(stats[idx].abs().powf(gsea_param));
+    }
     let nr: f64 = r_adj.iter().sum();
     let r_cum_sum: Vec<f64> = if nr == 0.0 {
         gs_idx
@@ -764,17 +762,16 @@ where
 }
 
 /// Subvector function to extract the relevant values
-fn subvector(from: &[f64], indices: &[usize]) -> Result<Vec<f64>, String> {
-    indices
-        .iter()
-        .map(|&idx| {
-            if idx > 0 && idx <= from.len() {
-                Ok(from[idx - 1])
-            } else {
-                Err(format!("Index out of bounds: {}", idx))
-            }
-        })
-        .collect()
+fn subvector(from: &[f64], indices: &[usize]) -> Option<Vec<f64>> {
+    let mut result = Vec::with_capacity(indices.len());
+    for &idx in indices {
+        if idx > 0 && idx <= from.len() {
+            result.push(from[idx - 1]);
+        } else {
+            return None;
+        }
+    }
+    Some(result)
 }
 
 /// Generate random gene set indices.
@@ -1055,7 +1052,7 @@ fn gsea_stats_sq(
     if !rev {
         // Forward direction with pre-ordered stats
         let mut prev: i32 = -1;
-        for (i, _) in (0..k).collect::<std::vec::Vec<usize>>().iter().enumerate() {
+        for (i, _) in (0..k).enumerate() {
             let j = selected_order[i];
             let t = (selected_stats[j] - 1) as i32;
             assert!(t - prev >= 1);
@@ -1105,7 +1102,7 @@ fn gsea_stats_sq(
 
     // Calculate statistic epsilon for handling small values
     let mut stat_eps: f64 = 1e-5;
-    for (i, _) in (0..k).collect::<std::vec::Vec<usize>>().iter().enumerate() {
+    for (i, _) in (0..k).enumerate() {
         let t = selected_stats[i];
         let xx = stats[t].abs();
         if xx > 0.0 {
@@ -1242,18 +1239,18 @@ pub fn calc_gsea_stat_cumulative(
     let res_down = gsea_stats_sq(stats, selected_stats, &selected_order, gsea_param, true);
 
     // Combine results (take max magnitude with sign)
-    let mut final_res = vec![0.0; res.len()];
-    for i in 0..res.len() {
-        if res[i] == res_down[i] {
-            final_res[i] = 0.0;
-        } else if res[i] < res_down[i] {
-            final_res[i] = -res_down[i];
-        } else {
-            final_res[i] = res[i];
-        }
-    }
-
-    final_res
+    res.into_iter()
+        .zip(res_down)
+        .map(|(up, down)| {
+            if up == down {
+                0.0
+            } else if up < down {
+                -down
+            } else {
+                up
+            }
+        })
+        .collect()
 }
 
 /// Create the permutations for the fgsea simple method
@@ -1268,10 +1265,20 @@ pub fn create_perm_es_simple(
 ) -> Vec<Vec<f64>> {
     let shared_perm = create_random_gs_indices(iters, max_len, universe_length, seed, one_indexed);
 
+    let chunk_size = std::cmp::max(1, iters / (rayon::current_num_threads() * 4));
+
     let rand_es: Vec<Vec<f64>> = shared_perm
-        .par_iter()
-        .map(|selected_genes_random| {
-            calc_gsea_stat_cumulative(stats, selected_genes_random, gsea_param)
+        .into_par_iter()
+        .chunks(chunk_size)
+        .flat_map(|chunk| {
+            let mut local_results = Vec::with_capacity(chunk.len());
+
+            for i in chunk {
+                let x = calc_gsea_stat_cumulative(stats, &i, gsea_param);
+                local_results.push(x)
+            }
+
+            local_results
         })
         .collect();
 
@@ -1283,7 +1290,7 @@ pub fn calc_gsea_stats_wrapper(
     pathway_scores: &[f64],
     pathway_sizes: &[usize],
     shared_perm: &Vec<Vec<f64>>,
-) -> Result<GseaBatchResults, String> {
+) -> GseaBatchResults {
     let m = pathway_scores.len();
 
     let mut le_es = vec![0; m];
@@ -1296,7 +1303,7 @@ pub fn calc_gsea_stats_wrapper(
     // Process each permutation
     for rand_es_i in shared_perm {
         // Get the subvector once
-        let rand_es_p = subvector(rand_es_i, pathway_sizes)?;
+        let rand_es_p = subvector(rand_es_i, pathway_sizes).unwrap();
 
         // Process all stats in a single pass for each pathway
         for i in 0..m {
@@ -1318,14 +1325,14 @@ pub fn calc_gsea_stats_wrapper(
         }
     }
 
-    Ok(GseaBatchResults {
+    GseaBatchResults {
         le_es,
         ge_es,
         le_zero,
         ge_zero,
         le_zero_sum,
         ge_zero_sum,
-    })
+    }
 }
 
 /// Calculate random scores batch-wise
@@ -1336,7 +1343,7 @@ pub fn calc_gsea_stat_cumulative_batch(
     iters: usize,
     gsea_param: f64,
     seed: u64,
-) -> Result<GseaBatchResults, String> {
+) -> GseaBatchResults {
     let n = stats.len();
     let k = array_max(pathway_sizes);
 
@@ -1393,22 +1400,18 @@ pub fn fgsea_multilevel_helper(
     eps: f64,
     sign: bool,
 ) -> (f64, bool) {
-    let pos_ranks: Vec<f64> = ranks.iter().map(|&r| r.abs()).collect();
-    let mut neg_ranks = pos_ranks.clone();
-    neg_ranks.reverse();
-
-    // Initialise the EsRulers
-    let mut es_ruler_pos = EsRuler::new(&pos_ranks, sample_size, pathway_size);
-    let mut es_ruler_neg = EsRuler::new(&neg_ranks, sample_size, pathway_size);
-
-    // Only extend the ruler we'll actually use
-    if enrichment_score >= 0.0 {
-        es_ruler_pos.extend(enrichment_score.abs(), seed, eps);
-        es_ruler_pos.get_pval(enrichment_score.abs(), sign)
+    let ranks: Vec<f64> = if enrichment_score >= 0.0 {
+        ranks.iter().map(|&r| r.abs()).collect()
     } else {
-        es_ruler_neg.extend(enrichment_score.abs(), seed, eps);
-        es_ruler_neg.get_pval(enrichment_score.abs(), sign)
-    }
+        // Only create what we need
+        let mut neg_ranks: Vec<f64> = ranks.iter().map(|&r| r.abs()).collect();
+        neg_ranks.reverse();
+        neg_ranks
+    };
+
+    let mut es_ruler = EsRuler::new(&ranks, sample_size, pathway_size);
+    es_ruler.extend(enrichment_score.abs(), seed, eps);
+    es_ruler.get_pval(enrichment_score.abs(), sign)
 }
 
 /// Calculates the simple and multi error in Rust
