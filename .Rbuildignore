@@ -3,3 +3,7 @@
 ^\.pre-commit-config\.yaml$
 ^bixverse\.Rproj$
 ^src/\.cargo$
+^vignettes/*_files$
+^vignettes/\.quarto$
+^doc$
+^Meta$

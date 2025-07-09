@@ -4,3 +4,7 @@
 
 # Apple
 .DS_Store
+inst/doc
+**/.quarto/
+/doc/
+/Meta/

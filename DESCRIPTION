@@ -3,13 +3,29 @@ Title: Rust-accelerated standard bioinformatics, computational biology workflows
 Version: 0.0.1.5
 Authors@R: 
     c(
-      person("Gregor", "Lueg", email = "gregorlueg@me.com", role = c("aut", "cre")),
-      person("Liesbeth", "Francois", email = "francois.liesbeth@gmail.com", role = "aut"),
-      person("Andrew", "Skelton", email = "Ajskelton@proton.me", role = "aut")
+      person(
+        given = "Gregor", 
+        family = "Lueg", 
+        email = "gregorlueg@me.com", 
+        role = c("aut", "cre")
+      ),
+      person(
+        given = "Liesbeth", 
+        family = "Francois",
+        email = "francois.liesbeth@gmail.com", 
+        role = c("ctb")
+      ),
+      person(
+        given = "Andrew", 
+        family = "Skelton", 
+        email = "Ajskelton@proton.me", 
+        role = c("ctb")
       )
+    )
 Description: 
-    Your favourite methods used in bioinformatics and computational biology made VERY
-    fast via Rust.
+    Your favourite methods used in bioinformatics and computational biology made 
+    VERY fast via Rust. Contains various gene set enrichment methods, graph-
+    based methods, co-expression module detection and much more.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -40,5 +56,15 @@ Imports:
     rlang,
     S7,
     zeallot
-Suggests: tinytest
-SystemRequirements: Cargo (Rust's package manager), rustc
+Suggests: 
+    knitr,
+    microbenchmark,
+    msigdbr,
+    qs2,
+    quarto,
+    tictoc,
+    tinytest
+SystemRequirements: 
+    Cargo (Rust's package manager), rustc
+VignetteBuilder: 
+    quarto
