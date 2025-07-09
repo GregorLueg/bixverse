@@ -228,7 +228,7 @@ params_gsea <- function(
   min_size = 5L,
   max_size = 500L,
   gsea_param = 1.0,
-  sample_size = 121L,
+  sample_size = 101L,
   eps = 1e-50
 ) {
   # Checks

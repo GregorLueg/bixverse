@@ -57,12 +57,12 @@ levels <- names(S7::prop(object, "levels"))
 
 expected_sizes_wo_elim <- c(35, 40, 64, 97, 100, 125)
 expected_nes_wo_elim <- c(
-  2.970346,
-  -3.515364,
-  3.472927,
-  -3.759593,
-  4.060339,
-  -4.188695
+  2.914655,
+  -3.585477,
+  3.490191,
+  -3.923612,
+  4.188840,
+  -4.351848
 )
 
 rust_res_wo_elim <- rs_geom_elim_fgsea_simple(
@@ -100,12 +100,12 @@ expect_equal(
 # for later gene sets
 expected_sizes_with_elim <- c(35, 40, 39, 62, 50, 46)
 expected_nes_with_elim <- c(
-  2.970346,
-  -3.515364,
-  2.689328,
-  -3.014979,
-  3.248230,
-  -3.340476
+  2.914655,
+  -3.585477,
+  2.614123,
+  -3.026099,
+  3.417490,
+  -3.414896
 )
 
 rust_res_with_elim <- rs_geom_elim_fgsea_simple(
@@ -144,12 +144,12 @@ expect_equal(
 # order is different due to merging
 r_expected_size_without_elim <- c(100, 64, 35, 125, 97, 40)
 r_expected_nes_without_elim <- c(
-  4.060339,
-  3.472927,
-  2.970346,
-  -4.188695,
-  -3.759593,
-  -3.515364
+  4.188840,
+  3.490191,
+  2.914655,
+  -4.351848,
+  -3.923612,
+  -3.585477
 )
 
 r_results_without_elim <- fgsea_simple_go_elim(
@@ -182,12 +182,12 @@ expect_equal(
 
 r_expected_size_with_elim <- c(50, 39, 35, 46, 62, 40)
 r_expected_nes_with_elim <- c(
-  3.248230,
-  2.689328,
-  2.970346,
-  -3.340476,
-  -3.014979,
-  -3.515364
+  3.417490,
+  2.614123,
+  2.914655,
+  -3.414896,
+  -3.026099,
+  -3.585477
 )
 
 r_results_with_elim <- fgsea_simple_go_elim(
@@ -283,8 +283,17 @@ levels <- names(S7::prop(object, "levels"))
 
 # these are super significant due to the sampling...
 
-expected_sizes <- c(35, 48, 61, 44, 40, 38, 40, 50)
-expected_err <- c(NA, NA, NA, NA, NA, 1.00087305, 0.06299909, 0.03458907)
+expected_sizes <- c(40, 48, 44, 61, 35, 38, 40, 50)
+expected_err <- c(
+  1.59595665,
+  1.38026492,
+  1.33449749,
+  1.09592929,
+  1.03769616,
+  0.82665730,
+  0.06591468,
+  0.03539908
+)
 
 r_results <- fgsea_go_elim(
   object = object,
@@ -314,8 +323,17 @@ expect_equal(
 
 ### without elimination --------------------------------------------------------
 
-expected_sizes <- c(35, 100, 64, 97, 40, 125, 40, 50)
-expected_err <- c(NA, NA, NA, NA, NA, NA, 0.06299909, 0.03458907)
+expected_sizes <- c(100, 125, 97, 40, 64, 35, 40, 50)
+expected_err <- c(
+  NA,
+  NA,
+  NA,
+  1.59595665,
+  1.52292160,
+  1.03769616,
+  0.06591468,
+  0.03539908
+)
 
 r_results <- fgsea_go_elim(
   object = object,

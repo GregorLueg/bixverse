@@ -1,8 +1,6 @@
 use extendr_api::List;
-use rand::distr::Uniform;
-use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
-use rand_distr::Distribution;
+use rand_mt::Mt;
 use rayon::prelude::*;
 use statrs::distribution::{Beta, ContinuousCDF};
 use statrs::function::gamma::digamma;
@@ -124,14 +122,15 @@ struct SampleChunks {
 
 #[derive(Clone, Debug)]
 struct EsRuler {
-    ranks: Vec<f64>,                  // Gene rankings
-    sample_size: usize,               // Number of random samples
-    pathway_size: usize,              // Size of gene set
-    current_samples: Vec<Vec<usize>>, // Current set of samples
-    enrichment_scores: Vec<f64>,      // Calculated ES values
-    prob_corrector: Vec<usize>,       // Correction factors for p-values
-    chunks_number: i32,               // Number of chunks for optimization
-    chunk_last_element: Vec<i32>,     // Last element index in each chunk
+    ranks: Vec<f64>,
+    sample_size: usize,
+    original_sample_size: usize,
+    pathway_size: usize,
+    current_samples: Vec<Vec<usize>>,
+    enrichment_scores: Vec<f64>,
+    prob_corrector: Vec<u32>, // ONLY CHANGE: was Vec<usize>, now Vec<u32>
+    chunks_number: i32,
+    chunk_last_element: Vec<i32>,
 }
 
 /////////////////////
@@ -195,10 +194,10 @@ where
 
 impl SampleChunks {
     /// Creates new SampleChunks with specified number of chunks
-    fn new(chunks_number: i32) -> Self {
+    fn new(chunks_number: usize) -> Self {
         Self {
-            chunk_sum: vec![0.0; chunks_number as usize],
-            chunks: vec![Vec::new(); chunks_number as usize],
+            chunk_sum: vec![0.0; chunks_number],
+            chunks: vec![Vec::new(); chunks_number],
         }
     }
 }
@@ -212,6 +211,7 @@ impl EsRuler {
         Self {
             ranks: inp_ranks.to_vec(),
             sample_size: inp_sample_size,
+            original_sample_size: inp_sample_size,
             pathway_size: inp_pathway_size,
             current_samples,
             enrichment_scores: Vec::new(),
@@ -226,11 +226,9 @@ impl EsRuler {
     fn duplicate_samples(&mut self) {
         let mut stats: Vec<(f64, usize)> = vec![(0.0, 0); self.sample_size];
         let mut pos_es_indxs: Vec<usize> = Vec::new();
-        let mut total_pos_es_count = 0;
+        let mut total_pos_es_count: i32 = 0;
 
-        // Calculate ES for each sample
-        let loop_iter = 0..self.sample_size; // Avoids clippy complaints
-        for sample_id in loop_iter {
+        for sample_id in 0..self.sample_size {
             let sample_es_pos = calc_positive_es(&self.ranks, &self.current_samples[sample_id]);
             let sample_es = calc_es(&self.ranks, &self.current_samples[sample_id]);
             if sample_es > 0.0 {
@@ -240,33 +238,35 @@ impl EsRuler {
             stats[sample_id] = (sample_es_pos, sample_id);
         }
 
-        stats.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+        stats.sort_by(|a, b| {
+            a.0.partial_cmp(&b.0)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.1.cmp(&b.1)) // Tie-breaking
+        });
 
-        // Store lower half ES values and track positive ES counts
-        let loop_iter = 0..(self.sample_size) / 2;
-        for sample_id in loop_iter {
+        let mut sample_id = 0;
+        while 2 * sample_id < self.sample_size {
             self.enrichment_scores.push(stats[sample_id].0);
             if pos_es_indxs.contains(&stats[sample_id].1) {
                 total_pos_es_count -= 1;
             }
-            self.prob_corrector.push(total_pos_es_count);
+            self.prob_corrector.push(total_pos_es_count as u32);
+            sample_id += 1;
         }
 
-        // Create new samples by duplicating high-ES samples
         let mut new_sets = Vec::new();
-        for sample_id in 0..(self.sample_size - 2) / 2 {
+        let mut sample_id = 0;
+        while 2 * sample_id < self.sample_size - 2 {
             for _ in 0..2 {
-                new_sets.push(
-                    self.current_samples[stats[self.sample_size - 1 - sample_id].1 as usize]
-                        .clone(),
-                );
+                new_sets
+                    .push(self.current_samples[stats[self.sample_size - 1 - sample_id].1].clone());
             }
+            sample_id += 1;
         }
-        new_sets.push(self.current_samples[stats[self.sample_size >> 1].1 as usize].clone());
+        new_sets.push(self.current_samples[stats[self.sample_size >> 1].1].clone());
 
-        // Replace current samples with new sets <- Interesting command to swap stuff in memory
         std::mem::swap(&mut self.current_samples, &mut new_sets);
-        self.sample_size = self.current_samples.len(); // VERY importand to add...
+        self.sample_size = self.current_samples.len();
     }
 
     /// Attempts to improve a sample by swapping genes in/out
@@ -278,12 +278,12 @@ impl EsRuler {
         k: i32,
         sample_chunks: &mut SampleChunks,
         bound: f64,
-        rng: &mut StdRng,
+        rng: &mut Mt,
     ) -> i32 {
         let pert_prmtr = 0.1; // Controls perturbation intensity
         let n = ranks.len() as i32;
-        let uid_n = Uniform::new(0, n).unwrap();
-        let uid_k = Uniform::new(0, k).unwrap();
+        let uid_n = UidWrapper::new(0, (n - 1) as usize);
+        let uid_k = UidWrapper::new(0, (k - 1) as usize);
 
         // Calculate initial rank sum
         let mut ns = 0.0;
@@ -314,12 +314,12 @@ impl EsRuler {
             {
                 let mut tmp = old_ind;
                 while old_chunk_ind < sample_chunks.chunks.len()
-                    && sample_chunks.chunks[old_chunk_ind].len() as i32 <= tmp
+                    && sample_chunks.chunks[old_chunk_ind].len() <= tmp
                 {
-                    tmp -= sample_chunks.chunks[old_chunk_ind].len() as i32;
+                    tmp -= sample_chunks.chunks[old_chunk_ind].len();
                     old_chunk_ind += 1;
                 }
-                old_ind_in_chunk = tmp as usize;
+                old_ind_in_chunk = tmp;
                 old_val = sample_chunks.chunks[old_chunk_ind][old_ind_in_chunk];
             }
 
@@ -327,22 +327,22 @@ impl EsRuler {
             let new_val = uid_n.sample(rng);
 
             // Find insertion position
-            let new_chunk_ind = match self.chunk_last_element.binary_search(&new_val) {
-                Ok(idx) => idx,
+            let new_chunk_ind = match self.chunk_last_element.binary_search(&(new_val as i32)) {
+                Ok(idx) => idx + 1,
                 Err(idx) => idx,
             };
 
-            let new_ind_in_chunk = match sample_chunks.chunks[new_chunk_ind].binary_search(&new_val)
-            {
-                Ok(idx) => idx,
-                Err(idx) => idx,
-            };
+            let new_ind_in_chunk =
+                match sample_chunks.chunks[new_chunk_ind].binary_search(&(new_val as i32)) {
+                    Ok(idx) => idx,
+                    Err(idx) => idx,
+                };
 
             // Skip if new value already in sample
             if new_ind_in_chunk < sample_chunks.chunks[new_chunk_ind].len()
-                && sample_chunks.chunks[new_chunk_ind][new_ind_in_chunk] == new_val
+                && sample_chunks.chunks[new_chunk_ind][new_ind_in_chunk] == new_val as i32
             {
-                if new_val == old_val {
+                if new_val as i32 == old_val {
                     moves += 1;
                 }
                 continue;
@@ -355,12 +355,12 @@ impl EsRuler {
             } else {
                 0
             };
-            sample_chunks.chunks[new_chunk_ind].insert(new_ind_in_chunk - adjust, new_val);
+            sample_chunks.chunks[new_chunk_ind].insert(new_ind_in_chunk - adjust, new_val as i32);
 
             // Update sums
-            ns = ns - ranks[old_val as usize] + ranks[new_val as usize];
+            ns = ns - ranks[old_val as usize] + ranks[new_val];
             sample_chunks.chunk_sum[old_chunk_ind] -= ranks[old_val as usize];
-            sample_chunks.chunk_sum[new_chunk_ind] += ranks[new_val as usize];
+            sample_chunks.chunk_sum[new_chunk_ind] += ranks[new_val];
 
             // Update candidate tracking
             if has_cand {
@@ -379,9 +379,9 @@ impl EsRuler {
                     }
                 }
 
-                if new_val < cand_val {
+                if new_val < cand_val as usize {
                     cand_x -= 1;
-                    cand_y += ranks[new_val as usize];
+                    cand_y += ranks[new_val];
                 }
             }
 
@@ -435,25 +435,25 @@ impl EsRuler {
 
             // If not valid, revert changes
             if !ok {
-                ns = ns - ranks[new_val as usize] + ranks[old_val as usize];
+                ns = ns - ranks[new_val] + ranks[old_val as usize];
                 sample_chunks.chunk_sum[old_chunk_ind] += ranks[old_val as usize];
-                sample_chunks.chunk_sum[new_chunk_ind] -= ranks[new_val as usize];
+                sample_chunks.chunk_sum[new_chunk_ind] -= ranks[new_val];
 
                 sample_chunks.chunks[new_chunk_ind].remove(new_ind_in_chunk - adjust);
                 sample_chunks.chunks[old_chunk_ind].insert(old_ind_in_chunk, old_val);
 
                 // Revert candidate tracking
                 if has_cand {
-                    if new_val == cand_val {
+                    if new_val == cand_val as usize {
                         has_cand = false;
                     } else if old_val < cand_val {
                         cand_x -= 1;
                         cand_y += ranks[old_val as usize];
                     }
 
-                    if new_val < cand_val {
+                    if new_val < cand_val as usize {
                         cand_x += 1;
-                        cand_y -= ranks[new_val as usize];
+                        cand_y -= ranks[new_val];
                     }
                 }
             } else {
@@ -467,7 +467,7 @@ impl EsRuler {
     /// Extends the ES distribution to include the target ES value
     /// Uses an adaptive sampling approach to explore higher ES values
     fn extend(&mut self, es: f64, seed: u64, eps: f64) {
-        let mut rng = StdRng::seed_from_u64(seed);
+        let mut rng = Mt::new(seed as u32);
 
         for sample_id in 0..self.sample_size {
             self.current_samples[sample_id] =
@@ -481,7 +481,8 @@ impl EsRuler {
         self.chunk_last_element = vec![0; self.chunks_number as usize];
         self.chunk_last_element[self.chunks_number as usize - 1] = self.ranks.len() as i32;
         let mut tmp: Vec<i32> = vec![0; self.sample_size];
-        let mut samples_chunks = vec![SampleChunks::new(self.chunks_number); self.sample_size];
+        let mut samples_chunks =
+            vec![SampleChunks::new(self.chunks_number as usize); self.sample_size];
 
         // Initial sample processing
         self.duplicate_samples();
@@ -563,39 +564,37 @@ impl EsRuler {
     }
 
     fn get_pval(&self, es: f64, _eps: f64, sign: bool) -> (f64, bool) {
-        let half_size = (self.sample_size + 1) / 2;
+        let half_size = (self.original_sample_size + 1) / 2; // Use original sample_size here!
         let it_index;
         let mut good_error = true;
 
-        // Find position in the ES distribution
         if es >= *self.enrichment_scores.last().unwrap_or(&0.0) {
             it_index = self.enrichment_scores.len() - 1;
             if es > self.enrichment_scores[it_index] + 1e-10 {
-                good_error = false; // Beyond measured range
+                good_error = false;
             }
         } else {
-            // Binary search for position
-            it_index = match self
-                .enrichment_scores
-                .binary_search_by(|probe| probe.partial_cmp(&es).unwrap())
-            {
+            it_index = match self.enrichment_scores.binary_search_by(|probe| {
+                probe.partial_cmp(&es).unwrap_or(std::cmp::Ordering::Equal)
+            }) {
                 Ok(index) => index,
-                Err(index) => index, // Insert position if not found exactly
+                Err(index) => index,
             };
         }
 
         let indx = if it_index > 0 { it_index } else { 0 };
         let k = indx / half_size;
-        let remainder = self.sample_size - (indx % half_size);
+        let remainder = self.original_sample_size - (indx % half_size); // Use original sample_size here!
 
-        let adj_log = beta_mean_log(half_size, self.sample_size);
-        let adj_log_pval = k as f64 * adj_log + beta_mean_log(remainder + 1, self.sample_size);
+        let adj_log = beta_mean_log(half_size, self.original_sample_size); // Use original sample_size here!
+        let adj_log_pval =
+            k as f64 * adj_log + beta_mean_log(remainder + 1, self.original_sample_size); // Use original sample_size here!
 
         if sign {
             (0.0_f64.max(1.0_f64.min(adj_log_pval.exp())), good_error)
         } else {
-            // Apply correction for multiple testing
-            let correction = calc_log_correction(&self.prob_corrector, indx, self.sample_size);
+            let correction =
+                calc_log_correction(&self.prob_corrector, indx, self.original_sample_size); // Use original sample_size here!
             let res_log = adj_log_pval + correction.0;
             (
                 0.0_f64.max(1.0_f64.min(res_log.exp())),
@@ -789,7 +788,7 @@ pub fn create_random_gs_indices(
         .map(|i| {
             // Create a unique seed for each iteration
             let iter_seed = seed.wrapping_add(i as u64);
-            let mut rng = StdRng::seed_from_u64(iter_seed);
+            let mut rng = Mt::seed_from_u64(iter_seed);
 
             // Fisher-Yates shuffle for efficient sampling without replacement
             // Also deal with potential issues in indexing here
@@ -879,29 +878,56 @@ pub fn calculate_nes_es_pval<'a>(
     }
 }
 
-/// Generate k random numbers from [a, b] (inclusive range)
-/// Uses Fisher-Yates shuffle approach similar to typical C++ implementations
-fn combination(a: usize, b: usize, k: usize, rng: &mut impl Rng) -> Vec<usize> {
+/// Combination function for the multi-level implentation.
+/// They use a way more complex way of getting to the values.
+fn combination(a: usize, b: usize, k: usize, rng: &mut Mt) -> Vec<usize> {
     let n = b - a + 1;
     if k > n {
         panic!("k cannot be greater than range size n");
     }
 
-    // Create a vector with all possible values
-    let mut indices: Vec<usize> = (a..=b).collect();
+    let mut v = Vec::with_capacity(k);
 
-    // Use Fisher-Yates shuffle to get k random elements
-    // This is equivalent to partial_shuffle in C++
-    for i in 0..k {
-        let j = rng.random_range(i..n);
-        indices.swap(i, j);
+    if k < n / 2 {
+        // Branch 1: Rejection sampling (same as C++)
+        let mut used = vec![false; n];
+        let uid = UidWrapper::new(a, b);
+
+        for _ in 0..k {
+            for _ in 0..100 {
+                // Same limit as C++
+                let x = uid.sample(rng);
+                if !used[x - a] {
+                    v.push(x);
+                    used[x - a] = true;
+                    break;
+                }
+            }
+        }
+    } else {
+        // Branch 2: Fisher-Yates approach (same as C++)
+        let mut used = vec![false; n];
+        for r in (n - k)..n {
+            let uid = UidWrapper::new(0, r);
+            let x = uid.sample(rng);
+            if !used[x] {
+                v.push(a + x);
+                used[x] = true;
+            } else {
+                v.push(a + r);
+                used[r] = true;
+            }
+        }
+
+        // Fisher-Yates shuffle
+        for i in (1..v.len()).rev() {
+            let uid = UidWrapper::new(0, i);
+            let j = uid.sample(rng);
+            v.swap(i, j);
+        }
     }
 
-    // Take first k elements and sort them
-    let mut result: Vec<usize> = indices.into_iter().take(k).collect();
-    result.sort_unstable();
-
-    result
+    v
 }
 
 /// Rearranges array so nth element is in its sorted position
@@ -1353,15 +1379,18 @@ fn beta_mean_log(a: usize, b: usize) -> f64 {
 
 /// Calculates the log corrections
 fn calc_log_correction(
-    prob_corrector: &[usize],
+    prob_corrector: &[u32], // ONLY CHANGE: was &[usize], now &[u32]
     prob_corr_idx: usize,
     sample_size: usize,
 ) -> (f64, bool) {
     let mut result = 0.0;
     let half_size = (sample_size + 1) / 2;
     let remainder = sample_size - (prob_corr_idx % half_size);
-    let cond_prob = beta_mean_log(prob_corrector[prob_corr_idx] + 1, remainder);
+
+    // ONLY CHANGE: cast u32 to usize for beta_mean_log
+    let cond_prob = beta_mean_log(prob_corrector[prob_corr_idx] as usize + 1, remainder);
     result += cond_prob;
+
     if cond_prob.exp() >= 0.5 {
         (result, true)
     } else {
@@ -1475,4 +1504,41 @@ pub fn calc_simple_and_multi_error(
         .collect();
 
     (simple_err, multi_err)
+}
+
+//////////////////////
+// Additional stuff //
+//////////////////////
+
+/// Special implementation of the uniform distribution that samples better
+/// This is from the original C++ code.
+#[derive(Clone, Debug)]
+struct UidWrapper {
+    from: usize,
+    len: usize,
+    complete_part: u32,
+}
+
+/// Functions that this uniform distribution is using.
+impl UidWrapper {
+    fn new(from: usize, to: usize) -> Self {
+        let len = to - from + 1;
+        let max_val = u32::MAX; // Maximum value for u32
+        let complete_part = max_val - max_val % (len as u32);
+        Self {
+            from,
+            len,
+            complete_part,
+        }
+    }
+
+    fn sample(&self, rng: &mut Mt) -> usize {
+        loop {
+            let x = rng.next_u32(); // Raw RNG output
+            if x < self.complete_part {
+                return self.from + (x % self.len as u32) as usize;
+            }
+            // Reject and try again
+        }
+    }
 }
