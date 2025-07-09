@@ -270,27 +270,21 @@ fn rs_calc_multi_level(
         .map(|&x| x.try_into().unwrap_or(0))
         .collect();
 
-    let res: Vec<GseaMultiLevelresults> = es
+    let res: Vec<(f64, bool)> = es
         .par_iter()
         .zip(pathway_size.par_iter())
         .map(|(es_i, size_i)| {
-            // The original implementation used vectors here by pathway size
-            // This was faster to do
-            let es_vec = vec![*es_i];
-            fgsea_multilevel_helper(&es_vec, &ranks, *size_i, sample_size, seed, eps, sign)
+            fgsea_multilevel_helper(*es_i, &ranks, *size_i, sample_size, seed, eps, sign)
         })
         .collect();
 
-    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(res.len());
-    let mut is_cp_ge_half: Vec<Vec<bool>> = Vec::with_capacity(res.len());
+    let mut pvals: Vec<f64> = Vec::with_capacity(res.len());
+    let mut is_cp_ge_half: Vec<bool> = Vec::with_capacity(res.len());
 
     for res_i in res {
-        pvals.push(res_i.pvals);
-        is_cp_ge_half.push(res_i.is_cp_ge_half);
+        pvals.push(res_i.0);
+        is_cp_ge_half.push(res_i.1);
     }
-
-    let pvals = flatten_vector(pvals);
-    let is_cp_ge_half = flatten_vector(is_cp_ge_half);
 
     Ok(list!(pvals = pvals, is_cp_ge_half = is_cp_ge_half))
 }

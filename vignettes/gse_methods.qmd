@@ -220,6 +220,9 @@ These can be run like:
 ```{r}
 #| label: fgsea run
 #| eval: !expr requireNamespace("fgsea", quietly = TRUE)
+
+# This is the example of fgsea
+
 library("fgsea")
 
 data(examplePathways)
@@ -238,6 +241,8 @@ head(fgsea_res)
 
 dim(fgsea_res)
 ```
+
+And this is how you run it via `bixverse`.
 
 ```{r}
 #| label: bixverse version of fgsea
@@ -259,5 +264,23 @@ We can appreciate the (more or less) same p-values estimated by both methods.
 plot(
   x = -log10(fgsea_res$pval),
   y = -log10(bixverse_fgsea$pvals)
+)
+```
+
+```{r}
+#| label: benchmark
+microbenchmark::microbenchmark(
+  fgsea = fgsea(
+    pathways = examplePathways, 
+    stats = exampleRanks,
+    minSize = 10,
+    maxSize = 500
+  ),
+  rust = calc_fgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    gsea_params = params_gsea(min_size = 10L)
+  ),
+  times = 20L
 )
 ```

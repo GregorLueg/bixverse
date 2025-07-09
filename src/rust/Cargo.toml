@@ -24,8 +24,6 @@ faer = '0.22.6'
 num-complex = '*'
 petgraph = { version = "0.8.2", features = ["rayon"] }
 rustc-hash = "2.1.1"
-rand_mt = "*"
-mersenne_twister = "1.1.1"
 
 [profile.release]
 panic = "abort"
