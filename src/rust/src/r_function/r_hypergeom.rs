@@ -80,11 +80,23 @@ fn rs_hypergeom_test_list(
     let gene_sets = r_list_to_str_vec(gene_sets)?;
     let target_genes_list = r_list_to_str_vec(target_genes_list)?;
 
+    let chunk_size = std::cmp::max(
+        1,
+        target_genes_list.len() / (rayon::current_num_threads() * 4),
+    );
+
     let res: Vec<HypergeomResult> = target_genes_list
         .par_iter()
-        .map(|x_i| {
-            let res_i: HypergeomResult = hypergeom_helper(x_i, &gene_sets, &gene_universe);
-            res_i
+        .chunks(chunk_size)
+        .flat_map(|chunk| {
+            let mut local_res = Vec::with_capacity(chunk.len());
+
+            for x_i in chunk {
+                let res_i: HypergeomResult = hypergeom_helper(x_i, &gene_sets, &gene_universe);
+                local_res.push(res_i);
+            }
+
+            local_res
         })
         .collect();
 

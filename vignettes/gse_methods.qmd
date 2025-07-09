@@ -180,7 +180,7 @@ data and exposes it in Rust.
 go_data_dt <- get_go_human_data()
 
 # Generate the S7 object for subsequent usage
-go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+go_data <- gene_ontology_data(go_data_dt, min_genes = 3L)
 ```
 
 Similar to the more generic hypergeometric tests, you can provide either a 
@@ -191,18 +191,20 @@ very fast.
 #| label: run single go-aware gse
 
 go_aware_res <- gse_go_elim_method(
-  object = go_data_s7,
+  object = go_data,
   target_genes = target_genes_1
 )
 
 head(go_aware_res)
 ```
 
+Here is the example on how to run this over a list.
+
 ```{r}
 #| label: run multiple go-aware gse
 
 go_aware_res_2 <- gse_go_elim_method_list(
-  object = go_data_s7,
+  object = go_data,
   target_gene_list = target_list
 )
 
@@ -288,3 +290,35 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 ```
+
+### GSEA gene ontology aware
+
+`bixverse` also implements GSEA in a gene-ontology aware form. In this case,
+you use the same object as for the hypergeometric test, but instead provide
+the ranked list. Similar to the hyper geometric version, the ontology is
+traversed from the lowest level first and the permutation-based p-values are
+calculated for a given term. Should this p-value be below the elimination
+threshold, the genes from that given gene ontology term are removed from all
+of its ancestors, yielding more specific GO terms. Once this has been done
+with the full ontology, the multi-level method from fgsea is used to estimate
+lower p-values than just possible via permutation for terms that show 
+significance.
+
+```{r}
+#| label: gsea gene ontology aware
+
+gene_universe_go <- unique(
+  unlist(go_data_dt[, "ensembl_id"], use.names = FALSE)
+)
+
+random_stats <- rnorm(length(gene_universe_go))
+names(random_stats) <- gene_universe_go
+
+go_gsea_res <- fgsea_go_elim(
+  object = go_data,
+  stats = random_stats
+)
+
+head(go_gsea_res)
+```
+

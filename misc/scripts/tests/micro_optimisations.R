@@ -3,6 +3,8 @@ library("fgsea")
 data(examplePathways)
 data(exampleRanks)
 
+devtools::load_all()
+
 stats = exampleRanks
 pathways = examplePathways
 gsea_params = params_gsea(min_size = 15L)
@@ -105,6 +107,10 @@ dt_simple_gsea <- permutations_res_simple[
 dt_multi_level <- permutations_res_simple[
   rs_err_res$multi_err < rs_err_res$simple_err
 ][, "denom_prob" := (mode_fraction + 1) / (nperm + 1)]
+
+split(dt_multi_level, dt_multi_level$size)
+
+rextendr::document()
 
 tictoc::tic()
 rs_res = with(

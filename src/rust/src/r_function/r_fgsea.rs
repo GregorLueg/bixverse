@@ -270,11 +270,22 @@ fn rs_calc_multi_level(
         .map(|&x| x.try_into().unwrap_or(0))
         .collect();
 
+    let chunk_size = std::cmp::max(1, es.len() / (rayon::current_num_threads() * 4));
+
     let res: Vec<(f64, bool)> = es
         .par_iter()
         .zip(pathway_size.par_iter())
-        .map(|(es_i, size_i)| {
-            fgsea_multilevel_helper(*es_i, &ranks, *size_i, sample_size, seed, eps, sign)
+        .chunks(chunk_size)
+        .flat_map(|chunk| {
+            let mut local_results = Vec::with_capacity(chunk.len());
+
+            for (es_i, size_i) in chunk {
+                let res_i =
+                    fgsea_multilevel_helper(*es_i, &ranks, *size_i, sample_size, seed, eps, sign);
+                local_results.push(res_i);
+            }
+
+            local_results
         })
         .collect();
 
