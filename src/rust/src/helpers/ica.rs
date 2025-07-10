@@ -45,6 +45,10 @@ pub struct IcaCvData {
 // ICA //
 /////////
 
+////////////////
+// Parameters //
+////////////////
+
 /// Prepare ICA parameters
 pub fn prepare_ica_params(r_list: List) -> IcaParams {
     let ica_params = r_list.into_hashmap();
@@ -74,11 +78,24 @@ pub fn prepare_ica_params(r_list: List) -> IcaParams {
     }
 }
 
+/// Parsing the ICA types
+pub fn parse_ica_type(s: &str) -> Option<IcaType> {
+    match s.to_lowercase().as_str() {
+        "exp" => Some(IcaType::Exp),
+        "logcosh" => Some(IcaType::LogCosh),
+        _ => None,
+    }
+}
+
+/////////////
+// Helpers //
+/////////////
+
 /// Whiten a matrix. This is needed pre-processing for ICA.
 /// Has the option to use randomised SVD for faster computations.
 /// Returns the scaled data and the pre-whitening matrix K.
 pub fn prepare_whitening(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     fast_svd: bool,
     seed: usize,
     rank: usize,
@@ -116,7 +133,7 @@ pub fn prepare_whitening(
 }
 
 /// Update the mixing matrix for ICA
-pub fn update_mix_mat(w: MatRef<'_, f64>) -> faer::Mat<f64> {
+pub fn update_mix_mat(w: MatRef<f64>) -> faer::Mat<f64> {
     // SVD
     let svd_res = w.thin_svd().unwrap();
 
@@ -142,19 +159,14 @@ pub fn create_w_init(n_comp: usize, seed: u64) -> faer::Mat<f64> {
     Mat::from_fn(n_comp, n_comp, |i, j| data[i + j * n_comp])
 }
 
-/// Parsing the ICA types
-pub fn parse_ica_type(s: &str) -> Option<IcaType> {
-    match s.to_lowercase().as_str() {
-        "exp" => Some(IcaType::Exp),
-        "logcosh" => Some(IcaType::LogCosh),
-        _ => None,
-    }
-}
+////////////////////
+// Main functions //
+////////////////////
 
 /// Fast ICA implementation based on logcosh.
 pub fn fast_ica_logcosh(
-    x: MatRef<'_, f64>,
-    w_init: MatRef<'_, f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     alpha: f64,
     maxit: usize,
@@ -225,8 +237,8 @@ pub fn fast_ica_logcosh(
 
 /// Fast ICA implementation based on exp.
 pub fn fast_ica_exp(
-    x: MatRef<'_, f64>,
-    w_init: MatRef<'_, f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     maxit: usize,
     verbose: bool,
@@ -292,11 +304,15 @@ pub fn fast_ica_exp(
     (w, min_tol)
 }
 
+////////////////////
+// Stabilised ICA //
+////////////////////
+
 /// Iterate through a set of random initialisations with a given pre-whitened
 /// matrix, the whitening matrix k and the respective ICA parameters.
 pub fn stabilised_ica_iters(
-    x_pre_whiten: MatRef<'_, f64>,
-    k: MatRef<'_, f64>,
+    x_pre_whiten: MatRef<f64>,
+    k: MatRef<f64>,
     no_comp: usize,
     no_iters: usize,
     ica_type: &str,
@@ -360,7 +376,7 @@ pub fn stabilised_ica_iters(
 
 /// Generate cross-validation like data for ICA.
 pub fn create_ica_cv_data(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     num_folds: usize,
     seed: usize,
     rank: Option<usize>,
@@ -427,7 +443,7 @@ pub fn create_ica_cv_data(
 
 #[allow(clippy::too_many_arguments)]
 pub fn stabilised_ica_cv(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     no_comp: usize,
     num_folds: usize,
     no_iters: usize,

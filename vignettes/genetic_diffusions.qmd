@@ -1,0 +1,171 @@
+---
+title: "Genetic diffusion and community detections"
+vignette: >
+  %\VignetteIndexEntry{Genetic diffusion and community detections}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+## Genetic diffusion and community detections
+
+This vignette shows how to leverage networks to "diffuse" genetic information
+(to note, this could be any other type of seeding information) over these to 
+create ranks of genes based on "diffusion heat", calculate the predictive
+power of these genes against some gold standard genes, and also generate
+communities within the networks of "genetically privileged" mechanisms. The 
+functions in the package have been inspired by work from
+[Fang et al.](https://pubmed.ncbi.nlm.nih.gov/31253980/),
+[Paull et al.](https://pubmed.ncbi.nlm.nih.gov/23986566/),
+[Barrio-Hernandez et al.](https://pubmed.ncbi.nlm.nih.gov/36823319/), and
+[Rosenthal et al.](https://www.nature.com/articles/s41596-022-00797-1).
+
+```{r}
+#| label: setup
+library(bixverse)
+library(magrittr)
+library(data.table)
+```
+
+### Data
+
+To exemplify the functions here, we will be using synthetic data, but you can
+easily adopt the workflow with any sets of seed genes and networks. We will
+create a barabasi graph of 100 nodes as an undirected network. Most biological
+networks follow a scale-free topology. For the seed genes, we will be sampling
+two sets based on the node degree distribution.
+
+```{r}
+#| label: generating synthetic data
+#| eval: !expr requireNamespace("igraph", quietly = TRUE)
+set.seed(123)
+
+no_nodes <- 100L
+
+barabasi_graph <- igraph::sample_pa(no_nodes, directed = FALSE)
+
+node_names <- sprintf("genes%i", 1:no_nodes)
+
+igraph::V(barabasi_graph)$name <- node_names
+
+# The classes expects a data.table representing the edges
+# Weighted and directed graphs are supported
+edge_data <- setDT(igraph::as_data_frame(barabasi_graph))
+
+# We will be creating two diffusion vectors based on the degree distribution
+# and one set of gold standard genes
+probs <- igraph::degree(barabasi_graph) / sum(igraph::degree(barabasi_graph))
+
+genes_1 <- sample(
+  igraph::V(barabasi_graph)$name, 
+  size = 5, 
+  prob = probs
+)
+genes_2 <- sample(
+  igraph::V(barabasi_graph)$name, 
+  size = 8, 
+  prob = probs
+)
+
+diffusion_vector_1 <- rep(1, length(genes_1)) %>% `names<-`(genes_1)
+diffusion_vector_2 <- rep(1, length(genes_2)) %>% `names<-`(genes_2)
+gold_standard_genes <- sample(
+  igraph::V(barabasi_graph)$name, 
+  size = 6, 
+  prob = probs
+)
+```
+
+### Running a single diffusion 
+
+To generate the class, you run 
+
+```{r}
+#| label: class initialisation
+
+diffusion_class <- network_diffusions(
+  edge_data, 
+  weighted = FALSE, 
+  directed = FALSE
+)
+```
+
+For just running a single diffusion from a single set, you can do:
+
+```{r}
+#| label: single diffusion
+
+diffusion_class <- diffuse_seed_nodes(
+  object = diffusion_class, 
+  diffusion_vector = diffusion_vector_1, 
+  summarisation = "max"
+)
+
+# Should you have duplicated names in the diffusion vector, the function
+# provides different summarisation methods for the underlying scores
+```
+
+`bixverse` offers a permutation-based test, using degree matched samplings to
+calculate Z-scores for each node. This is based on Rust-accelerated, 
+parallelised permutations.
+
+```{r}
+#| label: single diffusion permutations
+
+diffusion_class <- permute_seed_nodes(
+  object = diffusion_class,
+  perm_iters = 1000L,
+  .verbose = FALSE
+)
+```
+
+You can access the data via S7 properties
+
+```{r}
+#| label: access the data in the class
+
+diffusion_res <- diffusion_class@diffusion_res
+permutation_res <- diffusion_class@diffusion_perm
+
+hist(diffusion_res, xlab = "PPR score", main = "Diffusion result")
+```
+
+We can appreciated that there is a tail of values receiving more 
+"diffuion heat" than expected just by topology properties of the network.
+```{r}
+#| label: plot the Z scores
+
+hist(permutation_res, xlab = "Z score", main = "Permutation result")
+```
+
+### Assessing the recovery of gold standard genes
+
+To assess if the diffusions are useful to start with, you can run:
+
+```{r}
+auc_results <- calculate_diffusion_auc(
+  object = diffusion_class, 
+  hit_nodes = gold_standard_genes,
+  permutation_test = TRUE
+)
+
+print(
+  sprintf(
+    "The AUC of the diffuion is %.3f.", 
+    auc_results$auc
+  )
+)
+print(
+  sprintf(
+    "The Z-score based on random permutations is %.3f.",
+    auc_results$z
+  )
+)
+```
+
+As this is random data, we observe an AUC of just 0.589 and a corresponding
+Z-score of 0.764, indicating that the diffusion is not very informative compared
+to random sets of gold standard genes. 
