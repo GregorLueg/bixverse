@@ -4,12 +4,13 @@
 \alias{calculate_wang_sim_onto}
 \title{Calculate the Wang similarity for an ontology.}
 \usage{
-calculate_wang_sim_onto(object, w = 0.8, .verbose = TRUE)
+calculate_wang_sim_onto(object, weights, .verbose = TRUE)
 }
 \arguments{
 \item{object}{\verb{ontology class}. See \code{\link[=ontology]{ontology()}}.}
 
-\item{w}{Float. The value assigned to the respective edge. Defaults to \code{0.8}.}
+\item{weights}{Named numeric. The relationship of type to weight for this
+specific edge. For example \code{c("part_of" = 0.8, "is_a" = 0.6)}.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }

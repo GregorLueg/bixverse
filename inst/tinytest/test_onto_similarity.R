@@ -269,12 +269,48 @@ expect_equal(
 
 ## expected values -------------------------------------------------------------
 
-test_onto <- data.table::data.table(
+test_onto_wang <- data.table::data.table(
   parent = c("a", "b", "b", "b", "c", "g"),
-  child = c("b", "c", "d", "e", "f", "h")
+  child = c("b", "c", "d", "e", "f", "h"),
+  type = c("part_of", "part_of", "part_of", "is_a", "is_a", "part_of")
 )
 
-expected_sims_w08 <- c(
+weights_v1 <- c("part_of" = 0.8, "is_a" = 0.6)
+
+weights_v2 <- c("part_of" = 0.8, "is_a" = 0.8)
+
+expected_wang_sim_v1 <- c(
+  0.4698206,
+  0,
+  0.6247655,
+  0.3995381,
+  0.7960848,
+  0,
+  0.4278169,
+  0,
+  0.7641509,
+  0.4767442,
+  0.5901639,
+  0,
+  0.5575221,
+  0,
+  0,
+  0,
+  0.6428571,
+  0,
+  0.6428571,
+  0.7641509,
+  0,
+  0.7422680,
+  0.4767442,
+  0,
+  0.4805195,
+  0,
+  0.5575221,
+  0
+)
+
+expected_wang_sim_v2 <- c(
   0.4807122,
   0,
   0.6212121,
@@ -305,38 +341,7 @@ expected_sims_w08 <- c(
   0
 )
 
-expected_sims_w06 <- c(
-  0.3713733,
-  0,
-  0.5762712,
-  0.3828715,
-  0.7582205,
-  0,
-  0.3713733,
-  0,
-  0.7191011,
-  0.4594595,
-  0.4897959,
-  0,
-  0.4897959,
-  0,
-  0,
-  0,
-  0.6153846,
-  0,
-  0.6153846,
-  0.7191011,
-  0,
-  0.7191011,
-  0.4594595,
-  0,
-  0.4594595,
-  0,
-  0.4897959,
-  0
-)
-
-expected_dt_w08 <- data.table::data.table(
+expected_dt <- data.table::data.table(
   feature_a = c(
     "f",
     "f",
@@ -397,48 +402,51 @@ expected_dt_w08 <- data.table::data.table(
     "e",
     "e"
   ),
-  sim = expected_sims_w08
+  sim = expected_wang_sim_v1
 )
 
-expected_critval_w08 <- 0.7641509
-
-expected_critval_w06 <- 0.7191011
+expected_critval <- 0.7641509
 
 ## functions -------------------------------------------------------------------
 
-results_w08 <- calculate_wang_sim(test_onto, w = 0.8)
+expect_error(
+  current = calculate_wang_sim(test_onto, weights = weights),
+  info = "Wang ontology - correct error when column is missing"
+)
 
-results_w06 <- calculate_wang_sim(test_onto, w = 0.6)
-
-critval_w08 <- calculate_critical_value(results_w08, alpha = 0.1)
-
-critval_w06 <- calculate_critical_value(results_w06, alpha = 0.1)
+# different values
+results_v1 <- calculate_wang_sim(test_onto_wang, weights = weights_v1)
+critval_v1 <- calculate_critical_value(results_v1, alpha = 0.1)
 
 expect_equivalent(
-  current = rs_dense_to_upper_triangle(results_w08, 1L),
-  target = expected_sims_w08,
-  info = "Wang similarity w = 0.8 test",
-  tolerance = 1e-6
+  current = rs_dense_to_upper_triangle(results_v1, 1L),
+  target = expected_wang_sim_v1,
+  info = "Wang similarity version 1 values",
+  tolerance = 1e-7
 )
 
 expect_equivalent(
-  current = rs_dense_to_upper_triangle(results_w06, 1L),
-  target = expected_sims_w06,
-  info = "Wang similarity w = 0.6 test",
-  tolerance = 1e-6
+  current = critval_v1,
+  target = expected_critval,
+  info = "Wang similarity version 1 critical value",
+  tolerance = 1e-7
+)
+
+# all the same
+results_v2 <- calculate_wang_sim(test_onto_wang, weights = weights_v2)
+critval_v2 <- calculate_critical_value(results_v2, alpha = 0.1)
+
+expect_equivalent(
+  current = rs_dense_to_upper_triangle(results_v2, 1L),
+  target = expected_wang_sim_v2,
+  info = "Wang similarity version 2 values",
+  tolerance = 1e-7
 )
 
 expect_equivalent(
-  current = critval_w08,
-  target = expected_critval_w08,
-  info = "Wang similarity w = 0.8 critical value",
-  tolerance = 1e-6
-)
-
-expect_equivalent(
-  current = critval_w06,
-  target = expected_critval_w06,
-  info = "Wang similarity w = 0.6 critical value",
+  current = critval_v2,
+  target = expected_critval,
+  info = "Wang similarity version 2 critical value",
   tolerance = 1e-6
 )
 
@@ -446,7 +454,18 @@ expect_equivalent(
 
 test_class <- ontology(test_onto, .verbose = FALSE)
 
-test_class <- calculate_wang_sim_onto(test_class, .verbose = FALSE)
+expect_error(
+  current = calculate_wang_sim_onto(test_class, .verbose = FALSE),
+  info = "Wang ontology class - correct error when column is missing"
+)
+
+test_class <- ontology(test_onto_wang, .verbose = FALSE)
+
+test_class <- calculate_wang_sim_onto(
+  object = test_class,
+  weights = weights_v1,
+  .verbose = FALSE
+)
 
 matrix_res <- get_sim_matrix(
   test_class,
@@ -464,23 +483,23 @@ critval_class <- calculate_critical_value(test_class, alpha = 0.1)
 
 expect_equivalent(
   current = rs_dense_to_upper_triangle(matrix_res, 1L),
-  target = expected_sims_w08,
+  target = expected_wang_sim_v1,
   info = "Ontology class wang similarity - matrix version",
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 expect_equal(
   current = dt_res,
-  target = expected_dt_w08,
+  target = expected_dt,
   info = paste(
     "Ontology class wang similarity - data.table version"
   ),
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 expect_equivalent(
   current = critval_class,
-  target = expected_critval_w08,
+  target = expected_critval,
   info = "Ontology class wang similarity - critical value",
-  tolerance = 1e-6
+  tolerance = 1e-7
 )

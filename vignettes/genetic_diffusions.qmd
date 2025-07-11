@@ -130,16 +130,16 @@ You can access the data via S7 properties
 diffusion_res <- get_diffusion_vector(diffusion_obj)
 permutation_res <- get_diffusion_perms(diffusion_obj)
 
+par(mfrow = c(1, 2))
+
 hist(diffusion_res, xlab = "PPR score", main = "Diffusion result")
+hist(permutation_res, xlab = "Z score", main = "Permutation result")
+
+par(mfrow = c(1, 1))
 ```
 
 We can appreciated that there is a tail of values receiving more 
 "diffuion heat" than expected just by topology properties of the network.
-```{r}
-#| label: plot the Z scores
-
-hist(permutation_res, xlab = "Z score", main = "Permutation result")
-```
 
 ### Assessing the recovery of gold standard genes
 
@@ -271,18 +271,16 @@ Plotting the two:
 diffusion_res <- get_diffusion_vector(diffusion_obj)
 permutation_res <- get_diffusion_perms(diffusion_obj)
 
+par(mfrow = c(1, 2))
+
 hist(diffusion_res, xlab = "Tied PPR score", main = "Diffusion result (tied)")
-```
-
-The resulting Z-scores from the permutations
-
-```{r}
-#| label: tied diffusion z-scores
 hist(
   permutation_res, 
   xlab = "Tied PPR score", 
   main = "Permutations result (tied)"
 )
+
+par(mfrow = c(1, 1))
 ```
 
 You can again identify diffusion-heat privileged communities with the same

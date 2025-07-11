@@ -25,3 +25,21 @@ macro_rules! assert_nrows {
         );
     };
 }
+
+/// Assertion that three vectors have the same length.
+#[macro_export]
+macro_rules! assert_same_len_vec3 {
+    ($vec1:expr, $vec2:expr, $vec3:expr) => {
+        let len1 = $vec1.len();
+        let len2 = $vec2.len();
+        let len3 = $vec3.len();
+
+        assert!(
+            len1 == len2 && len2 == len3,
+            "Vectors have different lengths: {} != {} != {}",
+            len1,
+            len2,
+            len3
+        );
+    };
+}

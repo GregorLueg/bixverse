@@ -3,9 +3,12 @@ use crate::utils::general::flatten_vector;
 use extendr_api::prelude::*;
 use faer::Mat;
 use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::visit::EdgeRef;
 use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::sync::{Arc, Mutex, RwLock};
+
+use crate::assert_same_len_vec3;
 
 ///////////////////////////
 // Semantic similarities //
@@ -168,7 +171,7 @@ pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
 
 /// Type alias for SValue Cache
 /// This one needs the RwLock to be able to do the parallelisation on top
-pub type SValueCache = RwLock<FxHashMap<(NodeIndex, u64), FxHashMap<NodeIndex, f64>>>;
+pub type SValueCache = RwLock<FxHashMap<NodeIndex, FxHashMap<NodeIndex, f64>>>;
 
 /// Structure for calculating the Wang similarity on a given Ontology
 #[derive(Debug)]
@@ -176,20 +179,19 @@ pub type SValueCache = RwLock<FxHashMap<(NodeIndex, u64), FxHashMap<NodeIndex, f
 pub struct WangSimOntology {
     term_to_idx: FxHashMap<String, NodeIndex>, // term id to node index
     idx_to_term: Vec<String>,                  // the idx to term order (important)
-    graph: DiGraph<String, ()>,                // directed graph: parent > child
+    graph: DiGraph<String, f64>,               // directed graph: parent > child
     ancestors: Vec<FxHashSet<NodeIndex>>,      // ancestors (including self)
     topo_order: Vec<NodeIndex>,                // pre-computing topological order
     s_values_cache: SValueCache,               // pre-computed S-values
 }
 
+#[allow(dead_code)]
 impl WangSimOntology {
     /// Create a new ontology object from parents and child
     /// Assumes two strings as input, one being the parents, the other being
     /// the children
-    pub fn new(parents: &[String], children: &[String]) -> Result<Self> {
-        if parents.len() != children.len() {
-            return Err("Parent and child vectors must have same length".into());
-        }
+    pub fn new(parents: &[String], children: &[String], w: &[f64]) -> Result<Self> {
+        assert_same_len_vec3!(parents, children, w);
 
         let mut graph = DiGraph::new();
         let mut term_to_idx = FxHashMap::default();
@@ -215,10 +217,10 @@ impl WangSimOntology {
         }
 
         // Add edges to the graph
-        for (parent, child) in parents.iter().zip(children.iter()) {
+        for ((parent, child), w) in parents.iter().zip(children.iter()).zip(w.iter()) {
             let parent_idx = *term_to_idx.get(parent).unwrap();
             let child_idx = *term_to_idx.get(child).unwrap();
-            graph.add_edge(parent_idx, child_idx, ());
+            graph.add_edge(parent_idx, child_idx, *w);
         }
 
         let topo_order = Self::compute_topological_order(&graph);
@@ -234,19 +236,18 @@ impl WangSimOntology {
         })
     }
 
-    /// Calculate the similarity matrix with optimizations
-    pub fn calc_sim_matrix(&self, w: f64) -> (Mat<f64>, Vec<String>) {
+    /// Calculate the similarity matrix with optimizations - no w parameter needed
+    pub fn calc_sim_matrix(&self) -> (Mat<f64>, Vec<String>) {
         let n = self.idx_to_term.len();
         let mut matrix: Mat<f64> = Mat::zeros(n, n);
 
         // Pre-compute all S-values once and store in Arc for safe sharing
-        let w_key = w.to_bits();
         let all_s_values: Arc<Vec<FxHashMap<NodeIndex, f64>>> = Arc::new(
             (0..n)
                 .into_par_iter()
                 .map(|i| {
                     let term_idx = NodeIndex::new(i);
-                    self.get_or_compute_s_values(term_idx, w, w_key)
+                    self.get_or_compute_s_values(term_idx)
                 })
                 .collect(),
         );
@@ -295,30 +296,23 @@ impl WangSimOntology {
         cache.clear();
     }
 
-    /// Get or compute S-values with caching
-    fn get_or_compute_s_values(
-        &self,
-        term_idx: NodeIndex,
-        w: f64,
-        w_key: u64,
-    ) -> FxHashMap<NodeIndex, f64> {
-        let cache_key = (term_idx, w_key);
-
+    /// Get or compute S-values with caching - simplified without w parameter
+    fn get_or_compute_s_values(&self, term_idx: NodeIndex) -> FxHashMap<NodeIndex, f64> {
         // Try to read from cache first
         {
             let cache = self.s_values_cache.read().unwrap();
-            if let Some(cached) = cache.get(&cache_key) {
+            if let Some(cached) = cache.get(&term_idx) {
                 return cached.clone();
             }
         }
 
         // Compute if not in cache
-        let s_values = self.calculate_s_values(term_idx, w);
+        let s_values = self.calculate_s_values(term_idx);
 
         // Store in cache
         {
             let mut cache = self.s_values_cache.write().unwrap();
-            cache.insert(cache_key, s_values.clone());
+            cache.insert(term_idx, s_values.clone());
         }
 
         s_values
@@ -373,7 +367,7 @@ impl WangSimOntology {
 
     /// Get the ancestor terms of everything in the ontology
     fn get_ancestors(
-        graph: &DiGraph<String, ()>,
+        graph: &DiGraph<String, f64>,
         topo_order: &[NodeIndex],
     ) -> Vec<FxHashSet<NodeIndex>> {
         let mut ancestors = vec![FxHashSet::default(); graph.node_count()];
@@ -395,7 +389,7 @@ impl WangSimOntology {
     }
 
     /// Compute topological order
-    fn compute_topological_order(graph: &DiGraph<String, ()>) -> Vec<NodeIndex> {
+    fn compute_topological_order(graph: &DiGraph<String, f64>) -> Vec<NodeIndex> {
         petgraph::algo::toposort(graph, None)
             .unwrap_or_else(|_| panic!("Ontology contains cycles"))
             .into_iter()
@@ -403,8 +397,8 @@ impl WangSimOntology {
             .collect()
     }
 
-    /// Calculate the S-values for a specific term's DAG
-    fn calculate_s_values(&self, term_idx: NodeIndex, w: f64) -> FxHashMap<NodeIndex, f64> {
+    /// Calculate the S-values for a specific term's DAG using edge-specific weights
+    fn calculate_s_values(&self, term_idx: NodeIndex) -> FxHashMap<NodeIndex, f64> {
         let dag_nodes = &self.ancestors[term_idx.index()];
         let mut s_values = FxHashMap::with_capacity_and_hasher(dag_nodes.len(), FxBuildHasher);
 
@@ -417,10 +411,15 @@ impl WangSimOntology {
             }
 
             let mut max_contribution: f64 = 0.0;
-            for child_idx in self.graph.neighbors_directed(node_idx, petgraph::Outgoing) {
+
+            // Iterate through outgoing edges to get the specific weights
+            for edge_ref in self.graph.edges_directed(node_idx, petgraph::Outgoing) {
+                let child_idx = edge_ref.target();
+                let edge_weight = *edge_ref.weight();
+
                 if dag_nodes.contains(&child_idx) {
                     if let Some(&child_s_value) = s_values.get(&child_idx) {
-                        max_contribution = max_contribution.max(w * child_s_value);
+                        max_contribution = max_contribution.max(edge_weight * child_s_value);
                     }
                 }
             }
@@ -433,63 +432,61 @@ impl WangSimOntology {
         s_values
     }
 
-    // /// Calculate Wang similarity between two terms with caching
-    // pub fn wang_sim(&self, term1: &str, term2: &str, w: f64) -> Option<f64> {
-    //     let term_idx_1 = *self.term_to_idx.get(term1)?;
-    //     let term_idx_2 = *self.term_to_idx.get(term2)?;
+    /// Calculate Wang similarity between two terms with caching
+    pub fn wang_sim(&self, term1: &str, term2: &str) -> Option<f64> {
+        let term_idx_1 = *self.term_to_idx.get(term1)?;
+        let term_idx_2 = *self.term_to_idx.get(term2)?;
 
-    //     if term_idx_1 == term_idx_2 {
-    //         return Some(1.0);
-    //     }
+        if term_idx_1 == term_idx_2 {
+            return Some(1.0);
+        }
 
-    //     self.wang_sim_by_idx(term_idx_1, term_idx_2, w)
-    // }
+        self.wang_sim_by_idx(term_idx_1, term_idx_2)
+    }
 
-    // /// Calculate Wang similarity between two term indices (internal method)
-    // fn wang_sim_by_idx(&self, term_idx_1: NodeIndex, term_idx_2: NodeIndex, w: f64) -> Option<f64> {
-    //     let w_key = w.to_bits(); // Convert f64 to u64 for hashing
+    /// Calculate Wang similarity between two term indices (internal method)
+    fn wang_sim_by_idx(&self, term_idx_1: NodeIndex, term_idx_2: NodeIndex) -> Option<f64> {
+        let s_val_1 = self.get_or_compute_s_values(term_idx_1);
+        let s_val_2 = self.get_or_compute_s_values(term_idx_2);
 
-    //     let s_val_1 = self.get_or_compute_s_values(term_idx_1, w, w_key);
-    //     let s_val_2 = self.get_or_compute_s_values(term_idx_2, w, w_key);
+        let dag1_nodes = &self.ancestors[term_idx_1.index()];
+        let dag2_nodes = &self.ancestors[term_idx_2.index()];
 
-    //     let dag1_nodes = &self.ancestors[term_idx_1.index()];
-    //     let dag2_nodes = &self.ancestors[term_idx_2.index()];
+        // Find intersection more efficiently
+        let (smaller, larger) = if dag1_nodes.len() < dag2_nodes.len() {
+            (dag1_nodes, dag2_nodes)
+        } else {
+            (dag2_nodes, dag1_nodes)
+        };
 
-    //     // Find intersection more efficiently
-    //     let (smaller, larger) = if dag1_nodes.len() < dag2_nodes.len() {
-    //         (dag1_nodes, dag2_nodes)
-    //     } else {
-    //         (dag2_nodes, dag1_nodes)
-    //     };
+        let common_nodes: Vec<NodeIndex> = smaller
+            .iter()
+            .filter(|node| larger.contains(node))
+            .cloned()
+            .collect();
 
-    //     let common_nodes: Vec<NodeIndex> = smaller
-    //         .iter()
-    //         .filter(|node| larger.contains(node))
-    //         .cloned()
-    //         .collect();
+        if common_nodes.is_empty() {
+            return Some(0.0);
+        }
 
-    //     if common_nodes.is_empty() {
-    //         return Some(0.0);
-    //     }
+        let sv1: f64 = s_val_1.values().sum();
+        let sv2: f64 = s_val_2.values().sum();
 
-    //     let sv1: f64 = s_val_1.values().sum();
-    //     let sv2: f64 = s_val_2.values().sum();
+        let numerator: f64 = common_nodes
+            .iter()
+            .map(|&node_idx| {
+                s_val_1.get(&node_idx).unwrap_or(&0.0) + s_val_2.get(&node_idx).unwrap_or(&0.0)
+            })
+            .sum();
 
-    //     let numerator: f64 = common_nodes
-    //         .iter()
-    //         .map(|&node_idx| {
-    //             s_val_1.get(&node_idx).unwrap_or(&0.0) + s_val_2.get(&node_idx).unwrap_or(&0.0)
-    //         })
-    //         .sum();
+        let denominator = sv1 + sv2;
 
-    //     let denominator = sv1 + sv2;
-
-    //     if denominator > 0.0 {
-    //         Some(numerator / denominator)
-    //     } else {
-    //         Some(0.0)
-    //     }
-    // }
+        if denominator > 0.0 {
+            Some(numerator / denominator)
+        } else {
+            Some(0.0)
+        }
+    }
 }
 
 ////////////

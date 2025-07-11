@@ -57,8 +57,8 @@ fn rs_onto_semantic_sim(
 /// @param parents String vector. The names of the parents.
 /// @param children String vector. The names of the childs. The length of
 /// `parents` needs to be equal to `children`.
-/// @param w Float. The w parameter for the ontology. Needs to be between
-/// `0 < w < 1`.
+/// @param w Numerics. The weights between the parents and children. Need
+/// to be values between 0 and 1.
 /// @param flat_matrix Boolean. Shall only the upper triangle be returned.
 ///
 /// @return A list with:
@@ -72,12 +72,12 @@ fn rs_onto_semantic_sim(
 fn rs_onto_sim_wang(
     parents: Vec<String>,
     children: Vec<String>,
-    w: f64,
+    w: &[f64],
     flat_matrix: bool,
 ) -> extendr_api::Result<List> {
-    let fast_onto = WangSimOntology::new(&parents, &children)?;
+    let fast_onto = WangSimOntology::new(&parents, &children, w)?;
 
-    let (sim_mat, names) = fast_onto.calc_sim_matrix(w);
+    let (sim_mat, names) = fast_onto.calc_sim_matrix();
 
     fast_onto.clear_cache();
 

@@ -12,8 +12,8 @@ rs_onto_sim_wang(parents, children, w, flat_matrix)
 \item{children}{String vector. The names of the childs. The length of
 \code{parents} needs to be equal to \code{children}.}
 
-\item{w}{Float. The w parameter for the ontology. Needs to be between
-\verb{0 < w < 1}.}
+\item{w}{Numerics. The weights between the parents and children. Need
+to be values between 0 and 1.}
 
 \item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
 }

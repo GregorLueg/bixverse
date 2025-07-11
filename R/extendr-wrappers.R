@@ -964,8 +964,8 @@ rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(
 #' @param parents String vector. The names of the parents.
 #' @param children String vector. The names of the childs. The length of
 #' `parents` needs to be equal to `children`.
-#' @param w Float. The w parameter for the ontology. Needs to be between
-#' `0 < w < 1`.
+#' @param w Numerics. The weights between the parents and children. Need
+#' to be values between 0 and 1.
 #' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
 #' @return A list with:
