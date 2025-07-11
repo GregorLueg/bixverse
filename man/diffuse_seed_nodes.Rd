@@ -11,14 +11,15 @@ diffuse_seed_nodes(
 )
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{\code{network_diffusions} object. The underlying class
+\code{\link[=network_diffusions]{network_diffusions()}}.}
 
-\item{diffusion_vector}{A named vector with values to use for the reset
-parameter in the personalised page-rank diffusion. Names should represent
-node names of the graph.}
+\item{diffusion_vector}{Named nuermic. A named vector with values to use for
+the reset parameter in the personalised page-rank diffusion. Names should
+represent node names of the graph.}
 
-\item{summarisation}{If there are duplicated names in the \code{diffusion_vector}
-how to summarise these.}
+\item{summarisation}{String. If there are duplicated names in the
+\code{diffusion_vector} how to summarise the scores.}
 }
 \value{
 The class with added diffusion score based on a single set of seed

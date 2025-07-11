@@ -9,12 +9,13 @@
 #' diffusion to identify influential nodes. These can be used subsequently for
 #' community detection or check AUROC values given a set of genes.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
-#' @param diffusion_vector A named vector with values to use for the reset
-#' parameter in the personalised page-rank diffusion. Names should represent
-#' node names of the graph.
-#' @param summarisation If there are duplicated names in the `diffusion_vector`
-#' how to summarise these.
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
+#' @param diffusion_vector Named nuermic. A named vector with values to use for
+#' the reset parameter in the personalised page-rank diffusion. Names should
+#' represent node names of the graph.
+#' @param summarisation String. If there are duplicated names in the
+#' `diffusion_vector` how to summarise the scores.
 #'
 #' @return The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.
@@ -95,20 +96,22 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 #'
 #' @description
 #' This function takes two sets of diffusion vector and leverages tied diffusion
-#' to identify an intersection of influential nodes.
+#' to identify an intersection of influential nodes. If the network is
+#' undirected, the method will run two personalised page rank diffusions based
+#' on the diffusion vectors and generate the score aggregation
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
-#' @param diffusion_vector_1 The first named vector with values to use for the
-#' reset parameter in the personalised page-rank diffusion. Names should
-#' represent node names of the graph.
-#' @param diffusion_vector_2 The second named vector with values to use for the
-#' reset parameter in the personalised page-rank diffusion. Names should
-#' represent node names of the graph.
-#' @param summarisation If there are duplicated names in the `diffusion_vector`
-#' how to summarise
-#' these.
-#' @param score_aggregation How to summarise the tied scores.
-#' @param .verbose Controls verbosity of the function.
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
+#' @param diffusion_vector_1 Named numeric. The first named vector with values
+#' to use for the reset parameter in the personalised page-rank diffusion. Names
+#' should represent node names of the graph.
+#' @param diffusion_vector_2 Named numeric. The second named vector with values
+#' to use for the reset parameter in the personalised page-rank diffusion. Names
+#' should represent node names of the graph.
+#' @param summarisation String. If there are duplicated names in the
+#' `diffusion_vector` how to summarise these.
+#' @param score_aggregation String. How to summarise the tied scores.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added diffusion score based on a two sets of seed
 #' genes. Additionally, the seed genes are stored in the class.
@@ -254,7 +257,8 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' determine if the original diffusion was a single or tied diffusion and
 #' construct permutations accordingly.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param perm_iters Integer. Number of permutations to test for. Defaults to
 #' `1000L`.
 #' @param random_seed Integer. Random seed for determinism.
@@ -386,7 +390,8 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
 #' @description Detects privileged communities after a diffusion based on seed
 #' nodes.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param community_params List. Parameters for the community detection within
 #' the reduced network, see [bixverse::params_community_detection()]. A list
 #' with the following items:
@@ -715,11 +720,12 @@ S7::method(community_detection, network_diffusions) <- function(
 #' Calculate the AUROC for a diffusion score
 #'
 #' @description
-#' This functions can take a given `network_diffusions` class and calculates an
+#' This functions can take a given `network_diffusions` object and calculates an
 #' AUC and generates a Z-score based on random permutation of `random_aucs` for
 #' test for statistical significance if desired.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param hit_nodes String vector. Which nodes in the graph are considered a
 #' 'hit'.
 #' @param auc_iters Integer. How many iterations to run to approximate the

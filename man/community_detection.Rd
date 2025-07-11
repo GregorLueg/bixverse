@@ -13,7 +13,8 @@ community_detection(
 )
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{\code{network_diffusions} object. The underlying class
+\code{\link[=network_diffusions]{network_diffusions()}}.}
 
 \item{community_params}{List. Parameters for the community detection within
 the reduced network, see \code{\link[=params_community_detection]{params_community_detection()}}. A list

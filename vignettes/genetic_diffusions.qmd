@@ -127,8 +127,8 @@ You can access the data via S7 properties
 ```{r}
 #| label: access the data in the class
 
-diffusion_res <- diffusion_class@diffusion_res
-permutation_res <- diffusion_class@diffusion_perm
+diffusion_res <- get_diffusion_vector(diffusion_class)
+permutation_res <- get_diffusion_perms(diffusion_class)
 
 hist(diffusion_res, xlab = "PPR score", main = "Diffusion result")
 ```
@@ -149,7 +149,7 @@ To assess if the diffusions are useful to start with, you can run:
 auc_results <- calculate_diffusion_auc(
   object = diffusion_class, 
   hit_nodes = gold_standard_genes,
-  permutation_test = TRUE
+  permutation_test = TRUE # This will do permutation and generate Z-scores
 )
 
 print(
@@ -169,3 +169,6 @@ print(
 As this is random data, we observe an AUC of just 0.589 and a corresponding
 Z-score of 0.764, indicating that the diffusion is not very informative compared
 to random sets of gold standard genes. 
+
+### Generation of communities with high diffusion heat
+

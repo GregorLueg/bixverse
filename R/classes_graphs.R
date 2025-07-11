@@ -122,6 +122,40 @@ S7::method(get_diffusion_vector, network_diffusions) <- function(object) {
   diffusion_vec
 }
 
+#' Get the diffusion permutations
+#'
+#' @description Returns the diffusion Z-scores if you ran
+#' [bixverse::permute_seed_nodes()].
+#'
+#' @param object The underlying class [bixverse::network_diffusions()].
+#'
+#' @return The diffusion Z scores if found. Otherwise `NULL`.
+#'
+#' @export
+get_diffusion_perms <- S7::new_generic(
+  name = "get_diffusion_perms",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_diffusion_perms network_diffusions
+S7::method(get_diffusion_perms, network_diffusions) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::network_diffusions")
+  # Get the data
+  diffusion_perm <- S7::prop(object, "diffusion_perm")
+  if (is.null(diffusion_perm)) {
+    warning("No diffusion permutations found. Returning NULL.")
+  }
+  diffusion_perm
+}
+
 # rbh_graphs -------------------------------------------------------------------
 
 ## class -----------------------------------------------------------------------
