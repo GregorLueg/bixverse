@@ -19,4 +19,24 @@ of different similarity measures.
 ```{r}
 #| label: setup
 library(bixverse)
+library(data.table)
+library(magrittr)
 ```
+
+### Data
+
+In this case, we will be using the HPO from the the `ontologyIndex` package.
+
+```{r}
+#| label: generating synthetic data
+#| eval: !expr requireNamespace("ontologyIndex", quietly = TRUE)
+
+data("hpo")
+
+hpo_data <- as.data.table(stack(hpo$children)) %>%
+  setnames(old = c("values", "ind"), new = c("child", "parent")) %>%
+  .[, c("parent", "child"), with = FALSE] %>%
+  .[, type := "parent_of"] 
+```
+
+### Semantic similarities

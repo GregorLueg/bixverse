@@ -176,8 +176,8 @@ data and exposes it in Rust.
 ```{r}
 #| label: load human go data
 
-# Load in the package provided data
-go_data_dt <- get_go_human_data()
+# Load in the package provided data and process it into the right format
+go_data_dt <- get_go_data_human()
 
 # Generate the S7 object for subsequent usage
 go_data <- gene_ontology_data(go_data_dt, min_genes = 3L)

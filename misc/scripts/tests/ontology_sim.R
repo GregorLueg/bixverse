@@ -47,3 +47,21 @@ length(filtered_data$t1)
 rextendr::document()
 
 features <- test_class@sim_mat
+
+# helper for gene ontology generation ----
+
+go_data <- load_go_human_data()
+
+go_info <- go_data$go_info
+go_genes <- go_data$go_to_genes
+go_relationships <- go_data$gene_ontology %>%
+  setnames(
+    old = c("from", "to"),
+    new = c("parent", "child")
+  )
+
+go_data_final <- process_go_data(
+  go_info = go_info,
+  go_genes = go_genes,
+  go_relationships = go_relationships
+)
