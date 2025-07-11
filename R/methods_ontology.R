@@ -32,6 +32,9 @@ S7::method(pre_process_sim_onto, ontology) <- function(
   object,
   .verbose = TRUE
 ) {
+  # Scope
+  ancestors <- descendants <- NULL
+
   # Checks
   checkmate::assertClass(object, "bixverse::ontology")
   checkmate::qassert(.verbose, "B1")
@@ -341,7 +344,7 @@ S7::method(filter_similarities, ontology) <- function(
 #' [bixverse::calculate_information_content()].
 #'
 #' @return The symmetric similarity matrix for the specified terms and semantic
-#' similarity measure you chose. Self similarity is set to 0.
+#' similarity measure you chose.
 #'
 #' @export
 #'
@@ -373,7 +376,6 @@ calculate_semantic_sim <- function(
     shift = 1L,
     n = length(terms)
   )
-  diag(matrix) <- 0
   colnames(matrix) <- rownames(matrix) <- terms
 
   return(matrix)

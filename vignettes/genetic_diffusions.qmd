@@ -86,7 +86,7 @@ To generate the class, you run
 ```{r}
 #| label: class initialisation
 
-diffusion_class <- network_diffusions(
+diffusion_obj <- network_diffusions(
   edge_data, 
   weighted = FALSE, 
   directed = FALSE
@@ -98,8 +98,8 @@ For just running a single diffusion from a single set, you can do:
 ```{r}
 #| label: single diffusion
 
-diffusion_class <- diffuse_seed_nodes(
-  object = diffusion_class, 
+diffusion_obj <- diffuse_seed_nodes(
+  object = diffusion_obj, 
   diffusion_vector = diffusion_vector_1, 
   summarisation = "max"
 )
@@ -115,8 +115,8 @@ parallelised permutations.
 ```{r}
 #| label: single diffusion permutations
 
-diffusion_class <- permute_seed_nodes(
-  object = diffusion_class,
+diffusion_obj <- permute_seed_nodes(
+  object = diffusion_obj,
   perm_iters = 1000L,
   .verbose = FALSE
 )
@@ -127,8 +127,8 @@ You can access the data via S7 properties
 ```{r}
 #| label: access the data in the class
 
-diffusion_res <- get_diffusion_vector(diffusion_class)
-permutation_res <- get_diffusion_perms(diffusion_class)
+diffusion_res <- get_diffusion_vector(diffusion_obj)
+permutation_res <- get_diffusion_perms(diffusion_obj)
 
 hist(diffusion_res, xlab = "PPR score", main = "Diffusion result")
 ```
@@ -146,8 +146,10 @@ hist(permutation_res, xlab = "Z score", main = "Permutation result")
 To assess if the diffusions are useful to start with, you can run:
 
 ```{r}
+#| label: AUC calculations
+
 auc_results <- calculate_diffusion_auc(
-  object = diffusion_class, 
+  object = diffusion_obj, 
   hit_nodes = gold_standard_genes,
   permutation_test = TRUE # This will do permutation and generate Z-scores
 )
@@ -172,3 +174,152 @@ to random sets of gold standard genes.
 
 ### Generation of communities with high diffusion heat
 
+We provide function to identify regions in the graph that have higher 
+diffusion heat (for e.g., 'genetically privileged' communities akin to 
+[Barrio-Hernandez et al.](https://pubmed.ncbi.nlm.nih.gov/36823319/)). We 
+provide two options to return the initial network:
+
+- Proportion of highest scoring nodes in the network (as in the intial paper).
+- p-value based, i.e., you need to have run the permutations.
+
+Verion 1 is run here:
+
+```{r}
+#| label: community detection - single diffusion, threshold based
+
+diffusion_obj <- community_detection(
+  object = diffusion_obj,
+  community_params = params_community_detection(
+    min_nodes = 5L,
+    threshold_type = "prop_based",
+    min_seed_nodes = 1L
+  )
+)
+
+results_v1 <- get_results(diffusion_obj)
+head(results_v1)
+```
+
+The ks_pval column here signifies the KS test checking if the community has
+more heat than the rest of the network. In version 2, this is less relevant,
+as the network is massively reduced.
+
+```{r}
+#| label: community detection - single diffusion, p-value based
+
+diffusion_obj <- community_detection(
+  object = diffusion_obj,
+  community_params = params_community_detection(
+    min_nodes = 5L,
+    threshold_type = "pval_based",
+    pval_threshold = 0.25,
+    min_seed_nodes = 1L
+  )
+)
+
+results_v2 <- get_results(diffusion_obj)
+head(results_v2)
+```
+
+We can appreciate, that we identify less clusters in this case (just due to
+the network being reduced).
+
+### Tied diffusions
+
+Based on [Paull et al.](https://pubmed.ncbi.nlm.nih.gov/23986566/) we provide
+the optionality to run tied diffusions, i.e., have two separate sets of 
+initial seed genes. In the case of an undirected network, both sets are
+diffused via the personalised page rank algorithm. In the case, of directed 
+networks one is diffused from the network as is, and the other from a network
+derived from the transpose of the adjacency matrix, i.e., identifying 
+intersecting nodes between the two sets of genes. To run the algorithm,
+you can just do:
+
+```{r}
+#| label: tied diffusion
+
+diffusion_obj <- tied_diffusion(
+  object = diffusion_obj, 
+  diffusion_vector_1 = diffusion_vector_1, 
+  diffusion_vector_2 = diffusion_vector_2,
+  summarisation = "max",
+  score_aggregation = "min"
+)
+
+# The score aggregation allows to control how the two diffusion results
+# are combined.
+```
+
+We also provide permutations here again
+
+```{r}
+#| label: tied diffusion permutations
+
+# The function will automatically recognise which diffusion was used initially
+diffusion_obj <- permute_seed_nodes(
+  object = diffusion_obj,
+  perm_iters = 1000L,
+  .verbose = FALSE
+)
+```
+
+Plotting the two:
+
+```{r}
+#| label: tied diffusion plot
+
+diffusion_res <- get_diffusion_vector(diffusion_obj)
+permutation_res <- get_diffusion_perms(diffusion_obj)
+
+hist(diffusion_res, xlab = "Tied PPR score", main = "Diffusion result (tied)")
+```
+
+The resulting Z-scores from the permutations
+
+```{r}
+#| label: tied diffusion z-scores
+hist(
+  permutation_res, 
+  xlab = "Tied PPR score", 
+  main = "Permutations result (tied)"
+)
+```
+
+You can again identify diffusion-heat privileged communities with the same
+methods. The function will automatically identify the type of diffusion you
+applied before. Let's do this threshold based:
+
+```{r}
+#| label: community detection - tied diffusion, threshold based
+
+diffusion_obj <- community_detection(
+  object = diffusion_obj,
+  community_params = params_community_detection(
+    min_nodes = 5L,
+    threshold_type = "prop_based",
+    min_seed_nodes = 1L
+  )
+)
+
+results_v1 <- get_results(diffusion_obj)
+head(results_v1)
+```
+
+Or p-value based:
+
+```{r}
+#| label: community detection - tied diffusion, p-value based
+
+diffusion_obj <- community_detection(
+  object = diffusion_obj,
+  community_params = params_community_detection(
+    min_nodes = 2L,
+    threshold_type = "pval_based",
+    pval_threshold = 0.4, # Very high threshold here to identify any communities
+    min_seed_nodes = 1L
+  )
+)
+
+results_v2 <- get_results(diffusion_obj)
+head(results_v2)
+```

@@ -1,0 +1,22 @@
+---
+title: "Ontologies"
+vignette: >
+  %\VignetteIndexEntry{Ontologies}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+## Ontologies
+
+`bixverse` also offers some methods that work on ontologies (think disease,
+gene or phenotype ontologies) and leverages Rust for fast calculations
+of different similarity measures.
+
+```{r}
+#| label: setup
+library(bixverse)
+```
