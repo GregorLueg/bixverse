@@ -26,6 +26,34 @@ expect_equivalent(
   info = "Covariance equivalence test Rust <> R"
 )
 
+if (requireNamespace("coop", quietly = TRUE)) {
+  expect_equivalent(
+    current = rs_cos(mat),
+    target = coop::cosine(mat),
+    info = "Cosne equivalence test Rust <> R"
+  )
+}
+
+## correlation two matrices ----------------------------------------------------
+
+set.seed(246)
+mat_2 <- matrix(data = rnorm(100), nrow = 10, ncol = 10)
+rownames(mat_2) <- sprintf("sample_%i", 1:10)
+colnames(mat_2) <- sprintf("feature_%i", 1:10)
+
+# Pearson - two matrices
+expect_equivalent(
+  current = rs_cor2(mat, mat_2, spearman = FALSE),
+  target = cor(mat, mat_2),
+  info = "Correlation equivalence test Rust <> R (two matrices)"
+)
+# Spearman
+expect_equivalent(
+  current = rs_cor2(mat, mat_2, spearman = TRUE),
+  target = cor(mat, mat_2, method = "spearman"),
+  info = "Spearman Correlation equivalence test Rust <> R (two matrices)"
+)
+
 ## upper triangle versions -----------------------------------------------------
 
 # Check if the upper triangle class behaves as expected
@@ -219,3 +247,31 @@ if (requireNamespace("igraph", quietly = TRUE)) {
 } else {
   exit_file("igraph package not available for comparison tests")
 }
+
+# set similarities -------------------------------------------------------------
+
+## data ------------------------------------------------------------------------
+
+set_a <- letters[1:5]
+set_b <- letters[2:7]
+
+jaccard <- length(intersect(set_a, set_b)) / length(union(set_a, set_b))
+overlap_coef <- length(intersect(set_a, set_b)) /
+  min(c(length(set_a), length(set_b)))
+
+## results ---------------------------------------------------------------------
+
+rs_jaccard <- rs_set_similarity(set_a, set_b, overlap_coefficient = FALSE)
+rs_overlap_coef <- rs_set_similarity(set_a, set_b, overlap_coefficient = TRUE)
+
+expect_equal(
+  current = jaccard,
+  target = rs_jaccard,
+  info = "Jaccard similarity Rust <> R"
+)
+
+expect_equal(
+  current = overlap_coef,
+  target = rs_overlap_coef,
+  info = "Overlap coefficient Rust <> R"
+)

@@ -1,13 +1,13 @@
-# Check ICA stuff ---
-
-## Test real data ----
+# ICA RBH ----------------------------------------------------------------------
 
 library(devtools)
 library(ggplot2)
 library(magrittr)
 library(zeallot)
 
-devtools::document()
+## data ------------------------------------------------------------------------
+
+devtools::load_all()
 
 gtex_brain <- recount3::create_rse_manual(
   project = "BRAIN",
@@ -28,238 +28,81 @@ d <- edgeR::cpm(d, log = TRUE)
 
 d <- as.matrix(d)
 
-rextendr::document()
-devtools::document()
-devtools::load_all()
-# devtools::check()
-
 new_meta_data <- data.table::data.table(
   sample_id = rownames(coldata),
   case_control = "case",
   gtex_subgrp = coldata$gtex.smtsd
 )
 
-samples_to_keep <- new_meta_data[
+table(new_meta_data$gtex_subgrp)
+
+### data set 1 -----------------------------------------------------------------
+
+samples_to_keep_1 <- new_meta_data[
   gtex_subgrp == "Brain - Putamen (basal ganglia)",
   sample_id
 ]
-data_1 <- t(d)[samples_to_keep, ]
-meta_data <- new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
+data_1 <- t(d)[samples_to_keep_1, ]
+meta_data_1 <- new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
 
-ica_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data)
-ica_test <- preprocess_bulk_coexp(ica_test, mad_threshold = 1)
-ica_test <- ica_processing(ica_test)
+ica_test_1 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1)
+ica_test_1 <- preprocess_bulk_coexp(ica_test_1, mad_threshold = 1)
 
+plot_hvgs(ica_test_1)
 
-tictoc::tic()
-ica_test <- ica_evaluate_comp(
-  ica_test,
-  ica_type = "logcosh",
-  ncomp_params = params_ica_ncomp(max_no_comp = 100L)
-)
-tictoc::toc()
+ica_test_1 <- ica_processing(ica_test_1)
 
-plot_ica_stability_individual(ica_test)
+ica_test_1 <- ica_evaluate_comp(ica_test_1, ica_type = "logcosh")
 
-plot_ica_stability_summarised(ica_test)
+ica_test_1 <- ica_optimal_ncomp(ica_test_1, span = 0.5)
 
-devtools::load_all()
+plot_ica_ncomp_params(ica_test_1)
 
-ica_test <- ica_stabilised_results(
-  ica_test,
-  no_comp = 40L,
-  ica_type = "logcosh"
-)
+ica_test_1 <- ica_stabilised_results(ica_test_1, ica_type = "logcosh")
 
-outputs <- get_results(ica_test)
+ica_results_1 <- get_results(ica_test_1)
 
-outputs$S[1:5, 1:5]
+s_1 <- t(ica_results_1$S)
 
-outputs$A[1:5, 1:5]
+s_1[1:5, 1:5]
 
-outputs$ica_meta
+### data set 2 -----------------------------------------------------------------
 
-get_results(ica_test)
+samples_to_keep_2 <- new_meta_data[
+  gtex_subgrp == "Brain - Spinal cord (cervical c-1)",
+  sample_id
+]
+data_2 <- t(d)[samples_to_keep_2, ]
+meta_data_2 <- new_meta_data[
+  gtex_subgrp == "Brain - Spinal cord (cervical c-1)"
+]
 
-# Write a final component function
+ica_test_2 <- bulk_coexp(raw_data = data_2, meta_data = meta_data_2)
+ica_test_2 <- preprocess_bulk_coexp(ica_test_2, mad_threshold = 1)
 
-?rs_prepare_whitening
+plot_hvgs(ica_test_2)
 
-?ica_evaluate_comp
+ica_test_2 <- ica_processing(ica_test_2)
 
-object <- ica_test
-no_comp <- 50L
-ica_type <- "logcosh"
-iter_params <- params_ica_randomisation()
-ica_params <- params_ica_general()
-random_seed <- 42L
-consistent_sign <- TRUE
-.verbose <- TRUE
+ica_test_2 <- ica_evaluate_comp(ica_test_2, ica_type = "logcosh")
 
-X <- S7::prop(object, "processed_data")[["processed_data"]]
-X1 <- S7::prop(object, "processed_data")[["X1"]]
-K <- S7::prop(object, "processed_data")[["K"]]
+ica_test_2 <- ica_optimal_ncomp(ica_test_2, span = 0.5)
 
-do.call(c, list(1, 2, 3))
+plot_ica_ncomp_params(ica_test_2)
 
-# Get the combined S matrix and convergence information
-c(s_combined, converged) %<-%
-  with(
-    iter_params,
-    switch(
-      as.integer(iter_params$cross_validate) + 1,
-      rs_ica_iters(
-        x1 = X1,
-        k = K,
-        no_comp = no_comp,
-        no_random_init = random_init,
-        ica_type = ica_type,
-        random_seed = random_seed,
-        ica_params = ica_params
-      ),
-      rs_ica_iters_cv(
-        x = X_raw,
-        no_comp = no_comp,
-        no_folds = folds,
-        no_random_init = random_init,
-        ica_type = ica_type,
-        random_seed = random_seed,
-        ica_params = ica_params
-      )
-    )
-  )
+ica_test_2 <- ica_stabilised_results(ica_test_2, ica_type = "logcosh")
 
-c(stability_scores, centrotype) %<-%
-  .community_stability(
-    no_comp = as.integer(no_comp),
-    s = s_combined,
-    return_centrotype = TRUE
-  )
+ica_results_2 <- get_results(ica_test_2)
 
-colnames(centrotype) <- sprintf("IC_%i", 1:no_comp)
-rownames(centrotype) <- colnames(X_raw)
+s_2 <- t(ica_results_2$S)
 
-centrotype[1:5, 1:5]
+s_2[1:5, 1:5]
 
-
-centrotype <- apply(centrotype, 2, .flip_ica_loading_signs)
-
-S <- t(centrotype)
-
-A <- t(X1) %*% MASS::ginv(S)
-rownames(A) <- rownames(X)
-colnames(A) <- rownames(S)
-
-ica_meta <- list(
-  component = sprintf("IC_%i", 1:no_comp),
-  stability = stability_scores
-) %>%
-  data.table::setDT()
-
-
-# Is my ICA implementation correct ... ? ---------------------------------------
-
-## FastICA ---------------------------------------------------------------------
-
-S <- cbind(sin((1:1000) / 20), rep((((1:200) - 100) / 100), 5))
-A <- matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
-X <- S %*% A
-
-a <- fastICA::fastICA(
-  X,
-  2,
-  alg.typ = "parallel",
-  fun = "logcosh",
-  alpha = 1,
-  method = "R",
-  row.norm = FALSE,
-  maxit = 200,
-  tol = 0.0001,
-  verbose = TRUE
+rbh_data <- list(
+  module_1 = s_1,
+  module_2 = s_2
 )
 
-par(mfcol = c(2, 3))
-plot(
-  1:1000,
-  S[, 1],
-  type = "l",
-  main = "Original Signals",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, S[, 2], type = "l", xlab = "", ylab = "")
-plot(
-  1:1000,
-  X[, 1],
-  type = "l",
-  main = "Mixed Signals",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, X[, 2], type = "l", xlab = "", ylab = "")
-plot(
-  1:1000,
-  a$S[, 1],
-  type = "l",
-  main = "ICA source estimates",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, a$S[, 2], type = "l", xlab = "", ylab = "")
+rextendr::document()
 
-## Rust ------------------------------------------------------------------------
-
-S <- cbind(sin((1:1000) / 20), rep((((1:200) - 100) / 100), 5))
-A <- matrix(c(0.291, 0.6557, -0.5439, 0.5572), 2, 2)
-X <- S %*% A
-
-c(X_norm, K) %<-% rs_prepare_whitening(X, TRUE, 123L, NULL, NULL, NULL)
-
-# rextendr::document()
-# rextendr::clean()
-# devtools::load_all()
-#
-# ?fast_ica_rust
-
-ica_res_rs <- fast_ica_rust(
-  X_norm,
-  K,
-  n_icas = 2L,
-  ica_fun = "exp",
-  seed = 10101L
-)
-
-plot(x = S[, 1], y = ica_res_rs$S[1, ])
-
-cor()
-
-par(mfcol = c(1, 1))
-
-par(mfcol = c(2, 3))
-plot(
-  1:1000,
-  S[, 1],
-  type = "l",
-  main = "Original Signals",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, S[, 2], type = "l", xlab = "", ylab = "")
-plot(
-  1:1000,
-  X[, 1],
-  type = "l",
-  main = "Mixed Signals",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, X[, 2], type = "l", xlab = "", ylab = "")
-plot(
-  1:1000,
-  ica_res_rs$S[1, ],
-  type = "l",
-  main = "ICA source estimates",
-  xlab = "",
-  ylab = ""
-)
-plot(1:1000, ica_res_rs$S[2, ], type = "l", xlab = "", ylab = "")
+rs_rbh_cor(rbh_data, FALSE, 0.0)

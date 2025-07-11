@@ -471,9 +471,37 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'   \item similarity - The similarities between the two respective gene
 #'   modules.
 #' }
-#' 
+#'
 #' @export
 rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
+
+#' Generate reciprocal best hits based on correlations
+#'
+#' @description This function takes list of (named) matrices which represent
+#' for example matrix factorisation results you wish to identify reciprocal
+#' best hits (RBH) for. The rows need to represent the features and the columns
+#' the parts you wish to calculate the RBH for.
+#'
+#' @param module_matrices A list of named matrices. Rows represent features
+#' and columns the samples you wish to calculate the correlations for.
+#' @param spearman Shall Spearman correlation be used.
+#' @param min_similarity Minimum (absolute) correlations that needs to exist
+#' between two terms.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item origin - The name of the origin of the gene modules.
+#'   \item target - The name of the target of the gene modules.
+#'   \item comparisons - Integer vector indicating how many RBH hits were
+#'   identified in this comparison
+#'   \item origin_modules - Names of the gene modules from the origin.
+#'   \item target_modules - Names of the gene modules from the target.
+#'   \item similarity - The similarities between the two respective gene
+#'   modules.
+#' }
+#'
+#' @export
+rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
 #' Calculate the column-wise co-variance.
 #'
@@ -502,6 +530,32 @@ rs_covariance <- function(x) .Call(wrap__rs_covariance, x)
 #'
 #' @export
 rs_cor <- function(x, spearman) .Call(wrap__rs_cor, x, spearman)
+
+#' Calculate the column wise cosine similarities
+#'
+#' @description Calculates the cosyne similarity matrix of the columns.
+#'
+#' @param x R matrix with doubles.
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cos <- function(x) .Call(wrap__rs_cos, x)
+
+#' Calculate the column wise correlations.
+#'
+#' @description Calculates the correlation between the columns of two matrices.
+#' The number of rows need to be the same!
+#'
+#' @param x R matrix with doubles.
+#' @param y R matrix with doubles.
+#' @param spearman Shall the Spearman correlation be calculated instead of
+#' Pearson.
+#'
+#' @returns The correlation matrix.
+#'
+#' @export
+rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 
 #' Calculates the correlation matrix from the co-variance matrix
 #'

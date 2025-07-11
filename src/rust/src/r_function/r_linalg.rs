@@ -45,6 +45,51 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2
     faer_to_r_matrix(cor.as_ref())
 }
 
+/// Calculate the column wise cosine similarities
+///
+/// @description Calculates the cosyne similarity matrix of the columns.
+///
+/// @param x R matrix with doubles.
+///
+/// @returns The correlation matrix.
+///
+/// @export
+#[extendr]
+fn rs_cos(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
+    let mat = r_matrix_to_faer(&x);
+
+    let cos = column_cosine(&mat);
+
+    faer_to_r_matrix(cos.as_ref())
+}
+
+/// Calculate the column wise correlations.
+///
+/// @description Calculates the correlation between the columns of two matrices.
+/// The number of rows need to be the same!
+///
+/// @param x R matrix with doubles.
+/// @param y R matrix with doubles.
+/// @param spearman Shall the Spearman correlation be calculated instead of
+/// Pearson.
+///
+/// @returns The correlation matrix.
+///
+/// @export
+#[extendr]
+fn rs_cor2(
+    x: RMatrix<f64>,
+    y: RMatrix<f64>,
+    spearman: bool,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let x = r_matrix_to_faer(&x);
+    let y = r_matrix_to_faer(&y);
+
+    let cor = cor(&x, &y, spearman);
+
+    faer_to_r_matrix(cor.as_ref())
+}
+
 /// Calculates the correlation matrix from the co-variance matrix
 ///
 /// @description Calculates the correlation matrix from a co-variance
@@ -333,6 +378,8 @@ extendr_module! {
   mod r_linalg;
   fn rs_covariance;
   fn rs_cor;
+  fn rs_cos;
+  fn rs_cor2;
   fn rs_cov2cor;
   fn rs_prcomp;
   fn rs_random_svd;

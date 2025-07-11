@@ -58,12 +58,14 @@ S7::method(ica_processing, bulk_coexp) <- function(
   }
 
   # Whiten the data
-  if (.verbose) message("Preparing the whitening of the data for ICA.")
+  if (.verbose) {
+    message("Preparing the whitening of the data for ICA.")
+  }
   if (fast_svd && .verbose) {
-    message("Using randomised SVD for whitening (faster, but less precise)")
+    message("Using randomised SVD for whitening (faster, but less precise).")
   }
   if (!fast_svd && .verbose) {
-    message("Using full SVD for whitening (slowed, but more precise)")
+    message("Using full SVD for whitening (slower, but more precise).")
   }
   c(X1, K) %<-%
     rs_prepare_whitening(
@@ -256,8 +258,11 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 
   all_scores <- c()
   all_convergence <- c()
+  all_orthogonality <- c()
 
-  pb <- txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
+  if (.verbose) {
+    pb <- txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
+  }
 
   for (i in seq_along(n_comp_vector)) {
     no_comp <- n_comp_vector[[i]]
@@ -289,19 +294,24 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
       )
 
     c(stability_scores, centrotype) %<-%
-      .community_stability(
+      community_stability(
         no_comp = as.integer(no_comp),
         s = s_combined,
-        return_centrotype = FALSE
+        return_centrotype = TRUE
       )
+
+    orthogonality <- component_orthogonality(centrotype)
 
     all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
     all_convergence <- append(all_convergence, converged)
+    all_orthogonality <- append(all_orthogonality, orthogonality)
 
-    setTxtProgressBar(pb, i)
+    if (.verbose) setTxtProgressBar(pb, i)
   }
 
-  close(pb)
+  if (.verbose) {
+    close(pb)
+  }
 
   ica_comps_rep <- purrr::map(n_comp_vector, \(x) {
     rep(x, x)
@@ -336,12 +346,14 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
   ica_stability_res_sum <- ica_stability_res[,
     .(
       median_stability = median(stability),
-      max_stability = max(stability),
-      percentile_75 = quantile(stability, 0.75)
+      UQ_stability = quantile(stability, 0.75),
+      LQ_stability = quantile(stability, 0.25)
     ),
     .(no_components)
   ] %>%
-    merge(., prop_converged, by = "no_components")
+    merge(., prop_converged, by = "no_components") %>%
+    .[, orthogonality := all_orthogonality] %>%
+    .[, combined_score := median_stability * converged * orthogonality]
 
   stability_params <- list(
     ica_type = ica_type,
@@ -362,6 +374,145 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 }
 
 
+#' @title Identify stability inflection point
+#'
+#' @description
+#' This function can be used after having run [bixverse::ica_evaluate_comp()].
+#' It will calculate the inflection point, based on the first derivative of a
+#' loess function fitted `ncomp ~ combined_score` with the combined score being
+#' a product of the median stability, orthogonality and proportion of convergence
+#' and add these info to the object. Should the loess function raise a warning
+#' (e.g., singularity), the class will be returned as is and manual
+#' determination of optimal ncomp is warrented. Additionally, you have the
+#' option to plot the loess function for additional control over the span
+#' parameter (defaults to `TRUE`).
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' [bixverse::ica_evaluate_comp()] before running this function.
+#' @param span Float. A value between 0.1 and 1.0 for the loess function
+#' defining the span. Defaults to `0.2`.
+#' @param show_plot Boolean. Shall a plot be shown of the loess function fitted.
+#' Defaults to `TRUE`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return `bulk_coexp` with optimal ncomp based on the inflection point method.
+#'
+#' @export
+ica_optimal_ncomp <- S7::new_generic(
+  name = "ica_optimal_ncomp",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    span = 0.2,
+    show_plot = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @import data.table
+#' @importFrom zeallot `%<-%`
+#'
+#' @method ica_optimal_ncomp bulk_coexp
+S7::method(ica_optimal_ncomp, bulk_coexp) <- function(
+  object,
+  span = 0.2,
+  show_plot = TRUE,
+  .verbose = TRUE
+) {
+  inflection_idx <- gradient_change <- NULL
+
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(span, "N1[0.1, 1.0]")
+  checkmate::qassert(.verbose, "B1")
+
+  # function
+  stability_data <- data.table::copy(S7::prop(object, "outputs")[[
+    "ica_stability_res_sum"
+  ]])
+
+  # early return - no evaluation found
+  if (is.null(stability_data)) {
+    warning(paste(
+      "No stability results found. Did you run ica_evaluate_comp()",
+      "Returning object as is."
+    ))
+    return(object)
+  }
+
+  c(inflection_idx, gradient_change) %<-%
+    get_inflection_point(
+      stability_data$no_components,
+      stability_data$combined_score,
+      span = span
+    )
+
+  # early return - loess function cannot fit
+  if (is.null(inflection_idx)) {
+    warning(paste(
+      "The loess function could not be fitted with the given parameters.",
+      "Returning object as is."
+    ))
+    S7::prop(object, "params")[["ica_stability_assessment"]][[
+      'inflection_idx'
+    ]] <- NA
+    S7::prop(object, "params")[["ica_stability_assessment"]][[
+      'optimal_ncomp'
+    ]] <- NA
+    return(object)
+  }
+
+  optimal_ncomp <- stability_data$no_components[inflection_idx]
+  if (.verbose) {
+    message(sprintf("Identified %i as optimal number of ICs.", optimal_ncomp))
+  }
+  if ("gradient_change" %in% names(stability_data)) {
+    # Added this here, if one reruns the function
+    stability_data[, gradient_change := NULL]
+  }
+  stability_data[, gradient_change := c(0, gradient_change)]
+
+  S7::prop(object, "outputs")[["ica_stability_res_sum"]] <- stability_data
+  S7::prop(object, "params")[["ica_stability_assessment"]][[
+    'inflection_idx'
+  ]] <- inflection_idx
+  S7::prop(object, "params")[["ica_stability_assessment"]][[
+    'optimal_ncomp'
+  ]] <- optimal_ncomp
+
+  if (show_plot) {
+    p <- data.frame(
+      x = stability_data$no_components,
+      y = stability_data$combined_score
+    ) %>%
+      ggplot(data = ., mapping = aes(x = x, y = y)) +
+      geom_point(shape = 21, size = 2) +
+      geom_smooth(
+        formula = y ~ x,
+        method = "loess",
+        span = span,
+        color = "black"
+      ) +
+      xlab("No components") +
+      ylab("Combined score") +
+      theme_bw() +
+      geom_vline(
+        xintercept = optimal_ncomp,
+        linetype = "dashed",
+        color = "darkred"
+      )
+
+    print(p)
+  }
+
+  return(object)
+}
+
+
 #' @title Run stabilised ICA with a given number of components
 #'
 #' @description
@@ -369,9 +520,10 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
-#' @param no_comp Integer. Number of components you wish to use for the ICA
-#' run. [bixverse::ica_evaluate_comp()] can give you an idea in terms of
-#' stability of the number of components at different levels.
+#' @param no_comp Optional integer. Number of components you wish to use for the
+#' ICA run. If you have run [bixverse::ica_evaluate_comp()] the optimal number
+#' is identified via the elbow method and will be used if set to `NULL`. You
+#' can overwrite this however.
 #' @param ica_type String, element of `c("logcosh", "exp")`.
 #' @param iter_params List. This list controls the randomisation parameters for
 #' the ICA runs, see [bixverse::params_ica_randomisation()] for estimating
@@ -410,7 +562,7 @@ ica_stabilised_results <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    no_comp,
+    no_comp = NULL,
     ica_type = c("logcosh", "exp"),
     iter_params = params_ica_randomisation(),
     ica_params = params_ica_general(),
@@ -432,7 +584,7 @@ ica_stabilised_results <- S7::new_generic(
 #' @method ica_stabilised_results bulk_coexp
 S7::method(ica_stabilised_results, bulk_coexp) <- function(
   object,
-  no_comp,
+  no_comp = NULL,
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
   ica_params = params_ica_general(),
@@ -442,7 +594,7 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
 ) {
   # Checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::qassert(no_comp, "I1")
+  checkmate::qassert(no_comp, c("0", "I1"))
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaIterParams(iter_params)
   assertIcaParams(ica_params)
@@ -460,6 +612,26 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
     warning(
       paste(
         "This class does not seem to be set for ICA-based module detection",
+        "Returning class as is."
+      )
+    )
+    return(object)
+  }
+
+  optimal_ncomp <- S7::prop(object, "params")[["ica_stability_assessment"]][[
+    "optimal_ncomp"
+  ]]
+
+  no_comp <- if (is.null(no_comp)) {
+    optimal_ncomp
+  } else {
+    no_comp
+  }
+
+  if (is.null(no_comp)) {
+    warning(
+      paste(
+        "No optimal number of no of components was identified and none were provided",
         "Returning class as is."
       )
     )
@@ -500,7 +672,7 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
 
   # Get the component stability and centrotypes
   c(stability_scores, centrotype) %<-%
-    .community_stability(
+    community_stability(
       no_comp = as.integer(no_comp),
       s = s_combined,
       return_centrotype = TRUE
@@ -510,7 +682,7 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
   rownames(centrotype) <- colnames(X)
 
   if (consistent_sign) {
-    centrotype <- apply(centrotype, 2, .flip_ica_loading_signs)
+    centrotype <- apply(centrotype, 2, flip_ica_loading_signs)
   }
 
   S <- t(centrotype)
@@ -542,87 +714,101 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
   return(object)
 }
 
-
-# general ICA function --------------------------------------------------------
-
-#' Fast ICA via Rust
-#'
-#' @description
-#' This functions is a wrapper over the Rust implementation of fastICA. It has
-#' the same two options `c("logcosh", "exp")` to run ICA in parallel modus. This
-#' function expected
-#'
-#' @param X Numeric matrix. Processed data. Output of
-#' [bixverse::rs_prepare_whitening()].
-#' @param K The K matrix. Whitening matrix. Output of
-#' [bixverse::rs_prepare_whitening()].
-#' @param n_icas Integer. Number of independent components to recover.
-#' @param ica_fun String, element of `c("logcosh", "exp")`.
-#' @param seed Integer. Seed to ensure reproducible results.
-#' @param ica_params List. The ICA parameters, see [bixverse::params_ica_general()]
-#' wrapper function. This function generates a list containing:
-#' \itemize{
-#'  \item maxit - Integer. Maximum number of iterations for ICA.
-#'  \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'  Should be between 1 to 2.
-#'  \item max_tol - Maximum tolerance of the algorithm.
-#'  \item verbose - Controls verbosity of the function.
-#' }
-#'
-#' @returns A list containing:
-#' \itemize{
-#'  \item w The mixing matrix w.
-#'  \item A ICA results matrix A.
-#'  \item S ICA results matrix S.
-#'  \item converged Boolean indicating if algorithm converged.
-#' }
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-fast_ica_rust <- function(
-  X,
-  K,
-  n_icas,
-  ica_fun = c("logcosh", "exp"),
-  seed = NULL,
-  ica_params = params_ica_general()
-) {
-  # Scope check
-  a <- NULL
-  # Checks
-  checkmate::assertMatrix(X, mode = "numeric")
-  checkmate::assertMatrix(K, mode = "numeric")
-  checkmate::qassert(n_icas, sprintf("I1[2,%i]", ncol(X)))
-  checkmate::assertChoice(ica_fun, c("logcosh", "exp"))
-  checkmate::qassert(seed, c("I1", "0"))
-  assertIcaParams(ica_params)
-  # Function
-  K <- matrix(K[1:n_icas, ], n_icas, dim(X)[1])
-  X1 <- K %*% X
-  set.seed(seed)
-  w_init <- matrix(rnorm(n_icas * n_icas), nrow = n_icas, ncol = n_icas)
-
-  c(a, converged) %<-%
-    rs_fast_ica(X1, w_init, ica_type = ica_fun, ica_params = ica_params)
-
-  w <- a %*% K
-  S <- w %*% X
-  A <- t(w) %*% solve(w %*% t(w))
-
-  res <- list(
-    w = w,
-    A = A,
-    S = S,
-    converged = converged
-  )
-
-  return(res)
-}
-
 # helpers ----------------------------------------------------------------------
 
 ## plotting --------------------------------------------------------------------
+
+#' @title Plot various parameters with no comp
+#'
+#' @description
+#' Helper function to plot various parameters with the no of components. You
+#' have:
+#' \itemize{
+#'  \item Median stability - The median stability of the clusters at this
+#'  no of components given random initialisations.
+#'  \item % Converged - The percentage of ICA runs that converged at this
+#'  no of components.
+#'  \item IC Orthogonality - The orthogonality (measured as `1 - abs(cos)`)
+#'  indicating how orthogonal the signals detected at this level are.
+#'  \item Combined score - The product of the three other scores.
+#' }
+#' If found, the function will also add the optimal number of components based
+#' on [bixverse::ica_optimal_ncomp()] (if a loess function could be fitted).
+#'
+#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' [bixverse::ica_evaluate_comp()] before running this function.
+#'
+#' @return The plot with no comp ~ vs. various parameters.
+#'
+#' @export
+plot_ica_ncomp_params <- S7::new_generic(
+  name = "plot_ica_ncomp_params",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_ica_ncomp_params bulk_coexp
+S7::method(plot_ica_ncomp_params, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  # Function body
+  plot_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
+
+  if (is.null(plot_df)) {
+    warning(
+      paste(
+        "No ICA stability results found. Did you run ica_evaluate_comp()",
+        "and ica_optimal_ncomp()? Returning NULL."
+      )
+    )
+    return(NULL)
+  }
+
+  renaming <- setNames(
+    c("Median stability", "% Converged", "IC Orthogonality", "Combined score"),
+    c("median_stability", "converged", "orthogonality", "combined_score")
+  )
+
+  plot_df_red <- plot_df[,
+    c(
+      "no_components",
+      "median_stability",
+      "converged",
+      "orthogonality",
+      "combined_score"
+    ),
+    with = FALSE
+  ] %>%
+    melt(., id = "no_components") %>%
+    .[, variable := renaming[variable]]
+
+  p <- ggplot(data = plot_df_red, mapping = aes(x = no_components, y = value)) +
+    geom_point(size = 1.5, shape = 21) +
+    facet_wrap(~variable, ncol = 2) +
+    ylim(0, 1) +
+    theme_bw() +
+    ylab("Value") +
+    xlab("No components") +
+    ggtitle("No of IC comp vs. various params")
+
+  optimal_no_comp <- S7::prop(object, "params")[["ica_stability_assessment"]][[
+    'optimal_ncomp'
+  ]]
+
+  if (!is.null(optimal_no_comp) && !is.na(optimal_no_comp)) {
+    p <- p +
+      geom_vline(
+        xintercept = optimal_no_comp,
+        linetype = "dashed",
+        colour = "darkred",
+        linewidth = 0.5
+      )
+  }
+
+  p
+}
 
 #' @title Plot the stability of the ICA components
 #'
@@ -684,66 +870,6 @@ S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
     )
 }
 
-#' @title Plot the maximum and 75 %ile of the stability.
-#'
-#' @description
-#' Helper function to plot the individual maximum and 75th percentile in terms
-#' of stability over the tested ncomp to identify inflection points in the
-#' stability profiles.
-#'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
-#' [bixverse::ica_evaluate_comp()] before running this function.
-#'
-#' @export
-plot_ica_stability_summarised <- S7::new_generic(
-  name = "plot_ica_stability_summarised",
-  dispatch_args = "object",
-  fun = function(object) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method plot_ica_stability_summarised bulk_coexp
-S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
-  # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
-  # Function body
-  plot_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
-  if (is.null(plot_df)) {
-    warning(
-      "No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL."
-    )
-    return(NULL)
-  }
-
-  p <- ggplot(
-    data = plot_df,
-    mapping = aes(x = no_components, y = max_stability)
-  ) +
-    geom_point(
-      mapping = aes(fill = percentile_75),
-      shape = 21,
-      size = 3,
-      alpha = .75
-    ) +
-    ylim(0, 1) +
-    xlab("Component rank") +
-    ylab("Max stability index") +
-    scale_fill_viridis_c(option = "G") +
-    labs(fill = "Stability 75%-ile:") +
-    theme_minimal() +
-    ggtitle(label = "Maximum and 75th %-ile component stability") +
-    stat_smooth(
-      method = "loess",
-      se = FALSE,
-      span = 0.5,
-      color = "darkred",
-      linetype = "dashed",
-      linewidth = 0.5
-    )
-
-  p
-}
 
 ## component stability ---------------------------------------------------------
 
@@ -768,7 +894,7 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
 #'  \item stability_scores - The stability scores for the given runs.
 #'  \item centrotype - The centrotype component of each cluster.
 #' }
-.community_stability <- function(no_comp, s, return_centrotype) {
+community_stability <- function(no_comp, s, return_centrotype) {
   # Visible global function stuff...
   as.dist <- hclust <- cutree <- NULL
   # Checks
@@ -779,7 +905,7 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   abs_cor <- abs(rs_cor(s, spearman = FALSE))
   dist <- as.dist(1 - abs_cor)
 
-  clusters <- hclust(dist)
+  clusters <- fastcluster::hclust(dist)
 
   clusterCut <- cutree(tree = clusters, k = no_comp)
 
@@ -791,16 +917,28 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   for (cluster in seq_len(no_comp)) {
     cluster_indx <- which(clusterCut == cluster)
     not_cluster_indx <- which(clusterCut != cluster)
-    within_cluster <- sum(abs_cor[cluster_indx, cluster_indx]) /
-      length(cluster_indx)^2
+
+    if (length(cluster_indx) > 1) {
+      cluster_cor <- abs_cor[cluster_indx, cluster_indx]
+      within_cluster <- sum(cluster_cor[
+        upper.tri(cluster_cor) | lower.tri(cluster_cor)
+      ]) /
+        (length(cluster_indx) * (length(cluster_indx) - 1))
+    } else {
+      within_cluster <- 0
+    }
+
     outside_cluster <- sum(abs_cor[cluster_indx, not_cluster_indx]) /
       (length(cluster_indx) * length(not_cluster_indx))
+
     scores[cluster] <- within_cluster - outside_cluster
+
     if (return_centrotype) {
-      max_similarity <- max(rowSums(abs_cor[cluster_indx, cluster_indx]))
-      temp <- which(
-        rowSums(abs_cor[cluster_indx, cluster_indx]) == max_similarity
-      )
+      temp <- which.max(rowSums(abs_cor[
+        cluster_indx,
+        cluster_indx,
+        drop = FALSE
+      ]))
       centrotypes[[cluster]] <- s[, cluster_indx[temp], drop = FALSE]
     }
   }
@@ -817,6 +955,31 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
   res
 }
 
+## component orthogonality -----------------------------------------------------
+
+#' Assess the orthogonality of the ICA components
+#'
+#' @description
+#' Assesses the orthogonality of the discovered independent components. It leverages
+#' the cosine similarity to calculate this. Orthogonality is defined as:
+#' `1 - abs(cos) / length(cos)`.
+#'
+#' @param centrotype Numeric matrix. The calculated centrotypes for a given
+#' number of component.
+#'
+#' @returns Returns the average orthogonality between all the pairs.
+component_orthogonality <- function(centrotype) {
+  # checks
+  checkmate::assertMatrix(centrotype, mode = "numeric")
+
+  # function
+  cosine_sim <- rs_dense_to_upper_triangle(abs(rs_cos(centrotype)), 1L)
+  orthogonality <- sum(1 - cosine_sim) / length(cosine_sim)
+
+  return(orthogonality)
+}
+
+
 ## sign flipping ---------------------------------------------------------------
 
 #' Flips the ICA source sign
@@ -828,7 +991,7 @@ S7::method(plot_ica_stability_summarised, bulk_coexp) <- function(object) {
 #' @param x Numeric vector. The source signal for that independent component.
 #'
 #' @returns Returns a consistent ICA feature loading
-.flip_ica_loading_signs <- function(x) {
+flip_ica_loading_signs <- function(x) {
   feature_sign <- sign(x)
   max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]
   y <- if (max_val_sign == 1) {

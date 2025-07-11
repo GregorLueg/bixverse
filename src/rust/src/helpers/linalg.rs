@@ -6,6 +6,8 @@ use rayon::iter::*;
 use crate::utils::general::*;
 use crate::utils::utils_stats::*;
 
+use crate::assert_nrows;
+
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
 //////////////////////////////
@@ -122,6 +124,45 @@ pub fn scale_matrix_col(mat: &MatRef<'_, f64>, scale_sd: bool) -> Mat<f64> {
     result
 }
 
+/// Normalize each column to unit length (L2 norm = 1)
+fn normalise_matrix_col_l2(mat: &MatRef<'_, f64>) -> Mat<f64> {
+    let mut normalized = mat.to_owned();
+
+    for j in 0..mat.ncols() {
+        let col = mat.col(j);
+        let norm = col.norm_l2();
+
+        if norm > 1e-10 {
+            for i in 0..mat.nrows() {
+                normalized[(i, j)] = mat[(i, j)] / norm;
+            }
+        }
+    }
+
+    normalized
+}
+
+/// Applies ranking to the columns of a given matrix
+pub fn rank_matrix_col(mat: &MatRef<'_, f64>) -> Mat<f64> {
+    let mut ranked_mat = Mat::zeros(mat.nrows(), mat.ncols());
+
+    // Parallel ranking directly into the matrix
+    ranked_mat
+        .par_col_iter_mut()
+        .enumerate()
+        .for_each(|(col_idx, mut col)| {
+            let original_col: Vec<f64> = mat.col(col_idx).iter().copied().collect();
+            let ranks = rank_vector(&original_col);
+
+            // Write ranks directly to the matrix column
+            for (row_idx, &rank) in ranks.iter().enumerate() {
+                col[row_idx] = rank;
+            }
+        });
+
+    ranked_mat
+}
+
 /// Calculate the column-wise co-variance
 pub fn column_covariance(mat: &MatRef<'_, f64>) -> Mat<f64> {
     let n_rows = mat.nrows();
@@ -131,20 +172,19 @@ pub fn column_covariance(mat: &MatRef<'_, f64>) -> Mat<f64> {
     covariance
 }
 
+/// Calculate the column-wise co-variance
+pub fn column_cosine(mat: &MatRef<'_, f64>) -> Mat<f64> {
+    let normalized = normalise_matrix_col_l2(mat);
+
+    normalized.transpose() * &normalized
+}
+
 /// Calculate the column-wise correlation. Option to use spearman.
 pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
     let mat = if spearman {
-        let ranked_vecs: Vec<Vec<f64>> = mat
-            .par_col_iter()
-            .map(|x_i| {
-                let x_i: Vec<f64> = x_i.iter().copied().collect();
-                rank_vector(&x_i)
-            })
-            .collect();
-
-        nested_vector_to_faer_mat(ranked_vecs, true)
+        rank_matrix_col(mat)
     } else {
-        mat.cloned()
+        mat.to_owned()
     };
 
     let scaled = scale_matrix_col(&mat.as_ref(), true);
@@ -152,6 +192,33 @@ pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
     let nrow = scaled.nrows() as f64;
 
     let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
+
+    cor
+}
+
+/// Calculates the correlation between two matrices and their columns. The
+/// number of rows has to be equal, otherwise, the programm will panic
+pub fn cor(mat_a: &MatRef<'_, f64>, mat_b: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
+    assert_nrows!(mat_a, mat_b);
+
+    let nrow = mat_a.nrows() as f64;
+
+    let mat_a = if spearman {
+        rank_matrix_col(mat_a)
+    } else {
+        mat_a.to_owned()
+    };
+
+    let mat_b = if spearman {
+        rank_matrix_col(mat_b)
+    } else {
+        mat_b.to_owned()
+    };
+
+    let mat_a = scale_matrix_col(&mat_a.as_ref(), true);
+    let mat_b = scale_matrix_col(&mat_b.as_ref(), true);
+
+    let cor = mat_a.transpose() * &mat_b / (nrow - 1_f64);
 
     cor
 }

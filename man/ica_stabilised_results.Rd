@@ -6,7 +6,7 @@
 \usage{
 ica_stabilised_results(
   object,
-  no_comp,
+  no_comp = NULL,
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
   ica_params = params_ica_general(),
@@ -19,9 +19,10 @@ ica_stabilised_results(
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to apply
 \code{\link[=ica_processing]{ica_processing()}} before running this function.}
 
-\item{no_comp}{Integer. Number of components you wish to use for the ICA
-run. \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}} can give you an idea in terms of
-stability of the number of components at different levels.}
+\item{no_comp}{Optional integer. Number of components you wish to use for the
+ICA run. If you have run \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}} the optimal number
+is identified via the elbow method and will be used if set to \code{NULL}. You
+can overwrite this however.}
 
 \item{ica_type}{String, element of \code{c("logcosh", "exp")}.}
 

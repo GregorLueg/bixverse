@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 01.07.2025* </br>
+*Last update: 08.07.2025* </br>
 
 ### Version **0.0.1.5**
 
@@ -10,16 +10,23 @@
 additional measure.
 - Rework of the genetic community detection class and the diffusion methods. 
 This can break old code!
+- Rework of the ICA code. Some of the functions have been chaned and might
+break old code. Also, testing suite put in place for the ICA class. 
+- Added reciprocal best hit method based on correlations. You will need to
+provide now an additional parameter to the class specifying if you want to use
+set similarity or correlation-based similarity.
 
 #### Bug fixes, documentation updates
 
-...
+- ...
 
 #### Breaking changes
 
 - Functions and methods related to the ontology class could be breaking, as
 they have been moedified heavily. The same applies to the genetic community
 detection method.
+- Functions and methods to the ICA detection have been adopted. That might break
+some current code.
 
 ### Version **0.0.1.4**
 

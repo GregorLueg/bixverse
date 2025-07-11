@@ -11,3 +11,17 @@ macro_rules! assert_symmetric_mat {
         );
     };
 }
+
+/// Assertion that two matrices have the same number of rows.
+#[macro_export]
+macro_rules! assert_nrows {
+    ($matrix1:expr, $matrix2:expr) => {
+        assert_eq!(
+            $matrix1.nrows(),
+            $matrix2.nrows(),
+            "Matrices have different number of rows: {} != {}",
+            $matrix1.nrows(),
+            $matrix2.nrows()
+        );
+    };
+}
