@@ -155,8 +155,8 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
 #' Calculate the Wang similarity for an ontology.
 #'
 #' @description This function calculates the Wang similarity for the whole
-#' ontology and adds it to the class. The current implementation just allows for
-#' a single w for the relationships.
+#' ontology and adds it to the class in a memory-efficient format for
+#' subsequent usage.
 #'
 #' @param object `ontology class`. See [bixverse::ontology()].
 #' @param weights Named numeric. The relationship of type to weight for this
@@ -225,7 +225,7 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
   ]
 
   c(sim_data, features) %<-%
-    rs_onto_sim_wang(
+    rs_onto_sim_wang_mat(
       parents = parent_child_dt$parent,
       children = parent_child_dt$child,
       w = parent_child_dt$weight,

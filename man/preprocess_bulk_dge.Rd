@@ -31,7 +31,8 @@ to be identified in.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-...
+Returns the class with the \code{processed_data} data slot populated and
+applied parameters added to the \code{params} slot.
 }
 \description{
 This function generates general QC metrics for bulk DGE experiments.

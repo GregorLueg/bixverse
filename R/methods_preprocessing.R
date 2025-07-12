@@ -18,7 +18,8 @@
 #' to be identified in.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return ...
+#' @return Returns the class with the `processed_data` data slot populated and
+#' applied parameters added to the `params` slot.
 #'
 #' @export
 #'
@@ -77,7 +78,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   checkmate::assertTRUE(group_col %in% colnames(meta_data))
 
   # Sample outlier removal
-  if (.verbose) message("Detecting sample outliers.")
+  if (.verbose) {
+    message("Detecting sample outliers.")
+  }
   detected_genes_nb <- data.table::data.table(
     sample_id = colnames(raw_counts),
     nb_detected_genes = matrixStats::colSums2(raw_counts > 0)
@@ -153,18 +156,20 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     )
 
   outliers <- samples$perc_detected_genes <= min_perc
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "A total of %i samples are detected as outlier.",
       sum(outliers)
     ))
+  }
 
   samples_red <- samples[!(outliers), ]
   raw_counts <- raw_counts[, unique(samples_red$sample_id)]
 
   ## Voom normalization
-  if (.verbose)
+  if (.verbose) {
     message("Removing lowly expressed genes and normalising counts.")
+  }
   dge_list <- edgeR::DGEList(raw_counts)
 
   # Filter lowly expressed genes
@@ -173,7 +178,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     min.prop = min_prop,
     group = samples[[group_col]]
   )
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+  if (.verbose) {
+    message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+  }
 
   dge_list <- edgeR::calcNormFactors(
     dge_list[to_keep, ],

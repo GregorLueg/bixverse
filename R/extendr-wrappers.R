@@ -956,9 +956,33 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @export
 rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
 
-#' Calculate the Wang similarity for an ontology
+#' Calculate the Wang similarity for specific terms
 #'
-#' @description This function calculates the Wang similarity for a given
+#' @description This function calculates the Wang similarities between all
+#' permutations of a given set of terms.
+#'
+#' @param terms String vector. The terms you wish to calculate the similarities
+#' for.
+#' @param parents String vector. The names of the parents.
+#' @param children String vector. The names of the childs. The length of
+#' `parents` needs to be equal to `children`.
+#' @param w Numerics. The weights between the parents and children. Need
+#' to be values between 0 and 1.
+#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item term1 - name of the first term.
+#'   \item term2 - name of the second term.
+#'   \item sims - similarity between the two terms.
+#' }
+#'
+#' @export
+rs_onto_sim_wang <- function(terms, parents, children, w) .Call(wrap__rs_onto_sim_wang, terms, parents, children, w)
+
+#' Calculate the Wang similarity matrix for an ontology
+#'
+#' @description This function calculates the Wang similarity matrix for a given
 #' ontology.
 #'
 #' @param parents String vector. The names of the parents.
@@ -975,7 +999,7 @@ rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(
 #' }
 #'
 #' @export
-rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang, parents, children, w, flat_matrix)
+rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang_mat, parents, children, w, flat_matrix)
 
 #' Filter the term similarities for a specific critical value
 #'

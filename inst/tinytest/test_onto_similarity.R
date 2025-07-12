@@ -227,7 +227,6 @@ matrix_result <- get_sim_matrix(test_class, .verbose = FALSE)
 
 dt_result <- get_sim_matrix(test_class, as_data_table = TRUE, .verbose = FALSE)
 
-
 expect_equivalent(
   current = rs_dense_to_upper_triangle(matrix_result, 1),
   target = expected_resnik,
@@ -407,15 +406,15 @@ expected_dt <- data.table::data.table(
 
 expected_critval <- 0.7641509
 
-## functions -------------------------------------------------------------------
+## similarity matrices ---------------------------------------------------------
 
 expect_error(
-  current = calculate_wang_sim(test_onto, weights = weights),
+  current = calculate_wang_sim_mat(test_onto, weights = weights),
   info = "Wang ontology - correct error when column is missing"
 )
 
 # different values
-results_v1 <- calculate_wang_sim(test_onto_wang, weights = weights_v1)
+results_v1 <- calculate_wang_sim_mat(test_onto_wang, weights = weights_v1)
 critval_v1 <- calculate_critical_value(results_v1, alpha = 0.1)
 
 expect_equivalent(
@@ -432,8 +431,8 @@ expect_equivalent(
   tolerance = 1e-7
 )
 
-# all the same
-results_v2 <- calculate_wang_sim(test_onto_wang, weights = weights_v2)
+# for the version 2 with different weights
+results_v2 <- calculate_wang_sim_mat(test_onto_wang, weights = weights_v2)
 critval_v2 <- calculate_critical_value(results_v2, alpha = 0.1)
 
 expect_equivalent(
@@ -448,6 +447,45 @@ expect_equivalent(
   target = expected_critval,
   info = "Wang similarity version 2 critical value",
   tolerance = 1e-6
+)
+
+## individual values -----------------------------------------------------------
+
+expected_individual_res <- data.table::data.table(
+  term1 = c("a", "a", "a", "b", "b", "e"),
+  term2 = c("b", "e", "g", "e", "g", "g"),
+  sims = c(0.6428571, 0.4805195, 0, 0.7422680, 0, 0)
+)
+
+individual_results <- calculate_wang_sim(
+  terms = c("a", "b", "e", "g"),
+  parent_child_dt = test_onto_wang,
+  weights = weights_v1
+)
+
+expect_equal(
+  current = individual_results,
+  target = individual_results,
+  tolerance = 1e-7,
+  info = "Wang similarity - individual terms"
+)
+
+expect_error(
+  current = calculate_wang_sim(
+    terms = c("a", "b", "e", "g", "x"),
+    parent_child_dt = test_onto_wang,
+    weights = weights_v1
+  ),
+  info = "Wang similarity - individual terms error: wrong term"
+)
+
+expect_error(
+  current = calculate_wang_sim(
+    terms = c("a", "b", "e", "g"),
+    parent_child_dt = test_onto,
+    weights = weights_v1
+  ),
+  info = "Wang similarity - individual terms error: wrong parent_child_dt"
 )
 
 ## class -----------------------------------------------------------------------

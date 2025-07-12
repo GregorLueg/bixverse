@@ -58,8 +58,7 @@ calculate_semantic_sim <- function(
 #' Calculate the Wang similarity matrix
 #'
 #' @description This function calculates the Wang similarity, based on the DAG
-#' for a given ontology. The current implementation just allows for a single w
-#' for the relationships.
+#' for a given ontology. This function will return the full similarity matrix.
 #'
 #' @param parent_child_dt data.table. The data.table with column parent and
 #' child. You also need to have a type column for the Wang similarity to provide
@@ -72,7 +71,7 @@ calculate_semantic_sim <- function(
 #' @export
 #'
 #' @import data.table
-calculate_wang_sim <- function(parent_child_dt, weights) {
+calculate_wang_sim_mat <- function(parent_child_dt, weights) {
   # Scope
   weight <- type <- NULL
 
@@ -88,7 +87,7 @@ calculate_wang_sim <- function(parent_child_dt, weights) {
     weight := weights[type]
   ]
 
-  sim_wang <- rs_onto_sim_wang(
+  sim_wang <- rs_onto_sim_wang_mat(
     parents = parent_child_dt$parent,
     children = parent_child_dt$child,
     w = parent_child_dt$weight,
@@ -101,6 +100,56 @@ calculate_wang_sim <- function(parent_child_dt, weights) {
 
   return(sim_wang_mat)
 }
+
+
+#' Calculate the Wang similarities between terms
+#'
+#' @description This function calculates the Wang similarity for a set of temrs,
+#' based on the DAG for a given ontology.
+#'
+#' @param terms String vector. The terms for which to calculate the Wang
+#' similarity.
+#' @param parent_child_dt data.table. The data.table with column parent and
+#' child. You also need to have a type column for the Wang similarity to provide
+#' the weights for the relationships.
+#' @param weights Named numeric. The relationship of type to weight for this
+#' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
+#'
+#' @return A data.table with the calculated similarities.
+#'
+#' @export
+#'
+#' @import data.table
+calculate_wang_sim <- function(terms, parent_child_dt, weights) {
+  # Scope
+  weight <- type <- NULL
+
+  # Checks
+  checkmate::assertCharacter(terms, min.len = 2)
+  checkmate::assertDataTable(parent_child_dt)
+  checkmate::assert(all(
+    c("parent", "child", "type") %in% colnames(parent_child_dt)
+  ))
+  checkmate::assertNumeric(weights, min.len = 1L, names = "named")
+  checkmate::assertTRUE(all(unique(parent_child_dt$type) %in% names(weights)))
+  all_terms <- unique(c(parent_child_dt$parent, parent_child_dt$child))
+  checkmate::assertTRUE(all(terms %in% all_terms))
+
+  parent_child_dt <- data.table::copy(parent_child_dt)[,
+    weight := weights[type]
+  ]
+
+  sim_wang <- rs_onto_sim_wang(
+    terms = terms,
+    parents = parent_child_dt$parent,
+    children = parent_child_dt$child,
+    w = parent_child_dt$weight
+  ) %>%
+    data.table::setDT()
+
+  return(sim_wang)
+}
+
 
 ## helpers ---------------------------------------------------------------------
 

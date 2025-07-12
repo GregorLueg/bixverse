@@ -1,7 +1,7 @@
 use extendr_api::prelude::*;
 
 use crate::helpers::ontology::*;
-use crate::utils::general::faer_mat_to_upper_triangle;
+use crate::utils::general::{faer_mat_to_upper_triangle, flatten_vector};
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_list_to_hashmap_set};
 
 /// Calculate the semantic similarity in an ontology
@@ -49,9 +49,9 @@ fn rs_onto_semantic_sim(
     Ok(final_sim)
 }
 
-/// Calculate the Wang similarity for an ontology
+/// Calculate the Wang similarity matrix for an ontology
 ///
-/// @description This function calculates the Wang similarity for a given
+/// @description This function calculates the Wang similarity matrix for a given
 /// ontology.
 ///
 /// @param parents String vector. The names of the parents.
@@ -69,7 +69,7 @@ fn rs_onto_semantic_sim(
 ///
 /// @export
 #[extendr]
-fn rs_onto_sim_wang(
+fn rs_onto_sim_wang_mat(
     parents: Vec<String>,
     children: Vec<String>,
     w: &[f64],
@@ -92,6 +92,79 @@ fn rs_onto_sim_wang(
     Ok(list!(
         sim_mat = faer_to_r_matrix(sim_mat.as_ref()),
         names = names
+    ))
+}
+
+/// Calculate the Wang similarity for specific terms
+///
+/// @description This function calculates the Wang similarities between all
+/// permutations of a given set of terms.
+///
+/// @param terms String vector. The terms you wish to calculate the similarities
+/// for.
+/// @param parents String vector. The names of the parents.
+/// @param children String vector. The names of the childs. The length of
+/// `parents` needs to be equal to `children`.
+/// @param w Numerics. The weights between the parents and children. Need
+/// to be values between 0 and 1.
+/// @param flat_matrix Boolean. Shall only the upper triangle be returned.
+///
+/// @return A list with:
+/// \itemize{
+///   \item term1 - name of the first term.
+///   \item term2 - name of the second term.
+///   \item sims - similarity between the two terms.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_onto_sim_wang(
+    terms: Vec<String>,
+    parents: Vec<String>,
+    children: Vec<String>,
+    w: &[f64],
+) -> extendr_api::Result<List> {
+    let fast_onto = WangSimOntology::new(&parents, &children, w).unwrap();
+
+    let terms_split: Vec<(String, &[String])> = terms
+        .iter()
+        .enumerate()
+        .map(|(i, first)| (first.clone(), &terms[i + 1..]))
+        .take_while(|(_, rest)| !rest.is_empty())
+        .collect();
+
+    let res: Vec<Vec<OntoSimRes<'_>>> = terms_split
+        .iter()
+        .map(|(origin, targets)| {
+            let mut sub_res: Vec<OntoSimRes<'_>> = Vec::with_capacity(targets.len());
+            for term in targets.iter() {
+                let sim = fast_onto.wang_sim(origin, term).unwrap_or(f64::NAN);
+                sub_res.push(OntoSimRes {
+                    t1: origin,
+                    t2: term,
+                    sim,
+                });
+            }
+            sub_res
+        })
+        .collect();
+
+    let res = flatten_vector(res);
+
+    let mut origin_terms: Vec<String> = Vec::with_capacity(res.len());
+    let mut target_terms: Vec<String> = Vec::with_capacity(res.len());
+    let mut sims: Vec<f64> = Vec::with_capacity(res.len());
+
+    for onto_res in res {
+        origin_terms.push(onto_res.t1.to_string());
+        target_terms.push(onto_res.t2.to_string());
+        sims.push(onto_res.sim);
+    }
+
+    Ok(list!(
+        term1 = origin_terms,
+        term2 = target_terms,
+        sims = sims
     ))
 }
 
@@ -134,5 +207,6 @@ extendr_module! {
   mod r_ontology;
   fn rs_onto_semantic_sim;
   fn rs_onto_sim_wang;
+  fn rs_onto_sim_wang_mat;
   fn rs_filter_onto_sim;
 }

@@ -19,6 +19,6 @@ The class with added semantic similarities to the properties.
 }
 \description{
 This function calculates the Wang similarity for the whole
-ontology and adds it to the class. The current implementation just allows for
-a single w for the relationships.
+ontology and adds it to the class in a memory-efficient format for
+subsequent usage.
 }
