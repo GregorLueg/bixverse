@@ -20,7 +20,7 @@ to be values between 0 and 1.}
 \value{
 A list with:
 \itemize{
-\item sim_mat - the Wang similarity matrix.
+\item sim_mat - the Wang similarity matrix (flat or as matrix.)
 \item names - the row and column names for the calculated matrix.
 }
 }

@@ -127,17 +127,17 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
       ))
     }
 
-    similarities <- rs_onto_semantic_sim(
-      terms = terms,
+    similarities <- rs_onto_semantic_sim_mat(
       sim_type = sim_type,
       ancestor_list = ancestor_list,
-      ic_list = information_content_list
+      ic_list = information_content_list,
+      flat_matrix = TRUE
     )
 
     final_sim <- upper_triangular_sym_mat$new(
-      values = similarities,
+      values = similarities$sim_mat,
       shift = 1L,
-      features = terms
+      features = similarities$names
     )
 
     params <- list(

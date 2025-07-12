@@ -950,11 +950,37 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @param ic_list R list with the names being the term and the elements the
 #' information content of this given term. Needs to be a single float!
 #'
-#' @return A vector containing all the desired similarity scores. This is
-#' equivalent of the upper triangle of the similarity matrix.
+#' @return A list with:
+#' \itemize{
+#'   \item term1 - name of the first term.
+#'   \item term2 - name of the second term.
+#'   \item sims - similarity between the two terms.
+#' }
 #'
 #' @export
 rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
+
+#' Calculate the semantic similarity in an ontology
+#'
+#' @description This function calculates the specified semantic similarity and
+#' returns the full vector (only calculating the upper triangle) for the given
+#' similarity.
+#'
+#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
+#' @param ancestor_list R list with names being the term and the elements in the
+#' list the names of the ancestors.
+#' @param ic_list R list with the names being the term and the elements the
+#' information content of this given term. Needs to be a single float!
+#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
+#'   \item names - the row and column names for the calculated matrix.
+#' }
+#'
+#' @export
+rs_onto_semantic_sim_mat <- function(sim_type, ancestor_list, ic_list, flat_matrix) .Call(wrap__rs_onto_semantic_sim_mat, sim_type, ancestor_list, ic_list, flat_matrix)
 
 #' Calculate the Wang similarity for specific terms
 #'
@@ -994,7 +1020,7 @@ rs_onto_sim_wang <- function(terms, parents, children, w) .Call(wrap__rs_onto_si
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item sim_mat - the Wang similarity matrix.
+#'   \item sim_mat - the Wang similarity matrix (flat or as matrix.)
 #'   \item names - the row and column names for the calculated matrix.
 #' }
 #'

@@ -1,29 +1,15 @@
-go_data <- load_go_human_data()
+similarity_type = "resnik"
+ancestor_list = ancestors
+ic_list = information_content
 
-go_genes <- go_data$go_to_genes
-
-go_genes_ls <- split(go_genes$ensembl_id, go_genes$go_id)
-
-go_genes_ls <- purrr::keep(go_genes_ls, \(x) length(x) > 3L)
-
-length(go_genes_ls)
-
-results <- gse_hypergeometric(
-  target_genes = target_genes_1,
-  gene_set_list = go_genes_ls
+onto_similarities <- rs_onto_semantic_sim_mat(
+  sim_type = similarity_type,
+  ancestor_list = ancestor_list,
+  ic_list = ic_list,
+  flat_matrix = FALSE
 )
 
+final_sim_mat <- onto_similarities$sim_mat
+rownames(final_sim_mat) <- colnames(final_sim_mat) <- onto_similarities$names
 
-go_parent_child_dt <- go_data$gene_ontology[
-  relationship %in% c("is_a", "part_of")
-] %>%
-  setnames(
-    old = c("from", "to", "relationship"),
-    new = c("parent", "child", "type")
-  )
-
-results_simplified <- simplify_hypergeom_res(
-  res = results,
-  parent_child_dt = go_parent_child_dt,
-  weights = setNames(c(0.8, 0.6), c("is_a", "part_of"))
-)
+final_sim_mat[1:5, 1:5]

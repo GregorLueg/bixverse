@@ -2,6 +2,55 @@
 
 ## similarity calculations -----------------------------------------------------
 
+#' Calculate the Resnik or Lin semantic similarity matrix
+#'
+#' @description This function calculates the semantic similarities based on
+#' Resnik or Lin similarity for a given ontology. Has also the option to
+#' calculate a combined version of the two. Returns the full matrix of the data.
+#'
+#' @param similarity_type String. One of `c("resnik", "lin", "combined")`. The
+#' Resnik similarity is automatically rescaled between 0 and 1 (dividing the
+#' values by maximum information content observed).
+#' @param ancestor_list List. Names being the term and the elements in the
+#' list the names of the ancestors, see [bixverse::get_ontology_ancestry()].
+#' @param ic_list List. The names being the term and the elements the
+#' information content of this given term. Needs to be a single float! See
+#' [bixverse::calculate_information_content()].
+#'
+#' @return The symmetric similarity matrix for the specified data from the
+#' ontology.
+#'
+#' @export
+#'
+#' @import data.table
+calculate_semantic_sim_mat <- function(
+  similarity_type,
+  ancestor_list,
+  ic_list
+) {
+  # Checks
+  checkmate::assertChoice(similarity_type, c("resnik", "lin", "combined"))
+  checkmate::assertList(ancestor_list, types = "character")
+  checkmate::assertNames(
+    names(ancestor_list),
+    must.include = names(ic_list)
+  )
+  checkmate::assertList(ic_list, types = "double")
+  checkmate::assertNames(names(ic_list), must.include = names(ancestor_list))
+
+  onto_similarities <- rs_onto_semantic_sim_mat(
+    sim_type = similarity_type,
+    ancestor_list = ancestor_list,
+    ic_list = ic_list,
+    flat_matrix = FALSE
+  )
+
+  final_sim_mat <- onto_similarities$sim_mat
+  rownames(final_sim_mat) <- colnames(final_sim_mat) <- onto_similarities$names
+
+  return(final_sim_mat)
+}
+
 #' Calculate the Resnik or Lin semantic similarity
 #'
 #' @description This function calculates the semantic similarities based on
@@ -15,9 +64,10 @@
 #' @param ic_list List. The names being the term and the elements the
 #' information content of this given term. Needs to be a single float! See
 #' [bixverse::calculate_information_content()].
+#' @param add_self Boolean. Shall self-similarities be added. Defaults to
+#' `FALSE`.
 #'
-#' @return The symmetric similarity matrix for the specified terms and semantic
-#' similarity measure you chose.
+#' @return A data.table with the calculated similarities.
 #'
 #' @export
 #'
@@ -26,7 +76,8 @@ calculate_semantic_sim <- function(
   terms,
   similarity_type,
   ancestor_list,
-  ic_list
+  ic_list,
+  add_self = FALSE
 ) {
   # Checks
   checkmate::qassert(terms, "S+")
@@ -35,23 +86,29 @@ calculate_semantic_sim <- function(
   checkmate::assertNames(names(ancestor_list), must.include = terms)
   checkmate::assertList(ic_list, types = "double")
   checkmate::assertNames(names(ic_list), must.include = terms)
+  checkmate::qassert(add_self, "B1")
 
   onto_similarities <- rs_onto_semantic_sim(
     terms = terms,
     sim_type = similarity_type,
     ancestor_list = ancestor_list,
     ic_list = ic_list
-  )
+  ) %>%
+    data.table::setDT()
 
-  # Using this one to deal with this
-  matrix <- rs_upper_triangle_to_dense(
-    cor_vector = onto_similarities,
-    shift = 1L,
-    n = length(terms)
-  )
-  colnames(matrix) <- rownames(matrix) <- terms
+  if (add_self) {
+    self_dt <- data.table::data.table(
+      term1 = terms,
+      term2 = terms,
+      sims = 1
+    )
 
-  return(matrix)
+    onto_similarities <- data.table::rbindlist(
+      list(onto_similarities, self_dt)
+    )
+  }
+
+  return(onto_similarities)
 }
 
 

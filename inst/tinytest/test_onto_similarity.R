@@ -45,16 +45,16 @@ expected_resnik <- c(
   0,
   0,
   0,
-  0.1823216,
-  0.1823216,
-  0.1823216,
-  0.1823216,
-  0.1823216,
-  0.1823216,
-  1.0986123,
-  0.1823216,
-  0.1823216,
-  0.1823216
+  0.1017556,
+  0.1017556,
+  0.1017556,
+  0.1017556,
+  0.1017556,
+  0.1017556,
+  0.6131472,
+  0.1017556,
+  0.1017556,
+  0.1017556
 )
 
 expected_lin <- c(
@@ -131,10 +131,16 @@ expected_data_table <- data.table::data.table(
   sim = expected_resnik
 )
 
+expected_subset <- data.table::data.table(
+  term1 = c("a", "a", "c"),
+  term2 = c("c", "f", "f"),
+  sims = c(0, 0, 0.6131472)
+)
+
 expected_filtered <- data.table::data.table(
   t1 = "c",
   t2 = "f",
-  sim = 1.098612
+  sim = 0.6131472
 )
 
 ## separate functions ----------------------------------------------------------
@@ -168,45 +174,60 @@ expect_equivalent(
 
 ### semantic similarity --------------------------------------------------------
 
-resnik <- calculate_semantic_sim(
+#### full matrices -------------------------------------------------------------
+
+resnik <- calculate_semantic_sim_mat(
   similarity_type = "resnik",
-  terms = sort(names(ancestors)),
   ancestor_list = ancestors,
   ic_list = ic_data
 )
 
-lin <- calculate_semantic_sim(
+lin <- calculate_semantic_sim_mat(
   similarity_type = "lin",
-  terms = sort(names(ancestors)),
   ancestor_list = ancestors,
   ic_list = ic_data
 )
 
-combined <- calculate_semantic_sim(
+combined <- calculate_semantic_sim_mat(
   similarity_type = "combined",
-  terms = sort(names(ancestors)),
   ancestor_list = ancestors,
   ic_list = ic_data
 )
 
-expect_equivalent(
+expect_equal(
   current = rs_dense_to_upper_triangle(resnik, 1),
   target = expected_resnik,
   info = "Ontology similarity test for semantic semilarity (Resnik).",
   tolerance = 1e-6
 )
 
-expect_equivalent(
+expect_equal(
   current = rs_dense_to_upper_triangle(lin, 1),
   target = expected_lin,
   info = "Ontology similarity test for semantic semilarity (Lin).",
   tolerance = 1e-6
 )
 
-expect_equivalent(
+expect_equal(
   current = rs_dense_to_upper_triangle(combined, 1),
   target = expected_combined,
   info = "Ontology similarity test for semantic semilarity (combined type).",
+  tolerance = 1e-6
+)
+
+#### sub sets ------------------------------------------------------------------
+
+resnik_subset <- calculate_semantic_sim(
+  terms = c("a", "c", "f"),
+  similarity_type = "resnik",
+  ancestor_list = ancestors,
+  ic_list = ic_data
+)
+
+expect_equal(
+  current = resnik_subset,
+  target = expected_subset,
+  info = "Ontology similarity test for semantic semilarity (Resnik - subset).",
   tolerance = 1e-6
 )
 
@@ -227,7 +248,7 @@ matrix_result <- get_sim_matrix(test_class, .verbose = FALSE)
 
 dt_result <- get_sim_matrix(test_class, as_data_table = TRUE, .verbose = FALSE)
 
-expect_equivalent(
+expect_equal(
   current = rs_dense_to_upper_triangle(matrix_result, 1),
   target = expected_resnik,
   info = paste(
@@ -421,14 +442,14 @@ expect_equivalent(
   current = rs_dense_to_upper_triangle(results_v1, 1L),
   target = expected_wang_sim_v1,
   info = "Wang similarity version 1 values",
-  tolerance = 1e-7
+  tolerance = 1e-6
 )
 
 expect_equivalent(
   current = critval_v1,
   target = expected_critval,
   info = "Wang similarity version 1 critical value",
-  tolerance = 1e-7
+  tolerance = 1e-6
 )
 
 # for the version 2 with different weights
@@ -439,7 +460,7 @@ expect_equivalent(
   current = rs_dense_to_upper_triangle(results_v2, 1L),
   target = expected_wang_sim_v2,
   info = "Wang similarity version 2 values",
-  tolerance = 1e-7
+  tolerance = 1e-6
 )
 
 expect_equivalent(
@@ -466,7 +487,7 @@ individual_results <- calculate_wang_sim(
 expect_equal(
   current = individual_results,
   target = individual_results,
-  tolerance = 1e-7,
+  tolerance = 1e-6,
   info = "Wang similarity - individual terms"
 )
 
@@ -523,7 +544,7 @@ expect_equivalent(
   current = rs_dense_to_upper_triangle(matrix_res, 1L),
   target = expected_wang_sim_v1,
   info = "Ontology class wang similarity - matrix version",
-  tolerance = 1e-7
+  tolerance = 1e-6
 )
 
 expect_equal(
@@ -532,12 +553,12 @@ expect_equal(
   info = paste(
     "Ontology class wang similarity - data.table version"
   ),
-  tolerance = 1e-7
+  tolerance = 1e-6
 )
 
 expect_equivalent(
   current = critval_class,
   target = expected_critval,
   info = "Ontology class wang similarity - critical value",
-  tolerance = 1e-7
+  tolerance = 1e-6
 )

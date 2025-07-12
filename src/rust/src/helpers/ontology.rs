@@ -6,6 +6,7 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::assert_same_len_vec3;
@@ -45,7 +46,7 @@ fn get_mica(
     t1: &str,
     t2: &str,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> f64 {
     let default_hash: FxHashSet<String> =
         FxHashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
@@ -63,11 +64,16 @@ fn get_mica(
 fn calculate_resnik<'a>(
     t1: &'a str,
     t2: &'a str,
+    max_ic: &f64,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let sim = get_mica(t1, t2, ancestor_map, info_content_map);
-    OntoSimRes { t1, t2, sim }
+    OntoSimRes {
+        t1,
+        t2,
+        sim: sim / *max_ic,
+    }
 }
 
 /// Calculate the Lin semantic similarity
@@ -75,7 +81,7 @@ fn calculate_lin<'a>(
     t1: &'a str,
     t2: &'a str,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let mica = get_mica(t1, t2, ancestor_map, info_content_map);
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
@@ -90,7 +96,7 @@ fn calculate_combined_sim<'a>(
     t2: &'a str,
     max_ic: &f64,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let mica = get_mica(t1, t2, ancestor_map, info_content_map);
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
@@ -109,13 +115,13 @@ pub fn get_single_onto_sim<'a>(
     sim_type: &str,
     max_ic: &f64,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> Result<OntoSimRes<'a>> {
     let onto_sim_type = parse_onto_sim_type(sim_type)
         .ok_or_else(|| format!("Invalid Ontology Similarity Type: {}", sim_type))?;
 
     let res = match onto_sim_type {
-        OntoSimType::Resnik => calculate_resnik(t1, t2, ancestor_map, info_content_map),
+        OntoSimType::Resnik => calculate_resnik(t1, t2, max_ic, ancestor_map, info_content_map),
         OntoSimType::Lin => calculate_lin(t1, t2, ancestor_map, info_content_map),
         OntoSimType::Combined => {
             calculate_combined_sim(t1, t2, max_ic, ancestor_map, info_content_map)
@@ -130,7 +136,7 @@ pub fn calculate_onto_sim<'a>(
     terms_split: &'a Vec<(String, &[String])>,
     sim_type: &str,
     ancestors_map: FxHashMap<String, FxHashSet<String>>,
-    ic_map: FxHashMap<String, f64>,
+    ic_map: BTreeMap<String, f64>,
 ) -> Vec<OntoSimRes<'a>> {
     let max_ic = ic_map
         .values()
@@ -155,8 +161,8 @@ pub fn calculate_onto_sim<'a>(
 }
 
 /// Transform an R list that hopefully contains the IC into a HashMap of floats
-pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
-    let mut hashmap = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
+pub fn ic_list_to_ic_hashmap(r_list: List) -> BTreeMap<String, f64> {
+    let mut hashmap = BTreeMap::new();
     for (name, x) in r_list {
         let name = name.to_string();
         let ic_val = x.as_real().unwrap_or(0.0);
