@@ -7,7 +7,9 @@
 calculate_semantic_sim_mat(similarity_type, ancestor_list, ic_list)
 }
 \arguments{
-\item{similarity_type}{String. One of \code{c("resnik", "lin", "combined")}.}
+\item{similarity_type}{String. One of \code{c("resnik", "lin", "combined")}. The
+Resnik similarity is automatically rescaled between 0 and 1 (dividing the
+values by maximum information content observed).}
 
 \item{ancestor_list}{List. Names being the term and the elements in the
 list the names of the ancestors, see \code{\link[=get_ontology_ancestry]{get_ontology_ancestry()}}.}
@@ -18,9 +20,7 @@ information content of this given term. Needs to be a single float! See
 }
 \value{
 The symmetric similarity matrix for the specified data from the
-ontology. In the case of the \code{"resnik"}, the matrix is rescaled to between 0
-and 1 with dividing the similarities by the maximum information content
-observed in the ontology.
+ontology.
 }
 \description{
 This function calculates the semantic similarities based on

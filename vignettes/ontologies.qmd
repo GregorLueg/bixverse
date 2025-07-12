@@ -57,7 +57,8 @@ information_content <- calculate_information_content(descendants)
 
 Armed with this, we can now calculate different semantic similarity matrices,
 based on [Resnik](https://arxiv.org/abs/1105.5444) similarity, the 
-Lin similarity and a combination of the two.
+[Lin](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=32163f8f5114beea5576c93b2ce21ec1e48988ce) 
+similarity and a combination of the two.
 
 ```{r}
 #| label: resnik similarity calculation
@@ -104,7 +105,74 @@ combined_similarity <- calculate_semantic_sim(
   ic_list = information_content
 )
 
-combined_similarity[1:5, 1:5]
+head(combined_similarity)
+```
+
+#### Speed comparisons 
+
+Comparing against the popular ontologySimilarity package is shown below.
+
+```{r}
+#| label: ontologySimilarity speed
+#| eval: !expr requireNamespace("ontologySimilarity", quietly = TRUE)
+
+library(ontologySimilarity)
+
+data("hpo")
+
+# They include obsolete terms in the ancestry and in the hpo ids.
+# For comparison purposes, these will be removed
+# Additionally, they have additional weird terms in there, that should not be
+# like "inheres_in", "inheres_in_part_of" and "part_of"
+
+terms_to_remove <- c("inheres_in", "inheres_in_part_of", "part_of")
+
+# The ids are used by their functions
+hpo$id <- hpo$id[!hpo$obsolete]
+hpo$id <- hpo$id[!names(hpo$id) %in% terms_to_remove]
+
+# And the ancestry is being used by their functions
+hpo$ancestors <- hpo$ancestors[!hpo$obsolete]
+hpo$ancestors <- hpo$ancestors[!names(hpo$ancestors) %in% terms_to_remove]
+
+ontoSimiliarity_information_content <- descendants_IC(hpo)
+
+tictoc::tic()
+ontoSimiliarity_mat <- get_term_sim_mat(
+  ontology = hpo, 
+  information_content = ontoSimiliarity_information_content
+)
+tictoc::toc()
+
+# For some reason the self similarity for HP:0000001 is 0, instead of 1.
+diag(ontoSimiliarity_mat) <- 1
+
+ontoSimiliarity_mat[1:5, 1:5]
+```
+
+And this is the `bixverse` version.
+
+```{r}
+#| label: bixverse speed
+
+tictoc::tic()
+lin_similarity <- calculate_semantic_sim_mat(
+  similarity_type = "lin",
+  ancestor_list = ancestors,
+  ic_list = information_content
+)
+tictoc::toc()
+
+lin_similarity[1:5, 1:5]
+```
+
+You should observe decent speed improvements thanks to Rust and algorithm 
+optimisations. And the data is the same:
+
+```{r}
+#| label: data similarity
+
+all(ontoSimiliarity_mat == lin_similarity)
 ```
 
 ### Wang similarities
@@ -127,7 +195,11 @@ wang_similarity <- calculate_wang_sim_mat(
   parent_child_dt = hpo_data, 
   weight = wang_weights
 )
+
+wang_similarity[1:5, 1:5]
 ```
+
+Also here we provide functionality to only calculate similarities for subsets.
 
 ```{r}
 #| label: calculate full wang for subset

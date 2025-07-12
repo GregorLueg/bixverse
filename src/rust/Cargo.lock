@@ -55,6 +55,7 @@ dependencies = [
  "extendr-api",
  "faer",
  "num-complex",
+ "once_cell",
  "petgraph",
  "rand 0.9.0",
  "rand_distr 0.5.1",

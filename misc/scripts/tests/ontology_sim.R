@@ -1,67 +1,60 @@
-test_onto <- data.table::data.table(
-  parent = c("a", "b", "b", "b", "c", "g"),
-  child = c("b", "c", "d", "e", "f", "h")
+hpo$ancestors[['HP:0000001']]
+
+ontology <- hpo
+
+
+tab <- table(factor(
+  unlist(use.names = FALSE, ontology$ancestors),
+  levels = ontology$id
+))
+
+ic <- setNames(nm = ontology$id, -log(as.integer(tab) / length(ontology$id)))
+
+represented <- purrr::map_lgl(names(ontology$ancestors), \(x) {
+  x %in% names(information_content)
+})
+
+names(ontology$ancestors)[!represented]
+
+hpo$parents['HP:0000057']
+
+hpo$ancestors['HP:0000057']
+
+hpo$obsolete['HP:0000057']
+
+which[names(ontology$ancestors) %in% names(information_content)]
+
+
+information_content['HP:0000001']
+
+ontoSimiliarity_information_content['HP:0000001']
+
+ancestor_list <- ancestors
+
+ontology$ancestors[['HP:0000001']]
+
+ancestors[['HP:0000001']]
+
+ancestor_list <- descendants
+
+tab_2 <- table(factor(
+  unlist(use.names = FALSE, ancestors),
+  levels = names(ancestors)
+))
+
+tab_3 <- purrr::map_dbl(ancestor_list, length)
+
+information_content_v3 <- stats::setNames(
+  -log(as.integer(tab) / length(ancestor_list)),
+  nm = names(ancestor_list)
 )
 
-library(ontologyIndex)
-library(magrittr)
-library(data.table)
+tab_2['HP:0000001']
 
-rextendr::document()
+tab_3['HP:0000001']
 
-devtools::load_all()
+tab['HP:0000001']
 
-data("hpo")
+ic['HP:0000002']
 
-hpo_data <- as.data.table(stack(hpo$children)) %>%
-  setnames(old = c("values", "ind"), new = c("child", "parent"))
-
-test_class <- ontology(hpo_data, .verbose = FALSE)
-
-test_class <- calculate_wang_sim_onto(test_class)
-
-test_class <- filter_similarities(object = test_class, alpha = 0.001)
-
-get_results(test_class)
-
-test_class@final_results
-
-get_params(test_class)
-
-devtools::load_all()
-
-critval <- calculate_critical_value(test_class, alpha = 0.001)
-
-devtools::load_all()
-
-data <- test_class@sim_mat$get_cor_vector()
-
-filtered_data <- rs_filter_onto_sim(
-  sim_vals = data$cor_data,
-  names = data$features,
-  threshold = critval
-)
-
-length(filtered_data$t1)
-
-rextendr::document()
-
-features <- test_class@sim_mat
-
-# helper for gene ontology generation ----
-
-go_data <- load_go_human_data()
-
-go_info <- go_data$go_info
-go_genes <- go_data$go_to_genes
-go_relationships <- go_data$gene_ontology %>%
-  setnames(
-    old = c("from", "to"),
-    new = c("parent", "child")
-  )
-
-go_data_final <- process_go_data(
-  go_info = go_info,
-  go_genes = go_genes,
-  go_relationships = go_relationships
-)
+tab['HP:0000001']

@@ -4,7 +4,13 @@
 \alias{calculate_semantic_sim}
 \title{Calculate the Resnik or Lin semantic similarity}
 \usage{
-calculate_semantic_sim(terms, similarity_type, ancestor_list, ic_list)
+calculate_semantic_sim(
+  terms,
+  similarity_type,
+  ancestor_list,
+  ic_list,
+  add_self = FALSE
+)
 }
 \arguments{
 \item{terms}{Vector of strings. The terms in the ontology you wish to screen.}
@@ -17,6 +23,9 @@ list the names of the ancestors, see \code{\link[=get_ontology_ancestry]{get_ont
 \item{ic_list}{List. The names being the term and the elements the
 information content of this given term. Needs to be a single float! See
 \code{\link[=calculate_information_content]{calculate_information_content()}}.}
+
+\item{add_self}{Boolean. Shall self-similarities be added. Defaults to
+\code{FALSE}.}
 }
 \value{
 A data.table with the calculated similarities.

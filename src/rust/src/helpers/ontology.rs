@@ -2,6 +2,7 @@ use crate::utils::general::flatten_vector;
 
 use extendr_api::prelude::*;
 use faer::Mat;
+use once_cell::sync::Lazy;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use rayon::prelude::*;
@@ -10,6 +11,12 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::assert_same_len_vec3;
+
+/////////////
+// Globals //
+/////////////
+
+static EMPTY_ANCESTORS: Lazy<FxHashSet<String>> = Lazy::new(FxHashSet::default);
 
 ///////////////////////////
 // Semantic similarities //
@@ -48,16 +55,25 @@ fn get_mica(
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
     info_content_map: &BTreeMap<String, f64>,
 ) -> f64 {
-    let default_hash: FxHashSet<String> =
-        FxHashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
-    let ancestor_1 = ancestor_map.get(t1).unwrap_or(&default_hash);
-    let ancestor_2 = ancestor_map.get(t2).unwrap_or(&default_hash);
-    let mica = ancestor_1
-        .intersection(ancestor_2)
-        .map(|ancestor| info_content_map.get(ancestor).unwrap())
-        .copied()
-        .fold(0.0, f64::max);
-    mica
+    let ancestor_1 = ancestor_map.get(t1).unwrap_or(&EMPTY_ANCESTORS);
+    let ancestor_2 = ancestor_map.get(t2).unwrap_or(&EMPTY_ANCESTORS);
+
+    // Iterate through smaller set for efficiency
+    let (smaller, larger) = if ancestor_1.len() <= ancestor_2.len() {
+        (ancestor_1, ancestor_2)
+    } else {
+        (ancestor_2, ancestor_1)
+    };
+
+    let mut max_ic: f64 = 0.0;
+    for ancestor in smaller {
+        if larger.contains(ancestor) {
+            if let Some(&ic) = info_content_map.get(ancestor) {
+                max_ic = max_ic.max(ic);
+            }
+        }
+    }
+    max_ic
 }
 
 /// Calculate the Resnik semantic similarity
