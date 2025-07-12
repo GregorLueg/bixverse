@@ -31,6 +31,8 @@ In this case, we will be using the HPO from the the `ontologyIndex` package.
 #| label: generating synthetic data
 #| eval: !expr requireNamespace("ontologyIndex", quietly = TRUE)
 
+library("ontologyIndex")
+
 data("hpo")
 
 hpo_data <- as.data.table(stack(hpo$children)) %>%

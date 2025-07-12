@@ -4,7 +4,7 @@
 \alias{calculate_wang_sim}
 \title{Calculate the Wang similarities between terms}
 \usage{
-calculate_wang_sim(terms, parent_child_dt, weights)
+calculate_wang_sim(terms, parent_child_dt, weights, add_self = FALSE)
 }
 \arguments{
 \item{terms}{String vector. The terms for which to calculate the Wang
@@ -16,6 +16,9 @@ the weights for the relationships.}
 
 \item{weights}{Named numeric. The relationship of type to weight for this
 specific edge. For example \code{c("part_of" = 0.8, "is_a" = 0.6)}.}
+
+\item{add_self}{Boolean. Shall self-similarities be added. Defaults to
+\code{FALSE}.}
 }
 \value{
 A data.table with the calculated similarities.

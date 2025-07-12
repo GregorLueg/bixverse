@@ -165,12 +165,14 @@ process_go_data <- function(go_info, go_genes, go_relationships) {
 #' it into the format for [bixverse::gene_ontology_data()]. Wraps
 #' [bixverse::load_go_human_data()] and [bixverse::process_go_data()] into one.
 #'
+#' @param filter_relationships Boolean. Shall the ontology be filtered to
+#' only `"is_a"` and `"part_of"` relationships. Defaults to TRUE.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A data.table
 #'
 #' @export
-get_go_data_human <- function(.verbose = TRUE) {
+get_go_data_human <- function(filter_relationships = TRUE, .verbose = TRUE) {
   # checks
   checkmate::qassert(.verbose, "B1")
 
@@ -187,6 +189,10 @@ get_go_data_human <- function(.verbose = TRUE) {
       old = c("from", "to"),
       new = c("parent", "child")
     )
+
+  if (filter_relationships) {
+    go_relationships <- go_relationships[relationship %in% c("is_a", "part_of")]
+  }
 
   if (.verbose) {
     message("Processing data for the gene_ontology class.")

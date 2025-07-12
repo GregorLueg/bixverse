@@ -192,6 +192,103 @@ gse_hypergeometric_list <- function(
   gse_results
 }
 
+## simplify --------------------------------------------------------------------
+
+#' Simplify gene set results via ontologies
+#'
+#' @description
+#' This function provides an interface to simplify overenrichment results
+#' based on ontological information of the pathway origin (typical use case
+#' is to simplify gene ontology results). To do so, the function will
+#' calculate the Wang similarity and keep within a set of highly similar terms
+#' the one with the lowest fdr. Should there be terms with the same fdr, the
+#' function will keep the most specific term within the ontology.
+#'
+#' @param res data.table. The enrichment results. Needs to have the columns
+#' `c("gene_set_name", "fdr")`.
+#' @param parent_child_dt data.table. The data.table with column parent and
+#' child. You also need to have a type column for the Wang similarity to provide
+#' the weights for the relationships.
+#' @param weights Named numeric. The relationship of type to weight for this
+#' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
+#' @param min_sim Float between 0 and 1. The minimum similarity that the terms
+#' need to have.
+#'
+#' @return data.table with enrichment results.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+#' @import data.table
+simplify_hypergeom_res <- function(
+  res,
+  parent_child_dt,
+  weights,
+  min_sim = 0.7
+) {
+  # checks
+  checkmate::assertDataTable(res)
+  checkmate::assertNames(names(res), must.include = c("gene_set_name", "fdr"))
+  checkmate::assertDataTable(parent_child_dt)
+  checkmate::assert(all(
+    c("parent", "child", "type") %in% colnames(parent_child_dt)
+  ))
+  checkmate::assertNumeric(weights, min.len = 1L, names = "named")
+  checkmate::assertTRUE(all(unique(parent_child_dt$type) %in% names(weights)))
+  all_terms <- unique(c(parent_child_dt$parent, parent_child_dt$child))
+  checkmate::assertTRUE(all(res$gene_set_name %in% all_terms))
+  checkmate::qassert(min_sim, "N1[0, 1]")
+
+  # function body
+  ancestry <- get_ontology_ancestry(go_parent_child_dt)
+
+  descendants <- ancestry$descandants
+
+  wang_sims <- calculate_wang_sim(
+    terms = res$gene_set_name,
+    parent_child_dt = go_parent_child_dt,
+    weights = weights,
+    add_self = TRUE
+  )
+
+  res_combined <- merge(
+    res,
+    wang_sims,
+    by.x = "gene_set_name",
+    by.y = "term1"
+  )
+
+  to_remove <- c()
+
+  go_ids <- unique(res_combined$gene_set_name)
+
+  for (i in seq_along(go_ids)) {
+    id <- go_ids[i]
+    subset <- res_combined[term2 == id & sims >= min_sim]
+
+    if (nrow(subset) == 1) {
+      next
+    }
+
+    to_select <- which(subset$fdr == min(subset$fdr))
+    if (length(to_select) == 1) {
+      # case where we can just summarise by FDR
+      to_remove <- append(to_remove, subset$gene_set_name[-to_select])
+    } else {
+      # in this case, we will keep the most specific term
+      no_descendants <- purrr::map_dbl(
+        descendants[subset$gene_set_name],
+        length
+      )
+      to_select_desc <- which(no_descendants == min(no_descendants))
+      to_remove <- append(to_remove, subset$gene_set_name[-to_select])
+    }
+  }
+
+  res[!gene_set_name %in% to_remove]
+}
+
 ## gsea ------------------------------------------------------------------------
 
 ### main functions -------------------------------------------------------------

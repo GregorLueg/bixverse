@@ -114,13 +114,20 @@ calculate_wang_sim_mat <- function(parent_child_dt, weights) {
 #' the weights for the relationships.
 #' @param weights Named numeric. The relationship of type to weight for this
 #' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
+#' @param add_self Boolean. Shall self-similarities be added. Defaults to
+#' `FALSE`.
 #'
 #' @return A data.table with the calculated similarities.
 #'
 #' @export
 #'
 #' @import data.table
-calculate_wang_sim <- function(terms, parent_child_dt, weights) {
+calculate_wang_sim <- function(
+  terms,
+  parent_child_dt,
+  weights,
+  add_self = FALSE
+) {
   # Scope
   weight <- type <- NULL
 
@@ -146,6 +153,18 @@ calculate_wang_sim <- function(terms, parent_child_dt, weights) {
     w = parent_child_dt$weight
   ) %>%
     data.table::setDT()
+
+  if (add_self) {
+    self_dt <- data.table::data.table(
+      term1 = terms,
+      term2 = terms,
+      sims = 1
+    )
+
+    sim_wang <- data.table::rbindlist(
+      list(sim_wang, self_dt)
+    )
+  }
 
   return(sim_wang)
 }

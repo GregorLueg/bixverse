@@ -4,9 +4,12 @@
 \alias{get_go_data_human}
 \title{Wrapper function to load and process the gene ontology data.}
 \usage{
-get_go_data_human(.verbose = TRUE)
+get_go_data_human(filter_relationships = TRUE, .verbose = TRUE)
 }
 \arguments{
+\item{filter_relationships}{Boolean. Shall the ontology be filtered to
+only \code{"is_a"} and \code{"part_of"} relationships. Defaults to TRUE.}
+
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
