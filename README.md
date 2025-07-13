@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.5-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.2.0-orange) 
 
 </br>
 
@@ -12,19 +12,31 @@
 
 This package contains various bioinformatics and computational biology workflows
 that are being routinely used, ranging from gene set enrichment analyses, to 
-network-based approaches for module detection in bulk RNAseq. The package provides
-useful, bare bone versions of most bioinformatics functionalities and leverages Rust
-to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
+network-based approaches for module detection in bulk RNAseq. The package 
+provides useful, bare bone versions of most bioinformatics functionalities and
+leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.1.5**. With this update, we have
-added:
+We have now officially released version **0.0.2.0**. The package has now reached
+high degrees of maturity with more and more tests in place, vignettes to explain
+various workflows and further bug and documentation fixes. With this update the
+following has been updated/changed:
 
-- Improved ontology class and more methods.
+- Improved ontology class and more methods, and the addition of the Wang
+similarity measure.
 - Permutation-based tests for the genetic diffusion approaches that allow selection
 of significanlty enriched areas of the network (topology-aware).
-- Updates to the ICA detection approaches and correlation-based RBH.
+- Updates to the ICA detection approaches and correlation-based reciprocal best
+hits.
+- Further improvements in speed in various Rust functions (less unnecessary
+copying and changes to the used HashMaps and HashSets).
+- Addition of the simplify() type method to reduce Gene Ontology results 
+to the most relevant ones.
+- Vignettes explaining different methods.
+
+**Warnings**: Some of the previous interfaces to the functions were changed
+in this release and might break compared to prior releases!
 
 ## *Installation*
 
@@ -77,4 +89,4 @@ properly and make it public.
 3. Rust makes everything in R so much faster, that we just wished to share the 
 joy.
 
-*Last update to the read-me: 08.07.2025*
+*Last update to the read-me: 13.07.2025*

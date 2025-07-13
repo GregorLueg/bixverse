@@ -13,8 +13,8 @@ core function/methods that are broadly used.
 
 ## Usability of the package
 
-- Various vignettes for workflows and (more) detailed documentation in terms of 
-method implementation.
+- ~~Various vignettes for workflows and (more) detailed documentation in terms of 
+method implementation.~~
 
 ## General methods
 

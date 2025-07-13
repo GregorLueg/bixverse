@@ -7,7 +7,7 @@
 #' elimination methods.
 #'
 #' @param go_data_dt A data.table that contains the gene ontology information.
-#' This can be extract with for example [bixverse::get_go_human_data()].
+#' This can be extract with for example [bixverse::get_go_data_human()].
 #' @param min_genes data.frame. Meta-data information in form of a data.frame.
 #'
 #' @section Properties:

@@ -15,10 +15,11 @@ break old code. Also, testing suite put in place for the ICA class.
 - Added reciprocal best hit method based on correlations. You will need to
 provide now an additional parameter to the class specifying if you want to use
 set similarity or correlation-based similarity.
+- Vignettes for various methods written and added.
 
 #### Bug fixes, documentation updates
 
-- ...
+- Fixed bugs for the graph-based correlation methods.
 
 #### Breaking changes
 

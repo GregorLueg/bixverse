@@ -1,0 +1,379 @@
+---
+title: "Gene Set Enrichment Methods"
+vignette: >
+  %\VignetteIndexEntry{gse_methods}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+## Gene Set Enrichment Methods in bixverse
+
+This vignette shows you how to use the different implement gene set enrichment
+methods in `bixverse`.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(data.table)
+library(magrittr)
+```
+
+### Hypergeometric tests
+
+`bixverse` has implementations of the standard hypergeometric tests to identify
+gene set enrichment for a given set of target genes. In this example, we will
+be loading the Hallmark gene sets from `msigdbr`. Let's first load these in and
+create a list of gene sets (the expected format of most functions in `bixverse`
+for these type of analysis.)
+
+```{r}
+#| label: loading data from msigdbr
+#| eval: !expr requireNamespace("msigdbr", quietly = TRUE)
+h_gene_sets <- msigdbr::msigdbr(species = "human", collection = "H")
+
+h_gene_sets_ls <- split(h_gene_sets$ensembl_gene, h_gene_sets$gs_name)
+
+set.seed(123L)
+
+target_genes_1 <- c(
+  sample(h_gene_sets_ls[["HALLMARK_MYC_TARGETS_V1"]], 25),
+  sample(h_gene_sets_ls[["HALLMARK_MYC_TARGETS_V2"]], 25)
+)
+```
+
+To run the hypergeometric test against one target set, you can just use 
+`gse_hypergeometric`. The function has parameters to define a minimum FDR 
+threshold and minimum overlap science. Additionally, the gene universe will be 
+set (if not provided) to all of the genes represented in the `gene_set_list`. 
+You can provide your own gene universe if you wish to.
+
+```{r}
+#| label: run hypergeom test single
+results <- gse_hypergeometric(
+  target_genes = target_genes_1,
+  gene_set_list = h_gene_sets_ls
+)
+
+head(results)
+```
+
+To run the hypergeometric test over a list of target gene sets, `bixverse`
+provides `gse_hypergeometric_list` that leverages 
+[rayon](https://github.com/rayon-rs/rayon) in Rust for multi-threading. This 
+makes this function very fast even on large gene set libraries with lots of 
+target gene sets.
+
+```{r}
+#| label: run hypergeom test multiple
+target_genes_2 <- c(
+  sample(h_gene_sets_ls[["HALLMARK_TNFA_SIGNALING_VIA_NFKB"]], 20),
+  sample(h_gene_sets_ls[["HALLMARK_IL6_JAK_STAT3_SIGNALING"]], 25)
+)
+
+target_list <- list(
+  set_1 = target_genes_1,
+  set_2 = target_genes_2
+)
+
+results_multiple <- gse_hypergeometric_list(
+  target_genes_list = target_list,
+  gene_set_list = h_gene_sets_ls
+)
+
+head(results_multiple)
+```
+
+To exemplify the speed in Rust, in this case we run for 250 target gene sets
+over-enrichment tests against 5000 gene sets sampled from 20k genes. This totals
+1.25m hypergeometric tests. Pending on your system, you can expect this to be
+done in a few seconds.
+
+```{r}
+#| label: rust speed hypergeom multiple
+#| eval: !expr requireNamespace("tictoc", quietly = TRUE)
+
+seed = 10101L
+
+set.seed(seed)
+
+# Define the parameters
+universe <- sprintf("gene_%i", 1:20000)
+gene_sets_no <- 5000
+target_gene_sets_no <- 250
+
+# Generate random gene sets
+gene_sets <- purrr::map(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    size <- sample(20:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
+
+names(gene_sets) <- purrr::map_chr(
+  1:gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(LETTERS, 3), collapse = "")
+  }
+)
+
+# Generate random target sets
+target_gene_sets <- purrr::map(
+  1:target_gene_sets_no,
+  ~ {
+    set.seed(.x * seed)
+    size <- sample(50:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
+
+names(target_gene_sets) <- purrr::map_chr(
+  1:target_gene_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(letters, 3), collapse = "")
+  }
+)
+
+# Run the Rust function
+tictoc::tic()
+rs_results_example <- gse_hypergeometric_list(
+  target_genes_list = target_gene_sets,
+  gene_set_list = gene_sets
+)
+tictoc::toc()
+```
+
+### Gene ontology aware enrichment tests (for sets)
+
+Additionally, `bixverse` provides Rust-accelerated functions to run an ontology-
+aware enrichment test for the gene ontology in particular - the concept is based
+on [Adrian et al.](https://academic.oup.com/bioinformatics/article/22/13/1600/193669).
+Briefly, the function will start in the leafs of the ontology (lowest level)
+and calculate the enrichment statistic for that level. If an enrichment test
+reaches a threshold, the genes from that term are removed from all of its 
+ancestor terms, ensuring that the more specific terms have stronger test
+statistics. To make it easy for the users, we provide the human gene ontology as
+data in the package. This is a data.table with 5 columns:
+
+- go_id: the gene ontology term identifier.
+- go_name: the name gene ontology term name.
+- ensembl_id: the ensembl identifiers belonging to this term.
+- ancestors: in the ontology DAG all identified ancestors of this specific
+term
+- depth: the depth of that term (identified via BFS) for this term. Higher
+values indicate further distance from the top terms.
+
+These columns are expected by the `gene_ontology_data` class that stores the
+data and exposes it in Rust.
+
+```{r}
+#| label: load human go data
+
+# Load in the package provided data and process it into the right format
+go_data_dt <- get_go_data_human()
+
+# Generate the S7 object for subsequent usage
+go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+```
+
+Similar to the more generic hypergeometric tests, you can provide either a 
+single set of a target genes or a list of target genes. Leveraging Rusts
+borrowing, the overhead for multiple target gene sets is reduced and hence
+very fast.
+```{r}
+#| label: run single go-aware gse
+
+go_aware_res <- gse_go_elim_method(
+  object = go_data_s7,
+  target_genes = target_genes_1
+)
+
+head(go_aware_res)
+```
+
+Here is the example on how to run this over a list.
+
+```{r}
+#| label: run multiple go-aware gse
+
+go_aware_res_2 <- gse_go_elim_method_list(
+  object = go_data_s7,
+  target_gene_list = target_list
+)
+
+head(go_aware_res_2)
+```
+
+### Alternative: simplifying results
+
+Another approach is to run the enrichment over the gene ontology as is and
+simplify subsequently. `bixverse` also has options for that. Let's run an
+example with the gene ontology:
+
+```{r}
+#| label: prepare go data for simplification approach
+
+# load the go data that is part of the package
+go_data <- load_go_human_data()
+
+# prepare the go <> gene information
+min_genes <- 3L
+
+go_genes <- go_data$go_to_genes
+go_genes_ls <- split(go_genes$ensembl_id, go_genes$go_id)
+go_genes_ls <- purrr::keep(go_genes_ls, \(x) length(x) > min_genes)
+
+# run the hypergeometric test
+go_results_unfiltered <- gse_hypergeometric(
+  target_genes = target_genes_1,
+  gene_set_list = go_genes_ls
+)
+
+head(go_results_unfiltered)
+```
+
+Now that we have the results, we can simplify them. The approach here is to
+identify similar terms via the Wang similarity and within a subset of similar
+terms take the term with the best test statistic, i.e., lowest FDR. Should
+the terms have the same FDR, the function will select for the most specific term
+(i.e., lower in the ontology).
+
+```{r}
+#| label: run simplification with the gene ontology info
+
+go_parent_child_dt <- go_data$gene_ontology[
+  relationship %in% c("is_a", "part_of")
+] %>%
+  setnames(
+    old = c("from", "to", "relationship"),
+    new = c("parent", "child", "type")
+  )
+
+go_results_simplified <- simplify_hypergeom_res(
+  res = go_results_unfiltered,
+  parent_child_dt = go_parent_child_dt,
+  weights = setNames(c(0.8, 0.6), c("is_a", "part_of"))
+)
+
+head(go_results_simplified)
+```
+
+### GSEA
+
+`bixverse` also has implementations of the GSEA based on
+[Subramanian et al](https://www.pnas.org/doi/10.1073/pnas.0506580102) to test
+against continuous scores. The package provides also the fgsea implementations
+of [Korotkevich et al.](https://www.biorxiv.org/content/10.1101/060012v3).
+These can be run like:
+
+```{r}
+#| label: fgsea run
+#| eval: !expr requireNamespace("fgsea", quietly = TRUE)
+
+# This is the example of fgsea
+
+library("fgsea")
+
+data(examplePathways)
+data(exampleRanks)
+
+set.seed(42L)
+
+fgsea_res <- fgsea(
+  pathways = examplePathways, 
+  stats = exampleRanks,
+  minSize = 15,
+  maxSize = 500
+) %>% setorder(pathway)
+
+head(fgsea_res)
+```
+
+And this is how you run it via `bixverse`.
+
+```{r}
+#| label: bixverse version of fgsea
+bixverse_fgsea <- calc_fgsea(
+  stats = exampleRanks,
+  pathways = examplePathways,
+  gsea_params = params_gsea(min_size = 15L)
+) %>% setorder(pathway_name)
+
+head(bixverse_fgsea)
+```
+
+We can appreciate the (more or less) same p-values estimated by both methods.
+
+```{r}
+#| label: p-value comparison between fgsea and bixverse fgsea
+plot(
+  x = -log10(fgsea_res$pval),
+  y = -log10(bixverse_fgsea$pvals),
+  xlab = "-log10(pval) fgsea",
+  ylab = "-log10(pval) bixverse",
+  main = "fgsea and bixverse"
+)
+```
+
+The speed is very comparable with the Rcpp implementation of fgsea, indicating
+no issues in terms of performance.
+
+```{r}
+#| label: comparison of speed fgsea vs. bixverse version
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  fgsea = fgsea(
+    pathways = examplePathways, 
+    stats = exampleRanks,
+    minSize = 15,
+    maxSize = 500
+  ),
+  rust = calc_fgsea(
+    stats = exampleRanks,
+    pathways = examplePathways,
+    gsea_params = params_gsea(min_size = 15L)
+  ),
+  times = 10L
+)
+```
+
+### GSEA gene ontology aware
+
+`bixverse` also implements GSEA in a gene-ontology aware form. In this case,
+you use the same object as for the hypergeometric test, but instead provide
+the ranked list. Similar to the hyper geometric version, the ontology is
+traversed from the lowest level first and the permutation-based p-values are
+calculated for a given term. Should this p-value be below the elimination
+threshold, the genes from that given gene ontology term are removed from all
+of its ancestors, yielding more specific GO terms. Once this has been done
+with the full ontology, the multi-level method from fgsea is used to estimate
+lower p-values than just possible via permutation for terms that show 
+significance.
+
+```{r}
+#| label: gsea gene ontology aware
+
+gene_universe_go <- unique(
+  unlist(go_data_dt[, "ensembl_id"], use.names = FALSE)
+)
+
+set.seed(42L)
+
+random_stats <- rnorm(length(gene_universe_go))
+names(random_stats) <- gene_universe_go
+
+go_gsea_res <- fgsea_go_elim(
+  object = go_data_s7,
+  stats = random_stats
+)
+
+head(go_gsea_res)
+```
