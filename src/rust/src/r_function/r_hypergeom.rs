@@ -7,7 +7,7 @@ use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::r_list_to_str_vec;
 
 /// A type alias that can be returned by par_iter() functions.
-type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
+type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 
 /// Run a single hypergeometric test.
 ///
@@ -162,7 +162,7 @@ fn rs_gse_geom_elim(
     target_genes: Vec<String>,
     levels: Vec<String>,
     go_obj: Robj,
-    gene_universe_length: u64,
+    gene_universe_length: usize,
     min_genes: usize,
     elim_threshold: f64,
     debug: bool,
@@ -174,8 +174,8 @@ fn rs_gse_geom_elim(
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
     let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
     let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-    let mut hits: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
-    let mut gene_set_lengths: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
+    let mut hits: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut gene_set_lengths: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
 
     for level in levels.iter() {
         let level_res: GoElimLevelResults = process_ontology_level(
@@ -251,7 +251,7 @@ fn rs_gse_geom_elim_list(
     target_genes_list: List,
     levels: Vec<String>,
     go_obj: Robj,
-    gene_universe_length: u64,
+    gene_universe_length: usize,
     min_genes: usize,
     elim_threshold: f64,
     debug: bool,
@@ -271,8 +271,8 @@ fn rs_gse_geom_elim_list(
             let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
             let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
             let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-            let mut hits: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
-            let mut gene_set_lengths: Vec<Vec<u64>> = Vec::with_capacity(levels.len());
+            let mut hits: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+            let mut gene_set_lengths: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
 
             // Iterate over the levels
             for level in levels.iter() {

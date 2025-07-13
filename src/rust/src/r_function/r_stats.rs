@@ -175,7 +175,7 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
 ///
 /// @export
 #[extendr]
-fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
+fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
     hypergeom_pval(q, m, n, k)
 }
 

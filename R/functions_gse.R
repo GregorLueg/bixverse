@@ -132,7 +132,7 @@ gse_hypergeometric_list <- function(
   # Avoid check issues
   . <- `:=` <- pvals <- fdr <- target_set_name <- hits <- NULL
   # Input checks
-  checkmate::assertList(target_genes_list, types = "character")
+  checkmate::assertList(target_genes_list, types = "character", names = "named")
   checkmate::qassert(names(target_genes_list), "S+")
   checkmate::assertList(gene_set_list, types = "character")
   checkmate::qassert(names(gene_set_list), "S+")

@@ -454,7 +454,7 @@ S7::method(get_dge_limma_voom, bulk_dge) <-
 #'
 #' @param object `bulk_dge` class.
 #'
-#' @return Returns the effect size results.  (If found.)
+#' @return Returns the effect size results. (If found.)
 #'
 #' @export
 get_dge_effect_sizes <- S7::new_generic(
@@ -480,6 +480,90 @@ S7::method(get_dge_effect_sizes, bulk_dge) <-
     # Return
     return(S7::prop(object, "outputs")[['hedges_g_res']])
   }
+
+### bulk coexp class -----------------------------------------------------------
+
+#' Return the epsilon data
+#'
+#' @description
+#' Getter function to extract the `epsilon param ~ power law goodness of fit`
+#' data from the [bixverse::bulk_coexp()] class.
+#'
+#' @param object `bulk_coexp` class.
+#'
+#' @return Returns the epsilon data. (If found. Otherwise `NULL`).
+#'
+#' @export
+get_epsilon_res <- S7::new_generic(
+  name = "get_epsilon_res",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_epsilon_res bulk_coexp
+#'
+#' @export
+S7::method(get_epsilon_res, bulk_coexp) <-
+  function(object) {
+    # checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_coexp"
+    )
+    # body
+    epsilon_results <- S7::prop(object, "outputs")[['epsilon_data']]
+    if (is.null(epsilon_results)) {
+      warning(
+        paste(
+          "No epsilon results found.",
+          "Did you run cor_module_check_epsilon()? Returning NULL."
+        )
+      )
+    }
+
+    # return
+    return(epsilon_results)
+  }
+
+#' @title Return the resolution results
+#'
+#' @description
+#' Getter function to get the resolution results (if available).
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#'
+#' @return If resolution results were found, returns the data.table. Otherwise,
+#' throws a warning and returns NULL.
+#'
+#' @export
+get_resolution_res <- S7::new_generic(
+  name = "get_resolution_res",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#' @method get_resolution_res bulk_coexp
+S7::method(get_resolution_res, bulk_coexp) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  # Body
+  resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
+  if (is.null(resolution_results)) {
+    warning(
+      paste(
+        "No resolution results found.",
+        "Did you run cor_module_graph_check_res()? Returning NULL."
+      )
+    )
+  }
+
+  resolution_results
+}
 
 ## individual setters ----------------------------------------------------------
 

@@ -33,8 +33,8 @@ pub struct GoElimLevelResults {
     pub go_ids: Vec<String>,
     pub pvals: Vec<f64>,
     pub odds_ratios: Vec<f64>,
-    pub hits: Vec<u64>,
-    pub gene_set_lengths: Vec<u64>,
+    pub hits: Vec<usize>,
+    pub gene_set_lengths: Vec<usize>,
 }
 
 /// Return structure of the `process_ontology_level_fgsea_simple()` ontology function.
@@ -167,7 +167,7 @@ pub fn process_ontology_level(
     level: &String,
     go_obj: &mut GeneOntology,
     min_genes: usize,
-    gene_universe_length: u64,
+    gene_universe_length: usize,
     elim_threshold: f64,
     debug: bool, // This is embarassing, but this function gives me a HEADACHE
 ) -> GoElimLevelResults {
@@ -185,7 +185,7 @@ pub fn process_ontology_level(
         .collect();
 
     // Convert target genes to a HashSet for efficient lookup
-    let trials = target_genes.len() as u64;
+    let trials = target_genes.len();
     let target_set: FxHashSet<_> = target_genes.iter().cloned().collect();
 
     let size = level_data_final.len();
@@ -200,15 +200,15 @@ pub fn process_ontology_level(
         if debug {
             println!("This genes are being tested: {:?}", value)
         };
-        let gene_set_length = value.len() as u64;
-        let hits = target_set.intersection(value).count() as u64;
+        let gene_set_length = value.len();
+        let hits = target_set.intersection(value).count();
         if debug {
             println!("Number of hits: {:?}", hits)
         };
         let q = hits as i64 - 1;
         let pval = if q > 0 {
             hypergeom_pval(
-                q as u64,
+                q as usize,
                 gene_set_length,
                 gene_universe_length - gene_set_length,
                 trials,

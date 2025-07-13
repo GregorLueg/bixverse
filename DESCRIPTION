@@ -60,6 +60,8 @@ Suggests:
     knitr,
     microbenchmark,
     msigdbr,
+    ontologyIndex,
+    ontologySimilarity,
     qs2,
     quarto,
     tictoc,

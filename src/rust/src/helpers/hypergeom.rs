@@ -1,20 +1,26 @@
 // use statrs::distribution::{Discrete, Hypergeometric};
+use rustc_hash::FxHashSet;
 use statrs::function::gamma::ln_gamma;
-use std::collections::HashSet;
 
 ///////////
 // Types //
 ///////////
 
 /// A type alias that can be returned by the par_iter() functions.
-pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
+///
+/// ### Fields
+/// * `0` - P-value
+/// * `1` - Odds ratio  
+/// * `2` - Success counts
+/// * `3` - Gene set size
+pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 
 ///////////////
 // Functions //
 ///////////////
 
 /// Calculate the p-value of a hypergeometric test.
-pub fn hypergeom_pval(q: u64, m: u64, n: u64, k: u64) -> f64 {
+pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
     if q == 0 {
         1.0
     } else {
@@ -65,18 +71,18 @@ pub fn hypergeom_pval(q: u64, m: u64, n: u64, k: u64) -> f64 {
 }
 
 /// Calculate odds ratios
-pub fn hypergeom_odds_ratio(a1_b1: u64, a0_b1: u64, a1_b0: u64, a0_b0: u64) -> f64 {
+pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usize) -> f64 {
     (a1_b1 as f64 / a0_b1 as f64) / (a1_b0 as f64 / a0_b0 as f64)
 }
 
 /// Count the number of hits for the hypergeometric tests
-pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec<u64> {
-    let target_genes_hash: HashSet<_> = target_genes.iter().collect();
-    let hits: Vec<u64> = gene_set_list
+pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec<usize> {
+    let target_genes_hash: FxHashSet<_> = target_genes.iter().collect();
+    let hits: Vec<usize> = gene_set_list
         .iter()
         .map(|s| {
-            let s_hash: HashSet<_> = s.iter().collect();
-            let intersection = s_hash.intersection(&target_genes_hash).count() as u64;
+            let s_hash: FxHashSet<_> = s.iter().collect();
+            let intersection = s_hash.intersection(&target_genes_hash).count();
             intersection
         })
         .collect();
@@ -98,19 +104,26 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
 // }
 
 /// Helper function for the hypergeometric test
+///
+/// ### Parameters
+///
+/// - `target_genes` - The target genes for the test
+/// - `gene_sets` - The list of vectors with the gene set genes
+/// - `gene_universe` - Vector with the all genes of the universe
+///
+/// ### Returns
+///
+/// `HypergeomResult` - A tuple with the results.
 pub fn hypergeom_helper(
     target_genes: &[String],
     gene_sets: &[Vec<String>],
     gene_universe: &[String],
 ) -> HypergeomResult {
-    let gene_universe_length = gene_universe.len() as u64;
+    let gene_universe_length = gene_universe.len();
 
-    let trials = target_genes.len() as u64;
+    let trials = target_genes.len();
 
-    let gene_set_lengths = gene_sets
-        .iter()
-        .map(|s| s.len() as u64)
-        .collect::<Vec<u64>>();
+    let gene_set_lengths = gene_sets.iter().map(|s| s.len()).collect::<Vec<usize>>();
 
     let hits = count_hits(gene_sets, target_genes);
 
@@ -121,7 +134,7 @@ pub fn hypergeom_helper(
             let q = *hit as i64 - 1;
             if q > 0 {
                 hypergeom_pval(
-                    q as u64,
+                    q as usize,
                     *gene_set_length,
                     gene_universe_length - *gene_set_length,
                     trials,

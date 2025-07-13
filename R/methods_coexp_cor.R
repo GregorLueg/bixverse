@@ -519,13 +519,13 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
         "correlation-based" = get_cor_graph(
           object = object,
           epsilon = epsilon,
-          .verbose = verbose
+          .verbose = .verbose
         ),
         "differential correlation-based" = get_diffcor_graph(
           object = object,
           min_cor = min_cor,
           fdr_threshold = fdr_threshold,
-          .verbose = verbose
+          .verbose = .verbose
         )
       )
     )
@@ -727,6 +727,19 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 
   detection_method <- S7::prop(object, "params")[["detection_method"]]
 
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(resolution, c("0", "N1"))
+  checkmate::qassert(min_size, "I1")
+  checkmate::qassert(max_size, "I1")
+  checkmate::qassert(subclustering, "B1")
+  checkmate::qassert(random_seed, "I1")
+  assertCorGraphParams(.graph_params)
+  checkmate::qassert(.max_iters, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  detection_method <- S7::prop(object, "params")[["detection_method"]]
+
   # Early return
   if (
     is.null(detection_method) &&
@@ -760,8 +773,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
           detection_method,
           "correlation-based" = get_cor_graph(
             object = object,
-            kernel_bandwidth = kernel_bandwidth,
-            min_affinity = min_affinity,
+            epsilon = epsilon,
             .verbose = verbose
           ),
           "differential correlation-based" = get_diffcor_graph(
@@ -781,6 +793,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 
   # Final resolution
   if (is.null(resolution)) {
+    # Use the internal resolution results
     resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
     final_resolution <- if (!is.null(resolution_results)) {
       if (.verbose) {
@@ -788,6 +801,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
       }
       resolution_results[modularity == max(modularity), resolution]
     } else {
+      # Just use 1
       warning(
         paste(
           "No resolution results found and none provided.",
@@ -796,6 +810,9 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
       )
       1
     }
+  } else {
+    # Use the provided one
+    final_resolution <- resolution
   }
 
   # Do a first clustering
@@ -1330,7 +1347,7 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
   # Function body
   cor_res <- S7::prop(object, "processed_data")$correlation_res
   graph_df <- cor_res$get_data_table(.verbose = .verbose) %>%
-    .[, cor_abs := abs(cor)] %>%
+    .[, cor_abs := abs(sim)] %>%
     .[, dist := 1 - cor_abs] %>%
     .[, dist := data.table::fifelse(dist < 0, 0, dist)] %>%
     .[,
@@ -1661,46 +1678,6 @@ create_dist_obj <- function(x, size) {
   class(res) <- "dist"
 
   res
-}
-
-## getters ---------------------------------------------------------------------
-
-#' @title Return the resolution results
-#'
-#' @description
-#' Getter function to get the resolution results (if available).
-#'
-#' @param object The class, see [bixverse::bulk_coexp()].
-#'
-#' @return If resolution results were found, returns the data.table. Otherwise,
-#' throws a warning and returns NULL.
-#'
-#' @export
-get_resolution_res <- S7::new_generic(
-  name = "get_resolution_res",
-  dispatch_args = "object",
-  fun = function(object) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @export
-#' @method get_resolution_res bulk_coexp
-S7::method(get_resolution_res, bulk_coexp) <- function(object) {
-  # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
-  # Body
-  resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
-  if (is.null(resolution_results)) {
-    warning(
-      paste(
-        "No resolution results found.",
-        "Did you run cor_module_graph_check_res()? Returning NULL."
-      )
-    )
-  }
-
-  resolution_results
 }
 
 ## plotting --------------------------------------------------------------------

@@ -183,7 +183,11 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     . <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
     checkmate::assertClass(object, "bixverse::gene_ontology_data")
-    checkmate::assertList(target_gene_list, types = "character")
+    checkmate::assertList(
+      target_gene_list,
+      types = "character",
+      names = "named"
+    )
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
     checkmate::qassert(minimum_overlap, "I1")

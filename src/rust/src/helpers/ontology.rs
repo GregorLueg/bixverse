@@ -59,6 +59,7 @@ fn get_mica(
     let ancestor_2 = ancestor_map.get(t2).unwrap_or(&EMPTY_ANCESTORS);
 
     // Iterate through smaller set for efficiency
+    // Good suggestion from Claude to make this even faster...
     let (smaller, larger) = if ancestor_1.len() <= ancestor_2.len() {
         (ancestor_1, ancestor_2)
     } else {
@@ -197,7 +198,6 @@ pub type SValueCache = RwLock<FxHashMap<NodeIndex, FxHashMap<NodeIndex, f64>>>;
 
 /// Structure for calculating the Wang similarity on a given Ontology
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct WangSimOntology {
     term_to_idx: FxHashMap<String, NodeIndex>, // term id to node index
     idx_to_term: Vec<String>,                  // the idx to term order (important)
@@ -207,7 +207,6 @@ pub struct WangSimOntology {
     s_values_cache: SValueCache,               // pre-computed S-values
 }
 
-#[allow(dead_code)]
 impl WangSimOntology {
     /// Create a new ontology object from parents and child
     /// Assumes two strings as input, one being the parents, the other being

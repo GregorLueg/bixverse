@@ -994,7 +994,6 @@ rs_onto_semantic_sim_mat <- function(sim_type, ancestor_list, ic_list, flat_matr
 #' `parents` needs to be equal to `children`.
 #' @param w Numerics. The weights between the parents and children. Need
 #' to be values between 0 and 1.
-#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
 #' @return A list with:
 #' \itemize{

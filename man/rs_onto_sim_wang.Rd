@@ -17,8 +17,6 @@ for.}
 
 \item{w}{Numerics. The weights between the parents and children. Need
 to be values between 0 and 1.}
-
-\item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
 }
 \value{
 A list with:
