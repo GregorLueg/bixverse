@@ -9,6 +9,7 @@ use statrs::function::gamma::ln_gamma;
 /// A type alias that can be returned by the par_iter() functions.
 ///
 /// ### Fields
+///
 /// * `0` - P-value
 /// * `1` - Odds ratio  
 /// * `2` - Success counts
@@ -22,6 +23,7 @@ pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 /// Calculate the p-value of a hypergeometric test.
 ///
 /// ### Params
+///
 /// * `q` - Number of white balls drawn
 /// * `m` - Number of white balls in the urn
 /// * `n` - Number of black balls in the urn
@@ -83,6 +85,7 @@ pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// Calculate odds ratios
 ///
 /// ### Params
+///
 /// * `a1_b1` - In both gene set and target set
 /// * `a0_b1` - In gene set, but not in target set
 /// * `a1_b0` - In target set, but not in gene set
@@ -98,6 +101,7 @@ pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usi
 /// Count the number of hits for the hypergeometric tests
 ///
 /// ### Params
+///
 /// * `gene_set_list` - A slice of String vectors, representing the gene sets
 ///    you want to count the number of hits against
 /// * `target_genes` - A string slice representing the target genes
@@ -121,7 +125,7 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
 
 /// Helper function for the hypergeometric test
 ///
-/// ### Parameters
+/// ### Params
 ///
 /// - `target_genes` - The target genes for the test
 /// - `gene_sets` - The list of vectors with the gene set genes

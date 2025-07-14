@@ -227,14 +227,14 @@ go_gene_universe <- unique(unlist(go_data_dt$ensembl_id))
 
 go_target_sets_no <- 100L
 
-set.seed(246L)
+seed <- 246L
 
 go_target_gene_sets <- purrr::map(
   1:go_target_sets_no,
   ~ {
     set.seed(.x * seed)
     size <- sample(50:100, 1)
-    sample(universe, size, replace = FALSE)
+    sample(go_gene_universe, size, replace = FALSE)
   }
 )
 

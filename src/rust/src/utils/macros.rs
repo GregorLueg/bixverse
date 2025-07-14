@@ -50,6 +50,22 @@ macro_rules! assert_same_dims {
 // Vector macros //
 ///////////////////
 
+/// Assertion that two vectors have the same length.
+#[macro_export]
+macro_rules! assert_same_len_vec2 {
+    ($vec1:expr, $vec2:expr) => {
+        let len1 = $vec1.len();
+        let len2 = $vec2.len();
+
+        assert!(
+            len1 == len2,
+            "Vectors have different lengths: {} != {}",
+            len1,
+            len2,
+        );
+    };
+}
+
 /// Assertion that three vectors have the same length.
 #[macro_export]
 macro_rules! assert_same_len_vec3 {

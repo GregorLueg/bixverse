@@ -73,7 +73,7 @@ fn rs_page_rank_permutations(
     let page_rank_res: Vec<Vec<f64>> = personalise_vecs
         .par_iter()
         .map_init(PageRankWorkingMemory::new, |working_memory, diff| {
-            personalized_page_rank_optimized(
+            personalised_page_rank_optimised(
                 &pagerank_graph,
                 0.85,
                 diff,
@@ -159,7 +159,7 @@ fn rs_page_rank_permutations_tied(
         .map_init(
             || (PageRankWorkingMemory::new(), PageRankWorkingMemory::new()),
             |(working_mem1, working_mem2), (diff1, diff2)| {
-                let pr1 = personalized_page_rank_optimized(
+                let pr1 = personalised_page_rank_optimised(
                     &pagerank_graph_1,
                     0.85,
                     &diff1,
@@ -167,7 +167,7 @@ fn rs_page_rank_permutations_tied(
                     1e-7,
                     working_mem1,
                 );
-                let pr2 = personalized_page_rank_optimized(
+                let pr2 = personalised_page_rank_optimised(
                     &pagerank_graph_2,
                     0.85,
                     &diff2,

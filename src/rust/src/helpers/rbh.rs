@@ -9,6 +9,12 @@ use crate::utils::r_rust_interface::NamedMatrix;
 use crate::utils::utils_stats::set_similarity;
 
 /// Structure for an Rbh triplet Result
+///
+/// ### Fields
+///
+/// * `t1` - Name of term 1 of the ontology
+/// * `t2` - Name of term 2 of the ontology
+/// * `sim` - Calculated similarity
 #[derive(Clone, Debug)]
 pub struct RbhTripletStruc<'a> {
     pub t1: &'a str,
@@ -21,6 +27,25 @@ pub struct RbhTripletStruc<'a> {
 ////////////////////
 
 /// Calculates the reciprocal best hits based on set similarities.
+///
+/// Function will calculate the set similarities (Jaccard or Overlap coefficient)
+/// between all of the gene sets between the two data sets and calculate the
+/// reciprocal best hits based on this similarity matrix.
+///
+/// ### Params
+///
+/// * `origin_modules` - A BTreeMap containing the identified modules of the
+///                      the origin data set.
+/// * `target_modules` - A BTreeMap containing the identified modules of the
+///                      the target data set.
+/// * `overlap_coefficient` - Shall the overlap coefficient be used instead of
+///                           Jaccard similarity.
+/// * `min_similarity` - Minimum similarity to be returned
+/// * `debug` - Shall debug messages be printed.
+///
+/// ### Returns
+///
+/// A vector of `RbhTripletStruc`.
 pub fn calculate_rbh_set<'a>(
     origin_modules: &'a BTreeMap<String, FxHashSet<String>>,
     target_modules: &'a BTreeMap<String, FxHashSet<String>>,
@@ -142,8 +167,15 @@ pub fn calculate_rbh_set<'a>(
 // Correlation based //
 ///////////////////////
 
-/// Transforms a list of R matrices into a vector with name of the list
-/// and transforms the stored R object into an R matrix
+/// Transforms a list of R matrices into a vector of R matrices
+///
+/// ### Params
+///
+/// * `matrix_list` - R List of matrices
+///
+/// ### Returns
+///
+/// A vector of tuples with the name of the list element and the R matrix.
 pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usize; 2]>)> {
     matrix_list
         .iter()
@@ -151,8 +183,16 @@ pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usiz
         .collect()
 }
 
-/// Takes a matrix vector and transforms it into a BTreeMap that contains the
-/// named matrix class
+/// Take a vector of R matrices and generate a BTreeMap of NamedMatrices
+///
+/// ### Params
+///
+/// * `matrix_vector` - Slice of tuples with the first element representing the name
+///                     and the second the R matrix
+///
+/// ### Returns
+///
+/// A BTreeMap of `NamedMatrix` objects.
 pub fn r_matrix_vec_to_btree_list(
     matrix_vector: &[(String, RArray<f64, [usize; 2]>)],
 ) -> BTreeMap<String, NamedMatrix<'_>> {
@@ -166,6 +206,19 @@ pub fn r_matrix_vec_to_btree_list(
 }
 
 /// Calculate the RBH based on correlation of two NamedMatrices
+///
+/// The function will intersect into shared features and calculate the correlation
+/// matrix and subsequently reciprocal best hits based on the absolute correlation.
+///
+/// ### Params
+///
+/// * `x1` - `NamedMatrix` of the origin data
+/// * `x2` - `NamedMatrix` of the target data
+/// * `spearman` - Shall Spearman correlations be used.
+///
+/// ### Returns
+///
+/// A vector of `RbhTripletStruc`.
 pub fn calculate_rbh_cor<'a>(
     x1: &'a NamedMatrix<'a>,
     x2: &'a NamedMatrix<'a>,
