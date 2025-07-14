@@ -1,0 +1,205 @@
+---
+title: "Bixverse R <> Rust interface"
+vignette: >
+  %\VignetteIndexEntry{Bixverse R <> Rust interface}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+## Using the Rust functions in more general R code
+
+`bixverse` has a number of R <> Rust functions that might be useful more
+generally. This vignette is there to explore how to use these functions more
+general. This vignette will show you to use:
+
+* Correlations (via `rs_cor()`)
+* Covariance (via `rs_covariance()`)
+* Covariance to correlation (via `rs_cov2cor()`)
+* Correlations between two matrices (via `rs_cor2()`)
+
+```{r}
+#| label: setup
+library(bixverse)
+```
+
+This vignette will explore the interfaces in `bixverse` to underlying Rust
+code you can leverage to make your code faster. But be careful... Any function
+with `rs_` can cause panics when misused.
+
+### Correlations, co-variance, and cosine distance
+
+A typical thing one uses a lot are correlations, co-variance and cosine 
+distances. Let's look at how to use `bixverse` to calculate these. 
+
+```{r}
+#| label: generate random data
+
+no_rows <- 500L
+no_cols <- 500L
+
+set.seed(10101L)
+
+random_data <- matrix(
+  data = rnorm(no_rows * no_cols),
+  ncol = no_cols,
+  nrow = no_rows
+)
+```
+
+#### Pearson's correlation
+
+Let's look at Pearson's correlations.
+
+```{r}
+#| label: pearson correlations
+
+r_pearsons_res <- cor(random_data)
+
+rust_pearsons_res <- rs_cor(random_data, spearman = FALSE)
+
+# tiny numerical differences do exist
+all.equal(r_pearsons_res, rust_pearsons_res, tolerance = 1e-15)
+```
+
+Speed differences:
+
+```{r}
+#| label: pearson correlations (speed)
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  r = cor(random_data),
+  rust = rs_cor(random_data, spearman = FALSE),
+  times = 50L
+)
+```
+
+#### Spearman's correlations
+
+Let's look at Spearman's correlations...
+
+```{r}
+#| label: spearman correlations
+
+r_spearman_res <- cor(random_data, method = "spearman")
+
+rust_spearman_res <- rs_cor(random_data, spearman = TRUE)
+
+# tiny numerical differences do exist
+all.equal(r_spearman_res, rust_spearman_res, tolerance = 1e-15)
+```
+
+Speed differences:
+
+```{r}
+#| label: spearman correlations (speed)
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  r = cor(random_data, method = "spearman"),
+  rust = rs_cor(random_data, spearman = TRUE),
+  times = 50L
+)
+```
+
+#### Covariance
+
+And covariance calculations
+
+```{r}
+#| label: covariance
+
+r_covar_res <- cov(random_data)
+
+rust_covar_res <- rs_covariance(random_data)
+
+# tiny numerical differences do exist
+all.equal(r_covar_res, rust_covar_res, tolerance = 1e-15)
+```
+
+Speed differences:
+
+```{r}
+#| label: covariance (speed)
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  r = cov(random_data),
+  rust = rs_covariance(random_data),
+  times = 50L
+)
+```
+
+Let's transform covariance to correlations
+
+```{r}
+#| label: covariance to correlation
+
+r_cor_from_covar <- cov2cor(r_covar_res)
+
+rust_cor_from_covar <- rs_cov2cor(rust_covar_res)
+
+# tiny numerical differences do exist
+all.equal(r_cor_from_covar, rust_cor_from_covar, tolerance = 1e-15)
+```
+
+How much faster is Rust here? (This is where we observe the least improvement.)
+
+```{r}
+#| label: covariance to correlation (speed)
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  r = cov2cor(r_covar_res),
+  rust = rs_cov2cor(rust_covar_res),
+  times = 50L
+)
+```
+
+#### Correlations between two matrices
+
+We also provide interface to do correlations between two sets of data
+
+```{r}
+#| label: generate a second random data
+
+no_rows_2 <- 500L
+no_cols_2 <- 400L
+
+set.seed(23L)
+
+random_data_2 <- matrix(
+  data = rnorm(no_rows_2 * no_cols_2, mean = 2, sd = 2),
+  ncol = no_cols_2,
+  nrow = no_rows_2
+)
+```
+
+Let's test the correlations between the two matrices
+
+```{r}
+r_cor_2_matrices <- cor(random_data, random_data_2)
+
+rust_cor_2_matrices <- rs_cor2(random_data, random_data_2, spearman = FALSE)
+
+# The small precision differences are further propagated in here
+all.equal(r_cor_2_matrices, rust_cor_2_matrices, tolerance = 1e-14)
+```
+
+And speed between Rust and R
+
+```{r}
+#| label: correlations between two matrices
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  r = cor(random_data, random_data_2),
+  rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
+  times = 50L
+)
+```
+

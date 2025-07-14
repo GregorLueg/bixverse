@@ -326,3 +326,59 @@ expect_equivalent(
   target = expected_matrix_overlap,
   tolerance = 1e-7
 )
+
+# effect sizes -----------------------------------------------------------------
+
+## data ------------------------------------------------------------------------
+
+set.seed(42L)
+mat_a <- matrix(rnorm(12, mean = 5, sd = 1), nrow = 3, ncol = 4)
+mat_b <- matrix(rnorm(12, mean = 7, sd = 1), nrow = 3, ncol = 4)
+
+expected_es <- c(-0.7859511, -0.4890762, -0.1603383, -0.2796240)
+expected_se <- c(0.8474333, 0.8286131, 0.8178075, 0.8204770)
+
+expected_es_no_cor <- c(-1.2032370, -0.7487419, -0.2454669, -0.4280850)
+expected_se_no_cor <- c(0.8873077, 0.8446209, 0.8195656, 0.8257954)
+
+## tests -----------------------------------------------------------------------
+
+rs_results <- rs_hedges_g(
+  mat_a = mat_a,
+  mat_b = mat_b,
+  small_sample_correction = TRUE
+)
+
+rs_results_no_cor <- rs_hedges_g(
+  mat_a = mat_a,
+  mat_b = mat_b,
+  small_sample_correction = FALSE
+)
+
+expect_equal(
+  current = rs_results$effect_sizes,
+  target = expected_es,
+  tolerance = 1e-7,
+  info = paste("Hedge effect size with correction")
+)
+
+expect_equal(
+  current = rs_results$standard_errors,
+  target = expected_se,
+  tolerance = 1e-7,
+  info = paste("Hedge standard error with correction")
+)
+
+expect_equal(
+  current = rs_results_no_cor$effect_sizes,
+  target = expected_es_no_cor,
+  tolerance = 1e-7,
+  info = paste("Hedge effect size with correction")
+)
+
+expect_equal(
+  current = rs_results_no_cor$standard_errors,
+  target = expected_se_no_cor,
+  tolerance = 1e-7,
+  info = paste("Hedge standard error with correction")
+)

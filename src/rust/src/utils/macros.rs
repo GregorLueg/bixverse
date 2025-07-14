@@ -50,36 +50,20 @@ macro_rules! assert_same_dims {
 // Vector macros //
 ///////////////////
 
-/// Assertion that two vectors have the same length.
+/// Assertion that all vectors have the same length.
 #[macro_export]
-macro_rules! assert_same_len_vec2 {
-    ($vec1:expr, $vec2:expr) => {
-        let len1 = $vec1.len();
-        let len2 = $vec2.len();
+macro_rules! assert_same_len {
+    ($($vec:expr),+ $(,)?) => {
+        {
+            let lengths: Vec<usize> = vec![$($vec.len()),+];
+            let first_len = lengths[0];
 
-        assert!(
-            len1 == len2,
-            "Vectors have different lengths: {} != {}",
-            len1,
-            len2,
-        );
-    };
-}
-
-/// Assertion that three vectors have the same length.
-#[macro_export]
-macro_rules! assert_same_len_vec3 {
-    ($vec1:expr, $vec2:expr, $vec3:expr) => {
-        let len1 = $vec1.len();
-        let len2 = $vec2.len();
-        let len3 = $vec3.len();
-
-        assert!(
-            len1 == len2 && len2 == len3,
-            "Vectors have different lengths: {} != {} != {}",
-            len1,
-            len2,
-            len3
-        );
+            if !lengths.iter().all(|&len| len == first_len) {
+                panic!(
+                    "Vectors have different lengths: {:?}",
+                    lengths
+                );
+            }
+        }
     };
 }

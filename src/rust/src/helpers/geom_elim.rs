@@ -286,7 +286,7 @@ pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMa
 /// * `gene_universe_length` - Size of the gene universe
 /// * `elim_threshold` - Elimination threshold. Below that threshold the genes
 ///                      from that term are eliminated from its ancestors
-/// * `degug` - Shall debug messages be printed.
+/// * `debug` - Shall debug messages be printed.
 ///
 /// ### Return
 ///
@@ -432,7 +432,7 @@ pub fn process_ontology_level(
 /// * `gsea_params` - The GSEA parameter.
 /// * `elim_threshold` - Elimination threshold. Below that threshold the genes
 ///                      from that term are eliminated from its ancestors
-/// * `degug` - Shall debug messages be printed.
+/// * `debug` - Shall debug messages be printed.
 ///
 /// ### Return
 ///

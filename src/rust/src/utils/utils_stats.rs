@@ -4,21 +4,40 @@ use rand::seq::SliceRandom;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
+use std::ops::{Add, Div};
 
+use crate::assert_same_len;
 use crate::helpers::linalg::col_sums;
 
 ///////////
 // Types //
 ///////////
 
-/// A type alias that can be returned by the par_iter() functions.
+/// A type alias representing effect size results
+///
+/// ### Fields
+///
+/// * `0` - The calculated effect sizes
+/// * `1` - The corresponding standard errors
 pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 
 ///////////////////////
 // Generic functions //
 ///////////////////////
 
-/// Split a vector randomly into two chunks with one being [..x] and the other [x..]
+/// Split a vector randomly into two chunks
+///
+/// Splits a vector randomly into two of [..x] and the other [x..]
+///
+/// ### Params
+///
+/// * `vec` - Slice of the vector you want to split
+/// * `x` - Length of the first vector; the rest will be put into the second vector
+/// * `seed` - Seed for reproducibility
+///
+/// ### Returns
+///
+/// A tuple of the pieces of the vector
 pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
     let mut rng = StdRng::seed_from_u64(seed);
     let mut shuffled = vec.to_vec();
@@ -29,8 +48,18 @@ pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec
     (first_set.to_vec(), second_set.to_vec())
 }
 
-/// Calculate the set similarity. Options are Jaccard (similarity_index = False)
-/// or the similarity index calculation.
+/// Calculate the set similarity.
+///
+/// ### Params
+///
+/// * `s_1` - The first HashSet.
+/// * `s_2` - The second HashSet.
+/// * `overlap_coefficient` - Shall the overlap coefficient be returned or the
+///                           Jaccard similarity
+///
+/// ### Return
+///
+/// The Jaccard similarity or overlap coefficient.
 pub fn set_similarity(
     s_1: &FxHashSet<&String>,
     s_2: &FxHashSet<&String>,
@@ -49,14 +78,26 @@ pub fn set_similarity(
 // Vector functions //
 //////////////////////
 
-/// Get the median of a vector
-pub fn median(x: &[f64]) -> Option<f64> {
+/// Get the median
+///
+/// ### Params
+///
+/// * `x` - The slice for which to calculate the median for.
+///
+/// ### Results
+///
+/// The median (if the vector is not empty)
+pub fn median<T>(x: &[T]) -> Option<T>
+where
+    T: Clone + PartialOrd + Add<Output = T> + Div<T, Output = T> + From<u8>,
+{
     if x.is_empty() {
         return None;
     }
 
     let mut data = x.to_vec();
     let len = data.len();
+
     if len % 2 == 0 {
         let (_, median1, right) =
             data.select_nth_unstable_by(len / 2 - 1, |a, b| a.partial_cmp(b).unwrap());
@@ -64,21 +105,29 @@ pub fn median(x: &[f64]) -> Option<f64> {
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap();
-        Some((*median1 + *median2) / 2.0)
+        Some((median1.clone() + median2.clone()) / T::from(2))
     } else {
         let (_, median, _) = data.select_nth_unstable_by(len / 2, |a, b| a.partial_cmp(b).unwrap());
-        Some(*median)
+        Some(median.clone())
     }
 }
 
-/// Calculate the median absolute deviation of a Vector
-pub fn mad(data: &[f64]) -> Option<f64> {
-    if data.is_empty() {
+/// Calculate the MAD
+///
+/// ### Params
+///
+/// * `x` - Slice for which to calculate the MAD for
+///
+/// ### Results
+///
+/// The MAD of the slice.
+pub fn mad(x: &[f64]) -> Option<f64> {
+    if x.is_empty() {
         return None;
     }
 
-    let median_val = median(data)?; // Early return if median is None
-    let deviations: Vec<f64> = data.iter().map(|&x| (x - median_val).abs()).collect();
+    let median_val = median(x)?; // Early return if median is None
+    let deviations: Vec<f64> = x.iter().map(|&x| (x - median_val).abs()).collect();
     median(&deviations)
 }
 
@@ -87,6 +136,22 @@ pub fn mad(data: &[f64]) -> Option<f64> {
 //////////////////
 
 /// Calculate the Hedge's g effect size and its standard error
+///
+/// ### Params
+///
+/// * `mean_a` - The mean values of group a.
+/// * `mean_b` - The mean values of group b.
+/// * `std_a` - The standard deviations of group a.
+/// * `std_b` - The standard deviations of group b.
+/// * `n_a` - Number of samples in a.
+/// * `n_b` - Number of samples in b.
+/// * `small_sample_correction` - Apply a small sample correction? Recommended
+///                               when `n_a` + `n_b` ≤ 35.
+///
+/// ### Returns
+///
+/// A tuple with the effect sizes being the first element, and the standard
+/// errors the second element.
 pub fn hedge_g_effect(
     mean_a: &[f64],
     mean_b: &[f64],
@@ -96,6 +161,8 @@ pub fn hedge_g_effect(
     n_b: usize,
     small_sample_correction: bool,
 ) -> EffectSizeRes {
+    assert_same_len!(mean_a, mean_b, std_a, std_b);
+
     let total_n = (n_a + n_b) as f64;
     let res: Vec<(f64, f64)> = mean_a
         .par_iter()
@@ -146,6 +213,14 @@ pub enum RbfType {
 }
 
 /// Parsing the RBF function
+///
+/// ### Params
+///
+/// * `s` - String to transform into `RbfType`
+///
+/// ### Returns
+///
+/// Returns the `RbfType`
 pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
     match s.to_lowercase().as_str() {
         "gaussian" => Some(RbfType::Gaussian),
@@ -155,7 +230,22 @@ pub fn parse_rbf_types(s: &str) -> Option<RbfType> {
     }
 }
 
-/// Gaussian Radial Basis function for vectors
+/// Gaussian Radial Basis function
+///
+/// Applies a Gaussian Radial Basis function on a vector of distances with the
+/// following formula:
+/// ```
+/// φ(r) = e^(-(εr)²)
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Vector of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Returns
+///
+/// The resulting affinity vector
 pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| f64::exp(-((x * *epsilon).powi(2))))
@@ -163,6 +253,22 @@ pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Gaussian Radial Basis function for matrices.
+///
+/// Applies a Gaussian Radial Basis function on a matrix of distances with the
+/// following formula:
+///
+/// ```
+/// φ(r) = e^(-(εr)²)
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Matrix of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Returns
+///
+/// The affinity matrix
 pub fn rbf_gaussian_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();
@@ -173,7 +279,22 @@ pub fn rbf_gaussian_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
 }
 
 /// Bump Radial Basis function
-/// Will set dist >= 1 / epsilon to 0, i.e., is a sparse RBF
+///
+/// Applies a Bump Radial Basis function on a vector of distances with the
+/// following formula:
+/// ```
+/// φ(r) = { exp(-1/(1-(εr)²)) + 1,  if εr < 1
+///        { 0,                      if εr ≥ 1
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Vector of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Returns
+///
+/// The resulting affinity vector
 pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| {
@@ -187,6 +308,22 @@ pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Bump Radial Basis function for matrices
+///
+/// Applies a Bump Radial Basis function on a matrix of distances with the
+/// following formula:
+/// ```
+/// φ(r) = { exp(-1/(1-(εr)²)) + 1,  if εr < 1
+///        { 0,                      if εr ≥ 1
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Matrix of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Returns
+///
+/// The resulting affinity matrix
 pub fn rbf_bump_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();
@@ -201,6 +338,21 @@ pub fn rbf_bump_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
 }
 
 /// Inverse quadratic RBF
+///
+/// Applies a Inverse Quadratic Radial Basis function on a vector of distances
+/// with the following formula:
+/// ```
+/// φ(r) = 1/(1 + (εr)²)
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Vector of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Return
+///
+/// The resulting affinity vector
 pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| 1.0 / (1.0 + (*epsilon * x).powi(2)))
@@ -208,6 +360,21 @@ pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Inverse quadratic RBF for matrices
+///
+/// Applies a Inverse Quadratic Radial Basis function on a matrix of distances
+/// with the following formula:
+/// ```
+/// φ(r) = 1/(1 + (εr)²)
+/// ```
+///
+/// ### Params
+///
+/// * `dist` - Matrix of distances
+/// * `epsilon` - Shape parameter controlling function width
+///
+/// ### Returns
+///
+/// The resulting affinity matrix
 pub fn rbf_inverse_quadratic_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();

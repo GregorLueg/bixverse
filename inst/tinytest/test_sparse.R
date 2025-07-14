@@ -33,6 +33,16 @@ expect_equal(
   info = "Rust sparse implementation - data"
 )
 
+expect_true(
+  current = rs_data$ncol == 4,
+  info = "Rust sparse implementation - ncols"
+)
+
+expect_true(
+  current = rs_data$nrow == 4,
+  info = "Rust sparse implementation - nrow"
+)
+
 ## r tests ---------------------------------------------------------------------
 
 sparse_matrix <- upper_triangle_to_sparse(data, 1L, 4L)

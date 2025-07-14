@@ -10,7 +10,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock};
 
-use crate::assert_same_len_vec3;
+use crate::assert_same_len;
 
 /////////////
 // Globals //
@@ -321,7 +321,7 @@ impl WangSimOntology {
     /// * `children` - Slice containing the names of the children
     /// * `w` - Slice of the weights between the parents and children.
     pub fn new(parents: &[String], children: &[String], w: &[f64]) -> Result<Self> {
-        assert_same_len_vec3!(parents, children, w);
+        assert_same_len!(parents, children, w);
 
         let mut graph = DiGraph::new();
         let mut term_to_idx = FxHashMap::default();

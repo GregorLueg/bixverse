@@ -27,7 +27,7 @@ pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 /// * `q` - Number of white balls drawn
 /// * `m` - Number of white balls in the urn
 /// * `n` - Number of black balls in the urn
-/// * `*` - Number of balls drawn from the urn
+/// * `k` - Number of balls drawn from the urn
 ///
 /// ### Return
 ///

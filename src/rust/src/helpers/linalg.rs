@@ -340,23 +340,18 @@ pub fn cor(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, spearman: bool) -> Mat<f64>
 pub fn cov2cor(mat: MatRef<f64>) -> Mat<f64> {
     assert_symmetric_mat!(mat);
 
-    let diag_elems = mat.diagonal();
-    let std_devs: Vec<f64> = diag_elems
-        .column_vector()
-        .iter()
-        .map(|x| x.sqrt())
-        .collect();
-    let d = faer_diagonal_from_vec(std_devs);
+    let n = mat.nrows();
+    let mut result = mat.to_owned();
 
-    let d_inv = Mat::from_fn(d.nrows(), d.ncols(), |i, j| {
-        if i == j {
-            1.0 / d.get(i, j)
-        } else {
-            0.0
+    let inv_sqrt_diag: Vec<f64> = (0..n).map(|i| 1.0 / mat.get(i, i).sqrt()).collect();
+
+    for i in 0..n {
+        for j in 0..n {
+            result[(i, j)] = mat.get(i, j) * inv_sqrt_diag[i] * inv_sqrt_diag[j];
         }
-    });
+    }
 
-    &d_inv * mat * &d_inv
+    result
 }
 
 /// Calculate differential correlations

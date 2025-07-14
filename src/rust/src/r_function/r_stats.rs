@@ -231,13 +231,19 @@ fn rs_set_similarity_list(
     let s_hash1: Vec<FxHashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
     let s_hash2: Vec<FxHashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
-    let mut matrix: Mat<f64> = Mat::zeros(s_hash1.len(), s_hash2.len());
+    let data: Vec<f64> = s_hash1
+        .par_iter()
+        .flat_map(|s1| {
+            s_hash2
+                .iter()
+                .map(|s2| set_similarity(s1, s2, overlap_coefficient))
+                .collect::<Vec<_>>()
+        })
+        .collect();
 
-    for (i, s1) in s_hash1.iter().enumerate() {
-        for (j, s2) in s_hash2.iter().enumerate() {
-            matrix[(i, j)] = set_similarity(s1, s2, overlap_coefficient);
-        }
-    }
+    let matrix = Mat::from_fn(s_hash1.len(), s_hash2.len(), |i, j| {
+        data[i * s_hash2.len() + j]
+    });
 
     Ok(faer_to_r_matrix(matrix.as_ref()))
 }

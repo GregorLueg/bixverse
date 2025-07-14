@@ -4,7 +4,7 @@ use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::assert_same_len_vec2;
+use crate::assert_same_len;
 
 ////////////
 // Traits //
@@ -75,6 +75,14 @@ pub enum TiedSumType {
 }
 
 /// Parsing the tied summarisation types
+///
+/// ### Params
+///
+/// * `s` - The string that defines the tied summarisation type
+///
+/// ### Results
+///
+/// The `TiedSumType` defining the tied summarisation type
 pub fn parse_tied_sum(s: &str) -> Option<TiedSumType> {
     match s.to_lowercase().as_str() {
         "max" => Some(TiedSumType::Max),
@@ -142,6 +150,10 @@ pub struct PageRankGraph {
 
 impl PageRankGraph {
     /// Generate the structure from a given petgraph.
+    ///
+    /// ### Params
+    ///
+    /// * `graph` The PetGraph from which to generate the structure.
     pub fn from_petgraph<G>(graph: G) -> Self
     where
         G: NodeCount + IntoEdges + NodeIndexable + Sync,
@@ -184,6 +196,17 @@ impl PageRankGraph {
     }
 
     /// Get incoming edges for a node
+    ///
+    /// Inline function to hopefully optimise further the compilation of the
+    /// program
+    ///
+    /// ### Params
+    ///
+    /// * `node` - Get the in_edges for a given node index.
+    ///
+    /// ### Return
+    ///
+    /// Returns a slice of in_edges
     #[inline]
     fn in_edges(&self, node: usize) -> &[usize] {
         let start = self.in_edges_offsets[node];
@@ -411,7 +434,7 @@ pub fn graph_from_strings(
     to: &[String],
     undirected: bool,
 ) -> Graph<String, ()> {
-    assert_same_len_vec2!(from, to);
+    assert_same_len!(from, to);
 
     let mut graph: Graph<String, ()> = Graph::new();
 
