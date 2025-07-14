@@ -74,6 +74,7 @@ fn get_mica(
             }
         }
     }
+
     max_ic
 }
 
@@ -86,6 +87,7 @@ fn calculate_resnik<'a>(
     info_content_map: &BTreeMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let sim = get_mica(t1, t2, ancestor_map, info_content_map);
+
     OntoSimRes {
         t1,
         t2,
@@ -104,6 +106,7 @@ fn calculate_lin<'a>(
     let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
     let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
     let sim = 2.0 * mica / (t1_ic + t2_ic);
+
     OntoSimRes { t1, t2, sim }
 }
 
@@ -121,6 +124,7 @@ fn calculate_combined_sim<'a>(
     let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
     let resnik_sim = mica / max_ic;
     let sim = (lin_sim + resnik_sim) / 2.0;
+
     OntoSimRes { t1, t2, sim }
 }
 
@@ -185,6 +189,7 @@ pub fn ic_list_to_ic_hashmap(r_list: List) -> BTreeMap<String, f64> {
         let ic_val = x.as_real().unwrap_or(0.0);
         hashmap.insert(name, ic_val);
     }
+
     hashmap
 }
 

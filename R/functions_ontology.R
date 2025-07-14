@@ -268,7 +268,7 @@ get_ontology_ancestry <- function(parent_child_dt) {
   ancestors <- split(ancestor_DT$to, ancestor_DT$from)
   descendants <- split(ancestor_DT$from, ancestor_DT$to)
 
-  return(list(ancestors = ancestors, descandants = descendants))
+  return(list(ancestors = ancestors, descendants = descendants))
 }
 
 

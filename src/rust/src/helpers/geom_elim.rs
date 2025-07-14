@@ -28,6 +28,14 @@ type LevelMap = FxHashMap<String, Vec<String>>;
 type GoIntermediaryRes = (f64, usize, Vec<i32>);
 
 /// Return structure of the `process_ontology_level()` ontology function.
+///
+/// ### Fields
+///
+/// * `go_ids` - GO term identifiers.
+/// * `pvals` - p-values for the terms.
+/// * `odds_ratio` - Calculated odds ratios for the terms.
+/// * `hits` - Number of intersecting genes with the target gene set
+/// * `gene_set_lengths` - Length of the gene set after elimination.
 #[derive(Clone, Debug)]
 pub struct GoElimLevelResults {
     pub go_ids: Vec<String>,

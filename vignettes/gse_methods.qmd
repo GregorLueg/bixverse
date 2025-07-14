@@ -211,6 +211,50 @@ go_aware_res_2 <- gse_go_elim_method_list(
 head(go_aware_res_2)
 ```
 
+#### Speed of the functions
+
+Also this functions were designed with speed in mind (leveraging Rust's 
+borrowing and parallelisations where possible). To run this over 100 potential 
+target gene sets takes only a few seconds.
+
+```{r}
+#| label: speed go-aware gse
+#| eval: !expr requireNamespace("tictoc", quietly = TRUE)
+
+go_gene_universe <- unique(unlist(go_data_dt$ensembl_id))
+
+# Generate random target sets
+
+go_target_sets_no <- 100L
+
+set.seed(246L)
+
+go_target_gene_sets <- purrr::map(
+  1:go_target_sets_no,
+  ~ {
+    set.seed(.x * seed)
+    size <- sample(50:100, 1)
+    sample(universe, size, replace = FALSE)
+  }
+)
+
+names(go_target_gene_sets) <- purrr::map_chr(
+  1:go_target_sets_no,
+  ~ {
+    set.seed(seed + .x + 1)
+    paste(sample(letters, 3), collapse = "")
+  }
+)
+
+# Quick test with tictoc
+tictoc::tic()
+rs_results_example <- gse_go_elim_method_list(
+  object = go_data_s7,
+  target_gene_list = go_target_gene_sets
+)
+tictoc::toc()
+```
+
 ### Alternative: simplifying results
 
 Another approach is to run the enrichment over the gene ontology as is and

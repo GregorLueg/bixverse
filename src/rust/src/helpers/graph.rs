@@ -10,7 +10,6 @@ use rustc_hash::FxHashMap;
 
 /// Simple numeric trait for PageRank calculations
 /// Need this because of all the trait craziness going on
-#[allow(dead_code)]
 pub trait NumericType:
     Copy
     + Send
@@ -24,9 +23,7 @@ pub trait NumericType:
 {
     fn zero() -> Self;
     fn one() -> Self;
-    fn from_usize(n: usize) -> Self;
     fn from_f64(n: f64) -> Option<Self>;
-    fn abs(self) -> Self;
     fn default_tolerance() -> Self;
 }
 
@@ -38,14 +35,8 @@ impl NumericType for f64 {
     fn one() -> Self {
         1.0
     }
-    fn from_usize(n: usize) -> Self {
-        n as f64
-    }
     fn from_f64(n: f64) -> Option<Self> {
         Some(n)
-    }
-    fn abs(self) -> Self {
-        self.abs()
     }
     fn default_tolerance() -> Self {
         1e-6
@@ -60,14 +51,8 @@ impl NumericType for f32 {
     fn one() -> Self {
         1.0
     }
-    fn from_usize(n: usize) -> Self {
-        n as f32
-    }
     fn from_f64(n: f64) -> Option<Self> {
         Some(n as f32)
-    }
-    fn abs(self) -> Self {
-        self.abs()
     }
     fn default_tolerance() -> Self {
         1e-6

@@ -243,7 +243,7 @@ simplify_hypergeom_res <- function(
   # function body
   ancestry <- get_ontology_ancestry(go_parent_child_dt)
 
-  descendants <- ancestry$descandants
+  descendants <- ancestry$descendants
 
   wang_sims <- calculate_wang_sim(
     terms = res$gene_set_name,

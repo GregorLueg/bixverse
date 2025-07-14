@@ -20,6 +20,16 @@ pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 ///////////////
 
 /// Calculate the p-value of a hypergeometric test.
+///
+/// ### Params
+/// * `q` - Number of white balls drawn
+/// * `m` - Number of white balls in the urn
+/// * `n` - Number of black balls in the urn
+/// * `*` - Number of balls drawn from the urn
+///
+/// ### Return
+///
+/// The p-value of the hypergeometric test
 pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
     if q == 0 {
         1.0
@@ -71,11 +81,30 @@ pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
 }
 
 /// Calculate odds ratios
+///
+/// ### Params
+/// * `a1_b1` - In both gene set and target set
+/// * `a0_b1` - In gene set, but not in target set
+/// * `a1_b0` - In target set, but not in gene set
+/// * `a0_b0` - Not in either
+///
+/// ### Return
+///
+/// The odds ratio. Pending values, can become infinity.
 pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usize) -> f64 {
     (a1_b1 as f64 / a0_b1 as f64) / (a1_b0 as f64 / a0_b0 as f64)
 }
 
 /// Count the number of hits for the hypergeometric tests
+///
+/// ### Params
+/// * `gene_set_list` - A slice of String vectors, representing the gene sets
+///    you want to count the number of hits against
+/// * `target_genes` - A string slice representing the target genes
+///
+/// ### Returns
+///
+/// A vector of hits, i.e., intersecting genes.
 pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec<usize> {
     let target_genes_hash: FxHashSet<_> = target_genes.iter().collect();
     let hits: Vec<usize> = gene_set_list
@@ -89,19 +118,6 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
 
     hits
 }
-
-// /// Count the number of hits for the hypergeometric tests (against HashSets)
-// pub fn count_hits_hash(gene_set_list: Vec<&HashSet<String>>, target_genes: &[String]) -> Vec<u64> {
-//     let target_genes_hash: HashSet<String> = target_genes.iter().cloned().collect();
-//     let hits: Vec<u64> = gene_set_list
-//         .into_iter()
-//         .map(|s| {
-//             let intersection = s.intersection(&target_genes_hash).count() as u64;
-//             intersection
-//         })
-//         .collect();
-//     hits
-// }
 
 /// Helper function for the hypergeometric test
 ///

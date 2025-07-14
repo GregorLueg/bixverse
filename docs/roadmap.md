@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 08.07.2025* </br>
+*Last update: 13.07.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -14,7 +14,7 @@ core function/methods that are broadly used.
 ## Usability of the package
 
 - ~~Various vignettes for workflows and (more) detailed documentation in terms of 
-method implementation.~~
+method implementation.~~ First set of vignettes have been written now.
 
 ## General methods
 
