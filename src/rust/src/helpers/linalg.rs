@@ -6,13 +6,19 @@ use rayon::iter::*;
 use crate::utils::general::*;
 use crate::utils::utils_stats::*;
 
-use crate::assert_nrows;
+use crate::{assert_nrows, assert_same_dims, assert_symmetric_mat};
 
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
 //////////////////////////////
 
 /// Structure for random SVD results
+///
+/// ### Fields
+///
+/// * `u` - Matrix u of the SVD decomposition
+/// * `v` - Matrix v of the SVD decomposition
+/// * `s` - Eigen vectors of the SVD decomposition
 #[derive(Clone, Debug)]
 pub struct RandomSvdResults {
     pub u: faer::Mat<f64>,
@@ -21,6 +27,13 @@ pub struct RandomSvdResults {
 }
 
 /// Structure for DiffCor results
+///
+/// ### Fields
+///
+/// * `r_a` - Correlation coefficients of a
+/// * `r_b` - Correlation coefficients of b
+/// * `z_score` - Z-scores of the differential correlation
+/// * `p_vals` - Calculated p-values from the Z-scores
 #[derive(Clone, Debug)]
 pub struct DiffCorRes {
     pub r_a: Vec<f64>,
@@ -33,8 +46,16 @@ pub struct DiffCorRes {
 // SCALING, COVAR, COR, PCA //
 //////////////////////////////
 
-/// Calculates the columns means of a matrix and returns it as Vec<f64>
-pub fn col_means(mat: MatRef<'_, f64>) -> Vec<f64> {
+/// Calculates the columns means of a matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the column-wise means
+///
+/// ### Returns
+///
+/// Vector of the column means.
+pub fn col_means(mat: MatRef<f64>) -> Vec<f64> {
     let n_rows = mat.nrows();
     let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
     let means = (ones.transpose() * mat) / n_rows as f64;
@@ -42,8 +63,16 @@ pub fn col_means(mat: MatRef<'_, f64>) -> Vec<f64> {
     means.row(0).iter().cloned().collect()
 }
 
-/// Calculates the column sums of a matrix and returns it as Vec<f64>
-pub fn col_sums(mat: MatRef<'_, f64>) -> Vec<f64> {
+/// Calculates the column sums of a matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the column-wise sums
+///
+/// ### Returns
+///
+/// Vector of the column sums.
+pub fn col_sums(mat: MatRef<f64>) -> Vec<f64> {
     let n_rows = mat.nrows();
     let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
     let col_sums = ones.transpose() * mat;
@@ -52,7 +81,16 @@ pub fn col_sums(mat: MatRef<'_, f64>) -> Vec<f64> {
 }
 
 /// Calculate the column standard deviations
-pub fn col_sds(mat: MatRef<'_, f64>) -> Vec<f64> {
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the column-wise standard
+///           deviations
+///
+/// ### Returns
+///
+/// Vector of the column standard deviations.
+pub fn col_sds(mat: MatRef<f64>) -> Vec<f64> {
     let n = mat.nrows() as f64;
     let n_cols = mat.ncols();
 
@@ -77,8 +115,17 @@ pub fn col_sds(mat: MatRef<'_, f64>) -> Vec<f64> {
     m2
 }
 
-/// Scale a matrix by its mean (column wise)
-pub fn scale_matrix_col(mat: &MatRef<'_, f64>, scale_sd: bool) -> Mat<f64> {
+/// Scale a matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply column-wise scaling
+/// * `scale_sd` - Shall the standard deviation be equalised across columns
+///
+/// ### Returns
+///
+/// The scaled matrix.
+pub fn scale_matrix_col(mat: &MatRef<f64>, scale_sd: bool) -> Mat<f64> {
     let n_rows = mat.nrows();
     let n_cols = mat.ncols();
 
@@ -124,8 +171,16 @@ pub fn scale_matrix_col(mat: &MatRef<'_, f64>, scale_sd: bool) -> Mat<f64> {
     result
 }
 
-/// Normalize each column to unit length (L2 norm = 1)
-fn normalise_matrix_col_l2(mat: &MatRef<'_, f64>) -> Mat<f64> {
+/// Column wise L2 normalisation
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply column-wise L2 normalisation
+///
+/// ### Returns
+///
+/// The matrix with the columns being L2 normalised.
+fn normalise_matrix_col_l2(mat: &MatRef<f64>) -> Mat<f64> {
     let mut normalized = mat.to_owned();
 
     for j in 0..mat.ncols() {
@@ -142,8 +197,16 @@ fn normalise_matrix_col_l2(mat: &MatRef<'_, f64>) -> Mat<f64> {
     normalized
 }
 
-/// Applies ranking to the columns of a given matrix
-pub fn rank_matrix_col(mat: &MatRef<'_, f64>) -> Mat<f64> {
+/// Column wise rank normalisation
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply column-wise rank normalisation
+///
+/// ### Returns
+///
+/// The matrix with the columns being rank normalised.
+pub fn rank_matrix_col(mat: &MatRef<f64>) -> Mat<f64> {
     let mut ranked_mat = Mat::zeros(mat.nrows(), mat.ncols());
 
     // Parallel ranking directly into the matrix
@@ -163,8 +226,19 @@ pub fn rank_matrix_col(mat: &MatRef<'_, f64>) -> Mat<f64> {
     ranked_mat
 }
 
-/// Calculate the column-wise co-variance
-pub fn column_covariance(mat: &MatRef<'_, f64>) -> Mat<f64> {
+/// Calculate the co-variance
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the co-variance. Assumes that
+///           features are columns.
+///
+/// ### Returns
+///
+/// The resulting co-variance matrix.
+pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
+    assert_symmetric_mat!(mat);
+
     let n_rows = mat.nrows();
     let centered = scale_matrix_col(mat, false);
     let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
@@ -172,15 +246,34 @@ pub fn column_covariance(mat: &MatRef<'_, f64>) -> Mat<f64> {
     covariance
 }
 
-/// Calculate the column-wise co-variance
-pub fn column_cosine(mat: &MatRef<'_, f64>) -> Mat<f64> {
+/// Calculate the cosine similarity
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the cosine similarity. Assumes
+///           that features are columns.
+///
+/// ### Returns
+///
+/// The resulting cosine similarity matrix
+pub fn column_cosine(mat: &MatRef<f64>) -> Mat<f64> {
     let normalized = normalise_matrix_col_l2(mat);
 
     normalized.transpose() * &normalized
 }
 
-/// Calculate the column-wise correlation. Option to use spearman.
-pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
+/// Calculate the correlation matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the correlation matrix. Assumes
+///           that features are columns.
+/// * `spearman` - Shall Spearman correlation be used.
+///
+/// ### Returns
+///
+/// The resulting correlation matrix.
+pub fn column_correlation(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
     let mat = if spearman {
         rank_matrix_col(mat)
     } else {
@@ -196,9 +289,21 @@ pub fn column_correlation(mat: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
     cor
 }
 
-/// Calculates the correlation between two matrices and their columns. The
-/// number of rows has to be equal, otherwise, the programm will panic
-pub fn cor(mat_a: &MatRef<'_, f64>, mat_b: &MatRef<'_, f64>, spearman: bool) -> Mat<f64> {
+/// Calculates the correlation between two matrices
+///
+/// The two matrices need to have the same number of rows, otherwise the function
+/// panics
+///
+/// ### Params
+///
+/// * `mat_a` - The first matrix.
+/// * `mat_b` - The second matrix.
+/// * `spearman` - Shall Spearman correlation be used.
+///
+/// ### Returns
+///
+/// The resulting correlation between the samples of the two matrices
+pub fn cor(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, spearman: bool) -> Mat<f64> {
     assert_nrows!(mat_a, mat_b);
 
     let nrow = mat_a.nrows() as f64;
@@ -223,8 +328,18 @@ pub fn cor(mat_a: &MatRef<'_, f64>, mat_b: &MatRef<'_, f64>, spearman: bool) -> 
     cor
 }
 
-/// Co-variance to cor
-pub fn cov2cor(mat: MatRef<'_, f64>) -> Mat<f64> {
+/// Calculate the correlation matrix from the co-variance matrix
+///
+/// ### Params
+///
+/// * `mat` - The co-variance matrix
+///
+/// ### Returns
+///
+/// The resulting correlation matrix.
+pub fn cov2cor(mat: MatRef<f64>) -> Mat<f64> {
+    assert_symmetric_mat!(mat);
+
     let diag_elems = mat.diagonal();
     let std_devs: Vec<f64> = diag_elems
         .column_vector()
@@ -245,6 +360,21 @@ pub fn cov2cor(mat: MatRef<'_, f64>) -> Mat<f64> {
 }
 
 /// Calculate differential correlations
+///
+/// The function will panic if the two correlation matrices are not symmetric
+/// and do not have the same dimensions.
+///
+/// ### Params
+///
+/// * `mat_a` - The first correlation matrix.
+/// * `mat_b` - The second correlation matrix.
+/// * `no_sample_a` - Number of samples that were present to calculate mat_a.
+/// * `no_sample_b` - Number of samples that were present to calculate mat_b.
+/// * `spearman` - Was Spearman correlation used.
+///
+/// ### Returns
+///
+/// The resulting differential correlation results as a structure.
 pub fn calculate_diff_correlation(
     mat_a: &Mat<f64>,
     mat_b: &Mat<f64>,
@@ -252,6 +382,10 @@ pub fn calculate_diff_correlation(
     no_sample_b: usize,
     spearman: bool,
 ) -> DiffCorRes {
+    assert_symmetric_mat!(mat_a);
+    assert_symmetric_mat!(mat_b);
+    assert_same_dims!(mat_a, mat_b);
+
     let mut cors_a: Vec<f64> = Vec::new();
     let mut cors_b: Vec<f64> = Vec::new();
 
@@ -294,11 +428,21 @@ pub fn calculate_diff_correlation(
     }
 }
 
-/// Get the eigenvalues and vectors from a symmetric co-variance or correlation
-/// matrix
+/// Get the eigenvalues and vectors from a covar or cor matrix
+///
+/// Function will panic if the matrix is not symmetric
+///
+/// ### Params
+///
+/// * `matrix` - The correlation or co-variance matrix
+/// * `top_n` - How many of the top eigen vectors and values to return.
+///
+/// ### Returns
+///
+/// A vector of tuples corresponding to the top eigen pairs.
 pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64>)> {
     // Ensure the matrix is square
-    assert!(matrix.nrows() == matrix.ncols(), "Matrix must be square");
+    assert_symmetric_mat!(matrix);
 
     let eigendecomp = matrix.eigen().unwrap();
 
@@ -325,10 +469,34 @@ pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64
     res
 }
 
-/// Implementation of random Singular Value Decomposition to be faster
-/// and computationally WAY more efficient.
+/// Randomised SVD
+///
+/// ### Params
+///
+/// * `x` - The matrix on which to apply the randomised SVD.
+/// * `rank` - The target rank of the approximation (number of singular values,
+///            vectors to compute).
+/// * `seed` - Random seed for reproducible results.
+/// * `oversampling` - Additional samples beyond the target rank to improve accuracy.
+///                    Defaults to 10 if not specified.
+/// * `n_power_iter` - Number of power iterations to perform for better approximation quality.
+///                    More iterations generally improve accuracy but increase computation time.
+///                    Defaults to 2 if not specified.
+///
+/// ### Returns
+///
+/// The randomised SVD results in form of `RandomSvdResults`.
+///
+/// ### Algorithm Details
+///
+/// 1. Generate a random Gaussian matrix Ω of size n × (rank + oversampling)
+/// 2. Compute Y = X * Ω to capture the range of X
+/// 3. Orthogonalize Y using QR decomposition to get Q
+/// 4. Apply power iterations: for each iteration, compute Z = X^T * Q, then Q = QR(X * Z)
+/// 5. Form B = Q^T * X and compute its SVD
+/// 6. Reconstruct the final SVD: U = Q * U_B, V = V_B, S = S_B
 pub fn randomised_svd(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     rank: usize,
     seed: usize,
     oversampling: Option<usize>,
@@ -368,8 +536,24 @@ pub fn randomised_svd(
     }
 }
 
-/// Iterate over a distance vector with given RBF function and epsilon parameter
-/// and return the column sums for the matrices based on the epsilons.
+/// Test different epsilons over a distance vector
+///
+/// ### Params
+///
+/// * `dist` - The distance vector on which to apply the specified RBF function.
+///            Assumes that these are the values of upper triangle of the distance
+///            matrix.
+/// * `epsilons` - Vector of epsilons to test.
+/// * `n` - Original dimensions of the distance matrix from which `dist` was
+///         derived.
+/// * `shift` - Was a shift applied during the generation of the vector, i.e., was
+///             the diagonal included or not.
+/// * `rbf_type` - Which RBF function to apply on the distance vector.
+///
+/// ### Returns
+///
+/// The column sums of the resulting adjacency matrices after application of the
+/// RBF function to for example check if these are following power law distributions.
 pub fn rbf_iterate_epsilons(
     dist: &[f64],
     epsilons: &[f64],

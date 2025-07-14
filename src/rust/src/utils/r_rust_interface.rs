@@ -4,15 +4,19 @@ use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
-///////////////////
-// Maps and Sets //
-///////////////////
+//////////////////
+// Type aliases //
+//////////////////
 
 /// Type alias for a double nested HashMap
 pub type NestedHashMap = FxHashMap<String, FxHashMap<String, FxHashSet<String>>>;
 
 /// Type alias for double nested BtreeMap
 pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, FxHashSet<String>>>;
+
+///////////
+// Lists //
+///////////
 
 /// Transforms a Robj List into a Hashmap
 pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, Vec<String>>> {
@@ -56,7 +60,7 @@ pub fn r_list_to_hashmap_set(
 
 // Transforms an Robj nested list into a nested hashmap
 #[allow(dead_code)]
-pub fn r_nested_list_to_rust(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
+pub fn r_nested_list_to_nested_hashmap(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
     let mut result = FxHashMap::with_capacity_and_hasher(r_nested_list.len(), FxBuildHasher);
     for (n, obj) in r_nested_list {
         let inner_list = obj.as_list().ok_or_else(|| {
