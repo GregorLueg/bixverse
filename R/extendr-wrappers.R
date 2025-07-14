@@ -316,7 +316,8 @@ rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_univer
 #' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
 #' Jaccard similarity be calculated.
 #'
-#' @return Vector of set similarities (upper triangle) values.
+#' @return A matrix of the Jaccard similarities between the elements. The rows
+#' represent s_1_list and the column s_2_list.
 #'
 #' @export
 rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)

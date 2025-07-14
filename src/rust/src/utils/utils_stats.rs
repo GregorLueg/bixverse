@@ -163,7 +163,7 @@ pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Gaussian Radial Basis function for matrices.
-pub fn rbf_gaussian_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+pub fn rbf_gaussian_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();
     Mat::from_fn(nrow, ncol, |i, j| {
@@ -187,7 +187,7 @@ pub fn rbf_bump(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Bump Radial Basis function for matrices
-pub fn rbf_bump_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+pub fn rbf_bump_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();
     Mat::from_fn(nrow, ncol, |i, j| {
@@ -208,7 +208,7 @@ pub fn rbf_inverse_quadratic(dist: &[f64], epsilon: &f64) -> Vec<f64> {
 }
 
 /// Inverse quadratic RBF for matrices
-pub fn rbf_inverse_quadratic_mat(dist: MatRef<'_, f64>, epsilon: &f64) -> Mat<f64> {
+pub fn rbf_inverse_quadratic_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
     let ncol = dist.ncols();
     let nrow = dist.nrows();
     Mat::from_fn(nrow, ncol, |i, j| {
@@ -240,7 +240,7 @@ pub fn parse_tom_types(s: &str) -> Option<TomType> {
 /// Calculates the topological overlap measure for a given affinity matrix
 /// Assumes a symmetric affinity matrix. Has the option to calculate the
 /// signed and unsigned version. Supports both Version1 and Version2 algorithms.
-pub fn calc_tom(affinity_mat: MatRef<'_, f64>, signed: bool, tom_type: TomType) -> Mat<f64> {
+pub fn calc_tom(affinity_mat: MatRef<f64>, signed: bool, tom_type: TomType) -> Mat<f64> {
     let n = affinity_mat.nrows();
     let mut tom_mat = Mat::<f64>::zeros(n, n);
 

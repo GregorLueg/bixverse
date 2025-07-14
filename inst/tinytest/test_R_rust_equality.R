@@ -275,3 +275,54 @@ expect_equal(
   target = rs_overlap_coef,
   info = "Overlap coefficient Rust <> R"
 )
+
+## matrix version --------------------------------------------------------------
+
+### data -----------------------------------------------------------------------
+
+set_c <- letters[5:11]
+set_d <- letters[3:7]
+set_e <- letters[20:25]
+
+list_a <- list(set_a = set_a, set_b = set_b)
+list_b <- list(set_c = set_c, set_d = set_d, set_e = set_e)
+
+expected_matrix_jaccard <- matrix(
+  data = c(0.09090909, 0.4285714, 0, 0.3, 0.8333333, 0),
+  nrow = 2,
+  ncol = 3,
+  byrow = TRUE
+)
+
+expected_matrix_overlap <- matrix(
+  data = c(0.2, 0.6, 0, 0.5, 1, 0),
+  nrow = 2,
+  ncol = 3,
+  byrow = TRUE
+)
+
+### tests ----------------------------------------------------------------------
+
+jaccard_mat <- rs_set_similarity_list(
+  s_1_list = list_a,
+  s_2_list = list_b,
+  overlap = FALSE
+)
+
+overlap_mat <- rs_set_similarity_list(
+  s_1_list = list_a,
+  s_2_list = list_b,
+  overlap = TRUE
+)
+
+expect_equivalent(
+  current = jaccard_mat,
+  target = expected_matrix_jaccard,
+  tolerance = 1e-7
+)
+
+expect_equivalent(
+  current = overlap_mat,
+  target = expected_matrix_overlap,
+  tolerance = 1e-7
+)

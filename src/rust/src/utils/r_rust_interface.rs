@@ -14,106 +14,11 @@ pub type NestedHashMap = FxHashMap<String, FxHashMap<String, FxHashSet<String>>>
 /// Type alias for double nested BtreeMap
 pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, FxHashSet<String>>>;
 
-///////////
-// Lists //
-///////////
+////////////
+// Errors //
+////////////
 
-/// Transforms a Robj List into a Hashmap
-pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, Vec<String>>> {
-    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
-
-    for (n, s) in r_list {
-        let s_vec = s.as_string_vector().ok_or_else(|| {
-            Error::Other(format!(
-                "Failed to convert value for key '{}' to string vector",
-                n
-            ))
-        })?;
-        result.insert(n.to_string(), s_vec);
-    }
-
-    Ok(result)
-}
-
-/// Transforms a Robj List into a Hashmap with the values as Hashset
-pub fn r_list_to_hashmap_set(
-    r_list: List,
-) -> extendr_api::Result<FxHashMap<String, FxHashSet<String>>> {
-    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
-
-    for (n, s) in r_list {
-        let s_vec = s.as_string_vector().ok_or_else(|| {
-            Error::Other(format!(
-                "Failed to convert value for key '{}' to string vector",
-                n
-            ))
-        })?;
-        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
-        for item in s_vec {
-            s_hash.insert(item);
-        }
-        result.insert(n.to_string(), s_hash);
-    }
-
-    Ok(result)
-}
-
-// Transforms an Robj nested list into a nested hashmap
-#[allow(dead_code)]
-pub fn r_nested_list_to_nested_hashmap(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
-    let mut result = FxHashMap::with_capacity_and_hasher(r_nested_list.len(), FxBuildHasher);
-    for (n, obj) in r_nested_list {
-        let inner_list = obj.as_list().ok_or_else(|| {
-            Error::Other(format!("Failed to convert value for key '{}' to list", n))
-        })?;
-        let inner_hashmap = r_list_to_hashmap_set(inner_list)?;
-        result.insert(n.to_string(), inner_hashmap);
-    }
-    Ok(result)
-}
-
-/// Transform a Robj List into a BTreeMap with the values as HashSet
-/// Import where ordering of the values matters
-pub fn r_list_to_btree_set(
-    r_list: List,
-) -> extendr_api::Result<BTreeMap<String, FxHashSet<String>>> {
-    let mut result = BTreeMap::new();
-    for (n, s) in r_list {
-        let s_vec = s.as_string_vector().ok_or_else(|| {
-            Error::Other(format!(
-                "Failed to convert value for key '{}' to string vector",
-                n
-            ))
-        })?;
-        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
-        for item in s_vec {
-            s_hash.insert(item);
-        }
-        result.insert(n.to_string(), s_hash);
-    }
-    Ok(result)
-}
-
-/// Transform an Robj nested list into a nested Btreemap
-pub fn r_nested_list_to_btree_nest(r_nested_list: List) -> extendr_api::Result<NestedBtreeMap> {
-    let mut result = BTreeMap::new();
-
-    for (n, obj) in r_nested_list {
-        let inner_list = obj.as_list().ok_or_else(|| {
-            Error::Other(format!("Failed to convert value for key '{}' to list", n))
-        })?;
-        let inner_tree = r_list_to_btree_set(inner_list)?;
-        result.insert(n.to_string(), inner_tree);
-    }
-
-    Ok(result)
-}
-
-/////////////
-// Vectors //
-/////////////
-
-// Error handling for named numeric conversion
+/// Error handling for named numeric conversion
 #[derive(Debug)]
 pub enum NamedVecError {
     NotNumeric,
@@ -139,10 +44,172 @@ impl From<NamedVecError> for extendr_api::Error {
     }
 }
 
-/// Type alias for named vectors
+///////////
+// Lists //
+///////////
+
+/// Transforms a Robj List into a Hashmap
+///
+/// This function assumes that the R list contains string vector!
+///
+/// ### Params
+///
+/// * `r_list` - R list that has names and contains string vectors.
+///
+/// ### Returns
+///
+/// A HashMap with as keys the names of the list and values the string vectors.
+pub fn r_list_to_hashmap(r_list: List) -> extendr_api::Result<FxHashMap<String, Vec<String>>> {
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
+
+    for (n, s) in r_list {
+        let s_vec = s.as_string_vector().ok_or_else(|| {
+            Error::Other(format!(
+                "Failed to convert value for key '{}' to string vector",
+                n
+            ))
+        })?;
+        result.insert(n.to_string(), s_vec);
+    }
+
+    Ok(result)
+}
+
+/// Transforms a Robj List into a Hashmap with HashSet values
+///
+/// This function assumes that the R list contains string vector!
+///
+/// ### Params
+///
+/// * `r_list` - R list that has names and contains string vectors.
+///
+/// ### Returns
+///
+/// A HashMap with as keys the names of the list and values as HashSets.
+pub fn r_list_to_hashmap_set(
+    r_list: List,
+) -> extendr_api::Result<FxHashMap<String, FxHashSet<String>>> {
+    let mut result = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
+
+    for (n, s) in r_list {
+        let s_vec = s.as_string_vector().ok_or_else(|| {
+            Error::Other(format!(
+                "Failed to convert value for key '{}' to string vector",
+                n
+            ))
+        })?;
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
+        for item in s_vec {
+            s_hash.insert(item);
+        }
+        result.insert(n.to_string(), s_hash);
+    }
+
+    Ok(result)
+}
+
+/// Transforms an Robj nested list into a nested HashMap containing further HashMap
+///
+/// A helper that generates a nested HashMap from a nested R list.
+///
+/// ### Params
+///
+/// * `r_nested_list` - A named R list that contains named lists with String vectors.
+///
+/// ### Returns
+///
+/// Returns a `NestedHashMap`
+#[allow(dead_code)]
+pub fn r_nested_list_to_nested_hashmap(r_nested_list: List) -> extendr_api::Result<NestedHashMap> {
+    let mut result = FxHashMap::with_capacity_and_hasher(r_nested_list.len(), FxBuildHasher);
+    for (n, obj) in r_nested_list {
+        let inner_list = obj.as_list().ok_or_else(|| {
+            Error::Other(format!("Failed to convert value for key '{}' to list", n))
+        })?;
+        let inner_hashmap = r_list_to_hashmap_set(inner_list)?;
+        result.insert(n.to_string(), inner_hashmap);
+    }
+    Ok(result)
+}
+
+/// Transform a Robj List into a BTreeMap with the values as HashSet
+///
+/// Use where ordering of the values matters as the HashMaps have non-deterministic
+/// ordering
+///
+/// ### Params
+///
+/// * `r_list` - R list that has names and contains string vectors.
+///
+/// ### Returns
+///
+/// A BTreeMap with as keys the names of the list and values as HashSets.
+pub fn r_list_to_btree_set(
+    r_list: List,
+) -> extendr_api::Result<BTreeMap<String, FxHashSet<String>>> {
+    let mut result = BTreeMap::new();
+    for (n, s) in r_list {
+        let s_vec = s.as_string_vector().ok_or_else(|| {
+            Error::Other(format!(
+                "Failed to convert value for key '{}' to string vector",
+                n
+            ))
+        })?;
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
+        for item in s_vec {
+            s_hash.insert(item);
+        }
+        result.insert(n.to_string(), s_hash);
+    }
+    Ok(result)
+}
+
+/// Transform an Robj nested list into a nested BtreeMap
+///
+/// A helper that generates a nested BTreeMap from a nested R list.
+///
+/// ### Params
+///
+/// * `r_nested_list` - A named R list that contains named lists with String vectors.
+///
+/// ### Returns
+///
+/// Returns a `NestedBtreeMap`
+pub fn r_nested_list_to_btree_nest(r_nested_list: List) -> extendr_api::Result<NestedBtreeMap> {
+    let mut result = BTreeMap::new();
+
+    for (n, obj) in r_nested_list {
+        let inner_list = obj.as_list().ok_or_else(|| {
+            Error::Other(format!("Failed to convert value for key '{}' to list", n))
+        })?;
+        let inner_tree = r_list_to_btree_set(inner_list)?;
+        result.insert(n.to_string(), inner_tree);
+    }
+
+    Ok(result)
+}
+
+/////////////
+// Vectors //
+/////////////
+
+/// Type alias for named numeric vectors
+///
+/// ### Fields
+///
+/// * `0` The names of the vector
+/// * `1` The values of the vector
 pub type NamedNumericVec = (Vec<String>, Vec<f64>);
 
 /// Transforms a Robj List into an array of String arrays.
+///
+/// ### Params
+///
+/// * `r_list` - R list that has names and contains string vectors.
+///
+/// ### Returns
+///
+/// A vector of vectors with Strings
 pub fn r_list_to_str_vec(r_list: List) -> extendr_api::Result<Vec<Vec<String>>> {
     let mut result = Vec::with_capacity(r_list.len());
 
@@ -160,6 +227,14 @@ pub fn r_list_to_str_vec(r_list: List) -> extendr_api::Result<Vec<Vec<String>>> 
 }
 
 /// Get the names and numeric values from a named R vector
+///
+/// ### Params
+///
+/// * `named_vec` - Robj that represents a named numeric in R
+///
+/// ### Returns
+///
+/// The `NamedNumericVec` type alias.
 pub fn r_named_vec_data(named_vec: Robj) -> extendr_api::Result<NamedNumericVec> {
     let values = named_vec
         .as_real_vector()
@@ -176,8 +251,13 @@ pub fn r_named_vec_data(named_vec: Robj) -> extendr_api::Result<NamedNumericVec>
 // Matrices //
 //////////////
 
-/// Structure to store named matrices and have utilies to select based on
-/// feature and sample names. Assumes features = columns and samples = rows.
+/// Structure to store named matrices
+///
+/// ### Fields
+///
+/// * `col_names` - A BTreeMap representing the column names and the col indices
+/// * `row_names` - A BTreeMap representing the row names and the row indices
+/// * `values` - A faer matrix reference representing the matrix values.
 #[derive(Clone, Debug)]
 pub struct NamedMatrix<'a> {
     pub col_names: BTreeMap<String, usize>,
@@ -188,6 +268,10 @@ pub struct NamedMatrix<'a> {
 #[allow(dead_code)]
 impl<'a> NamedMatrix<'a> {
     /// Generate a new matrix with the feature and sample names stored in the structure
+    ///
+    /// ### Paramx
+    ///
+    /// * `x` - An RMatrix.
     pub fn new(x: &'a RMatrix<f64>) -> Self {
         let col_names: BTreeMap<String, usize> = x
             .get_colnames()
@@ -212,8 +296,18 @@ impl<'a> NamedMatrix<'a> {
     }
 
     /// Return a submatrix based on the row names and columns to select.
-    /// If no rows or columns are specified, returns the full matrix.
-    /// If empty slices are provided, returns None.
+    ///
+    /// If no rows or columns are specified, returns the full matrix. If empty slices are
+    /// provided, returns None.
+    ///
+    /// ### Params
+    ///
+    /// * `rows_to_select` - Names of the row features
+    /// * `cols_to_select` - Names of the column features
+    ///
+    /// ### Returns
+    ///
+    /// The faer Matrix with the values from the rows and columns.
     pub fn get_sub_mat(
         &self,
         rows_to_select: Option<&[&str]>,
@@ -271,33 +365,69 @@ impl<'a> NamedMatrix<'a> {
     }
 
     /// Convenience method to get the full matrix
+    ///
+    /// ### Returns
+    ///
+    /// Faer matrix representing the full data.
     pub fn get_full_mat(&self) -> Mat<f64> {
         self.get_sub_mat(None, None).unwrap()
     }
 
     /// Convenience method to get submatrix with only row selection
+    ///
+    /// ### Params
+    ///
+    /// * `rows_to_select` - Names of the row features
+    ///
+    /// ### Returns
+    ///
+    /// Faer matrix with the selected rows.
     pub fn get_rows(&self, rows_to_select: &[&str]) -> Option<Mat<f64>> {
         self.get_sub_mat(Some(rows_to_select), None)
     }
 
     /// Convenience method to get submatrix with only column selection
+    ///
+    /// ### Params
+    ///
+    /// * `cols_to_select` - Names of the column features
+    ///
+    /// ### Returns
+    ///
+    /// Faer matrix with the selected columns.
     pub fn get_cols(&self, cols_to_select: &[&str]) -> Option<Mat<f64>> {
         self.get_sub_mat(None, Some(cols_to_select))
     }
 
     /// Get column names as references (for temporary use within same scope)
+    ///
+    /// ### Returns
+    ///
+    /// The column names as a reference
     pub fn get_col_names_refs(&self) -> Vec<&String> {
         self.col_names.keys().collect()
     }
 
     /// Get row names as references (for temporary use within same scope)
+    ///
+    /// ### Returns
+    ///
+    /// The row names as a reference
     pub fn get_row_names_refs(&self) -> Vec<&String> {
         self.row_names.keys().collect()
     }
 }
 
 /// Transform an R matrix to a Faer one
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<'_, f64> {
+///
+/// ### Params
+///
+/// * `x` - The R matrix to transform into a faer MatRef (with `f64`)
+///
+/// ### Returns
+///
+/// The faer `MatRef` from the original R matrix.
+pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();
@@ -305,7 +435,15 @@ pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<'_, f64> {
     MatRef::from_column_major_slice(data, nrow, ncol)
 }
 
-/// Transform an R integer matrix to a faer one
+/// Transform an R matrix to a Faer one
+///
+/// ### Params
+///
+/// * `x` - The R matrix to transform into a faer MatRef (with `i32`)
+///
+/// ### Returns
+///
+/// The faer `MatRef` from the original R matrix.
 pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> faer::MatRef<'_, i32> {
     let ncol = x.ncols();
     let nrow = x.nrows();
@@ -315,6 +453,14 @@ pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> faer::MatRef<'_, i32> {
 }
 
 /// Transform a faer into an R matrix
+///
+/// ### Params
+///
+/// * `x` - faer `MatRef` matrix to transform into an R matrix
+///
+/// ###
+///
+/// The R matrix based on the faer matrix.
 pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let nrow = x.nrows();
     let ncol = x.ncols();
@@ -322,7 +468,9 @@ pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize
     RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
 }
 
-/// Transform a sparse matrix to an R list
+/// Transform a SparseColumnMatrix to an R list
+///
+/// Takes a `SparseColumnMatrix` and transforms the into a list.
 pub fn sparse_matrix_to_list<T>(sparse: SparseColumnMatrix<T>) -> List
 where
     T: Into<Robj>,
@@ -330,6 +478,14 @@ where
     let data: Vec<Robj> = sparse.data.into_iter().map(|x| x.into()).collect();
     let row_indices: Vec<usize> = sparse.row_indices;
     let col_ptr: Vec<usize> = sparse.col_ptrs;
+    let nrow = sparse.nrow;
+    let ncol = sparse.ncol;
 
-    list![data = data, row_indices = row_indices, col_ptr = col_ptr]
+    list![
+        data = data,
+        row_indices = row_indices,
+        col_ptr = col_ptr,
+        ncol = ncol,
+        nrow = nrow
+    ]
 }

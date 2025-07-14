@@ -15,7 +15,8 @@ rs_set_similarity_list(s_1_list, s_2_list, overlap_coefficient)
 Jaccard similarity be calculated.}
 }
 \value{
-Vector of set similarities (upper triangle) values.
+A matrix of the Jaccard similarities between the elements. The rows
+represent s_1_list and the column s_2_list.
 }
 \description{
 This function calculates the Jaccard or similarity index between a one given

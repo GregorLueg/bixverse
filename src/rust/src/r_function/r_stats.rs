@@ -1,12 +1,13 @@
 use extendr_api::prelude::*;
+use faer::Mat;
 use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 use crate::helpers::hypergeom::hypergeom_pval;
 use crate::helpers::linalg::{col_means, col_sds};
-use crate::utils::general::{flatten_vector, string_vec_to_set};
-use crate::utils::r_rust_interface::{r_list_to_str_vec, r_matrix_to_faer};
+use crate::utils::general::string_vec_to_set;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils::utils_stats::*;
 
 /// Fast AUC calculation
@@ -214,7 +215,8 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
 /// Jaccard similarity be calculated.
 ///
-/// @return Vector of set similarities (upper triangle) values.
+/// @return A matrix of the Jaccard similarities between the elements. The rows
+/// represent s_1_list and the column s_2_list.
 ///
 /// @export
 #[extendr]
@@ -222,27 +224,22 @@ fn rs_set_similarity_list(
     s_1_list: List,
     s_2_list: List,
     overlap_coefficient: bool,
-) -> extendr_api::Result<Vec<f64>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
     let s_hash1: Vec<FxHashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
     let s_hash2: Vec<FxHashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
-    let res: Vec<Vec<f64>> = s_hash1
-        .into_iter()
-        .map(|s| {
-            let subres: Vec<f64> = s_hash2
-                .iter()
-                .map(|s2| set_similarity(&s, s2, overlap_coefficient))
-                .collect();
-            subres
-        })
-        .collect();
+    let mut matrix: Mat<f64> = Mat::zeros(s_hash1.len(), s_hash2.len());
 
-    let res = flatten_vector(res);
+    for (i, s1) in s_hash1.iter().enumerate() {
+        for (j, s2) in s_hash2.iter().enumerate() {
+            matrix[(i, j)] = set_similarity(s1, s2, overlap_coefficient);
+        }
+    }
 
-    Ok(res)
+    Ok(faer_to_r_matrix(matrix.as_ref()))
 }
 
 /// Calculate the critical value
