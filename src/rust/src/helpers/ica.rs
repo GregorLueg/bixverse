@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
     Mat, MatRef,

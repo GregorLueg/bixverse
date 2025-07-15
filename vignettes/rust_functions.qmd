@@ -20,6 +20,7 @@ general. This vignette will show you to use:
 * Covariance (via `rs_covariance()`)
 * Covariance to correlation (via `rs_cov2cor()`)
 * Correlations between two matrices (via `rs_cor2()`)
+* Calculations of set similarities between
 
 ```{r}
 #| label: setup
@@ -203,3 +204,106 @@ microbenchmark::microbenchmark(
 )
 ```
 
+### Set similarities
+
+`bixverse` also provides various functions that leverage Rust to do set
+similarities. Let's compare this against some R implementation. Below is a
+naive R implementation to calculate the Jaccard similarities between two 
+lists containing strings.
+
+```{r}
+#| label: R jaccard similarity function
+
+jaccard_sim <- function(x, y) {
+  length(intersect(x, y)) / length(union(x, y))
+}
+
+set.seed(42L)
+
+random_sets_1 <- purrr::map(1:1000L, ~{
+  paste(sample(LETTERS, sample(1:20, 1)))
+})
+
+random_sets_2 <- purrr::map(1:500L, ~{
+  paste(sample(LETTERS, sample(1:20, 1)))
+})
+
+tictoc::tic()
+future::plan(strategy = future::multisession())
+
+r_results <- furrr::future_map(random_sets_1, \(x) {
+  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
+}, .progress = TRUE)
+
+future::plan(strategy = future::sequential())
+
+similarity_matrix <- matrix(
+  data = unlist(r_results), 
+  nrow = length(random_sets_1), 
+  ncol = length(random_sets_2),
+  byrow = TRUE
+)
+tictoc::toc()
+```
+
+Maybe we can make this a bit faster with an optimised Jaccard similarity
+function.
+
+```{r}
+#| label: R jaccard similarity function (faster)
+
+# Optimised function...
+jaccard_sim_fast <- function(x, y) {
+  intersection <- length(intersect(x, y))
+  union_size <- length(x) + length(y) - intersection
+  intersection / union_size
+}
+
+tictoc::tic()
+future::plan(strategy = future::multisession())
+
+r_results <- furrr::future_map(random_sets_1, \(x) {
+  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim_fast(x, y)})
+}, .progress = TRUE)
+
+future::plan(strategy = future::sequential())
+
+similarity_matrix <- matrix(
+  data = unlist(r_results), 
+  nrow = length(random_sets_1), 
+  ncol = length(random_sets_2),
+  byrow = TRUE
+)
+tictoc::toc()
+```
+
+Let's see if vectorisation makes a difference in R? 
+```{r}
+#| label: R jaccard similarity function (vectorisation)
+
+tictoc::tic()
+result <- outer(random_sets_1, random_sets_2, Vectorize(function(x, y) {
+    intersection <- length(intersect(x, y))
+    union_size <- length(x) + length(y) - intersection
+    intersection / union_size
+}))
+tictoc::toc()
+```
+
+We lack of parallel processing is felt here...
+
+Let's compare against the Rust version implemented in `bixverse`:
+
+```{r}
+#| label: bixverse jaccard similarity function
+
+tictoc::tic()
+rust_res <- rs_set_similarity_list(
+  s_1_list = random_sets_1,
+  s_2_list = random_sets_2,
+  overlap_coefficient = FALSE
+)
+tictoc::toc()
+
+all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
+```

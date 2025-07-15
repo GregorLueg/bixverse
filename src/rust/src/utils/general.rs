@@ -1,6 +1,5 @@
 use rustc_hash::FxHashSet;
 use std::cmp::PartialOrd;
-use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;
 
@@ -115,13 +114,16 @@ pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
 /// ### Returns
 ///
 /// The ranked vector (also f64)
-pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
+pub fn rank_vector<T>(vec: &[T]) -> Vec<f64>
+where
+    T: Copy + PartialOrd + PartialEq,
+{
     let n = vec.len();
     if n == 0 {
         return Vec::new();
     }
 
-    let mut indexed_values: Vec<(f64, usize)> = vec
+    let mut indexed_values: Vec<(T, usize)> = vec
         .iter()
         .copied()
         .enumerate()
@@ -133,22 +135,17 @@ pub fn rank_vector(vec: &[f64]) -> Vec<f64> {
 
     let mut ranks = vec![0.0; n];
     let mut i = 0;
-
     while i < n {
         let current_value = indexed_values[i].0;
         let start = i;
-
         while i < n && indexed_values[i].0 == current_value {
             i += 1;
         }
-
         let avg_rank = (start + i + 1) as f64 / 2.0;
-
         for j in start..i {
             ranks[indexed_values[j].1] = avg_rank;
         }
     }
-
     ranks
 }
 
@@ -165,7 +162,7 @@ pub fn unique<T>(vec: &[T]) -> Vec<T>
 where
     T: Copy + Eq + Hash + Debug,
 {
-    let mut set = HashSet::new();
+    let mut set = FxHashSet::default();
     vec.iter()
         .filter(|&&item| set.insert(item))
         .cloned()

@@ -272,6 +272,10 @@ impl<'a> NamedMatrix<'a> {
     /// ### Paramx
     ///
     /// * `x` - An RMatrix.
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn new(x: &'a RMatrix<f64>) -> Self {
         let col_names: BTreeMap<String, usize> = x
             .get_colnames()
@@ -470,7 +474,18 @@ pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize
 
 /// Transform a SparseColumnMatrix to an R list
 ///
-/// Takes a `SparseColumnMatrix` and transforms the into a list.
+/// ### Params
+///
+/// * `sparse` - SparseColumnMatrix structure
+///
+/// ### Returns
+///
+/// R list with the following slots:
+/// * `data` - The values
+/// * `row_indices` - The row indices
+/// * `col_ptr` - The column pointers
+/// * `ncol` - Number of columns
+/// * `nrow` - Number of rows
 pub fn sparse_matrix_to_list<T>(sparse: SparseColumnMatrix<T>) -> List
 where
     T: Into<Robj>,

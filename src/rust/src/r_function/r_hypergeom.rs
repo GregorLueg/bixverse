@@ -1,11 +1,12 @@
 use extendr_api::prelude::*;
+
 use rayon::prelude::*;
+use rustc_hash::FxHashSet;
 
 use crate::helpers::geom_elim::*;
 use crate::helpers::hypergeom::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::r_list_to_str_vec;
-use rustc_hash::FxHashSet;
 
 /// A type alias that can be returned by par_iter() functions.
 type GoElimLevelResultsIter = (Vec<String>, Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);

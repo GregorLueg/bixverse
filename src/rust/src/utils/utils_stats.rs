@@ -404,9 +404,41 @@ pub fn parse_tom_types(s: &str) -> Option<TomType> {
     }
 }
 
-/// Calculates the topological overlap measure for a given affinity matrix
-/// Assumes a symmetric affinity matrix. Has the option to calculate the
-/// signed and unsigned version. Supports both Version1 and Version2 algorithms.
+/// Calculates the topological overlap measure (TOM) for a given affinity matrix
+///
+/// The TOM quantifies the relative interconnectedness of two nodes in a network by measuring
+/// how much they share neighbors relative to their connectivity. Higher TOM values indicate
+/// nodes that are part of the same module or cluster.
+///
+/// ### Params
+///
+/// * `affinity_mat` - Symmetric affinity/adjacency matrix
+/// * `signed` - Whether to use signed (absolute values) or unsigned connectivity
+/// * `tom_type` - Algorithm version (Version1 or Version2)
+///
+/// ### Returns
+/// Symmetric TOM matrix with values in [0,1] representing topological overlap
+///
+/// ### Mathematical Formulation
+///
+/// #### Connectivity
+/// For node i: k_i = Σ_j |a_ij| (signed) or k_i = Σ_j a_ij (unsigned)
+///
+/// #### Shared Neighbors
+/// For nodes i,j: l_ij = Σ_k (a_ik * a_kj) - a_ii*a_ij - a_ij*a_jj
+///
+/// #### TOM Calculation
+///
+/// **Version 1:**
+/// - Numerator: a_ij + l_ij
+/// - Denominator (unsigned): min(k_i, k_j) + 1 - a_ij
+/// - Denominator (signed): min(k_i, k_j) + 1 - a_ij (if a_ij ≥ 0) or min(k_i, k_j) + 1 + a_ij (if a_ij < 0)
+/// - TOM_ij = numerator / denominator
+///
+/// **Version 2:**
+/// - Divisor (unsigned): min(k_i, k_j) + a_ij
+/// - Divisor (signed): min(k_i, k_j) + a_ij (if a_ij ≥ 0) or min(k_i, k_j) - a_ij (if a_ij < 0)
+/// - TOM_ij = 0.5 * (a_ij + l_ij/divisor)
 pub fn calc_tom(affinity_mat: MatRef<f64>, signed: bool, tom_type: TomType) -> Mat<f64> {
     let n = affinity_mat.nrows();
     let mut tom_mat = Mat::<f64>::zeros(n, n);
@@ -476,6 +508,15 @@ pub fn calc_tom(affinity_mat: MatRef<f64>, signed: bool, tom_type: TomType) -> M
 ///////////////////////
 
 /// Helper functions to calculate the intersection of sorted usize vectors
+///
+/// ### Params
+///
+/// * `a` - (Sorted) slice of usize
+/// * `b` - (Sorted) slice of usize
+///
+/// ### Returns
+///
+/// Intersection between the two sorted slices.
 fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
     let mut count = 0;
     let mut i = 0;
@@ -496,10 +537,18 @@ fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
     count
 }
 
-/// Function that assesses the cluster stability. Assumes that the rows
-/// are the features and the columns the different resamples/bootstraps.
-/// Returns a vector of tuples with the first being the average Jaccard
-/// and the second the standard deviation.
+/// Function that assesses the cluster stability.
+///
+/// ### Params
+///
+/// * `cluster_matrix` - A matrix with the columns representing the bootstraps,
+///                      the rows the features and the values which cluster the
+///                      feature belongs to.
+///
+/// ### Returns
+///
+/// Returns tuple of (average Jaccard similarities, standard deviations of the
+/// Jaccard similarities).
 pub fn cluster_stability(cluster_matrix: &MatRef<i32>) -> Vec<(f64, f64)> {
     let n_features = cluster_matrix.nrows();
     let n_iter = cluster_matrix.ncols();
@@ -599,6 +648,14 @@ pub fn trigamma(x: f64) -> f64 {
 }
 
 /// Transform Z-scores into p-values (assuming normality).
+///
+/// ### Params
+///
+/// * `z_scores` - The Z scores to transform to p-values
+///
+/// ### Returns
+///
+///
 pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
     let normal = Normal::new(0.0, 1.0).unwrap();
     z_scores

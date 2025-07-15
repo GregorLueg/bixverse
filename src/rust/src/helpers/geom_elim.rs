@@ -1,6 +1,7 @@
 use extendr_api::prelude::*;
+
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use crate::helpers::fgsea::{
     calc_gsea_stats, calc_gsea_stats_wrapper, calculate_nes_es_pval, GseaBatchResults, GseaParams,
@@ -101,6 +102,10 @@ impl<'a> GeneOntology<'a> {
     /// * `gene_map` - The HashMap with the term to gene associations.
     /// * `ancestors` - The HashMap with the term to ancestor associations.
     /// * `levels` - The HashMap with the level to term associations.
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn new(gene_map: GeneMap, ancestor_map: &'a AncestorMap, levels_map: &'a LevelMap) -> Self {
         GeneOntology {
             go_to_gene: gene_map,
@@ -208,6 +213,10 @@ impl<'a> GeneOntologyRandomPerm<'a> {
     /// ### Params
     ///
     /// * `perm_es` - A vector of vectors with the permutation results
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn new(perm_es: &'a Vec<Vec<f64>>) -> Self {
         GeneOntologyRandomPerm {
             random_perm: perm_es,
@@ -307,7 +316,7 @@ pub fn process_ontology_level(
     let level_data = go_obj.get_genes_list(level_ids);
 
     // Filter data based on minimum gene requirement
-    let level_data_final: HashMap<_, _> = level_data
+    let level_data_final: FxHashMap<_, _> = level_data
         .iter()
         .filter(|(_, value)| value.len() >= min_genes)
         .map(|(key, value)| (key.clone(), value))
@@ -440,7 +449,7 @@ pub fn process_ontology_level(
 #[allow(clippy::too_many_arguments)]
 pub fn process_ontology_level_fgsea_simple(
     stats: &[f64],
-    stat_name_indices: &HashMap<&String, usize>,
+    stat_name_indices: &FxHashMap<&String, usize>,
     level: &String,
     go_obj: &mut GeneOntology,
     go_random_perms: &GeneOntologyRandomPerm,

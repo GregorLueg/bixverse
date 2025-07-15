@@ -1,8 +1,7 @@
 use extendr_api::prelude::*;
 
-use std::collections::HashMap;
-
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 use crate::helpers::fgsea::*;
 use crate::helpers::geom_elim::*;
@@ -48,7 +47,7 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 #[extendr]
 fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_api::Result<List> {
     // HashMap for fast look ups
-    let gene_map: HashMap<&str, usize> = gene_universe
+    let gene_map: FxHashMap<&str, usize> = gene_universe
         .iter()
         .enumerate()
         .map(|(i, gene)| (gene.as_str(), i))
@@ -404,7 +403,7 @@ fn rs_geom_elim_fgsea_simple(
 
     let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
 
-    let stat_name_indices: HashMap<&String, usize> = vec_data
+    let stat_name_indices: FxHashMap<&String, usize> = vec_data
         .0
         .iter()
         .enumerate()

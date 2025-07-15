@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+
 use rayon::prelude::*;
 
 use crate::helpers::rbh::*;
@@ -6,6 +7,14 @@ use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::{r_nested_list_to_btree_nest, NestedBtreeMap};
 
 /// Structure to store the RBH results.
+///
+/// ### Fields
+///
+/// * `origin` - Name of the origin data set
+/// * `target` - Name of the target data set
+/// * `origin_modules` - Names of the origin modules/gene sets
+/// * `target_modules` - Names of the target modules/gene sets
+/// * `similarities` - Similarities between the modules/gene sets
 #[derive(Clone, Debug)]
 pub struct RbhResult {
     pub origin: String,

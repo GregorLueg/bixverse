@@ -1,4 +1,5 @@
 use extendr_api::List;
+
 use rand::distr::Uniform;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -91,7 +92,16 @@ pub struct GseaParams {
     pub min_size: usize,
 }
 
-/// Prepare GSEA parameters
+/// Prepare GSEA parameters from R list input
+///
+/// ### Params
+///
+/// * `r_list` - R list containing parameter values
+///
+/// ### Returns
+///
+/// `GseaParams` struct with parsed parameters (defaults: gsea_param=1.0,
+/// min_size=5, max_size=500)
 pub fn prepare_gsea_params(r_list: List) -> GseaParams {
     let gsea_params = r_list.into_hashmap();
 
@@ -121,7 +131,16 @@ pub fn prepare_gsea_params(r_list: List) -> GseaParams {
 // Segment tree //
 //////////////////
 
-/// Structure from the fgsea simple algorithm
+/// Structure from the fgsea simple algorithm implementing a segment tree data structure
+///
+/// ### Fields
+///
+/// * `t` - Tree array for storing segment values
+/// * `b` - Block array for storing block-level aggregates
+/// * `n` - Total size of the tree (padded to power of 2)
+/// * `k2` - Number of blocks in the structure
+/// * `log_k` - Log base 2 of block size for bit operations
+/// * `block_mask` - Bitmask for extracting block positions
 #[derive(Clone, Debug)]
 pub struct SegmentTree<T> {
     t: Vec<T>,
@@ -136,7 +155,15 @@ impl<T> SegmentTree<T>
 where
     T: Copy + std::ops::AddAssign + Default + std::ops::Add<Output = T>,
 {
-    /// Create a new tree with size n
+    /// Create a new segment tree with size n
+    ///
+    /// ### Params
+    ///
+    /// * `n_` - Size of the tree
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn new(n_: usize) -> Self {
         let mut k = 1;
         let mut log_k = 0;
@@ -163,7 +190,15 @@ where
     }
 
     /// Increment the value at position p by delta
-    /// p NEEDS to be mutable...
+    ///
+    /// ### Params
+    ///
+    /// * `p` - Position to increment (mutable)
+    /// * `delta` - Value to add
+    ///
+    /// ### Note
+    ///
+    /// p NEEDS to be mutable for the algorithm to work correctly
     pub fn increment(&mut self, mut p: usize, delta: T) {
         let block_end = p - (p & self.block_mask) + self.block_mask + 1;
         while p < block_end && p < self.n {
@@ -178,6 +213,14 @@ where
     }
 
     /// Calculate the sum in range 0 to r
+    ///
+    /// ### Params
+    ///
+    /// * `r` - Right bound of range
+    ///
+    /// ### Returns
+    ///
+    /// Sum in range [0, r)
     pub fn query_r(&self, mut r: usize) -> T {
         if r == 0 {
             return T::default();
@@ -193,7 +236,11 @@ where
 
 /// Structure for fgsea multi-level
 /// Stores and manages chunked samples for efficient processing
-
+///
+/// ### Fields
+///
+/// * `chunk_sum` - Sum of rank values in each chunk for fast computation
+/// * `chunks` - Vector of chunks, each containing gene indices for that chunk
 #[derive(Clone, Debug)]
 struct SampleChunks {
     chunk_sum: Vec<f64>,
@@ -202,6 +249,14 @@ struct SampleChunks {
 
 impl SampleChunks {
     /// Creates new SampleChunks with specified number of chunks
+    ///
+    /// ### Params
+    ///
+    /// * `chunks_number` - Number of chunks to create
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     fn new(chunks_number: usize) -> Self {
         Self {
             chunk_sum: vec![0.0; chunks_number],
@@ -214,9 +269,21 @@ impl SampleChunks {
 // ES Ruler //
 //////////////
 
+/// This is EsRuler implementation for adaptive enrichment score sampling
+///
 /// Further structure for fgsea multi-level
-/// This is EsRuler implementation
-
+///
+/// ### Fields
+///
+/// * `ranks` - Gene ranks used for ES calculation
+/// * `sample_size` - Current sample size (may change during duplication)
+/// * `original_sample_size` - Original sample size for p-value calculation
+/// * `pathway_size` - Number of genes in the pathway
+/// * `current_samples` - Current sample sets being processed
+/// * `enrichment_scores` - Calculated enrichment scores from samples
+/// * `prob_corrector` - Probability correction factors for p-value adjustment
+/// * `chunks_number` - Number of chunks used for optimization
+/// * `chunk_last_element` - Last element index in each chunk
 #[derive(Clone, Debug)]
 struct EsRuler {
     ranks: Vec<f64>,
@@ -231,7 +298,17 @@ struct EsRuler {
 }
 
 impl EsRuler {
-    /// Creates a new ES ruler
+    /// Creates a new ES ruler for adaptive sampling
+    ///
+    /// ### Params
+    ///
+    /// * `inp_ranks` - Input gene ranks
+    /// * `inp_sample_size` - Sample size
+    /// * `inp_pathway_size` - Pathway size
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     fn new(inp_ranks: &[f64], inp_sample_size: usize, inp_pathway_size: usize) -> Self {
         let mut current_samples: Vec<Vec<usize>> = Vec::with_capacity(inp_sample_size);
         current_samples.resize_with(inp_sample_size, Vec::new);
@@ -250,7 +327,8 @@ impl EsRuler {
     }
 
     /// Removes samples with low ES and duplicates samples with high ES
-    /// This is to drive the sampling process to higher and higher ES
+    ///
+    /// This drives the sampling process toward higher and higher ES values
     fn duplicate_samples(&mut self) {
         let mut stats: Vec<(f64, usize)> = vec![(0.0, 0); self.sample_size];
         let mut pos_es_indxs: FxHashSet<usize> = FxHashSet::default();
@@ -304,8 +382,18 @@ impl EsRuler {
         self.sample_size = self.current_samples.len();
     }
 
-    /// Attempts to improve a sample by swapping genes in/out
-    /// Returns number of successful perturbations
+    /// Attempts to improve a sample by swapping genes in/out using perturbation
+    ///
+    /// ### Params
+    /// * `ranks` - Gene ranks
+    /// * `k` - Number of genes in sample
+    /// * `sample_chunks` - Sample chunks to modify
+    /// * `bound` - ES boundary threshold
+    /// * `rng` - Random number generator
+    ///
+    /// ### Returns
+    ///
+    /// Number of successful perturbations
     #[allow(unused_assignments)]
     fn perturbate(
         &self,
@@ -496,7 +584,14 @@ impl EsRuler {
     }
 
     /// Extends the ES distribution to include the target ES value
+    ///
     /// Uses an adaptive sampling approach to explore higher ES values
+    ///
+    /// ### Params
+    ///
+    /// * `es` - Target enrichment score
+    /// * `seed` - Random seed
+    /// * `eps` - Precision parameter (0.0 for no precision requirement)
     fn extend(&mut self, es: f64, seed: u64, eps: f64) {
         let mut rng = StdRng::seed_from_u64(seed);
 
@@ -594,7 +689,16 @@ impl EsRuler {
         }
     }
 
-    /// Function to get the p-value
+    /// Calculate the p-value for a given enrichment score
+    ///
+    /// ### Params
+    ///
+    /// * `es` - Enrichment score
+    /// * `sign` - Whether to consider sign in calculation
+    ///
+    /// # Returns
+    ///
+    /// Tuple of (p-value, error quality flag)
     fn get_pval(&self, es: f64, sign: bool) -> (f64, bool) {
         let half_size = (self.original_sample_size + 1) / 2; // Use original sample_size here!
         let it_index;
@@ -641,6 +745,15 @@ impl EsRuler {
 //////////////////////
 
 /// Calculate the enrichment score (based on the fgsea C++ implementation)
+///
+/// ### Params
+///
+/// * `ranks` - Gene ranks array
+/// * `pathway_indices` - Indices of genes in the pathway
+///
+/// ### Returns
+///
+/// Enrichment score value
 fn calc_es(ranks: &[f64], pathway_indices: &[usize]) -> f64 {
     let mut ns = 0.0;
     for p in pathway_indices {
@@ -668,6 +781,15 @@ fn calc_es(ranks: &[f64], pathway_indices: &[usize]) -> f64 {
 }
 
 /// Calculate the positive enrichment score (based on the fgsea C++ implementation)
+///
+/// ### Params
+///
+/// * `ranks` - Gene ranks array
+/// * `pathway_indices` - Indices of genes in the pathway
+///
+/// # Returns
+///
+/// Positive enrichment score value
 fn calc_positive_es(ranks: &[f64], pathway_indices: &[usize]) -> f64 {
     let mut ns = 0.0;
     for p in pathway_indices {
@@ -689,6 +811,18 @@ fn calc_positive_es(ranks: &[f64], pathway_indices: &[usize]) -> f64 {
 }
 
 /// Calculate the ES and leading edge genes
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `gs_idx` - Gene set indices
+/// * `gsea_param` - GSEA parameter for weighting
+/// * `return_leading_edge` - Whether to return leading edge genes
+/// * `one_indexed` - Whether indices are one-based
+///
+/// ### Returns
+///
+/// Tuple of (gene statistic, leading edge genes)
 pub fn calc_gsea_stats(
     stats: &[f64],
     gs_idx: &[i32],
@@ -769,7 +903,15 @@ pub fn calc_gsea_stats(
     (gene_stat, leading_edge)
 }
 
-/// The ranks from order function from the fgsea C++ implementation
+/// Convert order indices to ranks (from fgsea C++ implementation)
+///
+/// ### Params
+///
+/// * `order` - Ordering indices
+///
+/// ### Returns
+///
+/// Rank vector
 pub fn ranks_from_order(order: &[usize]) -> Vec<i32> {
     let mut res = vec![0; order.len()];
     for (i, _) in order.iter().enumerate() {
@@ -781,6 +923,14 @@ pub fn ranks_from_order(order: &[usize]) -> Vec<i32> {
 
 /// Returns a vector of indices that would sort the input slice
 /// Implementation of the C++ code
+///
+/// ### Params
+///
+/// * `x` - Input slice to get ordering for
+///
+/// ### Returns
+///
+/// Vector of sorting indice
 pub fn fgsea_order<T>(x: &[T]) -> Vec<usize>
 where
     T: PartialOrd,
@@ -790,7 +940,16 @@ where
     res
 }
 
-/// Subvector function to extract the relevant values
+/// Extract values at specified indices from a vector
+///
+/// ### Params
+///
+/// * `from` - Source vector
+/// * `indices` - Indices to extract (1-indexed)
+///
+/// # Returns
+///
+/// Option containing extracted values or None if invalid index
 fn subvector(from: &[f64], indices: &[usize]) -> Option<Vec<f64>> {
     let mut result = Vec::with_capacity(indices.len());
     for &idx in indices {
@@ -803,7 +962,19 @@ fn subvector(from: &[f64], indices: &[usize]) -> Option<Vec<f64>> {
     Some(result)
 }
 
-/// Generate random gene set indices.
+/// Generate random gene set indices using parallel processing
+///
+/// ### Params
+///
+/// * `iter_number` - Number of iterations/permutations
+/// * `max_len` - Maximum length of each sample
+/// * `universe_length` - Total number of genes
+/// * `seed` - Random seed
+/// * `one_indexed` - Whether to use 1-based indexing
+///
+/// # Returns
+///
+/// Vector of random index vectors
 pub fn create_random_gs_indices(
     iter_number: usize,
     max_len: usize,
@@ -844,8 +1015,17 @@ pub fn create_random_gs_indices(
         .collect()
 }
 
-/// Transform the batch results into final GSEA results,
-/// i.e., es, nes, pval and size
+/// Transform batch results into final GSEA results (es, nes, pval and size)
+///
+/// ### Params
+///
+/// * `pathway_scores` - Enrichment scores for pathways
+/// * `pathway_sizes` - Sizes of pathways
+/// * `gsea_res` - Batch results from permutations
+///
+/// ### Returns
+///
+/// Final GSEA results structure
 pub fn calculate_nes_es_pval<'a>(
     pathway_scores: &'a [f64],
     pathway_sizes: &'a [usize],
@@ -907,8 +1087,22 @@ pub fn calculate_nes_es_pval<'a>(
     }
 }
 
-/// Generate k random numbers from [a, b] (inclusive range)
-/// Uses Fisher-Yates shuffle approach similar to typical C++ implementations
+/// Generate k random numbers from [a, b] inclusive range using Fisher-Yates shuffle
+///
+/// ### Params
+///
+/// * `a` - Range start
+/// * `b` - Range end
+/// * `k` - Number of elements to select
+/// * `rng` - Random number generator
+///
+/// ### Returns
+///
+/// Sorted vector of k random elements
+///
+/// ### Panics
+///
+/// If k > range size (b - a + 1)
 fn combination(a: usize, b: usize, k: usize, rng: &mut impl Rng) -> Vec<usize> {
     let n = b - a + 1;
     if k > n {
@@ -933,6 +1127,11 @@ fn combination(a: usize, b: usize, k: usize, rng: &mut impl Rng) -> Vec<usize> {
 }
 
 /// Rearranges array so nth element is in its sorted position
+///
+/// ### Params
+///
+/// * `arr` - Array to rearrange
+/// * `n` - Target position
 fn nth_element(arr: &mut [i32], n: usize) {
     if arr.is_empty() || n >= arr.len() {
         return;
@@ -948,9 +1147,16 @@ fn nth_element(arr: &mut [i32], n: usize) {
 // Classical Gene Set enrichment analysis //
 ////////////////////////////////////////////
 
-/// Calculate the Enrichment score. The function assumes
-/// that stats is sorted and pathway are the index positions
-/// of the genes in the pathway
+/// Calculate the Enrichment score assuming stats is sorted and pathway contains index positions
+///
+/// ### Params
+///
+/// * `stats` - Sorted gene statistics
+/// * `pathway` - Index positions of genes in the pathway
+///
+/// ### Returns
+///
+/// Enrichment score
 pub fn calculate_es(stats: &[f64], pathway: &[usize]) -> f64 {
     // stats and p must be sorted
     let no_genes = stats.len();
@@ -980,7 +1186,17 @@ pub fn calculate_es(stats: &[f64], pathway: &[usize]) -> f64 {
     }
 }
 
-/// Calculate once for each size the permutation-based enrichment scores.
+/// Calculate once for each size the permutation-based enrichment scores
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `gene_set_sizes` - Unique gene set sizes
+/// * `shared_perms` - Shared permutations
+///
+/// ### Returns
+///
+/// HashMap mapping sizes to permutation scores
 fn create_perm_es(
     stats: &[f64],
     gene_set_sizes: &[usize],
@@ -998,7 +1214,19 @@ fn create_perm_es(
     shared_perm_es
 }
 
-/// Calculate the permutations in the 'traditional' way.
+/// Calculate the permutations in the 'traditional' way
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `pathway_scores` - Pathway enrichment scores
+/// * `pathway_sizes` - Pathway sizes
+/// * `iters` - Number of iterations
+/// * `seed` - Random seed
+///
+/// ### Returns
+///
+/// Batch results from traditional, permutation-based method
 pub fn calc_gsea_stat_traditional_batch(
     stats: &[f64],
     pathway_scores: &[f64],
@@ -1054,9 +1282,21 @@ pub fn calc_gsea_stat_traditional_batch(
 // FGSEA simple //
 //////////////////
 
-/// Crazy approximation from the fgsea paper leveraging a square root heuristic
-/// and convex hull updates translated into Rust
+/// Square root heuristic approximation from fgsea paper with convex hull updates
+///
 /// Selected stats needs to be one-indexed!!!
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `selected_stats` - Selected gene indices (one-indexed)
+/// * `selected_order` - Order of selected genes
+/// * `gsea_param` - GSEA parameter for weighting
+/// * `rev` - Whether to reverse direction
+///
+/// # Returns
+///
+/// Vector of enrichment scores
 fn gsea_stats_sq(
     stats: &[f64],
     selected_stats: &[usize],
@@ -1252,8 +1492,17 @@ fn gsea_stats_sq(
     res
 }
 
-/// Calculate the cumulative enrichment scores via the
-/// block-wise approximation
+/// Calculate cumulative enrichment scores via block-wise approximation
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `selected_stats` - Selected gene indices
+/// * `gsea_param` - GSEA parameter for weighting
+///
+/// ### Returns
+///
+/// Vector of cumulative enrichment scores
 pub fn calc_gsea_stat_cumulative(
     stats: &[f64],
     selected_stats: &[usize],
@@ -1282,7 +1531,21 @@ pub fn calc_gsea_stat_cumulative(
         .collect()
 }
 
-/// Create the permutations for the fgsea simple method
+/// Create permutations for the fgsea simple method
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `gsea_param` - GSEA parameter
+/// * `iters` - Number of iterations
+/// * `max_len` - Maximum pathway length
+/// * `universe_length` - Total number of genes
+/// * `seed` - Random seed
+/// * `one_indexed` - Whether to use 1-based indexing
+///
+/// ### Returns
+///
+/// Vector of permutation enrichment score vectors
 pub fn create_perm_es_simple(
     stats: &[f64],
     gsea_param: f64,
@@ -1315,6 +1578,16 @@ pub fn create_perm_es_simple(
 }
 
 /// Abstraction wrapper to be used in different parts of the package
+///
+/// ### Params
+///
+/// * `pathway_scores` - Pathway enrichment scores
+/// * `pathway_sizes` - Pathway sizes
+/// * `shared_perm` - Shared permutation results
+///
+/// ### Returns
+///
+/// Batch results from permutation analysis
 pub fn calc_gsea_stats_wrapper(
     pathway_scores: &[f64],
     pathway_sizes: &[usize],
@@ -1364,7 +1637,20 @@ pub fn calc_gsea_stats_wrapper(
     }
 }
 
-/// Calculate random scores batch-wise
+/// Calculate random scores batch-wise using the fgsea simple method
+///
+/// ### Params
+///
+/// * `stats` - Gene statistics
+/// * `pathway_scores` - Pathway enrichment scores
+/// * `pathway_sizes` - Pathway sizes
+/// * `iters` - Number of iterations
+/// * `gsea_param` - GSEA parameter
+/// * `seed` - Random seed
+///
+/// ### Returns
+///
+/// Batch results from fgsea simple method
 pub fn calc_gsea_stat_cumulative_batch(
     stats: &[f64],
     pathway_scores: &[f64],
@@ -1386,11 +1672,30 @@ pub fn calc_gsea_stat_cumulative_batch(
 //////////////////////
 
 /// Helper to calculate the beta mean log
+///
+/// ### Params
+///
+/// * `a` - First beta parameter
+/// * `b` - Second beta parameter
+///
+/// ### Returns
+///
+/// Beta mean log value
 fn beta_mean_log(a: usize, b: usize) -> f64 {
     digamma(a as f64) - digamma((b + 1) as f64)
 }
 
-/// Calculates the log corrections
+/// Calculates the log corrections for p-value adjustment
+///
+/// ### Params
+///
+/// * `prob_corrector` - Probability correction vector
+/// * `prob_corr_idx` - Correction index
+/// * `sample_size` - Sample size
+///
+/// ### Returns
+///
+/// Tuple of (log correction, validity flag)
 fn calc_log_correction(
     prob_corrector: &[usize],
     prob_corr_idx: usize,
@@ -1400,7 +1705,6 @@ fn calc_log_correction(
     let half_size = (sample_size + 1) / 2;
     let remainder = sample_size - (prob_corr_idx % half_size);
 
-    // ONLY CHANGE: cast u32 to usize for beta_mean_log
     let cond_prob = beta_mean_log(prob_corrector[prob_corr_idx] + 1, remainder);
     result += cond_prob;
 
@@ -1412,6 +1716,15 @@ fn calc_log_correction(
 }
 
 /// Calculates multilevel error for a given p-value and sample size
+///
+/// ### Params
+///
+/// * `pval` - P-value
+/// * `sample_size` - Sample size
+///
+/// ### Returns
+///
+/// Multilevel error estimate
 fn multilevel_error(pval: &f64, sample_size: &f64) -> f64 {
     let floor_term = (-pval.log2() + 1.0).floor();
     let trigamma_diff = trigamma((sample_size + 1.0) / 2.0) - trigamma(sample_size + 1.0);
@@ -1420,6 +1733,20 @@ fn multilevel_error(pval: &f64, sample_size: &f64) -> f64 {
 }
 
 /// Function to do the multi-level magic in fgsea
+///
+/// ### Params
+///
+/// * `enrichment_score` - Target enrichment score
+/// * `ranks` - Gene ranks
+/// * `pathway_size` - Size of pathway
+/// * `sample_size` - Sample size
+/// * `seed` - Random seed
+/// * `eps` - Precision parameter (0.0 for no precision requirement)
+/// * `sign` - Whether to consider sign in calculation
+///
+/// ### Returns
+///
+/// Tuple of (p-value, error quality flag)
 pub fn fgsea_multilevel_helper(
     enrichment_score: f64,
     ranks: &[f64],
@@ -1443,7 +1770,17 @@ pub fn fgsea_multilevel_helper(
     es_ruler.get_pval(enrichment_score.abs(), sign)
 }
 
-/// Calculates the simple and multi error in Rust
+/// Calculates the simple and multi error estimates
+///
+/// ### Params
+///
+/// * `n_more_extreme` - Number of more extreme permutations
+/// * `nperm` - Total permutations
+/// * `sample_size` - Sample size
+///
+/// ### Returns
+///
+/// Tuple of (simple errors, multi errors)
 pub fn calc_simple_and_multi_error(
     n_more_extreme: &[usize],
     nperm: usize,

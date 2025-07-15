@@ -3,7 +3,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use crate::assert_symmetric_mat;
 use crate::helpers::linalg::column_correlation;
@@ -76,7 +76,7 @@ fn rs_coremo_quality(
     let cor_mat = r_matrix_to_faer(&cor_mat);
 
     // Faster look-ups
-    let gene_map: HashMap<&str, usize> = row_names
+    let gene_map: FxHashMap<&str, usize> = row_names
         .iter()
         .enumerate()
         .map(|(i, gene)| (gene.as_str(), i))

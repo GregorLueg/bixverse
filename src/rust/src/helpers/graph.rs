@@ -112,6 +112,10 @@ pub struct PageRankWorkingMemory {
 
 impl PageRankWorkingMemory {
     /// Initialise the structure
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn new() -> Self {
         Self {
             ranks: Vec::new(),
@@ -154,6 +158,10 @@ impl PageRankGraph {
     /// ### Params
     ///
     /// * `graph` The PetGraph from which to generate the structure.
+    ///
+    /// ### Returns
+    ///
+    /// Initialised structure
     pub fn from_petgraph<G>(graph: G) -> Self
     where
         G: NodeCount + IntoEdges + NodeIndexable + Sync,
