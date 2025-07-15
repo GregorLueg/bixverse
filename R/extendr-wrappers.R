@@ -1117,6 +1117,20 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
+#' Rust version of calcaluting the personalised page rank
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param personalised Numerical vector. The reset values. They must sum to 1 and
+#' be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return The personalised page rank values.
+#'
+#' @export
+rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+
 #' Calculate massively parallelised personalised page rank scores
 #'
 #' @description Helper function to calculate in parallel on the same (unweighted)
@@ -1134,20 +1148,6 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #' `diffusion_scores` list (in order), and each column representing the value
 #' of the personalised page rank diffusion for this node.
 rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, diffusion_scores, undirected)
-
-#' Rust version of calcaluting the personalised page rank
-#'
-#' @param node_names String vector. Name of the graph nodes.
-#' @param from String vector. The names of the `from` edges from the edge list.
-#' @param to String vector. The names of the `to` edges from the edge list.
-#' @param personalised Numerical vector. The reset values. They must sum to 1 and
-#' be of same length of `node_names`!
-#' @param undirected Boolean. Is this an undirected graph.
-#'
-#' @return The personalised page rank values.
-#'
-#' @export
-rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
 
 #' Calculate massively parallelised tied diffusion scores
 #'
