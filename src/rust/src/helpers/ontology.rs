@@ -45,24 +45,6 @@ pub enum OntoSemSimType {
     Combined,
 }
 
-/// Parsing the Onto Similarity types
-///
-/// ### Params
-///
-/// * `s` - String that defines the semenatic similarity Type
-///
-/// ### Returns
-///
-/// The respective `OntoSemSimType` Enum.
-fn parse_onto_sim_type(s: &str) -> Option<OntoSemSimType> {
-    match s.to_lowercase().as_str() {
-        "resnik" => Some(OntoSemSimType::Resnik),
-        "lin" => Some(OntoSemSimType::Lin),
-        "combined" => Some(OntoSemSimType::Combined),
-        _ => None,
-    }
-}
-
 /// Get the information content of the MICA
 ///
 /// ### Params
@@ -84,128 +66,65 @@ fn get_mica(
     let ancestor_1 = ancestor_map.get(t1).unwrap_or(&EMPTY_ANCESTORS);
     let ancestor_2 = ancestor_map.get(t2).unwrap_or(&EMPTY_ANCESTORS);
 
-    // Iterate through smaller set for efficiency
-    // Good suggestion from Claude to make this even faster...
     let (smaller, larger) = if ancestor_1.len() <= ancestor_2.len() {
         (ancestor_1, ancestor_2)
     } else {
         (ancestor_2, ancestor_1)
     };
 
-    let mut max_ic: f64 = 0.0;
-    for ancestor in smaller {
-        if larger.contains(ancestor) {
-            if let Some(&ic) = info_content_map.get(ancestor) {
-                max_ic = max_ic.max(ic);
-            }
+    smaller
+        .iter()
+        .filter(|ancestor| larger.contains(*ancestor))
+        .filter_map(|ancestor| info_content_map.get(ancestor))
+        .fold(0.0, |max_ic, &ic| max_ic.max(ic))
+}
+
+/// Calculate semantic similarity between two terms
+///
+/// ### Params
+///
+/// * `t1` - Name of term 1.
+/// * `t2` - Name of term 2.
+/// * `sim_type` - `OntoSemSimType` defining the type of semantic similarity
+///                to calculate
+/// * `max_ic` - The maximum information content observed to rescale the Resnik
+///              similarity between 0 and 1.
+/// * `ancestor_map` - HashMap with the ancestors of the terms.
+/// * `info_content_map` - BTreeMap with the information content for the terms.
+///
+/// ### Returns
+///
+/// `OntoSimRes` result.
+fn calculate_similarity<'a>(
+    t1: &'a str,
+    t2: &'a str,
+    sim_type: OntoSemSimType,
+    max_ic: f64,
+    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
+    info_content_map: &BTreeMap<String, f64>,
+) -> OntoSimRes<'a> {
+    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
+
+    let sim = match sim_type {
+        OntoSemSimType::Resnik => mica / max_ic,
+        OntoSemSimType::Lin => {
+            let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
+            let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
+            2.0 * mica / (t1_ic + t2_ic)
         }
-    }
-
-    max_ic
-}
-
-/// Calculate the Resnik semantic similarity
-///
-/// ### Params
-///
-/// * `t1` - Name of term 1.
-/// * `t2` - Name of term 2.
-/// * `max_ic` - The maximum information content observed to rescale the Resnik
-///              similarity between 0 and 1.
-/// * `ancestor_map` - HashMap with the ancestors of the terms.
-/// * `info_content_map` - BTreeMap with the information content for the terms.
-///
-/// ### Returns
-///
-/// The Resnik similarity between the two terms as `OntoSimRes`.
-fn calculate_resnik<'a>(
-    t1: &'a str,
-    t2: &'a str,
-    max_ic: &f64,
-    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &BTreeMap<String, f64>,
-) -> OntoSimRes<'a> {
-    let sim = get_mica(t1, t2, ancestor_map, info_content_map);
-
-    OntoSimRes {
-        t1,
-        t2,
-        sim: sim / *max_ic,
-    }
-}
-
-/// Calculate the Lin semantic similarity
-///
-/// ### Params
-///
-/// * `t1` - Name of term 1.
-/// * `t2` - Name of term 2.
-/// * `ancestor_map` - HashMap with the ancestors of the terms.
-/// * `info_content_map` - BTreeMap with the information content for the terms.
-///
-/// ### Returns
-///
-/// The Lin similarity between the two terms as `OntoSimRes`.
-fn calculate_lin<'a>(
-    t1: &'a str,
-    t2: &'a str,
-    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &BTreeMap<String, f64>,
-) -> OntoSimRes<'a> {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let sim = 2.0 * mica / (t1_ic + t2_ic);
-
-    OntoSimRes { t1, t2, sim }
-}
-
-/// Calculate the combined semantic similarity based on Resnik and Lin
-///
-/// ### Params
-///
-/// * `t1` - Name of term 1.
-/// * `t2` - Name of term 2.
-/// * `max_ic` - The maximum information content observed to rescale the Resnik
-///              similarity between 0 and 1.
-/// * `ancestor_map` - HashMap with the ancestors of the terms.
-/// * `info_content_map` - BTreeMap with the information content for the terms.
-///
-/// ### Returns
-///
-/// The combined similarity between the two terms as `OntoSimRes`.
-fn calculate_combined_sim<'a>(
-    t1: &'a str,
-    t2: &'a str,
-    max_ic: &f64,
-    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &BTreeMap<String, f64>,
-) -> OntoSimRes<'a> {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
-    let resnik_sim = mica / max_ic;
-    let sim = (lin_sim + resnik_sim) / 2.0;
+        OntoSemSimType::Combined => {
+            let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
+            let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
+            let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
+            let resnik_sim = mica / max_ic;
+            (lin_sim + resnik_sim) / 2.0
+        }
+    };
 
     OntoSimRes { t1, t2, sim }
 }
 
 /// Calculate the semantic similarity given two terms
-///
-/// ### Params
-///
-/// * `t1` - Name of term 1.
-/// * `t2` - Name of term 2.
-/// * `sim_type` - Name of the similarity you want to calculate.
-/// * `max_ic` - The maximum information content observed to rescale the Resnik
-///              similarity between 0 and 1.
-/// * `ancestor_map` - HashMap with the ancestors of the terms.
-/// * `info_content_map` - BTreeMap with the information content for the terms.
-///
-/// ### Returns
-///
-/// The specified similarity between the two terms as `OntoSimRes`.
 pub fn get_single_onto_sim<'a>(
     t1: &'a str,
     t2: &'a str,
@@ -214,18 +133,21 @@ pub fn get_single_onto_sim<'a>(
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
     info_content_map: &BTreeMap<String, f64>,
 ) -> Result<OntoSimRes<'a>> {
-    let onto_sim_type = parse_onto_sim_type(sim_type)
-        .ok_or_else(|| format!("Invalid Ontology Similarity Type: {}", sim_type))?;
-
-    let res = match onto_sim_type {
-        OntoSemSimType::Resnik => calculate_resnik(t1, t2, max_ic, ancestor_map, info_content_map),
-        OntoSemSimType::Lin => calculate_lin(t1, t2, ancestor_map, info_content_map),
-        OntoSemSimType::Combined => {
-            calculate_combined_sim(t1, t2, max_ic, ancestor_map, info_content_map)
-        }
+    let onto_sim_type = match sim_type.to_lowercase().as_str() {
+        "resnik" => OntoSemSimType::Resnik,
+        "lin" => OntoSemSimType::Lin,
+        "combined" => OntoSemSimType::Combined,
+        _ => return Err(format!("Invalid Ontology Similarity Type: {}", sim_type).into()),
     };
 
-    Ok(res)
+    Ok(calculate_similarity(
+        t1,
+        t2,
+        onto_sim_type,
+        *max_ic,
+        ancestor_map,
+        info_content_map,
+    ))
 }
 
 /// Calculate the semantic similarity in an efficient manner for a set of terms
