@@ -16,11 +16,13 @@ knitr:
 generally. This vignette is there to explore how to use these functions more
 general. This vignette will show you to use:
 
-* Correlations (via `rs_cor()`)
-* Covariance (via `rs_covariance()`)
-* Covariance to correlation (via `rs_cov2cor()`)
-* Correlations between two matrices (via `rs_cor2()`)
-* Calculations of set similarities between
+* Correlations (via `rs_cor()`).
+* Covariance (via `rs_covariance()`).
+* Covariance to correlation (via `rs_cov2cor()`).
+* Correlations between two matrices (via `rs_cor2()`).
+* Calculations of set similarities between (via `rs_set_similarity_list()` or
+`rs_set_similarity()`).
+* Massively parallelised personalised page rank scores.
 
 ```{r}
 #| label: setup

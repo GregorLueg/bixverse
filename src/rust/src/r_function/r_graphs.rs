@@ -4,8 +4,8 @@ use rayon::prelude::*;
 use std::sync::Arc;
 
 use crate::helpers::graph::*;
-use crate::helpers::linalg::{col_means, col_sds};
 use crate::utils::general::nested_vector_to_faer_mat;
+use crate::utils::r_rust_interface::faer_to_r_matrix;
 
 /// Rust version of calcaluting the personalised page rank
 ///
@@ -33,9 +33,11 @@ fn rs_page_rank(
     personalized_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
 }
 
-/// Helper function to calculate permutation-based page rank scores
+/// Calculate massively parallelised personalised page rank scores
 ///
-/// @description Helper function to calculate permutation based page-rank scores.
+/// @description Helper function to calculate in parallel on the same (unweighted)
+/// network the personalised page rank as fast as possible. Can be used for permutations
+/// type approaches.
 ///
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
@@ -44,20 +46,17 @@ fn rs_page_rank(
 /// values. Each element must sum to 1 and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
 ///
-/// @return A list containing:
-///  \itemize{
-///   \item means - The mean personalised page-rank scores based on the permutations.
-///   \item sd - The standard deviation of the personalised page-rank scores based on
-///   permutations.
-/// }
+/// @return A matrix of the scores with each row representing an element in the
+/// `diffusion_scores` list (in order), and each column representing the value
+/// of the personalised page rank diffusion for this node.
 #[extendr]
-fn rs_page_rank_permutations(
+fn rs_page_rank_parallel(
     node_names: Vec<String>,
     from: Vec<String>,
     to: Vec<String>,
     diffusion_scores: List,
     undirected: bool,
-) -> extendr_api::Result<List> {
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Pre-process graph once
@@ -86,16 +85,14 @@ fn rs_page_rank_permutations(
         .collect();
 
     let matrix_result = nested_vector_to_faer_mat(page_rank_res, false);
-    let means = col_means(matrix_result.as_ref());
-    let sds = col_sds(matrix_result.as_ref());
 
-    Ok(list!(means = means, sd = sds))
+    Ok(faer_to_r_matrix(matrix_result.as_ref()))
 }
 
-/// Helper function to calculate permutation-based tied page rank scores
+/// Calculate massively parallelised tied diffusion scores
 ///
-/// @description Helper function to calculate permutation based tied page-rank
-/// scores.
+/// @description Helper function to calculate in parallel on the same (unweighted)
+/// network the tied diffusions as fast as possible. Can be used for permutation.
 ///
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
@@ -110,14 +107,11 @@ fn rs_page_rank_permutations(
 /// of summarisation function to use to calculate the tied diffusion.
 /// @param undirected Boolean. Is this an undirected graph.
 ///
-/// @return A list containing:
-///  \itemize{
-///   \item means - The mean personalised page-rank scores based on the permutations.
-///   \item sd - The standard deviation of the personalised page-rank scores based on
-///   permutations.
-/// }
+/// @return A matrix of the scores with each row representing a tied diffusion of
+/// of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
+/// column representing the value of the tied diffusion for this node.
 #[extendr]
-fn rs_page_rank_permutations_tied(
+fn rs_tied_diffusion_parallel(
     node_names: Vec<String>,
     from: Vec<String>,
     to: Vec<String>,
@@ -125,7 +119,7 @@ fn rs_page_rank_permutations_tied(
     diffusion_scores_2: List,
     summarisation_fun: String,
     undirected: bool,
-) -> extendr_api::Result<List> {
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     assert!(
         diffusion_scores_1.len() == diffusion_scores_2.len(),
         "The two sets of random diffusion scores need to be the same length"
@@ -191,15 +185,12 @@ fn rs_page_rank_permutations_tied(
 
     let matrix_result = nested_vector_to_faer_mat(tied_res, false);
 
-    let means = col_means(matrix_result.as_ref());
-    let sds = col_sds(matrix_result.as_ref());
-
-    Ok(list!(means = means, sd = sds))
+    Ok(faer_to_r_matrix(matrix_result.as_ref()))
 }
 
 extendr_module! {
     mod r_graphs;
-    fn rs_page_rank_permutations;
     fn rs_page_rank;
-    fn rs_page_rank_permutations_tied;
+    fn rs_page_rank_parallel;
+    fn rs_tied_diffusion_parallel;
 }

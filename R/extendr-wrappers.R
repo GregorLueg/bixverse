@@ -1117,9 +1117,11 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
-#' Helper function to calculate permutation-based page rank scores
+#' Calculate massively parallelised personalised page rank scores
 #'
-#' @description Helper function to calculate permutation based page-rank scores.
+#' @description Helper function to calculate in parallel on the same (unweighted)
+#' network the personalised page rank as fast as possible. Can be used for permutations
+#' type approaches.
 #'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
@@ -1128,13 +1130,10 @@ rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 #' values. Each element must sum to 1 and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return A list containing:
-#'  \itemize{
-#'   \item means - The mean personalised page-rank scores based on the permutations.
-#'   \item sd - The standard deviation of the personalised page-rank scores based on
-#'   permutations.
-#' }
-rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)
+#' @return A matrix of the scores with each row representing an element in the
+#' `diffusion_scores` list (in order), and each column representing the value
+#' of the personalised page rank diffusion for this node.
+rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, diffusion_scores, undirected)
 
 #' Rust version of calcaluting the personalised page rank
 #'
@@ -1150,10 +1149,10 @@ rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, un
 #' @export
 rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
 
-#' Helper function to calculate permutation-based tied page rank scores
+#' Calculate massively parallelised tied diffusion scores
 #'
-#' @description Helper function to calculate permutation based tied page-rank
-#' scores.
+#' @description Helper function to calculate in parallel on the same (unweighted)
+#' network the tied diffusions as fast as possible. Can be used for permutation.
 #'
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
@@ -1168,13 +1167,10 @@ rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(w
 #' of summarisation function to use to calculate the tied diffusion.
 #' @param undirected Boolean. Is this an undirected graph.
 #'
-#' @return A list containing:
-#'  \itemize{
-#'   \item means - The mean personalised page-rank scores based on the permutations.
-#'   \item sd - The standard deviation of the personalised page-rank scores based on
-#'   permutations.
-#' }
-rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_page_rank_permutations_tied, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+#' @return A matrix of the scores with each row representing a tied diffusion of
+#' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
+#' column representing the value of the tied diffusion for this node.
+rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
 #' Generate sparse data from an upper triangle
 #'

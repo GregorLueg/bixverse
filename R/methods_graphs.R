@@ -326,7 +326,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
     )
 
     # use rust for fast calculations
-    page_rank_perm_res <- rs_page_rank_permutations(
+    page_rank_perm_res <- rs_page_rank_parallel(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
@@ -355,7 +355,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
       iters = perm_iters
     )
 
-    page_rank_perm_res <- rs_page_rank_permutations_tied(
+    page_rank_perm_res <- rs_tied_diffusion_parallel(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
@@ -366,14 +366,17 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
     )
   }
 
-  z_scores <- (diffusion_results - page_rank_perm_res$means) /
-    (page_rank_perm_res$sd + 10^-32)
+  diffuion_means <- colMeans(page_rank_perm_res)
+  diffusion_sds <- matrixStats::colSds(page_rank_perm_res)
+
+  z_scores <- (diffusion_results - diffuion_means) /
+    (diffusion_sds + 10^-32)
 
   diffusion_perm_params <- list(
     "perm_iters" = perm_iters,
     "random_seed" = random_seed,
-    "perm_mean" = page_rank_perm_res$means,
-    "perm_sds" = page_rank_perm_res$sd
+    "perm_mean" = diffuion_means,
+    "perm_sds" = diffusion_sds
   )
 
   S7::prop(object, "diffusion_perm") <- z_scores
