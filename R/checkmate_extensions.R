@@ -347,6 +347,116 @@ checkGSEAParams <- function(x) {
   return(TRUE)
 }
 
+## gsva ------------------------------------------------------------------------
+
+#' Check GSVA parameters
+#'
+#' @description Checkmate extension for checking the gene set variation analysis
+#' (GSVA) parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkGSVAParams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "tau",
+      "min_size",
+      "max_size",
+      "max_diff",
+      "abs_rank"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "tau" = "N1",
+    "min_size" = "I1[3,)",
+    "max_size" = "I1[4,)",
+    "max_diff" = "B1",
+    "abs_rank" = "B1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in GSVA params does not conform to the",
+          "expected format. min_size and max_size need to be integers (with",
+          "max_size > min_size and min_size >= 3L),",
+          "tau being a double, max_diff and abs_rank booleans."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Check GSVA parameters
+#'
+#' @description Checkmate extension for checking single sample gene set
+#' enrichment analysis parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkSingleSampleGSEAparams <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "alpha",
+      "min_size",
+      "max_size",
+      "normalise"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "alpha" = "N1(0,1)",
+    "min_size" = "I1[3,)",
+    "max_size" = "I1[4,)",
+    "normalise" = "B1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in GSVA params does not conform to the",
+          "expected format. min_size and max_size need to be integers (with",
+          "max_size > min_size and min_size >= 3L),",
+          "alpha being a double (between 0 and 1), and normalise a boolean."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
 ## coremo ----------------------------------------------------------------------
 
 #' Check CoReMo parameters
@@ -545,6 +655,42 @@ assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
+
+## gsva ------------------------------------------------------------------------
+
+#' Assert GSVA parameter
+#'
+#' @description Checkmate extension for asserting single sample gene set
+#' enrichment analysis parameters.
+#'
+#' @inheritParams checkSingleSampleGSEAparams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
+  checkSingleSampleGSEAparams
+)
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Assert ssGSEA parameter
+#'
+#' @description Checkmate extension for asserting the gene set variation
+#' analysis (GSVA) parameters.
+#'
+#' @inheritParams checkGSVAParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 
 ## coremo ----------------------------------------------------------------------
 

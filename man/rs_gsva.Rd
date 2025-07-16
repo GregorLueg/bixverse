@@ -10,18 +10,21 @@ rs_gsva(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
 \item{exp}{Numerical matrix. The expression matrix with rows = genes, and
 columns = samples}
 
-\item{gs_list}{List. A list containing the pathway genes.}
+\item{gs_list}{List. A list containing the indices of the pathway genes
+(needs to be null indexed). See \code{\link[=rs_prepare_gsva_gs]{rs_prepare_gsva_gs()}}.}
 
-\item{tau}{Tau parameter. Usual recommendation is to use \code{1.0} here. Larger
-values emphasise the tails more.}
+\item{tau}{Float. Tau parameter, usual recommendation is to use \code{1.0} here.
+Larger values emphasise the tails more.}
 
-\item{gaussian}{If \code{TRUE} the Gaussian kernel will be used, if \code{FALSE} the
-Poisson kernel will be used.}
+\item{gaussian}{Boolean. If \code{TRUE} the Gaussian kernel will be used, if
+\code{FALSE} the Poisson kernel will be used.}
 
-\item{max_diff}{Scoring mode: \code{TRUE} = difference, \code{FALSE} = larger absolute
-value}
+\item{max_diff}{Boolean. Scoring mode: \code{TRUE} = difference, \code{FALSE} = larger
+absolute value}
 
-\item{abs_rank}{If \code{TRUE} = pos-neg, \code{FALSE} = pos+neg}
+\item{abs_rank}{Booelan. If \code{TRUE} = pos-neg, \code{FALSE} = pos+neg}
+
+\item{timings}{Boolean. Prints timings from the algorithm.}
 }
 \value{
 Returns a matrix of gene set ES scores x samples.

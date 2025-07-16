@@ -310,6 +310,19 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' column representing the value of the tied diffusion for this node.
 rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
+#' Prepare a pathway list for GSVA
+#'
+#' @param feature_names String vector. The feature names of the matrix (should
+#' be the rows).
+#' @param pathway_list List. A list containing the pathways and the respective
+#' genes
+#' @param min_size,max_size Integer. The minimum and maximum size respectively.
+#'
+#' @return Returns a list with (zero-indexed) indices.
+#'
+#' @export
+rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) .Call(wrap__rs_prepare_gsva_gs, feature_names, pathway_list, min_size, max_size)
+
 #' Rust version of the GSVA algorithm
 #'
 #' @description
@@ -318,19 +331,40 @@ rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1,
 #'
 #' @param exp Numerical matrix. The expression matrix with rows = genes, and
 #' columns = samples
-#' @param gs_list List. A list containing the pathway genes.
-#' @param tau Tau parameter. Usual recommendation is to use `1.0` here. Larger
-#' values emphasise the tails more.
-#' @param gaussian If `TRUE` the Gaussian kernel will be used, if `FALSE` the
-#' Poisson kernel will be used.
-#' @param max_diff Scoring mode: `TRUE` = difference, `FALSE` = larger absolute
-#' value
-#' @param abs_rank If `TRUE` = pos-neg, `FALSE` = pos+neg
+#' @param gs_list List. A list containing the indices of the pathway genes
+#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
+#' Larger values emphasise the tails more.
+#' @param gaussian Boolean. If `TRUE` the Gaussian kernel will be used, if
+#' `FALSE` the Poisson kernel will be used.
+#' @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
+#' absolute value
+#' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
+#' @param timings Boolean. Prints timings from the algorithm.
 #'
 #' @return Returns a matrix of gene set ES scores x samples.
 #'
 #' @export
 rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+
+#' Rust version of the ssGSEA algorithm
+#'
+#' @description
+#' Rust-based implementation of the popular single sample GSEA algorithm. Has
+#' further performance optimisations compared to the original implementation.
+#'
+#' @param exp Numerical matrix. The expression matrix with rows = genes, and
+#' columns = samples
+#' @param gs_list List. A list containing the indices of the pathway genes
+#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param alpha Float. The alpha parameter to adjust the weights.
+#' @param normalise Boolean. Shall the scores be normalised.
+#' @param timings Boolean. Prints timings from the algorithm.
+#'
+#' @return Returns a matrix of gene set ES scores x samples.
+#'
+#' @export
+rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'

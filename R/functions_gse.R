@@ -289,6 +289,156 @@ simplify_hypergeom_res <- function(
   res[!gene_set_name %in% to_remove]
 }
 
+## gsva ------------------------------------------------------------------------
+
+#' Bixverse implementation of GSVA
+#'
+#' @description
+#' Implementation of the bixverse version of the gene set variation analysis
+#' (GSVA).
+#'
+#' @param exp Numerical matrix. Rows represents the features, columns the
+#' features/genes.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param gaussian Boolean. If set to `TRUE` the Gaussian kernel will be used,
+#' if `FALSE` the Poisson will be used.
+#' @param gsva_params List. The GSVA parameters, see [bixverse::params_gsva()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item tau - Float. The tau parameter of the algorithm. Large values will
+#'  emphasise the tails more. Defaults to `1.0`.
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item max_diff - Boolean. Influences the scoring. If `TRUE` the difference
+#'  will be used; if `FALSE`, the largest absolute value.
+#'  \item abs_rank - Boolean. If `TRUE` = pos-neg, `FALSE` = pos+neg for the
+#'  internal calculations.
+#' }
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#'
+#' @export
+calc_gsva <- function(
+  exp,
+  pathways,
+  gaussian = TRUE,
+  gsva_params = params_gsva(),
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::assertMatrix(
+    exp,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertList(pathways, types = "character", names = "named")
+  checkmate::qassert(gaussian, "B1")
+  assertGSVAParams(gsva_params)
+
+  # function body
+  gs_indices <- with(
+    gsva_params,
+    rs_prepare_gsva_gs(
+      feature_names = rownames(exp),
+      pathway_list = pathways,
+      min_size = min_size,
+      max_size = max_size
+    )
+  )
+
+  gsva_res <- with(
+    gsva_params,
+    rs_gsva(
+      exp = exp,
+      gs_list = gs_indices,
+      tau = tau,
+      gaussian = gaussian,
+      max_diff = max_diff,
+      abs_rank = abs_rank,
+      timings = .verbose
+    )
+  )
+
+  rownames(gsva_res) <- names(gs_indices)
+  colnames(gsva_res) <- colnames(exp)
+
+  return(gsva_res)
+}
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Bixverse implementation of ssGSEA
+#'
+#' @description
+#' Implementation of the bixverse version of the single sample gene set
+#' enrichment analysis (ssGSEA)
+#'
+#' @param exp Numerical matrix. Rows represents the features, columns the
+#' features/genes.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param ssgsea_params List. The GSVA parameters, see [bixverse::params_ssgsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item alpha - Float. The exponent defining the weight of the tail in the
+#'  random walk performed by ssGSEA.
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item normalise - Boolean. Shall the scores be normalised.
+#' }
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#'
+#' @export
+calc_ssgsea <- function(
+  exp,
+  pathways,
+  ssgsea_params = params_ssgsea(),
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::assertMatrix(
+    exp,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertList(pathways, types = "character", names = "named")
+  assertSingleSampleGSEAparams(ssgsea_params)
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  gs_indices <- with(
+    ssgsea_params,
+    rs_prepare_gsva_gs(
+      feature_names = rownames(exp),
+      pathway_list = pathways,
+      min_size = min_size,
+      max_size = max_size
+    )
+  )
+
+  ssgsea_results <- with(
+    ssgsea_params,
+    rs_ssgsea(
+      exp = exp,
+      gs_list = gs_indices,
+      alpha = alpha,
+      normalise = normalise,
+      timings = .verbose
+    )
+  )
+
+  rownames(ssgsea_results) <- names(gs_indices)
+  colnames(ssgsea_results) <- colnames(exp)
+
+  return(ssgsea_results)
+}
+
 ## gsea ------------------------------------------------------------------------
 
 ### main functions -------------------------------------------------------------
