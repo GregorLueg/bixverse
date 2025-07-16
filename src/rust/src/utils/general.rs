@@ -88,6 +88,22 @@ pub fn array_max_min<T: PartialOrd + Copy>(arr: &[T]) -> (T, T) {
     (min_val, max_val)
 }
 
+/// Standard deviation
+///
+/// ### Params
+///
+/// * `x` Slice of `f64`
+///
+/// ### Returns
+///
+/// The standard deviation
+pub fn standard_deviation(x: &[f64]) -> f64 {
+    let n = x.len() as f64;
+    let mean: f64 = x.iter().sum::<f64>() / n;
+    let variance = x.iter().map(|&val| (val - mean).powi(2)).sum::<f64>() / (n - 1.0);
+    variance.sqrt()
+}
+
 /// String slice to FxHashSet
 ///
 /// ### Params

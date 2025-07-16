@@ -1,6 +1,7 @@
 pub mod fgsea;
 pub mod geom_elim;
 pub mod graph;
+pub mod gsva;
 pub mod hypergeom;
 pub mod ica;
 pub mod linalg;
