@@ -22,7 +22,6 @@ general. This vignette will show you to use:
 * Correlations between two matrices (via `rs_cor2()`).
 * Calculations of set similarities between (via `rs_set_similarity_list()` or
 `rs_set_similarity()`).
-* Massively parallelised personalised page rank scores.
 
 ```{r}
 #| label: setup
@@ -309,7 +308,3 @@ tictoc::toc()
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 ```
-
-### Graph methods
-
-For the generation

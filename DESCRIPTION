@@ -57,6 +57,8 @@ Imports:
     S7,
     zeallot
 Suggests: 
+    fgsea,
+    GSVA,
     knitr,
     microbenchmark,
     msigdbr,
