@@ -249,6 +249,83 @@ params_gsea <- function(
   )
 }
 
+## gsva ------------------------------------------------------------------------
+
+#' Wrapper function to generate GSVA parameters
+#'
+#' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
+#' Larger values emphasise the tails more.
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param max_diff Boolean. Scoring mode for GSVA, if `TRUE` = difference; if
+#' `FALSE` = larger absolute value.
+#' @param abs_rank Boolean. If `TRUE` = pos - neg, `FALSE` = pos + neg.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_gsva <- function(
+  tau = 1.0,
+  min_size = 5L,
+  max_size = 500L,
+  max_diff = TRUE,
+  abs_rank = FALSE
+) {
+  # checks
+  checkmate::qassert(tau, "N1")
+  checkmate::qassert(min_size, "I1")
+  checkmate::qassert(max_size, "I1")
+  checkmate::qassert(max_diff, "B1")
+  checkmate::qassert(abs_rank, "B1")
+
+  # return
+  return(
+    list(
+      tau = tau,
+      min_size = min_size,
+      max_size = max_size,
+      max_diff = max_diff,
+      abs_rank = abs_rank
+    )
+  )
+}
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Wrapper function to generate ssGSEA parameters
+#'
+#' @param alpha Float. The exponent defining the weight of the tail in the
+#' random walk performed by ssGSEA.
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param normalise Boolean. Shall the scores be normalised.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_ssgsea <- function(
+  alpha = 0.25,
+  min_size = 5L,
+  max_size = 500L,
+  normalise = TRUE
+) {
+  # checks
+  checkmate::qassert(alpha, "N1(0, 1)")
+  checkmate::qassert(min_size, "I1")
+  checkmate::qassert(max_size, "I1")
+  checkmate::qassert(normalise, "B1")
+
+  # return
+  return(
+    list(
+      alpha = alpha,
+      min_size = min_size,
+      max_size = max_size,
+      normalise = TRUE
+    )
+  )
+}
+
 ## coremo ----------------------------------------------------------------------
 
 #' Wrapper function to generate CoReMo parameters

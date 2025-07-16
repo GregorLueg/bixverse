@@ -244,8 +244,6 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     cor_dir_v2 > 0.99,
     info = "Rust personalsied Page Rank implementation directed network (v2)."
   )
-} else {
-  exit_file("igraph package not available for comparison tests")
 }
 
 # set similarities -------------------------------------------------------------

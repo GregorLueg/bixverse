@@ -309,3 +309,7 @@ tictoc::toc()
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 ```
+
+### Graph methods
+
+For the generation

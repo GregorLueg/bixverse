@@ -420,6 +420,62 @@ impl<'a> NamedMatrix<'a> {
     pub fn get_row_names_refs(&self) -> Vec<&String> {
         self.row_names.keys().collect()
     }
+
+    /// Get the row indices based on names
+    ///
+    /// ### Params
+    ///
+    /// * `rows_to_select` - Names of the row features
+    pub fn get_row_indices(&self, rows_to_select: Option<&[&str]>) -> Vec<usize> {
+        let row_indices: Vec<usize> = match rows_to_select {
+            None => (0..self.values.nrows()).collect(), // All rows
+            Some(rows) => {
+                if rows.is_empty() {
+                    return vec![];
+                }
+                let mut indices = Vec::new();
+                for &row_name in rows {
+                    if let Some(&index) = self.row_names.get(row_name) {
+                        indices.push(index);
+                    }
+                }
+                if indices.is_empty() {
+                    return vec![];
+                }
+                indices
+            }
+        };
+
+        row_indices
+    }
+
+    /// Get the col indices based on names
+    ///
+    /// ### Params
+    ///
+    /// * `rows_to_select` - Names of the row features
+    pub fn get_col_indices(&self, cols_to_select: Option<&[&str]>) -> Vec<usize> {
+        let col_indices: Vec<usize> = match cols_to_select {
+            None => (0..self.values.ncols()).collect(), // All columns
+            Some(cols) => {
+                if cols.is_empty() {
+                    return vec![];
+                }
+                let mut indices = Vec::new();
+                for &col_name in cols {
+                    if let Some(&index) = self.col_names.get(col_name) {
+                        indices.push(index);
+                    }
+                }
+                if indices.is_empty() {
+                    return vec![];
+                }
+                indices
+            }
+        };
+
+        col_indices
+    }
 }
 
 /// Transform an R matrix to a Faer one

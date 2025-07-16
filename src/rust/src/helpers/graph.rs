@@ -115,7 +115,7 @@ impl PageRankWorkingMemory {
     ///
     /// ### Returns
     ///
-    /// Initialised structure
+    /// Initialised `PageRankWorkingMemory` structure
     pub fn new() -> Self {
         Self {
             ranks: Vec::new(),
@@ -152,6 +152,7 @@ pub struct PageRankGraph {
     out_degrees: Vec<f64>,
 }
 
+#[allow(dead_code)]
 impl PageRankGraph {
     /// Generate the structure from a given petgraph.
     ///
@@ -161,7 +162,7 @@ impl PageRankGraph {
     ///
     /// ### Returns
     ///
-    /// Initialised structure
+    /// Initialised `PageRankGraph` structure
     pub fn from_petgraph<G>(graph: G) -> Self
     where
         G: NodeCount + IntoEdges + NodeIndexable + Sync,
@@ -180,6 +181,71 @@ impl PageRankGraph {
                 let target_idx = graph.to_index(edge.target());
                 out_edges[i].push(target_idx);
                 in_edges[target_idx].push(i);
+            }
+        }
+
+        // Flatten in_edges for better cache locality
+        let mut in_edges_flat = Vec::new();
+        let mut in_edges_offsets = Vec::with_capacity(node_count + 1);
+        in_edges_offsets.push(0);
+
+        for node_in_edges in &in_edges {
+            in_edges_flat.extend_from_slice(node_in_edges);
+            in_edges_offsets.push(in_edges_flat.len());
+        }
+
+        let out_degrees: Vec<f64> = out_edges.iter().map(|edges| edges.len() as f64).collect();
+
+        Self {
+            node_count,
+            in_edges_flat,
+            in_edges_offsets,
+            out_degrees,
+        }
+    }
+
+    /// Generate the structure directly from node names and edge lists
+    ///
+    /// ### Params
+    ///
+    /// * `nodes` - Slice of the node names
+    /// * `from` - Slice of the names of the from nodes
+    /// * `to` - Slice of the names of the to nodes
+    /// * `undirected` - Whether to create bidirectional edges
+    ///
+    /// ### Returns
+    ///
+    /// Initialised `PageRankGraph` structure
+    pub fn from_strings(
+        nodes: &[String],
+        from: &[String],
+        to: &[String],
+        undirected: bool,
+    ) -> Self {
+        assert_same_len!(from, to);
+
+        let node_count = nodes.len();
+
+        // Create mapping from node names to indices
+        let mut name_to_idx = FxHashMap::default();
+        for (idx, name) in nodes.iter().enumerate() {
+            name_to_idx.insert(name, idx);
+        }
+
+        // Build adjacency lists
+        let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+        let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+
+        for (from_name, to_name) in from.iter().zip(to.iter()) {
+            let from_idx = *name_to_idx.get(from_name).unwrap();
+            let to_idx = *name_to_idx.get(to_name).unwrap();
+
+            out_edges[from_idx].push(to_idx);
+            in_edges[to_idx].push(from_idx);
+
+            if undirected {
+                out_edges[to_idx].push(from_idx);
+                in_edges[from_idx].push(to_idx);
             }
         }
 
@@ -238,7 +304,7 @@ impl PageRankGraph {
 ///                              making this the personalised page rank.
 /// * `nb_iter` - Maximum number of iterations for the personalised page rank.
 /// * `tolerance` - Tolerance of the algorithm.
-/// * `working_memory` - The PageRankWorkingMemory structure to store the old
+/// * `working_memory` - The `PageRankWorkingMemory` structure to store the old
 ///                      and new ranks
 ///
 /// ### Returns

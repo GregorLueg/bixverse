@@ -7,6 +7,7 @@ use extendr_api::prelude::*;
 pub use r_function::r_coremo;
 pub use r_function::r_fgsea;
 pub use r_function::r_graphs;
+pub use r_function::r_gsva;
 pub use r_function::r_helpers;
 pub use r_function::r_hypergeom;
 pub use r_function::r_ica;
@@ -18,15 +19,16 @@ pub use r_function::r_stats;
 
 extendr_module! {
     mod bixverse;
-    use r_fgsea;
-    use r_hypergeom;
-    use r_stats;
-    use r_rbh;
-    use r_linalg;
-    use r_helpers;
-    use r_ica;
-    use r_ontology;
     use r_coremo;
+    use r_fgsea;
     use r_graphs;
+    use r_gsva;
+    use r_helpers;
+    use r_hypergeom;
+    use r_ica;
+    use r_linalg;
+    use r_ontology;
+    use r_rbh;
     use r_sparse_struct;
+    use r_stats;
 }
