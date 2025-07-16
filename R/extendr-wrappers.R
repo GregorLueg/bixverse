@@ -310,8 +310,27 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' column representing the value of the tied diffusion for this node.
 rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
+#' Rust version of the GSVA algorithm
+#'
+#' @description
+#' Rust-based implementation of the popular GSVA algorithm. Has further
+#' performance optimisations compared to the original implementation.
+#'
+#' @param exp Numerical matrix. The expression matrix with rows = genes, and
+#' columns = samples
+#' @param gs_list List. A list containing the pathway genes.
+#' @param tau Tau parameter. Usual recommendation is to use `1.0` here. Larger
+#' values emphasise the tails more.
+#' @param gaussian If `TRUE` the Gaussian kernel will be used, if `FALSE` the
+#' Poisson kernel will be used.
+#' @param max_diff Scoring mode: `TRUE` = difference, `FALSE` = larger absolute
+#' value
+#' @param abs_rank If `TRUE` = pos-neg, `FALSE` = pos+neg
+#'
+#' @return Returns a matrix of gene set ES scores x samples.
+#'
 #' @export
-rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank)
+rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'

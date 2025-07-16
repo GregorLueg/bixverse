@@ -32,6 +32,7 @@ pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
 /// ### Return
 ///
 /// The p-value of the hypergeometric test
+#[inline]
 pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
     if q == 0 {
         1.0
@@ -94,6 +95,7 @@ pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// ### Return
 ///
 /// The odds ratio. Pending values, can become infinity.
+#[inline]
 pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usize) -> f64 {
     (a1_b1 as f64 / a0_b1 as f64) / (a1_b0 as f64 / a0_b0 as f64)
 }
