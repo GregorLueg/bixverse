@@ -11,7 +11,8 @@ rs_gse_geom_elim(
   gene_universe_length,
   min_genes,
   elim_threshold,
-  debug
+  min_overlap,
+  fdr_threshold
 )
 }
 \arguments{
@@ -30,8 +31,9 @@ tested.}
 \item{elim_threshold}{p-value below which the elimination procedure shall be
 applied to the ancestors.}
 
-\item{debug}{Boolean that will provide additional console information for
-debugging purposes.}
+\item{min_overlap}{Optional minimum overlap threshold.}
+
+\item{fdr_threshold}{Optional fdr threshold.}
 }
 \value{
 A list containing:

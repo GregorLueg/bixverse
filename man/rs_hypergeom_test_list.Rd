@@ -4,7 +4,13 @@
 \alias{rs_hypergeom_test_list}
 \title{Run a hypergeometric test over a list of target genes}
 \usage{
-rs_hypergeom_test_list(target_genes_list, gene_sets, gene_universe)
+rs_hypergeom_test_list(
+  target_genes_list,
+  gene_sets,
+  gene_universe,
+  min_overlap,
+  fdr_threshold
+)
 }
 \arguments{
 \item{target_genes_list}{A character vector representing the target gene set.}
@@ -18,10 +24,13 @@ which the target genes and gene sets are sampled from.}
 \value{
 A list containing:
 \itemize{
-\item pvals - The p-values from the hypergeometric test
+\item pvals - The p-values from the hypergeometric test.
+\item fdr - The FDRs for each target gene calculated across all gene sets.
 \item odds ratios - The calculated odds ratios
-\item overlap - The size of the overlap
+\item hits - The size of the overlap between the target gene set and individual
+gene sets.
 \item gene_set_lengths - The length of the gene sets.
+\item to_keep - indices
 }
 }
 \description{

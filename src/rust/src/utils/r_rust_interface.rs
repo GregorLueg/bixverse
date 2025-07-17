@@ -132,6 +132,34 @@ pub fn r_nested_list_to_nested_hashmap(r_nested_list: List) -> extendr_api::Resu
     Ok(result)
 }
 
+/// Transforms an R list to a vector of HashSets
+///
+/// ### Params
+///
+/// * `r_list` - A named R list that contains named lists with String vectors.
+///
+/// ### Returns
+///
+/// Returns a Vector of FxHashSets
+pub fn r_list_to_hash_vec(r_list: List) -> extendr_api::Result<Vec<FxHashSet<String>>> {
+    let mut res = Vec::with_capacity(r_list.len());
+    for (n, s) in r_list {
+        let s_vec = s.as_string_vector().ok_or_else(|| {
+            Error::Other(format!(
+                "Failed to convert value for key '{}' to string vector",
+                n
+            ))
+        })?;
+        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
+        for item in s_vec {
+            s_hash.insert(item);
+        }
+        res.push(s_hash)
+    }
+
+    Ok(res)
+}
+
 /// Transform a Robj List into a BTreeMap with the values as HashSet
 ///
 /// Use where ordering of the values matters as the HashMaps have non-deterministic

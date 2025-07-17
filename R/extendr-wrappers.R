@@ -464,21 +464,28 @@ rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max
 #' gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around
 #' the Rust functions with type checks are provided in the package.
 #'
-#' @param target_genes A character vector representing the target gene set.
-#' @param gene_sets A list of strings that represent the gene sets to test against.
-#' @param gene_universe A character vector representing the gene universe from
-#' which the target genes and gene sets are sampled from.
+#' @param target_genes String vector. Represents the target gene set.
+#' @param gene_sets List. Contains the strings that represent the gene sets to
+#' test against.
+#' @param gene_universe String vector. The features representing the gene universe
+#' from which the target genes and gene sets are sampled from.
+#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
+#' overlappign genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
+#' tolerated FDR.
 #'
 #' @return A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
-#'   \item overlap - The size of the overlap
+#'   \item hits - The size of the overlap
 #'   \item gene_set_lengths - The length of the gene sets.
+#'   \item fdr - The FDR calculated across the gene sets.
+#'   \item to_keep - Indices of the gene sets that passed (optional) thresholds.
 #' }
 #'
 #' @export
-rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
+rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe, min_overlap, fdr_threshold)
 
 #' Run a hypergeometric test over a list of target genes
 #'
@@ -496,14 +503,17 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #'
 #' @return A list containing:
 #'  \itemize{
-#'   \item pvals - The p-values from the hypergeometric test
+#'   \item pvals - The p-values from the hypergeometric test.
+#'   \item fdr - The FDRs for each target gene calculated across all gene sets.
 #'   \item odds ratios - The calculated odds ratios
-#'   \item overlap - The size of the overlap
+#'   \item hits - The size of the overlap between the target gene set and individual
+#'   gene sets.
 #'   \item gene_set_lengths - The length of the gene sets.
+#'   \item to_keep - indices
 #' }
 #'
 #' @export
-rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe)
+rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold)
 
 #' Run hypergeometric enrichment over the gene ontology
 #'
@@ -524,8 +534,8 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param debug Boolean that will provide additional console information for
-#' debugging purposes.
+#' @param min_overlap Optional minimum overlap threshold.
+#' @param fdr_threshold Optional fdr threshold.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -537,7 +547,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' }
 #'
 #' @export
-rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold) .Call(wrap__rs_gse_geom_elim, target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold)
 
 #' Run hypergeometric enrichment a list of target genes over the gene ontology
 #'
@@ -560,23 +570,23 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall
 #' be applied to the ancestors.
-#' @param debug boolean that will provide additional console information for
-#' debugging purposes.
+#' @param min_overlap Optional minimum overlap threshold.
+#' @param fdr_threshold Optional fdr threshold.
 #'
 #' @return A list containing:
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
 #'   \item pvals - The calculated odds ratios.
+#'   \item fdrs - The calculated fdrs.
 #'   \item odds_ratios - The calculated odds ratios.
 #'   \item overlap - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item no_test - The number of tests that were conducted against
-#'   target_gene_list. First element indicates how many values belong to the
-#'   first target_genes set in the list, etc.
+#'   \item no_test - The number of tests for that target set that passed the
+#'   thresholds.
 #' }
 #'
 #' @export
-rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold)
 
 #' Prepare the data for whitening
 #'

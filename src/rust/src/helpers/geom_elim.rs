@@ -50,6 +50,26 @@ pub struct GoElimLevelResults {
     pub gene_set_lengths: Vec<usize>,
 }
 
+/// Final return structure after filtering
+///
+/// ### Fields
+///
+/// * `go_ids` - GO term identifiers.
+/// * `pvals` - p-values for the terms.
+/// * `fdr` - the FDRs.
+/// * `odds_ratio` - Calculated odds ratios for the terms.
+/// * `hits` - Number of intersecting genes with the target gene set
+/// * `gene_set_lengths` - Length of the gene set after elimination.
+#[derive(Clone, Debug)]
+pub struct GoElimFinalResults {
+    pub go_ids: Vec<String>,
+    pub pvals: Vec<f64>,
+    pub fdr: Vec<f64>,
+    pub odds_ratios: Vec<f64>,
+    pub hits: Vec<usize>,
+    pub gs_length: Vec<usize>,
+}
+
 /// Return structure of the `process_ontology_level_fgsea_simple()` ontology function.
 ///
 /// ### Fields
@@ -280,6 +300,59 @@ pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMa
     Ok((go_to_genes, ancestors, levels))
 }
 
+/// Filter down the results for a given gene ontology-aware elimination GSE
+///
+/// ### Params
+///
+/// * `go_ids` - The gene ontology term ids.
+/// * `pvals` - The enrichment p-values.
+/// * `fdr` - The enrichment fdr.
+/// * `odds_ratios` - The enrichment odds ratio.
+/// * `hits` - The number of hits.
+/// * `gs_lengths` - The size of the gene set (after elimination).
+/// * `min_overlap` - Optional minimum overlap.
+/// * `fdr_threshold` - Optional fdr threshold.
+///
+/// ### Returns
+///
+/// A `GoElimFinalResults` results structure
+#[allow(clippy::too_many_arguments)]
+pub fn filter_go_res(
+    go_ids: Vec<String>,
+    pvals: Vec<f64>,
+    fdr: Vec<f64>,
+    odds_ratios: Vec<f64>,
+    hits: Vec<usize>,
+    gs_lengths: Vec<usize>,
+    min_overlap: Option<usize>,
+    fdr_threshold: Option<f64>,
+) -> GoElimFinalResults {
+    let to_keep: Vec<usize> = (0..go_ids.len())
+        .filter(|i| {
+            if let Some(min_overlap) = min_overlap {
+                if hits[*i] < min_overlap {
+                    return false;
+                }
+            }
+            if let Some(fdr_threshold) = fdr_threshold {
+                if fdr[*i] > fdr_threshold {
+                    return false;
+                }
+            }
+            true
+        })
+        .collect();
+
+    GoElimFinalResults {
+        go_ids: to_keep.iter().map(|i| go_ids[*i].clone()).collect(),
+        pvals: to_keep.iter().map(|i| pvals[*i]).collect(),
+        fdr: to_keep.iter().map(|i| fdr[*i]).collect(),
+        odds_ratios: to_keep.iter().map(|i| odds_ratios[*i]).collect(),
+        hits: to_keep.iter().map(|i| hits[*i]).collect(),
+        gs_length: to_keep.iter().map(|i| gs_lengths[*i]).collect(),
+    }
+}
+
 /////////////////////
 // Hypergeom tests //
 /////////////////////
@@ -307,7 +380,6 @@ pub fn process_ontology_level(
     min_genes: usize,
     gene_universe_length: usize,
     elim_threshold: f64,
-    debug: bool,
 ) -> GoElimLevelResults {
     // Get the identifiers of that level and clean everything up
     let binding: Vec<String> = Vec::new();
@@ -334,14 +406,8 @@ pub fn process_ontology_level(
     let mut gene_set_lengths = Vec::with_capacity(size);
 
     for (key, value) in level_data_final {
-        if debug {
-            println!("This genes are being tested: {:?}", value)
-        };
         let gene_set_length = value.len();
         let hits = target_set.intersection(value).count();
-        if debug {
-            println!("Number of hits: {:?}", hits)
-        };
         let q = hits as i64 - 1;
         let pval = if q > 0 {
             hypergeom_pval(
@@ -383,42 +449,14 @@ pub fn process_ontology_level(
         .map(|(string, _)| string.clone())
         .collect();
 
-    if debug {
-        let no_terms = go_to_remove.len();
-        println!(
-            "At level {} a total of {} gene ontology terms will be affected by elimination: {:?}",
-            level, no_terms, go_to_remove
-        );
-    }
-
     for term in go_to_remove.iter() {
         let ancestors = go_obj.get_ancestors(term);
         let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
 
-        if debug {
-            println!(
-                "The following ancestors are affected: {:?}",
-                ancestors_final
-            )
-        }
-
         if let Some(genes_to_remove) = go_obj.get_genes(term) {
             let genes_to_remove = genes_to_remove.clone();
-            if debug {
-                println!("The following genes will be removed: {:?}", genes_to_remove)
-            }
-            go_obj.remove_genes(&ancestors_final, &genes_to_remove);
-        }
 
-        if debug {
-            for ancestor in &ancestors_final {
-                let mut binding = FxHashSet::default();
-                binding.insert("no genes left".to_string());
-                let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
-                if debug {
-                    println!("The following genes remain: {:?}", new_genes)
-                }
-            }
+            go_obj.remove_genes(&ancestors_final, &genes_to_remove);
         }
     }
 

@@ -4,23 +4,38 @@
 \alias{rs_hypergeom_test}
 \title{Run a single hypergeometric test.}
 \usage{
-rs_hypergeom_test(target_genes, gene_sets, gene_universe)
+rs_hypergeom_test(
+  target_genes,
+  gene_sets,
+  gene_universe,
+  min_overlap,
+  fdr_threshold
+)
 }
 \arguments{
-\item{target_genes}{A character vector representing the target gene set.}
+\item{target_genes}{String vector. Represents the target gene set.}
 
-\item{gene_sets}{A list of strings that represent the gene sets to test against.}
+\item{gene_sets}{List. Contains the strings that represent the gene sets to
+test against.}
 
-\item{gene_universe}{A character vector representing the gene universe from
-which the target genes and gene sets are sampled from.}
+\item{gene_universe}{String vector. The features representing the gene universe
+from which the target genes and gene sets are sampled from.}
+
+\item{min_overlap}{Optional integer. Shall a filter be applied on the minimum of
+overlappign genes.}
+
+\item{fdr_threshold}{Optional float. Shall a filter be applied for the maximum
+tolerated FDR.}
 }
 \value{
 A list containing:
 \itemize{
 \item pvals - The p-values from the hypergeometric test
 \item odds_ratios - The calculated odds ratios
-\item overlap - The size of the overlap
+\item hits - The size of the overlap
 \item gene_set_lengths - The length of the gene sets.
+\item fdr - The FDR calculated across the gene sets.
+\item to_keep - Indices of the gene sets that passed (optional) thresholds.
 }
 }
 \description{

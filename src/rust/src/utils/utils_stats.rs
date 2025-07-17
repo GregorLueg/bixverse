@@ -74,6 +74,48 @@ pub fn set_similarity(
     i as f64 / u as f64
 }
 
+/// Calculate the FDR
+///
+/// ### Params
+///
+/// * `pvals` - P-values for which to calculate the FDR
+///
+/// ### Returns
+///
+/// The calculated FDRs
+pub fn calc_fdr(pvals: &[f64]) -> Vec<f64> {
+    let n = pvals.len();
+    let n_f64 = n as f64;
+
+    let mut indexed_pval: Vec<(usize, f64)> =
+        pvals.par_iter().enumerate().map(|(i, &x)| (i, x)).collect();
+
+    indexed_pval
+        .sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    let adj_pvals_tmp: Vec<f64> = indexed_pval
+        .par_iter()
+        .enumerate()
+        .map(|(i, (_, p))| (n_f64 / (i + 1) as f64) * p)
+        .collect();
+
+    let mut current_min = adj_pvals_tmp[n - 1].min(1.0);
+    let mut monotonic_adj = vec![current_min; n];
+
+    for i in (0..n - 1).rev() {
+        current_min = current_min.min(adj_pvals_tmp[i]).min(1.0);
+        monotonic_adj[i] = current_min;
+    }
+
+    let mut adj_pvals = vec![0.0; n];
+
+    for (i, &(original_idx, _)) in indexed_pval.iter().enumerate() {
+        adj_pvals[original_idx] = monotonic_adj[i];
+    }
+
+    adj_pvals
+}
+
 //////////////////////
 // Vector functions //
 //////////////////////

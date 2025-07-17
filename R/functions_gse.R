@@ -47,12 +47,15 @@ gse_hypergeometric <- function(
   checkmate::qassert(threshold, c("R1[0,1]", "0"))
   checkmate::qassert(minimum_overlap, "I1")
   checkmate::qassert(.verbose, "B1")
-  # Function body
+
+  # body
   if (is.null(gene_universe)) {
     if (.verbose) {
       message(
-        "No gene universe given. Function will use the represented genes in the
-        pathways/gene sets as reference."
+        paste(
+          "No gene universe given. Function will use the represented",
+          "genes in the pathways/gene sets as reference."
+        )
       )
     }
     gene_universe <- unique(unlist(gene_set_list))
@@ -60,18 +63,26 @@ gse_hypergeometric <- function(
 
   target_genes_length <- length(target_genes)
 
-  gse_results <- rs_hypergeom_test(
+  gse_results_rs <- rs_hypergeom_test(
     target_genes = target_genes,
     gene_sets = gene_set_list,
-    gene_universe = gene_universe
+    gene_universe = gene_universe,
+    min_overlap = minimum_overlap,
+    fdr_threshold = threshold
   )
 
   gse_results <-
-    data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, `:=`(
-      gene_set_name = names(gene_set_list),
-      fdr = p.adjust(pvals, method = "BH")
-    )] %>%
+    data.table::data.table(do.call(
+      cbind,
+      gse_results_rs[c(
+        "pvals",
+        "odds_ratios",
+        "hits",
+        "gene_set_lengths",
+        "fdr"
+      )]
+    )) %>%
+    .[, gene_set_name := names(gene_set_list)[gse_results_rs$to_keep]] %>%
     data.table::setcolorder(
       .,
       c(
@@ -83,7 +94,6 @@ gse_hypergeometric <- function(
         "gene_set_lengths"
       )
     ) %>%
-    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals) %>%
     .[,
       target_set_lengths := target_genes_length
@@ -153,22 +163,32 @@ gse_hypergeometric_list <- function(
 
   target_set_lengths = sapply(target_genes_list, length)
 
-  gse_results <- rs_hypergeom_test_list(
+  rs_gse_results <- rs_hypergeom_test_list(
     target_genes_list = target_genes_list,
     gene_sets = gene_set_list,
-    gene_universe = gene_universe
+    gene_universe = gene_universe,
+    min_overlap = minimum_overlap,
+    fdr_threshold = threshold
   )
 
   gse_results <-
-    data.table::data.table(do.call(cbind, gse_results)) %>%
+    data.table::data.table(do.call(
+      cbind,
+      rs_gse_results[c(
+        "pvals",
+        "odds_ratios",
+        "hits",
+        "gene_set_lengths",
+        "fdr"
+      )]
+    )) %>%
     .[, `:=`(
-      gene_set_name = rep(names(gene_set_list), length(target_genes_list)),
+      gene_set_name = names(gene_set_list)[rs_gse_results$to_keep],
       target_set_name = rep(
-        names(target_genes_list),
-        each = length(gene_set_list)
+        names(target_set_lengths),
+        rs_gse_results$tests_passed
       )
     )] %>%
-    .[, fdr := p.adjust(pvals, method = "BH"), by = target_set_name] %>%
     data.table::setcolorder(
       .,
       c(
@@ -180,7 +200,6 @@ gse_hypergeometric_list <- function(
         "gene_set_lengths"
       )
     ) %>%
-    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals) %>%
     .[,
       target_set_lengths := target_set_lengths[match(

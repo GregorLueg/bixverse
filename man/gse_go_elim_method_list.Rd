@@ -10,8 +10,7 @@ gse_go_elim_method_list(
   minimum_overlap = 3L,
   fdr_threshold = 0.05,
   elim_threshold = 0.05,
-  min_genes = NULL,
-  .debug = FALSE
+  min_genes = NULL
 )
 }
 \arguments{
@@ -31,10 +30,6 @@ elimination on the ancestors shall be conducted.}
 \item{min_genes}{Integer. Minimum number of genes that have to be included in
 the gene ontology term. If NULL, it will default to the number of minimum
 genes stored in \code{gene_ontology_data}.}
-
-\item{.debug}{Boolean. Shall information from the Rust function be displayed.
-For debugging purposes. Warning: should you run this command over a large
-list, you will have a large print output!}
 }
 \value{
 data.table with enrichment results.

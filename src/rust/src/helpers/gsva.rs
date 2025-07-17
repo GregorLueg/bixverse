@@ -26,11 +26,12 @@ const SIGMA_FACTOR: f64 = 4.0;
 /// Helps prevent zero lambda values and provides numerical stability.
 const POISSON_BANDWIDTH: f64 = 0.5;
 
-// Thread-local cache for Poisson distributions to avoid repeated allocation.
-//
-// Key: lambda value encoded as u32 (lambda * 10000 for precision)
-// Value: Pre-computed Poisson distribution object
 thread_local! {
+    /// Thread-local cache for Poisson distributions to avoid repeated allocation.
+    ///
+    /// Key: lambda value encoded as u32 (lambda * 10000 for precision)
+    ///
+    /// Value: Pre-computed Poisson distribution object
     static POISSON_CACHE: RefCell<FxHashMap<u32, Poisson>> = RefCell::new(FxHashMap::default());
 }
 
@@ -262,6 +263,7 @@ fn row_kernel_density(
             // Process 4 elements at a time
             let mut i = 0;
             while i + 4 <= n_density {
+                // More unsafe
                 unsafe {
                     let d1 = *density_row.get_unchecked(i);
                     let d2 = *density_row.get_unchecked(i + 1);

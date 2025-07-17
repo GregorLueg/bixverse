@@ -2,6 +2,8 @@
 use rustc_hash::FxHashSet;
 use statrs::function::gamma::ln_gamma;
 
+use crate::utils::utils_stats::calc_fdr;
+
 ///////////
 // Types //
 ///////////
@@ -10,11 +12,18 @@ use statrs::function::gamma::ln_gamma;
 ///
 /// ### Fields
 ///
-/// * `0` - P-value
-/// * `1` - Odds ratio  
-/// * `2` - Success counts
-/// * `3` - Gene set size
-pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<usize>, Vec<usize>);
+/// * `pval` - P-value
+/// * `fdr` - FDR
+/// * `odds_ratio` - Oddsratio
+/// * `hits` - Number of success
+/// * `gs_length` - Length of the gene set
+pub struct HypergeomResult {
+    pub pval: Vec<f64>,
+    pub fdr: Vec<f64>,
+    pub odds_ratio: Vec<f64>,
+    pub hits: Vec<usize>,
+    pub gs_length: Vec<usize>,
+}
 
 ///////////////
 // Functions //
@@ -111,13 +120,14 @@ pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usi
 /// ### Returns
 ///
 /// A vector of hits, i.e., intersecting genes.
-pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec<usize> {
-    let target_genes_hash: FxHashSet<_> = target_genes.iter().collect();
+pub fn count_hits(
+    gene_set_list: &[FxHashSet<String>],
+    target_genes: &FxHashSet<String>,
+) -> Vec<usize> {
     let hits: Vec<usize> = gene_set_list
         .iter()
-        .map(|s| {
-            let s_hash: FxHashSet<_> = s.iter().collect();
-            let intersection = s_hash.intersection(&target_genes_hash).count();
+        .map(|targets| {
+            let intersection = targets.intersection(target_genes).count();
             intersection
         })
         .collect();
@@ -137,14 +147,12 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
 ///
 /// `HypergeomResult` - A tuple with the results.
 pub fn hypergeom_helper(
-    target_genes: &[String],
-    gene_sets: &[Vec<String>],
+    target_genes: &FxHashSet<String>,
+    gene_sets: &[FxHashSet<String>],
     gene_universe: &[String],
 ) -> HypergeomResult {
     let gene_universe_length = gene_universe.len();
-
     let trials = target_genes.len();
-
     let gene_set_lengths = gene_sets.iter().map(|s| s.len()).collect::<Vec<usize>>();
 
     let hits = count_hits(gene_sets, target_genes);
@@ -166,6 +174,7 @@ pub fn hypergeom_helper(
             }
         })
         .collect();
+
     let odds_ratios: Vec<f64> = hits
         .iter()
         .zip(gene_set_lengths.iter())
@@ -179,5 +188,57 @@ pub fn hypergeom_helper(
         })
         .collect();
 
-    (pvals, odds_ratios, hits, gene_set_lengths)
+    let fdr = calc_fdr(&pvals);
+
+    HypergeomResult {
+        pval: pvals,
+        fdr,
+        odds_ratio: odds_ratios,
+        hits,
+        gs_length: gene_set_lengths,
+    }
+}
+
+/// Helper function for the hypergeometric test
+///
+/// ### Params
+///
+/// - `res` - The `HypergeomResult` to filter.
+/// - `min_overlap` - Optional minimum overlap in terms of hits.
+/// - `fdr_threshold` - Optional threshold on the fdr.
+///
+/// ### Returns
+///
+/// `HypergeomResult` - The filtered results
+pub fn filter_gse_results(
+    res: HypergeomResult,
+    min_overlap: Option<usize>,
+    fdr_threshold: Option<f64>,
+) -> (HypergeomResult, Vec<usize>) {
+    let to_keep: Vec<usize> = (0..res.pval.len())
+        .filter(|i| {
+            if let Some(min_overlap) = min_overlap {
+                if res.hits[*i] < min_overlap {
+                    return false;
+                }
+            }
+            if let Some(fdr_threshold) = fdr_threshold {
+                if res.fdr[*i] > fdr_threshold {
+                    return false;
+                }
+            }
+            true
+        })
+        .collect();
+
+    (
+        HypergeomResult {
+            pval: to_keep.iter().map(|i| res.pval[*i]).collect(),
+            fdr: to_keep.iter().map(|i| res.fdr[*i]).collect(),
+            odds_ratio: to_keep.iter().map(|i| res.odds_ratio[*i]).collect(),
+            hits: to_keep.iter().map(|i| res.hits[*i]).collect(),
+            gs_length: to_keep.iter().map(|i| res.gs_length[*i]).collect(),
+        },
+        to_keep.iter().map(|x| *x + 1).collect(),
+    )
 }

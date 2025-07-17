@@ -76,7 +76,8 @@ target_genes_2 <- c(
 
 target_list <- list(
   set_1 = target_genes_1,
-  set_2 = target_genes_2
+  set_2 = target_genes_2,
+  set_3 = c("random gene 1", "random gene 2", "random gene 3")
 )
 
 results_multiple <- gse_hypergeometric_list(

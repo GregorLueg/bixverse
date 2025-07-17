@@ -27,11 +27,14 @@ r_pval <- phyper(
   lower.tail = FALSE
 )
 
+
 expected_result <- list(
   pvals = r_pval,
   odds_ratios = 44,
   hits = 2,
-  gene_set_lengths = 3
+  gene_set_lengths = 3,
+  fdr = p.adjust(r_pval, method = "fdr"),
+  to_keep = 1
 )
 
 expected_results_dt <- data.table::as.data.table(
@@ -60,7 +63,9 @@ expected_results_dt <- data.table::as.data.table(
 rs_res <- rs_hypergeom_test(
   target_genes = target_genes,
   gene_sets = gene_set,
-  gene_universe = gene_universe
+  gene_universe = gene_universe,
+  min_overlap = NULL,
+  fdr_threshold = NULL
 )
 
 expect_equal(
@@ -170,8 +175,7 @@ go_results_no_elim_v1 <- gse_go_elim_method(
   target_genes = go_target_genes$first_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 0,
-  .debug = FALSE
+  elim_threshold = 0
 ) %>%
   data.table::setorder(go_id)
 
@@ -199,8 +203,7 @@ go_results_no_elim_v2 <- gse_go_elim_method(
   target_genes = go_target_genes$second_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 0,
-  .debug = FALSE
+  elim_threshold = 0
 ) %>%
   data.table::setorder(go_id)
 
@@ -231,8 +234,7 @@ go_results_with_elim_v1 <- gse_go_elim_method(
   target_genes = go_target_genes$first_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 0.95,
-  .debug = FALSE
+  elim_threshold = 0.95
 ) %>%
   data.table::setorder(go_id)
 
@@ -260,8 +262,7 @@ go_results_with_elim_v2 <- gse_go_elim_method(
   target_genes = go_target_genes$second_test,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 0.95,
-  .debug = FALSE
+  elim_threshold = 0.95
 ) %>%
   data.table::setorder(go_id)
 
@@ -333,8 +334,7 @@ go_results_with_multiple <- gse_go_elim_method_list(
   target_gene_list = go_target_genes,
   minimum_overlap = 0L,
   fdr_threshold = 1,
-  elim_threshold = 0,
-  .debug = FALSE
+  elim_threshold = 0
 ) %>%
   data.table::setorder(target_set_name, -go_id)
 
