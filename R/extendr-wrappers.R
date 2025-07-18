@@ -217,8 +217,6 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' @param iters Integer. Number of random permutations for the fgsea simple method
 #' to use
 #' @param seed Integer. For reproducibility purposes.
-#' @param debug Boolean that will provide additional console information for
-#' debugging purposes.
 #'
 #' @return List with the following elements
 #' \itemize{
@@ -237,7 +235,7 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' }
 #'
 #' @export
-rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug)
+rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_threshold, iters, seed) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_params, elim_threshold, iters, seed)
 
 #' Calculates the simple and multi error for fgsea multi level
 #'
@@ -500,6 +498,10 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #' against.
 #' @param gene_universe A character vector representing the gene universe from
 #' which the target genes and gene sets are sampled from.
+#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
+#' overlappign genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
+#' tolerated FDR.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -509,7 +511,9 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overla
 #'   \item hits - The size of the overlap between the target gene set and individual
 #'   gene sets.
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item to_keep - indices
+#'   \item to_keep - Indices of the tests that passed.
+#'   \item tests_passed - How many tests passed the filter criteria for that target
+#'   set.
 #' }
 #'
 #' @export
@@ -1055,8 +1059,6 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' Jaccard similarity be used.
 #' @param min_similarity Minimum similarity that should exist between any two
 #' given gene modules to actually calculate RBH pairs.
-#' @param debug Boolean Boolean that activates print messages for debugging
-#' purposes.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -1071,7 +1073,7 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' }
 #'
 #' @export
-rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
+rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity)
 
 #' Generate reciprocal best hits based on correlations
 #'

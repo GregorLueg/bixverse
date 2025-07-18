@@ -20,6 +20,12 @@ against.}
 
 \item{gene_universe}{A character vector representing the gene universe from
 which the target genes and gene sets are sampled from.}
+
+\item{min_overlap}{Optional integer. Shall a filter be applied on the minimum of
+overlappign genes.}
+
+\item{fdr_threshold}{Optional float. Shall a filter be applied for the maximum
+tolerated FDR.}
 }
 \value{
 A list containing:
@@ -30,7 +36,9 @@ A list containing:
 \item hits - The size of the overlap between the target gene set and individual
 gene sets.
 \item gene_set_lengths - The length of the gene sets.
-\item to_keep - indices
+\item to_keep - Indices of the tests that passed.
+\item tests_passed - How many tests passed the filter criteria for that target
+set.
 }
 }
 \description{

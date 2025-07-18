@@ -469,7 +469,6 @@ cor_module_graph_check_res <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #' @importFrom zeallot `%->%`
-#' @importFrom future plan multisession sequential
 #' @import data.table
 #'
 #' @method cor_module_graph_check_res bulk_coexp
@@ -544,56 +543,72 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
       max_workers <- get_cores()
     }
     if (.verbose) {
-      message(sprintf("Using parallel computation over %i cores.", max_workers))
+      message(sprintf(
+        "Using parallel computation over %i cores via mirai.",
+        max_workers
+      ))
     }
 
-    # future plan funkiness
-    assign(".temp_workers", max_workers, envir = .GlobalEnv)
-    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+    mirai::daemons(max_workers)
 
-    plan(future::multisession(workers = .temp_workers))
+    community_df_res <- mirai::mirai_map(
+      resolutions,
+      \(res, seed, graph) {
+        set.seed(seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      },
+      .args = list(seed = random_seed, graph = graph)
+    )[]
+
+    mirai::daemons(0)
   } else {
     if (.verbose) {
       message("Using sequential computation.")
     }
-    future::plan(future::sequential())
+    community_df_res <- purrr::map(
+      resolutions,
+      \(res) {
+        set.seed(random_seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      }
+    )
   }
 
-  community_df_res <- furrr::future_map(
-    resolutions,
-    \(res) {
-      set.seed(random_seed)
-      community <- igraph::cluster_leiden(
-        graph,
-        objective_function = "modularity",
-        resolution = res,
-        n_iterations = 5L
-      )
-
-      modularity <- igraph::modularity(
-        x = graph,
-        membership = community$membership
-      )
-
-      community_df <- data.table::data.table(
-        resolution = res,
-        node_name = community$names,
-        membership = community$membership,
-        modularity = modularity
-      )
-    },
-    .progress = .verbose,
-    .options = furrr::furrr_options(seed = TRUE)
-  ) %>%
-    data.table::rbindlist(.)
-
-  # To make the message trace prettier, if set to verbose
-  if (.verbose) {
-    message("")
-  }
-
-  future::plan(future::sequential())
-  gc()
+  community_df_res <- data.table::rbindlist(community_df_res)
 
   community_df_res[, combined_id := sprintf("id_%s_%s", resolution, membership)]
 

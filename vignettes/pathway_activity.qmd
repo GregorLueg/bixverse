@@ -33,7 +33,7 @@ Poisson distributed) to mimic different types of transcriptomics measurements.
 #| label: random data generation
 
 p <- 10000 # number of genes
-n <- 100    # number of samples
+n <- 100   # number of samples
   
 # simulate expression values from a standard Gaussian distribution
 X <- matrix(
@@ -95,7 +95,8 @@ gsva_res_gaussian[1:5, 1:5]
 ```
 
 We can appreciated very similar values. There is slight differences in
-numerical precision due to optimisations in Rust (approximation of the Gaussian CDF enabling). However, the correlations between the two are ≥0.99
+numerical precision due to optimisations in Rust. However, the correlations
+between the two are ≥0.99
 
 ```{r}
 #| label: correlations between GSVA and bixverse
@@ -122,23 +123,11 @@ results compared to the original `GSVA` code.
 #| label: speed comparison
 #| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
 
-# Parallelism only over 4 cores to avoid overheads here
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X, gs)
-    gsva(
-      gsvaPar, 
-      verbose = FALSE
-    )
+    gsva(gsvaPar, verbose = FALSE)
   },
-  gsva_parallel = {
-    gsvaPar <- gsvaParam(X, gs)
-    gsva(
-      gsvaPar, 
-      verbose = FALSE,
-      BPPARAM = BiocParallel::MulticoreParam(workers = 4L)
-    )
-  }, 
   bixverse = calc_gsva(
     exp = X,
     pathways = gs,
@@ -209,18 +198,7 @@ And speed comparisons for the Poisson kernel version between `GSVA` and
 microbenchmark::microbenchmark(
   gsva = {
     gsvaPar <- gsvaParam(X1, gs, kcdf = "Poisson")
-    gsva(
-      gsvaPar, 
-      verbose = FALSE
-    )
-  },
-  gsva_parallel = {
-    gsvaPar <- gsvaParam(X1, gs, kcdf = "Poisson")
-    gsva(
-      gsvaPar, 
-      verbose = FALSE,
-      BPPARAM = BiocParallel::MulticoreParam(workers = 4L)
-    )
+    gsva(gsvaPar, verbose = FALSE)
   },
   bixverse = calc_gsva(
     exp = X1,
@@ -287,17 +265,9 @@ and leveraging Rust's performance.
 #| eval: !expr requireNamespace(c("GSVA", "microbenchmark"), quietly = TRUE)
 
 microbenchmark::microbenchmark(
-  ssgsea = {
+  gsva = {
     ssgseaPar <- ssgseaParam(X, gs)
     gsva(ssgseaPar, verbose = FALSE)
-  },
-  ssgsea_parallel = {
-    ssgseaPar <- ssgseaParam(X, gs)
-    gsva(
-      ssgseaPar, 
-      verbose = FALSE,
-      BPPARAM = BiocParallel::MulticoreParam(workers = 4L)
-    )
   },
   bixverse = calc_ssgsea(
     exp = X,

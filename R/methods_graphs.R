@@ -718,7 +718,7 @@ S7::method(community_detection, network_diffusions) <- function(
   return(object)
 }
 
-## utils ----
+## utils -----------------------------------------------------------------------
 
 #' Calculate the AUROC for a diffusion score
 #'
@@ -934,7 +934,6 @@ summarise_scores <- function(
 #' to set similarity.
 #' @param spearman Boolean. Shall Spearman correlation be used. Only relevant
 #' if the underlying class is set to correlation-based similarity.
-#' @param .debug Debug flag that will create print messages from Rust.
 #'
 #' @return The class with added properties.
 #'
@@ -946,8 +945,7 @@ generate_rbh_graph <- S7::new_generic(
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
-    spearman = FALSE,
-    .debug = FALSE
+    spearman = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -964,8 +962,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
-    spearman = FALSE,
-    .debug = FALSE
+    spearman = FALSE
   ) {
     # scope checks
     origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
@@ -975,7 +972,6 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     checkmate::qassert(minimum_similarity, "R[0, 1]")
     checkmate::qassert(overlap_coefficient, "B1")
     checkmate::qassert(spearman, "B1")
-    checkmate::qassert(.debug, "B1")
 
     # function body
     rbh_type <- S7::prop(object, "params")[["rbh_type"]]
@@ -986,8 +982,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
       rs_rbh_sets(
         module_list = list_of_list,
         overlap_coefficient = overlap_coefficient,
-        min_similarity = minimum_similarity,
-        debug = .debug
+        min_similarity = minimum_similarity
       )
     } else {
       list_of_matrices <- S7::prop(object, "module_data")
@@ -1079,7 +1074,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 #' }
 #' @param parallel Boolean. Shall the resolution search be in parallel.
 #' @param max_workers Integer. Number of maximum cores to use. Defaults to half
-#' of the identified cores.
+#' of the identified cores (to a maximum of 8).
 #' @param random_seed Integer. Random seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -1092,7 +1087,7 @@ find_rbh_communities <- S7::new_generic(
   fun = function(
     object,
     resolution_params = params_graph_resolution(),
-    max_workers = as.integer(parallel::detectCores() / 2),
+    max_workers = NULL,
     parallel = TRUE,
     random_seed = 42L,
     .verbose = TRUE
@@ -1105,25 +1100,24 @@ find_rbh_communities <- S7::new_generic(
 #' @export
 #'
 #' @importFrom magrittr `%>%`
-#' @importFrom future plan multisession sequential
 #' @import data.table
 #'
 #' @method find_rbh_communities rbh_graph
 S7::method(find_rbh_communities, rbh_graph) <- function(
   object,
   resolution_params = params_graph_resolution(),
-  max_workers = as.integer(parallel::detectCores() / 2),
+  max_workers = NULL,
   parallel = TRUE,
   random_seed = 42L,
   .verbose = TRUE
 ) {
   # Scope checks
-  best_modularity <- modularity <- NULL
+  best_modularity <- modularity <- . <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::rbh_graph")
   assertGraphResParams(resolution_params)
   checkmate::qassert(parallel, "B1")
-  checkmate::qassert(max_workers, "I1")
+  checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
   if (is.null(S7::prop(object, "rbh_graph"))) {
@@ -1143,51 +1137,100 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
   }
 
   if (parallel) {
+    if (is.null(max_workers)) {
+      max_workers <- get_cores()
+    }
     if (.verbose) {
-      message(sprintf("Using parallel computation over %i cores.", max_workers))
+      message(sprintf(
+        "Using parallel computation over %i cores via mirai.",
+        max_workers
+      ))
     }
 
-    # future plan funkiness
-    assign(".temp_workers", max_workers, envir = .GlobalEnv)
-    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+    mirai::daemons(max_workers)
 
-    future::plan(future::multisession(workers = .temp_workers))
+    community_df_res <- mirai::mirai_map(
+      resolutions,
+      \(res, seed, graph) {
+        set.seed(seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      },
+      .args = list(seed = random_seed, graph = graph)
+    )[]
+
+    mirai::daemons(0)
   } else {
     if (.verbose) {
       message("Using sequential computation.")
     }
-    future::plan(future::sequential())
+    community_df_res <- purrr::map(
+      resolutions,
+      \(res) {
+        set.seed(random_seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      }
+    )
   }
 
-  community_df_res <- furrr::future_map(
-    resolutions,
-    \(res) {
-      set.seed(random_seed)
-      community <- igraph::cluster_leiden(
-        graph,
-        objective_function = "modularity",
-        resolution = res,
-        n_iterations = 5L
-      )
+  community_df_res <- data.table::rbindlist(community_df_res) %>%
+    .[, best_modularity := modularity == max(modularity)]
 
-      modularity <- igraph::modularity(
-        x = graph,
-        membership = community$membership
-      )
+  community_df_res[,
+    c("origin_id", "module_id") := sub(
+      "^([^_]+_[^_]+)_(.*)$",
+      "\\1|\\2",
+      community_df_res$node_name
+    ) %>%
+      strsplit(., "\\|") %>%
+      transpose()
+  ]
 
-      community_df <- data.table::data.table(
-        resolution = res,
-        node_name = community$names,
-        membership = community$membership,
-        modularity = modularity
-      )
-    },
-    .progress = .verbose,
-    .options = furrr::furrr_options(seed = TRUE)
-  ) %>%
-    data.table::rbindlist(.)
-
-  community_df_res[, best_modularity := modularity == max(modularity)]
+  community_df_res <- community_df_res[,
+    c(
+      "node_name",
+      "origin_id",
+      "module_id",
+      "membership",
+      "resolution",
+      "modularity",
+      "best_modularity"
+    ),
+    with = FALSE
+  ]
 
   S7::prop(object, "final_results") <- community_df_res
 

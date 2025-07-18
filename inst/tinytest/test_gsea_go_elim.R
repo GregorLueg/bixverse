@@ -72,8 +72,7 @@ rust_res_wo_elim <- rs_geom_elim_fgsea_simple(
   gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.00001, # Threshold is so low, it cannot be passed
   iters = 100,
-  seed = 10101,
-  debug = FALSE
+  seed = 10101
 )
 
 expect_equal(
@@ -115,8 +114,7 @@ rust_res_with_elim <- rs_geom_elim_fgsea_simple(
   gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.95, # This WILL be passed
   iters = 100,
-  seed = 10101,
-  debug = FALSE
+  seed = 10101
 )
 
 expect_equal(

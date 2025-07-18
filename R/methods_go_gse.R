@@ -269,9 +269,6 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
 #'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes. Warning: should you run this command over a large
-#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -285,8 +282,7 @@ fgsea_simple_go_elim <- S7::new_generic(
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -305,8 +301,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     # Scope checks
     . <- leading_edge <- fdr <- NULL
@@ -318,7 +313,6 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     checkmate::qassert(nperm, "I1")
     checkmate::qassert(seed, "I1")
     assertGSEAParams(gsea_params)
-    checkmate::qassert(.debug, "B1")
 
     # Function body
     stats <- sort(stats, decreasing = TRUE)
@@ -333,8 +327,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
       gsea_params = gsea_params,
       elim_threshold = elim_threshold,
       iters = nperm,
-      seed = seed,
-      debug = .debug
+      seed = seed
     )
 
     leading_edges <- mapply(
@@ -389,9 +382,6 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
 #'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes. Warning: should you run this command over a large
-#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -407,8 +397,7 @@ fgsea_go_elim <- S7::new_generic(
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -427,8 +416,7 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     # Scope checks
     . <- leading_edge <- fdr <- mode_fraction <- pvals <- log2err <- NULL
@@ -440,7 +428,6 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
     checkmate::qassert(nperm, "I1")
     checkmate::qassert(seed, "I1")
     assertGSEAParams(gsea_params)
-    checkmate::qassert(.debug, "B1")
 
     # Function body
     stats <- sort(stats, decreasing = TRUE)
@@ -455,8 +442,7 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
       gsea_params = gsea_params,
       elim_threshold = elim_threshold,
       iters = nperm,
-      seed = seed,
-      debug = FALSE
+      seed = seed
     ) %>%
       data.table::setDT()
 

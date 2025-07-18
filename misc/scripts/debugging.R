@@ -1,53 +1,109 @@
-object = object
-target_gene_list = go_target_genes
-minimum_overlap = 0L
-fdr_threshold = 1
-elim_threshold = 0.95
+object = cor_test
+graph_params = params_cor_graph(epsilon = 2.5)
+resolution_params = params_graph_resolution()
+random_seed = 123L
+min_genes = 10L
+parallel = TRUE
+max_workers = NULL
+.verbose = TRUE
+
+detection_method <- S7::prop(object, "params")[["detection_method"]]
 
 
-# Extract relevant data from the S7 object
-if (is.null(min_genes)) {
-  min_genes <- S7::prop(object, "min_genes")
-}
-levels <- names(S7::prop(object, "levels"))
-go_info <- S7::prop(object, "go_info")
-
-gene_universe_length <- length(unique(unlist(S7::prop(
-  object,
-  "go_to_genes"
-))))
-
-rs_results_go <- rs_gse_geom_elim_list(
-  target_genes_list = target_gene_list,
-  levels = levels,
-  go_obj = object,
-  gene_universe_length = gene_universe_length,
-  min_genes = min_genes,
-  elim_threshold = elim_threshold,
-  min_overlap = minimum_overlap,
-  fdr_threshold = fdr_threshold
-)
-
-cols_to_select <- c("pvals", "fdr", "odds_ratios", "hits", "gene_set_lengths")
-
-results_go_dt <- data.table(do.call(cbind, rs_results_go[cols_to_select])) %>%
-  .[, `:=`(
-    go_id = rs_results_go$go_ids,
-    target_set_name = rep(names(target_gene_list), rs_results_go$no_test)
-  )]
-
-results_go_dt <- merge(results_go_dt, go_info, by = "go_id") %>%
-  data.table::setorder(., pvals) %>%
-  data.table::setcolorder(
-    .,
-    c(
-      "target_set_name",
-      "go_name",
-      "go_id",
-      "odds_ratios",
-      "pvals",
-      "fdr",
-      "hits",
-      "gene_set_lengths"
+c(graph, graph_params) %<-%
+  with(
+    graph_params,
+    switch(
+      detection_method,
+      "correlation-based" = get_cor_graph(
+        object = object,
+        epsilon = epsilon,
+        .verbose = .verbose
+      ),
+      "differential correlation-based" = get_diffcor_graph(
+        object = object,
+        min_cor = min_cor,
+        fdr_threshold = fdr_threshold,
+        .verbose = .verbose
+      )
     )
   )
+
+resolutions <- with(
+  resolution_params,
+  exp(seq(log(min_res), log(max_res), length.out = number_res))
+)
+
+if (.verbose) {
+  message(sprintf("Iterating through %i resolutions", length(resolutions)))
+}
+
+if (parallel) {
+  if (is.null(max_workers)) {
+    max_workers <- get_cores()
+  }
+  if (.verbose) {
+    message(sprintf(
+      "Using parallel computation over %i cores via mirai.",
+      max_workers
+    ))
+  }
+
+  mirai::daemons(max_workers)
+
+  community_df_res <- mirai::mirai_map(
+    resolutions,
+    \(res, seed, graph) {
+      set.seed(seed)
+      community <- igraph::cluster_leiden(
+        graph,
+        objective_function = "modularity",
+        resolution = res,
+        n_iterations = 5L
+      )
+
+      modularity <- igraph::modularity(
+        x = graph,
+        membership = community$membership
+      )
+
+      community_df <- data.table::data.table(
+        resolution = res,
+        node_name = community$names,
+        membership = community$membership,
+        modularity = modularity
+      )
+    },
+    .args = list(seed = random_seed, graph = graph)
+  )[]
+
+  mirai::daemons(0)
+} else {
+  if (.verbose) {
+    message("Using sequential computation.")
+  }
+  community_df_res <- purrr::map(
+    resolutions,
+    \(res) {
+      set.seed(random_seed)
+      community <- igraph::cluster_leiden(
+        graph,
+        objective_function = "modularity",
+        resolution = res,
+        n_iterations = 5L
+      )
+
+      modularity <- igraph::modularity(
+        x = graph,
+        membership = community$membership
+      )
+
+      community_df <- data.table::data.table(
+        resolution = res,
+        node_name = community$names,
+        membership = community$membership,
+        modularity = modularity
+      )
+    }
+  )
+}

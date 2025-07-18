@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
 use crate::helpers::fgsea::{
@@ -8,7 +8,9 @@ use crate::helpers::fgsea::{
     GseaResults,
 };
 use crate::helpers::hypergeom::*;
+use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::{r_list_to_hashmap, r_list_to_hashmap_set};
+use crate::utils::utils_stats::calc_fdr;
 
 ///////////////////////
 // Types & Structure //
@@ -188,11 +190,11 @@ impl<'a> GeneOntology<'a> {
     ///
     /// A HashMap with the genes as HashSets.
     pub fn get_genes_list(&self, ids: &[String]) -> FxHashMap<String, &FxHashSet<String>> {
-        let mut to_ret = FxHashMap::default();
+        let mut to_ret = FxHashMap::with_capacity_and_hasher(ids.len(), FxBuildHasher);
 
         for id in ids.iter() {
-            if self.go_to_gene.contains_key(id) {
-                to_ret.insert(id.to_string(), self.go_to_gene.get(id).unwrap());
+            if let Some(gene_set) = self.go_to_gene.get(id) {
+                to_ret.insert(id.clone(), gene_set);
             }
         }
 
@@ -300,34 +302,46 @@ pub fn prepare_go_data(go_obj: Robj) -> extendr_api::Result<(GeneMap, AncestorMa
     Ok((go_to_genes, ancestors, levels))
 }
 
-/// Filter down the results for a given gene ontology-aware elimination GSE
+/// Finalise the GO enrichment results from a hypergeometric test
 ///
 /// ### Params
 ///
-/// * `go_ids` - The gene ontology term ids.
-/// * `pvals` - The enrichment p-values.
-/// * `fdr` - The enrichment fdr.
-/// * `odds_ratios` - The enrichment odds ratio.
-/// * `hits` - The number of hits.
-/// * `gs_lengths` - The size of the gene set (after elimination).
+/// * `go_res` - Slice of `GoElimLevelResults` structures
 /// * `min_overlap` - Optional minimum overlap.
 /// * `fdr_threshold` - Optional fdr threshold.
 ///
 /// ### Returns
 ///
 /// A `GoElimFinalResults` results structure
-#[allow(clippy::too_many_arguments)]
-pub fn filter_go_res(
-    go_ids: Vec<String>,
-    pvals: Vec<f64>,
-    fdr: Vec<f64>,
-    odds_ratios: Vec<f64>,
-    hits: Vec<usize>,
-    gs_lengths: Vec<usize>,
+pub fn finalise_go_res(
+    go_res: &[GoElimLevelResults],
     min_overlap: Option<usize>,
     fdr_threshold: Option<f64>,
 ) -> GoElimFinalResults {
-    let to_keep: Vec<usize> = (0..go_ids.len())
+    let n = go_res.iter().map(|x| x.go_ids.len()).sum::<usize>();
+
+    let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(n);
+    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(n);
+    let mut hits: Vec<Vec<usize>> = Vec::with_capacity(n);
+    let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(n);
+    let mut gs_lengths: Vec<Vec<usize>> = Vec::with_capacity(n);
+
+    for res in go_res {
+        go_ids.push(res.go_ids.clone());
+        pvals.push(res.pvals.clone());
+        hits.push(res.hits.clone());
+        odds_ratios.push(res.odds_ratios.clone());
+        gs_lengths.push(res.gene_set_lengths.clone());
+    }
+
+    let go_ids = flatten_vector(go_ids);
+    let pvals = flatten_vector(pvals);
+    let fdr = calc_fdr(&pvals);
+    let hits = flatten_vector(hits);
+    let odds_ratios = flatten_vector(odds_ratios);
+    let gs_lengths = flatten_vector(gs_lengths);
+
+    let to_keep: Vec<usize> = (0..n)
         .filter(|i| {
             if let Some(min_overlap) = min_overlap {
                 if hits[*i] < min_overlap {
@@ -394,9 +408,7 @@ pub fn process_ontology_level(
         .map(|(key, value)| (key.clone(), value))
         .collect();
 
-    // Convert target genes to a HashSet for efficient lookup
     let trials = target_set.len();
-
     let size = level_data_final.len();
 
     let mut go_ids = Vec::with_capacity(size);
@@ -450,13 +462,13 @@ pub fn process_ontology_level(
         .collect();
 
     for term in go_to_remove.iter() {
-        let ancestors = go_obj.get_ancestors(term);
-        let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
+        if let Some(ancestors) = go_obj.get_ancestors(term) {
+            let ancestors_final: Vec<String> = ancestors.to_vec();
+            if let Some(genes_to_remove) = go_obj.get_genes(term) {
+                let genes_to_remove = genes_to_remove.clone();
 
-        if let Some(genes_to_remove) = go_obj.get_genes(term) {
-            let genes_to_remove = genes_to_remove.clone();
-
-            go_obj.remove_genes(&ancestors_final, &genes_to_remove);
+                go_obj.remove_genes(&ancestors_final, &genes_to_remove);
+            }
         }
     }
 
@@ -479,7 +491,6 @@ pub fn process_ontology_level(
 /// * `gsea_params` - The GSEA parameter.
 /// * `elim_threshold` - Elimination threshold. Below that threshold the genes
 ///                      from that term are eliminated from its ancestors
-/// * `debug` - Shall debug messages be printed.
 ///
 /// ### Return
 ///
@@ -493,7 +504,6 @@ pub fn process_ontology_level_fgsea_simple(
     go_random_perms: &GeneOntologyRandomPerm,
     gsea_params: &GseaParams,
     elim_threshold: f64,
-    debug: bool, // This is embarassing, but this function gives me a HEADACHE...
 ) -> Result<GoElimLevelResultsGsea> {
     // Get the identfiers of that level and clean everything up
     let binding: Vec<String> = Vec::new();
@@ -523,10 +533,6 @@ pub fn process_ontology_level_fgsea_simple(
         }
     }
 
-    if debug {
-        println!("Generated successful the BTreeMap for level: {:?}", level);
-    }
-
     let mut pathway_scores: Vec<f64> = Vec::with_capacity(level_data_es.len());
     let mut pathway_sizes: Vec<usize> = Vec::with_capacity(level_data_es.len());
     let mut leading_edge_indices: Vec<Vec<i32>> = Vec::with_capacity(level_data_es.len());
@@ -540,13 +546,6 @@ pub fn process_ontology_level_fgsea_simple(
     let level_res: GseaResults<'_> =
         go_random_perms.get_gsea_res_simple(&pathway_scores, &pathway_sizes)?;
 
-    if debug {
-        println!(
-            "I calculated successfully the random permutations for level: {:?}",
-            level
-        );
-    }
-
     let go_to_remove: Vec<&String> = level_res
         .pvals
         .iter()
@@ -555,35 +554,13 @@ pub fn process_ontology_level_fgsea_simple(
         .map(|(_, go_id)| go_id)
         .collect();
 
-    if debug {
-        let no_terms = go_to_remove.len();
-        println!(
-            "At level {} a total of {} gene ontology terms will be affected by elimination: {:?}",
-            level, no_terms, go_to_remove
-        );
-    }
-
     for term in go_to_remove.iter() {
-        let ancestors = go_obj.get_ancestors(term);
-        let ancestors_final: Vec<String> = ancestors.cloned().unwrap_or_else(Vec::new);
+        if let Some(ancestors) = go_obj.get_ancestors(term) {
+            let ancestors_final: Vec<String> = ancestors.to_vec();
+            if let Some(genes_to_remove) = go_obj.get_genes(term) {
+                let genes_to_remove = genes_to_remove.clone();
 
-        if debug {
-            println!("What are the ancestors here: {:?}", ancestors_final);
-        }
-
-        if let Some(genes_to_remove) = go_obj.get_genes(term) {
-            let genes_to_remove = genes_to_remove.clone();
-            go_obj.remove_genes(&ancestors_final, &genes_to_remove);
-        }
-
-        if debug {
-            for ancestor in &ancestors_final {
-                let mut binding = FxHashSet::default();
-                binding.insert("no genes left".to_string());
-                let new_genes = go_obj.get_genes(ancestor).unwrap_or(&binding);
-                if debug {
-                    println!("The following genes remain: {:?}", new_genes)
-                }
+                go_obj.remove_genes(&ancestors_final, &genes_to_remove);
             }
         }
     }

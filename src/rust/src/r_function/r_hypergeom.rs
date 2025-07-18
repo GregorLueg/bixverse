@@ -8,7 +8,6 @@ use crate::helpers::geom_elim::*;
 use crate::helpers::hypergeom::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::{r_list_to_hash_vec, r_list_to_str_vec};
-use crate::utils::utils_stats::calc_fdr;
 
 /// Run a single hypergeometric test.
 ///
@@ -80,6 +79,10 @@ fn rs_hypergeom_test(
 /// against.
 /// @param gene_universe A character vector representing the gene universe from
 /// which the target genes and gene sets are sampled from.
+/// @param min_overlap Optional integer. Shall a filter be applied on the minimum of
+/// overlappign genes.
+/// @param fdr_threshold Optional float. Shall a filter be applied for the maximum
+/// tolerated FDR.
 ///
 /// @return A list containing:
 ///  \itemize{
@@ -89,7 +92,9 @@ fn rs_hypergeom_test(
 ///   \item hits - The size of the overlap between the target gene set and individual
 ///   gene sets.
 ///   \item gene_set_lengths - The length of the gene sets.
-///   \item to_keep - indices
+///   \item to_keep - Indices of the tests that passed.
+///   \item tests_passed - How many tests passed the filter criteria for that target
+///   set.
 /// }
 ///
 /// @export
@@ -193,13 +198,9 @@ fn rs_gse_geom_elim(
 ) -> extendr_api::Result<List> {
     let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
 
-    let mut go_obj = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
+    let mut go_obj: GeneOntology<'_> = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 
-    let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
-    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-    let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-    let mut hits: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
-    let mut gene_set_lengths: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+    let mut go_res: Vec<GoElimLevelResults> = Vec::with_capacity(levels.len());
 
     let target_set: FxHashSet<String> = target_genes.iter().cloned().collect();
 
@@ -212,30 +213,10 @@ fn rs_gse_geom_elim(
             gene_universe_length,
             elim_threshold,
         );
-        go_ids.push(level_res.go_ids);
-        pvals.push(level_res.pvals);
-        odds_ratios.push(level_res.odds_ratios);
-        hits.push(level_res.hits);
-        gene_set_lengths.push(level_res.gene_set_lengths);
+        go_res.push(level_res)
     }
 
-    let go_ids: Vec<_> = flatten_vector(go_ids);
-    let pvals: Vec<_> = flatten_vector(pvals);
-    let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
-    let hits: Vec<_> = flatten_vector(hits);
-    let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
-    let fdr = calc_fdr(&pvals);
-
-    let filtered_res: GoElimFinalResults = filter_go_res(
-        go_ids,
-        pvals,
-        fdr,
-        odds_ratios,
-        hits,
-        gene_set_lengths,
-        min_overlap,
-        fdr_threshold,
-    );
+    let filtered_res: GoElimFinalResults = finalise_go_res(&go_res, min_overlap, fdr_threshold);
 
     Ok(list!(
         go_ids = filtered_res.go_ids,
@@ -306,13 +287,10 @@ fn rs_gse_geom_elim_list(
         .par_iter()
         .map(|targets| {
             // Create necessary mutables
-            let mut go_obj = GeneOntology::new(go_data.0.clone(), &go_data.1, &go_data.2);
+            let mut go_obj: GeneOntology<'_> =
+                GeneOntology::new(go_data.0.clone(), &go_data.1, &go_data.2);
 
-            let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
-            let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-            let mut odds_ratios: Vec<Vec<f64>> = Vec::with_capacity(levels.len());
-            let mut hits: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
-            let mut gene_set_lengths: Vec<Vec<usize>> = Vec::with_capacity(levels.len());
+            let mut go_res: Vec<GoElimLevelResults> = Vec::with_capacity(levels.len());
 
             let target_set: FxHashSet<String> = targets.iter().cloned().collect();
 
@@ -327,31 +305,11 @@ fn rs_gse_geom_elim_list(
                     elim_threshold,
                 );
 
-                go_ids.push(level_res.go_ids);
-                pvals.push(level_res.pvals);
-                odds_ratios.push(level_res.odds_ratios);
-                hits.push(level_res.hits);
-                gene_set_lengths.push(level_res.gene_set_lengths);
+                go_res.push(level_res);
             }
 
-            // Flatten the vectors
-            let go_ids: Vec<_> = flatten_vector(go_ids);
-            let pvals: Vec<_> = flatten_vector(pvals);
-            let odds_ratios: Vec<_> = flatten_vector(odds_ratios);
-            let hits: Vec<_> = flatten_vector(hits);
-            let gene_set_lengths: Vec<_> = flatten_vector(gene_set_lengths);
-            let fdr = calc_fdr(&pvals);
-
-            let filtered_res: GoElimFinalResults = filter_go_res(
-                go_ids,
-                pvals,
-                fdr,
-                odds_ratios,
-                hits,
-                gene_set_lengths,
-                min_overlap,
-                fdr_threshold,
-            );
+            let filtered_res: GoElimFinalResults =
+                finalise_go_res(&go_res, min_overlap, fdr_threshold);
 
             let passed_tests = filtered_res.go_ids.len();
 

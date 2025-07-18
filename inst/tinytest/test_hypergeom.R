@@ -27,7 +27,6 @@ r_pval <- phyper(
   lower.tail = FALSE
 )
 
-
 expected_result <- list(
   pvals = r_pval,
   odds_ratios = 44,

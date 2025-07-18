@@ -65,8 +65,7 @@ expect_error(
 object <- generate_rbh_graph(
   object,
   minimum_similarity = 0,
-  overlap_coefficient = TRUE,
-  .debug = FALSE
+  overlap_coefficient = TRUE
 )
 
 overlap_res <- get_rbh_res(object) %>% data.table::setorder(-similiarity)
@@ -92,8 +91,7 @@ expect_equivalent(
 object <- generate_rbh_graph(
   object,
   minimum_similarity = 0,
-  overlap_coefficient = FALSE,
-  .debug = FALSE
+  overlap_coefficient = FALSE
 )
 
 overlap_res <- get_rbh_res(object) %>% data.table::setorder(-similiarity)

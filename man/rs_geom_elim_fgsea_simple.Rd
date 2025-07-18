@@ -11,8 +11,7 @@ rs_geom_elim_fgsea_simple(
   gsea_params,
   elim_threshold,
   iters,
-  seed,
-  debug
+  seed
 )
 }
 \arguments{
@@ -42,9 +41,6 @@ applied to the ancestors.}
 to use}
 
 \item{seed}{Integer. For reproducibility purposes.}
-
-\item{debug}{Boolean that will provide additional console information for
-debugging purposes.}
 }
 \value{
 List with the following elements

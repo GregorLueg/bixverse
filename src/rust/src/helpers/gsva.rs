@@ -719,8 +719,6 @@ pub fn gsva(
         );
     }
 
-    // Step 1: Kernel density estimation for each gene across all samples
-    // This creates log-odds transformed KCDF values
     let start_kcdf = Instant::now();
     let kcdf_matrix = matrix_kernel_density(
         expression_matrix, // density reference

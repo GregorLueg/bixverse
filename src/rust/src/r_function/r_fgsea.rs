@@ -349,8 +349,6 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
 /// @param iters Integer. Number of random permutations for the fgsea simple method
 /// to use
 /// @param seed Integer. For reproducibility purposes.
-/// @param debug Boolean that will provide additional console information for
-/// debugging purposes.
 ///
 /// @return List with the following elements
 /// \itemize{
@@ -379,7 +377,6 @@ fn rs_geom_elim_fgsea_simple(
     elim_threshold: f64,
     iters: usize,
     seed: u64,
-    debug: bool,
 ) -> extendr_api::Result<List> {
     let vec_data = r_named_vec_data(stats)?;
 
@@ -410,10 +407,6 @@ fn rs_geom_elim_fgsea_simple(
         .map(|(i, name)| (name, i))
         .collect();
 
-    if debug {
-        println!("Shared permutations generated");
-    }
-
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
     let mut es = Vec::with_capacity(levels.len());
     let mut nes: Vec<Vec<Option<f64>>> = Vec::with_capacity(levels.len());
@@ -425,10 +418,6 @@ fn rs_geom_elim_fgsea_simple(
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
-        if debug {
-            println!("I am processing level: {:?}?", level);
-        }
-
         let level_res = process_ontology_level_fgsea_simple(
             &vec_data.1,
             &stat_name_indices,
@@ -437,7 +426,6 @@ fn rs_geom_elim_fgsea_simple(
             &go_shared_perm,
             &gsea_params,
             elim_threshold,
-            debug,
         )?;
 
         go_ids.push(level_res.go_ids);

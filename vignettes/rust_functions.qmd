@@ -184,6 +184,7 @@ random_data_2 <- matrix(
 Let's test the correlations between the two matrices
 
 ```{r}
+#| label: R vs Rust second corelations
 r_cor_2_matrices <- cor(random_data, random_data_2)
 
 rust_cor_2_matrices <- rs_cor2(random_data, random_data_2, spearman = FALSE)
