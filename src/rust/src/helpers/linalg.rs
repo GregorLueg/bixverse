@@ -1,4 +1,7 @@
-use faer::{Mat, MatRef};
+use faer::{
+    linalg::solvers::{PartialPivLu, Solve},
+    Mat, MatRef,
+};
 use rand::prelude::*;
 use rand_distr::Normal;
 use rayon::iter::*;
@@ -257,9 +260,9 @@ pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
 ///
 /// The resulting cosine similarity matrix
 pub fn column_cosine(mat: &MatRef<f64>) -> Mat<f64> {
-    let normalized = normalise_matrix_col_l2(mat);
+    let normalised = normalise_matrix_col_l2(mat);
 
-    normalized.transpose() * &normalized
+    normalised.transpose() * &normalised
 }
 
 /// Calculate the correlation matrix
@@ -352,75 +355,6 @@ pub fn cov2cor(mat: MatRef<f64>) -> Mat<f64> {
     }
 
     result
-}
-
-/// Calculate differential correlations
-///
-/// The function will panic if the two correlation matrices are not symmetric
-/// and do not have the same dimensions.
-///
-/// ### Params
-///
-/// * `mat_a` - The first correlation matrix.
-/// * `mat_b` - The second correlation matrix.
-/// * `no_sample_a` - Number of samples that were present to calculate mat_a.
-/// * `no_sample_b` - Number of samples that were present to calculate mat_b.
-/// * `spearman` - Was Spearman correlation used.
-///
-/// ### Returns
-///
-/// The resulting differential correlation results as a structure.
-pub fn calculate_diff_correlation(
-    mat_a: &Mat<f64>,
-    mat_b: &Mat<f64>,
-    no_sample_a: usize,
-    no_sample_b: usize,
-    spearman: bool,
-) -> DiffCorRes {
-    assert_symmetric_mat!(mat_a);
-    assert_symmetric_mat!(mat_b);
-    assert_same_dims!(mat_a, mat_b);
-
-    let mut cors_a: Vec<f64> = Vec::new();
-    let mut cors_b: Vec<f64> = Vec::new();
-
-    let upper_triangle_indices = upper_triangle_indices(mat_a.ncols(), 1);
-
-    for (&r, &c) in upper_triangle_indices
-        .0
-        .iter()
-        .zip(upper_triangle_indices.1.iter())
-    {
-        cors_a.push(*mat_a.get(r, c));
-        cors_b.push(*mat_b.get(r, c));
-    }
-
-    // Maybe save the original correlations... Note to myself.
-    let original_cor_a = cors_a.to_vec();
-    let original_cor_b = cors_b.to_vec();
-
-    cors_a.par_iter_mut().for_each(|x| *x = x.atanh());
-    cors_b.par_iter_mut().for_each(|x| *x = x.atanh());
-
-    // Constant will depend on if Spearman or Pearson
-    let constant = if spearman { 1.06 } else { 1.0 };
-    let denominator =
-        ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
-
-    let z_scores: Vec<f64> = cors_a
-        .par_iter()
-        .zip(cors_b.par_iter())
-        .map(|(a, b)| (a - b) / denominator)
-        .collect();
-
-    let p_values = z_scores_to_pval(&z_scores);
-
-    DiffCorRes {
-        r_a: original_cor_a,
-        r_b: original_cor_b,
-        z_score: z_scores,
-        p_vals: p_values,
-    }
 }
 
 /// Get the eigenvalues and vectors from a covar or cor matrix
@@ -531,6 +465,129 @@ pub fn randomised_svd(
     }
 }
 
+////////////////////
+// Matrix solvers //
+////////////////////
+
+pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef<f64>) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
+
+    let mn = m * n;
+    let mut coeff_matrix: Mat<f64> = Mat::zeros(mn, mn);
+
+    for i in 0..m {
+        for j in 0..n {
+            let row_idx = i * n + j;
+
+            // A part: (I ⊗ A)
+            for k in 0..m {
+                let col_idx = k * n + j;
+                coeff_matrix[(row_idx, col_idx)] = mat_a[(i, k)];
+            }
+
+            // B^T part: (B^T ⊗ I)
+            for l in 0..n {
+                let col_idx = i * n + l;
+                let current = coeff_matrix[(row_idx, col_idx)];
+                coeff_matrix[(row_idx, col_idx)] = current + mat_b[(l, j)];
+            }
+        }
+    }
+
+    let mut c_vec: Mat<f64> = Mat::zeros(mn, 1);
+    for i in 0..m {
+        for j in 0..n {
+            c_vec[(i * n + j, 0)] = mat_c[(i, j)];
+        }
+    }
+
+    let lu = PartialPivLu::new(coeff_matrix.as_ref());
+    let solved = lu.solve(&c_vec);
+
+    let mut res = Mat::zeros(m, n);
+    for i in 0..m {
+        for j in 0..n {
+            res[(i, j)] = solved[(i * n + j, 0)];
+        }
+    }
+
+    res
+}
+
+///////////
+// Other //
+///////////
+
+/// Calculate differential correlations
+///
+/// The function will panic if the two correlation matrices are not symmetric
+/// and do not have the same dimensions.
+///
+/// ### Params
+///
+/// * `mat_a` - The first correlation matrix.
+/// * `mat_b` - The second correlation matrix.
+/// * `no_sample_a` - Number of samples that were present to calculate mat_a.
+/// * `no_sample_b` - Number of samples that were present to calculate mat_b.
+/// * `spearman` - Was Spearman correlation used.
+///
+/// ### Returns
+///
+/// The resulting differential correlation results as a structure.
+pub fn calculate_diff_correlation(
+    mat_a: &Mat<f64>,
+    mat_b: &Mat<f64>,
+    no_sample_a: usize,
+    no_sample_b: usize,
+    spearman: bool,
+) -> DiffCorRes {
+    assert_symmetric_mat!(mat_a);
+    assert_symmetric_mat!(mat_b);
+    assert_same_dims!(mat_a, mat_b);
+
+    let mut cors_a: Vec<f64> = Vec::new();
+    let mut cors_b: Vec<f64> = Vec::new();
+
+    let upper_triangle_indices = upper_triangle_indices(mat_a.ncols(), 1);
+
+    for (&r, &c) in upper_triangle_indices
+        .0
+        .iter()
+        .zip(upper_triangle_indices.1.iter())
+    {
+        cors_a.push(*mat_a.get(r, c));
+        cors_b.push(*mat_b.get(r, c));
+    }
+
+    // Maybe save the original correlations... Note to myself.
+    let original_cor_a = cors_a.to_vec();
+    let original_cor_b = cors_b.to_vec();
+
+    cors_a.par_iter_mut().for_each(|x| *x = x.atanh());
+    cors_b.par_iter_mut().for_each(|x| *x = x.atanh());
+
+    // Constant will depend on if Spearman or Pearson
+    let constant = if spearman { 1.06 } else { 1.0 };
+    let denominator =
+        ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
+
+    let z_scores: Vec<f64> = cors_a
+        .par_iter()
+        .zip(cors_b.par_iter())
+        .map(|(a, b)| (a - b) / denominator)
+        .collect();
+
+    let p_values = z_scores_to_pval(&z_scores);
+
+    DiffCorRes {
+        r_a: original_cor_a,
+        r_b: original_cor_b,
+        z_score: z_scores,
+        p_vals: p_values,
+    }
+}
+
 /// Test different epsilons over a distance vector
 ///
 /// ### Params
@@ -574,4 +631,34 @@ pub fn rbf_iterate_epsilons(
         .collect();
 
     Ok(nested_vector_to_faer_mat(k_res, true))
+}
+
+///////////
+// Tests //
+///////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use faer::mat;
+
+    #[test]
+    fn test_sylvester_solver() {
+        let a = mat![[1.0, 2.0], [0.0, 3.0]];
+        let b = mat![[4.0, 1.0], [0.0, 2.0]];
+        let c = mat![[1.0, 2.0], [3.0, 4.0]];
+
+        let x = sylvester_solver(&a.as_ref(), &b.as_ref(), &c.as_ref());
+
+        // Verify: AX + XB should equal C
+        let result = &a * &x + &x * &b;
+
+        // Check if close to C (allowing for numerical errors)
+        for i in 0..c.nrows() {
+            for j in 0..c.ncols() {
+                let diff = result[(i, j)] - c[(i, j)].abs();
+                assert!(diff < 1e-10, "Solution verification failed");
+            }
+        }
+    }
 }

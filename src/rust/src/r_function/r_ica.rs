@@ -88,7 +88,7 @@ fn rs_fast_ica(
     ica_params: List,
 ) -> extendr_api::Result<List> {
     // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
-    let ica_params = prepare_ica_params(ica_params);
+    let ica_params = IcaParams::from_r_list(ica_params);
 
     let x = r_matrix_to_faer(&whiten);
     let w_init = r_matrix_to_faer(&w_init);
@@ -176,7 +176,7 @@ fn rs_ica_iters(
     let x_processed = r_matrix_to_faer(&x1);
     let k = r_matrix_to_faer(&k);
 
-    let ica_params = prepare_ica_params(ica_params);
+    let ica_params = IcaParams::from_r_list(ica_params);
 
     let (s_combined, converged) = stabilised_ica_iters(
         x_processed,
@@ -238,7 +238,7 @@ fn rs_ica_iters_cv(
     ica_params: List,
 ) -> List {
     let x = r_matrix_to_faer(&x);
-    let ica_params = prepare_ica_params(ica_params);
+    let ica_params = IcaParams::from_r_list(ica_params);
 
     let (s_combined, converged) = stabilised_ica_cv(
         x,

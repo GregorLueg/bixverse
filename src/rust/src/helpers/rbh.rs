@@ -8,6 +8,10 @@ use crate::utils::general::*;
 use crate::utils::r_rust_interface::NamedMatrix;
 use crate::utils::utils_stats::set_similarity;
 
+////////////////////////
+// Results structures //
+////////////////////////
+
 /// Structure for an Rbh triplet Result
 ///
 /// ### Fields
@@ -20,6 +24,25 @@ pub struct RbhTripletStruc<'a> {
     pub t1: &'a str,
     pub t2: &'a str,
     pub sim: f64,
+}
+
+/// Structure to store the RBH results.
+///
+/// ### Fields
+///
+/// * `origin` - Name of the origin data set
+/// * `target` - Name of the target data set
+/// * `origin_modules` - Names of the origin modules/gene sets
+/// * `target_modules` - Names of the target modules/gene sets
+/// * `similarities` - Similarities between the modules/gene sets
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct RbhResult {
+    pub origin: String,
+    pub target: String,
+    pub origin_modules: Vec<String>,
+    pub target_modules: Vec<String>,
+    pub similarities: Vec<f64>,
 }
 
 ////////////////////

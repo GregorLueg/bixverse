@@ -1,10 +1,11 @@
+use faer::{Mat, MatRef};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, NodeCount, NodeIndexable};
 use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::assert_same_len;
+use crate::{assert_same_len, assert_symmetric_mat};
 
 ////////////
 // Traits //
@@ -486,9 +487,9 @@ where
     ranks
 }
 
-/////////////
-// Helpers //
-/////////////
+/////////////////////////
+// PetGraph generation //
+/////////////////////////
 
 /// Generate a PetGraph Graph
 ///
@@ -529,4 +530,75 @@ pub fn graph_from_strings(
     }
 
     graph
+}
+
+///////////////////////
+// KNN and Laplacian //
+///////////////////////
+
+/// Generate a KNN graph adjacency matrix from a similarity matrix
+///
+/// ### Params
+///
+/// * `similarities` - The symmetric similarity matrix.
+/// * `k` - Number of neighbours to take
+///
+/// ### Returns
+///
+/// The KNN adjacency matrix
+pub fn get_knn_graph_adj(similarities: &MatRef<f64>, k: usize) -> Mat<f64> {
+    assert_symmetric_mat!(similarities);
+
+    let n = similarities.nrows();
+    let mut adjacency: Mat<f64> = Mat::zeros(n, n);
+
+    for i in 0..n {
+        let mut neighbours: Vec<(usize, f64)> = (0..n).map(|j| (j, similarities[(i, j)])).collect();
+
+        neighbours.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        for &(neighbour, sim) in neighbours.iter().skip(1).take(k) {
+            adjacency[(i, neighbour)] = sim
+        }
+    }
+
+    for i in 0..n {
+        for j in 0..n {
+            let val = (adjacency[(i, j)] + adjacency[(j, i)]) / 2.0;
+            adjacency[(i, j)] = val;
+            adjacency[(j, i)] = val;
+        }
+    }
+
+    adjacency
+}
+
+/// Generate a Laplacian matrix from an adjacency matrix
+///
+/// ### Params
+///
+/// * `adjacency` - The symmetric adjacency matrix.
+///
+/// ### Returns
+///
+/// The Laplacian matrix
+pub fn adjacency_to_laplacian(adjacency: &MatRef<f64>) -> Mat<f64> {
+    assert_symmetric_mat!(adjacency);
+
+    let n = adjacency.nrows();
+
+    let mut laplacian = adjacency.cloned();
+
+    for i in 0..n {
+        let degree = adjacency.row(i).iter().sum::<f64>();
+        laplacian[(i, i)] = degree - adjacency[(i, i)];
+
+        for j in 0..n {
+            if i != j {
+                laplacian[(i, j)] = -adjacency[(i, j)];
+            }
+        }
+    }
+
+    laplacian
 }

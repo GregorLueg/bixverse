@@ -14,6 +14,7 @@ pub use r_function::r_ica;
 pub use r_function::r_linalg;
 pub use r_function::r_ontology;
 pub use r_function::r_rbh;
+pub use r_function::r_sparse_graph_dict;
 pub use r_function::r_sparse_struct;
 pub use r_function::r_stats;
 
