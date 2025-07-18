@@ -68,6 +68,7 @@ install.packages("rextendr")
 ```
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
+
 ## *Docs*
 
 - [Roadmap](/docs/roadmap.md)
@@ -80,16 +81,16 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 <img src="/misc/pics/but_why.png" width="418" height="218" alt="but why">
 
 Good question, why this package? Basically, there are three reasons for this:
-1. Initially, the package was born out of the desire to harmonise in a single 
-package lots and lots of different packages. (One package to rule them all.) 
-And while doing so, slim the functionality down to the bare bone essentials and
-remove barely used options.
-2. After having reimplemented for the 3rd time some version of a 
-hypergeometric test for some project, one is just tired of it. The same applies 
-to other established methods in the field that need some internal reimplementation
-(with maybe some tweaks here and there) for reasons... ? Better to do it once
-properly and make it public.
-3. Rust makes everything in R so much faster, that we just wished to share the 
-joy.
+1. Rust makes everything in R so much faster, that we just wished to share the 
+joy. Also, it's a fun language write.
+2. BioConductor is great, but you end up with quite large dependency graphs, 
+lots of packages that have to be downloaded and quite a few algorithms can 
+benefit from the speed that Rust offers. The idea of `bixverse` is to accelerate
+key functions used in CompBio and bioinformatics and reduce them to the 
+barebone methods with simple interfaces.
+3. Having worked in biotech and pharma, one realises that a surprising amount
+of time is spent on rewriting and reimplementing published methods for internal
+usage. Better to make it fast/good once, and open it up to the public via open 
+source.
 
-*Last update to the read-me: 13.07.2025*
+*Last update to the read-me: 18.07.2025*
