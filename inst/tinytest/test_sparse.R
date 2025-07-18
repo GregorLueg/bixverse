@@ -28,7 +28,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = unlist(rs_data$data),
+  current = rs_data$data,
   target = expected_sparse_matrix@x,
   info = "Rust sparse implementation - data"
 )

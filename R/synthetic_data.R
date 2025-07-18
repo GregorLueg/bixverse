@@ -1,6 +1,6 @@
-# synthetic data ----
+# synthetic data ---------------------------------------------------------------
 
-## general signal data ----
+## general signal data ---------------------------------------------------------
 
 #' Generates a synthetic, pseudo gene expression matrix
 #'
@@ -141,17 +141,25 @@ synthetic_signal_matrix <- function(
   return(result)
 }
 
-## cpca synthetic data ----
+## contrastive pca synthetic data ----------------------------------------------
 
+#' @title
 #' Generates synthetic data for cPCA exploration.
 #'
-#' @description Generates three elements: target matrix, background matrix
-#' and labels for the target matrix.
+#' @description
+#' Generates three elements: target matrix, background matrix and labels for the
+#' target matrix.
 #'
-#' @param seed Integer. Initial random seed for generation of the synthetic data. Default: 10101L.
+#' @param seed Integer. Initial random seed for generation of the synthetic
+#' data. Default: 10101L.
 #'
-#' @return A list. First elements is the target matrix, second element the background matrix and the
-#' third one being a factor with the cluster labels of the target matrix.
+#' @return A list with the following elements:
+#' \itemize{
+#'  \item target - The target matrix.
+#'  \item background - The background matrix.
+#'  \item target_labels - The target labels
+#' }
+#'
 #' @importFrom magrittr `%>%`
 #'
 #' @export
@@ -200,11 +208,110 @@ synthetic_cPCA_data <- function(seed = 10101L) {
   )
 }
 
-# plotting functions ----
+## gene module data ------------------------------------------------------------
+
+#' @title
+#' Generates synthetic gene module data.
+#'
+#' @description
+#' Generates an artifical matrix of active modules (for a maximum of 8) in
+#' samples being active. Also allows for overlap between the modules. Designed
+#' to test some of the algorithms.
+#'
+#' @param n_samples Integer. Number of samples.
+#' @param n_genes Integer. Number of genes.
+#' @param n_modules Integer. Number of active gene modules. To a maximum of 10.
+#' @param overlap_fraction Float. How much the same modules can be active
+#' in the same samples.
+#' @param seed Integer. Initial random seed for generation of the synthetic
+#' data. Default: 10101L.
+#'
+#' @return A synthetic sample x gene matrix with specific genes representing
+#' specific modules.
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @export
+generate_gene_module_data <- function(
+  n_samples = 24L,
+  n_genes = 60L,
+  n_modules = 4L,
+  overlap_fraction = 0.25,
+  seed = 10101L
+) {
+  # checks
+  checkmate::qassert(n_samples, "I1")
+  checkmate::qassert(n_genes, "I1")
+  checkmate::qassert(n_modules, "I1[1, 11)")
+  checkmate::qassert(overlap_fraction, "N1(0, 1)")
+  checkmate::qassert(seed, "I1")
+
+  # body
+  set.seed(seed)
+
+  data <- matrix(0, nrow = n_samples, ncol = n_genes)
+
+  genes_per_module <- n_genes %/% n_modules
+  gene_boundaries <- seq(1, n_genes + 1, by = genes_per_module)
+  if (length(gene_boundaries) > n_modules + 1) {
+    gene_boundaries <- gene_boundaries[1:(n_modules + 1)]
+  }
+  gene_boundaries[n_modules + 1] <- n_genes + 1 # Ensure last boundary covers all genes
+
+  cells_per_module <- n_samples %/% n_modules
+  overlap_size <- round(cells_per_module * overlap_fraction)
+
+  modules <- vector("list", n_modules)
+  active_cells <- vector("list", n_modules)
+
+  for (i in 1:n_modules) {
+    gene_start <- gene_boundaries[i]
+    gene_end <- gene_boundaries[i + 1] - 1
+
+    modules[[i]] <- list(
+      start = gene_start,
+      end = gene_end
+    )
+
+    cell_start <- max(1, (i - 1) * cells_per_module - overlap_size + 1)
+    cell_end <- min(n_samples, i * cells_per_module + overlap_size)
+
+    active_cells[[i]] <- cell_start:cell_end
+  }
+
+  # Simulate module activities
+  for (i in seq_along(modules)) {
+    module <- modules[[i]]
+
+    for (cell in active_cells[[i]]) {
+      base_activity <- 1.0 + runif(1, -0.2, 0.2)
+
+      for (gene in module$start:module$end) {
+        data[cell, gene] <- base_activity + runif(1, -0.1, 0.1)
+      }
+    }
+  }
+
+  # Add background noise
+  noise <- matrix(
+    runif(n_samples * n_genes, -0.05, 0.05),
+    nrow = n_samples,
+    ncol = n_genes
+  )
+  data <- data + noise
+
+  # Add metadata as attributes
+  attr(data, "active_cells") <- active_cells
+  attr(data, "n_modules") <- n_modules
+
+  return(data)
+}
+
+# plots ------------------------------------------------------------------------
 
 #' Plot the synthetic gene expression
 #'
-#' @param synthetic_GEX List. Output from Hephaestus::create_synthetic_signal_matrix().
+#' @param synthetic_GEX List. Output from [bixverse::synthetic_signal_matrix()].
 #' It will throw an error if this is not an output from the function.
 #'
 #' @return A plotted heatmap showing the DEG.

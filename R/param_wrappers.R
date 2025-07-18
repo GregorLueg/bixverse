@@ -382,3 +382,52 @@ params_coremo <- function(
     )
   )
 }
+
+## DGRDL -----------------------------------------------------------------------
+
+#' Wrapper function to generate DGRDL parameters
+#'
+#' @param sparsity Integer. Sparsity constraint (max non-zero coefficients per
+#' signal)
+#' @param dict_size Integer. Dictionary size
+#' @param alpha Float. Sample context regularisation weight.
+#' @param beta Float. Feature effect regularisation weight
+#' @param max_iter Integer. Maximum number of iterations for the main algorithm.
+#' @param k_neighbours Integer. Number of neighbours in the KNN graph.
+#' @param admm_iter Integer. ADMM iterations for sparse coding.
+#' @param rho Float. ADMM step size.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_dgrdl <- function(
+  sparsity = 5L,
+  dict_size = 5L,
+  alpha = 1.0,
+  beta = 1.0,
+  max_iter = 20L,
+  k_neighbours = 5L,
+  admm_iter = 5L,
+  rho = 1.0
+) {
+  # checks
+  checkmate::qassert(sparsity, "I1")
+  checkmate::qassert(dict_size, "I1")
+  checkmate::qassert(alpha, "N1")
+  checkmate::qassert(beta, "N1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(k_neighbours, "I1")
+  checkmate::qassert(admm_iter, "I1")
+  checkmate::qassert(rho, "N1")
+
+  list(
+    sparsity = sparsity,
+    dict_size = dict_size,
+    alpha = alpha,
+    beta = beta,
+    max_iter = max_iter,
+    k_neighbours = k_neighbours,
+    admm_iter = admm_iter,
+    rho = rho
+  )
+}

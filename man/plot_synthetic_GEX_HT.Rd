@@ -7,7 +7,7 @@
 plot_synthetic_GEX_HT(synthetic_GEX)
 }
 \arguments{
-\item{synthetic_GEX}{List. Output from Hephaestus::create_synthetic_signal_matrix().
+\item{synthetic_GEX}{List. Output from \code{\link[=synthetic_signal_matrix]{synthetic_signal_matrix()}}.
 It will throw an error if this is not an output from the function.}
 }
 \value{

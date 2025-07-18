@@ -30,6 +30,7 @@ extendr_module! {
     use r_linalg;
     use r_ontology;
     use r_rbh;
+    use r_sparse_graph_dict;
     use r_sparse_struct;
     use r_stats;
 }

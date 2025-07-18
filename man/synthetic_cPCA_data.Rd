@@ -7,13 +7,18 @@
 synthetic_cPCA_data(seed = 10101L)
 }
 \arguments{
-\item{seed}{Integer. Initial random seed for generation of the synthetic data. Default: 10101L.}
+\item{seed}{Integer. Initial random seed for generation of the synthetic
+data. Default: 10101L.}
 }
 \value{
-A list. First elements is the target matrix, second element the background matrix and the
-third one being a factor with the cluster labels of the target matrix.
+A list with the following elements:
+\itemize{
+\item target - The target matrix.
+\item background - The background matrix.
+\item target_labels - The target labels
+}
 }
 \description{
-Generates three elements: target matrix, background matrix
-and labels for the target matrix.
+Generates three elements: target matrix, background matrix and labels for the
+target matrix.
 }

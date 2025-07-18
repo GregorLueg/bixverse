@@ -4,6 +4,7 @@ use crate::helpers::sparse_graph_dict::*;
 use crate::helpers::structs_sparse::SparseColumnMatrix;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, sparse_matrix_to_list};
 
+/// @export
 #[extendr]
 fn rs_sparse_dict_dgrdl(dat: RMatrix<f64>, dgrdl_params: List, verbose: bool) -> List {
     let x = r_matrix_to_faer(&dat);
@@ -23,4 +24,9 @@ fn rs_sparse_dict_dgrdl(dat: RMatrix<f64>, dgrdl_params: List, verbose: bool) ->
         feature_laplacian = sparse_matrix_to_list(feature_laplacian),
         sample_laplacian = sparse_matrix_to_list(sample_laplacian),
     )
+}
+
+extendr_module! {
+    mod r_sparse_graph_dict;
+    fn rs_sparse_dict_dgrdl;
 }
