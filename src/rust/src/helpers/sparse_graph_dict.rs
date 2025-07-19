@@ -186,25 +186,35 @@ impl Dgrdl {
     pub fn fit(&self, data: &MatRef<f64>, seed: usize, verbose: bool) -> DgrdlResults {
         let n_features = data.ncols();
 
-        if verbose {
-            println!("DGRDL dictionary initialisation.");
-        }
+        let start_total = Instant::now();
 
+        let start_dictionary_gen = Instant::now();
         let mut dictionary = self.initialise_dictionary(data, seed);
+        let end_dictionary_gen = start_dictionary_gen.elapsed();
 
         if verbose {
-            println!("DGRDL graph laplacians being generated.");
+            println!(
+                "DGRDL dictionary initialisation finished in {:.2?}",
+                end_dictionary_gen
+            );
         }
 
+        let start_laplacian_gen = Instant::now();
         let feature_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, true);
         let sample_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, false);
+        let end_laplacian_gen = start_laplacian_gen.elapsed();
+
+        if verbose {
+            println!(
+                "DGRDL graph laplacians generated in {:.2?}",
+                end_laplacian_gen
+            );
+        }
 
         let mut coefficients: Mat<f64> = Mat::zeros(self.params.dict_size, n_features);
 
         for iter in 0..self.params.max_iter {
-            if verbose {
-                println!("DGRDL iteration {}/{}", iter + 1, self.params.max_iter);
-            }
+            let start_iter = Instant::now();
 
             // Sparse coding step
             coefficients = grsc_admm(
@@ -220,6 +230,23 @@ impl Dgrdl {
             // Dictionary update step
             dictionary =
                 update_dictionary(data, &coefficients, &sample_laplacian, self.params.alpha);
+
+            let end_iter = start_iter.elapsed();
+
+            if verbose {
+                println!(
+                    " DGRDL iteration {}/{} in {:.2?}",
+                    iter + 1,
+                    self.params.max_iter,
+                    end_iter
+                );
+            }
+        }
+
+        let end_time = start_total.elapsed();
+
+        if verbose {
+            println!("Total time for fitting DGRDL: {:.2?}", end_time)
         }
 
         DgrdlResults {

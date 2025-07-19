@@ -7,9 +7,11 @@
 hedges_g_dge(
   meta_data,
   main_contrast,
-  contrast_list = NULL,
   normalised_counts,
+  contrast_list = NULL,
   small_sample_correction = NULL,
+  parallel = TRUE,
+  no_cores = NULL,
   .verbose = TRUE
 )
 }
@@ -19,18 +21,27 @@ which the contrast info can be found.}
 
 \item{main_contrast}{String. Which column contains the main groups you want
 to calculate the Hedge's G effect for. Every permutation of the groups
-will be tested.}
+will be tested if \code{contrast_list} is \code{NULL}.}
 
 \item{normalised_counts}{Numeric Matrix. The normalized count matrix.}
 
+\item{contrast_list}{String vector or NULL. Optional string vector of
+contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all
+contrasts automatically.}
+
 \item{small_sample_correction}{Can be NULL (automatic determination if a
 small sample size correction should be applied) or Boolean.}
+
+\item{parallel}{Boolean. Shall parallelisation be used across the contrasts.}
+
+\item{no_cores}{Optional integer. Number of cores to use for parallelisation.
+If \code{NULL} will default to half the detected cores.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 A data.table with the effect sizes and standard errors based on the
-Hedge's G effect size for all found permutations of the groups.
+Hedge's G effect size for the groups.
 }
 \description{
 Calculate the effect

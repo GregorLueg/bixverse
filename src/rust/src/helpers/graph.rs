@@ -65,24 +65,6 @@ impl NumericType for f32 {
     }
 }
 
-impl Eq for SimilarityItem {}
-
-impl Ord for SimilarityItem {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // Reverse for min-heap (we want to keep highest similarities)
-        other
-            .similarity
-            .partial_cmp(&self.similarity)
-            .unwrap_or(Ordering::Equal)
-    }
-}
-
-impl PartialOrd for SimilarityItem {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 ///////////
 // Enums //
 ///////////
@@ -568,14 +550,41 @@ struct SimilarityItem {
     similarity: f64,
 }
 
+/// Equality Trait for SimilarityItem
+impl Eq for SimilarityItem {}
+
+/// `PartialEq` trait for `SimilarityItem`
+///
+/// Check equality between two `SimilarityItem` items in terms of similarity
+///
+/// ### Returns
+///
+/// `true` if they are the same.
 impl PartialEq for SimilarityItem {
-    /// Check equality between two `SimilarityItem` items in terms of similarity
-    ///
-    /// ### Returns
-    ///
-    /// `true` if they are the same.
     fn eq(&self, other: &Self) -> bool {
         self.similarity == other.similarity
+    }
+}
+
+/// Ord trait `SimilarityItem`
+///
+/// How to order `SimilarityItem`
+impl Ord for SimilarityItem {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Reverse for min-heap (we want to keep highest similarities)
+        other
+            .similarity
+            .partial_cmp(&self.similarity)
+            .unwrap_or(Ordering::Equal)
+    }
+}
+
+/// PartialOrd trait `SimilarityItem`
+///
+/// How to order `SimilarityItem`
+impl PartialOrd for SimilarityItem {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

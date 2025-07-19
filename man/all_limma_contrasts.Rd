@@ -2,7 +2,7 @@
 % Please edit documentation in R/functions_bulk.R
 \name{all_limma_contrasts}
 \alias{all_limma_contrasts}
-\title{Create all limma contrasts}
+\title{Create all limma contrasts (based on combination of everything)}
 \usage{
 all_limma_contrasts(limma_fit, contrast_grps)
 }
@@ -16,5 +16,5 @@ all co-variate comparisons will be returned.}
 The Limma contrasts for further usage.
 }
 \description{
-Create all limma contrasts
+Create all limma contrasts (based on combination of everything)
 }

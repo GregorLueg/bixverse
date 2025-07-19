@@ -54,6 +54,7 @@ Imports:
     rhdf5,
     rlang,
     S7,
+    stringr,
     zeallot
 Suggests: 
     BiocParallel,
