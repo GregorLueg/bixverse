@@ -7,8 +7,10 @@
 calculate_all_dges(
   object,
   contrast_column,
+  contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
+  small_sample_correction = NULL,
   ...,
   .verbose = TRUE
 )
@@ -19,6 +21,9 @@ calculate_all_dges(
 \item{contrast_column}{String. The contrast column in which the groupings
 are stored. Needs to be found in the meta_data within the properties.}
 
+\item{contrast_list}{String or NULL. Optional list of contrast formatted as contrast1-contrast2.
+Default NULL will create all contrast automatically.}
+
 \item{filter_column}{Optional String. If there is a column you wish to use as
 sub groupings, this can be provided here. An example could be different
 sampled tissues and you wish to run the DGE analyses within each tissue
@@ -26,6 +31,9 @@ separately.}
 
 \item{co_variates}{Optional String vector. Any co-variates you wish to
 consider during the Limma Voom modelling.}
+
+\item{small_sample_correction}{Can be NULL (automatic determination if a
+small sample size correction should be applied) or Boolean.}
 
 \item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
 \code{\link[limma:voom]{limma::voom()}}.}

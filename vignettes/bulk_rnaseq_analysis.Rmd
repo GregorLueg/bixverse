@@ -1,0 +1,139 @@
+---
+title: "Bulk RNAseq analysis workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{bulk_rnaseq_analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette will showcase a simple workflow for bulk RNAseq analyses starting from a publically available dataset in GEO.
+
+```{r setup, eval = FALSE, echo = TRUE}
+# packages
+library(bixverse)
+library(polars)
+library(magrittr)
+library(data.table)
+
+# GEO study 
+gse_id = "GSE57945"
+
+## Paths
+data_path = "~/Desktop"
+file_path = file.path(data_path, gse_id)
+
+## gene info from NCBI
+## download.file("https://www.ncbi.nlm.n<!--ih.gov/geo/download/?format=file&type=rnaseq_counts&file=Human.GRCh38.p13.annot.tsv.gz",
+#               destfile = file.path(da-->ta_path, "genes.tsv.gz"))
+genes = read.csv(
+  file.path(data_path, "genes.tsv.gz"),
+  sep = "\t"
+) %>%
+  as.data.table() %>%
+  .[, .(GeneID, Symbol, GeneType, EnsemblGeneID)] %>%
+  .[GeneType == "protein-coding" & EnsemblGeneID != "", ] %>%
+  .[!duplicated(EnsemblGeneID)] %>%
+  setnames(
+    c("GeneID", "Symbol", "GeneType", "EnsemblGeneID"),
+    c("entrez_id", "gene_symbol", "type", "ensembl_id")
+  )
+```
+
+# Initialize data
+
+```{r, eval = FALSE, echo = TRUE}
+## load in raw count matrix
+raw_counts <- fread(file.path(file_path, paste0(gse_id, ".tsv.gz"))) %>% 
+  dplyr::mutate_if(is.integer, as.numeric) %>% 
+  .[, ensembl_id := genes$ensembl_id[match(GeneID, genes$entrez_id)]] %>% 
+  .[!is.na(ensembl_id), ]
+genes <- genes[match(ensembl_id, raw_counts$ensembl_id), ] %>%
+  setnames(c("ensembl_id"), "var_id")
+cn_raw_counts <- raw_counts$ensembl_id
+raw_counts <- raw_counts[, -c("GeneID", "ensembl_id")]
+raw_counts <- as.matrix(raw_counts)
+rownames(raw_counts) <- cn_raw_counts
+
+## read in sample information
+samples = pl$read_parquet(file.path(
+  file_path,
+  "sample_info.parquet"
+)) %>%
+  as.data.table() %>%
+  .[,
+    phenotype := dplyr::case_when(grepl("IBD", l2_type) ~ "Non IBD", TRUE ~ l2_type)
+  ] %>%
+  .[,
+    label := dplyr::case_when(
+      grepl("IBD", phenotype) ~ "Non Inflammatory Bowel Disease",
+      grepl("cCD", phenotype) ~ "Colon-only Crohn Disease",
+      grepl("iCD", phenotype) ~ "Ilial Crohn Disease",
+      TRUE ~ "Ulcerative Colitis"
+    )
+  ] %>%
+  .[, case_control := phenotype]
+table(samples$phenotype, samples$label)
+table(samples$sample_id %in% colnames(raw_counts))
+```
+
+# Quality control
+
+This package provides a simplified workflow for bulk RNAseq using the boxstandard tools of edgeR, limma, voom. 
+
+By capturing the data and results in an S7 object, it aims to more formally structure the object and it's outputs to facilitate cross-aggregation of studies at any later point.
+
+To start the analyses, initialize a bulk_dge S7 object providing the raw counts, samples, optionally information on genes and the normalization method.
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object <- bulk_dge(
+  raw_counts = raw_counts,
+  meta_data = samples,
+  variable_info = genes,
+  norm_method = "TMM"
+)
+```
+
+To explore the results, we can show the plots highlighting:
+- the number of detected by group
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object@plots$p1_nb_genes_cohort
+```
+
+- the identification of outliers during the QC process
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object@plots$p2_outliers
+```
+
+- the voom normalization
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object@plots$p3_voom_normalization
+bulk_object@plots$p4_boxplot_normalization
+```
+
+# Analyses
+
+On this object we can then subsequently run the principal component analyses and calculation of differential expression. 
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object <- bixverse::calculate_pca_bulk_dge(bulk_object)
+bulk_object <- calculate_all_dges(bulk_object, contrast_column = "case_control")
+```
+
+And we can show the boxplot with the PCA results.
+
+```{r, eval = FALSE, echo = TRUE}
+bulk_object@plots$p5_pca_case_control
+```

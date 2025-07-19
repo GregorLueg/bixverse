@@ -41,6 +41,233 @@
   return(pca_anova_dt)
 }
 
+## pre-processing ---------------------------------------------------------------
+
+#' QC on the bulk dge data
+#'
+#' @description
+#' This function generates general QC metrics for bulk DGE experiments.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param group_col String. The column in the metadata that will contain the
+#' contrast groups. Needs to be part of the metadata stored in the class.
+#' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
+#' ` "none")`. Please refer to [edgeR::normLibSizes()].
+#' @param outlier_threshold Float. Number of standard deviations in terms of
+#' percentage genes detected you allow before removing a sample. Defaults to `2`.
+#' @param min_prop Float. Minimum proportion of samples in which the gene has
+#' to be identified in.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return ...
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+preprocess_bulk_dge <- S7::new_generic(
+  "preprocess_bulk_dge",
+  "object",
+  fun = function(
+    object,
+    group_col,
+    norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+    outlier_threshold = 2,
+    min_prop = 0.2,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method preprocess_bulk_dge bulk_dge
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(preprocess_bulk_dge, bulk_dge) <- function(
+  object,
+  group_col,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  outlier_threshold = 2,
+  min_prop = 0.2,
+  .verbose = TRUE
+) {
+  # Scope checks
+  . <- `:=` <- NULL
+  norm_method <- match.arg(norm_method)
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::bulk_dge"
+  )
+  checkmate::qassert(group_col, "S1")
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+  checkmate::qassert(outlier_threshold, "N1")
+  checkmate::qassert(min_prop, "R1[0,1]")
+  checkmate::qassert(.verbose, "B1")
+
+  raw_counts <- S7::prop(object, "raw_counts")
+  meta_data <- S7::prop(object, "meta_data")
+
+  checkmate::assertTRUE(group_col %in% colnames(meta_data))
+
+  # Sample outlier removal
+  if (.verbose) message("Detecting sample outliers.")
+  detected_genes_nb <- data.table::data.table(
+    sample_id = colnames(raw_counts),
+    nb_detected_genes = matrixStats::colSums2(raw_counts > 0)
+  )
+
+  samples <- merge(meta_data, detected_genes_nb, by = "sample_id") %>%
+    .[, `:=`(perc_detected_genes = nb_detected_genes / nrow(raw_counts))]
+
+  p1_nb_genes_cohort <- ggplot2::ggplot(
+    samples,
+    aes(
+      x = .data[[group_col]],
+      y = nb_detected_genes,
+      fill = .data[[group_col]]
+    )
+  ) +
+    ggplot2::geom_boxplot(alpha = 0.5) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
+      x = "Groups",
+      y = "Number of genes detected",
+      title = "Number of genes by cohort"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+      legend.position = "none"
+    )
+
+  sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
+  min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
+    outlier_threshold * sd_samples
+  max_perc = mean(samples$perc_detected_genes, na.rm = TRUE) +
+    outlier_threshold * sd_samples
+
+  p2_outliers <- ggplot2::ggplot(
+    samples,
+    aes(
+      x = .data[[group_col]],
+      y = perc_detected_genes,
+      color = .data[[group_col]]
+    )
+  ) +
+    ggplot2::geom_point(
+      position = position_jitter(width = 0.2, height = 0, seed = 123),
+      size = 3,
+      alpha = 0.7
+    ) +
+    ggplot2::geom_hline(
+      yintercept = min_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::geom_hline(
+      yintercept = max_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
+      x = "Groups",
+      y = "Percentage of genes detected",
+      title = "Outlier samples based on %genes detected"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    )
+
+  outliers <- samples$perc_detected_genes <= min_perc
+  if (.verbose)
+    message(sprintf(
+      "A total of %i samples are detected as outlier.",
+      sum(outliers)
+    ))
+
+  samples_red <- samples[!(outliers), ]
+  raw_counts <- raw_counts[, unique(samples_red$sample_id)]
+
+  ## Voom normalization
+  if (.verbose)
+    message("Removing lowly expressed genes and normalising counts.")
+  dge_list <- edgeR::DGEList(raw_counts)
+
+  # Filter lowly expressed genes
+  to_keep <- edgeR::filterByExpr(
+    y = dge_list,
+    min.prop = min_prop,
+    group = samples[[group_col]]
+  )
+  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+
+  dge_list <- edgeR::calcNormFactors(
+    dge_list[to_keep, ],
+    method = norm_method
+  )
+
+  samples <- samples_red[[group_col]]
+
+  design <- model.matrix(~ 0 + samples)
+
+  voom_obj <- limma::voom(
+    counts = dge_list,
+    design = design,
+    normalize.method = "quantile",
+    plot = TRUE
+  )
+
+  p3_voom_normalization <- recordPlot()
+  dev.off()
+
+  boxplot(
+    voom_obj$E,
+    col = as.factor(samples),
+    main = "Boxplot of normalized gene expression across samples"
+  )
+  p4_boxplot_normalization <- recordPlot()
+  dev.off()
+
+  S7::prop(object, "plots") <- list(
+    p1_nb_genes_cohort = p1_nb_genes_cohort,
+    p2_outliers = p2_outliers,
+    p3_voom_normalization = p3_voom_normalization,
+    p4_boxplot_normalization = p4_boxplot_normalization
+  )
+
+  S7::prop(object, "outputs") <- list(
+    dge_list = dge_list,
+    sample_info = samples_red,
+    normalised_counts = voom_obj$E,
+    group_col = group_col,
+    outliers = outliers
+  )
+
+  S7::prop(object, "params")[["QC_params"]] <- list(
+    normalisation_method = norm_method,
+    min_prop = min_prop,
+    outlier_threshold = outlier_threshold
+  )
+
+  return(object)
+}
+
+
 ## pca -------------------------------------------------------------------------
 
 #' Calculate PCA on the expression.
@@ -268,9 +495,13 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 
   batch_data <- factor(sample_info[[batch_col]])
 
+  design <- model.matrix(~ 0 + factor(sample_info[[contrast_column]]))
+  colnames(design) = unique(sample_info[[contrast_column]])
+
   normalised_counts_corrected <- limma::removeBatchEffect(
     x = normalised_counts,
-    batch = batch_data
+    batch = batch_data,
+    design = design
   )
 
   # TODO abstract out the HVG genes and PCA calculations into one single
@@ -320,7 +551,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
     ggplot2::theme_bw() +
     ggplot2::ggtitle("Pre batch correction") +
     ggplot2::xlab("PC1") +
-    ggplot2::ylab("PC2")
+    ggplot2::ylab("PC2") +
+    ggplot2::theme(legend.position = "none")
 
   plot_cor <- ggplot2::ggplot(
     data = pca_dt_cor,
@@ -334,7 +566,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
     ggplot2::theme_bw() +
     ggplot2::ggtitle("Post batch correction") +
     ggplot2::xlab("PC1") +
-    ggplot2::ylab("PC2")
+    ggplot2::ylab("PC2") +
+    ggplot2::theme(legend.position = "bottom")
 
   p6_batch_correction_plot <- plot_uncor +
     plot_cor +
@@ -392,8 +625,12 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 #' separately.
 #' @param co_variates Optional String vector. Any co-variates you wish to
 #' consider during the Limma Voom modelling.
+#' @param contrast_list String or NULL. Optional list of contrast formatted as contrast1-contrast2.
+#' Default NULL will create all contrast automatically.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
+#' @param small_sample_correction Can be NULL (automatic determination if a
+#' small sample size correction should be applied) or Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
@@ -405,8 +642,10 @@ calculate_all_dges <- S7::new_generic(
   fun = function(
     object,
     contrast_column,
+    contrast_list = NULL,
     filter_column = NULL,
     co_variates = NULL,
+    small_sample_correction = NULL,
     ...,
     .verbose = TRUE
   ) {
@@ -424,8 +663,10 @@ calculate_all_dges <- S7::new_generic(
 S7::method(calculate_all_dges, bulk_dge) <- function(
   object,
   contrast_column,
+  contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
+  small_sample_correction = NULL,
   ...,
   .verbose = TRUE
 ) {
@@ -452,9 +693,17 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
   }
 
   ## get objects
-  all_specified_columns <- c(contrast_column, co_variates, filter_column)
+  all_specified_columns <- setdiff(
+    c(contrast_column, co_variates, filter_column),
+    NULL
+  )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
-  dge_list <- S7::prop(object, "outputs")[['dge_list']]
+  if (is.null(S7::prop(object, "outputs")[['dge_list']])) {
+    dge_list = NULL
+  } else {
+    dge_list <- S7::prop(object, "outputs")[['dge_list']]
+  }
+
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
 
   counts_batch_cor <- S7::prop(object, "outputs")[[
@@ -481,6 +730,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
       meta_data = sample_info,
       main_contrast = contrast_column,
       dge_list = dge_list,
+      normalised_counts = norm_counts,
+      contrast_list = contrast_list,
       co_variates = co_variates,
       ...,
       .verbose = .verbose
@@ -493,7 +744,9 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     hedges_g_results_final <- hedges_g_dge(
       meta_data = sample_info,
       main_contrast = contrast_column,
+      contrast_list = contrast_list,
       normalised_counts = norm_counts,
+      small_sample_correction = small_sample_correction,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -513,8 +766,13 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
           text = paste0(filter_column, " == '", group, "'")
         ))
       ]
-      dge_list_red <- dge_list[, sample_info_red$sample_id]
-      norm_counts_red <- norm_counts[, sample_info_red$sample_id]
+      if (is.null(dge_list)) {
+        dge_list_red = NULL
+        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
+      } else {
+        dge_list_red <- dge_list[, sample_info_red$sample_id]
+        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
+      }
 
       # Limma Voom
       limma_results <- run_limma_voom(
@@ -522,6 +780,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         main_contrast = contrast_column,
         dge_list = dge_list_red,
         co_variates = co_variates,
+        contrast_list = contrast_list,
         ...,
         .verbose = .verbose
       ) %>%
@@ -531,6 +790,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
         normalised_counts = norm_counts_red,
+        contrast_list = contrast_list,
+        small_sample_correction = small_sample_correction,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
@@ -574,6 +835,8 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
 
 # plotting ---------------------------------------------------------------------
+
+## PCA plots -------------------------------------------------------------------
 
 #' Plot the PCA data
 #'
@@ -662,3 +925,66 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 
   return(p)
 }
+
+## QC plots --------------------------------------------------------------------
+
+#' Return QC plots
+#'
+#' @description
+#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
+#' class. These are added when you run for example
+#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
+#' `NULL` and provide input when prompted, or you provide the name. The possible
+#' plots that might be in the class
+#' \itemize{
+#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
+#'  respective cohorts
+#'  \item p2_outliers An outlier plot based on the data from p1
+#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
+#'  lowly expressed genes
+#'  \item p4_boxplot_normalization Expression levels after normalisation
+#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
+#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
+#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
+#'  with the case-control category overlayed. Added if
+#' [bixverse::batch_correction_bulk_dge()] is run.
+#' }
+#'
+#' @param object `bulk_dge` class.
+#' @param plot_choice Optional string or integer. Index or name of the plate.
+#'
+#' @return Returns the DGEList stored in the class.
+#'
+#' @export
+get_dge_qc_plot <- S7::new_generic(
+  name = "get_dge_qc_plot",
+  dispatch_args = "object",
+  fun = function(object, plot_choice = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_dge_qc_plot bulk_dge
+#'
+#' @export
+S7::method(get_dge_qc_plot, bulk_dge) <-
+  function(object, plot_choice = NULL) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
+
+    plots <- S7::prop(object, "plots")
+    plot_names <- names(plots)
+
+    user_choice <- ifelse(
+      is.null(plot_choice),
+      select_user_option(plot_names),
+      plot_choice
+    )
+
+    # Return
+    return(plots[[user_choice]])
+  }
