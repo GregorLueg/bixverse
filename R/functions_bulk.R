@@ -21,8 +21,7 @@ fix_contrast_names <- function(x) {
   return(res)
 }
 
-
-#' Create all limma contrasts
+#' Create all limma contrasts (based on combination of everything)
 #'
 #' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
 #' @param contrast_grps String vector. The contrast groups of interest. If NULL
@@ -59,10 +58,11 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
   return(all_contrasts)
 }
 
-#' Create all limma contrasts from
+#' Create all limma contrasts from a provided string
 #'
 #' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
-#' @param contrast_list String vector. The list of contrast of interest.
+#' @param contrast_list String vector. The strings need to have the form of
+#' `"contrast1-contrast2"`.
 #'
 #' @returns The Limma contrasts for further usage.
 limma_contrasts <- function(limma_fit, contrast_list) {
@@ -99,11 +99,17 @@ limma_contrasts <- function(limma_fit, contrast_list) {
 #' which the contrast info (and potential co-variates) can be found.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to test differential gene expression with the Limma-Voom workflow for.
-#' @param dge_list DGEList, see [edgeR::DGEList()].
+#' @param contrast_list String vector or NULL. Optional string vector of
+#' contrast formatted as `"contrast1-contrast2"`. Default NULL will create all
+#' contrasts automatically.
+#' @param dge_list DGEList, see [edgeR::DGEList()]. If `NULL` it will be
+#' regenerated.
 #' @param normalised_counts Matrix. Normalised count matrix.
 #' @param co_variates String or NULL. Optional co-variates you wish to consider
 #' during model fitting.
-#' @param contrast_list String or NULL. Optional list of contrast formatted as contrast1-contrast2. Default NULL will create all contrast automatically.
+#' @param parallel Boolean. Shall parallelisation be used across the contrasts.
+#' @param no_cores Optional integer. Number of cores to use for parallelisation.
+#' If `NULL` will default to half the detected cores.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -122,6 +128,8 @@ run_limma_voom <- function(
   dge_list = NULL,
   normalised_counts = NULL,
   co_variates = NULL,
+  parallel = TRUE,
+  no_cores = NULL,
   ...,
   .verbose = TRUE
 ) {
@@ -130,7 +138,7 @@ run_limma_voom <- function(
   checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
   checkmate::assert(
-    class(dge_list) == "DGEList", ## had troubles with the assert or check,.. didn't return T/F
+    checkmate::checkClass(dge_list, "DGEList"),
     checkmate::checkNull(dge_list),
     combine = "or"
   )
@@ -143,6 +151,8 @@ run_limma_voom <- function(
   checkmate::qassert(contrast_list, c("S+", "0"))
   checkmate::assert(all(grepl("-", contrast_list)))
   checkmate::assertMatrix(normalised_counts)
+  checkmate::qassert(parallel, "B1")
+  checkmate::qassert(no_cores, c("I1", "0"))
 
   meta_data[,
     (variables) := lapply(.SD, fix_contrast_names),
@@ -192,24 +202,38 @@ run_limma_voom <- function(
     )
   }
 
-  all_dge_res <- purrr::map(limma_contrasts, \(contrast_obj) {
-    final_fit <- limma::contrasts.fit(limma_fit, contrast_obj)
-    final_fit <- limma::eBayes(final_fit, ...)
+  # parallelisation stuff
+  if (!parallel) {
+    mirai::daemons(1)
+  } else {
+    sessions <- ifelse(is.null(no_cores), get_cores(), no_cores)
+    mirai::daemons(sessions)
+  }
 
-    coef_name <- colnames(coef(final_fit))
+  all_dge_res <- mirai::mirai_map(
+    limma_contrasts,
+    \(contrast_obj, limma_fit) {
+      final_fit <- limma::contrasts.fit(limma_fit, contrast_obj)
+      final_fit <- limma::eBayes(final_fit, ...)
 
-    top.table <- as.data.table(
-      limma::topTable(
-        fit = final_fit,
-        sort.by = "P",
-        n = Inf,
-        confint = TRUE
-      ),
-      keep.rownames = "gene_id"
-    ) %>%
-      .[, contrast := gsub("-", "_vs_", coef_name)]
-  }) %>%
+      coef_name <- colnames(coef(final_fit))
+
+      top.table <- as.data.table(
+        limma::topTable(
+          fit = final_fit,
+          sort.by = "P",
+          n = Inf,
+          confint = TRUE
+        ),
+        keep.rownames = "gene_id"
+      ) %>%
+        .[, contrast := gsub("-", "_vs_", coef_name)]
+    },
+    .args = list(limma_fit = limma_fit)
+  )[] %>%
     rbindlist()
+
+  mirai::daemons(0)
 
   return(all_dge_res)
 }
@@ -222,14 +246,20 @@ run_limma_voom <- function(
 #' which the contrast info can be found.
 #' @param main_contrast String. Which column contains the main groups you want
 #' to calculate the Hedge's G effect for. Every permutation of the groups
-#' will be tested.
+#' will be tested if `contrast_list` is `NULL`.
 #' @param normalised_counts Numeric Matrix. The normalized count matrix.
+#' @param contrast_list String vector or NULL. Optional string vector of
+#' contrast formatted as `"contrast1-contrast2"`. Default NULL will create all
+#' contrasts automatically.
 #' @param small_sample_correction Can be NULL (automatic determination if a
 #' small sample size correction should be applied) or Boolean.
+#' @param parallel Boolean. Shall parallelisation be used across the contrasts.
+#' @param no_cores Optional integer. Number of cores to use for parallelisation.
+#' If `NULL` will default to half the detected cores.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A data.table with the effect sizes and standard errors based on the
-#' Hedge's G effect size for all found permutations of the groups.
+#' Hedge's G effect size for the groups.
 #'
 #' @export
 #'
@@ -238,12 +268,15 @@ run_limma_voom <- function(
 hedges_g_dge <- function(
   meta_data,
   main_contrast,
-  contrast_list = NULL,
   normalised_counts,
+  contrast_list = NULL,
   small_sample_correction = NULL,
+  parallel = TRUE,
+  no_cores = NULL,
   .verbose = TRUE
 ) {
-  # Checks
+  # checks
+
   checkmate::assertDataFrame(meta_data)
   checkmate::qassert(main_contrast, "S1")
   checkmate::assertClass(normalised_counts, "matrix")
@@ -253,8 +286,12 @@ hedges_g_dge <- function(
   )
   checkmate::qassert(contrast_list, c("S+", "0"))
   checkmate::assert(all(grepl("-", contrast_list)))
+  checkmate::qassert(parallel, "B1")
+  checkmate::qassert(no_cores, c("I1", "0"))
 
-  # Function
+  # function
+
+  ## create automatic contrasts or keep the provided ones
   if (is.null(contrast_list)) {
     groups <- as.character(unique(meta_data[[main_contrast]]))
     combinations_to_test <- combn(
@@ -274,34 +311,52 @@ hedges_g_dge <- function(
     )
   }
 
-  res <- purrr::map(combinations_to_test, \(combination) {
-    grpA <- meta_data[
-      eval(parse(text = paste0(main_contrast, " == '", combination[[1]], "'"))),
-      sample_id
-    ]
-    grpB <- meta_data[
-      eval(parse(text = paste0(main_contrast, " == '", combination[[2]], "'"))),
-      sample_id
-    ]
+  # parallelisation stuff
+  if (!parallel) {
+    mirai::daemons(1)
+  } else {
+    sessions <- ifelse(is.null(no_cores), get_cores(), no_cores)
+    mirai::daemons(sessions)
+  }
 
-    mat_a <- t(normalised_counts[, grpA])
-    mat_b <- t(normalised_counts[, grpB])
+  res <- mirai::mirai_map(
+    combinations_to_test,
+    \(combination, meta_data, normalised_counts) {
+      grpA <- meta_data[
+        eval(parse(
+          text = paste0(main_contrast, " == '", combination[[1]], "'")
+        )),
+        sample_id
+      ]
+      grpB <- meta_data[
+        eval(parse(
+          text = paste0(main_contrast, " == '", combination[[2]], "'")
+        )),
+        sample_id
+      ]
 
-    hedges_g_effect <- calculate_effect_size(
-      mat_a = mat_a,
-      mat_b = mat_b,
-      small_sample_correction = small_sample_correction,
-      .verbose = .verbose
-    ) %>%
-      data.table::setDT() %>%
-      .[, `:=`(
-        gene_id = colnames(mat_a),
-        combination = paste(combination[[1]], combination[[2]], sep = "_vs_")
-      )]
+      mat_a <- t(normalised_counts[, grpA])
+      mat_b <- t(normalised_counts[, grpB])
 
-    hedges_g_effect
-  }) %>%
+      hedges_g_effect <- calculate_effect_size(
+        mat_a = mat_a,
+        mat_b = mat_b,
+        small_sample_correction = small_sample_correction,
+        .verbose = .verbose
+      ) %>%
+        data.table::setDT() %>%
+        .[, `:=`(
+          gene_id = colnames(mat_a),
+          combination = paste(combination[[1]], combination[[2]], sep = "_vs_")
+        )]
+
+      hedges_g_effect
+    },
+    .args = list(meta_data = meta_data, normalised_counts = normalised_counts)
+  ) %>%
     data.table::rbindlist()
+
+  mirai::daemons(0)
 
   return(res)
 }
