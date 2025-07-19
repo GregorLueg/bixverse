@@ -4,6 +4,8 @@ use faer::{
     linalg::solvers::{PartialPivLu, Solve},
     ColRef, Mat, MatRef,
 };
+use rand::{rngs::StdRng, Rng, SeedableRng};
+use rayon::prelude::*;
 
 use crate::helpers::graph::{adjacency_to_laplacian, get_knn_graph_adj};
 use crate::helpers::linalg::{column_cosine, sylvester_solver};
@@ -180,10 +182,18 @@ impl Dgrdl {
     /// ### Returns
     ///
     /// `DgrdlResults` containing the learned dictionary, coefficients, and Laplacians
-    pub fn fit(&self, data: &MatRef<f64>, verbose: bool) -> DgrdlResults {
+    pub fn fit(&self, data: &MatRef<f64>, seed: usize, verbose: bool) -> DgrdlResults {
         let n_features = data.ncols();
 
-        let mut dictionary = self.initialise_dictionary(data);
+        if verbose {
+            println!("DGRDL dictionary initialisation.");
+        }
+
+        let mut dictionary = self.initialise_dictionary(data, seed);
+
+        if verbose {
+            println!("DGRDL graph laplacians being generated.");
+        }
 
         let feature_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, true);
         let sample_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, false);
@@ -207,13 +217,8 @@ impl Dgrdl {
             );
 
             // Dictionary update step
-            dictionary = update_dictionary(
-                data,
-                &coefficients,
-                &sample_laplacian,
-                self.params.alpha,
-                self.params.beta,
-            );
+            dictionary =
+                update_dictionary(data, &coefficients, &sample_laplacian, self.params.alpha);
         }
 
         DgrdlResults {
@@ -237,37 +242,68 @@ impl Dgrdl {
     /// ### Returns
     ///
     /// Initialised dictionary matrix with normalized columns
-    fn initialise_dictionary(&self, data: &MatRef<f64>) -> Mat<f64> {
+    fn initialise_dictionary(&self, data: &MatRef<f64>, seed: usize) -> Mat<f64> {
+        let mut rng = StdRng::seed_from_u64(seed as u64);
+
         let k = self.params.dict_size;
         let (n_samples, n_features) = data.shape();
 
-        let mut medoids = Vec::new();
-        let mut remaining: Vec<usize> = (0..n_features).collect();
+        let mut selected = Vec::with_capacity(k);
 
-        // Start with first sample as initial medoid
-        medoids.push(remaining.remove(0));
+        // Choose first center randomly
+        selected.push(rng.random_range(0..n_features));
 
-        // Greedy selection of remaining medoids
+        // Precompute all pairwise distances (only upper triangle)
+        let distances = self.precompute_distances(data);
+
         for _ in 1..k {
-            let mut best_medoid = 0;
-            let mut best_cost = f64::INFINITY;
+            // Find distances to nearest selected center
+            let min_distances: Vec<f64> = (0..n_features)
+                .into_par_iter()
+                .map(|i| {
+                    if selected.contains(&i) {
+                        0.0 // Already selected
+                    } else {
+                        selected
+                            .iter()
+                            .map(|&j| get_distance(&distances, i, j, n_features))
+                            .fold(f64::INFINITY, f64::min)
+                    }
+                })
+                .collect();
 
-            for &candidate in &remaining {
-                let cost = compute_medoid_cost(data, &medoids, candidate);
-                if cost < best_cost {
-                    best_cost = cost;
-                    best_medoid = candidate;
+            // Choose next center with probability proportional to squared distance
+            let total_weight: f64 = min_distances.iter().map(|d| d * d).sum();
+
+            if total_weight > 0.0 {
+                let mut target = rng.random::<f64>() * total_weight;
+                let mut chosen = 0;
+
+                for (i, &dist) in min_distances.iter().enumerate() {
+                    target -= dist * dist;
+                    if target <= 0.0 || i == n_features - 1 {
+                        chosen = i;
+                        break;
+                    }
+                }
+
+                if !selected.contains(&chosen) {
+                    selected.push(chosen);
+                }
+            } else {
+                // Fallback: choose randomly from unselected
+                let unselected: Vec<usize> =
+                    (0..n_features).filter(|i| !selected.contains(i)).collect();
+                if !unselected.is_empty() {
+                    selected.push(unselected[rng.random_range(0..unselected.len())]);
                 }
             }
-
-            medoids.push(best_medoid);
-            remaining.retain(|&x| x != best_medoid);
         }
 
-        // Build dictionary from selected medoids
+        // Build dictionary
         let mut dictionary = Mat::zeros(n_samples, k);
-        for (dict_idx, &gene_idx) in medoids.iter().enumerate() {
-            let col = data.col(gene_idx);
+        for (dict_idx, &feature_idx) in selected.iter().enumerate() {
+            let col = data.col(feature_idx);
             let norm = col.norm_l2();
             if norm > 1e-12 {
                 for i in 0..n_samples {
@@ -275,14 +311,49 @@ impl Dgrdl {
                 }
             }
         }
-
         dictionary
+    }
+
+    fn precompute_distances(&self, data: &MatRef<f64>) -> Vec<f64> {
+        let n_features = data.ncols();
+        let n_pairs = n_features * (n_features - 1) / 2;
+
+        (0..n_pairs)
+            .into_par_iter()
+            .map(|pair_idx| {
+                let (i, j) = triangle_to_indices(pair_idx, n_features);
+                column_distance(data.col(i), data.col(j))
+            })
+            .collect()
     }
 }
 
 /////////////
 // Helpers //
 /////////////
+
+fn triangle_to_indices(linear_idx: usize, n: usize) -> (usize, usize) {
+    let mut idx = linear_idx;
+    let mut i = 0;
+
+    while idx >= n - i - 1 {
+        idx -= n - i - 1;
+        i += 1;
+    }
+
+    (i, i + 1 + idx)
+}
+
+/// Get distance from compact upper-triangle storage
+fn get_distance(distances: &[f64], i: usize, j: usize, n: usize) -> f64 {
+    if i == j {
+        return 0.0;
+    }
+
+    let (min_idx, max_idx) = if i < j { (i, j) } else { (j, i) };
+    let linear_idx = (min_idx * (2 * n - min_idx - 1)) / 2 + (max_idx - min_idx - 1);
+    distances[linear_idx]
+}
 
 /// Create the Laplacian matrix for the features or samples
 ///
@@ -421,60 +492,39 @@ fn sparse_projection(x: &Mat<f64>, sparsity: usize) -> Mat<f64> {
     let (k, m) = x.shape();
     let mut result = Mat::zeros(k, m);
 
-    for j in 0..m {
-        let col = x.col(j);
-        let mut indexed_vals: Vec<(usize, f64)> =
-            col.iter().enumerate().map(|(i, &val)| (i, val)).collect();
+    // Process columns in parallel
+    let columns: Vec<Vec<f64>> = (0..m)
+        .into_par_iter()
+        .map(|j| {
+            let x_col = x.col(j);
+            let mut indexed_vals: Vec<(usize, f64)> =
+                x_col.iter().enumerate().map(|(i, &val)| (i, val)).collect();
 
-        indexed_vals.sort_by(|a, b| b.1.abs().partial_cmp(&a.1.abs()).unwrap());
+            // Partial sort to find top sparsity elements
+            let take_count = sparsity.min(k);
+            if take_count < indexed_vals.len() {
+                indexed_vals.select_nth_unstable_by(take_count, |a, b| {
+                    b.1.abs().partial_cmp(&a.1.abs()).unwrap()
+                });
+            }
 
-        for &(idx, val) in indexed_vals.iter().take(sparsity) {
-            result[(idx, j)] = val;
+            // Create column result
+            let mut col_result = vec![0.0; k];
+            for &(idx, val) in indexed_vals.iter().take(sparsity) {
+                col_result[idx] = val;
+            }
+            col_result
+        })
+        .collect();
+
+    // Copy results back to matrix
+    for (j, col_data) in columns.iter().enumerate() {
+        for (i, &val) in col_data.iter().enumerate() {
+            result[(i, j)] = val;
         }
     }
 
     result
-}
-
-/// Compute the cost of adding a candidate medoid
-///
-/// Calculates the total distance from all data points to their nearest
-/// medoid (including the candidate), used for k-medoids clustering.
-///
-/// ### Params
-///
-/// * `data` - Input data matrix
-/// * `current_medoids` - Currently selected medoid indices
-/// * `candidate` - Candidate medoid index to evaluate
-///
-/// ### Returns
-///
-/// Total cost (sum of distances to nearest medoids) if candidate is added
-fn compute_medoid_cost(data: &MatRef<f64>, current_medoids: &[usize], candidate: usize) -> f64 {
-    let n_features = data.ncols();
-    let mut total_cost = 0.0;
-
-    for feature in 0..n_features {
-        let mut min_dist = f64::INFINITY;
-
-        // Distance to current medoids
-        for &medoid in current_medoids {
-            let dist = column_distance(data.col(feature), data.col(medoid));
-            if dist < min_dist {
-                min_dist = dist;
-            }
-        }
-
-        // Distance to candidate
-        let candidate_dist = column_distance(data.col(feature), data.col(candidate));
-        if candidate_dist < min_dist {
-            min_dist = candidate_dist;
-        }
-
-        total_cost += min_dist;
-    }
-
-    total_cost
 }
 
 /// Compute Euclidean distance between two columns
@@ -494,78 +544,6 @@ fn column_distance(col_i: ColRef<f64>, col_j: ColRef<f64>) -> f64 {
         .map(|(a, b)| (a - b).powi(2))
         .sum::<f64>()
         .sqrt()
-}
-
-/// Update a single dictionary atom
-///
-/// Updates one column of the dictionary by solving a regularized least squares
-/// problem that incorporates sample graph regularization. Only considers
-/// signals that actively use this atom (have non-zero coefficients).
-///
-/// ### Params
-///
-/// * `data` - Input data matrix Y
-/// * `coefficients` - Current coefficient matrix X
-/// * `atom_idx` - Index of the dictionary atom to update
-/// * `context_laplacian` - Sample graph Laplacian L_s
-/// * `alpha` - Sample regularization weight
-/// * `_beta` - Feature regularization weight (unused in current implementation)
-///
-/// ### Returns
-///
-/// Updated dictionary atom as a column vector
-fn update_single_atom(
-    data: &MatRef<f64>,
-    coefficients: &Mat<f64>,
-    atom_idx: usize,
-    sample_laplacian: &Mat<f64>,
-    alpha: f64,
-    _beta: f64,
-) -> Mat<f64> {
-    let n_contexts = data.nrows();
-
-    // Find signals that use this atom (non-zero coefficients)
-    let x_j = coefficients.row(atom_idx);
-    let mut active_signals = Vec::new();
-    let mut x_j_active = Vec::new();
-
-    for (signal_idx, &coeff) in x_j.iter().enumerate() {
-        if coeff.abs() > 1e-12 {
-            active_signals.push(signal_idx);
-            x_j_active.push(coeff);
-        }
-    }
-
-    if active_signals.is_empty() {
-        // Replace with random signal if unused
-        return Mat::zeros(n_contexts, 1);
-    }
-
-    // Compute residual for active signals
-    let mut residual = Mat::zeros(n_contexts, active_signals.len());
-    for (res_idx, &signal_idx) in active_signals.iter().enumerate() {
-        let signal = data.col(signal_idx);
-        for i in 0..n_contexts {
-            residual[(i, res_idx)] = signal[i];
-        }
-    }
-
-    // Solve regularized least squares: (||x_j||²I + αL_s)d_j = residual * x_j
-    let x_j_norm_sq = x_j_active.iter().map(|x| x * x).sum::<f64>();
-
-    if x_j_norm_sq > 1e-12 {
-        let regularization_term = alpha * sample_laplacian;
-        let identity: Mat<f64> = Mat::identity(n_contexts, n_contexts);
-        let system_matrix = &(x_j_norm_sq * identity) + regularization_term;
-
-        let rhs = residual * Mat::from_fn(x_j_active.len(), 1, |i, _| x_j_active[i]);
-
-        let lu = PartialPivLu::new(system_matrix.as_ref());
-
-        lu.solve(&rhs)
-    } else {
-        Mat::zeros(n_contexts, 1)
-    }
 }
 
 /// Update the entire dictionary
@@ -590,23 +568,72 @@ fn update_dictionary(
     coefficients: &Mat<f64>,
     sample_laplacian: &Mat<f64>,
     alpha: f64,
-    beta: f64,
 ) -> Mat<f64> {
     let (n_contexts, _) = data.shape();
     let k = coefficients.nrows();
-    let mut dictionary = Mat::zeros(n_contexts, k);
 
-    // Update each dictionary atom
-    for atom_idx in 0..k {
-        let updated_atom =
-            update_single_atom(data, coefficients, atom_idx, sample_laplacian, alpha, beta);
+    // Precompute common matrices
+    let identity: Mat<f64> = Mat::identity(n_contexts, n_contexts);
+    let reg_term = alpha * sample_laplacian;
 
-        // Normalize atom
-        let norm = updated_atom.norm_l2();
-        if norm > 1e-12 {
-            for i in 0..n_contexts {
-                dictionary[(i, atom_idx)] = updated_atom[(i, 0)] / norm;
+    // Process atoms in parallel, collect results
+    let atom_columns: Vec<Vec<f64>> = (0..k)
+        .into_par_iter()
+        .map(|atom_idx| {
+            let x_j = coefficients.row(atom_idx);
+
+            // Find active signals
+            let active_signals: Vec<(usize, f64)> = x_j
+                .iter()
+                .enumerate()
+                .filter_map(|(signal_idx, &coeff)| {
+                    if coeff.abs() > 1e-12 {
+                        Some((signal_idx, coeff))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            if active_signals.is_empty() {
+                return vec![0.0; n_contexts];
             }
+
+            // Compute right-hand side
+            let mut rhs = Mat::zeros(n_contexts, 1);
+            for &(signal_idx, coeff) in &active_signals {
+                let signal = data.col(signal_idx);
+                for i in 0..n_contexts {
+                    rhs[(i, 0)] += signal[i] * coeff;
+                }
+            }
+
+            // Solve system
+            let x_j_norm_sq: f64 = active_signals.iter().map(|(_, coeff)| coeff * coeff).sum();
+
+            if x_j_norm_sq > 1e-12 {
+                let system_matrix = &(x_j_norm_sq * &identity) + &reg_term;
+                let lu = PartialPivLu::new(system_matrix.as_ref());
+                let solution = lu.solve(&rhs);
+
+                // Normalize
+                let norm = solution.norm_l2();
+                if norm > 1e-12 {
+                    (0..n_contexts).map(|i| solution[(i, 0)] / norm).collect()
+                } else {
+                    vec![0.0; n_contexts]
+                }
+            } else {
+                vec![0.0; n_contexts]
+            }
+        })
+        .collect();
+
+    // Build dictionary from results
+    let mut dictionary = Mat::zeros(n_contexts, k);
+    for (atom_idx, atom_col) in atom_columns.iter().enumerate() {
+        for (i, &val) in atom_col.iter().enumerate() {
+            dictionary[(i, atom_idx)] = val;
         }
     }
 
@@ -695,7 +722,7 @@ mod tests {
         };
 
         let dgrdl = Dgrdl::new(params);
-        let result = dgrdl.fit(&synthetic_data.as_ref(), true);
+        let result = dgrdl.fit(&synthetic_data.as_ref(), 42, true);
 
         // Test reconstruction quality
         let reconstruction = &result.dictionary * &result.coefficients;
@@ -778,7 +805,7 @@ mod tests {
         };
 
         let dgrdl = Dgrdl::new(params);
-        let result = dgrdl.fit(&data.as_ref(), true);
+        let result = dgrdl.fit(&data.as_ref(), 42, true);
 
         // Check that we can reconstruct the block structure
         let reconstruction = &result.dictionary * &result.coefficients;
@@ -847,7 +874,7 @@ mod tests {
         };
 
         let dgrdl = Dgrdl::new(params);
-        let result = dgrdl.fit(&data.as_ref(), true);
+        let result = dgrdl.fit(&data.as_ref(), 42, true);
 
         // Validate results
         let reconstruction = &result.dictionary * &result.coefficients;
@@ -935,7 +962,7 @@ mod tests {
             };
 
             let dgrdl = Dgrdl::new(params);
-            let result = dgrdl.fit(&data.as_ref(), false);
+            let result = dgrdl.fit(&data.as_ref(), 42, false);
 
             let reconstruction = &result.dictionary * &result.coefficients;
             let error = (&data - &reconstruction).norm_l2() / data.norm_l2();

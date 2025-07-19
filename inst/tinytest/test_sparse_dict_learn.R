@@ -83,7 +83,8 @@ res_simple <- rs_sparse_dict_dgrdl(
     admm_iter = 5L,
     rho = 1.0
   ),
-  verbose = FALSE
+  verbose = FALSE,
+  seed = 10101L
 )
 
 reconstruction_simple <- res_simple$dictionary %*% res_simple$coefficients
@@ -115,8 +116,6 @@ expect_equal(
 
 ### 'biological' data ----------------------------------------------------------
 
-heatmap(synthetic_data)
-
 res_bio <- rs_sparse_dict_dgrdl(
   dat = synthetic_data_2,
   dgrdl_params = params_dgrdl(
@@ -129,12 +128,33 @@ res_bio <- rs_sparse_dict_dgrdl(
     admm_iter = 5L,
     rho = 1.0
   ),
-  verbose = FALSE
+  verbose = FALSE,
+  seed = 10101L
 )
 
 reconstruction_bio <- res_bio$dictionary %*% res_bio$coefficients
 reconstruction_error_bio <- norm(synthetic_data_2 - reconstruction_bio, "F") /
   norm(synthetic_data_2, "F")
+
+# qs2::qs_save(
+#   res_bio$dictionary,
+#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_dictionary.qs"
+# )
+
+# qs2::qs_save(
+#   res_bio$coefficients,
+#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_coefficients.qs"
+# )
+
+# qs2::qs_save(
+#   res_bio$feature_laplacian,
+#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_feat_laplacian.qs"
+# )
+
+# qs2::qs_save(
+#   res_bio$sample_laplacian,
+#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_sample_laplacian.qs"
+# )
 
 expect_true(
   current = reconstruction_error_bio < 0.2,

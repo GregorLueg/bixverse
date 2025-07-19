@@ -4,6 +4,8 @@ use petgraph::visit::{IntoEdges, NodeCount, NodeIndexable};
 use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 
 use crate::{assert_same_len, assert_symmetric_mat};
 
@@ -60,6 +62,24 @@ impl NumericType for f32 {
     }
     fn default_tolerance() -> Self {
         1e-6
+    }
+}
+
+impl Eq for SimilarityItem {}
+
+impl Ord for SimilarityItem {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Reverse for min-heap (we want to keep highest similarities)
+        other
+            .similarity
+            .partial_cmp(&self.similarity)
+            .unwrap_or(Ordering::Equal)
+    }
+}
+
+impl PartialOrd for SimilarityItem {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -536,6 +556,19 @@ pub fn graph_from_strings(
 // KNN and Laplacian //
 ///////////////////////
 
+// Helper struct for KNN with heap
+#[derive(Debug)]
+struct SimilarityItem {
+    index: usize,
+    similarity: f64,
+}
+
+impl PartialEq for SimilarityItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.similarity == other.similarity
+    }
+}
+
 /// Generate a KNN graph adjacency matrix from a similarity matrix
 ///
 /// ### Params
@@ -552,18 +585,43 @@ pub fn get_knn_graph_adj(similarities: &MatRef<f64>, k: usize) -> Mat<f64> {
     let n = similarities.nrows();
     let mut adjacency: Mat<f64> = Mat::zeros(n, n);
 
-    for i in 0..n {
-        let mut neighbours: Vec<(usize, f64)> = (0..n).map(|j| (j, similarities[(i, j)])).collect();
+    // Parallelize across rows
+    let rows: Vec<Vec<(usize, f64)>> = (0..n)
+        .into_par_iter()
+        .map(|i| {
+            let mut heap = BinaryHeap::with_capacity(k + 1);
 
-        neighbours.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+            // Use min-heap to keep top-k similarities
+            for j in 0..n {
+                if i != j {
+                    let sim = similarities[(i, j)];
+                    heap.push(SimilarityItem {
+                        index: j,
+                        similarity: sim,
+                    });
 
-        for &(neighbour, sim) in neighbours.iter().skip(1).take(k) {
-            adjacency[(i, neighbour)] = sim
+                    if heap.len() > k {
+                        heap.pop(); // Remove smallest
+                    }
+                }
+            }
+
+            heap.into_iter()
+                .map(|item| (item.index, item.similarity))
+                .collect()
+        })
+        .collect();
+
+    // Fill adjacency matrix
+    for (i, neighbors) in rows.iter().enumerate() {
+        for &(j, sim) in neighbors {
+            adjacency[(i, j)] = sim;
         }
     }
 
+    // Symmetrize in parallel
     for i in 0..n {
-        for j in 0..n {
+        for j in i + 1..n {
             let val = (adjacency[(i, j)] + adjacency[(j, i)]) / 2.0;
             adjacency[(i, j)] = val;
             adjacency[(j, i)] = val;

@@ -469,13 +469,75 @@ pub fn randomised_svd(
 // Matrix solvers //
 ////////////////////
 
+/// Sylvester solver for three matrix systems
 pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef<f64>) -> Mat<f64> {
     let m = mat_a.nrows();
     let n = mat_b.ncols();
 
+    // For small problems, use direct method
+    if m * n < 1000 {
+        return sylvester_solver_direct(mat_a, mat_b, mat_c);
+    }
+
+    // Use iterative method for large problems
+    sylvester_solver_iterative(mat_a, mat_b, mat_c)
+}
+
+/// Iterative Sylvester solver using fixed-point iteration
+fn sylvester_solver_iterative(
+    mat_a: &MatRef<f64>,
+    mat_b: &MatRef<f64>,
+    mat_c: &MatRef<f64>,
+) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
+
+    // Initial guess
+    let mut x = mat_c.cloned();
+    let mut x_new = Mat::zeros(m, n);
+
+    let max_iter = 50;
+    let tol = 1e-6;
+
+    // Precompute for efficiency
+    let alpha = 0.1; // Step size
+
+    for _ in 0..max_iter {
+        // x_new = C - alpha * (A*x + x*B)
+        let ax = mat_a * &x;
+        let xb = &x * mat_b;
+
+        for i in 0..m {
+            for j in 0..n {
+                x_new[(i, j)] = mat_c[(i, j)] - alpha * (ax[(i, j)] + xb[(i, j)]);
+            }
+        }
+
+        // Check convergence
+        let diff = (&x_new - &x).norm_l2();
+        if diff < tol {
+            break;
+        }
+
+        std::mem::swap(&mut x, &mut x_new);
+    }
+
+    x
+}
+
+/// Direct version for small matrices
+fn sylvester_solver_direct(
+    mat_a: &MatRef<f64>,
+    mat_b: &MatRef<f64>,
+    mat_c: &MatRef<f64>,
+) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
     let mn = m * n;
+
     let mut coeff_matrix: Mat<f64> = Mat::zeros(mn, mn);
 
+    // Build coefficient matrix more efficiently
     for i in 0..m {
         for j in 0..n {
             let row_idx = i * n + j;
@@ -489,12 +551,12 @@ pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef
             // B^T part: (B^T ⊗ I)
             for l in 0..n {
                 let col_idx = i * n + l;
-                let current = coeff_matrix[(row_idx, col_idx)];
-                coeff_matrix[(row_idx, col_idx)] = current + mat_b[(l, j)];
+                coeff_matrix[(row_idx, col_idx)] += mat_b[(l, j)];
             }
         }
     }
 
+    // Vectorize C
     let mut c_vec: Mat<f64> = Mat::zeros(mn, 1);
     for i in 0..m {
         for j in 0..n {
@@ -505,13 +567,13 @@ pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef
     let lu = PartialPivLu::new(coeff_matrix.as_ref());
     let solved = lu.solve(&c_vec);
 
+    // Reshape result
     let mut res = Mat::zeros(m, n);
     for i in 0..m {
         for j in 0..n {
             res[(i, j)] = solved[(i * n + j, 0)];
         }
     }
-
     res
 }
 

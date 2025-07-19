@@ -1104,7 +1104,7 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
 #' @export
-rs_sparse_dict_dgrdl <- function(dat, dgrdl_params, verbose) .Call(wrap__rs_sparse_dict_dgrdl, dat, dgrdl_params, verbose)
+rs_sparse_dict_dgrdl <- function(dat, dgrdl_params, seed, verbose) .Call(wrap__rs_sparse_dict_dgrdl, dat, dgrdl_params, seed, verbose)
 
 #' Generate sparse data from an upper triangle
 #'
