@@ -6,6 +6,7 @@ use faer::{
 };
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
+use std::time::Instant;
 
 use crate::helpers::graph::{adjacency_to_laplacian, get_knn_graph_adj};
 use crate::helpers::linalg::{column_cosine, sylvester_solver};
@@ -238,6 +239,7 @@ impl Dgrdl {
     /// ### Params
     ///
     /// * `data` - Input data matrix
+    /// * `seed` - Seed for the random initilisation of the first medoid.
     ///
     /// ### Returns
     ///

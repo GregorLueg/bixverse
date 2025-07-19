@@ -556,7 +556,12 @@ pub fn graph_from_strings(
 // KNN and Laplacian //
 ///////////////////////
 
-// Helper struct for KNN with heap
+/// Helper struct for KNN with heap
+///
+/// ### Fields
+///
+/// * `index` - Index position of that neighbours
+/// * `similiarity` - Similarity value for that Neighbour
 #[derive(Debug)]
 struct SimilarityItem {
     index: usize,
@@ -564,6 +569,11 @@ struct SimilarityItem {
 }
 
 impl PartialEq for SimilarityItem {
+    /// Check equality between two `SimilarityItem` items in terms of similarity
+    ///
+    /// ### Returns
+    ///
+    /// `true` if they are the same.
     fn eq(&self, other: &Self) -> bool {
         self.similarity == other.similarity
     }

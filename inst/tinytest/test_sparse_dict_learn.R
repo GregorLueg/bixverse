@@ -136,26 +136,6 @@ reconstruction_bio <- res_bio$dictionary %*% res_bio$coefficients
 reconstruction_error_bio <- norm(synthetic_data_2 - reconstruction_bio, "F") /
   norm(synthetic_data_2, "F")
 
-# qs2::qs_save(
-#   res_bio$dictionary,
-#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_dictionary.qs"
-# )
-
-# qs2::qs_save(
-#   res_bio$coefficients,
-#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_coefficients.qs"
-# )
-
-# qs2::qs_save(
-#   res_bio$feature_laplacian,
-#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_feat_laplacian.qs"
-# )
-
-# qs2::qs_save(
-#   res_bio$sample_laplacian,
-#   "~/repos/shared/bixverse/inst/tinytest/test_data/dgrdl_sample_laplacian.qs"
-# )
-
 expect_true(
   current = reconstruction_error_bio < 0.2,
   info = "DGRDL synthetic data 2 reconstruction error"
