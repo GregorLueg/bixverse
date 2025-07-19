@@ -1102,6 +1102,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     if (.verbose) {
       message("Calculating the differential expression with limma results.")
     }
+
     limma_results_final <- run_limma_voom(
       meta_data = sample_info,
       main_contrast = contrast_column,
@@ -1133,6 +1134,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         "Method will run Limma Voom and Hedge's G on the individual data sets."
       ))
     }
+
     # Iterate through the grps
     groups <- unique(sample_info[[filter_column]])
     results <- purrr::map(groups, \(group) {

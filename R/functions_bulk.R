@@ -11,9 +11,13 @@ fix_contrast_names <- function(x) {
   checkmate::qassert(x, c("S+", "F+", "N+"))
   if (checkmate::qtest(x, c("S+", "F+"))) {
     res <- as.factor(gsub(
-      "\\.",
+      "_{2,}",
       "_",
-      make.names(gsub("[[:punct:]&&[^_]]", "", x))
+      gsub(
+        "\\.",
+        "_",
+        make.names(gsub("[[:punct:]&&[^_]]", "", x))
+      )
     ))
   } else {
     res <- x
@@ -174,15 +178,15 @@ run_limma_voom <- function(
   colnames(model_matrix) <- gsub(main_contrast, "", colnames(model_matrix))
 
   if (is.null(dge_list)) {
-    counts = normalised_counts
+    counts <- normalised_counts
     limma_fit <- limma::lmFit(counts, model_matrix)
   } else {
-    counts = dge_list
+    counts <- dge_list
     voom_obj <- limma::voom(
       counts = counts,
       design = model_matrix,
       normalize.method = "quantile",
-      plot = TRUE,
+      plot = FALSE,
       ...
     )
     limma_fit <- limma::lmFit(voom_obj, model_matrix)
@@ -353,7 +357,7 @@ hedges_g_dge <- function(
       hedges_g_effect
     },
     .args = list(meta_data = meta_data, normalised_counts = normalised_counts)
-  ) %>%
+  )[] %>%
     data.table::rbindlist()
 
   mirai::daemons(0)

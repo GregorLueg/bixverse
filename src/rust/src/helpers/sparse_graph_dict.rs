@@ -194,7 +194,7 @@ impl Dgrdl {
 
         if verbose {
             println!(
-                "DGRDL dictionary initialisation finished in {:.2?}",
+                "DGRDL dictionary initialisation finished in {:.2?}.",
                 end_dictionary_gen
             );
         }
@@ -206,7 +206,7 @@ impl Dgrdl {
 
         if verbose {
             println!(
-                "DGRDL graph laplacians generated in {:.2?}",
+                "DGRDL graph laplacians generated in {:.2?}.",
                 end_laplacian_gen
             );
         }
@@ -235,7 +235,7 @@ impl Dgrdl {
 
             if verbose {
                 println!(
-                    " DGRDL iteration {}/{} in {:.2?}",
+                    " DGRDL iteration {}/{} in {:.2?}.",
                     iter + 1,
                     self.params.max_iter,
                     end_iter
@@ -246,7 +246,10 @@ impl Dgrdl {
         let end_time = start_total.elapsed();
 
         if verbose {
-            println!("Total time for fitting DGRDL: {:.2?}", end_time)
+            println!(
+                "Total time elapsed for fitting the DGRDL run: {:.2?}.",
+                end_time
+            )
         }
 
         DgrdlResults {
