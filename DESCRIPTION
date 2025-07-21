@@ -73,3 +73,5 @@ SystemRequirements:
     Cargo (Rust's package manager), rustc
 VignetteBuilder: 
     quarto
+Depends: 
+    R (>= 4.2)
