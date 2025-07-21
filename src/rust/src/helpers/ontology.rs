@@ -1,6 +1,5 @@
-use crate::utils::general::flatten_vector;
-
 use extendr_api::prelude::*;
+
 use faer::Mat;
 use once_cell::sync::Lazy;
 use petgraph::graph::{DiGraph, NodeIndex};
@@ -11,6 +10,7 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock};
 
 use crate::assert_same_len;
+use crate::utils::general::flatten_vector;
 
 /////////////
 // Globals //

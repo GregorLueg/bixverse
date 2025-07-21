@@ -72,7 +72,7 @@ expected_sample_laplacian <- qs2::qs_read(
 ### simple data ----------------------------------------------------------------
 
 res_simple <- rs_sparse_dict_dgrdl(
-  dat = synthetic_data,
+  x = synthetic_data,
   dgrdl_params = params_dgrdl(
     sparsity = 2L,
     dict_size = 4L,
@@ -117,7 +117,7 @@ expect_equal(
 ### 'biological' data ----------------------------------------------------------
 
 res_bio <- rs_sparse_dict_dgrdl(
-  dat = synthetic_data_2,
+  x = synthetic_data_2,
   dgrdl_params = params_dgrdl(
     sparsity = 3L,
     dict_size = 8L,

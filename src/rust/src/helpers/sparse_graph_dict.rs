@@ -364,6 +364,20 @@ impl Dgrdl {
 // Helpers //
 /////////////
 
+/// Get the upper triangle indices as a pair for rapid distance calculations
+///
+/// Stores the indices of a 3 x 3 matrix for example in a pattern of
+/// `(0,1)`, `(0,2)`, `(0,3)`, `(1,2)`, `(1,3)`, `(2,3)` (assuming a linear
+/// matrix).
+///
+/// ### Params
+///
+/// * `pair_idx` - Linear index in compressed storage, i.e., `0 to n (n - 1) / 2 - 1)`
+/// * `n` - Shape of the original column
+///
+/// ### Returns
+///
+/// Tuple of `(i, j)`
 fn triangle_to_indices(linear_idx: usize, n: usize) -> (usize, usize) {
     let mut idx = linear_idx;
     let mut i = 0;
@@ -376,7 +390,18 @@ fn triangle_to_indices(linear_idx: usize, n: usize) -> (usize, usize) {
     (i, i + 1 + idx)
 }
 
-/// Get distance from compact upper-triangle storage
+/// Retrieve distance from compressed upper-triangle storage
+///
+/// ### Params
+///
+/// * `distances` - Pre-computed distance array in compressed format
+/// * `i` - First matrix index
+/// * `j` - Second matrix index  
+/// * `n` - Original matrix size
+///
+/// ### Returns
+///
+/// Distance value between the two values
 fn get_distance(distances: &[f64], i: usize, j: usize, n: usize) -> f64 {
     if i == j {
         return 0.0;
@@ -419,8 +444,8 @@ fn get_dgrdl_laplacian(data: &MatRef<f64>, k: usize, features: bool) -> Mat<f64>
 ///
 /// min_X ||Y - DX||²_F + β·tr(X·L_f·X^T) + λ||X||_0
 ///
-/// subject to sparsity constraint using Alternating Direction Method of
-/// Multipliers (ADMM).
+/// subject to sparsity constraint using alternating direction method of
+/// multipliers (ADMM).
 ///
 /// ### Params
 ///
@@ -681,7 +706,7 @@ mod tests {
     fn test_known_dictionary_recovery() {
         let mut rng = StdRng::seed_from_u64(42);
 
-        // Create ground truth dictionary (smaller for speed)
+        // Create ground truth dictionary
         let n_samples = 15;
         let n_features = 30;
         let true_dict_size = 4;
@@ -689,7 +714,7 @@ mod tests {
 
         let mut true_dict = Mat::zeros(n_samples, true_dict_size);
 
-        // Create 4 simpler, more distinct patterns
+        // Create 4 simple distinct patterns
         // Pattern 1: Constant high
         for i in 0..n_samples {
             true_dict[(i, 0)] = 1.0;
@@ -710,7 +735,7 @@ mod tests {
             true_dict[(i, 3)] = if i % 2 == 0 { 1.0 } else { -1.0 };
         }
 
-        // Normalize columns
+        // Normalise columns
         for j in 0..true_dict_size {
             let col = true_dict.col(j);
             let norm = col.norm_l2();
@@ -719,7 +744,7 @@ mod tests {
             }
         }
 
-        // Generate sparse coefficients (simpler, cleaner)
+        // Generate sparse coefficients
         let mut true_coeffs = Mat::zeros(true_dict_size, n_features);
         for j in 0..n_features {
             // Randomly select which atoms to use
@@ -741,15 +766,16 @@ mod tests {
             }
         }
 
-        // Run DGRDL with faster settings
+        // Run DGRDL with fast settings
+        // Weak regularisation, less iterations
         let params = DgrdlParams {
             sparsity,
             dict_size: true_dict_size,
-            alpha: 0.01, // Very weak regularization
-            beta: 0.01,
-            max_iter: 8, // Fewer iterations
+            alpha: 0.25,
+            beta: 0.25,
+            max_iter: 8,
             k_neighbours: 3,
-            admm_iter: 5, // Fewer ADMM iterations
+            admm_iter: 5,
             rho: 1.0,
         };
 
@@ -847,6 +873,7 @@ mod tests {
         assert!(block_error < 0.5, "Failed to capture block structure");
     }
 
+    /// Test 3: Test something that represents biology
     #[test]
     fn test_gene_modules() {
         let n_cell_lines = 24;
@@ -856,10 +883,10 @@ mod tests {
 
         // Create modules representing biological functions
         let modules = [
-            ("DNA_repair", 0..15),  // Module 1: DNA repair genes
-            ("Cell_cycle", 15..30), // Module 2: Cell cycle genes
-            ("Metabolism", 30..45), // Module 3: Metabolic genes
-            ("Stress", 45..60),     // Module 4: Stress response
+            ("DNA_repair", 0..15),  // Module 1
+            ("Cell_cycle", 15..30), // Module 2
+            ("Metabolism", 30..45), // Module 3
+            ("Stress", 45..60),     // Module 4
         ];
 
         let mut rng = StdRng::seed_from_u64(456);
@@ -870,10 +897,10 @@ mod tests {
 
             // Each module is active in different cell lines
             let active_cells = match module_idx {
-                0 => 0..8,   // DNA repair: active in first 8 cell lines
-                1 => 6..14,  // Cell cycle: overlaps with DNA repair
-                2 => 12..20, // Metabolism: active in middle cell lines
-                3 => 16..24, // Stress: active in last 8 cell lines
+                0 => 0..8,   // Have module 1 active
+                1 => 6..14,  // Have module 2 active
+                2 => 12..20, // Have module 3 active
+                3 => 16..24, // Have module 4 active
                 _ => 0..0,
             };
 
@@ -897,7 +924,7 @@ mod tests {
         let params = DgrdlParams {
             sparsity: 3,
             dict_size: 8,
-            alpha: 0.3,
+            alpha: 0.5,
             beta: 0.5,
             max_iter: 10,
             k_neighbours: 3,
@@ -952,8 +979,11 @@ mod tests {
         );
     }
 
+    /// Test 4: Test graph regularisation
+    ///
+    /// This test is slow as it has to run over three different settings
     #[test]
-    fn test_regularization_effects() {
+    fn test_regularisation_effects() {
         // Create data where graph regularization should help
         let n_samples = 30;
         let n_features = 60;
@@ -961,7 +991,7 @@ mod tests {
         let mut data = Mat::zeros(n_samples, n_features);
         let mut rng = StdRng::seed_from_u64(789);
 
-        // Create smooth patterns that should benefit from graph regularization
+        // Create smooth patterns that should benefit from graph regularisation
         for i in 0..n_samples {
             for j in 0..n_features {
                 // Smooth function of both sample and feature indices
@@ -972,7 +1002,7 @@ mod tests {
             }
         }
 
-        // Test with different regularization strengths
+        // Test with different regularisation strengths
         let test_cases = vec![
             ("No regularization", 0.0, 0.0),
             ("Weak regularization", 0.1, 0.1),
@@ -987,15 +1017,16 @@ mod tests {
                 dict_size: 8,
                 alpha,
                 beta,
-                max_iter: 15,
+                max_iter: 10,
                 k_neighbours: 5,
-                admm_iter: 8,
+                admm_iter: 5,
                 rho: 1.0,
             };
 
             let dgrdl = Dgrdl::new(params);
-            let result = dgrdl.fit(&data.as_ref(), 42, false);
+            let result = dgrdl.fit(&data.as_ref(), 42, true);
 
+            // Check reconstruction
             let reconstruction = &result.dictionary * &result.coefficients;
             let error = (&data - &reconstruction).norm_l2() / data.norm_l2();
 
