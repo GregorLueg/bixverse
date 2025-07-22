@@ -1,5 +1,6 @@
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
+    traits::AddByRef,
     Mat, MatRef,
 };
 use rand::prelude::*;
@@ -470,62 +471,128 @@ pub fn randomised_svd(
 ////////////////////
 
 /// Sylvester solver for three matrix systems
+///
+/// Solves a system of `AX + XB = C`. Pending on the size of the underlying
+/// matrices, the algorithm will solve this directly or iteratively.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+///
+/// ### Returns
+///
+/// The matrix X
 pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef<f64>) -> Mat<f64> {
     let m = mat_a.nrows();
     let n = mat_b.ncols();
 
-    // For small problems, use direct method
     if m * n < 1000 {
-        return sylvester_solver_direct(mat_a, mat_b, mat_c);
+        // For small problems, use direct method
+        sylvester_solver_direct(mat_a, mat_b, mat_c)
+    } else {
+        // For large problems use the iterative method
+        sylvester_solver_iterative(mat_a, mat_b, mat_c, 50, 1e-6)
     }
-
-    // Use iterative method for large problems
-    sylvester_solver_iterative(mat_a, mat_b, mat_c)
 }
 
 /// Iterative Sylvester solver using fixed-point iteration
+///
+/// Solves a system of `AX + XB = C`. Uses an iterative approach more
+/// appropriate for large matrix systems.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+/// * `max_iter` - Maximum number of iterations
+/// * `tolerance` - Tolerance parameter
+///
+/// Returns
+///
+/// The matrix X
 fn sylvester_solver_iterative(
     mat_a: &MatRef<f64>,
     mat_b: &MatRef<f64>,
     mat_c: &MatRef<f64>,
+    max_iter: usize,
+    tolerance: f64,
 ) -> Mat<f64> {
     let m = mat_a.nrows();
     let n = mat_b.ncols();
 
     // Initial guess
-    let mut x = mat_c.cloned();
+    let mut x = mat_c.to_owned();
     let mut x_new = Mat::zeros(m, n);
+    let mut residual = Mat::zeros(m, n);
 
-    let max_iter = 50;
-    let tol = 1e-6;
+    // Adaptive alpha parameters
+    let mut alpha: f64 = 0.5;
+    let alpha_min = 0.01;
+    let alpha_max = 1.0;
+    let mut prev_residual_norm = f64::INFINITY;
 
-    // Precompute for efficiency
-    let alpha = 0.1; // Step size
+    let c_norm = mat_c.norm_l2();
+    let rel_tolerance = tolerance * c_norm.max(1.0);
 
-    for _ in 0..max_iter {
+    for iter in 0..max_iter {
         // x_new = C - alpha * (A*x + x*B)
         let ax = mat_a * &x;
         let xb = &x * mat_b;
 
-        for i in 0..m {
-            for j in 0..n {
-                x_new[(i, j)] = mat_c[(i, j)] - alpha * (ax[(i, j)] + xb[(i, j)]);
-            }
-        }
+        residual.copy_from(&mat_c);
+        residual -= &ax;
+        residual -= &xb;
 
-        // Check convergence
-        let diff = (&x_new - &x).norm_l2();
-        if diff < tol {
+        let residual_norm = residual.norm_l2();
+
+        // Check convergence with relative tolerance
+        if residual_norm < rel_tolerance {
             break;
         }
 
+        if iter > 0 {
+            if residual_norm < prev_residual_norm {
+                // Good progress, increase step size slightly
+                alpha = (alpha * 1.1).min(alpha_max);
+            } else {
+                // Poor progress, reduce step size
+                alpha = (alpha * 0.5).max(alpha_min);
+            }
+        }
+
+        x_new.copy_from(&x);
+
+        x_new.add_by_ref(&(residual.as_ref() * alpha));
+
         std::mem::swap(&mut x, &mut x_new);
+        prev_residual_norm = residual_norm;
+
+        // Early termination for very slow convergence
+        if iter > 10 && residual_norm > 0.99 * prev_residual_norm {
+            break;
+        }
     }
 
     x
 }
 
 /// Direct version for small matrices
+///
+/// Uses partial LU decomposition to solve: `AX + XB = C`. Slow for large
+/// matrix systems.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+///
+/// ### Returns
+///
+/// The matrix X
 fn sylvester_solver_direct(
     mat_a: &MatRef<f64>,
     mat_b: &MatRef<f64>,
@@ -537,7 +604,7 @@ fn sylvester_solver_direct(
 
     let mut coeff_matrix: Mat<f64> = Mat::zeros(mn, mn);
 
-    // Build coefficient matrix more efficiently
+    // Build coefficient matrix
     for i in 0..m {
         for j in 0..n {
             let row_idx = i * n + j;
@@ -556,7 +623,7 @@ fn sylvester_solver_direct(
         }
     }
 
-    // Vectorize C
+    // Vectorise C
     let mut c_vec: Mat<f64> = Mat::zeros(mn, 1);
     for i in 0..m {
         for j in 0..n {
@@ -567,13 +634,14 @@ fn sylvester_solver_direct(
     let lu = PartialPivLu::new(coeff_matrix.as_ref());
     let solved = lu.solve(&c_vec);
 
-    // Reshape result
+    // Reshape
     let mut res = Mat::zeros(m, n);
     for i in 0..m {
         for j in 0..n {
             res[(i, j)] = solved[(i * n + j, 0)];
         }
     }
+
     res
 }
 

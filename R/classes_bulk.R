@@ -263,6 +263,99 @@ S7::method(remove_samples, bulk_dge) <-
     return(object_new)
   }
 
+
+#' Helper to fix meta-data columns to be R conform
+#'
+#' @description
+#' This function will update the specified columns in the metadata of an
+#' `bixverse::bulk_dge` or `bixverse::bulk_coexp` to be conform with R standard
+#' naming convetions. This is useful to do before running DGE methods as they
+#' expect standardised names.
+#'
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param col_names Character vector. The columns to fix.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return Returns the object with the respective metadata columns updated.
+#'
+#' @export
+fix_meta_data_column <- S7::new_generic(
+  name = "fix_meta_data_column",
+  dispatch_args = "object",
+  fun = function(object, col_names, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method fix_meta_data_column bulk_dge
+#'
+#' @export
+S7::method(fix_meta_data_column, bulk_dge) <-
+  function(object, col_names) {
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    # Data
+    S7::prop(object, "meta_data") <- S7::prop(object, "meta_data")[,
+      (col_names) := lapply(.SD, fix_contrast_names),
+      .SDcols = col_names
+    ]
+
+    # Return
+    return(object)
+  }
+
+
+#' Replace values in a metadata column
+#'
+#' @description
+#' This function will update the values in a given metadata column based on
+#' what you are providing in terms of replacement.
+#'
+#' @param object The underlying object, either `bixverse::bulk_coexp` or
+#' `bixverse::bulk_dge`.
+#' @param column Character vector. The columns for which to replace the
+#' values.
+#' @param replacement Named character vector. The values with which to replace
+#' the data.
+#' @param ... Additional arguments to parse to the functions.
+#'
+#' @return Returns the object with the respective metadata updated.
+#'
+#' @export
+update_metadata_values <- S7::new_generic(
+  name = "update_metadata_values",
+  dispatch_args = "object",
+  fun = function(object, column, replacement, ...) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method update_metadata_values bulk_dge
+#'
+#' @export
+S7::method(update_metadata_values, bulk_dge) <-
+  function(object, column, replacement) {
+    meta_data <- S7::prop(object, "meta_data")
+
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::assertTRUE(
+      all(meta_data[[column]] %in% names(replacement))
+    )
+
+    meta_data[[column]] <- replacement[meta_data[[column]]]
+
+    S7::prop(object, "meta_data") <- meta_data
+
+    # Return
+    return(object)
+  }
+
 ## common getters --------------------------------------------------------------
 
 #' Return the metadata

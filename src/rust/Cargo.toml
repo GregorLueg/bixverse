@@ -1,5 +1,6 @@
 [package]
 name = 'bixverse'
+publish = false
 version = '0.2.0'
 edition = '2021'
 rust-version = '1.65'
@@ -14,8 +15,12 @@ default = []
 [profile.dev.package.faer]
 opt-level = 3
 
+[profile.test]
+opt-level = 3
+debug = false
+
 [dependencies]
-extendr-api = "0.8.0"
+extendr-api = "0.8.1"
 rayon = '*'
 rand = { version = "0.9.0", features = ["std"] }
 rand_distr = "0.5.0"
@@ -25,6 +30,3 @@ num-complex = '*'
 petgraph = { version = "0.8.2", features = ["rayon"] }
 rustc-hash = "2.1.1"
 once_cell = "*"
-
-[profile.release]
-panic = "abort"

@@ -4,6 +4,10 @@
 ^\.pre-commit-config\.yaml$
 ^bixverse\.Rproj$
 ^doc$
+^src/Makevars$
+^src/Makevars\.win$
 ^src/\.cargo$
+^src/rust/target$
+^src/rust/vendor$
 ^vignettes/*_files$
 ^vignettes/\.quarto$

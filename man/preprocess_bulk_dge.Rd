@@ -19,8 +19,9 @@ preprocess_bulk_dge(
 \item{group_col}{String. The column in the metadata that will contain the
 contrast groups. Needs to be part of the metadata stored in the class.}
 
-\item{norm_method}{String. One of \verb{c("TMM", "TMMwsp", "RLE", "upperquartile",}
-\verb{ "none")}. Please refer to \code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
+\item{norm_method}{String. One of
+\code{c("TMM", "TMMwsp", "RLE", "upperquartile", "none")}. Please refer to
+\code{\link[edgeR:calcNormFactors]{edgeR::normLibSizes()}}.}
 
 \item{outlier_threshold}{Float. Number of standard deviations in terms of
 percentage genes detected you allow before removing a sample. Defaults to \code{2}.}
