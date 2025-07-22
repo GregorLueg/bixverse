@@ -48,7 +48,7 @@ fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbos
 
     let dgrdl_params = DgrdlParams::from_r_list(dgrdl_params);
 
-    let dgrdl_object = Dgrdl::new(dgrdl_params);
+    let mut dgrdl_object = Dgrdl::new(dgrdl_params);
 
     let res: DgrdlResults = dgrdl_object.fit(&x, seed, verbose);
 
