@@ -63,7 +63,57 @@ fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbos
     )
 }
 
+/// @export
+#[extendr]
+fn rs_sparse_dict_dgrdl_grid_search(
+    x: RMatrix<f64>,
+    dgrdl_params: List,
+    seeds: &[i32],
+    dict_sizes: &[i32],
+    k_neighbours_vec: &[i32],
+    verbose: bool,
+) -> List {
+    let x = r_matrix_to_faer(&x);
+
+    // Transform R i32 to usize
+    let seeds: Vec<usize> = seeds.iter().map(|x| *x as usize).collect();
+    let dict_sizes: Vec<usize> = dict_sizes.iter().map(|x| *x as usize).collect();
+    let k_neighbours_vec: Vec<usize> = k_neighbours_vec.iter().map(|x| *x as usize).collect();
+
+    let dgrdl_params = DgrdlParams::from_r_list(dgrdl_params);
+    let mut dgrdl_object = Dgrdl::new(dgrdl_params);
+
+    let grid_search_res: Vec<DgrdlObjectives> =
+        dgrdl_object.grid_search(&x, &dict_sizes, &k_neighbours_vec, &seeds, verbose);
+
+    let mut approximation_err: Vec<f64> = Vec::with_capacity(grid_search_res.len());
+    let mut feature_laplacian_objective: Vec<f64> = Vec::with_capacity(grid_search_res.len());
+    let mut sample_laplacian_objective = Vec::with_capacity(grid_search_res.len());
+    let mut seeds: Vec<usize> = Vec::with_capacity(grid_search_res.len());
+    let mut dict_sizes: Vec<usize> = Vec::with_capacity(grid_search_res.len());
+    let mut k_neighbours_vec: Vec<usize> = Vec::with_capacity(grid_search_res.len());
+
+    for res in grid_search_res {
+        approximation_err.push(res.approximation_error);
+        feature_laplacian_objective.push(res.feature_laplacian_objective);
+        sample_laplacian_objective.push(res.sample_laplacian_objective);
+        seeds.push(res.seed);
+        dict_sizes.push(res.dict_size);
+        k_neighbours_vec.push(res.k_neighbours);
+    }
+
+    list!(
+        seed = seeds,
+        dict_size = dict_sizes,
+        k_neighbours = k_neighbours_vec,
+        reconstruction_errs = approximation_err,
+        feature_laplacian_objective = feature_laplacian_objective,
+        sample_laplacian_objective = sample_laplacian_objective,
+    )
+}
+
 extendr_module! {
     mod r_sparse_graph_dict;
     fn rs_sparse_dict_dgrdl;
+    fn rs_sparse_dict_dgrdl_grid_search;
 }

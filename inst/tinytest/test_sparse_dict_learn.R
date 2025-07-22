@@ -67,6 +67,37 @@ expected_sample_laplacian <- qs2::qs_read(
   "./test_data/dgrdl_sample_laplacian.qs"
 )
 
+### grid search expected data --------------------------------------------------
+
+# values that should come out of a (very) small grid search
+
+expected_dict_size <- c(4, 4, 6, 6, 8, 8)
+expected_k_neighbours <- c(2, 4, 2, 4, 2, 4)
+expected_reconstruction_errs <- c(
+  7.841485,
+  8.058670,
+  3.230930,
+  3.410178,
+  2.684076,
+  2.932293
+)
+expected_feature_laplacian_objective <- c(
+  0.08811495,
+  0.07238789,
+  0.09457138,
+  0.08825983,
+  0.09495633,
+  0.09622596
+)
+expected_sample_laplacian_objective <- c(
+  0.1721426,
+  1.0404422,
+  0.2704316,
+  1.6122873,
+  0.3565061,
+  2.1199792
+)
+
 ## tests -----------------------------------------------------------------------
 
 ### simple data ----------------------------------------------------------------
@@ -163,4 +194,63 @@ expect_equal(
   current = res_bio$sample_laplacian,
   target = expected_sample_laplacian,
   info = "DGRDL synthetic data 2 expected sample laplacian"
+)
+
+### grid search ----------------------------------------------------------------
+
+# hyper params to iterate through
+neighbours_vector <- as.integer(c(2, 4))
+seed_vector <- as.integer(c(123))
+dict_size <- as.integer(c(4, 6, 8))
+
+# grid search
+grid_search_res <- rs_sparse_dict_dgrdl_grid_search(
+  x = synthetic_data_2,
+  dgrdl_params = params_dgrdl(
+    sparsity = 10L,
+    dict_size = 8L,
+    alpha = 1.0,
+    beta = 1.0,
+    max_iter = 10L,
+    k_neighbours = 5L,
+    admm_iter = 5L,
+    rho = 1.0
+  ),
+  seeds = seed_vector,
+  dict_sizes = dict_size,
+  k_neighbours_vec = neighbours_vector,
+  verbose = FALSE
+)
+
+expect_equal(
+  current = grid_search_res$dict_size,
+  target = expected_dict_size,
+  info = "DGRDL grid search: dictionary size"
+)
+
+expect_equal(
+  current = grid_search_res$k_neighbours,
+  target = expected_k_neighbours,
+  info = "DGRDL grid search: k neighbours"
+)
+
+expect_equal(
+  current = grid_search_res$reconstruction_errs,
+  target = expected_reconstruction_errs,
+  info = "DGRDL grid search: expected reconstruction error",
+  tolerance = 1e-7
+)
+
+expect_equal(
+  current = grid_search_res$feature_laplacian_objective,
+  target = expected_feature_laplacian_objective,
+  info = "DGRDL grid search: expected feature laplacian objective",
+  tolerance = 1e-7
+)
+
+expect_equal(
+  current = grid_search_res$sample_laplacian_objective,
+  target = expected_sample_laplacian_objective,
+  info = "DGRDL grid search: expected sample laplacian objective",
+  tolerance = 1e-7
 )
