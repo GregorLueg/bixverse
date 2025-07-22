@@ -8,10 +8,6 @@ synthetic_signal_matrix(
   no_grps = 3,
   per_group = 30,
   total_genes = 1000L,
-  mean_initial = 5,
-  variance_initial = 5,
-  mean_up = 10,
-  variance_up = 5,
   no_genes_up = 100L,
   add_small_group = TRUE,
   size_small_grp = 5L,
@@ -23,19 +19,8 @@ synthetic_signal_matrix(
 
 \item{per_group}{Integer. Number of samples per larger groups. Default: 30L.}
 
-\item{total_genes}{Integer. Number of total genes in the matrix.
-Default: 1000L.}
-
-\item{mean_initial}{Float. Initial mean expression. Default: 5.}
-
-\item{variance_initial}{Float. Initial variance in the expression.
-Default: 5.}
-
-\item{mean_up}{Float. Mean expression of the genes that are differentially
-expressed. Default: 10.}
-
-\item{variance_up}{Float. Variance of the genes that are differentially
-expressed. Default: 5.}
+\item{total_genes}{Integer. Number of total genes in the matrix. Default:
+1000L.}
 
 \item{no_genes_up}{Integer. Number of genes per group that are differentially
 expressed. Default: 100L.}
@@ -49,7 +34,7 @@ expressed. Default: 100L.}
 data. Default: 10101L.}
 }
 \value{
-A list containing:
+A \code{synthetic_matrix_simple} class containing:
 \itemize{
 \item mat - The random matrix
 \item diff - List of differentially expressed genes per group
@@ -60,8 +45,8 @@ A list containing:
 This is a function to create a synthetic, pseudo gene expression matrix with
 a pre-defined number of total genes, groups and number of genes
 differentially expressed in the groups. The function will create in a
-standard setting a 1000 x 90 matrix, and add a small group into the mixture
-that is more difficult to detect.
+standard setting a 1000 x 90 matrix, and add optionally a small group into
+the mixture that is slightly more difficult to detect
 }
 \examples{
 \dontrun{
