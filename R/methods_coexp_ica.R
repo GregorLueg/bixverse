@@ -1052,7 +1052,7 @@ S7::method(get_ica_stability_res, bulk_coexp) <- function(object) {
   # checks
   checkmate::assertClass(object, "bixverse::bulk_coexp")
 
-  stability_df <- S7::prop(object, "outputs")[["ica_stability_res"]]
+  stability_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
   if (is.null(stability_df)) {
     warning(
       paste(

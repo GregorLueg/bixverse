@@ -260,7 +260,111 @@ expect_equal(
 
 # s7 class version -------------------------------------------------------------
 
+## initialisation and first warnings -------------------------------------------
+
 s7_obj <- bulk_coexp(
   raw_data = synthetic_data_2$data,
   meta_data = synthetic_data_2$meta_data
+)
+
+expect_warning(
+  current = get_grid_search_res(s7_obj),
+  info = "DGRDL class - no grid search result warning."
+)
+
+expect_warning(
+  current = dgrdl_grid_search(
+    object = s7_obj,
+    neighbours_vec = neighbours_vector[1],
+    dict_size_vec = dict_size[1],
+    seed_vec = seed_vector,
+    .verbose = FALSE
+  ),
+  info = "DGRDL class - pre-processing warning."
+)
+
+## grid search -----------------------------------------------------------------
+
+s7_obj <- suppressWarnings(dgrdl_grid_search(
+  object = s7_obj,
+  dgrdl_params = params_dgrdl(
+    sparsity = 10L,
+    dict_size = 8L,
+    alpha = 1.0,
+    beta = 1.0,
+    max_iter = 10L,
+    k_neighbours = 5L,
+    admm_iter = 5L,
+    rho = 1.0
+  ),
+  neighbours_vec = neighbours_vector,
+  dict_size_vec = dict_size,
+  seed_vec = seed_vector,
+  .verbose = FALSE
+))
+
+grid_search_res <- get_grid_search_res(s7_obj)
+
+# Check that nothing weird is happening here
+expect_equal(
+  current = grid_search_res$reconstruction_errs,
+  target = expected_reconstruction_errs,
+  info = "DGRDL class grid search: expected reconstruction error",
+  tolerance = 1e-7
+)
+
+expect_equal(
+  current = grid_search_res$feature_laplacian_objective,
+  target = expected_feature_laplacian_objective,
+  info = "DGRDL class grid search: expected feature laplacian objective",
+  tolerance = 1e-7
+)
+
+expect_equal(
+  current = grid_search_res$sample_laplacian_objective,
+  target = expected_sample_laplacian_objective,
+  info = "DGRDL class grid search: expected sample laplacian objective",
+  tolerance = 1e-7
+)
+
+## actual fitting --------------------------------------------------------------
+
+s7_obj <- suppressWarnings(dgrdl_result(
+  object = s7_obj,
+  dgrdl_params = params_dgrdl(
+    sparsity = 3L,
+    dict_size = 8L,
+    alpha = 0.3,
+    beta = 0.5,
+    max_iter = 10L,
+    k_neighbours = 3L,
+    admm_iter = 5L,
+    rho = 1.0
+  ),
+  seed = 10101L,
+  .verbose = FALSE
+))
+
+s7_res <- get_results(s7_obj)
+
+expect_equivalent(
+  current = s7_res$dictionary,
+  target = expected_dictionary,
+  info = "DGRDL class - expected dictionary"
+)
+
+expect_equivalent(
+  current = s7_res$loadings,
+  target = expected_coefficients,
+  info = "DGRDL class - expected coefficients"
+)
+
+expect_true(
+  current = class(s7_res$feature_laplacian) == "dgCMatrix",
+  info = "DGRDL class - feature laplacian class"
+)
+
+expect_true(
+  current = class(s7_res$sample_laplacian) == "dgCMatrix",
+  info = "DGRDL class - sample laplacian class"
 )
