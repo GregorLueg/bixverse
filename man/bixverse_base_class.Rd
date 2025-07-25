@@ -11,7 +11,7 @@ Returns the S7 object for further operations.
 }
 \description{
 Generic base class that is used for inheritance in certain common methods
-across classes.
+across other classes.
 }
 \section{Properties}{
 

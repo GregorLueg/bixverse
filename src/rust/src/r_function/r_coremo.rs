@@ -3,11 +3,11 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rand::prelude::*;
 use rayon::prelude::*;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use crate::assert_symmetric_mat;
 use crate::helpers::linalg::column_correlation;
-use crate::utils::general::{mat_row_rm_row, upper_triangle_indices};
+use crate::utils::general::{mat_rm_row, upper_triangle_indices};
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
 use crate::utils::utils_stats::*;
 
@@ -76,7 +76,7 @@ fn rs_coremo_quality(
     let cor_mat = r_matrix_to_faer(&cor_mat);
 
     // Faster look-ups
-    let gene_map: HashMap<&str, usize> = row_names
+    let gene_map: FxHashMap<&str, usize> = row_names
         .iter()
         .enumerate()
         .map(|(i, gene)| (gene.as_str(), i))
@@ -184,7 +184,7 @@ fn rs_coremo_stability(
         .par_iter()
         .map(|index| {
             let index = *index as usize - 1;
-            let data_red = mat_row_rm_row(data, index);
+            let data_red = mat_rm_row(data, index);
             let cor_red = column_correlation(&data_red.as_ref(), spearman);
             // Flatten the data and apply the rbf function
             let indices = upper_triangle_indices(cor_red.ncols(), 1);

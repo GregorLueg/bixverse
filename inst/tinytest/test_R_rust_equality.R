@@ -81,6 +81,24 @@ expect_equivalent(
   info = "cov2cor equivalence test Rust <> R"
 )
 
+## mutual information ----------------------------------------------------------
+
+if (requireNamespace("infotheo", quietly = TRUE)) {
+  rust_result <- rs_mutual_info(mat, NULL, FALSE)
+
+  # ensure that the same discretisation is used
+  infotheo_res <- infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalwidth",
+    nbins = sqrt(nrow(mat))
+  ))
+
+  expect_equivalent(
+    current = rust_result,
+    target = infotheo_res,
+    info = "mutual information rest Rust <> R"
+  )
+}
 
 # hypergeom distributions ------------------------------------------------------
 
@@ -244,8 +262,6 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     cor_dir_v2 > 0.99,
     info = "Rust personalsied Page Rank implementation directed network (v2)."
   )
-} else {
-  exit_file("igraph package not available for comparison tests")
 }
 
 # set similarities -------------------------------------------------------------
@@ -274,4 +290,111 @@ expect_equal(
   current = overlap_coef,
   target = rs_overlap_coef,
   info = "Overlap coefficient Rust <> R"
+)
+
+## matrix version --------------------------------------------------------------
+
+### data -----------------------------------------------------------------------
+
+set_c <- letters[5:11]
+set_d <- letters[3:7]
+set_e <- letters[20:25]
+
+list_a <- list(set_a = set_a, set_b = set_b)
+list_b <- list(set_c = set_c, set_d = set_d, set_e = set_e)
+
+expected_matrix_jaccard <- matrix(
+  data = c(0.09090909, 0.4285714, 0, 0.3, 0.8333333, 0),
+  nrow = 2,
+  ncol = 3,
+  byrow = TRUE
+)
+
+expected_matrix_overlap <- matrix(
+  data = c(0.2, 0.6, 0, 0.5, 1, 0),
+  nrow = 2,
+  ncol = 3,
+  byrow = TRUE
+)
+
+### tests ----------------------------------------------------------------------
+
+jaccard_mat <- rs_set_similarity_list(
+  s_1_list = list_a,
+  s_2_list = list_b,
+  overlap = FALSE
+)
+
+overlap_mat <- rs_set_similarity_list(
+  s_1_list = list_a,
+  s_2_list = list_b,
+  overlap = TRUE
+)
+
+expect_equivalent(
+  current = jaccard_mat,
+  target = expected_matrix_jaccard,
+  tolerance = 1e-7
+)
+
+expect_equivalent(
+  current = overlap_mat,
+  target = expected_matrix_overlap,
+  tolerance = 1e-7
+)
+
+# effect sizes -----------------------------------------------------------------
+
+## data ------------------------------------------------------------------------
+
+set.seed(42L)
+mat_a <- matrix(rnorm(12, mean = 5, sd = 1), nrow = 3, ncol = 4)
+mat_b <- matrix(rnorm(12, mean = 7, sd = 1), nrow = 3, ncol = 4)
+
+expected_es <- c(-0.7859511, -0.4890762, -0.1603383, -0.2796240)
+expected_se <- c(0.8474333, 0.8286131, 0.8178075, 0.8204770)
+
+expected_es_no_cor <- c(-1.2032370, -0.7487419, -0.2454669, -0.4280850)
+expected_se_no_cor <- c(0.8873077, 0.8446209, 0.8195656, 0.8257954)
+
+## tests -----------------------------------------------------------------------
+
+rs_results <- rs_hedges_g(
+  mat_a = mat_a,
+  mat_b = mat_b,
+  small_sample_correction = TRUE
+)
+
+rs_results_no_cor <- rs_hedges_g(
+  mat_a = mat_a,
+  mat_b = mat_b,
+  small_sample_correction = FALSE
+)
+
+expect_equal(
+  current = rs_results$effect_sizes,
+  target = expected_es,
+  tolerance = 1e-7,
+  info = paste("Hedge effect size with correction")
+)
+
+expect_equal(
+  current = rs_results$standard_errors,
+  target = expected_se,
+  tolerance = 1e-7,
+  info = paste("Hedge standard error with correction")
+)
+
+expect_equal(
+  current = rs_results_no_cor$effect_sizes,
+  target = expected_es_no_cor,
+  tolerance = 1e-7,
+  info = paste("Hedge effect size with correction")
+)
+
+expect_equal(
+  current = rs_results_no_cor$standard_errors,
+  target = expected_se_no_cor,
+  tolerance = 1e-7,
+  info = paste("Hedge standard error with correction")
 )

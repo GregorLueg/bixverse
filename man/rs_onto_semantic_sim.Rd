@@ -18,8 +18,12 @@ list the names of the ancestors.}
 information content of this given term. Needs to be a single float!}
 }
 \value{
-A vector containing all the desired similarity scores. This is
-equivalent of the upper triangle of the similarity matrix.
+A list with:
+\itemize{
+\item term1 - name of the first term.
+\item term2 - name of the second term.
+\item sims - similarity between the two terms.
+}
 }
 \description{
 This function calculates the specified semantic similarity and

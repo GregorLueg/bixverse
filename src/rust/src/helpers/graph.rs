@@ -1,16 +1,21 @@
+use faer::{Mat, MatRef};
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdges, NodeCount, NodeIndexable};
 use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+
+use crate::{assert_same_len, assert_symmetric_mat};
 
 ////////////
 // Traits //
 ////////////
 
 /// Simple numeric trait for PageRank calculations
-/// Need this because of all the trait craziness going on
-#[allow(dead_code)]
+///
+/// Needed because of all the trait craziness going on
 pub trait NumericType:
     Copy
     + Send
@@ -24,13 +29,11 @@ pub trait NumericType:
 {
     fn zero() -> Self;
     fn one() -> Self;
-    fn from_usize(n: usize) -> Self;
     fn from_f64(n: f64) -> Option<Self>;
-    fn abs(self) -> Self;
     fn default_tolerance() -> Self;
 }
 
-// Implementation for f64
+/// Implementation `NumericType` for `f64`
 impl NumericType for f64 {
     fn zero() -> Self {
         0.0
@@ -38,21 +41,15 @@ impl NumericType for f64 {
     fn one() -> Self {
         1.0
     }
-    fn from_usize(n: usize) -> Self {
-        n as f64
-    }
     fn from_f64(n: f64) -> Option<Self> {
         Some(n)
-    }
-    fn abs(self) -> Self {
-        self.abs()
     }
     fn default_tolerance() -> Self {
         1e-6
     }
 }
 
-// Implementation for f32
+// Implementation `NumericType` for `f64`
 impl NumericType for f32 {
     fn zero() -> Self {
         0.0
@@ -60,14 +57,8 @@ impl NumericType for f32 {
     fn one() -> Self {
         1.0
     }
-    fn from_usize(n: usize) -> Self {
-        n as f32
-    }
     fn from_f64(n: f64) -> Option<Self> {
         Some(n as f32)
-    }
-    fn abs(self) -> Self {
-        self.abs()
     }
     fn default_tolerance() -> Self {
         1e-6
@@ -76,8 +67,9 @@ impl NumericType for f32 {
 
 ///////////
 // Enums //
+///////////
 
-/// Enum for the ICA types
+/// Enum for the TiedSumType types
 #[derive(Clone, Debug)]
 pub enum TiedSumType {
     Max,
@@ -86,6 +78,14 @@ pub enum TiedSumType {
 }
 
 /// Parsing the tied summarisation types
+///
+/// ### Params
+///
+/// * `s` - The string that defines the tied summarisation type
+///
+/// ### Results
+///
+/// The `TiedSumType` defining the tied summarisation type
 pub fn parse_tied_sum(s: &str) -> Option<TiedSumType> {
     match s.to_lowercase().as_str() {
         "max" => Some(TiedSumType::Max),
@@ -99,9 +99,14 @@ pub fn parse_tied_sum(s: &str) -> Option<TiedSumType> {
 // Personalised page rank //
 ////////////////////////////
 
-/// Reusable working memory to avoid allocations
-/// This is a good suggestion from Claude! Also, usage of memory swap makes stuff
-/// way better...
+/// Structure for Page Rank Memory
+///
+/// Allows for faster, better usage of memory
+///
+/// ### Fields
+///
+/// * `ranks` - The old ranks
+/// * `new_ranks` - The new ranks
 #[derive(Debug)]
 pub struct PageRankWorkingMemory {
     ranks: Vec<f64>,
@@ -109,7 +114,11 @@ pub struct PageRankWorkingMemory {
 }
 
 impl PageRankWorkingMemory {
-    /// Generaten of a new class
+    /// Initialise the structure
+    ///
+    /// ### Returns
+    ///
+    /// Initialised `PageRankWorkingMemory` structure
     pub fn new() -> Self {
         Self {
             ranks: Vec::new(),
@@ -118,6 +127,10 @@ impl PageRankWorkingMemory {
     }
 
     /// Ensure that the capacity is correct to avoid panics
+    ///
+    /// ### Params
+    ///
+    /// * `node_count` - The new node count.
     fn ensure_capacity(&mut self, node_count: usize) {
         if self.ranks.len() < node_count {
             self.ranks.resize(node_count, 0.0);
@@ -127,16 +140,32 @@ impl PageRankWorkingMemory {
 }
 
 /// Precomputed graph structure for efficient PageRank computation
+///
+/// ### Fields
+///
+/// * `node_count` - The total number of nodes in the graph
+/// * `in_edges_flat` - Flattened incoming edges: `[node0_in_edges..., node1_in_edges..., ...]`
+/// * `in_edges_offsets` - Offsets into the `in_edges_flat` for each node
+/// * `out_degrees` - The out degree for each node.
 #[derive(Clone)]
 pub struct PageRankGraph {
-    node_count: usize,            // Node counts
-    in_edges_flat: Vec<usize>, // Flattened incoming edges: [node0_in_edges..., node1_in_edges..., ...]
-    in_edges_offsets: Vec<usize>, // Offsets into in_edges_flat for each node
-    out_degrees: Vec<f64>,     // Out-degrees for each node
+    node_count: usize,
+    in_edges_flat: Vec<usize>,
+    in_edges_offsets: Vec<usize>,
+    out_degrees: Vec<f64>,
 }
 
+#[allow(dead_code)]
 impl PageRankGraph {
     /// Generate the structure from a given petgraph.
+    ///
+    /// ### Params
+    ///
+    /// * `graph` The PetGraph from which to generate the structure.
+    ///
+    /// ### Returns
+    ///
+    /// Initialised `PageRankGraph` structure
     pub fn from_petgraph<G>(graph: G) -> Self
     where
         G: NodeCount + IntoEdges + NodeIndexable + Sync,
@@ -178,7 +207,83 @@ impl PageRankGraph {
         }
     }
 
+    /// Generate the structure directly from node names and edge lists
+    ///
+    /// ### Params
+    ///
+    /// * `nodes` - Slice of the node names
+    /// * `from` - Slice of the names of the from nodes
+    /// * `to` - Slice of the names of the to nodes
+    /// * `undirected` - Whether to create bidirectional edges
+    ///
+    /// ### Returns
+    ///
+    /// Initialised `PageRankGraph` structure
+    pub fn from_strings(
+        nodes: &[String],
+        from: &[String],
+        to: &[String],
+        undirected: bool,
+    ) -> Self {
+        assert_same_len!(from, to);
+
+        let node_count = nodes.len();
+
+        // Create mapping from node names to indices
+        let mut name_to_idx = FxHashMap::default();
+        for (idx, name) in nodes.iter().enumerate() {
+            name_to_idx.insert(name, idx);
+        }
+
+        // Build adjacency lists
+        let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+        let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+
+        for (from_name, to_name) in from.iter().zip(to.iter()) {
+            let from_idx = *name_to_idx.get(from_name).unwrap();
+            let to_idx = *name_to_idx.get(to_name).unwrap();
+
+            out_edges[from_idx].push(to_idx);
+            in_edges[to_idx].push(from_idx);
+
+            if undirected {
+                out_edges[to_idx].push(from_idx);
+                in_edges[from_idx].push(to_idx);
+            }
+        }
+
+        // Flatten in_edges for better cache locality
+        let mut in_edges_flat = Vec::new();
+        let mut in_edges_offsets = Vec::with_capacity(node_count + 1);
+        in_edges_offsets.push(0);
+
+        for node_in_edges in &in_edges {
+            in_edges_flat.extend_from_slice(node_in_edges);
+            in_edges_offsets.push(in_edges_flat.len());
+        }
+
+        let out_degrees: Vec<f64> = out_edges.iter().map(|edges| edges.len() as f64).collect();
+
+        Self {
+            node_count,
+            in_edges_flat,
+            in_edges_offsets,
+            out_degrees,
+        }
+    }
+
     /// Get incoming edges for a node
+    ///
+    /// Inline function to hopefully optimise further the compilation of the
+    /// program
+    ///
+    /// ### Params
+    ///
+    /// * `node` - Get the in_edges for a given node index.
+    ///
+    /// ### Return
+    ///
+    /// Returns a slice of in_edges
     #[inline]
     fn in_edges(&self, node: usize) -> &[usize] {
         let start = self.in_edges_offsets[node];
@@ -187,8 +292,28 @@ impl PageRankGraph {
     }
 }
 
-/// Optimized PageRank with pre-allocated working memory
-pub fn personalized_page_rank_optimized(
+/// Optimised PageRank with pre-allocated working memory
+///
+/// This is a highly optimised version of the personalised page rank to be used
+/// for rapid permutations. Otherwise, you can just use the other version
+///
+/// ### Params
+///
+/// * `graph` - The `PageRankGraph` structure with pre-computed values for
+///             fast calculations
+/// * `damping_factor` - The dampening factor parameter, i.e., the probability
+///                      of resetting.
+/// * `personalization_vector` - The vector of probabilities for the reset,
+///                              making this the personalised page rank.
+/// * `nb_iter` - Maximum number of iterations for the personalised page rank.
+/// * `tolerance` - Tolerance of the algorithm.
+/// * `working_memory` - The `PageRankWorkingMemory` structure to store the old
+///                      and new ranks
+///
+/// ### Returns
+///
+/// The (normalised) personalised page rank scores.
+pub fn personalised_page_rank_optimised(
     graph: &PageRankGraph,
     damping_factor: f64,
     personalization_vector: &[f64],
@@ -260,6 +385,21 @@ pub fn personalized_page_rank_optimized(
 }
 
 /// Parallel Personalized Page Rank algorithm.
+///
+/// ### Params
+///
+/// * `graph` - The PetGraph on which to run the personalised page-rank.
+/// * `damping_factor` - The dampening factor parameter, i.e., the probability
+///                      of resetting.
+/// * `personalization_vector` - The vector of probabilities for the reset,
+///                              making this the personalised page rank.
+/// * `nb_iter` - Maximum number of iterations for the personalised page rank.
+/// * `tolerance` - Optional tolerance for the algorithm. If not provided, it will
+///                 default to `1e-6`.
+///
+/// ### Returns
+///
+/// The (normalised) personalised page rank scores.
 pub fn personalized_page_rank<G, D>(
     graph: G,
     damping_factor: D,
@@ -349,17 +489,30 @@ where
     ranks
 }
 
-/////////////
-// Helpers //
-/////////////
+/////////////////////////
+// PetGraph generation //
+/////////////////////////
 
-/// Generate a graph object from three vectors
+/// Generate a PetGraph Graph
+///
+/// ### Params
+///
+/// * `nodes` - Slice of the node names.
+/// * `from` - Slice of the names of the from nodes.
+/// * `to` - Slice of the names of the no nodes.
+/// * `undirected` - Shall a directed or undirected graph be generated.
+///
+/// ### Returns
+///
+/// The generated PetGraph
 pub fn graph_from_strings(
     nodes: &[String],
     from: &[String],
     to: &[String],
     undirected: bool,
 ) -> Graph<String, ()> {
+    assert_same_len!(from, to);
+
     let mut graph: Graph<String, ()> = Graph::new();
 
     let mut term_to_idx = FxHashMap::default();
@@ -379,4 +532,150 @@ pub fn graph_from_strings(
     }
 
     graph
+}
+
+///////////////////////
+// KNN and Laplacian //
+///////////////////////
+
+/// Helper struct for KNN with heap
+///
+/// ### Fields
+///
+/// * `index` - Index position of that neighbours
+/// * `similiarity` - Similarity value for that Neighbour
+#[derive(Debug)]
+struct SimilarityItem {
+    index: usize,
+    similarity: f64,
+}
+
+/// Equality Trait for SimilarityItem
+impl Eq for SimilarityItem {}
+
+/// `PartialEq` trait for `SimilarityItem`
+///
+/// Check equality between two `SimilarityItem` items in terms of similarity
+///
+/// ### Returns
+///
+/// `true` if they are the same.
+impl PartialEq for SimilarityItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.similarity == other.similarity
+    }
+}
+
+/// Ord trait `SimilarityItem`
+///
+/// How to order `SimilarityItem`
+impl Ord for SimilarityItem {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Reverse for min-heap (we want to keep highest similarities)
+        other
+            .similarity
+            .partial_cmp(&self.similarity)
+            .unwrap_or(Ordering::Equal)
+    }
+}
+
+/// PartialOrd trait `SimilarityItem`
+///
+/// How to order `SimilarityItem`
+impl PartialOrd for SimilarityItem {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Generate a KNN graph adjacency matrix from a similarity matrix
+///
+/// ### Params
+///
+/// * `similarities` - The symmetric similarity matrix.
+/// * `k` - Number of neighbours to take
+///
+/// ### Returns
+///
+/// The KNN adjacency matrix
+pub fn get_knn_graph_adj(similarities: &MatRef<f64>, k: usize) -> Mat<f64> {
+    assert_symmetric_mat!(similarities);
+
+    let n = similarities.nrows();
+    let mut adjacency: Mat<f64> = Mat::zeros(n, n);
+
+    // Parallelize across rows
+    let rows: Vec<Vec<(usize, f64)>> = (0..n)
+        .into_par_iter()
+        .map(|i| {
+            let mut heap = BinaryHeap::with_capacity(k + 1);
+
+            // Use min-heap to keep top-k similarities
+            for j in 0..n {
+                if i != j {
+                    let sim = similarities[(i, j)];
+                    heap.push(SimilarityItem {
+                        index: j,
+                        similarity: sim,
+                    });
+
+                    if heap.len() > k {
+                        heap.pop(); // Remove smallest
+                    }
+                }
+            }
+
+            heap.into_iter()
+                .map(|item| (item.index, item.similarity))
+                .collect()
+        })
+        .collect();
+
+    // Fill adjacency matrix
+    for (i, neighbors) in rows.iter().enumerate() {
+        for &(j, sim) in neighbors {
+            adjacency[(i, j)] = sim;
+        }
+    }
+
+    // Symmetrize in parallel
+    for i in 0..n {
+        for j in i + 1..n {
+            let val = (adjacency[(i, j)] + adjacency[(j, i)]) / 2.0;
+            adjacency[(i, j)] = val;
+            adjacency[(j, i)] = val;
+        }
+    }
+
+    adjacency
+}
+
+/// Generate a Laplacian matrix from an adjacency matrix
+///
+/// ### Params
+///
+/// * `adjacency` - The symmetric adjacency matrix.
+///
+/// ### Returns
+///
+/// The Laplacian matrix
+pub fn adjacency_to_laplacian(adjacency: &MatRef<f64>) -> Mat<f64> {
+    assert_symmetric_mat!(adjacency);
+
+    let n = adjacency.nrows();
+
+    let mut laplacian = adjacency.cloned();
+
+    for i in 0..n {
+        let degree = adjacency.row(i).iter().sum::<f64>();
+        laplacian[(i, i)] = degree - adjacency[(i, i)];
+
+        for j in 0..n {
+            if i != j {
+                laplacian[(i, j)] = -adjacency[(i, j)];
+            }
+        }
+    }
+
+    laplacian
 }

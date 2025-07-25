@@ -3,7 +3,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rayon::prelude::*;
 
-use crate::utils::general::array_f64_max_min;
+use crate::utils::general::array_max_min;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 use crate::utils::utils_stats::*;
 
@@ -188,7 +188,7 @@ fn rs_rbf_function_mat(
 /// @export
 #[extendr]
 fn rs_range_norm(x: &[f64], max_val: f64, min_val: f64) -> Vec<f64> {
-    let (x_min, x_max) = array_f64_max_min(x);
+    let (x_min, x_max) = array_max_min(x);
     let denom = x_max - x_min;
     let scale = (max_val - min_val) / denom;
     x.par_iter()

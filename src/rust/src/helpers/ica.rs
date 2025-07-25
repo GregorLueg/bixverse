@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
     Mat, MatRef,
@@ -23,9 +24,21 @@ pub enum IcaType {
 }
 
 /// Type alias of the ICA results
+///
+/// ### Fields
+///
+/// * `0` - Mixing matrix w
+/// * `1` - Tolerance
 type IcaRes = (faer::Mat<f64>, f64);
 
 /// Structure to save ICA parameters
+///
+/// ### Fields
+///
+/// * `maxit` - Maximum number of iterations to run ICA for.
+/// * `alpha` - Alpha parameter for the `logcosh` variant.
+/// * `tol` - Tolerance parameter.
+/// * `verbose` - Shall print messages be returned.
 #[derive(Clone, Debug)]
 pub struct IcaParams {
     pub maxit: usize,
@@ -34,7 +47,53 @@ pub struct IcaParams {
     pub verbose: bool,
 }
 
+impl IcaParams {
+    /// Prepare ICA parameters from R List
+    ///
+    /// Takes in a R list and extracts the ICA parameters or uses sensible defaults.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - R List with the ICA parameters.
+    ///
+    /// ### Returns
+    ///
+    /// `IcaParams` parameter structure.
+    pub fn from_r_list(r_list: List) -> Self {
+        let ica_params = r_list.into_hashmap();
+
+        let maxit = ica_params
+            .get("maxit")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+        let alpha = ica_params
+            .get("alpha")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0);
+        let tol = ica_params
+            .get("max_tol")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1e-4);
+        let verbose = ica_params
+            .get("verbose")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        IcaParams {
+            maxit,
+            alpha,
+            tol,
+            verbose,
+        }
+    }
+}
+
 /// Structure to save ICA CV results
+///
+/// ### Fields
+///
+/// * `pre_white_matrices` - Vector of pre-processed matrices, ready for whitening
+/// * `k_matrices` - Vector of pre-whitening matrices
 #[derive(Clone, Debug)]
 pub struct IcaCvData {
     pub pre_white_matrices: Vec<Mat<f64>>,
@@ -45,40 +104,54 @@ pub struct IcaCvData {
 // ICA //
 /////////
 
-/// Prepare ICA parameters
-pub fn prepare_ica_params(r_list: List) -> IcaParams {
-    let ica_params = r_list.into_hashmap();
+////////////////
+// Parameters //
+////////////////
 
-    let maxit = ica_params
-        .get("maxit")
-        .and_then(|v| v.as_integer())
-        .unwrap_or(200) as usize;
-    let alpha = ica_params
-        .get("alpha")
-        .and_then(|v| v.as_real())
-        .unwrap_or(1.0);
-    let tol = ica_params
-        .get("max_tol")
-        .and_then(|v| v.as_real())
-        .unwrap_or(1e-4);
-    let verbose = ica_params
-        .get("verbose")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-
-    IcaParams {
-        maxit,
-        alpha,
-        tol,
-        verbose,
+/// Parsing the ICA types
+///
+/// ### Params
+///
+/// * `s` - string defining the ICA type
+///
+/// ### Returns
+///
+/// The `IcaType`.
+pub fn parse_ica_type(s: &str) -> Option<IcaType> {
+    match s.to_lowercase().as_str() {
+        "exp" => Some(IcaType::Exp),
+        "logcosh" => Some(IcaType::LogCosh),
+        _ => None,
     }
 }
 
-/// Whiten a matrix. This is needed pre-processing for ICA.
-/// Has the option to use randomised SVD for faster computations.
-/// Returns the scaled data and the pre-whitening matrix K.
+/////////////
+// Helpers //
+/////////////
+
+/// Prepare the whitening.
+///
+/// This is needed pre-processing for ICA. Has the option to use randomised SVD
+/// for faster computations.
+///
+/// ### Params
+///
+/// * `x` - The pre-processed matrix on which to apply ICA.
+/// * `fast_svd` - Shall the faster version of SVD be used.
+/// * `seed` - Random seed for reproducibility purposes
+/// * `rank` - The target rank of the approximation (number of singular values,
+///            vectors to compute).
+/// * `oversampling` - Additional samples beyond the target rank to improve accuracy.
+///                    Defaults to 10 if not specified.
+/// * `n_power_iter` - Number of power iterations to perform for better approximation quality.
+///                    More iterations generally improve accuracy but increase computation time.
+///                    Defaults to 2 if not specified.
+///
+/// ### Returns
+///
+/// A tuple of the processed matrix (pre-whitening) and the whitening matrix K.
 pub fn prepare_whitening(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     fast_svd: bool,
     seed: usize,
     rank: usize,
@@ -115,8 +188,16 @@ pub fn prepare_whitening(
     (centered.cloned(), k)
 }
 
-/// Update the mixing matrix for ICA
-pub fn update_mix_mat(w: MatRef<'_, f64>) -> faer::Mat<f64> {
+/// Helper function to update the mixing matrix for ICA
+///
+/// ### Params
+///
+/// * `w` The mixing matrix
+///
+/// ### Returns
+///
+/// The updated mixing matrix.
+pub fn update_mix_mat(w: MatRef<f64>) -> faer::Mat<f64> {
     // SVD
     let svd_res = w.thin_svd().unwrap();
 
@@ -132,7 +213,17 @@ pub fn update_mix_mat(w: MatRef<'_, f64>) -> faer::Mat<f64> {
     u * d * u.transpose() * w
 }
 
-/// Generate a w_init matrix of size n_comp * n_comp given a random seed.
+/// Generate a random mixing matrix
+///
+/// ### Params
+///
+/// * `n_comp` - Number of independent components. This will influence the dimensionality
+///              of the randomly initialised mixing matrix.
+/// * `seed` - Random seed for reproducibility purposes
+///
+/// ### Returns
+///
+/// Mixing matrix of dimensions `n_comp` x `n_comp`
 pub fn create_w_init(n_comp: usize, seed: u64) -> faer::Mat<f64> {
     let mut rng = StdRng::seed_from_u64(seed);
     let normal = Normal::new(0.0, 1.0).unwrap();
@@ -142,19 +233,28 @@ pub fn create_w_init(n_comp: usize, seed: u64) -> faer::Mat<f64> {
     Mat::from_fn(n_comp, n_comp, |i, j| data[i + j * n_comp])
 }
 
-/// Parsing the ICA types
-pub fn parse_ica_type(s: &str) -> Option<IcaType> {
-    match s.to_lowercase().as_str() {
-        "exp" => Some(IcaType::Exp),
-        "logcosh" => Some(IcaType::LogCosh),
-        _ => None,
-    }
-}
+////////////////////
+// Main functions //
+////////////////////
 
 /// Fast ICA implementation based on logcosh.
+///
+/// ### Params
+///
+/// * `x` - Whitened matrix
+/// * `w_init` - Initial, random mixing matrix
+/// * `maxit` - Maximum number of iterations to run ICA for.
+/// * `alpha` - Alpha parameter for this variant
+/// * `tol` - Tolerance parameter.
+/// * `verbose` - Shall print messages be returned for each iteration.
+///
+/// ### Returns
+///
+/// A tuple of the final identified mixing matrix w and the reached tolerance
+/// value.
 pub fn fast_ica_logcosh(
-    x: MatRef<'_, f64>,
-    w_init: MatRef<'_, f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     alpha: f64,
     maxit: usize,
@@ -223,10 +323,23 @@ pub fn fast_ica_logcosh(
     (w, min_tol)
 }
 
-/// Fast ICA implementation based on exp.
+/// Fast ICA implementation based on exp algorithm.
+///
+/// ### Params
+///
+/// * `x` - Whitened matrix
+/// * `w_init` - Initial, random mixing matrix
+/// * `maxit` - Maximum number of iterations to run ICA for.
+/// * `tol` - Tolerance parameter.
+/// * `verbose` - Shall print messages be returned for each iteration.
+///
+/// ### Returns
+///
+/// A tuple of the final identified mixing matrix w and the reached tolerance
+/// value.
 pub fn fast_ica_exp(
-    x: MatRef<'_, f64>,
-    w_init: MatRef<'_, f64>,
+    x: MatRef<f64>,
+    w_init: MatRef<f64>,
     tol: f64,
     maxit: usize,
     verbose: bool,
@@ -292,11 +405,34 @@ pub fn fast_ica_exp(
     (w, min_tol)
 }
 
+////////////////////
+// Stabilised ICA //
+////////////////////
+
+/// Stabilised ICA iteration implementation
+///
 /// Iterate through a set of random initialisations with a given pre-whitened
-/// matrix, the whitening matrix k and the respective ICA parameters.
+/// matrix, the whitening matrix k and the respective ICA parameters. It will
+/// generate `no_iters` random seeds and generate the S matrix for all of them.
+///
+/// ### Params
+///
+/// * `x_pre_whiten` - he pre-processed, but not yet whitened matrix.
+/// * `k` - Whitening matrix k.
+/// * `no_comp` - Number of independent components to test for.
+/// * `no_iters` - Number of random iterations.
+/// * `ica_type` - Which of the implemented versions of ICA to test.
+/// * `ica_params` - `IcaParams` structure with the parameters for the individual
+///                  runs.
+/// * `random_seed` - Seed for reproducibility purposes.
+///
+/// ### Returns
+///
+/// Returns a tuple of the column bound S matrices and a vector of the final tolerances
+/// each individual run achieved.
 pub fn stabilised_ica_iters(
-    x_pre_whiten: MatRef<'_, f64>,
-    k: MatRef<'_, f64>,
+    x_pre_whiten: MatRef<f64>,
+    k: MatRef<f64>,
     no_comp: usize,
     no_iters: usize,
     ica_type: &str,
@@ -359,8 +495,23 @@ pub fn stabilised_ica_iters(
 }
 
 /// Generate cross-validation like data for ICA.
+///
+/// This function will default to the faster randomised SVD for the whitening
+/// process.
+///
+/// ### Params
+///
+/// * `x` - The matrix for which to generate a cross-validation like set
+/// * `num_folds` - In how many folds to split the data
+/// * `seed` - Random seed for reproducibility purposes
+/// * `rank` - Optional rank for the randomised SVD that is used to generate the
+///            the pre-whitened matrix and whitening matrix k.
+///
+/// ### Returns
+///
+/// An `IcaCvData` structure.
 pub fn create_ica_cv_data(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     num_folds: usize,
     seed: usize,
     rank: Option<usize>,
@@ -425,11 +576,31 @@ pub fn create_ica_cv_data(
     }
 }
 
+/// Run stabilised ICA iterations over the CV-like data
+///
+/// ### Params
+///
+/// * `x` - The matrix for which to run the stabilised ICA over CV-like subsets.
+/// * `no_comp` - Number of independent components to test for.
+/// * `no_folds` - Number of folds to use for the cross-validation.
+/// * `no_iters` - Number of random iterations.
+/// * `ica_type` - Which of the implemented versions of ICA to test.
+/// * `ica_params` - `IcaParams` structure with the parameters for the individual
+///                  runs.
+/// * `ica_cv_data` - Optional pre-processed `IcaCvData` structure. If not provided,
+///                   these will be automatically generated.
+/// * `random_seed` - Seed for reproducibility purposes.
+///
+/// ### Returns
+///
+/// Returns a tuple of the column bound S matrices (in this case across the different
+/// folds and random initialisations of the mixing matrix) and a vector of the final tolerances
+/// each individual run achieved.
 #[allow(clippy::too_many_arguments)]
 pub fn stabilised_ica_cv(
-    x: MatRef<'_, f64>,
+    x: MatRef<f64>,
     no_comp: usize,
-    num_folds: usize,
+    no_folds: usize,
     no_iters: usize,
     ica_type: &str,
     ica_params: IcaParams,
@@ -439,7 +610,7 @@ pub fn stabilised_ica_cv(
     // Generate cross-validation data if not provided
     let cv_data = match ica_cv_data {
         Some(data) => data, // Use the provided data
-        None => create_ica_cv_data(x, num_folds, seed, Some(no_comp)), // Generate new data
+        None => create_ica_cv_data(x, no_folds, seed, Some(no_comp)), // Generate new data
     };
 
     // Iterate through bootstrapped samples

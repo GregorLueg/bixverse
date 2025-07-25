@@ -8,7 +8,17 @@ use crate::utils::general::*;
 use crate::utils::r_rust_interface::NamedMatrix;
 use crate::utils::utils_stats::set_similarity;
 
+////////////////////////
+// Results structures //
+////////////////////////
+
 /// Structure for an Rbh triplet Result
+///
+/// ### Fields
+///
+/// * `t1` - Name of term 1 of the ontology
+/// * `t2` - Name of term 2 of the ontology
+/// * `sim` - Calculated similarity
 #[derive(Clone, Debug)]
 pub struct RbhTripletStruc<'a> {
     pub t1: &'a str,
@@ -16,28 +26,56 @@ pub struct RbhTripletStruc<'a> {
     pub sim: f64,
 }
 
+/// Structure to store the RBH results.
+///
+/// ### Fields
+///
+/// * `origin` - Name of the origin data set
+/// * `target` - Name of the target data set
+/// * `origin_modules` - Names of the origin modules/gene sets
+/// * `target_modules` - Names of the target modules/gene sets
+/// * `similarities` - Similarities between the modules/gene sets
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct RbhResult {
+    pub origin: String,
+    pub target: String,
+    pub origin_modules: Vec<String>,
+    pub target_modules: Vec<String>,
+    pub similarities: Vec<f64>,
+}
+
 ////////////////////
 // Set similarity //
 ////////////////////
 
 /// Calculates the reciprocal best hits based on set similarities.
+///
+/// Function will calculate the set similarities (Jaccard or Overlap coefficient)
+/// between all of the gene sets between the two data sets and calculate the
+/// reciprocal best hits based on this similarity matrix.
+///
+/// ### Params
+///
+/// * `origin_modules` - A BTreeMap containing the identified modules of the
+///                      the origin data set.
+/// * `target_modules` - A BTreeMap containing the identified modules of the
+///                      the target data set.
+/// * `overlap_coefficient` - Shall the overlap coefficient be used instead of
+///                           Jaccard similarity.
+/// * `min_similarity` - Minimum similarity to be returned
+///
+/// ### Returns
+///
+/// A vector of `RbhTripletStruc`.
 pub fn calculate_rbh_set<'a>(
     origin_modules: &'a BTreeMap<String, FxHashSet<String>>,
     target_modules: &'a BTreeMap<String, FxHashSet<String>>,
     overlap_coefficient: bool,
     min_similarity: f64,
-    debug: bool,
 ) -> Vec<RbhTripletStruc<'a>> {
     let names_targets: Vec<&String> = target_modules.keys().collect();
     let names_origin: Vec<&String> = origin_modules.keys().collect();
-
-    if debug {
-        println!("Target names: {:?}", names_targets)
-    }
-
-    if debug {
-        println!("Origin names: {:?}", names_origin)
-    }
 
     let similarities_flat: Vec<Vec<f64>> = origin_modules
         .values()
@@ -55,16 +93,9 @@ pub fn calculate_rbh_set<'a>(
 
     let mat_data: Vec<f64> = flatten_vector(similarities_flat);
 
-    if debug {
-        println!("Flat data {:?}", mat_data)
-    };
-
     let max_sim = array_max(&mat_data);
 
     let result = if max_sim < min_similarity {
-        if debug {
-            println!("No similarity passed the threshold.\n\n")
-        }
         vec![RbhTripletStruc {
             t1: "NA",
             t2: "NA",
@@ -75,10 +106,6 @@ pub fn calculate_rbh_set<'a>(
         let ncol = names_targets.len();
 
         let sim_mat = Mat::from_fn(nrow, ncol, |i, j| mat_data[j + i * ncol]);
-
-        if debug {
-            println!("The matrix looks like: {:?}", sim_mat)
-        };
 
         let row_maxima: Vec<&f64> = sim_mat
             .row_iter()
@@ -108,20 +135,9 @@ pub fn calculate_rbh_set<'a>(
                         sim: value,
                     };
 
-                    if debug {
-                        println!("What are the matching pairs?: {:?}", triplet)
-                    };
-
                     matching_pairs.push(triplet)
                 }
             }
-        }
-
-        if debug {
-            println!(
-                "A total of {} RBH pairs were identified.\n\n",
-                matching_pairs.len()
-            );
         }
 
         if !matching_pairs.is_empty() {
@@ -142,8 +158,15 @@ pub fn calculate_rbh_set<'a>(
 // Correlation based //
 ///////////////////////
 
-/// Transforms a list of R matrices into a vector with name of the list
-/// and transforms the stored R object into an R matrix
+/// Transforms a list of R matrices into a vector of R matrices
+///
+/// ### Params
+///
+/// * `matrix_list` - R List of matrices
+///
+/// ### Returns
+///
+/// A vector of tuples with the name of the list element and the R matrix.
 pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usize; 2]>)> {
     matrix_list
         .iter()
@@ -151,8 +174,16 @@ pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usiz
         .collect()
 }
 
-/// Takes a matrix vector and transforms it into a BTreeMap that contains the
-/// named matrix class
+/// Take a vector of R matrices and generate a BTreeMap of NamedMatrices
+///
+/// ### Params
+///
+/// * `matrix_vector` - Slice of tuples with the first element representing the name
+///                     and the second the R matrix
+///
+/// ### Returns
+///
+/// A BTreeMap of `NamedMatrix` objects.
 pub fn r_matrix_vec_to_btree_list(
     matrix_vector: &[(String, RArray<f64, [usize; 2]>)],
 ) -> BTreeMap<String, NamedMatrix<'_>> {
@@ -166,6 +197,19 @@ pub fn r_matrix_vec_to_btree_list(
 }
 
 /// Calculate the RBH based on correlation of two NamedMatrices
+///
+/// The function will intersect into shared features and calculate the correlation
+/// matrix and subsequently reciprocal best hits based on the absolute correlation.
+///
+/// ### Params
+///
+/// * `x1` - `NamedMatrix` of the origin data
+/// * `x2` - `NamedMatrix` of the target data
+/// * `spearman` - Shall Spearman correlations be used.
+///
+/// ### Returns
+///
+/// A vector of `RbhTripletStruc`.
 pub fn calculate_rbh_cor<'a>(
     x1: &'a NamedMatrix<'a>,
     x2: &'a NamedMatrix<'a>,

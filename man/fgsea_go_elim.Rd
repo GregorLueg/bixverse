@@ -10,8 +10,7 @@ fgsea_go_elim(
   elim_threshold = 0.05,
   nperm = 2000L,
   gsea_params = params_gsea(max_size = 2000L),
-  seed = 42L,
-  .debug = FALSE
+  seed = 42L
 )
 }
 \arguments{
@@ -37,10 +36,6 @@ level implementation of fgsea.
 }}
 
 \item{seed}{Random seed for reproducibility.}
-
-\item{.debug}{Boolean. Shall information from the Rust function be displayed.
-For debugging purposes. Warning: should you run this command over a large
-list, you will have a large print output!}
 }
 \value{
 data.table with enrichment results.

@@ -1,19 +1,10 @@
 use extendr_api::prelude::*;
+
 use rayon::prelude::*;
 
 use crate::helpers::rbh::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::{r_nested_list_to_btree_nest, NestedBtreeMap};
-
-/// Structure to store the RBH results.
-#[derive(Clone, Debug)]
-pub struct RbhResult {
-    pub origin: String,
-    pub target: String,
-    pub origin_modules: Vec<String>,
-    pub target_modules: Vec<String>,
-    pub similarities: Vec<f64>,
-}
 
 /// Generate reciprocal best hits based on set similarities
 ///
@@ -30,8 +21,6 @@ pub struct RbhResult {
 /// Jaccard similarity be used.
 /// @param min_similarity Minimum similarity that should exist between any two
 /// given gene modules to actually calculate RBH pairs.
-/// @param debug Boolean Boolean that activates print messages for debugging
-/// purposes.
 ///
 /// @return A list containing:
 ///  \itemize{
@@ -51,15 +40,10 @@ fn rs_rbh_sets(
     module_list: List,
     overlap_coefficient: bool,
     min_similarity: f64,
-    debug: bool,
 ) -> extendr_api::Result<List> {
     let module_list: NestedBtreeMap = r_nested_list_to_btree_nest(module_list)?;
     // Pull out all the keys
     let origins: Vec<String> = module_list.keys().cloned().collect();
-
-    if debug {
-        println!("Origins are: {:?}", origins)
-    };
 
     let origins_split: Vec<(String, &[String])> = origins
         .iter()
@@ -67,10 +51,6 @@ fn rs_rbh_sets(
         .map(|(i, first)| (first.clone(), &origins[i + 1..]))
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
-
-    if debug {
-        println!("What are you splitted into? {:?}", origins_split)
-    };
 
     let rbh_results: Vec<Vec<RbhResult>> = origins_split
         .par_iter()
@@ -89,7 +69,6 @@ fn rs_rbh_sets(
                         target_module_data,
                         overlap_coefficient,
                         min_similarity,
-                        debug,
                     );
 
                     let mut origin_modules = Vec::new();

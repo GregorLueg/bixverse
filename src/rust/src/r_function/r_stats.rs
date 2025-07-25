@@ -1,12 +1,13 @@
 use extendr_api::prelude::*;
+use faer::Mat;
 use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 use crate::helpers::hypergeom::hypergeom_pval;
 use crate::helpers::linalg::{col_means, col_sds};
-use crate::utils::general::{flatten_vector, string_vec_to_set};
-use crate::utils::r_rust_interface::{r_list_to_str_vec, r_matrix_to_faer};
+use crate::utils::general::string_vec_to_set;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_list_to_str_vec, r_matrix_to_faer};
 use crate::utils::utils_stats::*;
 
 /// Fast AUC calculation
@@ -132,36 +133,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
 /// @export
 #[extendr]
 fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
-    let n = pvals.len();
-    let n_f64 = n as f64;
-
-    let mut indexed_pval: Vec<(usize, f64)> =
-        pvals.par_iter().enumerate().map(|(i, &x)| (i, x)).collect();
-
-    indexed_pval
-        .sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    let adj_pvals_tmp: Vec<f64> = indexed_pval
-        .par_iter()
-        .enumerate()
-        .map(|(i, (_, p))| (n_f64 / (i + 1) as f64) * p)
-        .collect();
-
-    let mut current_min = adj_pvals_tmp[n - 1].min(1.0);
-    let mut monotonic_adj = vec![current_min; n];
-
-    for i in (0..n - 1).rev() {
-        current_min = current_min.min(adj_pvals_tmp[i]).min(1.0);
-        monotonic_adj[i] = current_min;
-    }
-
-    let mut adj_pvals = vec![0.0; n];
-
-    for (i, &(original_idx, _)) in indexed_pval.iter().enumerate() {
-        adj_pvals[original_idx] = monotonic_adj[i];
-    }
-
-    adj_pvals
+    calc_fdr(pvals)
 }
 
 /// Calculate the hypergeometric rest in Rust
@@ -175,7 +147,7 @@ fn rs_fdr_adjustment(pvals: &[f64]) -> Vec<f64> {
 ///
 /// @export
 #[extendr]
-fn rs_phyper(q: u64, m: u64, n: u64, k: u64) -> f64 {
+fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
     hypergeom_pval(q, m, n, k)
 }
 
@@ -214,7 +186,8 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
 /// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
 /// Jaccard similarity be calculated.
 ///
-/// @return Vector of set similarities (upper triangle) values.
+/// @return A matrix of the Jaccard similarities between the elements. The rows
+/// represent s_1_list and the column s_2_list.
 ///
 /// @export
 #[extendr]
@@ -222,27 +195,28 @@ fn rs_set_similarity_list(
     s_1_list: List,
     s_2_list: List,
     overlap_coefficient: bool,
-) -> extendr_api::Result<Vec<f64>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let s1_vec = r_list_to_str_vec(s_1_list)?;
     let s2_vec = r_list_to_str_vec(s_2_list)?;
 
     let s_hash1: Vec<FxHashSet<&String>> = s1_vec.iter().map(|s| string_vec_to_set(s)).collect();
     let s_hash2: Vec<FxHashSet<&String>> = s2_vec.iter().map(|s| string_vec_to_set(s)).collect();
 
-    let res: Vec<Vec<f64>> = s_hash1
-        .into_iter()
-        .map(|s| {
-            let subres: Vec<f64> = s_hash2
+    let data: Vec<f64> = s_hash1
+        .par_iter()
+        .flat_map(|s1| {
+            s_hash2
                 .iter()
-                .map(|s2| set_similarity(&s, s2, overlap_coefficient))
-                .collect();
-            subres
+                .map(|s2| set_similarity(s1, s2, overlap_coefficient))
+                .collect::<Vec<_>>()
         })
         .collect();
 
-    let res = flatten_vector(res);
+    let matrix = Mat::from_fn(s_hash1.len(), s_hash2.len(), |i, j| {
+        data[i * s_hash2.len() + j]
+    });
 
-    Ok(res)
+    Ok(faer_to_r_matrix(matrix.as_ref()))
 }
 
 /// Calculate the critical value

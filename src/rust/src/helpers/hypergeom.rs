@@ -1,20 +1,48 @@
 // use statrs::distribution::{Discrete, Hypergeometric};
+use rustc_hash::FxHashSet;
 use statrs::function::gamma::ln_gamma;
-use std::collections::HashSet;
+
+use crate::utils::utils_stats::calc_fdr;
 
 ///////////
 // Types //
 ///////////
 
 /// A type alias that can be returned by the par_iter() functions.
-pub type HypergeomResult = (Vec<f64>, Vec<f64>, Vec<u64>, Vec<u64>);
+///
+/// ### Fields
+///
+/// * `pval` - P-value
+/// * `fdr` - FDR
+/// * `odds_ratio` - Oddsratio
+/// * `hits` - Number of success
+/// * `gs_length` - Length of the gene set
+pub struct HypergeomResult {
+    pub pval: Vec<f64>,
+    pub fdr: Vec<f64>,
+    pub odds_ratio: Vec<f64>,
+    pub hits: Vec<usize>,
+    pub gs_length: Vec<usize>,
+}
 
 ///////////////
 // Functions //
 ///////////////
 
 /// Calculate the p-value of a hypergeometric test.
-pub fn hypergeom_pval(q: u64, m: u64, n: u64, k: u64) -> f64 {
+///
+/// ### Params
+///
+/// * `q` - Number of white balls drawn
+/// * `m` - Number of white balls in the urn
+/// * `n` - Number of black balls in the urn
+/// * `k` - Number of balls drawn from the urn
+///
+/// ### Return
+///
+/// The p-value of the hypergeometric test
+#[inline]
+pub fn hypergeom_pval(q: usize, m: usize, n: usize, k: usize) -> f64 {
     if q == 0 {
         1.0
     } else {
@@ -65,18 +93,42 @@ pub fn hypergeom_pval(q: u64, m: u64, n: u64, k: u64) -> f64 {
 }
 
 /// Calculate odds ratios
-pub fn hypergeom_odds_ratio(a1_b1: u64, a0_b1: u64, a1_b0: u64, a0_b0: u64) -> f64 {
+///
+/// ### Params
+///
+/// * `a1_b1` - In both gene set and target set
+/// * `a0_b1` - In gene set, but not in target set
+/// * `a1_b0` - In target set, but not in gene set
+/// * `a0_b0` - Not in either
+///
+/// ### Return
+///
+/// The odds ratio. Pending values, can become infinity.
+#[inline]
+pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usize) -> f64 {
     (a1_b1 as f64 / a0_b1 as f64) / (a1_b0 as f64 / a0_b0 as f64)
 }
 
 /// Count the number of hits for the hypergeometric tests
-pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec<u64> {
-    let target_genes_hash: HashSet<_> = target_genes.iter().collect();
-    let hits: Vec<u64> = gene_set_list
+///
+/// ### Params
+///
+/// * `gene_set_list` - A slice of String vectors, representing the gene sets
+///    you want to count the number of hits against
+/// * `target_genes` - A string slice representing the target genes
+///
+/// ### Returns
+///
+/// A vector of hits, i.e., intersecting genes.
+#[inline]
+pub fn count_hits(
+    gene_set_list: &[FxHashSet<String>],
+    target_genes: &FxHashSet<String>,
+) -> Vec<usize> {
+    let hits: Vec<usize> = gene_set_list
         .iter()
-        .map(|s| {
-            let s_hash: HashSet<_> = s.iter().collect();
-            let intersection = s_hash.intersection(&target_genes_hash).count() as u64;
+        .map(|targets| {
+            let intersection = targets.intersection(target_genes).count();
             intersection
         })
         .collect();
@@ -84,33 +136,25 @@ pub fn count_hits(gene_set_list: &[Vec<String>], target_genes: &[String]) -> Vec
     hits
 }
 
-// /// Count the number of hits for the hypergeometric tests (against HashSets)
-// pub fn count_hits_hash(gene_set_list: Vec<&HashSet<String>>, target_genes: &[String]) -> Vec<u64> {
-//     let target_genes_hash: HashSet<String> = target_genes.iter().cloned().collect();
-//     let hits: Vec<u64> = gene_set_list
-//         .into_iter()
-//         .map(|s| {
-//             let intersection = s.intersection(&target_genes_hash).count() as u64;
-//             intersection
-//         })
-//         .collect();
-//     hits
-// }
-
 /// Helper function for the hypergeometric test
+///
+/// ### Params
+///
+/// - `target_genes` - The target genes for the test
+/// - `gene_sets` - The list of vectors with the gene set genes
+/// - `gene_universe` - Vector with the all genes of the universe
+///
+/// ### Returns
+///
+/// `HypergeomResult` - A tuple with the results.
 pub fn hypergeom_helper(
-    target_genes: &[String],
-    gene_sets: &[Vec<String>],
+    target_genes: &FxHashSet<String>,
+    gene_sets: &[FxHashSet<String>],
     gene_universe: &[String],
 ) -> HypergeomResult {
-    let gene_universe_length = gene_universe.len() as u64;
-
-    let trials = target_genes.len() as u64;
-
-    let gene_set_lengths = gene_sets
-        .iter()
-        .map(|s| s.len() as u64)
-        .collect::<Vec<u64>>();
+    let gene_universe_length = gene_universe.len();
+    let trials = target_genes.len();
+    let gene_set_lengths = gene_sets.iter().map(|s| s.len()).collect::<Vec<usize>>();
 
     let hits = count_hits(gene_sets, target_genes);
 
@@ -121,7 +165,7 @@ pub fn hypergeom_helper(
             let q = *hit as i64 - 1;
             if q > 0 {
                 hypergeom_pval(
-                    q as u64,
+                    q as usize,
                     *gene_set_length,
                     gene_universe_length - *gene_set_length,
                     trials,
@@ -131,6 +175,7 @@ pub fn hypergeom_helper(
             }
         })
         .collect();
+
     let odds_ratios: Vec<f64> = hits
         .iter()
         .zip(gene_set_lengths.iter())
@@ -144,5 +189,57 @@ pub fn hypergeom_helper(
         })
         .collect();
 
-    (pvals, odds_ratios, hits, gene_set_lengths)
+    let fdr = calc_fdr(&pvals);
+
+    HypergeomResult {
+        pval: pvals,
+        fdr,
+        odds_ratio: odds_ratios,
+        hits,
+        gs_length: gene_set_lengths,
+    }
+}
+
+/// Helper function for the hypergeometric test
+///
+/// ### Params
+///
+/// - `res` - The `HypergeomResult` to filter.
+/// - `min_overlap` - Optional minimum overlap in terms of hits.
+/// - `fdr_threshold` - Optional threshold on the fdr.
+///
+/// ### Returns
+///
+/// `HypergeomResult` - The filtered results
+pub fn filter_gse_results(
+    res: HypergeomResult,
+    min_overlap: Option<usize>,
+    fdr_threshold: Option<f64>,
+) -> (HypergeomResult, Vec<usize>) {
+    let to_keep: Vec<usize> = (0..res.pval.len())
+        .filter(|i| {
+            if let Some(min_overlap) = min_overlap {
+                if res.hits[*i] < min_overlap {
+                    return false;
+                }
+            }
+            if let Some(fdr_threshold) = fdr_threshold {
+                if res.fdr[*i] > fdr_threshold {
+                    return false;
+                }
+            }
+            true
+        })
+        .collect();
+
+    (
+        HypergeomResult {
+            pval: to_keep.iter().map(|i| res.pval[*i]).collect(),
+            fdr: to_keep.iter().map(|i| res.fdr[*i]).collect(),
+            odds_ratio: to_keep.iter().map(|i| res.odds_ratio[*i]).collect(),
+            hits: to_keep.iter().map(|i| res.hits[*i]).collect(),
+            gs_length: to_keep.iter().map(|i| res.gs_length[*i]).collect(),
+        },
+        to_keep.iter().map(|x| *x + 1).collect(),
+    )
 }

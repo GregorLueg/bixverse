@@ -6,6 +6,14 @@ use faer::{Mat, MatRef};
 ////////////////
 
 /// Structure for SparseColumnMatrices
+///
+/// ### Fields
+///
+/// * `data` - Vector with the data.
+/// * `row_indices` - The row indices of the data.
+/// * `col_ptrs` - The column pointers of the data.
+/// * `ncol` - Original number of columns.
+/// * `nrow` - Original number of rows.
 #[derive(Debug, Clone)]
 pub struct SparseColumnMatrix<T> {
     pub data: Vec<T>,
@@ -20,7 +28,15 @@ impl<T> SparseColumnMatrix<T>
 where
     T: Clone + Default + PartialEq + ComplexField + From<f64>,
 {
-    /// Generate a new sparse column matrix from values
+    /// Generate a new sparse column matrix from values pre-computed data
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Slice of the data.
+    /// * `row_indices` - Slice of the row indices of the data.
+    /// * `col_ptrs` - Slice of the column pointers of the data.
+    /// * `ncol` - Original number of columns.
+    /// * `nrow` - Original number of rows.
     pub fn new(
         data: &[T],
         row_indices: &[usize],
@@ -38,6 +54,10 @@ where
     }
 
     /// Convert a faer dense matrix to sparse column format
+    ///
+    /// ### Params
+    ///
+    /// * `dense` - The original dense matrix.
     pub fn from_dense_matrix(dense: MatRef<T>) -> Self {
         let ncol = dense.ncols();
         let nrow = dense.nrows();
@@ -69,6 +89,10 @@ where
     }
 
     /// To a dense faer matrix
+    ///
+    /// ### Returns
+    ///
+    /// Returns a dense faer matrix.
     pub fn to_dense_matrix(&self) -> Mat<T> {
         let mut dense = Mat::zeros(self.nrow, self.ncol);
 
@@ -87,11 +111,25 @@ where
     }
 
     /// Return the number of non-zero values
+    ///
+    /// ### Returns
+    ///
+    /// Return the total number of NNZ values in the data
     pub fn nnz(&self) -> usize {
         self.data.len()
     }
 
     /// Create a sparse matrix from a row major upper triangle stored value
+    ///
+    /// This is a helper function to transform potentially sparse symmetric matrices
+    /// stored as upper-triangles into a sparse matrix format in Rust.
+    ///
+    /// ### Params
+    ///
+    /// * `upper_triangle` - Represents the values of the upper triangle in
+    ///                      row major formant
+    /// * `n` - Original nrows and ncols.
+    /// * `include_diagonal` - Are the diagonal values included.
     pub fn from_upper_triangle_sym(upper_triangle: &[T], n: usize, include_diagonal: bool) -> Self {
         let mut values = Vec::new();
         let mut row_indices = Vec::new();

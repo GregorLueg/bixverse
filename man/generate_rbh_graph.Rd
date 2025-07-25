@@ -8,8 +8,7 @@ generate_rbh_graph(
   object,
   minimum_similarity,
   overlap_coefficient = FALSE,
-  spearman = FALSE,
-  .debug = FALSE
+  spearman = FALSE
 )
 }
 \arguments{
@@ -23,8 +22,6 @@ to set similarity.}
 
 \item{spearman}{Boolean. Shall Spearman correlation be used. Only relevant
 if the underlying class is set to correlation-based similarity.}
-
-\item{.debug}{Debug flag that will create print messages from Rust.}
 }
 \value{
 The class with added properties.

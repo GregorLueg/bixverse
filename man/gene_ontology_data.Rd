@@ -8,7 +8,7 @@ gene_ontology_data(go_data_dt, min_genes)
 }
 \arguments{
 \item{go_data_dt}{A data.table that contains the gene ontology information.
-This can be extract with for example \code{\link[=get_go_human_data]{get_go_human_data()}}.}
+This can be extract with for example \code{\link[=get_go_data_human]{get_go_data_human()}}.}
 
 \item{min_genes}{data.frame. Meta-data information in form of a data.frame.}
 }

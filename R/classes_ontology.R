@@ -7,7 +7,7 @@
 #' elimination methods.
 #'
 #' @param go_data_dt A data.table that contains the gene ontology information.
-#' This can be extract with for example [bixverse::get_go_human_data()].
+#' This can be extract with for example [bixverse::get_go_data_human()].
 #' @param min_genes data.frame. Meta-data information in form of a data.frame.
 #'
 #' @section Properties:
@@ -124,7 +124,8 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #'
 #' @section Properties:
 #' \describe{
-#'   \item{edge_dt}{data.table. Contains the parent-child relationships.}
+#'   \item{edge_dt}{data.table. Contains the parent-child relationships. (For
+#'   Wang similarity also the relationship type.)}
 #'   \item{outputs}{List. Contains various intermediary results used for some
 #'   methods.}
 #'   \item{sim_mat}{List. Contains the potentially calculated similarity

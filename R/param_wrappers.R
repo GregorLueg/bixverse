@@ -228,7 +228,7 @@ params_gsea <- function(
   min_size = 5L,
   max_size = 500L,
   gsea_param = 1.0,
-  sample_size = 121L,
+  sample_size = 101L,
   eps = 1e-50
 ) {
   # Checks
@@ -245,6 +245,83 @@ params_gsea <- function(
       gsea_param = gsea_param,
       sample_size = sample_size,
       eps = eps
+    )
+  )
+}
+
+## gsva ------------------------------------------------------------------------
+
+#' Wrapper function to generate GSVA parameters
+#'
+#' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
+#' Larger values emphasise the tails more.
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param max_diff Boolean. Scoring mode for GSVA, if `TRUE` = difference; if
+#' `FALSE` = larger absolute value.
+#' @param abs_rank Boolean. If `TRUE` = pos - neg, `FALSE` = pos + neg.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_gsva <- function(
+  tau = 1.0,
+  min_size = 5L,
+  max_size = 500L,
+  max_diff = TRUE,
+  abs_rank = FALSE
+) {
+  # checks
+  checkmate::qassert(tau, "N1")
+  checkmate::qassert(min_size, "I1")
+  checkmate::qassert(max_size, "I1")
+  checkmate::qassert(max_diff, "B1")
+  checkmate::qassert(abs_rank, "B1")
+
+  # return
+  return(
+    list(
+      tau = tau,
+      min_size = min_size,
+      max_size = max_size,
+      max_diff = max_diff,
+      abs_rank = abs_rank
+    )
+  )
+}
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Wrapper function to generate ssGSEA parameters
+#'
+#' @param alpha Float. The exponent defining the weight of the tail in the
+#' random walk performed by ssGSEA.
+#' @param min_size Integer. Minimum number of genes per gene set.
+#' @param max_size Integer. Maximum number of genes per gene set.
+#' @param normalise Boolean. Shall the scores be normalised.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_ssgsea <- function(
+  alpha = 0.25,
+  min_size = 5L,
+  max_size = 500L,
+  normalise = TRUE
+) {
+  # checks
+  checkmate::qassert(alpha, "N1(0, 1)")
+  checkmate::qassert(min_size, "I1")
+  checkmate::qassert(max_size, "I1")
+  checkmate::qassert(normalise, "B1")
+
+  # return
+  return(
+    list(
+      alpha = alpha,
+      min_size = min_size,
+      max_size = max_size,
+      normalise = TRUE
     )
   )
 }
@@ -303,5 +380,54 @@ params_coremo <- function(
       rbf_func = rbf_func,
       cor_method = cor_method
     )
+  )
+}
+
+## DGRDL -----------------------------------------------------------------------
+
+#' Wrapper function to generate DGRDL parameters
+#'
+#' @param sparsity Integer. Sparsity constraint (max non-zero coefficients per
+#' signal)
+#' @param dict_size Integer. Dictionary size
+#' @param alpha Float. Sample context regularisation weight.
+#' @param beta Float. Feature effect regularisation weight.
+#' @param max_iter Integer. Maximum number of iterations for the main algorithm.
+#' @param k_neighbours Integer. Number of neighbours in the KNN graph.
+#' @param admm_iter Integer. ADMM iterations for sparse coding.
+#' @param rho Float. ADMM step size.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_dgrdl <- function(
+  sparsity = 5L,
+  dict_size = 5L,
+  alpha = 1.0,
+  beta = 1.0,
+  max_iter = 20L,
+  k_neighbours = 5L,
+  admm_iter = 5L,
+  rho = 1.0
+) {
+  # checks
+  checkmate::qassert(sparsity, "I1")
+  checkmate::qassert(dict_size, "I1")
+  checkmate::qassert(alpha, "N1")
+  checkmate::qassert(beta, "N1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(k_neighbours, "I1")
+  checkmate::qassert(admm_iter, "I1")
+  checkmate::qassert(rho, "N1")
+
+  list(
+    sparsity = sparsity,
+    dict_size = dict_size,
+    alpha = alpha,
+    beta = beta,
+    max_iter = max_iter,
+    k_neighbours = k_neighbours,
+    admm_iter = admm_iter,
+    rho = rho
   )
 }

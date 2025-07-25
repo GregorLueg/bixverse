@@ -176,3 +176,89 @@ expect_equal(
     "CoReMo: expected modules"
   )
 )
+
+## run graph-based clustering --------------------------------------------------
+
+### expected data --------------------------------------------------------------
+
+expected_epsilon_res <- qs2::qs_read("./test_data/cor_graph_epsilon_res.qs")
+expected_resolution_res <- qs2::qs_read(
+  "./test_data/cor_graph_resolution_res.qs"
+)
+expected_cor_graph_res <- qs2::qs_read(
+  "./test_data/cor_graph_final_res.qs"
+)
+
+### run the graph-based clustering ---------------------------------------------
+
+cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
+  preprocess_bulk_coexp(., hvg = 0.5, .verbose = FALSE) %>%
+  cor_module_processing(., cor_method = "spearman", .verbose = FALSE)
+
+#### epsilon results -----------------------------------------------------------
+
+expect_warning(
+  current = get_epsilon_res(cor_test),
+  info = paste(
+    "Testing the warning of missing epsilon results."
+  )
+)
+
+cor_test <- cor_module_check_epsilon(
+  cor_test,
+  rbf_func = "bump",
+  .verbose = FALSE
+)
+
+epsilon_results <- get_epsilon_res(cor_test)
+
+expect_equivalent(
+  current = epsilon_results,
+  target = expected_epsilon_res,
+  info = paste(
+    "Testing expected epsilon results"
+  )
+)
+
+#### resolution results --------------------------------------------------------
+
+expect_warning(
+  current = get_resolution_res(cor_test),
+  info = paste(
+    "Testing the warning of missing resolution results."
+  )
+)
+
+cor_test <- cor_module_graph_check_res(
+  object = cor_test,
+  graph_params = params_cor_graph(epsilon = 2.5),
+  .verbose = FALSE
+)
+
+resolution_results <- get_resolution_res(cor_test)
+
+expect_equivalent(
+  current = resolution_results,
+  target = expected_resolution_res,
+  info = paste(
+    "Testing expected resolution results"
+  )
+)
+
+#### finalisation of the clusters ----------------------------------------------
+
+cor_test <- cor_module_graph_final_modules(
+  object = cor_test,
+  resolution = 1,
+  .verbose = FALSE
+)
+
+final_cor_graph_res <- get_results(cor_test)
+
+expect_equivalent(
+  current = final_cor_graph_res,
+  target = expected_cor_graph_res,
+  info = paste(
+    "Testing expected final results from the graph-based cor results"
+  )
+)

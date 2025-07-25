@@ -1,17 +1,35 @@
-use crate::utils::general::flatten_vector;
-
 use extendr_api::prelude::*;
+
 use faer::Mat;
+use once_cell::sync::Lazy;
 use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::visit::EdgeRef;
 use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, RwLock};
+
+use crate::assert_same_len;
+use crate::utils::general::flatten_vector;
+
+/////////////
+// Globals //
+/////////////
+
+/// Static global for re-use
+static EMPTY_ANCESTORS: Lazy<FxHashSet<String>> = Lazy::new(FxHashSet::default);
 
 ///////////////////////////
 // Semantic similarities //
 ///////////////////////////
 
 /// Structure to store the Ontology similarity results
+///
+/// ### Fields
+///
+/// * `t1` - Name of term 1.
+/// * `t2` - Name of term 2.
+/// * `sim` - The calculated semantic or Wang similarity
 #[derive(Clone, Debug)]
 pub struct OntoSimRes<'a> {
     pub t1: &'a str,
@@ -19,115 +37,138 @@ pub struct OntoSimRes<'a> {
     pub sim: f64,
 }
 
-/// Enum to store the different similarity types
+/// Enum to define the different semantic similarity types
 #[derive(Clone, Debug)]
-pub enum OntoSimType {
+pub enum OntoSemSimType {
     Resnik,
     Lin,
     Combined,
 }
 
-/// Parsing the Onto Similarity types
-fn parse_onto_sim_type(s: &str) -> Option<OntoSimType> {
-    match s.to_lowercase().as_str() {
-        "resnik" => Some(OntoSimType::Resnik),
-        "lin" => Some(OntoSimType::Lin),
-        "combined" => Some(OntoSimType::Combined),
-        _ => None,
-    }
-}
-
-/// Get the most informative common ancestors
+/// Get the information content of the MICA
+///
+/// ### Params
+///
+/// * `t1` - Name of term 1.
+/// * `t2` - Name of term 2.
+/// * `ancestor_map` - HashMap with the ancestors of the terms.
+/// * `info_content_map` - HashMap with the information content for the terms.
+///
+/// ### Returns
+///
+/// The information content of the most informative common ancestors.
 fn get_mica(
     t1: &str,
     t2: &str,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> f64 {
-    let default_hash: FxHashSet<String> =
-        FxHashSet::from_iter(std::iter::once("I have no ancestors".to_string()));
-    let ancestor_1 = ancestor_map.get(t1).unwrap_or(&default_hash);
-    let ancestor_2 = ancestor_map.get(t2).unwrap_or(&default_hash);
-    let mica = ancestor_1
-        .intersection(ancestor_2)
-        .map(|ancestor| info_content_map.get(ancestor).unwrap())
-        .copied()
-        .fold(0.0, f64::max);
-    mica
+    let ancestor_1 = ancestor_map.get(t1).unwrap_or(&EMPTY_ANCESTORS);
+    let ancestor_2 = ancestor_map.get(t2).unwrap_or(&EMPTY_ANCESTORS);
+
+    let (smaller, larger) = if ancestor_1.len() <= ancestor_2.len() {
+        (ancestor_1, ancestor_2)
+    } else {
+        (ancestor_2, ancestor_1)
+    };
+
+    smaller
+        .iter()
+        .filter(|ancestor| larger.contains(*ancestor))
+        .filter_map(|ancestor| info_content_map.get(ancestor))
+        .fold(0.0, |max_ic, &ic| max_ic.max(ic))
 }
 
-/// Calculate the Resnik semantic similarity
-fn calculate_resnik<'a>(
+/// Calculate semantic similarity between two terms
+///
+/// ### Params
+///
+/// * `t1` - Name of term 1.
+/// * `t2` - Name of term 2.
+/// * `sim_type` - `OntoSemSimType` defining the type of semantic similarity
+///                to calculate
+/// * `max_ic` - The maximum information content observed to rescale the Resnik
+///              similarity between 0 and 1.
+/// * `ancestor_map` - HashMap with the ancestors of the terms.
+/// * `info_content_map` - BTreeMap with the information content for the terms.
+///
+/// ### Returns
+///
+/// `OntoSimRes` result.
+fn calculate_similarity<'a>(
     t1: &'a str,
     t2: &'a str,
+    sim_type: OntoSemSimType,
+    max_ic: f64,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
-) -> OntoSimRes<'a> {
-    let sim = get_mica(t1, t2, ancestor_map, info_content_map);
-    OntoSimRes { t1, t2, sim }
-}
-
-/// Calculate the Lin semantic similarity
-fn calculate_lin<'a>(
-    t1: &'a str,
-    t2: &'a str,
-    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
-) -> OntoSimRes<'a> {
-    let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let sim = 2.0 * mica / (t1_ic + t2_ic);
-    OntoSimRes { t1, t2, sim }
-}
-
-/// Calculate for the combined Resnik/Lin similarity
-fn calculate_combined_sim<'a>(
-    t1: &'a str,
-    t2: &'a str,
-    max_ic: &f64,
-    ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> OntoSimRes<'a> {
     let mica = get_mica(t1, t2, ancestor_map, info_content_map);
-    let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
-    let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
-    let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
-    let resnik_sim = mica / max_ic;
-    let sim = (lin_sim + resnik_sim) / 2.0;
+
+    let sim = match sim_type {
+        OntoSemSimType::Resnik => mica / max_ic,
+        OntoSemSimType::Lin => {
+            let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
+            let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
+            2.0 * mica / (t1_ic + t2_ic)
+        }
+        OntoSemSimType::Combined => {
+            let t1_ic = info_content_map.get(t1).unwrap_or(&1.0);
+            let t2_ic = info_content_map.get(t2).unwrap_or(&1.0);
+            let lin_sim = 2.0 * mica / (t1_ic + t2_ic);
+            let resnik_sim = mica / max_ic;
+            (lin_sim + resnik_sim) / 2.0
+        }
+    };
+
     OntoSimRes { t1, t2, sim }
 }
 
-/// Calculate the semantic similarity given two terms, the specified similarity
-/// type and other needed information.
+/// Calculate the semantic similarity given two terms
 pub fn get_single_onto_sim<'a>(
     t1: &'a str,
     t2: &'a str,
     sim_type: &str,
     max_ic: &f64,
     ancestor_map: &FxHashMap<String, FxHashSet<String>>,
-    info_content_map: &FxHashMap<String, f64>,
+    info_content_map: &BTreeMap<String, f64>,
 ) -> Result<OntoSimRes<'a>> {
-    let onto_sim_type = parse_onto_sim_type(sim_type)
-        .ok_or_else(|| format!("Invalid Ontology Similarity Type: {}", sim_type))?;
-
-    let res = match onto_sim_type {
-        OntoSimType::Resnik => calculate_resnik(t1, t2, ancestor_map, info_content_map),
-        OntoSimType::Lin => calculate_lin(t1, t2, ancestor_map, info_content_map),
-        OntoSimType::Combined => {
-            calculate_combined_sim(t1, t2, max_ic, ancestor_map, info_content_map)
-        }
+    let onto_sim_type = match sim_type.to_lowercase().as_str() {
+        "resnik" => OntoSemSimType::Resnik,
+        "lin" => OntoSemSimType::Lin,
+        "combined" => OntoSemSimType::Combined,
+        _ => return Err(format!("Invalid Ontology Similarity Type: {}", sim_type).into()),
     };
 
-    Ok(res)
+    Ok(calculate_similarity(
+        t1,
+        t2,
+        onto_sim_type,
+        *max_ic,
+        ancestor_map,
+        info_content_map,
+    ))
 }
 
-/// Calculate the ontological similarity in an efficient manner for a set of terms
+/// Calculate the semantic similarity in an efficient manner for a set of terms
+///
+/// ### Params
+///
+/// * `terms_split` - A vector of tuples with the first element being the term 1
+///                   and the second element being the terms against which to calculate
+///                   the semantic similarity.
+/// * `sim_type` - Which type of semantic similarity to calculate.
+/// * `ancestor_map` - HashMap with the ancestors of the terms.
+/// * `ic_map` - HashMap with the information content for the terms.
+///
+/// ### Returns
+///
+/// A vector of `OntoSimRes` results.
 pub fn calculate_onto_sim<'a>(
     terms_split: &'a Vec<(String, &[String])>,
     sim_type: &str,
     ancestors_map: FxHashMap<String, FxHashSet<String>>,
-    ic_map: FxHashMap<String, f64>,
+    ic_map: BTreeMap<String, f64>,
 ) -> Vec<OntoSimRes<'a>> {
     let max_ic = ic_map
         .values()
@@ -152,13 +193,14 @@ pub fn calculate_onto_sim<'a>(
 }
 
 /// Transform an R list that hopefully contains the IC into a HashMap of floats
-pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
-    let mut hashmap = FxHashMap::with_capacity_and_hasher(r_list.len(), FxBuildHasher);
+pub fn ic_list_to_ic_hashmap(r_list: List) -> BTreeMap<String, f64> {
+    let mut hashmap = BTreeMap::new();
     for (name, x) in r_list {
         let name = name.to_string();
         let ic_val = x.as_real().unwrap_or(0.0);
         hashmap.insert(name, ic_val);
     }
+
     hashmap
 }
 
@@ -167,29 +209,41 @@ pub fn ic_list_to_ic_hashmap(r_list: List) -> FxHashMap<String, f64> {
 ///////////////////////
 
 /// Type alias for SValue Cache
-/// This one needs the RwLock to be able to do the parallelisation on top
-pub type SValueCache = RwLock<FxHashMap<(NodeIndex, u64), FxHashMap<NodeIndex, f64>>>;
+///
+/// This one needs the RwLock to be able to do the parallelisation on top. This
+/// locks it to maximum one writer and multiple readers at the same time.
+pub type SValueCache = RwLock<FxHashMap<NodeIndex, FxHashMap<NodeIndex, f64>>>;
 
 /// Structure for calculating the Wang similarity on a given Ontology
+///
+/// ### Fields
+/// * `term_to_idx` - HashMap between term to node index.
+/// * `idx_to_term` - The term order as a string.
+/// * `graph` - Directed Graph from parent to child.
+/// * `ancestors` - A vector containing the ancestors as HashSets.
+/// * `topo_order` - Calculated topological order.
+/// * `s_values_cache` - The `SValueCache` caching all of the S values for each
+///                      node.
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct WangSimOntology {
-    term_to_idx: FxHashMap<String, NodeIndex>, // term id to node index
-    idx_to_term: Vec<String>,                  // the idx to term order (important)
-    graph: DiGraph<String, ()>,                // directed graph: parent > child
-    ancestors: Vec<FxHashSet<NodeIndex>>,      // ancestors (including self)
-    topo_order: Vec<NodeIndex>,                // pre-computing topological order
-    s_values_cache: SValueCache,               // pre-computed S-values
+    term_to_idx: FxHashMap<String, NodeIndex>,
+    idx_to_term: Vec<String>,
+    graph: DiGraph<String, f64>,
+    ancestors: Vec<FxHashSet<NodeIndex>>,
+    topo_order: Vec<NodeIndex>,
+    s_values_cache: SValueCache,
 }
 
 impl WangSimOntology {
-    /// Create a new ontology object from parents and child
-    /// Assumes two strings as input, one being the parents, the other being
-    /// the children
-    pub fn new(parents: &[String], children: &[String]) -> Result<Self> {
-        if parents.len() != children.len() {
-            return Err("Parent and child vectors must have same length".into());
-        }
+    /// Create a new ontology object from parents, child and weights between them
+    ///
+    /// ### Params
+    ///
+    /// * `parents` - Slice containing the names of the parents
+    /// * `children` - Slice containing the names of the children
+    /// * `w` - Slice of the weights between the parents and children.
+    pub fn new(parents: &[String], children: &[String], w: &[f64]) -> Result<Self> {
+        assert_same_len!(parents, children, w);
 
         let mut graph = DiGraph::new();
         let mut term_to_idx = FxHashMap::default();
@@ -215,10 +269,10 @@ impl WangSimOntology {
         }
 
         // Add edges to the graph
-        for (parent, child) in parents.iter().zip(children.iter()) {
+        for ((parent, child), w) in parents.iter().zip(children.iter()).zip(w.iter()) {
             let parent_idx = *term_to_idx.get(parent).unwrap();
             let child_idx = *term_to_idx.get(child).unwrap();
-            graph.add_edge(parent_idx, child_idx, ());
+            graph.add_edge(parent_idx, child_idx, *w);
         }
 
         let topo_order = Self::compute_topological_order(&graph);
@@ -235,18 +289,22 @@ impl WangSimOntology {
     }
 
     /// Calculate the similarity matrix with optimizations
-    pub fn calc_sim_matrix(&self, w: f64) -> (Mat<f64>, Vec<String>) {
+    ///
+    /// ### Returns
+    ///
+    /// A tuple with the full Wang similarity matrix as first element and the
+    /// column/row names as the second element.
+    pub fn calc_sim_matrix(&self) -> (Mat<f64>, Vec<String>) {
         let n = self.idx_to_term.len();
         let mut matrix: Mat<f64> = Mat::zeros(n, n);
 
         // Pre-compute all S-values once and store in Arc for safe sharing
-        let w_key = w.to_bits();
         let all_s_values: Arc<Vec<FxHashMap<NodeIndex, f64>>> = Arc::new(
             (0..n)
                 .into_par_iter()
                 .map(|i| {
                     let term_idx = NodeIndex::new(i);
-                    self.get_or_compute_s_values(term_idx, w, w_key)
+                    self.get_or_compute_s_values(term_idx)
                 })
                 .collect(),
         );
@@ -296,35 +354,47 @@ impl WangSimOntology {
     }
 
     /// Get or compute S-values with caching
-    fn get_or_compute_s_values(
-        &self,
-        term_idx: NodeIndex,
-        w: f64,
-        w_key: u64,
-    ) -> FxHashMap<NodeIndex, f64> {
-        let cache_key = (term_idx, w_key);
-
+    ///
+    /// ### Params
+    ///
+    /// * `term_idx` The node index for which to calculate the S value
+    ///
+    /// ### Returns
+    ///
+    /// Returns a HashMap of the NodeIndeces with the given S values for all ancestors
+    /// of the specified term_idx.
+    fn get_or_compute_s_values(&self, term_idx: NodeIndex) -> FxHashMap<NodeIndex, f64> {
         // Try to read from cache first
         {
             let cache = self.s_values_cache.read().unwrap();
-            if let Some(cached) = cache.get(&cache_key) {
+            if let Some(cached) = cache.get(&term_idx) {
                 return cached.clone();
             }
         }
 
-        // Compute if not in cache
-        let s_values = self.calculate_s_values(term_idx, w);
+        // Compute and store if not in cache
+        let s_values = self.calculate_s_values(term_idx);
 
-        // Store in cache
         {
             let mut cache = self.s_values_cache.write().unwrap();
-            cache.insert(cache_key, s_values.clone());
+            cache.insert(term_idx, s_values.clone());
         }
 
         s_values
     }
 
     /// Calculate similarity from pre-computed S-values
+    ///
+    /// ### Params
+    ///
+    /// * `term_idx_1` - NodeIndex of the first term
+    /// * `term_idx_2` - NodeIndex of the second term
+    /// * `s_val_1` - HashMap with the ancestors of term1 and the s-values.
+    /// * `s_val_2` - HashMap with the ancestors of term2 and the s-values.
+    ///
+    /// ### Returns
+    ///
+    /// The Wang similarity between the two terms defined by the NodeIndex.
     fn calculate_similarity_from_s_values(
         &self,
         term_idx_1: NodeIndex,
@@ -372,8 +442,17 @@ impl WangSimOntology {
     }
 
     /// Get the ancestor terms of everything in the ontology
+    ///
+    /// ### Params
+    ///
+    /// * `graph` - The DirectedGraph representing the ontology
+    /// * `topo_order` - The vector defining the topological order
+    ///
+    /// ### Returns
+    ///
+    /// A vector of the HashSets with the ancestor node indices.
     fn get_ancestors(
-        graph: &DiGraph<String, ()>,
+        graph: &DiGraph<String, f64>,
         topo_order: &[NodeIndex],
     ) -> Vec<FxHashSet<NodeIndex>> {
         let mut ancestors = vec![FxHashSet::default(); graph.node_count()];
@@ -395,7 +474,16 @@ impl WangSimOntology {
     }
 
     /// Compute topological order
-    fn compute_topological_order(graph: &DiGraph<String, ()>) -> Vec<NodeIndex> {
+    ///
+    /// ### Params
+    ///
+    /// * `graph` - The DirectedGraph representing the ontology
+    ///
+    /// ### Returns
+    ///
+    /// A vector of node indices based on the topological order of the directed
+    /// graph.
+    fn compute_topological_order(graph: &DiGraph<String, f64>) -> Vec<NodeIndex> {
         petgraph::algo::toposort(graph, None)
             .unwrap_or_else(|_| panic!("Ontology contains cycles"))
             .into_iter()
@@ -404,7 +492,15 @@ impl WangSimOntology {
     }
 
     /// Calculate the S-values for a specific term's DAG
-    fn calculate_s_values(&self, term_idx: NodeIndex, w: f64) -> FxHashMap<NodeIndex, f64> {
+    ///
+    /// ### Params
+    ///
+    /// * `term_idx` - The NodeIndex for which to calculate the S values
+    ///
+    /// ### Returns
+    ///
+    /// A HashMap of NodeIndices with corresponding S values
+    fn calculate_s_values(&self, term_idx: NodeIndex) -> FxHashMap<NodeIndex, f64> {
         let dag_nodes = &self.ancestors[term_idx.index()];
         let mut s_values = FxHashMap::with_capacity_and_hasher(dag_nodes.len(), FxBuildHasher);
 
@@ -417,10 +513,15 @@ impl WangSimOntology {
             }
 
             let mut max_contribution: f64 = 0.0;
-            for child_idx in self.graph.neighbors_directed(node_idx, petgraph::Outgoing) {
+
+            // Iterate through outgoing edges to get the specific weights
+            for edge_ref in self.graph.edges_directed(node_idx, petgraph::Outgoing) {
+                let child_idx = edge_ref.target();
+                let edge_weight = *edge_ref.weight();
+
                 if dag_nodes.contains(&child_idx) {
                     if let Some(&child_s_value) = s_values.get(&child_idx) {
-                        max_contribution = max_contribution.max(w * child_s_value);
+                        max_contribution = max_contribution.max(edge_weight * child_s_value);
                     }
                 }
             }
@@ -433,70 +534,101 @@ impl WangSimOntology {
         s_values
     }
 
-    // /// Calculate Wang similarity between two terms with caching
-    // pub fn wang_sim(&self, term1: &str, term2: &str, w: f64) -> Option<f64> {
-    //     let term_idx_1 = *self.term_to_idx.get(term1)?;
-    //     let term_idx_2 = *self.term_to_idx.get(term2)?;
+    /// Calculate Wang similarity between two terms with caching
+    ///
+    /// ### Params
+    ///
+    /// * `term1` - Name of term1
+    /// * `term2` - Name of term2
+    ///
+    /// ### Returns
+    ///
+    /// The optional Wang similarity between the two terms.
+    pub fn wang_sim(&self, term1: &str, term2: &str) -> Option<f64> {
+        let term_idx_1 = *self.term_to_idx.get(term1)?;
+        let term_idx_2 = *self.term_to_idx.get(term2)?;
 
-    //     if term_idx_1 == term_idx_2 {
-    //         return Some(1.0);
-    //     }
+        if term_idx_1 == term_idx_2 {
+            return Some(1.0);
+        }
 
-    //     self.wang_sim_by_idx(term_idx_1, term_idx_2, w)
-    // }
+        self.wang_sim_by_idx(term_idx_1, term_idx_2)
+    }
 
-    // /// Calculate Wang similarity between two term indices (internal method)
-    // fn wang_sim_by_idx(&self, term_idx_1: NodeIndex, term_idx_2: NodeIndex, w: f64) -> Option<f64> {
-    //     let w_key = w.to_bits(); // Convert f64 to u64 for hashing
+    /// Calculate Wang similarity between two term indices (internal method)
+    ///
+    /// ### Params
+    ///
+    /// * `term_idx_1` - NodeIndex of term 1
+    /// * `term_idx_2` - NodeIndex of term 2
+    ///
+    /// ### Returns
+    ///
+    /// The Wang similarity between the two terms.
+    fn wang_sim_by_idx(&self, term_idx_1: NodeIndex, term_idx_2: NodeIndex) -> Option<f64> {
+        let s_val_1 = self.get_or_compute_s_values(term_idx_1);
+        let s_val_2 = self.get_or_compute_s_values(term_idx_2);
 
-    //     let s_val_1 = self.get_or_compute_s_values(term_idx_1, w, w_key);
-    //     let s_val_2 = self.get_or_compute_s_values(term_idx_2, w, w_key);
+        let dag1_nodes = &self.ancestors[term_idx_1.index()];
+        let dag2_nodes = &self.ancestors[term_idx_2.index()];
 
-    //     let dag1_nodes = &self.ancestors[term_idx_1.index()];
-    //     let dag2_nodes = &self.ancestors[term_idx_2.index()];
+        // Find intersection more efficiently
+        let (smaller, larger) = if dag1_nodes.len() < dag2_nodes.len() {
+            (dag1_nodes, dag2_nodes)
+        } else {
+            (dag2_nodes, dag1_nodes)
+        };
 
-    //     // Find intersection more efficiently
-    //     let (smaller, larger) = if dag1_nodes.len() < dag2_nodes.len() {
-    //         (dag1_nodes, dag2_nodes)
-    //     } else {
-    //         (dag2_nodes, dag1_nodes)
-    //     };
+        let common_nodes: Vec<NodeIndex> = smaller
+            .iter()
+            .filter(|node| larger.contains(node))
+            .cloned()
+            .collect();
 
-    //     let common_nodes: Vec<NodeIndex> = smaller
-    //         .iter()
-    //         .filter(|node| larger.contains(node))
-    //         .cloned()
-    //         .collect();
+        if common_nodes.is_empty() {
+            return Some(0.0);
+        }
 
-    //     if common_nodes.is_empty() {
-    //         return Some(0.0);
-    //     }
+        let sv1: f64 = s_val_1.values().sum();
+        let sv2: f64 = s_val_2.values().sum();
 
-    //     let sv1: f64 = s_val_1.values().sum();
-    //     let sv2: f64 = s_val_2.values().sum();
+        let numerator: f64 = common_nodes
+            .iter()
+            .map(|&node_idx| {
+                s_val_1.get(&node_idx).unwrap_or(&0.0) + s_val_2.get(&node_idx).unwrap_or(&0.0)
+            })
+            .sum();
 
-    //     let numerator: f64 = common_nodes
-    //         .iter()
-    //         .map(|&node_idx| {
-    //             s_val_1.get(&node_idx).unwrap_or(&0.0) + s_val_2.get(&node_idx).unwrap_or(&0.0)
-    //         })
-    //         .sum();
+        let denominator = sv1 + sv2;
 
-    //     let denominator = sv1 + sv2;
-
-    //     if denominator > 0.0 {
-    //         Some(numerator / denominator)
-    //     } else {
-    //         Some(0.0)
-    //     }
-    // }
+        if denominator > 0.0 {
+            Some(numerator / denominator)
+        } else {
+            Some(0.0)
+        }
+    }
 }
 
 ////////////
 // Others //
 ////////////
 
-/// Filter the similarities based on some threshold
+/// Filter similarities based on threshold
+///
+/// Helper function to generate a Vector of `OntoSimRes` results based on the
+/// row-major similarities (as a vector), a threshold and the col/row names
+/// of the similarity matrix
+///
+/// ### Params
+///
+/// * `sim_vals` - The upper triangle values of the similarity matrix stored in
+///                row major format, excluding the diagonal.
+/// * `names` - The column and row names of the similarity matrix.
+/// * `threshold` - Filtering threshold
+///
+/// ### Returns
+///
+/// A vector of `OntoSimRes` that pass the threshold.
 pub fn filter_sims_critval<'a>(
     sim_vals: &[f64],
     names: &'a [String],

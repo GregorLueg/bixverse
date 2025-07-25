@@ -10,6 +10,76 @@
 #' @useDynLib bixverse, .registration = TRUE
 NULL
 
+#' Calculates the TOM over an affinity matrix
+#'
+#' @description Calculates the topological overlap measure for a given affinity matrix
+#' x. Has the option to calculate the signed and unsigned version.
+#'
+#' @param x Numerical matrix. Affinity matrix.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
+#' normalisation method will be used.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
+#' should be ≥ 0.
+#'
+#' @return Returns the TOM matrix.
+#'
+#' @export
+rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
+
+#' Helper function to assess CoReMo cluster quality
+#'
+#' @description This function assesses the quality of the clusters
+#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
+#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
+#' to a random set of 1000 genes.
+#'
+#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
+#' @param row_names String vector. The row names (or column names) of the
+#' correlation matrix.
+#' @param seed Integer. Random seed for the sub sampling of genes.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item r2med - median R2 of the cluster.
+#'   \item r2mad - median absolute deviation of the R2 in the cluster.
+#'   \item size - size of the cluster.
+#' }
+rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
+
+#' Helper function to assess CoReMo cluster stability
+#'
+#' @description This function is a helper for the leave-on-out stability
+#' assessment of CoReMo clusters. The function will generate the distance
+#' vectors based on leaving out the samples defined in indices one by one.
+#'
+#' @param data Numeric matrix. The original processed matrix.
+#' @param indices Integer vector. The sample indices to remove to re-calculate
+#' the distances.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from
+#' `c("gaussian", "bump", "inverse_quadratic")`.
+#' @param spearman Boolean. Shall Spearman correlation be used.
+#'
+#' @return A list with `length(indices)` elements, each containing the distance
+#' minus the given sample.
+rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Call(wrap__rs_coremo_stability, data, indices, epsilon, rbf_type, spearman)
+
+#' Helper function to assess cluster stability
+#'
+#' @param data Integer matrix. Assumes that each column represents a given
+#' resampling/bootstrap and the rows represent the features, while each integer
+#' indicates cluster membership.
+#'
+#' @return A list containing:
+#'  \itemize{
+#'   \item mean_jaccard - mean Jaccard similarities for this feature across all
+#'   the bootstraps, resamplings.
+#'   \item std_jaccard - the standard deviation of the Jaccard similarities for
+#'   this feature across all the bootstraps, resamplings.
+#' }
+rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
+
 #' Calculates the traditional GSEA enrichment score
 #'
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
@@ -147,8 +217,6 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' @param iters Integer. Number of random permutations for the fgsea simple method
 #' to use
 #' @param seed Integer. For reproducibility purposes.
-#' @param debug Boolean that will provide additional console information for
-#' debugging purposes.
 #'
 #' @return List with the following elements
 #' \itemize{
@@ -167,7 +235,7 @@ rs_calc_multi_level <- function(stats, es, pathway_size, sample_size, seed, eps,
 #' }
 #'
 #' @export
-rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_params, elim_threshold, iters, seed, debug)
+rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_threshold, iters, seed) .Call(wrap__rs_geom_elim_fgsea_simple, stats, levels, go_obj, gsea_params, elim_threshold, iters, seed)
 
 #' Calculates the simple and multi error for fgsea multi level
 #'
@@ -185,6 +253,208 @@ rs_geom_elim_fgsea_simple <- function(stats, levels, go_obj, gsea_params, elim_t
 #' @export
 rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wrap__rs_simple_and_multi_err, n_more_extreme, nperm, sample_size)
 
+#' Rust version of calcaluting the personalised page rank
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param personalised Numerical vector. The reset values. They must sum to 1 and
+#' be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return The personalised page rank values.
+#'
+#' @export
+rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+
+#' Calculate massively parallelised personalised page rank scores
+#'
+#' @description Helper function to calculate in parallel on the same (unweighted)
+#' network the personalised page rank as fast as possible. Can be used for permutations
+#' type approaches.
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores List. The personalised vectors for the page rank reset
+#' values. Each element must sum to 1 and be of same length of `node_names`!
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return A matrix of the scores with each row representing an element in the
+#' `diffusion_scores` list (in order), and each column representing the value
+#' of the personalised page rank diffusion for this node.
+rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, diffusion_scores, undirected)
+
+#' Calculate massively parallelised tied diffusion scores
+#'
+#' @description Helper function to calculate in parallel on the same (unweighted)
+#' network the tied diffusions as fast as possible. Can be used for permutation.
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param diffusion_scores_1 List. The first set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param diffusion_scores_2 List. The second set of personalised vectors for
+#' the page rank reset values. Each element must sum to 1 and be of same length
+#' of `node_names`!
+#' @param summarisation_fun String. One of `c("min", "max", "avg")`. Which type
+#' of summarisation function to use to calculate the tied diffusion.
+#' @param undirected Boolean. Is this an undirected graph.
+#'
+#' @return A matrix of the scores with each row representing a tied diffusion of
+#' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
+#' column representing the value of the tied diffusion for this node.
+rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+
+#' Prepare a pathway list for GSVA
+#'
+#' @param feature_names String vector. The feature names of the matrix (should
+#' be the rows).
+#' @param pathway_list List. A list containing the pathways and the respective
+#' genes
+#' @param min_size,max_size Integer. The minimum and maximum size respectively.
+#'
+#' @return Returns a list with (zero-indexed) indices.
+#'
+#' @export
+rs_prepare_gsva_gs <- function(feature_names, pathway_list, min_size, max_size) .Call(wrap__rs_prepare_gsva_gs, feature_names, pathway_list, min_size, max_size)
+
+#' Rust version of the GSVA algorithm
+#'
+#' @description
+#' Rust-based implementation of the popular GSVA algorithm. Has further
+#' performance optimisations compared to the original implementation.
+#'
+#' @param exp Numerical matrix. The expression matrix with rows = genes, and
+#' columns = samples
+#' @param gs_list List. A list containing the indices of the pathway genes
+#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param tau Float. Tau parameter, usual recommendation is to use `1.0` here.
+#' Larger values emphasise the tails more.
+#' @param gaussian Boolean. If `TRUE` the Gaussian kernel will be used, if
+#' `FALSE` the Poisson kernel will be used.
+#' @param max_diff Boolean. Scoring mode: `TRUE` = difference, `FALSE` = larger
+#' absolute value
+#' @param abs_rank Booelan. If `TRUE` = pos-neg, `FALSE` = pos+neg
+#' @param timings Boolean. Prints timings from the algorithm.
+#'
+#' @return Returns a matrix of gene set ES scores x samples.
+#'
+#' @export
+rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .Call(wrap__rs_gsva, exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
+
+#' Rust version of the ssGSEA algorithm
+#'
+#' @description
+#' Rust-based implementation of the popular single sample GSEA algorithm. Has
+#' further performance optimisations compared to the original implementation.
+#'
+#' @param exp Numerical matrix. The expression matrix with rows = genes, and
+#' columns = samples
+#' @param gs_list List. A list containing the indices of the pathway genes
+#' (needs to be null indexed). See [bixverse::rs_prepare_gsva_gs()].
+#' @param alpha Float. The alpha parameter to adjust the weights.
+#' @param normalise Boolean. Shall the scores be normalised.
+#' @param timings Boolean. Prints timings from the algorithm.
+#'
+#' @return Returns a matrix of gene set ES scores x samples.
+#'
+#' @export
+rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
+
+#' Reconstruct a matrix from a flattened upper triangle vector
+#'
+#' @description This function takes a flattened vector of the upper triangle
+#' from a symmetric matrix (think correlation matrix) and reconstructs the full
+#' dense matrix for you.
+#'
+#' @param cor_vector Numeric vector. The vector of correlation coefficients
+#' that you want to use to go back to a dense matrix.
+#' @param shift Integer. If you applied a shift, i.e. included the diagonal
+#' values = 0; or excluded the diagonal values = 1.
+#' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
+#' reconstructed.
+#'
+#' @return The dense R matrix.
+#'
+#' @export
+rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
+
+#' Generate a vector-based representation of the upper triangle of a matrix
+#'
+#' @description This function generates a vector from the upper triangle of
+#' a given symmetric matrix. You have the option to remove the diagonal with
+#' setting shift to 1.
+#'
+#' @param x Numeric vector. The vector of correlation coefficients that you
+#' want to use to go back to a dense matrix.
+#' @param shift Integer. If you want to apply a shift, i.e. included the diagonal
+#' values = 0; or excluded the diagonal values = 1.
+#'
+#' @return The dense R matrix.
+#'
+#' @export
+rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
+
+#' Calculate the OT harmonic sum
+#'
+#' @param x The numeric vector (should be between 0 and 1) for which to
+#' calculate the harmonic sum
+#'
+#' @return Returns the harmonic sum according to the OT calculation.
+#'
+#' @export
+rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
+
+#' Apply a Radial Basis Function
+#'
+#' @description Applies a radial basis function (RBF) to a given distance
+#' vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
+#'
+#' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
+#' onto.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+#'
+#' @return The affinities after the Kernel was applied.
+#'
+#' @export
+rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
+
+#' Apply a Radial Basis Function (to a matrix)
+#'
+#' @description Applies a radial basis function (RBF) to a given distance
+#' matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
+#' RBF.
+#'
+#' @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
+#' onto.
+#' @param epsilon Float. Epsilon parameter for the RBF.
+#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
+#'
+#' @return The affinities after the Kernel was applied.
+#'
+#' @export
+rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
+
+#' Apply a range normalisation on a vector.
+#'
+#' @description Applies a range normalisation on an R vector.
+#'
+#' @param x Numerical vector. The data to normalise.
+#' @param max_val Numeric. The upper bound value to normalise into. If set to 1,
+#' the function will be equal to a min-max normalisation.
+#' @param min_val Numeric. The lower bound value to normalise into. If set to 0,
+#' the function will equal a min-max normalisation.
+#'
+#' @return Normalised values
+#'
+#' @export
+rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
+
 #' Run a single hypergeometric test.
 #'
 #' @description Given a set of target genes, this is a Rust implementation of
@@ -192,21 +462,28 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' gene sets. WARNING! Incorrect use can cause kernel crashes. Wrapper around
 #' the Rust functions with type checks are provided in the package.
 #'
-#' @param target_genes A character vector representing the target gene set.
-#' @param gene_sets A list of strings that represent the gene sets to test against.
-#' @param gene_universe A character vector representing the gene universe from
-#' which the target genes and gene sets are sampled from.
+#' @param target_genes String vector. Represents the target gene set.
+#' @param gene_sets List. Contains the strings that represent the gene sets to
+#' test against.
+#' @param gene_universe String vector. The features representing the gene universe
+#' from which the target genes and gene sets are sampled from.
+#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
+#' overlappign genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
+#' tolerated FDR.
 #'
 #' @return A list containing:
 #'  \itemize{
 #'   \item pvals - The p-values from the hypergeometric test
 #'   \item odds_ratios - The calculated odds ratios
-#'   \item overlap - The size of the overlap
+#'   \item hits - The size of the overlap
 #'   \item gene_set_lengths - The length of the gene sets.
+#'   \item fdr - The FDR calculated across the gene sets.
+#'   \item to_keep - Indices of the gene sets that passed (optional) thresholds.
 #' }
 #'
 #' @export
-rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe)
+rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test, target_genes, gene_sets, gene_universe, min_overlap, fdr_threshold)
 
 #' Run a hypergeometric test over a list of target genes
 #'
@@ -221,17 +498,26 @@ rs_hypergeom_test <- function(target_genes, gene_sets, gene_universe) .Call(wrap
 #' against.
 #' @param gene_universe A character vector representing the gene universe from
 #' which the target genes and gene sets are sampled from.
+#' @param min_overlap Optional integer. Shall a filter be applied on the minimum of
+#' overlappign genes.
+#' @param fdr_threshold Optional float. Shall a filter be applied for the maximum
+#' tolerated FDR.
 #'
 #' @return A list containing:
 #'  \itemize{
-#'   \item pvals - The p-values from the hypergeometric test
+#'   \item pvals - The p-values from the hypergeometric test.
+#'   \item fdr - The FDRs for each target gene calculated across all gene sets.
 #'   \item odds ratios - The calculated odds ratios
-#'   \item overlap - The size of the overlap
+#'   \item hits - The size of the overlap between the target gene set and individual
+#'   gene sets.
 #'   \item gene_set_lengths - The length of the gene sets.
+#'   \item to_keep - Indices of the tests that passed.
+#'   \item tests_passed - How many tests passed the filter criteria for that target
+#'   set.
 #' }
 #'
 #' @export
-rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe)
+rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold) .Call(wrap__rs_hypergeom_test_list, target_genes_list, gene_sets, gene_universe, min_overlap, fdr_threshold)
 
 #' Run hypergeometric enrichment over the gene ontology
 #'
@@ -252,8 +538,8 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall be
 #' applied to the ancestors.
-#' @param debug Boolean that will provide additional console information for
-#' debugging purposes.
+#' @param min_overlap Optional minimum overlap threshold.
+#' @param fdr_threshold Optional fdr threshold.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -265,7 +551,7 @@ rs_hypergeom_test_list <- function(target_genes_list, gene_sets, gene_universe) 
 #' }
 #'
 #' @export
-rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim, target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold) .Call(wrap__rs_gse_geom_elim, target_genes, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold)
 
 #' Run hypergeometric enrichment a list of target genes over the gene ontology
 #'
@@ -288,220 +574,157 @@ rs_gse_geom_elim <- function(target_genes, levels, go_obj, gene_universe_length,
 #' tested.
 #' @param elim_threshold p-value below which the elimination procedure shall
 #' be applied to the ancestors.
-#' @param debug boolean that will provide additional console information for
-#' debugging purposes.
+#' @param min_overlap Optional minimum overlap threshold.
+#' @param fdr_threshold Optional fdr threshold.
 #'
 #' @return A list containing:
 #'  \itemize{
 #'   \item go_ids - The gene ontology identifier.
 #'   \item pvals - The calculated odds ratios.
+#'   \item fdrs - The calculated fdrs.
 #'   \item odds_ratios - The calculated odds ratios.
 #'   \item overlap - The size of the overlap.
 #'   \item gene_set_lengths - The length of the gene sets.
-#'   \item no_test - The number of tests that were conducted against
-#'   target_gene_list. First element indicates how many values belong to the
-#'   first target_genes set in the list, etc.
+#'   \item no_test - The number of tests for that target set that passed the
+#'   thresholds.
 #' }
 #'
 #' @export
-rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, debug)
+rs_gse_geom_elim_list <- function(target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold) .Call(wrap__rs_gse_geom_elim_list, target_genes_list, levels, go_obj, gene_universe_length, min_genes, elim_threshold, min_overlap, fdr_threshold)
 
-#' Set similarities over list
+#' Prepare the data for whitening
 #'
-#' This function calculates the Jaccard or similarity index between a one given
-#' string vector and list of vectors.
-#'
-#' @param s_1_list The String vector against which to calculate the set similarities.
-#' @param s_2_list A List of vector against which to calculate the set similarities.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
-#' Jaccard similarity be calculated.
-#'
-#' @return Vector of set similarities (upper triangle) values.
-#'
-#' @export
-rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
-
-#' Set similarities
-#'
-#' This function calculates the Jaccard or similarity index between a two given
-#' string vector and a  of other string vectors.
-#'
-#' @param s_1 The String vector against which to calculate the set similarities.
-#' @param s_2 The String vector against which to calculate the set similarities.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
-#'
-#' @export
-rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
-
-#' Fast AUC calculation
-#'
-#' @description This function calculates rapidly AUCs based on an approximation.
-#'
-#' @param pos_scores The scores of your hits.
-#' @param neg_scores The scores of your non-hits.
-#' @param iters Number of iterations to run the function for.
-#' Recommended size: 10000L.
-#' @param seed Seed.
-#'
-#' @return The AUC.
-#'
-#' @export
-rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
-
-#' Create random AUCs
-#'
-#' @description This function creates a random set of AUCs based on a score
-#' vector and a size of the positive set. This can be used for permutation-
-#' based estimation of Z-scores and subsequently p-values.
-#'
-#' @param score_vec The overall vector of scores.
-#' @param size_pos The size of the hits represented in the score_vec.
-#' @param random_iters Number of random AUCs to generate.
-#' @param auc_iters Number of random iterations to approximate the AUCs.
-#' Recommended size: 10000L.
-#' @param seed Seed.
-#'
-#' @return A vector of random AUCs based the score vector and size of the
-#' positive set.
-#'
-#' @export
-rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
-
-#' Calculate the Hedge's G effect
-#'
-#' @description Calculates the Hedge's G effect for two sets of matrices. The
-#' function assumes that rows = samples and columns = features.
+#' @description Prepares the data for subsequent usag in ICA.
 #' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
 #' functions with type checks are provided in the package.
 #'
-#' @param mat_a The matrix of samples and features in grp A for which to
-#' calculate the Hedge's G effect.
-#' @param mat_b The matrix of samples and features in grp B for which to
-#' calculate the Hedge's G effect.
-#' @param small_sample_correction Shall the small sample correction be applied.
+#' @param x The matrix to whiten. The whitening will happen over the columns.
+#' @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
+#' on larger data sets.
+#' @param seed Integer. Only relevant with fast_svd is set to `TRUE`.
+#' @param rank Integer. How many ranks to use for the fast SVD approximation.
+#' If you supply `NULL`, it will default to `10L`. Only relevant with
+#' fast_svd is set to `TRUE`.
+#' @param oversampling Integer. Oversampling parameter to make the approximation
+#' more precise. If you supply `NULL`, it will default to `10L`. Only relevant
+#' with fast_svd is set to `TRUE`.
+#' @param n_power_iter Integer. How much shall the QR low rank approximation be
+#' powered. If you supply `NULL`, it will default to `2L`.
 #'
-#' @return Returns the harmonic sum according to the OT calculation.
-#'
-#' @export
-rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
-
-#' Calculate a BH-based FDR
-#'
-#' @description Rust implementation that will be faster if you have an
-#' terrifying amount of p-values to adjust.
-#'
-#' @param pvals Numeric vector. The p-values you wish to adjust.
-#'
-#' @return The Benjamini-Hochberg adjusted p-values.
-#'
-#' @export
-rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
-
-#' Calculate the hypergeometric rest in Rust
-#'
-#' @param q Number of white balls drawn out of urn.
-#' @param m Number of white balls in the urn.
-#' @param n Number of black balls in the urn.
-#' @param k The number of balls drawn out of the urn.
-#'
-#' @return P-value (with lower.tail set to False)
-#'
-#' @export
-rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
-
-#' Calculate the critical value
-#'
-#' This function calculates the critical value for a given set based on random
-#' permutations and a given alpha value.
-#'
-#' @param values Numeric vector. The full data set for which to calculate the
-#' critical value.
-#' @param iters Integer. Number of random permutations to use.
-#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
-#' critical value is smaller than 0.1 percentile of the random permutations.
-#' @param seed Integer. For reproducibility purposes
-#'
-#' @return The critical value for the given parameters.
-#'
-#' @export
-rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, values, iters, alpha, seed)
-
-#' Calculate the critical value
-#'
-#' This function calculates the critical value for a given set based on random
-#' permutations and a given alpha value.
-#'
-#' @param mat Numeric matrix. The (symmetric matrix with all of the values).
-#' @param iters Integer. Number of random permutations to use.
-#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
-#' critical value is smaller than 0.1 percentile of the random permutations.
-#' @param seed Integer. For reproducibility purposes
-#'
-#' @return The critical value for the given parameters.
-#'
-#' @export
-rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
-
-#' Generate reciprocal best hits based on set similarities
-#'
-#' @description This function takes a nested list that contains gene modules/
-#' sets derived from various methods and generate identifies reciprocal best
-#' hits between gene modules/sets across the different origins. WARNING!
-#' Incorrect use can cause kernel crashes. Wrapper around the Rust functions
-#' with type checks are provided in the package.
-#'
-#' @param module_list A nested named list. The outer list should contain the
-#' origin of the gene modules, the inner list the names of the gene modules and
-#' the respective genes in them.
-#' @param overlap_coefficient Shall the overlap coefficient instead of the
-#' Jaccard similarity be used.
-#' @param min_similarity Minimum similarity that should exist between any two
-#' given gene modules to actually calculate RBH pairs.
-#' @param debug Boolean Boolean that activates print messages for debugging
-#' purposes.
 #'
 #' @return A list containing:
 #'  \itemize{
-#'   \item origin - The name of the origin of the gene modules.
-#'   \item target - The name of the target of the gene modules.
-#'   \item comparisons - Integer vector indicating how many RBH hits were
-#'   identified in this comparison
-#'   \item origin_modules - Names of the gene modules from the origin.
-#'   \item target_modules - Names of the gene modules from the target.
-#'   \item similarity - The similarities between the two respective gene
-#'   modules.
+#'   \item x - The preprocessed matrix.
+#'   \item k - The pre-whitening matrix k.
 #' }
 #'
 #' @export
-rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity, debug) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity, debug)
+rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_iter) .Call(wrap__rs_prepare_whitening, x, fast_svd, seed, rank, oversampling, n_power_iter)
 
-#' Generate reciprocal best hits based on correlations
+#' Run the Rust implementation of fast ICA.
 #'
-#' @description This function takes list of (named) matrices which represent
-#' for example matrix factorisation results you wish to identify reciprocal
-#' best hits (RBH) for. The rows need to represent the features and the columns
-#' the parts you wish to calculate the RBH for.
+#' @description This function serves as a wrapper over the fast ICA
+#' implementations in Rust. It assumes a whitened matrix and also an
+#' intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
+#' around the Rust functions with type checks are provided in the package.
 #'
-#' @param module_matrices A list of named matrices. Rows represent features
-#' and columns the samples you wish to calculate the correlations for.
-#' @param spearman Shall Spearman correlation be used.
-#' @param min_similarity Minimum (absolute) correlations that needs to exist
-#' between two terms.
+#' @param whiten Numerical matrix. The whitened matrix.
+#' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
+#' be equal to nrows of whiten.
+#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param ica_params A list containing:
+#'  \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
+#'
+#' @return A list with the following items:
+#'  \itemize{
+#'   \item mixing - The mixing matrix for subsequent usage.
+#'   \item converged - Boolean if the algorithm converged.
+#' }
+#'
+#' @export
+rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
+
+#' Run ICA over a given no_comp with random initilisations of w_init
+#'
+#' @description This function implements a stabilised ICA like algorithm in
+#' Rust. Briefly, it generates random w_init matrices (total number being
+#' no_random_init) and runs ICA given the x_processed and k data over these.
+#' The function returns combined S from the different runs and a boolean
+#' vector indicating if this specific run converged.
+#'
+#' @param x1 Numerical matrix. The processed matrix (but not yet
+#' whitened!)
+#' @param k Numerical matrix. The whitening matrix.
+#' @param no_comp Integer. Number of independent components to return.
+#' @param no_random_init Integer. Number of random initialisations to test.
+#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param random_seed Integer. Seed for randomisations.
+#' @param ica_params A list containing:
+#' \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
 #'
 #' @return A list containing:
-#'  \itemize{
-#'   \item origin - The name of the origin of the gene modules.
-#'   \item target - The name of the target of the gene modules.
-#'   \item comparisons - Integer vector indicating how many RBH hits were
-#'   identified in this comparison
-#'   \item origin_modules - Names of the gene modules from the origin.
-#'   \item target_modules - Names of the gene modules from the target.
-#'   \item similarity - The similarities between the two respective gene
-#'   modules.
+#' \itemize{
+#'   \item s_combined - The combined matrices for S. Dimensions are nrows =
+#'   features; and ncols = ncomp * no_random_init.
+#'   \item converged - Boolean vector indicating if the respective run reached
+#'   convergence. Length = no_random_init
 #' }
 #'
 #' @export
-rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
+rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
+
+#' Run ICA with cross-validation and random initialsiation
+#'
+#' @description This function will split the data into `no_folds` and apply
+#' ICA with `no_random_inits` over that fold.
+#'
+#' @param x Numeric matrix. The processed data (no whitening function has
+#' been applied yet.)
+#' @param no_comp Integer. Number of components to test for.
+#' @param no_random_init Integer. Number of random initialisations.
+#' @param no_folds Integer. Number of folds to use for the cross-validation.
+#' @param ica_type String. Which type of ICA shall be run.
+#' @param random_seed Integer. For reproducibility.
+#' @param ica_params A list containing:
+#' \itemize{
+#'   \item maxit - Integer. Maximum number of iterations for ICA.
+#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
+#'   Should be between 1 to 2.
+#'   \item max_tol - Maximum tolerance of the algorithm
+#'   \item verbose - Verbosity of the function, i.e., shall individual iters
+#'   be shown.
+#' }
+#' If the list is empty or the expected elements are not found, default values
+#' are used.
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item s_combined - The combined matrices for S. Dimensions are nrows =
+#'   features; and ncols = ncomp * no_random_init.
+#'   \item converged - Boolean vector indicating if the respective run reached
+#'   convergence. Length = no_random_init
+#' }
+#'
+#' @export
+rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
 
 #' Calculate the column-wise co-variance.
 #'
@@ -568,6 +791,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #'
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
+
+#' Calculates the mutual information matrix
+#'
+#' @description Calculates the mutual information across all columns in the
+#' data.
+#'
+#' @param x R matrix with doubles for which to calculate the mutual information
+#' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
+#' the function will default to `sqrt(nrows(x))`.
+#' @param normalise Boolean. Shall the normalised mutual information be
+#' calculated via joint entropy.
+#'
+#' @returns The mutual information matrix.
+#'
+#' @export
+rs_mutual_info <- function(x, n_bins, normalise) .Call(wrap__rs_mutual_info, x, n_bins, normalise)
 
 #' Rust implementation of prcomp
 #'
@@ -712,231 +951,6 @@ rs_differential_cor <- function(x_a, x_b, spearman) .Call(wrap__rs_differential_
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
-#' Reconstruct a matrix from a flattened upper triangle vector
-#'
-#' @description This function takes a flattened vector of the upper triangle
-#' from a symmetric matrix (think correlation matrix) and reconstructs the full
-#' dense matrix for you.
-#'
-#' @param cor_vector Numeric vector. The vector of correlation coefficients
-#' that you want to use to go back to a dense matrix.
-#' @param shift Integer. If you applied a shift, i.e. included the diagonal
-#' values = 0; or excluded the diagonal values = 1.
-#' @param n Integer. Original dimension (i.e., ncol/nrow) of the matrix to be
-#' reconstructed.
-#'
-#' @return The dense R matrix.
-#'
-#' @export
-rs_upper_triangle_to_dense <- function(cor_vector, shift, n) .Call(wrap__rs_upper_triangle_to_dense, cor_vector, shift, n)
-
-#' Generate a vector-based representation of the upper triangle of a matrix
-#'
-#' @description This function generates a vector from the upper triangle of
-#' a given symmetric matrix. You have the option to remove the diagonal with
-#' setting shift to 1.
-#'
-#' @param x Numeric vector. The vector of correlation coefficients that you
-#' want to use to go back to a dense matrix.
-#' @param shift Integer. If you want to apply a shift, i.e. included the diagonal
-#' values = 0; or excluded the diagonal values = 1.
-#'
-#' @return The dense R matrix.
-#'
-#' @export
-rs_dense_to_upper_triangle <- function(x, shift) .Call(wrap__rs_dense_to_upper_triangle, x, shift)
-
-#' Calculate the OT harmonic sum
-#'
-#' @param x The numeric vector (should be between 0 and 1) for which to
-#' calculate the harmonic sum
-#'
-#' @return Returns the harmonic sum according to the OT calculation.
-#'
-#' @export
-rs_ot_harmonic_sum <- function(x) .Call(wrap__rs_ot_harmonic_sum, x)
-
-#' Apply a Radial Basis Function
-#'
-#' @description Applies a radial basis function (RBF) to a given distance
-#' vector. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-#' RBF.
-#'
-#' @param x Numeric vector. The distances you wish to apply the Gaussian kernel
-#' onto.
-#' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
-#'
-#' @return The affinities after the Kernel was applied.
-#'
-#' @export
-rs_rbf_function <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function, x, epsilon, rbf_type)
-
-#' Apply a Radial Basis Function (to a matrix)
-#'
-#' @description Applies a radial basis function (RBF) to a given distance
-#' matrix. Has at the option to apply a Gaussian, Bump or Inverse Quadratic
-#' RBF.
-#'
-#' @param x Numeric Matrix. The distances you wish to apply the Gaussian kernel
-#' onto.
-#' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from `c("gaussian", "bump", "inverse_quadratic")`.
-#'
-#' @return The affinities after the Kernel was applied.
-#'
-#' @export
-rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_function_mat, x, epsilon, rbf_type)
-
-#' Apply a range normalisation on a vector.
-#'
-#' @description Applies a range normalisation on an R vector.
-#'
-#' @param x Numerical vector. The data to normalise.
-#' @param max_val Numeric. The upper bound value to normalise into. If set to 1,
-#' the function will be equal to a min-max normalisation.
-#' @param min_val Numeric. The lower bound value to normalise into. If set to 0,
-#' the function will equal a min-max normalisation.
-#'
-#' @return Normalised values
-#'
-#' @export
-rs_range_norm <- function(x, max_val, min_val) .Call(wrap__rs_range_norm, x, max_val, min_val)
-
-#' Prepare the data for whitening
-#'
-#' @description Prepares the data for subsequent usag in ICA.
-#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-#' functions with type checks are provided in the package.
-#'
-#' @param x The matrix to whiten. The whitening will happen over the columns.
-#' @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
-#' on larger data sets.
-#' @param seed Integer. Only relevant with fast_svd is set to `TRUE`.
-#' @param rank Integer. How many ranks to use for the fast SVD approximation.
-#' If you supply `NULL`, it will default to `10L`. Only relevant with
-#' fast_svd is set to `TRUE`.
-#' @param oversampling Integer. Oversampling parameter to make the approximation
-#' more precise. If you supply `NULL`, it will default to `10L`. Only relevant
-#' with fast_svd is set to `TRUE`.
-#' @param n_power_iter Integer. How much shall the QR low rank approximation be
-#' powered. If you supply `NULL`, it will default to `2L`.
-#'
-#'
-#' @return A list containing:
-#'  \itemize{
-#'   \item x - The preprocessed matrix.
-#'   \item k - The pre-whitening matrix k.
-#' }
-#'
-#' @export
-rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_iter) .Call(wrap__rs_prepare_whitening, x, fast_svd, seed, rank, oversampling, n_power_iter)
-
-#' Run the Rust implementation of fast ICA.
-#'
-#' @description This function serves as a wrapper over the fast ICA
-#' implementations in Rust. It assumes a whitened matrix and also an
-#' intialised w_init. WARNING! Incorrect use can cause kernel crashes. Wrapper
-#' around the Rust functions with type checks are provided in the package.
-#'
-#' @param whiten Numerical matrix. The whitened matrix.
-#' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
-#' be equal to nrows of whiten.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
-#' @param ica_params A list containing:
-#'  \itemize{
-#'   \item maxit - Integer. Maximum number of iterations for ICA.
-#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'   Should be between 1 to 2.
-#'   \item max_tol - Maximum tolerance of the algorithm
-#'   \item verbose - Verbosity of the function, i.e., shall individual iters
-#'   be shown.
-#' }
-#' If the list is empty or the expected elements are not found, default values
-#' are used.
-#'
-#' @return A list with the following items:
-#'  \itemize{
-#'   \item mixing - The mixing matrix for subsequent usage.
-#'   \item converged - Boolean if the algorithm converged.
-#' }
-#'
-#' @export
-rs_fast_ica <- function(whiten, w_init, ica_type, ica_params) .Call(wrap__rs_fast_ica, whiten, w_init, ica_type, ica_params)
-
-#' Run ICA over a given no_comp with random initilisations of w_init
-#'
-#' @description This function implements a stabilised ICA like algorithm in
-#' Rust. Briefly, it generates random w_init matrices (total number being
-#' no_random_init) and runs ICA given the x_processed and k data over these.
-#' The function returns combined S from the different runs and a boolean
-#' vector indicating if this specific run converged.
-#'
-#' @param x1 Numerical matrix. The processed matrix (but not yet
-#' whitened!)
-#' @param k Numerical matrix. The whitening matrix.
-#' @param no_comp Integer. Number of independent components to return.
-#' @param no_random_init Integer. Number of random initialisations to test.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
-#' @param random_seed Integer. Seed for randomisations.
-#' @param ica_params A list containing:
-#' \itemize{
-#'   \item maxit - Integer. Maximum number of iterations for ICA.
-#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'   Should be between 1 to 2.
-#'   \item max_tol - Maximum tolerance of the algorithm
-#'   \item verbose - Verbosity of the function, i.e., shall individual iters
-#'   be shown.
-#' }
-#' If the list is empty or the expected elements are not found, default values
-#' are used.
-#'
-#' @return A list containing:
-#' \itemize{
-#'   \item s_combined - The combined matrices for S. Dimensions are nrows =
-#'   features; and ncols = ncomp * no_random_init.
-#'   \item converged - Boolean vector indicating if the respective run reached
-#'   convergence. Length = no_random_init
-#' }
-#'
-#' @export
-rs_ica_iters <- function(x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters, x1, k, no_comp, no_random_init, ica_type, random_seed, ica_params)
-
-#' Run ICA with cross-validation and random initialsiation
-#'
-#' @description This function will split the data into `no_folds` and apply
-#' ICA with `no_random_inits` over that fold.
-#'
-#' @param x Numeric matrix. The processed data (no whitening function has
-#' been applied yet.)
-#' @param no_comp Integer. Number of components to test for.
-#' @param no_random_init Integer. Number of random initialisations.
-#' @param no_folds Integer. Number of folds to use for the cross-validation.
-#' @param ica_type String. Which type of ICA shall be run.
-#' @param random_seed Integer. For reproducibility.
-#' @param ica_params A list containing:
-#' \itemize{
-#'   \item maxit - Integer. Maximum number of iterations for ICA.
-#'   \item alpha - Float. The alpha parameter for the logcosh version of ICA.
-#'   Should be between 1 to 2.
-#'   \item max_tol - Maximum tolerance of the algorithm
-#'   \item verbose - Verbosity of the function, i.e., shall individual iters
-#'   be shown.
-#' }
-#' If the list is empty or the expected elements are not found, default values
-#' are used.
-#'
-#' @return A list containing:
-#' \itemize{
-#'   \item s_combined - The combined matrices for S. Dimensions are nrows =
-#'   features; and ncols = ncomp * no_random_init.
-#'   \item converged - Boolean vector indicating if the respective run reached
-#'   convergence. Length = no_random_init
-#' }
-#'
-#' @export
-rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params) .Call(wrap__rs_ica_iters_cv, x, no_comp, no_folds, no_random_init, ica_type, random_seed, ica_params)
-
 #' Calculate the semantic similarity in an ontology
 #'
 #' @description This function calculates the specified semantic similarity and
@@ -950,32 +964,81 @@ rs_ica_iters_cv <- function(x, no_comp, no_folds, no_random_init, ica_type, rand
 #' @param ic_list R list with the names being the term and the elements the
 #' information content of this given term. Needs to be a single float!
 #'
-#' @return A vector containing all the desired similarity scores. This is
-#' equivalent of the upper triangle of the similarity matrix.
+#' @return A list with:
+#' \itemize{
+#'   \item term1 - name of the first term.
+#'   \item term2 - name of the second term.
+#'   \item sims - similarity between the two terms.
+#' }
 #'
 #' @export
 rs_onto_semantic_sim <- function(terms, sim_type, ancestor_list, ic_list) .Call(wrap__rs_onto_semantic_sim, terms, sim_type, ancestor_list, ic_list)
 
-#' Calculate the Wang similarity for an ontology
+#' Calculate the semantic similarity in an ontology
 #'
-#' @description This function calculates the Wang similarity for a given
+#' @description This function calculates the specified semantic similarity and
+#' returns the full vector (only calculating the upper triangle) for the given
+#' similarity.
+#'
+#' @param sim_type String. Must be one of `c("resnik", "lin", "combined")`.
+#' @param ancestor_list R list with names being the term and the elements in the
+#' list the names of the ancestors.
+#' @param ic_list R list with the names being the term and the elements the
+#' information content of this given term. Needs to be a single float!
+#' @param flat_matrix Boolean. Shall only the upper triangle be returned.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item sim_mat - the semantic similarity matrix (flat or as matrix.)
+#'   \item names - the row and column names for the calculated matrix.
+#' }
+#'
+#' @export
+rs_onto_semantic_sim_mat <- function(sim_type, ancestor_list, ic_list, flat_matrix) .Call(wrap__rs_onto_semantic_sim_mat, sim_type, ancestor_list, ic_list, flat_matrix)
+
+#' Calculate the Wang similarity for specific terms
+#'
+#' @description This function calculates the Wang similarities between all
+#' permutations of a given set of terms.
+#'
+#' @param terms String vector. The terms you wish to calculate the similarities
+#' for.
+#' @param parents String vector. The names of the parents.
+#' @param children String vector. The names of the childs. The length of
+#' `parents` needs to be equal to `children`.
+#' @param w Numerics. The weights between the parents and children. Need
+#' to be values between 0 and 1.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item term1 - name of the first term.
+#'   \item term2 - name of the second term.
+#'   \item sims - similarity between the two terms.
+#' }
+#'
+#' @export
+rs_onto_sim_wang <- function(terms, parents, children, w) .Call(wrap__rs_onto_sim_wang, terms, parents, children, w)
+
+#' Calculate the Wang similarity matrix for an ontology
+#'
+#' @description This function calculates the Wang similarity matrix for a given
 #' ontology.
 #'
 #' @param parents String vector. The names of the parents.
 #' @param children String vector. The names of the childs. The length of
 #' `parents` needs to be equal to `children`.
-#' @param w Float. The w parameter for the ontology. Needs to be between
-#' `0 < w < 1`.
+#' @param w Numerics. The weights between the parents and children. Need
+#' to be values between 0 and 1.
 #' @param flat_matrix Boolean. Shall only the upper triangle be returned.
 #'
 #' @return A list with:
 #' \itemize{
-#'   \item sim_mat - the Wang similarity matrix.
+#'   \item sim_mat - the Wang similarity matrix (flat or as matrix.)
 #'   \item names - the row and column names for the calculated matrix.
 #' }
 #'
 #' @export
-rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang, parents, children, w, flat_matrix)
+rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__rs_onto_sim_wang_mat, parents, children, w, flat_matrix)
 
 #' Filter the term similarities for a specific critical value
 #'
@@ -997,134 +1060,151 @@ rs_onto_sim_wang <- function(parents, children, w, flat_matrix) .Call(wrap__rs_o
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
-#' Calculates the TOM over an affinity matrix
+#' Generate reciprocal best hits based on set similarities
 #'
-#' @description Calculates the topological overlap measure for a given affinity matrix
-#' x. Has the option to calculate the signed and unsigned version.
+#' @description This function takes a nested list that contains gene modules/
+#' sets derived from various methods and generate identifies reciprocal best
+#' hits between gene modules/sets across the different origins. WARNING!
+#' Incorrect use can cause kernel crashes. Wrapper around the Rust functions
+#' with type checks are provided in the package.
 #'
-#' @param x Numerical matrix. Affinity matrix.
-#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
-#' normalisation method will be used.
-#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-#' should be ≥ 0.
+#' @param module_list A nested named list. The outer list should contain the
+#' origin of the gene modules, the inner list the names of the gene modules and
+#' the respective genes in them.
+#' @param overlap_coefficient Shall the overlap coefficient instead of the
+#' Jaccard similarity be used.
+#' @param min_similarity Minimum similarity that should exist between any two
+#' given gene modules to actually calculate RBH pairs.
 #'
-#' @return Returns the TOM matrix.
+#' @return A list containing:
+#'  \itemize{
+#'   \item origin - The name of the origin of the gene modules.
+#'   \item target - The name of the target of the gene modules.
+#'   \item comparisons - Integer vector indicating how many RBH hits were
+#'   identified in this comparison
+#'   \item origin_modules - Names of the gene modules from the origin.
+#'   \item target_modules - Names of the gene modules from the target.
+#'   \item similarity - The similarities between the two respective gene
+#'   modules.
+#' }
 #'
 #' @export
-rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
+rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(wrap__rs_rbh_sets, module_list, overlap_coefficient, min_similarity)
 
-#' Helper function to assess CoReMo cluster quality
+#' Generate reciprocal best hits based on correlations
 #'
-#' @description This function assesses the quality of the clusters
-#' with a given cut `k`. Returns the median R2 (cor^2) and the median absolute
-#' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
-#' to a random set of 1000 genes.
+#' @description This function takes list of (named) matrices which represent
+#' for example matrix factorisation results you wish to identify reciprocal
+#' best hits (RBH) for. The rows need to represent the features and the columns
+#' the parts you wish to calculate the RBH for.
 #'
-#' @param cluster_genes A list. Contains the cluster and their respective genes.
-#' @param cor_mat Numerical matrix. Contains the correlation coefficients.
-#' @param row_names String vector. The row names (or column names) of the
-#' correlation matrix.
-#' @param seed Integer. Random seed for the sub sampling of genes.
+#' @param module_matrices A list of named matrices. Rows represent features
+#' and columns the samples you wish to calculate the correlations for.
+#' @param spearman Shall Spearman correlation be used.
+#' @param min_similarity Minimum (absolute) correlations that needs to exist
+#' between two terms.
 #'
 #' @return A list containing:
 #'  \itemize{
-#'   \item r2med - median R2 of the cluster.
-#'   \item r2mad - median absolute deviation of the R2 in the cluster.
-#'   \item size - size of the cluster.
+#'   \item origin - The name of the origin of the gene modules.
+#'   \item target - The name of the target of the gene modules.
+#'   \item comparisons - Integer vector indicating how many RBH hits were
+#'   identified in this comparison
+#'   \item origin_modules - Names of the gene modules from the origin.
+#'   \item target_modules - Names of the gene modules from the target.
+#'   \item similarity - The similarities between the two respective gene
+#'   modules.
 #' }
-rs_coremo_quality <- function(cluster_genes, cor_mat, row_names, seed) .Call(wrap__rs_coremo_quality, cluster_genes, cor_mat, row_names, seed)
-
-#' Helper function to assess CoReMo cluster stability
-#'
-#' @description This function is a helper for the leave-on-out stability
-#' assessment of CoReMo clusters. The function will generate the distance
-#' vectors based on leaving out the samples defined in indices one by one.
-#'
-#' @param data Numeric matrix. The original processed matrix.
-#' @param indices Integer vector. The sample indices to remove to re-calculate
-#' the distances.
-#' @param epsilon Float. Epsilon parameter for the RBF.
-#' @param rbf_type String. Needs to be from
-#' `c("gaussian", "bump", "inverse_quadratic")`.
-#' @param spearman Boolean. Shall Spearman correlation be used.
-#'
-#' @return A list with `length(indices)` elements, each containing the distance
-#' minus the given sample.
-rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Call(wrap__rs_coremo_stability, data, indices, epsilon, rbf_type, spearman)
-
-#' Helper function to assess cluster stability
-#'
-#' @param data Integer matrix. Assumes that each column represents a given
-#' resampling/bootstrap and the rows represent the features, while each integer
-#' indicates cluster membership.
-#'
-#' @return A list containing:
-#'  \itemize{
-#'   \item mean_jaccard - mean Jaccard similarities for this feature across all
-#'   the bootstraps, resamplings.
-#'   \item std_jaccard - the standard deviation of the Jaccard similarities for
-#'   this feature across all the bootstraps, resamplings.
-#' }
-rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
-
-#' Helper function to calculate permutation-based page rank scores
-#'
-#' @description Helper function to calculate permutation based page-rank scores.
-#'
-#' @param node_names String vector. Name of the graph nodes.
-#' @param from String vector. The names of the `from` edges from the edge list.
-#' @param to String vector. The names of the `to` edges from the edge list.
-#' @param diffusion_scores List. The personalised vectors for the page rank reset
-#' values. Each element must sum to 1 and be of same length of `node_names`!
-#' @param undirected Boolean. Is this an undirected graph.
-#'
-#' @return A list containing:
-#'  \itemize{
-#'   \item means - The mean personalised page-rank scores based on the permutations.
-#'   \item sd - The standard deviation of the personalised page-rank scores based on
-#'   permutations.
-#' }
-rs_page_rank_permutations <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_permutations, node_names, from, to, diffusion_scores, undirected)
-
-#' Rust version of calcaluting the personalised page rank
-#'
-#' @param node_names String vector. Name of the graph nodes.
-#' @param from String vector. The names of the `from` edges from the edge list.
-#' @param to String vector. The names of the `to` edges from the edge list.
-#' @param personalised Numerical vector. The reset values. They must sum to 1 and
-#' be of same length of `node_names`!
-#' @param undirected Boolean. Is this an undirected graph.
-#'
-#' @return The personalised page rank values.
 #'
 #' @export
-rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
-#' Helper function to calculate permutation-based tied page rank scores
+#' Generate a sparse dictionary with DGRDL
 #'
-#' @description Helper function to calculate permutation based tied page-rank
-#' scores.
+#' @description This is the Rust implementation of dual graph regularised
+#' dictionary learning in the implementation of Pan, et al., Cell Systems,
+#' 2022.
 #'
-#' @param node_names String vector. Name of the graph nodes.
-#' @param from String vector. The names of the `from` edges from the edge list.
-#' @param to String vector. The names of the `to` edges from the edge list.
-#' @param diffusion_scores_1 List. The first set of personalised vectors for
-#' the page rank reset values. Each element must sum to 1 and be of same length
-#' of `node_names`!
-#' @param diffusion_scores_2 List. The second set of personalised vectors for
-#' the page rank reset values. Each element must sum to 1 and be of same length
-#' of `node_names`!
-#' @param summarisation_fun String. One of `c("min", "max", "avg")`. Which type
-#' of summarisation function to use to calculate the tied diffusion.
-#' @param undirected Boolean. Is this an undirected graph.
-#'
-#' @return A list containing:
-#'  \itemize{
-#'   \item means - The mean personalised page-rank scores based on the permutations.
-#'   \item sd - The standard deviation of the personalised page-rank scores based on
-#'   permutations.
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param dgrdl_params A list with the parameters for the algorithm. Expects
+#' the following items.
+#' \itemize{
+#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
+#'   \item dict_size - Size of the dictionary.
+#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item max_iter - Integer. Maximum iteration for the algorithm.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
+#'   Laplacian matrix for the regularisation
+#'   \item admm_iter Integer. Number of iterations for using alternating direction
+#'   method of multipliers (ADMM).
+#'   \item rho Float. ADMM step size.
 #' }
-rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_page_rank_permutations_tied, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+#' @param seed Integer. Seed for the initialisation of the algorithm.
+#' @param verbose Boolean. Controls the verbosity of the function and reports timing
+#' of individual steps.
+#'
+#' @returns A list with the following elements:
+#'  \itemize{
+#'   \item dictionary - The dictionary of samples x dict_size.
+#'   \item coefficients - The feature loadings of size dict_size x features.
+#'   \item feature_laplacian - The KNN graph laplacian of the features in a
+#'   sparse format list.
+#'   \item sample_laplacian - The KNN graph laplacian of the samples in a
+#'   sparse format list.
+#' }
+#'
+#' @export
+rs_sparse_dict_dgrdl <- function(x, dgrdl_params, seed, verbose) .Call(wrap__rs_sparse_dict_dgrdl, x, dgrdl_params, seed, verbose)
+
+#' Generate a sparse dictionary with DGRDL
+#'
+#' @description This is the Rust implementation of dual graph regularised
+#' dictionary learning in the implementation of Pan, et al., Cell Systems,
+#' 2022. This helper function is designed to run a grid search over the data.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param dgrdl_params A list with the parameters for the algorithm. Expects
+#' the following items.
+#' \itemize{
+#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
+#'   \item dict_size - Size of the dictionary. This parameter will be ignored
+#'   for this function and `dict_sizes` will be used.
+#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item max_iter - Integer. Maximum iteration for the algorithm.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
+#'   Laplacian matrix for the regularisation. This parameter will be ignored and
+#'   `k_neighbours_vec` will be used.
+#'   \item admm_iter Integer. Number of iterations for using alternating direction
+#'   method of multipliers (ADMM).
+#'   \item rho Float. ADMM step size.
+#' }
+#' @param seeds Integer vectors. The random seeds to include in the grid search.
+#' @param dict_sizes Integer vector. The dictionary sizes to test in the grid
+#' search.
+#' @param k_neighbours_vec Integer vector. The number of neighbours for the KNN
+#' graph generation to test in the grid search.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#'  \itemize{
+#'   \item seed - The tested seeds.
+#'   \item dict_size - The tested dictionary sizes.
+#'   \item reconstruction_errs - The reconstruction errors for these hyper
+#'   parameters.
+#'   \item feature_laplacian_objective - The objective values of the feature
+#'   Laplacian term for these hyperparameters.
+#'   \item sample_laplacian_objective - The objective values of the sample
+#'   Laplacian term for these hyperparameters.
+#' }
+#'
+#' @export
+rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes, k_neighbours_vec, verbose) .Call(wrap__rs_sparse_dict_dgrdl_grid_search, x, dgrdl_params, seeds, dict_sizes, k_neighbours_vec, verbose)
 
 #' Generate sparse data from an upper triangle
 #'
@@ -1145,6 +1225,143 @@ rs_page_rank_permutations_tied <- function(node_names, from, to, diffusion_score
 #'
 #' @export
 rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
+
+#' Set similarities over list
+#'
+#' This function calculates the Jaccard or similarity index between a one given
+#' string vector and list of vectors.
+#'
+#' @param s_1_list The String vector against which to calculate the set similarities.
+#' @param s_2_list A List of vector against which to calculate the set similarities.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+#' Jaccard similarity be calculated.
+#'
+#' @return A matrix of the Jaccard similarities between the elements. The rows
+#' represent s_1_list and the column s_2_list.
+#'
+#' @export
+rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
+
+#' Set similarities
+#'
+#' This function calculates the Jaccard or similarity index between a two given
+#' string vector and a  of other string vectors.
+#'
+#' @param s_1 The String vector against which to calculate the set similarities.
+#' @param s_2 The String vector against which to calculate the set similarities.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.
+#'
+#' @export
+rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
+
+#' Fast AUC calculation
+#'
+#' @description This function calculates rapidly AUCs based on an approximation.
+#'
+#' @param pos_scores The scores of your hits.
+#' @param neg_scores The scores of your non-hits.
+#' @param iters Number of iterations to run the function for.
+#' Recommended size: 10000L.
+#' @param seed Seed.
+#'
+#' @return The AUC.
+#'
+#' @export
+rs_fast_auc <- function(pos_scores, neg_scores, iters, seed) .Call(wrap__rs_fast_auc, pos_scores, neg_scores, iters, seed)
+
+#' Create random AUCs
+#'
+#' @description This function creates a random set of AUCs based on a score
+#' vector and a size of the positive set. This can be used for permutation-
+#' based estimation of Z-scores and subsequently p-values.
+#'
+#' @param score_vec The overall vector of scores.
+#' @param size_pos The size of the hits represented in the score_vec.
+#' @param random_iters Number of random AUCs to generate.
+#' @param auc_iters Number of random iterations to approximate the AUCs.
+#' Recommended size: 10000L.
+#' @param seed Seed.
+#'
+#' @return A vector of random AUCs based the score vector and size of the
+#' positive set.
+#'
+#' @export
+rs_create_random_aucs <- function(score_vec, size_pos, random_iters, auc_iters, seed) .Call(wrap__rs_create_random_aucs, score_vec, size_pos, random_iters, auc_iters, seed)
+
+#' Calculate the Hedge's G effect
+#'
+#' @description Calculates the Hedge's G effect for two sets of matrices. The
+#' function assumes that rows = samples and columns = features.
+#' WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
+#' functions with type checks are provided in the package.
+#'
+#' @param mat_a The matrix of samples and features in grp A for which to
+#' calculate the Hedge's G effect.
+#' @param mat_b The matrix of samples and features in grp B for which to
+#' calculate the Hedge's G effect.
+#' @param small_sample_correction Shall the small sample correction be applied.
+#'
+#' @return Returns the harmonic sum according to the OT calculation.
+#'
+#' @export
+rs_hedges_g <- function(mat_a, mat_b, small_sample_correction) .Call(wrap__rs_hedges_g, mat_a, mat_b, small_sample_correction)
+
+#' Calculate a BH-based FDR
+#'
+#' @description Rust implementation that will be faster if you have an
+#' terrifying amount of p-values to adjust.
+#'
+#' @param pvals Numeric vector. The p-values you wish to adjust.
+#'
+#' @return The Benjamini-Hochberg adjusted p-values.
+#'
+#' @export
+rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
+
+#' Calculate the hypergeometric rest in Rust
+#'
+#' @param q Number of white balls drawn out of urn.
+#' @param m Number of white balls in the urn.
+#' @param n Number of black balls in the urn.
+#' @param k The number of balls drawn out of the urn.
+#'
+#' @return P-value (with lower.tail set to False)
+#'
+#' @export
+rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
+
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param values Numeric vector. The full data set for which to calculate the
+#' critical value.
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, values, iters, alpha, seed)
+
+#' Calculate the critical value
+#'
+#' This function calculates the critical value for a given set based on random
+#' permutations and a given alpha value.
+#'
+#' @param mat Numeric matrix. The (symmetric matrix with all of the values).
+#' @param iters Integer. Number of random permutations to use.
+#' @param alpha Float. The alpha value. For example, 0.001 would mean that the
+#' critical value is smaller than 0.1 percentile of the random permutations.
+#' @param seed Integer. For reproducibility purposes
+#'
+#' @return The critical value for the given parameters.
+#'
+#' @export
+rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
 
 
 # nolint end

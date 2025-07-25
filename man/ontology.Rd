@@ -24,7 +24,8 @@ on semantic similarities and the Wang similarity.
 \section{Properties}{
 
 \describe{
-\item{edge_dt}{data.table. Contains the parent-child relationships.}
+\item{edge_dt}{data.table. Contains the parent-child relationships. (For
+Wang similarity also the relationship type.)}
 \item{outputs}{List. Contains various intermediary results used for some
 methods.}
 \item{sim_mat}{List. Contains the potentially calculated similarity

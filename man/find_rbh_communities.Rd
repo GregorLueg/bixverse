@@ -7,7 +7,7 @@
 find_rbh_communities(
   object,
   resolution_params = params_graph_resolution(),
-  max_workers = as.integer(parallel::detectCores()/2),
+  max_workers = NULL,
   parallel = TRUE,
   random_seed = 42L,
   .verbose = TRUE
@@ -26,7 +26,7 @@ find_rbh_communities(
 }}
 
 \item{max_workers}{Integer. Number of maximum cores to use. Defaults to half
-of the identified cores.}
+of the identified cores (to a maximum of 8).}
 
 \item{parallel}{Boolean. Shall the resolution search be in parallel.}
 

@@ -9,12 +9,13 @@
 #' diffusion to identify influential nodes. These can be used subsequently for
 #' community detection or check AUROC values given a set of genes.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
-#' @param diffusion_vector A named vector with values to use for the reset
-#' parameter in the personalised page-rank diffusion. Names should represent
-#' node names of the graph.
-#' @param summarisation If there are duplicated names in the `diffusion_vector`
-#' how to summarise these.
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
+#' @param diffusion_vector Named nuermic. A named vector with values to use for
+#' the reset parameter in the personalised page-rank diffusion. Names should
+#' represent node names of the graph.
+#' @param summarisation String. If there are duplicated names in the
+#' `diffusion_vector` how to summarise the scores.
 #'
 #' @return The class with added diffusion score based on a single set of seed
 #' genes. Additionally, the seed genes are stored in the class.
@@ -95,20 +96,22 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 #'
 #' @description
 #' This function takes two sets of diffusion vector and leverages tied diffusion
-#' to identify an intersection of influential nodes.
+#' to identify an intersection of influential nodes. If the network is
+#' undirected, the method will run two personalised page rank diffusions based
+#' on the diffusion vectors and generate the score aggregation
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
-#' @param diffusion_vector_1 The first named vector with values to use for the
-#' reset parameter in the personalised page-rank diffusion. Names should
-#' represent node names of the graph.
-#' @param diffusion_vector_2 The second named vector with values to use for the
-#' reset parameter in the personalised page-rank diffusion. Names should
-#' represent node names of the graph.
-#' @param summarisation If there are duplicated names in the `diffusion_vector`
-#' how to summarise
-#' these.
-#' @param score_aggregation How to summarise the tied scores.
-#' @param .verbose Controls verbosity of the function.
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
+#' @param diffusion_vector_1 Named numeric. The first named vector with values
+#' to use for the reset parameter in the personalised page-rank diffusion. Names
+#' should represent node names of the graph.
+#' @param diffusion_vector_2 Named numeric. The second named vector with values
+#' to use for the reset parameter in the personalised page-rank diffusion. Names
+#' should represent node names of the graph.
+#' @param summarisation String. If there are duplicated names in the
+#' `diffusion_vector` how to summarise these.
+#' @param score_aggregation String. How to summarise the tied scores.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added diffusion score based on a two sets of seed
 #' genes. Additionally, the seed genes are stored in the class.
@@ -254,7 +257,8 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' determine if the original diffusion was a single or tied diffusion and
 #' construct permutations accordingly.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param perm_iters Integer. Number of permutations to test for. Defaults to
 #' `1000L`.
 #' @param random_seed Integer. Random seed for determinism.
@@ -322,7 +326,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
     )
 
     # use rust for fast calculations
-    page_rank_perm_res <- rs_page_rank_permutations(
+    page_rank_perm_res <- rs_page_rank_parallel(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
@@ -351,7 +355,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
       iters = perm_iters
     )
 
-    page_rank_perm_res <- rs_page_rank_permutations_tied(
+    page_rank_perm_res <- rs_tied_diffusion_parallel(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
@@ -362,14 +366,17 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
     )
   }
 
-  z_scores <- (diffusion_results - page_rank_perm_res$means) /
-    (page_rank_perm_res$sd + 10^-32)
+  diffuion_means <- colMeans(page_rank_perm_res)
+  diffusion_sds <- matrixStats::colSds(page_rank_perm_res)
+
+  z_scores <- (diffusion_results - diffuion_means) /
+    (diffusion_sds + 10^-32)
 
   diffusion_perm_params <- list(
     "perm_iters" = perm_iters,
     "random_seed" = random_seed,
-    "perm_mean" = page_rank_perm_res$means,
-    "perm_sds" = page_rank_perm_res$sd
+    "perm_mean" = diffuion_means,
+    "perm_sds" = diffusion_sds
   )
 
   S7::prop(object, "diffusion_perm") <- z_scores
@@ -386,7 +393,8 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
 #' @description Detects privileged communities after a diffusion based on seed
 #' nodes.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param community_params List. Parameters for the community detection within
 #' the reduced network, see [bixverse::params_community_detection()]. A list
 #' with the following items:
@@ -710,16 +718,17 @@ S7::method(community_detection, network_diffusions) <- function(
   return(object)
 }
 
-## utils ----
+## utils -----------------------------------------------------------------------
 
 #' Calculate the AUROC for a diffusion score
 #'
 #' @description
-#' This functions can take a given `network_diffusions` class and calculates an
+#' This functions can take a given `network_diffusions` object and calculates an
 #' AUC and generates a Z-score based on random permutation of `random_aucs` for
 #' test for statistical significance if desired.
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object `network_diffusions` object. The underlying class
+#' [bixverse::network_diffusions()].
 #' @param hit_nodes String vector. Which nodes in the graph are considered a
 #' 'hit'.
 #' @param auc_iters Integer. How many iterations to run to approximate the
@@ -925,7 +934,6 @@ summarise_scores <- function(
 #' to set similarity.
 #' @param spearman Boolean. Shall Spearman correlation be used. Only relevant
 #' if the underlying class is set to correlation-based similarity.
-#' @param .debug Debug flag that will create print messages from Rust.
 #'
 #' @return The class with added properties.
 #'
@@ -937,8 +945,7 @@ generate_rbh_graph <- S7::new_generic(
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
-    spearman = FALSE,
-    .debug = FALSE
+    spearman = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -955,8 +962,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     object,
     minimum_similarity,
     overlap_coefficient = FALSE,
-    spearman = FALSE,
-    .debug = FALSE
+    spearman = FALSE
   ) {
     # scope checks
     origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
@@ -966,7 +972,6 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     checkmate::qassert(minimum_similarity, "R[0, 1]")
     checkmate::qassert(overlap_coefficient, "B1")
     checkmate::qassert(spearman, "B1")
-    checkmate::qassert(.debug, "B1")
 
     # function body
     rbh_type <- S7::prop(object, "params")[["rbh_type"]]
@@ -977,8 +982,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
       rs_rbh_sets(
         module_list = list_of_list,
         overlap_coefficient = overlap_coefficient,
-        min_similarity = minimum_similarity,
-        debug = .debug
+        min_similarity = minimum_similarity
       )
     } else {
       list_of_matrices <- S7::prop(object, "module_data")
@@ -1070,7 +1074,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 #' }
 #' @param parallel Boolean. Shall the resolution search be in parallel.
 #' @param max_workers Integer. Number of maximum cores to use. Defaults to half
-#' of the identified cores.
+#' of the identified cores (to a maximum of 8).
 #' @param random_seed Integer. Random seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -1083,7 +1087,7 @@ find_rbh_communities <- S7::new_generic(
   fun = function(
     object,
     resolution_params = params_graph_resolution(),
-    max_workers = as.integer(parallel::detectCores() / 2),
+    max_workers = NULL,
     parallel = TRUE,
     random_seed = 42L,
     .verbose = TRUE
@@ -1096,25 +1100,24 @@ find_rbh_communities <- S7::new_generic(
 #' @export
 #'
 #' @importFrom magrittr `%>%`
-#' @importFrom future plan multisession sequential
 #' @import data.table
 #'
 #' @method find_rbh_communities rbh_graph
 S7::method(find_rbh_communities, rbh_graph) <- function(
   object,
   resolution_params = params_graph_resolution(),
-  max_workers = as.integer(parallel::detectCores() / 2),
+  max_workers = NULL,
   parallel = TRUE,
   random_seed = 42L,
   .verbose = TRUE
 ) {
   # Scope checks
-  best_modularity <- modularity <- NULL
+  best_modularity <- modularity <- . <- NULL
   # Checks
   checkmate::assertClass(object, "bixverse::rbh_graph")
   assertGraphResParams(resolution_params)
   checkmate::qassert(parallel, "B1")
-  checkmate::qassert(max_workers, "I1")
+  checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
   if (is.null(S7::prop(object, "rbh_graph"))) {
@@ -1134,51 +1137,100 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
   }
 
   if (parallel) {
+    if (is.null(max_workers)) {
+      max_workers <- get_cores()
+    }
     if (.verbose) {
-      message(sprintf("Using parallel computation over %i cores.", max_workers))
+      message(sprintf(
+        "Using parallel computation over %i cores via mirai.",
+        max_workers
+      ))
     }
 
-    # future plan funkiness
-    assign(".temp_workers", max_workers, envir = .GlobalEnv)
-    on.exit(rm(".temp_workers", envir = .GlobalEnv))
+    mirai::daemons(max_workers)
 
-    future::plan(future::multisession(workers = .temp_workers))
+    community_df_res <- mirai::mirai_map(
+      resolutions,
+      \(res, seed, graph) {
+        set.seed(seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      },
+      .args = list(seed = random_seed, graph = graph)
+    )[]
+
+    mirai::daemons(0)
   } else {
     if (.verbose) {
       message("Using sequential computation.")
     }
-    future::plan(future::sequential())
+    community_df_res <- purrr::map(
+      resolutions,
+      \(res) {
+        set.seed(random_seed)
+        community <- igraph::cluster_leiden(
+          graph,
+          objective_function = "modularity",
+          resolution = res,
+          n_iterations = 5L
+        )
+
+        modularity <- igraph::modularity(
+          x = graph,
+          membership = community$membership
+        )
+
+        community_df <- data.table::data.table(
+          resolution = res,
+          node_name = community$names,
+          membership = community$membership,
+          modularity = modularity
+        )
+      }
+    )
   }
 
-  community_df_res <- furrr::future_map(
-    resolutions,
-    \(res) {
-      set.seed(random_seed)
-      community <- igraph::cluster_leiden(
-        graph,
-        objective_function = "modularity",
-        resolution = res,
-        n_iterations = 5L
-      )
+  community_df_res <- data.table::rbindlist(community_df_res) %>%
+    .[, best_modularity := modularity == max(modularity)]
 
-      modularity <- igraph::modularity(
-        x = graph,
-        membership = community$membership
-      )
+  community_df_res[,
+    c("origin_id", "module_id") := sub(
+      "^([^_]+_[^_]+)_(.*)$",
+      "\\1|\\2",
+      community_df_res$node_name
+    ) %>%
+      strsplit(., "\\|") %>%
+      transpose()
+  ]
 
-      community_df <- data.table::data.table(
-        resolution = res,
-        node_name = community$names,
-        membership = community$membership,
-        modularity = modularity
-      )
-    },
-    .progress = .verbose,
-    .options = furrr::furrr_options(seed = TRUE)
-  ) %>%
-    data.table::rbindlist(.)
-
-  community_df_res[, best_modularity := modularity == max(modularity)]
+  community_df_res <- community_df_res[,
+    c(
+      "node_name",
+      "origin_id",
+      "module_id",
+      "membership",
+      "resolution",
+      "modularity",
+      "best_modularity"
+    ),
+    with = FALSE
+  ]
 
   S7::prop(object, "final_results") <- community_df_res
 

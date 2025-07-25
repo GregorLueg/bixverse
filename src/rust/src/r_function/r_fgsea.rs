@@ -1,8 +1,7 @@
 use extendr_api::prelude::*;
 
-use std::collections::HashMap;
-
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 use crate::helpers::fgsea::*;
 use crate::helpers::geom_elim::*;
@@ -48,7 +47,7 @@ fn rs_calc_es(stats: Robj, pathway_r: Vec<String>) -> extendr_api::Result<f64> {
 #[extendr]
 fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_api::Result<List> {
     // HashMap for fast look ups
-    let gene_map: HashMap<&str, usize> = gene_universe
+    let gene_map: FxHashMap<&str, usize> = gene_universe
         .iter()
         .enumerate()
         .map(|(i, gene)| (gene.as_str(), i))
@@ -208,7 +207,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
         iters,
         gsea_param,
         seed,
-    )?;
+    );
 
     let gsea_res: GseaResults<'_> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
@@ -270,27 +269,32 @@ fn rs_calc_multi_level(
         .map(|&x| x.try_into().unwrap_or(0))
         .collect();
 
-    let res: Vec<GseaMultiLevelresults> = es
+    let chunk_size = std::cmp::max(1, es.len() / (rayon::current_num_threads() * 4));
+
+    let res: Vec<(f64, bool)> = es
         .par_iter()
         .zip(pathway_size.par_iter())
-        .map(|(es_i, size_i)| {
-            // The original implementation used vectors here by pathway size
-            // This was faster to do
-            let es_vec = vec![*es_i];
-            fgsea_multilevel_helper(&es_vec, &ranks, *size_i, sample_size, seed, eps, sign)
+        .chunks(chunk_size)
+        .flat_map(|chunk| {
+            let mut local_results = Vec::with_capacity(chunk.len());
+
+            for (es_i, size_i) in chunk {
+                let res_i =
+                    fgsea_multilevel_helper(*es_i, &ranks, *size_i, sample_size, seed, eps, sign);
+                local_results.push(res_i);
+            }
+
+            local_results
         })
         .collect();
 
-    let mut pvals: Vec<Vec<f64>> = Vec::with_capacity(res.len());
-    let mut is_cp_ge_half: Vec<Vec<bool>> = Vec::with_capacity(res.len());
+    let mut pvals: Vec<f64> = Vec::with_capacity(res.len());
+    let mut is_cp_ge_half: Vec<bool> = Vec::with_capacity(res.len());
 
-    for res_i in res {
-        pvals.push(res_i.pvals);
-        is_cp_ge_half.push(res_i.is_cp_ge_half);
+    for (pval, cp_flag) in res {
+        pvals.push(pval);
+        is_cp_ge_half.push(cp_flag);
     }
-
-    let pvals = flatten_vector(pvals);
-    let is_cp_ge_half = flatten_vector(is_cp_ge_half);
 
     Ok(list!(pvals = pvals, is_cp_ge_half = is_cp_ge_half))
 }
@@ -345,8 +349,6 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
 /// @param iters Integer. Number of random permutations for the fgsea simple method
 /// to use
 /// @param seed Integer. For reproducibility purposes.
-/// @param debug Boolean that will provide additional console information for
-/// debugging purposes.
 ///
 /// @return List with the following elements
 /// \itemize{
@@ -375,7 +377,6 @@ fn rs_geom_elim_fgsea_simple(
     elim_threshold: f64,
     iters: usize,
     seed: u64,
-    debug: bool,
 ) -> extendr_api::Result<List> {
     let vec_data = r_named_vec_data(stats)?;
 
@@ -399,16 +400,12 @@ fn rs_geom_elim_fgsea_simple(
 
     let go_shared_perm = GeneOntologyRandomPerm::new(&shared_perm);
 
-    let stat_name_indices: HashMap<&String, usize> = vec_data
+    let stat_name_indices: FxHashMap<&String, usize> = vec_data
         .0
         .iter()
         .enumerate()
         .map(|(i, name)| (name, i))
         .collect();
-
-    if debug {
-        println!("Shared permutations generated");
-    }
 
     let mut go_ids: Vec<Vec<String>> = Vec::with_capacity(levels.len());
     let mut es = Vec::with_capacity(levels.len());
@@ -421,10 +418,6 @@ fn rs_geom_elim_fgsea_simple(
     let mut leading_edge: Vec<Vec<Vec<i32>>> = Vec::with_capacity(levels.len());
 
     for level in levels {
-        if debug {
-            println!("I am processing level: {:?}?", level);
-        }
-
         let level_res = process_ontology_level_fgsea_simple(
             &vec_data.1,
             &stat_name_indices,
@@ -433,7 +426,6 @@ fn rs_geom_elim_fgsea_simple(
             &go_shared_perm,
             &gsea_params,
             elim_threshold,
-            debug,
         )?;
 
         go_ids.push(level_res.go_ids);

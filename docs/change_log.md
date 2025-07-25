@@ -1,30 +1,40 @@
 # *bixverse* change log
 
-*Last update: 08.07.2025* </br>
+*Last update: 25.07.2025* </br>
 
-### Version **0.0.1.5**
+### Version **0.0.2.0**
+
+**Major version bump.** This version of `bixverse` implements a large number of
+new features, vignettes, reworks of some of the underlying Rust code to 
+accelerate certain functions even further. Hence, a big version bump is
+warranted.
 
 #### New features
 
 - Rework of the ontology class. Additionally, added Wang similarity as an 
 additional measure.
 - Rework of the genetic community detection class and the diffusion methods. 
-This can break old code!
-- Rework of the ICA code. Some of the functions have been chaned and might
-break old code. Also, testing suite put in place for the ICA class. 
+Additionally, permutation-based testing for diffusions is implemented. 
+- Rework of the ICA code and testing suite put in place for the ICA class. 
 - Added reciprocal best hit method based on correlations. You will need to
 provide now an additional parameter to the class specifying if you want to use
 set similarity or correlation-based similarity.
+- Vignettes for various methods written and added.
+- GSVA and ssGSEA implemented in Rust.
+- Rust code reworked in different places to make some of the functions faster.
+- Mutual information calculations in Rust.
+- Improvements to the synthetic data.
 
 #### Bug fixes, documentation updates
 
-- ...
+- Fixed bugs for the graph-based correlation methods.
 
 #### Breaking changes
 
 - Functions and methods related to the ontology class could be breaking, as
-they have been moedified heavily. The same applies to the genetic community
-detection method.
+they have been modified heavily. 
+- Community detection method has been updated, hence, old code might not work
+anymore.
 - Functions and methods to the ICA detection have been adopted. That might break
 some current code.
 

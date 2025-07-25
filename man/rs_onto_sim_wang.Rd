@@ -2,29 +2,31 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_onto_sim_wang}
 \alias{rs_onto_sim_wang}
-\title{Calculate the Wang similarity for an ontology}
+\title{Calculate the Wang similarity for specific terms}
 \usage{
-rs_onto_sim_wang(parents, children, w, flat_matrix)
+rs_onto_sim_wang(terms, parents, children, w)
 }
 \arguments{
+\item{terms}{String vector. The terms you wish to calculate the similarities
+for.}
+
 \item{parents}{String vector. The names of the parents.}
 
 \item{children}{String vector. The names of the childs. The length of
 \code{parents} needs to be equal to \code{children}.}
 
-\item{w}{Float. The w parameter for the ontology. Needs to be between
-\verb{0 < w < 1}.}
-
-\item{flat_matrix}{Boolean. Shall only the upper triangle be returned.}
+\item{w}{Numerics. The weights between the parents and children. Need
+to be values between 0 and 1.}
 }
 \value{
 A list with:
 \itemize{
-\item sim_mat - the Wang similarity matrix.
-\item names - the row and column names for the calculated matrix.
+\item term1 - name of the first term.
+\item term2 - name of the second term.
+\item sims - similarity between the two terms.
 }
 }
 \description{
-This function calculates the Wang similarity for a given
-ontology.
+This function calculates the Wang similarities between all
+permutations of a given set of terms.
 }
