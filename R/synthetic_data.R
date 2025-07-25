@@ -145,7 +145,7 @@ synthetic_signal_matrix <- function(
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A list with the following elements:
+#' @return A `cpca_synthetic_data` class with the following elements:
 #' \itemize{
 #'  \item target - The target matrix.
 #'  \item background - The background matrix.
@@ -222,8 +222,11 @@ synthetic_c_pca_data <- function(seed = 10101L) {
 #' @param seed Integer. Initial random seed for generation of the synthetic
 #' data. Default: 10101L.
 #'
-#' @return A synthetic sample x gene matrix with specific genes representing
-#' specific modules.
+#' @return A `synthetic_matrix_modules` class with the following items:
+#' \itemize{
+#'  \item data - The data matrix.
+#'  \item metadata - The sample metadata.
+#' }
 #'
 #' @importFrom magrittr `%>%`
 #'
@@ -296,11 +299,26 @@ generate_gene_module_data <- function(
   )
   data <- data + noise
 
-  # Add metadata as attributes
-  attr(data, "active_cells") <- active_cells
-  attr(data, "n_modules") <- n_modules
+  rownames(data) <- sprintf("sample_%i", 1:n_samples)
+  colnames(data) <- sprintf("feature_%i", 1:n_genes)
 
-  return(data)
+  activity <- purrr::map(active_cells, \(sample_idx) {
+    1:n_samples %in% sample_idx
+  })
+
+  activity_dt <- data.table::data.table(
+    sample_id = sprintf("sample_%i", 1:n_samples)
+  )
+
+  for (i in seq_along(activity)) {
+    activity_dt[, c(sprintf("module_%i_active", i)) := activity[[i]]]
+  }
+
+  result <- list(data = data, meta_data = activity_dt)
+
+  class(result) <- "synthetic_matrix_modules"
+
+  return(result)
 }
 
 # plots ------------------------------------------------------------------------

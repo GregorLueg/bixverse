@@ -11,7 +11,7 @@ synthetic_c_pca_data(seed = 10101L)
 data. Default: 10101L.}
 }
 \value{
-A list with the following elements:
+A \code{cpca_synthetic_data} class with the following elements:
 \itemize{
 \item target - The target matrix.
 \item background - The background matrix.

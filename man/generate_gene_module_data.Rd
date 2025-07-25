@@ -26,8 +26,11 @@ in the same samples.}
 data. Default: 10101L.}
 }
 \value{
-A synthetic sample x gene matrix with specific genes representing
-specific modules.
+A \code{synthetic_matrix_modules} class with the following items:
+\itemize{
+\item data - The data matrix.
+\item metadata - The sample metadata.
+}
 }
 \description{
 Generates an artifical matrix of active modules (for a maximum of 8) in

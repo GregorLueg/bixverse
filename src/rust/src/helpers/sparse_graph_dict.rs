@@ -6,6 +6,7 @@ use faer::{
 };
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::helpers::graph::{adjacency_to_laplacian, get_knn_graph_adj};
@@ -135,6 +136,226 @@ pub struct DgrdlResults {
     pub feature_laplacian: Mat<f64>,
 }
 
+/////////////////
+// DGRDL Cache //
+/////////////////
+
+/// DGRDL cache for hyperparameter tuning
+///
+/// ### Fields
+///
+/// * `data_hash` - Hash of the underlying data
+/// * `laplacian_cache` - HashMap of the feature and sample Laplacian matrix
+/// * `dictionary_cache` - HashMap of the dictionary cashe with (dict_size, seed)
+///                        as keys
+/// * `distance_matrix` - The distance matrix of the data as a flat vector
+#[derive(Debug)]
+pub struct DgrdlCache {
+    pub data_hash: u64,
+    pub laplacian_cache: FxHashMap<usize, (Mat<f64>, Mat<f64>)>,
+    pub dictionary_cache: FxHashMap<(usize, usize), Mat<f64>>,
+    pub distance_matrix: Option<Vec<f64>>,
+}
+
+impl DgrdlCache {
+    /// Generate a new instance of the Cache
+    ///
+    /// ### Returns
+    ///
+    /// Returns self with empty fields
+    pub fn new() -> Self {
+        Self {
+            data_hash: 0,
+            laplacian_cache: FxHashMap::default(),
+            dictionary_cache: FxHashMap::default(),
+            distance_matrix: None,
+        }
+    }
+
+    /// Clear cache if data has changed
+    ///
+    /// Will clear the cash if the Hash changed
+    ///
+    /// ### Params
+    ///
+    /// * `data` The data for which to calculate the Hash
+    fn validate_data(&mut self, data: &MatRef<f64>) {
+        let new_hash = self.compute_data_hash(data);
+        if new_hash != self.data_hash {
+            self.clear_cache();
+            self.data_hash = new_hash;
+        }
+    }
+
+    /// Compute the hash of the data. This will test just some elements
+    ///
+    /// ### Params
+    ///
+    /// * `data` - The data for the DGRDL algorithm
+    ///
+    /// ### Returns
+    ///
+    /// Hash usize
+    fn compute_data_hash(&self, data: &MatRef<f64>) -> u64 {
+        let mut hash = data.nrows() as u64;
+        hash = hash.wrapping_mul(31).wrapping_add(data.ncols() as u64);
+        if data.nrows() > 0 && data.ncols() > 0 {
+            hash = hash.wrapping_mul(31).wrapping_add(data[(0, 0)].to_bits());
+            let last_row = data.nrows() - 1;
+            let last_col = data.ncols() - 1;
+            hash = hash
+                .wrapping_mul(31)
+                .wrapping_add(data[(last_row, last_col)].to_bits());
+        }
+        hash
+    }
+
+    /// Clears the internal Cache
+    fn clear_cache(&mut self) {
+        self.laplacian_cache.clear();
+        self.dictionary_cache.clear();
+        self.distance_matrix = None;
+    }
+}
+
+///////////////////
+// DGRDL objects //
+///////////////////
+
+/// Calculate individual components of DGRDL objective function
+///
+/// Useful for hyperparameter tuning and model selection
+///
+/// ### Fields
+///
+/// * `approximation_error` - Calculates the approximation error in form of
+///                           squared Frobenius norm
+/// * `feature_laplacian_objective` - Measures the similiarity of coefficients
+///                                   for the feature Laplacian
+/// * `sample_laplacian_objective` - Measures the smoothness of the dictionary
+///                                  in respect to sample Laplacian
+/// *
+#[derive(Debug, Clone)]
+pub struct DgrdlObjectives {
+    pub approximation_error: f64,
+    pub feature_laplacian_objective: f64,
+    pub sample_laplacian_objective: f64,
+    pub seed: usize,
+    pub k_neighbours: usize,
+    pub dict_size: usize,
+}
+
+impl DgrdlObjectives {
+    /// Calculate the different objectives and reconstruction error for a given DGRDL run
+    ///
+    /// ### Params
+    ///
+    /// * `dat` - Input matrix
+    /// * `res` - The `DgrdlResults` of that run
+    /// * `alpha` - Sample context regularisation weight
+    /// * `beta` - Feature context regularisation weight
+    ///
+    /// ### Returns
+    ///
+    /// The `DgrdlObjectives` object
+    pub fn calculate(
+        dat: &MatRef<f64>,
+        res: &DgrdlResults,
+        alpha: f64,
+        beta: f64,
+        seed: usize,
+        k_neighbours: usize,
+        dict_size: usize,
+    ) -> Self {
+        let approximation_error =
+            Self::calculate_approximation_error(dat, &res.dictionary, &res.coefficients);
+
+        let feature_laplacian_objective =
+            beta * Self::calculate_trace_xlx(&res.coefficients, &res.feature_laplacian);
+
+        let sample_laplacian_objective =
+            alpha * Self::calculate_trace_ddl(&res.dictionary, &res.sample_laplacian);
+
+        Self {
+            approximation_error,
+            feature_laplacian_objective,
+            sample_laplacian_objective,
+            seed,
+            k_neighbours,
+            dict_size,
+        }
+    }
+
+    /// Calculate the reconstruction error
+    ///
+    /// ### Params
+    ///
+    /// * `x` - The input matrix
+    /// * `dictionary` - The yielded dictionary matrix from the algorithm
+    /// * `coefficients` - The yielded coefficient matrix from the algorithm
+    ///
+    /// ### Returns
+    ///
+    /// The Frobenius norm squared. The lower, the better.
+    fn calculate_approximation_error(
+        x: &MatRef<f64>,
+        dictionary: &Mat<f64>,
+        coefficients: &Mat<f64>,
+    ) -> f64 {
+        let reconstruction = dictionary * coefficients;
+        let residual = x.as_ref() - &reconstruction;
+        residual.norm_l2().powi(2)
+    }
+
+    /// Calculate gene Laplacian term: tr(X·L_f·X^T)
+    ///
+    /// ### Params
+    ///
+    /// * `coefficients` - The yielded coefficient matrix from the algorithm
+    /// * `feature_laplacian` - The Laplacian matrix of the features
+    ///
+    /// ### Returns
+    ///
+    /// The trace of that part of the equation. The lower, the better.
+    fn calculate_trace_xlx(coefficients: &Mat<f64>, feature_laplacian: &Mat<f64>) -> f64 {
+        let xl = coefficients * feature_laplacian;
+
+        let mut trace = 0.0;
+        for i in 0..coefficients.nrows() {
+            for j in 0..coefficients.ncols() {
+                trace += xl[(i, j)] * coefficients[(i, j)];
+            }
+        }
+        trace
+    }
+
+    /// Calculate cell Laplacian term: tr(D^T·D·L_s)
+    ///
+    /// ### Params
+    ///
+    /// * `dictionary` - The yielded dictionary matrix from the algorithm
+    /// * `sample_laplacian` - The Laplacian matrix of the samples
+    ///
+    /// ### Returns
+    ///
+    /// The trace of that part of equation. The lower, the better.
+    fn calculate_trace_ddl(dictionary: &Mat<f64>, sample_laplacian: &Mat<f64>) -> f64 {
+        // D^T·L_s (dict_size × n_samples)
+        let dt_l = dictionary.transpose() * sample_laplacian;
+
+        // tr(D^T·L_s·D) = sum_{i,j} (D^T·L_s)[i,j] * D[j,i]
+        let mut trace = 0.0;
+        for i in 0..dictionary.ncols() {
+            // dict_size
+            for j in 0..dictionary.nrows() {
+                // n_samples
+                trace += dt_l[(i, j)] * dictionary[(j, i)];
+            }
+        }
+        trace
+    }
+}
+
 //////////////////////////
 // DGRDL implementation //
 //////////////////////////
@@ -148,9 +369,10 @@ pub struct DgrdlResults {
 /// ### Fields
 ///
 /// * `params` - Configuration parameters for the algorithm
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Dgrdl {
     params: DgrdlParams,
+    cache: DgrdlCache,
 }
 
 impl Dgrdl {
@@ -164,10 +386,13 @@ impl Dgrdl {
     ///
     /// New DGRDL instance ready for training
     pub fn new(params: DgrdlParams) -> Self {
-        Self { params }
+        Self {
+            params,
+            cache: DgrdlCache::new(),
+        }
     }
 
-    /// Run DGRDL algorithm on input data
+    /// Run DGRDL algorithm on input data (with initial hyper parameters)
     ///
     /// Implements the main optimization loop alternating between sparse coding
     /// and dictionary update steps. The algorithm minimizes:
@@ -178,54 +403,81 @@ impl Dgrdl {
     /// ### Params
     ///
     /// * `data` - Input data matrix of size n_samples × n_features
+    /// * `seed` - Seed for dictionary initialisation.
     /// * `verbose` - Whether to print iteration progress
     ///
     /// ### Returns
     ///
     /// `DgrdlResults` containing the learned dictionary, coefficients, and Laplacians
-    pub fn fit(&self, data: &MatRef<f64>, seed: usize, verbose: bool) -> DgrdlResults {
+    pub fn fit(&mut self, data: &MatRef<f64>, seed: usize, verbose: bool) -> DgrdlResults {
+        self.fit_with_params(data, self.params.clone(), seed, verbose)
+    }
+
+    /// Run DGRDL algorithm on input data (with provided hyperparameters)
+    ///
+    /// Implements the main optimization loop alternating between sparse coding
+    /// and dictionary update steps. The algorithm minimizes:
+    /// ||Y - DX||²_F + α·tr(D^T·D·L_s) + β·tr(X·L_f·X^T) + sparsity constraint
+    /// where Y is data, D is dictionary, X is coefficients, L_s and L_f are
+    /// sample and feature Laplacians respectively.
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Input data matrix of size n_samples × n_features
+    /// * `params` - The `DgrdlParams` containing the parameters you wish to use.
+    /// * `seed` - Seed for dictionary initialisation.
+    /// * `verbose` - Whether to print iteration progress
+    ///
+    /// ### Returns
+    ///
+    /// `DgrdlResults` containing the learned dictionary, coefficients, and Laplacians
+    pub fn fit_with_params(
+        &mut self,
+        data: &MatRef<f64>,
+        params: DgrdlParams,
+        seed: usize,
+        verbose: bool,
+    ) -> DgrdlResults {
         let (n_samples, n_features) = data.shape();
 
         if verbose {
             println!(
-                "Starting DGRDL with {:?} samples and {:?} features.",
+                "Starting DGRDL run with {:?} samples and {:?} features.",
                 n_samples, n_features
-            );
+            )
         }
 
         let start_total = Instant::now();
 
         let start_dictionary_gen = Instant::now();
-        let mut dictionary = self.initialise_dictionary(data, seed);
+        let mut dictionary = self.get_dictionary(data, params.dict_size, seed);
         let end_dictionary_gen = start_dictionary_gen.elapsed();
 
         if verbose {
             println!(
-                "DGRDL dictionary initialisation finished in {:.2?}.",
-                end_dictionary_gen
+                "DGRDL dictionary obtained in {:.2?} (cached: {}).",
+                end_dictionary_gen,
+                self.cache
+                    .dictionary_cache
+                    .contains_key(&(self.params.dict_size, seed))
             );
         }
 
         let start_laplacian_gen = Instant::now();
-        let feature_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, true);
-        let sample_laplacian = get_dgrdl_laplacian(&data.as_ref(), self.params.k_neighbours, false);
+        let (feature_laplacian, sample_laplacian) = self.get_laplacians(data, params.k_neighbours);
         let end_laplacian_gen = start_laplacian_gen.elapsed();
 
         if verbose {
             println!(
-                "DGRDL graph laplacians generated in {:.2?}.",
-                end_laplacian_gen
+                "DGRDL graph laplacians obtained in {:.2?} (cached: {}).",
+                end_laplacian_gen,
+                self.cache
+                    .laplacian_cache
+                    .contains_key(&params.k_neighbours)
             );
         }
 
-        let mut coefficients: Mat<f64> = Mat::zeros(self.params.dict_size, n_features);
-
-        if verbose {
-            println!(
-                "Starting the fitting of the model with {:?} iterations.",
-                self.params.max_iter
-            );
-        }
+        let mut coefficients: Mat<f64> = Mat::zeros(params.dict_size, n_features);
 
         for iter in 0..self.params.max_iter {
             let start_iter = Instant::now();
@@ -235,23 +487,22 @@ impl Dgrdl {
                 &dictionary,
                 data,
                 &feature_laplacian,
-                self.params.sparsity,
-                self.params.beta,
-                self.params.admm_iter,
-                self.params.rho,
+                params.sparsity,
+                params.beta,
+                params.admm_iter,
+                params.rho,
             );
 
             // Dictionary update step
-            dictionary =
-                update_dictionary(data, &coefficients, &sample_laplacian, self.params.alpha);
+            dictionary = update_dictionary(data, &coefficients, &sample_laplacian, params.alpha);
 
             let end_iter = start_iter.elapsed();
 
             if verbose {
                 println!(
-                    " Iteration ({} / {}) in {:.2?}.",
+                    " DGRDL iteration {}/{} in {:.2?}.",
                     iter + 1,
-                    self.params.max_iter,
+                    params.max_iter,
                     end_iter
                 );
             }
@@ -274,24 +525,140 @@ impl Dgrdl {
         }
     }
 
+    pub fn grid_search(
+        &mut self,
+        data: &MatRef<f64>,
+        dict_sizes: &[usize],
+        k_neighbours_iters: &[usize],
+        seeds: &[usize],
+        verbose: bool,
+    ) -> Vec<DgrdlObjectives> {
+        let (n_samples, n_features) = data.shape();
+
+        let n_dict = dict_sizes.len();
+        let n_k_neighbours = k_neighbours_iters.len();
+        let n_seeds = k_neighbours_iters.len();
+
+        let total_permutations = n_dict * n_k_neighbours * n_seeds;
+
+        if verbose {
+            println!(
+                "Starting DGRDL hyperparameter grid search with {:?} samples and {:?} features and {:?} permutations.",
+                n_samples, n_features, total_permutations
+            )
+        }
+
+        let start_total = Instant::now();
+        let mut iteration: usize = 1;
+
+        let mut grid_search_res: Vec<DgrdlObjectives> = Vec::with_capacity(total_permutations);
+
+        for seed in seeds {
+            for dict_size in dict_sizes {
+                for &k_neighbours in k_neighbours_iters {
+                    let iter_total = Instant::now();
+
+                    let mut params = self.params.clone();
+                    params.dict_size = *dict_size;
+                    params.k_neighbours = k_neighbours;
+
+                    if verbose {
+                        println!(
+                            " Iter ({}|{}) - seed = {} | dict_size = {} | k_neighbours = {}",
+                            iteration, total_permutations, seed, dict_size, k_neighbours
+                        );
+                    }
+
+                    let res = self.fit_with_params(data, params.clone(), *seed, false);
+
+                    let metrics = DgrdlObjectives::calculate(
+                        data,
+                        &res,
+                        params.alpha,
+                        params.beta,
+                        *seed,
+                        k_neighbours,
+                        *dict_size,
+                    );
+
+                    grid_search_res.push(metrics);
+
+                    let iter_time = iter_total.elapsed();
+
+                    if verbose {
+                        println!(
+                            " Iter ({}|{}) - finalised in {:.2?}",
+                            iteration, total_permutations, iter_time
+                        );
+                    }
+
+                    iteration += 1;
+                }
+            }
+        }
+
+        let total_time = start_total.elapsed();
+
+        if verbose {
+            println!("Finished hyperparameter grid search in {:.2?}", total_time);
+        }
+
+        grid_search_res
+    }
+
+    /// Get or compute dictionary for given dict_size and seed
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Input data into the algorithm
+    /// * `dict_size` - The size of the dictionary
+    /// * `seed` - Random seed for the initialisation
+    ///
+    /// ### Returns
+    ///
+    /// The initial dictionary matrix
+    fn get_dictionary(&mut self, data: &MatRef<f64>, dict_size: usize, seed: usize) -> Mat<f64> {
+        self.cache.validate_data(data);
+
+        let key = (dict_size, seed);
+        if let Some(dictionary) = self.cache.dictionary_cache.get(&key) {
+            return dictionary.clone();
+        }
+
+        // Ensure distance matrix is computed (reused across dictionary initializations)
+        if self.cache.distance_matrix.is_none() {
+            self.cache.distance_matrix = Some(self.precompute_distances(data));
+        }
+
+        // Compute new dictionary using cached distances
+        let dictionary = self.initialise_dictionary(data, dict_size, seed);
+
+        // Cache the result
+        self.cache.dictionary_cache.insert(key, dictionary.clone());
+
+        dictionary
+    }
+
     /// Initialise dictionary using k-medoids clustering
     ///
     /// Selects initial dictionary atoms by finding representative samples
     /// (medoids) that minimise the total distance to all other samples.
-    /// This provides a good initialisation that captures data diversity.
+    /// This provides a good initialisation that captures data diversity. Will
+    /// leverage the pre-computed distances.
     ///
     /// ### Params
     ///
     /// * `data` - Input data matrix
+    /// * `dict_size` - The size of the dictionary.
     /// * `seed` - Seed for the random initilisation of the first medoid.
     ///
     /// ### Returns
     ///
     /// Initialised dictionary matrix with normalized columns
-    fn initialise_dictionary(&self, data: &MatRef<f64>, seed: usize) -> Mat<f64> {
+    fn initialise_dictionary(&self, data: &MatRef<f64>, dict_size: usize, seed: usize) -> Mat<f64> {
         let mut rng = StdRng::seed_from_u64(seed as u64);
 
-        let k = self.params.dict_size;
+        let k = dict_size;
         let (n_samples, n_features) = data.shape();
 
         let mut selected = Vec::with_capacity(k);
@@ -300,7 +667,7 @@ impl Dgrdl {
         selected.push(rng.random_range(0..n_features));
 
         // Precompute all pairwise distances (only upper triangle)
-        let distances = self.precompute_distances(data);
+        let distances = self.cache.distance_matrix.as_ref().unwrap();
 
         for _ in 1..k {
             // Find distances to nearest selected center
@@ -312,7 +679,7 @@ impl Dgrdl {
                     } else {
                         selected
                             .iter()
-                            .map(|&j| get_distance(&distances, i, j, n_features))
+                            .map(|&j| get_distance(distances, i, j, n_features))
                             .fold(f64::INFINITY, f64::min)
                     }
                 })
@@ -360,6 +727,18 @@ impl Dgrdl {
         dictionary
     }
 
+    /// Helper function to pre-calculate all the distances
+    ///
+    /// This function will calculate the cosine distance between all the
+    /// columns in a fast, sparse way
+    ///
+    /// ### Params
+    ///
+    /// * `data` - The input data
+    ///
+    /// ### Returns
+    ///
+    /// The flattened distances
     fn precompute_distances(&self, data: &MatRef<f64>) -> Vec<f64> {
         let n_features = data.ncols();
         let n_pairs = n_features * (n_features - 1) / 2;
@@ -371,6 +750,36 @@ impl Dgrdl {
                 column_distance(data.col(i), data.col(j))
             })
             .collect()
+    }
+
+    /// Pull out the Laplacians out of the cache or recompute for given k_neighbours
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Input data
+    /// * `k_neighbours` - Number of neighbours in the KNN graph
+    ///
+    /// ### Returns
+    ///
+    /// Tuple of `(feature_laplacian, sample_laplacian)`
+    fn get_laplacians(&mut self, data: &MatRef<f64>, k_neighbours: usize) -> (Mat<f64>, Mat<f64>) {
+        self.cache.validate_data(data);
+
+        if let Some((feature_lap, sample_lap)) = self.cache.laplacian_cache.get(&k_neighbours) {
+            return (feature_lap.clone(), sample_lap.clone());
+        }
+
+        // Compute new Laplacians
+        let feature_laplacian = get_dgrdl_laplacian(&data.as_ref(), k_neighbours, true);
+        let sample_laplacian = get_dgrdl_laplacian(&data.as_ref(), k_neighbours, false);
+
+        // Cache the results
+        self.cache.laplacian_cache.insert(
+            k_neighbours,
+            (feature_laplacian.clone(), sample_laplacian.clone()),
+        );
+
+        (feature_laplacian, sample_laplacian)
     }
 }
 
@@ -793,7 +1202,7 @@ mod tests {
             rho: 1.0,
         };
 
-        let dgrdl = Dgrdl::new(params);
+        let mut dgrdl = Dgrdl::new(params);
         let result = dgrdl.fit(&synthetic_data.as_ref(), 42, true);
 
         // Test reconstruction quality
@@ -876,7 +1285,7 @@ mod tests {
             rho: 1.0,
         };
 
-        let dgrdl = Dgrdl::new(params);
+        let mut dgrdl = Dgrdl::new(params);
         let result = dgrdl.fit(&data.as_ref(), 42, true);
 
         // Check that we can reconstruct the block structure
@@ -946,7 +1355,7 @@ mod tests {
             rho: 1.0,
         };
 
-        let dgrdl = Dgrdl::new(params);
+        let mut dgrdl = Dgrdl::new(params);
         let result = dgrdl.fit(&data.as_ref(), 42, true);
 
         // Validate results
@@ -1037,7 +1446,7 @@ mod tests {
                 rho: 1.0,
             };
 
-            let dgrdl = Dgrdl::new(params);
+            let mut dgrdl = Dgrdl::new(params);
             let result = dgrdl.fit(&data.as_ref(), 42, true);
 
             // Check reconstruction

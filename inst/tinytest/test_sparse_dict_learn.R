@@ -148,7 +148,7 @@ expect_equal(
 ### 'biological' data ----------------------------------------------------------
 
 res_bio <- rs_sparse_dict_dgrdl(
-  x = synthetic_data_2,
+  x = synthetic_data_2$data,
   dgrdl_params = params_dgrdl(
     sparsity = 3L,
     dict_size = 8L,
@@ -164,8 +164,11 @@ res_bio <- rs_sparse_dict_dgrdl(
 )
 
 reconstruction_bio <- res_bio$dictionary %*% res_bio$coefficients
-reconstruction_error_bio <- norm(synthetic_data_2 - reconstruction_bio, "F") /
-  norm(synthetic_data_2, "F")
+reconstruction_error_bio <- norm(
+  synthetic_data_2$data - reconstruction_bio,
+  "F"
+) /
+  norm(synthetic_data_2$data, "F")
 
 expect_true(
   current = reconstruction_error_bio < 0.2,
@@ -205,7 +208,7 @@ dict_size <- as.integer(c(4, 6, 8))
 
 # grid search
 grid_search_res <- rs_sparse_dict_dgrdl_grid_search(
-  x = synthetic_data_2,
+  x = synthetic_data_2$data,
   dgrdl_params = params_dgrdl(
     sparsity = 10L,
     dict_size = 8L,
@@ -256,3 +259,8 @@ expect_equal(
 )
 
 # s7 class version -------------------------------------------------------------
+
+s7_obj <- bulk_coexp(
+  raw_data = synthetic_data_2$data,
+  meta_data = synthetic_data_2$meta_data
+)

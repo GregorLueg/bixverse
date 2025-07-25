@@ -49,7 +49,7 @@ bulk_coexp <- S7::new_class(
     checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),
-      must.include = c("sample_id", "case_control")
+      must.include = c("sample_id")
     )
     checkmate::assert(
       checkmate::checkDataTable(variable_info),
