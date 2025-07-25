@@ -283,8 +283,6 @@ pub fn bin_matrix_cols(mat: &MatRef<f64>, n_bins: Option<usize>) -> Mat<usize> {
 ///
 /// The resulting co-variance matrix.
 pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
-    assert_symmetric_mat!(mat);
-
     let n_rows = mat.nrows();
     let centered = scale_matrix_col(mat, false);
     let covariance = (centered.transpose() * &centered) / (n_rows - 1) as f64;
