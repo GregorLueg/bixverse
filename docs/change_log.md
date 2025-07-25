@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 18.07.2025* </br>
+*Last update: 25.07.2025* </br>
 
 ### Version **0.0.2.0**
 
@@ -23,6 +23,7 @@ set similarity or correlation-based similarity.
 - GSVA and ssGSEA implemented in Rust.
 - Rust code reworked in different places to make some of the functions faster.
 - Mutual information calculations in Rust.
+- Improvements to the synthetic data.
 
 #### Bug fixes, documentation updates
 

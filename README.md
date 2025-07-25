@@ -31,13 +31,14 @@ of significanlty enriched areas of the network (topology-aware).
 hits.
 - Further improvements in speed in various Rust functions (less unnecessary
 copying and changes to the used HashMaps and HashSets).
-- Addition of the `simplify()` type method to reduce Gene Ontology results 
+- Addition of a `simplify()`-type method to reduce Gene Ontology results 
 to the most relevant ones.
 - Vignettes explaining different methods.
 - GSVA and ssGSEA implemented leveraging Rust.
 - Update of the `furrr::future_map()` type functions to the faster 
 `mirai::mirai_map()`.
 - Mutual information calculations between continuous variables.
+- Improvements to the synthetic data.
 
 **Warnings**: Some of the previous interfaces to the functions were changed
 in this release and might break compared to prior releases!

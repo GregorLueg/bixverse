@@ -15,6 +15,8 @@ expected_sparse_matrix <- as(
 
 rs_data <- rs_upper_triangle_to_sparse(data, 1, 4)
 
+sparse_matrix <- sparse_list_to_mat(rs_data)
+
 expect_equal(
   current = rs_data$row_indices,
   target = expected_sparse_matrix@i,
@@ -41,6 +43,12 @@ expect_true(
 expect_true(
   current = rs_data$nrow == 4,
   info = "Rust sparse implementation - nrow"
+)
+
+expect_equal(
+  current = sparse_matrix,
+  target = expected_sparse_matrix,
+  info = "Rust sparse list to sparse mat"
 )
 
 ## r tests ---------------------------------------------------------------------

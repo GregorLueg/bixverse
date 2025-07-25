@@ -290,6 +290,32 @@ upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
   return(matrix)
 }
 
+#' Helper function to transform the Rust-exported sparse matrices into R ones
+#'
+#' @param ls List. Needs to represent the (column) sparse data.
+#'
+#' @returns The sparseMatrix from the data.
+#'
+#' @export
+sparse_list_to_mat <- function(ls) {
+  # checks
+  checkmate::assertList(ls, types = "numeric", names = "named")
+  checkmate::assertNames(
+    names(ls),
+    must.include = c("data", "row_indices", "col_ptr", "ncol", "nrow")
+  )
+
+  # body
+  sparse_mat <- Matrix::sparseMatrix(
+    i = ls$row_indices + 1,
+    p = ls$col_ptr,
+    x = ls$data,
+    dims = c(ls$nrow, ls$ncol)
+  )
+
+  return(sparse_mat)
+}
+
 # inflection points ------------------------------------------------------------
 
 #' Identify the inflection point for elbow-like data
