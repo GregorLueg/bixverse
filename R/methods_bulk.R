@@ -235,6 +235,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   return(object)
 }
 
+
 ### bulk cor modules -----------------------------------------------------------
 
 #' Process the raw data
@@ -276,6 +277,7 @@ preprocess_bulk_coexp <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
 
 #' @method preprocess_bulk_coexp bulk_coexp
 #' @export

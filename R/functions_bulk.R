@@ -62,6 +62,7 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
   return(all_contrasts)
 }
 
+
 #' Create all limma contrasts from a provided string
 #'
 #' @param limma_fit The fitted limma model, i.e., output of [limma::lmFit()].
@@ -272,6 +273,7 @@ run_limma_voom <- function(
 hedges_g_dge <- function(
   meta_data,
   main_contrast,
+  contrast_list = NULL,
   normalised_counts,
   contrast_list = NULL,
   small_sample_correction = NULL,
