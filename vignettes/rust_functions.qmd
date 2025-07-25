@@ -273,7 +273,7 @@ naive R implementation to calculate the Jaccard similarities between two
 lists containing strings.
 
 ```{r}
-#| label: R jaccard similarity function
+#| label: R similarity data
 
 jaccard_sim <- function(x, y) {
   length(intersect(x, y)) / length(union(x, y))
@@ -288,6 +288,37 @@ random_sets_1 <- purrr::map(1:1000L, ~{
 random_sets_2 <- purrr::map(1:500L, ~{
   paste(sample(LETTERS, sample(1:20, 1)))
 })
+```
+
+Let's start with a naive purrr approach. Nonetheless, we can appreciate already
+that some type of parallelism will help here. But for completeness, let's test
+purrr...
+
+```{r}
+#| label: set similarity in R (purrr)
+#| eval: !expr requireNamespace(c("future", "tictoc", "furrr"), quietly = TRUE)
+
+tictoc::tic()
+
+r_results <- purrr::map(random_sets_1, \(x) {
+  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
+}, .progress = TRUE)
+
+similarity_matrix <- matrix(
+  data = unlist(r_results), 
+  nrow = length(random_sets_1), 
+  ncol = length(random_sets_2),
+  byrow = TRUE
+)
+tictoc::toc()
+```
+
+Let's try to parallelise this via future and furrr back-ends and see how 
+much we can improve this.
+
+```{r}
+#| label: set similarity in R (furrr)
+#| eval: !expr requireNamespace(c("future", "tictoc", "furrr"), quietly = TRUE)
 
 tictoc::tic()
 future::plan(strategy = future::multisession())
@@ -307,27 +338,51 @@ similarity_matrix <- matrix(
 tictoc::toc()
 ```
 
-Maybe we can make this a bit faster with an optimised Jaccard similarity
-function.
+What about [mirai](https://mirai.r-lib.org/articles/mirai.html)? It should 
+produce less overhead compared to future.
 
 ```{r}
-#| label: R jaccard similarity function (faster)
-
-# Optimised function...
-jaccard_sim_fast <- function(x, y) {
-  intersection <- length(intersect(x, y))
-  union_size <- length(x) + length(y) - intersection
-  intersection / union_size
-}
+#| label: set similarity in R (mirai)
+#| eval: !expr requireNamespace(c("tictoc", "mirai"), quietly = TRUE)
 
 tictoc::tic()
-future::plan(strategy = future::multisession())
+mirai::daemons(4)
 
-r_results <- furrr::future_map(random_sets_1, \(x) {
-  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim_fast(x, y)})
-}, .progress = TRUE)
+r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
+  purrr::map_dbl(sets_2, \(y) {
+    length(intersect(x, y)) / length(union(x, y))
+  })
+}, .args = list(sets_2 = random_sets_2))[]
 
-future::plan(strategy = future::sequential())
+similarity_matrix <- matrix(
+  data = unlist(r_results_mirai), 
+  nrow = length(random_sets_1), 
+  ncol = length(random_sets_2),
+  byrow = TRUE
+)
+
+mirai::daemons(0)
+tictoc::toc()
+```
+
+That's already a bit better. Maybe we can optimise the Jaccard similarity 
+function further.
+
+```{r}
+#| label: set similarity in R (mirai, optimised)
+#| eval: !expr requireNamespace(c("tictoc", "mirai"), quietly = TRUE)
+
+tictoc::tic()
+mirai::daemons(4)
+
+r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
+  purrr::map_dbl(sets_2, \(y) {
+    # Optimised function
+    intersection <- length(intersect(x, y))
+    union_size <- length(x) + length(y) - intersection
+    intersection / union_size
+  })
+}, .args = list(sets_2 = random_sets_2))[]
 
 similarity_matrix <- matrix(
   data = unlist(r_results), 
@@ -335,25 +390,14 @@ similarity_matrix <- matrix(
   ncol = length(random_sets_2),
   byrow = TRUE
 )
+
+mirai::daemons(0)
 tictoc::toc()
 ```
 
-Let's see if vectorisation makes a difference in R? 
-```{r}
-#| label: R jaccard similarity function (vectorisation)
-
-tictoc::tic()
-result <- outer(random_sets_1, random_sets_2, Vectorize(function(x, y) {
-    intersection <- length(intersect(x, y))
-    union_size <- length(x) + length(y) - intersection
-    intersection / union_size
-}))
-tictoc::toc()
-```
-
-We lack of parallel processing is felt here...
-
-Let's compare against the Rust version implemented in `bixverse`:
+This is already much better... Pending on your system you might be seeing a 4x
+increase in speed compared to the naive purrr version. However, let's compare 
+against the Rust version implemented in `bixverse`:
 
 ```{r}
 #| label: bixverse jaccard similarity function
@@ -368,3 +412,6 @@ tictoc::toc()
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 ```
+
+Yep, that is MUCH faster... These are some of the functions that are exposed
+in `bixverse` and can be integrated into other workflows.
