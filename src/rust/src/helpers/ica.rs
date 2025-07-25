@@ -47,6 +47,47 @@ pub struct IcaParams {
     pub verbose: bool,
 }
 
+impl IcaParams {
+    /// Prepare ICA parameters from R List
+    ///
+    /// Takes in a R list and extracts the ICA parameters or uses sensible defaults.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - R List with the ICA parameters.
+    ///
+    /// ### Returns
+    ///
+    /// `IcaParams` parameter structure.
+    pub fn from_r_list(r_list: List) -> Self {
+        let ica_params = r_list.into_hashmap();
+
+        let maxit = ica_params
+            .get("maxit")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+        let alpha = ica_params
+            .get("alpha")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0);
+        let tol = ica_params
+            .get("max_tol")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1e-4);
+        let verbose = ica_params
+            .get("verbose")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        IcaParams {
+            maxit,
+            alpha,
+            tol,
+            verbose,
+        }
+    }
+}
+
 /// Structure to save ICA CV results
 ///
 /// ### Fields
@@ -66,45 +107,6 @@ pub struct IcaCvData {
 ////////////////
 // Parameters //
 ////////////////
-
-/// Prepare ICA parameters
-///
-/// Takes in a R list and extracts the ICA parameters or uses sensible defaults.
-///
-/// ### Params
-///
-/// * `r_list` - R List with the ICA parameters.
-///
-/// ### Returns
-///
-/// `IcaParams` parameter structure.
-pub fn prepare_ica_params(r_list: List) -> IcaParams {
-    let ica_params = r_list.into_hashmap();
-
-    let maxit = ica_params
-        .get("maxit")
-        .and_then(|v| v.as_integer())
-        .unwrap_or(200) as usize;
-    let alpha = ica_params
-        .get("alpha")
-        .and_then(|v| v.as_real())
-        .unwrap_or(1.0);
-    let tol = ica_params
-        .get("max_tol")
-        .and_then(|v| v.as_real())
-        .unwrap_or(1e-4);
-    let verbose = ica_params
-        .get("verbose")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-
-    IcaParams {
-        maxit,
-        alpha,
-        tol,
-        verbose,
-    }
-}
 
 /// Parsing the ICA types
 ///

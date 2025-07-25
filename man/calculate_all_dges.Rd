@@ -21,19 +21,20 @@ calculate_all_dges(
 \item{contrast_column}{String. The contrast column in which the groupings
 are stored. Needs to be found in the meta_data within the properties.}
 
-\item{contrast_list}{String or NULL. Optional list of contrast formatted as contrast1-contrast2.
-Default NULL will create all contrast automatically.}
+\item{contrast_list}{Optional string vector. A vectors that contains the
+contrast formatted as \code{"contrast1-contrast2"}. Default \code{NULL} will create
+all possible contrast automatically.}
 
 \item{filter_column}{Optional String. If there is a column you wish to use as
 sub groupings, this can be provided here. An example could be different
 sampled tissues and you wish to run the DGE analyses within each tissue
 separately.}
 
-\item{co_variates}{Optional String vector. Any co-variates you wish to
+\item{co_variates}{Optional string vector. Any co-variates you wish to
 consider during the Limma Voom modelling.}
 
 \item{small_sample_correction}{Can be NULL (automatic determination if a
-small sample size correction should be applied) or Boolean.}
+small sample size correction should be applied) or a Boolean.}
 
 \item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
 \code{\link[limma:voom]{limma::voom()}}.}
@@ -46,7 +47,8 @@ Returns the class with additional data added to the outputs.
 \description{
 This class is a wrapper class around applying various differential gene
 expression on the data. At a minimum you will need to provide a
-\code{contrast_column} that can be found in the meta-data. Every permutation of
+\code{contrast_column} that can be found in the meta-data. If you do not provide
+a vector of contrasts that you wish to test for, every permutation of
 groups represented in that column will be tested against each other. Two
 variants of differential gene expression analyses will be applied:
 \enumerate{

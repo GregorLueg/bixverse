@@ -574,7 +574,14 @@ pub fn sparse_matrix_to_list<T>(sparse: SparseColumnMatrix<T>) -> List
 where
     T: Into<Robj>,
 {
-    let data: Vec<Robj> = sparse.data.into_iter().map(|x| x.into()).collect();
+    let data: Vec<f64> = sparse
+        .data
+        .into_iter()
+        .map(|x| {
+            let robj: Robj = x.into();
+            robj.as_real().unwrap()
+        })
+        .collect();
     let row_indices: Vec<usize> = sparse.row_indices;
     let col_ptr: Vec<usize> = sparse.col_ptrs;
     let nrow = sparse.nrow;

@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkmate_extensions.R
 \name{assertSingleSampleGSEAparams}
 \alias{assertSingleSampleGSEAparams}
-\title{Assert GSVA parameter}
+\title{Assert ssGSEA parameter}
 \usage{
 assertSingleSampleGSEAparams(x, .var.name = checkmate::vname(x), add = NULL)
 }

@@ -792,6 +792,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 
+#' Calculates the mutual information matrix
+#'
+#' @description Calculates the mutual information across all columns in the
+#' data.
+#'
+#' @param x R matrix with doubles for which to calculate the mutual information
+#' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
+#' the function will default to `sqrt(nrows(x))`.
+#' @param normalise Boolean. Shall the normalised mutual information be
+#' calculated via joint entropy.
+#'
+#' @returns The mutual information matrix.
+#'
+#' @export
+rs_mutual_info <- function(x, n_bins, normalise) .Call(wrap__rs_mutual_info, x, n_bins, normalise)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.
@@ -1102,6 +1118,93 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #'
 #' @export
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
+
+#' Generate a sparse dictionary with DGRDL
+#'
+#' @description This is the Rust implementation of dual graph regularised
+#' dictionary learning in the implementation of Pan, et al., Cell Systems,
+#' 2022.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param dgrdl_params A list with the parameters for the algorithm. Expects
+#' the following items.
+#' \itemize{
+#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
+#'   \item dict_size - Size of the dictionary.
+#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item max_iter - Integer. Maximum iteration for the algorithm.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
+#'   Laplacian matrix for the regularisation
+#'   \item admm_iter Integer. Number of iterations for using alternating direction
+#'   method of multipliers (ADMM).
+#'   \item rho Float. ADMM step size.
+#' }
+#' @param seed Integer. Seed for the initialisation of the algorithm.
+#' @param verbose Boolean. Controls the verbosity of the function and reports timing
+#' of individual steps.
+#'
+#' @returns A list with the following elements:
+#'  \itemize{
+#'   \item dictionary - The dictionary of samples x dict_size.
+#'   \item coefficients - The feature loadings of size dict_size x features.
+#'   \item feature_laplacian - The KNN graph laplacian of the features in a
+#'   sparse format list.
+#'   \item sample_laplacian - The KNN graph laplacian of the samples in a
+#'   sparse format list.
+#' }
+#'
+#' @export
+rs_sparse_dict_dgrdl <- function(x, dgrdl_params, seed, verbose) .Call(wrap__rs_sparse_dict_dgrdl, x, dgrdl_params, seed, verbose)
+
+#' Generate a sparse dictionary with DGRDL
+#'
+#' @description This is the Rust implementation of dual graph regularised
+#' dictionary learning in the implementation of Pan, et al., Cell Systems,
+#' 2022. This helper function is designed to run a grid search over the data.
+#'
+#' @param x Numerical matrix. Rows = samples, columns = features.
+#' @param dgrdl_params A list with the parameters for the algorithm. Expects
+#' the following items.
+#' \itemize{
+#'   \item sparsity - Sparsity constraint (max non-zero coefficients per signal).
+#'   \item dict_size - Size of the dictionary. This parameter will be ignored
+#'   for this function and `dict_sizes` will be used.
+#'   \item alpha - Float. Sample context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item beta - Float. Feature context regularisation weight. The higher the stronger
+#'   the regularisation.
+#'   \item max_iter - Integer. Maximum iteration for the algorithm.
+#'   \item k_neighbours - Integer. Number of k neighbours for the sample and feature
+#'   Laplacian matrix for the regularisation. This parameter will be ignored and
+#'   `k_neighbours_vec` will be used.
+#'   \item admm_iter Integer. Number of iterations for using alternating direction
+#'   method of multipliers (ADMM).
+#'   \item rho Float. ADMM step size.
+#' }
+#' @param seeds Integer vectors. The random seeds to include in the grid search.
+#' @param dict_sizes Integer vector. The dictionary sizes to test in the grid
+#' search.
+#' @param k_neighbours_vec Integer vector. The number of neighbours for the KNN
+#' graph generation to test in the grid search.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#'  \itemize{
+#'   \item seed - The tested seeds.
+#'   \item dict_size - The tested dictionary sizes.
+#'   \item reconstruction_errs - The reconstruction errors for these hyper
+#'   parameters.
+#'   \item feature_laplacian_objective - The objective values of the feature
+#'   Laplacian term for these hyperparameters.
+#'   \item sample_laplacian_objective - The objective values of the sample
+#'   Laplacian term for these hyperparameters.
+#' }
+#'
+#' @export
+rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes, k_neighbours_vec, verbose) .Call(wrap__rs_sparse_dict_dgrdl_grid_search, x, dgrdl_params, seeds, dict_sizes, k_neighbours_vec, verbose)
 
 #' Generate sparse data from an upper triangle
 #'

@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkmate_extensions.R
 \name{checkSingleSampleGSEAparams}
 \alias{checkSingleSampleGSEAparams}
-\title{Check GSVA parameters}
+\title{Check ssGSEA parameters}
 \usage{
 checkSingleSampleGSEAparams(x)
 }

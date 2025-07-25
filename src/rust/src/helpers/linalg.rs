@@ -1,4 +1,8 @@
-use faer::{Mat, MatRef};
+use faer::{
+    linalg::solvers::{PartialPivLu, Solve},
+    traits::AddByRef,
+    Mat, MatRef,
+};
 use rand::prelude::*;
 use rand_distr::Normal;
 use rayon::iter::*;
@@ -226,6 +230,48 @@ pub fn rank_matrix_col(mat: &MatRef<f64>) -> Mat<f64> {
     ranked_mat
 }
 
+/// Column wise binning
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply column-wise binning
+/// * `n_bins` - Optional number of bins. If not provided, will default to
+///              `sqrt(nrow)`
+///
+/// ### Returns
+///
+/// The matrix with the columns being binned into equal distances.
+pub fn bin_matrix_cols(mat: &MatRef<f64>, n_bins: Option<usize>) -> Mat<usize> {
+    let (n_rows, n_cols) = mat.shape();
+    let n_bins = n_bins.unwrap_or_else(|| (n_rows as f64).sqrt() as usize);
+
+    let binned_vals: Vec<Vec<usize>> = mat
+        .par_col_iter()
+        .map(|col| {
+            let (min_val, max_val) = col
+                .iter()
+                .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), x| {
+                    (min.min(*x), max.max(*x))
+                });
+            let range = max_val - min_val;
+            let step = range / n_bins as f64;
+
+            col.iter()
+                .map(|x| {
+                    if range == 0.0 {
+                        0
+                    } else {
+                        ((*x - min_val) / step).floor() as usize
+                    }
+                    .min(n_bins - 1)
+                })
+                .collect()
+        })
+        .collect();
+
+    Mat::from_fn(n_rows, n_cols, |i, j| binned_vals[j][i])
+}
+
 /// Calculate the co-variance
 ///
 /// ### Params
@@ -257,9 +303,9 @@ pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
 ///
 /// The resulting cosine similarity matrix
 pub fn column_cosine(mat: &MatRef<f64>) -> Mat<f64> {
-    let normalized = normalise_matrix_col_l2(mat);
+    let normalised = normalise_matrix_col_l2(mat);
 
-    normalized.transpose() * &normalized
+    normalised.transpose() * &normalised
 }
 
 /// Calculate the correlation matrix
@@ -287,6 +333,74 @@ pub fn column_correlation(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
     let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
 
     cor
+}
+
+/// Calculate the mutual information matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the column-wise mutual
+///           information
+/// * `n_bins` - Optional number of bins to use. Will default to `sqrt(nrows)`
+///              if nothing is provided.
+/// * `normalised` - Shall the normalised mutual information be calculated via
+///                  joint entropy normalisation.
+///
+/// ### Returns
+///
+/// The resulting mutual information matrix.
+pub fn column_mutual_information(
+    mat: &MatRef<f64>,
+    n_bins: Option<usize>,
+    normalised: bool,
+) -> Mat<f64> {
+    let binned_mat = bin_matrix_cols(mat, n_bins);
+
+    let n_cols = binned_mat.ncols();
+
+    let pairs: Vec<(usize, usize)> = (0..n_cols)
+        .flat_map(|i| (i + 1..n_cols).map(move |j| (i, j)))
+        .collect();
+
+    let mi_vals: Vec<((usize, usize), f64)> = pairs
+        .into_par_iter()
+        .map(|(i, j)| {
+            let mi = calculate_mi(binned_mat.col(i), binned_mat.col(j), n_bins);
+            let nmi = if normalised {
+                let joint_entropy =
+                    calculate_joint_entropy(binned_mat.col(i), binned_mat.col(j), n_bins);
+                mi / joint_entropy
+            } else {
+                mi
+            };
+            ((i, j), nmi)
+        })
+        .collect();
+
+    let entropy: Vec<f64> = (0..n_cols)
+        .into_par_iter()
+        .map(|i| {
+            let entropy = if normalised {
+                1.0
+            } else {
+                calculate_entropy(binned_mat.col(i), n_bins)
+            };
+            entropy
+        })
+        .collect();
+
+    let mut mi_matrix = Mat::zeros(n_cols, n_cols);
+
+    for ((i, j), mi_val) in mi_vals {
+        mi_matrix[(i, j)] = mi_val;
+        mi_matrix[(j, i)] = mi_val;
+    }
+
+    for i in 0..n_cols {
+        mi_matrix[(i, i)] = entropy[i];
+    }
+
+    mi_matrix
 }
 
 /// Calculates the correlation between two matrices
@@ -352,75 +466,6 @@ pub fn cov2cor(mat: MatRef<f64>) -> Mat<f64> {
     }
 
     result
-}
-
-/// Calculate differential correlations
-///
-/// The function will panic if the two correlation matrices are not symmetric
-/// and do not have the same dimensions.
-///
-/// ### Params
-///
-/// * `mat_a` - The first correlation matrix.
-/// * `mat_b` - The second correlation matrix.
-/// * `no_sample_a` - Number of samples that were present to calculate mat_a.
-/// * `no_sample_b` - Number of samples that were present to calculate mat_b.
-/// * `spearman` - Was Spearman correlation used.
-///
-/// ### Returns
-///
-/// The resulting differential correlation results as a structure.
-pub fn calculate_diff_correlation(
-    mat_a: &Mat<f64>,
-    mat_b: &Mat<f64>,
-    no_sample_a: usize,
-    no_sample_b: usize,
-    spearman: bool,
-) -> DiffCorRes {
-    assert_symmetric_mat!(mat_a);
-    assert_symmetric_mat!(mat_b);
-    assert_same_dims!(mat_a, mat_b);
-
-    let mut cors_a: Vec<f64> = Vec::new();
-    let mut cors_b: Vec<f64> = Vec::new();
-
-    let upper_triangle_indices = upper_triangle_indices(mat_a.ncols(), 1);
-
-    for (&r, &c) in upper_triangle_indices
-        .0
-        .iter()
-        .zip(upper_triangle_indices.1.iter())
-    {
-        cors_a.push(*mat_a.get(r, c));
-        cors_b.push(*mat_b.get(r, c));
-    }
-
-    // Maybe save the original correlations... Note to myself.
-    let original_cor_a = cors_a.to_vec();
-    let original_cor_b = cors_b.to_vec();
-
-    cors_a.par_iter_mut().for_each(|x| *x = x.atanh());
-    cors_b.par_iter_mut().for_each(|x| *x = x.atanh());
-
-    // Constant will depend on if Spearman or Pearson
-    let constant = if spearman { 1.06 } else { 1.0 };
-    let denominator =
-        ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
-
-    let z_scores: Vec<f64> = cors_a
-        .par_iter()
-        .zip(cors_b.par_iter())
-        .map(|(a, b)| (a - b) / denominator)
-        .collect();
-
-    let p_values = z_scores_to_pval(&z_scores);
-
-    DiffCorRes {
-        r_a: original_cor_a,
-        r_b: original_cor_b,
-        z_score: z_scores,
-        p_vals: p_values,
-    }
 }
 
 /// Get the eigenvalues and vectors from a covar or cor matrix
@@ -531,6 +576,258 @@ pub fn randomised_svd(
     }
 }
 
+////////////////////
+// Matrix solvers //
+////////////////////
+
+/// Sylvester solver for three matrix systems
+///
+/// Solves a system of `AX + XB = C`. Pending on the size of the underlying
+/// matrices, the algorithm will solve this directly or iteratively.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+///
+/// ### Returns
+///
+/// The matrix X
+pub fn sylvester_solver(mat_a: &MatRef<f64>, mat_b: &MatRef<f64>, mat_c: &MatRef<f64>) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
+
+    if m * n < 1000 {
+        // For small problems, use direct method
+        sylvester_solver_direct(mat_a, mat_b, mat_c)
+    } else {
+        // For large problems use the iterative method
+        sylvester_solver_iterative(mat_a, mat_b, mat_c, 50, 1e-6)
+    }
+}
+
+/// Iterative Sylvester solver using fixed-point iteration
+///
+/// Solves a system of `AX + XB = C`. Uses an iterative approach more
+/// appropriate for large matrix systems.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+/// * `max_iter` - Maximum number of iterations
+/// * `tolerance` - Tolerance parameter
+///
+/// Returns
+///
+/// The matrix X
+fn sylvester_solver_iterative(
+    mat_a: &MatRef<f64>,
+    mat_b: &MatRef<f64>,
+    mat_c: &MatRef<f64>,
+    max_iter: usize,
+    tolerance: f64,
+) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
+
+    // Initial guess
+    let mut x = mat_c.to_owned();
+    let mut x_new = Mat::zeros(m, n);
+    let mut residual = Mat::zeros(m, n);
+
+    // Adaptive alpha parameters
+    let mut alpha: f64 = 0.5;
+    let alpha_min = 0.01;
+    let alpha_max = 1.0;
+    let mut prev_residual_norm = f64::INFINITY;
+
+    let c_norm = mat_c.norm_l2();
+    let rel_tolerance = tolerance * c_norm.max(1.0);
+
+    for iter in 0..max_iter {
+        // x_new = C - alpha * (A*x + x*B)
+        let ax = mat_a * &x;
+        let xb = &x * mat_b;
+
+        residual.copy_from(&mat_c);
+        residual -= &ax;
+        residual -= &xb;
+
+        let residual_norm = residual.norm_l2();
+
+        // Check convergence with relative tolerance
+        if residual_norm < rel_tolerance {
+            break;
+        }
+
+        if iter > 0 {
+            if residual_norm < prev_residual_norm {
+                // Good progress, increase step size slightly
+                alpha = (alpha * 1.1).min(alpha_max);
+            } else {
+                // Poor progress, reduce step size
+                alpha = (alpha * 0.5).max(alpha_min);
+            }
+        }
+
+        x_new.copy_from(&x);
+
+        x_new.add_by_ref(&(residual.as_ref() * alpha));
+
+        std::mem::swap(&mut x, &mut x_new);
+        prev_residual_norm = residual_norm;
+
+        // Early termination for very slow convergence
+        if iter > 10 && residual_norm > 0.99 * prev_residual_norm {
+            break;
+        }
+    }
+
+    x
+}
+
+/// Direct version for small matrices
+///
+/// Uses partial LU decomposition to solve: `AX + XB = C`. Slow for large
+/// matrix systems.
+///
+/// ### Params
+///
+/// * `mat_a` - Matrix A of the system
+/// * `mat_b` - Matrix B of the system
+/// * `mat_c` - Matrix C of the system
+///
+/// ### Returns
+///
+/// The matrix X
+fn sylvester_solver_direct(
+    mat_a: &MatRef<f64>,
+    mat_b: &MatRef<f64>,
+    mat_c: &MatRef<f64>,
+) -> Mat<f64> {
+    let m = mat_a.nrows();
+    let n = mat_b.ncols();
+    let mn = m * n;
+
+    let mut coeff_matrix: Mat<f64> = Mat::zeros(mn, mn);
+
+    // Build coefficient matrix
+    for i in 0..m {
+        for j in 0..n {
+            let row_idx = i * n + j;
+
+            // A part: (I ⊗ A)
+            for k in 0..m {
+                let col_idx = k * n + j;
+                coeff_matrix[(row_idx, col_idx)] = mat_a[(i, k)];
+            }
+
+            // B^T part: (B^T ⊗ I)
+            for l in 0..n {
+                let col_idx = i * n + l;
+                coeff_matrix[(row_idx, col_idx)] += mat_b[(l, j)];
+            }
+        }
+    }
+
+    // Vectorise C
+    let mut c_vec: Mat<f64> = Mat::zeros(mn, 1);
+    for i in 0..m {
+        for j in 0..n {
+            c_vec[(i * n + j, 0)] = mat_c[(i, j)];
+        }
+    }
+
+    let lu = PartialPivLu::new(coeff_matrix.as_ref());
+    let solved = lu.solve(&c_vec);
+
+    // Reshape
+    let mut res = Mat::zeros(m, n);
+    for i in 0..m {
+        for j in 0..n {
+            res[(i, j)] = solved[(i * n + j, 0)];
+        }
+    }
+
+    res
+}
+
+///////////
+// Other //
+///////////
+
+/// Calculate differential correlations
+///
+/// The function will panic if the two correlation matrices are not symmetric
+/// and do not have the same dimensions.
+///
+/// ### Params
+///
+/// * `mat_a` - The first correlation matrix.
+/// * `mat_b` - The second correlation matrix.
+/// * `no_sample_a` - Number of samples that were present to calculate mat_a.
+/// * `no_sample_b` - Number of samples that were present to calculate mat_b.
+/// * `spearman` - Was Spearman correlation used.
+///
+/// ### Returns
+///
+/// The resulting differential correlation results as a structure.
+pub fn calculate_diff_correlation(
+    mat_a: &Mat<f64>,
+    mat_b: &Mat<f64>,
+    no_sample_a: usize,
+    no_sample_b: usize,
+    spearman: bool,
+) -> DiffCorRes {
+    assert_symmetric_mat!(mat_a);
+    assert_symmetric_mat!(mat_b);
+    assert_same_dims!(mat_a, mat_b);
+
+    let mut cors_a: Vec<f64> = Vec::new();
+    let mut cors_b: Vec<f64> = Vec::new();
+
+    let upper_triangle_indices = upper_triangle_indices(mat_a.ncols(), 1);
+
+    for (&r, &c) in upper_triangle_indices
+        .0
+        .iter()
+        .zip(upper_triangle_indices.1.iter())
+    {
+        cors_a.push(*mat_a.get(r, c));
+        cors_b.push(*mat_b.get(r, c));
+    }
+
+    // Maybe save the original correlations... Note to myself.
+    let original_cor_a = cors_a.to_vec();
+    let original_cor_b = cors_b.to_vec();
+
+    cors_a.par_iter_mut().for_each(|x| *x = x.atanh());
+    cors_b.par_iter_mut().for_each(|x| *x = x.atanh());
+
+    // Constant will depend on if Spearman or Pearson
+    let constant = if spearman { 1.06 } else { 1.0 };
+    let denominator =
+        ((constant / (no_sample_a as f64 - 3.0)) + (constant / (no_sample_b as f64 - 3.0))).sqrt();
+
+    let z_scores: Vec<f64> = cors_a
+        .par_iter()
+        .zip(cors_b.par_iter())
+        .map(|(a, b)| (a - b) / denominator)
+        .collect();
+
+    let p_values = z_scores_to_pval(&z_scores);
+
+    DiffCorRes {
+        r_a: original_cor_a,
+        r_b: original_cor_b,
+        z_score: z_scores,
+        p_vals: p_values,
+    }
+}
+
 /// Test different epsilons over a distance vector
 ///
 /// ### Params
@@ -574,4 +871,34 @@ pub fn rbf_iterate_epsilons(
         .collect();
 
     Ok(nested_vector_to_faer_mat(k_res, true))
+}
+
+///////////
+// Tests //
+///////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use faer::mat;
+
+    #[test]
+    fn test_sylvester_solver() {
+        let a = mat![[1.0, 2.0], [0.0, 3.0]];
+        let b = mat![[4.0, 1.0], [0.0, 2.0]];
+        let c = mat![[1.0, 2.0], [3.0, 4.0]];
+
+        let x = sylvester_solver(&a.as_ref(), &b.as_ref(), &c.as_ref());
+
+        // Verify: AX + XB should equal C
+        let result = &a * &x + &x * &b;
+
+        // Check if close to C (allowing for numerical errors)
+        for i in 0..c.nrows() {
+            for j in 0..c.ncols() {
+                let diff = result[(i, j)] - c[(i, j)].abs();
+                assert!(diff < 1e-10, "Solution verification failed");
+            }
+        }
+    }
 }

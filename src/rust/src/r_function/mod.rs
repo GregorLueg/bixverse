@@ -8,5 +8,6 @@ pub mod r_ica;
 pub mod r_linalg;
 pub mod r_ontology;
 pub mod r_rbh;
+pub mod r_sparse_graph_dict;
 pub mod r_sparse_struct;
 pub mod r_stats;

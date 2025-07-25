@@ -2,18 +2,24 @@
 % Please edit documentation in R/functions_bulk.R
 \name{limma_contrasts}
 \alias{limma_contrasts}
-\title{Create all limma contrasts from}
+
+\title{Create all limma contrasts from a provided string}
+
 \usage{
 limma_contrasts(limma_fit, contrast_list)
 }
 \arguments{
 \item{limma_fit}{The fitted limma model, i.e., output of \code{\link[limma:lmFit]{limma::lmFit()}}.}
 
-\item{contrast_list}{String vector. The list of contrast of interest.}
+\item{contrast_list}{String vector. The strings need to have the form of
+\code{"contrast1-contrast2"}.}
+
 }
 \value{
 The Limma contrasts for further usage.
 }
 \description{
-Create all limma contrasts from
+  
+Create all limma contrasts from a provided string
+
 }

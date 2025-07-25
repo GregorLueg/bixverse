@@ -92,7 +92,8 @@ S7::method(ica_processing, bulk_coexp) <- function(
 #' This function allows to iterate over a vector of ncomp to identify which
 #' ncomp parameter to choose for your data set. The idea is to generate stability
 #' profiles over the different ncomps and identify a 'sweet spot' of good
-#' stability of the identified independent components
+#' stability, low mutual information and good convergence of the identified
+#' independent components
 #'
 #' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
@@ -258,7 +259,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 
   all_scores <- c()
   all_convergence <- c()
-  all_orthogonality <- c()
+  all_mutual_information <- c()
 
   if (.verbose) {
     pb <- txtProgressBar(initial = 0, max = length(n_comp_vector), style = 3)
@@ -300,11 +301,11 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
         return_centrotype = TRUE
       )
 
-    orthogonality <- component_orthogonality(centrotype)
+    mutual_information <- component_mutual_information(centrotype)
 
     all_scores <- append(all_scores, sort(stability_scores, decreasing = TRUE))
     all_convergence <- append(all_convergence, converged)
-    all_orthogonality <- append(all_orthogonality, orthogonality)
+    all_mutual_information <- append(all_mutual_information, mutual_information)
 
     if (.verbose) setTxtProgressBar(pb, i)
   }
@@ -352,8 +353,12 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
     .(no_components)
   ] %>%
     merge(., prop_converged, by = "no_components") %>%
-    .[, orthogonality := all_orthogonality] %>%
-    .[, combined_score := median_stability * converged * orthogonality]
+    .[, norm_mutual_information := all_mutual_information] %>%
+    .[,
+      combined_score := median_stability *
+        converged *
+        (1 - norm_mutual_information)
+    ]
 
   stability_params <- list(
     ica_type = ica_type,
@@ -767,8 +772,18 @@ S7::method(plot_ica_ncomp_params, bulk_coexp) <- function(object) {
   }
 
   renaming <- setNames(
-    c("Median stability", "% Converged", "IC Orthogonality", "Combined score"),
-    c("median_stability", "converged", "orthogonality", "combined_score")
+    c(
+      "Median stability",
+      "% Converged",
+      "IC (1 - nMI)",
+      "Combined score"
+    ),
+    c(
+      "median_stability",
+      "converged",
+      "norm_mutual_information",
+      "combined_score"
+    )
   )
 
   plot_df_red <- plot_df[,
@@ -776,11 +791,12 @@ S7::method(plot_ica_ncomp_params, bulk_coexp) <- function(object) {
       "no_components",
       "median_stability",
       "converged",
-      "orthogonality",
+      "norm_mutual_information",
       "combined_score"
     ),
     with = FALSE
   ] %>%
+    .[, norm_mutual_information := 1 - norm_mutual_information] %>%
     melt(., id = "no_components") %>%
     .[, variable := renaming[variable]]
 
@@ -836,7 +852,10 @@ S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
   plot_df <- S7::prop(object, "outputs")[["ica_stability_res"]]
   if (is.null(plot_df)) {
     warning(
-      "No ICA stability results found. Did you run ica_evaluate_comp()? Returning NULL."
+      paste(
+        "No ICA stability results found. Did you run ica_evaluate_comp()?",
+        "Returning NULL."
+      )
     )
     return(NULL)
   }
@@ -955,28 +974,30 @@ community_stability <- function(no_comp, s, return_centrotype) {
   res
 }
 
-## component orthogonality -----------------------------------------------------
+## component mutual information ------------------------------------------------
 
-#' Assess the orthogonality of the ICA components
+#' Assess the NMI of the ICA components
 #'
 #' @description
-#' Assesses the orthogonality of the discovered independent components. It leverages
-#' the cosine similarity to calculate this. Orthogonality is defined as:
-#' `1 - abs(cos) / length(cos)`.
+#' Assesses the normalised mutual information of the components.
 #'
 #' @param centrotype Numeric matrix. The calculated centrotypes for a given
 #' number of component.
 #'
-#' @returns Returns the average orthogonality between all the pairs.
-component_orthogonality <- function(centrotype) {
+#' @returns Returns the average normalised mutual information across all
+#' components
+component_mutual_information <- function(centrotype) {
   # checks
   checkmate::assertMatrix(centrotype, mode = "numeric")
 
   # function
-  cosine_sim <- rs_dense_to_upper_triangle(abs(rs_cos(centrotype)), 1L)
-  orthogonality <- sum(1 - cosine_sim) / length(cosine_sim)
+  mi_data <- rs_dense_to_upper_triangle(
+    rs_mutual_info(centrotype, n_bins = NULL, normalise = TRUE),
+    1L
+  )
+  total_mi <- sum(mi_data) / length(mi_data)
 
-  return(orthogonality)
+  return(total_mi)
 }
 
 
@@ -1000,4 +1021,47 @@ flip_ica_loading_signs <- function(x) {
     -x
   }
   y
+}
+
+## getters ---------------------------------------------------------------------
+
+#' @title Get the ICA component data (stability, convergence, nMI)
+#'
+#' @description
+#' Getter function to extract the ICA component data in terms of stability,
+#' convergence and normalised mutual information between the components. If not
+#' found will return `NULL`.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#'
+#' @return data.table with the ICA parameter data (if found. Otherwise `NULL`.)
+#'
+#' @export
+get_ica_stability_res <- S7::new_generic(
+  name = "get_ica_stability_res",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @method get_ica_stability_res bulk_coexp
+S7::method(get_ica_stability_res, bulk_coexp) <- function(object) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+
+  stability_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
+  if (is.null(stability_df)) {
+    warning(
+      paste(
+        "No ICA stability results found. Did you run ica_evaluate_comp()?",
+        "Returning NULL."
+      )
+    )
+    return(NULL)
+  }
+
+  return(stability_df)
 }

@@ -1,47 +1,8 @@
 # methods ----------------------------------------------------------------------
 
-## helpers ---------------------------------------------------------------------
+## pre-processing --------------------------------------------------------------
 
-#' Helper function to check if PC1/2 distinguish groups
-#'
-#' @description
-#' Runs an ANOVA for the group variable vs PC1 and PC2 and checks if either
-#' principal component can separate the groups.
-#'
-#' @param pc1 Numeric vector. The values of PC1.
-#' @param pc2 Numeric vector. The values of PC2.
-#' @param grps Factor or character vector. The group vector.
-#'
-#' @returns A data.table with two columns
-#'
-#' @import data.table
-.check_pca_grp_differences <- function(pc1, pc2, grps) {
-  # Globals
-  lm <- anova <- NULL
-
-  # Checks
-  checkmate::qassert(pc1, "N+")
-  checkmate::qassert(pc2, "N+")
-  checkmate::qassert(grps, c("F+", "S+"))
-  # Function body
-  pca_anova_dt <- if (length(unique(grps)) > 1) {
-    pc1_anova_pval <- anova(lm(pc1 ~ grps))$`Pr(>F)`[1]
-    pc2_anova_pval <- anova(lm(pc2 ~ grps))$`Pr(>F)`[1]
-    data.table::data.table(
-      pc = c("PC1", "PC2"),
-      pvalue = c(pc1_anova_pval, pc2_anova_pval)
-    )
-  } else {
-    data.table::data.table(
-      pc = c("PC1", "PC2"),
-      pvalue = c(NA, NA)
-    )
-  }
-
-  return(pca_anova_dt)
-}
-
-## pre-processing ---------------------------------------------------------------
+### bulk dge -------------------------------------------------------------------
 
 #' QC on the bulk dge data
 #'
@@ -51,15 +12,17 @@
 #' @param object The underlying class, see [bixverse::bulk_dge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
-#' @param norm_method String. One of `c("TMM", "TMMwsp", "RLE", "upperquartile",`
-#' ` "none")`. Please refer to [edgeR::normLibSizes()].
+#' @param norm_method String. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
+#' [edgeR::normLibSizes()].
 #' @param outlier_threshold Float. Number of standard deviations in terms of
 #' percentage genes detected you allow before removing a sample. Defaults to `2`.
 #' @param min_prop Float. Minimum proportion of samples in which the gene has
 #' to be identified in.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return ...
+#' @return Returns the class with the `processed_data` data slot populated and
+#' applied parameters added to the `params` slot.
 #'
 #' @export
 #'
@@ -118,7 +81,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   checkmate::assertTRUE(group_col %in% colnames(meta_data))
 
   # Sample outlier removal
-  if (.verbose) message("Detecting sample outliers.")
+  if (.verbose) {
+    message("Detecting sample outliers.")
+  }
   detected_genes_nb <- data.table::data.table(
     sample_id = colnames(raw_counts),
     nb_detected_genes = matrixStats::colSums2(raw_counts > 0)
@@ -194,18 +159,20 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     )
 
   outliers <- samples$perc_detected_genes <= min_perc
-  if (.verbose)
+  if (.verbose) {
     message(sprintf(
       "A total of %i samples are detected as outlier.",
       sum(outliers)
     ))
+  }
 
   samples_red <- samples[!(outliers), ]
   raw_counts <- raw_counts[, unique(samples_red$sample_id)]
 
   ## Voom normalization
-  if (.verbose)
+  if (.verbose) {
     message("Removing lowly expressed genes and normalising counts.")
+  }
   dge_list <- edgeR::DGEList(raw_counts)
 
   # Filter lowly expressed genes
@@ -214,7 +181,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     min.prop = min_prop,
     group = samples[[group_col]]
   )
-  if (.verbose) message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+  if (.verbose) {
+    message(sprintf("A total of %i genes are kept.", sum(to_keep)))
+  }
 
   dge_list <- edgeR::calcNormFactors(
     dge_list[to_keep, ],
@@ -254,8 +223,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     dge_list = dge_list,
     sample_info = samples_red,
     normalised_counts = voom_obj$E,
-    group_col = group_col,
-    outliers = outliers
+    group_col = group_col
   )
 
   S7::prop(object, "params")[["QC_params"]] <- list(
@@ -267,6 +235,285 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   return(object)
 }
 
+
+### bulk cor modules -----------------------------------------------------------
+
+#' Process the raw data
+#'
+#' @description
+#' Function to do general pre-processing on top of the [bixverse::bulk_coexp()].
+#' Options to do scaling, HVG selection, etc.
+#'
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param hvg Integer or float. If an integer, the top `hvg` genes will be
+#' included; if float, the float has to be between 0 and 1, representing the
+#' percentage of genes to include.
+#' @param mad_threshold Float. Instead of of selecting number or proportion of
+#' genes, you can also provide a mad_threshold.
+#' @param scaling Boolean. Shall the data be scaled.
+#' @param scaling_type String. You have the option to use normal scaling or
+#' robust scaling.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return Returns the class with the `processed_data` data slot populated and
+#' applied parameters added to the `params` slot.
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+preprocess_bulk_coexp <- S7::new_generic(
+  "preprocess_bulk_coexp",
+  "object",
+  fun = function(
+    object,
+    hvg = NULL,
+    mad_threshold = NULL,
+    scaling = FALSE,
+    scaling_type = c("normal", "robust"),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method preprocess_bulk_coexp bulk_coexp
+#' @export
+S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
+  object,
+  hvg = NULL,
+  mad_threshold = NULL,
+  scaling = FALSE,
+  scaling_type = c("normal", "robust"),
+  .verbose = TRUE
+) {
+  # Scope checks
+  feature_name <- MAD <- NULL
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(mad_threshold, c("R1", "0"))
+  nfeatures <- S7::prop(object, "params")[["original_dim"]][2]
+  checkmate::qassert(hvg, c("R1[0,1]", sprintf("I1[0,%i]", nfeatures), "0"))
+  checkmate::qassert(scaling, "B1")
+  if (scaling) {
+    checkmate::assertChoice(scaling_type, c("normal", "robust"))
+  }
+
+  mat <- S7::prop(object, "raw_data")
+
+  feature_meta <- data.table::data.table(
+    feature_name = colnames(mat),
+    mean_exp = colMeans(mat),
+    MAD = matrixStats::colMads(mat),
+    var_exp = matrixStats::colVars(mat)
+  ) %>%
+    data.table::setorder(-MAD)
+
+  if (!is.null(hvg) & !is.null(mad_threshold)) {
+    choice <- menu(
+      choices = c("MAD threshold", "HVG threshold"),
+      title = paste(
+        "You have provided both a MAD and HVG",
+        "threshold. Which one do you want to use?"
+      )
+    )
+    if (choice == 1) {
+      hvg <- NULL
+    } else {
+      mad_threshold <- NULL
+    }
+  }
+
+  if (is.null(hvg) & is.null(mad_threshold)) {
+    hvg <- 1
+  }
+
+  if (!is.null(hvg)) {
+    no_genes_to_take <-
+      ifelse(is.integer(hvg), hvg, ceiling(hvg * ncol(mat)))
+    hvg_genes <- feature_meta[1:no_genes_to_take, feature_name]
+  } else {
+    hvg_genes <- feature_meta[MAD >= mad_threshold, feature_name]
+  }
+
+  if (.verbose) {
+    message(sprintf("A total of %i genes will be included.", length(hvg_genes)))
+  }
+
+  feature_meta[, hvg := feature_name %in% hvg_genes]
+
+  # Process the matrix
+  matrix_processed <- mat[, hvg_genes]
+
+  if (scaling) {
+    fun <-
+      ifelse(scaling_type == "normal", "scale", "bixverse::robust_scale")
+    matrix_processed <- rlang::eval_tidy(rlang::quo(apply(
+      matrix_processed,
+      1,
+      !!!rlang::parse_exprs(fun)
+    )))
+  }
+
+  processing_params <- list(
+    mad_threshold = if (is.null(mad_threshold)) {
+      "not applicable"
+    } else {
+      mad_threshold
+    },
+    hvg = if (is.null(hvg)) {
+      "not applicable"
+    } else {
+      hvg
+    },
+    scaling = scaling,
+    scaling_type = if (!scaling) {
+      "not applicable"
+    } else {
+      scaling_type
+    }
+  )
+
+  S7::prop(object, "params")[["preprocessing"]] <-
+    processing_params
+  S7::prop(object, "processed_data")[["processed_data"]] <-
+    matrix_processed
+  S7::prop(object, "processed_data")[["feature_meta"]] <-
+    feature_meta
+
+  object
+}
+
+### plots ----------------------------------------------------------------------
+
+#' @title Plot the highly variable genes
+#'
+#' @description
+#' Plots the median-absolute deviation of the genes and applied thresholds.
+#' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
+#' error otherwise.
+#'
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param bins Integer. Number of bins to plot.
+#'
+plot_hvgs <- S7::new_generic(
+  "plot_hvgs",
+  "object",
+  fun = function(object, bins = 50L) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_hvgs bulk_coexp
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(bins, "I1")
+  # Early return
+  if (is.null(S7::prop(object, "params")[["preprocessing"]])) {
+    warning("No pre-processing data found. Returning NULL.")
+    return(NULL)
+  }
+  plot_df <- S7::prop(object, "processed_data")[["feature_meta"]]
+
+  p <- ggplot2::ggplot(data = plot_df, mapping = aes(x = MAD)) +
+    ggplot2::geom_histogram(
+      mapping = aes(fill = hvg),
+      bins = 50L,
+      color = "black",
+      alpha = 0.7
+    ) +
+    ggplot2::scale_fill_manual(
+      values = setNames(c("orange", "grey"), c(TRUE, FALSE))
+    ) +
+    ggplot2::ggtitle(
+      "Distribution of MAD across the genes",
+      subtitle = "And included genes"
+    ) +
+    ggplot2::theme_minimal()
+
+  mad_threshold <- S7::prop(object, "params")[["preprocessing"]][[
+    "mad_threshold"
+  ]]
+
+  if (mad_threshold != "not applicable") {
+    p <- p +
+      ggplot2::geom_vline(
+        xintercept = mad_threshold,
+        linetype = "dashed",
+        color = "darkred"
+      )
+  }
+
+  return(p)
+}
+
+#' Return QC plots
+#'
+#' @description
+#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
+#' class. These are added when you run for example
+#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
+#' `NULL` and provide input when prompted, or you provide the name. The possible
+#' plots that might be in the class
+#' \itemize{
+#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
+#'  respective cohorts
+#'  \item p2_outliers An outlier plot based on the data from p1
+#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
+#'  lowly expressed genes
+#'  \item p4_boxplot_normalization Expression levels after normalisation
+#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
+#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
+#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
+#'  with the case-control category overlayed. Added if
+#'  [bixverse::batch_correction_bulk_dge()] is run.
+#' }
+#'
+#' @param object `bulk_dge` class.
+#' @param plot_choice Optional string or integer. Index or name of the plate.
+#'
+#' @return Returns the DGEList stored in the class.
+#'
+#' @export
+get_dge_qc_plot <- S7::new_generic(
+  name = "get_dge_qc_plot",
+  dispatch_args = "object",
+  fun = function(object, plot_choice = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_dge_qc_plot bulk_dge
+#'
+#' @export
+S7::method(get_dge_qc_plot, bulk_dge) <-
+  function(object, plot_choice = NULL) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
+
+    plots <- S7::prop(object, "plots")
+    plot_names <- names(plots)
+
+    user_choice <- ifelse(
+      is.null(plot_choice),
+      select_user_option(plot_names),
+      plot_choice
+    )
+
+    # Return
+    return(plots[[user_choice]])
+  }
 
 ## pca -------------------------------------------------------------------------
 
@@ -383,7 +630,7 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     ggplot2::ggtitle("PCA with key columns") +
     ggplot2::labs(colour = "Groups:")
 
-  pca_anova <- .check_pca_grp_differences(
+  pca_anova <- check_pca_grp_differences(
     pc1 = plot_df$PC_1,
     pc2 = plot_df$PC_2,
     grps = plot_df[[contrast_info]]
@@ -402,6 +649,137 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
   S7::prop(object, "plots")[['p5_pca_case_control']] <- p5_pca_case_control
 
   return(object)
+}
+
+### helpers --------------------------------------------------------------------
+
+#' Helper function to check if PC1 and/or PC2 distinguish groups
+#'
+#' @description
+#' Runs an ANOVA for the group variable vs PC1 and PC2 and checks if either
+#' principal component can separate the groups.
+#'
+#' @param pc1 Numeric vector. The values of PC1.
+#' @param pc2 Numeric vector. The values of PC2.
+#' @param grps Factor or character vector. The group vector.
+#'
+#' @returns A data.table with two columns
+#'
+#' @import data.table
+check_pca_grp_differences <- function(pc1, pc2, grps) {
+  # Globals
+  lm <- anova <- NULL
+
+  # Checks
+  checkmate::qassert(pc1, "N+")
+  checkmate::qassert(pc2, "N+")
+  checkmate::qassert(grps, c("F+", "S+"))
+  # Function body
+  pca_anova_dt <- if (length(unique(grps)) > 1) {
+    pc1_anova_pval <- anova(lm(pc1 ~ grps))$`Pr(>F)`[1]
+    pc2_anova_pval <- anova(lm(pc2 ~ grps))$`Pr(>F)`[1]
+    data.table::data.table(
+      pc = c("PC1", "PC2"),
+      pvalue = c(pc1_anova_pval, pc2_anova_pval)
+    )
+  } else {
+    data.table::data.table(
+      pc = c("PC1", "PC2"),
+      pvalue = c(NA, NA)
+    )
+  }
+
+  return(pca_anova_dt)
+}
+
+### plots ----------------------------------------------------------------------
+
+#' Plot the PCA data
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param pcs_to_plot String vector of length 2.
+#' Will default to `c("PC_1", "PC_2")`.
+#' @param cols_to_plot String vector. The columns within the meta-data to plot.
+#' Defaults to `c('contrast_info', 'sample_source')`
+#' @param ... additional parameters
+#'
+#' @return A plot if the PCA information was found. `NULL` if no PCA was found.
+#'
+#' @export
+plot_pca_res <- S7::new_generic(
+  "plot_pca_res",
+  "object",
+  fun = function(
+    object,
+    cols_to_plot = c('contrast_info', 'sample_source'),
+    pcs_to_plot = c("PC_1", "PC_2"),
+    ...
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_pca_res bulk_dge
+#'
+#' @export
+#'
+#' @import data.table
+#' @import ggplot2
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+S7::method(plot_pca_res, bulk_dge) <- function(
+  object,
+  cols_to_plot = c('contrast_info', 'sample_source'),
+  pcs_to_plot = c("PC_1", "PC_2"),
+  ...
+) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::qassert(cols_to_plot, "S+")
+  checkmate::qassert(pcs_to_plot, "S2")
+
+  pca_dt <- S7::prop(object, "outputs")[['pca']]
+  meta_data <- S7::prop(object, "meta_data")
+
+  if (is.null(pca_dt)) {
+    warning(paste(
+      "No PCA results found in the object.",
+      "Did you run calculate_pca_bulk_dge()?",
+      "Returning NULL."
+    ))
+    return(NULL)
+  }
+
+  checkmate::assertNames(
+    names(pca_dt),
+    must.include = pcs_to_plot
+  )
+  checkmate::assertNames(
+    names(meta_data),
+    must.include = cols_to_plot
+  )
+
+  plot_df <- data.table::merge.data.table(
+    pca_dt[, c('sample_id', pcs_to_plot), with = FALSE],
+    meta_data[, c('sample_id', cols_to_plot), with = FALSE],
+    by.x = 'sample_id',
+    by.y = 'sample_id'
+  ) %>%
+    data.table::melt(id.vars = c('sample_id', pcs_to_plot))
+
+  p <- ggplot2::ggplot(
+    data = plot_df,
+    mapping = aes(x = .data[[pcs_to_plot[1]]], y = .data[[pcs_to_plot[2]]])
+  ) +
+    ggplot2::geom_point(mapping = aes(col = value), size = 3, alpha = 0.7) +
+    ggplot2::facet_wrap(facets = ~variable, ncol = 3L) +
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2") +
+    ggplot2::theme_minimal() +
+    ggplot2::ggtitle("PCA with key columns") +
+    ggplot2::labs(colour = "Groups:")
+
+  return(p)
 }
 
 ## batch correction ------------------------------------------------------------
@@ -440,7 +818,6 @@ batch_correction_bulk_dge <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
 
 #' @method batch_correction_bulk_dge bulk_dge
 #'
@@ -593,7 +970,6 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   return(object)
 }
 
-
 ## differential gene expression ------------------------------------------------
 
 #' Calculate all possible DGE variants
@@ -601,7 +977,8 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 #' @description
 #' This class is a wrapper class around applying various differential gene
 #' expression on the data. At a minimum you will need to provide a
-#' `contrast_column` that can be found in the meta-data. Every permutation of
+#' `contrast_column` that can be found in the meta-data. If you do not provide
+#' a vector of contrasts that you wish to test for, every permutation of
 #' groups represented in that column will be tested against each other. Two
 #' variants of differential gene expression analyses will be applied:
 #' \enumerate{
@@ -623,14 +1000,15 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 #' sub groupings, this can be provided here. An example could be different
 #' sampled tissues and you wish to run the DGE analyses within each tissue
 #' separately.
-#' @param co_variates Optional String vector. Any co-variates you wish to
+#' @param co_variates Optional string vector. Any co-variates you wish to
 #' consider during the Limma Voom modelling.
-#' @param contrast_list String or NULL. Optional list of contrast formatted as contrast1-contrast2.
-#' Default NULL will create all contrast automatically.
+#' @param contrast_list Optional string vector. A vectors that contains the
+#' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
+#' all possible contrast automatically.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
 #' @param small_sample_correction Can be NULL (automatic determination if a
-#' small sample size correction should be applied) or Boolean.
+#' small sample size correction should be applied) or a Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
@@ -726,6 +1104,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     if (.verbose) {
       message("Calculating the differential expression with limma results.")
     }
+
     limma_results_final <- run_limma_voom(
       meta_data = sample_info,
       main_contrast = contrast_column,
@@ -757,6 +1136,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         "Method will run Limma Voom and Hedge's G on the individual data sets."
       ))
     }
+
     # Iterate through the grps
     groups <- unique(sample_info[[filter_column]])
     results <- purrr::map(groups, \(group) {
@@ -832,159 +1212,3 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
   return(object)
 }
-
-
-# plotting ---------------------------------------------------------------------
-
-## PCA plots -------------------------------------------------------------------
-
-#' Plot the PCA data
-#'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
-#' @param pcs_to_plot String vector of length 2.
-#' Will default to `c("PC_1", "PC_2")`.
-#' @param cols_to_plot String vector. The columns within the meta-data to plot.
-#' Defaults to `c('contrast_info', 'sample_source')`
-#' @param ... additional parameters
-#'
-#' @return A plot if the PCA information was found. `NULL` if no PCA was found.
-#'
-#' @export
-plot_pca_res <- S7::new_generic(
-  "plot_pca_res",
-  "object",
-  fun = function(
-    object,
-    cols_to_plot = c('contrast_info', 'sample_source'),
-    pcs_to_plot = c("PC_1", "PC_2"),
-    ...
-  ) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method plot_pca_res bulk_dge
-#'
-#' @export
-#'
-#' @import data.table
-#' @import ggplot2
-#' @importFrom magrittr `%>%`
-#' @importFrom magrittr `%$%`
-S7::method(plot_pca_res, bulk_dge) <- function(
-  object,
-  cols_to_plot = c('contrast_info', 'sample_source'),
-  pcs_to_plot = c("PC_1", "PC_2"),
-  ...
-) {
-  # Checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
-  checkmate::qassert(cols_to_plot, "S+")
-  checkmate::qassert(pcs_to_plot, "S2")
-
-  pca_dt <- S7::prop(object, "outputs")[['pca']]
-  meta_data <- S7::prop(object, "meta_data")
-
-  if (is.null(pca_dt)) {
-    warning(paste(
-      "No PCA results found in the object.",
-      "Did you run calculate_pca_bulk_dge()?",
-      "Returning NULL."
-    ))
-    return(NULL)
-  }
-
-  checkmate::assertNames(
-    names(pca_dt),
-    must.include = pcs_to_plot
-  )
-  checkmate::assertNames(
-    names(meta_data),
-    must.include = cols_to_plot
-  )
-
-  plot_df <- data.table::merge.data.table(
-    pca_dt[, c('sample_id', pcs_to_plot), with = FALSE],
-    meta_data[, c('sample_id', cols_to_plot), with = FALSE],
-    by.x = 'sample_id',
-    by.y = 'sample_id'
-  ) %>%
-    data.table::melt(id.vars = c('sample_id', pcs_to_plot))
-
-  p <- ggplot2::ggplot(
-    data = plot_df,
-    mapping = aes(x = .data[[pcs_to_plot[1]]], y = .data[[pcs_to_plot[2]]])
-  ) +
-    ggplot2::geom_point(mapping = aes(col = value), size = 3, alpha = 0.7) +
-    ggplot2::facet_wrap(facets = ~variable, ncol = 3L) +
-    ggplot2::xlab("PC1") +
-    ggplot2::ylab("PC2") +
-    ggplot2::theme_minimal() +
-    ggplot2::ggtitle("PCA with key columns") +
-    ggplot2::labs(colour = "Groups:")
-
-  return(p)
-}
-
-## QC plots --------------------------------------------------------------------
-
-#' Return QC plots
-#'
-#' @description
-#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
-#' class. These are added when you run for example
-#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
-#' `NULL` and provide input when prompted, or you provide the name. The possible
-#' plots that might be in the class
-#' \itemize{
-#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
-#'  respective cohorts
-#'  \item p2_outliers An outlier plot based on the data from p1
-#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
-#'  lowly expressed genes
-#'  \item p4_boxplot_normalization Expression levels after normalisation
-#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
-#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
-#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
-#'  with the case-control category overlayed. Added if
-#' [bixverse::batch_correction_bulk_dge()] is run.
-#' }
-#'
-#' @param object `bulk_dge` class.
-#' @param plot_choice Optional string or integer. Index or name of the plate.
-#'
-#' @return Returns the DGEList stored in the class.
-#'
-#' @export
-get_dge_qc_plot <- S7::new_generic(
-  name = "get_dge_qc_plot",
-  dispatch_args = "object",
-  fun = function(object, plot_choice = NULL) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method get_dge_qc_plot bulk_dge
-#'
-#' @export
-S7::method(get_dge_qc_plot, bulk_dge) <-
-  function(object, plot_choice = NULL) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::bulk_dge"
-    )
-    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
-
-    plots <- S7::prop(object, "plots")
-    plot_names <- names(plots)
-
-    user_choice <- ifelse(
-      is.null(plot_choice),
-      select_user_option(plot_names),
-      plot_choice
-    )
-
-    # Return
-    return(plots[[user_choice]])
-  }

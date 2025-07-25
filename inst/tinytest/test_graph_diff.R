@@ -1,6 +1,6 @@
 # graph diffusion tests --------------------------------------------------------
 
-library(data.table)
+suppressPackageStartupMessages(library(data.table))
 library(magrittr)
 
 ## data ------------------------------------------------------------------------

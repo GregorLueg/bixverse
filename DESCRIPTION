@@ -54,11 +54,13 @@ Imports:
     rhdf5,
     rlang,
     S7,
+    stringr,
     zeallot
 Suggests: 
     BiocParallel,
     fgsea,
     GSVA,
+    infotheo,
     knitr,
     microbenchmark,
     msigdbr,
@@ -72,3 +74,5 @@ SystemRequirements:
     Cargo (Rust's package manager), rustc
 VignetteBuilder: 
     quarto
+Depends: 
+    R (>= 4.2)

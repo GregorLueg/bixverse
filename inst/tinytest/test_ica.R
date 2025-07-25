@@ -248,10 +248,10 @@ expect_equal(
   info = paste("ICA class - K matrix")
 )
 
-ica_stability_res <- ica_test@outputs$ica_stability_res_sum
+ica_stability_res <- get_ica_stability_res(ica_test)
 
 expect_equal(
-  current = ica_test@outputs$ica_stability_res_sum,
+  current = ica_stability_res,
   target = expected_ica_stability_res,
   info = paste("ICA class - Stability results")
 )

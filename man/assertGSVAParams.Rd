@@ -2,7 +2,7 @@
 % Please edit documentation in R/checkmate_extensions.R
 \name{assertGSVAParams}
 \alias{assertGSVAParams}
-\title{Assert ssGSEA parameter}
+\title{Assert GSVA parameter}
 \usage{
 assertGSVAParams(x, .var.name = checkmate::vname(x), add = NULL)
 }

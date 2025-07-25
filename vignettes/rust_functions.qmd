@@ -20,6 +20,7 @@ general. This vignette will show you to use:
 * Covariance (via `rs_covariance()`).
 * Covariance to correlation (via `rs_cov2cor()`).
 * Correlations between two matrices (via `rs_cor2()`).
+* Calculate the mutual information between columns (via `rs_mutual_information()`)
 * Calculations of set similarities between (via `rs_set_similarity_list()` or
 `rs_set_similarity()`).
 
@@ -202,6 +203,64 @@ And speed between Rust and R
 microbenchmark::microbenchmark(
   r = cor(random_data, random_data_2),
   rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
+  times = 50L
+)
+```
+
+### Mutual information 
+
+Another quantity you might be interested in is the mutual information between
+between your variables of interest. `bixverse` also provides a Rust-powered 
+interface into very rapid calculations in this regard.
+
+```{r}
+#| label: generate new smaller data
+
+# we are going to create a reduced set for the benchmark to finish 
+# in a reasonable time
+set.seed(246L)
+
+nrows <- 100
+ncols <- 100
+
+mat <- matrix(data = rnorm(nrows * ncols), nrow = nrows, ncol = ncols)
+rownames(mat) <- sprintf("sample_%i", 1:nrows)
+colnames(mat) <- sprintf("feature_%i", 1:ncols)
+```
+
+To run the function you can just use the following code. The Rust version
+will default to sqrt(nrow())
+
+```{r}
+#| label: calculate the mutual informations on a per column basis
+#| eval: !expr requireNamespace("infotheo", quietly = TRUE)
+
+rust_res_mi <- rs_mutual_info(mat, n_bins = NULL, normalise = FALSE)
+rownames(rust_res_mi) <- colnames(rust_res_mi) <- colnames(mat)
+
+# ensure that the same discretisation is used
+infotheo_res_mi <- infotheo::mutinformation(infotheo::discretize(
+  mat,
+  disc = "equalwidth",
+  nbins = sqrt(nrow(mat))
+))
+
+all.equal(rust_res_mi, infotheo_res_mi)
+```
+
+Again, the Rust implementation is way faster.
+
+```{r}
+#| label: speed differences bixverse vs. infotheo
+#| eval: !expr requireNamespace(c("infotheo", "microbench"), quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  infotheo = infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalwidth",
+    nbins = sqrt(nrow(mat))
+  )),
+  rust = rs_mutual_info(mat, n_bins = NULL, normalise = FALSE),
   times = 50L
 )
 ```
