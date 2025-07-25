@@ -273,7 +273,6 @@ run_limma_voom <- function(
 hedges_g_dge <- function(
   meta_data,
   main_contrast,
-  contrast_list = NULL,
   normalised_counts,
   contrast_list = NULL,
   small_sample_correction = NULL,

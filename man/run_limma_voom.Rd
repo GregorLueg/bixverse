@@ -33,8 +33,6 @@ regenerated.}
 
 \item{normalised_counts}{Matrix. Normalised count matrix.}
 
-\item{normalised_counts}{Matrix. Normalised count matrix.}
-
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}
 
