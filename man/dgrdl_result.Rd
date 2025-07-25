@@ -16,18 +16,18 @@ dgrdl_result(
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{dgrdl_params}{List. Output of \code{\link[=params_dgrdl]{params_dgrdl()}}:
-\itemize {
-\item sparsity - Integer. Sparsity constraint (max non-zero coefficients
-per signal)
-\item dict size - Integer. The dictionary size.
-\item alpha - Float. Sample context regularisation weight.
-\item beta - Float. Feature effect regularisation weight.
-\item max_iter - Integer. Maximum number of iterations for the main
-algorithm.
-\item k_neighbours - Integer. Number of neighbours for the KNN graph for the
-feature and sample Laplacian.
-\item admm_iter - Integer. ADMM iterations for sparse coding.
-\item rho - Float. ADMM step size.
+\itemize{
+\item{sparsity - Integer. Sparsity constraint (max non-zero coefficients
+per signal)}
+\item{dict size - Integer. The dictionary size.}
+\item{alpha - Float. Sample context regularisation weight.}
+\item{beta - Float. Feature effect regularisation weight.}
+\item{max_iter - Integer. Maximum number of iterations for the main
+algorithm.}
+\item{k_neighbours - Integer. Number of neighbours for the KNN graph for the
+feature and sample Laplacian.}
+\item{admm_iter - Integer. ADMM iterations for sparse coding.}
+\item{rho - Float. ADMM step size.}
 }}
 
 \item{seed}{Integer. Seed for the initialisation of the dictionary.}

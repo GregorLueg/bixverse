@@ -327,7 +327,7 @@ generate_gene_module_data <- function(
 
 #' Plot the (simple) synthetic gene expression
 #'
-#' @param synthetic_gex `synthetic_matrix_simple` class. Output from
+#' @param x `synthetic_matrix_simple` class. Output from
 #' [bixverse::synthetic_signal_matrix()].
 #' @param ... Additional params
 #'
@@ -342,7 +342,7 @@ generate_gene_module_data <- function(
 #'
 #' plot(synthetic_gex)
 #' }
-plot.synthetic_matrix_simple <- function(synthetic_gex, ...) {
+plot.synthetic_matrix_simple <- function(x, ...) {
   # checks
   checkmate::assertClass(synthetic_gex, "synthetic_matrix_simple")
 
@@ -371,7 +371,7 @@ plot.synthetic_matrix_simple <- function(synthetic_gex, ...) {
 #' @title
 #' Plot the contrastive PCA example data
 #'
-#' @param cpca_data `cpca_synthetic_data` class. Output from
+#' @param x `cpca_synthetic_data` class. Output from
 #' [bixverse::synthetic_c_pca_data()].
 #' @param ... Additional params
 #'
@@ -383,7 +383,7 @@ plot.synthetic_matrix_simple <- function(synthetic_gex, ...) {
 #' @import patchwork
 #' @import ggplot2
 #' @importFrom magrittr `%>%`
-plot.cpca_synthetic_data <- function(cpca_data, ...) {
+plot.cpca_synthetic_data <- function(x, ...) {
   # checks
   checkmate::assertClass(cpca_data, "cpca_synthetic_data")
 

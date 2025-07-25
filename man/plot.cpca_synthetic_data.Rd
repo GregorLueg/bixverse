@@ -4,10 +4,10 @@
 \alias{plot.cpca_synthetic_data}
 \title{Plot the contrastive PCA example data}
 \usage{
-\method{plot}{cpca_synthetic_data}(cpca_data, ...)
+\method{plot}{cpca_synthetic_data}(x, ...)
 }
 \arguments{
-\item{cpca_data}{\code{cpca_synthetic_data} class. Output from
+\item{x}{\code{cpca_synthetic_data} class. Output from
 \code{\link[=synthetic_c_pca_data]{synthetic_c_pca_data()}}.}
 
 \item{...}{Additional params}

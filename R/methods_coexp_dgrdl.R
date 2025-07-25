@@ -16,19 +16,19 @@
 #' @param seed_vec Integer vector. The different initial seeds to test for the
 #' dictionary generation.
 #' @param dgrdl_params List. Output of [bixverse::params_dgrdl()]:
-#' \itemize {
-#'   \item sparsity - Integer. Sparsity constraint (max non-zero coefficients
-#'   per signal)
-#'   \item dict size - Integer. Will be ignored by this function and the
-#'   `dict_size_vec` vector will be used.
-#'   \item alpha - Float. Sample context regularisation weight.
-#'   \item beta - Float. Feature effect regularisation weight.
-#'   \item max_iter - Integer. Maximum number of iterations for the main
-#'   algorithm.
-#'   \item k_neighbours - Integer. Will be ignored by this function and the
-#'   `neighbours_vec` will be used.
-#'   \item admm_iter - Integer. ADMM iterations for sparse coding.
-#'   \item rho - Float. ADMM step size.
+#' \itemize{
+#'   \item{sparsity - Integer. Sparsity constraint (max non-zero coefficients
+#'   per signal)}
+#'   \item{dict size - Integer. Will be ignored by this function and the
+#'   `dict_size_vec` vector will be used.}
+#'   \item{alpha - Float. Sample context regularisation weight.}
+#'   \item{beta - Float. Feature effect regularisation weight.}
+#'   \item{max_iter - Integer. Maximum number of iterations for the main
+#'   algorithm.}
+#'   \item{k_neighbours - Integer. Will be ignored by this function and the
+#'   `neighbours_vec` will be used.}
+#'   \item{admm_iter - Integer. ADMM iterations for sparse coding.}
+#'   \item{rho - Float. ADMM step size.}
 #' }
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
@@ -137,18 +137,18 @@ S7::method(dgrdl_grid_search, bulk_coexp) <- function(
 #' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param dgrdl_params List. Output of [bixverse::params_dgrdl()]:
-#' \itemize {
-#'   \item sparsity - Integer. Sparsity constraint (max non-zero coefficients
-#'   per signal)
-#'   \item dict size - Integer. The dictionary size.
-#'   \item alpha - Float. Sample context regularisation weight.
-#'   \item beta - Float. Feature effect regularisation weight.
-#'   \item max_iter - Integer. Maximum number of iterations for the main
-#'   algorithm.
-#'   \item k_neighbours - Integer. Number of neighbours for the KNN graph for the
-#'   feature and sample Laplacian.
-#'   \item admm_iter - Integer. ADMM iterations for sparse coding.
-#'   \item rho - Float. ADMM step size.
+#' \itemize{
+#'   \item{sparsity - Integer. Sparsity constraint (max non-zero coefficients
+#'   per signal)}
+#'   \item{dict size - Integer. The dictionary size.}
+#'   \item{alpha - Float. Sample context regularisation weight.}
+#'   \item{beta - Float. Feature effect regularisation weight.}
+#'   \item{max_iter - Integer. Maximum number of iterations for the main
+#'   algorithm.}
+#'   \item{k_neighbours - Integer. Number of neighbours for the KNN graph for the
+#'   feature and sample Laplacian.}
+#'   \item{admm_iter - Integer. ADMM iterations for sparse coding.}
+#'   \item{rho - Float. ADMM step size.}
 #' }
 #' @param seed Integer. Seed for the initialisation of the dictionary.
 #' @param .verbose Boolean. Controls verbosity of the function.

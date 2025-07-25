@@ -4,10 +4,10 @@
 \alias{plot.synthetic_matrix_simple}
 \title{Plot the (simple) synthetic gene expression}
 \usage{
-\method{plot}{synthetic_matrix_simple}(synthetic_gex, ...)
+\method{plot}{synthetic_matrix_simple}(x, ...)
 }
 \arguments{
-\item{synthetic_gex}{\code{synthetic_matrix_simple} class. Output from
+\item{x}{\code{synthetic_matrix_simple} class. Output from
 \code{\link[=synthetic_signal_matrix]{synthetic_signal_matrix()}}.}
 
 \item{...}{Additional params}

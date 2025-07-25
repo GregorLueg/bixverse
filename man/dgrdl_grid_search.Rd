@@ -27,19 +27,19 @@ for.}
 dictionary generation.}
 
 \item{dgrdl_params}{List. Output of \code{\link[=params_dgrdl]{params_dgrdl()}}:
-\itemize {
-\item sparsity - Integer. Sparsity constraint (max non-zero coefficients
-per signal)
-\item dict size - Integer. Will be ignored by this function and the
-\code{dict_size_vec} vector will be used.
-\item alpha - Float. Sample context regularisation weight.
-\item beta - Float. Feature effect regularisation weight.
-\item max_iter - Integer. Maximum number of iterations for the main
-algorithm.
-\item k_neighbours - Integer. Will be ignored by this function and the
-\code{neighbours_vec} will be used.
-\item admm_iter - Integer. ADMM iterations for sparse coding.
-\item rho - Float. ADMM step size.
+\itemize{
+\item{sparsity - Integer. Sparsity constraint (max non-zero coefficients
+per signal)}
+\item{dict size - Integer. Will be ignored by this function and the
+\code{dict_size_vec} vector will be used.}
+\item{alpha - Float. Sample context regularisation weight.}
+\item{beta - Float. Feature effect regularisation weight.}
+\item{max_iter - Integer. Maximum number of iterations for the main
+algorithm.}
+\item{k_neighbours - Integer. Will be ignored by this function and the
+\code{neighbours_vec} will be used.}
+\item{admm_iter - Integer. ADMM iterations for sparse coding.}
+\item{rho - Float. ADMM step size.}
 }}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
