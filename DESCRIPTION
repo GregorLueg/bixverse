@@ -60,6 +60,7 @@ Suggests:
     BiocParallel,
     fgsea,
     GSVA,
+    infotheo,
     knitr,
     microbenchmark,
     msigdbr,

@@ -22,6 +22,7 @@ set similarity or correlation-based similarity.
 - Vignettes for various methods written and added.
 - GSVA and ssGSEA implemented in Rust.
 - Rust code reworked in different places to make some of the functions faster.
+- Mutual information calculations in Rust.
 
 #### Bug fixes, documentation updates
 

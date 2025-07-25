@@ -230,6 +230,48 @@ pub fn rank_matrix_col(mat: &MatRef<f64>) -> Mat<f64> {
     ranked_mat
 }
 
+/// Column wise binning
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply column-wise binning
+/// * `n_bins` - Optional number of bins. If not provided, will default to
+///              `sqrt(nrow)`
+///
+/// ### Returns
+///
+/// The matrix with the columns being binned into equal distances.
+pub fn bin_matrix_cols(mat: &MatRef<f64>, n_bins: Option<usize>) -> Mat<usize> {
+    let (n_rows, n_cols) = mat.shape();
+    let n_bins = n_bins.unwrap_or_else(|| (n_rows as f64).sqrt() as usize);
+
+    let binned_vals: Vec<Vec<usize>> = mat
+        .par_col_iter()
+        .map(|col| {
+            let (min_val, max_val) = col
+                .iter()
+                .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), x| {
+                    (min.min(*x), max.max(*x))
+                });
+            let range = max_val - min_val;
+            let step = range / n_bins as f64;
+
+            col.iter()
+                .map(|x| {
+                    if range == 0.0 {
+                        0
+                    } else {
+                        ((*x - min_val) / step).floor() as usize
+                    }
+                    .min(n_bins - 1)
+                })
+                .collect()
+        })
+        .collect();
+
+    Mat::from_fn(n_rows, n_cols, |i, j| binned_vals[j][i])
+}
+
 /// Calculate the co-variance
 ///
 /// ### Params
@@ -291,6 +333,74 @@ pub fn column_correlation(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
     let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
 
     cor
+}
+
+/// Calculate the mutual information matrix
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the column-wise mutual
+///           information
+/// * `n_bins` - Optional number of bins to use. Will default to `sqrt(nrows)`
+///              if nothing is provided.
+/// * `normalised` - Shall the normalised mutual information be calculated via
+///                  joint entropy normalisation.
+///
+/// ### Returns
+///
+/// The resulting mutual information matrix.
+pub fn column_mutual_information(
+    mat: &MatRef<f64>,
+    n_bins: Option<usize>,
+    normalised: bool,
+) -> Mat<f64> {
+    let binned_mat = bin_matrix_cols(mat, n_bins);
+
+    let n_cols = binned_mat.ncols();
+
+    let pairs: Vec<(usize, usize)> = (0..n_cols)
+        .flat_map(|i| (i + 1..n_cols).map(move |j| (i, j)))
+        .collect();
+
+    let mi_vals: Vec<((usize, usize), f64)> = pairs
+        .into_par_iter()
+        .map(|(i, j)| {
+            let mi = calculate_mi(binned_mat.col(i), binned_mat.col(j), n_bins);
+            let nmi = if normalised {
+                let joint_entropy =
+                    calculate_joint_entropy(binned_mat.col(i), binned_mat.col(j), n_bins);
+                mi / joint_entropy
+            } else {
+                mi
+            };
+            ((i, j), nmi)
+        })
+        .collect();
+
+    let entropy: Vec<f64> = (0..n_cols)
+        .into_par_iter()
+        .map(|i| {
+            let entropy = if normalised {
+                1.0
+            } else {
+                calculate_entropy(binned_mat.col(i), n_bins)
+            };
+            entropy
+        })
+        .collect();
+
+    let mut mi_matrix = Mat::zeros(n_cols, n_cols);
+
+    for ((i, j), mi_val) in mi_vals {
+        mi_matrix[(i, j)] = mi_val;
+        mi_matrix[(j, i)] = mi_val;
+    }
+
+    for i in 0..n_cols {
+        mi_matrix[(i, i)] = entropy[i];
+    }
+
+    mi_matrix
 }
 
 /// Calculates the correlation between two matrices

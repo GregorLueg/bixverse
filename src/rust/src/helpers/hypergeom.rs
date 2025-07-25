@@ -120,6 +120,7 @@ pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usi
 /// ### Returns
 ///
 /// A vector of hits, i.e., intersecting genes.
+#[inline]
 pub fn count_hits(
     gene_set_list: &[FxHashSet<String>],
     target_genes: &FxHashSet<String>,

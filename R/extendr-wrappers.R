@@ -792,6 +792,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 
+#' Calculates the mutual information matrix
+#'
+#' @description Calculates the mutual information across all columns in the
+#' data.
+#'
+#' @param x R matrix with doubles for which to calculate the mutual information
+#' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
+#' the function will default to `sqrt(nrows(x))`.
+#' @param normalise Boolean. Shall the normalised mutual information be
+#' calculated via joint entropy.
+#'
+#' @returns The mutual information matrix.
+#'
+#' @export
+rs_mutual_info <- function(x, n_bins, normalise) .Call(wrap__rs_mutual_info, x, n_bins, normalise)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.

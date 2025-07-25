@@ -37,6 +37,7 @@ to the most relevant ones.
 - GSVA and ssGSEA implemented leveraging Rust.
 - Update of the `furrr::future_map()` type functions to the faster 
 `mirai::mirai_map()`.
+- Mutual information calculations between continuous variables.
 
 **Warnings**: Some of the previous interfaces to the functions were changed
 in this release and might break compared to prior releases!
@@ -93,4 +94,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 18.07.2025*
+*Last update to the read-me: 25.07.2025*

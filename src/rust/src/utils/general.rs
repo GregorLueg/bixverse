@@ -1,7 +1,8 @@
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashSet};
 use std::cmp::PartialOrd;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::AddAssign;
 
 use faer::{concat, Mat, MatRef};
 
@@ -114,7 +115,7 @@ pub fn standard_deviation(x: &[f64]) -> f64 {
 ///
 /// A HashSet with borrowed String values
 pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
-    let mut set = FxHashSet::default();
+    let mut set = FxHashSet::with_capacity_and_hasher(x.len(), FxBuildHasher);
     for s in x {
         set.insert(s);
     }
@@ -125,7 +126,7 @@ pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
 ///
 /// ### Params
 ///
-/// * `vec` - The slice of f64s to rank.
+/// * `vec` - The slice of numericals to rank.
 ///
 /// ### Returns
 ///
@@ -189,16 +190,19 @@ where
 ///
 /// ### Params
 ///
-/// * `x` - The slice of f64
+/// * `x` - The slice of numerical values
 ///
 /// ### Returns
 ///
 /// The cumulative sum over the vector.
-pub fn cumsum(x: &[f64]) -> Vec<f64> {
-    let mut sum = 0.0;
+pub fn cumsum<T>(x: &[T]) -> Vec<T>
+where
+    T: Copy + Default + AddAssign<T>,
+{
+    let mut sum = T::default();
     x.iter()
-        .map(|&x| {
-            sum += x;
+        .map(|&val| {
+            sum += val;
             sum
         })
         .collect()

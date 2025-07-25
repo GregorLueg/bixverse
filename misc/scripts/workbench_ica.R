@@ -56,6 +56,8 @@ ica_test_1 <- ica_evaluate_comp(ica_test_1, ica_type = "logcosh")
 
 ica_test_1 <- ica_optimal_ncomp(ica_test_1, span = 0.5)
 
+head(ica_test_1@outputs$ica_stability_res_sum)
+
 plot_ica_ncomp_params(ica_test_1)
 
 ica_test_1 <- ica_stabilised_results(ica_test_1, ica_type = "logcosh")

@@ -254,3 +254,5 @@ expect_equal(
   info = "DGRDL grid search: expected sample laplacian objective",
   tolerance = 1e-7
 )
+
+# s7 class version -------------------------------------------------------------

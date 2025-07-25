@@ -23,7 +23,7 @@ signal)}
 
 \item{alpha}{Float. Sample context regularisation weight.}
 
-\item{beta}{Float. Feature effect regularisation weight}
+\item{beta}{Float. Feature effect regularisation weight.}
 
 \item{max_iter}{Integer. Maximum number of iterations for the main algorithm.}
 

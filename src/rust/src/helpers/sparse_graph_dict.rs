@@ -562,8 +562,6 @@ impl Dgrdl {
                     params.dict_size = *dict_size;
                     params.k_neighbours = k_neighbours;
 
-                    println!("Parameters are {:?}", params);
-
                     if verbose {
                         println!(
                             " Iter ({}|{}) - seed = {} | dict_size = {} | k_neighbours = {}",

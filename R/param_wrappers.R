@@ -391,7 +391,7 @@ params_coremo <- function(
 #' signal)
 #' @param dict_size Integer. Dictionary size
 #' @param alpha Float. Sample context regularisation weight.
-#' @param beta Float. Feature effect regularisation weight
+#' @param beta Float. Feature effect regularisation weight.
 #' @param max_iter Integer. Maximum number of iterations for the main algorithm.
 #' @param k_neighbours Integer. Number of neighbours in the KNN graph.
 #' @param admm_iter Integer. ADMM iterations for sparse coding.

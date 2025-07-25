@@ -81,6 +81,24 @@ expect_equivalent(
   info = "cov2cor equivalence test Rust <> R"
 )
 
+## mutual information ----------------------------------------------------------
+
+if (requireNamespace("infotheo", quietly = TRUE)) {
+  rust_result <- rs_mutual_info(mat, NULL, FALSE)
+
+  # ensure that the same discretisation is used
+  infotheo_res <- infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalwidth",
+    nbins = sqrt(nrow(mat))
+  ))
+
+  expect_equivalent(
+    current = rust_result,
+    target = infotheo_res,
+    info = "mutual information rest Rust <> R"
+  )
+}
 
 # hypergeom distributions ------------------------------------------------------
 
