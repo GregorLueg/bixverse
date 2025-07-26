@@ -232,10 +232,15 @@ To run the function you can just use the following code. The Rust version
 will default to sqrt(nrow())
 
 ```{r}
-#| label: calculate the mutual informations on a per column basis
+#| label: mutual information calculations - equal width
 #| eval: !expr requireNamespace("infotheo", quietly = TRUE)
 
-rust_res_mi <- rs_mutual_info(mat, n_bins = NULL, normalise = FALSE)
+rust_res_mi <- rs_mutual_info(
+  mat, 
+  n_bins = NULL, 
+  normalise = FALSE,
+  strategy = "equal_width"
+)
 rownames(rust_res_mi) <- colnames(rust_res_mi) <- colnames(mat)
 
 # ensure that the same discretisation is used
@@ -248,11 +253,35 @@ infotheo_res_mi <- infotheo::mutinformation(infotheo::discretize(
 all.equal(rust_res_mi, infotheo_res_mi)
 ```
 
+There is also an equal frequency strategy implemented:
+
+```{r}
+#| label: mutual information calculations - equal frequency
+#| eval: !expr requireNamespace("infotheo", quietly = TRUE)
+
+rust_res_mi <- rs_mutual_info(
+  mat, 
+  n_bins = NULL, 
+  normalise = FALSE,
+  strategy = "equal_freq"
+)
+rownames(rust_res_mi) <- colnames(rust_res_mi) <- colnames(mat)
+
+# ensure that the same discretisation is used
+infotheo_res_mi <- infotheo::mutinformation(infotheo::discretize(
+  mat,
+  disc = "equalfreq",
+  nbins = sqrt(nrow(mat))
+))
+
+all.equal(rust_res_mi, infotheo_res_mi)
+```
+
 Again, the Rust implementation is way faster.
 
 ```{r}
-#| label: speed differences bixverse vs. infotheo
-#| eval: !expr requireNamespace(c("infotheo", "microbench"), quietly = TRUE)
+#| label: speed differences bixverse vs. infotheo (version 1)
+#| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
 
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
@@ -260,7 +289,33 @@ microbenchmark::microbenchmark(
     disc = "equalwidth",
     nbins = sqrt(nrow(mat))
   )),
-  rust = rs_mutual_info(mat, n_bins = NULL, normalise = FALSE),
+  rust = rs_mutual_info(
+    mat, 
+    n_bins = NULL, 
+    normalise = FALSE,
+    strategy = "equal_width"
+  ),
+  times = 50L
+)
+```
+
+And with equal frequency per bin:
+```{r}
+#| label: speed differences bixverse vs. infotheo (version 2)
+#| eval: !expr requireNamespace(c("infotheo", "microbenchmark"), quietly = TRUE)
+
+microbenchmark::microbenchmark(
+  infotheo = infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalfreq",
+    nbins = sqrt(nrow(mat))
+  )),
+  rust = rs_mutual_info(
+    mat, 
+    n_bins = NULL, 
+    normalise = FALSE,
+    strategy = "equal_freq"
+  ),
   times = 50L
 )
 ```
@@ -290,9 +345,9 @@ random_sets_2 <- purrr::map(1:500L, ~{
 })
 ```
 
-Let's start with a naive purrr approach. Nonetheless, we can appreciate already
-that some type of parallelism will help here. But for completeness, let's test
-purrr...
+Let's start with a naive [purrr](https://purrr.tidyverse.org) approach. 
+The problem obviously will benefit from some form of parallel processing, but 
+for completeness, let's run this version, too.
 
 ```{r}
 #| label: set similarity in R (purrr)
@@ -313,8 +368,8 @@ similarity_matrix <- matrix(
 tictoc::toc()
 ```
 
-Let's try to parallelise this via future and furrr back-ends and see how 
-much we can improve this.
+Let's try to parallelise this vi [furrr](https://furrr.futureverse.org) and 
+evaluate how much we can improve this.
 
 ```{r}
 #| label: set similarity in R (furrr)
@@ -338,6 +393,7 @@ similarity_matrix <- matrix(
 tictoc::toc()
 ```
 
+Parallelisation as expected accelerates the calculations substantially. 
 What about [mirai](https://mirai.r-lib.org/articles/mirai.html)? It should 
 produce less overhead compared to future.
 
@@ -366,7 +422,7 @@ tictoc::toc()
 ```
 
 That's already a bit better. Maybe we can optimise the Jaccard similarity 
-function further.
+function further and accelerate this even more.
 
 ```{r}
 #| label: set similarity in R (mirai, optimised)
@@ -414,4 +470,7 @@ all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 ```
 
 Yep, that is MUCH faster... These are some of the functions that are exposed
-in `bixverse` and can be integrated into other workflows.
+in `bixverse` and can be integrated into other workflows. There are many more
+highly specialised functions that can be used in other workflows. It's best
+to explore the package and the underlying code base to identify all of these
+functions.

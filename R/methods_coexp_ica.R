@@ -992,7 +992,12 @@ component_mutual_information <- function(centrotype) {
 
   # function
   mi_data <- rs_dense_to_upper_triangle(
-    rs_mutual_info(centrotype, n_bins = NULL, normalise = TRUE),
+    rs_mutual_info(
+      centrotype,
+      n_bins = NULL,
+      strategy = "equal_width",
+      normalise = TRUE
+    ),
     1L
   )
   total_mi <- sum(mi_data) / length(mi_data)

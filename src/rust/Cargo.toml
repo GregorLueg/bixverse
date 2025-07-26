@@ -30,3 +30,4 @@ num-complex = '*'
 petgraph = { version = "0.8.2", features = ["rayon"] }
 rustc-hash = "2.1.1"
 once_cell = "*"
+anyhow = "*"

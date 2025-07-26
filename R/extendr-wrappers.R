@@ -800,13 +800,15 @@ rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 #' @param x R matrix with doubles for which to calculate the mutual information
 #' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 #' the function will default to `sqrt(nrows(x))`.
+#' @param strategy String. Binning strategy One of
+#' `c("equal_width", "equal_freq")`.
 #' @param normalise Boolean. Shall the normalised mutual information be
 #' calculated via joint entropy.
 #'
 #' @returns The mutual information matrix.
 #'
 #' @export
-rs_mutual_info <- function(x, n_bins, normalise) .Call(wrap__rs_mutual_info, x, n_bins, normalise)
+rs_mutual_info <- function(x, n_bins, strategy, normalise) .Call(wrap__rs_mutual_info, x, n_bins, strategy, normalise)
 
 #' Rust implementation of prcomp
 #'

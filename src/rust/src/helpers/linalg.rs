@@ -1,7 +1,8 @@
+use anyhow::Result;
 use faer::{
     linalg::solvers::{PartialPivLu, Solve},
     traits::AddByRef,
-    Mat, MatRef,
+    ColRef, Mat, MatRef,
 };
 use rand::prelude::*;
 use rand_distr::Normal;
@@ -15,6 +16,15 @@ use crate::{assert_nrows, assert_same_dims, assert_symmetric_mat};
 //////////////////////////////
 // ENUMS, TYPES, STRUCTURES //
 //////////////////////////////
+
+/// Binning strategy enum
+#[derive(Debug, Clone)]
+pub enum BinningStrategy {
+    /// Equal width bins (equal distance between bin edges)
+    EqualWidth,
+    /// Equal frequency bins (approximately equal number of values per bin)
+    EqualFrequency,
+}
 
 /// Structure for random SVD results
 ///
@@ -44,6 +54,31 @@ pub struct DiffCorRes {
     pub r_b: Vec<f64>,
     pub z_score: Vec<f64>,
     pub p_vals: Vec<f64>,
+}
+
+////////////
+// Params //
+////////////
+
+////////////////
+// Parameters //
+////////////////
+
+/// Parsing the binning strategy
+///
+/// ### Params
+///
+/// * `s` - string defining the binning strategy
+///
+/// ### Returns
+///
+/// The `BinningStrategy`.
+pub fn parse_strategy_type(s: &str) -> Option<BinningStrategy> {
+    match s.to_lowercase().as_str() {
+        "equal_width" => Some(BinningStrategy::EqualWidth),
+        "equal_freq" => Some(BinningStrategy::EqualFrequency),
+        _ => None,
+    }
 }
 
 //////////////////////////////
@@ -230,6 +265,81 @@ pub fn rank_matrix_col(mat: &MatRef<f64>) -> Mat<f64> {
     ranked_mat
 }
 
+/// Equal width binning for a single column
+///
+/// ### Params
+///
+/// * `col` - Column refence to bin with equal width strategy
+/// * `n_bins` - Number of bins to use
+///
+/// ### Returns
+///
+/// Binned vector
+fn bin_equal_width(col: &ColRef<f64>, n_bins: usize) -> Vec<usize> {
+    let (min_val, max_val) = col
+        .iter()
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), x| {
+            (min.min(*x), max.max(*x))
+        });
+
+    let range = max_val - min_val;
+
+    if range == 0.0 {
+        return vec![0; col.nrows()];
+    }
+
+    let step = range / n_bins as f64;
+
+    col.iter()
+        .map(|x| {
+            let bin = ((*x - min_val) / step).floor() as usize;
+            bin.min(n_bins - 1)
+        })
+        .collect()
+}
+
+/// Equal frequency binning for a single column
+///
+/// ### Params
+///
+/// * `col` - Column refence to bin with equal frequency strategy
+/// * `n_bins` - Number of bins to use
+///
+/// ### Returns
+///
+/// Binned vector
+fn bin_equal_frequency(col: &faer::col::ColRef<f64>, n_bins: usize) -> Vec<usize> {
+    let n_rows = col.nrows();
+
+    // Create a copy of the column values for sorting
+    let mut sorted_values: Vec<f64> = col.iter().copied().collect();
+    sorted_values.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Calculate split points (quantiles) like infotheo does
+    let mut split_points = Vec::with_capacity(n_bins);
+    for k in 1..n_bins {
+        let idx = (k * n_rows) / n_bins;
+        // Use the value at the calculated index as split point
+        split_points.push(sorted_values[idx.min(n_rows - 1)]);
+    }
+
+    // Assign bins based on split points
+    let mut bin_assignments = vec![0; n_rows];
+    for (i, &value) in col.iter().enumerate() {
+        let mut bin = 0;
+        for &split in &split_points {
+            if value >= split {
+                bin += 1;
+            } else {
+                break;
+            }
+        }
+        bin_assignments[i] = bin.min(n_bins - 1);
+    }
+
+    bin_assignments
+}
+
 /// Column wise binning
 ///
 /// ### Params
@@ -241,31 +351,19 @@ pub fn rank_matrix_col(mat: &MatRef<f64>) -> Mat<f64> {
 /// ### Returns
 ///
 /// The matrix with the columns being binned into equal distances.
-pub fn bin_matrix_cols(mat: &MatRef<f64>, n_bins: Option<usize>) -> Mat<usize> {
+pub fn bin_matrix_cols(
+    mat: &MatRef<f64>,
+    n_bins: Option<usize>,
+    strategy: BinningStrategy,
+) -> Mat<usize> {
     let (n_rows, n_cols) = mat.shape();
     let n_bins = n_bins.unwrap_or_else(|| (n_rows as f64).sqrt() as usize);
 
     let binned_vals: Vec<Vec<usize>> = mat
         .par_col_iter()
-        .map(|col| {
-            let (min_val, max_val) = col
-                .iter()
-                .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), x| {
-                    (min.min(*x), max.max(*x))
-                });
-            let range = max_val - min_val;
-            let step = range / n_bins as f64;
-
-            col.iter()
-                .map(|x| {
-                    if range == 0.0 {
-                        0
-                    } else {
-                        ((*x - min_val) / step).floor() as usize
-                    }
-                    .min(n_bins - 1)
-                })
-                .collect()
+        .map(|col| match strategy {
+            BinningStrategy::EqualWidth => bin_equal_width(&col, n_bins),
+            BinningStrategy::EqualFrequency => bin_equal_frequency(&col, n_bins),
         })
         .collect();
 
@@ -343,6 +441,8 @@ pub fn column_correlation(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
 ///              if nothing is provided.
 /// * `normalised` - Shall the normalised mutual information be calculated via
 ///                  joint entropy normalisation.
+/// * `strategy` - String specifying if equal frequency or equal width binning
+///                should be used.
 ///
 /// ### Returns
 ///
@@ -351,15 +451,16 @@ pub fn column_mutual_information(
     mat: &MatRef<f64>,
     n_bins: Option<usize>,
     normalised: bool,
-) -> Mat<f64> {
-    let binned_mat = bin_matrix_cols(mat, n_bins);
+    strategy: &str,
+) -> Result<Mat<f64>, String> {
+    let bin_strategy = parse_strategy_type(strategy)
+        .ok_or_else(|| format!("Invalid binning strategy: {}", strategy))?;
+    let binned_mat = bin_matrix_cols(mat, n_bins, bin_strategy);
 
     let n_cols = binned_mat.ncols();
-
     let pairs: Vec<(usize, usize)> = (0..n_cols)
         .flat_map(|i| (i + 1..n_cols).map(move |j| (i, j)))
         .collect();
-
     let mi_vals: Vec<((usize, usize), f64)> = pairs
         .into_par_iter()
         .map(|(i, j)| {
@@ -374,7 +475,6 @@ pub fn column_mutual_information(
             ((i, j), nmi)
         })
         .collect();
-
     let entropy: Vec<f64> = (0..n_cols)
         .into_par_iter()
         .map(|i| {
@@ -386,19 +486,15 @@ pub fn column_mutual_information(
             entropy
         })
         .collect();
-
     let mut mi_matrix = Mat::zeros(n_cols, n_cols);
-
     for ((i, j), mi_val) in mi_vals {
         mi_matrix[(i, j)] = mi_val;
         mi_matrix[(j, i)] = mi_val;
     }
-
     for i in 0..n_cols {
         mi_matrix[(i, i)] = entropy[i];
     }
-
-    mi_matrix
+    Ok(mi_matrix)
 }
 
 /// Calculates the correlation between two matrices

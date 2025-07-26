@@ -19,7 +19,9 @@ use crate::utils::general::*;
 /// Enum for the ICA types
 #[derive(Clone, Debug)]
 pub enum IcaType {
+    /// Use the `Exp` type implementation of fastICA
     Exp,
+    /// Use the `LogCosh` type implementation of fastICA
     LogCosh,
 }
 
