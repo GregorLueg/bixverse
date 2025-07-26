@@ -344,11 +344,11 @@ generate_gene_module_data <- function(
 #' }
 plot.synthetic_matrix_simple <- function(x, ...) {
   # checks
-  checkmate::assertClass(synthetic_gex, "synthetic_matrix_simple")
+  checkmate::assertClass(x, "synthetic_matrix_simple")
 
   # pull out relevant parts
-  mat <- synthetic_gex$mat
-  group <- synthetic_gex$group
+  mat <- x$mat
+  group <- x$group
 
   # plot
   heatmap(
@@ -385,18 +385,21 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #' @importFrom magrittr `%>%`
 plot.cpca_synthetic_data <- function(x, ...) {
   # checks
-  checkmate::assertClass(cpca_data, "cpca_synthetic_data")
+  checkmate::assertClass(x, "cpca_synthetic_data")
 
   # get the data
-  target_df <- as.data.table(t(cpca_data$target), keep.rownames = "samples") %>%
-    .[, grp := cpca_data$target_labels] %>%
-    melt(id.vars = c("samples", "grp"))
-
-  background_df <- as.data.table(
-    t(cpca_data$background),
+  target_df <- data.table::as.data.table(
+    t(x$target),
     keep.rownames = "samples"
   ) %>%
-    melt(id.vars = "samples")
+    .[, grp := x$target_labels] %>%
+    data.table::melt(id.vars = c("samples", "grp"))
+
+  background_df <- data.table::as.data.table(
+    t(x$background),
+    keep.rownames = "samples"
+  ) %>%
+    data.table::melt(id.vars = "samples")
 
   # plots
   p1 <- ggplot(

@@ -774,13 +774,13 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   method_info <- if (is.null(S7::prop(x, "params")[["detection_method"]])) {
     # Case of nothing has been applied
     ""
-  } else if (S7::prop(x, "params")[["detection_method"]] == "cPCA") {
+  } else if (S7::prop(x, "params")[["detection_method"]] == "c_pca") {
     # Contrastive PCA
-    no_intersecting_features <- length(S7::prop(x, "params")[["cPCA_params"]][[
+    no_intersecting_features <- length(S7::prop(x, "params")[["c_pca_params"]][[
       "intersecting_features"
     ]])
     paste0(
-      " Detection method: cPCA.\n",
+      " Detection method: contrastive PCA.\n",
       sprintf("  No of intersecting features: %i.\n", no_intersecting_features)
     )
   } else if (

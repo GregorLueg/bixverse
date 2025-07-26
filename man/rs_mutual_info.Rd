@@ -4,13 +4,16 @@
 \alias{rs_mutual_info}
 \title{Calculates the mutual information matrix}
 \usage{
-rs_mutual_info(x, n_bins, normalise)
+rs_mutual_info(x, n_bins, strategy, normalise)
 }
 \arguments{
 \item{x}{R matrix with doubles for which to calculate the mutual information}
 
 \item{n_bins}{Optional integer. Number of bins to use. If \code{NULL} is provided
 the function will default to \code{sqrt(nrows(x))}.}
+
+\item{strategy}{String. Binning strategy One of
+\code{c("equal_width", "equal_freq")}.}
 
 \item{normalise}{Boolean. Shall the normalised mutual information be
 calculated via joint entropy.}

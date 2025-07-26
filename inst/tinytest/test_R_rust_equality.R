@@ -3,9 +3,9 @@
 ## simple versions -------------------------------------------------------------
 
 set.seed(123)
-mat <- matrix(data = rnorm(100), nrow = 10, ncol = 10)
-rownames(mat) <- sprintf("sample_%i", 1:10)
-colnames(mat) <- sprintf("feature_%i", 1:10)
+mat <- matrix(data = rnorm(12 * 14), nrow = 12, ncol = 14)
+rownames(mat) <- sprintf("sample_%i", 1:12)
+colnames(mat) <- sprintf("feature_%i", 1:14)
 
 # Pearson
 expect_equivalent(
@@ -37,9 +37,9 @@ if (requireNamespace("coop", quietly = TRUE)) {
 ## correlation two matrices ----------------------------------------------------
 
 set.seed(246)
-mat_2 <- matrix(data = rnorm(100), nrow = 10, ncol = 10)
-rownames(mat_2) <- sprintf("sample_%i", 1:10)
-colnames(mat_2) <- sprintf("feature_%i", 1:10)
+mat_2 <- matrix(data = rnorm(12 * 8), nrow = 12, ncol = 8)
+rownames(mat_2) <- sprintf("sample_%i", 1:12)
+colnames(mat_2) <- sprintf("feature_%i", 1:8)
 
 # Pearson - two matrices
 expect_equivalent(
@@ -84,19 +84,86 @@ expect_equivalent(
 ## mutual information ----------------------------------------------------------
 
 if (requireNamespace("infotheo", quietly = TRUE)) {
-  rust_result <- rs_mutual_info(mat, NULL, FALSE)
+  # equal width strategy
+
+  mi_rust_result_1.1 <- rs_mutual_info(
+    mat,
+    n_bins = NULL,
+    strategy = "equal_width",
+    normalise = FALSE
+  )
 
   # ensure that the same discretisation is used
-  infotheo_res <- infotheo::mutinformation(infotheo::discretize(
+  infotheo_res_1.1 <- infotheo::mutinformation(infotheo::discretize(
     mat,
     disc = "equalwidth",
     nbins = sqrt(nrow(mat))
   ))
 
+  mi_rust_result_1.2 <- rs_mutual_info(
+    mat_2,
+    n_bins = NULL,
+    strategy = "equal_width",
+    normalise = FALSE
+  )
+
+  # ensure that the same discretisation is used
+  infotheo_res_1.2 <- infotheo::mutinformation(infotheo::discretize(
+    mat_2,
+    disc = "equalwidth",
+    nbins = sqrt(nrow(mat))
+  ))
+
   expect_equivalent(
-    current = rust_result,
-    target = infotheo_res,
-    info = "mutual information rest Rust <> R"
+    current = mi_rust_result_1.1,
+    target = infotheo_res_1.1,
+    info = "mutual information rest Rust <> R - equal width - matrix 1"
+  )
+
+  expect_equivalent(
+    current = mi_rust_result_1.2,
+    target = infotheo_res_1.2,
+    info = "mutual information rest Rust <> R - equal width - matrix 2"
+  )
+
+  # equal frequency strategy
+
+  mi_rust_result_2.1 <- rs_mutual_info(
+    mat,
+    n_bins = NULL,
+    strategy = "equal_freq",
+    normalise = FALSE
+  )
+
+  infotheo_res_2.1 <- infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalfreq",
+    nbins = sqrt(nrow(mat))
+  ))
+
+  mi_rust_result_2.2 <- rs_mutual_info(
+    mat_2,
+    n_bins = NULL,
+    strategy = "equal_freq",
+    normalise = FALSE
+  )
+
+  infotheo_res_2.2 <- infotheo::mutinformation(infotheo::discretize(
+    mat_2,
+    disc = "equalfreq",
+    nbins = sqrt(nrow(mat))
+  ))
+
+  expect_equivalent(
+    current = mi_rust_result_2.1,
+    target = infotheo_res_2.1,
+    info = "mutual information rest Rust <> R - equal distance - matrix 1"
+  )
+
+  expect_equivalent(
+    current = mi_rust_result_2.2,
+    target = infotheo_res_2.2,
+    info = "mutual information rest Rust <> R - equal distance - matrix 2"
   )
 }
 
@@ -151,9 +218,12 @@ expect_equivalent(
   info = "Factors for PCA (via SVD) for Rust <> R."
 )
 
+# The last remaining PCs are approaching numerical null space and are not
+# stable in the implementations anymore... They can be ignored. At most the
+# first 11 PCs should be the same with this data
 expect_equivalent(
-  current = abs(rs_pca_res$v),
-  target = abs(r_pca_res$rotation),
+  current = abs(rs_pca_res$v[, 1:11]),
+  target = abs(r_pca_res$rotation[, 1:11]),
   info = "Loadings/rotation for PCA (via SVD) for Rust <> R."
 )
 

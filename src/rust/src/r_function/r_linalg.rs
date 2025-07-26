@@ -117,6 +117,8 @@ fn rs_cov2cor(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 /// @param x R matrix with doubles for which to calculate the mutual information
 /// @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 /// the function will default to `sqrt(nrows(x))`.
+/// @param strategy String. Binning strategy One of
+/// `c("equal_width", "equal_freq")`.
 /// @param normalise Boolean. Shall the normalised mutual information be
 /// calculated via joint entropy.
 ///
@@ -127,13 +129,14 @@ fn rs_cov2cor(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 fn rs_mutual_info(
     x: RMatrix<f64>,
     n_bins: Option<usize>,
+    strategy: String,
     normalise: bool,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let mat = r_matrix_to_faer(&x);
 
-    let mi_mat = column_mutual_information(&mat, n_bins, normalise);
+    let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy)?;
 
-    faer_to_r_matrix(mi_mat.as_ref())
+    Ok(faer_to_r_matrix(mi_mat.as_ref()))
 }
 
 /// Calculate the column wise correlations.
