@@ -1159,6 +1159,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
         dge_list = dge_list_red,
+        normalised_counts = norm_counts_red,
         co_variates = co_variates,
         contrast_list = contrast_list,
         ...,
