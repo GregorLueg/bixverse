@@ -497,6 +497,92 @@ pub fn column_mutual_information(
     Ok(mi_matrix)
 }
 
+/// Calculate the pointwise mutual information for a boolean matrix representation
+///
+/// This function takes in a representation of binary values (`true`, `false`)
+/// and calculations the column-wise pointwise mutual information.
+///
+/// ### Params
+///
+/// * `x` - A slice of boolean vectors representing the data. The outer vector
+///         represents the columns.
+/// * `normalise` - Shall the normalised pointwise mutual information be
+///                 calculated
+///
+/// ### Returns
+///
+/// The similarity matrix with (normalised) pointwise mutual information scores
+pub fn calc_pmi(x: &[Vec<bool>], normalise: bool) -> Mat<f64> {
+    let n = x.len();
+    let mut sim_mat: Mat<f64> = Mat::zeros(n, n);
+
+    // pre-compute for speed
+    let p_values: Vec<f64> = x
+        .par_iter()
+        .map(|col| col.iter().map(|&x| x as usize).sum::<usize>() as f64 / col.len() as f64)
+        .collect();
+
+    // get all the indices...
+    let pairs: Vec<(usize, usize)> = (0..n)
+        .flat_map(|i| ((i + 1)..n).map(move |j| (i, j)))
+        .collect();
+
+    // compute PMI values in parallel
+    let results: Vec<((usize, usize), f64)> = pairs
+        .par_iter()
+        .map(|&(i, j)| {
+            let col_a = &x[i];
+            let col_b = &x[j];
+            let p_x = p_values[i];
+            let p_y = p_values[j];
+
+            let p_xy = col_a
+                .iter()
+                .zip(col_b.iter())
+                .map(|(&a, &b)| if a & b { 1 } else { 0 })
+                .sum::<usize>() as f64
+                / col_a.len() as f64;
+
+            let value = match (p_x, p_y, p_xy) {
+                // If any of these is zero, return neg infinity
+                (0.0, _, _) | (_, 0.0, _) | (_, _, 0.0) => f64::NEG_INFINITY,
+
+                // Otherwise, do the normal calculation
+                _ => {
+                    let pmi = (p_xy / (p_x * p_y)).log2();
+                    if normalise {
+                        pmi / (-p_xy.log2())
+                    } else {
+                        pmi
+                    }
+                }
+            };
+
+            ((i, j), value)
+        })
+        .collect();
+
+    for ((i, j), value) in results {
+        sim_mat[(i, j)] = value;
+        sim_mat[(j, i)] = value;
+    }
+
+    for i in 0..n {
+        if normalise {
+            sim_mat[(i, i)] = 1.0;
+        } else {
+            let p_i = p_values[i];
+            if p_i > 0.0 {
+                sim_mat[(i, i)] = -p_i.log2();
+            } else {
+                sim_mat[(i, i)] = f64::INFINITY;
+            }
+        }
+    }
+
+    sim_mat
+}
+
 /// Calculates the correlation between two matrices
 ///
 /// The two matrices need to have the same number of rows, otherwise the function

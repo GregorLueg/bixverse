@@ -2,7 +2,7 @@ use extendr_api::prelude::*;
 
 use crate::helpers::linalg::*;
 use crate::utils::general::{nested_vector_to_faer_mat, upper_triangle_indices};
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_vec_bool};
 
 /// Calculate the column-wise co-variance.
 ///
@@ -137,6 +137,32 @@ fn rs_mutual_info(
     let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy)?;
 
     Ok(faer_to_r_matrix(mi_mat.as_ref()))
+}
+
+/// Calculates the point wise mutual information
+///
+/// @description Calculates the pointwise mutual information (can be also
+/// normalised) across all columns of the data. This can be used to identify
+/// (dis)similar samples based on Boolean characteristics.
+///
+/// @param x Logical matrix. The columns represent features and the rows
+/// represent samples
+/// @param normalise Shall the normalised pointwise mutual information be
+/// returned.
+///
+/// @returns The (normalised) pointwise mutual information matrix.
+///
+/// @export
+#[extendr]
+fn rs_pointwise_mutual_info(
+    x: RMatrix<Rbool>,
+    normalise: bool,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let data = r_matrix_to_vec_bool(&x);
+
+    let npmi_mat = calc_pmi(&data, normalise);
+
+    faer_to_r_matrix(npmi_mat.as_ref())
 }
 
 /// Calculate the column wise correlations.
@@ -412,6 +438,7 @@ extendr_module! {
   fn rs_cor2;
   fn rs_cov2cor;
   fn rs_mutual_info;
+  fn rs_pointwise_mutual_info;
   fn rs_prcomp;
   fn rs_random_svd;
   fn rs_cor_upper_triangle;

@@ -90,6 +90,10 @@ impl IcaParams {
     }
 }
 
+///////////////////////////
+// Cross validation data //
+///////////////////////////
+
 /// Structure to save ICA CV results
 ///
 /// ### Fields
@@ -100,6 +104,90 @@ impl IcaParams {
 pub struct IcaCvData {
     pub pre_white_matrices: Vec<Mat<f64>>,
     pub k_matrices: Vec<Mat<f64>>,
+}
+
+impl IcaCvData {
+    /// Generate the `IcaCvData` from data
+    ///
+    /// This function will default to the faster randomised SVD for the whitening
+    /// process.
+    ///
+    /// ### Params
+    ///
+    /// * `x` - The matrix for which to generate a cross-validation like set
+    /// * `num_folds` - In how many folds to split the data
+    /// * `seed` - Random seed for reproducibility purposes
+    /// * `rank` - Optional rank for the randomised SVD that is used to generate the
+    ///            the pre-whitened matrix and whitening matrix k.
+    ///
+    /// ### Returns
+    ///
+    /// An `IcaCvData` structure.
+    pub fn create_from_data(
+        x: MatRef<f64>,
+        num_folds: usize,
+        seed: usize,
+        rank: Option<usize>,
+    ) -> IcaCvData {
+        let no_samples = x.nrows();
+        let no_features = x.ncols();
+        let mut indices: Vec<usize> = (0..no_samples).collect();
+        let mut rng = StdRng::seed_from_u64(seed as u64);
+        indices.shuffle(&mut rng);
+
+        let svd_rank = rank.unwrap_or(no_features);
+
+        let fold_size = no_samples / num_folds;
+        let remainder = no_samples % num_folds;
+
+        let mut folds = Vec::with_capacity(num_folds);
+        let mut start = 0;
+
+        for idx in 0..num_folds {
+            let current_fold_size = if idx < remainder {
+                fold_size + 1
+            } else {
+                fold_size
+            };
+
+            let end = start + current_fold_size;
+            folds.push(indices[start..end].to_vec());
+            start = end;
+        }
+
+        let k_x_matrices: Vec<(Mat<f64>, Mat<f64>)> = folds
+            .par_iter()
+            .map(|test_indices| {
+                let train_indices: Vec<usize> = indices
+                    .iter()
+                    .filter(|&idx| !test_indices.contains(idx))
+                    .cloned()
+                    .collect();
+                let mut x_i = Mat::<f64>::zeros(train_indices.len(), no_features);
+
+                for (new_row, old_row) in train_indices.iter().enumerate() {
+                    for j in 0..no_features {
+                        x_i[(new_row, j)] = x[(*old_row, j)];
+                    }
+                }
+
+                prepare_whitening(x_i.as_ref(), true, seed + 1, svd_rank, None, None)
+            })
+            .collect();
+
+        let mut pre_white_matrices = Vec::with_capacity(num_folds);
+        let mut k_matrices = Vec::with_capacity(num_folds);
+
+        for (x_i, k_i) in k_x_matrices {
+            pre_white_matrices.push(x_i);
+            k_matrices.push(k_i);
+        }
+
+        Self {
+            pre_white_matrices,
+            k_matrices,
+        }
+    }
 }
 
 /////////
@@ -496,88 +584,6 @@ pub fn stabilised_ica_iters(
     (s_combined, convergence)
 }
 
-/// Generate cross-validation like data for ICA.
-///
-/// This function will default to the faster randomised SVD for the whitening
-/// process.
-///
-/// ### Params
-///
-/// * `x` - The matrix for which to generate a cross-validation like set
-/// * `num_folds` - In how many folds to split the data
-/// * `seed` - Random seed for reproducibility purposes
-/// * `rank` - Optional rank for the randomised SVD that is used to generate the
-///            the pre-whitened matrix and whitening matrix k.
-///
-/// ### Returns
-///
-/// An `IcaCvData` structure.
-pub fn create_ica_cv_data(
-    x: MatRef<f64>,
-    num_folds: usize,
-    seed: usize,
-    rank: Option<usize>,
-) -> IcaCvData {
-    let no_samples = x.nrows();
-    let no_features = x.ncols();
-    let mut indices: Vec<usize> = (0..no_samples).collect();
-    let mut rng = StdRng::seed_from_u64(seed as u64);
-    indices.shuffle(&mut rng);
-
-    let svd_rank = rank.unwrap_or(no_features);
-
-    let fold_size = no_samples / num_folds;
-    let remainder = no_samples % num_folds;
-
-    let mut folds = Vec::with_capacity(num_folds);
-    let mut start = 0;
-
-    for idx in 0..num_folds {
-        let current_fold_size = if idx < remainder {
-            fold_size + 1
-        } else {
-            fold_size
-        };
-
-        let end = start + current_fold_size;
-        folds.push(indices[start..end].to_vec());
-        start = end;
-    }
-
-    let k_x_matrices: Vec<(Mat<f64>, Mat<f64>)> = folds
-        .par_iter()
-        .map(|test_indices| {
-            let train_indices: Vec<usize> = indices
-                .iter()
-                .filter(|&idx| !test_indices.contains(idx))
-                .cloned()
-                .collect();
-            let mut x_i = Mat::<f64>::zeros(train_indices.len(), no_features);
-
-            for (new_row, old_row) in train_indices.iter().enumerate() {
-                for j in 0..no_features {
-                    x_i[(new_row, j)] = x[(*old_row, j)];
-                }
-            }
-
-            prepare_whitening(x_i.as_ref(), true, seed + 1, svd_rank, None, None)
-        })
-        .collect();
-
-    let mut pre_white_matrices = Vec::with_capacity(num_folds);
-    let mut k_matrices = Vec::with_capacity(num_folds);
-
-    for (x_i, k_i) in k_x_matrices {
-        pre_white_matrices.push(x_i);
-        k_matrices.push(k_i);
-    }
-
-    IcaCvData {
-        pre_white_matrices,
-        k_matrices,
-    }
-}
-
 /// Run stabilised ICA iterations over the CV-like data
 ///
 /// ### Params
@@ -612,7 +618,7 @@ pub fn stabilised_ica_cv(
     // Generate cross-validation data if not provided
     let cv_data = match ica_cv_data {
         Some(data) => data, // Use the provided data
-        None => create_ica_cv_data(x, no_folds, seed, Some(no_comp)), // Generate new data
+        None => IcaCvData::create_from_data(x, no_folds, seed, Some(no_comp)), // Generate new data
     };
 
     // Iterate through bootstrapped samples

@@ -540,6 +540,25 @@ pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> faer::MatRef<i32> {
     MatRef::from_column_major_slice(data, nrow, ncol)
 }
 
+/// Transform an R matrix into a nested vector of booleans
+///
+/// ### Params
+///
+/// * `x` - The R matrix to transform into a vector of vectors with booleans
+///
+/// ### Returns
+///
+/// The nested vector with the outer vector representing the columns.
+pub fn r_matrix_to_vec_bool(x: &RMatrix<Rbool>) -> Vec<Vec<bool>> {
+    let ncol = x.ncols();
+    let nrow = x.nrows();
+    let data = x.data();
+
+    (0..ncol)
+        .map(|j| (0..nrow).map(|i| data[i + j * nrow].to_bool()).collect())
+        .collect()
+}
+
 /// Transform a faer into an R matrix
 ///
 /// ### Params
