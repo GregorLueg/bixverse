@@ -42,5 +42,6 @@ enrichment for any GO terms. If the threshold of the p-value is below the
 elimination threshold, the genes from this term will be removed from all its
 ancestors. The function then proceeds to the next level of the ontology and
 repeats the process. The class will leverage Rust threading to parallelise
-the process.
+the process. The gene universe will be automatically set to every gene
+represented in the ontology.
 }
