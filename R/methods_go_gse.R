@@ -8,7 +8,9 @@
 #' levels of the ontology and tests if there is significant enrichment for any
 #' GO terms. If the threshold of the p-value is below the elimination threshold,
 #' the genes from this term will be removed from all its ancestors. The function
-#' then proceeds to the next level of the ontology and repeats the process.
+#' then proceeds to the next level of the ontology and repeats the process. The
+#' gene universe will be automatically set to every gene represented in the
+#' ontology.
 #'
 #' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
@@ -118,7 +120,8 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' elimination threshold, the genes from this term will be removed from all its
 #' ancestors. The function then proceeds to the next level of the ontology and
 #' repeats the process. The class will leverage Rust threading to parallelise
-#' the process.
+#' the process. The gene universe will be automatically set to every gene
+#' represented in the ontology.
 #'
 #' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_gene_list List. The target genes list you wish to apply the

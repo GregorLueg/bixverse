@@ -54,11 +54,11 @@ gse_hypergeometric <- function(
       message(
         paste(
           "No gene universe given. Function will use the represented",
-          "genes in the pathways/gene sets as reference."
+          "genes in the target set and pathways/gene sets as reference."
         )
       )
     }
-    gene_universe <- unique(unlist(gene_set_list))
+    gene_universe <- unique(c(unlist(gene_set_list), target_genes))
   }
 
   target_genes_length <- length(target_genes)
@@ -155,10 +155,10 @@ gse_hypergeometric_list <- function(
     if (.verbose) {
       message(
         "No gene universe given. Function will use the represented genes in the
-        pathways/gene sets as reference."
+        target gene sets and pathways/gene sets as reference."
       )
     }
-    gene_universe <- unique(unlist(gene_set_list))
+    gene_universe <- unique(c(unlist(gene_set_list), unlist(target_genes_list)))
   }
 
   target_set_lengths = sapply(target_genes_list, length)
