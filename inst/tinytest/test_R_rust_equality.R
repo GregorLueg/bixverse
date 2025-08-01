@@ -167,6 +167,35 @@ if (requireNamespace("infotheo", quietly = TRUE)) {
   )
 }
 
+## pointwise mutual information ------------------------------------------------
+
+set.seed(123)
+mat_lgl <- matrix(
+  data = as.logical(rbinom(n = 10 * 12, size = 1, prob = 0.35)),
+  nrow = 10,
+  ncol = 12
+)
+rownames(mat_lgl) <- sprintf("sample_%i", 1:10)
+colnames(mat_lgl) <- sprintf("feature_%i", 1:12)
+
+expected_res <- qs2::qs_read("./test_data/npmi_res.qs")
+expected_res_norm <- qs2::qs_read("./test_data/npmi_res_norm.qs")
+
+res <- rs_pointwise_mutual_info(mat_lgl, normalise = FALSE)
+res_normalised <- rs_pointwise_mutual_info(mat_lgl, normalise = TRUE)
+
+expect_equal(
+  current = res,
+  target = expected_res,
+  info = "nPMI calculations - non normalised"
+)
+
+expect_equal(
+  current = res_normalised,
+  target = expected_res_norm,
+  info = "nPMI calculations - normalised"
+)
+
 # hypergeom distributions ------------------------------------------------------
 
 m <- 10

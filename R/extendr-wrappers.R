@@ -810,6 +810,22 @@ rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 #' @export
 rs_mutual_info <- function(x, n_bins, strategy, normalise) .Call(wrap__rs_mutual_info, x, n_bins, strategy, normalise)
 
+#' Calculates the point wise mutual information
+#'
+#' @description Calculates the pointwise mutual information (can be also
+#' normalised) across all columns of the data. This can be used to identify
+#' (dis)similar samples based on Boolean characteristics.
+#'
+#' @param x Logical matrix. The columns represent features and the rows
+#' represent samples
+#' @param normalise Shall the normalised pointwise mutual information be
+#' returned.
+#'
+#' @returns The (normalised) pointwise mutual information matrix.
+#'
+#' @export
+rs_pointwise_mutual_info <- function(x, normalise) .Call(wrap__rs_pointwise_mutual_info, x, normalise)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.

@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 18.07.2025* </br>
+*Last update: 26.07.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -116,5 +116,7 @@ of inheritance.
 If you implement something that should behave like functions from a different 
 package make sure that you compare the your version against the established 
 ones. Also, double check that any Rust version of an R-internal version returns
-the same results. The idea should be always: 
-*Make It Work, Make It Right, Make It Fast.*
+the same results. The idea should be always: </br>
+*Make It Work, Make It Right, Make It Fast.* </br>
+We like writing tests particularly when you encounter a nasty bug that screws
+up something. Write a test specifically checking for these nasty bugs.

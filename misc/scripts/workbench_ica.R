@@ -30,11 +30,8 @@ d <- as.matrix(d)
 
 new_meta_data <- data.table::data.table(
   sample_id = rownames(coldata),
-  case_control = "case",
   gtex_subgrp = coldata$gtex.smtsd
 )
-
-table(new_meta_data$gtex_subgrp)
 
 ### data set 1 -----------------------------------------------------------------
 
@@ -52,7 +49,16 @@ plot_hvgs(ica_test_1)
 
 ica_test_1 <- ica_processing(ica_test_1)
 
-ica_test_1 <- ica_evaluate_comp(ica_test_1, ica_type = "logcosh")
+tictoc::tic()
+ica_test_1 <- ica_evaluate_comp(
+  ica_test_1,
+  ica_type = "logcosh",
+  iter_params = params_ica_randomisation(
+    cross_validate = TRUE,
+    random_init = 5L
+  )
+)
+tictoc::toc()
 
 ica_test_1 <- ica_optimal_ncomp(ica_test_1, span = 0.5)
 
