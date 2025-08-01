@@ -4,7 +4,7 @@
 \alias{rs_rbh_sets}
 \title{Generate reciprocal best hits based on set similarities}
 \usage{
-rs_rbh_sets(module_list, overlap_coefficient, min_similarity, debug)
+rs_rbh_sets(module_list, overlap_coefficient, min_similarity)
 }
 \arguments{
 \item{module_list}{A nested named list. The outer list should contain the
@@ -16,9 +16,6 @@ Jaccard similarity be used.}
 
 \item{min_similarity}{Minimum similarity that should exist between any two
 given gene modules to actually calculate RBH pairs.}
-
-\item{debug}{Boolean Boolean that activates print messages for debugging
-purposes.}
 }
 \value{
 A list containing:

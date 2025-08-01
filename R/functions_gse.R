@@ -47,31 +47,42 @@ gse_hypergeometric <- function(
   checkmate::qassert(threshold, c("R1[0,1]", "0"))
   checkmate::qassert(minimum_overlap, "I1")
   checkmate::qassert(.verbose, "B1")
-  # Function body
+
+  # body
   if (is.null(gene_universe)) {
     if (.verbose) {
       message(
-        "No gene universe given. Function will use the represented genes in the
-        pathways/gene sets as reference."
+        paste(
+          "No gene universe given. Function will use the represented",
+          "genes in the target set and pathways/gene sets as reference."
+        )
       )
     }
-    gene_universe <- unique(unlist(gene_set_list))
+    gene_universe <- unique(c(unlist(gene_set_list), target_genes))
   }
 
   target_genes_length <- length(target_genes)
 
-  gse_results <- rs_hypergeom_test(
+  gse_results_rs <- rs_hypergeom_test(
     target_genes = target_genes,
     gene_sets = gene_set_list,
-    gene_universe = gene_universe
+    gene_universe = gene_universe,
+    min_overlap = minimum_overlap,
+    fdr_threshold = threshold
   )
 
   gse_results <-
-    data.table::data.table(do.call(cbind, gse_results)) %>%
-    .[, `:=`(
-      gene_set_name = names(gene_set_list),
-      fdr = p.adjust(pvals, method = "BH")
-    )] %>%
+    data.table::data.table(do.call(
+      cbind,
+      gse_results_rs[c(
+        "pvals",
+        "odds_ratios",
+        "hits",
+        "gene_set_lengths",
+        "fdr"
+      )]
+    )) %>%
+    .[, gene_set_name := names(gene_set_list)[gse_results_rs$to_keep]] %>%
     data.table::setcolorder(
       .,
       c(
@@ -83,7 +94,6 @@ gse_hypergeometric <- function(
         "gene_set_lengths"
       )
     ) %>%
-    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals) %>%
     .[,
       target_set_lengths := target_genes_length
@@ -132,7 +142,7 @@ gse_hypergeometric_list <- function(
   # Avoid check issues
   . <- `:=` <- pvals <- fdr <- target_set_name <- hits <- NULL
   # Input checks
-  checkmate::assertList(target_genes_list, types = "character")
+  checkmate::assertList(target_genes_list, types = "character", names = "named")
   checkmate::qassert(names(target_genes_list), "S+")
   checkmate::assertList(gene_set_list, types = "character")
   checkmate::qassert(names(gene_set_list), "S+")
@@ -145,30 +155,40 @@ gse_hypergeometric_list <- function(
     if (.verbose) {
       message(
         "No gene universe given. Function will use the represented genes in the
-        pathways/gene sets as reference."
+        target gene sets and pathways/gene sets as reference."
       )
     }
-    gene_universe <- unique(unlist(gene_set_list))
+    gene_universe <- unique(c(unlist(gene_set_list), unlist(target_genes_list)))
   }
 
   target_set_lengths = sapply(target_genes_list, length)
 
-  gse_results <- rs_hypergeom_test_list(
+  rs_gse_results <- rs_hypergeom_test_list(
     target_genes_list = target_genes_list,
     gene_sets = gene_set_list,
-    gene_universe = gene_universe
+    gene_universe = gene_universe,
+    min_overlap = minimum_overlap,
+    fdr_threshold = threshold
   )
 
   gse_results <-
-    data.table::data.table(do.call(cbind, gse_results)) %>%
+    data.table::data.table(do.call(
+      cbind,
+      rs_gse_results[c(
+        "pvals",
+        "odds_ratios",
+        "hits",
+        "gene_set_lengths",
+        "fdr"
+      )]
+    )) %>%
     .[, `:=`(
-      gene_set_name = rep(names(gene_set_list), length(target_genes_list)),
+      gene_set_name = names(gene_set_list)[rs_gse_results$to_keep],
       target_set_name = rep(
-        names(target_genes_list),
-        each = length(gene_set_list)
+        names(target_set_lengths),
+        rs_gse_results$tests_passed
       )
     )] %>%
-    .[, fdr := p.adjust(pvals, method = "BH"), by = target_set_name] %>%
     data.table::setcolorder(
       .,
       c(
@@ -180,7 +200,6 @@ gse_hypergeometric_list <- function(
         "gene_set_lengths"
       )
     ) %>%
-    .[(fdr <= threshold) & (hits >= minimum_overlap)] %>%
     data.table::setorder(., pvals) %>%
     .[,
       target_set_lengths := target_set_lengths[match(
@@ -192,13 +211,260 @@ gse_hypergeometric_list <- function(
   gse_results
 }
 
+## simplify --------------------------------------------------------------------
+
+#' Simplify gene set results via ontologies
+#'
+#' @description
+#' This function provides an interface to simplify overenrichment results
+#' based on ontological information of the pathway origin (typical use case
+#' is to simplify gene ontology results). To do so, the function will
+#' calculate the Wang similarity and keep within a set of highly similar terms
+#' the one with the lowest fdr. Should there be terms with the same fdr, the
+#' function will keep the most specific term within the ontology.
+#'
+#' @param res data.table. The enrichment results. Needs to have the columns
+#' `c("gene_set_name", "fdr")`.
+#' @param parent_child_dt data.table. The data.table with column parent and
+#' child. You also need to have a type column for the Wang similarity to provide
+#' the weights for the relationships.
+#' @param weights Named numeric. The relationship of type to weight for this
+#' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
+#' @param min_sim Float between 0 and 1. The minimum similarity that the terms
+#' need to have.
+#'
+#' @return data.table with enrichment results.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+#' @import data.table
+simplify_hypergeom_res <- function(
+  res,
+  parent_child_dt,
+  weights,
+  min_sim = 0.7
+) {
+  # checks
+  checkmate::assertDataTable(res)
+  checkmate::assertNames(names(res), must.include = c("gene_set_name", "fdr"))
+  checkmate::assertDataTable(parent_child_dt)
+  checkmate::assert(all(
+    c("parent", "child", "type") %in% colnames(parent_child_dt)
+  ))
+  checkmate::assertNumeric(weights, min.len = 1L, names = "named")
+  checkmate::assertTRUE(all(unique(parent_child_dt$type) %in% names(weights)))
+  all_terms <- unique(c(parent_child_dt$parent, parent_child_dt$child))
+  checkmate::assertTRUE(all(res$gene_set_name %in% all_terms))
+  checkmate::qassert(min_sim, "N1[0, 1]")
+
+  # function body
+  ancestry <- get_ontology_ancestry(go_parent_child_dt)
+
+  descendants <- ancestry$descendants
+
+  wang_sims <- calculate_wang_sim(
+    terms = res$gene_set_name,
+    parent_child_dt = go_parent_child_dt,
+    weights = weights,
+    add_self = TRUE
+  )
+
+  res_combined <- merge(
+    res,
+    wang_sims,
+    by.x = "gene_set_name",
+    by.y = "term1"
+  )
+
+  to_remove <- c()
+
+  go_ids <- unique(res_combined$gene_set_name)
+
+  for (i in seq_along(go_ids)) {
+    id <- go_ids[i]
+    subset <- res_combined[term2 == id & sims >= min_sim]
+
+    if (nrow(subset) == 1) {
+      next
+    }
+
+    to_select <- which(subset$fdr == min(subset$fdr))
+    if (length(to_select) == 1) {
+      # case where we can just summarise by FDR
+      to_remove <- append(to_remove, subset$gene_set_name[-to_select])
+    } else {
+      # in this case, we will keep the most specific term
+      no_descendants <- purrr::map_dbl(
+        descendants[subset$gene_set_name],
+        length
+      )
+      to_select_desc <- which(no_descendants == min(no_descendants))
+      to_remove <- append(to_remove, subset$gene_set_name[-to_select])
+    }
+  }
+
+  res[!gene_set_name %in% to_remove]
+}
+
+## gsva ------------------------------------------------------------------------
+
+#' Bixverse implementation of GSVA
+#'
+#' @description
+#' Implementation of the bixverse version of the gene set variation analysis
+#' (GSVA).
+#'
+#' @param exp Numerical matrix. Rows represents the features, columns the
+#' features/genes.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param gaussian Boolean. If set to `TRUE` the Gaussian kernel will be used,
+#' if `FALSE` the Poisson will be used.
+#' @param gsva_params List. The GSVA parameters, see [bixverse::params_gsva()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item tau - Float. The tau parameter of the algorithm. Large values will
+#'  emphasise the tails more. Defaults to `1.0`.
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item max_diff - Boolean. Influences the scoring. If `TRUE` the difference
+#'  will be used; if `FALSE`, the largest absolute value.
+#'  \item abs_rank - Boolean. If `TRUE` = pos-neg, `FALSE` = pos+neg for the
+#'  internal calculations.
+#' }
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#'
+#' @export
+calc_gsva <- function(
+  exp,
+  pathways,
+  gaussian = TRUE,
+  gsva_params = params_gsva(),
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::assertMatrix(
+    exp,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertList(pathways, types = "character", names = "named")
+  checkmate::qassert(gaussian, "B1")
+  assertGSVAParams(gsva_params)
+
+  # function body
+  gs_indices <- with(
+    gsva_params,
+    rs_prepare_gsva_gs(
+      feature_names = rownames(exp),
+      pathway_list = pathways,
+      min_size = min_size,
+      max_size = max_size
+    )
+  )
+
+  gsva_res <- with(
+    gsva_params,
+    rs_gsva(
+      exp = exp,
+      gs_list = gs_indices,
+      tau = tau,
+      gaussian = gaussian,
+      max_diff = max_diff,
+      abs_rank = abs_rank,
+      timings = .verbose
+    )
+  )
+
+  rownames(gsva_res) <- names(gs_indices)
+  colnames(gsva_res) <- colnames(exp)
+
+  return(gsva_res)
+}
+
+## ssgsea ----------------------------------------------------------------------
+
+#' Bixverse implementation of ssGSEA
+#'
+#' @description
+#' Implementation of the bixverse version of the single sample gene set
+#' enrichment analysis (ssGSEA)
+#'
+#' @param exp Numerical matrix. Rows represents the features, columns the
+#' features/genes.
+#' @param pathways List. A named list with each element containing the genes for
+#' this pathway.
+#' @param ssgsea_params List. The GSVA parameters, see [bixverse::params_ssgsea()]
+#' wrapper function. This function generates a list containing:
+#' \itemize{
+#'  \item alpha - Float. The exponent defining the weight of the tail in the
+#'  random walk performed by ssGSEA.
+#'  \item min_size - Integer. Minimum size for the gene sets.
+#'  \item max_size - Integer. Maximum size for the gene sets.
+#'  \item normalise - Boolean. Shall the scores be normalised.
+#' }
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @return A matrix of shape pathways (that passed the thresholds) x samples.
+#'
+#' @export
+calc_ssgsea <- function(
+  exp,
+  pathways,
+  ssgsea_params = params_ssgsea(),
+  .verbose = FALSE
+) {
+  # checks
+  checkmate::assertMatrix(
+    exp,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertList(pathways, types = "character", names = "named")
+  assertSingleSampleGSEAparams(ssgsea_params)
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  gs_indices <- with(
+    ssgsea_params,
+    rs_prepare_gsva_gs(
+      feature_names = rownames(exp),
+      pathway_list = pathways,
+      min_size = min_size,
+      max_size = max_size
+    )
+  )
+
+  ssgsea_results <- with(
+    ssgsea_params,
+    rs_ssgsea(
+      exp = exp,
+      gs_list = gs_indices,
+      alpha = alpha,
+      normalise = normalise,
+      timings = .verbose
+    )
+  )
+
+  rownames(ssgsea_results) <- names(gs_indices)
+  colnames(ssgsea_results) <- colnames(exp)
+
+  return(ssgsea_results)
+}
+
 ## gsea ------------------------------------------------------------------------
 
 ### main functions -------------------------------------------------------------
 
 #### original implementations --------------------------------------------------
 
-#' Bixverse implementation of the simple fgsea algorithm
+#' Bixverse implementation of the traditional GSEA algorithm
 #'
 #' @description
 #' Rust-based version of the traditional permutation-based GSEA algorithm.
@@ -243,7 +509,7 @@ calc_gsea_traditional = function(
   seed = 123L
 ) {
   # Scope checks
-  . <- `:=` <- pvals <- stats <- pathways_clean <- pathway_sizes <- NULL
+  . <- `:=` <- pvals <- pathways_clean <- pathway_sizes <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
@@ -472,8 +738,8 @@ calc_fgsea <- function(
   seed = 123L
 ) {
   # Globals scope check
-  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <- NULL
-  pathway_sizes <- es <- ge_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
+  . <- `:=` <- mode_fraction <- pvals <- log2err <- pathways_clean <-
+    pathway_sizes <- es <- ge_zero <- le_zero <- n_more_extreme <- denom_prob <- p.adjust <- NULL
 
   # Checks
   checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)

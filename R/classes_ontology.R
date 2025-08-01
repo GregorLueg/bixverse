@@ -7,7 +7,7 @@
 #' elimination methods.
 #'
 #' @param go_data_dt A data.table that contains the gene ontology information.
-#' This can be extract with for example [bixverse::get_go_human_data()].
+#' This can be extract with for example [bixverse::get_go_data_human()].
 #' @param min_genes data.frame. Meta-data information in form of a data.frame.
 #'
 #' @section Properties:
@@ -114,8 +114,8 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #'
 #' @description
 #' This class is used to store any ontology and apply different methods to it.
-#' Currently implement are semantic similarity calculations based on the
-#' ontological information.
+#' Currently implemented are different types of term similarities, i.e., based
+#' on semantic similarities and the Wang similarity.
 #'
 #' @param parent_child_dt A data.table that contains the ontological information
 #' in terms of parent child relationships. Need to contain the
@@ -124,14 +124,12 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #'
 #' @section Properties:
 #' \describe{
-#'   \item{edge_dt}{data.table. Contains the parent-child relationships.}
-#'   \item{information_content_list}{List. Contains the information content
-#'   of each individual term.}
-#'   \item{ancestor_list}{List. Contains the ancestors for each ontology term.}
-#'   \item{descendants_list}{List. Contains the descendants for each ontology
-#'   term.}
-#'   \item{semantic_similarities}{data.table. Contains the semantic similarities
-#'   if calculated.}
+#'   \item{edge_dt}{data.table. Contains the parent-child relationships. (For
+#'   Wang similarity also the relationship type.)}
+#'   \item{outputs}{List. Contains various intermediary results used for some
+#'   methods.}
+#'   \item{sim_mat}{List. Contains the potentially calculated similarity
+#'   matrix in form of an R6 class. Getters to access the data are provided.}
 #'   \item{params}{A (nested) list that will store all the parameters of the
 #'   applied function.}
 #'   \item{final_results}{Final results stored in the class.}
@@ -148,10 +146,8 @@ ontology <- S7::new_class(
   # Properties, i.e., slots
   properties = list(
     parent_child_dt = S7::class_data.frame,
-    information_content_list = S7::class_list,
-    ancestor_list = S7::class_list,
-    descendants_list = S7::class_list,
-    semantic_similarities = S7::class_data.frame,
+    outputs = S7::class_list,
+    sim_mat = S7::class_any,
     params = S7::class_list,
     final_results = S7::class_any
   ),
@@ -161,14 +157,12 @@ ontology <- S7::new_class(
     checkmate::assert(all(c("parent", "child") %in% colnames(parent_child_dt)))
     checkmate::qassert(.verbose, "B1")
 
-    if (.verbose) message("Identifying the ancestors in the ontology.")
-    c(ancestors, descendants) %<-% get_ontology_ancestry(parent_child_dt)
-    if (.verbose) message("Calculating the information content of each term")
-    information_content <- calculate_information_content(descendants)
-
     params <- list(
       ontology_data = list(
-        total_size = length(information_content)
+        total_size = length(unique(
+          parent_child_dt$child,
+          parent_child_dt$parent
+        ))
       )
     )
 
@@ -176,10 +170,8 @@ ontology <- S7::new_class(
     S7::new_object(
       S7::S7_object(),
       parent_child_dt = parent_child_dt,
-      information_content_list = information_content,
-      ancestor_list = ancestors,
-      descendants_list = descendants,
-      semantic_similarities = data.table::data.table(),
+      outputs = list(),
+      sim_mat = NULL,
       params = params,
       final_results = NULL
     )
@@ -204,8 +196,8 @@ ontology <- S7::new_class(
 S7::method(print, ontology) <- function(x, ...) {
   # Get necessary parameters
   ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]
-  semantic_similarities <- S7::prop(x, "semantic_similarities")
-  semantic_calculated <- ifelse(nrow(semantic_similarities) == 0, "No.", "Yes.")
+  sim_mat <- S7::prop(x, "sim_mat")
+  semantic_calculated <- ifelse(is.null(sim_mat), "No.", "Yes.")
 
   cat(paste(
     "Ontology class:",
@@ -219,17 +211,20 @@ S7::method(print, ontology) <- function(x, ...) {
 
 ## getters ---------------------------------------------------------------------
 
-#' Get the ontology term similarities
+#' Get the similarity matrix
 #'
 #' @param object `ontology class`. See [bixverse::ontology()].
+#' @param as_data_table Boolean. Shall the data be returned as a long
+#' data.table.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return Returns the semantic similarity data.table from the class
 #'
 #' @export
-get_semantic_similarities <- S7::new_generic(
+get_sim_matrix <- S7::new_generic(
   name = "get_semantic_similarities",
   dispatch_args = "object",
-  fun = function(object) {
+  fun = function(object, as_data_table = FALSE, .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
@@ -239,9 +234,20 @@ get_semantic_similarities <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_semantic_similarities ontology
-S7::method(get_semantic_similarities, ontology) <-
-  function(object) {
-    ontology_sim <- S7::prop(object, "semantic_similarities")
-    return(ontology_sim)
+#' @method get_sim_matrix ontology
+S7::method(get_sim_matrix, ontology) <-
+  function(object, as_data_table = FALSE, .verbose = TRUE) {
+    checkmate::assertClass(object, "bixverse::ontology")
+    sim_mat <- S7::prop(object, "sim_mat")
+    # Early return
+    if (is.null(sim_mat)) {
+      return(NULL)
+    }
+    res <- if (as_data_table) {
+      sim_mat$get_data_table(.verbose = .verbose)
+    } else {
+      sim_mat$get_sym_matrix(.verbose = .verbose)
+    }
+
+    return(res)
   }

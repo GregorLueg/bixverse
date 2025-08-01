@@ -11,7 +11,12 @@ rs_set_similarity_list(s_1_list, s_2_list, overlap_coefficient)
 
 \item{s_2_list}{A List of vector against which to calculate the set similarities.}
 
-\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of the Jaccard similarity be calculated.}
+\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of the
+Jaccard similarity be calculated.}
+}
+\value{
+A matrix of the Jaccard similarities between the elements. The rows
+represent s_1_list and the column s_2_list.
 }
 \description{
 This function calculates the Jaccard or similarity index between a one given

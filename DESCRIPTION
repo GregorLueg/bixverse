@@ -1,40 +1,78 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.0.1.4
+Version: 0.0.2.0
 Authors@R: 
     c(
-      person("Gregor", "Lueg", email = "gregorlueg@me.com", role = c("aut", "cre")),
-      person("Liesbeth", "Francois", email = "francois.liesbeth@gmail.com", role = "aut"),
-      person("Andrew", "Skelton", email = "Ajskelton@proton.me", role = "aut")
+      person(
+        given = "Gregor", 
+        family = "Lueg", 
+        email = "gregorlueg@me.com", 
+        role = c("aut", "cre")
+      ),
+      person(
+        given = "Liesbeth", 
+        family = "Francois",
+        email = "francois.liesbeth@gmail.com", 
+        role = c("ctb")
+      ),
+      person(
+        given = "Andrew", 
+        family = "Skelton", 
+        email = "Ajskelton@proton.me", 
+        role = c("ctb")
       )
-Description: ...
+    )
+Description: 
+    Your favourite methods used in bioinformatics and computational biology made 
+    VERY fast via Rust. Contains various gene set enrichment methods, graph-
+    based methods, co-expression module detection and much more.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Config/rextendr/version: 0.3.1
+Config/rextendr/version: 0.4.1
 biocViews:
 Imports: 
     arrow,
     checkmate,
     data.table,
     dplyr,
+    edgeR,
     fastcluster,
     ggplot2,
     igraph,
+    limma,
     magrittr,
+    MASS,
     matrixStats,
+    Matrix,
+    mirai,
     patchwork,
     purrr,
-    furrr,
-    future,
     R6,
     rextendr,
+    rhdf5,
     rlang,
     S7,
-    zeallot,
-    MASS,
-    edgeR,
-    limma,
-    rhdf5
-Suggests: tinytest
+    stringr,
+    zeallot
+Suggests: 
+    BiocParallel,
+    fgsea,
+    GSVA,
+    infotheo,
+    knitr,
+    microbenchmark,
+    msigdbr,
+    ontologyIndex,
+    ontologySimilarity,
+    qs2,
+    quarto,
+    tictoc,
+    tinytest
+SystemRequirements: 
+    Cargo (Rust's package manager), rustc
+VignetteBuilder: 
+    quarto
+Depends: 
+    R (>= 4.2)

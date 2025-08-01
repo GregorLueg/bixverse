@@ -4,19 +4,33 @@
 \alias{rbh_graph}
 \title{Reciprocal best hit graph}
 \usage{
-rbh_graph(module_results, dataset_col, module_col, value_col)
+rbh_graph(
+  module_results,
+  rbh_type = c("cor", "set"),
+  dataset_col = NULL,
+  module_col = NULL,
+  value_col = NULL
+)
 }
 \arguments{
-\item{module_results}{data.table with the all of the gene modules for which
-you wish to generate the RBH graph.}
+\item{module_results}{data.table or list. If data.table (you set the class
+to \code{"set"}, i.e., set similarities will be used) it cointains all of
+the gene modules for which you wish to generate the RBH graph and you need
+to have the three column names. If list (you set the class to `"cor"``,
+i.e., correlations between for example gene loadings will be used), the
+list contains all of the matrices (must have col and row names).}
+
+\item{rbh_type}{String. One of \code{c("cor", "set")}.}
 
 \item{dataset_col}{The column (name) which indicates from which data set/
-method the gene module was derived.}
+method the gene module was derived. Only needed if you want to use set
+similarities.}
 
-\item{module_col}{The column (name) which stores the names of the modules.}
+\item{module_col}{The column (name) which stores the names of the modules.
+Only needed if you want to use set similarities.}
 
 \item{value_col}{The column (name) which stores the genes that are part of
-the modules.}
+the modules. Only needed if you want to use set similarities.}
 }
 \value{
 Returns the \code{rbh_graph} class for further operations.

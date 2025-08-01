@@ -3,28 +3,40 @@ LIBDIR = $(TARGET_DIR)/release
 STATLIB = $(LIBDIR)/libbixverse.a
 PKG_LIBS = -L$(LIBDIR) -lbixverse
 
-all: C_clean
+all: $(SHLIB) rust_clean
+
+.PHONY: $(STATLIB)
 
 $(SHLIB): $(STATLIB)
 
 CARGOTMP = $(CURDIR)/.cargo
+VENDOR_DIR = $(CURDIR)/vendor
 
+
+# RUSTFLAGS appends --print=native-static-libs to ensure that 
+# the correct linkers are used. Use this for debugging if need. 
+#
+# CRAN note: Cargo and Rustc versions are reported during
+# configure via tools/msrv.R.
+#
+# vendor.tar.xz, if present, is unzipped and used for offline compilation.
 $(STATLIB):
-	# In some environments, ~/.cargo/bin might not be included in PATH, so we need
-	# to set it here to ensure cargo can be invoked. It is appended to PATH and
-	# therefore is only used if cargo is absent from the user's PATH.
-	if [ "$(NOT_CRAN)" != "true" ]; then \
-		export CARGO_HOME=$(CARGOTMP); \
-	fi && \
-		export PATH="$(PATH):$(HOME)/.cargo/bin" && \
-		cargo build --lib --release --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR)
-	if [ "$(NOT_CRAN)" != "true" ]; then \
-		rm -Rf $(CARGOTMP) && \
-		rm -Rf $(LIBDIR)/build; \
+
+	if [ -f ./rust/vendor.tar.xz ]; then \
+		tar xf rust/vendor.tar.xz && \
+		mkdir -p $(CARGOTMP) && \
+		cp rust/vendor-config.toml $(CARGOTMP)/config.toml; \
 	fi
 
-C_clean:
-	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS)
+	export CARGO_HOME=$(CARGOTMP) && \
+	export PATH="$(PATH):$(HOME)/.cargo/bin" && \
+	RUSTFLAGS="$(RUSTFLAGS) --print=native-static-libs" cargo build  --lib --release --manifest-path=./rust/Cargo.toml --target-dir $(TARGET_DIR) 
+
+	# Always clean up CARGOTMP
+	rm -Rf $(CARGOTMP);
+
+rust_clean: $(SHLIB)
+	rm -Rf $(CARGOTMP) $(VENDOR_DIR) 
 
 clean:
-	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) rust/target
+	rm -Rf $(SHLIB) $(STATLIB) $(OBJECTS) $(TARGET_DIR) $(VENDOR_DIR)

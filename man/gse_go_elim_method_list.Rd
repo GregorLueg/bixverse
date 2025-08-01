@@ -10,8 +10,7 @@ gse_go_elim_method_list(
   minimum_overlap = 3L,
   fdr_threshold = 0.05,
   elim_threshold = 0.05,
-  min_genes = NULL,
-  .debug = FALSE
+  min_genes = NULL
 )
 }
 \arguments{
@@ -31,10 +30,6 @@ elimination on the ancestors shall be conducted.}
 \item{min_genes}{Integer. Minimum number of genes that have to be included in
 the gene ontology term. If NULL, it will default to the number of minimum
 genes stored in \code{gene_ontology_data}.}
-
-\item{.debug}{Boolean. Shall information from the Rust function be displayed.
-For debugging purposes. Warning: should you run this command over a large
-list, you will have a large print output!}
 }
 \value{
 data.table with enrichment results.
@@ -47,5 +42,6 @@ enrichment for any GO terms. If the threshold of the p-value is below the
 elimination threshold, the genes from this term will be removed from all its
 ancestors. The function then proceeds to the next level of the ontology and
 repeats the process. The class will leverage Rust threading to parallelise
-the process.
+the process. The gene universe will be automatically set to every gene
+represented in the ontology.
 }

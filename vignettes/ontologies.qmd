@@ -1,0 +1,215 @@
+---
+title: "Ontologies"
+vignette: >
+  %\VignetteIndexEntry{Ontologies}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+## Ontologies
+
+`bixverse` also offers some methods that work on ontologies (think disease,
+gene or phenotype ontologies) and leverages Rust for very fast calculations
+of different similarity measures.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(data.table)
+library(magrittr)
+library(zeallot)
+```
+
+### Data
+
+In this case, we will be using the HPO from the the `ontologyIndex` package.
+
+```{r}
+#| label: loading in hpo
+#| eval: !expr requireNamespace("ontologyIndex", quietly = TRUE)
+
+library("ontologyIndex")
+
+data("hpo")
+
+hpo_data <- as.data.table(stack(hpo$children)) %>%
+  setnames(old = c("values", "ind"), new = c("child", "parent")) %>%
+  .[, c("parent", "child"), with = FALSE] %>%
+  .[, type := "parent_of"] 
+```
+
+### Semantic similarities
+
+Armed with the parent child data we can now calculate the semantic similarities.
+First we need the ancestry to identify the ancestors and calculate the
+information content. We can do this via: 
+
+```{r}
+#| label: get the ancestry and information content
+c(ancestors, descendants) %<-% get_ontology_ancestry(hpo_data)
+
+information_content <- calculate_information_content(descendants)
+```
+
+Armed with this, we can now calculate different semantic similarity matrices,
+based on [Resnik](https://arxiv.org/abs/1105.5444) similarity, the 
+[Lin](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=32163f8f5114beea5576c93b2ce21ec1e48988ce) 
+similarity and a combination of the two.
+
+```{r}
+#| label: resnik similarity calculation
+
+resnik_similarity <- calculate_semantic_sim_mat(
+  similarity_type = "resnik",
+  ancestor_list = ancestors,
+  ic_list = information_content
+)
+
+# The similarity is rescaled to between 0 and 1
+resnik_similarity[1:5, 1:5]
+```
+
+To calculate the Lin similarity you can just do adopt the parameter:
+
+```{r}
+#| label: lin similarity calculation
+
+lin_similarity <- calculate_semantic_sim_mat(
+  similarity_type = "lin",
+  ancestor_list = ancestors,
+  ic_list = information_content
+)
+
+lin_similarity[1:5, 1:5]
+```
+
+Of course you can also just calculate the similarity between pre-specified
+terms. Let's do this for a random sample and use the combined semantic 
+similarity, i.e., the average of the (normalised) Resnik and Lin similarity.
+
+```{r}
+#| label: calculate for pre-specified terms
+
+set.seed(10101L)
+
+random_term_sample <- sort(sample(names(information_content), 10L))
+
+combined_similarity <- calculate_semantic_sim(
+  terms = random_term_sample,
+  similarity_type = "combined",
+  ancestor_list = ancestors,
+  ic_list = information_content
+)
+
+head(combined_similarity)
+```
+
+#### Speed comparisons 
+
+Comparing against the popular ontologySimilarity package is shown below.
+
+```{r}
+#| label: ontologySimilarity speed
+#| eval: !expr requireNamespace("ontologySimilarity", quietly = TRUE)
+
+library(ontologySimilarity)
+
+data("hpo")
+
+# They include obsolete terms in the ancestry and in the hpo ids.
+# For comparison purposes, these will be removed
+# Additionally, they have additional weird terms in there, that should not be
+# like "inheres_in", "inheres_in_part_of" and "part_of"
+
+terms_to_remove <- c("inheres_in", "inheres_in_part_of", "part_of")
+
+# The ids are used by their functions
+hpo$id <- hpo$id[!hpo$obsolete]
+hpo$id <- hpo$id[!names(hpo$id) %in% terms_to_remove]
+
+# And the ancestry is being used by their functions
+hpo$ancestors <- hpo$ancestors[!hpo$obsolete]
+hpo$ancestors <- hpo$ancestors[!names(hpo$ancestors) %in% terms_to_remove]
+
+ontoSimiliarity_information_content <- descendants_IC(hpo)
+
+tictoc::tic()
+ontoSimiliarity_mat <- get_term_sim_mat(
+  ontology = hpo, 
+  information_content = ontoSimiliarity_information_content
+)
+tictoc::toc()
+
+# For some reason the self similarity for HP:0000001 is 0, instead of 1.
+diag(ontoSimiliarity_mat) <- 1
+
+ontoSimiliarity_mat[1:5, 1:5]
+```
+
+And this is the `bixverse` version.
+
+```{r}
+#| label: bixverse speed
+
+tictoc::tic()
+lin_similarity <- calculate_semantic_sim_mat(
+  similarity_type = "lin",
+  ancestor_list = ancestors,
+  ic_list = information_content
+)
+tictoc::toc()
+
+lin_similarity[1:5, 1:5]
+```
+
+You should observe decent speed improvements thanks to Rust and algorithm 
+optimisations. And the data is the same:
+
+```{r}
+#| label: data similarity
+
+all(ontoSimiliarity_mat == lin_similarity)
+```
+
+### Wang similarities
+
+We provide also the calculation of the 
+[Wang similarity](https://academic.oup.com/bioinformatics/article/23/10/1274/197095). 
+These are based on the DAG of the respective ontology and allow you to assign a
+weight to relationship. To calculate this, let's generate again the full
+matrix
+
+```{r}
+#| label: calculate full wang similarity
+
+# We are assigning a weight of 0.8 here... 
+# In this ontology we only have one type of relationship, but for example
+# in the Gene Ontology there are more of them
+wang_weights <- setNames(0.8, "parent_of")
+
+wang_similarity <- calculate_wang_sim_mat(
+  parent_child_dt = hpo_data, 
+  weight = wang_weights
+)
+
+wang_similarity[1:5, 1:5]
+```
+
+Also here we provide functionality to only calculate similarities for subsets.
+
+```{r}
+#| label: calculate full wang for subset
+
+wang_similarity_subset <- calculate_wang_sim(
+  terms = random_term_sample,
+  parent_child_dt = hpo_data, 
+  weight = wang_weights
+)
+
+# This one returns a data.table
+head(wang_similarity_subset)
+```

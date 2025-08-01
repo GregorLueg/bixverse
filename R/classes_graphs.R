@@ -39,6 +39,7 @@ network_diffusions <- S7::new_class(
   properties = list(
     graph = S7::class_any,
     diffusion_res = S7::class_numeric,
+    diffusion_perm = S7::class_numeric,
     final_results = S7::class_data.frame,
     params = S7::class_list
   ),
@@ -75,6 +76,7 @@ network_diffusions <- S7::new_class(
       S7::S7_object(),
       graph = graph,
       diffusion_res = vector(mode = "numeric"),
+      diffusion_perm = vector(mode = "numeric"),
       final_results = data.table(),
       params = params
     )
@@ -120,6 +122,40 @@ S7::method(get_diffusion_vector, network_diffusions) <- function(object) {
   diffusion_vec
 }
 
+#' Get the diffusion permutations
+#'
+#' @description Returns the diffusion Z-scores if you ran
+#' [bixverse::permute_seed_nodes()].
+#'
+#' @param object The underlying class [bixverse::network_diffusions()].
+#'
+#' @return The diffusion Z scores if found. Otherwise `NULL`.
+#'
+#' @export
+get_diffusion_perms <- S7::new_generic(
+  name = "get_diffusion_perms",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_diffusion_perms network_diffusions
+S7::method(get_diffusion_perms, network_diffusions) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::network_diffusions")
+  # Get the data
+  diffusion_perm <- S7::prop(object, "diffusion_perm")
+  if (is.null(diffusion_perm)) {
+    warning("No diffusion permutations found. Returning NULL.")
+  }
+  diffusion_perm
+}
+
 # rbh_graphs -------------------------------------------------------------------
 
 ## class -----------------------------------------------------------------------
@@ -153,48 +189,80 @@ rbh_graph <- S7::new_class(
   #' - params: A list with the params. This will be populated during subsequent
   #' function calls.
   #'
-  #' @param module_results data.table with the all of the gene modules for which
-  #' you wish to generate the RBH graph.
+  #' @param module_results data.table or list. If data.table (you set the class
+  #' to `"set"`, i.e., set similarities will be used) it cointains all of
+  #' the gene modules for which you wish to generate the RBH graph and you need
+  #' to have the three column names. If list (you set the class to `"cor"``,
+  #' i.e., correlations between for example gene loadings will be used), the
+  #' list contains all of the matrices (must have col and row names).
+  #' @param rbh_type String. One of `c("cor", "set")`.
   #' @param dataset_col The column (name) which indicates from which data set/
-  #' method the gene module was derived.
+  #' method the gene module was derived. Only needed if you want to use set
+  #' similarities.
   #' @param module_col The column (name) which stores the names of the modules.
+  #' Only needed if you want to use set similarities.
   #' @param value_col The column (name) which stores the genes that are part of
-  #' the modules.
+  #' the modules. Only needed if you want to use set similarities.
   #'
   #' @return Returns the `rbh_graph` class for further operations.
   #'
   #' @export
-  constructor = function(module_results, dataset_col, module_col, value_col) {
-    checkmate::assertDataTable(module_results)
-    checkmate::qassert(dataset_col, "S1")
-    checkmate::qassert(module_col, "S1")
-    checkmate::qassert(value_col, "S1")
-    checkmate::assertNames(
-      names(module_results),
-      must.include = c(dataset_col, module_col, value_col)
-    )
-    # Function body
-    list_of_list <- split(
-      module_results %>% dplyr::select(!!module_col, !!value_col),
-      module_results[, ..dataset_col]
-    ) %>%
-      purrr::map(
-        .,
-        ~ {
-          df <- .
-          split(unlist(df[, ..value_col]), unlist(df[, ..module_col]))
-        }
+  constructor = function(
+    module_results,
+    rbh_type = c("cor", "set"),
+    dataset_col = NULL,
+    module_col = NULL,
+    value_col = NULL
+  ) {
+    # checks
+    checkmate::assertChoice(rbh_type, c("cor", "set"))
+    if (rbh_type == "set") {
+      checkmate::assertDataTable(module_results)
+      checkmate::qassert(dataset_col, "S1")
+      checkmate::qassert(module_col, "S1")
+      checkmate::qassert(value_col, "S1")
+      checkmate::assertNames(
+        names(module_results),
+        must.include = c(dataset_col, module_col, value_col)
       )
+    } else {
+      checkmate::assertList(module_results, types = "matrix")
+      checkmate::assertTRUE(all(purrr::map_lgl(module_results, \(mat) {
+        checkmate::checkMatrix(
+          mat,
+          mode = "numeric",
+          row.names = "named",
+          col.names = "named"
+        )
+      })))
+    }
+
+    # function body
+    data <- if (rbh_type == "set") {
+      split(
+        module_results %>% dplyr::select(!!module_col, !!value_col),
+        module_results[, ..dataset_col]
+      ) %>%
+        purrr::map(
+          .,
+          ~ {
+            df <- .
+            split(unlist(df[, ..value_col]), unlist(df[, ..module_col]))
+          }
+        )
+    } else {
+      module_results
+    }
 
     # Finalise object
     S7::new_object(
       S7::S7_object(),
-      module_data = list_of_list,
+      module_data = data,
       rbh_edge_df = data.table(),
       rbh_graph = NULL,
       final_results = data.table(),
       params = list(
-        no_compared_modules = nrow(module_results)
+        rbh_type = rbh_type
       )
     )
   }

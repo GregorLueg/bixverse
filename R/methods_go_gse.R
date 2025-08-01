@@ -8,7 +8,9 @@
 #' levels of the ontology and tests if there is significant enrichment for any
 #' GO terms. If the threshold of the p-value is below the elimination threshold,
 #' the genes from this term will be removed from all its ancestors. The function
-#' then proceeds to the next level of the ontology and repeats the process.
+#' then proceeds to the next level of the ontology and repeats the process. The
+#' gene universe will be automatically set to every gene represented in the
+#' ontology.
 #'
 #' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
@@ -20,8 +22,6 @@
 #' @param min_genes Integer. Minimum number of genes that have to be included in
 #' the gene ontology term. If NULL, it will default to the number of minimum
 #' genes stored in `gene_ontology_data`.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -35,8 +35,7 @@ gse_go_elim_method <- S7::new_generic(
     minimum_overlap = 3L,
     fdr_threshold = 0.05,
     elim_threshold = 0.05,
-    min_genes = NULL,
-    .debug = FALSE
+    min_genes = NULL
   ) {
     S7::S7_dispatch()
   }
@@ -56,8 +55,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     minimum_overlap = 3L,
     fdr_threshold = 0.05,
     elim_threshold = 0.05,
-    min_genes = NULL,
-    .debug = FALSE
+    min_genes = NULL
   ) {
     # Scope checks
     . <- pvals <- fdr <- hits <- NULL
@@ -68,7 +66,6 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     checkmate::qassert(elim_threshold, "R+[0,1]")
     checkmate::qassert(minimum_overlap, "I1")
     checkmate::qassert(min_genes, c("0", "I1"))
-    checkmate::qassert(.debug, "B1")
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
       min_genes <- S7::prop(object, "min_genes")
@@ -81,21 +78,19 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
       "go_to_genes"
     ))))
 
-    results_go <- rs_gse_geom_elim(
+    rs_results_go <- rs_gse_geom_elim(
       target_genes = target_genes,
       levels = levels,
       go_obj = object,
       gene_universe_length = gene_universe_length,
       min_genes = min_genes,
       elim_threshold = elim_threshold,
-      debug = .debug
+      min_overlap = minimum_overlap,
+      fdr_threshold = fdr_threshold
     )
 
-    results_go_dt <- data.table(do.call(cbind, results_go[-1])) %>%
-      .[, `:=`(
-        go_id = results_go$go_ids,
-        fdr = p.adjust(pvals, method = "BH")
-      )] %>%
+    results_go_dt <- data.table(do.call(cbind, rs_results_go[-1])) %>%
+      .[, go_id := rs_results_go$go_ids, ] %>%
       data.table::setcolorder(
         .,
         c(
@@ -109,8 +104,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
       )
 
     results_go_dt <- merge(go_info, results_go_dt, by = "go_id") %>%
-      data.table::setorder(., pvals) %>%
-      .[(fdr <= fdr_threshold) & (hits >= minimum_overlap)]
+      data.table::setorder(., pvals)
 
     results_go_dt
   }
@@ -126,7 +120,8 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' elimination threshold, the genes from this term will be removed from all its
 #' ancestors. The function then proceeds to the next level of the ontology and
 #' repeats the process. The class will leverage Rust threading to parallelise
-#' the process.
+#' the process. The gene universe will be automatically set to every gene
+#' represented in the ontology.
 #'
 #' @param object The underlying class, see [bixverse::gene_ontology_data()].
 #' @param target_gene_list List. The target genes list you wish to apply the
@@ -139,9 +134,6 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' @param min_genes Integer. Minimum number of genes that have to be included in
 #' the gene ontology term. If NULL, it will default to the number of minimum
 #' genes stored in `gene_ontology_data`.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes. Warning: should you run this command over a large
-#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -155,8 +147,7 @@ gse_go_elim_method_list <- S7::new_generic(
     minimum_overlap = 3L,
     fdr_threshold = 0.05,
     elim_threshold = 0.05,
-    min_genes = NULL,
-    .debug = FALSE
+    min_genes = NULL
   ) {
     S7::S7_dispatch()
   }
@@ -176,19 +167,22 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     minimum_overlap = 3L,
     fdr_threshold = 0.05,
     elim_threshold = 0.05,
-    min_genes = NULL,
-    .debug = FALSE
+    min_genes = NULL
   ) {
     # Scope checks
     . <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
     checkmate::assertClass(object, "bixverse::gene_ontology_data")
-    checkmate::assertList(target_gene_list, types = "character")
+    checkmate::assertList(
+      target_gene_list,
+      types = "character",
+      names = "named"
+    )
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
     checkmate::qassert(minimum_overlap, "I1")
     checkmate::qassert(min_genes, c("0", "I1"))
-    checkmate::qassert(.debug, "B1")
+
     # Extract relevant data from the S7 object
     if (is.null(min_genes)) {
       min_genes <- S7::prop(object, "min_genes")
@@ -201,34 +195,33 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
       "go_to_genes"
     ))))
 
-    results_go <- rs_gse_geom_elim_list(
+    rs_results_go <- rs_gse_geom_elim_list(
       target_genes_list = target_gene_list,
       levels = levels,
       go_obj = object,
       gene_universe_length = gene_universe_length,
       min_genes = min_genes,
       elim_threshold = elim_threshold,
-      debug = .debug
+      min_overlap = minimum_overlap,
+      fdr_threshold = fdr_threshold
     )
 
-    target_set_names <- purrr::map2(
-      names(target_gene_list),
-      results_go$no_test,
-      ~ {
-        rep(.x, each = .y)
-      }
+    cols_to_select <- c(
+      "pvals",
+      "fdr",
+      "odds_ratios",
+      "hits",
+      "gene_set_lengths"
     )
 
-    target_set_names <- do.call(c, target_set_names)
-
-    cols_to_select <- c("pvals", "odds_ratios", "hits", "gene_set_lengths")
-
-    results_go_dt <- data.table(do.call(cbind, results_go[cols_to_select])) %>%
+    results_go_dt <- data.table(do.call(
+      cbind,
+      rs_results_go[cols_to_select]
+    )) %>%
       .[, `:=`(
-        go_id = results_go$go_ids,
-        target_set_name = target_set_names
-      )] %>%
-      .[, fdr := p.adjust(pvals, method = "BH"), by = target_set_name]
+        go_id = rs_results_go$go_ids,
+        target_set_name = rep(names(target_gene_list), rs_results_go$no_test)
+      )]
 
     results_go_dt <- merge(results_go_dt, go_info, by = "go_id") %>%
       data.table::setorder(., pvals) %>%
@@ -244,8 +237,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
           "hits",
           "gene_set_lengths"
         )
-      ) %>%
-      .[(fdr <= fdr_threshold) & (hits >= minimum_overlap)]
+      )
 
     results_go_dt
   }
@@ -280,9 +272,6 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
 #'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes. Warning: should you run this command over a large
-#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -296,8 +285,7 @@ fgsea_simple_go_elim <- S7::new_generic(
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -316,8 +304,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     # Scope checks
     . <- leading_edge <- fdr <- NULL
@@ -329,7 +316,6 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     checkmate::qassert(nperm, "I1")
     checkmate::qassert(seed, "I1")
     assertGSEAParams(gsea_params)
-    checkmate::qassert(.debug, "B1")
 
     # Function body
     stats <- sort(stats, decreasing = TRUE)
@@ -344,8 +330,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
       gsea_params = gsea_params,
       elim_threshold = elim_threshold,
       iters = nperm,
-      seed = seed,
-      debug = .debug
+      seed = seed
     )
 
     leading_edges <- mapply(
@@ -400,9 +385,6 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
 #'  level implementation of fgsea.
 #' }
 #' @param seed Random seed for reproducibility.
-#' @param .debug Boolean. Shall information from the Rust function be displayed.
-#' For debugging purposes. Warning: should you run this command over a large
-#' list, you will have a large print output!
 #'
 #' @return data.table with enrichment results.
 #'
@@ -418,8 +400,7 @@ fgsea_go_elim <- S7::new_generic(
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     S7::S7_dispatch()
   }
@@ -438,8 +419,7 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
     elim_threshold = 0.05,
     nperm = 2000L,
     gsea_params = params_gsea(max_size = 2000L),
-    seed = 42L,
-    .debug = FALSE
+    seed = 42L
   ) {
     # Scope checks
     . <- leading_edge <- fdr <- mode_fraction <- pvals <- log2err <- NULL
@@ -451,7 +431,6 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
     checkmate::qassert(nperm, "I1")
     checkmate::qassert(seed, "I1")
     assertGSEAParams(gsea_params)
-    checkmate::qassert(.debug, "B1")
 
     # Function body
     stats <- sort(stats, decreasing = TRUE)
@@ -466,8 +445,7 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
       gsea_params = gsea_params,
       elim_threshold = elim_threshold,
       iters = nperm,
-      seed = seed,
-      debug = FALSE
+      seed = seed
     ) %>%
       data.table::setDT()
 

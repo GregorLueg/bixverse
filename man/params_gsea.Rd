@@ -8,7 +8,7 @@ params_gsea(
   min_size = 5L,
   max_size = 500L,
   gsea_param = 1,
-  sample_size = 121L,
+  sample_size = 101L,
   eps = 1e-50
 )
 }

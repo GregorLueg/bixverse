@@ -1,12 +1,12 @@
-# classes ----
+# classes ----------------------------------------------------------------------
 
-## bixverse_base_class ----
+## bixverse_base_class ---------------------------------------------------------
 
 #' bixverse base class
 #'
 #' @description
 #' Generic base class that is used for inheritance in certain common methods
-#' across classes.
+#' across other classes.
 #'
 #' @section Properties:
 #' \describe{
@@ -29,9 +29,9 @@ bixverse_base_class <- S7::new_class(
   }
 )
 
-# methods ----
+# methods ----------------------------------------------------------------------
 
-## getters ----
+## getters ---------------------------------------------------------------------
 
 #' Get the parameters that were used.
 #'

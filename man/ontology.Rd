@@ -18,20 +18,18 @@ Returns the class for subsequent usage.
 }
 \description{
 This class is used to store any ontology and apply different methods to it.
-Currently implement are semantic similarity calculations based on the
-ontological information.
+Currently implemented are different types of term similarities, i.e., based
+on semantic similarities and the Wang similarity.
 }
 \section{Properties}{
 
 \describe{
-\item{edge_dt}{data.table. Contains the parent-child relationships.}
-\item{information_content_list}{List. Contains the information content
-of each individual term.}
-\item{ancestor_list}{List. Contains the ancestors for each ontology term.}
-\item{descendants_list}{List. Contains the descendants for each ontology
-term.}
-\item{semantic_similarities}{data.table. Contains the semantic similarities
-if calculated.}
+\item{edge_dt}{data.table. Contains the parent-child relationships. (For
+Wang similarity also the relationship type.)}
+\item{outputs}{List. Contains various intermediary results used for some
+methods.}
+\item{sim_mat}{List. Contains the potentially calculated similarity
+matrix in form of an R6 class. Getters to access the data are provided.}
 \item{params}{A (nested) list that will store all the parameters of the
 applied function.}
 \item{final_results}{Final results stored in the class.}

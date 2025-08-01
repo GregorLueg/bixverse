@@ -8,7 +8,7 @@ generate_rbh_graph(
   object,
   minimum_similarity,
   overlap_coefficient = FALSE,
-  .debug = FALSE
+  spearman = FALSE
 )
 }
 \arguments{
@@ -16,10 +16,12 @@ generate_rbh_graph(
 
 \item{minimum_similarity}{The minimum similarity to create an edge.}
 
-\item{overlap_coefficient}{Shall the overlap coefficient be used instead of
-Jaccard similarity.}
+\item{overlap_coefficient}{Boolean. Shall the overlap coefficient be used
+instead of Jaccard similarity. Only relevant if the underlying class is set
+to set similarity.}
 
-\item{.debug}{Debug flat that will create print messages from Rust.}
+\item{spearman}{Boolean. Shall Spearman correlation be used. Only relevant
+if the underlying class is set to correlation-based similarity.}
 }
 \value{
 The class with added properties.

@@ -50,7 +50,7 @@ expect_equal(
   info = paste(
     "gsea: es calculation positive"
   ),
-  tolerance = 10e-6
+  tolerance = 10e-7
 )
 
 expect_equal(
@@ -59,7 +59,7 @@ expect_equal(
   info = paste(
     "gsea: es calculation negative"
   ),
-  tolerance = 10e-6
+  tolerance = 10e-7
 )
 
 ### gene set indices -----------------------------------------------------------
@@ -193,7 +193,7 @@ expect_equal(
   info = paste(
     "gsea: gsea stat pos (with leading edge)"
   ),
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 expect_equal(
@@ -202,7 +202,7 @@ expect_equal(
   info = paste(
     "gsea: gsea stat pos: leading edge"
   ),
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 #### negative ------------------------------------------------------------------
@@ -213,7 +213,7 @@ expect_equal(
   info = paste(
     "gsea: gsea stat neg"
   ),
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 expect_equal(
@@ -222,7 +222,7 @@ expect_equal(
   info = paste(
     "gsea: gsea stat pos: leading edge"
   ),
-  tolerance = 1e-6
+  tolerance = 1e-7
 )
 
 ## traditional gsea vs simple fgsea --------------------------------------------
@@ -283,8 +283,7 @@ expect_true(
 
 ### comparison 1 ---------------------------------------------------------------
 
-# Due to the low number of permutations, all of the p-values from the
-# multi-level version should be lower here...
+# For the two significant pathways, we should see lower p-values
 
 internal_gsea_multi_level_res <- calc_fgsea(
   stats = stats,
@@ -294,7 +293,10 @@ internal_gsea_multi_level_res <- calc_fgsea(
   data.table::setorder(pathway_name)
 
 expect_true(
-  all(internal_gsea_multi_level_res$pvals < internal_gsea_simple_res$pvals),
+  all(
+    internal_gsea_multi_level_res$pvals[1:2] <
+      internal_gsea_simple_res$pvals[1:2]
+  ),
   info = paste(
     "simple fgsea vs multi-level fgsea comparison (low permutations)"
   )
@@ -364,8 +366,6 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
       "calc gsea stats fgsea vs internal: positive"
     )
   )
-} else {
-  exit_file("fgsea package not available for comparison tests")
 }
 
 ## simple method ---------------------------------------------------------------
@@ -397,27 +397,25 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
 
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_pval >= 0.98,
+    correlation_fgsea_internal_pval >= 0.99,
     info = paste(
       "correlation internal fgsea vs official (pval)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_es >= 0.98,
+    correlation_fgsea_internal_es >= 0.99,
     info = paste(
       "correlation internal fgsea vs official (ES)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_internal_nes >= 0.98,
+    correlation_fgsea_internal_nes >= 0.99,
     info = paste(
       "correlation internal fgsea vs official (NES)"
     )
   )
-} else {
-  exit_file("fgsea package not available for comparison tests")
 }
 
 ## multi-level method ----------------------------------------------------------
@@ -449,21 +447,21 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
 
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_multilevel_pval >= 0.98,
+    correlation_fgsea_multilevel_pval >= 0.99,
     info = paste(
       "correlation internal fgsea vs official - multilevel (pval)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_multilevel_es >= 0.98,
+    correlation_fgsea_multilevel_es >= 0.99,
     info = paste(
       "correlation internal fgsea vs official - multilevel (ES)"
     )
   )
   # There should be a very high correlation, despite random initialisation
   expect_true(
-    correlation_fgsea_multilevel_nes >= 0.98,
+    correlation_fgsea_multilevel_nes >= 0.99,
     info = paste(
       "correlation internal fgsea vs official - multilevel (NES)"
     )

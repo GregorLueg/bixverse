@@ -98,9 +98,9 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
     S7::prop(object, "processed_data")[["background_covar"]] <-
       background_covar
 
-    # Set the object to a cPCA analysis
-    S7::prop(object, "params")["detection_method"] <- "cPCA"
-    S7::prop(object, "params")[["cPCA_params"]] <- internal_params
+    # Set the object to a c_pca analysis
+    S7::prop(object, "params")["detection_method"] <- "c_pca"
+    S7::prop(object, "params")[["c_pca_params"]] <- internal_params
 
     # Return
     object
@@ -124,14 +124,13 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
 #' @references Abid, et al., Nature Communications, 2018
 #'
 #' @export
-apply_contrastive_pca <- S7::new_generic(
-  name = "apply_contrastive_pca",
+contrastive_pca <- S7::new_generic(
+  name = "contrastive_pca",
   dispatch_args = "object",
   fun = function(object, alpha, no_pcs) {
     S7::S7_dispatch()
   }
 )
-
 
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
@@ -139,8 +138,8 @@ apply_contrastive_pca <- S7::new_generic(
 #'
 #' @export
 #'
-#' @method apply_contrastive_pca bulk_coexp
-S7::method(apply_contrastive_pca, bulk_coexp) <-
+#' @method contrastive_pca bulk_coexp
+S7::method(contrastive_pca, bulk_coexp) <-
   function(object, alpha, no_pcs) {
     # Scope checks
     factors <- loadings <- NULL
@@ -149,14 +148,14 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
     checkmate::qassert(alpha, "N1")
     checkmate::qassert(no_pcs, "I1")
     detection_method <- S7::prop(object, "params")["detection_method"]
-    checkmate::assertTRUE(detection_method == "cPCA")
+    checkmate::assertTRUE(detection_method == "c_pca")
 
     # Extract data
     target_covar <- S7::prop(object, "processed_data")[["target_covar"]]
     background_covar <- S7::prop(object, "processed_data")[["background_covar"]]
     target_mat <- S7::prop(object, "processed_data")[["target_mat"]]
 
-    # Run cPCA
+    # Run c_pca
     c(factors, loadings) %<-%
       rs_contrastive_pca(
         target_covar = target_covar,
@@ -169,20 +168,95 @@ S7::method(apply_contrastive_pca, bulk_coexp) <-
 
     colnames(factors) <- colnames(loadings) <- sprintf("cPC_%i", seq(1:10))
     rownames(factors) <- rownames(target_mat)
-    rownames(loadings) <- S7::prop(object, "params")[["cPCA_params"]][[
+    rownames(loadings) <- S7::prop(object, "params")[["c_pca_params"]][[
       "intersecting_features"
     ]]
 
-    S7::prop(object, "params")[["cPCA_params"]]["final_alpha"] <- alpha
-    S7::prop(object, "params")[["cPCA_params"]]["n_pcs"] <- no_pcs
+    S7::prop(object, "params")[["c_pca_params"]]["final_alpha"] <- alpha
+    S7::prop(object, "params")[["c_pca_params"]]["n_pcs"] <- no_pcs
 
-    S7::prop(object, "outputs")[["cPCA_factors"]] <- factors
-    S7::prop(object, "outputs")[["cPCA_loadings"]] <- loadings
+    S7::prop(object, "outputs")[["c_pca_factors"]] <- factors
+    S7::prop(object, "outputs")[["c_pca_loadings"]] <- loadings
 
     return(object)
   }
 
-# plotting ---------------------------------------------------------------------
+# helpers ----------------------------------------------------------------------
+
+## specific getters ------------------------------------------------------------
+
+#' Get the contrastive PCA loadings
+#'
+#' @description
+#' Getter function for the feature loadings of the contrastive PCA
+#'
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#'
+#' @returns The feature loadings of the contrastive PCA run. If not found,
+#' returns a warning and NULL.
+#'
+#' @export
+get_c_pca_loadings <- S7::new_generic(
+  name = "get_c_pca_loadings",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @method get_c_pca_loadings bulk_coexp
+S7::method(get_c_pca_loadings, bulk_coexp) <- function(object) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+
+  loadings <- S7::prop(object, "outputs")[["c_pca_loadings"]]
+
+  if (is.null(loadings)) {
+    warning("No contrastive PCA loadings found. Returning NULL.")
+  }
+
+  return(loadings)
+}
+
+
+#' Get the contrastive PCA factors
+#'
+#' @description
+#' Getter function for the feature factors of the contrastive PCA
+#'
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#'
+#' @returns The sample scores of the contrastive PCA run. If not found,
+#' returns a warning and NULL.
+#'
+#' @export
+get_c_pca_factors <- S7::new_generic(
+  name = "get_c_pca_factors",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @method get_c_pca_factors bulk_coexp
+S7::method(get_c_pca_factors, bulk_coexp) <- function(object) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+
+  factors <- S7::prop(object, "outputs")[["c_pca_factors"]]
+
+  if (is.null(factors)) {
+    warning("No contrastive PCA factors found. Returning NULL.")
+  }
+
+  return(factors)
+}
+
+## plotting --------------------------------------------------------------------
 
 #' Plot various alphas for the contrastive PCA
 #'
@@ -250,7 +324,7 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(
   checkmate::qassert(max_alpha, sprintf("N1(%f,]", min_alpha))
   checkmate::qassert(n_alphas, "I1")
   detection_method <- S7::prop(object, "params")["detection_method"]
-  checkmate::assertTRUE(detection_method == "cPCA")
+  checkmate::assertTRUE(detection_method == "c_pca")
 
   # Get data
   target_covar <- S7::prop(object, "processed_data")[["target_covar"]]

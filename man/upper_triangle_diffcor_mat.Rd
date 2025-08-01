@@ -9,28 +9,30 @@ correlation results in an memory-efficient form and return a data.table or
 dense R matrix for a given parameter if need be.
 }
 \section{Super class}{
-\code{\link[bixverse:upper_triangular_cor_mat]{bixverse::upper_triangular_cor_mat}} -> \code{upper_triangular_diffcor_mat}
+\code{\link[bixverse:upper_triangular_sym_mat]{bixverse::upper_triangular_sym_mat}} -> \code{upper_triangle_diffcor_mat}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-upper_triangular_diffcor_mat-new}{\code{upper_triangle_diffcor_mat$new()}}
-\item \href{#method-upper_triangular_diffcor_mat-get_data_table}{\code{upper_triangle_diffcor_mat$get_data_table()}}
-\item \href{#method-upper_triangular_diffcor_mat-get_cor_matrix}{\code{upper_triangle_diffcor_mat$get_cor_matrix()}}
-\item \href{#method-upper_triangular_diffcor_mat-clone}{\code{upper_triangle_diffcor_mat$clone()}}
+\item \href{#method-upper_triangle_diffcor_mat-new}{\code{upper_triangle_diffcor_mat$new()}}
+\item \href{#method-upper_triangle_diffcor_mat-get_data_table}{\code{upper_triangle_diffcor_mat$get_data_table()}}
+\item \href{#method-upper_triangle_diffcor_mat-get_cor_matrix}{\code{upper_triangle_diffcor_mat$get_cor_matrix()}}
+\item \href{#method-upper_triangle_diffcor_mat-clone}{\code{upper_triangle_diffcor_mat$clone()}}
 }
 }
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_cor_mat" data-id="get_cor_vector"><a href='../../bixverse/html/upper_triangular_cor_mat.html#method-upper_triangular_cor_mat-get_cor_vector'><code>bixverse::upper_triangular_cor_mat$get_cor_vector()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_cor_mat" data-id="print"><a href='../../bixverse/html/upper_triangular_cor_mat.html#method-upper_triangular_cor_mat-print'><code>bixverse::upper_triangular_cor_mat$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_data"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_data'><code>bixverse::upper_triangular_sym_mat$get_data()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sparse_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sparse_matrix'><code>bixverse::upper_triangular_sym_mat$get_sparse_matrix()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="get_sym_matrix"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-get_sym_matrix'><code>bixverse::upper_triangular_sym_mat$get_sym_matrix()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="upper_triangular_sym_mat" data-id="print"><a href='../../bixverse/html/upper_triangular_sym_mat.html#method-upper_triangular_sym_mat-print'><code>bixverse::upper_triangular_sym_mat$print()</code></a></span></li>
 </ul>
 </details>
 }}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-upper_triangular_diffcor_mat-new"></a>}}
-\if{latex}{\out{\hypertarget{method-upper_triangular_diffcor_mat-new}{}}}
+\if{html}{\out{<a id="method-upper_triangle_diffcor_mat-new"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangle_diffcor_mat-new}{}}}
 \subsection{Method \code{new()}}{
 Initialises the R6 class.
 \subsection{Usage}{
@@ -51,8 +53,8 @@ Returns the initialised class.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-upper_triangular_diffcor_mat-get_data_table"></a>}}
-\if{latex}{\out{\hypertarget{method-upper_triangular_diffcor_mat-get_data_table}{}}}
+\if{html}{\out{<a id="method-upper_triangle_diffcor_mat-get_data_table"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangle_diffcor_mat-get_data_table}{}}}
 \subsection{Method \code{get_data_table()}}{
 Returns the data in form of a data.table.
 \subsection{Usage}{
@@ -85,8 +87,8 @@ features.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-upper_triangular_diffcor_mat-get_cor_matrix"></a>}}
-\if{latex}{\out{\hypertarget{method-upper_triangular_diffcor_mat-get_cor_matrix}{}}}
+\if{html}{\out{<a id="method-upper_triangle_diffcor_mat-get_cor_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangle_diffcor_mat-get_cor_matrix}{}}}
 \subsection{Method \code{get_cor_matrix()}}{
 Return the full correlation matrix of either sample.
 \subsection{Usage}{
@@ -111,8 +113,8 @@ Returns the specified correlation matrix as a dense R matrix.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-upper_triangular_diffcor_mat-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-upper_triangular_diffcor_mat-clone}{}}}
+\if{html}{\out{<a id="method-upper_triangle_diffcor_mat-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-upper_triangle_diffcor_mat-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

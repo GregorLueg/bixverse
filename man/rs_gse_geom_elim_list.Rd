@@ -11,7 +11,8 @@ rs_gse_geom_elim_list(
   gene_universe_length,
   min_genes,
   elim_threshold,
-  debug
+  min_overlap,
+  fdr_threshold
 )
 }
 \arguments{
@@ -31,20 +32,21 @@ tested.}
 \item{elim_threshold}{p-value below which the elimination procedure shall
 be applied to the ancestors.}
 
-\item{debug}{boolean that will provide additional console information for
-debugging purposes.}
+\item{min_overlap}{Optional minimum overlap threshold.}
+
+\item{fdr_threshold}{Optional fdr threshold.}
 }
 \value{
 A list containing:
 \itemize{
 \item go_ids - The gene ontology identifier.
 \item pvals - The calculated odds ratios.
+\item fdrs - The calculated fdrs.
 \item odds_ratios - The calculated odds ratios.
 \item overlap - The size of the overlap.
 \item gene_set_lengths - The length of the gene sets.
-\item no_test - The number of tests that were conducted against
-target_gene_list. First element indicates how many values belong to the
-first target_genes set in the list, etc.
+\item no_test - The number of tests for that target set that passed the
+thresholds.
 }
 }
 \description{

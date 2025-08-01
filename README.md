@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.1.4-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.2.0-orange) 
 
 </br>
 
@@ -12,19 +12,36 @@
 
 This package contains various bioinformatics and computational biology workflows
 that are being routinely used, ranging from gene set enrichment analyses, to 
-network-based approaches for module detection in bulk RNAseq. The package provides
-useful, bare bone versions of most bioinformatics functionalities and leverages Rust
-to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
+network-based approaches for module detection in bulk RNAseq. The package 
+provides useful, bare bone versions of most bioinformatics functionalities and
+leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.1.4**. Test coverage has further increased,
-and more and more functionality has been added. New features:
+We have now officially released version **0.0.2.0**. The package has now reached
+high degrees of maturity with more and more tests in place, vignettes to explain
+various workflows and further bug and documentation fixes. With this update the
+following has been updated/changed:
 
-- CoReMo-based clustering, based on [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).
-- TOM calculations, see [Yip and Horvath](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-8-22)
-- Multi-level version of gsea also implemented for the gene ontology elimination
-method.
+- Improved ontology class and more methods, and the addition of the Wang
+similarity measure.
+- Permutation-based tests for the genetic diffusion approaches that allow selection
+of significanlty enriched areas of the network (topology-aware).
+- Updates to the ICA detection approaches and correlation-based reciprocal best
+hits.
+- Further improvements in speed in various Rust functions (less unnecessary
+copying and changes to the used HashMaps and HashSets).
+- Addition of a `simplify()`-type method to reduce Gene Ontology results 
+to the most relevant ones.
+- Vignettes explaining different methods.
+- GSVA and ssGSEA implemented leveraging Rust.
+- Update of the `furrr::future_map()` type functions to the faster 
+`mirai::mirai_map()`.
+- Mutual information calculations between continuous variables.
+- Improvements to the synthetic data.
+
+**Warnings**: Some of the previous interfaces to the functions were changed
+in this release and might break compared to prior releases!
 
 ## *Installation*
 
@@ -53,6 +70,7 @@ install.packages("rextendr")
 ```
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
+
 ## *Docs*
 
 - [Roadmap](/docs/roadmap.md)
@@ -65,16 +83,16 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 <img src="/misc/pics/but_why.png" width="418" height="218" alt="but why">
 
 Good question, why this package? Basically, there are three reasons for this:
-1. Initially, the package was born out of the desire to harmonise in a single 
-package lots and lots of different packages. (One package to rule them all.) 
-And while doing so, slim the functionality down to the bare bone essentials and
-remove barely used options.
-2. After having reimplemented for the 3rd time some version of a 
-hypergeometric test for some project, one is just tired of it. The same applies 
-to other established methods in the field that need some internal reimplementation
-(with maybe some tweaks here and there) for reasons... ? Better to do it once
-properly and make it public.
-3. Rust makes everything in R so much faster, that we just wished to share the 
-joy.
+1. Rust makes everything in R so much faster, that we just wished to share the 
+joy. Also, it's a fun language write.
+2. BioConductor is great, but you end up with quite large dependency graphs, 
+lots of packages that have to be downloaded and quite a few algorithms can 
+benefit from the speed that Rust offers. The idea of `bixverse` is to accelerate
+key functions used in CompBio and bioinformatics and reduce them to the 
+barebone methods with simple interfaces.
+3. Having worked in biotech and pharma, one realises that a surprising amount
+of time is spent on rewriting and reimplementing published methods for internal
+usage. Better to make it fast/good once, and open it up to the public via open 
+source.
 
-*Last update to the read-me: 16.06.2025*
+*Last update to the read-me: 25.07.2025*

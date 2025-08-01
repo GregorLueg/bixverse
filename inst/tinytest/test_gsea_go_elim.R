@@ -72,8 +72,7 @@ rust_res_wo_elim <- rs_geom_elim_fgsea_simple(
   gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.00001, # Threshold is so low, it cannot be passed
   iters = 100,
-  seed = 10101,
-  debug = FALSE
+  seed = 10101
 )
 
 expect_equal(
@@ -115,8 +114,7 @@ rust_res_with_elim <- rs_geom_elim_fgsea_simple(
   gsea_params = params_gsea(min_size = 3L, max_size = 250L),
   elim_threshold = 0.95, # This WILL be passed
   iters = 100,
-  seed = 10101,
-  debug = FALSE
+  seed = 10101
 )
 
 expect_equal(
@@ -283,8 +281,17 @@ levels <- names(S7::prop(object, "levels"))
 
 # these are super significant due to the sampling...
 
-expected_sizes <- c(35, 48, 61, 44, 40, 38, 40, 50)
-expected_err <- c(NA, NA, NA, NA, NA, 1.00087305, 0.06299909, 0.03458907)
+expected_sizes <- c(40, 48, 44, 61, 35, 38, 40, 50)
+expected_err <- c(
+  1.60243115,
+  1.39518713,
+  1.34223377,
+  1.09592929,
+  1.03769616,
+  0.83908894,
+  0.06299909,
+  0.03458907
+)
 
 r_results <- fgsea_go_elim(
   object = object,
@@ -314,14 +321,24 @@ expect_equal(
 
 ### without elimination --------------------------------------------------------
 
-expected_sizes <- c(35, 100, 64, 97, 40, 125, 40, 50)
-expected_err <- c(NA, NA, NA, NA, NA, NA, 0.06299909, 0.03458907)
+expected_sizes <- c(100, 64, 35, 40, 125, 97, 40, 50)
+expected_err <- c(
+  NA,
+  1.52970525,
+  1.03769616,
+  0.06299909,
+  NA,
+  NA,
+  1.60243115,
+  0.03458907
+)
 
 r_results <- fgsea_go_elim(
   object = object,
   stats = stats,
   elim_threshold = 0.00001
-)
+) %>%
+  data.table::setorder(go_id)
 
 expect_equal(
   current = r_results$size,

@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 15.05.2025* </br>
+*Last update: 26.07.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -14,14 +14,14 @@ on the same code base.
 The general idea is to leverage modern R language features (for example using 
 the new [S7 OOP system](https://github.com/RConsortium/S7) to have a more "R 
 like" feeling to objects and classes, while avoiding some of the short falls of 
-S3/S4). To make key computations as fast as possible we use the [rextendr](https://github.com/extendr/rextendr)
-interface into Rust. </br>
+S3/S4). To make key computations as fast as possible we use the 
+[rextendr](https://github.com/extendr/rextendr) interface into Rust. </br>
 
 Born out of experience, the package creators want to avoid unnecessary 
-complexity. Class inheritance structures that feel smart initially but make debugging
-a huge pain, 8 layers of abstractions to actually find the function that is 
-causing the bug or weird convoluted data structures. The motto should be at all
-times:
+complexity. Class inheritance structures that feel smart initially but make 
+debugging a huge pain, 8 layers of abstractions to actually find the function 
+that is causing the bug or weird convoluted data structures. The motto should be
+at all times:
 
 </br>
 
@@ -31,8 +31,8 @@ times:
 
 A good way to think about all of this is that there is a complexity budget to 
 any code base and we would like to not spend too much energy on unnecessary 
-abstractions over making key functionalities blazingly fast and memory-efficient.
-Please, just think about this meme in doubt:
+abstractions over making key functionalities blazingly fast and 
+memory-efficient. Please, just think about this meme in doubt:
 
 <img src="/misc/pics/stop_abstracting.png" width="350" height="504" alt="stop abstracting">
 
@@ -66,10 +66,10 @@ nature to go low level themselves, so no need to reinvent wheels here. Nonethele
 the speed-ups you can gain from using Rust can be incredible. Rust functions should 
 start with *rs_*, and ideally an R wrapper should exist to use them. Please refer
 to the [Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
-understand that not everyone can or will be able to recode the function into Rust, 
-please refer to the next points for additional suggestions on code improvements 
-that can already go a long way to make workflows more efficient (though not as 
-**brrrrrr** as using Rust).
+understand that not everyone can or will be able to recode the function into 
+Rust, please refer to the next points for additional suggestions on code 
+improvements that can already go a long way to make workflows more efficient 
+(though not as **brrrrrr** as using Rust).
 4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
 over tibble and/or data.frame. *"Yeah, but I like dplyr and the tidyverse."* 
 We get it... But the speed-ups, increased memory efficacy, feature richness of
@@ -91,14 +91,14 @@ affects some packages  in bioinformatics and computational biology. A good
 primer for this is the [tinyverse](https://www.tinyverse.org).
 7. The good old `for loop` vs. `lapply/map` question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
-equivalent parallelised versions via [furrr](https://furrr.futureverse.org), i.e., 
-`future_map` derivatives) over the apply family functions. Did you not just write 
+equivalent parallelised / concurrent versions via [mirai](https://mirai.r-lib.org), 
+i.e., `mirai_map`) over the apply family functions. Did you not just write 
 that you want to avoid external dependencies? Yeah, but map allows to make 
 explicit code which is easier to reason over. `map_lgl()` is very clear that I 
 will get a logical vector back. With `unlist(lapply())` it is less
 obvious what is going on. For loops in R have a very bad reputation, but this is 
 usually because people grow objects in memory in the loop which is a bad 
-practice indeed (refer to the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf).
+practice indeed (refer to the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)).
 8. In terms of object-oriented programming, [S7](https://github.com/RConsortium/S7)
 provides a way to write very R-like OOP (the methods belong to generics). For 
 user-facing key methods and workflows, we recommend using this one, as most R
@@ -116,5 +116,7 @@ of inheritance.
 If you implement something that should behave like functions from a different 
 package make sure that you compare the your version against the established 
 ones. Also, double check that any Rust version of an R-internal version returns
-the same results. The idea should be always: 
-*Make It Work, Make It Right, Make It Fast.*
+the same results. The idea should be always: </br>
+*Make It Work, Make It Right, Make It Fast.* </br>
+We like writing tests particularly when you encounter a nasty bug that screws
+up something. Write a test specifically checking for these nasty bugs.

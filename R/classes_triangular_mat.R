@@ -4,17 +4,18 @@
 #'
 #' @description
 #' The class allows to store the upper triangular matrix of a symmetric
-#' correlation matrix in an memory-efficient form and return a data.table or
-#' dense R matrix if need be.
-upper_triangular_cor_mat <- R6::R6Class(
+#' matrix (think correlation matrix, distance matrix, etc.) in an
+#' memory-efficient form and return a data.table or dense (or sparse) R matrix
+#' if need be.
+upper_triangular_sym_mat <- R6::R6Class(
   # Class name
-  classname = "upper_triangular_cor_mat",
+  classname = "upper_triangular_sym_mat",
 
   # Public
   public = list(
     #' @description Initialises the R6 class.
     #'
-    #' @param cor_coef Numerical vector. The correlation coefficients of the
+    #' @param values Numerical vector. The correlation coefficients of the
     #' upper triangular correlation matrix stored as a row-major vector
     #' @param features String vector. The features of the correlation matrix.
     #' @param shift Integer. Was a shift applied during the calculation of the
@@ -22,9 +23,9 @@ upper_triangular_cor_mat <- R6::R6Class(
     #' not included)
     #'
     #' @return Returns the initialised class.
-    initialize = function(cor_coef, features, shift) {
+    initialize = function(values, features, shift) {
       # Checks
-      checkmate::qassert(cor_coef, "N+")
+      checkmate::qassert(values, "N+")
       checkmate::qassert(features, "S+")
       checkmate::qassert(shift, "I1")
       # Gauss trick to calculate what would be expected in terms of number of
@@ -34,9 +35,9 @@ upper_triangular_cor_mat <- R6::R6Class(
       if (no_features %% 2 == 1) {
         expected_features <- expected_features + ceiling(no_features / 2)
       }
-      checkmate::assertTRUE(expected_features == length(cor_coef))
+      checkmate::assertTRUE(expected_features == length(values))
       # Populate the slots
-      private$correlations <- cor_coef
+      private$values <- values
       private$features <- features
       private$shift <- shift
     },
@@ -51,7 +52,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       )
       cat(
         " Size of the numerical vector: ",
-        length(private$correlations),
+        length(private$values),
         ".\n",
         sep = ""
       )
@@ -82,7 +83,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       data <- list(
         feature_a = private$get_feature_a(factor = factor),
         feature_b = private$get_feature_b(factor = factor),
-        cor = private$correlations
+        sim = private$values
       )
 
       data.table::setDT(data)
@@ -95,7 +96,7 @@ upper_triangular_cor_mat <- R6::R6Class(
     #' @param .verbose Boolean. Controls verbosity.
     #'
     #' @return Returns the correlation matrix as a dense R matrix.
-    get_cor_matrix = function(.verbose = TRUE) {
+    get_sym_matrix = function(.verbose = TRUE) {
       checkmate::qassert(.verbose, "B1")
 
       if (.verbose) {
@@ -106,7 +107,7 @@ upper_triangular_cor_mat <- R6::R6Class(
       shift <- private$shift
 
       mat <- rs_upper_triangle_to_dense(
-        private$correlations,
+        private$values,
         shift = shift,
         n = n
       )
@@ -115,20 +116,46 @@ upper_triangular_cor_mat <- R6::R6Class(
       return(mat)
     },
 
+    #' @description
+    #' Return a sparse version of the correlation matrix
+    #'
+    #' @param .verbose Boolean. Controls verbosity
+    #'
+    #' @return The sparse matrix.
+    get_sparse_matrix = function(.verbose = TRUE) {
+      checkmate::qassert(.verbose, "B1")
+
+      if (.verbose) {
+        message("Generating the sparse matrix format of the symmetric matrix.")
+      }
+
+      sparse_mat <- upper_triangle_to_sparse(
+        upper_triangle_vals = private$values,
+        shift = private$shift,
+        n = length(private$features)
+      ) %>%
+        `rownames<-`(private$features) %>%
+        `colnames<-`(private$features)
+
+      return(sparse_mat)
+    },
+
     #' @description Return the correlation data and shift
     #'
     #' @return A list with
     #' \itemize{
-    #'  \item cor_data - Numeric vector. The correlations.
+    #'  \item cor_data - Numeric vector. The values.
+    #'  \item features - String. The feature names.
     #'  \item n_features - Integer. Number of initial features.
     #'  \item shift - Integer. The applied shift.
     #' }
-    get_cor_vector = function() {
+    get_data = function() {
       shift <- private$shift
-      cor_data <- private$correlations
+      values <- private$values
       return(
         list(
-          cor_data = cor_data,
+          data = values,
+          features = private$features,
           n_features = length(private$features),
           shift = shift
         )
@@ -138,7 +165,7 @@ upper_triangular_cor_mat <- R6::R6Class(
   # Private
   private = list(
     # Slots
-    correlations = NULL,
+    values = NULL,
     features = NULL,
     shift = NULL,
     # Private functions
@@ -194,8 +221,8 @@ upper_triangular_cor_mat <- R6::R6Class(
 #' dense R matrix for a given parameter if need be.
 upper_triangle_diffcor_mat <- R6::R6Class(
   # Class name
-  inherit = upper_triangular_cor_mat,
-  classname = "upper_triangular_diffcor_mat",
+  inherit = upper_triangular_sym_mat,
+  classname = "upper_triangle_diffcor_mat",
   public = list(
     #' @description Initialises the R6 class.
     #'
@@ -235,15 +262,15 @@ upper_triangle_diffcor_mat <- R6::R6Class(
     #'
     #' @return A data.table with three columns:
     #' \itemize{
-    #' \item feature_a: The name of the first feature in the correlation matrix.
-    #' \item feature_b: The name of the second feature in the correlation
-    #' matrix.
-    #' \item cor_a: The correlation coefficients for data set a between the
-    #' features.
-    #' \item cor_b: The correlation coefficients for data set b between the
-    #' features.
-    #' \item z_score: The differential correlation z-score.
-    #' \item p_val: The p-value of the differential correlation.
+    #'   \item feature_a: The name of the first feature in the correlation matrix.
+    #'   \item feature_b: The name of the second feature in the correlation
+    #'   matrix.
+    #'   \item cor_a: The correlation coefficients for data set a between the
+    #'   features.
+    #'   \item cor_b: The correlation coefficients for data set b between the
+    #'   features.
+    #'   \item z_score: The differential correlation z-score.
+    #'   \item p_val: The p-value of the differential correlation.
     #' }
     get_data_table = function(factor = FALSE, .verbose = TRUE) {
       # Checks
