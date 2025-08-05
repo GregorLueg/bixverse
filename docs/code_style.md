@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 26.07.2025* </br>
+*Last update: 05.08.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this

@@ -2,6 +2,12 @@
 
 *Last update: 25.07.2025* </br>
 
+### Version **0.0.2.1**
+
+#### New features
+
+- Addition of constrained PageRank implementation.
+
 ### Version **0.0.2.0**
 
 **Major version bump.** This version of `bixverse` implements a large number of

@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.0-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.2.1-orange) 
 
 </br>
 
@@ -18,7 +18,7 @@ leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.2.0**. The package has now reached
+We have now officially released version **0.0.2.1**. The package has now reached
 high degrees of maturity with more and more tests in place, vignettes to explain
 various workflows and further bug and documentation fixes. With this update the
 following has been updated/changed:
@@ -95,4 +95,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 25.07.2025*
+*Last update to the read-me: 05.08.2025*

@@ -32,7 +32,7 @@ fn rs_page_rank(
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Arc version not needed here, as single run
-    personalised_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
+    personalised_page_rank(graph, 0.85, personalised, 1000, Some(1e-7))
 }
 
 /// Calculate massively parallelised personalised page rank scores
@@ -62,7 +62,7 @@ fn rs_page_rank_parallel(
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Pre-process graph once
-    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(&graph));
+    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(graph));
 
     let mut personalise_vecs: Vec<Vec<f64>> = Vec::with_capacity(diffusion_scores.len());
     for i in 0..diffusion_scores.len() {
@@ -137,8 +137,8 @@ fn rs_tied_diffusion_parallel(
     };
 
     // Pre-process graph once
-    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(&graph_1));
-    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(&graph_2));
+    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(graph_1));
+    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(graph_2));
 
     let mut personalise_vecs_1 = Vec::with_capacity(diffusion_scores_1.len());
     let mut personalise_vecs_2 = Vec::with_capacity(diffusion_scores_1.len());

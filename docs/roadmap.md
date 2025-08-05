@@ -20,7 +20,6 @@ method implementation.~~ Missing ones:
     * Correlation-based co-expression module detection.
     * How to run the DGRDL method.
 
-
 ## General methods
 
 - ~~Gene set enrichment analysis on top of continuous data based on 
