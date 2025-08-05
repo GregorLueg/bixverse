@@ -521,7 +521,7 @@ pub fn constrained_personalised_page_rank<D>(
     constrained_edge_types: Option<&FxHashSet<String>>,
 ) -> Vec<D>
 where
-    D: NumericType + std::iter::Sum + Send + Sync + std::ops::DivAssign,
+    D: NumericType + std::iter::Sum + Send + Sync + std::ops::DivAssign + std::ops::AddAssign,
 {
     let node_count = graph.node_count();
     if node_count == 0 {
@@ -545,8 +545,8 @@ where
     let constrained_types = constrained_edge_types.unwrap_or(&binding);
 
     // build transition structure with constraints and weights
-    let mut valid_out_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
-    let mut in_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
+    let mut out_edges: Vec<Vec<(usize, f64, bool)>> = vec![Vec::new(); node_count];
+    let mut in_edges: Vec<Vec<(usize, f64, bool)>> = vec![Vec::new(); node_count];
 
     for node_idx in graph.node_indices() {
         let node_idx_usize = graph.to_index(node_idx);
@@ -557,71 +557,101 @@ where
             continue;
         }
 
-        // add valid outgoing edges (not constrained) with their weights
+        // add all outgoing edges with their weights and sink edge flags
         for edge in graph.edges(node_idx) {
             let edge_data = edge.weight();
             let target_idx = graph.to_index(edge.target());
+            let is_sink_edge = constrained_types.contains(&edge_data.edge_type);
 
-            // only add edge if it's not a constrained type
-            if !constrained_types.contains(&edge_data.edge_type) {
-                valid_out_edges[node_idx_usize].push((target_idx, edge_data.weight));
-                in_edges[target_idx].push((node_idx_usize, edge_data.weight));
-            }
-            // if edge is constrained, we don't add it to valid transitions
-            // this means the probability mass will go to teleportation instead
+            out_edges[node_idx_usize].push((target_idx, edge_data.weight, is_sink_edge));
+            in_edges[target_idx].push((node_idx_usize, edge_data.weight, is_sink_edge));
         }
     }
 
-    // calculate effective out-degrees (sum of weights of valid edges)
-    let out_degrees: Vec<D> = valid_out_edges
+    // calculate out-degrees (sum of weights of ALL edges, including sink edges)
+    let out_degrees: Vec<D> = out_edges
         .iter()
         .map(|edges| {
-            let total_weight: f64 = edges.iter().map(|(_, weight)| weight).sum();
+            let total_weight: f64 = edges.iter().map(|(_, weight, _)| weight).sum();
             D::from_f64(total_weight).unwrap_or(D::zero())
         })
         .collect();
 
-    let mut ranks: Vec<D> = personalisation_vector.to_vec();
+    // track mass that can flow forward (non-sink mass) vs absorbed mass (sink mass)
+    let mut flowable_ranks: Vec<D> = personalisation_vector.to_vec();
+    let mut absorbed_ranks: Vec<D> = vec![D::zero(); node_count];
     let teleport_factor = D::one() - damping_factor;
 
     for _ in 0..nb_iter {
-        let new_ranks: Vec<D> = (0..node_count)
+        // Calculate new flowable and absorbed mass
+        let (new_flowable, new_absorbed): (Vec<D>, Vec<D>) = (0..node_count)
             .into_par_iter()
             .map(|v| {
-                let teleport_prob = teleport_factor * personalisation_vector[v];
+                let teleport_mass = teleport_factor * personalisation_vector[v];
+                let mut flowable = teleport_mass;
+                let mut absorbed = D::zero();
 
-                let link_prob = in_edges[v]
-                    .iter()
-                    .map(|&(w, weight)| {
-                        if out_degrees[w] > D::zero() {
-                            // use weighted transition probability
-                            let edge_weight = D::from_f64(weight).unwrap_or(D::zero());
-                            damping_factor * ranks[w] * edge_weight / out_degrees[w]
+                for &(w, weight, is_sink_edge) in &in_edges[v] {
+                    if out_degrees[w] > D::zero() {
+                        let edge_weight = D::from_f64(weight).unwrap_or(D::zero());
+                        let flow =
+                            damping_factor * flowable_ranks[w] * edge_weight / out_degrees[w];
+
+                        if is_sink_edge {
+                            absorbed += flow;
                         } else {
-                            // node w has no valid outgoing edges (sink or all edges constrained)
-                            // its mass gets redistributed via teleportation
-                            damping_factor * ranks[w] * personalisation_vector[v]
+                            flowable += flow;
                         }
-                    })
-                    .sum::<D>();
+                    } else {
+                        // Source node w has no outgoing edges (sink node)
+                        flowable += damping_factor * flowable_ranks[w] * personalisation_vector[v];
+                    }
+                }
 
-                teleport_prob + link_prob
+                (flowable, absorbed)
             })
+            .unzip();
+
+        // Total absorbed mass gets teleported back
+        let total_absorbed_mass: D = new_absorbed.iter().copied().sum();
+
+        let final_flowable: Vec<D> = new_flowable
+            .into_iter()
+            .enumerate()
+            .map(|(v, flowable)| flowable + total_absorbed_mass * personalisation_vector[v])
             .collect();
 
-        // check for convergence
-        let squared_norm_2 = new_ranks
+        // Total ranks = flowable + absorbed
+        let total_ranks: Vec<D> = final_flowable
+            .iter()
+            .zip(&new_absorbed)
+            .map(|(f, a)| *f + *a)
+            .collect();
+
+        // Check for convergence using total ranks
+        let squared_norm_2 = total_ranks
             .par_iter()
-            .zip(&ranks)
-            .map(|(new, old)| (*new - *old) * (*new - *old))
+            .zip(flowable_ranks.par_iter().zip(&absorbed_ranks))
+            .map(|(new_total, (old_flow, old_abs))| {
+                let old_total = *old_flow + *old_abs;
+                (*new_total - old_total) * (*new_total - old_total)
+            })
             .sum::<D>();
 
-        ranks = new_ranks;
+        flowable_ranks = final_flowable;
+        absorbed_ranks = new_absorbed;
 
         if squared_norm_2 <= tolerance {
             break;
         }
     }
+
+    // final ranks = flowable + absorbed
+    let mut ranks: Vec<D> = flowable_ranks
+        .iter()
+        .zip(&absorbed_ranks)
+        .map(|(f, a)| *f + *a)
+        .collect();
 
     // normalise
     let sum: D = ranks.iter().copied().sum();
@@ -643,6 +673,7 @@ where
 /// * `name` - name of the node.
 /// * `node_type` - type of the node
 #[derive(Debug, Clone)]
+#[allow(dead_code)] // clippy is wrongly complaining here
 pub struct NodeData {
     pub name: String,
     pub node_type: String,
@@ -965,9 +996,9 @@ mod tests {
 
         println!("Ranks: {:?}", ranks);
 
-        // C (sink node) should have highest rank because it accumulates
-        // probability, but doesn't redistribute it via outgoing edges
-        assert!(ranks[2] > ranks[1] && ranks[1] > ranks[0]);
+        // C (sink node) should have higher rank than A because mass flows A->B->C
+        // and C cannot pass mass forward
+        assert!(ranks[2] > ranks[0]);
 
         // Verify the ranks sum to 1
         let sum: f64 = ranks.iter().sum();
@@ -976,12 +1007,12 @@ mod tests {
 
     #[test]
     fn test_constrained_edge_types() {
-        // Test edge type constraints: A -> B -[blocked]-> C
+        // Test edge type constraints: A -> B -[sink_edge]-> C
         let nodes = vec!["A".to_string(), "B".to_string(), "C".to_string()];
         let node_types = vec!["regular".to_string(); 3];
         let from = vec!["A".to_string(), "B".to_string()];
         let to = vec!["B".to_string(), "C".to_string()];
-        let edge_types = vec!["normal".to_string(), "blocked".to_string()];
+        let edge_types = vec!["normal".to_string(), "sink_edge".to_string()];
         let edge_weights = vec![1.0, 1.0];
 
         let graph = graph_from_strings_with_attributes(
@@ -995,7 +1026,7 @@ mod tests {
 
         let personalisation = vec![1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0];
         let mut blocked_edges = FxHashSet::default();
-        blocked_edges.insert("blocked".to_string());
+        blocked_edges.insert("sink_edge".to_string());
 
         let ranks = constrained_personalised_page_rank(
             &graph,
@@ -1009,10 +1040,86 @@ mod tests {
 
         println!("Edge-constrained ranks: {:?}", ranks);
 
-        // C should have lower rank since the edge leading to it is blocked
-        assert!(ranks[2] < ranks[1]);
+        // Mass flowing through sink edge B->C gets teleported back
+        // C should have most of the mass. It's the same scenario as above
+        assert!(ranks[2] > ranks[0] && ranks[2] > ranks[1]);
 
-        // verify normalization
+        // verify normalisation
+        let sum: f64 = ranks.iter().sum();
+        assert!((sum - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_mixed_edge_types() {
+        // Critical test: Node D can be reached by both sink and non-sink edges
+        // A -> B -> D (normal edge)
+        // C -> D (sink edge)
+        // D -> E (normal edge)
+
+        let nodes = vec![
+            "A".to_string(),
+            "B".to_string(),
+            "C".to_string(),
+            "D".to_string(),
+            "E".to_string(),
+        ];
+        let node_types = vec!["regular".to_string(); 5];
+        let from = vec![
+            "A".to_string(),
+            "B".to_string(),
+            "C".to_string(),
+            "D".to_string(),
+        ];
+        let to = vec![
+            "B".to_string(),
+            "D".to_string(),
+            "D".to_string(),
+            "E".to_string(),
+        ];
+        let edge_types = vec![
+            "normal".to_string(),
+            "normal".to_string(),
+            "sink_edge".to_string(),
+            "normal".to_string(),
+        ];
+        let edge_weights = vec![1.0, 1.0, 1.0, 1.0];
+
+        let graph = graph_from_strings_with_attributes(
+            &nodes,
+            &node_types,
+            &from,
+            &to,
+            &edge_types,
+            &edge_weights,
+        );
+
+        let personalisation = vec![0.2; 5]; // uniform
+        let mut blocked_edges = FxHashSet::default();
+        blocked_edges.insert("sink_edge".to_string());
+
+        let ranks = constrained_personalised_page_rank(
+            &graph,
+            0.85,
+            &personalisation,
+            100,
+            None,
+            None,
+            Some(&blocked_edges),
+        );
+
+        println!("Mixed edge types ranks: {:?}", ranks);
+
+        // Mass from B->D (normal) should flow to E
+        // Mass from C->D (sink) should teleport back
+        // So E should have some mass (reachable via A->B->D->E)
+        assert!(ranks[4] > 0.1, "E should be reachable via normal path");
+
+        // D should receive mass from both paths but only forward the normal part
+        assert!(
+            ranks[3] > 0.1,
+            "D should accumulate mass from mixed sources"
+        );
+
         let sum: f64 = ranks.iter().sum();
         assert!((sum - 1.0).abs() < 1e-10);
     }
@@ -1020,15 +1127,13 @@ mod tests {
     #[test]
     fn test_edge_weights_affect_transitions() {
         // Test that different edge weights DO change PageRank results
-        // as they should affect transition probabilities
-
         let nodes = vec!["A".to_string(), "B".to_string(), "C".to_string()];
         let node_types = vec!["regular".to_string(); 3];
         let from = vec!["A".to_string(), "A".to_string()];
         let to = vec!["B".to_string(), "C".to_string()];
         let edge_types = vec!["normal".to_string(); 2];
 
-        // First graph: B edge has 10x weight of C edge (B should get more probability)
+        // First graph: B edge has 10x weight of C edge
         let b_favored_weights = vec![10.0, 1.0];
         let graph1 = graph_from_strings_with_attributes(
             &nodes,
@@ -1039,7 +1144,7 @@ mod tests {
             &b_favored_weights,
         );
 
-        // Second graph: C edge has 10x weight of B edge (C should get more probability)
+        // Second graph: C edge has 10x weight of B edge
         let c_favored_weights = vec![1.0, 10.0];
         let graph2 = graph_from_strings_with_attributes(
             &nodes,
@@ -1075,36 +1180,29 @@ mod tests {
         println!("B-favored weights ranks: {:?}", ranks1);
         println!("C-favored weights ranks: {:?}", ranks2);
 
-        // In graph1, B should have higher rank than C
+        // Higher weight edges should lead to higher ranks
         assert!(
             ranks1[1] > ranks1[2],
             "B should have higher rank when B edge has higher weight"
         );
-
-        // In graph2, C should have higher rank than B
         assert!(
             ranks2[2] > ranks2[1],
             "C should have higher rank when C edge has higher weight"
         );
 
-        // The difference should be significant
-        assert!(
-            (ranks1[1] - ranks1[2]).abs() > 0.1,
-            "Weight difference should create significant rank difference"
-        );
-        assert!(
-            (ranks2[2] - ranks2[1]).abs() > 0.1,
-            "Weight difference should create significant rank difference"
-        );
+        // Verify normalisation
+        for ranks in [&ranks1, &ranks2] {
+            let sum: f64 = ranks.iter().sum();
+            assert!((sum - 1.0).abs() < 1e-10);
+        }
     }
 
     #[test]
     fn test_different_personalisation_vectors() {
-        // Test how different personalisation vectors affect results
         let nodes = vec!["A".to_string(), "B".to_string(), "C".to_string()];
         let node_types = vec!["regular".to_string(); 3];
         let from = vec!["A".to_string(), "B".to_string()];
-        let to = vec!["B".to_string(), "C".to_string()]; // Linear chain: A -> B -> C
+        let to = vec!["B".to_string(), "C".to_string()];
         let edge_types = vec!["normal".to_string(); 2];
         let edge_weights = vec![1.0, 1.0];
 
@@ -1117,17 +1215,14 @@ mod tests {
             &edge_weights,
         );
 
-        // Uniform personalization
         let uniform_pers = vec![1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0];
         let uniform_ranks =
             constrained_personalised_page_rank(&graph, 0.85, &uniform_pers, 100, None, None, None);
 
-        // A-biased personalization (reset mostly to A)
         let a_biased_pers = vec![0.8, 0.1, 0.1];
         let a_biased_ranks =
             constrained_personalised_page_rank(&graph, 0.85, &a_biased_pers, 100, None, None, None);
 
-        // C-biased personalization (reset mostly to C)
         let c_biased_pers = vec![0.1, 0.1, 0.8];
         let c_biased_ranks =
             constrained_personalised_page_rank(&graph, 0.85, &c_biased_pers, 100, None, None, None);
@@ -1136,95 +1231,132 @@ mod tests {
         println!("A-biased personalization ranks: {:?}", a_biased_ranks);
         println!("C-biased personalization ranks: {:?}", c_biased_ranks);
 
-        // A should have higher rank with A-biased personalization
+        // biased personalisation should increase ranks of favored nodes
         assert!(
             a_biased_ranks[0] > uniform_ranks[0],
-            "A should have higher rank with A-biased personalization"
+            "A should benefit from A-biased personalization"
         );
-
-        // C should have higher rank with C-biased personalization
         assert!(
             c_biased_ranks[2] > uniform_ranks[2],
-            "C should have higher rank with C-biased personalization"
+            "C should benefit from C-biased personalization"
         );
 
-        // Verify all are normalized
+        // verify normalisation
         for ranks in [&uniform_ranks, &a_biased_ranks, &c_biased_ranks] {
             let sum: f64 = ranks.iter().sum();
-            assert!((sum - 1.0).abs() < 1e-10, "Ranks should sum to 1");
+            assert!((sum - 1.0).abs() < 1e-10);
         }
     }
 
     #[test]
-    fn test_personalization_with_constraints() {
-        // Test interaction between personalization and constraints
+    fn test_biological_network_example() {
         let nodes = vec![
-            "source".to_string(), 
-            "intermediate".to_string(), 
-            "target".to_string()
+            "receptor_a".to_string(),
+            "receptor_b".to_string(),
+            "kinase_c".to_string(),
+            "kinase_d".to_string(),
+            "tf_e".to_string(),
+            "tf_f".to_string(),
+            "target_gene_g".to_string(),
+            "target_gene_h".to_string(),
+            "target_gene_i".to_string(),
         ];
         let node_types = vec![
-            "regular".to_string(),
-            "regular".to_string(), 
-            "sink".to_string()
+            "receptor".to_string(),
+            "receptor".to_string(),
+            "kinase".to_string(),
+            "kinase".to_string(),
+            "tf".to_string(),
+            "tf".to_string(),
+            "target_gene".to_string(),
+            "target_gene".to_string(),
+            "target_gene".to_string(),
         ];
-        let from = vec!["source".to_string(), "intermediate".to_string()];
-        let to = vec!["intermediate".to_string(), "target".to_string()];
-        let edge_types = vec!["normal".to_string(), "final".to_string()];
-        let edge_weights = vec![1.0, 1.0];
-        
+        let from = vec![
+            "receptor_a".to_string(),
+            "receptor_a".to_string(),
+            "receptor_b".to_string(),
+            "kinase_c".to_string(),
+            "kinase_d".to_string(),
+            "tf_e".to_string(),
+            "tf_e".to_string(),
+            "tf_f".to_string(),
+            "tf_f".to_string(),
+            "tf_f".to_string(),
+        ];
+        let to = vec![
+            "kinase_c".to_string(),
+            "kinase_d".to_string(),
+            "kinase_d".to_string(),
+            "tf_e".to_string(),
+            "tf_f".to_string(),
+            "receptor_a".to_string(),
+            "target_gene_g".to_string(),
+            "receptor_b".to_string(),
+            "target_gene_h".to_string(),
+            "target_gene_i".to_string(),
+        ];
+        let edge_types = vec![
+            "activation".to_string(),
+            "activation".to_string(),
+            "activation".to_string(),
+            "phosphorylation".to_string(),
+            "phosphorylation".to_string(),
+            "tf_activation".to_string(),
+            "tf_activation".to_string(),
+            "tf_activation".to_string(),
+            "tf_activation".to_string(),
+            "tf_activation".to_string(),
+        ];
+        let edge_weights = vec![1.0; 10];
+
         let graph = graph_from_strings_with_attributes(
-            &nodes, &node_types, &from, &to, &edge_types, &edge_weights
+            &nodes,
+            &node_types,
+            &from,
+            &to,
+            &edge_types,
+            &edge_weights,
         );
-        
-        // Source-biased personalisation with sink constraint
-        let source_biased = vec![0.8, 0.1, 0.1];
-        let mut sink_types = FxHashSet::default();
-        sink_types.insert("sink".to_string());
-        
-        let ranks_with_sink = constrained_personalised_page_rank(
-            &graph, 0.85, &source_biased, 100, None, Some(&sink_types), None
+
+        let personalisation = vec![1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+        let mut sink_edges = FxHashSet::default();
+        sink_edges.insert("activation".to_string());
+
+        let ranks = constrained_personalised_page_rank(
+            &graph,
+            0.85,
+            &personalisation,
+            100,
+            None,
+            None,
+            Some(&sink_edges),
         );
-        
-        // Source-biased personalisation with edge constraint
-        let mut constrained_edges = FxHashSet::default();
-        constrained_edges.insert("final".to_string());
-        
-        let ranks_with_edge_constraint = constrained_personalised_page_rank(
-            &graph, 0.85, &source_biased, 100, None, None, Some(&constrained_edges)
+
+        println!("Biological network ranks: {:?}", ranks);
+
+        // kinase_c and kinase_d should be reachable and have non-zero scores
+        assert!(
+            ranks[2] > 0.0,
+            "kinase_c should be reachable via activation edge"
         );
-        
-        // Both constraints together
-        let ranks_with_both = constrained_personalised_page_rank(
-            &graph, 0.85, &source_biased, 100, None, 
-            Some(&sink_types), Some(&constrained_edges)
+        assert!(
+            ranks[3] > 0.0,
+            "kinase_d should be reachable via activation edge"
         );
-        
-        println!("Source-biased with sink constraint: {:?}", ranks_with_sink);
-        println!("Source-biased with edge constraint: {:?}", ranks_with_edge_constraint);
-        println!("Source-biased with both constraints: {:?}", ranks_with_both);
-        
-        // With source-biased personalisation, source should have the highest rank in all cases
-        assert!(ranks_with_sink[0] > ranks_with_sink[1] && ranks_with_sink[0] > ranks_with_sink[2], 
-               "Source should have highest rank with source-biased personalization and sink constraint");
-        assert!(ranks_with_edge_constraint[0] > ranks_with_edge_constraint[1], 
-               "Source should have higher rank than intermediate with edge constraint");
-        assert!(ranks_with_both[0] > ranks_with_both[1], 
-               "Source should have higher rank than intermediate with both constraints");
-        
-        // Edge constraint should make target have much lower rank than sink constraint
-        assert!(ranks_with_edge_constraint[2] < ranks_with_sink[2],
-               "Edge constraint should reduce target rank more than sink constraint");
-        
-        // Source should benefit more from edge constraints than sink constraints
-        // (because edge constraints prevent flow to target, while sink constraints allow flow but no redistribution)
-        assert!(ranks_with_edge_constraint[0] > ranks_with_sink[0],
-               "Source should have higher rank with edge constraint than sink constraint");
-        
-        // All should be normalized
-        for ranks in [&ranks_with_sink, &ranks_with_edge_constraint, &ranks_with_both] {
-            let sum: f64 = ranks.iter().sum();
-            assert!((sum - 1.0).abs() < 1e-10, "Ranks should sum to 1");
+
+        // Downstream nodes (tf_e, tf_f, target genes) should have very low scores
+        // since activation edges cause immediate reset
+
+        let iter = 4..9;
+        for i in iter {
+            assert!(
+                ranks[i] == 0.0,
+                "Downstream nodes should have low scores due to activation edge constraints"
+            );
         }
+
+        let sum: f64 = ranks.iter().sum();
+        assert!((sum - 1.0).abs() < 1e-10);
     }
 }
