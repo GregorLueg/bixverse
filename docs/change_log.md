@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 25.07.2025* </br>
+*Last update: 05.08.2025* </br>
 
 ### Version **0.0.2.0**
 

@@ -120,3 +120,7 @@ the same results. The idea should be always: </br>
 *Make It Work, Make It Right, Make It Fast.* </br>
 We like writing tests particularly when you encounter a nasty bug that screws
 up something. Write a test specifically checking for these nasty bugs.
+10. If you implement a new method with sufficient complexity, it would be nice 
+to have a vignette. `bixverse` uses [Quarto](https://quarto.org/) instead of 
+RMarkdown. Please add the respective vignette and put any additional 
+dependencies needed to build the vignette into suggested packages.
