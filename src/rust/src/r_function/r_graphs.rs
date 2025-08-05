@@ -30,7 +30,7 @@ fn rs_page_rank(
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Arc version not needed here, as single run
-    personalized_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
+    personalised_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
 }
 
 /// Calculate massively parallelised personalised page rank scores
