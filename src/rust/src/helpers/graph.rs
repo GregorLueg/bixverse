@@ -1,13 +1,11 @@
 use faer::{Mat, MatRef};
 use petgraph::prelude::*;
-use petgraph::visit::NodeIndexable;
+use petgraph::visit::{IntoEdges, NodeCount, NodeIndexable};
 use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use std::iter::Sum;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, Sub};
 
 use crate::{assert_same_len, assert_symmetric_mat};
 
@@ -22,10 +20,10 @@ pub trait NumericType:
     Copy
     + Send
     + Sync
-    + Add<Output = Self>
-    + Sub<Output = Self>
-    + Mul<Output = Self>
-    + Div<Output = Self>
+    + std::ops::Add<Output = Self>
+    + std::ops::Sub<Output = Self>
+    + std::ops::Mul<Output = Self>
+    + std::ops::Div<Output = Self>
     + PartialOrd
     + std::fmt::Debug
 {
@@ -74,11 +72,8 @@ impl NumericType for f32 {
 /// Enum for the TiedSumType types
 #[derive(Clone, Debug)]
 pub enum TiedSumType {
-    /// Maximum between the two diffusion vectors
     Max,
-    /// Minimum between the two diffusion vectors
     Min,
-    /// Average between the two diffusion vectors
     Avg,
 }
 
@@ -171,7 +166,10 @@ impl PageRankGraph {
     /// ### Returns
     ///
     /// Initialised `PageRankGraph` structure
-    pub fn from_petgraph(graph: Graph<&str, ()>) -> Self {
+    pub fn from_petgraph<G>(graph: G) -> Self
+    where
+        G: NodeCount + IntoEdges + NodeIndexable + Sync,
+    {
         let node_count = graph.node_count();
 
         // Build adjacency structure more efficiently
@@ -402,15 +400,16 @@ pub fn personalised_page_rank_optimised(
 /// ### Returns
 ///
 /// The (normalised) personalised page rank scores.
-pub fn personalised_page_rank<D>(
-    graph: Graph<&str, ()>,
+pub fn personalised_page_rank<G, D>(
+    graph: G,
     damping_factor: D,
     personalisation_vector: &[D],
     nb_iter: usize,
     tol: Option<D>,
 ) -> Vec<D>
 where
-    D: NumericType + Sum + DivAssign,
+    G: NodeCount + IntoEdges + NodeIndexable + Sync,
+    D: NumericType + std::iter::Sum + std::ops::DivAssign,
 {
     let node_count = graph.node_count();
     if node_count == 0 {
@@ -504,13 +503,10 @@ where
 /// * `personalization_vector` - The vector of probabilities for the reset,
 ///                              making this the personalised page rank.
 /// * `nb_iter` - Maximum number of iterations for the personalised page rank.
-/// * `tolerance` - Optional tolerance for the algorithm. If not provided, it
-///                 will default to `1e-6`.
-/// * `sink_node_types` - Optional HashSet of node types that act as sinks
-///                       (force reset of the surfer)
-/// * `constrained_edge_types` - Optional HashSet of edge types that force reset
-///                              after traversal of that edge.
-///     
+/// * `tolerance` - Optional tolerance for the algorithm. If not provided, it will
+///                 default to `1e-6`.
+/// * `sink_node_types` - Set of node types that act as sinks (force reset)
+/// * `constrained_edge_types` - Set of edge types that force reset when traversed
 ///
 /// ### Returns
 ///
@@ -525,7 +521,7 @@ pub fn constrained_personalised_page_rank<D>(
     constrained_edge_types: Option<&FxHashSet<String>>,
 ) -> Vec<D>
 where
-    D: NumericType + Sum + Send + Sync + DivAssign + AddAssign,
+    D: NumericType + std::iter::Sum + Send + Sync + std::ops::DivAssign + std::ops::AddAssign,
 {
     let node_count = graph.node_count();
     if node_count == 0 {
@@ -557,7 +553,7 @@ where
         let node_data = &graph[node_idx];
 
         // check if this node is a sink - if so, it has no valid outgoing edges
-        if sink_types.contains(node_data.node_type) {
+        if sink_types.contains(&node_data.node_type) {
             continue;
         }
 
@@ -565,7 +561,7 @@ where
         for edge in graph.edges(node_idx) {
             let edge_data = edge.weight();
             let target_idx = graph.to_index(edge.target());
-            let is_sink_edge = constrained_types.contains(edge_data.edge_type);
+            let is_sink_edge = constrained_types.contains(&edge_data.edge_type);
 
             out_edges[node_idx_usize].push((target_idx, edge_data.weight, is_sink_edge));
             in_edges[target_idx].push((node_idx_usize, edge_data.weight, is_sink_edge));
@@ -678,9 +674,9 @@ where
 /// * `node_type` - type of the node
 #[derive(Debug, Clone)]
 #[allow(dead_code)] // clippy is wrongly complaining here
-pub struct NodeData<'a> {
-    pub name: &'a str,
-    pub node_type: &'a str,
+pub struct NodeData {
+    pub name: String,
+    pub node_type: String,
 }
 
 /// EdgeData structure
@@ -690,8 +686,8 @@ pub struct NodeData<'a> {
 /// * `edge_type` - type of the edge.
 /// * `weight` - weight of the edge.
 #[derive(Debug, Clone)]
-pub struct EdgeData<'a> {
-    pub edge_type: &'a str,
+pub struct EdgeData {
+    pub edge_type: String,
     pub weight: f64,
 }
 
@@ -708,36 +704,39 @@ pub struct EdgeData<'a> {
 ///
 /// ### Returns
 ///
-/// A `Graph<NodeData<'_>, EdgeData<'_>>` graph for subsequent usage in
-/// constraint personalised page-rank iteration.
+/// A `Graph<NodeData, EdgeData>` graph for subsequent usage in constraint
+/// personalised page-rank iteration.
 ///
 /// ### Panics
 ///
 /// Function will panic if `nodes` and `nodes_types` do not have the same
 /// length and/or when `from`, `to`, `edge_types` and `edge_weights` do not
 /// have the same length.
-pub fn graph_from_strings_with_attributes<'a>(
-    nodes: &'a [String],
-    node_types: &'a [String],
-    from: &'a [String],
-    to: &'a [String],
-    edge_types: &'a [String],
-    edge_weights: &'a [f64],
-) -> Graph<NodeData<'a>, EdgeData<'a>> {
+pub fn graph_from_strings_with_attributes(
+    nodes: &[String],
+    node_types: &[String],
+    from: &[String],
+    to: &[String],
+    edge_types: &[String],
+    edge_weights: &[f64],
+) -> Graph<NodeData, EdgeData> {
     assert_same_len!(nodes, node_types);
     assert_same_len!(from, to, edge_types, edge_weights);
 
-    let mut graph: Graph<NodeData<'_>, EdgeData<'_>> = Graph::new();
+    let mut graph = Graph::new();
     let mut name_to_idx = FxHashMap::default();
 
-    // add the nodes
+    // Add the nodes
     for (name, node_type) in nodes.iter().zip(node_types.iter()) {
-        let node_data = NodeData { name, node_type };
+        let node_data = NodeData {
+            name: name.clone(),
+            node_type: node_type.clone(),
+        };
         let idx = graph.add_node(node_data);
         name_to_idx.insert(name, idx);
     }
 
-    // add the edges
+    // Add the edges
     for (((from_name, to_name), edge_type), &weight) in from
         .iter()
         .zip(to.iter())
@@ -752,7 +751,10 @@ pub fn graph_from_strings_with_attributes<'a>(
             .get(to_name)
             .unwrap_or_else(|| panic!("From node '{}' not found in nodes list", from_name));
 
-        let edge_data = EdgeData { edge_type, weight };
+        let edge_data = EdgeData {
+            edge_type: edge_type.clone(),
+            weight,
+        };
 
         graph.add_edge(from_idx, to_idx, edge_data);
     }
@@ -772,20 +774,20 @@ pub fn graph_from_strings_with_attributes<'a>(
 /// ### Returns
 ///
 /// The generated PetGraph
-pub fn graph_from_strings<'a>(
-    nodes: &'a [String],
+pub fn graph_from_strings(
+    nodes: &[String],
     from: &[String],
     to: &[String],
     undirected: bool,
-) -> Graph<&'a str, ()> {
+) -> Graph<String, ()> {
     assert_same_len!(from, to);
 
-    let mut graph: Graph<&'a str, ()> = Graph::new();
+    let mut graph: Graph<String, ()> = Graph::new();
 
     let mut term_to_idx = FxHashMap::default();
 
     for term in nodes {
-        let idx = graph.add_node(term);
+        let idx = graph.add_node(term.clone());
         term_to_idx.insert(term, idx);
     }
 

@@ -52,7 +52,8 @@ in Rust now.
 terms of algorithm.
 - ~~TOM (topological overlap measure) for correlation-based methods.~~
 - Eigengene calculations for correlation-based methods (especially the single
-correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
+correlation based one), akin to 
+[WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
 - ~~Hierarchical clustering-based gene module detection on top of correlation-based
 methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).~~
 - Interpretation layers on top of gene modules, i.e., upstream regulators, 
