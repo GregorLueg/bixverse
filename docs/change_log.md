@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 25.07.2025* </br>
+*Last update: 06.08.2025* </br>
 
 ### Version **0.0.2.1**
 
@@ -25,11 +25,11 @@ Additionally, permutation-based testing for diffusions is implemented.
 - Added reciprocal best hit method based on correlations. You will need to
 provide now an additional parameter to the class specifying if you want to use
 set similarity or correlation-based similarity.
-- Vignettes for various methods written and added.
+- Vignettes for various methods written and added. (More to come!)
 - GSVA and ssGSEA implemented in Rust.
 - Rust code reworked in different places to make some of the functions faster.
-- Mutual information calculations in Rust.
-- Improvements to the synthetic data.
+- Mutual information and pointwise mutual information calculations in Rust.
+- Improvements to the synthetic data with additonal plotting functions.
 
 #### Bug fixes, documentation updates
 
