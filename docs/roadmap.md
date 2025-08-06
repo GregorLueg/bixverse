@@ -13,9 +13,10 @@ will be a separate package for plotting.
 
 ### Stability and reliability of the package
 
-- ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~ (Test coverage is slowly but surely increasing.)
+- ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~ 
+(Test coverage is slowly but surely increasing. Bugs you find are features ;P )
 - ~~Make usage of borrowing/lifetimes where possible to avoid expensive 
-in-memory copying in Rust.~~ (This has been implemented now in a lot of 
+copying in Rust.~~ (This has been implemented now in a lot of 
 function. If we find more speed and/or memory improvements, we will implement 
 them)
 
@@ -37,7 +38,7 @@ and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).~~ (The fgsea
 multi-level and simple method have been implemented in Rust.)
 - ~~Gene ontology enrichment with elimination/pruning for continuous values.~~ 
 - ~~Gene set variation analysis in [Rust](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7)~~
-- Mitch-like multi contrast analysis in [Rust](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9)
+- Mitch-like multi contrast analysis in [Rust](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
 
@@ -56,7 +57,7 @@ and identify 'privileged' sub communities in the graph.~~
 [Paull et al.](https://academic.oup.com/bioinformatics/article/29/21/2757/195824). 
 (Also with implementation for 'privileged' community detection.)~~
 - ~~Rapid permutation-based methods for both to generate topology-aware 
-background diffusion scores.~~
+background diffusion scores for statistical testing.~~
 - Constrained PageRank implementation for heterogenous graphs with sink nodes
 and/or edges, see [Ruiz et al.](https://www.nature.com/articles/s41467-021-21770-8).
 
@@ -71,7 +72,8 @@ methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s4146
 - ~~Implement [sparse dictionary learning](https://pubmed.ncbi.nlm.nih.gov/35085500/)
 as a bi-clustering type of version.~~
 - ~~Versions of fastICA in Rust with stabilised ICA and RBH graphs based on
-correlations, see [Cantini et al.](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054)~~
+correlations (and set similarities), see 
+[Cantini et al.](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054)~~
 - ~~Correlation and differential correlation based methods with subsequent 
 sparsification/pruning of the correlation-based graph and community detection.~~
 - NMF implementations as a different way to do matrix factorisations. TBD in 
@@ -84,9 +86,9 @@ annotations of modules (wrappers over pathway enrichment function), etc.
 #### Single cell transcriptomics
 
 This is a mid/longer term project to leverage Rust to keep the (sparse) count 
-matrices on disk (likely via some serialised format) and leverage Rust for 
-fast on-disk computations of the data and avoid loading unnecessary data into 
-memory where avoidable for single cell and spatial datasets. Think 
+matrices on disk (likely via some serialised binary format) and leverage Rust 
+for fast on-disk computations of the data and avoid loading unnecessary data 
+into memory where avoidable for single cell and spatial datasets. Think 
 [BPCell](https://bnprks.github.io/BPCells/index.html) with Rust instead of C++. 
 This would allow analyses of much larger datasets on local infrastructure. Core
 functionality to be implemented:
