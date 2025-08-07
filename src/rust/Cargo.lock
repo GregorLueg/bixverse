@@ -82,6 +82,7 @@ dependencies = [
  "bincode",
  "extendr-api",
  "faer",
+ "half",
  "num-complex",
  "once_cell",
  "petgraph",
@@ -600,6 +601,7 @@ dependencies = [
  "cfg-if",
  "crunchy",
  "num-traits",
+ "serde",
 ]
 
 [[package]]

@@ -1,5 +1,11 @@
+use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
+use serde::{Deserialize, Serialize};
+#[allow(unused_imports)]
+use std::fs::{File, OpenOptions};
+#[allow(unused_imports)]
+use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 
 ////////////////
 // Structures //
@@ -184,6 +190,379 @@ where
 ///////////////////////////
 // Sparse data streaming //
 ///////////////////////////
+
+////////////
+// Traits //
+////////////
+
+#[derive(Encode, Decode, Serialize, Deserialize, Debug)]
+pub struct F16(u16);
+
+impl From<half::f16> for F16 {
+    fn from(f: half::f16) -> Self {
+        F16(f.to_bits())
+    }
+}
+
+impl From<F16> for half::f16 {
+    fn from(f: F16) -> Self {
+        half::f16::from_bits(f.0)
+    }
+}
+
+/////////////////////
+// Data structures //
+/////////////////////
+
+/// CscCellChunk
+///
+/// This structure is designed to store the data for fast access in terms of
+/// cells for single cell experiments.
+///
+/// ### Fields
+///
+/// * `raw_data` - Vector with the raw data (likely `u16`).
+/// * `norm_data` - Vector with the normalised data (likely `f16`).
+/// * `library_size` - Vector with the library size (likely `u32`).
+/// * `to_keep` - Boolean if the cell should be included into anything.
+/// * `row_indices` - The row indices of the data.
+/// * `col_ptrs` - The column pointers of the data.
+/// * `chunk_id` - Id of the chunk.
+#[derive(Encode, Decode, Serialize, Deserialize, Debug)]
+pub struct CscCellChunk {
+    pub raw_data: Vec<u16>,
+    pub norm_data: Vec<F16>,
+    pub library_size: Vec<u32>,
+    pub to_keep: Vec<bool>,
+    pub row_indices: Vec<usize>,
+    pub col_ptrs: Vec<usize>,
+    pub chunk_id: usize,
+}
+
+/// CsrGeneChunk
+///
+/// This structure is designed to store the data for fast access in terms of
+/// genes for single cell experiments.
+///
+/// ### Fields
+///
+/// * `raw_data` - Vector with the raw data (likely `u16`).
+/// * `norm_data` - Vector with the normalised data (likely `f16`).
+/// * `average_exp` - Vector with average expression (likely `f16`).
+/// * `no_expressed` - Vector with the number of cells expressing this gene.
+/// * `to_keep` - Boolean if the gene should be included into anything.
+/// * `row_ptrs` - The row pointers of the data.
+/// * `col_indices` - The column indices of the data.
+/// * `chunk_id` - Id of the chunk.
+#[derive(Encode, Decode, Serialize, Deserialize, Debug)]
+pub struct CsrGeneChunk {
+    pub raw_data: Vec<u16>,
+    pub norm_data: Vec<F16>,
+    pub average_exp: Vec<F16>,
+    pub no_expressed: Vec<usize>,
+    pub to_keep: Vec<bool>,
+    pub row_ptrs: Vec<usize>,
+    pub col_indices: Vec<usize>,
+    pub chunk_id: usize,
+}
+
+/// CompressedDataHeader
+///
+/// Stores the information in terms of total cells, total genes, number of
+/// chunks in terms of cells and genes and the offset vectors
+///
+/// ### Params
+///
+/// * `total_cells` - Total number of cells in the experiment.
+/// * `total_genes` - Total number of genes in the experiemnt.
+/// * `cell_based` - Boolean indicating that if `true` the data is stored
+///                  in a cell-favourable format. If `false`, data is stored
+///                  in a gene-favourable format.
+/// * `no_chunks` - No of chunks that store either cell or gene data.
+/// * `chunk_offsets` - Vector containing the offsets for the cell or gene
+///                     chunks.
+#[derive(Encode, Decode, Serialize, Deserialize)]
+pub struct CompressedDataHeader {
+    pub total_cells: usize,
+    pub total_genes: usize,
+    pub cell_based: bool,
+    pub no_chunks: usize,
+    pub chunk_offsets: Vec<usize>,
+}
+
+//////////////////////
+// Streaming writer //
+//////////////////////
+
+/// StreamingWriter
+///
+/// Implementation of a structure for writing in a streamed manner two different
+/// types of sparse stored data.
+///
+/// ### Params
+///
+/// * `header` - The header of the file.
+/// * `writer` - BufWriter to the file.
+/// * `current_pos` - The current position of the chunks.
+#[allow(dead_code)]
+pub struct StreamingSparseWriter {
+    header: CompressedDataHeader,
+    writer: BufWriter<File>,
+    current_pos: usize,
+}
+
+#[allow(dead_code)]
+impl StreamingSparseWriter {
+    /// Generate a new StreamingSparseWriter
+    ///
+    /// ### Params
+    ///
+    /// * `path_f` - Path to the file storing the compressed sparse column
+    ///                  data for rapid access for cells.
+    /// * `cell_based` - Boolean indicating if you are about to store data in
+    ///                  cell favourable, i.e., CSC format.
+    /// * `total_cells` - Total number of cells.
+    /// * `total_genes` - Total number of genes.
+    ///
+    /// ### Returns
+    ///
+    /// Returns the ready `StreamingSparseWriter`.
+    pub fn new(
+        path_f: &str,
+        cell_based: bool,
+        total_cells: usize,
+        total_genes: usize,
+    ) -> std::io::Result<Self> {
+        // Cells
+        let file = File::create(path_f)?;
+        let mut writer = BufWriter::new(file);
+        let placeholder_cell_header = CompressedDataHeader {
+            total_cells,
+            total_genes,
+            cell_based,
+            no_chunks: 0_usize,
+            chunk_offsets: Vec::new(),
+        };
+        let header_size = encode_to_vec(&placeholder_cell_header, config::standard())
+            .unwrap()
+            .len();
+        writer.write_all(&vec![0u8; header_size as usize])?;
+
+        Ok(Self {
+            header: placeholder_cell_header,
+            writer,
+            current_pos: header_size,
+        })
+    }
+
+    /// Write a Cell Chunk to disk
+    ///
+    /// * `csc_chunk` - The chunk with the cell data, i.e., `CscCellChunk`
+    pub fn write_csc_chunk(&mut self, csc_chunk: CscCellChunk) -> std::io::Result<()> {
+        assert!(
+            self.header.cell_based,
+            "This is not set for a cell-based (CSC format) writing!"
+        );
+
+        self.header.chunk_offsets.push(self.current_pos);
+
+        let encoded = encode_to_vec(&csc_chunk, config::standard()).unwrap();
+        let chunk_size = encoded.len() as u64;
+
+        self.writer.write_all(&chunk_size.to_le_bytes())?;
+        self.writer.write_all(&encoded)?;
+
+        self.current_pos += 8 + chunk_size as usize;
+        self.header.no_chunks += 1;
+
+        Ok(())
+    }
+
+    /// Write a Gene Chunk to disk
+    ///
+    /// * `csr_chunk` - The chunk with the cell data, i.e., `CsrGeneChunk`
+    pub fn write_csr_chunk(&mut self, csr_chunk: CsrGeneChunk) -> std::io::Result<()> {
+        assert!(
+            !self.header.cell_based,
+            "This is not set for a gene-based (CSR format) writing!"
+        );
+        self.header.chunk_offsets.push(self.current_pos);
+
+        let encoded = encode_to_vec(&csr_chunk, config::standard()).unwrap();
+        let chunk_size = encoded.len();
+
+        self.writer.write_all(&chunk_size.to_le_bytes())?;
+        self.writer.write_all(&encoded)?;
+
+        self.current_pos += 8 + chunk_size as usize;
+        self.header.no_chunks += 1;
+
+        Ok(())
+    }
+
+    /// Finalise writing
+    pub fn finalise(mut self) -> std::io::Result<()> {
+        self.writer.seek(SeekFrom::Start(0))?;
+        let header_data = encode_to_vec(&self.header, config::standard()).unwrap();
+        self.writer.write_all(&header_data)?;
+        self.writer.flush()?;
+
+        Ok(())
+    }
+}
+
+//////////////////////
+// Streaming reader //
+//////////////////////
+
+/// StreamingSparseReader
+///
+/// Implementation of a structure for writing in a streamed manner
+///
+/// ### Params
+///
+/// * `header` - The header of the file.
+/// * `writer` - BufReader of the file.
+/// * `current_pos` - The current position of the chunks.
+#[allow(dead_code)]
+pub struct StreamingSparseReader {
+    header: CompressedDataHeader,
+    reader: BufReader<File>,
+    current_chunk: usize,
+}
+
+#[allow(dead_code)]
+impl StreamingSparseReader {
+    /// Initialise the `StreamingSparseReader`
+    ///
+    /// ### Params
+    ///
+    /// * `f_path` - Path to the file.
+    pub fn new(f_path: &str) -> std::io::Result<Self> {
+        let file = File::open(f_path)?;
+        let mut reader = BufReader::new(file);
+
+        // Read in the header
+        let mut header_size_buf = [0u8; 8];
+        reader.read_exact(&mut header_size_buf)?;
+
+        reader.seek(SeekFrom::Start(0))?;
+
+        let mut header_buf = vec![
+            0u8;
+            encode_to_vec(
+                &CompressedDataHeader {
+                    total_cells: 0,
+                    total_genes: 0,
+                    cell_based: true,
+                    no_chunks: 0,
+                    chunk_offsets: Vec::new(),
+                },
+                config::standard()
+            )
+            .unwrap()
+            .len() as usize
+        ];
+
+        reader.read_exact(&mut header_buf)?;
+
+        let (header, _): (CompressedDataHeader, usize) =
+            decode_from_slice(&header_buf, config::standard()).unwrap();
+
+        Ok(Self {
+            reader,
+            header,
+            current_chunk: 0,
+        })
+    }
+
+    /// Read in the cell chunk
+    ///
+    /// The function will panic if the underlying file does not seem to contain
+    /// `CscCellChunk`s.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CscCellChunk>>`
+    pub fn read_cell_chunk(&mut self) -> std::io::Result<Option<CscCellChunk>> {
+        assert!(
+            self.header.cell_based,
+            "The data you are trying to read in is not set up for CscCellChunk."
+        );
+
+        if self.current_chunk >= self.header.no_chunks {
+            return Ok(None);
+        }
+
+        // get to the chunk position
+        let chunk_offset = self.header.chunk_offsets[self.current_chunk] as u64;
+        self.reader.seek(SeekFrom::Start(chunk_offset))?;
+
+        // read chunk size
+        let mut size_buf = [0u8; 8];
+        self.reader.read_exact(&mut size_buf)?;
+        let chunk_size = u64::from_le_bytes(size_buf) as usize;
+
+        // read chunk data
+        let mut chunk_buf = vec![0u8; chunk_size];
+        self.reader.read_exact(&mut chunk_buf)?;
+
+        let (chunk, _): (CscCellChunk, usize) =
+            decode_from_slice(&chunk_buf, config::standard()).unwrap();
+
+        self.current_chunk += 1;
+
+        Ok(Some(chunk))
+    }
+
+    /// Read in the gene chunk
+    ///
+    /// The function will panic if the underlying file does not seem to contain
+    /// `CsrGeneChunk`s.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CsrGeneChunk>>`
+    pub fn read_gene_chunk(&mut self) -> std::io::Result<Option<CsrGeneChunk>> {
+        assert!(
+            !self.header.cell_based,
+            "The data you are trying to read in is not set up for CscCellChunk."
+        );
+
+        if self.current_chunk >= self.header.no_chunks {
+            return Ok(None);
+        }
+
+        // get to the chunk position
+        let chunk_offset = self.header.chunk_offsets[self.current_chunk] as u64;
+        self.reader.seek(SeekFrom::Start(chunk_offset))?;
+
+        // read chunk size
+        let mut size_buf = [0u8; 8];
+        self.reader.read_exact(&mut size_buf)?;
+        let chunk_size = u64::from_le_bytes(size_buf) as usize;
+
+        // read chunk data
+        let mut chunk_buf = vec![0u8; chunk_size];
+        self.reader.read_exact(&mut chunk_buf)?;
+
+        let (chunk, _): (CsrGeneChunk, usize) =
+            decode_from_slice(&chunk_buf, config::standard()).unwrap();
+
+        self.current_chunk += 1;
+
+        Ok(Some(chunk))
+    }
+
+    /// Get the header
+    ///
+    /// ### Returns
+    ///
+    /// The `CompressedDataHeader` with information about the file.
+    pub fn get_header(&self) -> &CompressedDataHeader {
+        &self.header
+    }
+}
 
 ///////////
 // Tests //
