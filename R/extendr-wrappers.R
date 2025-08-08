@@ -1164,6 +1164,12 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' @export
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
+#' @export
+rs_csc_to_binary_f <- function(f_path, no_cells, no_genes, data, col_ptr, row_idx) invisible(.Call(wrap__rs_csc_to_binary_f, f_path, no_cells, no_genes, data, col_ptr, row_idx))
+
+#' @export
+rs_binary_f_to_csc <- function(f_path) .Call(wrap__rs_binary_f_to_csc, f_path)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description This is the Rust implementation of dual graph regularised
