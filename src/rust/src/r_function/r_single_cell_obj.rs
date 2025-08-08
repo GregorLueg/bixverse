@@ -22,7 +22,7 @@ pub fn rs_csc_to_binary_f(
         let start_i = col_ptr[i - 1] as usize;
         // create chunk from raw data
         let chunk_i =
-            CscCellChunk::from_r_data(&data[start_i..end_i], &row_idx[start_i..end_i], end_i);
+            CscCellChunk::from_r_data(&data[start_i..end_i], &row_idx[start_i..end_i], i - 1);
 
         writer.write_cell_chunk(chunk_i).unwrap();
     }
@@ -30,6 +30,8 @@ pub fn rs_csc_to_binary_f(
     writer.finalise().unwrap();
 }
 
+/// @export
+#[extendr]
 pub fn rs_binary_f_to_csc(f_path: &str) -> List {
     let mut reader = StreamingSparseReader::new(f_path).unwrap();
 
@@ -44,11 +46,16 @@ pub fn rs_binary_f_to_csc(f_path: &str) -> List {
     // Add zero
     col_ptr.push(0);
 
+    let mut current_ptr = 0_usize;
+
     for i in 0..total_chunks {
         let chunk_i = reader.read_cell_chunk().unwrap().unwrap();
-        data.push(chunk_i.data_raw);
+        let data_i = chunk_i.data_raw;
+        let len_data_i = data_i.len();
+        data.push(data_i);
         row_idx.push(chunk_i.row_indices);
-        col_ptr.push(chunk_i.original_index);
+        col_ptr.push(current_ptr + len_data_i);
+        current_ptr += len_data_i
     }
 
     let data = flatten_vector(data);
@@ -69,4 +76,5 @@ pub fn rs_binary_f_to_csc(f_path: &str) -> List {
 extendr_module! {
     mod r_single_cell_obj;
     fn rs_csc_to_binary_f;
+    fn rs_binary_f_to_csc;
 }

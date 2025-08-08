@@ -42,6 +42,8 @@ csc_matrix@p
 csc_matrix@x
 csc_matrix@Dim
 
+length(csc_matrix@p)
+
 dir <- tempdir()
 f_path <- file.path(dir, "test.bin")
 
@@ -54,7 +56,7 @@ rs_csc_to_binary_f(
   row_idx = csc_matrix@i
 )
 
-list.files(dir)
+read_file <- rs_binary_f_to_csc(f_path)
 
 # csr (gene-centric) -----------------------------------------------------------
 
