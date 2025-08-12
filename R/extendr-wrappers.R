@@ -1164,12 +1164,6 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' @export
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
-#' @export
-rs_csc_to_binary_f <- function(f_path, no_cells, no_genes, data, col_ptr, row_idx) invisible(.Call(wrap__rs_csc_to_binary_f, f_path, no_cells, no_genes, data, col_ptr, row_idx))
-
-#' @export
-rs_binary_f_to_csc <- function(f_path) .Call(wrap__rs_binary_f_to_csc, f_path)
-
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description This is the Rust implementation of dual graph regularised
@@ -1413,6 +1407,22 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #'
 #' @export
 rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
+
+SingeCellCountData <- new.env(parent = emptyenv())
+
+SingeCellCountData$new <- function(f_path) .Call(wrap__SingeCellCountData__new, f_path)
+
+SingeCellCountData$r_csc_mat_to_file <- function(no_cells, no_genes, data, col_ptr, row_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csc_mat_to_file, self, no_cells, no_genes, data, col_ptr, row_idx, target_size))
+
+SingeCellCountData$file_to_r_csc_mat <- function() .Call(wrap__SingeCellCountData__file_to_r_csc_mat, self)
+
+SingeCellCountData$get_cells_by_indices <- function(indices) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices)
+
+#' @export
+`$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.SingeCellCountData` <- `$.SingeCellCountData`
 
 
 # nolint end

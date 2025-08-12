@@ -187,6 +187,69 @@ where
     }
 }
 
+////////////////
+// Conversion //
+////////////////
+
+/// A type alias representing effect size results
+///
+/// ### Fields
+///
+/// * `0` - The data in the CSR format
+/// * `1` - The column indices
+/// * `2` - The row pointers
+#[allow(dead_code)]
+pub type CsrData<T> = (Vec<T>, Vec<usize>, Vec<usize>);
+
+/// Transform CSC stored data into CSR stored data
+///
+/// This version does a full memory copy of the data
+///
+/// ### Params
+///
+/// * `data` - The data stored in CSC format.
+/// * `row_ind` - The row indices from the CSC format.
+/// * `col_ptr` - The column pointers from the CSC format.
+/// * `nrows` - The number of rows in the data.
+///
+/// ### Returns
+///
+/// The data in CSR format, i.e., `CsrData`
+#[allow(dead_code)]
+pub fn csc_to_csr<T: Clone + Default>(
+    data: &[T],
+    row_ind: &[usize],
+    col_ptr: &[usize],
+    nrows: usize,
+) -> CsrData<T> {
+    let nnz = data.len();
+    let mut row_ptr = vec![0; nrows + 1];
+
+    for &r in row_ind {
+        row_ptr[r + 1] += 1;
+    }
+
+    for i in 0..nrows {
+        row_ptr[i + 1] += row_ptr[i];
+    }
+
+    let mut csr_data = vec![T::default(); nnz];
+    let mut csr_col_ind = vec![0; nnz];
+    let mut next = row_ptr[..nrows].to_vec();
+
+    for col in 0..(col_ptr.len() - 1) {
+        for idx in col_ptr[col]..col_ptr[col + 1] {
+            let row = row_ind[idx];
+            let pos = next[row];
+            csr_data[pos] = data[idx].clone();
+            csr_col_ind[pos] = col;
+            next[row] += 1;
+        }
+    }
+
+    (csr_data, csr_col_ind, row_ptr)
+}
+
 ///////////////////////////
 // Sparse data streaming //
 ///////////////////////////
@@ -239,13 +302,18 @@ pub struct CscCellChunk {
 
 impl CscCellChunk {
     /// Function to generate the chunk from R data
-    pub fn from_r_data(data: &[i32], row_idx: &[i32], original_index: usize) -> Self {
+    pub fn from_r_data(
+        data: &[i32],
+        row_idx: &[i32],
+        original_index: usize,
+        target_size: f32,
+    ) -> Self {
         let data_f32 = data.iter().map(|x| *x as f32).collect::<Vec<f32>>();
         let sum = data_f32.iter().sum::<f32>();
         let data_norm: Vec<F16> = data_f32
             .into_iter()
             .map(|x| {
-                let norm = x / sum;
+                let norm = (x / sum * target_size).ln_1p();
                 F16::from(f16::from_f32(norm))
             })
             .collect();
@@ -268,11 +336,13 @@ impl CscCellChunk {
 ///
 /// ### Fields
 ///
-/// * `data_raw` - Vector with the raw data (likely `u16`).
-/// * `data_norm` - Vector with the normalised data (likely `f16`).
-/// * `avg_exp` - Vector with average expression (likely `f16`).
+/// * `data_raw` - Vector with the raw data.
+/// * `data_norm` - Vector with the normalised data (library size adjusted and
+///   log-normalised).
+/// * `avg_exp` - Vector with average expression.
 /// * `nnz` - Number non-zero values.
 /// * `col_indices` - The column indices of the data.
+/// * `original_index` - Original index of the gene.
 /// * `to_keep` - Boolean if the gene should be included into anything.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct CsrGeneChunk {
@@ -281,6 +351,7 @@ pub struct CsrGeneChunk {
     pub avg_exp: F16,
     pub nnz: usize,
     pub col_indices: Vec<u16>,
+    pub original_index: usize,
     pub to_keep: bool,
 }
 
@@ -306,29 +377,48 @@ pub struct SparseDataHeader {
     pub cell_based: bool,
     pub no_chunks: usize,
     pub chunk_offsets: Vec<u64>,
-    pub cell_index_map: FxHashMap<usize, usize>,
+    pub index_map: FxHashMap<usize, usize>,
 }
 
 /// Fixed-size file header that points to the main header location
+///
+/// ### Params
+///
+/// * `magic` - Magic string as bytes to recognise the file
+/// * `version` - Version of the file
+/// * `main_header_offset` - Offset of the main header, i.e., 64 bytes
+/// * `_reserved_1` - 32 additional reserved bytes for the future
+/// * `_reserved_2` - 4 additional reserved bytes for the future
 #[repr(C)]
 #[derive(Encode, Decode, Serialize, Deserialize)]
 struct FileHeader {
     magic: [u8; 8],
     version: u32,
     main_header_offset: u64,
+    cell_based: bool,
     // Needs to be split into two arrays to get to 64 bytes
     _reserved_1: [u8; 32],
-    _reserved_2: [u8; 4],
+    _reserved_2: [u8; 3],
 }
 
 impl FileHeader {
-    fn new() -> Self {
+    /// Generate a new header
+    ///
+    /// ### Params
+    ///
+    /// * `cell_based` - Is the data stored for fast cell retrieval.
+    ///
+    /// ### Returns
+    ///
+    /// A new object of `FileHeader`
+    fn new(cell_based: bool) -> Self {
         Self {
             magic: *b"SCRNASEQ",
             version: 1,
             main_header_offset: 0,
+            cell_based,
             _reserved_1: [0; 32],
-            _reserved_2: [0; 4],
+            _reserved_2: [0; 3],
         }
     }
 }
@@ -347,14 +437,26 @@ impl FileHeader {
 /// * `header` - The header of the file.
 /// * `writer` - BufWriter to the file.
 /// * `chunks_start_pos` - The current position of the chunks.
+/// * `cell_based` - Boolean indicating if the writer is designed to write in
+///   an efficient manner for cells.
 pub struct CellGeneSparseWriter {
     header: SparseDataHeader,
     writer: BufWriter<File>,
     chunks_start_pos: u64,
+    cell_based: bool,
 }
 
 #[allow(dead_code)]
 impl CellGeneSparseWriter {
+    /// Create a new sparse writer instance
+    ///
+    /// ### Params
+    ///
+    /// * `path_f` - Path to the .bin file to which to write to.
+    /// * `cell_based` - Shall the writer be set up for writing cell-based
+    ///   (`true`) or gene-based chunks.
+    /// * `total_cells` - Total cells in the data.
+    /// * `total_genes` - Total genes in the data.
     pub fn new(
         path_f: &str,
         cell_based: bool,
@@ -364,7 +466,7 @@ impl CellGeneSparseWriter {
         let file = File::create(path_f)?;
         let mut writer = BufWriter::new(file);
 
-        let file_header = FileHeader::new();
+        let file_header = FileHeader::new(cell_based);
         let file_header_enc = encode_to_vec(&file_header, config::standard()).unwrap();
         if file_header_enc.len() < 64 {
             writer.write_all(&file_header_enc)?;
@@ -382,17 +484,30 @@ impl CellGeneSparseWriter {
             cell_based,
             no_chunks: 0,
             chunk_offsets: Vec::new(),
-            cell_index_map: FxHashMap::default(),
+            index_map: FxHashMap::default(),
         };
 
         Ok(Self {
             header,
             writer,
             chunks_start_pos,
+            cell_based,
         })
     }
 
+    /// Write a Cell to the file
+    ///
+    /// This function will panic if the file was not set to cell-based!
+    ///
+    /// ### Params
+    ///
+    /// * `cell_chunk` - The data representing that specific cell.
     pub fn write_cell_chunk(&mut self, cell_chunk: CscCellChunk) -> std::io::Result<()> {
+        assert!(
+            self.cell_based,
+            "The writer is not set to write in a cell-based manner!"
+        );
+
         // get current position in file
         let current_pos = self.writer.stream_position()?;
 
@@ -401,7 +516,7 @@ impl CellGeneSparseWriter {
         self.header.chunk_offsets.push(chunk_offset);
 
         self.header
-            .cell_index_map
+            .index_map
             .insert(cell_chunk.original_index, self.header.no_chunks);
 
         let encoded = encode_to_vec(&cell_chunk, config::standard()).unwrap();
@@ -416,21 +531,44 @@ impl CellGeneSparseWriter {
         Ok(())
     }
 
-    // pub fn write_gene_chunk(&mut self, gene_chunk: CsrGeneChunk) -> std::io::Result<()> {
-    //     let encoded = encode_to_vec(&gene_chunk, config::standard()).unwrap();
-    //     let chunk_size = encoded.len() as u64;
+    /// Write a Gene to the file
+    ///
+    /// This function will panic if the file was set to cell-based!
+    ///
+    /// ### Params
+    ///
+    /// * `gene_chunk` - The data representing that specific gene.
+    pub fn write_gene_chunk(&mut self, gene_chunk: CsrGeneChunk) -> std::io::Result<()> {
+        assert!(
+            !self.cell_based,
+            "The writer is not set to write in a gene-based manner!"
+        );
 
-    //     self.header.chunk_offsets.push(self.chunks.len());
+        // get current position in file
+        let current_pos = self.writer.stream_position()?;
 
-    //     self.chunks.extend_from_slice(&chunk_size.to_le_bytes());
-    //     self.chunks.extend_from_slice(&encoded);
+        // store offset relative to chunks start
+        let chunk_offset = current_pos - self.chunks_start_pos;
+        self.header.chunk_offsets.push(chunk_offset);
 
-    //     self.header.no_chunks += 1;
-    //     Ok(())
-    // }
+        self.header
+            .index_map
+            .insert(gene_chunk.original_index, self.header.no_chunks);
 
+        let encoded = encode_to_vec(&gene_chunk, config::standard()).unwrap();
+        let chunk_size = encoded.len() as u64;
+
+        self.writer.write_all(&chunk_size.to_le_bytes())?;
+        self.writer.write_all(&encoded)?;
+        self.writer.flush()?;
+
+        self.header.no_chunks += 1;
+        Ok(())
+    }
+
+    /// Finalise the file
     pub fn finalise(mut self) -> std::io::Result<()> {
-        // Write header size and header
+        // write header size and header
         let main_header_offset = self.writer.stream_position()?;
 
         let header_data = encode_to_vec(&self.header, config::standard()).unwrap();
@@ -440,7 +578,7 @@ impl CellGeneSparseWriter {
         self.writer.write_all(&header_data)?;
 
         self.writer.seek(SeekFrom::Start(0))?;
-        let mut file_header = FileHeader::new();
+        let mut file_header = FileHeader::new(self.cell_based);
         file_header.main_header_offset = main_header_offset;
         let file_header_enc = encode_to_vec(&file_header, config::standard()).unwrap();
 
@@ -464,6 +602,11 @@ impl CellGeneSparseWriter {
 //////////////////////
 
 /// Iterator for reading cell chunks sequentially
+///
+/// ### Fields
+///
+/// * `reader` - A borrowed reference to the `StreamingSparseReader`.
+/// * `current_chunk` - The current chunk
 pub struct CellChunkIterator<'a> {
     reader: &'a mut StreamingSparseReader,
     current_chunk: usize,
@@ -472,12 +615,44 @@ pub struct CellChunkIterator<'a> {
 impl<'a> Iterator for CellChunkIterator<'a> {
     type Item = std::io::Result<CscCellChunk>;
 
+    /// Get the next element of the iterator
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_chunk >= self.reader.header.no_chunks {
             return None;
         }
 
         let result = self.reader.read_cell_chunk_at(self.current_chunk);
+        self.current_chunk += 1;
+
+        match result {
+            Ok(Some(chunk)) => Some(Ok(chunk)),
+            Ok(None) => None,
+            Err(e) => Some(Err(e)),
+        }
+    }
+}
+
+/// Iterator for reading gene chunks sequentially
+///
+/// ### Fields
+///
+/// * `reader` - A borrowed reference to the `StreamingSparseReader`.
+/// * `current_chunk` - The current chunk
+pub struct GeneChunkIterator<'a> {
+    reader: &'a mut StreamingSparseReader,
+    current_chunk: usize,
+}
+
+impl<'a> Iterator for GeneChunkIterator<'a> {
+    type Item = std::io::Result<CsrGeneChunk>;
+
+    /// Get the next element of the iterator
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_chunk >= self.reader.header.no_chunks {
+            return None;
+        }
+
+        let result = self.reader.read_gene_chunk_at(self.current_chunk);
         self.current_chunk += 1;
 
         match result {
@@ -560,13 +735,33 @@ impl StreamingSparseReader {
         })
     }
 
+    ///////////
+    // Cells //
+    ///////////
+
     /// Read a specific cell by its original index
+    ///
+    /// This function will panic if the file was not designed for cell-based
+    /// read/write!
+    ///
+    /// ### Param
+    ///
+    /// * `original_index` - Original index position of the cell.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CscCellChunk>>`
     pub fn read_cell_by_index(
         &mut self,
         original_index: usize,
     ) -> std::io::Result<Option<CscCellChunk>> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for cell-based read/write!"
+        );
+
         // find chunk index for this cell
-        let chunk_index = match self.header.cell_index_map.get(&original_index) {
+        let chunk_index = match self.header.index_map.get(&original_index) {
             Some(idx) => *idx,
             None => return Ok(None),
         };
@@ -575,10 +770,26 @@ impl StreamingSparseReader {
     }
 
     /// Read multiple cells by their original indices
+    ///
+    /// This function will panic if the file was not designed for cell-based
+    /// read/write!
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - A slice of positions to retrieve
+    ///
+    /// ### Returns
+    ///
+    /// A vector of `CscCellChunk`
     pub fn read_cells_by_indices(
         &mut self,
         indices: &[usize],
     ) -> std::io::Result<Vec<CscCellChunk>> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for cell-based read/write!"
+        );
+
         let mut cells = Vec::new();
 
         for &idx in indices {
@@ -591,10 +802,27 @@ impl StreamingSparseReader {
     }
 
     /// Read a cell chunk at a specific chunk index
+    ///
+    /// This function will panic if the file was not designed for cell-based
+    /// read/write! If the index is larger than the what is written in the file,
+    /// it will return `None`.
+    ///
+    /// ### Params
+    ///
+    /// * `chunk_index` - Index postion of the chunk.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CscCellChunk>>`
     pub fn read_cell_chunk_at(
         &mut self,
         chunk_index: usize,
     ) -> std::io::Result<Option<CscCellChunk>> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for cell-based read/write!"
+        );
+
         if chunk_index >= self.header.no_chunks {
             return Ok(None);
         }
@@ -618,20 +846,169 @@ impl StreamingSparseReader {
     }
 
     /// Iterator over all cell chunks
+    ///
+    /// ### Returns
+    ///
+    /// An iterator (`CellChunkIterator`) that can be subsequently consumed
     pub fn iter_cells(&mut self) -> CellChunkIterator<'_> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for cell-based read/write!"
+        );
+
         CellChunkIterator {
             reader: self,
             current_chunk: 0,
         }
     }
 
+    ///////////
+    // Genes //
+    ///////////
+
+    /// Read a specific gene by its original index
+    ///
+    /// This function will panic if the file was not designed for gene-based
+    /// read/write!
+    ///
+    /// ### Param
+    ///
+    /// * `original_index` - Original index position of the cell.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CsrGeneChunk>>`
+    pub fn read_gene_by_index(
+        &mut self,
+        original_index: usize,
+    ) -> std::io::Result<Option<CsrGeneChunk>> {
+        assert!(
+            !self.header.cell_based,
+            "The file was not designed for gene-based read/write!"
+        );
+
+        // find chunk index for this cell
+        let chunk_index = match self.header.index_map.get(&original_index) {
+            Some(idx) => *idx,
+            None => return Ok(None),
+        };
+
+        self.read_gene_chunk_at(chunk_index)
+    }
+
+    /// Read multiple cells by their original indices
+    ///
+    /// This function will panic if the file was not designed for cell-based
+    /// read/write!
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - A slice of positions to retrieve
+    ///
+    /// ### Returns
+    ///
+    /// A vector of `CsrGeneChunk`
+    pub fn read_genes_by_indices(
+        &mut self,
+        indices: &[usize],
+    ) -> std::io::Result<Vec<CsrGeneChunk>> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for cell-based read/write!"
+        );
+
+        let mut cells = Vec::new();
+
+        for &idx in indices {
+            if let Some(cell) = self.read_gene_chunk_at(idx)? {
+                cells.push(cell);
+            }
+        }
+
+        Ok(cells)
+    }
+
+    /// Read a gene chunk at a specific chunk index
+    ///
+    /// This function will panic if the file was not designed for gene-based
+    /// read/write! If the index is larger than the what is written in the file,
+    /// it will return `None`.
+    ///
+    /// ### Params
+    ///
+    /// * `chunk_index` - Index postion of the chunk.
+    ///
+    /// ### Returns
+    ///
+    /// `Result<Option<CsrGeneChunk>>`
+    pub fn read_gene_chunk_at(
+        &mut self,
+        chunk_index: usize,
+    ) -> std::io::Result<Option<CsrGeneChunk>> {
+        assert!(
+            !self.header.cell_based,
+            "The file was not designed for gene-based read/write!"
+        );
+
+        if chunk_index >= self.header.no_chunks {
+            return Ok(None);
+        }
+
+        // Calculate absolute position
+        let chunk_offset = self.chunks_start + self.header.chunk_offsets[chunk_index];
+        self.reader.seek(SeekFrom::Start(chunk_offset))?;
+
+        // Read chunk size
+        let mut size_buf = [0u8; 8];
+        self.reader.read_exact(&mut size_buf)?;
+        let chunk_size = u64::from_le_bytes(size_buf) as usize;
+
+        // Read chunk data
+        let mut chunk_buf = vec![0u8; chunk_size];
+        self.reader.read_exact(&mut chunk_buf)?;
+
+        let (chunk, _) = decode_from_slice(&chunk_buf, config::standard()).unwrap();
+
+        Ok(Some(chunk))
+    }
+
+    /// Iterator over all gene chunks
+    ///
+    /// ### Returns
+    ///
+    /// An iterator (`GeneChunkIterator`) that can be subsequently consumed
+    pub fn iter_genes(&mut self) -> GeneChunkIterator<'_> {
+        assert!(
+            self.header.cell_based,
+            "The file was not designed for gene-based read/write!"
+        );
+
+        GeneChunkIterator {
+            reader: self,
+            current_chunk: 0,
+        }
+    }
+
+    /////////////
+    // General //
+    /////////////
+
+    /// Get the header of the file
+    ///
+    /// ### Returns
+    ///
+    /// The borrowed `SparseDataHeader`
     pub fn get_header(&self) -> &SparseDataHeader {
         &self.header
     }
 
-    /// Get all available cell indices
-    pub fn get_available_cell_indices(&self) -> Vec<usize> {
-        let mut indices: Vec<usize> = self.header.cell_index_map.keys().copied().collect();
+    /// Get all available cell or gene indices
+    ///
+    /// ### Returns
+    ///
+    /// A vector of usizes with all indices.
+    pub fn get_available_indices(&self) -> Vec<usize> {
+        let mut indices: Vec<usize> = self.header.index_map.keys().copied().collect();
         indices.sort();
         indices
     }
@@ -720,13 +1097,33 @@ mod tests {
     }
 
     #[test]
+    fn test_csc_to_csr_conversion() {
+        // Test matrix:
+        // [1 0 2]
+        // [0 3 0]
+        // [4 0 5]
+
+        // CSC format
+        let data = vec![1, 4, 3, 2, 5];
+        let row_ind = vec![0, 2, 1, 0, 2];
+        let col_ptr = vec![0, 2, 3, 5];
+
+        let (csr_data, csr_col_ind, csr_row_ptr) = csc_to_csr(&data, &row_ind, &col_ptr, 3);
+
+        // Expected CSR format
+        assert_eq!(csr_data, vec![1, 2, 3, 4, 5]);
+        assert_eq!(csr_col_ind, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csr_row_ptr, vec![0, 2, 3, 5]);
+    }
+
+    #[test]
     fn test_streaming_write_read() {
         // Write some cells
         let mut writer = CellGeneSparseWriter::new("test.bin", true, 1000, 2000).unwrap();
 
         // Write cells one by one (not keeping them in memory)
         for i in 0..100 {
-            let cell = CscCellChunk::from_r_data(&[1, 2, 3], &[0, 5, 10], i);
+            let cell = CscCellChunk::from_r_data(&[1, 2, 3], &[0, 5, 10], i, 1e5);
             writer.write_cell_chunk(cell).unwrap();
         }
 

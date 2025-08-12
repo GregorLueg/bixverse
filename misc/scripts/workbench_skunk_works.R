@@ -12,7 +12,7 @@ probs <- 1 / seq_len(length(genes))
 probs <- probs / sum(probs)
 
 # More efficient approach: build sparse matrix directly
-mirai::daemons(5L)
+mirai::daemons(10L)
 
 # Generate all random data in parallel chunks
 sparse_data <- mirai::mirai_map(
@@ -56,22 +56,22 @@ length(csc_matrix@p)
 dir <- tempdir()
 f_path <- file.path(dir, "test.bin")
 
-tictoc::tic()
-rs_csc_to_binary_f(
-  f_path = f_path,
+??SingeCellCountData
+
+single_cell_counts <- SingeCellCountData$new(f_path = f_path)
+
+single_cell_counts
+
+single_cell_counts$r_csc_mat_to_file(
   no_cells = csc_matrix@Dim[2],
   no_genes = csc_matrix@Dim[1],
   data = as.integer(csc_matrix@x),
   col_ptr = csc_matrix@p,
   row_idx = csc_matrix@i
 )
-tictoc::toc()
 
-list.files(dir)
+single_cell_counts$file_to_r_csc_mat()
 
-tictoc::tic()
-read_file <- rs_binary_f_to_csc(f_path)
-tictoc::toc()
 
 # csr (gene-centric) -----------------------------------------------------------
 
