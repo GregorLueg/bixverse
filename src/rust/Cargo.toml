@@ -3,7 +3,7 @@ name = 'bixverse'
 publish = false
 version = '0.3.0'
 edition = '2021'
-rust-version = '1.65'
+rust-version = '1.85'
 
 [lib]
 crate-type = ['staticlib']

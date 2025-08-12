@@ -48,7 +48,7 @@ pub fn rs_binary_f_to_csc(f_path: &str) -> List {
 
     let mut current_ptr = 0_usize;
 
-    for i in 0..total_chunks {
+    for _i in 0..total_chunks {
         let chunk_i = reader.read_cell_chunk().unwrap().unwrap();
         let data_i = chunk_i.data_raw;
         let len_data_i = data_i.len();

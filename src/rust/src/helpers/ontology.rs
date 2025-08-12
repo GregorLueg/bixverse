@@ -86,9 +86,9 @@ fn get_mica(
 /// * `t1` - Name of term 1.
 /// * `t2` - Name of term 2.
 /// * `sim_type` - `OntoSemSimType` defining the type of semantic similarity
-///                to calculate
+///   to calculate.
 /// * `max_ic` - The maximum information content observed to rescale the Resnik
-///              similarity between 0 and 1.
+///   similarity between 0 and 1.
 /// * `ancestor_map` - HashMap with the ancestors of the terms.
 /// * `info_content_map` - BTreeMap with the information content for the terms.
 ///
@@ -155,8 +155,8 @@ pub fn get_single_onto_sim<'a>(
 /// ### Params
 ///
 /// * `terms_split` - A vector of tuples with the first element being the term 1
-///                   and the second element being the terms against which to calculate
-///                   the semantic similarity.
+///   and the second element being the terms against which to calculate the semantic
+///   similarity.
 /// * `sim_type` - Which type of semantic similarity to calculate.
 /// * `ancestor_map` - HashMap with the ancestors of the terms.
 /// * `ic_map` - HashMap with the information content for the terms.
@@ -223,7 +223,7 @@ pub type SValueCache = RwLock<FxHashMap<NodeIndex, FxHashMap<NodeIndex, f64>>>;
 /// * `ancestors` - A vector containing the ancestors as HashSets.
 /// * `topo_order` - Calculated topological order.
 /// * `s_values_cache` - The `SValueCache` caching all of the S values for each
-///                      node.
+///   node.
 #[derive(Debug)]
 pub struct WangSimOntology {
     term_to_idx: FxHashMap<String, NodeIndex>,
@@ -622,7 +622,7 @@ impl WangSimOntology {
 /// ### Params
 ///
 /// * `sim_vals` - The upper triangle values of the similarity matrix stored in
-///                row major format, excluding the diagonal.
+///   row major format, excluding the diagonal.
 /// * `names` - The column and row names of the similarity matrix.
 /// * `threshold` - Filtering threshold
 ///

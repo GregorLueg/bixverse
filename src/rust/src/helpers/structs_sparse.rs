@@ -132,7 +132,7 @@ where
     /// ### Params
     ///
     /// * `upper_triangle` - Represents the values of the upper triangle in
-    ///                      row major formant
+    ///   row major formant
     /// * `n` - Original nrows and ncols.
     /// * `include_diagonal` - Are the diagonal values included.
     pub fn from_upper_triangle_sym(upper_triangle: &[T], n: usize, include_diagonal: bool) -> Self {
@@ -293,10 +293,10 @@ pub struct CsrGeneChunk {
 /// * `total_cells` - Total number of cells in the experiment.
 /// * `total_genes` - Total number of genes in the experiemnt.
 /// * `cell_based` - Boolean. If `true` the data stores cells; if `false` the
-///                  data stores genes.
+///   data stores genes.
 /// * `no_chunks` - No of chunks that store either cell or gene data.
 /// * `chunk_offsets` - Vector containing the offsets for the cell or gene
-///                     chunks.
+///   chunks.
 #[derive(Encode, Decode, Serialize, Deserialize)]
 pub struct SparseDataHeader {
     pub total_cells: usize,
@@ -326,6 +326,7 @@ pub struct CellGeneSparseWriter {
     chunks: Vec<u8>, // Buffer all chunks in memory
 }
 
+#[allow(dead_code)]
 impl CellGeneSparseWriter {
     pub fn new(
         path_f: &str,
@@ -416,6 +417,7 @@ pub struct StreamingSparseReader {
     chunks_start: u64,
 }
 
+#[allow(dead_code)]
 impl StreamingSparseReader {
     pub fn new(f_path: &str) -> std::io::Result<Self> {
         let file = File::open(f_path)?;
