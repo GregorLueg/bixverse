@@ -35,7 +35,6 @@ pub fn rs_csc_to_binary_f(
 pub fn rs_binary_f_to_csc(f_path: &str) -> List {
     let mut reader = StreamingSparseReader::new(f_path).unwrap();
 
-    let total_chunks = reader.get_header().no_chunks;
     let no_cells = reader.get_header().total_cells;
     let no_genes = reader.get_header().total_genes;
 
@@ -43,19 +42,19 @@ pub fn rs_binary_f_to_csc(f_path: &str) -> List {
     let mut row_idx: Vec<Vec<u16>> = Vec::new();
     let mut col_ptr: Vec<usize> = Vec::new();
 
-    // Add zero
-    col_ptr.push(0);
+    let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
 
-    let mut current_ptr = 0_usize;
+    let mut current_pol_ptr = 0_usize;
+    col_ptr.push(current_pol_ptr);
 
-    for _i in 0..total_chunks {
-        let chunk_i = reader.read_cell_chunk().unwrap().unwrap();
-        let data_i = chunk_i.data_raw;
-        let len_data_i = data_i.len();
+    for cell in all_cells {
+        let data_i = cell.data_raw;
+        let len_data_i = data.len();
+        current_pol_ptr += len_data_i;
+        // Add data
         data.push(data_i);
-        row_idx.push(chunk_i.row_indices);
-        col_ptr.push(current_ptr + len_data_i);
-        current_ptr += len_data_i
+        row_idx.push(cell.row_indices);
+        col_ptr.push(current_pol_ptr);
     }
 
     let data = flatten_vector(data);
