@@ -2,76 +2,73 @@
 
 library(magrittr)
 
-## csc (cell-centric) ----------------------------------------------------------
-
-set.seed(123)
-genes <- sprintf("gene_%i", 1:20000)
-count_range <- 1:20
-no_cells <- 10000L
-probs <- 1 / seq_len(length(genes))
-probs <- probs / sum(probs)
-
-# More efficient approach: build sparse matrix directly
-mirai::daemons(10L)
-
-# Generate all random data in parallel chunks
-sparse_data <- mirai::mirai_map(
-  1:no_cells,
-  \(idx, count_range, genes, probs) {
-    set.seed(idx)
-
-    random_indx_i <- sample(1:length(genes), 750, prob = probs)
-    random_counts_i <- sample(count_range, 750, replace = TRUE)
-
-    data.table::data.table(
-      i = random_indx_i,
-      j = idx,
-      x = random_counts_i
-    )
-  },
-  .args = list(count_range, genes, probs)
-)[]
-
-sparse_dt <- data.table::rbindlist(sparse_data)
-
-csc_matrix <- Matrix::sparseMatrix(
-  i = sparse_dt$i,
-  j = sparse_dt$j,
-  x = sparse_dt$x,
-  dims = c(length(genes), no_cells),
-  dimnames = list(genes, sprintf("cell_%i", 1:no_cells))
-)
-
-mirai::daemons(0L) # Clean up daemons
-
 rextendr::document()
 
-csc_matrix@i
-csc_matrix@p
-csc_matrix@x
-csc_matrix@Dim
+## csc (cell-centric) ----------------------------------------------------------
 
-length(csc_matrix@p)
+seed <- 123L
+no_genes <- 20000L
+no_cells <- 500000L
+
+rs_sparse_data <- rs_synthetic_sc_data(
+  n_genes = no_genes,
+  n_cells = no_cells,
+  min_genes = 200,
+  max_genes = 1000,
+  max_exp = 50,
+  seed = seed
+)
+
+csc_matrix <- Matrix::sparseMatrix(
+  i = rs_sparse_data$row_indices + 1,
+  p = rs_sparse_data$col_ptrs,
+  x = rs_sparse_data$data,
+  dims = c(no_genes, no_cells),
+  dimnames = list(
+    sprintf("gene_%i", 1:no_genes),
+    sprintf("cell_%i", 1:no_cells)
+  )
+)
+
+dim(csc_matrix)
+
+# check sparsity
+(length(csc_matrix@x) / 1000) / ((no_genes / 1000) * (no_cells / 1000))
 
 dir <- tempdir()
-f_path <- file.path(dir, "test.bin")
+f_path_cells <- file.path(dir, "cells.bin")
+f_path_genes <- file.path(dir, "genes.bin")
 
-??SingeCellCountData
+single_cell_counts <- SingeCellCountData$new(
+  f_path_cells = f_path_cells,
+  f_path_genes = f_path_genes
+)
 
-single_cell_counts <- SingeCellCountData$new(f_path = f_path)
-
-single_cell_counts
-
+tictoc::tic()
 single_cell_counts$r_csc_mat_to_file(
   no_cells = csc_matrix@Dim[2],
   no_genes = csc_matrix@Dim[1],
   data = as.integer(csc_matrix@x),
   col_ptr = csc_matrix@p,
-  row_idx = csc_matrix@i
+  row_idx = csc_matrix@i,
+  target_size = 1e5
 )
+tictoc::toc()
 
-single_cell_counts$file_to_r_csc_mat()
+file.info(f_path_cells)$size / 1024^2
 
+tictoc::tic()
+return_data <- single_cell_counts$file_to_r_csc_mat(assay = "raw")
+tictoc::toc()
+
+indices <- sample(1:no_cells, 10000)
+
+tictoc::tic()
+return_data <- single_cell_counts$get_cells_by_indices(
+  indices = indices,
+  assay = "norm"
+)
+tictoc::toc()
 
 # csr (gene-centric) -----------------------------------------------------------
 

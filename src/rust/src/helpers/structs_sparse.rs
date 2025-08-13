@@ -258,7 +258,7 @@ pub fn csc_to_csr<T: Clone + Default>(
 // Traits //
 ////////////
 
-#[derive(Encode, Decode, Serialize, Deserialize, Debug)]
+#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct F16(u16);
 
 impl From<half::f16> for F16 {

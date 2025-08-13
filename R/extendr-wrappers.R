@@ -1408,15 +1408,33 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #' @export
 rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
 
+#' Generate synthetic single cell data
+#'
+#' @description This function generates pseudo data to test single cell
+#' functions
+#'
+#' @param n_genes Integer. Number of genes you wish to have in the synthetic
+#' data.
+#' @param n_cells Integer. Number of cells you wish to have in the synthetic
+#' data.
+#' @param min_genes Integer. Minimum number of genes expressed per cell.
+#' @param max_genes Integer. Maximum number of genes expressed per cell.
+#' @param max_exp Upper bound in terms of expression. Expression values will be
+#' sampled from `1:max_exp`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @export
+rs_synthetic_sc_data <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
-SingeCellCountData$new <- function(f_path) .Call(wrap__SingeCellCountData__new, f_path)
+SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
 
 SingeCellCountData$r_csc_mat_to_file <- function(no_cells, no_genes, data, col_ptr, row_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csc_mat_to_file, self, no_cells, no_genes, data, col_ptr, row_idx, target_size))
 
-SingeCellCountData$file_to_r_csc_mat <- function() .Call(wrap__SingeCellCountData__file_to_r_csc_mat, self)
+SingeCellCountData$file_to_r_csc_mat <- function(assay) .Call(wrap__SingeCellCountData__file_to_r_csc_mat, self, assay)
 
-SingeCellCountData$get_cells_by_indices <- function(indices) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices)
+SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
 #' @export
 `$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
