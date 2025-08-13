@@ -681,7 +681,7 @@ impl EsRuler {
 
             // Stop if precision requirement met
             if eps != 0.0 {
-                let k = self.enrichment_scores.len() / ((self.sample_size + 1) / 2);
+                let k = self.enrichment_scores.len() / (self.sample_size.div_ceil(2));
                 if k as f64 > -f64::log2(0.5 * eps) {
                     break;
                 }
@@ -700,6 +700,7 @@ impl EsRuler {
     ///
     /// Tuple of (p-value, error quality flag)
     fn get_pval(&self, es: f64, sign: bool) -> (f64, bool) {
+        #[allow(clippy::manual_div_ceil)]
         let half_size = (self.original_sample_size + 1) / 2; // Use original sample_size here!
         let it_index;
         let mut good_error = true;
@@ -1702,6 +1703,7 @@ fn calc_log_correction(
     sample_size: usize,
 ) -> (f64, bool) {
     let mut result = 0.0;
+    #[allow(clippy::manual_div_ceil)]
     let half_size = (sample_size + 1) / 2;
     let remainder = sample_size - (prob_corr_idx % half_size);
 

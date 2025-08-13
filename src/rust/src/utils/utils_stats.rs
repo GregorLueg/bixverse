@@ -55,7 +55,7 @@ pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec
 /// * `s_1` - The first HashSet.
 /// * `s_2` - The second HashSet.
 /// * `overlap_coefficient` - Shall the overlap coefficient be returned or the
-///                           Jaccard similarity
+///   Jaccard similarity
 ///
 /// ### Return
 ///
@@ -188,7 +188,7 @@ pub fn mad(x: &[f64]) -> Option<f64> {
 /// * `n_a` - Number of samples in a.
 /// * `n_b` - Number of samples in b.
 /// * `small_sample_correction` - Apply a small sample correction? Recommended
-///                               when `n_a` + `n_b` ≤ 35.
+///   when `n_a` + `n_b` ≤ 35.
 ///
 /// ### Returns
 ///
@@ -584,8 +584,7 @@ fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
 /// ### Params
 ///
 /// * `cluster_matrix` - A matrix with the columns representing the bootstraps,
-///                      the rows the features and the values which cluster the
-///                      feature belongs to.
+///   the rows the features and the values which cluster the feature belongs to.
 ///
 /// ### Returns
 ///
@@ -743,7 +742,7 @@ pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: 
 /// * `col_i` - Column reference to the first column to compare
 /// * `col_j` - Column reference to the second column to compare
 /// * `n_bins` - Optional number of bins. If not provided, will default to
-///              `sqrt(nrows)`.
+///   `sqrt(nrows)`.
 ///
 /// ### Returns
 ///
@@ -791,7 +790,7 @@ pub fn calculate_mi(col_i: ColRef<usize>, col_j: ColRef<usize>, n_bins: Option<u
 /// * `col_i` - Column reference to the first column to compare
 /// * `col_j` - Column reference to the second column to compare
 /// * `n_bins` - Optional number of bins. If not provided, will default to
-///              `sqrt(nrows)`.
+///   `sqrt(nrows)`.
 ///
 /// ### Returns
 ///
@@ -834,7 +833,7 @@ pub fn calculate_joint_entropy(
 ///
 /// * `col` - Column reference for which to calculate entropy
 /// * `n_bins` - Optional number of bins. If not provided, will default to
-///              `sqrt(nrows)`.
+///   `sqrt(nrows)`.
 ///
 /// ### Returns
 ///

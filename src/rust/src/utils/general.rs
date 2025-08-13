@@ -303,8 +303,8 @@ impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
 ///
 /// * `nested_vec` - The nested vector
 /// * `col_wise` - If set to `True` it will column bind (outer vector represents)
-///                the columns. If set to `False` it will row bind (outer vector
-///                represents the rows).
+///   the columns. If set to `False` it will row bind (outer vector represents the
+///   rows).
 ///
 /// ### Returns
 ///
@@ -347,7 +347,7 @@ pub fn faer_diagonal_from_vec(vec: Vec<f64>) -> Mat<f64> {
 ///
 /// * `n_dim` - The dimensions of the symmetric matrix
 /// * `offset` - Do you want to include the diagonal values (offset = 0) or exclude
-///              them (offset = 1).
+///   them (offset = 1).
 ///
 /// ### Returns
 ///
@@ -372,9 +372,8 @@ pub fn upper_triangle_indices(n_dim: usize, offset: usize) -> (Vec<usize>, Vec<u
         if start_col < n_dim {
             let end_col = n_dim;
             let elements_in_row = end_col - start_col;
-
-            // Use extend with iterator for better performance
-            row_indices.extend(std::iter::repeat(row).take(elements_in_row));
+            // Use repeat_n for better performance and clarity
+            row_indices.extend(std::iter::repeat_n(row, elements_in_row));
             col_indices.extend(start_col..end_col);
         }
     }
@@ -391,7 +390,7 @@ pub fn upper_triangle_indices(n_dim: usize, offset: usize) -> (Vec<usize>, Vec<u
 ///
 /// * `data` - Slice of the values
 /// * `shift` - Was the diagonal included (= 0) or not (= 1). If not included,
-///             the diagonal is set to 1.
+///   the diagonal is set to 1.
 /// * `n` - Original dimension of the symmetric matrix.
 ///
 /// ### Return

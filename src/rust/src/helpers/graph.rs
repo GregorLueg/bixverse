@@ -302,15 +302,15 @@ impl PageRankGraph {
 /// ### Params
 ///
 /// * `graph` - The `PageRankGraph` structure with pre-computed values for
-///             fast calculations
+///   fast calculations
 /// * `damping_factor` - The dampening factor parameter, i.e., the probability
-///                      of resetting.
+///   of resetting.
 /// * `personalization_vector` - The vector of probabilities for the reset,
-///                              making this the personalised page rank.
+///   making this the personalised page rank.
 /// * `nb_iter` - Maximum number of iterations for the personalised page rank.
 /// * `tolerance` - Tolerance of the algorithm.
 /// * `working_memory` - The `PageRankWorkingMemory` structure to store the old
-///                      and new ranks
+///   and new ranks
 ///
 /// ### Returns
 ///
@@ -392,12 +392,12 @@ pub fn personalised_page_rank_optimised(
 ///
 /// * `graph` - The PetGraph on which to run the personalised page-rank.
 /// * `damping_factor` - The dampening factor parameter, i.e., the probability
-///                      of resetting.
+///   of resetting.
 /// * `personalization_vector` - The vector of probabilities for the reset,
-///                              making this the personalised page rank.
+///   making this the personalised page rank.
 /// * `nb_iter` - Maximum number of iterations for the personalised page rank.
 /// * `tolerance` - Optional tolerance for the algorithm. If not provided, it will
-///                 default to `1e-6`.
+///   default to `1e-6`.
 ///
 /// ### Returns
 ///
@@ -500,16 +500,16 @@ where
 ///
 /// * `graph` - The PetGraph with NodeData and EdgeData
 /// * `damping_factor` - The dampening factor parameter, i.e., the probability
-///                      of resetting.
+///   of resetting.
 /// * `personalization_vector` - The vector of probabilities for the reset,
-///                              making this the personalised page rank.
+///   making this the personalised page rank.
 /// * `nb_iter` - Maximum number of iterations for the personalised page rank.
 /// * `tolerance` - Optional tolerance for the algorithm. If not provided, it
-///                 will default to `1e-6`.
+///   will default to `1e-6`.
 /// * `sink_node_types` - Optional HashSet of node types that act as sinks
-///                       (force reset of the surfer)
+///   (force reset of the surfer)
 /// * `constrained_edge_types` - Optional HashSet of edge types that force reset
-///                              after traversal of that edge.
+///   after traversal of that edge.
 ///     
 ///
 /// ### Returns

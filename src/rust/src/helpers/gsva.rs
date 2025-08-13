@@ -163,7 +163,7 @@ fn fast_poisson_cdf(lambda: f64, k: u64) -> f64 {
 ///
 /// A vector of vectors with the index positions as usizes
 pub fn get_gsva_gs_indices(gs_list: List) -> Result<Vec<Vec<usize>>> {
-    if gs_list.len() == 0 {
+    if gs_list.is_empty() {
         let gs_indices: Vec<Vec<usize>> = vec![vec![]];
         return Ok(gs_indices);
     }
@@ -808,7 +808,7 @@ pub fn gsva(
 /// * `expression_matrix` - Gene expression data (genes × samples)
 /// * `gene_sets` - Vector of gene sets as index vectors
 /// * `alpha` - The exponent defining the weight of the tail in the random walk
-///             performed by ssGSEA.
+///   performed by ssGSEA.
 /// * `normalisations` - Shall the extract score be normalised.
 /// * `print_timings` - Enable detailed performance output
 ///

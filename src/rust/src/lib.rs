@@ -14,9 +14,11 @@ pub use r_function::r_ica;
 pub use r_function::r_linalg;
 pub use r_function::r_ontology;
 pub use r_function::r_rbh;
+pub use r_function::r_single_cell_obj;
 pub use r_function::r_sparse_graph_dict;
 pub use r_function::r_sparse_struct;
 pub use r_function::r_stats;
+pub use r_function::r_synthetic_data;
 
 extendr_module! {
     mod bixverse;
@@ -30,7 +32,9 @@ extendr_module! {
     use r_linalg;
     use r_ontology;
     use r_rbh;
+    use r_single_cell_obj;
     use r_sparse_graph_dict;
     use r_sparse_struct;
     use r_stats;
+    use r_synthetic_data;
 }
