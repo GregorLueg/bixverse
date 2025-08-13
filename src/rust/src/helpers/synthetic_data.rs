@@ -1,17 +1,9 @@
 use rand::prelude::*;
-use rand_distr::weighted::WeightedIndex;
+use rand_distr::weighted::WeightedAliasIndex;
 
-/// A type alias representing effect size results
-///
-/// ### Fields
-///
-/// * `0` - The data in the CSR format
-/// * `1` - The column indices
-/// * `2` - The row pointers
-#[allow(dead_code)]
-pub type CscData<T> = (Vec<T>, Vec<usize>, Vec<usize>);
+use crate::helpers::structs_sparse::{CscData, CsrData};
 
-/// Create weighted sparse data resembling single cell counts
+/// Create weighted sparse data resembling single cell counts in CSC
 ///
 /// ### Params
 ///
@@ -26,51 +18,129 @@ pub type CscData<T> = (Vec<T>, Vec<usize>, Vec<usize>);
 /// ### Returns
 ///
 /// The `CscData` type with the synthetic data.
-pub fn create_sparse_sc_data(
+pub fn create_sparse_csc_data(
+    n_genes: usize,
+    n_cells: usize,
+    no_cells_exp: (usize, usize),
+    max_exp: i32,
+    seed: usize,
+) -> CscData<i32> {
+    // Weight genes by inverse frequency (popular genes expressed in more cells)
+    let weights: Vec<f64> = (1..=n_genes).map(|i| 1.0 / i as f64).collect();
+
+    let avg_cells = (no_cells_exp.0 + no_cells_exp.1) / 2;
+    let estimated_total = n_genes * avg_cells;
+
+    let mut indptr = Vec::with_capacity(n_genes + 1); // n_genes + 1 for CSC
+    let mut indices = Vec::with_capacity(estimated_total);
+    let mut data = Vec::with_capacity(estimated_total);
+    indptr.push(0);
+
+    let mut temp_vec = Vec::with_capacity(no_cells_exp.1);
+
+    // Iterate by genes (columns) - TRUE CSC
+    #[allow(clippy::needless_range_loop)]
+    for gene_idx in 0..n_genes {
+        let mut rng = StdRng::seed_from_u64(seed as u64 + gene_idx as u64);
+
+        // More popular genes (lower gene_idx) expressed in more cells
+        let weight_factor = weights[gene_idx];
+        let scaled_range = (
+            (no_cells_exp.0 as f64 * weight_factor * 10.0) as usize,
+            (no_cells_exp.1 as f64 * weight_factor * 10.0).min(n_cells as f64) as usize,
+        );
+        let no_cells_expressing = rng.random_range(scaled_range.0.max(1)..=scaled_range.1.max(1));
+
+        temp_vec.clear();
+
+        // Sample which cells express this gene
+        for _ in 0..no_cells_expressing {
+            let cell_idx = rng.random_range(0..n_cells);
+            let count = rng.random_range(1..=max_exp);
+            temp_vec.push((cell_idx, count));
+        }
+
+        // Sort by cell index for CSC format
+        temp_vec.sort_unstable_by_key(|(cell_idx, _)| *cell_idx);
+
+        // Remove duplicates by summing counts
+        temp_vec.dedup_by(|a, b| {
+            if a.0 == b.0 {
+                b.1 += a.1;
+                true
+            } else {
+                false
+            }
+        });
+
+        for (cell_idx, count) in temp_vec.iter() {
+            indices.push(*cell_idx); // Cell indices for CSC
+            data.push(*count);
+        }
+
+        indptr.push(indices.len());
+    }
+
+    (data, indptr, indices, None)
+}
+
+/// Create weighted sparse data resembling single cell counts in CSR format
+///
+/// ### Params
+///
+/// * `n_genes` - Total no of genes  
+/// * `n_cells` - Total no of cells
+/// * `no_genes_exp` - Tuple representing the min and max number of genes expressed
+///   per cell
+/// * `max_exp` - Maximum expression a given gene can reach. Expression values will
+///   be between `1..max_exp`
+/// * `seed` - Seed for reproducibility purposes
+///
+/// ### Returns
+///
+/// The `CsrData` type with the synthetic data (cells as rows, genes as columns).
+pub fn create_sparse_csr_data(
     n_genes: usize,
     n_cells: usize,
     no_genes_exp: (usize, usize),
     max_exp: i32,
     seed: usize,
-) -> CscData<i32> {
+) -> CsrData<i32> {
     let weights: Vec<f64> = (1..=n_genes).map(|i| 1.0 / i as f64).collect();
-    let total_entries = n_genes * n_cells;
+    let alias = WeightedAliasIndex::new(weights).unwrap();
 
-    let mut indptr = vec![0; n_cells + 1];
-    let mut indices = Vec::with_capacity(total_entries);
-    let mut data = Vec::with_capacity(total_entries);
+    let avg_genes = (no_genes_exp.0 + no_genes_exp.1) / 2;
+    let estimated_total = n_cells * avg_genes;
+
+    let mut indptr = Vec::with_capacity(n_cells + 1);
+    let mut indices = Vec::with_capacity(estimated_total);
+    let mut data = Vec::with_capacity(estimated_total);
+    indptr.push(0);
+
+    let mut temp_vec = Vec::with_capacity(no_genes_exp.1);
 
     for cell_idx in 0..n_cells {
         let mut rng = StdRng::seed_from_u64(seed as u64 + cell_idx as u64);
-        let no_cells_expressed = rng.random_range(no_genes_exp.0..=no_genes_exp.1);
-        let dist = WeightedIndex::new(&weights).unwrap();
+        let no_genes_expressed = rng.random_range(no_genes_exp.0..=no_genes_exp.1);
 
-        let start_idx = indices.len();
+        temp_vec.clear();
 
-        for _ in 0..no_cells_expressed {
-            let gene_idx = dist.sample(&mut rng);
+        for _ in 0..no_genes_expressed {
+            let gene_idx = alias.sample(&mut rng);
             let count = rng.random_range(1..=max_exp);
-
-            indices.push(gene_idx);
-            data.push(count);
+            temp_vec.push((gene_idx, count));
         }
 
-        let end_idx = indices.len();
-        let mut gene_count_pairs: Vec<_> = indices[start_idx..end_idx]
-            .iter()
-            .zip(&data[start_idx..end_idx])
-            .map(|(&gene_idx, &count)| (gene_idx, count))
-            .collect();
+        // Sort by gene index
+        temp_vec.sort_unstable_by_key(|(gene_idx, _)| *gene_idx);
 
-        gene_count_pairs.sort_by_key(|(gene_idx, _)| *gene_idx);
-
-        for (local_idx, (gene_idx, count)) in gene_count_pairs.iter().enumerate() {
-            indices[start_idx + local_idx] = *gene_idx;
-            data[start_idx + local_idx] = *count;
+        for (gene_idx, count) in temp_vec.iter() {
+            indices.push(*gene_idx);
+            data.push(*count);
         }
 
-        indptr[cell_idx + 1] = indices.len();
+        indptr.push(indices.len());
     }
 
-    (data, indptr, indices)
+    (data, indptr, indices, None)
 }

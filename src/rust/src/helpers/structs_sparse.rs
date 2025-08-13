@@ -6,6 +6,7 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
+use std::iter::Sum;
 
 ////////////////
 // Structures //
@@ -196,10 +197,21 @@ where
 /// ### Fields
 ///
 /// * `0` - The data in the CSR format
-/// * `1` - The column indices
-/// * `2` - The row pointers
+/// * `1` - The row pointers
+/// * `2` - The column indices
+/// * `3` - An optional second data layer
 #[allow(dead_code)]
-pub type CsrData<T> = (Vec<T>, Vec<usize>, Vec<usize>);
+pub type CsrData<T, U = T> = (Vec<T>, Vec<usize>, Vec<usize>, Option<Vec<U>>);
+
+/// A type alias representing effect size results
+///
+/// ### Fields
+///
+/// * `0` - The data in the CSR format
+/// * `1` - The column pointers
+/// * `2` - The row indices
+/// * `3` - An optional second data layer
+pub type CscData<T, U = T> = (Vec<T>, Vec<usize>, Vec<usize>, Option<Vec<U>>);
 
 /// Transform CSC stored data into CSR stored data
 ///
@@ -211,17 +223,19 @@ pub type CsrData<T> = (Vec<T>, Vec<usize>, Vec<usize>);
 /// * `row_ind` - The row indices from the CSC format.
 /// * `col_ptr` - The column pointers from the CSC format.
 /// * `nrows` - The number of rows in the data.
+/// * `data2` - An optional second data layer.
 ///
 /// ### Returns
 ///
 /// The data in CSR format, i.e., `CsrData`
 #[allow(dead_code)]
-pub fn csc_to_csr<T: Clone + Default>(
+pub fn csc_to_csr<T: Clone + Default, U: Clone + Default>(
     data: &[T],
     row_ind: &[usize],
     col_ptr: &[usize],
     nrows: usize,
-) -> CsrData<T> {
+    data2: Option<&[U]>,
+) -> CsrData<T, U> {
     let nnz = data.len();
     let mut row_ptr = vec![0; nrows + 1];
 
@@ -234,6 +248,7 @@ pub fn csc_to_csr<T: Clone + Default>(
     }
 
     let mut csr_data = vec![T::default(); nnz];
+    let mut csr_data2 = data2.map(|_| vec![U::default(); nnz]);
     let mut csr_col_ind = vec![0; nnz];
     let mut next = row_ptr[..nrows].to_vec();
 
@@ -243,11 +258,77 @@ pub fn csc_to_csr<T: Clone + Default>(
             let pos = next[row];
             csr_data[pos] = data[idx].clone();
             csr_col_ind[pos] = col;
+
+            // Add the second layer
+            if let (Some(d2), Some(ref mut csr_d2)) = (data2, &mut csr_data2) {
+                csr_d2[pos] = d2[idx].clone();
+            }
+
             next[row] += 1;
         }
     }
 
-    (csr_data, csr_col_ind, row_ptr)
+    (csr_data, row_ptr, csr_col_ind, csr_data2)
+}
+
+/// Transform CSR stored data into CSC stored data
+///
+/// This version does a full memory copy of the data
+///
+/// ### Params
+///
+/// * `data` - The data stored in CSR format.
+/// * `col_ind` - The column indices from the CSR format.
+/// * `row_ptr` - The row pointers from the CSR format.
+/// * `ncols` - The number of columns in the data.
+/// * `data2` - An optional second data layer.
+///
+/// ### Returns
+///
+/// The data in CSC format, i.e., `CscData`
+pub fn csr_to_csc<T: Clone + Default, U: Clone + Default>(
+    data: &[T],
+    col_ind: &[usize],
+    row_ptr: &[usize],
+    ncols: usize,
+    data2: Option<&[U]>,
+) -> CscData<T, U> {
+    let nnz = data.len();
+    let mut col_ptr = vec![0; ncols + 1];
+
+    // Count occurrences per column
+    for &c in col_ind {
+        col_ptr[c + 1] += 1;
+    }
+
+    // Cumulative sum to get column pointers
+    for i in 0..ncols {
+        col_ptr[i + 1] += col_ptr[i];
+    }
+
+    let mut csc_data = vec![T::default(); nnz];
+    let mut csc_data2 = data2.map(|_| vec![U::default(); nnz]);
+    let mut csc_row_ind = vec![0; nnz];
+    let mut next = col_ptr[..ncols].to_vec();
+
+    // Iterate through rows and place data in CSC format
+    for row in 0..(row_ptr.len() - 1) {
+        for idx in row_ptr[row]..row_ptr[row + 1] {
+            let col = col_ind[idx];
+            let pos = next[col];
+            csc_data[pos] = data[idx].clone();
+            csc_row_ind[pos] = row;
+
+            // Add second layer if there
+            if let (Some(d2), Some(ref mut csc_d2)) = (data2, &mut csc_data2) {
+                csc_d2[pos] = d2[idx].clone();
+            }
+
+            next[col] += 1;
+        }
+    }
+
+    (csc_data, col_ptr, csc_row_ind, csc_data2)
 }
 
 ///////////////////////////
@@ -258,7 +339,7 @@ pub fn csc_to_csr<T: Clone + Default>(
 // Traits //
 ////////////
 
-#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Copy, Default)]
 pub struct F16(u16);
 
 impl From<half::f16> for F16 {
@@ -273,38 +354,52 @@ impl From<F16> for half::f16 {
     }
 }
 
+impl Sum for F16 {
+    fn sum<I: Iterator<Item = F16>>(iter: I) -> Self {
+        let sum: half::f16 = iter.map(half::f16::from).sum();
+        F16::from(sum)
+    }
+}
+
+impl<'a> Sum<&'a F16> for F16 {
+    fn sum<I: Iterator<Item = &'a F16>>(iter: I) -> Self {
+        let sum: half::f16 = iter.map(|&f| half::f16::from(f)).sum();
+        F16::from(sum)
+    }
+}
+
 /////////////////////
 // Data structures //
 /////////////////////
 
-/// CscCellChunk
+/// CsrCellChunk
 ///
 /// This structure is designed to store the data of a single cell in a
-/// CSC-like format optimised for rapid access on disk.
+/// CSR-like format optimised for rapid access on disk.
 ///
 /// ### Fields
 ///
 /// * `data_raw` - Array of the raw counts of this cell.
 /// * `data_norm` - Array of the normalised counts of this cell.
 /// * `library_size` - Total library size of the cell.
-/// * `row_indices` - The row indices of the genes.
-/// * `original_index` - Original index of the cell.
+/// * `col_indices` - The col indices of the genes.
+/// * `original_index` - Original (row) index of the cell.
 /// * `to_keep` - Flat if the cell should be included in certain analysis.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug)]
-pub struct CscCellChunk {
+pub struct CsrCellChunk {
     pub data_raw: Vec<u16>,
     pub data_norm: Vec<F16>,
     pub library_size: usize,
-    pub row_indices: Vec<u16>,
+    pub col_indices: Vec<u16>,
     pub original_index: usize,
     pub to_keep: bool,
 }
 
-impl CscCellChunk {
+impl CsrCellChunk {
     /// Function to generate the chunk from R data
     pub fn from_r_data(
         data: &[i32],
-        row_idx: &[i32],
+        col_idx: &[i32],
         original_index: usize,
         target_size: f32,
     ) -> Self {
@@ -322,17 +417,17 @@ impl CscCellChunk {
             data_raw: data.iter().map(|x| *x as u16).collect::<Vec<u16>>(),
             data_norm,
             library_size: sum as usize,
-            row_indices: row_idx.iter().map(|x| *x as u16).collect::<Vec<u16>>(),
+            col_indices: col_idx.iter().map(|x| *x as u16).collect::<Vec<u16>>(),
             original_index,
             to_keep: true,
         }
     }
 }
 
-/// CsrGeneChunk
+/// CscGeneChunk
 ///
 /// This structure is designed to store the data of a single gene in a
-/// CSR-like format optimised for rapid access on disk.
+/// CSC-like format optimised for rapid access on disk.
 ///
 /// ### Fields
 ///
@@ -341,18 +436,41 @@ impl CscCellChunk {
 ///   log-normalised).
 /// * `avg_exp` - Vector with average expression.
 /// * `nnz` - Number non-zero values.
-/// * `col_indices` - The column indices of the data.
+/// * `row_indices` - The column indices of the data.
 /// * `original_index` - Original index of the gene.
 /// * `to_keep` - Boolean if the gene should be included into anything.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug)]
-pub struct CsrGeneChunk {
+pub struct CscGeneChunk {
     pub data_raw: Vec<u16>,
     pub data_norm: Vec<F16>,
     pub avg_exp: F16,
     pub nnz: usize,
-    pub col_indices: Vec<u16>,
+    pub row_indices: Vec<u32>,
     pub original_index: usize,
     pub to_keep: bool,
+}
+
+#[allow(dead_code)]
+impl CscGeneChunk {
+    pub fn from_conversion(
+        data: &[u16],
+        data_2: &[F16],
+        col_idx: &[usize],
+        original_index: usize,
+    ) -> Self {
+        let avg_exp = data_2.iter().sum::<F16>();
+        let nnz = data.len();
+
+        Self {
+            data_raw: data.to_vec(),
+            data_norm: data_2.to_vec(),
+            avg_exp,
+            nnz,
+            row_indices: col_idx.iter().map(|x| *x as u32).collect::<Vec<u32>>(),
+            original_index,
+            to_keep: true,
+        }
+    }
 }
 
 /// SparseDataHeader
@@ -450,6 +568,9 @@ pub struct CellGeneSparseWriter {
 impl CellGeneSparseWriter {
     /// Create a new sparse writer instance
     ///
+    /// This writer assumes that rows represent genes and columns represent
+    /// cells.
+    ///
     /// ### Params
     ///
     /// * `path_f` - Path to the .bin file to which to write to.
@@ -495,14 +616,15 @@ impl CellGeneSparseWriter {
         })
     }
 
-    /// Write a Cell to the file
+    /// Write a Cell (Chunk) to the file
     ///
-    /// This function will panic if the file was not set to cell-based!
+    /// This function will panic if the file was not set to cell-based! The
+    /// data is represented in a CSR-type format.
     ///
     /// ### Params
     ///
     /// * `cell_chunk` - The data representing that specific cell.
-    pub fn write_cell_chunk(&mut self, cell_chunk: CscCellChunk) -> std::io::Result<()> {
+    pub fn write_cell_chunk(&mut self, cell_chunk: CsrCellChunk) -> std::io::Result<()> {
         assert!(
             self.cell_based,
             "The writer is not set to write in a cell-based manner!"
@@ -538,7 +660,7 @@ impl CellGeneSparseWriter {
     /// ### Params
     ///
     /// * `gene_chunk` - The data representing that specific gene.
-    pub fn write_gene_chunk(&mut self, gene_chunk: CsrGeneChunk) -> std::io::Result<()> {
+    pub fn write_gene_chunk(&mut self, gene_chunk: CscGeneChunk) -> std::io::Result<()> {
         assert!(
             !self.cell_based,
             "The writer is not set to write in a gene-based manner!"
@@ -613,7 +735,7 @@ pub struct CellChunkIterator<'a> {
 }
 
 impl<'a> Iterator for CellChunkIterator<'a> {
-    type Item = std::io::Result<CscCellChunk>;
+    type Item = std::io::Result<CsrCellChunk>;
 
     /// Get the next element of the iterator
     fn next(&mut self) -> Option<Self::Item> {
@@ -644,7 +766,7 @@ pub struct GeneChunkIterator<'a> {
 }
 
 impl<'a> Iterator for GeneChunkIterator<'a> {
-    type Item = std::io::Result<CsrGeneChunk>;
+    type Item = std::io::Result<CscGeneChunk>;
 
     /// Get the next element of the iterator
     fn next(&mut self) -> Option<Self::Item> {
@@ -750,11 +872,11 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// `Result<Option<CscCellChunk>>`
+    /// `Result<Option<CsrCellChunk>>`
     pub fn read_cell_by_index(
         &mut self,
         original_index: usize,
-    ) -> std::io::Result<Option<CscCellChunk>> {
+    ) -> std::io::Result<Option<CsrCellChunk>> {
         assert!(
             self.header.cell_based,
             "The file was not designed for cell-based read/write!"
@@ -780,24 +902,27 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// A vector of `CscCellChunk`
+    /// A vector of `CsrCellChunk`
     pub fn read_cells_by_indices(
         &mut self,
         indices: &[usize],
-    ) -> std::io::Result<Vec<CscCellChunk>> {
+    ) -> std::io::Result<Vec<CsrCellChunk>> {
         assert!(
             self.header.cell_based,
             "The file was not designed for cell-based read/write!"
         );
-
-        let mut cells = Vec::new();
-
+        let mut cells = Vec::with_capacity(indices.len());
         for &idx in indices {
-            if let Some(cell) = self.read_cell_by_index(idx)? {
-                cells.push(cell);
+            match self.read_cell_by_index(idx)? {
+                Some(cell) => cells.push(cell),
+                None => {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        format!("Cell index {} not found", idx),
+                    ))
+                }
             }
         }
-
         Ok(cells)
     }
 
@@ -813,11 +938,11 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// `Result<Option<CscCellChunk>>`
+    /// `Result<Option<CsrCellChunk>>`
     pub fn read_cell_chunk_at(
         &mut self,
         chunk_index: usize,
-    ) -> std::io::Result<Option<CscCellChunk>> {
+    ) -> std::io::Result<Option<CsrCellChunk>> {
         assert!(
             self.header.cell_based,
             "The file was not designed for cell-based read/write!"
@@ -877,11 +1002,11 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// `Result<Option<CsrGeneChunk>>`
+    /// `Result<Option<CscGeneChunk>>`
     pub fn read_gene_by_index(
         &mut self,
         original_index: usize,
-    ) -> std::io::Result<Option<CsrGeneChunk>> {
+    ) -> std::io::Result<Option<CscGeneChunk>> {
         assert!(
             !self.header.cell_based,
             "The file was not designed for gene-based read/write!"
@@ -907,25 +1032,25 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// A vector of `CsrGeneChunk`
+    /// A vector of `CscGeneChunk`
     pub fn read_genes_by_indices(
         &mut self,
         indices: &[usize],
-    ) -> std::io::Result<Vec<CsrGeneChunk>> {
+    ) -> std::io::Result<Vec<CscGeneChunk>> {
         assert!(
-            self.header.cell_based,
+            !self.header.cell_based,
             "The file was not designed for cell-based read/write!"
         );
 
-        let mut cells = Vec::new();
+        let mut genes = Vec::new();
 
         for &idx in indices {
             if let Some(cell) = self.read_gene_chunk_at(idx)? {
-                cells.push(cell);
+                genes.push(cell);
             }
         }
 
-        Ok(cells)
+        Ok(genes)
     }
 
     /// Read a gene chunk at a specific chunk index
@@ -940,11 +1065,11 @@ impl StreamingSparseReader {
     ///
     /// ### Returns
     ///
-    /// `Result<Option<CsrGeneChunk>>`
+    /// `Result<Option<CscGeneChunk>>`
     pub fn read_gene_chunk_at(
         &mut self,
         chunk_index: usize,
-    ) -> std::io::Result<Option<CsrGeneChunk>> {
+    ) -> std::io::Result<Option<CscGeneChunk>> {
         assert!(
             !self.header.cell_based,
             "The file was not designed for gene-based read/write!"
@@ -979,7 +1104,7 @@ impl StreamingSparseReader {
     /// An iterator (`GeneChunkIterator`) that can be subsequently consumed
     pub fn iter_genes(&mut self) -> GeneChunkIterator<'_> {
         assert!(
-            self.header.cell_based,
+            !self.header.cell_based,
             "The file was not designed for gene-based read/write!"
         );
 
@@ -1097,23 +1222,85 @@ mod tests {
     }
 
     #[test]
-    fn test_csc_to_csr_conversion() {
+    fn test_csc_to_csr_conversion_single_layer() {
         // Test matrix:
         // [1 0 2]
         // [0 3 0]
         // [4 0 5]
-
         // CSC format
         let data = vec![1, 4, 3, 2, 5];
         let row_ind = vec![0, 2, 1, 0, 2];
         let col_ptr = vec![0, 2, 3, 5];
-
-        let (csr_data, csr_col_ind, csr_row_ptr) = csc_to_csr(&data, &row_ind, &col_ptr, 3);
+        let (csr_data, csr_row_ptr, csr_col_ind, csr_data2) =
+            csc_to_csr(&data, &row_ind, &col_ptr, 3, None::<&[i32]>);
 
         // Expected CSR format
         assert_eq!(csr_data, vec![1, 2, 3, 4, 5]);
         assert_eq!(csr_col_ind, vec![0, 2, 1, 0, 2]);
         assert_eq!(csr_row_ptr, vec![0, 2, 3, 5]);
+        assert_eq!(csr_data2, None);
+    }
+
+    #[test]
+    fn test_csc_to_csr_conversion_dual_layer() {
+        // Test matrix:
+        // [1 0 2]    [10 0  20]
+        // [0 3 0]    [0  30 0 ]
+        // [4 0 5]    [40 0  50]
+        // CSC format for both layers
+        let data = vec![1, 4, 3, 2, 5];
+        let data2 = vec![1.0, 4.0, 3.0, 2.0, 5.0];
+        let row_ind = vec![0, 2, 1, 0, 2];
+        let col_ptr = vec![0, 2, 3, 5];
+        let (csr_data, csr_row_ptr, csr_col_ind, csr_data2) =
+            csc_to_csr(&data, &row_ind, &col_ptr, 3, Some(&data2));
+
+        // Expected CSR format
+        assert_eq!(csr_data, vec![1, 2, 3, 4, 5]);
+        assert_eq!(csr_col_ind, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csr_row_ptr, vec![0, 2, 3, 5]);
+        assert_eq!(csr_data2, Some(vec![1.0, 2.0, 3.0, 4.0, 5.0]));
+    }
+
+    #[test]
+    fn test_csr_to_csc_conversion_single_layer() {
+        // Test matrix:
+        // [1 0 2]
+        // [0 3 0]
+        // [4 0 5]
+        // CSR format
+        let data = vec![1, 2, 3, 4, 5];
+        let col_ind = vec![0, 2, 1, 0, 2];
+        let row_ptr = vec![0, 2, 3, 5];
+        let (csc_data, csc_col_ptr, csc_row_ind, csc_data2) =
+            csr_to_csc(&data, &col_ind, &row_ptr, 3, None::<&[i32]>);
+
+        // Expected CSC format
+        assert_eq!(csc_data, vec![1, 4, 3, 2, 5]);
+        assert_eq!(csc_row_ind, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csc_col_ptr, vec![0, 2, 3, 5]);
+        assert_eq!(csc_data2, None);
+    }
+
+    #[test]
+    fn test_csr_to_csc_conversion_dual_layer() {
+        // Test matrix:
+        // [1 0 2]    [10 0  20]
+        // [0 3 0]    [0  30 0 ]
+        // [4 0 5]    [40 0  50]
+        // CSR format for both layers
+        let data = vec![1, 2, 3, 4, 5];
+        let data2 = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let col_ind = vec![0, 2, 1, 0, 2];
+        let row_ptr = vec![0, 2, 3, 5];
+        let (csc_data, csc_col_ptr, csc_row_ind, csc_data2) =
+            csr_to_csc(&data, &col_ind, &row_ptr, 3, Some(&data2));
+
+        // Expected CSC format
+        assert_eq!(csc_data, vec![1, 4, 3, 2, 5]);
+        assert_eq!(csc_row_ind, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csc_col_ptr, vec![0, 2, 3, 5]);
+        assert_eq!(csc_data2, Some(vec![1.0, 4.0, 3.0, 2.0, 5.0]));
     }
 
     #[test]
@@ -1123,7 +1310,7 @@ mod tests {
 
         // Write cells one by one (not keeping them in memory)
         for i in 0..100 {
-            let cell = CscCellChunk::from_r_data(&[1, 2, 3], &[0, 5, 10], i, 1e5);
+            let cell = CsrCellChunk::from_r_data(&[1, 2, 3], &[0, 5, 10], i, 1e5);
             writer.write_cell_chunk(cell).unwrap();
         }
 

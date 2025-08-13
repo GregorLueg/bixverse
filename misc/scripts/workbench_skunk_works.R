@@ -4,36 +4,42 @@ library(magrittr)
 
 rextendr::document()
 
-## csc (cell-centric) ----------------------------------------------------------
+## csr (cell-centric) ----------------------------------------------------------
 
+# based on the h5ad format with cells -> rows; genes -> columns
+
+# let's try with 1m cells...
 seed <- 123L
 no_genes <- 20000L
-no_cells <- 500000L
+no_cells <- 1000000L
 
-rs_sparse_data <- rs_synthetic_sc_data(
+tictoc::tic()
+rs_sparse_data <- rs_synthetic_sc_data_csr(
   n_genes = no_genes,
   n_cells = no_cells,
-  min_genes = 200,
+  min_genes = 250,
   max_genes = 1000,
   max_exp = 50,
   seed = seed
 )
+tictoc::toc()
 
-csc_matrix <- Matrix::sparseMatrix(
-  i = rs_sparse_data$row_indices + 1,
-  p = rs_sparse_data$col_ptrs,
-  x = rs_sparse_data$data,
-  dims = c(no_genes, no_cells),
-  dimnames = list(
-    sprintf("gene_%i", 1:no_genes),
-    sprintf("cell_%i", 1:no_cells)
-  )
-)
+gc()
 
-dim(csc_matrix)
+# csr_matrix <- Matrix::sparseMatrix(
+#   j = rs_sparse_data$col_indices + 1,
+#   p = rs_sparse_data$row_ptrs,
+#   x = rs_sparse_data$data,
+#   dims = c(no_cells, no_genes),
+#   dimnames = list(
+#     sprintf("cell_%i", 1:no_cells),
+#     sprintf("gene_%i", 1:no_genes)
+#   )
+# )
 
-# check sparsity
-(length(csc_matrix@x) / 1000) / ((no_genes / 1000) * (no_cells / 1000))
+# rm(rs_sparse_data)
+
+# csr_matrix <- as(csr_matrix, "RsparseMatrix")
 
 dir <- tempdir()
 f_path_cells <- file.path(dir, "cells.bin")
@@ -44,21 +50,21 @@ single_cell_counts <- SingeCellCountData$new(
   f_path_genes = f_path_genes
 )
 
+list.files(dir)
+
 tictoc::tic()
-single_cell_counts$r_csc_mat_to_file(
-  no_cells = csc_matrix@Dim[2],
-  no_genes = csc_matrix@Dim[1],
-  data = as.integer(csc_matrix@x),
-  col_ptr = csc_matrix@p,
-  row_idx = csc_matrix@i,
+single_cell_counts$r_csr_mat_to_file(
+  no_cells = no_cells,
+  no_genes = no_genes,
+  data = as.integer(rs_sparse_data$data),
+  row_ptr = as.integer(rs_sparse_data$row_ptrs),
+  col_idx = as.integer(rs_sparse_data$col_indices),
   target_size = 1e5
 )
 tictoc::toc()
 
-file.info(f_path_cells)$size / 1024^2
-
 tictoc::tic()
-return_data <- single_cell_counts$file_to_r_csc_mat(assay = "raw")
+single_cell_counts$generate_gene_based_data()
 tictoc::toc()
 
 indices <- sample(1:no_cells, 10000)
@@ -70,20 +76,20 @@ return_data <- single_cell_counts$get_cells_by_indices(
 )
 tictoc::toc()
 
-# csr (gene-centric) -----------------------------------------------------------
+file.size(f_path_cells) / 1024^2
+file.size(f_path_genes) / 1024^2
 
-## TODO
+# csc (gene-centric) -----------------------------------------------------------
 
-csr_matrix <- as(
-  Matrix::Matrix(count_mat, sparse = TRUE),
-  "RsparseMatrix"
+gene_indices <- sample(1:no_genes, 100)
+
+csc_matrix <- csr_matrix[, gene_indices]
+
+csc_matrix <- as(csc_matrix, "CsparseMatrix")
+
+return_gene_data <- single_cell_counts$get_genes_by_indices(
+  indices = gene_indices,
+  assay = "raw"
 )
 
-length(csc_matrix@p)
-
-csr_matrix@p
-csr_matrix@j
-csr_matrix@x
-
-
-rextendr::document()
+return_gene_data$row_ptr

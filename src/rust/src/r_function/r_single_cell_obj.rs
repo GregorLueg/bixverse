@@ -116,9 +116,12 @@ pub fn parse_count_type(s: &str) -> Option<AssayType> {
 /// * `f_path_cells` - Path to the .bin file for the cells.
 /// * `f_path_genes` - Path to the .bin file for the genes.
 #[extendr]
+#[allow(dead_code)]
 struct SingeCellCountData {
     pub f_path_cells: String,
     pub f_path_genes: String,
+    pub n_cells: usize,
+    pub n_genes: usize,
 }
 
 #[extendr]
@@ -133,12 +136,18 @@ impl SingeCellCountData {
         Self {
             f_path_cells,
             f_path_genes,
+            n_cells: usize::default(),
+            n_genes: usize::default(),
         }
     }
 
-    /// Write data from R CSC to disk
+    ///////////
+    // Cells //
+    ///////////
+
+    /// Write data from R CSR to disk
     ///
-    /// Helper function to write CSC matrices from R to disk.
+    /// Helper function to write CSR matrices from R to disk.
     ///
     /// ### Params
     ///
@@ -149,28 +158,30 @@ impl SingeCellCountData {
     /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
     /// * `target_size` - To which target size to normalise to. 1e6 ->
     ///   CPM normalisation
-    pub fn r_csc_mat_to_file(
-        &self,
+    pub fn r_csr_mat_to_file(
+        &mut self,
         no_cells: usize,
         no_genes: usize,
         data: &[i32],
-        col_ptr: &[i32],
-        row_idx: &[i32],
+        row_ptr: &[i32],
+        col_idx: &[i32],
         target_size: f64,
     ) {
-        let ptr_range = 1..col_ptr.len();
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+        let ptr_range = 1..row_ptr.len();
 
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
 
         for i in ptr_range {
             // get the index position
-            let end_i = col_ptr[i] as usize;
-            let start_i = col_ptr[i - 1] as usize;
+            let end_i = row_ptr[i] as usize;
+            let start_i = row_ptr[i - 1] as usize;
             // create chunk from raw data
-            let chunk_i = CscCellChunk::from_r_data(
+            let chunk_i = CsrCellChunk::from_r_data(
                 &data[start_i..end_i],
-                &row_idx[start_i..end_i],
+                &col_idx[start_i..end_i],
                 i - 1,
                 target_size as f32,
             );
@@ -181,7 +192,7 @@ impl SingeCellCountData {
         writer.finalise().unwrap();
     }
 
-    /// Returns the full data as a List
+    /// Returns the full (row/cell) data as a List
     ///
     /// ### Params
     ///
@@ -191,7 +202,7 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     /// An R list with all of the info that was stored in the .bin file
-    pub fn file_to_r_csc_mat(&self, assay: &str) -> List {
+    pub fn file_to_r_csr_mat(&self, assay: &str) -> List {
         let mut reader = StreamingSparseReader::new(&self.f_path_cells).unwrap();
 
         let assay_type = parse_count_type(assay).unwrap();
@@ -200,13 +211,13 @@ impl SingeCellCountData {
         let no_genes = reader.get_header().total_genes;
 
         let mut data: Vec<AssayData> = Vec::new();
-        let mut row_idx: Vec<Vec<u16>> = Vec::new();
-        let mut col_ptr: Vec<usize> = Vec::new();
+        let mut col_idx: Vec<Vec<u16>> = Vec::new();
+        let mut row_ptr: Vec<usize> = Vec::new();
 
         let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
 
-        let mut current_pol_ptr = 0_usize;
-        col_ptr.push(current_pol_ptr);
+        let mut current_row_ptr = 0_usize;
+        row_ptr.push(current_row_ptr);
 
         for cell in all_cells {
             let data_i = match assay_type {
@@ -222,28 +233,29 @@ impl SingeCellCountData {
                 ),
             };
             let len_data_i = data_i.len();
-            current_pol_ptr += len_data_i;
+            current_row_ptr += len_data_i;
             // Add data
             data.push(data_i);
-            row_idx.push(cell.row_indices);
-            col_ptr.push(current_pol_ptr);
+            col_idx.push(cell.col_indices);
+            row_ptr.push(current_row_ptr);
         }
 
-        let data = AssayData::flatten_into_r_vector(data);
-        let row_idx = flatten_vector(row_idx);
-
-        let row_idx_final = row_idx.par_iter().map(|x| *x as i32).collect::<Vec<i32>>();
+        let data: Robj = AssayData::flatten_into_r_vector(data);
+        let col_idx = flatten_vector(col_idx)
+            .par_iter()
+            .map(|x| *x as i32)
+            .collect::<Vec<i32>>();
 
         list!(
-            col_ptr = col_ptr,
-            row_idx = row_idx_final,
+            row_ptr = row_ptr,
+            col_idx = col_idx,
             data = data,
             no_cells = no_cells,
             no_genes = no_genes
         )
     }
 
-    /// Returns the data for the specified indices
+    /// Returns the (row/cell) data for the specified indices
     ///
     /// ### Params
     ///
@@ -264,16 +276,17 @@ impl SingeCellCountData {
 
         let indices = indices
             .iter()
-            .map(|x| (*x - 1_i32) as usize)
+            .map(|x| (*x - 1) as usize)
             .collect::<Vec<usize>>();
+
         let cells = reader.read_cells_by_indices(&indices).unwrap();
 
         let mut data: Vec<AssayData> = Vec::new();
-        let mut row_idx: Vec<Vec<u16>> = Vec::new();
-        let mut col_ptr: Vec<usize> = Vec::new();
+        let mut col_idx: Vec<Vec<u16>> = Vec::new();
+        let mut row_ptr: Vec<usize> = Vec::new();
 
-        let mut current_pol_ptr = 0_usize;
-        col_ptr.push(current_pol_ptr);
+        let mut current_row_ptr = 0_usize;
+        row_ptr.push(current_row_ptr);
 
         for cell in &cells {
             let data_i = match assay_type {
@@ -289,25 +302,205 @@ impl SingeCellCountData {
                 ),
             };
             let len_data_i = data_i.len();
-            current_pol_ptr += len_data_i;
+            current_row_ptr += len_data_i;
             // Add data
             data.push(data_i);
-            row_idx.push(cell.row_indices.clone());
-            col_ptr.push(current_pol_ptr);
+            col_idx.push(cell.col_indices.clone());
+            row_ptr.push(current_row_ptr);
         }
 
         let data = AssayData::flatten_into_r_vector(data);
-        let row_idx = flatten_vector(row_idx);
-
-        let row_idx_final = row_idx.par_iter().map(|x| *x as i32).collect::<Vec<i32>>();
+        let col_idx = flatten_vector(col_idx)
+            .par_iter()
+            .map(|x| *x as i32)
+            .collect::<Vec<i32>>();
 
         list!(
-            col_ptr = col_ptr,
-            row_idx = row_idx_final,
+            row_ptr = row_ptr,
+            col_idx = col_idx,
             data = data,
             no_cells = cells.len(),
             no_genes = no_genes
         )
+    }
+
+    ///////////
+    // Genes //
+    ///////////
+
+    /// Transforms already written cell data also into the gene data
+    ///
+    /// This function will read the .bin file at `self.f_path_cells` and
+    /// transform the data into the gene-based file format. This happens for
+    /// the full data set in memory and might cause memory pressure, pending
+    /// the size of the data.
+    pub fn generate_gene_based_data(&self) {
+        let mut reader = StreamingSparseReader::new(&self.f_path_cells).unwrap();
+
+        let no_cells = reader.get_header().total_cells;
+        let no_genes = reader.get_header().total_genes;
+
+        // Extract all data
+        let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
+
+        let mut data: Vec<Vec<u16>> = Vec::new();
+        let mut data_2: Vec<Vec<F16>> = Vec::new();
+        let mut col_idx: Vec<Vec<u16>> = Vec::new();
+        let mut row_ptr: Vec<usize> = Vec::new();
+
+        let mut current_row_ptr = 0_usize;
+        row_ptr.push(current_row_ptr);
+
+        for cell in all_cells {
+            let data_i = cell.data_raw;
+            let data_norm_i = cell.data_norm;
+
+            let len_data_i = data_i.len();
+            current_row_ptr += len_data_i;
+            // Add data
+            data.push(data_i);
+            data_2.push(data_norm_i);
+            col_idx.push(cell.col_indices);
+            row_ptr.push(current_row_ptr);
+        }
+
+        let data = flatten_vector(data);
+        let data_2 = flatten_vector(data_2);
+        let col_idx = flatten_vector(col_idx);
+        let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
+
+        let (data, col_ptr, row_indices, data_2): (
+            Vec<u16>,
+            Vec<usize>,
+            Vec<usize>,
+            Option<Vec<F16>>,
+        ) = csr_to_csc(&data, &col_idx, &row_ptr, no_genes, Some(&data_2));
+
+        let data_2 = data_2.unwrap();
+
+        // Write the data in CSC format to disk
+        let mut writer =
+            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+
+        let ptr_range = 1..col_ptr.len();
+
+        for i in ptr_range {
+            // get the index position
+            let end_i = col_ptr[i];
+            let start_i = col_ptr[i - 1];
+            // create the chunk and write to disk
+            let chunk_i = CscGeneChunk::from_conversion(
+                &data[start_i..end_i],
+                &data_2[start_i..end_i],
+                &row_indices[start_i..end_i],
+                i - 1,
+            );
+
+            writer.write_gene_chunk(chunk_i).unwrap();
+        }
+
+        writer.finalise().unwrap();
+    }
+
+    pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> List {
+        let mut reader = StreamingSparseReader::new(&self.f_path_genes).unwrap();
+
+        let assay_type = parse_count_type(assay).unwrap();
+
+        let no_cells = reader.get_header().total_cells;
+
+        let indices = indices
+            .iter()
+            .map(|x| (*x - 1) as usize)
+            .collect::<Vec<usize>>();
+
+        let genes = reader.read_genes_by_indices(&indices).unwrap();
+
+        let mut data: Vec<AssayData> = Vec::new();
+        let mut col_idx: Vec<Vec<u32>> = Vec::new();
+        let mut row_ptr: Vec<usize> = Vec::new();
+
+        let mut current_col_ptr = 0_usize;
+        row_ptr.push(current_col_ptr);
+
+        for gene in &genes {
+            let data_i = match assay_type {
+                AssayType::Raw => AssayData::Raw(gene.data_raw.iter().map(|&x| x as i32).collect()),
+                AssayType::Norm => AssayData::Norm(
+                    gene.data_norm
+                        .iter()
+                        .map(|x| {
+                            let f16_val: half::f16 = (*x).into();
+                            f16_val.to_f32()
+                        })
+                        .collect(),
+                ),
+            };
+            let len_data_i = data_i.len();
+            current_col_ptr += len_data_i;
+            data.push(data_i);
+            col_idx.push(gene.row_indices.clone());
+            row_ptr.push(current_col_ptr);
+        }
+
+        let data = AssayData::flatten_into_r_vector(data);
+        let col_idx = flatten_vector(col_idx)
+            .par_iter()
+            .map(|x| *x as i32)
+            .collect::<Vec<i32>>();
+
+        list!(
+            row_ptr = row_ptr,
+            col_idx = col_idx,
+            data = data,
+            no_cells = no_cells,
+            no_genes = indices.len()
+        )
+    }
+
+    /// Write data from R CSC to disk
+    ///
+    /// Helper function to write CSC matrices from R to disk.
+    ///
+    /// ### Params
+    ///
+    /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
+    /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
+    /// * `data` - Slice of the data (`csc_matrix@x`).
+    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
+    /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
+    /// * `target_size` - To which target size to normalise to. 1e6 ->
+    ///   CPM normalisation
+    pub fn r_csc_mat_to_file(
+        &self,
+        no_cells: usize,
+        no_genes: usize,
+        data: &[i32],
+        row_ptr: &[i32],
+        col_idx: &[i32],
+        target_size: f64,
+    ) {
+        let ptr_range = 1..row_ptr.len();
+
+        let mut writer =
+            CellGeneSparseWriter::new(&self.f_path_genes, true, no_cells, no_genes).unwrap();
+
+        for i in ptr_range {
+            // get the index position
+            let end_i = row_ptr[i] as usize;
+            let start_i = row_ptr[i - 1] as usize;
+            // create chunk from raw data
+            let chunk_i = CsrCellChunk::from_r_data(
+                &data[start_i..end_i],
+                &col_idx[start_i..end_i],
+                i - 1,
+                target_size as f32,
+            );
+
+            writer.write_cell_chunk(chunk_i).unwrap();
+        }
+
+        writer.finalise().unwrap();
     }
 }
 
