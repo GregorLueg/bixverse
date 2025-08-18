@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 26.07.2025* </br>
+*Last update: 06.08.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -37,8 +37,8 @@ memory-efficient. Please, just think about this meme in doubt:
 <img src="/misc/pics/stop_abstracting.png" width="350" height="504" alt="stop abstracting">
 
 Additionally, the idea is to be quite defensive in terms of coding style and use
-asserts (more on that later) where possible to validate function inputs, leverage
-early returns and warnings if data is not what it should be.
+assertions (more on that later) where possible to validate function inputs, 
+leverage early returns and warnings if data is not what it should be.
 
 ## *General rules*
 
@@ -54,41 +54,48 @@ be able to provide wrong arguments without getting an informative (!) error by
 the function. This allows for quite defensive coding and one avoids a several 
 minute debug session just to realise one has provided the wrong input. Also,
 brings us back to point 1. If the function parameter is not covered by checkmate,
-just write an extension, see [here](https://mllg.github.io/checkmate/articles/checkmate.html#extending-checkmate).
-There is a [file](/R/checkmate_extensions.R) that contains the package-internal
-checkmate extensions.
-3. If the function does something beyond 'simple' transformation, aggregation of
-data, renaming, plotting, etc. go to [Rust](https://www.rust-lang.org) via the 
+just write an extension, see [here](https://mllg.github.io/checkmate/articles/checkmate.html#extending-checkmate). 
+There is a [file](/R/checkmate_extensions.R) that contains the package-internal 
+checkmate extensions particularly designed to check lists of parameters for 
+certain functions.
+3. If the function does something beyond a 'simple' transformation, aggregation
+of data, renaming, plotting, etc. go to [Rust](https://www.rust-lang.org) via the 
 [rextendr](https://github.com/extendr/rextendr) interface to make computations 
 go **brrrrrr** (i.e., fast). Some libraries such as [igraph](https://r.igraph.org)
 or [data.table](https://github.com/Rdatatable/data.table) are very fast by their
-nature to go low level themselves, so no need to reinvent wheels here. Nonetheless, 
-the speed-ups you can gain from using Rust can be incredible. Rust functions should 
-start with *rs_*, and ideally an R wrapper should exist to use them. Please refer
-to the [Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
+nature to go low level themselves, so no need to reinvent wheels here (there are
+cases where `bixverse` still offers Rust versions of certain algorithms, for
+example for parallelised personalised PageRank calculations for a large number
+of personalisation vectors). Nonetheless, the speed-ups you can gain from using
+Rust can be incredible. Rust functions should start with *rs_*, and ideally an 
+R wrapper should exist to use them. Please refer to the 
+[Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
 understand that not everyone can or will be able to recode the function into 
 Rust, please refer to the next points for additional suggestions on code 
 improvements that can already go a long way to make workflows more efficient 
-(though not as **brrrrrr** as using Rust).
+(though not as **brrrrrr** as using Rust). You can also just use issues and
+ask the current author/contributor to make certain functions faster in Rust.
 4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
 over tibble and/or data.frame. *"Yeah, but I like dplyr and the tidyverse."* 
-We get it... But the speed-ups, increased memory efficacy, feature richness of
-data.table are just too big to not use when writing code bases from broader usage.
-data.table also inherits all of the data.frame functionality and most dplyr code
+We get it... But the speed-ups, increased memory efficacy and feature richness of
+data.table are just too big to not use when writing code bases for broader usage.
+data.table also inherits most of the data.frame functionality, hence, dplyr code
 works with it, making it easy for users to jump to tidyverse when they want to.
 The point of the bixverse is to be fast, so let's stick with data.table.
 5. Be explicit and defensive in the code where possible. Simple example for the
 former, if you provide parameters to a function, write the parameter name. It 
 makes reasoning and debugging code so much easier. Try to use meaningful variable
-names. Think about future you when writing code. Will I still understand what a 
-piece of code does in 12 months? If you are doubting yourself here, maybe rethink
-what you wrote. For the latter, i.e., defensive, leverage early returns, asserts
-(see point 2)
+names. Think about future you when writing code. Will you still understand what 
+a piece of code does in 12 months? If you are doubting yourself here, maybe 
+rethink what you wrote. For the latter, i.e., defensive, leverage early returns, 
+asserts (see point 2). 
 6. Avoid external dependencies if not absolutely necessary. The point of the 
 package is to rewrite functions from other packages into
 **very fast, simple Rust-accelerated code** and reducing the (code) bloat that
-affects some packages  in bioinformatics and computational biology. A good 
-primer for this is the [tinyverse](https://www.tinyverse.org).
+affects some packages in bioinformatics and computational biology (think about
+the moment you install a package and suddenly you are downloading an additional
+20+ dependencies). A good example for this is the 
+[tinyverse](https://www.tinyverse.org).
 7. The good old `for loop` vs. `lapply/map` question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
 equivalent parallelised / concurrent versions via [mirai](https://mirai.r-lib.org), 
@@ -98,7 +105,9 @@ explicit code which is easier to reason over. `map_lgl()` is very clear that I
 will get a logical vector back. With `unlist(lapply())` it is less
 obvious what is going on. For loops in R have a very bad reputation, but this is 
 usually because people grow objects in memory in the loop which is a bad 
-practice indeed (refer to the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)).
+practice indeed (refer to the [second circle of hell in R](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)). 
+But sometimes they can be as fast as purrr versions, hence, use what you think 
+is best for the specific use case.
 8. In terms of object-oriented programming, [S7](https://github.com/RConsortium/S7)
 provides a way to write very R-like OOP (the methods belong to generics). For 
 user-facing key methods and workflows, we recommend using this one, as most R
@@ -111,12 +120,22 @@ the average R users might find the R6 classes not very intuitive. Inheritance
 can be quite useful in certain cases to abstract out common generics/methods, 
 but try to avoid deeply layered inheritance where possible. This is not the most
 complex software we are writing here, so there should be no need for 8+ layers 
-of inheritance.
-9. Test expected behaviour of key functions via [tinytest](https://github.com/markvanderloo/tinytest).
-If you implement something that should behave like functions from a different 
-package make sure that you compare the your version against the established 
-ones. Also, double check that any Rust version of an R-internal version returns
-the same results. The idea should be always: </br>
-*Make It Work, Make It Right, Make It Fast.* </br>
-We like writing tests particularly when you encounter a nasty bug that screws
-up something. Write a test specifically checking for these nasty bugs.
+of inheritance. Also, not everything needs to follow some OOP paradigm. 
+Procedural code can be as effective and there is seldom a reason outside of
+complex analysis workflows with lots of state and different in and outputs to
+go full blown into OOP.
+9. Test expected behaviour of key functions via 
+[tinytest](https://github.com/markvanderloo/tinytest). If you implement 
+something that should behave like functions from a different package make sure 
+that you compare the your version against the established ones. Also, double 
+check that any Rust version of an R-internal version returns the same results
+(tiny errors from float precision can be ignored.). The idea should be always: 
+</br></br>
+*Make It Work, Make It Right, Make It Fast.*
+</br></br>
+We recommend writing tests particularly when you encounter a nasty bug that 
+screws up something and takes a long time to find. Write a test specifically 
+checking for these nasty bugs.
+10. If you wish to implement a more complex analytical workflow, it might be
+worth adding a vignette. `bixverse` is using [quarto](https://quarto.org) for
+vignettes. This is not a must, but makes usage easier.
