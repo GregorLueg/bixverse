@@ -118,7 +118,7 @@ impl IcaCvData {
     /// * `num_folds` - In how many folds to split the data
     /// * `seed` - Random seed for reproducibility purposes
     /// * `rank` - Optional rank for the randomised SVD that is used to generate the
-    ///            the pre-whitened matrix and whitening matrix k.
+    ///   the pre-whitened matrix and whitening matrix k.
     ///
     /// ### Returns
     ///
@@ -230,12 +230,12 @@ pub fn parse_ica_type(s: &str) -> Option<IcaType> {
 /// * `fast_svd` - Shall the faster version of SVD be used.
 /// * `seed` - Random seed for reproducibility purposes
 /// * `rank` - The target rank of the approximation (number of singular values,
-///            vectors to compute).
+///   vectors to compute).
 /// * `oversampling` - Additional samples beyond the target rank to improve accuracy.
-///                    Defaults to 10 if not specified.
-/// * `n_power_iter` - Number of power iterations to perform for better approximation quality.
-///                    More iterations generally improve accuracy but increase computation time.
-///                    Defaults to 2 if not specified.
+///   Defaults to 10 if not specified.
+/// * `n_power_iter` - Number of power iterations to perform for better approximation
+///   quality. More iterations generally improve accuracy but increase computation time.
+///   Defaults to 2 if not specified.
 ///
 /// ### Returns
 ///
@@ -307,8 +307,8 @@ pub fn update_mix_mat(w: MatRef<f64>) -> faer::Mat<f64> {
 ///
 /// ### Params
 ///
-/// * `n_comp` - Number of independent components. This will influence the dimensionality
-///              of the randomly initialised mixing matrix.
+/// * `n_comp` - Number of independent components. This will influence the
+///   dimensionality of the randomly initialised mixing matrix.
 /// * `seed` - Random seed for reproducibility purposes
 ///
 /// ### Returns
@@ -512,8 +512,8 @@ pub fn fast_ica_exp(
 /// * `no_comp` - Number of independent components to test for.
 /// * `no_iters` - Number of random iterations.
 /// * `ica_type` - Which of the implemented versions of ICA to test.
-/// * `ica_params` - `IcaParams` structure with the parameters for the individual
-///                  runs.
+/// * `ica_params` - `IcaParams` structure with the parameters for the
+///   individual runs.
 /// * `random_seed` - Seed for reproducibility purposes.
 ///
 /// ### Returns
@@ -594,9 +594,9 @@ pub fn stabilised_ica_iters(
 /// * `no_iters` - Number of random iterations.
 /// * `ica_type` - Which of the implemented versions of ICA to test.
 /// * `ica_params` - `IcaParams` structure with the parameters for the individual
-///                  runs.
+///   runs.
 /// * `ica_cv_data` - Optional pre-processed `IcaCvData` structure. If not provided,
-///                   these will be automatically generated.
+///   these will be automatically generated.
 /// * `random_seed` - Seed for reproducibility purposes.
 ///
 /// ### Returns
