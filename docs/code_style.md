@@ -94,7 +94,7 @@ package is to rewrite functions from other packages into
 **very fast, simple Rust-accelerated code** and reducing the (code) bloat that
 affects some packages in bioinformatics and computational biology (think about
 the moment you install a package and suddenly you are downloading an additional
-20+ dependencies). A good primer for this is the 
+20+ dependencies). A good example for this is the 
 [tinyverse](https://www.tinyverse.org).
 7. The good old `for loop` vs. `lapply/map` question... Generally speaking, our
 recommendation is using `map` via [purrr](https://purrr.tidyverse.org) (or the 
