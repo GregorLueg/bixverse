@@ -1,5 +1,6 @@
 mod helpers;
 mod r_function;
+mod single_cell;
 mod utils;
 
 use extendr_api::prelude::*;

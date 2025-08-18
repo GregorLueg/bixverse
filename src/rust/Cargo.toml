@@ -23,7 +23,7 @@ debug = false
 bincode = { version = "2.0.1", features = ["serde"] }
 anyhow = "*"
 extendr-api = "0.8.1"
-faer = '0.22.6'
+faer = { version = '0.22.6' }
 half = { version = "2.3", features = ["serde"] }
 num-complex = '*'
 once_cell = "*"

@@ -25,25 +25,23 @@ pub fn create_sparse_csc_data(
     max_exp: i32,
     seed: usize,
 ) -> CscData<i32> {
-    // Weight genes by inverse frequency (popular genes expressed in more cells)
     let weights: Vec<f64> = (1..=n_genes).map(|i| 1.0 / i as f64).collect();
 
     let avg_cells = (no_cells_exp.0 + no_cells_exp.1) / 2;
     let estimated_total = n_genes * avg_cells;
 
-    let mut indptr = Vec::with_capacity(n_genes + 1); // n_genes + 1 for CSC
+    let mut indptr = Vec::with_capacity(n_genes + 1);
     let mut indices = Vec::with_capacity(estimated_total);
     let mut data = Vec::with_capacity(estimated_total);
     indptr.push(0);
 
     let mut temp_vec = Vec::with_capacity(no_cells_exp.1);
 
-    // Iterate by genes (columns) - TRUE CSC
     #[allow(clippy::needless_range_loop)]
     for gene_idx in 0..n_genes {
         let mut rng = StdRng::seed_from_u64(seed as u64 + gene_idx as u64);
 
-        // More popular genes (lower gene_idx) expressed in more cells
+        // Trick thanks to Claude
         let weight_factor = weights[gene_idx];
         let scaled_range = (
             (no_cells_exp.0 as f64 * weight_factor * 10.0) as usize,
@@ -53,17 +51,15 @@ pub fn create_sparse_csc_data(
 
         temp_vec.clear();
 
-        // Sample which cells express this gene
         for _ in 0..no_cells_expressing {
             let cell_idx = rng.random_range(0..n_cells);
             let count = rng.random_range(1..=max_exp);
             temp_vec.push((cell_idx, count));
         }
 
-        // Sort by cell index for CSC format
         temp_vec.sort_unstable_by_key(|(cell_idx, _)| *cell_idx);
 
-        // Remove duplicates by summing counts
+        // remove duplicates by summing counts
         temp_vec.dedup_by(|a, b| {
             if a.0 == b.0 {
                 b.1 += a.1;

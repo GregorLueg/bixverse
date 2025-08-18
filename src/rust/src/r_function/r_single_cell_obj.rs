@@ -1,5 +1,6 @@
 use extendr_api::prelude::*;
 
+use crate::utils::traits::F16;
 use crate::{helpers::structs_sparse::*, utils::general::flatten_vector};
 use rayon::prelude::*;
 

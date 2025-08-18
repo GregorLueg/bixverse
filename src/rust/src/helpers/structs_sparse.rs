@@ -6,7 +6,8 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
-use std::iter::Sum;
+
+use crate::utils::traits::F16;
 
 ////////////////
 // Structures //
@@ -188,9 +189,9 @@ where
     }
 }
 
-////////////////
-// Conversion //
-////////////////
+//////////////////////////////
+// Sparse format conversion //
+//////////////////////////////
 
 /// A type alias representing effect size results
 ///
@@ -200,7 +201,6 @@ where
 /// * `1` - The row pointers
 /// * `2` - The column indices
 /// * `3` - An optional second data layer
-#[allow(dead_code)]
 pub type CsrData<T, U = T> = (Vec<T>, Vec<usize>, Vec<usize>, Option<Vec<U>>);
 
 /// A type alias representing effect size results
@@ -273,7 +273,7 @@ pub fn csc_to_csr<T: Clone + Default, U: Clone + Default>(
 
 /// Transform CSR stored data into CSC stored data
 ///
-/// This version does a full memory copy of the data
+/// This version does a full memory copy of the data.
 ///
 /// ### Params
 ///
@@ -335,39 +335,6 @@ pub fn csr_to_csc<T: Clone + Default, U: Clone + Default>(
 // Sparse data streaming //
 ///////////////////////////
 
-////////////
-// Traits //
-////////////
-
-#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Copy, Default)]
-pub struct F16(u16);
-
-impl From<half::f16> for F16 {
-    fn from(f: half::f16) -> Self {
-        F16(f.to_bits())
-    }
-}
-
-impl From<F16> for half::f16 {
-    fn from(f: F16) -> Self {
-        half::f16::from_bits(f.0)
-    }
-}
-
-impl Sum for F16 {
-    fn sum<I: Iterator<Item = F16>>(iter: I) -> Self {
-        let sum: half::f16 = iter.map(half::f16::from).sum();
-        F16::from(sum)
-    }
-}
-
-impl<'a> Sum<&'a F16> for F16 {
-    fn sum<I: Iterator<Item = &'a F16>>(iter: I) -> Self {
-        let sum: half::f16 = iter.map(|&f| half::f16::from(f)).sum();
-        F16::from(sum)
-    }
-}
-
 /////////////////////
 // Data structures //
 /////////////////////
@@ -380,11 +347,13 @@ impl<'a> Sum<&'a F16> for F16 {
 /// ### Fields
 ///
 /// * `data_raw` - Array of the raw counts of this cell.
-/// * `data_norm` - Array of the normalised counts of this cell.
-/// * `library_size` - Total library size of the cell.
+/// * `data_norm` - Array of the normalised counts of this cell. This will do a
+///   CPM type transformation and then calculate the ln_1p.
+/// * `library_size` - Total library size/UMI counts of the cell.
 /// * `col_indices` - The col indices of the genes.
 /// * `original_index` - Original (row) index of the cell.
 /// * `to_keep` - Flat if the cell should be included in certain analysis.
+///   Future feature.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct CsrCellChunk {
     pub data_raw: Vec<u16>,
@@ -397,18 +366,31 @@ pub struct CsrCellChunk {
 
 impl CsrCellChunk {
     /// Function to generate the chunk from R data
+    ///
+    /// Assumes columns = genes, rows = cells.
+    ///
+    /// ### Params
+    ///
+    /// * `data` - The raw counts present in this cell
+    /// * `col_idx` - The column indices where the gene is expressed.
+    /// * `original_index` - Original row index in the matrix
+    /// * `size_factor` - To which size to normalise to. 1e6 -> CPM normalisation.
+    ///
+    /// ### Returns
+    ///
+    /// The `CsrCellChunk` for this cell.
     pub fn from_r_data(
         data: &[i32],
         col_idx: &[i32],
         original_index: usize,
-        target_size: f32,
+        size_factor: f32,
     ) -> Self {
         let data_f32 = data.iter().map(|x| *x as f32).collect::<Vec<f32>>();
         let sum = data_f32.iter().sum::<f32>();
         let data_norm: Vec<F16> = data_f32
             .into_iter()
             .map(|x| {
-                let norm = (x / sum * target_size).ln_1p();
+                let norm = (x / sum * size_factor).ln_1p();
                 F16::from(f16::from_f32(norm))
             })
             .collect();
@@ -439,31 +421,45 @@ impl CsrCellChunk {
 /// * `row_indices` - The column indices of the data.
 /// * `original_index` - Original index of the gene.
 /// * `to_keep` - Boolean if the gene should be included into anything.
+///   Future feature.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct CscGeneChunk {
     pub data_raw: Vec<u16>,
     pub data_norm: Vec<F16>,
     pub avg_exp: F16,
     pub nnz: usize,
+    // u32 as there might be clearly more than 65_535 cells in the data
+    // 4_294_967_295 should be enough however...
     pub row_indices: Vec<u32>,
     pub original_index: usize,
     pub to_keep: bool,
 }
 
-#[allow(dead_code)]
 impl CscGeneChunk {
+    /// Helper function to generate the CscGeneChunk from converted data
+    ///
+    /// ### Params
+    ///
+    /// * `data_raw` - The raw counts for this gene
+    /// * `data_norm` - The normalised counts for this gene.
+    /// * `col_idx` - The column indices for which cells this gene is expressed.
+    /// * `original_index` - Original row index
+    ///
+    /// ### Returns
+    ///
+    /// The `CscGeneChunk` for this gene.
     pub fn from_conversion(
-        data: &[u16],
-        data_2: &[F16],
+        data_raw: &[u16],
+        data_norm: &[F16],
         col_idx: &[usize],
         original_index: usize,
     ) -> Self {
-        let avg_exp = data_2.iter().sum::<F16>();
-        let nnz = data.len();
+        let avg_exp = data_norm.iter().sum::<F16>();
+        let nnz = data_raw.len();
 
         Self {
-            data_raw: data.to_vec(),
-            data_norm: data_2.to_vec(),
+            data_raw: data_raw.to_vec(),
+            data_norm: data_norm.to_vec(),
             avg_exp,
             nnz,
             row_indices: col_idx.iter().map(|x| *x as u32).collect::<Vec<u32>>(),
@@ -487,7 +483,7 @@ impl CscGeneChunk {
 /// * `no_chunks` - No of chunks that store either cell or gene data.
 /// * `chunk_offsets` - Vector containing the offsets for the cell or gene
 ///   chunks.
-/// * `cell_index_map` - FxHashMap with the original index -> chunk info
+/// * `index_map` - FxHashMap with the original index -> chunk info
 #[derive(Encode, Decode, Serialize, Deserialize)]
 pub struct SparseDataHeader {
     pub total_cells: usize,
@@ -564,7 +560,6 @@ pub struct CellGeneSparseWriter {
     cell_based: bool,
 }
 
-#[allow(dead_code)]
 impl CellGeneSparseWriter {
     /// Create a new sparse writer instance
     ///
@@ -578,6 +573,10 @@ impl CellGeneSparseWriter {
     ///   (`true`) or gene-based chunks.
     /// * `total_cells` - Total cells in the data.
     /// * `total_genes` - Total genes in the data.
+    ///
+    /// ### Returns
+    ///
+    /// The `CellGeneSparseWriter`.
     pub fn new(
         path_f: &str,
         cell_based: bool,
@@ -794,7 +793,6 @@ impl<'a> Iterator for GeneChunkIterator<'a> {
 /// * `header` - The header of the file.
 /// * `reader` - BufReader of the file.
 /// * `chunks_start` - Position of where chunks start.
-#[allow(dead_code)]
 pub struct StreamingSparseReader {
     header: SparseDataHeader,
     reader: BufReader<File>,
