@@ -15,9 +15,9 @@ made interfacing R and Rust very easy and actually quite fun.
 ## *Correlations and co-variance*
 
 One of the most typical things we tend to look at: correlations and 
-co-variance - the starting point of this package to be fair. These were the
-first implemented functions to just understand faer and the Rust <> R
-interface. What becomes quite quickly apparent is shown below:
+co-variance - the starting point of this package. These were the first 
+implemented functions to just understand faer and the Rust <> R interface. What
+becomes quite quickly apparent is shown below:
 
 ```
 # Improvements in correlation speeds
