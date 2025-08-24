@@ -51,18 +51,19 @@ constrained_page_rank <- function(
   personalisation_vector <- personalisation_vector / sum(personalisation_vector)
 
   res <- rs_constrained_page_rank(
-    node_names = igraph::V(graph)$name,
-    node_types = igraph::V(graph)$type,
+    node_names = igraph::vertex.attributes(graph)$name,
+    node_types = igraph::vertex.attributes(graph)$type,
     from = edge_list[, 1],
     to = edge_list[, 2],
-    weights = igraph::E(graph)$weight,
-    edge_type = igraph::E(graph)$type,
+    weights = igraph::edge.attributes(graph)$weight,
+    edge_type = igraph::edge.attributes(graph)$type,
     personalised = personalisation_vector,
     sink_nodes = sink_nodes,
     sink_edges = sink_edges
   )
+  names(res) <- igraph::vertex.attributes(graph)$name
 
-  res
+  return(res)
 }
 
 #' Constrained personalised page rank over a list
@@ -112,18 +113,19 @@ constrained_page_rank_ls <- function(
   checkmate::qassert(sink_edges, c("S+", "0"))
 
   edge_list <- igraph::as_edgelist(graph, names = TRUE)
+  # Ensure everything sums to 1
   personalisation_list <- purrr::map(personalisation_list, \(pers_vec) {
     pers_vec / sum(pers_vec)
   })
 
   results <- rs_constrained_page_rank_list(
     personalisation_list = personalisation_list,
-    node_names = igraph::V(graph)$name,
-    node_types = igraph::V(graph)$type,
+    node_names = igraph::vertex.attributes(graph)$name,
+    node_types = igraph::vertex.attributes(graph)$type,
     from = edge_list[, 1],
     to = edge_list[, 2],
-    weights = igraph::E(graph)$weight,
-    edge_type = igraph::E(graph)$type,
+    weights = igraph::edge.attributes(graph)$weight,
+    edge_type = igraph::edge.attributes(graph)$type,
     sink_nodes = sink_nodes,
     sink_edges = sink_edges
   )
@@ -132,7 +134,7 @@ constrained_page_rank_ls <- function(
   results <- purrr::map(
     results,
     ~ {
-      names(.x) <- igraph::V(graph)$names
+      names(.x) <- igraph::vertex.attributes(graph)$name
       .x
     }
   )
