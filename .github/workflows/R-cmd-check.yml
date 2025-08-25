@@ -2,7 +2,9 @@ name: R-CMD-check
 
 on:
   push:
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
 
 jobs:
   R-CMD-check:
@@ -35,12 +37,18 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
             any::rcmdcheck
             any::rmarkdown
             any::knitr
+            any::rextendr
           needs: check
 
       - name: Install system dependencies (Linux)
