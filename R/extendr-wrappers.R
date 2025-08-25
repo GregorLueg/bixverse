@@ -258,8 +258,8 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
-#' @param personalised Numerical vector. The reset values. They must sum to 1 and
-#' be of same length of `node_names`!
+#' @param personalised Numerical vector. The reset values. They must sum to 1
+#' and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
 #'
 #' @return The personalised page rank values.
@@ -307,6 +307,61 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 #' column representing the value of the tied diffusion for this node.
 rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+
+#' Calculate a constrained page-rank score
+#'
+#' @description This function can be used to get constrainted personalised
+#' page-rank scores akin to Ruiz, et al. You can provide optionally
+#' `sink_nodes` (node types that will force a reset) and/or `sink_edges`
+#' (edge types that will force a reset).
+#'
+#' @param node_names String vector. Name of the graph nodes.
+#' @param node_types String vector. The node types.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Numerical vector. The edge weights from the edge list.
+#' @param edge_type String vector. The edge types.
+#' @param personalised Numerical vector. The reset values. They must sum to 1
+#' and be of same length of `node_names`!
+#' @param sink_nodes Optional string vector. Should these node types be seen as
+#' sinks, i.e., the reset occurs when this node is reached.
+#' @param sink_edges Optional string vector. Shall an automatic reset occur
+#' when this edge type is traversed.
+#'
+#' @return The personalised constrained page rank values.
+#'
+#' @export
+#'
+#' @references Ruiz, et al., Nat Commun, 2021
+rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, edge_type, personalised, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank, node_names, node_types, from, to, weights, edge_type, personalised, sink_nodes, sink_edges)
+
+#' Calculate a constrained page-rank score over a list.
+#'
+#' @description This function can be used to get constrainted personalised
+#' page-rank scores akin to Ruiz, et al. You can provide optionally
+#' `sink_nodes` (node types that will force a reset) and/or `sink_edges`
+#' (edge types that will force a reset). This version can take in a list
+#' of personalisation vectors and returns a list as result.
+#'
+#' @param personalisation_list List. The list with the personalisation vectors.
+#' The sum must equal to 1, otherwise the function panics!
+#' @param node_names String vector. Name of the graph nodes.
+#' @param node_types String vector. The node types.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Numerical vector. The edge weights from the edge list.
+#' @param edge_type String vector. The edge types.
+#' @param sink_nodes Optional string vector. Should these node types be seen as
+#' sinks, i.e., the reset occurs when this node is reached.
+#' @param sink_edges Optional string vector. Shall an automatic reset occur
+#' when this edge type is traversed.
+#'
+#' @return A list of the personalised (constrained) page rank values.
+#'
+#' @export
+#'
+#' @references Ruiz, et al., Nat Commun, 2021
+rs_constrained_page_rank_list <- function(personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank_list, personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges)
 
 #' Prepare a pathway list for GSVA
 #'

@@ -1,0 +1,16 @@
+---
+title: "Bulk DGE helper class"
+vignette: >
+  %\VignetteIndexEntry{Bulk DGE helper class}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+```{r}
+#| label: setup
+library(bixverse)
+```

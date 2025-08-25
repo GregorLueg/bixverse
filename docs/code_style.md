@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 06.08.2025* </br>
+*Last update: 05.08.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -63,23 +63,19 @@ of data, renaming, plotting, etc. go to [Rust](https://www.rust-lang.org) via th
 [rextendr](https://github.com/extendr/rextendr) interface to make computations 
 go **brrrrrr** (i.e., fast). Some libraries such as [igraph](https://r.igraph.org)
 or [data.table](https://github.com/Rdatatable/data.table) are very fast by their
-nature to go low level themselves, so no need to reinvent wheels here (there are
-cases where `bixverse` still offers Rust versions of certain algorithms, for
-example for parallelised personalised PageRank calculations for a large number
-of personalisation vectors). Nonetheless, the speed-ups you can gain from using
-Rust can be incredible. Rust functions should start with *rs_*, and ideally an 
-R wrapper should exist to use them. Please refer to the 
-[Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
+nature to go low level themselves, so no need to reinvent wheels here. Nonetheless, 
+the speed-ups you can gain from using Rust can be incredible. Rust functions should 
+start with *rs_*, and ideally an R wrapper should exist to use them. Please refer
+to the [Why Rust](/docs/why_rust.md) section. While we are very keen on Rust, we
 understand that not everyone can or will be able to recode the function into 
 Rust, please refer to the next points for additional suggestions on code 
 improvements that can already go a long way to make workflows more efficient 
-(though not as **brrrrrr** as using Rust). You can also just use issues and
-ask the current author/contributor to make certain functions faster in Rust.
+(though not as **brrrrrr** as using Rust).
 4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
 over tibble and/or data.frame. *"Yeah, but I like dplyr and the tidyverse."* 
-We get it... But the speed-ups, increased memory efficacy and feature richness of
-data.table are just too big to not use when writing code bases for broader usage.
-data.table also inherits most of the data.frame functionality, hence, dplyr code
+We get it... But the speed-ups, increased memory efficacy, feature richness of
+data.table are just too big to not use when writing code bases from broader usage.
+data.table also inherits all of the data.frame functionality and most dplyr code
 works with it, making it easy for users to jump to tidyverse when they want to.
 The point of the bixverse is to be fast, so let's stick with data.table.
 5. Be explicit and defensive in the code where possible. Simple example for the

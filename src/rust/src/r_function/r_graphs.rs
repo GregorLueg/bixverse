@@ -1,6 +1,8 @@
 use extendr_api::prelude::*;
 
+use petgraph::Graph;
 use rayon::prelude::*;
+use rustc_hash::FxHashSet;
 use std::sync::Arc;
 
 use crate::helpers::graph::*;
@@ -12,8 +14,8 @@ use crate::utils::r_rust_interface::faer_to_r_matrix;
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
 /// @param to String vector. The names of the `to` edges from the edge list.
-/// @param personalised Numerical vector. The reset values. They must sum to 1 and
-/// be of same length of `node_names`!
+/// @param personalised Numerical vector. The reset values. They must sum to 1
+/// and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
 ///
 /// @return The personalised page rank values.
@@ -30,7 +32,7 @@ fn rs_page_rank(
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Arc version not needed here, as single run
-    personalized_page_rank(&graph, 0.85, personalised, 1000, Some(1e-7))
+    personalised_page_rank(graph, 0.85, personalised, 1000, Some(1e-7))
 }
 
 /// Calculate massively parallelised personalised page rank scores
@@ -60,7 +62,7 @@ fn rs_page_rank_parallel(
     let graph = graph_from_strings(&node_names, &from, &to, undirected);
 
     // Pre-process graph once
-    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(&graph));
+    let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(graph));
 
     let mut personalise_vecs: Vec<Vec<f64>> = Vec::with_capacity(diffusion_scores.len());
     for i in 0..diffusion_scores.len() {
@@ -135,8 +137,8 @@ fn rs_tied_diffusion_parallel(
     };
 
     // Pre-process graph once
-    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(&graph_1));
-    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(&graph_2));
+    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(graph_1));
+    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(graph_2));
 
     let mut personalise_vecs_1 = Vec::with_capacity(diffusion_scores_1.len());
     let mut personalise_vecs_2 = Vec::with_capacity(diffusion_scores_1.len());
@@ -188,9 +190,165 @@ fn rs_tied_diffusion_parallel(
     Ok(faer_to_r_matrix(matrix_result.as_ref()))
 }
 
+/// Calculate a constrained page-rank score
+///
+/// @description This function can be used to get constrainted personalised
+/// page-rank scores akin to Ruiz, et al. You can provide optionally
+/// `sink_nodes` (node types that will force a reset) and/or `sink_edges`
+/// (edge types that will force a reset).
+///
+/// @param node_names String vector. Name of the graph nodes.
+/// @param node_types String vector. The node types.
+/// @param from String vector. The names of the `from` edges from the edge list.
+/// @param to String vector. The names of the `to` edges from the edge list.
+/// @param weights Numerical vector. The edge weights from the edge list.
+/// @param edge_type String vector. The edge types.
+/// @param personalised Numerical vector. The reset values. They must sum to 1
+/// and be of same length of `node_names`!
+/// @param sink_nodes Optional string vector. Should these node types be seen as
+/// sinks, i.e., the reset occurs when this node is reached.
+/// @param sink_edges Optional string vector. Shall an automatic reset occur
+/// when this edge type is traversed.
+///
+/// @return The personalised constrained page rank values.
+///
+/// @export
+///
+/// @references Ruiz, et al., Nat Commun, 2021
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_constrained_page_rank(
+    node_names: Vec<String>,
+    node_types: Vec<String>,
+    from: Vec<String>,
+    to: Vec<String>,
+    weights: &[f64],
+    edge_type: Vec<String>,
+    personalised: &[f64],
+    sink_nodes: Option<Vec<String>>,
+    sink_edges: Option<Vec<String>>,
+) -> Vec<f64> {
+    let graph: Graph<NodeData, EdgeData> = graph_from_strings_with_attributes(
+        &node_names,
+        &node_types,
+        &from,
+        &to,
+        &edge_type,
+        weights,
+    );
+
+    let sink_node_set = sink_nodes
+        .filter(|v| !v.is_empty())
+        .map(|v| v.into_iter().collect::<FxHashSet<_>>());
+
+    let sink_edge_set = sink_edges
+        .filter(|v| !v.is_empty())
+        .map(|v| v.into_iter().collect::<FxHashSet<_>>());
+
+    constrained_personalised_page_rank(
+        &graph,
+        0.85,
+        personalised,
+        1000,
+        Some(1e-7),
+        sink_node_set.as_ref(),
+        sink_edge_set.as_ref(),
+    )
+}
+
+/// Calculate a constrained page-rank score over a list.
+///
+/// @description This function can be used to get constrainted personalised
+/// page-rank scores akin to Ruiz, et al. You can provide optionally
+/// `sink_nodes` (node types that will force a reset) and/or `sink_edges`
+/// (edge types that will force a reset). This version can take in a list
+/// of personalisation vectors and returns a list as result.
+///
+/// @param personalisation_list List. The list with the personalisation vectors.
+/// The sum must equal to 1, otherwise the function panics!
+/// @param node_names String vector. Name of the graph nodes.
+/// @param node_types String vector. The node types.
+/// @param from String vector. The names of the `from` edges from the edge list.
+/// @param to String vector. The names of the `to` edges from the edge list.
+/// @param weights Numerical vector. The edge weights from the edge list.
+/// @param edge_type String vector. The edge types.
+/// @param sink_nodes Optional string vector. Should these node types be seen as
+/// sinks, i.e., the reset occurs when this node is reached.
+/// @param sink_edges Optional string vector. Shall an automatic reset occur
+/// when this edge type is traversed.
+///
+/// @return A list of the personalised (constrained) page rank values.
+///
+/// @export
+///
+/// @references Ruiz, et al., Nat Commun, 2021
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_constrained_page_rank_list(
+    personalisation_list: List,
+    node_names: Vec<String>,
+    node_types: Vec<String>,
+    from: Vec<String>,
+    to: Vec<String>,
+    weights: &[f64],
+    edge_type: Vec<String>,
+    sink_nodes: Option<Vec<String>>,
+    sink_edges: Option<Vec<String>>,
+) -> extendr_api::Result<List> {
+    let mut personalisation_vectors: Vec<Vec<f64>> = Vec::with_capacity(personalisation_list.len());
+
+    for i in 0..personalisation_list.len() {
+        let list_data = personalisation_list.elt(i)?;
+        let num_data = list_data.as_real_vector().unwrap();
+        personalisation_vectors.push(num_data);
+    }
+
+    let graph: Graph<NodeData, EdgeData> = graph_from_strings_with_attributes(
+        &node_names,
+        &node_types,
+        &from,
+        &to,
+        &edge_type,
+        weights,
+    );
+
+    let sink_node_set = sink_nodes
+        .filter(|v| !v.is_empty())
+        .map(|v| v.into_iter().collect::<FxHashSet<_>>());
+
+    let sink_edge_set = sink_edges
+        .filter(|v| !v.is_empty())
+        .map(|v| v.into_iter().collect::<FxHashSet<_>>());
+
+    let diffusion_results: Vec<Vec<f64>> = personalisation_vectors
+        .par_iter()
+        .map(|p_vec| {
+            constrained_personalised_page_rank(
+                &graph,
+                0.85,
+                p_vec,
+                1000,
+                Some(1e-7),
+                sink_node_set.as_ref(),
+                sink_edge_set.as_ref(),
+            )
+        })
+        .collect();
+
+    let mut result_list = List::new(diffusion_results.len());
+
+    for (idx, vec) in diffusion_results.iter().enumerate() {
+        result_list.set_elt(idx, Robj::from(vec))?
+    }
+
+    Ok(result_list)
+}
+
 extendr_module! {
     mod r_graphs;
     fn rs_page_rank;
     fn rs_page_rank_parallel;
     fn rs_tied_diffusion_parallel;
+    fn rs_constrained_page_rank;
+    fn rs_constrained_page_rank_list;
 }

@@ -13,8 +13,8 @@ rs_page_rank(node_names, from, to, personalised, undirected)
 
 \item{to}{String vector. The names of the \code{to} edges from the edge list.}
 
-\item{personalised}{Numerical vector. The reset values. They must sum to 1 and
-be of same length of \code{node_names}!}
+\item{personalised}{Numerical vector. The reset values. They must sum to 1
+and be of same length of \code{node_names}!}
 
 \item{undirected}{Boolean. Is this an undirected graph.}
 }

@@ -11,12 +11,10 @@
 ## *Description* 
 
 This package contains various bioinformatics and computational biology workflows
-that are being routinely used, ranging from gene set enrichment analyses in all
-colours and forms, various analysis methods for networks to different methods
-for co-expression module detection in bulk RNAseq. The package provides simple, 
-bare bone versions of quite a few functions from your favourite 
-[BioConductor](https://www.bioconductor.org/) packages and leverages Rust to 
-make any computational bottlenecks in these go **brrrrrrr** (i.e., fast).
+that are being routinely used, ranging from gene set enrichment analyses, to 
+network-based approaches for module detection in bulk RNAseq. The package 
+provides useful, bare bone versions of most bioinformatics functionalities and
+leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
@@ -30,10 +28,10 @@ update the following has been updated/changed:
 You will need Rust on your system to have the package working. An installation
 guide is provided [here](https://www.rust-lang.org/tools/install). There is a 
 bunch of further help written [here](https://extendr.github.io/rextendr/index.html)
-by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to 
-interface with Rust.)
+by the rextendr guys in terms of Rust set up. (bixverse uses rextendr to interface
+with Rust.)
 
-Steps for installation (assuming MacOS or Linux-based systems): 
+Steps for installation: 
 
 1. In the terminal, install [Rust](https://www.rust-lang.org/tools/install) 
 
@@ -65,18 +63,16 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 <img src="/misc/pics/but_why.png" width="418" height="218" alt="but why">
 
 Good question, why this package? Basically, there are three reasons for this:
-1. Rust makes a lot of things in R so much faster and who does not like faster
-code? The aim is to share the joy of speedy code. Additionally, it's a fun 
-language to write.
+1. Rust makes everything in R so much faster, that we just wished to share the 
+joy. Also, it's a fun language write.
 2. BioConductor is great, but you end up with quite large dependency graphs, 
 lots of packages that have to be downloaded and quite a few algorithms can 
-benefit from the speed and memory control that Rust offers. The idea of 
-`bixverse` is to accelerate key functions used in CompBio and bioinformatics and
-reduce them to the barebone methods with simple interfaces (which can be
-easily used in your workflows).
+benefit from the speed that Rust offers. The idea of `bixverse` is to accelerate
+key functions used in CompBio and bioinformatics and reduce them to the 
+barebone methods with simple interfaces.
 3. Having worked in biotech and pharma, one realises that a surprising amount
 of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 06.08.2025*
+*Last update to the read-me: 05.08.2025*
