@@ -2,7 +2,7 @@
 % Please edit documentation in R/synthetic_data.R
 \name{synthetic_signal_matrix}
 \alias{synthetic_signal_matrix}
-\title{Generates a synthetic, pseudo gene expression matrix}
+\title{Generates a simple synthetic, pseudo gene expression matrix}
 \usage{
 synthetic_signal_matrix(
   no_grps = 3,

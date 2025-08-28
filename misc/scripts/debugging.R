@@ -332,3 +332,59 @@ norm_counts = edgeR::cpm(dropout_data_2, log = TRUE)
 
 
 calculate_sparsity_stats(test2, dropout_data_2)
+
+# new tests --------------------------------------------------------------------
+
+test_data = rs_generate_bulk_rnaseq(
+  num_samples = 100L,
+  num_genes = 1000L,
+  seed = 123L,
+  add_modules = TRUE,
+  module_sizes = c(100L, 100L, 100L)
+)
+
+norm_counts = edgeR::cpm(test_data$counts, log = TRUE)
+rownames(norm_counts) <- sprintf("gene_%i", 1:1000)
+colnames(norm_counts) <- sprintf("sample_%i", 1:100)
+
+data <- t(norm_counts)
+
+meta_data <- data.table::data.table(
+  sample_id = rownames(data)
+)
+
+cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
+
+cor_test <- preprocess_bulk_coexp(cor_test, hvg = 0.5, .verbose = FALSE)
+
+plot_hvgs(cor_test)
+
+cor_test <- cor_module_processing(
+  cor_test,
+  cor_method = "spearman",
+  .verbose = FALSE
+)
+
+cor_test <- cor_module_check_epsilon(
+  cor_test,
+  rbf_func = "gaussian",
+  .verbose = FALSE
+)
+
+plot_epsilon_res(cor_test)
+
+plot_rbf_impact("gaussian", 8)
+
+
+cor_test <- cor_module_coremo_clustering(
+  cor_test,
+  .verbose = TRUE
+)
+
+plot_optimal_cuts(cor_test)
+
+cor_test <- cor_module_coremo_stability(cor_test, .verbose = TRUE)
+
+table(cor_test@outputs$final_modules$cluster_id)
+
+hist(cor_test@outputs$final_modules$stability)

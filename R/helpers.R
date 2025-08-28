@@ -375,7 +375,7 @@ get_inflection_point <- function(x, y, span = 0.5) {
     gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
   }
 
-  gradient_change <- diff(gradient)
+  gradient_change <- abs(diff(gradient))
   # One after the point with the biggest delta
   inflection_idx <- which.max(gradient_change) + 1
 

@@ -324,7 +324,7 @@ cor_module_check_epsilon <- S7::new_generic(
   fun = function(
     object,
     rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
-    epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+    epsilons = c(0.25, seq(from = 0.5, to = 10, by = 0.5)),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -341,7 +341,7 @@ cor_module_check_epsilon <- S7::new_generic(
 S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   object,
   rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
-  epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+  epsilons = c(0.25, seq(from = 0.5, to = 10, by = 0.5)),
   .verbose = TRUE
 ) {
   # Checks
@@ -814,7 +814,15 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
       if (.verbose) {
         message("Using resolution with best modularity.")
       }
-      resolution_results[modularity == max(modularity), resolution]
+      potential_resolutions <- resolution_results[
+        modularity == max(modularity),
+        resolution
+      ]
+      if (length(potential_resolutions) == 1) {
+        potential_resolutions
+      } else {
+        min(potential_resolutions)
+      }
     } else {
       # Just use 1
       warning(
@@ -965,6 +973,8 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 #' the 'junk module'.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
+#' @param span Float. Defines the span parameter for the loess function to
+#' identify the inflection point. Defaults to `0.1`. Must be between 0.1 and 1.
 #' @param coremo_params List. Parameters for the generation of the CoReMo
 #' modules, see [bixverse::params_coremo()]. Contains:
 #' \itemize{
@@ -994,6 +1004,7 @@ cor_module_coremo_clustering <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    span = 0.1,
     coremo_params = params_coremo(),
     seed = 42L,
     .verbose = TRUE
@@ -1011,6 +1022,7 @@ cor_module_coremo_clustering <- S7::new_generic(
 #' @method cor_module_coremo_clustering bulk_coexp
 S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   object,
+  span = 0.1,
   coremo_params = params_coremo(),
   seed = 42L,
   .verbose = TRUE
@@ -1078,7 +1090,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
     get_inflection_point(
       optimal_cuts$k,
       optimal_cuts$R2_weighted_median,
-      span = 0.25
+      span = span
     )
 
   optimal_cuts[, gradient_change := c(0, gradient_change)]
@@ -1845,8 +1857,7 @@ S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
 
   plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
     "optimal_cuts"
-  ]]) %>%
-    data.table::setorder(gradient_change)
+  ]])
 
   if (is.null(plot_df)) {
     warning(paste(
@@ -1855,6 +1866,8 @@ S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
       "Returning NULL."
     ))
   }
+
+  data.table::setorder(plot_df, gradient_change)
 
   optimal_cuts <- S7::prop(object = object, name = "params")[["coremo"]][[
     "inflection_idx"
@@ -1883,4 +1896,42 @@ S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
     ggplot2::ggtitle("k cuts vs. change in R2")
 
   p
+}
+
+### other plotting functions ---------------------------------------------------
+
+#' @title Helper function to plot distance to affinity relationship
+#'
+#' @description
+#' This function plots the distance to affinity relationship after applying
+#' a given radial basis function (RBF) with a given epsilon value.
+#'
+#' @param rbf_type String. The RBF type. One of
+#' `c("gaussian", "bump", "inverse_quadratic")`
+#' @param epsilon Numerical. The epsilon parameter.
+#'
+#' @return A plot depicting the distance to affinity relationship after
+#' applying the RBF function.
+#'
+#' @export
+plot_rbf_impact <- function(rbf_type, epsilon) {
+  # checks
+  checkmate::assertChoice(rbf_type, c("gaussian", "bump", "inverse_quadratic"))
+  checkmate::qassert(epsilon, "N1(0,)")
+
+  # body
+  distances <- seq(from = 0, to = 1, by = 0.01)
+  affinities <- rs_rbf_function(
+    x = distances,
+    epsilon = epsilon,
+    rbf_type = rbf_type
+  )
+
+  plot(
+    x = distances,
+    y = affinities,
+    xlab = "Distance",
+    ylab = "Affinity",
+    main = sprintf("Impact of RBF %s w eps %.2f", rbf_type, epsilon)
+  )
 }
