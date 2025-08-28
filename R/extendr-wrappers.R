@@ -1436,5 +1436,11 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #' @export
 rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
 
+#' @export
+rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, module_sizes) .Call(wrap__rs_generate_bulk_rnaseq, num_samples, num_genes, seed, add_modules, module_sizes)
+
+#' @export
+rs_simulate_dropouts <- function(count_mat, dropout_midpoint, dropout_shape, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_midpoint, dropout_shape, global_sparsity, seed)
+
 
 # nolint end
