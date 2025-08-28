@@ -127,7 +127,7 @@ where
     /// ### Params
     ///
     /// * `upper_triangle` - Represents the values of the upper triangle in
-    ///                      row major formant
+    ///   row major formant
     /// * `n` - Original nrows and ncols.
     /// * `include_diagonal` - Are the diagonal values included.
     pub fn from_upper_triangle_sym(upper_triangle: &[T], n: usize, include_diagonal: bool) -> Self {

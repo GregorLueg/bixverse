@@ -58,11 +58,11 @@ pub struct RbhResult {
 /// ### Params
 ///
 /// * `origin_modules` - A BTreeMap containing the identified modules of the
-///                      the origin data set.
+///   the origin data set.
 /// * `target_modules` - A BTreeMap containing the identified modules of the
-///                      the target data set.
+///   the target data set.
 /// * `overlap_coefficient` - Shall the overlap coefficient be used instead of
-///                           Jaccard similarity.
+///   Jaccard similarity.
 /// * `min_similarity` - Minimum similarity to be returned
 ///
 /// ### Returns
@@ -179,7 +179,7 @@ pub fn r_matrix_list_to_vec(matrix_list: List) -> Vec<(String, RArray<f64, [usiz
 /// ### Params
 ///
 /// * `matrix_vector` - Slice of tuples with the first element representing the name
-///                     and the second the R matrix
+///   and the second the R matrix
 ///
 /// ### Returns
 ///
