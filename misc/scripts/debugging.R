@@ -170,29 +170,146 @@ calculate_dropout_prob <- function(
   return(pmin(prob, 1)) # Ensure probability doesn't exceed 1
 }
 
+calculate_sparsity_stats <- function(original_matrix, dropout_matrix) {
+  # Overall sparsity
+  original_zeros <- sum(original_matrix == 0)
+  dropout_zeros <- sum(dropout_matrix == 0)
+  total_values <- length(original_matrix)
+
+  original_sparsity <- original_zeros / total_values
+  final_sparsity <- dropout_zeros / total_values
+  added_sparsity <- final_sparsity - original_sparsity
+  requested_sparsity <- attributes(dropout_matrix)$parameters$global_sparsity
+
+  # Per-gene sparsity
+  gene_sparsity <- rowMeans(dropout_matrix == 0)
+
+  # Per-sample sparsity
+  sample_sparsity <- colMeans(dropout_matrix == 0)
+
+  # Expression-dependent dropout analysis
+  non_zero_original <- original_matrix[original_matrix > 0]
+  corresponding_dropout <- dropout_matrix[original_matrix > 0]
+  dropout_events <- corresponding_dropout == 0
+
+  # Bin by expression level
+  expr_bins <- cut(log1p(non_zero_original), breaks = 10)
+  dropout_by_expr <- tapply(dropout_events, expr_bins, mean)
+
+  stats <- list(
+    original_sparsity = original_sparsity,
+    final_sparsity = final_sparsity,
+    added_sparsity = added_sparsity,
+    requested_sparsity = requested_sparsity,
+    gene_sparsity_mean = mean(gene_sparsity),
+    gene_sparsity_sd = sd(gene_sparsity),
+    sample_sparsity_mean = mean(sample_sparsity),
+    sample_sparsity_sd = sd(sample_sparsity),
+    dropout_by_expression = dropout_by_expr
+  )
+
+  return(stats)
+}
+
 # test bulk rnaseq data --------------------------------------------------------
 
 tictoc::tic()
 test = rs_generate_bulk_rnaseq(
-  num_samples = 500L,
-  num_genes = 10000L,
+  num_samples = 100L,
+  num_genes = 1000L,
   seed = 123L,
   add_modules = TRUE,
-  module_sizes = NULL
+  module_sizes = c(100L, 100L, 100L)
 )
-tictoc::toc()
-
-tictoc::tic()
-dropout_data <- rs_simulate_dropouts(
-  count_mat = test$counts,
-  dropout_midpoint = 10,
-  dropout_shape = 1.5,
-  global_sparsity = 0.1,
-  seed = 123L
-)
-tictoc::toc()
 
 norm_counts = edgeR::cpm(test$counts, log = TRUE)
+
+heatmap(norm_counts)
+
+correlations <- rs_cor(t(test$counts), spearman = FALSE)
+
+heatmap(correlations)
+
+dropout_data <- rs_simulate_dropouts(
+  count_mat = test$counts,
+  dropout_function = "log",
+  dropout_midpoint = 5,
+  dropout_shape = 0.5,
+  power_factor = 0.3,
+  global_sparsity = 0.25,
+  seed = 123L
+)
+
+dropout_data_v2 <- rs_simulate_dropouts(
+  count_mat = test$counts,
+  dropout_function = "powerdecay",
+  dropout_midpoint = 5,
+  dropout_shape = 0.5,
+  power_factor = 0.3,
+  global_sparsity = 0.25,
+  seed = 123L
+)
+
+tictoc::toc()
+
+calculate_sparsity_stats(test$counts, dropout_data)
+
+calculate_sparsity_stats(test$counts, dropout_data_v2)
+
+norm_counts = edgeR::cpm(test$counts, log = TRUE)
+norm_counts_sparse = edgeR::cpm(dropout_data, log = TRUE)
+norm_counts_sparse_v2 = edgeR::cpm(dropout_data_v2, log = TRUE)
+
+plot(
+  rowMeans(norm_counts),
+  matrixStats::rowSds(norm_counts),
+  xlab = "Average expression",
+  ylab = "Standard deviation",
+  main = "Relation pre sparsification"
+)
+
+plot(
+  rowMeans(norm_counts_sparse),
+  matrixStats::rowSds(norm_counts_sparse),
+  xlab = "Average expression",
+  ylab = "Standard deviation",
+  main = "Relation post sparsification"
+)
+
+plot(
+  rowMeans(norm_counts),
+  rowSums(dropout_data == 0) / ncol(dropout_data),
+  xlab = "Average expression",
+  ylab = "Sparsity"
+)
+
+plot(
+  rowMeans(norm_counts_sparse_v2),
+  matrixStats::rowSds(norm_counts_sparse_v2),
+  xlab = "Average expression",
+  ylab = "Standard deviation",
+  main = "Relation post sparsification"
+)
+
+
+plot(
+  rowMeans(norm_counts_sparse_v2),
+  rowSums(dropout_data_v2 == 0) / ncol(dropout_data),
+  xlab = "Average expression",
+  ylab = "Sparsity"
+)
+
+sequence <- seq(from = 1, to = 7, by = 0.5)
+dropout_midpoint <- 5
+power_factor <- 0.3
+global_sparsity <- 0.25
+one_minus_global_sparsity <- 1 - global_sparsity
+
+expr_dropout = (dropout_midpoint / (sequence + 1.0)^(power_factor))
+
+(1.0 / (1.0 + exp(expr_dropout)))
+
+(expr_dropout * one_minus_global_sparsity + global_sparsity)
 
 tictoc::tic()
 test2 = generate_bulk_rnaseq(
@@ -209,4 +326,9 @@ dropout_data_2 <- simulate_dropouts(
 )
 tictoc::toc()
 
-plot(rowMeans(norm_counts_2), matrixStats::rowSds(norm_counts_2))
+plot(rowMeans(norm_counts), matrixStats::rowSds(norm_counts))
+
+norm_counts = edgeR::cpm(dropout_data_2, log = TRUE)
+
+
+calculate_sparsity_stats(test2, dropout_data_2)

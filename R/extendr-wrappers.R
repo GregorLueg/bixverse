@@ -1436,11 +1436,82 @@ rs_critval <- function(values, iters, alpha, seed) .Call(wrap__rs_critval, value
 #' @export
 rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, mat, iters, alpha, seed)
 
+#' Generation of bulkRNAseq-like data with optional correlation structure
+#'
+#' @description
+#' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
+#' expressed genes show higher variance) and can optionally add correlation
+#' structures for testing purposes.
+#'
+#' @param num_samples Integer. Number of samples to simulate.
+#' @param num_genes Integer. Number of genes to simulate.
+#' @param seed. Integer. Seed for reproducibility.
+#' @param add_modules Boolean. Shall correlation structures be added to the
+#' data.
+#' @param module_size `NULL` or vector of sizes of the gene modules. When
+#' `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
+#' vector must be ≤ num_genes!
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item counts The matrix of simulated counts.
+#'     \item module_membership Vector defining the module membership.
+#' }
+#'
 #' @export
 rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, module_sizes) .Call(wrap__rs_generate_bulk_rnaseq, num_samples, num_genes, seed, add_modules, module_sizes)
 
+#' Sparsify bulkRNAseq like data
+#'
+#' @description
+#' This function takes in a (raw) count matrix (for example from the synthetic
+#' data in bixverse) and applies sparsification to it based on two possible
+#' functions:
+#'
+#' **Logistic function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - Plateaus at ~30% dropout for high expression genes
+#' - Partial dropout preserves count structure via binomial thinning
+#' - Good for preserving variance-mean relationships
+#'
+#' **Power Decay function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - No plateau - high expression genes get substantial dropout
+#' - Complete dropout only (no partial dropout)
+#' - More uniform dropout across expression range
+#'
+#' @param count_mat Numerical matrix. Original numeric matrix.
+#' @param dropout_function String. One of `c("log", "powerdecay")`. Defines
+#' which function will be used to induce the sparsity.
+#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
+#' logistic and power decay function.
+#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
+#' function.
+#' @param power_factor Numeric. Controls the power factor of the power decay
+#' function.
+#' @param global_sparsity Numeric. The global sparsity parameter.
+#' @param seed Integer. Seed for reproducibility.
+#'
+#' @return The sparsified matrix based on the provided parameters.
+#'
 #' @export
-rs_simulate_dropouts <- function(count_mat, dropout_midpoint, dropout_shape, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_midpoint, dropout_shape, global_sparsity, seed)
+rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
 
 # nolint end

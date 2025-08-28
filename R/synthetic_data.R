@@ -2,9 +2,9 @@
 
 ## gene expression version -----------------------------------------------------
 
-### version 1 ------------------------------------------------------------------
+### simple dge version ---------------------------------------------------------
 
-#' Generates a synthetic, pseudo gene expression matrix
+#' Generates a simple synthetic, pseudo gene expression matrix
 #'
 #' @description
 #' This is a function to create a synthetic, pseudo gene expression matrix with
