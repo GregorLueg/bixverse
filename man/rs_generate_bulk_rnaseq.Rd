@@ -17,12 +17,12 @@ rs_generate_bulk_rnaseq(
 
 \item{num_genes}{Integer. Number of genes to simulate.}
 
+\item{seed}{Integer. Seed for reproducibility.}
+
 \item{add_modules}{Boolean. Shall correlation structures be added to the
 data.}
 
-\item{seed.}{Integer. Seed for reproducibility.}
-
-\item{module_size}{\code{NULL} or vector of sizes of the gene modules. When
+\item{module_sizes}{\code{NULL} or vector of sizes of the gene modules. When
 \code{NULL} defaults to \code{c(300, 250, 200, 300, 500)}. Warning! The sum of this
 vector must be ≤ num_genes!}
 }

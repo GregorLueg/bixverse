@@ -162,7 +162,7 @@ expect_true(
   info = "bulk_coexp - correct main class"
 )
 expect_true(
-  S7::S7_inherits(cor_test, bixverse_base_class),
+  S7::S7_inherits(cor_test, bixverse::bixverse_base_class),
   info = "bulk_coexp - correct base class"
 )
 

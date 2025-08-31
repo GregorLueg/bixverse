@@ -1,6 +1,46 @@
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
 
+/////////////
+// Helpers //
+/////////////
+
+/// Counts the zeroes in a given faer matrix
+///
+/// ### Params
+///
+/// * `mat` - The respective faer matrix
+///
+/// ### Returns
+///
+/// A tuple with the first being the total zeroes, the second the zeroes per
+/// row and the last element being the column zeroes.
+pub fn count_zeroes<T>(mat: &MatRef<T>) -> (usize, Vec<usize>, Vec<usize>)
+where
+    T: Default + PartialEq,
+{
+    let (nrow, ncol) = mat.shape();
+    let mut total_zeroes = 0_usize;
+    let mut row_zeroes = vec![0_usize; nrow];
+    let mut col_zeroes = vec![0_usize; ncol];
+
+    let zero = T::default();
+
+    #[allow(clippy::needless_range_loop)]
+    for j in 0..ncol {
+        for i in 0..nrow {
+            let val = unsafe { mat.get_unchecked(i, j) };
+            if *val == zero {
+                total_zeroes += 1;
+                row_zeroes[i] += 1;
+                col_zeroes[j] += 1;
+            }
+        }
+    }
+
+    (total_zeroes, row_zeroes, col_zeroes)
+}
+
 ////////////////
 // Structures //
 ////////////////

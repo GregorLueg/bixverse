@@ -170,7 +170,7 @@ calculate_dropout_prob <- function(
   return(pmin(prob, 1)) # Ensure probability doesn't exceed 1
 }
 
-calculate_sparsity_stats <- function(original_matrix, dropout_matrix) {
+calculate_sparsity_stats_old <- function(original_matrix, dropout_matrix) {
   # Overall sparsity
   original_zeros <- sum(original_matrix == 0)
   dropout_zeros <- sum(dropout_matrix == 0)
@@ -214,177 +214,66 @@ calculate_sparsity_stats <- function(original_matrix, dropout_matrix) {
 # test bulk rnaseq data --------------------------------------------------------
 
 tictoc::tic()
-test = rs_generate_bulk_rnaseq(
-  num_samples = 100L,
-  num_genes = 1000L,
-  seed = 123L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L)
-)
-
-norm_counts = edgeR::cpm(test$counts, log = TRUE)
-
-heatmap(norm_counts)
-
-correlations <- rs_cor(t(test$counts), spearman = FALSE)
-
-heatmap(correlations)
-
-dropout_data <- rs_simulate_dropouts(
-  count_mat = test$counts,
-  dropout_function = "log",
-  dropout_midpoint = 5,
-  dropout_shape = 0.5,
-  power_factor = 0.3,
-  global_sparsity = 0.25,
-  seed = 123L
-)
-
-dropout_data_v2 <- rs_simulate_dropouts(
-  count_mat = test$counts,
-  dropout_function = "powerdecay",
-  dropout_midpoint = 5,
-  dropout_shape = 0.5,
-  power_factor = 0.3,
-  global_sparsity = 0.25,
-  seed = 123L
-)
-
-tictoc::toc()
-
-calculate_sparsity_stats(test$counts, dropout_data)
-
-calculate_sparsity_stats(test$counts, dropout_data_v2)
-
-norm_counts = edgeR::cpm(test$counts, log = TRUE)
-norm_counts_sparse = edgeR::cpm(dropout_data, log = TRUE)
-norm_counts_sparse_v2 = edgeR::cpm(dropout_data_v2, log = TRUE)
-
-plot(
-  rowMeans(norm_counts),
-  matrixStats::rowSds(norm_counts),
-  xlab = "Average expression",
-  ylab = "Standard deviation",
-  main = "Relation pre sparsification"
-)
-
-plot(
-  rowMeans(norm_counts_sparse),
-  matrixStats::rowSds(norm_counts_sparse),
-  xlab = "Average expression",
-  ylab = "Standard deviation",
-  main = "Relation post sparsification"
-)
-
-plot(
-  rowMeans(norm_counts),
-  rowSums(dropout_data == 0) / ncol(dropout_data),
-  xlab = "Average expression",
-  ylab = "Sparsity"
-)
-
-plot(
-  rowMeans(norm_counts_sparse_v2),
-  matrixStats::rowSds(norm_counts_sparse_v2),
-  xlab = "Average expression",
-  ylab = "Standard deviation",
-  main = "Relation post sparsification"
-)
-
-
-plot(
-  rowMeans(norm_counts_sparse_v2),
-  rowSums(dropout_data_v2 == 0) / ncol(dropout_data),
-  xlab = "Average expression",
-  ylab = "Sparsity"
-)
-
-sequence <- seq(from = 1, to = 7, by = 0.5)
-dropout_midpoint <- 5
-power_factor <- 0.3
-global_sparsity <- 0.25
-one_minus_global_sparsity <- 1 - global_sparsity
-
-expr_dropout = (dropout_midpoint / (sequence + 1.0)^(power_factor))
-
-(1.0 / (1.0 + exp(expr_dropout)))
-
-(expr_dropout * one_minus_global_sparsity + global_sparsity)
-
-tictoc::tic()
-test2 = generate_bulk_rnaseq(
+test = synthetic_bulk_cor_matrix(
   num_samples = 500L,
   num_genes = 10000L,
-  add_modules = TRUE
+  module_sizes = c(300L, 250L, 200L, 300L, 500L)
 )
 
-dropout_data_2 <- simulate_dropouts(
-  test2,
-  dropout_midpoint = 10,
-  dropout_shape = 1.5,
-  global_sparsity = 0.1
-)
+test = simulate_dropouts(test, dropout_function = "powerdecay")
 tictoc::toc()
 
-plot(rowMeans(norm_counts), matrixStats::rowSds(norm_counts))
+calculate_sparsity_stats(test)
 
-norm_counts = edgeR::cpm(dropout_data_2, log = TRUE)
+norm_counts = edgeR::cpm(test$counts, log = TRUE)
 
+norm_counts_sparse = edgeR::cpm(test$sparse_counts, log = TRUE)
 
-calculate_sparsity_stats(test2, dropout_data_2)
+plot(x = rowMeans(norm_counts), y = matrixStats::rowSds(norm_counts))
 
-# new tests --------------------------------------------------------------------
-
-test_data = rs_generate_bulk_rnaseq(
-  num_samples = 100L,
-  num_genes = 1000L,
-  seed = 123L,
-  add_modules = TRUE,
-  module_sizes = c(100L, 100L, 100L)
+plot(
+  x = rowMeans(norm_counts_sparse),
+  y = matrixStats::rowSds(norm_counts_sparse)
 )
 
-norm_counts = edgeR::cpm(test_data$counts, log = TRUE)
-rownames(norm_counts) <- sprintf("gene_%i", 1:1000)
-colnames(norm_counts) <- sprintf("sample_%i", 1:100)
+original_mat <- test$counts
+sparse_mat <- test$sparse_counts
 
-data <- t(norm_counts)
+tictoc::tic()
+calculate_sparsity_stats_old(original_mat, sparse_mat)
+tictoc::toc()
 
-meta_data <- data.table::data.table(
-  sample_id = rownames(data)
+tictoc::tic()
+calculate_sparsity_stats(test)
+tictoc::toc()
+
+rust = rs_count_zeroes(original_mat)
+
+
+microbenchmark::microbenchmark(
+  r = {
+    sum(sparse_mat == 0)
+    rowMeans(sparse_mat == 0)
+    colMeans(sparse_mat == 0)
+  },
+  rust = rs_count_zeroes(sparse_mat)
 )
 
-cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
-
-cor_test <- preprocess_bulk_coexp(cor_test, hvg = 0.5, .verbose = FALSE)
-
-plot_hvgs(cor_test)
-
-cor_test <- cor_module_processing(
-  cor_test,
-  cor_method = "spearman",
-  .verbose = FALSE
+microbenchmark::microbenchmark(
+  original_zeros = sum(original_mat == 0),
+  dropout_zeros = sum(sparse_mat == 0),
+  total_values = length(original_mat),
+  original_sparsity = original_zeros / total_values,
+  final_sparsity = dropout_zeros / total_values,
+  added_sparsity = final_sparsity - original_sparsity,
+  gene_sparsity = rowMeans(sparse_mat == 0),
+  gene_sparsity_2 = matrixStats::rowMeans2(original_mat == 0),
+  sample_sparsity = colMeans(sparse_mat == 0),
+  sample_sparsity_2 = matrixStats::colMeans2(sparse_mat == 0),
+  non_zero_original = original_mat[original_mat > 0],
+  corresponding_dropout = sparse_mat[original_mat > 0],
+  dropout_events = corresponding_dropout == 0,
+  expr_bins = cut(log1p(non_zero_original), breaks = 10),
+  dropout_by_expr = tapply(dropout_events, expr_bins, mean),
+  times = 10L
 )
-
-cor_test <- cor_module_check_epsilon(
-  cor_test,
-  rbf_func = "gaussian",
-  .verbose = FALSE
-)
-
-plot_epsilon_res(cor_test)
-
-plot_rbf_impact("gaussian", 8)
-
-
-cor_test <- cor_module_coremo_clustering(
-  cor_test,
-  .verbose = TRUE
-)
-
-plot_optimal_cuts(cor_test)
-
-cor_test <- cor_module_coremo_stability(cor_test, .verbose = TRUE)
-
-table(cor_test@outputs$final_modules$cluster_id)
-
-hist(cor_test@outputs$final_modules$stability)

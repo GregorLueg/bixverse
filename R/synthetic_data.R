@@ -133,6 +133,245 @@ synthetic_signal_matrix <- function(
   return(result)
 }
 
+### correlation structure version ----------------------------------------------
+
+#' Generates synthetic bulk RNAseq data
+#'
+#' @description
+#' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
+#' expressed genes show higher variance) and can optionally add gene ~ gene
+#' correlations for testing purposes of module detection methods.
+#'
+#' @param num_samples Integer. Number of samples.
+#' @param num_genes Integer. Number of genes.
+#' @param add_modules Boolean. Shall gene modules with correlation structures
+#' be generated.
+#' @param module_sizes Integer vector. Sizes of the different correlation
+#' modules. The sum needs be smaller than `num_genes`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return A `synthetic_bulk_data` class containing:
+#' \itemize{
+#'  \item counts - The count matrix
+#'  \item sparse_counts - A slot for sparse counts that can be added later, see
+#'  [bixverse::simulate_dropouts()].
+#'  \item module_data - The module membership of the genes
+#' }
+#'
+#' @export
+synthetic_bulk_cor_matrix <- function(
+  num_samples = 100L,
+  num_genes = 1000L,
+  add_modules = TRUE,
+  module_sizes = c(100L, 100L, 100L),
+  seed = 123L
+) {
+  # checks
+  checkmate::qassert(num_samples, "I1")
+  checkmate::qassert(num_genes, "I1")
+  checkmate::qassert(add_modules, "B1")
+  checkmate::qassert(module_sizes, "I+")
+  checkmate::qassert(seed, "I1")
+  checkmate::assertTRUE(sum(module_sizes) <= num_genes)
+
+  # body
+  c(counts, module_membership) %<-%
+    rs_generate_bulk_rnaseq(
+      num_samples = num_samples,
+      num_genes = num_genes,
+      seed = seed,
+      add_modules = add_modules,
+      module_sizes = module_sizes
+    )
+
+  rownames(counts) <- sprintf("gene_%i", 1:num_genes)
+  colnames(counts) <- sprintf("sample_%i", 1:num_samples)
+
+  module_dt <- data.table::data.table(
+    gene = rownames(counts),
+    membership = module_membership
+  )
+
+  result <- list(counts = counts, sparse_counts = NULL, module_data = module_dt)
+  class(result) <- "synthetic_bulk_data"
+
+  return(result)
+}
+
+#### sparsification ------------------------------------------------------------
+
+#' Simulate dropouts via different functions on synthetic bulk data
+#'
+#' @description
+#' This function induces expression-level dependent sparsity on the data. The
+#' two possible functions are:
+#'
+#' **Logistic function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - Plateaus at global_sparsity dropout for high expression genes
+#' - Partial dropout preserves count structure via binomial thinning
+#' - Good for preserving variance-mean relationships
+#'
+#'**Power Decay function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - No plateau - high expression genes get substantial dropout
+#' - Complete dropout only (no partial dropout)
+#' - More uniform dropout across expression range
+#'
+#' @param object The `synthetic_bulk_data` class.
+#' @param dropout_function String. One of `c("log", "powerdecay")`. These
+#' are the two options to cause dropout in the bulk data.
+#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
+#' logistic and power decay function.
+#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
+#' function.
+#' @param power_factor Numeric. Controls the power factor of the power decay
+#' function.
+#' @param global_sparsity Numeric. The global sparsity parameter.
+#' @param seed Integer. Random seed for reproducibility purposes.
+#'
+#' @return `synthetic_bulk_data` with added sparse data.
+#'
+#' @export
+simulate_dropouts <- function(
+  object,
+  dropout_function = c("log", "powerdecay"),
+  dropout_midpoint = 5,
+  dropout_shape = 0.5,
+  power_factor = 0.3,
+  global_sparsity = 0.25,
+  seed = 123L
+) {
+  dropout_function <- match.arg(dropout_function)
+
+  # checks
+  checkmate::assertClass(object, "synthetic_bulk_data")
+  checkmate::assertChoice(dropout_function, c("log", "powerdecay"))
+  checkmate::qassert(dropout_midpoint, "N1")
+  checkmate::qassert(dropout_shape, "N1")
+  checkmate::qassert(power_factor, "N1[0, 1]")
+  checkmate::qassert(seed, "I1")
+
+  sparse_counts <- rs_simulate_dropouts(
+    count_mat = object$counts,
+    dropout_function = dropout_function,
+    dropout_midpoint = dropout_midpoint,
+    dropout_shape = dropout_shape,
+    power_factor = power_factor,
+    global_sparsity = global_sparsity,
+    seed = seed
+  )
+
+  rownames(sparse_counts) <- rownames(object$counts)
+  colnames(sparse_counts) <- colnames(object$counts)
+
+  sparsification_params <- list(
+    dropout_function = dropout_function,
+    dropout_midpoint = dropout_midpoint,
+    dropout_shape = dropout_shape,
+    power_factor = power_factor,
+    global_sparsity = global_sparsity,
+    seed = seed
+  )
+
+  object$sparse_counts <- sparse_counts
+  attr(object, "dropout_params") <- sparsification_params
+
+  return(object)
+}
+
+
+#' Helper function to calculate the induced sparsity
+#'
+#' @param object `synthetic_bulk_data` object. You need to have run
+#' [bixverse::simulate_dropouts()] for this function to work.
+#' @param no_exp_bins Integer. Number of expression bins to check. Defaults to
+#' `10L`.
+#'
+#' @returns A list with various statistics about the sparsity
+#' \itemize{
+#'  \item original_sparsity - Original proportion of zeroes in the counts.
+#'  \item final_sparsity - Sparsity after applying
+#'  [bixverse::simulate_dropouts()].
+#'  \item added_sparsity - Added sparsity.
+#'  \item gene_sparsity_mean - Mean sparsity for the genes.
+#'  \item gene_sparsity_sd - SD sparsity form the genes.
+#'  \item sample_sparsity_mean - Mean sparsity for the genes.
+#'  \item sample_sparsity_sd - SD sparsity for the genes.
+#'  \item dropout_by_expression - Dropout per expression bin level.
+#' }
+#'
+#' @export
+calculate_sparsity_stats <- function(object, no_exp_bins = 10L) {
+  original_zero <- sparse_zero <- NULL
+
+  # checks
+  checkmate::assertClass(object, "synthetic_bulk_data")
+  checkmate::qassert(no_exp_bins, "I1")
+
+  # early return
+  if (is.null(object$sparse_counts)) {
+    warning(paste(
+      "No sparse counts found.",
+      "Did you run simulate_dropouts()? Returning NULL"
+    ))
+    return(NULL)
+  }
+
+  original_mat <- object$counts
+  sparse_mat <- object$sparse_counts
+
+  # general sparsity calculations
+  c(original_zero, original_row_zero, original_col_zero) %<-%
+    rs_count_zeroes(original_mat)
+
+  c(sparse_zero, sparse_row_zero, sparse_col_zero) %<-%
+    rs_count_zeroes(sparse_mat)
+
+  n <- length(original_mat)
+
+  original_sparsity <- original_zero / n
+  final_sparsity <- sparse_zero / n
+  added_sparsity <- final_sparsity - original_sparsity
+
+  # dropout per expression bin
+  non_zero_original <- original_mat[original_mat > 0]
+  corresponding_dropout <- sparse_mat[original_mat > 0]
+  dropout_events <- corresponding_dropout == 0
+
+  expr_bins <- cut(log1p(non_zero_original), breaks = no_exp_bins)
+  dropout_by_expr <- tapply(dropout_events, expr_bins, mean)
+
+  stats <- list(
+    original_sparsity = original_sparsity,
+    final_sparsity = final_sparsity,
+    added_sparsity = added_sparsity,
+    gene_sparsity_mean = mean(sparse_row_zero),
+    gene_sparsity_sd = sd(sparse_row_zero),
+    sample_sparsity_mean = mean(sparse_col_zero),
+    sample_sparsity_sd = sd(sparse_col_zero),
+    dropout_by_expression = dropout_by_expr
+  )
+
+  return(stats)
+}
+
 ## contrastive pca synthetic data ----------------------------------------------
 
 #' @title
@@ -384,6 +623,9 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #' @import ggplot2
 #' @importFrom magrittr `%>%`
 plot.cpca_synthetic_data <- function(x, ...) {
+  # scope
+  . <- NULL
+
   # checks
   checkmate::assertClass(x, "cpca_synthetic_data")
 

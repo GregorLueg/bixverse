@@ -16,6 +16,8 @@
 #' }
 #'
 #' @return Returns the S7 object for further operations.
+#'
+#' @export
 bixverse_base_class <- S7::new_class(
   # Name
   name = "bixverse_base_class",
@@ -35,10 +37,11 @@ bixverse_base_class <- S7::new_class(
 
 #' Get the parameters that were used.
 #'
-#' @description Extracts parameters from the `bixverse_base_class` class (or child
-#' classes) and has options to return (pretty) JSONs.
+#' @description Extracts parameters from the `bixverse_base_class` class (or
+#' child classes) and has options to return (pretty) JSONs.
 #'
-#' @param object A class within bixverse that inherits from [bixverse::bixverse_base_class()].
+#' @param object A class within bixverse that inherits from
+#' [bixverse::bixverse_base_class()].
 #' @param to_json Shall the params be returned as a JSON string.
 #' @param pretty_json Shall the params be returned as a pretty JSON string.
 #'

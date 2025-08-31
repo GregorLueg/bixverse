@@ -12,10 +12,10 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 ///
 /// @param num_samples Integer. Number of samples to simulate.
 /// @param num_genes Integer. Number of genes to simulate.
-/// @param seed. Integer. Seed for reproducibility.
+/// @param seed Integer. Seed for reproducibility.
 /// @param add_modules Boolean. Shall correlation structures be added to the
 /// data.
-/// @param module_size `NULL` or vector of sizes of the gene modules. When
+/// @param module_sizes `NULL` or vector of sizes of the gene modules. When
 /// `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
 /// vector must be ≤ num_genes!
 ///

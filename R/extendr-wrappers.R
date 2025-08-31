@@ -1299,6 +1299,25 @@ rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes,
 #' @export
 rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
 
+#' Helper to get zero stats from a given matrix
+#'
+#' @description
+#' Calculates in a single matrix pass the total number of zeroes, the row
+#' zeroes and column zeroes.
+#'
+#' @param x Numeric matrix. The matrix for which to calculate the total zeroes,
+#' column and row zeroes.
+#'
+#' @returns A list with:
+#' \itemize{
+#'     \item total_zeroes - Total zeroes in the matrix.
+#'     \item row_zeroes - Vector with number of zeroes per row.
+#'     \item col_zeroes - Vector with number of zeroes per column.
+#' }
+#'
+#' @export
+rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
+
 #' Set similarities over list
 #'
 #' This function calculates the Jaccard or similarity index between a one given
@@ -1445,10 +1464,10 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'
 #' @param num_samples Integer. Number of samples to simulate.
 #' @param num_genes Integer. Number of genes to simulate.
-#' @param seed. Integer. Seed for reproducibility.
+#' @param seed Integer. Seed for reproducibility.
 #' @param add_modules Boolean. Shall correlation structures be added to the
 #' data.
-#' @param module_size `NULL` or vector of sizes of the gene modules. When
+#' @param module_sizes `NULL` or vector of sizes of the gene modules. When
 #' `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
 #' vector must be ≤ num_genes!
 #'
@@ -1478,7 +1497,7 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #'
 #' with the following characteristics:
 #'
-#' - Plateaus at ~30% dropout for high expression genes
+#' - Plateaus at global_sparsity dropout for high expression genes
 #' - Partial dropout preserves count structure via binomial thinning
 #' - Good for preserving variance-mean relationships
 #'
