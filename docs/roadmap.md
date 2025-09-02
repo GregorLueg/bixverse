@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 05.08.2025* </br>
+*Last update: 02.09.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -52,8 +52,8 @@ and identify 'privileged' sub communities in the graph.~~
 (Also with implementation for 'privileged' community detection.)~~
 - ~~Rapid permutation-based methods for both to generate topology-aware 
 background diffusion scores for statistical testing.~~
-- Constrained PageRank implementation for heterogenous graphs with sink nodes
-and/or edges, see [Ruiz et al.](https://www.nature.com/articles/s41467-021-21770-8).
+- ~~Constrained PageRank implementation for heterogenous graphs with sink nodes
+and/or edges, see [Ruiz et al.](https://www.nature.com/articles/s41467-021-21770-8).~~
 
 #### bulkRNAseq methods
 
