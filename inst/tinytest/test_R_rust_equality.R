@@ -319,6 +319,12 @@ edge_dt <- data.table::data.table(
   to = c("b", "c", "d", "a", "e")
 )
 
+edge_dt_weighted <- data.table::data.table(
+  from = c("a", "b", "c", "d", "d"),
+  to = c("b", "c", "d", "a", "e"),
+  weight = c(1, 1, 0.5, 0.4, 0.25)
+)
+
 unique_nodes <- unique(c(edge_dt$from, edge_dt$to))
 
 personalised_v1 <- c(1, 0, 0, 0, 0)
@@ -327,9 +333,15 @@ personalised_v2 <- rep(1, 5) / 5
 ## tests -----------------------------------------------------------------------
 
 if (requireNamespace("igraph", quietly = TRUE)) {
+  # graphs
   g_undir <- igraph::graph_from_data_frame(edge_dt, directed = FALSE)
   g_dir <- igraph::graph_from_data_frame(edge_dt, directed = TRUE)
+  g_weighted <- igraph::graph_from_data_frame(
+    edge_dt_weighted,
+    directed = FALSE
+  )
 
+  # version 1 - igraph
   igraph_res_undir_v1 <- igraph::page_rank(
     graph = g_undir,
     personalized = personalised_v1
@@ -340,6 +352,12 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     personalized = personalised_v1
   )$vector
 
+  igraph_res_weighted_v1 <- igraph::page_rank(
+    graph = g_weighted,
+    personalized = personalised_v1
+  )$vector
+
+  # version 2 - igraph
   igraph_res_undir_v2 <- igraph::page_rank(
     graph = g_undir,
     personalized = personalised_v2
@@ -350,10 +368,17 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     personalized = personalised_v2
   )$vector
 
+  igraph_res_weighted_v2 <- igraph::page_rank(
+    graph = g_weighted,
+    personalized = personalised_v2
+  )$vector
+
+  # version 1 - rust
   rs_res_undir_v1 <- rs_page_rank(
     node_names = unique_nodes,
     from = edge_dt$from,
     to = edge_dt$to,
+    weights = NULL,
     personalised = personalised_v1,
     undirected = TRUE
   )
@@ -362,14 +387,26 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     node_names = unique_nodes,
     from = edge_dt$from,
     to = edge_dt$to,
+    weights = NULL,
     personalised = personalised_v1,
     undirected = FALSE
   )
 
+  rs_res_weighted_v1 <- rs_page_rank(
+    node_names = unique_nodes,
+    from = edge_dt_weighted$from,
+    to = edge_dt_weighted$to,
+    weights = edge_dt_weighted$weight,
+    personalised = personalised_v1,
+    undirected = TRUE
+  )
+
+  # version 2 - rust
   rs_res_undir_v2 <- rs_page_rank(
     node_names = unique_nodes,
     from = edge_dt$from,
     to = edge_dt$to,
+    weights = NULL,
     personalised = personalised_v2,
     undirected = TRUE
   )
@@ -378,17 +415,24 @@ if (requireNamespace("igraph", quietly = TRUE)) {
     node_names = unique_nodes,
     from = edge_dt$from,
     to = edge_dt$to,
+    weights = NULL,
     personalised = personalised_v2,
     undirected = FALSE
   )
 
+  rs_res_weighted_v2 <- rs_page_rank(
+    node_names = unique_nodes,
+    from = edge_dt_weighted$from,
+    to = edge_dt_weighted$to,
+    weights = edge_dt_weighted$weight,
+    personalised = personalised_v2,
+    undirected = TRUE
+  )
+
+  # version 1
   cor_undir_v1 <- cor(igraph_res_undir_v1, rs_res_undir_v1)
-
   cor_dir_v1 <- cor(igraph_res_dir_v1, rs_res_dir_v1)
-
-  cor_undir_v2 <- cor(igraph_res_undir_v2, rs_res_undir_v2)
-
-  cor_dir_v2 <- cor(igraph_res_dir_v2, rs_res_dir_v2)
+  cor_weighted_v1 <- cor(igraph_res_weighted_v1, rs_res_weighted_v1)
 
   expect_true(
     cor_undir_v1 > 0.99,
@@ -401,6 +445,16 @@ if (requireNamespace("igraph", quietly = TRUE)) {
   )
 
   expect_true(
+    cor_weighted_v1 > 0.99,
+    info = "Rust personalsied Page Rank implementation weighted network (v1)."
+  )
+
+  # version 2
+  cor_undir_v2 <- cor(igraph_res_undir_v2, rs_res_undir_v2)
+  cor_dir_v2 <- cor(igraph_res_dir_v2, rs_res_dir_v2)
+  cor_weighted_v2 <- cor(igraph_res_weighted_v2, rs_res_weighted_v2)
+
+  expect_true(
     cor_undir_v2 > 0.99,
     info = "Rust personalsied Page Rank implementation undirected network (v2)."
   )
@@ -408,6 +462,11 @@ if (requireNamespace("igraph", quietly = TRUE)) {
   expect_true(
     cor_dir_v2 > 0.99,
     info = "Rust personalsied Page Rank implementation directed network (v2)."
+  )
+
+  expect_true(
+    cor_weighted_v2 > 0.99,
+    info = "Rust personalsied Page Rank implementation weighted network (v2)."
   )
 }
 

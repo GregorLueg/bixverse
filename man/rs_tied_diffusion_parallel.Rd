@@ -8,6 +8,7 @@ rs_tied_diffusion_parallel(
   node_names,
   from,
   to,
+  weights,
   diffusion_scores_1,
   diffusion_scores_2,
   summarisation_fun,
