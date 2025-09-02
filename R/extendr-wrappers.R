@@ -847,6 +847,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 
+#' Calculate the pairwise column distance in a matrix
+#'
+#' @description
+#' This function allows to calculate pairwise between all columns the specified
+#' distance metric.
+#'
+#' @param x Numerical matrix. The matrix for which to calculate the pairwise
+#' column distances.
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#'
+#' @return The calculated distance matrix
+#'
+#' @export
+rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
+
 #' Calculates the mutual information matrix
 #'
 #' @description Calculates the mutual information across all columns in the

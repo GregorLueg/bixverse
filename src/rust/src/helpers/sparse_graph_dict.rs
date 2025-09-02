@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::helpers::graph::{adjacency_to_laplacian, get_knn_graph_adj};
-use crate::helpers::linalg::{column_cosine, sylvester_solver};
+use crate::helpers::linalg::{column_pairwise_cosine, sylvester_solver};
 
 ////////////////////////
 // Params and results //
@@ -853,9 +853,9 @@ fn get_distance(distances: &[f64], i: usize, j: usize, n: usize) -> f64 {
 /// adjacency matrix
 fn get_dgrdl_laplacian(data: &MatRef<f64>, k: usize, features: bool) -> Mat<f64> {
     let cosine_sim = if features {
-        column_cosine(data)
+        column_pairwise_cosine(data)
     } else {
-        column_cosine(&data.transpose())
+        column_pairwise_cosine(&data.transpose())
     };
 
     let knn_adjacency = get_knn_graph_adj(&cosine_sim.as_ref(), k);

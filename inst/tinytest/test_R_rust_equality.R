@@ -196,6 +196,54 @@ expect_equal(
   info = "nPMI calculations - normalised"
 )
 
+## distances -------------------------------------------------------------------
+
+### euclidean ------------------------------------------------------------------
+
+rust_res <- rs_dist(mat, distance_type = "euclidean")
+r_res <- as.matrix(dist(t(mat), method = "euclidean"))
+
+expect_equivalent(
+  current = rust_res,
+  target = r_res,
+  info = "Distance - Euclidean"
+)
+
+### manhattan ------------------------------------------------------------------
+
+rust_res <- rs_dist(mat, distance_type = "manhattan")
+r_res <- as.matrix(dist(t(mat), method = "manhattan"))
+
+expect_equivalent(
+  current = rust_res,
+  target = r_res,
+  info = "Distance - Manhattan"
+)
+
+### canberra -------------------------------------------------------------------
+
+rust_res <- rs_dist(mat, distance_type = "canberra")
+r_res <- as.matrix(dist(t(mat), method = "canberra"))
+
+expect_equivalent(
+  current = rust_res,
+  target = r_res,
+  info = "Distance - Canberra"
+)
+
+### cosine distance ------------------------------------------------------------
+
+if (requireNamespace("coop", quietly = TRUE)) {
+  rust_res <- rs_dist(mat, distance_type = "cosine")
+  r_res <- 1 - abs(coop::cosine(mat))
+
+  expect_equivalent(
+    current = rust_res,
+    target = r_res,
+    info = "Distance - Cosine"
+  )
+}
+
 # hypergeom distributions ------------------------------------------------------
 
 m <- 10

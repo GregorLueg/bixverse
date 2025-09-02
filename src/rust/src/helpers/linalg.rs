@@ -26,6 +26,19 @@ pub enum BinningStrategy {
     EqualFrequency,
 }
 
+/// Distance type enum
+#[derive(Debug, Clone)]
+pub enum DistanceType {
+    /// L1 norm, i.e., Manhattan distance
+    L1Norm,
+    /// L2 norm, i.e., Euclidean distance
+    L2Norm,
+    /// Cosine distance
+    Cosine,
+    /// Canberra distance
+    Canberra,
+}
+
 /// Structure for random SVD results
 ///
 /// ### Fields
@@ -81,9 +94,28 @@ pub fn parse_strategy_type(s: &str) -> Option<BinningStrategy> {
     }
 }
 
-//////////////////////////////
-// SCALING, COVAR, COR, PCA //
-//////////////////////////////
+/// Parsing the distance type
+///
+/// ### Params
+///
+/// * `s` - string defining the distance type
+///
+/// ### Returns
+///
+/// The `DistanceType`.
+pub fn parse_distance_type(s: &str) -> Option<DistanceType> {
+    match s.to_lowercase().as_str() {
+        "euclidean" => Some(DistanceType::L2Norm),
+        "manhattan" => Some(DistanceType::L1Norm),
+        "canberra" => Some(DistanceType::Canberra),
+        "cosine" => Some(DistanceType::Cosine),
+        _ => None,
+    }
+}
+
+////////////////
+// Column ops //
+////////////////
 
 /// Calculates the columns means of a matrix
 ///
@@ -369,6 +401,10 @@ pub fn bin_matrix_cols(
     Mat::from_fn(n_rows, n_cols, |i, j| binned_vals[j][i])
 }
 
+///////////////////////
+// Column matrix ops //
+///////////////////////
+
 /// Calculate the co-variance
 ///
 /// ### Params
@@ -387,20 +423,189 @@ pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
     covariance
 }
 
-/// Calculate the cosine similarity
+/// Calculate the cosine similarity between columns
 ///
 /// ### Params
 ///
-/// * `mat` - The matrix for which to calculate the cosine similarity. Assumes
-///   that features are columns.
+/// * `mat` - The matrix for which to calculate the cosine similarity.
 ///
 /// ### Returns
 ///
 /// The resulting cosine similarity matrix
-pub fn column_cosine(mat: &MatRef<f64>) -> Mat<f64> {
+pub fn column_pairwise_cosine(mat: &MatRef<f64>) -> Mat<f64> {
     let normalised = normalise_matrix_col_l2(mat);
 
     normalised.transpose() * &normalised
+}
+
+/// Calculate the cosine distance between columns
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the cosine distance.
+///
+/// ### Returns
+///
+/// The resulting cosine distance matrix
+pub fn column_pairwise_cosine_dist(mat: &MatRef<f64>) -> Mat<f64> {
+    let cosine_sim = column_pairwise_cosine(mat);
+    let ncols = cosine_sim.ncols();
+    let mut res: Mat<f64> = Mat::zeros(ncols, ncols);
+    for i in 0..ncols {
+        for j in 0..ncols {
+            if i != j {
+                res[(i, j)] = 1_f64 - cosine_sim.get(i, j).abs();
+            }
+        }
+    }
+    res
+}
+
+/// Calculate L2 Norm (Euclidean distance) between columns
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the L2 norm (Euclidean distance)
+///   pairwise between all columns.
+///
+/// ### Returns
+///
+/// The distance matrix based on the L2 Norm.
+pub fn column_pairwise_l2_norm(mat: &MatRef<f64>) -> Mat<f64> {
+    let ncols = mat.ncols();
+
+    let gram = mat.transpose() * mat;
+    let mut col_norms_square = vec![0_f64; ncols];
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..ncols {
+        col_norms_square[i] = *gram.get(i, i);
+    }
+
+    let mut res: Mat<f64> = Mat::zeros(ncols, ncols);
+
+    for i in 0..ncols {
+        for j in 0..ncols {
+            if i == j {
+                res[(i, j)] = 0_f64;
+            } else {
+                let dist_sq = col_norms_square[i] + col_norms_square[j] - 2.0 * gram.get(i, j);
+                let dist = dist_sq.max(0.0).sqrt();
+                res[(i, j)] = dist;
+            }
+        }
+    }
+
+    res
+}
+
+/// Calculate L1 Norm (Manhatten distance) between columns
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the L1 norm (Manhatten distance)
+///   pairwise between all columns.
+///
+/// ### Returns
+///
+/// The distance matrix based on the L1 Norm.
+pub fn column_pairwise_l1_norm(mat: &MatRef<f64>) -> Mat<f64> {
+    let (nrows, ncols) = mat.shape();
+    let mut res: Mat<f64> = Mat::zeros(ncols, ncols);
+
+    let pairs: Vec<(usize, usize)> = (0..ncols)
+        .flat_map(|i| ((i + 1)..ncols).map(move |j| (i, j)))
+        .collect();
+
+    let results: Vec<(usize, usize, f64)> = pairs
+        .par_iter()
+        .map(|&(i, j)| {
+            let col_i = mat.col(i);
+            let col_j = mat.col(j);
+
+            let mut sum_abs = 0_f64;
+
+            // smid friendly code with unsafe
+            let mut k = 0_usize;
+
+            // 4 elements at once
+            while k + 3 < nrows {
+                unsafe {
+                    sum_abs += (col_i.get_unchecked(k) - col_j.get_unchecked(k)).abs();
+                    sum_abs += (col_i.get_unchecked(k + 1) - col_j.get_unchecked(k + 1)).abs();
+                    sum_abs += (col_i.get_unchecked(k + 2) - col_j.get_unchecked(k + 2)).abs();
+                    sum_abs += (col_i.get_unchecked(k + 3) - col_j.get_unchecked(k + 3)).abs();
+                }
+                k += 4;
+            }
+
+            // remaining elements
+            while k < nrows {
+                unsafe {
+                    sum_abs += (col_i.get_unchecked(k) - col_j.get_unchecked(k)).abs();
+                }
+                k += 1;
+            }
+
+            (i, j, sum_abs)
+        })
+        .collect();
+
+    for (i, j, dist) in results {
+        res[(i, j)] = dist;
+        res[(j, i)] = dist;
+    }
+
+    res
+}
+
+/// Calculate Canberra distance between columns
+///
+/// ### Params
+///
+/// * `mat` - The matrix for which to calculate the Canberra distance pairwise
+///   between all columns.
+///
+/// ### Returns
+///
+/// The Canberra distance matrix between all columns.
+pub fn column_pairwise_canberra_dist(mat: &MatRef<f64>) -> Mat<f64> {
+    let (nrows, ncols) = mat.shape();
+    let mut res: Mat<f64> = Mat::zeros(ncols, ncols);
+
+    let pairs: Vec<(usize, usize)> = (0..ncols)
+        .flat_map(|i| ((i + 1)..ncols).map(move |j| (i, j)))
+        .collect();
+
+    let results: Vec<(usize, usize, f64)> = pairs
+        .par_iter()
+        .map(|&(i, j)| {
+            let col_i = mat.col(i);
+            let col_j = mat.col(j);
+
+            let mut sum_canberra = 0_f64;
+            for k in 0..nrows {
+                let val_i = col_i.get(k);
+                let val_j = col_j.get(k);
+
+                let abs_i = val_i.abs();
+                let abs_j = val_j.abs();
+                let denom = abs_i + abs_j;
+
+                if denom > f64::EPSILON {
+                    sum_canberra += (val_i - val_j).abs() / denom;
+                }
+            }
+
+            (i, j, sum_canberra)
+        })
+        .collect();
+
+    for (i, j, dist) in results {
+        res[(i, j)] = dist;
+        res[(j, i)] = dist;
+    }
+
+    res
 }
 
 /// Calculate the correlation matrix
