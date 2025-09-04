@@ -11,10 +11,6 @@ core function/methods that are broadly used.
 
 - ~~Include proper tests via [tinytest](https://github.com/markvanderloo/tinytest/tree/master).~~ 
 (Test coverage is slowly but surely increasing. Bugs you find are features ;P )
-- ~~Make usage of borrowing/lifetimes where possible to avoid expensive 
-copying in Rust.~~ (This has been implemented now in a lot of 
-function. If we find more speed and/or memory improvements, we will implement 
-them)
 
 ### Documentation of the package
 

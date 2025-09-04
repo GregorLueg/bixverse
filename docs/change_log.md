@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 02.09.2025* </br>
+*Last update: 04.09.2025* </br>
 
 ### Version **0.0.2.1**
 
@@ -10,11 +10,13 @@
 - Improved synthetic data for correlation-based gene module detections.
 - Improved tests for ICA, CoReMo and graph-based correlation modules.
 - Various distance calculations accelerated in Rust.
+- The Rust-based implementations of personalised PageRank have now the option
+to use weighted graphs.
 
 #### Bug fixes, documentation updates
 
 - Fixed bugs for the graph-based correlation methods.
-- Fixed export bugs for plotting functions.
+- Fixed export bugs for some of the plotting functions.
 
 #### Breaking changes
 

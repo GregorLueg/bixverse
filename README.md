@@ -27,6 +27,7 @@ edges. Also, improved the Rust-based page-rank algorithm to take in weighted
 graphs.
 - Various distance matrices for pairwise column-based calculations (L1 Norm,
 L2 Norm, Canberra distance and Cosine distance).
+- Bug and documentation fixes.
 
 ## *Installation*
 
@@ -80,4 +81,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 02.09.2025*
+*Last update to the read-me: 04.09.2025*
