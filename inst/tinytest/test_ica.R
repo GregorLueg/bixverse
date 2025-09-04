@@ -184,9 +184,11 @@ expected_ica_meta_logcosh <- data.table::data.table(
   stability = c(0.7642566, 0.7246840, 0.5724235, 0.7190692)
 )
 
-expected_ica_x1_mat <- qs2::qs_read("./test_data/ica_x1_package.qs")
-expected_ica_k_mat <- qs2::qs_read("./test_data/ica_k_package.qs")
-expected_ica_stability_res <- qs2::qs_read("./test_data/ica_stability_res.qs")
+expected_ica_x1_mat <- qs2::qs_read("./test_data/ica_class_x1.qs")
+expected_ica_k_mat <- qs2::qs_read("./test_data/ica_class_k_mat.qs")
+expected_ica_stability_res <- qs2::qs_read(
+  "./test_data/ica_class_stability_res.qs"
+)
 expected_ica_s_logcosh_mat <- qs2::qs_read(
   "./test_data/ica_s_matrix_logcosh.qs"
 )
@@ -202,20 +204,51 @@ expected_ica_a_exp_mat <- qs2::qs_read(
 
 ### gex synthetic data ---------------------------------------------------------
 
-syn_data <- synthetic_signal_matrix()
+test_data <- rs_generate_bulk_rnaseq(
+  num_samples = 100L,
+  num_genes = 1000L,
+  seed = 123L,
+  add_modules = TRUE,
+  module_sizes = c(100L, 100L, 100L)
+)
 
-data <- t(syn_data$mat)
+norm_counts <- edgeR::cpm(test_data$counts, log = TRUE)
+
+rownames(norm_counts) <- sprintf("gene_%i", 1:1000)
+colnames(norm_counts) <- sprintf("sample_%i", 1:100)
+
+data <- t(norm_counts)
 
 meta_data <- data.table::data.table(
-  sample_id = rownames(data),
-  case_control = syn_data$group
+  sample_id = rownames(data)
 )
 
 ### run the class (pre processing) ---------------------------------------------
 
+# this stuff is extensively tested in test_cor_modules.R
 ica_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
+
+expect_warning(
+  current = ica_processing(ica_test, .verbose = FALSE),
+  info = "ica bulk coexp - warning without pre-processed"
+)
+
 ica_test <- preprocess_bulk_coexp(ica_test, hvg = 0.5, .verbose = FALSE)
 ica_test <- ica_processing(ica_test, .verbose = FALSE)
+
+expect_equal(
+  current = ica_test@processed_data$K,
+  target = expected_ica_k_mat,
+  info = "ica bulk coexp - k matrix"
+)
+
+expect_equal(
+  current = ica_test@processed_data$X1,
+  target = expected_ica_x1_mat,
+  info = "ica bulk coexp - x1 matrix"
+)
+
+### ica runs -------------------------------------------------------------------
 
 ica_test <- ica_evaluate_comp(
   ica_test,
@@ -224,77 +257,41 @@ ica_test <- ica_evaluate_comp(
   .verbose = FALSE
 )
 
-ica_test <- suppressWarnings(ica_optimal_ncomp(
-  ica_test,
-  .verbose = FALSE,
-  show_plot = FALSE
-))
-
 # this one should throw a warning, as the loess function looks ugly
 expect_warning(
   current = ica_optimal_ncomp(ica_test, .verbose = FALSE, show_plot = FALSE),
-  info = paste("ICA class - warnings from loess")
+  info = paste("ica bulk coexp - warnings from loess")
 )
 
-expect_equal(
-  current = ica_test@processed_data$X1,
-  target = expected_ica_x1_mat,
-  info = paste("ICA class - X1 matrix")
+p_individual <- plot_ica_stability_individual(ica_test)
+p_ncomp_params <- plot_ica_ncomp_params(ica_test)
+
+expect_true(
+  "ggplot" %in% class(p_individual),
+  info = paste("ica bulk coexp - individual stability plots")
 )
 
-# numerical stability issues once we increase the numbers ≥ 75.
-# need potentially better synthetic data
-expect_equal(
-  current = ica_test@processed_data$K[1:75, ],
-  target = expected_ica_k_mat[1:75, ],
-  info = paste("ICA class - K matrix"),
-  tolerance = 1e-7
+expect_true(
+  "ggplot" %in% class(p_ncomp_params),
+  info = paste("ica bulk coexp - all parameter plots")
 )
 
 ica_stability_res <- get_ica_stability_res(ica_test)
 
-# numerical stability problems with certain numbers of IC
-# can cause test failure pending architecture. to avoid this,
-# we will test for overall correlations and similarity there.
 expect_true(
-  current = cor(
-    ica_stability_res$median_stability,
-    expected_ica_stability_res$median_stability
-  ) >=
-    0.9,
-  info = paste("ICA class - Stability results - median stability")
+  current = checkmate::test_data_table(ica_stability_res),
+  info = paste("ica bulk coexp - stability results class")
 )
 
-expect_true(
-  current = cor(
-    ica_stability_res$norm_mutual_information,
-    expected_ica_stability_res$norm_mutual_information
-  ) >=
-    0.9,
-  info = paste("ICA class - Stability results - mutual information")
-)
-
-expect_true(
-  current = cor(
-    ica_stability_res$converged,
-    expected_ica_stability_res$converged
-  ) >=
-    0.9,
-  info = paste("ICA class - Stability results - convergence")
-)
-
-expect_true(
-  current = cor(
-    ica_stability_res$combined_score,
-    expected_ica_stability_res$combined_score
-  ) >=
-    0.9,
-  info = paste("ICA class - Stability results - combined score")
+expect_equal(
+  current = ica_stability_res,
+  target = expected_ica_stability_res,
+  info = paste("ica bulk coexp - stability results")
 )
 
 ### class (logcosh) ------------------------------------------------------------
 
-ica_test <- ica_stabilised_results(ica_test, no_comp = 4L, ica_type = "logcosh")
+ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "logcosh")
 
 results <- get_results(ica_test)
 
@@ -312,7 +309,7 @@ expect_equal(
 
 ### class (exp) ----------------------------------------------------------------
 
-ica_test <- ica_stabilised_results(ica_test, no_comp = 4L, ica_type = "exp")
+ica_test <- ica_stabilised_results(ica_test, no_comp = 3L, ica_type = "exp")
 
 results <- get_results(ica_test)
 

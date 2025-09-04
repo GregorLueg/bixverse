@@ -21,11 +21,11 @@ debug = false
 
 [dependencies]
 extendr-api = "0.8.1"
-rayon = "*"
+rayon = "1.11.0"
 rand = { version = "0.9.0", features = ["std"] }
 rand_distr = "0.5.0"
-statrs = '*'
 faer = '0.22.6'
+statrs = { version = '*', features = ["rand"] }
 num-complex = '*'
 petgraph = { version = "0.8.2", features = ["rayon"] }
 rustc-hash = "2.1.1"

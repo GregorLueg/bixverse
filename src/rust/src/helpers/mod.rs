@@ -9,3 +9,4 @@ pub mod ontology;
 pub mod rbh;
 pub mod sparse_graph_dict;
 pub mod structs_sparse;
+pub mod synthetic_data;

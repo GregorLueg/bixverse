@@ -7,6 +7,13 @@
 #### New features
 
 - Addition of constrained PageRank implementation.
+- Improved synthetic data for correlation-based gene module detections.
+- Improved tests for ICA, CoReMo and graph-based correlation modules.
+
+#### Bug fixes, documentation updates
+
+- Fixed bugs for the graph-based correlation methods.
+- Fixed export bugs for plotting functions.
 
 ### Version **0.0.2.0**
 

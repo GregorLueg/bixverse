@@ -11,3 +11,4 @@ pub mod r_rbh;
 pub mod r_sparse_graph_dict;
 pub mod r_sparse_struct;
 pub mod r_stats;
+pub mod r_synthetic_data;

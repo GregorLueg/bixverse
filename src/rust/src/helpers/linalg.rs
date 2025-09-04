@@ -123,8 +123,7 @@ pub fn col_sums(mat: MatRef<f64>) -> Vec<f64> {
 ///
 /// ### Params
 ///
-/// * `mat` - The matrix for which to calculate the column-wise standard
-///           deviations
+/// * `mat` - The matrix for which to calculate the column-wise standard deviations
 ///
 /// ### Returns
 ///
@@ -346,7 +345,7 @@ fn bin_equal_frequency(col: &faer::col::ColRef<f64>, n_bins: usize) -> Vec<usize
 ///
 /// * `mat` - The matrix on which to apply column-wise binning
 /// * `n_bins` - Optional number of bins. If not provided, will default to
-///              `sqrt(nrow)`
+///   `sqrt(nrow)`
 ///
 /// ### Returns
 ///
@@ -375,7 +374,7 @@ pub fn bin_matrix_cols(
 /// ### Params
 ///
 /// * `mat` - The matrix for which to calculate the co-variance. Assumes that
-///           features are columns.
+///   features are columns.
 ///
 /// ### Returns
 ///
@@ -393,7 +392,7 @@ pub fn column_covariance(mat: &MatRef<f64>) -> Mat<f64> {
 /// ### Params
 ///
 /// * `mat` - The matrix for which to calculate the cosine similarity. Assumes
-///           that features are columns.
+///   that features are columns.
 ///
 /// ### Returns
 ///
@@ -409,7 +408,7 @@ pub fn column_cosine(mat: &MatRef<f64>) -> Mat<f64> {
 /// ### Params
 ///
 /// * `mat` - The matrix for which to calculate the correlation matrix. Assumes
-///           that features are columns.
+///   that features are columns.
 /// * `spearman` - Shall Spearman correlation be used.
 ///
 /// ### Returns
@@ -436,13 +435,13 @@ pub fn column_correlation(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
 /// ### Params
 ///
 /// * `mat` - The matrix for which to calculate the column-wise mutual
-///           information
+///   information
 /// * `n_bins` - Optional number of bins to use. Will default to `sqrt(nrows)`
-///              if nothing is provided.
+///   if nothing is provided.
 /// * `normalised` - Shall the normalised mutual information be calculated via
-///                  joint entropy normalisation.
+///   joint entropy normalisation.
 /// * `strategy` - String specifying if equal frequency or equal width binning
-///                should be used.
+///   should be used.
 ///
 /// ### Returns
 ///
@@ -505,9 +504,8 @@ pub fn column_mutual_information(
 /// ### Params
 ///
 /// * `x` - A slice of boolean vectors representing the data. The outer vector
-///         represents the columns.
-/// * `normalise` - Shall the normalised pointwise mutual information be
-///                 calculated
+///   represents the columns.
+/// * `normalise` - Shall the normalised pointwise mutual information be calculated
 ///
 /// ### Returns
 ///
@@ -695,13 +693,13 @@ pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64
 ///
 /// * `x` - The matrix on which to apply the randomised SVD.
 /// * `rank` - The target rank of the approximation (number of singular values,
-///            vectors to compute).
+///   vectors to compute).
 /// * `seed` - Random seed for reproducible results.
 /// * `oversampling` - Additional samples beyond the target rank to improve accuracy.
-///                    Defaults to 10 if not specified.
+///   Defaults to 10 if not specified.
 /// * `n_power_iter` - Number of power iterations to perform for better approximation quality.
-///                    More iterations generally improve accuracy but increase computation time.
-///                    Defaults to 2 if not specified.
+///   More iterations generally improve accuracy but increase computation time.
+///   Defaults to 2 if not specified.
 ///
 /// ### Returns
 ///
@@ -1013,13 +1011,13 @@ pub fn calculate_diff_correlation(
 /// ### Params
 ///
 /// * `dist` - The distance vector on which to apply the specified RBF function.
-///            Assumes that these are the values of upper triangle of the distance
-///            matrix.
+///   Assumes that these are the values of upper triangle of the distance
+///   matrix.
 /// * `epsilons` - Vector of epsilons to test.
 /// * `n` - Original dimensions of the distance matrix from which `dist` was
-///         derived.
+///   derived.
 /// * `shift` - Was a shift applied during the generation of the vector, i.e., was
-///             the diagonal included or not.
+///   the diagonal included or not.
 /// * `rbf_type` - Which RBF function to apply on the distance vector.
 ///
 /// ### Returns

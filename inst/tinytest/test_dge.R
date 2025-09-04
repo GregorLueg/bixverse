@@ -46,7 +46,7 @@ expected_effect_sizes <- qs2::qs_read(
 ### class generation -----------------------------------------------------------
 
 bad_metadata <- data.table::copy(test_data$meta_data) %>%
-  setnames(old = "sample_id", new = "doesn't work")
+  data.table::setnames(old = "sample_id", new = "doesn't work")
 
 bad_counts <- test_data$counts
 rownames(bad_counts) <- NULL

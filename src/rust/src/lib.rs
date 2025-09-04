@@ -17,6 +17,7 @@ pub use r_function::r_rbh;
 pub use r_function::r_sparse_graph_dict;
 pub use r_function::r_sparse_struct;
 pub use r_function::r_stats;
+pub use r_function::r_synthetic_data;
 
 extendr_module! {
     mod bixverse;
@@ -33,4 +34,5 @@ extendr_module! {
     use r_sparse_graph_dict;
     use r_sparse_struct;
     use r_stats;
+    use r_synthetic_data;
 }

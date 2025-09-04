@@ -220,10 +220,10 @@ expect_equal(
 
 #### errors --------------------------------------------------------------------
 
-g.2 <- copy(g)
+g.2 <- data.table::copy(g)
 g.2 <- igraph::delete_vertex_attr(g.2, "type")
 
-g.3 <- copy(g)
+g.3 <- data.table::copy(g)
 g.3 <- igraph::delete_edge_attr(g.3, "type")
 
 
