@@ -14,6 +14,8 @@ use crate::utils::r_rust_interface::faer_to_r_matrix;
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
 /// @param to String vector. The names of the `to` edges from the edge list.
+/// @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+/// for all edges.
 /// @param personalised Numerical vector. The reset values. They must sum to 1
 /// and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
@@ -26,10 +28,11 @@ fn rs_page_rank(
     node_names: Vec<String>,
     from: Vec<String>,
     to: Vec<String>,
+    weights: Option<&[f64]>,
     personalised: &[f64],
     undirected: bool,
 ) -> Vec<f64> {
-    let graph = graph_from_strings(&node_names, &from, &to, undirected);
+    let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
     // Arc version not needed here, as single run
     personalised_page_rank(graph, 0.85, personalised, 1000, Some(1e-7))
@@ -44,6 +47,8 @@ fn rs_page_rank(
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
 /// @param to String vector. The names of the `to` edges from the edge list.
+/// @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+/// for all edges.
 /// @param diffusion_scores List. The personalised vectors for the page rank reset
 /// values. Each element must sum to 1 and be of same length of `node_names`!
 /// @param undirected Boolean. Is this an undirected graph.
@@ -56,10 +61,11 @@ fn rs_page_rank_parallel(
     node_names: Vec<String>,
     from: Vec<String>,
     to: Vec<String>,
+    weights: Option<&[f64]>,
     diffusion_scores: List,
     undirected: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
-    let graph = graph_from_strings(&node_names, &from, &to, undirected);
+    let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
     // Pre-process graph once
     let pagerank_graph = Arc::new(PageRankGraph::from_petgraph(graph));
@@ -99,6 +105,8 @@ fn rs_page_rank_parallel(
 /// @param node_names String vector. Name of the graph nodes.
 /// @param from String vector. The names of the `from` edges from the edge list.
 /// @param to String vector. The names of the `to` edges from the edge list.
+/// @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+/// for all edges.
 /// @param diffusion_scores_1 List. The first set of personalised vectors for
 /// the page rank reset values. Each element must sum to 1 and be of same length
 /// of `node_names`!
@@ -113,10 +121,12 @@ fn rs_page_rank_parallel(
 /// of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 /// column representing the value of the tied diffusion for this node.
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_tied_diffusion_parallel(
     node_names: Vec<String>,
     from: Vec<String>,
     to: Vec<String>,
+    weights: Option<&[f64]>,
     diffusion_scores_1: List,
     diffusion_scores_2: List,
     summarisation_fun: String,
@@ -127,13 +137,13 @@ fn rs_tied_diffusion_parallel(
         "The two sets of random diffusion scores need to be the same length"
     );
 
-    let graph_1 = graph_from_strings(&node_names, &from, &to, undirected);
+    let graph_1 = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
     // For tied diffusion in the directed case, the directionality is reversed
     let graph_2 = if !undirected {
-        graph_from_strings(&node_names, &to, &from, undirected)
+        graph_from_strings(&node_names, &to, &from, weights, undirected)
     } else {
-        graph_from_strings(&node_names, &from, &to, undirected)
+        graph_from_strings(&node_names, &from, &to, weights, undirected)
     };
 
     // Pre-process graph once

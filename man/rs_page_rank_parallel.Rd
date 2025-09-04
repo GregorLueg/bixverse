@@ -4,7 +4,14 @@
 \alias{rs_page_rank_parallel}
 \title{Calculate massively parallelised personalised page rank scores}
 \usage{
-rs_page_rank_parallel(node_names, from, to, diffusion_scores, undirected)
+rs_page_rank_parallel(
+  node_names,
+  from,
+  to,
+  weights,
+  diffusion_scores,
+  undirected
+)
 }
 \arguments{
 \item{node_names}{String vector. Name of the graph nodes.}

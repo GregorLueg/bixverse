@@ -258,6 +258,8 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param personalised Numerical vector. The reset values. They must sum to 1
 #' and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
@@ -265,7 +267,7 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' @return The personalised page rank values.
 #'
 #' @export
-rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+rs_page_rank <- function(node_names, from, to, weights, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, weights, personalised, undirected)
 
 #' Calculate massively parallelised personalised page rank scores
 #'
@@ -283,7 +285,7 @@ rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(w
 #' @return A matrix of the scores with each row representing an element in the
 #' `diffusion_scores` list (in order), and each column representing the value
 #' of the personalised page rank diffusion for this node.
-rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, diffusion_scores, undirected)
+rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, weights, diffusion_scores, undirected)
 
 #' Calculate massively parallelised tied diffusion scores
 #'
@@ -306,7 +308,7 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' @return A matrix of the scores with each row representing a tied diffusion of
 #' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 #' column representing the value of the tied diffusion for this node.
-rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
 #' Calculate a constrained page-rank score
 #'
@@ -846,6 +848,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #'
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
+
+#' Calculate the pairwise column distance in a matrix
+#'
+#' @description
+#' This function allows to calculate pairwise between all columns the specified
+#' distance metric.
+#'
+#' @param x Numerical matrix. The matrix for which to calculate the pairwise
+#' column distances.
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#'
+#' @return The calculated distance matrix
+#'
+#' @export
+rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
 
 #' Calculates the mutual information matrix
 #'
