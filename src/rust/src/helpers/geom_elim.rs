@@ -524,10 +524,16 @@ pub fn process_ontology_level_fgsea_simple(
                 indices.sort();
 
                 if !indices.is_empty() {
-                    let es_res =
-                        calc_gsea_stats(stats, &indices, gsea_params.gsea_param, true, false);
+                    let es_res = calc_gsea_stats(
+                        stats,
+                        &indices,
+                        gsea_params.gsea_param,
+                        true,
+                        false,
+                        false,
+                    );
                     let size = indices.len();
-                    level_data_es.insert(go_id.clone(), (es_res.0, size, es_res.1));
+                    level_data_es.insert(go_id.clone(), (es_res.es, size, es_res.leading_edge));
                 }
             }
         }

@@ -22,6 +22,9 @@ rs_tied_diffusion_parallel(
 
 \item{to}{String vector. The names of the \code{to} edges from the edge list.}
 
+\item{weights}{Optional weight vector. If NULL, defaults to 1.0 as weight
+for all edges.}
+
 \item{diffusion_scores_1}{List. The first set of personalised vectors for
 the page rank reset values. Each element must sum to 1 and be of same length
 of \code{node_names}!}

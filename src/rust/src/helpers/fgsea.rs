@@ -32,6 +32,22 @@ pub type MultiLevelErrRes = (Vec<f64>, Vec<f64>);
 // Results //
 /////////////
 
+/// Structure to store GSEA stats
+///
+/// ### Fields
+///
+/// * `es` - Enrichment score
+/// * `leading_edge` - The index positions of the leading edge genes
+/// * `top` - Top points for plotting purposes
+/// * `bottom` - Bottom points for plotting purposes
+#[derive(Clone, Debug)]
+pub struct GseaStats {
+    pub es: f64,
+    pub leading_edge: Vec<i32>,
+    pub top: Vec<f64>,
+    pub bottom: Vec<f64>,
+}
+
 /// Structure for final GSEA results from any algorithm
 ///
 /// ### Fields
@@ -818,6 +834,7 @@ fn calc_positive_es(ranks: &[f64], pathway_indices: &[usize]) -> f64 {
 /// * `gs_idx` - Gene set indices
 /// * `gsea_param` - GSEA parameter for weighting
 /// * `return_leading_edge` - Whether to return leading edge genes
+/// * `return_all_extreme` - Whether to return the all points for plotting
 /// * `one_indexed` - Whether indices are one-based
 ///
 /// ### Returns
@@ -828,8 +845,9 @@ pub fn calc_gsea_stats(
     gs_idx: &[i32],
     gsea_param: f64,
     return_leading_edge: bool,
+    return_all_extreme: bool,
     one_indexed: bool,
-) -> (f64, Vec<i32>) {
+) -> GseaStats {
     let n = stats.len();
     let m = gs_idx.len();
     let mut r_adj = Vec::with_capacity(m);
@@ -847,6 +865,7 @@ pub fn calc_gsea_stats(
     } else {
         cumsum(&r_adj).iter().map(|x| x / nr).collect()
     };
+
     let top_tmp: Vec<f64> = gs_idx
         .iter()
         .enumerate()
@@ -875,6 +894,7 @@ pub fn calc_gsea_stats(
     } else {
         min_p
     };
+    // leading edges
     let leading_edge = if return_leading_edge {
         if max_p > -min_p {
             let max_idx = bottoms
@@ -899,8 +919,22 @@ pub fn calc_gsea_stats(
     } else {
         Vec::new()
     };
-
-    (gene_stat, leading_edge)
+    // extreme points
+    if return_all_extreme {
+        GseaStats {
+            es: gene_stat,
+            leading_edge,
+            top: tops,
+            bottom: bottoms,
+        }
+    } else {
+        GseaStats {
+            es: gene_stat,
+            leading_edge,
+            top: Vec::new(),
+            bottom: Vec::new(),
+        }
+    }
 }
 
 /// Convert order indices to ranks (from fgsea C++ implementation)

@@ -109,15 +109,19 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @param gs_idx Integer vector. The indices of the gene set genes.
 #' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
 #' @param return_leading_edge Boolean. Return the leading edge indices.
+#' @param return_all_extremes Boolean. Shall the extreme values be returned
+#' for plotting.
 #'
 #' @return List with the following elements
 #' \itemize{
 #'     \item gene_stat Enrichment score for that gene set
 #'     \item leading_edge Indicies of the leading edge genes.
+#'     \item top Top values of the curve.
+#'     \item bottom Bottom values of the curve.
 #' }
 #'
 #' @export
-rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge)
+rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge, return_all_extremes) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge, return_all_extremes)
 
 #' Helper function to generate fgsea simple-based permutations
 #'
@@ -278,6 +282,8 @@ rs_page_rank <- function(node_names, from, to, weights, personalised, undirected
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param diffusion_scores List. The personalised vectors for the page rank reset
 #' values. Each element must sum to 1 and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
@@ -295,6 +301,8 @@ rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_score
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param diffusion_scores_1 List. The first set of personalised vectors for
 #' the page rank reset values. Each element must sum to 1 and be of same length
 #' of `node_names`!
