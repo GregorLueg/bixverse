@@ -23,7 +23,8 @@ update the following has been updated/changed:
 
 - Improved synthetic data for bulk RNAseq to test correlation-based methods
 - Constrained page-rank algorithms in Rust that can have sink nodes and/or sink
-edges
+edges. Also, improved the Rust-based page-rank algorithm to take in weighted
+graphs.
 - Various distance matrices for pairwise column-based calculations (L1 Norm,
 L2 Norm, Canberra distance and Cosine distance).
 

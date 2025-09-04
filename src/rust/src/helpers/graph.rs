@@ -808,7 +808,7 @@ pub fn graph_from_strings<'a>(
     nodes: &'a [String],
     from: &[String],
     to: &[String],
-    weights: Option<&'a [f64]>,
+    weights: Option<&[f64]>,
     undirected: bool,
 ) -> Graph<&'a str, f64> {
     assert_same_len!(from, to);
