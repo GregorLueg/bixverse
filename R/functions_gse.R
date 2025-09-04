@@ -538,7 +538,8 @@ calc_gsea_traditional = function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
@@ -650,7 +651,8 @@ calc_fgsea_simple = function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
@@ -768,7 +770,8 @@ calc_fgsea <- function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
