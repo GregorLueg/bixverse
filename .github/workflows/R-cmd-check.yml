@@ -27,14 +27,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clear R package cache
-        run: |
-          if [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
-            rm -rf ~/.cache/R/pak
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\R\cache\R\pak"
-          fi
-        shell: bash
+      - name: Clear R package cache (Unix)
+        if: runner.os != 'Windows'
+        run: rm -rf ~/.cache/R/pak
+
+      - name: Clear R package cache (Windows)
+        if: runner.os == 'Windows'
+        run: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\R\cache\R\pak"
+        shell: pwsh
 
       - uses: r-lib/actions/setup-pandoc@v2
 
