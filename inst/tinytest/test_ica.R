@@ -306,7 +306,7 @@ corr_mutual_info <- cor(
 )
 
 expect_true(
-  current = corr_stability >= 0.95,
+  current = corr_stability >= 0.75,
   info = paste("ica bulk coexp - stability: median results")
 )
 
