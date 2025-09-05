@@ -308,6 +308,12 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
   edge_list <- igraph::as_edgelist(graph, names = TRUE)
   graph_names <- igraph::V(graph)$name
 
+  weights <- if (igraph::is_weighted(graph)) {
+    igraph::edge.attributes(graph)$weight
+  } else {
+    NULL
+  }
+
   if (diffusion_params$diffusion_type == "single") {
     if (.verbose) {
       message(sprintf(
@@ -330,6 +336,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
+      weights = weights,
       diffusion_scores = randomised_diffusions,
       undirected = !igraph::is_directed(graph)
     )
@@ -359,6 +366,7 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
       node_names = graph_names,
       from = edge_list[, 1],
       to = edge_list[, 2],
+      weights = weights,
       diffusion_scores_1 = permutations_1,
       diffusion_scores_2 = permutations_2,
       summarisation_fun = diffusion_params$score_aggregation,

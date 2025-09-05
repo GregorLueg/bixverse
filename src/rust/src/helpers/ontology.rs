@@ -155,8 +155,8 @@ pub fn get_single_onto_sim<'a>(
 /// ### Params
 ///
 /// * `terms_split` - A vector of tuples with the first element being the term 1
-///   and the second element being the terms against which to calculate the semantic
-///   similarity.
+///   and the second element being the terms against which to calculate
+///   the semantic similarity.
 /// * `sim_type` - Which type of semantic similarity to calculate.
 /// * `ancestor_map` - HashMap with the ancestors of the terms.
 /// * `ic_map` - HashMap with the information content for the terms.

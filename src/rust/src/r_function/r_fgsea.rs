@@ -90,11 +90,15 @@ fn rs_get_gs_indices(gene_universe: Vec<String>, pathway_list: List) -> extendr_
 /// @param gs_idx Integer vector. The indices of the gene set genes.
 /// @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
 /// @param return_leading_edge Boolean. Return the leading edge indices.
+/// @param return_all_extremes Boolean. Shall the extreme values be returned
+/// for plotting.
 ///
 /// @return List with the following elements
 /// \itemize{
 ///     \item gene_stat Enrichment score for that gene set
 ///     \item leading_edge Indicies of the leading edge genes.
+///     \item top Top values of the curve.
+///     \item bottom Bottom values of the curve.
 /// }
 ///
 /// @export
@@ -104,10 +108,23 @@ fn rs_calc_gsea_stats(
     gs_idx: &[i32],
     gsea_param: f64,
     return_leading_edge: bool,
+    return_all_extremes: bool,
 ) -> List {
-    let res = calc_gsea_stats(stats, gs_idx, gsea_param, return_leading_edge, true);
+    let res: GseaStats = calc_gsea_stats(
+        stats,
+        gs_idx,
+        gsea_param,
+        return_leading_edge,
+        return_all_extremes,
+        true,
+    );
 
-    list!(es = res.0, leading_edge = res.1)
+    list!(
+        es = res.es,
+        leading_edge = res.leading_edge,
+        top = res.top,
+        bottom = res.bottom
+    )
 }
 
 /// Helper function to generate traditional GSEA-based permutations

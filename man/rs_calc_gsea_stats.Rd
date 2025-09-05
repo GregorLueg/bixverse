@@ -4,7 +4,13 @@
 \alias{rs_calc_gsea_stats}
 \title{Rust implementation of the fgsea::calcGseaStat() function}
 \usage{
-rs_calc_gsea_stats(stats, gs_idx, gsea_param, return_leading_edge)
+rs_calc_gsea_stats(
+  stats,
+  gs_idx,
+  gsea_param,
+  return_leading_edge,
+  return_all_extremes
+)
 }
 \arguments{
 \item{stats}{Numeric vector. The gene level statistic. Needs to
@@ -15,12 +21,17 @@ sorted in descending nature.}
 \item{gsea_param}{Float. The GSEA parameter. Usually defaults to 1.0.}
 
 \item{return_leading_edge}{Boolean. Return the leading edge indices.}
+
+\item{return_all_extremes}{Boolean. Shall the extreme values be returned
+for plotting.}
 }
 \value{
 List with the following elements
 \itemize{
 \item gene_stat Enrichment score for that gene set
 \item leading_edge Indicies of the leading edge genes.
+\item top Top values of the curve.
+\item bottom Bottom values of the curve.
 }
 }
 \description{

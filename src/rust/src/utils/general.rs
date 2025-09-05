@@ -303,8 +303,8 @@ impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
 ///
 /// * `nested_vec` - The nested vector
 /// * `col_wise` - If set to `True` it will column bind (outer vector represents)
-///   the columns. If set to `False` it will row bind (outer vector represents the
-///   rows).
+///   the columns. If set to `False` it will row bind (outer vector represents
+///   the rows).
 ///
 /// ### Returns
 ///

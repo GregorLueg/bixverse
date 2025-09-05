@@ -156,8 +156,9 @@ impl PageRankWorkingMemory {
 pub struct PageRankGraph {
     node_count: usize,
     in_edges_flat: Vec<usize>,
+    in_edge_weights_flat: Vec<f64>,
     in_edges_offsets: Vec<usize>,
-    out_degrees: Vec<f64>,
+    out_weight_sums: Vec<f64>,
 }
 
 #[allow(dead_code)]
@@ -171,12 +172,12 @@ impl PageRankGraph {
     /// ### Returns
     ///
     /// Initialised `PageRankGraph` structure
-    pub fn from_petgraph(graph: Graph<&str, ()>) -> Self {
+    pub fn from_petgraph(graph: Graph<&str, f64>) -> Self {
         let node_count = graph.node_count();
 
         // Build adjacency structure more efficiently
-        let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
-        let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+        let mut out_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
+        let mut in_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
 
         // Single pass through edges and clippy being dumb
         #[allow(clippy::needless_range_loop)]
@@ -184,28 +185,38 @@ impl PageRankGraph {
             let node_id = graph.from_index(i);
             for edge in graph.edges(node_id) {
                 let target_idx = graph.to_index(edge.target());
-                out_edges[i].push(target_idx);
-                in_edges[target_idx].push(i);
+                let weight = *edge.weight();
+                out_edges[i].push((target_idx, weight));
+                in_edges[target_idx].push((i, weight));
             }
         }
 
         // Flatten in_edges for better cache locality
         let mut in_edges_flat = Vec::new();
+        let mut in_edge_weights_flat = Vec::new();
         let mut in_edges_offsets = Vec::with_capacity(node_count + 1);
         in_edges_offsets.push(0);
 
         for node_in_edges in &in_edges {
-            in_edges_flat.extend_from_slice(node_in_edges);
+            for &(node_idx, weight) in node_in_edges {
+                in_edges_flat.push(node_idx);
+                in_edge_weights_flat.push(weight);
+            }
             in_edges_offsets.push(in_edges_flat.len());
         }
 
-        let out_degrees: Vec<f64> = out_edges.iter().map(|edges| edges.len() as f64).collect();
+        // Calculate sum of outgoing weights for each node
+        let out_weight_sums: Vec<f64> = out_edges
+            .iter()
+            .map(|edges| edges.iter().map(|(_, weight)| weight).sum())
+            .collect();
 
         Self {
             node_count,
             in_edges_flat,
+            in_edge_weights_flat,
             in_edges_offsets,
-            out_degrees,
+            out_weight_sums,
         }
     }
 
@@ -225,9 +236,14 @@ impl PageRankGraph {
         nodes: &[String],
         from: &[String],
         to: &[String],
+        weights: Option<&[f64]>,
         undirected: bool,
     ) -> Self {
         assert_same_len!(from, to);
+
+        if let Some(weights) = weights {
+            assert_same_len!(from, weights);
+        }
 
         let node_count = nodes.len();
 
@@ -237,40 +253,51 @@ impl PageRankGraph {
             name_to_idx.insert(name, idx);
         }
 
-        // Build adjacency lists
-        let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
-        let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+        // Build adjacency lists with weights
+        let mut out_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
+        let mut in_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
 
-        for (from_name, to_name) in from.iter().zip(to.iter()) {
+        for (i, (from_name, to_name)) in from.iter().zip(to.iter()).enumerate() {
             let from_idx = *name_to_idx.get(from_name).unwrap();
             let to_idx = *name_to_idx.get(to_name).unwrap();
 
-            out_edges[from_idx].push(to_idx);
-            in_edges[to_idx].push(from_idx);
+            let weight = weights.map(|w| w[i]).unwrap_or(1.0);
+
+            out_edges[from_idx].push((to_idx, weight));
+            in_edges[to_idx].push((from_idx, weight));
 
             if undirected {
-                out_edges[to_idx].push(from_idx);
-                in_edges[from_idx].push(to_idx);
+                out_edges[to_idx].push((from_idx, weight));
+                in_edges[from_idx].push((to_idx, weight));
             }
         }
 
         // Flatten in_edges for better cache locality
         let mut in_edges_flat = Vec::new();
+        let mut in_edge_weights_flat = Vec::new();
         let mut in_edges_offsets = Vec::with_capacity(node_count + 1);
         in_edges_offsets.push(0);
 
         for node_in_edges in &in_edges {
-            in_edges_flat.extend_from_slice(node_in_edges);
+            for &(node_idx, weight) in node_in_edges {
+                in_edges_flat.push(node_idx);
+                in_edge_weights_flat.push(weight);
+            }
             in_edges_offsets.push(in_edges_flat.len());
         }
 
-        let out_degrees: Vec<f64> = out_edges.iter().map(|edges| edges.len() as f64).collect();
+        // Calculate sum of outgoing weights for each node
+        let out_weight_sums: Vec<f64> = out_edges
+            .iter()
+            .map(|edges| edges.iter().map(|(_, weight)| weight).sum())
+            .collect();
 
         Self {
             node_count,
             in_edges_flat,
+            in_edge_weights_flat,
             in_edges_offsets,
-            out_degrees,
+            out_weight_sums,
         }
     }
 
@@ -287,10 +314,13 @@ impl PageRankGraph {
     ///
     /// Returns a slice of in_edges
     #[inline]
-    fn in_edges(&self, node: usize) -> &[usize] {
+    fn in_edges(&self, node: usize) -> (&[usize], &[f64]) {
         let start = self.in_edges_offsets[node];
         let end = self.in_edges_offsets[node + 1];
-        &self.in_edges_flat[start..end]
+        (
+            &self.in_edges_flat[start..end],
+            &self.in_edge_weights_flat[start..end],
+        )
     }
 }
 
@@ -318,39 +348,40 @@ impl PageRankGraph {
 pub fn personalised_page_rank_optimised(
     graph: &PageRankGraph,
     damping_factor: f64,
-    personalization_vector: &[f64],
+    personalisation_vector: &[f64],
     nb_iter: usize,
     tolerance: f64,
     working_memory: &mut PageRankWorkingMemory,
 ) -> Vec<f64> {
     let node_count = graph.node_count;
 
-    // Reuse pre-allocated vectors
+    // reuse pre-allocated vectors
     working_memory.ensure_capacity(node_count);
     let ranks = &mut working_memory.ranks;
     let new_ranks = &mut working_memory.new_ranks;
 
-    // Initialize ranks
-    ranks[..node_count].copy_from_slice(personalization_vector);
+    // initialise ranks
+    ranks[..node_count].copy_from_slice(personalisation_vector);
 
     let teleport_factor = 1.0 - damping_factor;
 
     for _ in 0..nb_iter {
-        // Compute new ranks
+        // compute new ranks
         new_ranks[..node_count]
             .par_iter_mut()
             .enumerate()
             .for_each(|(v, new_rank)| {
-                let teleport_prob = teleport_factor * personalization_vector[v];
+                let teleport_prob = teleport_factor * personalisation_vector[v];
 
-                let link_prob: f64 = graph
-                    .in_edges(v)
+                let (in_nodes, in_weights) = graph.in_edges(v);
+                let link_prob: f64 = in_nodes
                     .iter()
-                    .map(|&w| {
-                        if graph.out_degrees[w] > 0.0 {
-                            damping_factor * ranks[w] / graph.out_degrees[w]
+                    .zip(in_weights.iter())
+                    .map(|(&w, &edge_weight)| {
+                        if graph.out_weight_sums[w] > 0.0 {
+                            damping_factor * ranks[w] * edge_weight / graph.out_weight_sums[w]
                         } else {
-                            damping_factor * ranks[w] * personalization_vector[v]
+                            damping_factor * ranks[w] * personalisation_vector[v]
                         }
                     })
                     .sum();
@@ -369,7 +400,6 @@ pub fn personalised_page_rank_optimised(
             .sum();
 
         // Swap vectors (no allocation)
-        // This is a crazy command and still frightens me
         std::mem::swap(ranks, new_ranks);
 
         if squared_norm_2 <= tolerance {
@@ -377,7 +407,7 @@ pub fn personalised_page_rank_optimised(
         }
     }
 
-    // Normalize (make sure tha sum == 1)
+    // Normalize (make sure that sum == 1)
     let sum: f64 = ranks[..node_count].iter().sum();
     if sum > 0.0 {
         ranks[..node_count].iter_mut().for_each(|x| *x /= sum);
@@ -403,7 +433,7 @@ pub fn personalised_page_rank_optimised(
 ///
 /// The (normalised) personalised page rank scores.
 pub fn personalised_page_rank<D>(
-    graph: Graph<&str, ()>,
+    graph: Graph<&str, D>,
     damping_factor: D,
     personalisation_vector: &[D],
     nb_iter: usize,
@@ -425,26 +455,28 @@ where
     assert_eq!(
         personalisation_vector.len(),
         node_count,
-        "Personalization vector length must match node count."
+        "Personalisation vector length must match node count."
     );
 
     let tolerance = tol.unwrap_or(D::default_tolerance());
 
-    let mut out_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
-    let mut in_edges: Vec<Vec<usize>> = vec![Vec::new(); node_count];
+    let mut out_edges: Vec<Vec<(usize, D)>> = vec![Vec::new(); node_count];
+    let mut in_edges: Vec<Vec<(usize, D)>> = vec![Vec::new(); node_count];
 
+    // build adjacency lists with weights
     for (i, out_edge_vec) in out_edges.iter_mut().enumerate().take(node_count) {
         let node_id = graph.from_index(i);
         for edge in graph.edges(node_id) {
             let target_idx = graph.to_index(edge.target());
-            out_edge_vec.push(target_idx);
-            in_edges[target_idx].push(i);
+            let weight = *edge.weight();
+            out_edge_vec.push((target_idx, weight));
+            in_edges[target_idx].push((i, weight));
         }
     }
 
-    let out_degrees: Vec<D> = out_edges
+    let out_weight_sums: Vec<D> = out_edges
         .iter()
-        .map(|edges| D::from_f64(edges.len() as f64).unwrap_or(D::zero()))
+        .map(|edges| edges.iter().map(|(_, weight)| *weight).sum())
         .collect();
 
     let mut ranks: Vec<D> = personalisation_vector.to_vec();
@@ -458,9 +490,9 @@ where
 
                 let link_prob = in_edges[v]
                     .iter()
-                    .map(|&w| {
-                        if out_degrees[w] > D::zero() {
-                            damping_factor * ranks[w] / out_degrees[w]
+                    .map(|&(w, edge_weight)| {
+                        if out_weight_sums[w] > D::zero() {
+                            damping_factor * ranks[w] * edge_weight / out_weight_sums[w]
                         } else {
                             damping_factor * ranks[w] * personalisation_vector[v]
                         }
@@ -567,8 +599,8 @@ where
             let target_idx = graph.to_index(edge.target());
             let is_sink_edge = constrained_types.contains(edge_data.edge_type);
 
-            out_edges[node_idx_usize].push((target_idx, edge_data.weight, is_sink_edge));
-            in_edges[target_idx].push((node_idx_usize, edge_data.weight, is_sink_edge));
+            out_edges[node_idx_usize].push((target_idx, *edge_data.weight, is_sink_edge));
+            in_edges[target_idx].push((node_idx_usize, *edge_data.weight, is_sink_edge));
         }
     }
 
@@ -692,7 +724,7 @@ pub struct NodeData<'a> {
 #[derive(Debug, Clone)]
 pub struct EdgeData<'a> {
     pub edge_type: &'a str,
-    pub weight: f64,
+    pub weight: &'a f64,
 }
 
 /// Generate a weighted, labelled PetGraph Graph
@@ -738,7 +770,7 @@ pub fn graph_from_strings_with_attributes<'a>(
     }
 
     // add the edges
-    for (((from_name, to_name), edge_type), &weight) in from
+    for (((from_name, to_name), edge_type), weight) in from
         .iter()
         .zip(to.iter())
         .zip(edge_types.iter())
@@ -776,11 +808,16 @@ pub fn graph_from_strings<'a>(
     nodes: &'a [String],
     from: &[String],
     to: &[String],
+    weights: Option<&[f64]>,
     undirected: bool,
-) -> Graph<&'a str, ()> {
+) -> Graph<&'a str, f64> {
     assert_same_len!(from, to);
 
-    let mut graph: Graph<&'a str, ()> = Graph::new();
+    if let Some(weights) = weights {
+        assert_same_len!(from, weights);
+    }
+
+    let mut graph: Graph<&'a str, f64> = Graph::new();
 
     let mut term_to_idx = FxHashMap::default();
 
@@ -789,12 +826,13 @@ pub fn graph_from_strings<'a>(
         term_to_idx.insert(term, idx);
     }
 
-    for (from, to) in from.iter().zip(to.iter()) {
+    for (i, (from, to)) in from.iter().zip(to.iter()).enumerate() {
         let from = *term_to_idx.get(from).unwrap();
         let to = *term_to_idx.get(to).unwrap();
-        graph.add_edge(from, to, ());
+        let weight = weights.map(|w| w[i]).unwrap_or(1.0);
+        graph.add_edge(from, to, weight);
         if undirected {
-            graph.add_edge(to, from, ());
+            graph.add_edge(to, from, weight);
         }
     }
 

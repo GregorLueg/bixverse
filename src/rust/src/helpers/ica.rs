@@ -307,8 +307,8 @@ pub fn update_mix_mat(w: MatRef<f64>) -> faer::Mat<f64> {
 ///
 /// ### Params
 ///
-/// * `n_comp` - Number of independent components. This will influence the
-///   dimensionality of the randomly initialised mixing matrix.
+/// * `n_comp` - Number of independent components. This will influence the dimensionality
+///   of the randomly initialised mixing matrix.
 /// * `seed` - Random seed for reproducibility purposes
 ///
 /// ### Returns

@@ -4,7 +4,7 @@
 \alias{rs_page_rank}
 \title{Rust version of calcaluting the personalised page rank}
 \usage{
-rs_page_rank(node_names, from, to, personalised, undirected)
+rs_page_rank(node_names, from, to, weights, personalised, undirected)
 }
 \arguments{
 \item{node_names}{String vector. Name of the graph nodes.}
@@ -12,6 +12,9 @@ rs_page_rank(node_names, from, to, personalised, undirected)
 \item{from}{String vector. The names of the \code{from} edges from the edge list.}
 
 \item{to}{String vector. The names of the \code{to} edges from the edge list.}
+
+\item{weights}{Optional weight vector. If NULL, defaults to 1.0 as weight
+for all edges.}
 
 \item{personalised}{Numerical vector. The reset values. They must sum to 1
 and be of same length of \code{node_names}!}

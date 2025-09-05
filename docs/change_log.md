@@ -1,12 +1,27 @@
 # *bixverse* change log
 
-*Last update: 25.07.2025* </br>
+*Last update: 04.09.2025* </br>
 
 ### Version **0.0.2.1**
 
 #### New features
 
 - Addition of constrained PageRank implementation.
+- Improved synthetic data for correlation-based gene module detections.
+- Improved tests for ICA, CoReMo and graph-based correlation modules.
+- Various distance calculations accelerated in Rust.
+- The Rust-based implementations of personalised PageRank have now the option
+to use weighted graphs.
+
+#### Bug fixes, documentation updates
+
+- Fixed bugs for the graph-based correlation methods.
+- Fixed export bugs for some of the plotting functions.
+
+#### Breaking changes
+
+- Interface to the Rust-based personalised page-rank calculations can break due
+to the addition of a `weights` parameter.
 
 ### Version **0.0.2.0**
 

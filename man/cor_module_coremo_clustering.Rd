@@ -6,6 +6,7 @@
 \usage{
 cor_module_coremo_clustering(
   object,
+  span = 0.1,
   coremo_params = params_coremo(),
   seed = 42L,
   .verbose = TRUE
@@ -13,6 +14,9 @@ cor_module_coremo_clustering(
 }
 \arguments{
 \item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+
+\item{span}{Float. Defines the span parameter for the loess function to
+identify the inflection point. Defaults to \code{0.1}. Must be between 0.1 and 1.}
 
 \item{coremo_params}{List. Parameters for the generation of the CoReMo
 modules, see \code{\link[=params_coremo]{params_coremo()}}. Contains:

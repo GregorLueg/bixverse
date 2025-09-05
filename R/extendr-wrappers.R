@@ -109,15 +109,19 @@ rs_get_gs_indices <- function(gene_universe, pathway_list) .Call(wrap__rs_get_gs
 #' @param gs_idx Integer vector. The indices of the gene set genes.
 #' @param gsea_param Float. The GSEA parameter. Usually defaults to 1.0.
 #' @param return_leading_edge Boolean. Return the leading edge indices.
+#' @param return_all_extremes Boolean. Shall the extreme values be returned
+#' for plotting.
 #'
 #' @return List with the following elements
 #' \itemize{
 #'     \item gene_stat Enrichment score for that gene set
 #'     \item leading_edge Indicies of the leading edge genes.
+#'     \item top Top values of the curve.
+#'     \item bottom Bottom values of the curve.
 #' }
 #'
 #' @export
-rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge)
+rs_calc_gsea_stats <- function(stats, gs_idx, gsea_param, return_leading_edge, return_all_extremes) .Call(wrap__rs_calc_gsea_stats, stats, gs_idx, gsea_param, return_leading_edge, return_all_extremes)
 
 #' Helper function to generate fgsea simple-based permutations
 #'
@@ -258,6 +262,8 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param personalised Numerical vector. The reset values. They must sum to 1
 #' and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
@@ -265,7 +271,7 @@ rs_simple_and_multi_err <- function(n_more_extreme, nperm, sample_size) .Call(wr
 #' @return The personalised page rank values.
 #'
 #' @export
-rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, personalised, undirected)
+rs_page_rank <- function(node_names, from, to, weights, personalised, undirected) .Call(wrap__rs_page_rank, node_names, from, to, weights, personalised, undirected)
 
 #' Calculate massively parallelised personalised page rank scores
 #'
@@ -276,6 +282,8 @@ rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(w
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param diffusion_scores List. The personalised vectors for the page rank reset
 #' values. Each element must sum to 1 and be of same length of `node_names`!
 #' @param undirected Boolean. Is this an undirected graph.
@@ -283,7 +291,7 @@ rs_page_rank <- function(node_names, from, to, personalised, undirected) .Call(w
 #' @return A matrix of the scores with each row representing an element in the
 #' `diffusion_scores` list (in order), and each column representing the value
 #' of the personalised page rank diffusion for this node.
-rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, diffusion_scores, undirected)
+rs_page_rank_parallel <- function(node_names, from, to, weights, diffusion_scores, undirected) .Call(wrap__rs_page_rank_parallel, node_names, from, to, weights, diffusion_scores, undirected)
 
 #' Calculate massively parallelised tied diffusion scores
 #'
@@ -293,6 +301,8 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' @param node_names String vector. Name of the graph nodes.
 #' @param from String vector. The names of the `from` edges from the edge list.
 #' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Optional weight vector. If NULL, defaults to 1.0 as weight
+#' for all edges.
 #' @param diffusion_scores_1 List. The first set of personalised vectors for
 #' the page rank reset values. Each element must sum to 1 and be of same length
 #' of `node_names`!
@@ -306,9 +316,9 @@ rs_page_rank_parallel <- function(node_names, from, to, diffusion_scores, undire
 #' @return A matrix of the scores with each row representing a tied diffusion of
 #' of `diffusion_scores_1` and  `diffusion_scores_2` lists (in order), and each
 #' column representing the value of the tied diffusion for this node.
-rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
+rs_tied_diffusion_parallel <- function(node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected) .Call(wrap__rs_tied_diffusion_parallel, node_names, from, to, weights, diffusion_scores_1, diffusion_scores_2, summarisation_fun, undirected)
 
-#' Rust version of calcaluting a constrained personalised page rank
+#' Calculate a constrained page-rank score
 #'
 #' @description This function can be used to get constrainted personalised
 #' page-rank scores akin to Ruiz, et al. You can provide optionally
@@ -328,12 +338,40 @@ rs_tied_diffusion_parallel <- function(node_names, from, to, diffusion_scores_1,
 #' @param sink_edges Optional string vector. Shall an automatic reset occur
 #' when this edge type is traversed.
 #'
-#' @return The personalised page rank values.
+#' @return The personalised constrained page rank values.
 #'
 #' @export
 #'
 #' @references Ruiz, et al., Nat Commun, 2021
 rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, edge_type, personalised, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank, node_names, node_types, from, to, weights, edge_type, personalised, sink_nodes, sink_edges)
+
+#' Calculate a constrained page-rank score over a list.
+#'
+#' @description This function can be used to get constrainted personalised
+#' page-rank scores akin to Ruiz, et al. You can provide optionally
+#' `sink_nodes` (node types that will force a reset) and/or `sink_edges`
+#' (edge types that will force a reset). This version can take in a list
+#' of personalisation vectors and returns a list as result.
+#'
+#' @param personalisation_list List. The list with the personalisation vectors.
+#' The sum must equal to 1, otherwise the function panics!
+#' @param node_names String vector. Name of the graph nodes.
+#' @param node_types String vector. The node types.
+#' @param from String vector. The names of the `from` edges from the edge list.
+#' @param to String vector. The names of the `to` edges from the edge list.
+#' @param weights Numerical vector. The edge weights from the edge list.
+#' @param edge_type String vector. The edge types.
+#' @param sink_nodes Optional string vector. Should these node types be seen as
+#' sinks, i.e., the reset occurs when this node is reached.
+#' @param sink_edges Optional string vector. Shall an automatic reset occur
+#' when this edge type is traversed.
+#'
+#' @return A list of the personalised (constrained) page rank values.
+#'
+#' @export
+#'
+#' @references Ruiz, et al., Nat Commun, 2021
+rs_constrained_page_rank_list <- function(personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank_list, personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges)
 
 #' Prepare a pathway list for GSVA
 #'
@@ -819,6 +857,22 @@ rs_cor2 <- function(x, y, spearman) .Call(wrap__rs_cor2, x, y, spearman)
 #' @export
 rs_cov2cor <- function(x) .Call(wrap__rs_cov2cor, x)
 
+#' Calculate the pairwise column distance in a matrix
+#'
+#' @description
+#' This function allows to calculate pairwise between all columns the specified
+#' distance metric.
+#'
+#' @param x Numerical matrix. The matrix for which to calculate the pairwise
+#' column distances.
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#'
+#' @return The calculated distance matrix
+#'
+#' @export
+rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
+
 #' Calculates the mutual information matrix
 #'
 #' @description Calculates the mutual information across all columns in the
@@ -1271,6 +1325,25 @@ rs_sparse_dict_dgrdl_grid_search <- function(x, dgrdl_params, seeds, dict_sizes,
 #' @export
 rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
 
+#' Helper to get zero stats from a given matrix
+#'
+#' @description
+#' Calculates in a single matrix pass the total number of zeroes, the row
+#' zeroes and column zeroes.
+#'
+#' @param x Numeric matrix. The matrix for which to calculate the total zeroes,
+#' column and row zeroes.
+#'
+#' @returns A list with:
+#' \itemize{
+#'     \item total_zeroes - Total zeroes in the matrix.
+#'     \item row_zeroes - Vector with number of zeroes per row.
+#'     \item col_zeroes - Vector with number of zeroes per column.
+#' }
+#'
+#' @export
+rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
+
 #' Set similarities over list
 #'
 #' This function calculates the Jaccard or similarity index between a one given
@@ -1430,8 +1503,6 @@ rs_critval_mat <- function(mat, iters, alpha, seed) .Call(wrap__rs_critval_mat, 
 #'   \item col_ptrs - The column pointers
 #'   \item row_indices - The row indices
 #' }
-#'
-#' @export
 rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csc, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
 #' Generate synthetic single cell data (h5ad type)
@@ -1459,6 +1530,83 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #'
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
+#' Generation of bulkRNAseq-like data with optional correlation structure
+#'
+#' @description
+#' Function generates synthetic bulkRNAseq data with heteroskedasticity (lowly
+#' expressed genes show higher variance) and can optionally add correlation
+#' structures for testing purposes.
+#'
+#' @param num_samples Integer. Number of samples to simulate.
+#' @param num_genes Integer. Number of genes to simulate.
+#' @param seed Integer. Seed for reproducibility.
+#' @param add_modules Boolean. Shall correlation structures be added to the
+#' data.
+#' @param module_sizes `NULL` or vector of sizes of the gene modules. When
+#' `NULL` defaults to `c(300, 250, 200, 300, 500)`. Warning! The sum of this
+#' vector must be ≤ num_genes!
+#'
+#' @return List with the following elements
+#' \itemize{
+#'     \item counts The matrix of simulated counts.
+#'     \item module_membership Vector defining the module membership.
+#' }
+#'
+#' @export
+rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, module_sizes) .Call(wrap__rs_generate_bulk_rnaseq, num_samples, num_genes, seed, add_modules, module_sizes)
+
+#' Sparsify bulkRNAseq like data
+#'
+#' @description
+#' This function takes in a (raw) count matrix (for example from the synthetic
+#' data in bixverse) and applies sparsification to it based on two possible
+#' functions:
+#'
+#' **Logistic function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = clamp(1 / (1 + exp(shape * (ln(exp+1) - ln(midpoint+1)))), 0.3, 0.8) * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - Plateaus at global_sparsity dropout for high expression genes
+#' - Partial dropout preserves count structure via binomial thinning
+#' - Good for preserving variance-mean relationships
+#'
+#' **Power Decay function:**
+#'
+#' With dropout probability defined as:
+#'
+#' ```
+#' P(dropout) = (midpoint / (exp + midpoint))^power * scale_factor * (1 - global_sparsity) + global_sparsity
+#' ```
+#'
+#' with the following characteristics:
+#'
+#' - No plateau - high expression genes get substantial dropout
+#' - Complete dropout only (no partial dropout)
+#' - More uniform dropout across expression range
+#'
+#' @param count_mat Numerical matrix. Original numeric matrix.
+#' @param dropout_function String. One of `c("log", "powerdecay")`. Defines
+#' which function will be used to induce the sparsity.
+#' @param dropout_midpoint Numeric. Controls the midpoint parameter of the
+#' logistic and power decay function.
+#' @param dropout_shape Numeric. Controls the shape parameter of the logistic
+#' function.
+#' @param power_factor Numeric. Controls the power factor of the power decay
+#' function.
+#' @param global_sparsity Numeric. The global sparsity parameter.
+#' @param seed Integer. Seed for reproducibility.
+#'
+#' @return The sparsified matrix based on the provided parameters.
+#'
+#' @export
+rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

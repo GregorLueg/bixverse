@@ -145,26 +145,71 @@ expected_gsea_neg_leading_edge <- c(
   860,
   855
 )
+expected_top_values <- c(
+  0.0756723,
+  0.1479945,
+  0.2296184,
+  0.3069747,
+  0.3863413,
+  0.4510943,
+  0.5203886,
+  0.5901955,
+  0.6361301,
+  0.6854175,
+  0.7094889,
+  0.7596139,
+  0.7925105,
+  0.8363718,
+  0.8730964
+)
+expected_bottom_values <- c(
+  -0.01725888,
+  0.06450479,
+  0.14697927,
+  0.22657273,
+  0.30697472,
+  0.37821951,
+  0.44906379,
+  0.51937336,
+  0.57192141,
+  0.62496258,
+  0.65800637,
+  0.70847365,
+  0.74540071,
+  0.78946486,
+  0.82825000
+)
 
 rs_gsea_stats_pos = rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_pos,
   gsea_param = 1.0,
-  return_leading_edge = FALSE
+  return_leading_edge = FALSE,
+  return_all_extremes = FALSE
 )
 
 rs_gsea_stats_pos_v2 = rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_pos,
   gsea_param = 1.0,
-  return_leading_edge = TRUE
+  return_leading_edge = TRUE,
+  return_all_extremes = FALSE
+)
+
+rs_gsea_stats_pos_v3 = rs_calc_gsea_stats(
+  stats = stats,
+  gs_idx = rs_indices$pathway_pos,
+  gsea_param = 1.0,
+  return_leading_edge = TRUE,
+  return_all_extremes = TRUE
 )
 
 rs_gsea_stats_neg = rs_calc_gsea_stats(
   stats = stats,
   gs_idx = rs_indices$pathway_neg,
   gsea_param = 1.0,
-  return_leading_edge = TRUE
+  return_leading_edge = TRUE,
+  return_all_extremes = FALSE
 )
 
 
@@ -201,6 +246,38 @@ expect_equal(
   target = expected_gsea_pos_leading_edge,
   info = paste(
     "gsea: gsea stat pos: leading edge"
+  ),
+  tolerance = 1e-7
+)
+
+expect_true(
+  current = length(rs_gsea_stats_pos_v2$top) == 0,
+  info = paste(
+    "gsea: gsea stat pos: no top values returned"
+  )
+)
+
+expect_true(
+  current = length(rs_gsea_stats_pos_v2$bottom) == 0,
+  info = paste(
+    "gsea: gsea stat pos: no bottom values returned"
+  )
+)
+
+expect_equal(
+  current = rs_gsea_stats_pos_v3$top,
+  target = expected_top_values,
+  info = paste(
+    "gsea: gsea stat pos: top values"
+  ),
+  tolerance = 1e-7
+)
+
+expect_equal(
+  current = rs_gsea_stats_pos_v3$bottom,
+  target = expected_bottom_values,
+  info = paste(
+    "gsea: gsea stat pos: bottom values"
   ),
   tolerance = 1e-7
 )
@@ -259,21 +336,21 @@ correlation_traditional_vs_fgsea_pval <- cor(
 )
 
 expect_true(
-  correlation_traditional_vs_fgsea_es >= 0.97,
+  correlation_traditional_vs_fgsea_es >= 0.99,
   info = paste(
     "correlation internal fgsea vs official (ES)"
   )
 )
 
 expect_true(
-  correlation_traditional_vs_fgsea_nes >= 0.97,
+  correlation_traditional_vs_fgsea_nes >= 0.99,
   info = paste(
     "correlation internal fgsea vs official (NES)"
   )
 )
 
 expect_true(
-  correlation_traditional_vs_fgsea_pval >= 0.97,
+  correlation_traditional_vs_fgsea_pval >= 0.99,
   info = paste(
     "correlation internal fgsea vs official (pval)"
   )
@@ -352,7 +429,7 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
     `names<-`(c("es", "leading_edge"))
 
   expect_equal(
-    current = rs_gsea_stats_pos_v2,
+    current = rs_gsea_stats_pos_v2[c("es", "leading_edge")],
     target = fgsea_result_calc_gsea_stats_pos,
     info = paste(
       "calc gsea stats fgsea vs internal: positive"
@@ -360,10 +437,34 @@ if (requireNamespace("fgsea", quietly = TRUE)) {
   )
 
   expect_equal(
-    current = rs_gsea_stats_neg,
+    current = rs_gsea_stats_neg[c("es", "leading_edge")],
     target = fgsea_result_calc_gsea_stats_neg,
     info = paste(
       "calc gsea stats fgsea vs internal: positive"
+    )
+  )
+
+  # with extreme values
+  fgsea_result_calc_gsea_stats_pos_v2 <- fgsea::calcGseaStat(
+    stats = stats,
+    selectedStats = pathway_indices_r$pathway_pos,
+    returnLeadingEdge = TRUE,
+    returnAllExtremes = TRUE
+  )
+
+  expect_equivalent(
+    current = rs_gsea_stats_pos_v3$top,
+    target = fgsea_result_calc_gsea_stats_pos_v2$top,
+    info = paste(
+      "calc gsea stats fgsea vs internal: top extreme values"
+    )
+  )
+
+  expect_equivalent(
+    current = rs_gsea_stats_pos_v3$bottom,
+    target = fgsea_result_calc_gsea_stats_pos_v2$bottom,
+    info = paste(
+      "calc gsea stats fgsea vs internal: bottom extreme values"
     )
   )
 }
