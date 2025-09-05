@@ -27,6 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clear R package cache
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ] || [ "$RUNNER_OS" == "Linux" ]; then
+            rm -rf ~/.cache/R/pak
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$env:LOCALAPPDATA\R\cache\R\pak"
+          fi
+        shell: bash
+
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
@@ -34,6 +43,7 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          extra-repositories: 'https://cloud.r-project.org'
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
