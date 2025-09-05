@@ -4,7 +4,14 @@
 \alias{rs_page_rank_parallel}
 \title{Calculate massively parallelised personalised page rank scores}
 \usage{
-rs_page_rank_parallel(node_names, from, to, diffusion_scores, undirected)
+rs_page_rank_parallel(
+  node_names,
+  from,
+  to,
+  weights,
+  diffusion_scores,
+  undirected
+)
 }
 \arguments{
 \item{node_names}{String vector. Name of the graph nodes.}
@@ -12,6 +19,9 @@ rs_page_rank_parallel(node_names, from, to, diffusion_scores, undirected)
 \item{from}{String vector. The names of the \code{from} edges from the edge list.}
 
 \item{to}{String vector. The names of the \code{to} edges from the edge list.}
+
+\item{weights}{Optional weight vector. If NULL, defaults to 1.0 as weight
+for all edges.}
 
 \item{diffusion_scores}{List. The personalised vectors for the page rank reset
 values. Each element must sum to 1 and be of same length of \code{node_names}!}

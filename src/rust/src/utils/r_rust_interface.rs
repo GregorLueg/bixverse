@@ -515,7 +515,7 @@ impl<'a> NamedMatrix<'a> {
 /// ### Returns
 ///
 /// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
+pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> MatRef<'_, f64> {
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();
@@ -532,7 +532,7 @@ pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> faer::MatRef<f64> {
 /// ### Returns
 ///
 /// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> faer::MatRef<i32> {
+pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> MatRef<'_, i32> {
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();

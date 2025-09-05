@@ -45,7 +45,12 @@ bulk_coexp <- S7::new_class(
   ),
   constructor = function(raw_data, meta_data, variable_info = NULL) {
     # Checks
-    checkmate::assertMatrix(raw_data, mode = "numeric")
+    checkmate::assertMatrix(
+      raw_data,
+      mode = "numeric",
+      row.names = "named",
+      col.names = "named"
+    )
     checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),
@@ -128,7 +133,12 @@ bulk_dge <- S7::new_class(
     alternative_gene_id = NULL
   ) {
     # Checks
-    checkmate::assertMatrix(raw_counts, mode = "numeric")
+    checkmate::assertMatrix(
+      raw_counts,
+      mode = "numeric",
+      row.names = "named",
+      col.names = "named"
+    )
     checkmate::assertDataTable(meta_data)
     checkmate::assertNames(
       names(meta_data),

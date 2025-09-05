@@ -114,7 +114,7 @@ pub fn hypergeom_odds_ratio(a1_b1: usize, a0_b1: usize, a1_b0: usize, a0_b0: usi
 /// ### Params
 ///
 /// * `gene_set_list` - A slice of String vectors, representing the gene sets
-///    you want to count the number of hits against
+///   you want to count the number of hits against
 /// * `target_genes` - A string slice representing the target genes
 ///
 /// ### Returns

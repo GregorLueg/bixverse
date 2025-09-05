@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::helpers::graph::{adjacency_to_laplacian, get_knn_graph_adj};
-use crate::helpers::linalg::{column_cosine, sylvester_solver};
+use crate::helpers::linalg::{column_pairwise_cosine, sylvester_solver};
 
 ////////////////////////
 // Params and results //
@@ -147,7 +147,7 @@ pub struct DgrdlResults {
 /// * `data_hash` - Hash of the underlying data
 /// * `laplacian_cache` - HashMap of the feature and sample Laplacian matrix
 /// * `dictionary_cache` - HashMap of the dictionary cashe with (dict_size, seed)
-///                        as keys
+///   as keys
 /// * `distance_matrix` - The distance matrix of the data as a flat vector
 #[derive(Debug)]
 pub struct DgrdlCache {
@@ -229,12 +229,14 @@ impl DgrdlCache {
 /// ### Fields
 ///
 /// * `approximation_error` - Calculates the approximation error in form of
-///                           squared Frobenius norm
+///   squared Frobenius norm
 /// * `feature_laplacian_objective` - Measures the similiarity of coefficients
-///                                   for the feature Laplacian
+///   for the feature Laplacian
 /// * `sample_laplacian_objective` - Measures the smoothness of the dictionary
-///                                  in respect to sample Laplacian
-/// *
+///   in respect to sample Laplacian
+/// * `seed` - Random seed for reproducibility
+/// * `k_neighbours` - Number of neighbours
+/// * `dict_size` - The size of the dictionary
 #[derive(Debug, Clone)]
 pub struct DgrdlObjectives {
     pub approximation_error: f64,
@@ -840,10 +842,10 @@ fn get_distance(distances: &[f64], i: usize, j: usize, n: usize) -> f64 {
 /// ### Fields
 ///
 /// * `data` - The original data matrix with rows = samples and columns =
-///            features
+///   features
 /// * `k` - Number of neighbours for the KNN graph
 /// * `features` - If `true` generated the Laplacian for the features, otherwise
-///                for the samples
+///   for the samples
 ///
 /// ### Returns
 ///
@@ -851,9 +853,9 @@ fn get_distance(distances: &[f64], i: usize, j: usize, n: usize) -> f64 {
 /// adjacency matrix
 fn get_dgrdl_laplacian(data: &MatRef<f64>, k: usize, features: bool) -> Mat<f64> {
     let cosine_sim = if features {
-        column_cosine(data)
+        column_pairwise_cosine(data)
     } else {
-        column_cosine(&data.transpose())
+        column_pairwise_cosine(&data.transpose())
     };
 
     let knn_adjacency = get_knn_graph_adj(&cosine_sim.as_ref(), k);

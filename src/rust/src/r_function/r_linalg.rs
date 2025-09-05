@@ -58,7 +58,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2
 fn rs_cos(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
-    let cos = column_cosine(&mat);
+    let cos = column_pairwise_cosine(&mat);
 
     faer_to_r_matrix(cos.as_ref())
 }
@@ -163,6 +163,40 @@ fn rs_pointwise_mutual_info(
     let npmi_mat = calc_pmi(&data, normalise);
 
     faer_to_r_matrix(npmi_mat.as_ref())
+}
+
+/// Calculate the pairwise column distance in a matrix
+///
+/// @description
+/// This function allows to calculate pairwise between all columns the specified
+/// distance metric.
+///
+/// @param x Numerical matrix. The matrix for which to calculate the pairwise
+/// column distances.
+/// @param distance_type String. One of
+/// `c("euclidean", "manhattan", "canberra", "cosine")`.
+///
+/// @return The calculated distance matrix
+///
+/// @export
+#[extendr]
+fn rs_dist(
+    x: RMatrix<f64>,
+    distance_type: String,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+    let data = &r_matrix_to_faer(&x);
+
+    let dist_type = parse_distance_type(&distance_type)
+        .ok_or_else(|| format!("Invalid Distance type: {}", distance_type))?;
+
+    let res = match dist_type {
+        DistanceType::L2Norm => column_pairwise_l2_norm(data),
+        DistanceType::L1Norm => column_pairwise_l1_norm(data),
+        DistanceType::Cosine => column_pairwise_cosine_dist(data),
+        DistanceType::Canberra => column_pairwise_canberra_dist(data),
+    };
+
+    Ok(faer_to_r_matrix(res.as_ref()))
 }
 
 /// Calculate the column wise correlations.
@@ -437,6 +471,7 @@ extendr_module! {
   fn rs_cos;
   fn rs_cor2;
   fn rs_cov2cor;
+  fn rs_dist;
   fn rs_mutual_info;
   fn rs_pointwise_mutual_info;
   fn rs_prcomp;

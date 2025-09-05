@@ -80,7 +80,6 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 
   checkmate::assertTRUE(group_col %in% colnames(meta_data))
 
-  # Sample outlier removal
   if (.verbose) {
     message("Detecting sample outliers.")
   }
@@ -92,6 +91,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   samples <- merge(meta_data, detected_genes_nb, by = "sample_id") %>%
     .[, `:=`(perc_detected_genes = nb_detected_genes / nrow(raw_counts))]
 
+  # plot 1 - number of genes per cohort
   p1_nb_genes_cohort <- ggplot2::ggplot(
     samples,
     aes(
@@ -115,6 +115,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
       legend.position = "none"
     )
 
+  # plot 2 - outlier plot based on standard deviations
   sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
   min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
     outlier_threshold * sd_samples
@@ -198,19 +199,55 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     counts = dge_list,
     design = design,
     normalize.method = "quantile",
-    plot = TRUE
+    plot = FALSE
   )
 
-  p3_voom_normalization <- recordPlot()
-  dev.off()
-
-  boxplot(
-    voom_obj$E,
-    col = as.factor(samples),
-    main = "Boxplot of normalized gene expression across samples"
+  # plot 3 - mean variance trend from voom
+  voom_plot_data <- data.table::data.table(
+    avg_exp = rowMeans(voom_obj$E),
+    residual_sd = sqrt(matrixStats::rowSds(voom_obj$E))
   )
-  p4_boxplot_normalization <- recordPlot()
-  dev.off()
+
+  p3_voom_normalization <- ggplot2::ggplot(
+    data = voom_plot_data,
+    mapping = aes(x = avg_exp, residual_sd)
+  ) +
+    ggplot2::geom_point(size = 0.1) +
+    ggplot2::geom_smooth(
+      method = "loess",
+      span = 0.5,
+      se = FALSE,
+      color = "red"
+    ) +
+    ggplot2::labs(
+      x = "sqrt(count size)",
+      y = "Residual standard deviation",
+      title = "Voom: Mean-variance trend"
+    ) +
+    ggplot2::theme_classic()
+
+  # plot 4 - boxplots
+  boxplot_data <- data.table::data.table(
+    sample = rep(colnames(voom_obj$E), each = nrow(voom_obj$E)),
+    expression = as.vector(voom_obj$E),
+    group = rep(as.factor(samples), each = nrow(voom_obj$E))
+  )
+
+  p4_boxplot_normalization <- ggplot2::ggplot(
+    boxplot_data,
+    aes(x = sample, y = expression, fill = group)
+  ) +
+    ggplot2::geom_boxplot() +
+    ggplot2::labs(
+      x = "Samples",
+      y = "Normalized log2 expression",
+      title = "Boxplot of normalized gene expression across samples"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "top"
+    )
 
   S7::prop(object, "plots") <- list(
     p1_nb_genes_cohort = p1_nb_genes_cohort,
@@ -398,6 +435,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
 #' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param bins Integer. Number of bins to plot.
 #'
+#' @export
 plot_hvgs <- S7::new_generic(
   "plot_hvgs",
   "object",

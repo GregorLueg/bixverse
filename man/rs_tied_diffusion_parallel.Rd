@@ -8,6 +8,7 @@ rs_tied_diffusion_parallel(
   node_names,
   from,
   to,
+  weights,
   diffusion_scores_1,
   diffusion_scores_2,
   summarisation_fun,
@@ -20,6 +21,9 @@ rs_tied_diffusion_parallel(
 \item{from}{String vector. The names of the \code{from} edges from the edge list.}
 
 \item{to}{String vector. The names of the \code{to} edges from the edge list.}
+
+\item{weights}{Optional weight vector. If NULL, defaults to 1.0 as weight
+for all edges.}
 
 \item{diffusion_scores_1}{List. The first set of personalised vectors for
 the page rank reset values. Each element must sum to 1 and be of same length

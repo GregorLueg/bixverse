@@ -250,7 +250,7 @@ impl<'a> GeneOntologyRandomPerm<'a> {
     /// ### Params
     ///
     /// * `pathway_scores` - The pathway scores for which to estimate the permutation
-    ///                      based stats
+    ///   based stats
     /// * `pathway_sizes` - The corresponding pathway sizes.
     ///
     /// ### Returns
@@ -381,7 +381,7 @@ pub fn finalise_go_res(
 /// * `min_genes` - Minimum number of genes in a given term.
 /// * `gene_universe_length` - Size of the gene universe
 /// * `elim_threshold` - Elimination threshold. Below that threshold the genes
-///                      from that term are eliminated from its ancestors
+///   from that term are eliminated from its ancestors
 /// * `debug` - Shall debug messages be printed.
 ///
 /// ### Return
@@ -490,7 +490,7 @@ pub fn process_ontology_level(
 /// * `go_random_perms` - The `GeneOntologyRandomPerm` with the random permutations.
 /// * `gsea_params` - The GSEA parameter.
 /// * `elim_threshold` - Elimination threshold. Below that threshold the genes
-///                      from that term are eliminated from its ancestors
+///   from that term are eliminated from its ancestors
 ///
 /// ### Return
 ///
@@ -524,10 +524,16 @@ pub fn process_ontology_level_fgsea_simple(
                 indices.sort();
 
                 if !indices.is_empty() {
-                    let es_res =
-                        calc_gsea_stats(stats, &indices, gsea_params.gsea_param, true, false);
+                    let es_res = calc_gsea_stats(
+                        stats,
+                        &indices,
+                        gsea_params.gsea_param,
+                        true,
+                        false,
+                        false,
+                    );
                     let size = indices.len();
-                    level_data_es.insert(go_id.clone(), (es_res.0, size, es_res.1));
+                    level_data_es.insert(go_id.clone(), (es_res.es, size, es_res.leading_edge));
                 }
             }
         }

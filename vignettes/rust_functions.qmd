@@ -19,6 +19,7 @@ general. This vignette will show you to use:
 * Correlations (via `rs_cor()`).
 * Covariance (via `rs_covariance()`).
 * Covariance to correlation (via `rs_cov2cor()`).
+* Distance calculations (vs `rs_dist()`).
 * Correlations between two matrices (via `rs_cor2()`).
 * Calculate the mutual information between columns (via `rs_mutual_information()`)
 * Calculations of set similarities between (via `rs_set_similarity_list()` or
@@ -203,6 +204,144 @@ And speed between Rust and R
 microbenchmark::microbenchmark(
   r = cor(random_data, random_data_2),
   rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
+  times = 50L
+)
+```
+
+### Distance metrics 
+
+`bixverse` also includes various distance metrics. Let's have a look at very
+common ones.
+
+#### Euclidean distance
+
+Let's check out the very classical Euclidean distance.
+
+```{r}
+#| label: euclidean distance
+
+r_euclidean_distance <- as.matrix(
+  dist(
+    random_data, 
+    method = "euclidean"
+  )
+)
+
+rs_euclidean_distance <- rs_dist(
+  t(random_data), # dist() calculates row-wise distances
+  distance_type = "euclidean"
+)
+
+all.equal(
+  r_euclidean_distance, 
+  rs_euclidean_distance, 
+  tolerance = 1e-14,
+  check.attributes = FALSE
+)
+```
+
+Again, Rust is much faster...
+
+```{r}
+#| label: euclidean distance speed
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+# to remove any overhead, we do not do the matrix transformation
+# or the transpositation. due to the equal dimensions, it will
+# not matter
+microbenchmark::microbenchmark(
+  r = dist(random_data, method = "euclidean"),
+  rust = rs_dist(random_data, distance_type = "euclidean"),
+  times = 50L
+)
+```
+
+#### Other distance metrics
+
+Let's test other distance metrics...
+
+**Manhattan distance**
+
+We observe again equivalence of Rust and R results.
+
+```{r}
+#| label: manhattan distance
+
+r_manhattan_distance <- as.matrix(
+  dist(
+    random_data, 
+    method = "manhattan"
+  )
+)
+
+rs_manhattan_distance <- rs_dist(
+  t(random_data), # dist() calculates row-wise distances
+  distance_type = "manhattan"
+)
+
+all.equal(
+  r_manhattan_distance, 
+  rs_manhattan_distance, 
+  tolerance = 1e-14,
+  check.attributes = FALSE
+)
+```
+
+And speed ups in Rust.
+
+```{r}
+#| label: manhattan distance speed
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+# to remove any overhead, we do not do the matrix transformation
+# or the transpositation. due to the equal dimensions, it will
+# not matter
+microbenchmark::microbenchmark(
+  r = dist(random_data, method = "manhattan"),
+  rust = rs_dist(random_data, distance_type = "manhattan"),
+  times = 50L
+)
+```
+
+**Canberra distance**
+
+Equivalence observed...
+
+```{r}
+#| label: canberra distance
+
+r_canberra_distance <- as.matrix(
+  dist(
+    random_data, 
+    method = "canberra"
+  )
+)
+
+rs_canberra_distance <- rs_dist(
+  t(random_data), # dist() calculates row-wise distances
+  distance_type = "canberra"
+)
+
+all.equal(
+  r_canberra_distance, 
+  rs_canberra_distance, 
+  tolerance = 1e-14,
+  check.attributes = FALSE
+)
+```
+
+... and speed-ups.
+
+```{r}
+#| label: canberra distance speed
+#| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
+
+# to remove any overhead, we do not do the matrix transformation
+# or the transpositation. due to the equal dimensions, it will
+# not matter
+microbenchmark::microbenchmark(
+  r = dist(random_data, method = "canberra"),
+  rust = rs_dist(random_data, distance_type = "canberra"),
   times = 50L
 )
 ```
