@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.1-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.2.2-orange) 
 
 </br>
 
@@ -18,16 +18,10 @@ leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-This is now officially the version **0.0.2.1** release. With this 
+This is now officially the version **0.0.2.2** release. With this 
 update the following has been updated/changed:
 
-- Improved synthetic data for bulk RNAseq to test correlation-based methods
-- Constrained page-rank algorithms in Rust that can have sink nodes and/or sink
-edges. Also, improved the Rust-based page-rank algorithm to take in weighted
-graphs.
-- Various distance matrices for pairwise column-based calculations (L1 Norm,
-L2 Norm, Canberra distance and Cosine distance).
-- Bug and documentation fixes.
+- ...
 
 ## *Installation*
 
