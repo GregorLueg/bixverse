@@ -1,7 +1,8 @@
 [package]
+
+version = '0.3.0'
 name = 'bixverse'
 publish = false
-version = '0.3.0'
 edition = '2021'
 rust-version = '1.85'
 
