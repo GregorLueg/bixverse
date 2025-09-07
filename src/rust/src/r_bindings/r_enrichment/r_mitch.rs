@@ -1,20 +1,46 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 
+use crate::core::base::stats::calc_fdr;
 use crate::core::enrichment::mitch::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::*;
 
+/// Calculate mitch enrichment leveraging Rust under the hood
+///
+/// @param x Numerical matrix. Each column represents on the contrasts you
+/// wish to test for and the rows represent the gene statistics per contrast.
+/// @param pathway_list Named list. Each element represents one of the pathways
+/// to test for.
+/// @param min_size Integer. Minimum size of gene the gene set to be tested for.
+///
+/// @return A list with the following elements:
+///  \itemize{
+///     \item pathway_names - The name of the pathway.
+///     \item pathway_sizes The size of the pathway.
+///     \item manova_pvals - The p-value of the MANOVA test.
+///     \item anova_pvals The p-values of the ANOVA test on top of the MANOVA
+///     results. Total length = `ncol(x)` * number of pathways.
+///     \item scores - The scores for each pathway set, contrast. Same length
+///     as `anova_pvals`.
+///     \item s_dist - Calculated distances from the hypotenuse.
+///     \item sd - SDs of the scores.
+/// }
+///
 /// @export
 #[extendr]
 fn rs_mitch_calc(
     x: RMatrix<f64>,
-    row_names: Vec<String>,
     pathway_list: List,
     min_size: usize,
 ) -> extendr_api::Result<List> {
     let data = r_matrix_to_faer(&x);
     let ranked_data = mitch_rank(&data);
+    let r_row_names = x.get_rownames().unwrap();
+    let mut row_names = Vec::with_capacity(r_row_names.len());
+    for e in r_row_names.iter() {
+        row_names.push(e.to_string());
+    }
 
     let (pathway_names, pathway_indices) =
         prepare_mitch_pathways(&row_names, pathway_list, min_size)?;
@@ -49,7 +75,8 @@ fn rs_mitch_calc(
     Ok(list!(
         pathway_names = pathway_names,
         pathway_sizes = pathway_sizes,
-        manova_pvals = manova_pvals,
+        manova_pval = manova_pvals.clone(),
+        manova_fdr = calc_fdr(&manova_pvals),
         anova_pvals = anova_pvals,
         scores = scores,
         s_dist = s_dist,

@@ -1,133 +1,111 @@
-# library(mitch)
+# mitch test -------------------------------------------------------------------
 
-# ?mitch_calc
+## data ------------------------------------------------------------------------
 
-# data(myImportedData, genesetsExample)
+set.seed(42L)
 
-# tictoc::tic()
-# resExample <- mitch_calc(
-#   myImportedData,
-#   genesetsExample,
-#   priority = 'significance',
-#   minsetsize = 5,
-#   cores = 2
-# )
-# tictoc::toc()
+contrast_data <- matrix(data = rnorm(3 * 26), nrow = 26)
+colnames(contrast_data) <- sprintf("contrast_%i", 1:3)
+rownames(contrast_data) <- letters
 
-# microbenchmark::microbenchmark(
-#   r = {
-#     mitch_calc(
-#       myImportedData,
-#       genesetsExample,
-#       priority = 'significance',
-#       minsetsize = 5,
-#       cores = 2
-#     )
-#   },
-#   rust = {
-#     rs_mitch_calc(
-#       as.matrix(myImportedData),
-#       rownames(myImportedData),
-#       genesetsExample,
-#       5
-#     )
-#   },
-#   times = 50L
-# )
+gene_sets <- purrr::map(
+  1:4,
+  ~ {
+    sample(x = letters, size = .x + 3)
+  }
+)
+names(gene_sets) <- sprintf("pathway_%s", LETTERS[1:4])
 
-# tictoc::tic()
-# rs_result <- rs_mitch_calc(
-#   as.matrix(myImportedData),
-#   rownames(myImportedData),
-#   genesetsExample,
-#   5
-# )
-# tictoc::toc()
+## tests -----------------------------------------------------------------------
 
-# rs_result$pathway_names[order(rs_result$manova_pvals)]
-# rs_result$pathway_sizes[order(rs_result$manova_pvals)]
-# rs_result$sd[order(rs_result$manova_pvals)]
+res <- calc_mitch(
+  contrast_mat = contrast_data,
+  gene_set_list = gene_sets
+)
 
-# resExample$enrichment_result
+expect_equal(
+  current = res$pathway_names,
+  target = c("pathway_C", "pathway_D", "pathway_B"),
+  info = "mitch - expected pathway names"
+)
 
-# input_profile <- myImportedData
-# genesets = genesetsExample
-# minsetsize = 5
-# cores = 2
-# priority = 'effect'
+expect_equal(
+  current = res$pathway_sizes,
+  target = c(6, 7, 5),
+  info = "mitch - expected pathway sizes"
+)
 
-# ranked_profile <- mitch:::mitch_rank(input_profile)
+expect_equal(
+  current = res$manova_pval,
+  target = c(0.006953769, 0.486574059, 0.660185031),
+  eps = 1e-7,
+  info = "mitch - expected manova pvals"
+)
 
-# enrichment_result <- mitch:::MANOVA(
-#   ranked_profile,
-#   genesets,
-#   minsetsize <- minsetsize,
-#   cores = cores,
-#   priority = priority
-# )
+## direct comparison mitch -----------------------------------------------------
 
-# x = ranked_profile
+if (requireNamespace("mitch", quietly = TRUE)) {
+  # load in the mitch example data
+  data(myImportedData, genesetsExample)
 
-# sets <- names(genesets)
+  mitch_res <- suppressMessages(mitch_calc(
+    myImportedData,
+    genesetsExample,
+    priority = 'significance',
+    minsetsize = 5,
+    cores = 2
+  ))
 
-# hypotenuse <- function(x) {
-#   sqrt(sum(
-#     unlist(lapply(x, function(x) {
-#       x^2
-#     })),
-#     na.rm = TRUE
-#   ))
-# }
+  bixverse_res <- calc_mitch(
+    contrast_mat = as.matrix(myImportedData),
+    gene_set_list = genesetsExample
+  )
 
-# x <- scord
+  expect_equal(
+    current = bixverse_res$pathway_names,
+    target = mitch_res$enrichment_result$set,
+    info = "mitch direct comparison - pathways"
+  )
 
-# sqrt(sum(x^2))
+  expect_equal(
+    current = bixverse_res$manova_fdr,
+    target = mitch_res$enrichment_result$p.adjustMANOVA,
+    info = "mitch direct comparison - adjusted MANOVA pvalues"
+  )
 
-# lapply(x, function(x) {
-#   x^2
-# })
+  expect_equal(
+    current = bixverse_res$s.rna,
+    target = mitch_res$enrichment_result$s.rna,
+    info = "mitch direct comparison - s.rna"
+  )
 
-# HYPOT <- hypotenuse(apply(x, 2, length))
+  expect_equal(
+    current = bixverse_res$s.k9a,
+    target = mitch_res$enrichment_result$s.k9a,
+    info = "mitch direct comparison - s.k9a"
+  )
 
-# set = "Biological oxidations"
+  expect_equal(
+    current = bixverse_res$s.k36a,
+    target = mitch_res$enrichment_result$s.k36a,
+    info = "mitch direct comparison - s.k36a"
+  )
 
-# inset <- rownames(x) %in% as.character(unlist(genesets[set]))
+  expect_equal(
+    current = bixverse_res$p.rna,
+    target = mitch_res$enrichment_result$p.rna,
+    info = "mitch direct comparison - p.rna"
+  )
 
-# rextendr::document()
+  expect_equal(
+    current = bixverse_res$p.k9a,
+    target = mitch_res$enrichment_result$p.k9a,
+    info = "mitch direct comparison - p.k9a"
+  )
 
-# rs_fast_mitch(x, inset)
-
-# fit <- manova(x ~ inset)
-# sumMANOVA <- summary.manova(fit)
-# sumAOV <- summary.aov(fit)
-# pMANOVA <- sumMANOVA$stats[1, "Pr(>F)"]
-
-# summary(fit)$stats
-
-# NROW <- nrow(x)
-
-# raov <- lapply(sumAOV, function(zz) {
-#   zz[1, "Pr(>F)"]
-# })
-# raov <- unlist(raov)
-# names(raov) <- gsub("^ Response ", "p.", names(raov))
-# # S coordinates
-# NOTINSET <- colMeans(x[!inset, ], na.rm = TRUE)
-# scord <- (2 * (colMeans(x[inset, ], na.rm = TRUE) - NOTINSET)) / NROW
-# names(scord) <- paste0("s-", names(scord))
-# # calculate the hypotenuse length of s scores
-# s.dist <- hypotenuse(scord)
-# names(s.dist) <- "s.dist"
-# mysd <- sd(scord)
-# names(mysd) <- "SD"
-
-# data.frame(
-#   set,
-#   setSize = sum(inset),
-#   pMANOVA,
-#   t(scord),
-#   t(raov),
-#   t(s.dist),
-#   t(mysd),
-#   stringsAsFactors = FALSE
-# )
+  expect_equal(
+    current = bixverse_res$p.k36a,
+    target = mitch_res$enrichment_result$p.k36a,
+    info = "mitch direct comparison - p.k36a"
+  )
+}
