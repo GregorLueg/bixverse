@@ -119,7 +119,6 @@ pub fn parse_count_type(s: &str) -> Option<AssayType> {
 /// * `f_path_cells` - Path to the .bin file for the cells.
 /// * `f_path_genes` - Path to the .bin file for the genes.
 #[extendr]
-#[allow(dead_code)]
 struct SingeCellCountData {
     pub f_path_cells: String,
     pub f_path_genes: String,
@@ -508,6 +507,6 @@ impl SingeCellCountData {
 }
 
 extendr_module! {
-    mod r_single_cell_obj;
+    mod r_count_obj;
     impl SingeCellCountData;
 }

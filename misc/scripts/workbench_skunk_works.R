@@ -11,7 +11,7 @@ rextendr::document()
 # let's try with 1m cells...
 seed <- 123L
 no_genes <- 20000L
-no_cells <- 1000000L
+no_cells <- 100000L
 
 tictoc::tic()
 rs_sparse_data <- rs_synthetic_sc_data_csr(
@@ -82,10 +82,6 @@ file.size(f_path_genes) / 1024^2
 # csc (gene-centric) -----------------------------------------------------------
 
 gene_indices <- sample(1:no_genes, 100)
-
-csc_matrix <- csr_matrix[, gene_indices]
-
-csc_matrix <- as(csc_matrix, "CsparseMatrix")
 
 return_gene_data <- single_cell_counts$get_genes_by_indices(
   indices = gene_indices,

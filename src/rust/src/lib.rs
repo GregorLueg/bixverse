@@ -35,6 +35,9 @@ pub use r_bindings::r_methods::r_rbh;
 pub use r_bindings::r_ontology::r_go_elim;
 pub use r_bindings::r_ontology::r_similiarity;
 
+// single cell
+pub use r_bindings::r_single_cell::r_count_obj;
+
 extendr_module! {
     mod bixverse;
     // base
@@ -62,4 +65,6 @@ extendr_module! {
     // ontology
     use r_go_elim;
     use r_similiarity;
+    // single cell
+    use r_count_obj;
 }

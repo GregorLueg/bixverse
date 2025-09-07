@@ -508,6 +508,56 @@ rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_tr
 #' @export
 rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 
+#' Generate synthetic single cell data (Seurat type)
+#'
+#' @description This function generates pseudo data to test single cell
+#' functions in form of the Seurat version, with cells = columns and genes =
+#' rows. The data is CSC type.
+#'
+#' @param n_genes Integer. Number of genes you wish to have in the synthetic
+#' data.
+#' @param n_cells Integer. Number of cells you wish to have in the synthetic
+#' data.
+#' @param min_genes Integer. Minimum number of genes expressed per cell.
+#' @param max_genes Integer. Maximum number of genes expressed per cell.
+#' @param max_exp Upper bound in terms of expression. Expression values will be
+#' sampled from `1:max_exp`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The list with the synthetic data with the following items:
+#'  \itemize{
+#'   \item data - The synthetic counts
+#'   \item col_ptrs - The column pointers
+#'   \item row_indices - The row indices
+#' }
+rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csc, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
+#' Generate synthetic single cell data (h5ad type)
+#'
+#' @description This function generates pseudo data to test single cell
+#' functions in form of the h5ad version, with cells = rows and genes =
+#' columns. The data is CSR type.
+#'
+#' @param n_genes Integer. Number of genes you wish to have in the synthetic
+#' data.
+#' @param n_cells Integer. Number of cells you wish to have in the synthetic
+#' data.
+#' @param min_genes Integer. Minimum number of genes expressed per cell.
+#' @param max_genes Integer. Maximum number of genes expressed per cell.
+#' @param max_exp Upper bound in terms of expression. Expression values will be
+#' sampled from `1:max_exp`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The list with the synthetic data with the following items:
+#'  \itemize{
+#'   \item data - The synthetic counts
+#'   \item row_ptrs - The row pointers
+#'   \item col_indices - The column indices
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
 #' @description
@@ -1581,6 +1631,28 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #'
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
+
+SingeCellCountData <- new.env(parent = emptyenv())
+
+SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
+
+SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size))
+
+SingeCellCountData$file_to_r_csr_mat <- function(assay) .Call(wrap__SingeCellCountData__file_to_r_csr_mat, self, assay)
+
+SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
+
+SingeCellCountData$generate_gene_based_data <- function() invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self))
+
+SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
+
+SingeCellCountData$r_csc_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csc_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size))
+
+#' @export
+`$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.SingeCellCountData` <- `$.SingeCellCountData`
 
 
 # nolint end
