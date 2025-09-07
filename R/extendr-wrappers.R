@@ -776,8 +776,29 @@ rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .C
 #' @export
 rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
 
+#' Calculate mitch enrichment leveraging Rust under the hood
+#'
+#' @param x Numerical matrix. Each column represents on the contrasts you
+#' wish to test for and the rows represent the gene statistics per contrast.
+#' @param pathway_list Named list. Each element represents one of the pathways
+#' to test for.
+#' @param min_size Integer. Minimum size of gene the gene set to be tested for.
+#'
+#' @return A list with the following elements:
+#'  \itemize{
+#'     \item pathway_names - The name of the pathway.
+#'     \item pathway_sizes The size of the pathway.
+#'     \item manova_pvals - The p-value of the MANOVA test.
+#'     \item anova_pvals The p-values of the ANOVA test on top of the MANOVA
+#'     results. Total length = `ncol(x)` * number of pathways.
+#'     \item scores - The scores for each pathway set, contrast. Same length
+#'     as `anova_pvals`.
+#'     \item s_dist - Calculated distances from the hypotenuse.
+#'     \item sd - SDs of the scores.
+#' }
+#'
 #' @export
-rs_mitch_calc <- function(x, row_names, pathway_list, min_size) .Call(wrap__rs_mitch_calc, x, row_names, pathway_list, min_size)
+rs_mitch_calc <- function(x, pathway_list, min_size) .Call(wrap__rs_mitch_calc, x, pathway_list, min_size)
 
 #' Run a single hypergeometric test.
 #'
