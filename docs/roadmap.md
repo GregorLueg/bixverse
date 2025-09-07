@@ -63,8 +63,8 @@ of mouse data.
 (First version implemented with fgsea simple.)
 - ~~Gene set variation analysis in 
 [Rust](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7)~~
-- Mitch-like multi contrast analysis in 
-[Rust](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9)
+- ~~Mitch-like multi contrast analysis in 
+[Rust](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9)~~
 
 ## Rust
 

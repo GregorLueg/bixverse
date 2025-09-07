@@ -21,7 +21,8 @@ leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 This is now officially the version **0.0.2.2** release. With this 
 update the following has been updated/changed:
 
-- ...
+- Mitch multi-contrast enrichment, see 
+[Kaspi and Ziemann](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 
 ## *Installation*
 
@@ -75,4 +76,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 04.09.2025*
+*Last update to the read-me: 07.09.2025*
