@@ -4,7 +4,7 @@ use rand_distr::weighted::WeightedAliasIndex;
 use rand_distr::{Beta, Binomial, Distribution, Gamma, Normal, Poisson};
 use rayon::prelude::*;
 
-use crate::helpers::structs_sparse::{CscData, CsrData};
+use crate::core::data::sparse_structures::{CscData, CsrData};
 
 ///////////
 // Enums //

@@ -1,3 +1,12 @@
+use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
+use half::f16;
+use rustc_hash::FxHashMap;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
+
+use crate::utils::traits::F16;
+
 ///////////////////////////
 // Sparse data streaming //
 ///////////////////////////
@@ -801,5 +810,43 @@ impl StreamingSparseReader {
         let mut indices: Vec<usize> = self.header.index_map.keys().copied().collect();
         indices.sort();
         indices
+    }
+}
+
+///////////
+// Tests //
+///////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_streaming_write_read() {
+        // Write some cells
+        let mut writer = CellGeneSparseWriter::new("test.bin", true, 1000, 2000).unwrap();
+
+        // Write cells one by one (not keeping them in memory)
+        for i in 0..100 {
+            let cell = CsrCellChunk::from_r_data(&[1, 2, 3], &[0, 5, 10], i, 1e5);
+            writer.write_cell_chunk(cell).unwrap();
+        }
+
+        writer.finalise().unwrap();
+
+        // Read specific cells
+        let mut reader = StreamingSparseReader::new("test.bin").unwrap();
+
+        // Read cells 5, 10, and 50
+        let cells = reader.read_cells_by_indices(&[5, 10, 50]).unwrap();
+        assert_eq!(cells.len(), 3);
+        assert_eq!(cells[0].original_index, 5);
+        assert_eq!(cells[1].original_index, 10);
+        assert_eq!(cells[2].original_index, 50);
+
+        // Iterate over all cells
+        let mut reader = StreamingSparseReader::new("test.bin").unwrap();
+        let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
+        assert_eq!(all_cells.len(), 100);
     }
 }

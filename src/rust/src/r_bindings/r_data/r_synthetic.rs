@@ -1,13 +1,8 @@
-<<<<<<< HEAD:src/rust/src/r_function/r_synthetic_data.rs
-use crate::helpers::structs_sparse::{CscData, CsrData};
-use crate::helpers::synthetic_data::*;
-=======
 use extendr_api::prelude::*;
 
+use crate::core::data::sparse_structures::*;
 use crate::core::data::synthetic_data::*;
->>>>>>> release/0022:src/rust/src/r_bindings/r_data/r_synthetic.rs
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
-use extendr_api::prelude::*;
 
 /// Generate synthetic single cell data (Seurat type)
 ///
@@ -231,13 +226,9 @@ fn rs_simulate_dropouts(
 }
 
 extendr_module! {
-<<<<<<< HEAD:src/rust/src/r_function/r_synthetic_data.rs
-    mod r_synthetic_data;
+    mod r_synthetic;
     fn rs_synthetic_sc_data_csc;
     fn rs_synthetic_sc_data_csr;
-=======
-    mod r_synthetic;
->>>>>>> release/0022:src/rust/src/r_bindings/r_data/r_synthetic.rs
     fn rs_generate_bulk_rnaseq;
     fn rs_simulate_dropouts;
 }
