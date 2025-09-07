@@ -23,18 +23,6 @@ type MitchPathways = (Vec<String>, Vec<Vec<usize>>);
 // Result structs //
 ////////////////////
 
-/// Structure to store Mitch results
-///
-/// ### Fields
-///
-/// * `pathway_name` - Name of the pathway
-/// * `pathway_size` - Size of the pathway
-/// * `manova_pval` - P-value of the MANOVA test on the ranked data
-/// * `scores` - The scores for each tested contrast for this pathway
-/// * `anova_pvals` - The p-values for the individual contrasts based on the
-///   ANOVA on top of the MANOVA results
-/// * `s_dist` - Calculated distances from the hypotenuse.
-/// * `mysd` - The standard deviation of the scores for this pathway.
 #[derive(Clone, Debug)]
 pub struct MitchResult<'a> {
     pub pathway_name: &'a str,
@@ -50,73 +38,6 @@ pub struct MitchResult<'a> {
 // Functions //
 ///////////////
 
-/// Helper function to get the indices of the pathways
-///
-/// ### Params
-///
-/// * `row_names` - The row names of the matrix representing the represented
-///   genes across all tested contrasts
-/// * `pathway_list` - The named R list containing the pathway genes.
-/// * `min_size` - The minimum overlap size
-///
-/// ### Returns
-///
-/// `MitchPathways = (Vec<String>, Vec<Vec<usize>>)` containing the pathway names
-/// and their position
-pub fn prepare_mitch_pathways(
-    row_names: &[String],
-    pathway_list: List,
-    min_size: usize,
-) -> Result<MitchPathways> {
-    let gene_map: FxHashMap<&str, usize> = row_names
-        .iter()
-        .enumerate()
-        .map(|(i, gene)| (gene.as_str(), i))
-        .collect();
-
-    let list_names: Vec<String> = pathway_list
-        .names()
-        .unwrap()
-        .map(|s| s.to_string())
-        .collect();
-
-    let mut filtered_pathways = Vec::new();
-    let mut filtered_names = Vec::new();
-
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..pathway_list.len() {
-        let element = pathway_list.elt(i)?;
-        if let Some(internal_vals) = element.as_string_vector() {
-            let mut indices = Vec::with_capacity(internal_vals.len());
-
-            for gene in &internal_vals {
-                if let Some(&idx) = gene_map.get(gene.as_str()) {
-                    indices.push(idx);
-                }
-            }
-
-            if indices.len() >= min_size {
-                indices.sort_unstable();
-                filtered_pathways.push(indices);
-                filtered_names.push(list_names[i].clone());
-            }
-        }
-    }
-
-    Ok((filtered_names, filtered_pathways))
-}
-
-/// Calculate the MANOVA results for a given pathway
-///
-/// ### Params
-///
-/// * `x` - The pre-ranked matrix.
-/// * `group1_indices` - The row index positions for which genes belong to the
-///   pathway.
-///
-/// ### Return
-///
-/// Returns the MANOVA results for this pathway.
 pub fn manova_mitch(x: MatRef<f64>, group1_indices: &[usize]) -> ManovaResult {
     let (n, p) = x.shape();
 
@@ -178,16 +99,49 @@ pub fn manova_mitch(x: MatRef<f64>, group1_indices: &[usize]) -> ManovaResult {
     }
 }
 
-/// Calculates the mitch-specific ranks for a given contrast based on the tied
-/// method
-///
-/// ### Params
-///
-/// * `mat` - The matrix to rank
-///
-/// ### Returns
-///
-/// The mitched-ranked matrix
+pub fn prepare_mitch_pathways(
+    row_names: &[String],
+    pathway_list: List,
+    min_size: usize,
+) -> Result<MitchPathways> {
+    let gene_map: FxHashMap<&str, usize> = row_names
+        .iter()
+        .enumerate()
+        .map(|(i, gene)| (gene.as_str(), i))
+        .collect();
+
+    let list_names: Vec<String> = pathway_list
+        .names()
+        .unwrap()
+        .map(|s| s.to_string())
+        .collect();
+
+    let mut filtered_pathways = Vec::new();
+    let mut filtered_names = Vec::new();
+
+    #[allow(clippy::needless_range_loop)]
+    for i in 0..pathway_list.len() {
+        let element = pathway_list.elt(i)?;
+        if let Some(internal_vals) = element.as_string_vector() {
+            let mut indices = Vec::with_capacity(internal_vals.len());
+
+            for gene in &internal_vals {
+                if let Some(&idx) = gene_map.get(gene.as_str()) {
+                    indices.push(idx);
+                }
+            }
+
+            if indices.len() >= min_size {
+                indices.sort_unstable();
+                filtered_pathways.push(indices);
+                filtered_names.push(list_names[i].clone());
+            }
+        }
+    }
+
+    Ok((filtered_names, filtered_pathways))
+}
+
 pub fn mitch_rank(mat: &MatRef<f64>) -> Mat<f64> {
     let mut ranked_mat = Mat::zeros(mat.nrows(), mat.ncols());
 
@@ -219,18 +173,6 @@ pub fn mitch_rank(mat: &MatRef<f64>) -> Mat<f64> {
     ranked_mat
 }
 
-/// Wrapper function to process a given pathway
-///
-/// ### Params
-///
-/// * `ranked_mat` - The ranked matrix
-/// * `pathway_name` - Name of the pathway/gene set that is being tested.
-/// * `pathway_indices` - Index positions which genes (rows) belong to this given
-///   pathway
-///
-/// ### Returns
-///
-/// A `MitchResult` structure with the results for this pathway.
 pub fn process_mitch_pathway<'a>(
     ranked_mat: MatRef<f64>,
     pathway_name: &'a str,
@@ -251,7 +193,7 @@ pub fn process_mitch_pathway<'a>(
     let scores = &manova_res.group_means[0]
         .iter()
         .zip(&manova_res.group_means[1])
-        .map(|(mean_0, mean_1)| (2.0 * (mean_1 - mean_0)) / nrow)
+        .map(|(mean_1, mean_0)| (2.0 * (mean_1 - mean_0)) / nrow)
         .collect::<Vec<f64>>();
 
     let sd_scores = scores.std_dev();

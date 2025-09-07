@@ -157,42 +157,21 @@ rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_t
 #' @export
 rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
 
-#' Set similarities over one list
+#' Set similarities over list
 #'
-#' @description This function calculates the set similarity via Jaccard or
-#' overlap coefficient across all permutations of one list.
+#' This function calculates the Jaccard or similarity index between a one given
+#' string vector and list of vectors.
 #'
-#' @param list A named R list.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-#' the Jaccard similarity be calculated.
-#'
-#' @return A list with the following items:
-#' \itemize{
-#'     \item from - Name of element i
-#'     \item to - Name of element j
-#'     \item sim - Similarity between the two elements
-#' }
-#'
-#' @export
-rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, list, overlap_coefficient)
-
-#' Set similarities over two list
-#'
-#' @description
-#' This function calculates the Jaccard or similarity index between two lists.
-#'
-#' @param s_1_list R list. The first list of string elements you want to
-#' compare against.
-#' @param s_2_list R list. The second list of string elements you want to
-#' compare against.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
-#' the Jaccard similarity be calculated.
+#' @param s_1_list The String vector against which to calculate the set similarities.
+#' @param s_2_list A List of vector against which to calculate the set similarities.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
+#' Jaccard similarity be calculated.
 #'
 #' @return A matrix of the Jaccard similarities between the elements. The rows
-#' represent `s_1_list` and the column `s_2_list`.
+#' represent s_1_list and the column s_2_list.
 #'
 #' @export
-rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
+rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'
@@ -797,29 +776,8 @@ rs_gsva <- function(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings) .C
 #' @export
 rs_ssgsea <- function(exp, gs_list, alpha, normalise, timings) .Call(wrap__rs_ssgsea, exp, gs_list, alpha, normalise, timings)
 
-#' Calculate mitch enrichment leveraging Rust under the hood
-#'
-#' @param x Numerical matrix. Each column represents on the contrasts you
-#' wish to test for and the rows represent the gene statistics per contrast.
-#' @param pathway_list Named list. Each element represents one of the pathways
-#' to test for.
-#' @param min_size Integer. Minimum size of gene the gene set to be tested for.
-#'
-#' @return A list with the following elements:
-#'  \itemize{
-#'     \item pathway_names - The name of the pathway.
-#'     \item pathway_sizes The size of the pathway.
-#'     \item manova_pvals - The p-value of the MANOVA test.
-#'     \item anova_pvals The p-values of the ANOVA test on top of the MANOVA
-#'     results. Total length = `ncol(x)` * number of pathways.
-#'     \item scores - The scores for each pathway set, contrast. Same length
-#'     as `anova_pvals`.
-#'     \item s_dist - Calculated distances from the hypotenuse.
-#'     \item sd - SDs of the scores.
-#' }
-#'
 #' @export
-rs_mitch_calc <- function(x, pathway_list, min_size) .Call(wrap__rs_mitch_calc, x, pathway_list, min_size)
+rs_mitch_calc <- function(x, row_names, pathway_list, min_size) .Call(wrap__rs_mitch_calc, x, row_names, pathway_list, min_size)
 
 #' Run a single hypergeometric test.
 #'
