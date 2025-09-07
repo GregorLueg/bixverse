@@ -966,7 +966,6 @@ calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
     col.names = "named",
     min.cols = 2L
   )
-  checkmate::assertTRUE(!any(is.na(contrast_mat)))
   checkmate::assertList(gene_set_list, types = "character", names = "named")
   checkmate::qassert(min_size, "I1")
 
