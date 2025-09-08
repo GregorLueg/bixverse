@@ -262,22 +262,24 @@ fn rs_set_similarity(s_1: Vec<String>, s_2: Vec<String>, overlap_coefficient: bo
     set_similarity(&s_hash1, &s_hash2, overlap_coefficient)
 }
 
-/// Set similarities over list
+/// Set similarities over two list
 ///
-/// This function calculates the Jaccard or similarity index between a one given
-/// string vector and list of vectors.
+/// @description
+/// This function calculates the Jaccard or similarity index between two lists.
 ///
-/// @param s_1_list The String vector against which to calculate the set similarities.
-/// @param s_2_list A List of vector against which to calculate the set similarities.
-/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
-/// Jaccard similarity be calculated.
+/// @param s_1_list R list. The first list of string elements you want to
+/// compare against.
+/// @param s_2_list R list. The second list of string elements you want to
+/// compare against.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
+/// the Jaccard similarity be calculated.
 ///
 /// @return A matrix of the Jaccard similarities between the elements. The rows
-/// represent s_1_list and the column s_2_list.
+/// represent `s_1_list` and the column `s_2_list`.
 ///
 /// @export
 #[extendr]
-fn rs_set_similarity_list(
+fn rs_set_similarity_list2(
     s_1_list: List,
     s_2_list: List,
     overlap_coefficient: bool,
@@ -305,6 +307,43 @@ fn rs_set_similarity_list(
     Ok(faer_to_r_matrix(matrix.as_ref()))
 }
 
+/// Set similarities over one list
+///
+/// @description This function calculates the set similarity via Jaccard or
+/// overlap coefficient across all permutations of one list.
+///
+/// @param list A named R list.
+/// @param overlap_coefficient Boolean. Use the overlap coefficient instead of
+/// the Jaccard similarity be calculated.
+///
+/// @return A list with the following items:
+/// \itemize{
+///     \item from - Name of element i
+///     \item to - Name of element j
+///     \item sim - Similarity between the two elements
+/// }
+#[extendr]
+fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api::Result<List> {
+    let btree = r_list_to_btree_set(list)?;
+    let names: Vec<&String> = btree.keys().collect();
+
+    let mut name_i = Vec::new();
+    let mut name_j = Vec::new();
+    let mut sim = Vec::new();
+
+    for i in 0..names.len() {
+        for j in (i + 1)..names.len() {
+            name_i.push(names[i].clone());
+            name_j.push(names[j].clone());
+            let val_i = btree.get(names[i]).unwrap().iter().collect();
+            let val_j = btree.get(names[j]).unwrap().iter().collect();
+            sim.push(set_similarity(&val_i, &val_j, overlap_coefficient));
+        }
+    }
+
+    Ok(list!(from = name_i, to = name_j, sim = sim))
+}
+
 extendr_module! {
   mod r_cors_similarity;
   fn rs_covariance;
@@ -318,4 +357,5 @@ extendr_module! {
   fn rs_cor_upper_triangle;
   fn rs_set_similarity;
   fn rs_set_similarity_list;
+  fn rs_set_similarity_list2;
 }

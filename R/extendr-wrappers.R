@@ -157,21 +157,40 @@ rs_cor_upper_triangle <- function(x, spearman, shift) .Call(wrap__rs_cor_upper_t
 #' @export
 rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_similarity, s_1, s_2, overlap_coefficient)
 
-#' Set similarities over list
+#' Set similarities over one list
 #'
-#' This function calculates the Jaccard or similarity index between a one given
-#' string vector and list of vectors.
+#' @description This function calculates the set similarity via Jaccard or
+#' overlap coefficient across all permutations of one list.
 #'
-#' @param s_1_list The String vector against which to calculate the set similarities.
-#' @param s_2_list A List of vector against which to calculate the set similarities.
-#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of the
-#' Jaccard similarity be calculated.
+#' @param list A named R list.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
+#' the Jaccard similarity be calculated.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'     \item from - Name of element i
+#'     \item to - Name of element j
+#'     \item sim - Similarity between the two elements
+#' }
+rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, list, overlap_coefficient)
+
+#' Set similarities over two list
+#'
+#' @description
+#' This function calculates the Jaccard or similarity index between two lists.
+#'
+#' @param s_1_list R list. The first list of string elements you want to
+#' compare against.
+#' @param s_2_list R list. The second list of string elements you want to
+#' compare against.
+#' @param overlap_coefficient Boolean. Use the overlap coefficient instead of
+#' the Jaccard similarity be calculated.
 #'
 #' @return A matrix of the Jaccard similarities between the elements. The rows
-#' represent s_1_list and the column s_2_list.
+#' represent `s_1_list` and the column `s_2_list`.
 #'
 #' @export
-rs_set_similarity_list <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, s_1_list, s_2_list, overlap_coefficient)
+rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'
