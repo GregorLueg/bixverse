@@ -337,9 +337,11 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
         for j in (i + 1)..names.len() {
             name_i.push(names[i].clone());
             name_j.push(names[j].clone());
-            let val_i = btree.get(names[i]).unwrap().iter().collect();
-            let val_j = btree.get(names[j]).unwrap().iter().collect();
-            sim.push(set_similarity(&val_i, &val_j, overlap_coefficient));
+            sim.push(set_similarity(
+                btree.get(names[i]).unwrap(),
+                btree.get(names[j]).unwrap(),
+                overlap_coefficient,
+            ));
         }
     }
 

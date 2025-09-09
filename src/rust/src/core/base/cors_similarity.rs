@@ -1,6 +1,8 @@
 use faer::{Mat, MatRef};
 use rayon::iter::*;
 use rustc_hash::FxHashSet;
+use std::borrow::Borrow;
+use std::hash::Hash;
 
 use crate::core::base::info::*;
 use crate::core::base::utils::*;
@@ -631,11 +633,10 @@ pub fn calc_tom(affinity_mat: MatRef<f64>, signed: bool, tom_type: TomType) -> M
 /// ### Return
 ///
 /// The Jaccard similarity or overlap coefficient.
-pub fn set_similarity(
-    s_1: &FxHashSet<&String>,
-    s_2: &FxHashSet<&String>,
-    overlap_coefficient: bool,
-) -> f64 {
+pub fn set_similarity<T>(s_1: &FxHashSet<T>, s_2: &FxHashSet<T>, overlap_coefficient: bool) -> f64
+where
+    T: Borrow<String> + Hash + Eq,
+{
     let i = s_1.intersection(s_2).count() as u64;
     let u = if overlap_coefficient {
         std::cmp::min(s_1.len(), s_2.len()) as u64
