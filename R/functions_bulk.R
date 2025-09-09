@@ -91,6 +91,25 @@ limma_contrasts <- function(limma_fit, contrast_list) {
   return(all_contrasts)
 }
 
+#' TPM calculation
+#'
+#' @param counts matrix. Count matrix (gene x sample)
+#' @param gene_lengths vector. Named vector with gene lengths
+#'
+#' @returns Matrix with TPM
+calculate_tpm <- function(counts, gene_lengths) {
+  # Step 1: Divide by gene length (in kb) -> RPK
+  rpk <- counts / (gene_lengths / 1000)
+
+  # Step 2: Get scaling factor (sum of RPK per sample)
+  scaling_factors <- colSums(rpk, na.rm = TRUE)
+
+  # Step 3: Divide by scaling factor and multiply by 1M -> TPM
+  tpm <- t(t(rpk) / scaling_factors) * 1e6
+
+  return(tpm)
+}
+
 # dge functions ----------------------------------------------------------------
 
 ## traditional dge -------------------------------------------------------------

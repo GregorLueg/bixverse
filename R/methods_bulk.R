@@ -19,6 +19,8 @@
 #' percentage genes detected you allow before removing a sample. Defaults to `2`.
 #' @param min_prop Float. Minimum proportion of samples in which the gene has
 #' to be identified in.
+#' @param include_tpm Boolean. Include TPM calculation (default = FALSE)
+#' @param species String. Species for which the gene lengths will be obtained from BioMart for TPM calculation, one of c("human","mouse", "rat"). Default "human"
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return Returns the class with the `processed_data` data slot populated and
@@ -38,6 +40,8 @@ preprocess_bulk_dge <- S7::new_generic(
     norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
     outlier_threshold = 2,
     min_prop = 0.2,
+    include_tpm = FALSE,
+    species = "human",
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -56,6 +60,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
   outlier_threshold = 2,
   min_prop = 0.2,
+  include_tpm = FALSE,
+  species = "human",
   .verbose = TRUE
 ) {
   # Scope checks
@@ -80,6 +86,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 
   checkmate::assertTRUE(group_col %in% colnames(meta_data))
 
+  checkmate::assertNames(species, subset.of = c("human", "mouse", "rat"))
+
   if (.verbose) {
     message("Detecting sample outliers.")
   }
@@ -92,74 +100,24 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     .[, `:=`(perc_detected_genes = nb_detected_genes / nrow(raw_counts))]
 
   # plot 1 - number of genes per cohort
-  p1_nb_genes_cohort <- ggplot2::ggplot(
-    samples,
-    aes(
-      x = .data[[group_col]],
-      y = nb_detected_genes,
-      fill = .data[[group_col]]
-    )
-  ) +
-    ggplot2::geom_boxplot(alpha = 0.5) +
-    ggplot2::scale_x_discrete(
-      labels = function(x) stringr::str_wrap(x, width = 35)
-    ) +
-    ggplot2::labs(
-      x = "Groups",
-      y = "Number of genes detected",
-      title = "Number of genes by cohort"
-    ) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-      legend.position = "none"
-    )
+  p1_nb_genes_cohort <- plot_preprocessing_genes(samples, group_col)
 
-  # plot 2 - outlier plot based on standard deviations
+  ## outlier detection
   sd_samples = sd(samples$perc_detected_genes, na.rm = TRUE)
   min_perc = mean(samples$perc_detected_genes, na.rm = TRUE) -
     outlier_threshold * sd_samples
   max_perc = mean(samples$perc_detected_genes, na.rm = TRUE) +
     outlier_threshold * sd_samples
-
-  p2_outliers <- ggplot2::ggplot(
-    samples,
-    aes(
-      x = .data[[group_col]],
-      y = perc_detected_genes,
-      color = .data[[group_col]]
-    )
-  ) +
-    ggplot2::geom_point(
-      position = position_jitter(width = 0.2, height = 0, seed = 123),
-      size = 3,
-      alpha = 0.7
-    ) +
-    ggplot2::geom_hline(
-      yintercept = min_perc,
-      color = "red",
-      linetype = "dashed"
-    ) +
-    ggplot2::geom_hline(
-      yintercept = max_perc,
-      color = "red",
-      linetype = "dashed"
-    ) +
-    ggplot2::scale_x_discrete(
-      labels = function(x) stringr::str_wrap(x, width = 35)
-    ) +
-    ggplot2::labs(
-      x = "Groups",
-      y = "Percentage of genes detected",
-      title = "Outlier samples based on %genes detected"
-    ) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-    )
-
   outliers <- samples$perc_detected_genes <= min_perc
+
+  # plot 2 - outlier plot based on standard deviations
+  p2_outliers <- plot_preprocessing_outliers(
+    samples,
+    group_col,
+    min_perc,
+    max_perc
+  )
+
   if (.verbose) {
     message(sprintf(
       "A total of %i samples are detected as outlier.",
@@ -182,19 +140,64 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     min.prop = min_prop,
     group = samples[[group_col]]
   )
+  dge_list <- dge_list[to_keep, ]
+  count_matrix <- dge_list$counts
+
   if (.verbose) {
     message(sprintf("A total of %i genes are kept.", sum(to_keep)))
   }
 
+  ## TPM and FPKM
+
+  if (include_tpm) {
+    ## this needs to be changed to something a bit better or optional to the user?
+    # For human genes (adjust species as needed)
+    dataset <- c(
+      "human" = "hsapiens_gene_ensembl",
+      "mouse" = "mmusculus_gene_ensembl",
+      "rat" = "rnorvegicus_gene_ensembl"
+    )
+    ensembl <- biomaRt::useMart("ensembl", dataset = dataset[species])
+
+    # Get gene lengths - this takes the median transcript length per gene
+    gene_info <- biomaRt::getBM(
+      attributes = c("ensembl_gene_id", "transcript_length"),
+      filters = "ensembl_gene_id",
+      values = rownames(dge_list$counts),
+      mart = ensembl
+    )
+
+    # Calculate median transcript length per gene
+    gene_lengths_df <- aggregate(
+      transcript_length ~ ensembl_gene_id,
+      data = gene_info,
+      FUN = median
+    )
+
+    # Match gene lengths to your count matrix row order
+    gene_lengths <- gene_lengths_df$transcript_length[
+      match(rownames(count_matrix), gene_lengths_df$ensembl_gene_id)
+    ]
+
+    # Handle any missing gene lengths
+    names(gene_lengths) <- rownames(count_matrix)
+    gene_lengths[is.na(gene_lengths)] <- median(gene_lengths, na.rm = TRUE)
+
+    # TPM and RPKM
+    tpm_values <- calculate_tpm(count_matrix, gene_lengths)
+    rpkm_values <- edgeR::rpkm(dge_list, gene.length = gene_lengths)
+  } else {
+    tpm_values <- NULL
+    rpkm_values <- NULL
+  }
+
+  ## CPM
   dge_list <- edgeR::calcNormFactors(
-    dge_list[to_keep, ],
+    dge_list,
     method = norm_method
   )
-
   samples <- samples_red[[group_col]]
-
   design <- model.matrix(~ 0 + samples)
-
   voom_obj <- limma::voom(
     counts = dge_list,
     design = design,
@@ -203,51 +206,13 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   )
 
   # plot 3 - mean variance trend from voom
-  voom_plot_data <- data.table::data.table(
-    avg_exp = rowMeans(voom_obj$E),
-    residual_sd = sqrt(matrixStats::rowSds(voom_obj$E))
-  )
-
-  p3_voom_normalization <- ggplot2::ggplot(
-    data = voom_plot_data,
-    mapping = aes(x = avg_exp, residual_sd)
-  ) +
-    ggplot2::geom_point(size = 0.1) +
-    ggplot2::geom_smooth(
-      method = "loess",
-      span = 0.5,
-      se = FALSE,
-      color = "red"
-    ) +
-    ggplot2::labs(
-      x = "sqrt(count size)",
-      y = "Residual standard deviation",
-      title = "Voom: Mean-variance trend"
-    ) +
-    ggplot2::theme_classic()
+  p3_voom_normalization <- plot_voom_normalization(voom_object = voom_obj)
 
   # plot 4 - boxplots
-  boxplot_data <- data.table::data.table(
-    sample = rep(colnames(voom_obj$E), each = nrow(voom_obj$E)),
-    expression = as.vector(voom_obj$E),
-    group = rep(as.factor(samples), each = nrow(voom_obj$E))
+  p4_boxplot_normalization <- plot_boxplot_normalization(
+    samples = samples,
+    voom_object = voom_obj
   )
-
-  p4_boxplot_normalization <- ggplot2::ggplot(
-    boxplot_data,
-    aes(x = sample, y = expression, fill = group)
-  ) +
-    ggplot2::geom_boxplot() +
-    ggplot2::labs(
-      x = "Samples",
-      y = "Normalized log2 expression",
-      title = "Boxplot of normalized gene expression across samples"
-    ) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      legend.position = "top"
-    )
 
   S7::prop(object, "plots") <- list(
     p1_nb_genes_cohort = p1_nb_genes_cohort,
@@ -260,7 +225,9 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     dge_list = dge_list,
     sample_info = samples_red,
     normalised_counts = voom_obj$E,
-    group_col = group_col
+    group_col = group_col,
+    tpm = tpm_values,
+    rpkm = rpkm_values
   )
 
   S7::prop(object, "params")[["QC_params"]] <- list(
@@ -424,6 +391,160 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
 }
 
 ### plots ----------------------------------------------------------------------
+
+#' @title Plot preprocessing output of distribution of genes by samples
+#'
+#' @param samples df. Dataframe with sample information created by bulk_dge object including column with nb_detected_genes and a column specifying cohort
+#' @param group_col char. String specifying the column with cohort information
+#'
+#' @return boxplot with number of genes by cohort
+plot_preprocessing_genes <- function(samples, group_col) {
+  checkmate::assertDataFrame(samples)
+  checkmate::assertNames(
+    colnames(samples),
+    must.include = c(group_col, "nb_detected_genes")
+  )
+
+  ggplot2::ggplot(
+    samples,
+    aes(
+      x = .data[[group_col]],
+      y = nb_detected_genes,
+      fill = .data[[group_col]]
+    )
+  ) +
+    ggplot2::geom_boxplot(alpha = 0.5) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
+      x = "Groups",
+      y = "Number of genes detected",
+      title = "Number of genes by cohort"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+      legend.position = "none"
+    )
+}
+
+#' @title Plot preprocessing output with identification of outliers
+#'
+#' @param samples df. Dataframe with sample information created by bulk_dge object including column with perc_detected_genes and a column specifying cohort
+#' @param group_col char. String specifying the column with cohort information
+#' @param min_perc num. Lower cutoff to identify outliers.
+#' @param max_perc num. Upper cutoff to identify outliers
+#'
+#' @return beeswarm plot with outlier indication
+#'
+plot_preprocessing_outliers <- function(
+  samples,
+  group_col,
+  min_perc,
+  max_perc
+) {
+  checkmate::assertDataFrame(samples)
+  checkmate::assertNames(
+    colnames(samples),
+    must.include = c(group_col, "perc_detected_genes")
+  )
+  ggplot2::ggplot(
+    samples,
+    aes(
+      x = .data[[group_col]],
+      y = perc_detected_genes,
+      color = .data[[group_col]]
+    )
+  ) +
+    ggplot2::geom_point(
+      position = position_jitter(width = 0.2, height = 0, seed = 123),
+      size = 3,
+      alpha = 0.7
+    ) +
+    ggplot2::geom_hline(
+      yintercept = min_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::geom_hline(
+      yintercept = max_perc,
+      color = "red",
+      linetype = "dashed"
+    ) +
+    ggplot2::scale_x_discrete(
+      labels = function(x) stringr::str_wrap(x, width = 35)
+    ) +
+    ggplot2::labs(
+      x = "Groups",
+      y = "Percentage of genes detected",
+      title = "Outlier samples based on %genes detected"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+    )
+}
+
+#' Plot preprocessing output of voom normalization
+#'
+#' @param voom_object Voom object
+#'
+plot_voom_normalization <- function(voom_object) {
+  voom_plot_data <- data.table::data.table(
+    avg_exp = rowMeans(voom_object$E),
+    residual_sd = sqrt(matrixStats::rowSds(voom_object$E))
+  )
+
+  ggplot2::ggplot(
+    data = voom_plot_data,
+    mapping = aes(x = avg_exp, residual_sd)
+  ) +
+    ggplot2::geom_point(size = 0.1) +
+    ggplot2::geom_smooth(
+      method = "loess",
+      span = 0.5,
+      se = FALSE,
+      color = "red"
+    ) +
+    ggplot2::labs(
+      x = "sqrt(count size)",
+      y = "Residual standard deviation",
+      title = "Voom: Mean-variance trend"
+    ) +
+    ggplot2::theme_classic()
+}
+
+#' Plot boxplot of normalized data
+#'
+#' @param samples data.frame. sample metadata
+#' @param voom_object Voom object
+#'
+plot_boxplot_normalization <- function(samples, voom_object) {
+  boxplot_data <- data.table::data.table(
+    sample = rep(colnames(voom_object$E), each = nrow(voom_object$E)),
+    expression = as.vector(voom_object$E),
+    group = rep(as.factor(samples), each = nrow(voom_object$E))
+  )
+
+  ggplot2::ggplot(
+    boxplot_data,
+    aes(x = sample, y = expression, fill = group)
+  ) +
+    ggplot2::geom_boxplot() +
+    ggplot2::labs(
+      x = "Samples",
+      y = "Normalized log2 expression",
+      title = "Boxplot of normalized gene expression across samples"
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "top"
+    )
+}
+
 
 #' @title Plot the highly variable genes
 #'
