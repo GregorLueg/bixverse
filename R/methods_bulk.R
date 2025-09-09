@@ -150,41 +150,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   ## TPM and FPKM
 
   if (include_tpm) {
-    ## this needs to be changed to something a bit better or optional to the user?
-    # For human genes (adjust species as needed)
-    dataset <- c(
-      "human" = "hsapiens_gene_ensembl",
-      "mouse" = "mmusculus_gene_ensembl",
-      "rat" = "rnorvegicus_gene_ensembl"
-    )
-    ensembl <- biomaRt::useMart("ensembl", dataset = dataset[species])
-
-    # Get gene lengths - this takes the median transcript length per gene
-    gene_info <- biomaRt::getBM(
-      attributes = c("ensembl_gene_id", "transcript_length"),
-      filters = "ensembl_gene_id",
-      values = rownames(dge_list$counts),
-      mart = ensembl
-    )
-
-    # Calculate median transcript length per gene
-    gene_lengths_df <- aggregate(
-      transcript_length ~ ensembl_gene_id,
-      data = gene_info,
-      FUN = median
-    )
-
-    # Match gene lengths to your count matrix row order
-    gene_lengths <- gene_lengths_df$transcript_length[
-      match(rownames(count_matrix), gene_lengths_df$ensembl_gene_id)
-    ]
-
-    # Handle any missing gene lengths
-    names(gene_lengths) <- rownames(count_matrix)
-    gene_lengths[is.na(gene_lengths)] <- median(gene_lengths, na.rm = TRUE)
-
-    # TPM and RPKM
-    tpm_values <- calculate_tpm(count_matrix, gene_lengths)
+    tpm_values <- tpm(count_matrix, species)
     rpkm_values <- edgeR::rpkm(dge_list, gene.length = gene_lengths)
   } else {
     tpm_values <- NULL
