@@ -172,6 +172,8 @@ rs_set_similarity <- function(s_1, s_2, overlap_coefficient) .Call(wrap__rs_set_
 #'     \item to - Name of element j
 #'     \item sim - Similarity between the two elements
 #' }
+#'
+#' @export
 rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set_similarity_list, list, overlap_coefficient)
 
 #' Set similarities over two list

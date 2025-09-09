@@ -322,6 +322,8 @@ fn rs_set_similarity_list2(
 ///     \item to - Name of element j
 ///     \item sim - Similarity between the two elements
 /// }
+///
+/// @export
 #[extendr]
 fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api::Result<List> {
     let btree = r_list_to_btree_set(list)?;

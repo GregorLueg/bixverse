@@ -42,6 +42,23 @@ expect_equal(
   info = "mitch - expected manova pvals"
 )
 
+### with NA situation ----------------------------------------------------------
+
+x_coords <- sample(nrow(contrast_data), size = 4, replace = TRUE)
+y_coords <- sample(ncol(contrast_data), size = 4, replace = TRUE)
+
+for (i in seq_along(x_coords)) {
+  contrast_data[x_coords[i], y_coords[i]] <- NA
+}
+
+expect_error(
+  current = calc_mitch(
+    contrast_mat = contrast_data,
+    gene_set_list = gene_sets
+  ),
+  info = paste("mitch - throw error with NAs")
+)
+
 ## direct comparison mitch -----------------------------------------------------
 
 if (requireNamespace("mitch", quietly = TRUE)) {
