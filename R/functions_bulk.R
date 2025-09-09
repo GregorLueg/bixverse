@@ -1,5 +1,169 @@
 # helpers ----------------------------------------------------------------------
 
+## gene normalisations ---------------------------------------------------------
+
+#' TPM calculation
+#'
+#' @param counts Numeric matrix. Count matrix (gene x sample)
+#' @param gene_lengths Named vector. Named vector with gene lengths.
+#'
+#' @returns TPM-normalised matrix.
+calculate_tpm <- function(counts, gene_lengths) {
+  # checks
+  checkmate::assertMatrix(
+    counts,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertNumeric(gene_lengths, names = "named", any.missing = FALSE)
+  checkmate::assertTRUE(all(names(gene_lengths) == rownames(counts)))
+
+  # calculations
+  rpk <- counts / (gene_lengths / 1000)
+  scaling_factors <- colSums(rpk, na.rm = TRUE)
+  tpm <- sweep(rpk, 2, scaling_factors, "/") * 1e6
+
+  return(tpm)
+}
+
+#' RPKM calculation
+#'
+#' @param counts Numeric matrix. Count matrix (gene x sample)
+#' @param gene_lengths Named vector. Named vector with gene lengths.
+#'
+#' @returns RPKM-normalised matrix.
+calculate_rpkm <- function(counts, gene_lengths) {
+  # checks
+  checkmate::assertMatrix(
+    counts,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertNumeric(gene_lengths, names = "named", any.missing = FALSE)
+  checkmate::assertTRUE(all(names(gene_lengths) == rownames(counts)))
+
+  rpk <- counts / (gene_lengths / 1000)
+  total_reads_millions <- colSums(counts, na.rm = TRUE) / 1e6
+  rpkm <- sweep(rpk, 2, total_reads_millions, "/")
+
+  return(rpkm)
+}
+
+## gene lengths ----------------------------------------------------------------
+
+#' Get the gene lengths
+#'
+#' @export
+get_gene_lengths <- function(x, species = c("human", "mouse", "rat"), ...) {
+  UseMethod("get_gene_lengths")
+}
+
+#' Get gene set lengths for a matrix
+#'
+#' @param x Numerical matrix. Assumes genes x samples as format and Ensembl
+#' identifiers as gene ids.
+#' @param species String. One of `c("human", "mouse", "rat")`.
+#' @param ... Additional parameters. Not in use atm.
+#'
+#' @returns Named numeric representing the gene lengths.
+#' @export
+get_gene_lengths.matrix <- function(
+  x,
+  species = c("human", "mouse", "rat"),
+  ...
+) {
+  species <- match.arg(species)
+  checkmate::assertMatrix(
+    x,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertChoice(species, c("human", "mouse", "rat"))
+
+  if (!requireNamespace("biomaRt", quietly = TRUE)) {
+    stop(paste(
+      "Package 'biomaRt' is required to use this function.",
+      "Please install it with: BiocManager::install('biomaRt')"
+    ))
+  }
+
+  dataset <- c(
+    "human" = "hsapiens_gene_ensembl",
+    "mouse" = "mmusculus_gene_ensembl",
+    "rat" = "rnorvegicus_gene_ensembl"
+  )
+
+  ensembl <- biomaRt::useMart("ensembl", dataset = dataset[species])
+  gene_info <- biomaRt::getBM(
+    attributes = c("ensembl_gene_id", "transcript_length"),
+    filters = "ensembl_gene_id",
+    values = rownames(x), # Fixed: was count_matrix
+    mart = ensembl
+  )
+
+  # calculate median transcript length per gene
+  gene_lengths_df <- aggregate(
+    transcript_length ~ ensembl_gene_id,
+    data = gene_info,
+    FUN = median
+  )
+
+  gene_lengths <- gene_lengths_df$transcript_length[
+    match(rownames(x), gene_lengths_df$ensembl_gene_id)
+  ]
+  names(gene_lengths) <- rownames(x) # Fixed: was count_matrix
+
+  if (any(is.na(gene_lengths))) {
+    warning("Some of the genes were not found. Using median imputation.")
+    gene_lengths[is.na(gene_lengths)] <- median(gene_lengths, na.rm = TRUE)
+  }
+
+  return(gene_lengths)
+}
+
+#' @name get_gene_lengths.bulk_coexp
+#'
+#' @title Get gene set lengths for a bulk_coexp class
+#'
+#' @description
+#' Get gene lengths for a bulk_coexp object by extracting the count matrix
+#' and delegating to the matrix method.
+#'
+#' @param x An object of class `bulk_coexp`.
+#' @param species String. One of `c("human", "mouse", "rat")`.
+#' @param ... Additional parameters. Not in use atm.
+#'
+#' @returns Named numeric representing the gene lengths.
+#'
+#' @method get_gene_lengths bulk_coexp
+S7::method(get_gene_lengths, bulk_coexp) <- function(
+  x,
+  species = c("human", "mouse", "rat"),
+  ...
+) {
+  species <- match.arg(species)
+
+  # checks
+  checkmate::assertClass(x, "bixverse::bulk_coexp")
+  checkmate::assertChoice(species, c("human", "mouse", "rat"))
+
+  # Fixed: condition was inverted
+  if (is.null(S7::prop(x, "outputs")[["raw_counts_filtered"]])) {
+    stop(paste(
+      "Could not find the filtered counts in the object.",
+      "Did you run qc_bulk_dge()?"
+    ))
+  }
+
+  counts <- S7::prop(x, "outputs")[["raw_counts_filtered"]] # Fixed: was object
+
+  # Delegate to the matrix method - this reuses the existing logic!
+  get_gene_lengths.matrix(counts, species = species, ...)
+}
+
 ## dge helpers -----------------------------------------------------------------
 
 #' Fixes contrast names for DGEs
@@ -89,74 +253,6 @@ limma_contrasts <- function(limma_fit, contrast_list) {
   }
 
   return(all_contrasts)
-}
-
-#' TPM calculation
-#'
-#' @param counts matrix. Count matrix (gene x sample)
-#' @param gene_lengths vector. Named vector with gene lengths
-#'
-#' @returns Matrix with TPM
-calculate_tpm <- function(counts, gene_lengths) {
-  # Step 1: Divide by gene length (in kb) -> RPK
-  rpk <- counts / (gene_lengths / 1000)
-
-  # Step 2: Get scaling factor (sum of RPK per sample)
-  scaling_factors <- colSums(rpk, na.rm = TRUE)
-
-  # Step 3: Divide by scaling factor and multiply by 1M -> TPM
-  tpm <- t(t(rpk) / scaling_factors) * 1e6
-
-  return(tpm)
-}
-
-#' TPM calculation
-#'
-#' @param count_matrix matrix. Count matrix (gene x sample)
-#' @param species string. One of "human", "mouse", "rat"
-#'
-#' @returns Matrix with TPM
-#'
-#' @export
-tpm <- function(count_matrix, species) {
-  checkmate::assertNames(species, subset.of = c("human", "mouse", "rat"))
-
-  ## this needs to be changed to something a bit better or optional to the user?
-  # For human genes (adjust species as needed)
-  dataset <- c(
-    "human" = "hsapiens_gene_ensembl",
-    "mouse" = "mmusculus_gene_ensembl",
-    "rat" = "rnorvegicus_gene_ensembl"
-  )
-  ensembl <- biomaRt::useMart("ensembl", dataset = dataset[species])
-
-  # Get gene lengths - this takes the median transcript length per gene
-  gene_info <- biomaRt::getBM(
-    attributes = c("ensembl_gene_id", "transcript_length"),
-    filters = "ensembl_gene_id",
-    values = rownames(count_matrix),
-    mart = ensembl
-  )
-
-  # Calculate median transcript length per gene
-  gene_lengths_df <- aggregate(
-    transcript_length ~ ensembl_gene_id,
-    data = gene_info,
-    FUN = median
-  )
-
-  # Match gene lengths to your count matrix row order
-  gene_lengths <- gene_lengths_df$transcript_length[
-    match(rownames(count_matrix), gene_lengths_df$ensembl_gene_id)
-  ]
-
-  # Handle any missing gene lengths
-  names(gene_lengths) <- rownames(count_matrix)
-  gene_lengths[is.na(gene_lengths)] <- median(gene_lengths, na.rm = TRUE)
-
-  # TPM and RPKM
-  tpm_values <- tpm(count_matrix, gene_lengths)
-  return(tpm_values)
 }
 
 # dge functions ----------------------------------------------------------------

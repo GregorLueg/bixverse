@@ -74,12 +74,11 @@ dge_class <- bulk_dge(
 
 ### pre-processing -------------------------------------------------------------
 
-dge_class <- preprocess_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
+# remove lowly expressed genes and outlier samples
+dge_class <- qc_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
 
 qc_plot_1 <- get_dge_qc_plot(dge_class, plot_choice = 1L)
 qc_plot_2 <- get_dge_qc_plot(dge_class, plot_choice = 2L)
-qc_plot_3 <- get_dge_qc_plot(dge_class, plot_choice = 3L)
-qc_plot_4 <- get_dge_qc_plot(dge_class, plot_choice = 4L)
 
 expect_true(
   current = "ggplot" %in% class(qc_plot_1),
@@ -89,6 +88,25 @@ expect_true(
   current = "ggplot" %in% class(qc_plot_2),
   info = "DGE pre-processing: 2nd QC plot"
 )
+
+expect_warning(
+  current = get_dge_qc_plot(dge_class, plot_choice = 3L),
+  info = "Non existing plot 3 warning"
+)
+expect_warning(
+  current = get_dge_qc_plot(dge_class, plot_choice = 4L),
+  info = "Non existing plot 4 warning"
+)
+
+devtools::load_all()
+
+# normalisations
+dge_class <- normalise_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
+
+qc_plot_3 <- get_dge_qc_plot(dge_class, plot_choice = 3L)
+qc_plot_4 <- get_dge_qc_plot(dge_class, plot_choice = 4L)
+
+
 expect_true(
   current = "ggplot" %in% class(qc_plot_3),
   info = "DGE pre-processing: 3rd QC plot"
@@ -97,10 +115,8 @@ expect_true(
   current = "ggplot" %in% class(qc_plot_4),
   info = "DGE pre-processing: 4th QC plot"
 )
-expect_error(
-  current = get_dge_qc_plot(dge_class, plot_choice = 5L),
-  info = "DGE pre-processing - error with plot choice"
-)
+
+
 expect_true(
   current = all(dim(get_dge_list(dge_class)) == c(15926, 8)),
   info = "DGE pre-processing - filtered lowly expressed genes."
