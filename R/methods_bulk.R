@@ -603,6 +603,7 @@ plot_voom_normalization <- function(voom_object) {
 #' @param samples data.table with sample information with perc_detected_genes
 #' and a column specifying the cohort.
 #' @param voom_object `EList`. Voom object with normalised counts.
+#' @param group_col String. The grouping column.
 #'
 #' @return ggplot object, i.e., box plot with expression per sample.
 plot_boxplot_normalization <- function(samples, voom_object, group_col) {
@@ -643,16 +644,18 @@ plot_boxplot_normalization <- function(samples, voom_object, group_col) {
 #' @description
 #' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
 #' class. These are added when you run for example
-#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
-#' `NULL` and provide input when prompted, or you provide the name. The possible
-#' plots that might be in the class
+#' [bixverse::qc_bulk_dge()] and [bixverse::normalise_bulk_dge()]. You can
+#' either leave the plot choice as `NULL` and provide input when prompted, or
+#' you provide the name. The possible plots that might be in the class
 #' \itemize{
 #'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
-#'  respective cohorts
-#'  \item p2_outliers An outlier plot based on the data from p1
+#'  respective cohorts (added after using [bixverse::qc_bulk_dge()]).
+#'  \item p2_outliers An outlier plot based on the data from p1, added after
+#'  using [bixverse::qc_bulk_dge()].
 #'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
-#'  lowly expressed genes
-#'  \item p4_boxplot_normalization Expression levels after normalisation
+#'  lowly expressed genes. Added after using [bixverse::normalise_bulk_dge()].
+#'  \item p4_boxplot_normalization Expression levels after normalisation. Added
+#'  after using [bixverse::normalise_bulk_dge()].
 #'  \item p5_pca_case_control A PCA plot with the chosen case control category.
 #'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
 #'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
@@ -1055,7 +1058,7 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 #' @description
 #' Runs a linear batch correction over the data regressing out batch effects
 #' and adding `normalised_counts_corrected` to the object. Should these counts
-#' be found by [bixverse::calculate_all_dges()], they will be used for
+#' be found by [bixverse::calculate_dge_hedges()], they will be used for
 #' calculations of effect sizes based on Hedge's G.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
@@ -1238,50 +1241,38 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 
 ## differential gene expression ------------------------------------------------
 
-#' Calculate all possible DGE variants
+#' Calculates the Limma Voom DGE
 #'
 #' @description
-#' This class is a wrapper class around applying various differential gene
-#' expression on the data. At a minimum you will need to provide a
-#' `contrast_column` that can be found in the meta-data. If you do not provide
-#' a vector of contrasts that you wish to test for, every permutation of
-#' groups represented in that column will be tested against each other. Two
-#' variants of differential gene expression analyses will be applied:
-#' \enumerate{
-#'   \item A standard Limma Voom approach will be applied. For this specific
-#'   approach you can also provide co-variates that will be used in the model
-#'   fitting. The function will return the Limma Voom results for every
-#'   combination of contrasts found. For more details, please refer to
-#'   [bixverse::run_limma_voom()].
-#'   \item Secondly, the Hedge's effect size for each gene between all
-#'   combinations of the groups will be calculated. The effect sizes can
-#'   subsequently be used for e.g., meta-analyses across various studies of
-#'   interest.
-#' }
+#' This function will apply the Limma Voom DGE workflow. At a minimum you will
+#' need to provide `contrast_column` that can be found in the meta-data. If you
+#' do not provide a vector of contrasts that you wish to test for, every
+#' permutation of groups represented in that column will be tested against each
+#' other.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
-#' @param filter_column Optional String. If there is a column you wish to use as
-#' sub groupings, this can be provided here. An example could be different
-#' sampled tissues and you wish to run the DGE analyses within each tissue
-#' separately.
-#' @param co_variates Optional string vector. Any co-variates you wish to
-#' consider during the Limma Voom modelling.
 #' @param contrast_list Optional string vector. A vectors that contains the
 #' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
 #' all possible contrast automatically.
+#' @param filter_column Optional String. If there is a column you wish to use as
+#' sub groupings, this can be provided here. An example could be different
+#' sampled tissues and you wish to run the DGE analyses within each tissue
+#' separately in the data.
+#' @param co_variates Optional string vector. Any co-variates you wish to
+#' consider during the Limma Voom modelling.
+#' @param quantile_norm Boolean. Shall the data also be quantile normalised.
+#' Defaults to `FALSE`.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
-#' @param small_sample_correction Can be NULL (automatic determination if a
-#' small sample size correction should be applied) or a Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
 #'
 #' @export
-calculate_all_dges <- S7::new_generic(
-  "calculate_all_dges",
+calculate_dge_limma <- S7::new_generic(
+  "calculate_dge_limma",
   "object",
   fun = function(
     object,
@@ -1289,7 +1280,7 @@ calculate_all_dges <- S7::new_generic(
     contrast_list = NULL,
     filter_column = NULL,
     co_variates = NULL,
-    small_sample_correction = NULL,
+    quantile_norm = FALSE,
     ...,
     .verbose = TRUE
   ) {
@@ -1297,20 +1288,20 @@ calculate_all_dges <- S7::new_generic(
   }
 )
 
-#' @method calculate_all_dges bulk_dge
+#' @method calculate_dge_limma bulk_dge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_all_dges, bulk_dge) <- function(
+S7::method(calculate_dge_limma, bulk_dge) <- function(
   object,
   contrast_column,
   contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
-  small_sample_correction = NULL,
+  quantile_norm = FALSE,
   ...,
   .verbose = TRUE
 ) {
@@ -1330,7 +1321,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
   if (!dge_list_present) {
     warning(paste(
-      "No dge_list found. Did you run preprocess_bulk_dge()?",
+      "No dge_list found. Did you run qc_bulk_dge()?",
       "Returning object as is"
     ))
     return(object)
@@ -1342,13 +1333,160 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     NULL
   )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
-  if (is.null(S7::prop(object, "outputs")[['dge_list']])) {
-    dge_list = NULL
-  } else {
-    dge_list <- S7::prop(object, "outputs")[['dge_list']]
-  }
+  dge_list <- S7::prop(object, "outputs")[["dge_list"]]
 
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
+
+  if (is.null(filter_column)) {
+    if (.verbose) {
+      message("Calculating the differential expression with Limma Voom.")
+    }
+
+    limma_results_final <- run_limma_voom(
+      meta_data = sample_info,
+      main_contrast = contrast_column,
+      dge_list = dge_list,
+      contrast_list = contrast_list,
+      co_variates = co_variates,
+      quantile_norm = quantile_norm,
+      ...,
+      .verbose = .verbose
+    ) %>%
+      .[, subgroup := NA]
+  } else {
+    if (.verbose) {
+      message(paste(
+        "Filtering column provided. Calculating the differential expression",
+        "with Limma Voom across the groups."
+      ))
+    }
+
+    # Iterate through the grps
+    groups <- unique(sample_info[[filter_column]])
+
+    results <- purrr::map(groups, \(group) {
+      # Filter the meta data and dge list
+      sample_info_red <- sample_info[
+        eval(parse(
+          text = paste0(filter_column, " == '", group, "'")
+        ))
+      ]
+      dge_list_red <- dge_list[, sample_info_red$sample_id]
+
+      # Limma Voom
+      limma_results <- run_limma_voom(
+        meta_data = sample_info,
+        main_contrast = contrast_column,
+        dge_list = dge_list,
+        contrast_list = contrast_list,
+        co_variates = co_variates,
+        quantile_norm = quantile_norm,
+        ...,
+        .verbose = .verbose
+      ) %>%
+        .[, subgroup := group]
+
+      return(limma_results)
+    })
+
+    # rbind the data
+    limma_results_final <- data.table::rbindlist(limma_results)
+  }
+
+  dge_params <- list(
+    contrast_column = contrast_column,
+    filter_column = filter_column,
+    co_variates = co_variates
+  )
+
+  S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
+  S7::prop(object, "params")[["limma_dge"]] <- dge_params
+
+  return(object)
+}
+
+#' Calculates the Hedge's G effect size
+#'
+#' @description
+#' This function will calculate the Hedge's G effect size on the normalised
+#' counts. Should batch-corrected counts be found, these will be used. At a
+#' minimum you will need to provide `contrast_column` that can be found in the
+#' meta-data. If you do not provide a vector of contrasts that you wish to test
+#' for, every permutation of groups represented in that column will be tested
+#' against each other.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param contrast_column String. The contrast column in which the groupings
+#' are stored. Needs to be found in the meta_data within the properties.
+#' @param contrast_list Optional string vector. A vectors that contains the
+#' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
+#' all possible contrast automatically.
+#' @param filter_column Optional String. If there is a column you wish to use as
+#' sub groupings, this can be provided here. An example could be different
+#' sampled tissues and you wish to run the DGE analyses within each tissue
+#' separately in the data.
+#' @param .verbose Controls verbosity of the function.
+#'
+#' @return Returns the class with additional data added to the outputs.
+#'
+#' @export
+calculate_dge_hedges <- S7::new_generic(
+  "calculate_dge_hedges",
+  "object",
+  fun = function(
+    object,
+    contrast_column,
+    contrast_list = NULL,
+    filter_column = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_dge_hedges bulk_dge
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+S7::method(calculate_dge_hedges, bulk_dge) <- function(
+  object,
+  contrast_column,
+  contrast_list = NULL,
+  filter_column = NULL,
+  .verbose = TRUE
+) {
+  . <- subgroup <- NULL
+
+  # First checks
+  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::qassert(contrast_column, "S+")
+  checkmate::qassert(filter_column, c("S+", "0"))
+
+  # Early return
+  norm_count_present <- checkmate::testNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalised_counts"
+  )
+
+  if (!norm_count_present) {
+    warning(paste(
+      "No normalised found. Did you run preprocess_bulk_dge()",
+      "and normalise_bulk_dge()? Returning object as is."
+    ))
+    return(object)
+  }
+
+  ## get objects
+  all_specified_columns <- setdiff(
+    c(contrast_column, filter_column),
+    NULL
+  )
+  sample_info <- S7::prop(object, "outputs")[["sample_info"]]
+
+  checkmate::assertTRUE(all(all_specified_columns %in% names(sample_info)))
 
   counts_batch_cor <- S7::prop(object, "outputs")[[
     'normalised_counts_corrected'
@@ -1368,30 +1506,14 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
   if (is.null(filter_column)) {
     if (.verbose) {
-      message("Calculating the differential expression with limma results.")
+      message("Calculating the differential expression based on Hedge's G.")
     }
 
-    limma_results_final <- run_limma_voom(
-      meta_data = sample_info,
-      main_contrast = contrast_column,
-      dge_list = dge_list,
-      normalised_counts = norm_counts,
-      contrast_list = contrast_list,
-      co_variates = co_variates,
-      ...,
-      .verbose = .verbose
-    ) %>%
-      .[, subgroup := NA]
-
-    if (.verbose) {
-      message("Calculating the Hedge's G effect sizes.")
-    }
     hedges_g_results_final <- hedges_g_dge(
       meta_data = sample_info,
       main_contrast = contrast_column,
       contrast_list = contrast_list,
       normalised_counts = norm_counts,
-      small_sample_correction = small_sample_correction,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -1412,70 +1534,30 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
           text = paste0(filter_column, " == '", group, "'")
         ))
       ]
-      if (is.null(dge_list)) {
-        dge_list_red = NULL
-        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
-      } else {
-        dge_list_red <- dge_list[, sample_info_red$sample_id]
-        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
-      }
-
-      # Limma Voom
-      limma_results <- run_limma_voom(
-        meta_data = data.table::copy(sample_info_red),
-        main_contrast = contrast_column,
-        dge_list = dge_list_red,
-        normalised_counts = norm_counts_red,
-        co_variates = co_variates,
-        contrast_list = contrast_list,
-        ...,
-        .verbose = .verbose
-      ) %>%
-        .[, subgroup := group]
+      norm_counts_red <- norm_counts[, sample_info_red$sample_id]
 
       hedges_g_results <- hedges_g_dge(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
         normalised_counts = norm_counts_red,
         contrast_list = contrast_list,
-        small_sample_correction = small_sample_correction,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
 
-      return(list(
-        limma_results = limma_results,
-        hedges_g_results = hedges_g_results
-      ))
+      return(hedges_g_results)
     })
 
-    # Rbind the data
-    limma_results_final <- purrr::map(
-      results,
-      ~ {
-        .[['limma_results']]
-      }
-    ) %>%
-      data.table::rbindlist()
-
-    hedges_g_results_final <- purrr::map(
-      results,
-      ~ {
-        .[['hedges_g_results']]
-      }
-    ) %>%
-      data.table::rbindlist()
+    hedges_g_results_final <- data.table::rbindlist(results)
   }
 
   dge_params <- list(
     contrast_column = contrast_column,
-    filter_column = filter_column,
-    co_variates = co_variates
+    filter_column = filter_column
   )
 
-  S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
   S7::prop(object, "outputs")[['hedges_g_res']] <- hedges_g_results_final
-  S7::prop(object, "params")[["dge"]] <- dge_params
+  S7::prop(object, "params")[["effect_size_dge"]] <- dge_params
 
   return(object)
 }

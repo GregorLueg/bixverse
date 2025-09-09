@@ -72,7 +72,7 @@ dge_class <- bulk_dge(
   meta_data = test_data$meta_data
 )
 
-### pre-processing -------------------------------------------------------------
+### qc -------------------------------------------------------------------------
 
 # remove lowly expressed genes and outlier samples
 dge_class <- qc_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
@@ -98,9 +98,8 @@ expect_warning(
   info = "Non existing plot 4 warning"
 )
 
-devtools::load_all()
+### normalisations -------------------------------------------------------------
 
-# normalisations
 dge_class <- normalise_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
 
 qc_plot_3 <- get_dge_qc_plot(dge_class, plot_choice = 3L)
@@ -115,8 +114,6 @@ expect_true(
   current = "ggplot" %in% class(qc_plot_4),
   info = "DGE pre-processing: 4th QC plot"
 )
-
-
 expect_true(
   current = all(dim(get_dge_list(dge_class)) == c(15926, 8)),
   info = "DGE pre-processing - filtered lowly expressed genes."
@@ -146,7 +143,14 @@ expect_equal(
 
 ### dge calculations -----------------------------------------------------------
 
-dge_class <- calculate_all_dges(
+#### limma ---------------------------------------------------------------------
+
+expect_warning(
+  current = get_dge_limma_voom(dge_class),
+  info = "DGE class - warning of Limma Voom getter"
+)
+
+dge_class <- calculate_dge_limma(
   dge_class,
   contrast_column = "dex",
   .verbose = FALSE
@@ -154,16 +158,93 @@ dge_class <- calculate_all_dges(
 
 limma_res <- get_dge_limma_voom(dge_class)
 
-effect_sizes <- get_dge_effect_sizes(dge_class)
-
 expect_equal(
   current = limma_res,
   target = expected_limma_res,
   info = "DGE class - Limma results"
 )
 
+#### hedge's g -----------------------------------------------------------------
+
+expect_warning(
+  current = get_dge_effect_sizes(dge_class),
+  info = "DGE class - warning of Hedge's getter"
+)
+
+dge_class <- calculate_dge_hedges(
+  dge_class,
+  contrast_column = "dex",
+  .verbose = FALSE
+)
+
+effect_sizes <- get_dge_effect_sizes(dge_class)
+
 expect_equal(
   current = effect_sizes,
   target = expected_effect_sizes,
   info = "DGE class - Effect size results"
+)
+
+## normalisation methods -------------------------------------------------------
+
+### gene length data -----------------------------------------------------------
+
+gene_lengths <- c(
+  1745.5,
+  873.5,
+  1074.5,
+  2870.0,
+  3086.5,
+  2383.0,
+  3136.0,
+  1316.0,
+  1800.0,
+  3759.0
+)
+names(gene_lengths) <- rownames(test_data$counts)[1:10]
+
+dge_class <- bulk_dge(
+  raw_counts = test_data$counts[1:10, ],
+  meta_data = test_data$meta_data
+)
+
+dge_class <- qc_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
+
+expect_error(
+  current = normalise_bulk_dge(
+    dge_class,
+    group_col = "dex",
+    calc_tpm = TRUE,
+    .verbose = FALSE
+  ),
+  info = paste("dge class - error without gene lengths")
+)
+
+expect_warning(
+  current = get_tpm_counts(dge_class),
+  info = paste("dge class - no TPM counts")
+)
+
+expect_warning(
+  current = get_fpkm_counts(dge_class),
+  info = paste("dge class - no FPKM counts")
+)
+
+dge_class <- normalise_bulk_dge(
+  dge_class,
+  group_col = "dex",
+  calc_tpm = TRUE,
+  calc_fpkm = TRUE,
+  gene_lengths = gene_lengths,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = "matrix" %in% class(get_tpm_counts(dge_class)),
+  info = paste("dge class - returns TPM counts")
+)
+
+expect_true(
+  current = "matrix" %in% class(get_fpkm_counts(dge_class)),
+  info = paste("dge class - returns FPKM counts")
 )

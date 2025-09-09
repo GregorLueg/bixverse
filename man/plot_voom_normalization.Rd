@@ -7,7 +7,7 @@
 plot_voom_normalization(voom_object)
 }
 \arguments{
-\item{voom_object}{Voom object}
+\item{voom_object}{\code{EList}. Voom object with normalised counts.}
 }
 \value{
 ggplot object, i.e., voom normalisation plot.

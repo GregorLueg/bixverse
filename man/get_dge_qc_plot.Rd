@@ -17,16 +17,18 @@ Returns the DGEList stored in the class.
 \description{
 Getter function to extract the QC plots from the \code{\link[=bulk_dge]{bulk_dge()}}
 class. These are added when you run for example
-\code{\link[=preprocess_bulk_dge]{preprocess_bulk_dge()}}. You can either leave the plot choice as
-\code{NULL} and provide input when prompted, or you provide the name. The possible
-plots that might be in the class
+\code{\link[=qc_bulk_dge]{qc_bulk_dge()}} and \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}}. You can
+either leave the plot choice as \code{NULL} and provide input when prompted, or
+you provide the name. The possible plots that might be in the class
 \itemize{
 \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
-respective cohorts
-\item p2_outliers An outlier plot based on the data from p1
+respective cohorts (added after using \code{\link[=qc_bulk_dge]{qc_bulk_dge()}}).
+\item p2_outliers An outlier plot based on the data from p1, added after
+using \code{\link[=qc_bulk_dge]{qc_bulk_dge()}}.
 \item p3_voom_normalization Initial Voom normalisation plot after filtering
-lowly expressed genes
-\item p4_boxplot_normalization Expression levels after normalisation
+lowly expressed genes. Added after using \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}}.
+\item p4_boxplot_normalization Expression levels after normalisation. Added
+after using \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}}.
 \item p5_pca_case_control A PCA plot with the chosen case control category.
 Added if \code{\link[=calculate_pca_bulk_dge]{calculate_pca_bulk_dge()}} is run.
 \item p6_batch_correction_plot A PCA plot pre and post batch correction

@@ -4,12 +4,15 @@
 \alias{plot_boxplot_normalization}
 \title{Helper plot function for boxplot of normalized data}
 \usage{
-plot_boxplot_normalization(samples, voom_object)
+plot_boxplot_normalization(samples, voom_object, group_col)
 }
 \arguments{
-\item{samples}{data.frame. sample metadata}
+\item{samples}{data.table with sample information with perc_detected_genes
+and a column specifying the cohort.}
 
-\item{voom_object}{Voom object}
+\item{voom_object}{\code{EList}. Voom object with normalised counts.}
+
+\item{group_col}{String. The grouping column.}
 }
 \value{
 ggplot object, i.e., box plot with expression per sample.

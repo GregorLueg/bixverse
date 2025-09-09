@@ -58,6 +58,7 @@ Imports:
     zeallot
 Suggests: 
     BiocParallel,
+    biomaRt,
     fgsea,
     GSVA,
     infotheo,
