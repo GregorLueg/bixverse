@@ -525,13 +525,13 @@ expected_matrix_overlap <- matrix(
 
 ### tests ----------------------------------------------------------------------
 
-jaccard_mat <- rs_set_similarity_list(
+jaccard_mat <- rs_set_similarity_list2(
   s_1_list = list_a,
   s_2_list = list_b,
   overlap = FALSE
 )
 
-overlap_mat <- rs_set_similarity_list(
+overlap_mat <- rs_set_similarity_list2(
   s_1_list = list_a,
   s_2_list = list_b,
   overlap = TRUE
@@ -540,13 +540,57 @@ overlap_mat <- rs_set_similarity_list(
 expect_equivalent(
   current = jaccard_mat,
   target = expected_matrix_jaccard,
-  tolerance = 1e-7
+  tolerance = 1e-7,
+  info = "set similarity - two lists matrix (jaccard)"
 )
 
 expect_equivalent(
   current = overlap_mat,
   target = expected_matrix_overlap,
-  tolerance = 1e-7
+  tolerance = 1e-7,
+  info = "set similarity - two lists matrix (overlap coefficient)"
+)
+
+## on one list -----------------------------------------------------------------
+
+### expected results -----------------------------------------------------------
+
+from <- c("set_c", "set_c", "set_d")
+to <- c("set_d", "set_e", "set_e")
+jaccard_sim <- c(1 / 3, 0, 0)
+overlap_sim <- c(0.6, 0, 0)
+
+### test -----------------------------------------------------------------------
+
+jaccard_list <- rs_set_similarity_list(
+  list = list_b,
+  overlap_coefficient = FALSE
+)
+
+jaccard_list_overlap <- rs_set_similarity_list(
+  list = list_b,
+  overlap_coefficient = TRUE
+)
+
+expect_equal(
+  current = jaccard_list$from,
+  target = from,
+  info = paste("set similarity - within list: from")
+)
+expect_equal(
+  current = jaccard_list$to,
+  target = to,
+  info = paste("set similarity - within list: to")
+)
+expect_equal(
+  current = jaccard_list$sim,
+  target = jaccard_sim,
+  info = paste("set similarity - within list: jaccard similarity")
+)
+expect_equal(
+  current = jaccard_list_overlap$sim,
+  target = overlap_sim,
+  info = paste("set similarity - within list: overlap similarity")
 )
 
 # effect sizes -----------------------------------------------------------------

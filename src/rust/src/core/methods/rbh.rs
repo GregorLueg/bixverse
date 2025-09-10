@@ -79,13 +79,9 @@ pub fn calculate_rbh_set<'a>(
     let similarities_flat: Vec<Vec<f64>> = origin_modules
         .values()
         .map(|v1| {
-            let v1_refs: FxHashSet<&String> = v1.iter().collect();
             target_modules
                 .values()
-                .map(|v2| {
-                    let v2_refs: FxHashSet<&String> = v2.iter().collect();
-                    set_similarity(&v1_refs, &v2_refs, overlap_coefficient)
-                })
+                .map(|v2| set_similarity(v1, v2, overlap_coefficient))
                 .collect()
         })
         .collect();

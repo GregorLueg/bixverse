@@ -2,23 +2,25 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_set_similarity_list}
 \alias{rs_set_similarity_list}
-\title{Set similarities over list}
+\title{Set similarities over one list}
 \usage{
-rs_set_similarity_list(s_1_list, s_2_list, overlap_coefficient)
+rs_set_similarity_list(list, overlap_coefficient)
 }
 \arguments{
-\item{s_1_list}{The String vector against which to calculate the set similarities.}
+\item{list}{A named R list.}
 
-\item{s_2_list}{A List of vector against which to calculate the set similarities.}
-
-\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of the
-Jaccard similarity be calculated.}
+\item{overlap_coefficient}{Boolean. Use the overlap coefficient instead of
+the Jaccard similarity be calculated.}
 }
 \value{
-A matrix of the Jaccard similarities between the elements. The rows
-represent s_1_list and the column s_2_list.
+A list with the following items:
+\itemize{
+\item from - Name of element i
+\item to - Name of element j
+\item sim - Similarity between the two elements
+}
 }
 \description{
-This function calculates the Jaccard or similarity index between a one given
-string vector and list of vectors.
+This function calculates the set similarity via Jaccard or
+overlap coefficient across all permutations of one list.
 }

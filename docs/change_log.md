@@ -1,6 +1,20 @@
 # *bixverse* change log
 
-*Last update: 04.09.2025* </br>
+*Last update: 08.09.2025* </br>
+
+### Version **0.0.2.2**
+
+#### New features
+
+- Mitch multi contrast enrichment in Rust.
+- Rework and -factor of sub modules in the Rust code.
+- Additional Rust functions to do set similarity across a list of times in R.
+
+#### Breaking changes
+
+- The interface for `rs_set_similarity_list()` has changed its name and is now
+`rs_set_similarity_list2()`. The former now takes in a single list and 
+calculates the set similarity across all permutations of the elements.
 
 ### Version **0.0.2.2**
 
