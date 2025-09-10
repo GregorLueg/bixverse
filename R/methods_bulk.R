@@ -7,20 +7,17 @@
 #' QC on the bulk dge data
 #'
 #' @description
-#' This function generates general QC metrics for bulk DGE experiments.
+#' This function will do QC on the bulk data and remove outlier samples that
+#' show substantially lower expression of genes compared to the rest of the
+#' data and remove lowly expressed genes.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
-#' @param norm_method String. One of
-#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
-#' [edgeR::normLibSizes()].
 #' @param outlier_threshold Float. Number of standard deviations in terms of
 #' percentage genes detected you allow before removing a sample. Defaults to `2`.
 #' @param min_prop Float. Minimum proportion of samples in which the gene has
 #' to be identified in.
-#' @param include_tpm Boolean. Include TPM calculation (default = FALSE)
-#' @param species String. Species for which the gene lengths will be obtained from BioMart for TPM calculation, one of c("human","mouse", "rat"). Default "human"
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return Returns the class with the `processed_data` data slot populated and
@@ -31,17 +28,14 @@
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-preprocess_bulk_dge <- S7::new_generic(
-  "preprocess_bulk_dge",
+qc_bulk_dge <- S7::new_generic(
+  "qc_bulk_dge",
   "object",
   fun = function(
     object,
     group_col,
-    norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
     outlier_threshold = 2,
     min_prop = 0.2,
-    include_tpm = FALSE,
-    species = "human",
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -49,34 +43,26 @@ preprocess_bulk_dge <- S7::new_generic(
 )
 
 
-#' @method preprocess_bulk_dge bulk_dge
+#' @method qc_bulk_dge bulk_dge
 #'
 #' @import ggplot2
 #'
 #' @export
-S7::method(preprocess_bulk_dge, bulk_dge) <- function(
+S7::method(qc_bulk_dge, bulk_dge) <- function(
   object,
   group_col,
-  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
   outlier_threshold = 2,
   min_prop = 0.2,
-  include_tpm = FALSE,
-  species = "human",
   .verbose = TRUE
 ) {
   # Scope checks
   . <- `:=` <- NULL
-  norm_method <- match.arg(norm_method)
   # Checks
   checkmate::assertClass(
     object,
     "bixverse::bulk_dge"
   )
   checkmate::qassert(group_col, "S1")
-  checkmate::assertChoice(
-    norm_method,
-    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
-  )
   checkmate::qassert(outlier_threshold, "N1")
   checkmate::qassert(min_prop, "R1[0,1]")
   checkmate::qassert(.verbose, "B1")
@@ -85,8 +71,6 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
   meta_data <- S7::prop(object, "meta_data")
 
   checkmate::assertTRUE(group_col %in% colnames(meta_data))
-
-  checkmate::assertNames(species, subset.of = c("human", "mouse", "rat"))
 
   if (.verbose) {
     message("Detecting sample outliers.")
@@ -130,7 +114,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 
   ## Voom normalization
   if (.verbose) {
-    message("Removing lowly expressed genes and normalising counts.")
+    message("Removing lowly expressed genes.")
   }
   dge_list <- edgeR::DGEList(raw_counts)
 
@@ -147,14 +131,122 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     message(sprintf("A total of %i genes are kept.", sum(to_keep)))
   }
 
-  ## TPM and FPKM
+  S7::prop(object, "plots") <- list(
+    p1_nb_genes_cohort = p1_nb_genes_cohort,
+    p2_outliers = p2_outliers
+  )
 
-  if (include_tpm) {
-    tpm_values <- tpm(count_matrix, species)
-    rpkm_values <- edgeR::rpkm(dge_list, gene.length = gene_lengths)
-  } else {
-    tpm_values <- NULL
-    rpkm_values <- NULL
+  S7::prop(object, "outputs") <- list(
+    dge_list = dge_list,
+    sample_info = samples_red,
+    group_col = group_col,
+    raw_counts_filtered = raw_counts
+  )
+
+  S7::prop(object, "params")[["QC_params"]] <- list(
+    min_prop = min_prop,
+    outlier_threshold = outlier_threshold
+  )
+
+  return(object)
+}
+
+#' Normalise the count data for DGE.
+#'
+#' @description
+#' This function will apply the CPM + Voom normalisation and can additionally
+#' calculate TPM and FPKM values for plotting purposes.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param group_col String. The column in the metadata that will contain the
+#' contrast groups. Needs to be part of the metadata stored in the class.
+#' @param norm_method String. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
+#' [edgeR::normLibSizes()].
+#' @param calc_tpm Boolean. Output TPM calculation (default = FALSE).
+#' @param calc_fpkm Boolean. Output FPKM calculation (default = FALSE).
+#' @param gene_lengths Optional named numeric. If you want to calculate TPM
+#' or FPKM you need to provide this one. The names need to be the same
+#' identifier as used in the counts.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return Returns the class with the `processed_data` data slot populated and
+#' applied parameters added to the `params` slot.
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+normalise_bulk_dge <- S7::new_generic(
+  "normalise_bulk_dge",
+  "object",
+  fun = function(
+    object,
+    group_col,
+    norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+    calc_tpm = FALSE,
+    calc_fpkm = FALSE,
+    gene_lengths = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+
+#' @method normalise_bulk_dge bulk_dge
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(normalise_bulk_dge, bulk_dge) <- function(
+  object,
+  group_col,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  calc_tpm = FALSE,
+  calc_fpkm = FALSE,
+  gene_lengths = NULL,
+  .verbose = TRUE
+) {
+  norm_method <- match.arg(norm_method)
+
+  # scope checks
+  . <- `:=` <- NULL
+
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::bulk_dge"
+  )
+  checkmate::qassert(group_col, "S1")
+  checkmate::assertChoice(
+    norm_method,
+    c("TMM", "TMMwsp", "RLE", "upperquartile", "none")
+  )
+  checkmate::qassert(calc_tpm, "B1")
+  checkmate::qassert(calc_fpkm, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  if (is.null(S7::prop(object, "outputs")[["dge_list"]])) {
+    warning(paste(
+      "Could not find the DGE list in the object. Did you run qc_bulk_dge()?",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+
+  dge_list <- S7::prop(object, "outputs")[["dge_list"]]
+  raw_counts_filtered <- S7::prop(object, "outputs")[["raw_counts_filtered"]]
+  meta_data_filtered <- S7::prop(object, "outputs")[["sample_info"]]
+
+  # assertion at this point for calculations here
+  if (calc_tpm | calc_fpkm) {
+    checkmate::assertNumeric(gene_lengths, names = "named", any.missing = FALSE)
+    checkmate::assertTRUE(all(
+      rownames(raw_counts_filtered) == names(gene_lengths)
+    ))
   }
 
   ## CPM
@@ -162,8 +254,8 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
     dge_list,
     method = norm_method
   )
-  samples <- samples_red[[group_col]]
-  design <- model.matrix(~ 0 + samples)
+  groups <- meta_data_filtered[[group_col]]
+  design <- model.matrix(~ 0 + groups)
   voom_obj <- limma::voom(
     counts = dge_list,
     design = design,
@@ -176,35 +268,40 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 
   # plot 4 - boxplots
   p4_boxplot_normalization <- plot_boxplot_normalization(
-    samples = samples,
-    voom_object = voom_obj
+    samples = meta_data_filtered,
+    voom_object = voom_obj,
+    group_col = group_col
   )
 
-  S7::prop(object, "plots") <- list(
-    p1_nb_genes_cohort = p1_nb_genes_cohort,
-    p2_outliers = p2_outliers,
-    p3_voom_normalization = p3_voom_normalization,
-    p4_boxplot_normalization = p4_boxplot_normalization
-  )
+  ## TPM and FPKM
 
-  S7::prop(object, "outputs") <- list(
-    dge_list = dge_list,
-    sample_info = samples_red,
-    normalised_counts = voom_obj$E,
-    group_col = group_col,
-    tpm = tpm_values,
-    rpkm = rpkm_values
-  )
+  tpm_counts <- if (calc_tpm) {
+    calculate_tpm(counts = raw_counts_filtered, gene_lengths = gene_lengths)
+  } else {
+    NULL
+  }
 
-  S7::prop(object, "params")[["QC_params"]] <- list(
-    normalisation_method = norm_method,
-    min_prop = min_prop,
-    outlier_threshold = outlier_threshold
+  fpkm_counts <- if (calc_fpkm) {
+    calculate_rpkm(counts = raw_counts_filtered, gene_lengths = gene_lengths)
+  } else {
+    NULL
+  }
+
+  S7::prop(object, "plots")[["p3_voom_normalization"]] <- p3_voom_normalization
+  S7::prop(object, "plots")[[
+    "p4_boxplot_normalization"
+  ]] <- p4_boxplot_normalization
+
+  S7::prop(object, "outputs")[["normalised_counts"]] <- voom_obj$E
+  S7::prop(object, "outputs")[["tpm_counts"]] <- tpm_counts
+  S7::prop(object, "outputs")[["fpkm_counts"]] <- fpkm_counts
+
+  S7::prop(object, "params")[["norm"]] <- list(
+    normalisation_method = norm_method
   )
 
   return(object)
 }
-
 
 ### bulk cor modules -----------------------------------------------------------
 
@@ -356,22 +453,27 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   object
 }
 
-### plots ----------------------------------------------------------------------
+## plots -----------------------------------------------------------------------
 
-#' @title Plot preprocessing output of distribution of genes by samples
+### bulk dge -------------------------------------------------------------------
+
+#' @title Helper plot function of distribution of genes by samples
 #'
-#' @param samples df. Dataframe with sample information created by bulk_dge object including column with nb_detected_genes and a column specifying cohort
-#' @param group_col char. String specifying the column with cohort information
+#' @param samples data.table with sample information with nb_detected_genes and
+#' a column specifying the cohort.
+#' @param group_col String specifying the column with cohort information
 #'
-#' @return boxplot with number of genes by cohort
+#' @return ggplot object, i.e. boxplot with number of genes by cohort
 plot_preprocessing_genes <- function(samples, group_col) {
+  # checks
   checkmate::assertDataFrame(samples)
   checkmate::assertNames(
     colnames(samples),
     must.include = c(group_col, "nb_detected_genes")
   )
 
-  ggplot2::ggplot(
+  # function
+  p <- ggplot2::ggplot(
     samples,
     aes(
       x = .data[[group_col]],
@@ -393,29 +495,36 @@ plot_preprocessing_genes <- function(samples, group_col) {
       axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
       legend.position = "none"
     )
+
+  return(p)
 }
 
-#' @title Plot preprocessing output with identification of outliers
+#' @title Helper plot function for identification of outliers
 #'
-#' @param samples df. Dataframe with sample information created by bulk_dge object including column with perc_detected_genes and a column specifying cohort
-#' @param group_col char. String specifying the column with cohort information
-#' @param min_perc num. Lower cutoff to identify outliers.
-#' @param max_perc num. Upper cutoff to identify outliers
+#' @param samples data.table with sample information with perc_detected_genes
+#' and a column specifying the cohort.
+#' @param group_col String specifying the column with cohort information
+#' @param min_perc Numeric. Lower cutoff to identify outliers.
+#' @param max_perc Numeric. Upper cutoff to identify outliers
 #'
-#' @return beeswarm plot with outlier indication
-#'
+#' @return ggplot object, i.e., beeswarm plot with outlier indication
 plot_preprocessing_outliers <- function(
   samples,
   group_col,
   min_perc,
   max_perc
 ) {
+  # checks
   checkmate::assertDataFrame(samples)
   checkmate::assertNames(
     colnames(samples),
     must.include = c(group_col, "perc_detected_genes")
   )
-  ggplot2::ggplot(
+  checkmate::qassert(min_perc, "N1")
+  checkmate::qassert(max_perc, "N1")
+
+  # function
+  p <- ggplot2::ggplot(
     samples,
     aes(
       x = .data[[group_col]],
@@ -451,13 +560,20 @@ plot_preprocessing_outliers <- function(
       legend.position = "none",
       axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
     )
+
+  return(p)
 }
 
-#' Plot preprocessing output of voom normalization
+#' Helper plot function for Voom normalisation
 #'
-#' @param voom_object Voom object
+#' @param voom_object `EList`. Voom object with normalised counts.
 #'
+#' @return ggplot object, i.e., voom normalisation plot.
 plot_voom_normalization <- function(voom_object) {
+  # checks
+  checkmate::assertClass(voom_object, "EList")
+
+  # function
   voom_plot_data <- data.table::data.table(
     avg_exp = rowMeans(voom_object$E),
     residual_sd = sqrt(matrixStats::rowSds(voom_object$E))
@@ -482,19 +598,29 @@ plot_voom_normalization <- function(voom_object) {
     ggplot2::theme_classic()
 }
 
-#' Plot boxplot of normalized data
+#' Helper plot function for boxplot of normalized data
 #'
-#' @param samples data.frame. sample metadata
-#' @param voom_object Voom object
+#' @param samples data.table with sample information with perc_detected_genes
+#' and a column specifying the cohort.
+#' @param voom_object `EList`. Voom object with normalised counts.
+#' @param group_col String. The grouping column.
 #'
-plot_boxplot_normalization <- function(samples, voom_object) {
+#' @return ggplot object, i.e., box plot with expression per sample.
+plot_boxplot_normalization <- function(samples, voom_object, group_col) {
+  # checks
+  checkmate::assertClass(voom_object, "EList")
+  checkmate::assertDataTable(samples)
+  checkmate::qassert(group_col, "S1")
+  checkmate::assertTRUE(group_col %in% names(samples))
+
+  # function
   boxplot_data <- data.table::data.table(
     sample = rep(colnames(voom_object$E), each = nrow(voom_object$E)),
     expression = as.vector(voom_object$E),
-    group = rep(as.factor(samples), each = nrow(voom_object$E))
+    group = rep(as.factor(samples[[group_col]]), each = nrow(voom_object$E))
   )
 
-  ggplot2::ggplot(
+  p <- ggplot2::ggplot(
     boxplot_data,
     aes(x = sample, y = expression, fill = group)
   ) +
@@ -509,8 +635,87 @@ plot_boxplot_normalization <- function(samples, voom_object) {
       axis.text.x = element_text(angle = 45, hjust = 1),
       legend.position = "top"
     )
+
+  return(p)
 }
 
+#' Return QC plots
+#'
+#' @description
+#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
+#' class. These are added when you run for example
+#' [bixverse::qc_bulk_dge()] and [bixverse::normalise_bulk_dge()]. You can
+#' either leave the plot choice as `NULL` and provide input when prompted, or
+#' you provide the name. The possible plots that might be in the class
+#' \itemize{
+#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
+#'  respective cohorts (added after using [bixverse::qc_bulk_dge()]).
+#'  \item p2_outliers An outlier plot based on the data from p1, added after
+#'  using [bixverse::qc_bulk_dge()].
+#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
+#'  lowly expressed genes. Added after using [bixverse::normalise_bulk_dge()].
+#'  \item p4_boxplot_normalization Expression levels after normalisation. Added
+#'  after using [bixverse::normalise_bulk_dge()].
+#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
+#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
+#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
+#'  with the case-control category overlayed. Added if
+#'  [bixverse::batch_correction_bulk_dge()] is run.
+#' }
+#'
+#' @param object `bulk_dge` class.
+#' @param plot_choice Optional string or integer. Index or name of the plate.
+#'
+#' @return Returns the DGEList stored in the class.
+#'
+#' @export
+get_dge_qc_plot <- S7::new_generic(
+  name = "get_dge_qc_plot",
+  dispatch_args = "object",
+  fun = function(object, plot_choice = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_dge_qc_plot bulk_dge
+#'
+#' @export
+S7::method(get_dge_qc_plot, bulk_dge) <-
+  function(object, plot_choice = NULL) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
+
+    plots <- S7::prop(object, "plots")
+    plot_names <- names(plots)
+
+    user_choice <- ifelse(
+      is.null(plot_choice),
+      select_user_option(plot_names),
+      plot_choice
+    )
+
+    res <- tryCatch(
+      {
+        plots[[user_choice]]
+      },
+      error = function(e) {
+        warning(paste(
+          "You are trying to return a not yet generated or not existing plot.",
+          "Returning NULL"
+        ))
+        return(NULL)
+      }
+    )
+
+    # Return
+    return(res)
+  }
+
+### bulk cor -------------------------------------------------------------------
 
 #' @title Plot the highly variable genes
 #'
@@ -578,67 +783,6 @@ S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
 
   return(p)
 }
-
-#' Return QC plots
-#'
-#' @description
-#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
-#' class. These are added when you run for example
-#' [bixverse::preprocess_bulk_dge()]. You can either leave the plot choice as
-#' `NULL` and provide input when prompted, or you provide the name. The possible
-#' plots that might be in the class
-#' \itemize{
-#'  \item p1_nb_genes_cohort Proportion of non-zero genes for the samples in the
-#'  respective cohorts
-#'  \item p2_outliers An outlier plot based on the data from p1
-#'  \item p3_voom_normalization Initial Voom normalisation plot after filtering
-#'  lowly expressed genes
-#'  \item p4_boxplot_normalization Expression levels after normalisation
-#'  \item p5_pca_case_control A PCA plot with the chosen case control category.
-#'  Added if [bixverse::calculate_pca_bulk_dge()] is run.
-#'  \item p6_batch_correction_plot A PCA plot pre and post batch correction
-#'  with the case-control category overlayed. Added if
-#'  [bixverse::batch_correction_bulk_dge()] is run.
-#' }
-#'
-#' @param object `bulk_dge` class.
-#' @param plot_choice Optional string or integer. Index or name of the plate.
-#'
-#' @return Returns the DGEList stored in the class.
-#'
-#' @export
-get_dge_qc_plot <- S7::new_generic(
-  name = "get_dge_qc_plot",
-  dispatch_args = "object",
-  fun = function(object, plot_choice = NULL) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method get_dge_qc_plot bulk_dge
-#'
-#' @export
-S7::method(get_dge_qc_plot, bulk_dge) <-
-  function(object, plot_choice = NULL) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::bulk_dge"
-    )
-    checkmate::qassert(plot_choice, c("0", "I1", "S1"))
-
-    plots <- S7::prop(object, "plots")
-    plot_names <- names(plots)
-
-    user_choice <- ifelse(
-      is.null(plot_choice),
-      select_user_option(plot_names),
-      plot_choice
-    )
-
-    # Return
-    return(plots[[user_choice]])
-  }
 
 ## pca -------------------------------------------------------------------------
 
@@ -914,7 +1058,7 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 #' @description
 #' Runs a linear batch correction over the data regressing out batch effects
 #' and adding `normalised_counts_corrected` to the object. Should these counts
-#' be found by [bixverse::calculate_all_dges()], they will be used for
+#' be found by [bixverse::calculate_dge_hedges()], they will be used for
 #' calculations of effect sizes based on Hedge's G.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
@@ -1097,50 +1241,38 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 
 ## differential gene expression ------------------------------------------------
 
-#' Calculate all possible DGE variants
+#' Calculates the Limma Voom DGE
 #'
 #' @description
-#' This class is a wrapper class around applying various differential gene
-#' expression on the data. At a minimum you will need to provide a
-#' `contrast_column` that can be found in the meta-data. If you do not provide
-#' a vector of contrasts that you wish to test for, every permutation of
-#' groups represented in that column will be tested against each other. Two
-#' variants of differential gene expression analyses will be applied:
-#' \enumerate{
-#'   \item A standard Limma Voom approach will be applied. For this specific
-#'   approach you can also provide co-variates that will be used in the model
-#'   fitting. The function will return the Limma Voom results for every
-#'   combination of contrasts found. For more details, please refer to
-#'   [bixverse::run_limma_voom()].
-#'   \item Secondly, the Hedge's effect size for each gene between all
-#'   combinations of the groups will be calculated. The effect sizes can
-#'   subsequently be used for e.g., meta-analyses across various studies of
-#'   interest.
-#' }
+#' This function will apply the Limma Voom DGE workflow. At a minimum you will
+#' need to provide `contrast_column` that can be found in the meta-data. If you
+#' do not provide a vector of contrasts that you wish to test for, every
+#' permutation of groups represented in that column will be tested against each
+#' other.
 #'
 #' @param object The underlying class, see [bixverse::bulk_dge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
-#' @param filter_column Optional String. If there is a column you wish to use as
-#' sub groupings, this can be provided here. An example could be different
-#' sampled tissues and you wish to run the DGE analyses within each tissue
-#' separately.
-#' @param co_variates Optional string vector. Any co-variates you wish to
-#' consider during the Limma Voom modelling.
 #' @param contrast_list Optional string vector. A vectors that contains the
 #' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
 #' all possible contrast automatically.
+#' @param filter_column Optional String. If there is a column you wish to use as
+#' sub groupings, this can be provided here. An example could be different
+#' sampled tissues and you wish to run the DGE analyses within each tissue
+#' separately in the data.
+#' @param co_variates Optional string vector. Any co-variates you wish to
+#' consider during the Limma Voom modelling.
+#' @param quantile_norm Boolean. Shall the data also be quantile normalised.
+#' Defaults to `FALSE`.
 #' @param ... Additional parameters to forward to [limma::eBayes()] or
 #' [limma::voom()].
-#' @param small_sample_correction Can be NULL (automatic determination if a
-#' small sample size correction should be applied) or a Boolean.
 #' @param .verbose Controls verbosity of the function.
 #'
 #' @return Returns the class with additional data added to the outputs.
 #'
 #' @export
-calculate_all_dges <- S7::new_generic(
-  "calculate_all_dges",
+calculate_dge_limma <- S7::new_generic(
+  "calculate_dge_limma",
   "object",
   fun = function(
     object,
@@ -1148,7 +1280,7 @@ calculate_all_dges <- S7::new_generic(
     contrast_list = NULL,
     filter_column = NULL,
     co_variates = NULL,
-    small_sample_correction = NULL,
+    quantile_norm = FALSE,
     ...,
     .verbose = TRUE
   ) {
@@ -1156,20 +1288,20 @@ calculate_all_dges <- S7::new_generic(
   }
 )
 
-#' @method calculate_all_dges bulk_dge
+#' @method calculate_dge_limma bulk_dge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_all_dges, bulk_dge) <- function(
+S7::method(calculate_dge_limma, bulk_dge) <- function(
   object,
   contrast_column,
   contrast_list = NULL,
   filter_column = NULL,
   co_variates = NULL,
-  small_sample_correction = NULL,
+  quantile_norm = FALSE,
   ...,
   .verbose = TRUE
 ) {
@@ -1189,7 +1321,7 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
   if (!dge_list_present) {
     warning(paste(
-      "No dge_list found. Did you run preprocess_bulk_dge()?",
+      "No dge_list found. Did you run qc_bulk_dge()?",
       "Returning object as is"
     ))
     return(object)
@@ -1201,13 +1333,160 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
     NULL
   )
   sample_info <- S7::prop(object, "outputs")[["sample_info"]]
-  if (is.null(S7::prop(object, "outputs")[['dge_list']])) {
-    dge_list = NULL
-  } else {
-    dge_list <- S7::prop(object, "outputs")[['dge_list']]
-  }
+  dge_list <- S7::prop(object, "outputs")[["dge_list"]]
 
   checkmate::assertTRUE(all(all_specified_columns %in% colnames(sample_info)))
+
+  if (is.null(filter_column)) {
+    if (.verbose) {
+      message("Calculating the differential expression with Limma Voom.")
+    }
+
+    limma_results_final <- run_limma_voom(
+      meta_data = sample_info,
+      main_contrast = contrast_column,
+      dge_list = dge_list,
+      contrast_list = contrast_list,
+      co_variates = co_variates,
+      quantile_norm = quantile_norm,
+      ...,
+      .verbose = .verbose
+    ) %>%
+      .[, subgroup := NA]
+  } else {
+    if (.verbose) {
+      message(paste(
+        "Filtering column provided. Calculating the differential expression",
+        "with Limma Voom across the groups."
+      ))
+    }
+
+    # Iterate through the grps
+    groups <- unique(sample_info[[filter_column]])
+
+    results <- purrr::map(groups, \(group) {
+      # Filter the meta data and dge list
+      sample_info_red <- sample_info[
+        eval(parse(
+          text = paste0(filter_column, " == '", group, "'")
+        ))
+      ]
+      dge_list_red <- dge_list[, sample_info_red$sample_id]
+
+      # Limma Voom
+      limma_results <- run_limma_voom(
+        meta_data = sample_info,
+        main_contrast = contrast_column,
+        dge_list = dge_list,
+        contrast_list = contrast_list,
+        co_variates = co_variates,
+        quantile_norm = quantile_norm,
+        ...,
+        .verbose = .verbose
+      ) %>%
+        .[, subgroup := group]
+
+      return(limma_results)
+    })
+
+    # rbind the data
+    limma_results_final <- data.table::rbindlist(limma_results)
+  }
+
+  dge_params <- list(
+    contrast_column = contrast_column,
+    filter_column = filter_column,
+    co_variates = co_variates
+  )
+
+  S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
+  S7::prop(object, "params")[["limma_dge"]] <- dge_params
+
+  return(object)
+}
+
+#' Calculates the Hedge's G effect size
+#'
+#' @description
+#' This function will calculate the Hedge's G effect size on the normalised
+#' counts. Should batch-corrected counts be found, these will be used. At a
+#' minimum you will need to provide `contrast_column` that can be found in the
+#' meta-data. If you do not provide a vector of contrasts that you wish to test
+#' for, every permutation of groups represented in that column will be tested
+#' against each other.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param contrast_column String. The contrast column in which the groupings
+#' are stored. Needs to be found in the meta_data within the properties.
+#' @param contrast_list Optional string vector. A vectors that contains the
+#' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
+#' all possible contrast automatically.
+#' @param filter_column Optional String. If there is a column you wish to use as
+#' sub groupings, this can be provided here. An example could be different
+#' sampled tissues and you wish to run the DGE analyses within each tissue
+#' separately in the data.
+#' @param .verbose Controls verbosity of the function.
+#'
+#' @return Returns the class with additional data added to the outputs.
+#'
+#' @export
+calculate_dge_hedges <- S7::new_generic(
+  "calculate_dge_hedges",
+  "object",
+  fun = function(
+    object,
+    contrast_column,
+    contrast_list = NULL,
+    filter_column = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_dge_hedges bulk_dge
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+S7::method(calculate_dge_hedges, bulk_dge) <- function(
+  object,
+  contrast_column,
+  contrast_list = NULL,
+  filter_column = NULL,
+  .verbose = TRUE
+) {
+  . <- subgroup <- NULL
+
+  # First checks
+  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::qassert(contrast_column, "S+")
+  checkmate::qassert(filter_column, c("S+", "0"))
+
+  # Early return
+  norm_count_present <- checkmate::testNames(
+    names(S7::prop(object, "outputs")),
+    must.include = "normalised_counts"
+  )
+
+  if (!norm_count_present) {
+    warning(paste(
+      "No normalised found. Did you run preprocess_bulk_dge()",
+      "and normalise_bulk_dge()? Returning object as is."
+    ))
+    return(object)
+  }
+
+  ## get objects
+  all_specified_columns <- setdiff(
+    c(contrast_column, filter_column),
+    NULL
+  )
+  sample_info <- S7::prop(object, "outputs")[["sample_info"]]
+
+  checkmate::assertTRUE(all(all_specified_columns %in% names(sample_info)))
 
   counts_batch_cor <- S7::prop(object, "outputs")[[
     'normalised_counts_corrected'
@@ -1227,30 +1506,14 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
 
   if (is.null(filter_column)) {
     if (.verbose) {
-      message("Calculating the differential expression with limma results.")
+      message("Calculating the differential expression based on Hedge's G.")
     }
 
-    limma_results_final <- run_limma_voom(
-      meta_data = sample_info,
-      main_contrast = contrast_column,
-      dge_list = dge_list,
-      normalised_counts = norm_counts,
-      contrast_list = contrast_list,
-      co_variates = co_variates,
-      ...,
-      .verbose = .verbose
-    ) %>%
-      .[, subgroup := NA]
-
-    if (.verbose) {
-      message("Calculating the Hedge's G effect sizes.")
-    }
     hedges_g_results_final <- hedges_g_dge(
       meta_data = sample_info,
       main_contrast = contrast_column,
       contrast_list = contrast_list,
       normalised_counts = norm_counts,
-      small_sample_correction = small_sample_correction,
       .verbose = .verbose
     ) %>%
       .[, subgroup := NA]
@@ -1271,70 +1534,30 @@ S7::method(calculate_all_dges, bulk_dge) <- function(
           text = paste0(filter_column, " == '", group, "'")
         ))
       ]
-      if (is.null(dge_list)) {
-        dge_list_red = NULL
-        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
-      } else {
-        dge_list_red <- dge_list[, sample_info_red$sample_id]
-        norm_counts_red <- norm_counts[, sample_info_red$sample_id]
-      }
-
-      # Limma Voom
-      limma_results <- run_limma_voom(
-        meta_data = data.table::copy(sample_info_red),
-        main_contrast = contrast_column,
-        dge_list = dge_list_red,
-        normalised_counts = norm_counts_red,
-        co_variates = co_variates,
-        contrast_list = contrast_list,
-        ...,
-        .verbose = .verbose
-      ) %>%
-        .[, subgroup := group]
+      norm_counts_red <- norm_counts[, sample_info_red$sample_id]
 
       hedges_g_results <- hedges_g_dge(
         meta_data = data.table::copy(sample_info_red),
         main_contrast = contrast_column,
         normalised_counts = norm_counts_red,
         contrast_list = contrast_list,
-        small_sample_correction = small_sample_correction,
         .verbose = .verbose
       ) %>%
         .[, subgroup := group]
 
-      return(list(
-        limma_results = limma_results,
-        hedges_g_results = hedges_g_results
-      ))
+      return(hedges_g_results)
     })
 
-    # Rbind the data
-    limma_results_final <- purrr::map(
-      results,
-      ~ {
-        .[['limma_results']]
-      }
-    ) %>%
-      data.table::rbindlist()
-
-    hedges_g_results_final <- purrr::map(
-      results,
-      ~ {
-        .[['hedges_g_results']]
-      }
-    ) %>%
-      data.table::rbindlist()
+    hedges_g_results_final <- data.table::rbindlist(results)
   }
 
   dge_params <- list(
     contrast_column = contrast_column,
-    filter_column = filter_column,
-    co_variates = co_variates
+    filter_column = filter_column
   )
 
-  S7::prop(object, "outputs")[['limma_voom_res']] <- limma_results_final
   S7::prop(object, "outputs")[['hedges_g_res']] <- hedges_g_results_final
-  S7::prop(object, "params")[["dge"]] <- dge_params
+  S7::prop(object, "params")[["effect_size_dge"]] <- dge_params
 
   return(object)
 }

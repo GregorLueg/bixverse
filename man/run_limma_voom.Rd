@@ -7,12 +7,10 @@
 run_limma_voom(
   meta_data,
   main_contrast,
+  dge_list,
   contrast_list = NULL,
-  dge_list = NULL,
-  normalised_counts = NULL,
   co_variates = NULL,
-  parallel = TRUE,
-  no_cores = NULL,
+  quantile_norm = FALSE,
   ...,
   .verbose = TRUE
 )
@@ -24,22 +22,17 @@ which the contrast info (and potential co-variates) can be found.}
 \item{main_contrast}{String. Which column contains the main groups you want
 to test differential gene expression with the Limma-Voom workflow for.}
 
+\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}.}
+
 \item{contrast_list}{String vector or NULL. Optional string vector of
 contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all
 contrasts automatically.}
 
-\item{dge_list}{DGEList, see \code{\link[edgeR:DGEList]{edgeR::DGEList()}}. If \code{NULL} it will be
-regenerated.}
-
-\item{normalised_counts}{Matrix. Normalised count matrix.}
-
 \item{co_variates}{String or NULL. Optional co-variates you wish to consider
 during model fitting.}
 
-\item{parallel}{Boolean. Shall parallelisation be used across the contrasts.}
-
-\item{no_cores}{Optional integer. Number of cores to use for parallelisation.
-If \code{NULL} will default to half the detected cores.}
+\item{quantile_norm}{Boolean. Shall the counts be also quantile-normalised.
+Defaults to \code{FALSE}.}
 
 \item{...}{Additional parameters to forward to \code{\link[limma:ebayes]{limma::eBayes()}} or
 \code{\link[limma:voom]{limma::voom()}}.}
