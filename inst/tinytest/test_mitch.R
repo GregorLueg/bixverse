@@ -46,9 +46,9 @@ expect_equal(
 
 if (requireNamespace("mitch", quietly = TRUE)) {
   # load in the mitch example data
-  data(myImportedData, genesetsExample)
+  data(myImportedData, genesetsExample, package = "mitch")
 
-  mitch_res <- suppressMessages(mitch_calc(
+  mitch_res <- suppressMessages(mitch::mitch_calc(
     myImportedData,
     genesetsExample,
     priority = 'significance',
