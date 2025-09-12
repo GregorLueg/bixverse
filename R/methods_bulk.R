@@ -18,8 +18,8 @@
 #' percentage genes detected you allow before removing a sample. Defaults to `2`.
 #' @param min_prop Float. Minimum proportion of samples in which the gene has
 #' to be identified in.
-#' @param min_count Float. Minimum number of counts (cpm) to be detected in min_prop of
-#' the samples (in cohorts defined by groups_coll)
+#' @param min_count Float. Minimum number of counts (cpm) to be detected in
+#' min_prop of the samples (in cohorts defined by groups_coll)
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return Returns the class with the `processed_data` data slot populated and

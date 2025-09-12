@@ -1,6 +1,8 @@
-## plots -----------------------------------------------------------------------
+# plots ------------------------------------------------------------------------
 
-### bulk dge -------------------------------------------------------------------
+## bulk dge --------------------------------------------------------------------
+
+### helpers --------------------------------------------------------------------
 
 #' @title Helper plot function of distribution of genes by samples
 #'
@@ -184,6 +186,38 @@ plot_boxplot_normalization <- function(samples, voom_object, group_col) {
   return(p)
 }
 
+#' Helper plot function for pca with contrasts
+#'
+#' @param pca_dt data.table. data.table with PCA and contrast information.
+#' @param grps Factor or character vector. The group vector.
+#'
+#' @return ggplot object for the pca
+plot_pca <- function(pca_dt, grps) {
+  # checks
+  checkmate::assertDataTable(pca_dt)
+  checkmate::qassert(grps, "S1")
+  checkmate::assertTRUE(all(c(grps, "PC_1", "PC_2") %in% names(pca_dt)))
+
+  p <- ggplot2::ggplot(
+    data = pca_dt,
+    mapping = aes(x = PC_1, y = PC_2)
+  ) +
+    ggplot2::geom_point(
+      mapping = aes(col = .data[[grps]]),
+      size = 3,
+      alpha = 0.7
+    ) +
+    ggplot2::xlab("PC1") +
+    ggplot2::ylab("PC2") +
+    ggplot2::theme_bw() +
+    ggplot2::ggtitle("PCA with key columns") +
+    ggplot2::labs(colour = "Groups:")
+
+  return(p)
+}
+
+### generics / methods ---------------------------------------------------------
+
 #' Return QC plots
 #'
 #' @description
@@ -260,107 +294,6 @@ S7::method(get_dge_qc_plot, bulk_dge) <-
     return(res)
   }
 
-### bulk cor -------------------------------------------------------------------
-
-#' @title Plot the highly variable genes
-#'
-#' @description
-#' Plots the median-absolute deviation of the genes and applied thresholds.
-#' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
-#' error otherwise.
-#'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
-#' @param bins Integer. Number of bins to plot.
-#'
-#' @export
-plot_hvgs <- S7::new_generic(
-  "plot_hvgs",
-  "object",
-  fun = function(object, bins = 50L) {
-    S7::S7_dispatch()
-  }
-)
-
-#' @method plot_hvgs bulk_coexp
-#'
-#' @import ggplot2
-#'
-#' @export
-S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
-  # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::qassert(bins, "I1")
-  # Early return
-  if (is.null(S7::prop(object, "params")[["preprocessing"]])) {
-    warning("No pre-processing data found. Returning NULL.")
-    return(NULL)
-  }
-  plot_df <- S7::prop(object, "processed_data")[["feature_meta"]]
-
-  p <- ggplot2::ggplot(data = plot_df, mapping = aes(x = MAD)) +
-    ggplot2::geom_histogram(
-      mapping = aes(fill = hvg),
-      bins = 50L,
-      color = "black",
-      alpha = 0.7
-    ) +
-    ggplot2::scale_fill_manual(
-      values = setNames(c("orange", "grey"), c(TRUE, FALSE))
-    ) +
-    ggplot2::ggtitle(
-      "Distribution of MAD across the genes",
-      subtitle = "And included genes"
-    ) +
-    ggplot2::theme_minimal()
-
-  mad_threshold <- S7::prop(object, "params")[["preprocessing"]][[
-    "mad_threshold"
-  ]]
-
-  if (mad_threshold != "not applicable") {
-    p <- p +
-      ggplot2::geom_vline(
-        xintercept = mad_threshold,
-        linetype = "dashed",
-        color = "darkred"
-      )
-  }
-
-  return(p)
-}
-
-
-#' Helper plot function for pca with contrasts
-#'
-#' @param pca_dt data.table. Datatable with PCA and contrast information
-#' @param grps Factor or character vector. The group vector.
-#'
-#' @return ggplot object for the pca
-plot_pca <- function(pca_dt, grps) {
-  # checks
-  checkmate::assertDataTable(pca_dt)
-  checkmate::assertTRUE(all(c(grps, "PC_1", "PC_2") %in% colnames(pca_dt)))
-
-  p <- ggplot2::ggplot(
-    data = pca_dt,
-    mapping = aes(x = PC_1, y = PC_2)
-  ) +
-    ggplot2::geom_point(
-      mapping = aes(col = .data[[grps]]),
-      size = 3,
-      alpha = 0.7
-    ) +
-    ggplot2::xlab("PC1") +
-    ggplot2::ylab("PC2") +
-    ggplot2::theme_bw() +
-    ggplot2::ggtitle("PCA with key columns") +
-    ggplot2::labs(colour = "Groups:")
-
-  return(p)
-}
-
-
-### plots ----------------------------------------------------------------------
 
 #' Plot the PCA data
 #'
@@ -446,6 +379,77 @@ S7::method(plot_pca_res, bulk_dge) <- function(
     ggplot2::theme_minimal() +
     ggplot2::ggtitle("PCA with key columns") +
     ggplot2::labs(colour = "Groups:")
+
+  return(p)
+}
+
+## bulk cor --------------------------------------------------------------------
+
+### generics / methods ---------------------------------------------------------
+
+#' @title Plot the highly variable genes
+#'
+#' @description
+#' Plots the median-absolute deviation of the genes and applied thresholds.
+#' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
+#' error otherwise.
+#'
+#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param bins Integer. Number of bins to plot.
+#'
+#' @export
+plot_hvgs <- S7::new_generic(
+  "plot_hvgs",
+  "object",
+  fun = function(object, bins = 50L) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method plot_hvgs bulk_coexp
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(bins, "I1")
+  # Early return
+  if (is.null(S7::prop(object, "params")[["preprocessing"]])) {
+    warning("No pre-processing data found. Returning NULL.")
+    return(NULL)
+  }
+  plot_df <- S7::prop(object, "processed_data")[["feature_meta"]]
+
+  p <- ggplot2::ggplot(data = plot_df, mapping = aes(x = MAD)) +
+    ggplot2::geom_histogram(
+      mapping = aes(fill = hvg),
+      bins = 50L,
+      color = "black",
+      alpha = 0.7
+    ) +
+    ggplot2::scale_fill_manual(
+      values = setNames(c("orange", "grey"), c(TRUE, FALSE))
+    ) +
+    ggplot2::ggtitle(
+      "Distribution of MAD across the genes",
+      subtitle = "And included genes"
+    ) +
+    ggplot2::theme_minimal()
+
+  mad_threshold <- S7::prop(object, "params")[["preprocessing"]][[
+    "mad_threshold"
+  ]]
+
+  if (mad_threshold != "not applicable") {
+    p <- p +
+      ggplot2::geom_vline(
+        xintercept = mad_threshold,
+        linetype = "dashed",
+        color = "darkred"
+      )
+  }
 
   return(p)
 }

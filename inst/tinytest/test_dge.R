@@ -10,6 +10,8 @@ test_data <- qs2::qs_read(
   "./synthetic_data/dge_test_data.qs"
 )
 
+test_data$meta_data
+
 ### expected data --------------------------------------------------------------
 
 expected_pca_pvals <- c(3.494401e-05, 8.877927e-01)
@@ -131,6 +133,11 @@ expect_true(
 
 ### pca ------------------------------------------------------------------------
 
+expect_warning(
+  current = get_dge_qc_plot(dge_class, plot_choice = 5L),
+  info = "Non existing plot 5 warning"
+)
+
 dge_class <- calculate_pca_bulk_dge(dge_class)
 
 expect_equal(
@@ -145,6 +152,20 @@ expect_equal(
   target = expected_pc2,
   tolerance = 1e-6,
   info = "DGE class - PC2 values"
+)
+
+qc_plot_5 <- get_dge_qc_plot(dge_class, plot_choice = 5L)
+
+expect_true(
+  current = "ggplot" %in% class(qc_plot_5),
+  info = "DGE pre-processing: 5th QC plot"
+)
+
+pca_plot_v2 <- plot_pca_res(dge_class, cols_to_plot = c("dex", "cell"))
+
+expect_true(
+  current = "ggplot" %in% class(pca_plot_v2),
+  info = "DGE pre-processing: 5th QC plot"
 )
 
 ### dge calculations -----------------------------------------------------------
