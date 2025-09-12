@@ -11,7 +11,8 @@ normalise_bulk_dge(
   calc_tpm = FALSE,
   calc_fpkm = FALSE,
   gene_lengths = NULL,
-  .verbose = TRUE
+  .verbose = TRUE,
+  ...
 )
 }
 \arguments{

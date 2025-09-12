@@ -75,7 +75,13 @@ dge_class <- bulk_dge(
 ### qc -------------------------------------------------------------------------
 
 # remove lowly expressed genes and outlier samples
-dge_class <- qc_bulk_dge(dge_class, group_col = "dex", .verbose = FALSE)
+dge_class <- qc_bulk_dge(
+  dge_class,
+  group_col = "dex",
+  min_prop = 0.2,
+  min_count = 10,
+  .verbose = FALSE
+)
 
 qc_plot_1 <- get_dge_qc_plot(dge_class, plot_choice = 1L)
 qc_plot_2 <- get_dge_qc_plot(dge_class, plot_choice = 2L)
