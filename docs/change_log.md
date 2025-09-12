@@ -16,6 +16,13 @@
 `rs_set_similarity_list2()`. The former now takes in a single list and 
 calculates the set similarity across all permutations of the elements.
 
+### Version **0.0.2.2**
+
+#### New features
+
+- Mitch multi contrast enrichment in Rust.
+- Rework and -factor of sub modules in the Rust code.
+
 ### Version **0.0.2.1**
 
 #### New features
