@@ -26,8 +26,8 @@ percentage genes detected you allow before removing a sample. Defaults to \code{
 \item{min_prop}{Float. Minimum proportion of samples in which the gene has
 to be identified in.}
 
-\item{min_count}{Float. Minimum number of counts (cpm) to be detected in min_prop of
-the samples (in cohorts defined by groups_coll)}
+\item{min_count}{Float. Minimum number of counts (cpm) to be detected in
+min_prop of the samples (in cohorts defined by groups_coll)}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
