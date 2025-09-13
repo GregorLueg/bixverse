@@ -8,7 +8,7 @@ This class wraps up the DB connection and methods to interact with the
 observation/cell metadata and the feature/gene metadata.
 }
 \section{Super class}{
-\code{bixverse::single_cell_duckdb_base} -> \code{single_cell_duckdb_con}
+\code{\link[bixverse:single_cell_duckdb_base]{bixverse::single_cell_duckdb_base}} -> \code{single_cell_duckdb_con}
 }
 \section{Methods}{
 \subsection{Public methods}{

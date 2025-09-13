@@ -585,6 +585,7 @@ impl StreamingSparseReader {
             self.header.cell_based,
             "The file was not designed for cell-based read/write!"
         );
+
         let mut cells = Vec::with_capacity(indices.len());
         for &idx in indices {
             match self.read_cell_by_index(idx)? {

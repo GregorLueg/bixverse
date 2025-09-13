@@ -91,7 +91,7 @@ single_cell_duckdb_base <- R6::R6Class(
     #' @return Returns the initialised class
     initialize = function(db_dir, db_name = "sc_duckdb.db") {
       # checks
-      checkmate::assertPathForOutput(db_dir)
+      checkmate::assertDirectoryExists(db_dir)
       checkmate::qassert(db_name, "S1")
 
       # define the path
@@ -275,7 +275,7 @@ single_cell_duckdb_con <- R6::R6Class(
             message(
               sprintf(
                 "Identified %i cells/observations in the h5 file",
-                length(col_data)
+                nrow(col_data)
               )
             )
           }
@@ -309,7 +309,7 @@ single_cell_duckdb_con <- R6::R6Class(
         }
       }
 
-      invsible(self)
+      invisible(self)
     },
 
     #' @description
@@ -371,7 +371,7 @@ single_cell_duckdb_con <- R6::R6Class(
             message(
               sprintf(
                 "Identified %i genes/features in the h5 file",
-                length(col_data)
+                nrow(col_data)
               )
             )
           }
@@ -405,9 +405,9 @@ single_cell_duckdb_con <- R6::R6Class(
         }
       }
 
-      invsible(self)
+      invisible(self)
     }
-  ),
+  )
 
   ############################
   # Private fields/functions #

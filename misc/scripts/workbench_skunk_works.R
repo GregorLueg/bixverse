@@ -10,10 +10,9 @@ rextendr::document()
 
 # let's try with 1m cells...
 seed <- 123L
-no_genes <- 20000L
-no_cells <- 100000L
+no_genes <- 1000L
+no_cells <- 10000L
 
-tictoc::tic()
 rs_sparse_data <- rs_synthetic_sc_data_csr(
   n_genes = no_genes,
   n_cells = no_cells,
@@ -22,20 +21,37 @@ rs_sparse_data <- rs_synthetic_sc_data_csr(
   max_exp = 50,
   seed = seed
 )
-tictoc::toc()
+
+length(rs_sparse_data$indices)
+
+rs_sparse_data_2 <- rs_synthetic_sc_data_csc(
+  n_genes = no_genes,
+  n_cells = no_cells,
+  min_genes = 250,
+  max_genes = 1000,
+  max_exp = 50,
+  seed = seed
+)
+
+length(rs_sparse_data_2$indices)
+
+max(rs_sparse_data$indices)
+length(rs_sparse_data$indptr)
 
 gc()
 
-# csr_matrix <- Matrix::sparseMatrix(
-#   j = rs_sparse_data$col_indices + 1,
-#   p = rs_sparse_data$row_ptrs,
-#   x = rs_sparse_data$data,
-#   dims = c(no_cells, no_genes),
-#   dimnames = list(
-#     sprintf("cell_%i", 1:no_cells),
-#     sprintf("gene_%i", 1:no_genes)
-#   )
-# )
+csr_matrix <- Matrix::sparseMatrix(
+  j = rs_sparse_data$indices + 1,
+  p = rs_sparse_data$indptr,
+  x = rs_sparse_data$data,
+  dims = c(no_cells, no_genes),
+  dimnames = list(
+    sprintf("cell_%i", 1:no_cells),
+    sprintf("gene_%i", 1:no_genes)
+  )
+)
+
+dim(csr_matrix)
 
 # rm(rs_sparse_data)
 
@@ -57,8 +73,8 @@ single_cell_counts$r_csr_mat_to_file(
   no_cells = no_cells,
   no_genes = no_genes,
   data = as.integer(rs_sparse_data$data),
-  row_ptr = as.integer(rs_sparse_data$row_ptrs),
-  col_idx = as.integer(rs_sparse_data$col_indices),
+  row_ptr = as.integer(rs_sparse_data$indptr),
+  col_idx = as.integer(rs_sparse_data$indices),
   target_size = 1e5
 )
 tictoc::toc()
@@ -67,7 +83,7 @@ tictoc::tic()
 single_cell_counts$generate_gene_based_data()
 tictoc::toc()
 
-indices <- sample(1:no_cells, 10000)
+indices <- sample(1:no_cells, 10)
 
 tictoc::tic()
 return_data <- single_cell_counts$get_cells_by_indices(
@@ -81,7 +97,7 @@ file.size(f_path_genes) / 1024^2
 
 # csc (gene-centric) -----------------------------------------------------------
 
-gene_indices <- sample(1:no_genes, 100)
+gene_indices <- sample(1:no_genes, 10)
 
 return_gene_data <- single_cell_counts$get_genes_by_indices(
   indices = gene_indices,
@@ -94,22 +110,19 @@ return_gene_data$row_ptr
 
 library(duckdb)
 
-h5_path <- "~/Downloads/anndata.h5ad"
+h5_path <- "~/Downloads/ERX11148735.h5ad"
+
+get_h5ad_dimensions(h5_path)
 
 list.files(tempdir())
 
 db_path <- file.path(tempdir(), "exp.db")
 single_cell_db <- dbConnect(duckdb::duckdb(), dbdir = db_path)
 
-h5_content <- rhdf5::h5ls(
-  h5_path
-) %>%
-  data.table::setDT()
 
 obs <- h5_content[
-  group == "/obs" & otype == "H5I_DATASET",
-  setNames((paste(group, name, sep = "/")), name)
-]
+  group == "/obs" & otype == "H5I_DATASET"
+][1, as.numeric(dim)]
 
 names(obs) <- gsub("-", "_", names(obs))
 
@@ -151,54 +164,62 @@ obs <- data.table::setDT(DBI::dbGetQuery(single_cell_db, 'SELECT * FROM obs'))
 
 DBI::dbDisconnect(single_cell_db)
 
-for (i in seq_along(obs)) {
-  col_name <- names(obs)[i]
-  col_path <- obs[[i]]
-  col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-    `names<-`(col_name)
-
-  if (i == 1) {
-    DBI::dbWriteTable(con, "obs", col_data)
-  } else {}
-
-  if (first_column) {
-    DBI::dbExecute(
-      con,
-      sprintf(
-        'COPY (SELECT * FROM col_data) TO "%s" (FORMAT PARQUET)',
-        parquet_path
-      )
-    )
-    first_column <- FALSE
-  } else {}
-}
-
-
-counts <- h5_content[
-  group == "/X",
-  setNames((paste(group, name, sep = "/")), name)
-]
-
 
 counts
 
+
+file.exists("~/Downloads/ERX11148735.h5ad")
+
+
+rextendr::document()
+expanded_path <- path.expand("~/Downloads/ERX11148735.h5ad")
+
+get_h5ad_dimensions(expanded_path)
+
+h5_content <- rhdf5::h5ls(
+  expanded_path
+) %>%
+  data.table::setDT()
+
+counts <- h5_content[
+  group == "/X" & name == "indptr"
+]
+
+tictoc::tic()
 data <- rhdf5::h5read(
-  file = h5_path,
-  name = counts["data"]
+  file = expanded_path,
+  name = "/X/data"
 )
 
 indices <- rhdf5::h5read(
-  file = h5_path,
-  name = counts["indices"]
+  file = expanded_path,
+  name = "/X/indices"
 )
-
-length(indptr)
-
-max(indices)
-
-indices[3618]
 
 indptr <- rhdf5::h5read(
-  file = h5_path,
-  name = counts["indptr"]
+  file = expanded_path,
+  name = "/X/indptr"
 )
+tictoc::toc()
+
+tictoc::tic()
+h5ad_data <- rs_h5ad_data(expanded_path, "CSR")
+tictoc::toc()
+
+length(h5ad_data$indptr)
+
+get_h5ad_dimensions(expanded_path)
+
+rextendr::document()
+
+devtools::load_all()
+
+db_connection <- single_cell_duckdb_con$new(db_dir = tempdir())
+
+db_connection$populate_obs_from_h5(h5_path = h5_path)$populate_vars_from_h5(
+  h5_path = h5_path
+)
+
+db_connection$get_obs_table()
+
+db_connection$get_vars_table()

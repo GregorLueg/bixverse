@@ -371,30 +371,33 @@ impl SingeCellCountData {
         let col_idx = flatten_vector(col_idx);
         let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
-        let (data, col_ptr, row_indices, data_2): (
-            Vec<u16>,
-            Vec<usize>,
-            Vec<usize>,
-            Option<Vec<F16>>,
-        ) = csr_to_csc(&data, &col_idx, &row_ptr, no_genes, Some(&data_2));
+        let sparse_data = CompressedSparseData::new_csr(
+            &data,
+            &col_idx,
+            &row_ptr,
+            Some(&data_2),
+            (no_cells, no_genes),
+        );
 
-        let data_2 = data_2.unwrap();
+        let sparse_data = sparse_data.transform();
 
         // Write the data in CSC format to disk
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
 
-        let ptr_range = 1..col_ptr.len();
+        let ptr_range = 1..sparse_data.indptr.len();
+
+        let data_2 = sparse_data.get_data2_unsafe();
 
         for i in ptr_range {
             // get the index position
-            let end_i = col_ptr[i];
-            let start_i = col_ptr[i - 1];
+            let end_i = sparse_data.indptr[i];
+            let start_i = sparse_data.indptr[i - 1];
             // create the chunk and write to disk
             let chunk_i = CscGeneChunk::from_conversion(
-                &data[start_i..end_i],
+                &sparse_data.data[start_i..end_i],
                 &data_2[start_i..end_i],
-                &row_indices[start_i..end_i],
+                &sparse_data.indices[start_i..end_i],
                 i - 1,
             );
 

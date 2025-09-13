@@ -529,6 +529,8 @@ rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
 #'   \item data - The synthetic counts
 #'   \item col_ptrs - The column pointers
 #'   \item row_indices - The row indices
+#'   \item nrow - Number of rows (cells)
+#'   \item ncol - Number of cols (genes)
 #' }
 rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csc, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
@@ -536,7 +538,7 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #'
 #' @description This function generates pseudo data to test single cell
 #' functions in form of the h5ad version, with cells = rows and genes =
-#' columns. The data is CSR type.
+#' columns. The data is encoded in CSR.
 #'
 #' @param n_genes Integer. Number of genes you wish to have in the synthetic
 #' data.
@@ -553,6 +555,8 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #'   \item data - The synthetic counts
 #'   \item row_ptrs - The row pointers
 #'   \item col_indices - The column indices
+#'   \item nrow - Number of rows (cells)
+#'   \item ncol - Number of cols (genes)
 #' }
 #'
 #' @export
@@ -634,6 +638,9 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #'
 #' @export
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
+
+#' @export
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols)
 
 #' Calculates the traditional GSEA enrichment score
 #'

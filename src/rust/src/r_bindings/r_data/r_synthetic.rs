@@ -25,6 +25,8 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 ///   \item data - The synthetic counts
 ///   \item col_ptrs - The column pointers
 ///   \item row_indices - The row indices
+///   \item nrow - Number of rows (cells)
+///   \item ncol - Number of cols (genes)
 /// }
 #[extendr]
 fn rs_synthetic_sc_data_csc(
@@ -35,13 +37,15 @@ fn rs_synthetic_sc_data_csc(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CscData<i32> =
-        create_sparse_csc_data(n_genes, n_cells, (min_genes, max_genes), max_exp, seed);
+    let synthetic_data: CompressedSparseData<i32> =
+        create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
-        data = synthetic_data.0,
-        col_ptrs = synthetic_data.1,
-        row_indices = synthetic_data.2
+        data = synthetic_data.data,
+        indptr = synthetic_data.indptr,
+        indices = synthetic_data.indices,
+        nrow = n_cells,
+        ncol = n_genes
     )
 }
 
@@ -49,7 +53,7 @@ fn rs_synthetic_sc_data_csc(
 ///
 /// @description This function generates pseudo data to test single cell
 /// functions in form of the h5ad version, with cells = rows and genes =
-/// columns. The data is CSR type.
+/// columns. The data is encoded in CSR.
 ///
 /// @param n_genes Integer. Number of genes you wish to have in the synthetic
 /// data.
@@ -66,6 +70,8 @@ fn rs_synthetic_sc_data_csc(
 ///   \item data - The synthetic counts
 ///   \item row_ptrs - The row pointers
 ///   \item col_indices - The column indices
+///   \item nrow - Number of rows (cells)
+///   \item ncol - Number of cols (genes)
 /// }
 ///
 /// @export
@@ -78,13 +84,15 @@ fn rs_synthetic_sc_data_csr(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CsrData<i32> =
-        create_sparse_csr_data(n_genes, n_cells, (min_genes, max_genes), max_exp, seed);
+    let synthetic_data: CompressedSparseData<i32> =
+        create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
-        data = synthetic_data.0,
-        row_ptrs = synthetic_data.1,
-        col_indices = synthetic_data.2
+        data = synthetic_data.data,
+        indptr = synthetic_data.indptr,
+        indices = synthetic_data.indices,
+        nrow = n_cells,
+        ncol = n_genes
     )
 }
 

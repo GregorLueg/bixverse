@@ -12,6 +12,7 @@ pub use r_bindings::r_base::r_stats;
 pub use r_bindings::r_base::r_svd_pca;
 
 // data
+pub use r_bindings::r_data::r_h5;
 pub use r_bindings::r_data::r_sparse;
 pub use r_bindings::r_data::r_synthetic;
 
@@ -49,6 +50,7 @@ extendr_module! {
     // data
     use r_sparse;
     use r_synthetic;
+    use r_h5;
     // enrichment
     use r_gsea;
     use r_gsva;

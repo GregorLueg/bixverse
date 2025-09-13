@@ -28,10 +28,12 @@ The list with the synthetic data with the following items:
 \item data - The synthetic counts
 \item row_ptrs - The row pointers
 \item col_indices - The column indices
+\item nrow - Number of rows (cells)
+\item ncol - Number of cols (genes)
 }
 }
 \description{
 This function generates pseudo data to test single cell
 functions in form of the h5ad version, with cells = rows and genes =
-columns. The data is CSR type.
+columns. The data is encoded in CSR.
 }

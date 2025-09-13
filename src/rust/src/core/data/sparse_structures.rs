@@ -225,82 +225,174 @@ where
 // Sparse format conversion //
 //////////////////////////////
 
-/// A type alias representing effect size results
-///
-/// ### Fields
-///
-/// * `0` - The data in the CSR format
-/// * `1` - The row pointers
-/// * `2` - The column indices
-/// * `3` - An optional second data layer
-pub type CsrData<T, U = T> = (Vec<T>, Vec<usize>, Vec<usize>, Option<Vec<U>>);
+/// Type to describe the CompressedSparseFormat
+#[derive(Debug, Clone)]
+pub enum CompressedSparseFormat {
+    /// CSC-formatted data
+    Csc,
+    /// CSR-formatted data
+    Csr,
+}
 
-/// A type alias representing effect size results
-///
-/// ### Fields
-///
-/// * `0` - The data in the CSR format
-/// * `1` - The column pointers
-/// * `2` - The row indices
-/// * `3` - An optional second data layer
-pub type CscData<T, U = T> = (Vec<T>, Vec<usize>, Vec<usize>, Option<Vec<U>>);
+#[derive(Debug, Clone)]
+pub struct CompressedSparseData<T, U = T>
+where
+    T: Clone + Default,
+    U: Clone + Default,
+{
+    pub data: Vec<T>,
+    pub indices: Vec<usize>,
+    pub indptr: Vec<usize>,
+    pub cs_type: CompressedSparseFormat,
+    pub data_2: Option<Vec<U>>,
+    pub shape: (usize, usize),
+}
 
-/// Transform CSC stored data into CSR stored data
-///
-/// This version does a full memory copy of the data
+#[allow(dead_code)]
+impl<T, U> CompressedSparseData<T, U>
+where
+    T: Clone + Default,
+    U: Clone + Default,
+{
+    /// Generate a nes CSC version of the matrix
+    ///
+    /// ### Params
+    ///
+    /// * `data` - The underlying data
+    /// * `indices` - The index positions (in this case row indices)
+    /// * `indptr` - The index pointer (in this case the column index pointers)
+    /// * `data2` - An optional second layer
+    pub fn new_csc(
+        data: &[T],
+        indices: &[usize],
+        indptr: &[usize],
+        data2: Option<&[U]>,
+        shape: (usize, usize),
+    ) -> Self {
+        Self {
+            data: data.to_vec(),
+            indices: indices.to_vec(),
+            indptr: indptr.to_vec(), // Fixed: was using indices instead of indptr
+            cs_type: CompressedSparseFormat::Csc,
+            data_2: data2.map(|d| d.to_vec()),
+            shape,
+        }
+    }
+
+    /// Generate a nes CSR version of the matrix
+    ///
+    /// ### Params
+    ///
+    /// * `data` - The underlying data
+    /// * `indices` - The index positions (in this case row indices)
+    /// * `indptr` - The index pointer (in this case the column index pointers)
+    /// * `data2` - An optional second layer
+    pub fn new_csr(
+        data: &[T],
+        indices: &[usize],
+        indptr: &[usize],
+        data2: Option<&[U]>,
+        shape: (usize, usize),
+    ) -> Self {
+        Self {
+            data: data.to_vec(),
+            indices: indices.to_vec(),
+            indptr: indptr.to_vec(), // Fixed: was using indices instead of indptr
+            cs_type: CompressedSparseFormat::Csr,
+            data_2: data2.map(|d| d.to_vec()),
+            shape,
+        }
+    }
+
+    /// Transform from CSC to CSR or vice versa
+    ///
+    /// ### Returns
+    ///
+    /// The transformed/transposed version
+    pub fn transform(self) -> Self {
+        match self.cs_type {
+            CompressedSparseFormat::Csc => csc_to_csr(self),
+            CompressedSparseFormat::Csr => csr_to_csc(self),
+        }
+    }
+
+    /// Returns the shape of the matrix
+    ///
+    /// ### Returns
+    ///
+    /// A tuple of `(nrow, ncol)`
+    pub fn shape(&self) -> (usize, usize) {
+        self.shape
+    }
+
+    /// Returns the NNZ
+    ///
+    /// ### Returns
+    ///
+    /// The number of NNZ
+    pub fn get_nnz(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn get_data2_unsafe(&self) -> Vec<U> {
+        self.data_2.clone().unwrap()
+    }
+}
+
+/// Transforms a CompressedSparseData that is CSC to CSR
 ///
 /// ### Params
 ///
-/// * `data` - The data stored in CSC format.
-/// * `row_ind` - The row indices from the CSC format.
-/// * `col_ptr` - The column pointers from the CSC format.
-/// * `nrows` - The number of rows in the data.
-/// * `data2` - An optional second data layer.
-///
-/// ### Returns
-///
-/// The data in CSR format, i.e., `CsrData`
-#[allow(dead_code)]
-pub fn csc_to_csr<T: Clone + Default, U: Clone + Default>(
-    data: &[T],
-    row_ind: &[usize],
-    col_ptr: &[usize],
-    nrows: usize,
-    data2: Option<&[U]>,
-) -> CsrData<T, U> {
-    let nnz = data.len();
-    let mut row_ptr = vec![0; nrows + 1];
+/// * `sparse_data` - The CompressedSparseData you want to transform
+pub fn csc_to_csr<T, U>(sparse_data: CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
+where
+    T: Clone + Default,
+    U: Clone + Default,
+{
+    let (nrow, _) = sparse_data.shape();
+    let nnz = sparse_data.get_nnz();
+    let mut row_ptr = vec![0; nrow + 1];
 
-    for &r in row_ind {
+    for &r in &sparse_data.indices {
         row_ptr[r + 1] += 1;
     }
 
-    for i in 0..nrows {
+    for i in 0..nrow {
         row_ptr[i + 1] += row_ptr[i];
     }
 
     let mut csr_data = vec![T::default(); nnz];
-    let mut csr_data2 = data2.map(|_| vec![U::default(); nnz]);
+    let mut csr_data2 = sparse_data.data_2.as_ref().map(|_| vec![U::default(); nnz]);
     let mut csr_col_ind = vec![0; nnz];
-    let mut next = row_ptr[..nrows].to_vec();
+    let mut next = row_ptr[..nrow].to_vec();
 
-    for col in 0..(col_ptr.len() - 1) {
-        for idx in col_ptr[col]..col_ptr[col + 1] {
-            let row = row_ind[idx];
+    for col in 0..(sparse_data.indptr.len() - 1) {
+        for idx in sparse_data.indptr[col]..sparse_data.indptr[col + 1] {
+            let row = sparse_data.indices[idx];
             let pos = next[row];
-            csr_data[pos] = data[idx].clone();
+
+            csr_data[pos] = sparse_data.data[idx].clone();
             csr_col_ind[pos] = col;
 
-            // Add the second layer
-            if let (Some(d2), Some(ref mut csr_d2)) = (data2, &mut csr_data2) {
-                csr_d2[pos] = d2[idx].clone();
+            // Handle the second layer data
+            if let (Some(ref source_data2), Some(ref mut csr_d2)) =
+                (&sparse_data.data_2, &mut csr_data2)
+            {
+                csr_d2[pos] = source_data2[idx].clone();
             }
 
             next[row] += 1;
         }
     }
 
-    (csr_data, row_ptr, csr_col_ind, csr_data2)
+    CompressedSparseData {
+        data: csr_data,
+        indices: csr_col_ind,
+        indptr: row_ptr,
+        cs_type: CompressedSparseFormat::Csr,
+        data_2: csr_data2,
+        shape: sparse_data.shape(),
+    }
 }
 
 /// Transform CSR stored data into CSC stored data
@@ -318,49 +410,58 @@ pub fn csc_to_csr<T: Clone + Default, U: Clone + Default>(
 /// ### Returns
 ///
 /// The data in CSC format, i.e., `CscData`
-pub fn csr_to_csc<T: Clone + Default, U: Clone + Default>(
-    data: &[T],
-    col_ind: &[usize],
-    row_ptr: &[usize],
-    ncols: usize,
-    data2: Option<&[U]>,
-) -> CscData<T, U> {
-    let nnz = data.len();
-    let mut col_ptr = vec![0; ncols + 1];
+pub fn csr_to_csc<T, U>(sparse_data: CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
+where
+    T: Clone + Default,
+    U: Clone + Default,
+{
+    let nnz = sparse_data.get_nnz();
+    let (_, ncol) = sparse_data.shape();
+    let mut col_ptr = vec![0; ncol + 1];
 
     // Count occurrences per column
-    for &c in col_ind {
+    for &c in &sparse_data.indices {
         col_ptr[c + 1] += 1;
     }
 
     // Cumulative sum to get column pointers
-    for i in 0..ncols {
+    for i in 0..ncol {
         col_ptr[i + 1] += col_ptr[i];
     }
 
     let mut csc_data = vec![T::default(); nnz];
-    let mut csc_data2 = data2.map(|_| vec![U::default(); nnz]);
+    let mut csc_data2 = sparse_data.data_2.as_ref().map(|_| vec![U::default(); nnz]);
     let mut csc_row_ind = vec![0; nnz];
-    let mut next = col_ptr[..ncols].to_vec();
+    let mut next = col_ptr[..ncol].to_vec();
 
     // Iterate through rows and place data in CSC format
-    for row in 0..(row_ptr.len() - 1) {
-        for idx in row_ptr[row]..row_ptr[row + 1] {
-            let col = col_ind[idx];
+    for row in 0..(sparse_data.indptr.len() - 1) {
+        for idx in sparse_data.indptr[row]..sparse_data.indptr[row + 1] {
+            let col = sparse_data.indices[idx];
             let pos = next[col];
-            csc_data[pos] = data[idx].clone();
+
+            csc_data[pos] = sparse_data.data[idx].clone();
             csc_row_ind[pos] = row;
 
-            // Add second layer if there
-            if let (Some(d2), Some(ref mut csc_d2)) = (data2, &mut csc_data2) {
-                csc_d2[pos] = d2[idx].clone();
+            // Handle the second layer data
+            if let (Some(ref source_data2), Some(ref mut csc_d2)) =
+                (&sparse_data.data_2, &mut csc_data2)
+            {
+                csc_d2[pos] = source_data2[idx].clone();
             }
 
             next[col] += 1;
         }
     }
 
-    (csc_data, col_ptr, csc_row_ind, csc_data2)
+    CompressedSparseData {
+        data: csc_data,
+        indices: csc_row_ind,
+        indptr: col_ptr,
+        cs_type: CompressedSparseFormat::Csc,
+        data_2: csc_data2,
+        shape: sparse_data.shape(),
+    }
 }
 
 ///////////
@@ -455,35 +556,47 @@ mod tests {
         let data = vec![1, 4, 3, 2, 5];
         let row_ind = vec![0, 2, 1, 0, 2];
         let col_ptr = vec![0, 2, 3, 5];
-        let (csr_data, csr_row_ptr, csr_col_ind, csr_data2) =
-            csc_to_csr(&data, &row_ind, &col_ptr, 3, None::<&[i32]>);
+        let shape = (3, 3);
+
+        let csc_matrix =
+            CompressedSparseData::new_csc(&data, &row_ind, &col_ptr, None::<&[i32]>, shape);
+
+        let csr_matrix = csc_to_csr(csc_matrix);
 
         // Expected CSR format
-        assert_eq!(csr_data, vec![1, 2, 3, 4, 5]);
-        assert_eq!(csr_col_ind, vec![0, 2, 1, 0, 2]);
-        assert_eq!(csr_row_ptr, vec![0, 2, 3, 5]);
-        assert_eq!(csr_data2, None);
+        assert_eq!(csr_matrix.data, vec![1, 2, 3, 4, 5]);
+        assert_eq!(csr_matrix.indices, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csr_matrix.indptr, vec![0, 2, 3, 5]);
+        assert_eq!(csr_matrix.data_2, None);
+        assert_eq!(csr_matrix.shape, (3, 3));
+        assert!(matches!(csr_matrix.cs_type, CompressedSparseFormat::Csr));
     }
 
     #[test]
     fn test_csc_to_csr_conversion_dual_layer() {
         // Test matrix:
-        // [1 0 2]    [10 0  20]
-        // [0 3 0]    [0  30 0 ]
-        // [4 0 5]    [40 0  50]
+        // [1 0 2] [1.0 0   2.0]
+        // [0 3 0] [0   3.0 0  ]
+        // [4 0 5] [4.0 0   5.0]
         // CSC format for both layers
         let data = vec![1, 4, 3, 2, 5];
         let data2 = vec![1.0, 4.0, 3.0, 2.0, 5.0];
         let row_ind = vec![0, 2, 1, 0, 2];
         let col_ptr = vec![0, 2, 3, 5];
-        let (csr_data, csr_row_ptr, csr_col_ind, csr_data2) =
-            csc_to_csr(&data, &row_ind, &col_ptr, 3, Some(&data2));
+        let shape = (3, 3);
+
+        let csc_matrix =
+            CompressedSparseData::new_csc(&data, &row_ind, &col_ptr, Some(&data2), shape);
+
+        let csr_matrix = csc_to_csr(csc_matrix);
 
         // Expected CSR format
-        assert_eq!(csr_data, vec![1, 2, 3, 4, 5]);
-        assert_eq!(csr_col_ind, vec![0, 2, 1, 0, 2]);
-        assert_eq!(csr_row_ptr, vec![0, 2, 3, 5]);
-        assert_eq!(csr_data2, Some(vec![1.0, 2.0, 3.0, 4.0, 5.0]));
+        assert_eq!(csr_matrix.data, vec![1, 2, 3, 4, 5]);
+        assert_eq!(csr_matrix.indices, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csr_matrix.indptr, vec![0, 2, 3, 5]);
+        assert_eq!(csr_matrix.data_2, Some(vec![1.0, 2.0, 3.0, 4.0, 5.0]));
+        assert_eq!(csr_matrix.shape, (3, 3));
+        assert!(matches!(csr_matrix.cs_type, CompressedSparseFormat::Csr));
     }
 
     #[test]
@@ -496,34 +609,46 @@ mod tests {
         let data = vec![1, 2, 3, 4, 5];
         let col_ind = vec![0, 2, 1, 0, 2];
         let row_ptr = vec![0, 2, 3, 5];
-        let (csc_data, csc_col_ptr, csc_row_ind, csc_data2) =
-            csr_to_csc(&data, &col_ind, &row_ptr, 3, None::<&[i32]>);
+        let shape = (3, 3);
+
+        let csr_matrix =
+            CompressedSparseData::new_csr(&data, &col_ind, &row_ptr, None::<&[i32]>, shape);
+
+        let csc_matrix = csr_to_csc(csr_matrix);
 
         // Expected CSC format
-        assert_eq!(csc_data, vec![1, 4, 3, 2, 5]);
-        assert_eq!(csc_row_ind, vec![0, 2, 1, 0, 2]);
-        assert_eq!(csc_col_ptr, vec![0, 2, 3, 5]);
-        assert_eq!(csc_data2, None);
+        assert_eq!(csc_matrix.data, vec![1, 4, 3, 2, 5]);
+        assert_eq!(csc_matrix.indices, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csc_matrix.indptr, vec![0, 2, 3, 5]);
+        assert_eq!(csc_matrix.data_2, None);
+        assert_eq!(csc_matrix.shape, (3, 3));
+        assert!(matches!(csc_matrix.cs_type, CompressedSparseFormat::Csc));
     }
 
     #[test]
     fn test_csr_to_csc_conversion_dual_layer() {
         // Test matrix:
-        // [1 0 2]    [10 0  20]
-        // [0 3 0]    [0  30 0 ]
-        // [4 0 5]    [40 0  50]
+        // [1 0 2] [1.0 0   2.0]
+        // [0 3 0] [0   3.0 0  ]
+        // [4 0 5] [4.0 0   5.0]
         // CSR format for both layers
         let data = vec![1, 2, 3, 4, 5];
         let data2 = vec![1.0, 2.0, 3.0, 4.0, 5.0];
         let col_ind = vec![0, 2, 1, 0, 2];
         let row_ptr = vec![0, 2, 3, 5];
-        let (csc_data, csc_col_ptr, csc_row_ind, csc_data2) =
-            csr_to_csc(&data, &col_ind, &row_ptr, 3, Some(&data2));
+        let shape = (3, 3);
+
+        let csr_matrix =
+            CompressedSparseData::new_csr(&data, &col_ind, &row_ptr, Some(&data2), shape);
+
+        let csc_matrix = csr_to_csc(csr_matrix);
 
         // Expected CSC format
-        assert_eq!(csc_data, vec![1, 4, 3, 2, 5]);
-        assert_eq!(csc_row_ind, vec![0, 2, 1, 0, 2]);
-        assert_eq!(csc_col_ptr, vec![0, 2, 3, 5]);
-        assert_eq!(csc_data2, Some(vec![1.0, 4.0, 3.0, 2.0, 5.0]));
+        assert_eq!(csc_matrix.data, vec![1, 4, 3, 2, 5]);
+        assert_eq!(csc_matrix.indices, vec![0, 2, 1, 0, 2]);
+        assert_eq!(csc_matrix.indptr, vec![0, 2, 3, 5]);
+        assert_eq!(csc_matrix.data_2, Some(vec![1.0, 4.0, 3.0, 2.0, 5.0]));
+        assert_eq!(csc_matrix.shape, (3, 3));
+        assert!(matches!(csc_matrix.cs_type, CompressedSparseFormat::Csc));
     }
 }

@@ -28,6 +28,8 @@ The list with the synthetic data with the following items:
 \item data - The synthetic counts
 \item col_ptrs - The column pointers
 \item row_indices - The row indices
+\item nrow - Number of rows (cells)
+\item ncol - Number of cols (genes)
 }
 }
 \description{
