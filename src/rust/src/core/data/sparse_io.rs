@@ -409,7 +409,7 @@ pub struct CellChunkIterator<'a> {
     current_chunk: usize,
 }
 
-impl<'a> Iterator for CellChunkIterator<'a> {
+impl Iterator for CellChunkIterator<'_> {
     type Item = std::io::Result<CsrCellChunk>;
 
     /// Get the next element of the iterator
@@ -440,7 +440,7 @@ pub struct GeneChunkIterator<'a> {
     current_chunk: usize,
 }
 
-impl<'a> Iterator for GeneChunkIterator<'a> {
+impl Iterator for GeneChunkIterator<'_> {
     type Item = std::io::Result<CscGeneChunk>;
 
     /// Get the next element of the iterator

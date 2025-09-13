@@ -17,6 +17,22 @@ get_cores <- function(abs_max_workers = 8L) {
   return(cores)
 }
 
+# nightly feature marker -------------------------------------------------------
+
+#' Helper functions to mark something unstable/nightly
+#'
+#' @returns Throws a warning.
+nightly_feature <- function() {
+  warning(
+    paste(
+      "This is a nightly/unstable feature!",
+      "These functions, classes and methods are not yet fully development and",
+      "can be subject to breaking changes, compelete removal!."
+    )
+  )
+  invisible()
+}
+
 # user options -----------------------------------------------------------------
 
 #' Helper function for user option selection
@@ -382,4 +398,46 @@ get_inflection_point <- function(x, y, span = 0.5) {
   return(
     list(inflection_idx = inflection_idx, gradient_change = gradient_change)
   )
+}
+
+# others -----------------------------------------------------------------------
+
+## string stuff ----------------------------------------------------------------
+
+#' Helper function to transform strings to snake_case
+#'
+#' @param x String. The string (vector) you wish to transform to snake_case.
+#' @param ignore_na Boolean. Shall the function just ignore `NA` values and
+#' return `NA` at this position.
+#' Defaults to `FALSE`.
+#'
+#' @return Returns the string in snake_case format.
+#'
+#' @export
+to_snake_case <- function(x, ignore_na = FALSE) {
+  # checks
+  if (ignore_na) {
+    checkmate::qassert(x, "s+")
+    na_positions <- is.na(x)
+    x <- x[!na_positions]
+  } else {
+    checkmate::qassert(x, "S+")
+    x <- x
+  }
+
+  # transformations
+  x <- gsub("([a-z])([A-Z])", "\\1_\\2", x)
+  x <- tolower(x)
+  x <- gsub("[^a-z0-9]+", "_", x)
+  x <- gsub("^_+|_+$", "", x)
+  x <- gsub("_+", "_", x)
+
+  if (ignore_na) {
+    res <- vector(mode = "character", length = length(na_positions))
+    res[!na_positions] <- x
+    res[na_positions] <- NA
+    return(res)
+  } else {
+    return(x)
+  }
 }
