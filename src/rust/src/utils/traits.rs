@@ -83,8 +83,18 @@ impl F16 {
         F16(bits)
     }
 
-    // Your existing from_f32 method
+    /// From f32
     pub fn from_f32(f: f32) -> Self {
         F16::from(f16::from_f32(f))
+    }
+
+    /// Convert to little-endian bytes
+    pub fn to_le_bytes(self) -> [u8; 2] {
+        self.0.to_le_bytes()
+    }
+
+    /// Create from little-endian bytes
+    pub fn from_le_bytes(bytes: [u8; 2]) -> Self {
+        F16(u16::from_le_bytes(bytes))
     }
 }

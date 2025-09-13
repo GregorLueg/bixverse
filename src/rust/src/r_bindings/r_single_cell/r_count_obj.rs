@@ -205,7 +205,7 @@ impl SingeCellCountData {
     ///
     /// An R list with all of the info that was stored in the .bin file
     pub fn file_to_r_csr_mat(&self, assay: &str) -> List {
-        let mut reader = StreamingSparseReader::new(&self.f_path_cells).unwrap();
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
 
         let assay_type = parse_count_type(assay).unwrap();
 
@@ -216,7 +216,7 @@ impl SingeCellCountData {
         let mut col_idx: Vec<Vec<u16>> = Vec::new();
         let mut row_ptr: Vec<usize> = Vec::new();
 
-        let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
+        let all_cells: Vec<_> = reader.get_all_cells();
 
         let mut current_row_ptr = 0_usize;
         row_ptr.push(current_row_ptr);
@@ -257,58 +257,47 @@ impl SingeCellCountData {
         )
     }
 
-    /// Returns the (row/cell) data for the specified indices
-    ///
-    /// ### Params
-    ///
-    /// * `indices` - Slice of the index positions for the cells
-    /// * `assay` - String. Return the raw counts or log-normalised counts. One
-    /// of `"raw"` or `"norm"`
-    ///
-    /// ### Returns
-    ///
-    /// An R list with the selected cell data that was stored in the .bin file
     pub fn get_cells_by_indices(&self, indices: &[i32], assay: &str) -> List {
-        // TODO better error handling here
-        let mut reader = StreamingSparseReader::new(&self.f_path_cells).unwrap();
-
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
         let assay_type = parse_count_type(assay).unwrap();
 
-        let no_genes = reader.get_header().total_genes;
+        let indices: Vec<usize> = indices.iter().map(|x| (*x - 1) as usize).collect();
 
-        let indices = indices
-            .iter()
-            .map(|x| (*x - 1) as usize)
-            .collect::<Vec<usize>>();
+        // Parallel read all cells at once
+        let cells = reader.read_cells_parallel(&indices);
 
-        let cells = reader.read_cells_by_indices(&indices).unwrap();
+        // Parallel processing of results
+        let results: Vec<(AssayData, Vec<u16>)> = cells
+            .par_iter()
+            .map(|cell| {
+                let data_i = match assay_type {
+                    AssayType::Raw => {
+                        AssayData::Raw(cell.data_raw.iter().map(|&x| x as i32).collect())
+                    }
+                    AssayType::Norm => AssayData::Norm(
+                        cell.data_norm
+                            .iter()
+                            .map(|x| {
+                                let f16_val: half::f16 = (*x).into();
+                                f16_val.to_f32()
+                            })
+                            .collect(),
+                    ),
+                };
+                (data_i, cell.col_indices.clone())
+            })
+            .collect();
 
-        let mut data: Vec<AssayData> = Vec::new();
-        let mut col_idx: Vec<Vec<u16>> = Vec::new();
-        let mut row_ptr: Vec<usize> = Vec::new();
+        // Sequential assembly (required for row_ptr)
+        let mut data = Vec::new();
+        let mut col_idx = Vec::new();
+        let mut row_ptr = vec![0];
 
-        let mut current_row_ptr = 0_usize;
-        row_ptr.push(current_row_ptr);
-
-        for cell in &cells {
-            let data_i = match assay_type {
-                AssayType::Raw => AssayData::Raw(cell.data_raw.iter().map(|&x| x as i32).collect()),
-                AssayType::Norm => AssayData::Norm(
-                    cell.data_norm
-                        .iter()
-                        .map(|x| {
-                            let f16_val: half::f16 = (*x).into();
-                            f16_val.to_f32()
-                        })
-                        .collect(),
-                ),
-            };
-            let len_data_i = data_i.len();
-            current_row_ptr += len_data_i;
-            // Add data
+        for (data_i, indices) in results {
+            let len = data_i.len();
+            row_ptr.push(row_ptr.last().unwrap() + len);
             data.push(data_i);
-            col_idx.push(cell.col_indices.clone());
-            row_ptr.push(current_row_ptr);
+            col_idx.push(indices);
         }
 
         let data = AssayData::flatten_into_r_vector(data);
@@ -321,8 +310,7 @@ impl SingeCellCountData {
             row_ptr = row_ptr,
             col_idx = col_idx,
             data = data,
-            no_cells = cells.len(),
-            no_genes = no_genes
+            no_cells = cells.len()
         )
     }
 
@@ -337,13 +325,13 @@ impl SingeCellCountData {
     /// the full data set in memory and might cause memory pressure, pending
     /// the size of the data.
     pub fn generate_gene_based_data(&self) {
-        let mut reader = StreamingSparseReader::new(&self.f_path_cells).unwrap();
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
 
         let no_cells = reader.get_header().total_cells;
         let no_genes = reader.get_header().total_genes;
 
         // Extract all data
-        let all_cells: Vec<_> = reader.iter_cells().map(|r| r.unwrap()).collect();
+        let all_cells: Vec<_> = reader.get_all_cells();
 
         let mut data: Vec<Vec<u16>> = Vec::new();
         let mut data_2: Vec<Vec<F16>> = Vec::new();
@@ -408,7 +396,7 @@ impl SingeCellCountData {
     }
 
     pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> List {
-        let mut reader = StreamingSparseReader::new(&self.f_path_genes).unwrap();
+        let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
 
         let assay_type = parse_count_type(assay).unwrap();
 
@@ -419,7 +407,7 @@ impl SingeCellCountData {
             .map(|x| (*x - 1) as usize)
             .collect::<Vec<usize>>();
 
-        let genes = reader.read_genes_by_indices(&indices).unwrap();
+        let genes = reader.read_gene_parallel(&indices);
 
         let mut data: Vec<AssayData> = Vec::new();
         let mut col_idx: Vec<Vec<u32>> = Vec::new();

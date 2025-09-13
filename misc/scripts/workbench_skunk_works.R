@@ -37,7 +37,7 @@ single_cell_counts <- SingeCellCountData$new(
 
 list.files(dir)
 
-rextendr::document()
+# rextendr::document()
 
 tictoc::tic()
 single_cell_counts$r_csr_mat_to_file(
@@ -54,7 +54,7 @@ tictoc::tic()
 single_cell_counts$generate_gene_based_data()
 tictoc::toc()
 
-indices <- sample(1:no_cells, 50000)
+indices <- sort(sample(1:no_cells, 100000))
 
 tictoc::tic()
 return_data <- single_cell_counts$get_cells_by_indices(
@@ -68,12 +68,14 @@ file.size(f_path_genes) / 1024^2
 
 # csc (gene-centric) -----------------------------------------------------------
 
-gene_indices <- sample(1:no_genes, 10)
+gene_indices <- sample(1:no_genes, 1000)
 
+tictoc::tic()
 return_gene_data <- single_cell_counts$get_genes_by_indices(
   indices = gene_indices,
   assay = "raw"
 )
+tictoc::toc()
 
 return_gene_data$row_ptr
 
