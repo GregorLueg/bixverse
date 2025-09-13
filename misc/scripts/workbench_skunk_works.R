@@ -10,8 +10,8 @@ rextendr::document()
 
 # let's try with 1m cells...
 seed <- 123L
-no_genes <- 1000L
-no_cells <- 10000L
+no_genes <- 20000L
+no_cells <- 1000000L
 
 rs_sparse_data <- rs_synthetic_sc_data_csr(
   n_genes = no_genes,
@@ -21,37 +21,6 @@ rs_sparse_data <- rs_synthetic_sc_data_csr(
   max_exp = 50,
   seed = seed
 )
-
-length(rs_sparse_data$indices)
-
-rs_sparse_data_2 <- rs_synthetic_sc_data_csc(
-  n_genes = no_genes,
-  n_cells = no_cells,
-  min_genes = 250,
-  max_genes = 1000,
-  max_exp = 50,
-  seed = seed
-)
-
-length(rs_sparse_data_2$indices)
-
-max(rs_sparse_data$indices)
-length(rs_sparse_data$indptr)
-
-gc()
-
-csr_matrix <- Matrix::sparseMatrix(
-  j = rs_sparse_data$indices + 1,
-  p = rs_sparse_data$indptr,
-  x = rs_sparse_data$data,
-  dims = c(no_cells, no_genes),
-  dimnames = list(
-    sprintf("cell_%i", 1:no_cells),
-    sprintf("gene_%i", 1:no_genes)
-  )
-)
-
-dim(csr_matrix)
 
 # rm(rs_sparse_data)
 
@@ -68,6 +37,8 @@ single_cell_counts <- SingeCellCountData$new(
 
 list.files(dir)
 
+rextendr::document()
+
 tictoc::tic()
 single_cell_counts$r_csr_mat_to_file(
   no_cells = no_cells,
@@ -83,7 +54,7 @@ tictoc::tic()
 single_cell_counts$generate_gene_based_data()
 tictoc::toc()
 
-indices <- sample(1:no_cells, 10)
+indices <- sample(1:no_cells, 50000)
 
 tictoc::tic()
 return_data <- single_cell_counts$get_cells_by_indices(

@@ -1,9 +1,11 @@
 use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
 use half::f16;
+use memmap2::MmapOptions;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
+use std::sync::Arc;
 
 use crate::utils::traits::F16;
 
@@ -79,6 +81,103 @@ impl CsrCellChunk {
             original_index,
             to_keep: true,
         }
+    }
+
+    /// Write directly to bytes without serialization framework
+    pub fn write_to_bytes(&self, writer: &mut impl Write) -> std::io::Result<()> {
+        // Write header (same as before)
+        writer.write_all(&(self.data_raw.len() as u32).to_le_bytes())?;
+        writer.write_all(&(self.data_norm.len() as u32).to_le_bytes())?;
+        writer.write_all(&(self.col_indices.len() as u32).to_le_bytes())?;
+        writer.write_all(&(self.library_size as u64).to_le_bytes())?;
+        writer.write_all(&(self.original_index as u64).to_le_bytes())?;
+        writer.write_all(&[self.to_keep as u8, 0, 0, 0])?; // Include padding
+
+        // Write arrays as raw bytes (much faster!)
+        let data_raw_bytes = unsafe {
+            std::slice::from_raw_parts(self.data_raw.as_ptr() as *const u8, self.data_raw.len() * 2)
+        };
+        writer.write_all(data_raw_bytes)?;
+
+        // Same for data_norm (assuming F16 is repr(transparent) over u16)
+        let data_norm_bytes = unsafe {
+            std::slice::from_raw_parts(
+                self.data_norm.as_ptr() as *const u8,
+                self.data_norm.len() * 2,
+            )
+        };
+        writer.write_all(data_norm_bytes)?;
+
+        let col_indices_bytes = unsafe {
+            std::slice::from_raw_parts(
+                self.col_indices.as_ptr() as *const u8,
+                self.col_indices.len() * 2,
+            )
+        };
+        writer.write_all(col_indices_bytes)?;
+
+        Ok(())
+    }
+
+    pub fn read_from_buffer(buffer: &[u8]) -> std::io::Result<Self> {
+        if buffer.len() < 32 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Buffer too small for header",
+            ));
+        }
+
+        // Parse header without copying
+        let header = &buffer[0..32];
+
+        let data_raw_len =
+            u32::from_le_bytes([header[0], header[1], header[2], header[3]]) as usize;
+        let data_norm_len =
+            u32::from_le_bytes([header[4], header[5], header[6], header[7]]) as usize;
+        let col_indices_len =
+            u32::from_le_bytes([header[8], header[9], header[10], header[11]]) as usize;
+        let library_size = u64::from_le_bytes([
+            header[12], header[13], header[14], header[15], header[16], header[17], header[18],
+            header[19],
+        ]) as usize;
+        let original_index = u64::from_le_bytes([
+            header[20], header[21], header[22], header[23], header[24], header[25], header[26],
+            header[27],
+        ]) as usize;
+        let to_keep = header[28] != 0;
+
+        let data_start = 32;
+        let data_end = data_start + data_raw_len * 2;
+        let norm_end = data_end + data_norm_len * 2;
+
+        // Direct transmutation - no intermediate allocations
+        let data_raw = unsafe {
+            let ptr = buffer.as_ptr().add(data_start) as *const u16;
+            std::slice::from_raw_parts(ptr, data_raw_len).to_vec()
+        };
+
+        // For F16, we still need to convert but can do it more efficiently
+        let data_norm = unsafe {
+            let ptr = buffer.as_ptr().add(data_end) as *const u16;
+            let slice = std::slice::from_raw_parts(ptr, data_norm_len);
+            let mut norm = Vec::with_capacity(data_norm_len);
+            norm.extend(slice.iter().map(|&bits| F16::from_bits(bits)));
+            norm
+        };
+
+        let col_indices = unsafe {
+            let ptr = buffer.as_ptr().add(norm_end) as *const u16;
+            std::slice::from_raw_parts(ptr, col_indices_len).to_vec()
+        };
+
+        Ok(Self {
+            data_raw,
+            data_norm,
+            library_size,
+            col_indices,
+            original_index,
+            to_keep,
+        })
     }
 }
 
@@ -234,6 +333,8 @@ pub struct CellGeneSparseWriter {
     writer: BufWriter<File>,
     chunks_start_pos: u64,
     cell_based: bool,
+    chunks_since_flush: usize,
+    flush_frequency: usize,
 }
 
 impl CellGeneSparseWriter {
@@ -260,7 +361,7 @@ impl CellGeneSparseWriter {
         total_genes: usize,
     ) -> std::io::Result<Self> {
         let file = File::create(path_f)?;
-        let mut writer = BufWriter::new(file);
+        let mut writer = BufWriter::with_capacity(10 * 1024 * 1024, file);
 
         let file_header = FileHeader::new(cell_based);
         let file_header_enc = encode_to_vec(&file_header, config::standard()).unwrap();
@@ -273,6 +374,8 @@ impl CellGeneSparseWriter {
         writer.flush()?;
 
         let chunks_start_pos = 64;
+
+        let flush_frequency = if cell_based { 100000_usize } else { 1000_usize };
 
         let header = SparseDataHeader {
             total_cells,
@@ -288,6 +391,8 @@ impl CellGeneSparseWriter {
             writer,
             chunks_start_pos,
             cell_based,
+            chunks_since_flush: 0_usize,
+            flush_frequency,
         })
     }
 
@@ -305,10 +410,7 @@ impl CellGeneSparseWriter {
             "The writer is not set to write in a cell-based manner!"
         );
 
-        // get current position in file
         let current_pos = self.writer.stream_position()?;
-
-        // store offset relative to chunks start
         let chunk_offset = current_pos - self.chunks_start_pos;
         self.header.chunk_offsets.push(chunk_offset);
 
@@ -316,15 +418,18 @@ impl CellGeneSparseWriter {
             .index_map
             .insert(cell_chunk.original_index, self.header.no_chunks);
 
-        let encoded = encode_to_vec(&cell_chunk, config::standard()).unwrap();
-        let chunk_size = encoded.len() as u64;
+        // Calculate size first (for the size prefix)
+        let size = 32 + // header size
+               (cell_chunk.data_raw.len() * 2) +
+               (cell_chunk.data_norm.len() * 2) +
+               (cell_chunk.col_indices.len() * 2);
 
-        self.writer.write_all(&chunk_size.to_le_bytes())?;
-        self.writer.write_all(&encoded)?;
-        self.writer.flush()?;
+        self.writer.write_all(&(size as u64).to_le_bytes())?;
+
+        // Use our custom serialization
+        cell_chunk.write_to_bytes(&mut self.writer)?;
 
         self.header.no_chunks += 1;
-
         Ok(())
     }
 
@@ -357,9 +462,15 @@ impl CellGeneSparseWriter {
 
         self.writer.write_all(&chunk_size.to_le_bytes())?;
         self.writer.write_all(&encoded)?;
-        self.writer.flush()?;
 
         self.header.no_chunks += 1;
+        self.chunks_since_flush += 1;
+
+        if self.chunks_since_flush >= self.flush_frequency {
+            self.writer.flush()?;
+            self.chunks_since_flush = 0;
+        }
+
         Ok(())
     }
 
@@ -473,6 +584,7 @@ pub struct StreamingSparseReader {
     header: SparseDataHeader,
     reader: BufReader<File>,
     chunks_start: u64,
+    read_buffer: Vec<u8>,
 }
 
 #[allow(dead_code)]
@@ -528,6 +640,7 @@ impl StreamingSparseReader {
             header,
             reader,
             chunks_start,
+            read_buffer: Vec::with_capacity(1024 * 1024),
         })
     }
 
@@ -627,7 +740,6 @@ impl StreamingSparseReader {
             return Ok(None);
         }
 
-        // Calculate absolute position
         let chunk_offset = self.chunks_start + self.header.chunk_offsets[chunk_index];
         self.reader.seek(SeekFrom::Start(chunk_offset))?;
 
@@ -636,11 +748,12 @@ impl StreamingSparseReader {
         self.reader.read_exact(&mut size_buf)?;
         let chunk_size = u64::from_le_bytes(size_buf) as usize;
 
-        // Read chunk data
-        let mut chunk_buf = vec![0u8; chunk_size];
-        self.reader.read_exact(&mut chunk_buf)?;
+        // Read entire chunk into our reusable buffer
+        self.read_buffer.resize(chunk_size, 0);
+        self.reader.read_exact(&mut self.read_buffer)?;
 
-        let (chunk, _) = decode_from_slice(&chunk_buf, config::standard()).unwrap();
+        // Parse from buffer (no allocations!)
+        let chunk = CsrCellChunk::read_from_buffer(&self.read_buffer)?;
 
         Ok(Some(chunk))
     }

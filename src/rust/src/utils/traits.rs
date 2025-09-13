@@ -23,12 +23,6 @@ impl From<F16> for f16 {
     }
 }
 
-impl F16 {
-    pub fn from_f32(f: f32) -> Self {
-        F16::from(f16::from_f32(f))
-    }
-}
-
 impl Sum for F16 {
     fn sum<I: Iterator<Item = F16>>(iter: I) -> Self {
         let sum: f16 = iter.map(f16::from).sum();
@@ -75,5 +69,22 @@ impl Ord for F16 {
             (false, true) => Ordering::Less,
             (false, false) => a.partial_cmp(&b).unwrap(),
         }
+    }
+}
+
+impl F16 {
+    /// Get the raw bits representation
+    pub fn to_bits(self) -> u16 {
+        self.0
+    }
+
+    /// Create from raw bits
+    pub fn from_bits(bits: u16) -> Self {
+        F16(bits)
+    }
+
+    // Your existing from_f32 method
+    pub fn from_f32(f: f32) -> Self {
+        F16::from(f16::from_f32(f))
     }
 }
