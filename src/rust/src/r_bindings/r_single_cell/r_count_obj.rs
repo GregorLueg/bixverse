@@ -2,6 +2,7 @@ use extendr_api::prelude::*;
 use rayon::prelude::*;
 
 use crate::core::data::sparse_io::*;
+use crate::core::data::sparse_io_h5::*;
 use crate::core::data::sparse_structures::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::traits::F16;
@@ -160,6 +161,11 @@ impl SingeCellCountData {
     /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
     /// * `target_size` - To which target size to normalise to. 1e6 ->
     ///   CPM normalisation
+    /// * `min_genes` - Number of minimum genes needed to be considered included
+    ///   in analysis.
+    ///
+    /// ### Returns
+    #[allow(clippy::too_many_arguments)]
     pub fn r_csr_mat_to_file(
         &mut self,
         no_cells: usize,
@@ -168,10 +174,14 @@ impl SingeCellCountData {
         row_ptr: &[i32],
         col_idx: &[i32],
         target_size: f64,
-    ) {
+        min_genes: usize,
+    ) -> Vec<bool> {
         self.n_cells = no_cells;
         self.n_genes = no_genes;
         let ptr_range = 1..row_ptr.len();
+        let row_ptr_usize = row_ptr.iter().map(|x| *x as usize).collect::<Vec<usize>>();
+
+        let cell_mask = filter_by_nnz(&row_ptr_usize, min_genes);
 
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
@@ -180,18 +190,42 @@ impl SingeCellCountData {
             // get the index position
             let end_i = row_ptr[i] as usize;
             let start_i = row_ptr[i - 1] as usize;
+            let to_keep_i = cell_mask[i];
             // create chunk from raw data
-            let chunk_i = CsrCellChunk::from_r_data(
+            let chunk_i = CsrCellChunk::from_data(
                 &data[start_i..end_i],
                 &col_idx[start_i..end_i],
                 i - 1,
                 target_size as f32,
+                to_keep_i,
             );
 
             writer.write_cell_chunk(chunk_i).unwrap();
         }
 
         writer.finalise().unwrap();
+
+        cell_mask
+    }
+
+    pub fn h5_to_file(
+        &mut self,
+        cs_type: String,
+        h5_path: String,
+        no_cells: usize,
+        no_genes: usize,
+        target_size: f64,
+        min_genes: usize,
+    ) -> Vec<bool> {
+        write_h5_counts(
+            &h5_path,
+            &self.f_path_cells,
+            &cs_type,
+            no_cells,
+            no_genes,
+            min_genes,
+            target_size as f32,
+        )
     }
 
     /// Returns the full (row/cell) data as a List
@@ -324,7 +358,7 @@ impl SingeCellCountData {
     /// transform the data into the gene-based file format. This happens for
     /// the full data set in memory and might cause memory pressure, pending
     /// the size of the data.
-    pub fn generate_gene_based_data(&self) {
+    pub fn generate_gene_based_data(&self, min_cells: usize) {
         let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
 
         let no_cells = reader.get_header().total_cells;
@@ -369,6 +403,8 @@ impl SingeCellCountData {
 
         let sparse_data = sparse_data.transform();
 
+        let gene_mask = filter_by_nnz(&sparse_data.indptr, min_cells);
+
         // Write the data in CSC format to disk
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
@@ -381,12 +417,14 @@ impl SingeCellCountData {
             // get the index position
             let end_i = sparse_data.indptr[i];
             let start_i = sparse_data.indptr[i - 1];
+            let to_keep_i = gene_mask[i];
             // create the chunk and write to disk
             let chunk_i = CscGeneChunk::from_conversion(
                 &sparse_data.data[start_i..end_i],
                 &data_2[start_i..end_i],
                 &sparse_data.indices[start_i..end_i],
                 i - 1,
+                to_keep_i,
             );
 
             writer.write_gene_chunk(chunk_i).unwrap();
@@ -449,51 +487,6 @@ impl SingeCellCountData {
             no_cells = no_cells,
             no_genes = indices.len()
         )
-    }
-
-    /// Write data from R CSC to disk
-    ///
-    /// Helper function to write CSC matrices from R to disk.
-    ///
-    /// ### Params
-    ///
-    /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
-    /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
-    /// * `data` - Slice of the data (`csc_matrix@x`).
-    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
-    /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
-    /// * `target_size` - To which target size to normalise to. 1e6 ->
-    ///   CPM normalisation
-    pub fn r_csc_mat_to_file(
-        &self,
-        no_cells: usize,
-        no_genes: usize,
-        data: &[i32],
-        row_ptr: &[i32],
-        col_idx: &[i32],
-        target_size: f64,
-    ) {
-        let ptr_range = 1..row_ptr.len();
-
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_genes, true, no_cells, no_genes).unwrap();
-
-        for i in ptr_range {
-            // get the index position
-            let end_i = row_ptr[i] as usize;
-            let start_i = row_ptr[i - 1] as usize;
-            // create chunk from raw data
-            let chunk_i = CsrCellChunk::from_r_data(
-                &data[start_i..end_i],
-                &col_idx[start_i..end_i],
-                i - 1,
-                target_size as f32,
-            );
-
-            writer.write_cell_chunk(chunk_i).unwrap();
-        }
-
-        writer.finalise().unwrap();
     }
 }
 

@@ -1,5 +1,6 @@
 use hdf5::{File, Result};
 
+use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
 
 /// Helper function to parse compressed sparse format
@@ -25,16 +26,35 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
 // Writers //
 /////////////
 
-// pub fn write_h5_counts_disk(file_path: &str, cs_type: &str, nrow: usize, ncol: usize) {
-//     let x_data: CsEitherData<u16> = read_h5ad_x_data(file_path, cs_type).unwrap();
+pub fn write_h5_counts(
+    h5_path: &str,
+    bin_path: &str,
+    cs_type: &str,
+    nrow: usize,
+    ncol: usize,
+    min_genes: usize,
+    size_factor: f32,
+) -> Vec<bool> {
+    let file_data: CompressedSparseData<u16> =
+        read_h5ad_x_data(h5_path, cs_type, (nrow, ncol)).unwrap();
 
-//     let x_data_t: (Vec<u16>, Vec<usize>, Vec<usize>, Option<Vec<u16>>) = match x_data.3 {
-//         CompressedSparseFormat::Csc => {
-//             csc_to_csr::<u16, u16>(&x_data.0, &x_data.1, &x_data.2, nrow, None)
-//         }
-//         CompressedSparseFormat::Csr => csr_to_csc(&x_data.0, &x_data.1, &x_data.2, nrow, None),
-//     };
-// }
+    let file_data = if file_data.cs_type.is_csc() {
+        file_data.transform()
+    } else {
+        file_data
+    };
+
+    let mut writer = CellGeneSparseWriter::new(bin_path, true, ncol, nrow).unwrap();
+
+    let (cell_chunk_vec, to_keep) =
+        CsrCellChunk::generate_chunks_sparse_data(file_data, min_genes, size_factor);
+
+    for cell_chunk in cell_chunk_vec {
+        writer.write_cell_chunk(cell_chunk).unwrap();
+    }
+
+    to_keep
+}
 
 /////////////
 // Helpers //

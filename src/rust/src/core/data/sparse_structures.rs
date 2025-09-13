@@ -41,6 +41,23 @@ where
     (total_zeroes, row_zeroes, col_zeroes)
 }
 
+/// Helper to filter compressed sparse by NNZ
+///
+/// Returns a boolean vector for a given indptr if the row, column has sufficient
+/// NNZ
+///
+/// ### Params
+///
+/// * `indptr` - Index pointers of the CSC or CSR format
+/// * `min_nnz` - Minimum number of NNZ eleents
+///
+/// ### Returns
+///
+/// A vector of booleans if the column/row passes the threshold.
+pub fn filter_by_nnz(indptr: &[usize], min_nnz: usize) -> Vec<bool> {
+    indptr.windows(2).map(|w| w[1] - w[0] >= min_nnz).collect()
+}
+
 ////////////////
 // Structures //
 ////////////////
@@ -234,6 +251,17 @@ pub enum CompressedSparseFormat {
     Csr,
 }
 
+impl CompressedSparseFormat {
+    /// Returns boolean if it's CSC
+    pub fn is_csc(&self) -> bool {
+        matches!(self, CompressedSparseFormat::Csc)
+    }
+    /// Returns boolean if it's CSR
+    pub fn is_csr(&self) -> bool {
+        matches!(self, CompressedSparseFormat::Csr)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CompressedSparseData<T, U = T>
 where
@@ -309,7 +337,7 @@ where
     /// ### Returns
     ///
     /// The transformed/transposed version
-    pub fn transform(self) -> Self {
+    pub fn transform(&self) -> Self {
         match self.cs_type {
             CompressedSparseFormat::Csc => csc_to_csr(self),
             CompressedSparseFormat::Csr => csr_to_csc(self),
@@ -334,6 +362,13 @@ where
         self.data.len()
     }
 
+    /// Return the second layer
+    ///
+    /// If this does not exist, the function will panic
+    ///
+    /// ### Returns
+    ///
+    /// Vector of the second layer
     pub fn get_data2_unsafe(&self) -> Vec<U> {
         self.data_2.clone().unwrap()
     }
@@ -344,7 +379,7 @@ where
 /// ### Params
 ///
 /// * `sparse_data` - The CompressedSparseData you want to transform
-pub fn csc_to_csr<T, U>(sparse_data: CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
+pub fn csc_to_csr<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
     T: Clone + Default,
     U: Clone + Default,
@@ -410,7 +445,7 @@ where
 /// ### Returns
 ///
 /// The data in CSC format, i.e., `CscData`
-pub fn csr_to_csc<T, U>(sparse_data: CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
+pub fn csr_to_csc<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
     T: Clone + Default,
     U: Clone + Default,
@@ -561,7 +596,7 @@ mod tests {
         let csc_matrix =
             CompressedSparseData::new_csc(&data, &row_ind, &col_ptr, None::<&[i32]>, shape);
 
-        let csr_matrix = csc_to_csr(csc_matrix);
+        let csr_matrix = csc_to_csr(&csc_matrix);
 
         // Expected CSR format
         assert_eq!(csr_matrix.data, vec![1, 2, 3, 4, 5]);
@@ -588,7 +623,7 @@ mod tests {
         let csc_matrix =
             CompressedSparseData::new_csc(&data, &row_ind, &col_ptr, Some(&data2), shape);
 
-        let csr_matrix = csc_to_csr(csc_matrix);
+        let csr_matrix = csc_to_csr(&csc_matrix);
 
         // Expected CSR format
         assert_eq!(csr_matrix.data, vec![1, 2, 3, 4, 5]);
@@ -614,7 +649,7 @@ mod tests {
         let csr_matrix =
             CompressedSparseData::new_csr(&data, &col_ind, &row_ptr, None::<&[i32]>, shape);
 
-        let csc_matrix = csr_to_csc(csr_matrix);
+        let csc_matrix = csr_to_csc(&csr_matrix);
 
         // Expected CSC format
         assert_eq!(csc_matrix.data, vec![1, 4, 3, 2, 5]);
@@ -641,7 +676,7 @@ mod tests {
         let csr_matrix =
             CompressedSparseData::new_csr(&data, &col_ind, &row_ptr, Some(&data2), shape);
 
-        let csc_matrix = csr_to_csc(csr_matrix);
+        let csc_matrix = csr_to_csc(&csr_matrix);
 
         // Expected CSC format
         assert_eq!(csc_matrix.data, vec![1, 4, 3, 2, 5]);

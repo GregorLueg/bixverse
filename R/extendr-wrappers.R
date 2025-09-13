@@ -1643,17 +1643,17 @@ SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
 
-SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size))
+SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes) .Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes)
+
+SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, target_size, min_genes) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, target_size, min_genes)
 
 SingeCellCountData$file_to_r_csr_mat <- function(assay) .Call(wrap__SingeCellCountData__file_to_r_csr_mat, self, assay)
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingeCellCountData$generate_gene_based_data <- function() invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self))
+SingeCellCountData$generate_gene_based_data <- function(min_cells) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, min_cells))
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
-
-SingeCellCountData$r_csc_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size) invisible(.Call(wrap__SingeCellCountData__r_csc_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size))
 
 #' @export
 `$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }

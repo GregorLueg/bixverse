@@ -8,7 +8,8 @@ use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
 use std::sync::Arc;
 
-use crate::utils::traits::F16;
+use crate::core::data::sparse_structures::*;
+use crate::utils::traits::*;
 
 ///////////////////////////
 // Sparse data streaming //
@@ -58,13 +59,18 @@ impl CsrCellChunk {
     /// ### Returns
     ///
     /// The `CsrCellChunk` for this cell.
-    pub fn from_r_data(
-        data: &[i32],
-        col_idx: &[i32],
+    pub fn from_data<T, U>(
+        data: &[T],
+        col_idx: &[U],
         original_index: usize,
         size_factor: f32,
-    ) -> Self {
-        let data_f32 = data.iter().map(|x| *x as f32).collect::<Vec<f32>>();
+        to_keep: bool,
+    ) -> Self
+    where
+        T: ToF32AndU16,
+        U: ToF32AndU16,
+    {
+        let data_f32 = data.iter().map(|&x| x.to_f32()).collect::<Vec<f32>>(); // Changed from f32::from(x)
         let sum = data_f32.iter().sum::<f32>();
         let data_norm: Vec<F16> = data_f32
             .into_iter()
@@ -73,14 +79,13 @@ impl CsrCellChunk {
                 F16::from(f16::from_f32(norm))
             })
             .collect();
-
         Self {
-            data_raw: data.iter().map(|x| *x as u16).collect::<Vec<u16>>(),
+            data_raw: data.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(), // Changed from u16::from(x)
             data_norm,
             library_size: sum as usize,
-            col_indices: col_idx.iter().map(|x| *x as u16).collect::<Vec<u16>>(),
+            col_indices: col_idx.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(), // Changed from u16::from(x)
             original_index,
-            to_keep: true,
+            to_keep,
         }
     }
 
@@ -191,6 +196,49 @@ impl CsrCellChunk {
             to_keep,
         })
     }
+
+    /// Generate a vector of Chunks from CompressedSparseData
+    ///
+    /// ### Params
+    ///
+    /// * `sparse_data` - The `CompressedSparseData` (in CSR format!)
+    /// * `min_genes` - Number of genes per cell to be included
+    /// * `size_factor` - Size factor for normalisation. 1e6 -> CPM
+    ///
+    /// ### Returns
+    ///
+    /// A tuple of the `Vec<CsrCellChunk>` and if the cell should be kept.
+    pub fn generate_chunks_sparse_data<T, U>(
+        sparse_data: CompressedSparseData<T, U>,
+        min_genes: usize,
+        size_factor: f32,
+    ) -> (Vec<CsrCellChunk>, Vec<bool>)
+    where
+        T: Clone + Default + Into<u32>,
+        U: Clone + Default,
+    {
+        let n_cells = sparse_data.indptr.len() - 1;
+        let to_keep = filter_by_nnz(&sparse_data.indptr, min_genes);
+
+        let mut res: Vec<CsrCellChunk> = Vec::with_capacity(to_keep.len());
+
+        for i in 0..n_cells {
+            let start_i = sparse_data.indptr[i];
+            let end_i = sparse_data.indptr[i + 1];
+            let indices_i = &sparse_data.indices[start_i..end_i];
+            let to_keep_i = to_keep[i];
+            let data_i: &Vec<u32> = &sparse_data.data[start_i..end_i]
+                .iter()
+                .map(|i| i.clone().into())
+                .collect();
+
+            let chunk_i = CsrCellChunk::from_data(data_i, indices_i, i, size_factor, to_keep_i);
+
+            res.push(chunk_i)
+        }
+
+        (res, to_keep)
+    }
 }
 
 /// CscGeneChunk
@@ -231,6 +279,7 @@ impl CscGeneChunk {
     /// * `data_norm` - The normalised counts for this gene.
     /// * `col_idx` - The column indices for which cells this gene is expressed.
     /// * `original_index` - Original row index
+    /// * `to_keep` - Shall the gene be included in later analysis.
     ///
     /// ### Returns
     ///
@@ -240,6 +289,7 @@ impl CscGeneChunk {
         data_norm: &[F16],
         col_idx: &[usize],
         original_index: usize,
+        to_keep: bool,
     ) -> Self {
         let avg_exp = data_norm.iter().sum::<F16>();
         let nnz = data_raw.len();
@@ -251,7 +301,7 @@ impl CscGeneChunk {
             nnz,
             row_indices: col_idx.iter().map(|x| *x as u32).collect::<Vec<u32>>(),
             original_index,
-            to_keep: true,
+            to_keep,
         }
     }
 
@@ -640,6 +690,7 @@ pub struct ParallelSparseReader {
     chunks_start: u64,
 }
 
+#[allow(dead_code)]
 impl ParallelSparseReader {
     /// Generate a new parallelised streaming reader
     ///
@@ -685,6 +736,15 @@ impl ParallelSparseReader {
         })
     }
 
+    /// Read in cells by indices in a multithreaded manner
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - Slice of index positions of the cells to retrieve
+    ///
+    /// ### Returns
+    ///
+    /// Returns an array of `CsrCellChunk`.
     pub fn read_cells_parallel(&self, indices: &[usize]) -> Vec<CsrCellChunk> {
         assert!(
             self.header.cell_based,
@@ -712,6 +772,15 @@ impl ParallelSparseReader {
             .collect()
     }
 
+    /// Read in genes by indices in a multithreaded manner
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - Slice of index positions of the genes to retrieve
+    ///
+    /// ### Returns
+    ///
+    /// Returns an array of `CscGeneChunk`.
     pub fn read_gene_parallel(&self, indices: &[usize]) -> Vec<CscGeneChunk> {
         assert!(
             !self.header.cell_based,
@@ -739,18 +808,33 @@ impl ParallelSparseReader {
             .collect()
     }
 
+    /// Return all cells
+    ///
+    /// ### Returns
+    ///
+    /// Returns an array of `CsrCellChunk` containing all cells on disk.
     pub fn get_all_cells(&self) -> Vec<CsrCellChunk> {
         let iter: Vec<usize> = (0..self.header.total_cells).collect();
 
         self.read_cells_parallel(&iter)
     }
 
+    /// Return all genes
+    ///
+    /// ### Returns
+    ///
+    /// Returns an array of `CscGeneChunk` containing all genes on disk.
     pub fn get_all_genes(&self) -> Vec<CscGeneChunk> {
         let iter: Vec<usize> = (0..self.header.total_genes).collect();
 
         self.read_gene_parallel(&iter)
     }
 
+    /// Helper to return the header
+    ///
+    /// ### Returns
+    ///
+    /// Returns the header file
     pub fn get_header(&self) -> SparseDataHeader {
         self.header.clone()
     }

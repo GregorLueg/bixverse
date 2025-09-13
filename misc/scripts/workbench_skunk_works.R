@@ -35,7 +35,7 @@ single_cell_counts <- SingeCellCountData$new(
   f_path_genes = f_path_genes
 )
 
-list.files(dir)
+# list.files(dir)
 
 # rextendr::document()
 
@@ -145,9 +145,7 @@ file.exists("~/Downloads/ERX11148735.h5ad")
 
 
 rextendr::document()
-expanded_path <- path.expand("~/Downloads/ERX11148735.h5ad")
 
-get_h5ad_dimensions(expanded_path)
 
 h5_content <- rhdf5::h5ls(
   expanded_path
@@ -175,8 +173,17 @@ indptr <- rhdf5::h5read(
 )
 tictoc::toc()
 
+h5_info <- get_h5ad_dimensions(expanded_path)
+
+h5_info$dims
+
 tictoc::tic()
-h5ad_data <- rs_h5ad_data(expanded_path, "CSR")
+h5ad_data <- rs_h5ad_data(
+  f_path = expanded_path,
+  cs_type = "CSC",
+  nrows = h5_info$dims[1],
+  ncols = h5_info$dims[2]
+)
 tictoc::toc()
 
 length(h5ad_data$indptr)
@@ -196,3 +203,30 @@ db_connection$populate_obs_from_h5(h5_path = h5_path)$populate_vars_from_h5(
 db_connection$get_obs_table()
 
 db_connection$get_vars_table()
+
+rextendr::document()
+
+expanded_path <- path.expand("~/Downloads/ERX11148735.h5ad")
+dir <- tempdir()
+f_path_cells <- file.path(dir, "cells.bin")
+f_path_genes <- file.path(dir, "genes.bin")
+
+single_cell_counts <- SingeCellCountData$new(
+  f_path_cells = f_path_cells,
+  f_path_genes = f_path_genes
+)
+
+h5_info <- get_h5ad_dimensions(expanded_path)
+
+res <- single_cell_counts$h5_to_file(
+  cs_type = "CSC",
+  h5_path = expanded_path,
+  no_cells = h5_info$dims["obs"],
+  no_genes = h5_info$dims["var"],
+  target_size = 1e5,
+  min_genes = 200
+)
+
+single_cell_counts$generate_gene_based_data(min_cells = 10L)
+
+sum(res)
