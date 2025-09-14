@@ -144,6 +144,15 @@ impl SingeCellCountData {
         }
     }
 
+    /////////////
+    // Helpers //
+    /////////////
+
+    /// Get the shape
+    pub fn get_shape(&mut self) -> Vec<usize> {
+        vec![self.n_cells, self.n_genes]
+    }
+
     ///////////
     // Cells //
     ///////////
@@ -165,6 +174,8 @@ impl SingeCellCountData {
     ///   in analysis.
     ///
     /// ### Returns
+    ///
+    /// The mask of cells that have the number of genes expected.
     #[allow(clippy::too_many_arguments)]
     pub fn r_csr_mat_to_file(
         &mut self,
@@ -178,7 +189,6 @@ impl SingeCellCountData {
     ) -> Vec<bool> {
         self.n_cells = no_cells;
         self.n_genes = no_genes;
-        let ptr_range = 1..row_ptr.len();
         let row_ptr_usize = row_ptr.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
         let cell_mask = filter_by_nnz(&row_ptr_usize, min_genes);
@@ -186,16 +196,17 @@ impl SingeCellCountData {
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
 
-        for i in ptr_range {
+        for i in 0..self.n_cells {
             // get the index position
-            let end_i = row_ptr[i] as usize;
-            let start_i = row_ptr[i - 1] as usize;
+            let end_i = row_ptr_usize[i + 1];
+            let start_i = row_ptr_usize[i];
             let to_keep_i = cell_mask[i];
+
             // create chunk from raw data
             let chunk_i = CsrCellChunk::from_data(
                 &data[start_i..end_i],
                 &col_idx[start_i..end_i],
-                i - 1,
+                i,
                 target_size as f32,
                 to_keep_i,
             );
@@ -217,6 +228,10 @@ impl SingeCellCountData {
         target_size: f64,
         min_genes: usize,
     ) -> Vec<bool> {
+        // assign the values internally
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
         write_h5_counts(
             &h5_path,
             &self.f_path_cells,
@@ -251,6 +266,8 @@ impl SingeCellCountData {
         let mut row_ptr: Vec<usize> = Vec::new();
 
         let all_cells: Vec<_> = reader.get_all_cells();
+
+        println!("Cells loaded succesfully!");
 
         let mut current_row_ptr = 0_usize;
         row_ptr.push(current_row_ptr);
@@ -358,7 +375,13 @@ impl SingeCellCountData {
     /// transform the data into the gene-based file format. This happens for
     /// the full data set in memory and might cause memory pressure, pending
     /// the size of the data.
-    pub fn generate_gene_based_data(&self, min_cells: usize) {
+    ///
+    /// ### Params
+    ///
+    /// ### Returns
+    ///
+    ///
+    pub fn generate_gene_based_data(&self, min_cells: usize) -> Vec<bool> {
         let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
 
         let no_cells = reader.get_header().total_cells;
@@ -409,21 +432,20 @@ impl SingeCellCountData {
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
 
-        let ptr_range = 1..sparse_data.indptr.len();
-
         let data_2 = sparse_data.get_data2_unsafe();
 
-        for i in ptr_range {
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..no_genes {
             // get the index position
-            let end_i = sparse_data.indptr[i];
-            let start_i = sparse_data.indptr[i - 1];
+            let start_i = sparse_data.indptr[i];
+            let end_i = sparse_data.indptr[i + 1];
             let to_keep_i = gene_mask[i];
             // create the chunk and write to disk
             let chunk_i = CscGeneChunk::from_conversion(
                 &sparse_data.data[start_i..end_i],
                 &data_2[start_i..end_i],
                 &sparse_data.indices[start_i..end_i],
-                i - 1,
+                i,
                 to_keep_i,
             );
 
@@ -431,6 +453,8 @@ impl SingeCellCountData {
         }
 
         writer.finalise().unwrap();
+
+        gene_mask
     }
 
     pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> List {

@@ -251,6 +251,7 @@ pub enum CompressedSparseFormat {
     Csr,
 }
 
+#[allow(dead_code)]
 impl CompressedSparseFormat {
     /// Returns boolean if it's CSC
     pub fn is_csc(&self) -> bool {
@@ -262,6 +263,16 @@ impl CompressedSparseFormat {
     }
 }
 
+/// Structure to store compressed sparse data of either type
+///
+/// ### Fields
+///
+/// * `data` - The values
+/// * `indices` - The indices of the values
+/// * `indptr` - The index pointers
+/// * `cs_type` - Is the data stored in `Csr` or `Csc`.
+/// * `data_2` - An optional second data layer
+/// * `shape` - The shape of the underlying matrix
 #[derive(Debug, Clone)]
 pub struct CompressedSparseData<T, U = T>
 where

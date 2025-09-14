@@ -222,6 +222,7 @@ impl CsrCellChunk {
 
         let mut res: Vec<CsrCellChunk> = Vec::with_capacity(to_keep.len());
 
+        #[allow(clippy::needless_range_loop)]
         for i in 0..n_cells {
             let start_i = sparse_data.indptr[i];
             let end_i = sparse_data.indptr[i + 1];

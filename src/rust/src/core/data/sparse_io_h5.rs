@@ -30,13 +30,16 @@ pub fn write_h5_counts(
     h5_path: &str,
     bin_path: &str,
     cs_type: &str,
-    nrow: usize,
-    ncol: usize,
+    no_cells: usize,
+    no_genes: usize,
     min_genes: usize,
     size_factor: f32,
 ) -> Vec<bool> {
     let file_data: CompressedSparseData<u16> =
-        read_h5ad_x_data(h5_path, cs_type, (nrow, ncol)).unwrap();
+        read_h5ad_x_data(h5_path, cs_type, (no_genes, no_cells)).unwrap();
+
+    println!("Data length: {:?}", file_data.data.len());
+    println!("Indptr length: {:?}", file_data.indptr.len());
 
     let file_data = if file_data.cs_type.is_csc() {
         file_data.transform()
@@ -44,7 +47,10 @@ pub fn write_h5_counts(
         file_data
     };
 
-    let mut writer = CellGeneSparseWriter::new(bin_path, true, ncol, nrow).unwrap();
+    println!("Data length: {:?}", file_data.data.len());
+    println!("Indptr length: {:?}", file_data.indptr.len());
+
+    let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
     let (cell_chunk_vec, to_keep) =
         CsrCellChunk::generate_chunks_sparse_data(file_data, min_genes, size_factor);
@@ -52,6 +58,8 @@ pub fn write_h5_counts(
     for cell_chunk in cell_chunk_vec {
         writer.write_cell_chunk(cell_chunk).unwrap();
     }
+
+    writer.finalise().unwrap();
 
     to_keep
 }
