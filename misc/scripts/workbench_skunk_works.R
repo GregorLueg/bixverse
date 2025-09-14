@@ -64,6 +64,12 @@ return_data <- single_cell_counts$get_cells_by_indices(
 )
 tictoc::toc()
 
+single_cell_counts$return_full_mat(
+  assay = "raw",
+  cell_based = FALSE,
+  verbose = TRUE
+)
+
 file.size(f_path_cells) / 1024^2
 file.size(f_path_genes) / 1024^2
 
@@ -85,7 +91,6 @@ return_gene_data$row_ptr
 
 library(duckdb)
 
-
 devtools::load_all()
 devtools::document()
 
@@ -93,17 +98,24 @@ rextendr::document()
 
 h5_path <- "~/Downloads/ERX11148735.h5ad"
 
-devtools::document()
-
 bixverse_sc <- single_cell_exp(dir_data = tempdir())
 
 bixverse_sc <- load_h5ad(bixverse_sc, h5_path = h5_path)
 
 obs <- get_sc_obs(
   bixverse_sc,
-  indices = as.integer(1:10),
-  cols = c("cell_mask", "lib_size")
 )
 
+head(obs)
 
-var <- get_sc_var(bixverse_sc, indices = as.integer(1:10))
+bixverse_sc[[1:25]]
+
+bixverse_sc[[c("cell_id", "lib_size", "nnz")]]
+
+counts <- get_sc_counts(bixverse_sc, return_format = "gene")
+
+class(counts)
+
+counts <- bixverse_sc[,, assay = "norm", return_format = "gene"]
+
+class(counts)

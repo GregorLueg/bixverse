@@ -14,6 +14,8 @@ etc.
 \item \href{#method-single_cell_duckdb_base-new}{\code{single_cell_duckdb_base$new()}}
 \item \href{#method-single_cell_duckdb_base-get_obs_table}{\code{single_cell_duckdb_base$get_obs_table()}}
 \item \href{#method-single_cell_duckdb_base-get_vars_table}{\code{single_cell_duckdb_base$get_vars_table()}}
+\item \href{#method-single_cell_duckdb_base-get_obs_index_map}{\code{single_cell_duckdb_base$get_obs_index_map()}}
+\item \href{#method-single_cell_duckdb_base-get_var_index_map}{\code{single_cell_duckdb_base$get_var_index_map()}}
 \item \href{#method-single_cell_duckdb_base-add_data_obs}{\code{single_cell_duckdb_base$add_data_obs()}}
 \item \href{#method-single_cell_duckdb_base-add_data_var}{\code{single_cell_duckdb_base$add_data_var()}}
 \item \href{#method-single_cell_duckdb_base-clone}{\code{single_cell_duckdb_base$clone()}}
@@ -85,6 +87,32 @@ Returns the full var table from the DuckDB.
 \subsection{Returns}{
 The var table (if found) as a data.table with optionally
 selected indices and/or columns.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-get_obs_index_map"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-get_obs_index_map}{}}}
+\subsection{Method \code{get_obs_index_map()}}{
+Returns a mapping between cell index and cell names/barcodes.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_obs_index_map()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named numeric containing the cell index mapping.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-get_var_index_map"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-get_var_index_map}{}}}
+\subsection{Method \code{get_var_index_map()}}{
+Returns a mapping between variable index and variable names.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_var_index_map()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named numeric containing the gene index mapping.
 }
 }
 \if{html}{\out{<hr>}}

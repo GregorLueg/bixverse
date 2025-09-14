@@ -250,7 +250,8 @@ get_sc_counts <- S7::new_generic(
     assay = c("raw", "norm"),
     return_format = c("cell", "gene"),
     cell_indices = NULL,
-    gene_indices = NULL
+    gene_indices = NULL,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -264,7 +265,8 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
-  gene_indices = NULL
+  gene_indices = NULL,
+  .verbose = TRUE
 ) {
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
@@ -272,13 +274,243 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertChoice(assay, c("raw", "norm"))
-  checkmate::assertChoice(return_format, c("raw", "norm"))
+  checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
+  checkmate::qassert(.verbose, "B1")
+
+  requireNamespace("Matrx", quietly = TRUE)
 
   rust_con <- get_sc_rust_ptr(object)
 
-  return(obs_table)
+  # Get raw data from Rust
+  count_data <- get_counts_from_rust(
+    rust_con = rust_con,
+    assay = assay,
+    return_format = return_format,
+    cell_indices = cell_indices,
+    gene_indices = gene_indices,
+    .verbose = .verbose
+  )
+
+  # Create sparse matrix
+  count_data <- create_sparse_matrix(
+    count_data = count_data,
+    return_format = return_format
+  )
+
+  # Set names and subset if needed
+  count_data <- finalise_matrix(
+    matrix = count_data,
+    object = object,
+    return_format = return_format,
+    cell_indices = cell_indices,
+    gene_indices = gene_indices
+  )
+
+  return(count_data)
+}
+
+#' @method `[` single_cell_exp
+#'
+#' @export
+S7::method(`[`, single_cell_exp) <- function(
+  x,
+  i,
+  j,
+  ...,
+  assay = c("raw", "norm"),
+  return_format = c("cell", "gene"),
+  drop = TRUE
+) {
+  if (missing(i)) {
+    i <- NULL
+  }
+  if (missing(j)) {
+    j <- NULL
+  }
+
+  assay <- match.arg(assay)
+  return_format <- match.arg(return_format)
+
+  # asserts
+  checkmate::qassert(i, c("I+", "0"))
+  checkmate::qassert(j, c("I+", "0"))
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::assertChoice(return_format, c("cell", "gene"))
+
+  get_sc_counts(
+    object = x,
+    assay = assay,
+    return_format = return_format,
+    cell_indices = i,
+    gene_indices = j,
+    .verbose = FALSE
+  )
+}
+
+##### helpers ------------------------------------------------------------------
+
+#' Helper function to get counts from Rust
+#'
+#' @param rust_con `SingeCellCountData` class. The connector to Rust.
+#' @param assay String. One of `c("raw", "norm")`.
+#' @param return_format String. One of `c("cell", "gene")`.
+#' @param cell_indices Optional integer vector. The index positions of cells to
+#' return.
+#' @param gene_indices Optional integer vector. The index positions of genes to
+#' return.
+#' @param .verbose Boolean. Controls verbosity
+#'
+#' @return Returns a list with:
+#' \itemize{
+#'  \item indptr - The index pointers of the compressed sparse format.
+#'  \item indices - The indices of the data.
+#'  \item data - The underlying data.
+#'  \item no_cells - Number of cells.
+#'  \item no_genes - Number of genes.
+#' }
+get_counts_from_rust <- function(
+  rust_con,
+  assay,
+  return_format,
+  cell_indices,
+  gene_indices,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(rust_con, "SingeCellCountData")
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::assertChoice(return_format, c("cell", "gene"))
+  checkmate::qassert(cell_indices, c("0", "I+"))
+  checkmate::qassert(gene_indices, c("0", "I+"))
+  checkmate::qassert(.verbose, "B1")
+
+  res <- if (return_format == "cell") {
+    if (is.null(cell_indices)) {
+      rust_con$return_full_mat(
+        assay = assay,
+        cell_based = TRUE,
+        verbose = .verbose
+      )
+    } else {
+      rust_con$get_cells_by_indices(indices = cell_indices, assay = assay)
+    }
+  } else {
+    # gene
+    if (is.null(gene_indices)) {
+      rust_con$return_full_mat(
+        assay = assay,
+        cell_based = FALSE,
+        verbose = .verbose
+      )
+    } else {
+      rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
+    }
+  }
+
+  return(res)
+}
+
+#' Helper function transform Rust counts into sparse matrices
+#'
+#' @param count_data A list. Output of [bixverse::get_counts_from_rust()].
+#' @param return_format String. One of `c("cell", "gene")`.
+#'
+#' @return The sparse matrix in CSR or CSC format, pending the choice in
+#' `return_format`
+create_sparse_matrix <- function(count_data, return_format) {
+  # checks
+  checkmate::assertList(count_data)
+  checkmate::assertNames(
+    names(count_data),
+    must.include = c("indices", "indptr", "data", "no_cells", "no_genes")
+  )
+  checkmate::assertChoice(return_format, c("cell", "gene"))
+
+  matrix_class <- if (return_format == "cell") "dgRMatrix" else "dgCMatrix"
+  index_slot <- if (return_format == "cell") "j" else "i"
+
+  sparse_mat <- with(count_data, {
+    args <- list(
+      p = as.integer(indptr),
+      x = as.numeric(data),
+      Dim = as.integer(c(no_cells, no_genes))
+    )
+    args[[index_slot]] <- as.integer(indices)
+
+    do.call(new, c(matrix_class, args))
+  })
+
+  return(sparse_mat)
+}
+
+#' Finalise the count matrix
+#'
+#' @param matrix The sparse matrix to finalise
+#' @param object `bixverse::single_cell_exp` class.
+#' @param return_format String. One of `c("cell", "gene")`.
+#' @param cell_indices Optional integer vector. The index positions of cells to
+#' return.
+#' @param gene_indices Optional integer vector. The index positions of genes to
+#' return.
+#'
+#' @return The finalised matrix.
+finalise_matrix <- function(
+  matrix,
+  object,
+  return_format,
+  cell_indices,
+  gene_indices
+) {
+  checkmate::assert(
+    checkmate::checkClass(matrix, "dgRMatrix"),
+    checkmate::checkClass(matrix, "dgCMatrix")
+  )
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertChoice(return_format, c("cell", "gene"))
+  checkmate::qassert(cell_indices, c("0", "I+"))
+  checkmate::qassert(gene_indices, c("0", "I+"))
+
+  index_maps <- S7::prop(object, "index_maps")
+
+  if (return_format == "cell") {
+    ## Cells
+    # Set row names (cells)
+    cell_names <- names(index_maps$cell_map)
+    rownames(matrix) <- if (is.null(cell_indices)) {
+      cell_names
+    } else {
+      cell_names[cell_indices]
+    }
+
+    # Set column names (genes) and subset if needed
+    if (is.null(gene_indices)) {
+      colnames(matrix) <- names(index_maps$gene_map)
+    } else {
+      matrix <- matrix[, gene_indices]
+      colnames(matrix) <- names(index_maps$gene_map)[gene_indices]
+    }
+  } else {
+    ## Genes
+    # Set column names (genes)
+    gene_names <- names(index_maps$gene_map)
+    colnames(matrix) <- if (is.null(gene_indices)) {
+      gene_names
+    } else {
+      gene_names[gene_indices]
+    }
+
+    # Set row names (cells) and subset if needed
+    if (is.null(cell_indices)) {
+      rownames(matrix) <- names(index_maps$cell_map)
+    } else {
+      matrix <- matrix[cell_indices, ]
+      rownames(matrix) <- names(index_maps$cell_map)[cell_indices]
+    }
+  }
+
+  matrix
 }
 
 # r6 ---------------------------------------------------------------------------
@@ -417,6 +649,58 @@ single_cell_duckdb_base <- R6::R6Class(
       ))
 
       return(var_dt)
+    },
+
+    #' @description
+    #' Returns a mapping between cell index and cell names/barcodes.
+    #'
+    #' @return A named numeric containing the cell index mapping.
+    get_obs_index_map = function() {
+      # checks
+      private$check_obs_exists()
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      data <- data.table::setDT(DBI::dbGetQuery(
+        conn = con,
+        statement = 'SELECT cell_idx, cell_id FROM obs'
+      )) %>%
+        `colnames<-`(c("index", "id"))
+
+      return(setNames(data$index, data$id))
+    },
+
+    #' @description
+    #' Returns a mapping between variable index and variable names.
+    #'
+    #' @return A named numeric containing the gene index mapping.
+    get_var_index_map = function() {
+      # checks
+      private$check_var_exists()
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      data <- data.table::setDT(DBI::dbGetQuery(
+        conn = con,
+        statement = 'SELECT gene_idx, gene_id FROM var'
+      )) %>%
+        `colnames<-`(c("index", "id"))
+
+      return(setNames(data$index, data$id))
     },
 
     ###########
@@ -638,6 +922,7 @@ single_cell_duckdb_con <- R6::R6Class(
           .[, c("cell_idx", col_name), with = FALSE]
 
         if (i == 1) {
+          colnames(col_data) <- c("cell_idx", "cell_id")
           if (.verbose) {
             message(
               sprintf(
@@ -734,6 +1019,7 @@ single_cell_duckdb_con <- R6::R6Class(
           .[, c("gene_idx", col_name), with = FALSE]
 
         if (i == 1) {
+          colnames(col_data) <- c("gene_idx", "gene_id")
           if (.verbose) {
             message(
               sprintf(

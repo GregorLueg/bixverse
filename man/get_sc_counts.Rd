@@ -9,7 +9,8 @@ get_sc_counts(
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
   cell_indices = NULL,
-  gene_indices = NULL
+  gene_indices = NULL,
+  .verbose = TRUE
 )
 }
 \arguments{

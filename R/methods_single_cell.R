@@ -67,6 +67,9 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   duckdb_con$populate_obs_from_h5(h5_path = h5_path, .verbose = .verbose)
   duckdb_con$populate_vars_from_h5(h5_path = h5_path, .verbose = .verbose)
 
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
   # get meta information from the h5 object
   h5_meta <- get_h5ad_dimensions(h5_path)
 
@@ -88,6 +91,8 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   duckdb_con$add_data_obs(new_data = cell_qc)$add_data_var(new_data = gene_qc)
 
   S7::prop(object, "dims") = c(h5_meta$dims["obs"], h5_meta$dims["var"])
+  S7::prop(object, "index_maps")[["cell_map"]] <- cell_map
+  S7::prop(object, "index_maps")[["gene_map"]] <- gene_map
 
   return(object)
 }

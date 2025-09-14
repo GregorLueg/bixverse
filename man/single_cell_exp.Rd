@@ -33,6 +33,8 @@ disk.}
 \item{cache}{List with cached data. Future feature, nothing implemented
 yet.}
 \item{dims}{Dimensions of the original data.}
+\item{index_maps}{A list of two named numerics that contains cell id to
+cell idx and gene id to gene idx info.}
 }
 }
 

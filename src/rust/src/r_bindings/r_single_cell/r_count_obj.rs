@@ -251,71 +251,104 @@ impl SingeCellCountData {
         )
     }
 
-    /// Returns the full (row/cell) data as a List
+    /// Returns the full matrix
     ///
     /// ### Params
     ///
     /// * `assay` - String. Return the raw counts or log-normalised counts. One
-    /// of `"raw"` or `"norm"`.
+    ///   of `"raw"` or `"norm"`.
+    /// * `cell_based` - Boolean. Shall the data be returned in CSR or CSC.
+    /// * `verbose` - Boolean. Verbosity of the function.
     ///
     /// ### Returns
     ///
     /// An R list with all of the info that was stored in the .bin file
-    pub fn file_to_r_csr_mat(&self, assay: &str) -> List {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
-
+    pub fn return_full_mat(&self, assay: &str, cell_based: bool, verbose: bool) -> List {
+        let mut data: Vec<AssayData> = Vec::new();
+        let mut indices: Vec<Vec<i32>> = Vec::new();
+        let mut indptr: Vec<usize> = Vec::new();
         let assay_type = parse_count_type(assay).unwrap();
 
-        let no_cells = reader.get_header().total_cells;
-        let no_genes = reader.get_header().total_genes;
+        if cell_based {
+            let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+            let cell_chunks = reader.get_all_cells();
 
-        let mut data: Vec<AssayData> = Vec::new();
-        let mut col_idx: Vec<Vec<u16>> = Vec::new();
-        let mut row_ptr: Vec<usize> = Vec::new();
+            if verbose {
+                println!("All cells loaded in successfully.")
+            }
 
-        let all_cells: Vec<_> = reader.get_all_cells();
+            let mut current_ptr = 0_usize;
+            indptr.push(current_ptr);
 
-        println!("Cells loaded succesfully!");
+            for cell in cell_chunks {
+                let data_i = match assay_type {
+                    AssayType::Raw => {
+                        AssayData::Raw(cell.data_raw.iter().map(|&x| x as i32).collect())
+                    }
+                    AssayType::Norm => AssayData::Norm(
+                        cell.data_norm
+                            .iter()
+                            .map(|x| {
+                                let f16_val: half::f16 = (*x).into();
+                                f16_val.to_f32()
+                            })
+                            .collect(),
+                    ),
+                };
+                let len_data_i = data_i.len();
+                current_ptr += len_data_i;
+                // Add data
+                data.push(data_i);
+                indices.push(cell.col_indices.iter().map(|x| *x as i32).collect());
+                indptr.push(current_ptr);
+            }
+        } else {
+            let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
+            let gene_chunks = reader.get_all_genes();
 
-        let mut current_row_ptr = 0_usize;
-        row_ptr.push(current_row_ptr);
+            if verbose {
+                println!("All cells loaded in successfully.")
+            }
 
-        for cell in all_cells {
-            let data_i = match assay_type {
-                AssayType::Raw => AssayData::Raw(cell.data_raw.iter().map(|&x| x as i32).collect()),
-                AssayType::Norm => AssayData::Norm(
-                    cell.data_norm
-                        .iter()
-                        .map(|x| {
-                            let f16_val: half::f16 = (*x).into();
-                            f16_val.to_f32()
-                        })
-                        .collect(),
-                ),
-            };
-            let len_data_i = data_i.len();
-            current_row_ptr += len_data_i;
-            // Add data
-            data.push(data_i);
-            col_idx.push(cell.col_indices);
-            row_ptr.push(current_row_ptr);
-        }
+            let mut current_ptr = 0_usize;
+            indptr.push(current_ptr);
+
+            for gene in gene_chunks {
+                let data_i = match assay_type {
+                    AssayType::Raw => {
+                        AssayData::Raw(gene.data_raw.iter().map(|&x| x as i32).collect())
+                    }
+                    AssayType::Norm => AssayData::Norm(
+                        gene.data_norm
+                            .iter()
+                            .map(|x| {
+                                let f16_val: half::f16 = (*x).into();
+                                f16_val.to_f32()
+                            })
+                            .collect(),
+                    ),
+                };
+                let len_data_i = data_i.len();
+                current_ptr += len_data_i;
+                data.push(data_i);
+                indices.push(gene.row_indices.iter().map(|x| *x as i32).collect());
+                indptr.push(current_ptr);
+            }
+        };
 
         let data: Robj = AssayData::flatten_into_r_vector(data);
-        let col_idx = flatten_vector(col_idx)
-            .par_iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>();
+        let indices = flatten_vector(indices);
 
         list!(
-            row_ptr = row_ptr,
-            col_idx = col_idx,
+            indptr = indptr,
+            indices = indices,
             data = data,
-            no_cells = no_cells,
-            no_genes = no_genes
+            no_cells = self.n_cells,
+            no_genes = self.n_genes
         )
     }
 
+    /// To write
     pub fn get_cells_by_indices(&self, indices: &[i32], assay: &str) -> List {
         let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
         let assay_type = parse_count_type(assay).unwrap();
@@ -366,8 +399,8 @@ impl SingeCellCountData {
             .collect::<Vec<i32>>();
 
         list!(
-            row_ptr = row_ptr,
-            col_idx = col_idx,
+            indptr = row_ptr,
+            indices = col_idx,
             data = data,
             no_cells = cells.len(),
             no_genes = self.n_genes
@@ -514,8 +547,8 @@ impl SingeCellCountData {
             .collect::<Vec<i32>>();
 
         list!(
-            row_ptr = row_ptr,
-            col_idx = col_idx,
+            indptr = row_ptr,
+            indices = col_idx,
             data = data,
             no_cells = no_cells,
             no_genes = indices.len()

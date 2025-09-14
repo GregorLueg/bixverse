@@ -19,11 +19,13 @@ observation/cell metadata and the feature/gene metadata.
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="add_data_obs"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-add_data_obs'><code>bixverse::single_cell_duckdb_base$add_data_obs()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="add_data_var"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-add_data_var'><code>bixverse::single_cell_duckdb_base$add_data_var()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_obs_index_map"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_obs_index_map'><code>bixverse::single_cell_duckdb_base$get_obs_index_map()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_obs_table"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_obs_table'><code>bixverse::single_cell_duckdb_base$get_obs_table()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_var_index_map"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_var_index_map'><code>bixverse::single_cell_duckdb_base$get_var_index_map()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_vars_table"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_vars_table'><code>bixverse::single_cell_duckdb_base$get_vars_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="initialize"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-initialize'><code>bixverse::single_cell_duckdb_base$initialize()</code></a></span></li>
 </ul>
