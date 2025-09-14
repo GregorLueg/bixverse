@@ -54,8 +54,18 @@ where
 /// ### Returns
 ///
 /// A vector of booleans if the column/row passes the threshold.
-pub fn filter_by_nnz(indptr: &[usize], min_nnz: usize) -> Vec<bool> {
-    indptr.windows(2).map(|w| w[1] - w[0] >= min_nnz).collect()
+pub fn filter_by_nnz(indptr: &[usize], min_nnz: usize) -> (Vec<usize>, Vec<bool>) {
+    let n = indptr.len() - 1;
+    let mut nnz = Vec::with_capacity(n);
+    let mut filter = Vec::with_capacity(n);
+
+    for i in 0..n {
+        let no_nnz = indptr[i + 1] - indptr[i];
+        nnz.push(no_nnz);
+        filter.push(no_nnz >= min_nnz);
+    }
+
+    (nnz, filter)
 }
 
 ////////////////
@@ -352,6 +362,55 @@ where
         match self.cs_type {
             CompressedSparseFormat::Csc => csc_to_csr(self),
             CompressedSparseFormat::Csr => csr_to_csc(self),
+        }
+    }
+
+    /// Transpose and convert
+    ///
+    /// This is a helper to deal with the h5ad madness. Takes in for example
+    /// a genes x cell CSR matrix from h5ad and transforms it into a cell x
+    /// genes CSR matrix which bixverse expects. Same for CSC.
+    ///
+    /// ### Returns
+    ///
+    /// The transformed/transposed version
+    pub fn transpose_and_convert(&self) -> Self {
+        match self.cs_type {
+            CompressedSparseFormat::Csr => {
+                // convert first and then switch around
+                let csc_version = csr_to_csc(self);
+                CompressedSparseData {
+                    data: csc_version.data,
+                    indices: csc_version.indices,
+                    indptr: csc_version.indptr,
+                    cs_type: CompressedSparseFormat::Csr, // relabel as CSR
+                    data_2: csc_version.data_2,
+                    shape: (self.shape.1, self.shape.0), // swap dimensions
+                }
+            }
+            CompressedSparseFormat::Csc => {
+                // no conversion needed here! simple transpose is enough...
+                CompressedSparseData {
+                    data: self.data.clone(),
+                    indices: self.indices.clone(),
+                    indptr: self.indptr.clone(),
+                    cs_type: CompressedSparseFormat::Csr,
+                    data_2: self.data_2.clone(),
+                    shape: (self.shape.1, self.shape.0),
+                }
+            }
+        }
+    }
+
+    /// Transpose the matrix
+    pub fn transpose_from_h5ad(&self) -> Self {
+        CompressedSparseData {
+            data: self.data.clone(),
+            indices: self.indices.clone(),
+            indptr: self.indptr.clone(),
+            cs_type: self.cs_type.clone(),
+            data_2: self.data_2.clone(),
+            shape: (self.shape.1, self.shape.0),
         }
     }
 

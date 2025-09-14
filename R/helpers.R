@@ -312,7 +312,7 @@ get_h5ad_dimensions <- function(h5_path) {
   cs_format <- ifelse(no_var == indptr, "CSC", "CSR")
 
   return(list(
-    dims = setNames(c(no_obs, no_var), c("obs", "var")),
+    dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
     type = cs_format
   ))
 }

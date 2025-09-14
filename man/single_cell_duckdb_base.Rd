@@ -14,6 +14,8 @@ etc.
 \item \href{#method-single_cell_duckdb_base-new}{\code{single_cell_duckdb_base$new()}}
 \item \href{#method-single_cell_duckdb_base-get_obs_table}{\code{single_cell_duckdb_base$get_obs_table()}}
 \item \href{#method-single_cell_duckdb_base-get_vars_table}{\code{single_cell_duckdb_base$get_vars_table()}}
+\item \href{#method-single_cell_duckdb_base-add_data_obs}{\code{single_cell_duckdb_base$add_data_obs()}}
+\item \href{#method-single_cell_duckdb_base-add_data_var}{\code{single_cell_duckdb_base$add_data_var()}}
 \item \href{#method-single_cell_duckdb_base-clone}{\code{single_cell_duckdb_base$clone()}}
 }
 }
@@ -45,18 +47,21 @@ Returns the initialised class
 \subsection{Method \code{get_obs_table()}}{
 Returns the full observation table from the DuckDB
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_obs_table(indices = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_obs_table(indices = NULL, cols = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{indices}}{Optional cell/obs positions. Not implemented yet.}
+\item{\code{indices}}{Optional cell/obs indices.}
+
+\item{\code{cols}}{Optional column names to return.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The observation table (if found) as a data.table
+The observation table (if found) as a data.table with optionally
+selected indices and/or columns.
 }
 }
 \if{html}{\out{<hr>}}
@@ -65,18 +70,65 @@ The observation table (if found) as a data.table
 \subsection{Method \code{get_vars_table()}}{
 Returns the full var table from the DuckDB.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_vars_table(indices = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_vars_table(indices = NULL, cols = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{indices}}{Optional gene/feature positions. Not implemented yet.}
+\item{\code{indices}}{Optional gene/var indices.}
+
+\item{\code{cols}}{Optional column names to return.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The observation table (if found) as a data.table
+The var table (if found) as a data.table with optionally
+selected indices and/or columns.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-add_data_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-add_data_obs}{}}}
+\subsection{Method \code{add_data_obs()}}{
+Add new data to the obs table in the DuckDB
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$add_data_obs(new_data)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_data}}{A data.table with additional new columns. The order needs
+to be the same as the original in the obs table.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self while adding the new columns to the obs table
+in the DuckDB.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-add_data_var"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-add_data_var}{}}}
+\subsection{Method \code{add_data_var()}}{
+Add the information which genes pass threshold to the DuckDB.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$add_data_var(new_data)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_data}}{A data.table with additional new columns. The order needs
+to be the same as the original in the var table.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self while adding the new columns to the var table
+in the DuckDB.
 }
 }
 \if{html}{\out{<hr>}}

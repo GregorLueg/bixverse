@@ -4,6 +4,7 @@ use rayon::prelude::*;
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
 use crate::core::data::sparse_structures::*;
+use crate::single_cell::processing::CellQuality;
 use crate::utils::general::flatten_vector;
 use crate::utils::traits::F16;
 
@@ -186,12 +187,12 @@ impl SingeCellCountData {
         col_idx: &[i32],
         target_size: f64,
         min_genes: usize,
-    ) -> Vec<bool> {
+    ) -> List {
         self.n_cells = no_cells;
         self.n_genes = no_genes;
         let row_ptr_usize = row_ptr.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
-        let cell_mask = filter_by_nnz(&row_ptr_usize, min_genes);
+        let (nnz, cell_mask) = filter_by_nnz(&row_ptr_usize, min_genes);
 
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
@@ -216,9 +217,10 @@ impl SingeCellCountData {
 
         writer.finalise().unwrap();
 
-        cell_mask
+        list!(nnz = nnz, cell_mask = cell_mask)
     }
 
+    /// Save h5 to file
     pub fn h5_to_file(
         &mut self,
         cs_type: String,
@@ -227,12 +229,12 @@ impl SingeCellCountData {
         no_genes: usize,
         target_size: f64,
         min_genes: usize,
-    ) -> Vec<bool> {
+    ) -> List {
         // assign the values internally
         self.n_cells = no_cells;
         self.n_genes = no_genes;
 
-        write_h5_counts(
+        let cell_qc: CellQuality = write_h5_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -240,6 +242,12 @@ impl SingeCellCountData {
             no_genes,
             min_genes,
             target_size as f32,
+        );
+
+        list!(
+            cell_mask = cell_qc.to_keep,
+            lib_size = cell_qc.lib_size.unwrap_or_default(),
+            nnz = cell_qc.no_genes.unwrap_or_default()
         )
     }
 
@@ -361,7 +369,8 @@ impl SingeCellCountData {
             row_ptr = row_ptr,
             col_idx = col_idx,
             data = data,
-            no_cells = cells.len()
+            no_cells = cells.len(),
+            no_genes = self.n_genes
         )
     }
 
@@ -381,7 +390,7 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     ///
-    pub fn generate_gene_based_data(&self, min_cells: usize) -> Vec<bool> {
+    pub fn generate_gene_based_data(&self, min_cells: usize) -> List {
         let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
 
         let no_cells = reader.get_header().total_cells;
@@ -426,7 +435,7 @@ impl SingeCellCountData {
 
         let sparse_data = sparse_data.transform();
 
-        let gene_mask = filter_by_nnz(&sparse_data.indptr, min_cells);
+        let (nnz, gene_mask) = filter_by_nnz(&sparse_data.indptr, min_cells);
 
         // Write the data in CSC format to disk
         let mut writer =
@@ -454,7 +463,7 @@ impl SingeCellCountData {
 
         writer.finalise().unwrap();
 
-        gene_mask
+        list!(nnz = nnz, gene_mask = gene_mask)
     }
 
     pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> List {

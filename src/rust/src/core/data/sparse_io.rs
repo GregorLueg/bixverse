@@ -6,9 +6,11 @@ use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
+use std::marker::Sync;
 use std::sync::Arc;
 
 use crate::core::data::sparse_structures::*;
+use crate::single_cell::processing::CellQuality;
 use crate::utils::traits::*;
 
 ///////////////////////////
@@ -28,7 +30,7 @@ use crate::utils::traits::*;
 ///
 /// * `data_raw` - Array of the raw counts of this cell.
 /// * `data_norm` - Array of the normalised counts of this cell. This will do a
-///   CPM type transformation and then calculate the ln_1p.
+///   CPM-type transformation and then calculate the ln_1p.
 /// * `library_size` - Total library size/UMI counts of the cell.
 /// * `col_indices` - The col indices of the genes.
 /// * `original_index` - Original (row) index of the cell.
@@ -70,7 +72,7 @@ impl CsrCellChunk {
         T: ToF32AndU16,
         U: ToF32AndU16,
     {
-        let data_f32 = data.iter().map(|&x| x.to_f32()).collect::<Vec<f32>>(); // Changed from f32::from(x)
+        let data_f32 = data.iter().map(|&x| x.to_f32()).collect::<Vec<f32>>();
         let sum = data_f32.iter().sum::<f32>();
         let data_norm: Vec<F16> = data_f32
             .into_iter()
@@ -80,10 +82,10 @@ impl CsrCellChunk {
             })
             .collect();
         Self {
-            data_raw: data.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(), // Changed from u16::from(x)
+            data_raw: data.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(),
             data_norm,
             library_size: sum as usize,
-            col_indices: col_idx.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(), // Changed from u16::from(x)
+            col_indices: col_idx.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(),
             original_index,
             to_keep,
         }
@@ -101,8 +103,10 @@ impl CsrCellChunk {
         writer.write_all(&(self.col_indices.len() as u32).to_le_bytes())?;
         writer.write_all(&(self.library_size as u64).to_le_bytes())?;
         writer.write_all(&(self.original_index as u64).to_le_bytes())?;
-        writer.write_all(&[self.to_keep as u8, 0, 0, 0])?; // Include padding
+        // include some padding
+        writer.write_all(&[self.to_keep as u8, 0, 0, 0])?;
 
+        // unsafe fun with direct write to disk
         let data_raw_bytes = unsafe {
             std::slice::from_raw_parts(self.data_raw.as_ptr() as *const u8, self.data_raw.len() * 2)
         };
@@ -212,33 +216,41 @@ impl CsrCellChunk {
         sparse_data: CompressedSparseData<T, U>,
         min_genes: usize,
         size_factor: f32,
-    ) -> (Vec<CsrCellChunk>, Vec<bool>)
+    ) -> (Vec<CsrCellChunk>, CellQuality)
     where
-        T: Clone + Default + Into<u32>,
+        T: Clone + Default + Into<u32> + Sync,
         U: Clone + Default,
     {
         let n_cells = sparse_data.indptr.len() - 1;
-        let to_keep = filter_by_nnz(&sparse_data.indptr, min_genes);
+        let (nnz, to_keep) = filter_by_nnz(&sparse_data.indptr, min_genes);
 
-        let mut res: Vec<CsrCellChunk> = Vec::with_capacity(to_keep.len());
+        let (res, lib_size): (Vec<CsrCellChunk>, Vec<usize>) = (0..n_cells)
+            .into_par_iter()
+            .map(|i| {
+                let start_i = sparse_data.indptr[i];
+                let end_i = sparse_data.indptr[i + 1];
+                let indices_i = &sparse_data.indices[start_i..end_i];
+                let to_keep_i = to_keep[i];
+                let data_i: &Vec<u32> = &sparse_data.data[start_i..end_i]
+                    .iter()
+                    .map(|i| i.clone().into())
+                    .collect();
+                let sum_data_i = data_i.iter().sum::<u32>() as usize;
 
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..n_cells {
-            let start_i = sparse_data.indptr[i];
-            let end_i = sparse_data.indptr[i + 1];
-            let indices_i = &sparse_data.indices[start_i..end_i];
-            let to_keep_i = to_keep[i];
-            let data_i: &Vec<u32> = &sparse_data.data[start_i..end_i]
-                .iter()
-                .map(|i| i.clone().into())
-                .collect();
+                let chunk_i = CsrCellChunk::from_data(data_i, indices_i, i, size_factor, to_keep_i);
 
-            let chunk_i = CsrCellChunk::from_data(data_i, indices_i, i, size_factor, to_keep_i);
+                (chunk_i, sum_data_i)
+            })
+            .unzip();
 
-            res.push(chunk_i)
-        }
+        let qc_data = CellQuality {
+            to_keep,
+            lib_size: Some(lib_size),
+            no_genes: Some(nnz),
+            mt_perc: None::<Vec<f32>>,
+        };
 
-        (res, to_keep)
+        (res, qc_data)
     }
 }
 
@@ -317,10 +329,12 @@ impl CscGeneChunk {
         writer.write_all(&(self.data_norm.len() as u32).to_le_bytes())?;
         writer.write_all(&(self.row_indices.len() as u32).to_le_bytes())?;
         writer.write_all(&self.avg_exp.to_le_bytes())?;
-        writer.write_all(&[0, 0])?; // padding
+        // first padding
+        writer.write_all(&[0, 0])?;
         writer.write_all(&(self.nnz as u64).to_le_bytes())?;
         writer.write_all(&(self.original_index as u64).to_le_bytes())?;
-        writer.write_all(&[self.to_keep as u8, 0, 0, 0])?; // Include padding
+        // bit padding
+        writer.write_all(&[self.to_keep as u8, 0, 0, 0])?;
 
         let data_raw_bytes = unsafe {
             std::slice::from_raw_parts(self.data_raw.as_ptr() as *const u8, self.data_raw.len() * 2)

@@ -80,50 +80,30 @@ tictoc::toc()
 
 return_gene_data$row_ptr
 
+
 # h5 files ---------------------------------------------------------------------
 
 library(duckdb)
 
-h5_path <- "~/Downloads/ERX11148735.h5ad"
 
-get_h5ad_dimensions(h5_path)
+devtools::load_all()
+devtools::document()
 
 rextendr::document()
 
-expanded_path <- path.expand("~/Downloads/ERX11148735.h5ad")
-dir <- tempdir()
-f_path_cells <- file.path(dir, "cells.bin")
-f_path_genes <- file.path(dir, "genes.bin")
+h5_path <- "~/Downloads/ERX11148735.h5ad"
 
-single_cell_counts <- SingeCellCountData$new(
-  f_path_cells = f_path_cells,
-  f_path_genes = f_path_genes
+devtools::document()
+
+bixverse_sc <- single_cell_exp(dir_data = tempdir())
+
+bixverse_sc <- load_h5ad(bixverse_sc, h5_path = h5_path)
+
+obs <- get_sc_obs(
+  bixverse_sc,
+  indices = as.integer(1:10),
+  cols = c("cell_mask", "lib_size")
 )
 
-single_cell_counts$get_shape()
 
-h5_info <- get_h5ad_dimensions(expanded_path)
-
-res <- single_cell_counts$h5_to_file(
-  cs_type = "CSC",
-  h5_path = expanded_path,
-  no_cells = h5_info$dims["obs"],
-  no_genes = h5_info$dims["var"],
-  target_size = 1e5,
-  min_genes = 200
-)
-
-single_cell_counts$get_shape()
-
-return_data <- single_cell_counts$get_cells_by_indices(
-  indices = 1:747,
-  assay = "raw"
-)
-
-length(return_data$row_ptr)
-
-single_cell_counts$file_to_r_csr_mat(assay = "raw")
-
-single_cell_counts$generate_gene_based_data(min_cells = 10L)
-
-sum(res)
+var <- get_sc_var(bixverse_sc, indices = as.integer(1:10))

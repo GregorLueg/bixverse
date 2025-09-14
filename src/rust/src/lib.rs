@@ -1,5 +1,6 @@
 mod core;
 mod r_bindings;
+mod single_cell;
 mod utils;
 
 use extendr_api::prelude::*;

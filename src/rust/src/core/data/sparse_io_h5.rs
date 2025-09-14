@@ -2,6 +2,7 @@ use hdf5::{File, Result};
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
+use crate::single_cell::processing::CellQuality;
 
 /// Helper function to parse compressed sparse format
 ///
@@ -26,6 +27,22 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
 // Writers //
 /////////////
 
+/// Writes h5ad data to disk in the binarised format
+///
+/// ### Params
+///
+/// * `h5_path` - Path to the h5 object.
+/// * `bin_path` - Path to the binarised object on disk to write to
+/// * `cs_type` - Was the h5ad data stored in "csc" or "csr". Important! h5ad
+///   stores data in genes x cells; bixverse stores in cells x genes!
+/// * `no_cells` - Total number of obversations in the data.
+/// * `no_genes` - Total number of vars in the data.
+/// * `min_genes` - Minimum number of genes to be detected in the cell.
+/// * `size_factor` - To which library size to normalise the data
+///
+/// ### Returns
+///
+/// A boolean vector indicating which cells have sufficient genes.
 pub fn write_h5_counts(
     h5_path: &str,
     bin_path: &str,
@@ -34,25 +51,15 @@ pub fn write_h5_counts(
     no_genes: usize,
     min_genes: usize,
     size_factor: f32,
-) -> Vec<bool> {
+) -> CellQuality {
     let file_data: CompressedSparseData<u16> =
         read_h5ad_x_data(h5_path, cs_type, (no_genes, no_cells)).unwrap();
 
-    println!("Data length: {:?}", file_data.data.len());
-    println!("Indptr length: {:?}", file_data.indptr.len());
-
-    let file_data = if file_data.cs_type.is_csc() {
-        file_data.transform()
-    } else {
-        file_data
-    };
-
-    println!("Data length: {:?}", file_data.data.len());
-    println!("Indptr length: {:?}", file_data.indptr.len());
+    let file_data = file_data.transpose_and_convert();
 
     let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
-    let (cell_chunk_vec, to_keep) =
+    let (cell_chunk_vec, cell_qc) =
         CsrCellChunk::generate_chunks_sparse_data(file_data, min_genes, size_factor);
 
     for cell_chunk in cell_chunk_vec {
@@ -61,7 +68,7 @@ pub fn write_h5_counts(
 
     writer.finalise().unwrap();
 
-    to_keep
+    cell_qc
 }
 
 /////////////
