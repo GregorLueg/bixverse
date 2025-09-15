@@ -134,3 +134,12 @@ impl ToF32AndU16 for usize {
         self as u16
     }
 }
+
+impl ToF32AndU16 for u16 {
+    fn to_f32(self) -> f32 {
+        self as f32
+    }
+    fn to_u16(self) -> u16 {
+        self
+    }
+}

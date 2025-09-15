@@ -604,6 +604,61 @@ checkDGRDLparams <- function(x) {
   return(TRUE)
 }
 
+## single cell -----------------------------------------------------------------
+
+### qc -------------------------------------------------------------------------
+
+#' Check SC minimum QC parameters
+#'
+#' @description Checkmate extension for checking the minimum QC parameters
+#' in single cell.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScMinQC <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "min_unique_genes",
+      "min_lib_size",
+      "min_cells",
+      "target_size"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "min_unique_genes" = "I1",
+    "min_lib_size" = "I1",
+    "min_cells" = "I1",
+    "target_size" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in min single cell QC params does not 
+          conform to the expected format. min_unique_genes, min_lib_size, ",
+          "min_cells need to be integers and target_size needs to be float."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## correlation params ----------------------------------------------------------
@@ -786,3 +841,22 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
+
+## single cell -----------------------------------------------------------------
+
+### qc -------------------------------------------------------------------------
+
+#' Assert SC minimum QC parameters
+#'
+#' @description Checkmate extension for asserting the minimum QC parameters
+#' in single cell.
+#'
+#' @inheritParams checkScMinQC
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)

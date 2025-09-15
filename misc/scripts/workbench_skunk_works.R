@@ -119,3 +119,47 @@ class(counts)
 counts <- bixverse_sc[,, assay = "norm", return_format = "gene"]
 
 class(counts)
+
+# mtx file ---------------------------------------------------------------------
+
+dir <- tempdir()
+f_path_cells <- file.path(dir, "cells.bin")
+f_path_genes <- file.path(dir, "genes.bin")
+
+single_cell_counts <- SingeCellCountData$new(
+  f_path_cells = f_path_cells,
+  f_path_genes = f_path_genes
+)
+
+rextendr::document()
+
+mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
+
+tictoc::tic()
+res <- single_cell_counts$mtx_to_file(
+  mtx_path = mtx_path,
+  target_size = 1e5,
+  min_genes = 200L,
+  min_lib_size = 500L
+)
+tictoc::toc()
+
+table(res)
+
+library(Seurat)
+
+install.packages("Seurat")
+
+tictoc::tic()
+expression_matrix <- Seurat::ReadMtx(
+  mtx = "~/Downloads/ex053/DGE.mtx",
+  features = "~/Downloads/ex053/all_genes.csv",
+  cells = "~/Downloads/ex053/cell_metadata.csv",
+  feature.column = 1,
+  mtx.transpose = TRUE,
+  skip.cell = 1,
+  skip.feature = 1
+)
+tictoc::toc()
+
+rm(expression_matrix)

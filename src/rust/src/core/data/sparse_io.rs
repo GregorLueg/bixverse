@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
 use std::marker::Sync;
+use std::path::Path;
 use std::sync::Arc;
 
 use crate::core::data::sparse_structures::*;
-use crate::single_cell::processing::CellQuality;
+use crate::single_cell::processing::*;
 use crate::utils::traits::*;
 
 ///////////////////////////
@@ -214,15 +215,14 @@ impl CsrCellChunk {
     /// A tuple of the `Vec<CsrCellChunk>` and if the cell should be kept.
     pub fn generate_chunks_sparse_data<T, U>(
         sparse_data: CompressedSparseData<T, U>,
-        min_genes: usize,
-        size_factor: f32,
+        cell_qc: MinCellQuality,
     ) -> (Vec<CsrCellChunk>, CellQuality)
     where
         T: Clone + Default + Into<u32> + Sync,
         U: Clone + Default,
     {
         let n_cells = sparse_data.indptr.len() - 1;
-        let (nnz, to_keep) = filter_by_nnz(&sparse_data.indptr, min_genes);
+        let (nnz, to_keep) = filter_by_nnz(&sparse_data.indptr, cell_qc.min_unique_genes);
 
         let (res, lib_size): (Vec<CsrCellChunk>, Vec<usize>) = (0..n_cells)
             .into_par_iter()
@@ -230,14 +230,15 @@ impl CsrCellChunk {
                 let start_i = sparse_data.indptr[i];
                 let end_i = sparse_data.indptr[i + 1];
                 let indices_i = &sparse_data.indices[start_i..end_i];
-                let to_keep_i = to_keep[i];
                 let data_i: &Vec<u32> = &sparse_data.data[start_i..end_i]
                     .iter()
                     .map(|i| i.clone().into())
                     .collect();
                 let sum_data_i = data_i.iter().sum::<u32>() as usize;
+                let to_keep_i = to_keep[i] & (sum_data_i >= cell_qc.min_lib_size);
 
-                let chunk_i = CsrCellChunk::from_data(data_i, indices_i, i, size_factor, to_keep_i);
+                let chunk_i =
+                    CsrCellChunk::from_data(data_i, indices_i, i, cell_qc.target_size, to_keep_i);
 
                 (chunk_i, sum_data_i)
             })
@@ -543,8 +544,8 @@ impl CellGeneSparseWriter {
     /// ### Returns
     ///
     /// The `CellGeneSparseWriter`.
-    pub fn new(
-        path_f: &str,
+    pub fn new<P: AsRef<Path>>(
+        path_f: P,
         cell_based: bool,
         total_cells: usize,
         total_genes: usize,
@@ -692,6 +693,30 @@ impl CellGeneSparseWriter {
         self.writer.flush()?;
 
         Ok(())
+    }
+
+    /// Update the number of cells in the header
+    ///
+    /// Helper function to update the number of cells to the number that was
+    /// finally written on disk.
+    ///
+    /// ### Params
+    ///
+    /// * `no_cells` - New number of cells
+    pub fn update_header_no_cells(&mut self, no_cells: usize) {
+        self.header.total_cells = no_cells;
+    }
+
+    /// Update the number of cells in the header
+    ///
+    /// Helper function to update the number of genes to the number that was
+    /// finally written on disk.
+    ///
+    /// ### Params
+    ///
+    /// * `no_genes` - New number of genes
+    pub fn update_header_no_genes(&mut self, no_genes: usize) {
+        self.header.total_genes = no_genes;
     }
 }
 

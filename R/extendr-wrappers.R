@@ -1649,6 +1649,8 @@ SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_p
 
 SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, target_size, min_genes) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, target_size, min_genes)
 
+SingeCellCountData$mtx_to_file <- function(mtx_path, target_size, min_genes, min_lib_size) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, target_size, min_genes, min_lib_size)
+
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)

@@ -431,3 +431,41 @@ params_dgrdl <- function(
     rho = rho
   )
 }
+
+## single cell -----------------------------------------------------------------
+
+### qc -------------------------------------------------------------------------
+
+#' Wrapper function to generate minimum quality metrics for single cell
+#'
+#' @param min_unique_genes Integer. Minimum number of unique genes per cell/spot
+#' to be included.
+#' @param min_lib_size Integer. Minimum library size per cell/spot to be
+#' included.
+#' @param min_cells Integer. Minimum number of cells a gene has to be
+#' expressed to be included.
+#' @param target_size Float. The target size for the normalisation. Defaults
+#' to `1e5`.
+#'
+#' @returns A list with the minimum parameters
+#'
+#' @export
+params_sc_min_quality <- function(
+  min_unique_genes = 100L,
+  min_lib_size = 250L,
+  min_cells = 10L,
+  target_size = 1e5
+) {
+  # checks
+  checkmate::qassert(min_unique_genes, "I1")
+  checkmate::qassert(min_lib_size, "I1")
+  checkmate::qassert(min_cells, "I1")
+  checkmate::qassert(target_size, "N1")
+
+  list(
+    min_unique_genes = min_unique_genes,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells,
+    target_size = target_size
+  )
+}

@@ -3,8 +3,9 @@ use rayon::prelude::*;
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
+use crate::core::data::sparse_io_mtx::*;
 use crate::core::data::sparse_structures::*;
-use crate::single_cell::processing::CellQuality;
+use crate::single_cell::processing::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::traits::F16;
 
@@ -126,6 +127,7 @@ struct SingeCellCountData {
     pub f_path_genes: String,
     pub n_cells: usize,
     pub n_genes: usize,
+    pub gene_mask: Vec<u16>,
 }
 
 #[extendr]
@@ -142,6 +144,7 @@ impl SingeCellCountData {
             f_path_genes,
             n_cells: usize::default(),
             n_genes: usize::default(),
+            gene_mask: Vec::new(),
         }
     }
 
@@ -221,18 +224,27 @@ impl SingeCellCountData {
     }
 
     /// Save h5 to file
+    ///
+    /// ### Params
+    ///
+    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
+    /// * `h5_path` - Path to the h5 file.
+    /// * `no_cells` - Number of cells in the h5 file.
+    /// * `no_genes` - Number of genes in the h5 file.
+    /// * `qc_params` - List with the quality control parameters.
     pub fn h5_to_file(
         &mut self,
         cs_type: String,
         h5_path: String,
         no_cells: usize,
         no_genes: usize,
-        target_size: f64,
-        min_genes: usize,
+        qc_params: List,
     ) -> List {
         // assign the values internally
         self.n_cells = no_cells;
         self.n_genes = no_genes;
+
+        let qc_params = MinCellQuality::from_r_list(qc_params);
 
         let cell_qc: CellQuality = write_h5_counts(
             &h5_path,
@@ -240,8 +252,7 @@ impl SingeCellCountData {
             &cs_type,
             no_cells,
             no_genes,
-            min_genes,
-            target_size as f32,
+            qc_params,
         );
 
         list!(
@@ -249,6 +260,22 @@ impl SingeCellCountData {
             lib_size = cell_qc.lib_size.unwrap_or_default(),
             nnz = cell_qc.no_genes.unwrap_or_default()
         )
+    }
+
+    pub fn mtx_to_file(&mut self, mtx_path: String, qc_params: List) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let mtx_reader = MtxReader::new(&mtx_path, qc_params)
+            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+
+        let mtx_res = mtx_reader
+            .process_mtx_and_write_bin(&self.f_path_cells)
+            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+
+        self.n_cells = mtx_res.no_cells;
+        self.n_genes = mtx_res.no_genes;
+
+        Ok(list!(cells_kept = mtx_res.to_keep))
     }
 
     /// Returns the full matrix
@@ -376,6 +403,13 @@ impl SingeCellCountData {
                             .collect(),
                     ),
                 };
+
+                // let (data_i, indices_i) = if !self.gene_mask.is_empty() {
+
+                // } else {
+
+                // }
+
                 (data_i, cell.col_indices.clone())
             })
             .collect();
@@ -423,8 +457,10 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     ///
-    pub fn generate_gene_based_data(&self, min_cells: usize) -> List {
+    pub fn generate_gene_based_data(&mut self, qc_params: List) -> List {
         let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+
+        let qc_params = MinCellQuality::from_r_list(qc_params);
 
         let no_cells = reader.get_header().total_cells;
         let no_genes = reader.get_header().total_genes;
@@ -468,7 +504,7 @@ impl SingeCellCountData {
 
         let sparse_data = sparse_data.transform();
 
-        let (nnz, gene_mask) = filter_by_nnz(&sparse_data.indptr, min_cells);
+        let (nnz, gene_mask) = filter_by_nnz(&sparse_data.indptr, qc_params.min_cells);
 
         // Write the data in CSC format to disk
         let mut writer =
@@ -476,25 +512,40 @@ impl SingeCellCountData {
 
         let data_2 = sparse_data.get_data2_unsafe();
 
+        let mut number_genes_written = 0_usize;
+
         #[allow(clippy::needless_range_loop)]
         for i in 0..no_genes {
-            // get the index position
-            let start_i = sparse_data.indptr[i];
-            let end_i = sparse_data.indptr[i + 1];
-            let to_keep_i = gene_mask[i];
-            // create the chunk and write to disk
-            let chunk_i = CscGeneChunk::from_conversion(
-                &sparse_data.data[start_i..end_i],
-                &data_2[start_i..end_i],
-                &sparse_data.indices[start_i..end_i],
-                i,
-                to_keep_i,
-            );
+            if gene_mask[i] {
+                // get the index position
+                let start_i = sparse_data.indptr[i];
+                let end_i = sparse_data.indptr[i + 1];
+                let to_keep_i = gene_mask[i];
+                // create the chunk and write to disk
+                let chunk_i = CscGeneChunk::from_conversion(
+                    &sparse_data.data[start_i..end_i],
+                    &data_2[start_i..end_i],
+                    &sparse_data.indices[start_i..end_i],
+                    i,
+                    to_keep_i,
+                );
 
-            writer.write_gene_chunk(chunk_i).unwrap();
+                writer.write_gene_chunk(chunk_i).unwrap();
+                number_genes_written += 1;
+            }
         }
 
+        writer.update_header_no_genes(number_genes_written);
         writer.finalise().unwrap();
+
+        let gene_indices: Vec<u16> = gene_mask
+            .iter()
+            .enumerate()
+            .filter_map(|(i, &val)| if val { Some(i as u16) } else { None })
+            .collect();
+
+        self.gene_mask = gene_indices;
+        self.n_genes = number_genes_written;
 
         list!(nnz = nnz, gene_mask = gene_mask)
     }
