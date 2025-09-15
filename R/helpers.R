@@ -1,49 +1,3 @@
-# parallelisation stuff --------------------------------------------------------
-
-#' Helper function for core detection.
-#'
-#' @description
-#' Identifies the number of cores/workers to use for parallel tasks. Will
-#' default to half of the available cores, to a maximum of `abs_max_workers`.
-#'
-#' @param abs_max_workers Integer. Absolute maximum number of cores to use.
-#' Defaults to `8L`.
-#'
-#' @returns Integer. Number of cores to use.
-get_cores <- function(abs_max_workers = 8L) {
-  checkmate::qassert(abs_max_workers, "I1")
-  cores <- as.integer(parallel::detectCores() / 2)
-  cores <- ifelse(cores >= abs_max_workers, abs_max_workers, cores)
-  return(cores)
-}
-
-# user options -----------------------------------------------------------------
-
-#' Helper function for user option selection
-#'
-#' @param options Character vector. The options the user has to choose from.
-#'
-#' @returns The chosen option
-select_user_option <- function(options) {
-  cat("Please select an option:\n")
-  for (i in seq_along(options)) {
-    cat(i, ": ", options[i], "\n")
-  }
-
-  while (TRUE) {
-    cat("\nEnter the number of your choice: ")
-    user_choice <- as.integer(readLines(n = 1))
-
-    if (
-      !is.na(user_choice) && user_choice > 0 && user_choice <= length(options)
-    ) {
-      return(options[user_choice])
-    } else {
-      cat("Invalid selection. Please try again.\n")
-    }
-  }
-}
-
 # gene set libraries -----------------------------------------------------------
 
 ## gene ontology ---------------------------------------------------------------
@@ -259,7 +213,9 @@ get_go_levels <- function(edge_dt) {
   return(level_dt)
 }
 
-# sparse matrices --------------------------------------------------------------
+# data -------------------------------------------------------------------------
+
+## sparse matrices -------------------------------------------------------------
 
 #' Transform an upper triangle-stored matrix to a sparse one
 #'
@@ -314,6 +270,51 @@ sparse_list_to_mat <- function(ls) {
   )
 
   return(sparse_mat)
+}
+
+## h5ad ------------------------------------------------------------------------
+
+#' Helper function to get the dimensions and compressed sparse format
+#'
+#' @param h5_path File path to the `.h5ad` file.
+#'
+#' @return A list with the following elements:
+#' \itemize{
+#'   \item dims - Dimensions of the stored data in the h5ad file.
+#'   \item type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
+#'   genes).
+#' }
+get_h5ad_dimensions <- function(h5_path) {
+  # checks
+  checkmate::assertFileExists(h5_path)
+
+  # function
+  h5_content <- rhdf5::h5ls(
+    h5_path
+  ) %>%
+    data.table::setDT()
+
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  no_obs <- h5_content[
+    group == "/obs" & otype == "H5I_DATASET"
+  ][1, as.numeric(dim)]
+
+  no_var <- h5_content[
+    group == "/var" & otype == "H5I_DATASET"
+  ][1, as.numeric(dim)]
+
+  indptr <- h5_content[
+    group == "/X" & name == "indptr",
+    as.numeric(dim)
+  ]
+
+  cs_format <- ifelse(no_var == indptr, "CSC", "CSR")
+
+  return(list(
+    dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
+    type = cs_format
+  ))
 }
 
 # inflection points ------------------------------------------------------------
@@ -375,11 +376,115 @@ get_inflection_point <- function(x, y, span = 0.5) {
     gradient[i] <- (py[i + 1] - py[i - 1]) / (x[i + 1] - x[i - 1])
   }
 
-  gradient_change <- diff(gradient)
+  gradient_change <- abs(diff(gradient))
   # One after the point with the biggest delta
   inflection_idx <- which.max(gradient_change) + 1
 
   return(
     list(inflection_idx = inflection_idx, gradient_change = gradient_change)
   )
+}
+
+# others -----------------------------------------------------------------------
+
+## parallelisation stuff -------------------------------------------------------
+
+#' Helper function for core detection.
+#'
+#' @description
+#' Identifies the number of cores/workers to use for parallel tasks. Will
+#' default to half of the available cores, to a maximum of `abs_max_workers`.
+#'
+#' @param abs_max_workers Integer. Absolute maximum number of cores to use.
+#' Defaults to `8L`.
+#'
+#' @returns Integer. Number of cores to use.
+get_cores <- function(abs_max_workers = 8L) {
+  checkmate::qassert(abs_max_workers, "I1")
+  cores <- as.integer(parallel::detectCores() / 2)
+  cores <- ifelse(cores >= abs_max_workers, abs_max_workers, cores)
+  return(cores)
+}
+
+## string stuff ----------------------------------------------------------------
+
+#' Helper function to transform strings to snake_case
+#'
+#' @param x String. The string (vector) you wish to transform to snake_case.
+#' @param ignore_na Boolean. Shall the function just ignore `NA` values and
+#' return `NA` at this position.
+#' Defaults to `FALSE`.
+#'
+#' @return Returns the string in snake_case format.
+#'
+#' @export
+to_snake_case <- function(x, ignore_na = FALSE) {
+  # checks
+  if (ignore_na) {
+    checkmate::qassert(x, "s+")
+    na_positions <- is.na(x)
+    x <- x[!na_positions]
+  } else {
+    checkmate::qassert(x, "S+")
+    x <- x
+  }
+
+  # transformations
+  x <- gsub("([a-z])([A-Z])", "\\1_\\2", x)
+  x <- tolower(x)
+  x <- gsub("[^a-z0-9]+", "_", x)
+  x <- gsub("^_+|_+$", "", x)
+  x <- gsub("_+", "_", x)
+
+  if (ignore_na) {
+    res <- vector(mode = "character", length = length(na_positions))
+    res[!na_positions] <- x
+    res[na_positions] <- NA
+    return(res)
+  } else {
+    return(x)
+  }
+}
+
+## feature flags ---------------------------------------------------------------
+
+#' Helper functions to mark something unstable/nightly
+#'
+#' @returns Throws a warning.
+nightly_feature <- function() {
+  warning(
+    paste(
+      "This is a nightly/unstable feature!",
+      "These functions, classes and methods are not yet fully development and",
+      "can be subject to breaking changes, compelete removal!."
+    )
+  )
+  invisible()
+}
+
+## user options ----------------------------------------------------------------
+
+#' Helper function for user option selection
+#'
+#' @param options Character vector. The options the user has to choose from.
+#'
+#' @returns The chosen option
+select_user_option <- function(options) {
+  cat("Please select an option:\n")
+  for (i in seq_along(options)) {
+    cat(i, ": ", options[i], "\n")
+  }
+
+  while (TRUE) {
+    cat("\nEnter the number of your choice: ")
+    user_choice <- as.integer(readLines(n = 1))
+
+    if (
+      !is.na(user_choice) && user_choice > 0 && user_choice <= length(options)
+    ) {
+      return(options[user_choice])
+    } else {
+      cat("Invalid selection. Please try again.\n")
+    }
+  }
 }

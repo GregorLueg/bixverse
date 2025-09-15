@@ -7,7 +7,8 @@
 get_params(object, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
-\item{object}{A class within bixverse that inherits from \code{\link[=bixverse_base_class]{bixverse_base_class()}}.}
+\item{object}{A class within bixverse that inherits from
+\code{\link[=bixverse_base_class]{bixverse_base_class()}}.}
 
 \item{to_json}{Shall the params be returned as a JSON string.}
 
@@ -17,6 +18,6 @@ get_params(object, to_json = FALSE, pretty_json = FALSE)
 Depending on parameters either the R list or a (pretty) JSON string.
 }
 \description{
-Extracts parameters from the \code{bixverse_base_class} class (or child
-classes) and has options to return (pretty) JSONs.
+Extracts parameters from the \code{bixverse_base_class} class (or
+child classes) and has options to return (pretty) JSONs.
 }

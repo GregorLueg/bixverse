@@ -111,6 +111,10 @@ expected_res_no_constraints_receptor_2 <- c(
   0.06873686
 )
 
+names(expected_res_no_constraints_receptor_1) <- names(
+  expected_res_no_constraints_receptor_2
+) <- node_names
+
 ## tests -----------------------------------------------------------------------
 
 ### no constraints -------------------------------------------------------------
@@ -141,14 +145,15 @@ res_no_constraints_receptor_2 <- rs_constrained_page_rank(
   sink_edges = NULL
 )
 
-expect_equal(
+# only equivalence
+expect_equivalent(
   current = res_no_constraints_receptor_1,
   target = expected_res_no_constraints_receptor_1,
   tolerance = 1e-7,
   info = "No constraints - diffusion from receptor 1"
 )
 
-expect_equal(
+expect_equivalent(
   current = res_no_constraints_receptor_2,
   target = expected_res_no_constraints_receptor_2,
   tolerance = 1e-7,
@@ -181,12 +186,44 @@ expect_equal(
   info = "No constraints - diffusion from receptor 2 (igraph)"
 )
 
+#### list variant --------------------------------------------------------------
+
+personalisation_list <- list(
+  first = personalisation_vec_1,
+  second = personalisation_vec_2
+)
+
+list_results <- constrained_page_rank_ls(
+  graph = g,
+  personalisation_list = personalisation_list
+)
+
+expect_equal(
+  current = names(personalisation_list),
+  target = names(list_results),
+  info = "List version "
+)
+
+expect_equal(
+  current = list_results$first,
+  target = expected_res_no_constraints_receptor_1,
+  tolerance = 1e-7,
+  info = "No constraints - diffusion from receptor 1 (igraph - list)"
+)
+
+expect_equal(
+  current = list_results$second,
+  target = expected_res_no_constraints_receptor_2,
+  tolerance = 1e-7,
+  info = "No constraints - diffusion from receptor 2 (igraph - list)"
+)
+
 #### errors --------------------------------------------------------------------
 
-g.2 <- copy(g)
+g.2 <- data.table::copy(g)
 g.2 <- igraph::delete_vertex_attr(g.2, "type")
 
-g.3 <- copy(g)
+g.3 <- data.table::copy(g)
 g.3 <- igraph::delete_edge_attr(g.3, "type")
 
 

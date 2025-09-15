@@ -30,13 +30,13 @@ should be a forced reset.}
 The constrained personalised page rank
 }
 \description{
-This function implements a constrained page-rank. You can define \code{sink_nodes}
-or \code{sink_edges}. In the case of the former, the vist of a sink_node (via a
-type attribute in the igraph) will automatically cause the surfer to reset.
-In the case of the latter, the traversal of a sink_edge is allowed, however,
-subsequently, the surfer will be reseted. This function can be useful for
-deriving PPR profiles under constraints in heterogenous graphs and has been
-inspired by Ruiz, et al.
+This function implements a constrained personalised page-rank. You can define
+\code{sink_nodes} or \code{sink_edges}. In the case of the former, the vist of a
+sink_node (via a type attribute in the igraph) will automatically cause the
+surfer to reset. In the case of the latter, the traversal of a sink_edge is
+allowed, however, subsequently, the surfer will be reseted. This function can
+be useful for deriving PPR profiles under constraints in heterogenous graphs
+and has been inspired by Ruiz, et al.
 }
 \references{
 Ruiz, et al., Nat Commun, 2021

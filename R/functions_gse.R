@@ -538,7 +538,8 @@ calc_gsea_traditional = function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
@@ -650,7 +651,8 @@ calc_fgsea_simple = function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
@@ -768,7 +770,8 @@ calc_fgsea <- function(
         rs_calc_gsea_stats,
         stats = stats,
         gsea_param = gsea_param,
-        return_leading_edge = TRUE
+        return_leading_edge = TRUE,
+        return_all_extremes = FALSE
       )
     )
   )
@@ -930,6 +933,73 @@ multilevel_error <- function(pval, sample_size) {
       (trigamma((sample_size + 1) / 2) - trigamma(sample_size + 1))
   ) /
     log(2)
+
+  return(res)
+}
+
+## mitch -----------------------------------------------------------------------
+
+#' Calculate a mitch gene set enrichments on contrast
+#'
+#' @description
+#' Rust-based version of the mitch multi-contrast enrichment, see Kaspi and
+#' Ziemann. Takes in a matrix representing the contrasts you wish to test
+#' against.
+#'
+#' @param contrast_mat Numerical matrix. The rows represent the gene statistic
+#' per contrast and each column represents the contrast.
+#' @param gene_set_list Named list. Contains the pathways you wish to test
+#' against.
+#' @param min_size Integer. Minimum size of the gene set to be included.
+#'
+#' @return A data.table with the Mitch enrichment results.
+#'
+#' @export
+#'
+#' @references Kaspi and Ziemann, Bmc Genomics, 2020
+calc_mitch <- function(contrast_mat, gene_set_list, min_size = 5L) {
+  # checks
+  checkmate::assertMatrix(
+    contrast_mat,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named",
+    min.cols = 2L
+  )
+  checkmate::assertList(gene_set_list, types = "character", names = "named")
+  checkmate::qassert(min_size, "I1")
+
+  # rust calculations
+  rs_result <- rs_mitch_calc(
+    x = contrast_mat,
+    pathway_list = gene_set_list,
+    min_size = min_size
+  )
+
+  anova_pvals <- transpose(split(
+    rs_result$anova_pvals,
+    ceiling(seq_along(rs_result$anova_pvals) / ncol(contrast_mat))
+  )) %>%
+    `names<-`(sprintf("p.%s", colnames(contrast_mat)))
+
+  anova_scores <- transpose(split(
+    rs_result$scores,
+    ceiling(seq_along(rs_result$scores) / ncol(contrast_mat))
+  )) %>%
+    `names<-`(sprintf("s.%s", colnames(contrast_mat)))
+
+  res <- rs_result[c(
+    "pathway_names",
+    "pathway_sizes",
+    "manova_pval",
+    "manova_fdr",
+    "s_dist",
+    "sd"
+  )] %>%
+    data.table::as.data.table()
+  res[, names(anova_pvals) := anova_pvals]
+  res[, names(anova_scores) := anova_scores]
+  data.table::setorder(res, manova_pval)
 
   return(res)
 }

@@ -7,7 +7,7 @@
 cor_module_check_epsilon(
   object,
   rbf_func = c("bump", "gaussian", "inverse_quadratic"),
-  epsilons = c(0.25, seq(from = 0.5, to = 5, by = 0.5)),
+  epsilons = c(0.25, seq(from = 0.5, to = 10, by = 0.5)),
   .verbose = TRUE
 )
 }

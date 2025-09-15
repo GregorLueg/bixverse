@@ -435,6 +435,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
 #' @param object The underlying class, see [bixverse::bulk_coexp()].
 #' @param bins Integer. Number of bins to plot.
 #'
+#' @export
 plot_hvgs <- S7::new_generic(
   "plot_hvgs",
   "object",

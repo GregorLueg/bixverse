@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_constrained_page_rank}
 \alias{rs_constrained_page_rank}
-\title{Rust version of calcaluting a constrained personalised page rank}
+\title{Calculate a constrained page-rank score}
 \usage{
 rs_constrained_page_rank(
   node_names,
@@ -39,7 +39,7 @@ sinks, i.e., the reset occurs when this node is reached.}
 when this edge type is traversed.}
 }
 \value{
-The personalised page rank values.
+The personalised constrained page rank values.
 }
 \description{
 This function can be used to get constrainted personalised

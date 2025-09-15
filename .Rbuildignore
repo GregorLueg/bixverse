@@ -11,3 +11,8 @@
 ^src/rust/vendor$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
+^docs$
+^misc$
+^Cargo\.toml$
+^Cargo\.lock$
+^target$

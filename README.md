@@ -1,6 +1,6 @@
 # *bixverse package*
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.1-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.2.2-orange) 
 
 </br>
 
@@ -18,30 +18,11 @@ leverages Rust to make any computational bottlenecks go *brrrrrrr* (i.e., fast).
 
 ## *Release notes*
 
-We have now officially released version **0.0.2.1**. The package has now reached
-high degrees of maturity with more and more tests in place, vignettes to explain
-various workflows and further bug and documentation fixes. With this update the
-following has been updated/changed:
+This is now officially the version **0.0.2.2** release. With this 
+update the following has been updated/changed:
 
-- Improved ontology class and more methods, and the addition of the Wang
-similarity measure.
-- Permutation-based tests for the genetic diffusion approaches that allow selection
-of significanlty enriched areas of the network (topology-aware).
-- Updates to the ICA detection approaches and correlation-based reciprocal best
-hits.
-- Further improvements in speed in various Rust functions (less unnecessary
-copying and changes to the used HashMaps and HashSets).
-- Addition of a `simplify()`-type method to reduce Gene Ontology results 
-to the most relevant ones.
-- Vignettes explaining different methods.
-- GSVA and ssGSEA implemented leveraging Rust.
-- Update of the `furrr::future_map()` type functions to the faster 
-`mirai::mirai_map()`.
-- Mutual information calculations between continuous variables.
-- Improvements to the synthetic data.
-
-**Warnings**: Some of the previous interfaces to the functions were changed
-in this release and might break compared to prior releases!
+- Mitch multi-contrast enrichment, see 
+[Kaspi and Ziemann](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 
 ## *Installation*
 
@@ -95,4 +76,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 05.08.2025*
+*Last update to the read-me: 07.09.2025*
