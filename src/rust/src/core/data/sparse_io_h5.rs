@@ -51,7 +51,7 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     no_cells: usize,
     no_genes: usize,
     cell_quality: MinCellQuality,
-) -> CellQuality {
+) -> (usize, CellQuality) {
     let file_data: CompressedSparseData<u16> =
         read_h5ad_x_data(h5_path, cs_type, (no_genes, no_cells)).unwrap();
 
@@ -75,7 +75,7 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     writer.update_header_no_cells(cells_writen);
     writer.finalise().unwrap();
 
-    cell_qc
+    (cells_writen, cell_qc)
 }
 
 /////////////

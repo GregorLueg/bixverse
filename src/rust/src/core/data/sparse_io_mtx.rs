@@ -93,6 +93,15 @@ impl CellAccumulator {
     fn to_include(&self, min_genes: usize, min_umi: u32) -> bool {
         self.gene_indices.len() >= min_genes && self.total_umi >= min_umi
     }
+
+    /// Return the cell data
+    ///
+    /// ### Returns
+    ///
+    /// A tuple of `(library_size, no_genes_expressed)`
+    fn get_cell_data(&self) -> (u32, usize) {
+        (self.total_umi, self.gene_indices.len())
+    }
 }
 
 /////////
@@ -125,7 +134,7 @@ pub struct MtxHeader {
 /// * `no_cells` - Number of cells that were read in.
 #[derive(Debug, Clone)]
 pub struct MtxFinalData {
-    pub to_keep: Vec<bool>,
+    pub cell_qc: CellQuality,
     pub no_genes: usize,
     pub no_cells: usize,
 }
@@ -234,6 +243,8 @@ impl MtxReader {
         )?;
 
         let mut to_include = vec![false; self.header.total_cells];
+        let mut lib_size = Vec::new();
+        let mut nnz = Vec::new();
         let mut accumulator = CellAccumulator::new();
         let mut line = String::new();
         let mut cells_written = 0_usize;
@@ -241,13 +252,10 @@ impl MtxReader {
 
         let mut line_buffer = Vec::with_capacity(64);
 
-        while self.reader.read_line(&mut line)? > 0 {
+        while {
             line_buffer.clear();
-            let bytes_read = self.reader.read_until(b'\n', &mut line_buffer)?;
-            if bytes_read == 0 {
-                break; // EOF
-            }
-
+            self.reader.read_until(b'\n', &mut line_buffer)? > 0
+        } {
             // Remove trailing newline
             if line_buffer.last() == Some(&b'\n') {
                 line_buffer.pop();
@@ -270,6 +278,9 @@ impl MtxReader {
             let gene_idx = (col - 1) as u16;
 
             if !accumulator.is_empty() && cell_idx != accumulator.current_idx {
+                let (lib_size_i, nnz_i) = accumulator.get_cell_data();
+                lib_size.push(lib_size_i);
+                nnz.push(nnz_i);
                 cells_written += self.process_cell(
                     &mut accumulator,
                     &mut writer,
@@ -289,6 +300,9 @@ impl MtxReader {
 
         // Process the last accumulated cell
         if !accumulator.is_empty() {
+            let (lib_size_i, nnz_i) = accumulator.get_cell_data();
+            lib_size.push(lib_size_i);
+            nnz.push(nnz_i);
             cells_written += self.process_cell(
                 &mut accumulator,
                 &mut writer,
@@ -309,7 +323,11 @@ impl MtxReader {
         writer.finalise()?;
 
         Ok(MtxFinalData {
-            to_keep: to_include,
+            cell_qc: CellQuality {
+                to_keep: to_include,
+                lib_size: Some(lib_size.iter().map(|x| *x as usize).collect()),
+                no_genes: Some(nnz),
+            },
             no_genes: self.header.total_genes,
             no_cells: cells_written,
         })

@@ -1,8 +1,31 @@
-# single cell methods ----------------------------------------------------------
+# single cell i/o methods ------------------------------------------------------
 
-## i/o -------------------------------------------------------------------------
+## helper ----------------------------------------------------------------------
 
-### h5ad -----------------------------------------------------------------------
+#' Generate an updated gene index mapping
+#'
+#' @param gene_mask Boolean vector.
+#'
+#' @return A `gene_column_index_map` class that can be used to readjust
+#' column indices to genes that were kept.
+generate_gene_index_map <- function(gene_mask) {
+  # checks
+  checkmate::qassert(gene_mask, "B+")
+
+  # set this to Rust 0 indexing...
+  original_indices <- which(gene_mask) - 1
+  new_indices <- seq_along(original_indices) - 1
+
+  gene_col_map <- setNames(
+    new_indices,
+    as.character(original_indices)
+  )
+  class(gene_col_map) <- "gene_column_index_map"
+
+  return(gene_col_map)
+}
+
+## h5ad ------------------------------------------------------------------------
 
 #' Load in h5ad to `single_cell_exp` (nightly!)
 #'
@@ -60,45 +83,56 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertFileExists(h5_path)
   assertScMinQC(sc_qc_param)
+  checkmate::qassert(.verbose, "B1")
 
-  # load in the obs and vars
-  duckdb_con <- get_sc_duckdb(object)
-  duckdb_con$populate_obs_from_h5(h5_path = h5_path, .verbose = .verbose)
-  duckdb_con$populate_vars_from_h5(h5_path = h5_path, .verbose = .verbose)
-
-  cell_map <- duckdb_con$get_obs_index_map()
-  gene_map <- duckdb_con$get_var_index_map()
-
-  # get meta information from the h5 object
+  # rust part
   h5_meta <- get_h5ad_dimensions(h5_path)
 
   rust_con <- get_sc_rust_ptr(object)
 
-  cell_qc <- rust_con$h5_to_file(
+  cell_res <- rust_con$h5_to_file(
     cs_type = h5_meta$type,
     h5_path = path.expand(h5_path),
     no_cells = h5_meta$dims["obs"],
     no_genes = h5_meta$dims["var"],
     qc_params = sc_qc_param
-  ) %>%
-    data.table::setDT()
+  )
 
-  gene_qc <- rust_con$generate_gene_based_data(
+  gene_res <- rust_con$generate_gene_based_data(
     qc_params = sc_qc_param,
     verbose = .verbose
-  ) %>%
-    data.table::setDT()
+  )
 
-  duckdb_con$add_data_obs(new_data = cell_qc)$add_data_var(new_data = gene_qc)
+  # load in the obs and vars
+  duckdb_con <- get_sc_duckdb(object)
+  duckdb_con$populate_obs_from_h5(
+    h5_path = h5_path,
+    filter = cell_res$cell_mask
+  )
+  duckdb_con$populate_vars_from_h5(
+    h5_path = h5_path,
+    filter = gene_res$gene_mask
+  )
+  cell_res_dt <- data.table::setDT(cell_res)[(cell_mask)][, cell_mask := NULL]
+  gene_res_dt <- data.table::setDT(gene_res)[(gene_mask)][, gene_mask := NULL]
 
-  S7::prop(object, "dims") = c(h5_meta$dims["obs"], h5_meta$dims["var"])
+  duckdb_con$add_data_obs(new_data = cell_res_dt)$add_data_var(
+    new_data = gene_res_dt
+  )
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
   S7::prop(object, "index_maps")[["cell_map"]] <- cell_map
   S7::prop(object, "index_maps")[["gene_map"]] <- gene_map
+  S7::prop(object, "index_maps")[[
+    "gene_col_idx_map"
+  ]] <- generate_gene_index_map(gene_mask = gene_res$gene_mask)
 
   return(object)
 }
 
-### mtx ------------------------------------------------------------------------
+## mtx -------------------------------------------------------------------------s
 
 #' Load in mtx/plain text files to `single_cell_exp` (nightly!)
 #'
@@ -154,4 +188,59 @@ S7::method(load_mtx, single_cell_exp) <- function(
   var_path,
   sc_qc_param = params_sc_min_quality(),
   .verbose = TRUE
-) {}
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertFileExists(mtx_path)
+  checkmate::assertFileExists(obs_path)
+  checkmate::assertFileExists(var_path)
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(.verbose, "B1")
+
+  # rust part
+  rust_con <- get_sc_rust_ptr(object)
+
+  if (.verbose) {
+    message("Loading in the mtx file to disk in a cell-friendly format")
+  }
+
+  cell_res <- rust_con$mtx_to_file(
+    mtx_path = mtx_path,
+    qc_params = sc_qc_param
+  )
+  gene_res <- rust_con$generate_gene_based_data(
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  # duck db
+  duckdb_con <- get_sc_duckdb(object)
+
+  duckdb_con$populate_obs_from_plain_text(
+    f_path = obs_path,
+    filter = cell_res$cell_mask
+  )
+
+  duckdb_con$populate_var_from_plain_text(
+    f_path = var_path,
+    filter = gene_res$gene_mask
+  )
+
+  cell_res_dt <- data.table::setDT(cell_res)[(cell_mask)][, cell_mask := NULL]
+  gene_res_dt <- data.table::setDT(gene_res)[(gene_mask)][, gene_mask := NULL]
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)$add_data_var(
+    new_data = gene_res_dt
+  )
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  S7::prop(object, "index_maps")[["cell_map"]] <- cell_map
+  S7::prop(object, "index_maps")[["gene_map"]] <- gene_map
+  S7::prop(object, "index_maps")[[
+    "gene_col_idx_map"
+  ]] <- generate_gene_index_map(gene_mask = gene_res$gene_mask)
+
+  return(object)
+}

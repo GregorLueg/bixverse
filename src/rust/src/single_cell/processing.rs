@@ -14,7 +14,6 @@ pub struct CellQuality {
     pub to_keep: Vec<bool>,
     pub lib_size: Option<Vec<usize>>,
     pub no_genes: Option<Vec<usize>>,
-    pub mt_perc: Option<Vec<f32>>,
 }
 
 /// Structure that stores minimum QC thresholds/info for single cell

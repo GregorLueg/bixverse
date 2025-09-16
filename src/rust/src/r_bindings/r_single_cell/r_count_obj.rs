@@ -357,12 +357,11 @@ impl SingeCellCountData {
         qc_params: List,
     ) -> List {
         // assign the values internally
-        self.n_cells = no_cells;
         self.n_genes = no_genes;
 
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let cell_qc: CellQuality = write_h5_counts(
+        let (no_cells, cell_qc): (usize, CellQuality) = write_h5_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -370,6 +369,8 @@ impl SingeCellCountData {
             no_genes,
             qc_params,
         );
+
+        self.n_cells = no_cells;
 
         list!(
             cell_mask = cell_qc.to_keep,
@@ -385,14 +386,18 @@ impl SingeCellCountData {
         let mtx_reader = MtxReader::new(&mtx_path, qc_params)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
-        let mtx_res = mtx_reader
+        let mtx_res: MtxFinalData = mtx_reader
             .process_mtx_and_write_bin(&self.f_path_cells)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         self.n_cells = mtx_res.no_cells;
         self.n_genes = mtx_res.no_genes;
 
-        Ok(list!(cells_kept = mtx_res.to_keep))
+        Ok(list!(
+            cell_mask = mtx_res.cell_qc.to_keep,
+            lib_size = mtx_res.cell_qc.lib_size.unwrap_or_default(),
+            nnz = mtx_res.cell_qc.no_genes.unwrap_or_default()
+        ))
     }
 
     /// Returns the full matrix

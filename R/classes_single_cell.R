@@ -217,13 +217,52 @@ S7::method(get_sc_var, single_cell_exp) <- function(
 #'
 #' @export
 S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
+  if (missing(i)) {
+    i <- NULL
+  }
+
   if (checkmate::qtest(i, "S+")) {
     get_sc_obs(x, cols = i)
   } else if (checkmate::qtest(i, "I+")) {
     get_sc_obs(x, indices = i)
+  } else if (checkmate::qtest(i, "0")) {
+    get_sc_obs(x)
   } else {
     stop("Invalid type")
   }
+}
+
+### map getters ----------------------------------------------------------------
+
+#' Getter for the different maps in the object
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @returns Returns the maps within the class.
+#'
+#' @export
+get_sc_map <- S7::new_generic(
+  name = "get_sc_maps",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_sc_var single_cell_exp
+#'
+#' @export
+S7::method(get_sc_map, single_cell_exp) <- function(
+  object
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+
+  res <- S7::prop(object, "index_maps")
+
+  return(res)
 }
 
 #### count getters -------------------------------------------------------------
@@ -279,9 +318,11 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   checkmate::qassert(gene_indices, c("0", "I+"))
   checkmate::qassert(.verbose, "B1")
 
-  requireNamespace("Matrx", quietly = TRUE)
+  requireNamespace("Matrix", quietly = TRUE)
 
   rust_con <- get_sc_rust_ptr(object)
+
+  col_index_map <- get_sc_map(object)[["gene_col_idx_map"]]
 
   # Get raw data from Rust
   count_data <- get_counts_from_rust(
@@ -290,6 +331,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
     return_format = return_format,
     cell_indices = cell_indices,
     gene_indices = gene_indices,
+    col_index_map = col_index_map,
     .verbose = .verbose
   )
 
@@ -360,6 +402,8 @@ S7::method(`[`, single_cell_exp) <- function(
 #' return.
 #' @param gene_indices Optional integer vector. The index positions of genes to
 #' return.
+#' @param col_index_map A `gene_column_index_map` class. Contains information
+#' which gene column index belongs to which filtered gene column index.
 #' @param .verbose Boolean. Controls verbosity
 #'
 #' @return Returns a list with:
@@ -376,6 +420,7 @@ get_counts_from_rust <- function(
   return_format,
   cell_indices,
   gene_indices,
+  col_index_map,
   .verbose = TRUE
 ) {
   # checks
@@ -384,6 +429,7 @@ get_counts_from_rust <- function(
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
+  checkmate::assertClass(col_index_map, "gene_column_index_map")
   checkmate::qassert(.verbose, "B1")
 
   res <- if (return_format == "cell") {
@@ -408,6 +454,10 @@ get_counts_from_rust <- function(
       rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
     }
   }
+
+  # update the indices here to match
+  # NEEDS TO BE CHARACTER!!!
+  res$indices <- col_index_map[as.character(res$indices)]
 
   return(res)
 }
@@ -956,14 +1006,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param .verbose Boolean. Controls verbosity of the function.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow of obs in the h5 object.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, .verbose = TRUE) {
+    populate_obs_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(.verbose, "B1")
+      checkmate::qassert(filter, c("B+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -976,10 +1027,9 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(obs) == 0) {
-        warning(
+        error(
           "No obs data could be found in the h5 file. Nothing was loaded."
         )
-        return(invisible(self))
       }
 
       con <- private$connect_db()
@@ -1001,20 +1051,15 @@ single_cell_duckdb_con <- R6::R6Class(
         col_name <- names(obs)[i]
         col_path <- obs[[i]]
         col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name) %>%
-          .[, cell_idx := .I] %>%
-          .[, c("cell_idx", col_name), with = FALSE]
+          `names<-`(col_name)
+        if (!is.null(filter)) {
+          col_data <- col_data[filter]
+        }
+        col_data[, cell_idx := .I]
+        setcolorder(col_data, c("cell_idx", col_name))
 
         if (i == 1) {
           colnames(col_data) <- c("cell_idx", "cell_id")
-          if (.verbose) {
-            message(
-              sprintf(
-                "Identified %i cells/observations in the h5 file",
-                nrow(col_data)
-              )
-            )
-          }
           DBI::dbWriteTable(
             con,
             "obs",
@@ -1053,14 +1098,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param .verbose Boolean. Controls verbosity of the function.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow of var in the h5 object.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_vars_from_h5 = function(h5_path, .verbose = TRUE) {
+    populate_vars_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(.verbose, "B1")
+      checkmate::qassert(filter, c("B+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -1073,10 +1119,9 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(var) == 0) {
-        warning(
-          "No obs data could be found in the h5 file. Nothing was loaded."
+        error(
+          "No var data could be found in the h5 file. Nothing was loaded."
         )
-        return(invisible(self))
       }
 
       con <- private$connect_db()
@@ -1098,20 +1143,16 @@ single_cell_duckdb_con <- R6::R6Class(
         col_name <- names(var)[i]
         col_path <- var[[i]]
         col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name) %>%
-          .[, gene_idx := .I] %>%
-          .[, c("gene_idx", col_name), with = FALSE]
+          `names<-`(col_name)
+        if (!is.null(filter)) {
+          col_data <- col_data[filter]
+        }
+
+        col_data[, gene_idx := .I]
+        setcolorder(col_data, c("gene_idx", col_name))
 
         if (i == 1) {
           colnames(col_data) <- c("gene_idx", "gene_id")
-          if (.verbose) {
-            message(
-              sprintf(
-                "Identified %i genes/features in the h5 file",
-                nrow(col_data)
-              )
-            )
-          }
           DBI::dbWriteTable(
             con,
             "var",
@@ -1180,6 +1221,7 @@ single_cell_duckdb_con <- R6::R6Class(
 
       original_col_names <- colnames(header_df)
       sanitised_cols_names <- to_snake_case(original_col_names)
+      sanitised_cols_names[1] <- "cell_id"
 
       col_mapping <- sprintf(
         '"%s" AS %s',
@@ -1263,6 +1305,7 @@ single_cell_duckdb_con <- R6::R6Class(
 
       original_col_names <- colnames(header_df)
       sanitised_cols_names <- to_snake_case(original_col_names)
+      sanitised_cols_names[1] <- "gene_id"
 
       col_mapping <- sprintf(
         '"%s" AS %s',

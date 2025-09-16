@@ -248,7 +248,6 @@ impl CsrCellChunk {
             to_keep,
             lib_size: Some(lib_size),
             no_genes: Some(nnz),
-            mt_perc: None::<Vec<f32>>,
         };
 
         (res, qc_data)

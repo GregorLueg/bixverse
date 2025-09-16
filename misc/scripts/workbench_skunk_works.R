@@ -106,6 +106,71 @@ obs <- get_sc_obs(
   bixverse_sc,
 )
 
+bixverse_sc[1:5L, ]
+
+bixverse_sc[[]]
+
+bixverse_sc@dims
+
+rust_con <- get_sc_rust_ptr(bixverse_sc)
+
+col_index_map <- get_sc_map(bixverse_sc)[["gene_col_idx_map"]]
+
+return_format = "cell"
+cell_indices = 1:10L
+assay = "raw"
+.verbose = FALSE
+
+res <- if (return_format == "cell") {
+  if (is.null(cell_indices)) {
+    rust_con$return_full_mat(
+      assay = assay,
+      cell_based = TRUE,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$get_cells_by_indices(indices = cell_indices, assay = assay)
+  }
+} else {
+  # gene
+  if (is.null(gene_indices)) {
+    rust_con$return_full_mat(
+      assay = assay,
+      cell_based = FALSE,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
+  }
+}
+
+res$indices <- col_index_map[as.character(res$indices)]
+
+get_sc_var(bixverse_sc)
+
+length(bixverse_sc@index_maps$cell_map)
+length(bixverse_sc@index_maps$gene_col_idx_map)
+
+bixverse_sc@dims
+
+count_data <- res
+
+matrix_class <- if (return_format == "cell") "dgRMatrix" else "dgCMatrix"
+index_slot <- if (return_format == "cell") "j" else "i"
+
+sparse_mat <- with(count_data, {
+  args <- list(
+    p = as.integer(indptr),
+    x = as.numeric(data),
+    Dim = as.integer(c(no_cells, no_genes))
+  )
+  args[[index_slot]] <- as.integer(indices)
+
+  do.call(new, c(matrix_class, args))
+})
+
+any(is.na(col_index_map[as.character(res$indices)]))
+
 head(obs)
 
 bixverse_sc[[1:25]]
@@ -135,64 +200,49 @@ single_cell_counts <- SingeCellCountData$new(
 
 mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
 
-tictoc::tic()
 res <- single_cell_counts$mtx_to_file(
   mtx_path = mtx_path,
   qc_params = params_sc_min_quality()
 )
-tictoc::toc()
 
-single_cell_counts$get_cells_by_indices(indices = c(1:10), assay = "raw")
-
-single_cell_counts$get_shape()
-
-tictoc::tic()
 genes_to_keep = single_cell_counts$generate_gene_based_data(
   qc_params = params_sc_min_quality(),
   verbose = TRUE
 )
 tictoc::toc()
 
+count_data <- single_cell_counts$get_cells_by_indices(1:10, assay = "norm")
+
+count_data
+
+max(count_data$indices)
+
+length(genes_to_keep$gene_mask)
+
+table(genes_to_keep$gene_mask)
+
+
 single_cell_counts$get_shape()
 
 single_cell_counts$get_genes_by_indices(indices = 1:10, assay = "norm")
 
-
-object = single_cell_exp(dir_data = tempdir())
-mtx_path = path.expand("~/Downloads/ex053/DGE.mtx")
-obs_path = path.expand("~/Downloads/ex053/cell_metadata.csv")
-var_path = path.expand("~/Downloads/ex053/all_genes.csv")
-sc_qc_param = params_sc_min_quality()
-.verbose = TRUE
-
-rust_con <- get_sc_rust_ptr(object)
-
-res <- rust_con$mtx_to_file(
-  mtx_path = mtx_path,
-  qc_params = sc_qc_param
-)
-gene_res <- rust_con$generate_gene_based_data(
-  qc_params = sc_qc_param,
-  verbose = .verbose
-)
-
-table(gene_res$gene_mask)
-
-res$cells_kept
-
-duckdb_con <- get_sc_duckdb(object)
-
-duckdb_con$populate_obs_from_plain_text(
-  f_path = obs_path,
-  filter = res$cells_kept
-)
-
+rextendr::document()
 devtools::load_all()
 
-obs <- fread(obs_path)
+object = single_cell_exp(dir_data = tempdir())
 
-var <- fread(var_path)
+tictoc::tic()
+object = load_mtx(
+  object = object,
+  mtx_path = path.expand("~/Downloads/ex053/DGE.mtx"),
+  obs_path = path.expand("~/Downloads/ex053/cell_metadata.csv"),
+  var_path = path.expand("~/Downloads/ex053/all_genes.csv"),
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 100L,
+    min_lib_size = 250L,
+    min_cells = 10L
+  )
+)
+tictoc::toc()
 
-colnames(obs)
-
-colnames(var)
+object[1:10L, ]
