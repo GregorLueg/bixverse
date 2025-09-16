@@ -14,12 +14,17 @@
 #'
 #' @param object `single_cell_exp` class.
 #' @param h5_path File path to the h5ad object you wish to load in.
-#' @param min_genes Integer. Minimum number of genes per cell to be considered
-#' in subsequent analysis.
-#' @param min_cells Integer. Minimum number of cells per gene to be considered
-#' in subsequent analysis.
-#' @param target_size Numeric. The target size. 1e6 -> CPM, 1e5 is more commonly
-#' used in single cell analysis.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return It will populate the files on disk and return the class with updated
@@ -32,9 +37,7 @@ load_h5ad <- S7::new_generic(
   fun = function(
     object,
     h5_path,
-    min_genes = 200L,
-    min_cells = 10L,
-    target_size = 1e5,
+    sc_qc_param = params_sc_min_quality(),
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -50,17 +53,13 @@ load_h5ad <- S7::new_generic(
 S7::method(load_h5ad, single_cell_exp) <- function(
   object,
   h5_path,
-  min_genes = 200L,
-  min_cells = 10L,
-  target_size = 1e5,
+  sc_qc_param = params_sc_min_quality(),
   .verbose = TRUE
 ) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertFileExists(h5_path)
-  checkmate::qassert(min_genes, "I1")
-  checkmate::qassert(min_cells, "I1")
-  checkmate::qassert(.verbose, "B1")
+  assertScMinQC(sc_qc_param)
 
   # load in the obs and vars
   duckdb_con <- get_sc_duckdb(object)
@@ -80,12 +79,14 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     h5_path = path.expand(h5_path),
     no_cells = h5_meta$dims["obs"],
     no_genes = h5_meta$dims["var"],
-    target_size = target_size,
-    min_genes = min_genes
+    qc_params = sc_qc_param
   ) %>%
     data.table::setDT()
 
-  gene_qc <- rust_con$generate_gene_based_data(min_cells = min_cells) %>%
+  gene_qc <- rust_con$generate_gene_based_data(
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  ) %>%
     data.table::setDT()
 
   duckdb_con$add_data_obs(new_data = cell_qc)$add_data_var(new_data = gene_qc)
@@ -96,3 +97,61 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 
   return(object)
 }
+
+### mtx ------------------------------------------------------------------------
+
+#' Load in mtx/plain text files to `single_cell_exp` (nightly!)
+#'
+#' @description
+#' ...
+#'
+#' @param object `single_cell_exp` class.
+#' @param mtx_path File path to the mtx file you wish to load in.
+#' @param obs_path File path
+#' @param var_path File path
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+load_mtx <- S7::new_generic(
+  name = "load_mtx",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    mtx_path,
+    obs_path,
+    var_path,
+    sc_qc_param = params_sc_min_quality(),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_mtx single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_mtx, single_cell_exp) <- function(
+  object,
+  mtx_path,
+  obs_path,
+  var_path,
+  sc_qc_param = params_sc_min_quality(),
+  .verbose = TRUE
+) {}

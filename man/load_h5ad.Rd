@@ -7,9 +7,7 @@
 load_h5ad(
   object,
   h5_path,
-  min_genes = 200L,
-  min_cells = 10L,
-  target_size = 1e+05,
+  sc_qc_param = params_sc_min_quality(),
   .verbose = TRUE
 )
 }
@@ -18,14 +16,17 @@ load_h5ad(
 
 \item{h5_path}{File path to the h5ad object you wish to load in.}
 
-\item{min_genes}{Integer. Minimum number of genes per cell to be considered
-in subsequent analysis.}
-
-\item{min_cells}{Integer. Minimum number of cells per gene to be considered
-in subsequent analysis.}
-
-\item{target_size}{Numeric. The target size. 1e6 -> CPM, 1e5 is more commonly
-used in single cell analysis.}
+\item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
+list with the following elements:
+\itemize{
+\item min_unique_genes - Integer. Minimum number of genes to be detected
+in the cell to be included.
+\item min_lib_size - Integer. Minimum library size in the cell to be
+included.
+\item min_cells - Integer. Minimum number of cells a gene needs to be
+detected to be included.
+\item target_size - Float. Target size to normalise to. Defaults to \code{1e5}.
+}}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }

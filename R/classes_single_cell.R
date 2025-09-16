@@ -703,6 +703,90 @@ single_cell_duckdb_base <- R6::R6Class(
       return(setNames(data$index, data$id))
     },
 
+    #' Filter the obs table and reset the cell idx
+    #'
+    #' @param filter_vec Boolean vector that will be used to filter the obs
+    #' table.
+    filter_obs_table = function(filter_vec) {
+      # checks
+      checkmate::qassert(filter_vec, "B1")
+      private$check_obs_exists()
+
+      filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
+
+      # get the connection
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "filter_temp",
+        filter_dt,
+        overwrite = TRUE
+      )
+
+      DBI::dbExecute(
+        con,
+        "
+        CREATE OR REPLACE TABLE obs AS
+        SELECT 
+          ROW_NUMBER() OVER() as cell_idx,
+          * EXCLUDE (cell_idx)  -- exclude old cell_idx column
+        FROM obs 
+        WHERE ROWID IN (SELECT cell_idx FROM temp_filter);
+        DROP TABLE filter_temp
+        "
+      )
+    },
+
+    #' Filter the var table and reset the gene idx
+    #'
+    #' @param filter_vec Boolean vector that will be used to filter the var
+    #' table.
+    filter_var_table = function(filter_vec) {
+      # checks
+      checkmate::qassert(filter_vec, "B1")
+      private$check_var_exists()
+
+      filter_dt <- data.frame(gene_idx = which(filter_vec), keep = TRUE)
+
+      # get the connection
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "filter_temp",
+        filter_dt,
+        overwrite = TRUE
+      )
+
+      DBI::dbExecute(
+        con,
+        "
+        CREATE OR REPLACE TABLE var AS
+        SELECT 
+          ROW_NUMBER() OVER() as gene_idx,
+          * EXCLUDE (gene_idx)  -- exclude old gene_idx column
+        FROM var 
+        WHERE ROWID IN (SELECT gene_idx FROM temp_filter);
+        DROP TABLE filter_temp
+        "
+      )
+    },
+
     ###########
     # Setters #
     ###########
@@ -1057,6 +1141,176 @@ single_cell_duckdb_con <- R6::R6Class(
           )
         }
       }
+
+      invisible(self)
+    },
+
+    ###############
+    # Readers mtx #
+    ###############
+
+    #' Function to populate the obs table from plain text files
+    #'
+    #' @param f_path File path to the plain text file.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow.
+    #'
+    #' @returns Invisible self and populates the internal obs table.
+    populate_obs_from_plain_text = function(f_path, filter = NULL) {
+      # checks
+      checkmate::assertFileExists(f_path)
+      checkmate::qassert(filter, c("B+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+
+      header_df <- DBI::dbGetQuery(
+        conn = con,
+        statement = header_query,
+        params = list(f_path)
+      )
+
+      original_col_names <- colnames(header_df)
+      sanitised_cols_names <- to_snake_case(original_col_names)
+
+      col_mapping <- sprintf(
+        '"%s" AS %s',
+        original_col_names,
+        sanitised_cols_names
+      ) %>%
+        paste(collapse = ",\n    ")
+
+      query <- if (!is.null(filter)) {
+        rows_to_keep <- which(filter)
+        row_placeholders <- paste(
+          rep("?", length(rows_to_keep)),
+          collapse = ","
+        )
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT
+            ROW_NUMBER() OVER() as cell_idx,
+            %s
+          FROM (
+            SELECT *, ROW_NUMBER() OVER() as original_row_num
+            FROM read_csv(?)
+          ) t
+          WHERE t.original_row_num IN (%s)",
+          col_mapping,
+          row_placeholders
+        )
+      } else {
+        rows_to_keep <- NULL
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT 
+            ROW_NUMBER() OVER() as cell_idx,
+            %s
+          FROM (
+            SELECT * FROM read_csv(?)
+          )",
+          col_mapping
+        )
+      }
+
+      DBI::dbExecute(
+        conn = con,
+        statement = query,
+        params = c(list(f_path), as.list(rows_to_keep))
+      )
+
+      invisible(self)
+    },
+
+    #' Function to populate the var table from plain text files
+    #'
+    #' @param f_path File path to the plain text file.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow.
+    #'
+    #' @returns Invisible self and populates the internal var table.
+    populate_var_from_plain_text = function(f_path, filter = NULL) {
+      # checks
+      checkmate::assertFileExists(f_path)
+      checkmate::qassert(filter, c("B+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+
+      header_df <- DBI::dbGetQuery(
+        conn = con,
+        statement = header_query,
+        params = list(f_path)
+      )
+
+      original_col_names <- colnames(header_df)
+      sanitised_cols_names <- to_snake_case(original_col_names)
+
+      col_mapping <- sprintf(
+        '"%s" AS %s',
+        original_col_names,
+        sanitised_cols_names
+      ) %>%
+        paste(collapse = ",\n    ")
+
+      query <- if (!is.null(filter)) {
+        rows_to_keep <- which(filter)
+        row_placeholders <- paste(
+          rep("?", length(rows_to_keep)),
+          collapse = ","
+        )
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE var AS
+          SELECT
+            ROW_NUMBER() OVER() AS gene_idx,
+            %s
+          FROM (
+            SELECT *, ROW_NUMBER() OVER() as original_row_num
+            FROM read_csv(?)
+          ) t
+          WHERE t.original_row_num IN (%s)",
+          col_mapping,
+          row_placeholders
+        )
+      } else {
+        rows_to_keep <- NULL
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE var AS
+          SELECT 
+            ROW_NUMBER() OVER() AS gene_idx,
+            %s
+          FROM (
+            SELECT * FROM read_csv(?)
+          )",
+          col_mapping
+        )
+      }
+
+      DBI::dbExecute(
+        conn = con,
+        statement = query,
+        params = c(list(f_path), as.list(rows_to_keep))
+      )
 
       invisible(self)
     }

@@ -64,8 +64,9 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
     let mut cells_writen = 0_usize;
 
-    for cell_chunk in cell_chunk_vec {
+    for mut cell_chunk in cell_chunk_vec {
         if cell_chunk.to_keep {
+            cell_chunk.update_index(&cells_writen);
             writer.write_cell_chunk(cell_chunk).unwrap();
             cells_writen += 1;
         }

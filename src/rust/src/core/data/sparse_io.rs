@@ -253,6 +253,15 @@ impl CsrCellChunk {
 
         (res, qc_data)
     }
+
+    /// Helper function to update the column index
+    ///
+    /// ###
+    ///
+    /// * `new_index` - Which is the new column index to set to
+    pub fn update_index(&mut self, new_index: &usize) {
+        self.original_index = *new_index;
+    }
 }
 
 /// CscGeneChunk

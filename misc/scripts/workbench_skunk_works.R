@@ -122,6 +122,8 @@ class(counts)
 
 # mtx file ---------------------------------------------------------------------
 
+rextendr::document()
+
 dir <- tempdir()
 f_path_cells <- file.path(dir, "cells.bin")
 f_path_genes <- file.path(dir, "genes.bin")
@@ -131,35 +133,66 @@ single_cell_counts <- SingeCellCountData$new(
   f_path_genes = f_path_genes
 )
 
-rextendr::document()
-
 mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
 
 tictoc::tic()
 res <- single_cell_counts$mtx_to_file(
   mtx_path = mtx_path,
-  target_size = 1e5,
-  min_genes = 200L,
-  min_lib_size = 500L
+  qc_params = params_sc_min_quality()
 )
 tictoc::toc()
 
-table(res)
+single_cell_counts$get_cells_by_indices(indices = c(1:10), assay = "raw")
 
-library(Seurat)
-
-install.packages("Seurat")
+single_cell_counts$get_shape()
 
 tictoc::tic()
-expression_matrix <- Seurat::ReadMtx(
-  mtx = "~/Downloads/ex053/DGE.mtx",
-  features = "~/Downloads/ex053/all_genes.csv",
-  cells = "~/Downloads/ex053/cell_metadata.csv",
-  feature.column = 1,
-  mtx.transpose = TRUE,
-  skip.cell = 1,
-  skip.feature = 1
+genes_to_keep = single_cell_counts$generate_gene_based_data(
+  qc_params = params_sc_min_quality(),
+  verbose = TRUE
 )
 tictoc::toc()
 
-rm(expression_matrix)
+single_cell_counts$get_shape()
+
+single_cell_counts$get_genes_by_indices(indices = 1:10, assay = "norm")
+
+
+object = single_cell_exp(dir_data = tempdir())
+mtx_path = path.expand("~/Downloads/ex053/DGE.mtx")
+obs_path = path.expand("~/Downloads/ex053/cell_metadata.csv")
+var_path = path.expand("~/Downloads/ex053/all_genes.csv")
+sc_qc_param = params_sc_min_quality()
+.verbose = TRUE
+
+rust_con <- get_sc_rust_ptr(object)
+
+res <- rust_con$mtx_to_file(
+  mtx_path = mtx_path,
+  qc_params = sc_qc_param
+)
+gene_res <- rust_con$generate_gene_based_data(
+  qc_params = sc_qc_param,
+  verbose = .verbose
+)
+
+table(gene_res$gene_mask)
+
+res$cells_kept
+
+duckdb_con <- get_sc_duckdb(object)
+
+duckdb_con$populate_obs_from_plain_text(
+  f_path = obs_path,
+  filter = res$cells_kept
+)
+
+devtools::load_all()
+
+obs <- fread(obs_path)
+
+var <- fread(var_path)
+
+colnames(obs)
+
+colnames(var)

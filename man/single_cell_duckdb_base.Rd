@@ -16,6 +16,8 @@ etc.
 \item \href{#method-single_cell_duckdb_base-get_vars_table}{\code{single_cell_duckdb_base$get_vars_table()}}
 \item \href{#method-single_cell_duckdb_base-get_obs_index_map}{\code{single_cell_duckdb_base$get_obs_index_map()}}
 \item \href{#method-single_cell_duckdb_base-get_var_index_map}{\code{single_cell_duckdb_base$get_var_index_map()}}
+\item \href{#method-single_cell_duckdb_base-filter_obs_table}{\code{single_cell_duckdb_base$filter_obs_table()}}
+\item \href{#method-single_cell_duckdb_base-filter_var_table}{\code{single_cell_duckdb_base$filter_var_table()}}
 \item \href{#method-single_cell_duckdb_base-add_data_obs}{\code{single_cell_duckdb_base$add_data_obs()}}
 \item \href{#method-single_cell_duckdb_base-add_data_var}{\code{single_cell_duckdb_base$add_data_var()}}
 \item \href{#method-single_cell_duckdb_base-clone}{\code{single_cell_duckdb_base$clone()}}
@@ -113,6 +115,42 @@ Returns a mapping between variable index and variable names.
 
 \subsection{Returns}{
 A named numeric containing the gene index mapping.
+Filter the obs table and reset the cell idx
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-filter_obs_table"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-filter_obs_table}{}}}
+\subsection{Method \code{filter_obs_table()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$filter_obs_table(filter_vec)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{filter_vec}}{Boolean vector that will be used to filter the obs
+table.
+Filter the var table and reset the gene idx}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-filter_var_table"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-filter_var_table}{}}}
+\subsection{Method \code{filter_var_table()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$filter_var_table(filter_vec)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{filter_vec}}{Boolean vector that will be used to filter the var
+table.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

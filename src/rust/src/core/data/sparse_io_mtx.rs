@@ -270,8 +270,12 @@ impl MtxReader {
             let gene_idx = (col - 1) as u16;
 
             if !accumulator.is_empty() && cell_idx != accumulator.current_idx {
-                cells_written +=
-                    self.process_cell(&mut accumulator, &mut writer, &mut to_include)?;
+                cells_written += self.process_cell(
+                    &mut accumulator,
+                    &mut writer,
+                    &mut to_include,
+                    &cells_written,
+                )?;
                 last_processed_cell = accumulator.current_idx;
             }
 
@@ -285,7 +289,12 @@ impl MtxReader {
 
         // Process the last accumulated cell
         if !accumulator.is_empty() {
-            cells_written += self.process_cell(&mut accumulator, &mut writer, &mut to_include)?;
+            cells_written += self.process_cell(
+                &mut accumulator,
+                &mut writer,
+                &mut to_include,
+                &cells_written,
+            )?;
             last_processed_cell = accumulator.current_idx;
         }
 
@@ -325,6 +334,7 @@ impl MtxReader {
         accumulator: &mut CellAccumulator,
         writer: &mut CellGeneSparseWriter,
         to_include: &mut [bool],
+        cell_written: &usize,
     ) -> IoResult<usize> {
         let cell_idx = accumulator.current_idx;
         let passes_qc = accumulator.to_include(
@@ -338,7 +348,7 @@ impl MtxReader {
             let cell_chunk = CsrCellChunk::from_data(
                 &accumulator.gene_counts,
                 &accumulator.gene_indices,
-                cell_idx,
+                *cell_written,
                 self.qc_params.target_size,
                 true, // to_keep = true since it passed QC
             );
