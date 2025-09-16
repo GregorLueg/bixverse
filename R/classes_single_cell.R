@@ -217,13 +217,52 @@ S7::method(get_sc_var, single_cell_exp) <- function(
 #'
 #' @export
 S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
+  if (missing(i)) {
+    i <- NULL
+  }
+
   if (checkmate::qtest(i, "S+")) {
     get_sc_obs(x, cols = i)
   } else if (checkmate::qtest(i, "I+")) {
     get_sc_obs(x, indices = i)
+  } else if (checkmate::qtest(i, "0")) {
+    get_sc_obs(x)
   } else {
     stop("Invalid type")
   }
+}
+
+### map getters ----------------------------------------------------------------
+
+#' Getter for the different maps in the object
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @returns Returns the maps within the class.
+#'
+#' @export
+get_sc_map <- S7::new_generic(
+  name = "get_sc_maps",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_sc_var single_cell_exp
+#'
+#' @export
+S7::method(get_sc_map, single_cell_exp) <- function(
+  object
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+
+  res <- S7::prop(object, "index_maps")
+
+  return(res)
 }
 
 #### count getters -------------------------------------------------------------
@@ -279,9 +318,11 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   checkmate::qassert(gene_indices, c("0", "I+"))
   checkmate::qassert(.verbose, "B1")
 
-  requireNamespace("Matrx", quietly = TRUE)
+  requireNamespace("Matrix", quietly = TRUE)
 
   rust_con <- get_sc_rust_ptr(object)
+
+  col_index_map <- get_sc_map(object)[["gene_col_idx_map"]]
 
   # Get raw data from Rust
   count_data <- get_counts_from_rust(
@@ -290,6 +331,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
     return_format = return_format,
     cell_indices = cell_indices,
     gene_indices = gene_indices,
+    col_index_map = col_index_map,
     .verbose = .verbose
   )
 
@@ -360,6 +402,8 @@ S7::method(`[`, single_cell_exp) <- function(
 #' return.
 #' @param gene_indices Optional integer vector. The index positions of genes to
 #' return.
+#' @param col_index_map A `gene_column_index_map` class. Contains information
+#' which gene column index belongs to which filtered gene column index.
 #' @param .verbose Boolean. Controls verbosity
 #'
 #' @return Returns a list with:
@@ -376,6 +420,7 @@ get_counts_from_rust <- function(
   return_format,
   cell_indices,
   gene_indices,
+  col_index_map,
   .verbose = TRUE
 ) {
   # checks
@@ -384,6 +429,7 @@ get_counts_from_rust <- function(
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
+  checkmate::assertClass(col_index_map, "gene_column_index_map")
   checkmate::qassert(.verbose, "B1")
 
   res <- if (return_format == "cell") {
@@ -408,6 +454,10 @@ get_counts_from_rust <- function(
       rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
     }
   }
+
+  # update the indices here to match
+  # NEEDS TO BE CHARACTER!!!
+  res$indices <- col_index_map[as.character(res$indices)]
 
   return(res)
 }
@@ -703,6 +753,90 @@ single_cell_duckdb_base <- R6::R6Class(
       return(setNames(data$index, data$id))
     },
 
+    #' Filter the obs table and reset the cell idx
+    #'
+    #' @param filter_vec Boolean vector that will be used to filter the obs
+    #' table.
+    filter_obs_table = function(filter_vec) {
+      # checks
+      checkmate::qassert(filter_vec, "B1")
+      private$check_obs_exists()
+
+      filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
+
+      # get the connection
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "filter_temp",
+        filter_dt,
+        overwrite = TRUE
+      )
+
+      DBI::dbExecute(
+        con,
+        "
+        CREATE OR REPLACE TABLE obs AS
+        SELECT 
+          ROW_NUMBER() OVER() as cell_idx,
+          * EXCLUDE (cell_idx)  -- exclude old cell_idx column
+        FROM obs 
+        WHERE ROWID IN (SELECT cell_idx FROM temp_filter);
+        DROP TABLE filter_temp
+        "
+      )
+    },
+
+    #' Filter the var table and reset the gene idx
+    #'
+    #' @param filter_vec Boolean vector that will be used to filter the var
+    #' table.
+    filter_var_table = function(filter_vec) {
+      # checks
+      checkmate::qassert(filter_vec, "B1")
+      private$check_var_exists()
+
+      filter_dt <- data.frame(gene_idx = which(filter_vec), keep = TRUE)
+
+      # get the connection
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "filter_temp",
+        filter_dt,
+        overwrite = TRUE
+      )
+
+      DBI::dbExecute(
+        con,
+        "
+        CREATE OR REPLACE TABLE var AS
+        SELECT 
+          ROW_NUMBER() OVER() as gene_idx,
+          * EXCLUDE (gene_idx)  -- exclude old gene_idx column
+        FROM var 
+        WHERE ROWID IN (SELECT gene_idx FROM temp_filter);
+        DROP TABLE filter_temp
+        "
+      )
+    },
+
     ###########
     # Setters #
     ###########
@@ -872,14 +1006,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param .verbose Boolean. Controls verbosity of the function.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow of obs in the h5 object.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, .verbose = TRUE) {
+    populate_obs_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(.verbose, "B1")
+      checkmate::qassert(filter, c("B+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -892,10 +1027,9 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(obs) == 0) {
-        warning(
+        error(
           "No obs data could be found in the h5 file. Nothing was loaded."
         )
-        return(invisible(self))
       }
 
       con <- private$connect_db()
@@ -917,20 +1051,15 @@ single_cell_duckdb_con <- R6::R6Class(
         col_name <- names(obs)[i]
         col_path <- obs[[i]]
         col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name) %>%
-          .[, cell_idx := .I] %>%
-          .[, c("cell_idx", col_name), with = FALSE]
+          `names<-`(col_name)
+        if (!is.null(filter)) {
+          col_data <- col_data[filter]
+        }
+        col_data[, cell_idx := .I]
+        setcolorder(col_data, c("cell_idx", col_name))
 
         if (i == 1) {
           colnames(col_data) <- c("cell_idx", "cell_id")
-          if (.verbose) {
-            message(
-              sprintf(
-                "Identified %i cells/observations in the h5 file",
-                nrow(col_data)
-              )
-            )
-          }
           DBI::dbWriteTable(
             con,
             "obs",
@@ -969,14 +1098,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param .verbose Boolean. Controls verbosity of the function.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow of var in the h5 object.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_vars_from_h5 = function(h5_path, .verbose = TRUE) {
+    populate_vars_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(.verbose, "B1")
+      checkmate::qassert(filter, c("B+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -989,10 +1119,9 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(var) == 0) {
-        warning(
-          "No obs data could be found in the h5 file. Nothing was loaded."
+        error(
+          "No var data could be found in the h5 file. Nothing was loaded."
         )
-        return(invisible(self))
       }
 
       con <- private$connect_db()
@@ -1014,20 +1143,16 @@ single_cell_duckdb_con <- R6::R6Class(
         col_name <- names(var)[i]
         col_path <- var[[i]]
         col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name) %>%
-          .[, gene_idx := .I] %>%
-          .[, c("gene_idx", col_name), with = FALSE]
+          `names<-`(col_name)
+        if (!is.null(filter)) {
+          col_data <- col_data[filter]
+        }
+
+        col_data[, gene_idx := .I]
+        setcolorder(col_data, c("gene_idx", col_name))
 
         if (i == 1) {
           colnames(col_data) <- c("gene_idx", "gene_id")
-          if (.verbose) {
-            message(
-              sprintf(
-                "Identified %i genes/features in the h5 file",
-                nrow(col_data)
-              )
-            )
-          }
           DBI::dbWriteTable(
             con,
             "var",
@@ -1057,6 +1182,178 @@ single_cell_duckdb_con <- R6::R6Class(
           )
         }
       }
+
+      invisible(self)
+    },
+
+    ###############
+    # Readers mtx #
+    ###############
+
+    #' Function to populate the obs table from plain text files
+    #'
+    #' @param f_path File path to the plain text file.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow.
+    #'
+    #' @returns Invisible self and populates the internal obs table.
+    populate_obs_from_plain_text = function(f_path, filter = NULL) {
+      # checks
+      checkmate::assertFileExists(f_path)
+      checkmate::qassert(filter, c("B+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+
+      header_df <- DBI::dbGetQuery(
+        conn = con,
+        statement = header_query,
+        params = list(f_path)
+      )
+
+      original_col_names <- colnames(header_df)
+      sanitised_cols_names <- to_snake_case(original_col_names)
+      sanitised_cols_names[1] <- "cell_id"
+
+      col_mapping <- sprintf(
+        '"%s" AS %s',
+        original_col_names,
+        sanitised_cols_names
+      ) %>%
+        paste(collapse = ",\n    ")
+
+      query <- if (!is.null(filter)) {
+        rows_to_keep <- which(filter)
+        row_placeholders <- paste(
+          rep("?", length(rows_to_keep)),
+          collapse = ","
+        )
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT
+            ROW_NUMBER() OVER() as cell_idx,
+            %s
+          FROM (
+            SELECT *, ROW_NUMBER() OVER() as original_row_num
+            FROM read_csv(?)
+          ) t
+          WHERE t.original_row_num IN (%s)",
+          col_mapping,
+          row_placeholders
+        )
+      } else {
+        rows_to_keep <- NULL
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT 
+            ROW_NUMBER() OVER() as cell_idx,
+            %s
+          FROM (
+            SELECT * FROM read_csv(?)
+          )",
+          col_mapping
+        )
+      }
+
+      DBI::dbExecute(
+        conn = con,
+        statement = query,
+        params = c(list(f_path), as.list(rows_to_keep))
+      )
+
+      invisible(self)
+    },
+
+    #' Function to populate the var table from plain text files
+    #'
+    #' @param f_path File path to the plain text file.
+    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
+    #' be read in. The length needs to be same as nrow.
+    #'
+    #' @returns Invisible self and populates the internal var table.
+    populate_var_from_plain_text = function(f_path, filter = NULL) {
+      # checks
+      checkmate::assertFileExists(f_path)
+      checkmate::qassert(filter, c("B+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+
+      header_df <- DBI::dbGetQuery(
+        conn = con,
+        statement = header_query,
+        params = list(f_path)
+      )
+
+      original_col_names <- colnames(header_df)
+      sanitised_cols_names <- to_snake_case(original_col_names)
+      sanitised_cols_names[1] <- "gene_id"
+
+      col_mapping <- sprintf(
+        '"%s" AS %s',
+        original_col_names,
+        sanitised_cols_names
+      ) %>%
+        paste(collapse = ",\n    ")
+
+      query <- if (!is.null(filter)) {
+        rows_to_keep <- which(filter)
+        row_placeholders <- paste(
+          rep("?", length(rows_to_keep)),
+          collapse = ","
+        )
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE var AS
+          SELECT
+            ROW_NUMBER() OVER() AS gene_idx,
+            %s
+          FROM (
+            SELECT *, ROW_NUMBER() OVER() as original_row_num
+            FROM read_csv(?)
+          ) t
+          WHERE t.original_row_num IN (%s)",
+          col_mapping,
+          row_placeholders
+        )
+      } else {
+        rows_to_keep <- NULL
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE var AS
+          SELECT 
+            ROW_NUMBER() OVER() AS gene_idx,
+            %s
+          FROM (
+            SELECT * FROM read_csv(?)
+          )",
+          col_mapping
+        )
+      }
+
+      DBI::dbExecute(
+        conn = con,
+        statement = query,
+        params = c(list(f_path), as.list(rows_to_keep))
+      )
 
       invisible(self)
     }

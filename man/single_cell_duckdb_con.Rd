@@ -3,6 +3,12 @@
 \name{single_cell_duckdb_con}
 \alias{single_cell_duckdb_con}
 \title{Class for storing single cell experimental data in DuckDB (nightly!)}
+\value{
+Invisible self and populates the internal obs table.
+Function to populate the var table from plain text files
+
+Invisible self and populates the internal var table.
+}
 \description{
 This class wraps up the DB connection and methods to interact with the
 observation/cell metadata and the feature/gene metadata.
@@ -15,6 +21,8 @@ observation/cell metadata and the feature/gene metadata.
 \itemize{
 \item \href{#method-single_cell_duckdb_con-populate_obs_from_h5}{\code{single_cell_duckdb_con$populate_obs_from_h5()}}
 \item \href{#method-single_cell_duckdb_con-populate_vars_from_h5}{\code{single_cell_duckdb_con$populate_vars_from_h5()}}
+\item \href{#method-single_cell_duckdb_con-populate_obs_from_plain_text}{\code{single_cell_duckdb_con$populate_obs_from_plain_text()}}
+\item \href{#method-single_cell_duckdb_con-populate_var_from_plain_text}{\code{single_cell_duckdb_con$populate_var_from_plain_text()}}
 \item \href{#method-single_cell_duckdb_con-clone}{\code{single_cell_duckdb_con$clone()}}
 }
 }
@@ -23,6 +31,8 @@ observation/cell metadata and the feature/gene metadata.
 <ul>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="add_data_obs"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-add_data_obs'><code>bixverse::single_cell_duckdb_base$add_data_obs()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="add_data_var"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-add_data_var'><code>bixverse::single_cell_duckdb_base$add_data_var()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="filter_obs_table"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-filter_obs_table'><code>bixverse::single_cell_duckdb_base$filter_obs_table()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="filter_var_table"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-filter_var_table'><code>bixverse::single_cell_duckdb_base$filter_var_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_obs_index_map"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_obs_index_map'><code>bixverse::single_cell_duckdb_base$get_obs_index_map()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_obs_table"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_obs_table'><code>bixverse::single_cell_duckdb_base$get_obs_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="single_cell_duckdb_base" data-id="get_var_index_map"><a href='../../bixverse/html/single_cell_duckdb_base.html#method-single_cell_duckdb_base-get_var_index_map'><code>bixverse::single_cell_duckdb_base$get_var_index_map()</code></a></span></li>
@@ -37,7 +47,7 @@ observation/cell metadata and the feature/gene metadata.
 \subsection{Method \code{populate_obs_from_h5()}}{
 This function populates the obs table from an h5 file (if found).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_h5(h5_path, .verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_h5(h5_path, filter = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -46,7 +56,8 @@ This function populates the obs table from an h5 file (if found).
 \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
 
-\item{\code{.verbose}}{Boolean. Controls verbosity of the function.}
+\item{\code{filter}}{Optional boolean. If provided, only rows with \code{TRUE} will
+be read in. The length needs to be same as nrow of obs in the h5 object.}
 }
 \if{html}{\out{</div>}}
 }
@@ -61,7 +72,7 @@ obs data from the h5ad file into the DuckDB.
 \subsection{Method \code{populate_vars_from_h5()}}{
 This populates the vars table from an h5 file (if found.)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_vars_from_h5(h5_path, .verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_vars_from_h5(h5_path, filter = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -70,13 +81,53 @@ This populates the vars table from an h5 file (if found.)
 \item{\code{h5_path}}{String. Path to the h5 file from which to load in the
 observation table.}
 
-\item{\code{.verbose}}{Boolean. Controls verbosity of the function.}
+\item{\code{filter}}{Optional boolean. If provided, only rows with \code{TRUE} will
+be read in. The length needs to be same as nrow of var in the h5 object.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 Returns invisible self. As a side effect, it will load in the
 obs data from the h5ad file into the DuckDB.
+Function to populate the obs table from plain text files
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_con-populate_obs_from_plain_text"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_obs_from_plain_text}{}}}
+\subsection{Method \code{populate_obs_from_plain_text()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_plain_text(f_path, filter = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{f_path}}{File path to the plain text file.}
+
+\item{\code{filter}}{Optional boolean. If provided, only rows with \code{TRUE} will
+be read in. The length needs to be same as nrow.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_con-populate_var_from_plain_text"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_var_from_plain_text}{}}}
+\subsection{Method \code{populate_var_from_plain_text()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_var_from_plain_text(f_path, filter = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{f_path}}{File path to the plain text file.}
+
+\item{\code{filter}}{Optional boolean. If provided, only rows with \code{TRUE} will
+be read in. The length needs to be same as nrow.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

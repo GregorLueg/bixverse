@@ -1647,13 +1647,15 @@ SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_s
 
 SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes) .Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes)
 
-SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, target_size, min_genes) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, target_size, min_genes)
+SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params)
+
+SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingeCellCountData$generate_gene_based_data <- function(min_cells) .Call(wrap__SingeCellCountData__generate_gene_based_data, self, min_cells)
+SingeCellCountData$generate_gene_based_data <- function(qc_params, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data, self, qc_params, verbose)
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 

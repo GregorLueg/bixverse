@@ -1,8 +1,9 @@
 use hdf5::{File, Result};
+use std::path::Path;
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
-use crate::single_cell::processing::CellQuality;
+use crate::single_cell::processing::*;
 
 /// Helper function to parse compressed sparse format
 ///
@@ -43,15 +44,14 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
 /// ### Returns
 ///
 /// A boolean vector indicating which cells have sufficient genes.
-pub fn write_h5_counts(
-    h5_path: &str,
-    bin_path: &str,
+pub fn write_h5_counts<P: AsRef<Path>>(
+    h5_path: P,
+    bin_path: P,
     cs_type: &str,
     no_cells: usize,
     no_genes: usize,
-    min_genes: usize,
-    size_factor: f32,
-) -> CellQuality {
+    cell_quality: MinCellQuality,
+) -> (usize, CellQuality) {
     let file_data: CompressedSparseData<u16> =
         read_h5ad_x_data(h5_path, cs_type, (no_genes, no_cells)).unwrap();
 
@@ -60,15 +60,22 @@ pub fn write_h5_counts(
     let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
     let (cell_chunk_vec, cell_qc) =
-        CsrCellChunk::generate_chunks_sparse_data(file_data, min_genes, size_factor);
+        CsrCellChunk::generate_chunks_sparse_data(file_data, cell_quality);
 
-    for cell_chunk in cell_chunk_vec {
-        writer.write_cell_chunk(cell_chunk).unwrap();
+    let mut cells_writen = 0_usize;
+
+    for mut cell_chunk in cell_chunk_vec {
+        if cell_chunk.to_keep {
+            cell_chunk.update_index(&cells_writen);
+            writer.write_cell_chunk(cell_chunk).unwrap();
+            cells_writen += 1;
+        }
     }
 
+    writer.update_header_no_cells(cells_writen);
     writer.finalise().unwrap();
 
-    cell_qc
+    (cells_writen, cell_qc)
 }
 
 /////////////
@@ -84,8 +91,8 @@ pub fn write_h5_counts(
 /// ### Returns
 ///
 /// The `CsEitherData` with the counts stored as u16
-pub fn read_h5ad_x_data(
-    file_path: &str,
+pub fn read_h5ad_x_data<P: AsRef<Path>>(
+    file_path: P,
     cs_type: &str,
     shape: (usize, usize),
 ) -> Result<CompressedSparseData<u16>> {
