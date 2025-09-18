@@ -316,9 +316,10 @@ impl CsrCellChunk {
             .unzip();
 
         let qc_data = CellQuality {
-            to_keep,
-            lib_size: Some(lib_size),
-            no_genes: Some(nnz),
+            cell_indices: Vec::new(),
+            gene_indices: Vec::new(),
+            lib_size,
+            no_genes: nnz,
         };
 
         (res, qc_data)

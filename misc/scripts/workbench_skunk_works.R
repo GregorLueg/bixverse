@@ -277,60 +277,81 @@ object[1:10L, ]
 # Rebuild of the h5ad parsing --------------------------------------------------
 
 rextendr::document()
+devtools::load_all()
 
 h5_path <- path.expand("~/Downloads/ERX11148735.h5ad")
 h5_meta <- get_h5ad_dimensions(h5_path)
 
-h5data <- rs_h5ad_data(
-  f_path = path.expand(h5_path),
-  cs_type = "CSR",
-  nrow = h5_meta$dims["var"],
-  ncol = h5_meta$dims["obs"],
-  cell_quality = params_sc_min_quality()
+object <- single_cell_exp(dir_data = tempdir())
+h5_path
+sc_qc_param = params_sc_min_quality()
+.verbose = TRUE
+
+h5_meta <- get_h5ad_dimensions(h5_path)
+
+rust_con <- get_sc_rust_ptr(object)
+
+file_res <- rust_con$h5_to_file(
+  cs_type = h5_meta$type,
+  h5_path = path.expand(h5_path),
+  no_cells = h5_meta$dims["obs"],
+  no_genes = h5_meta$dims["var"],
+  qc_params = sc_qc_param,
+  verbose = .verbose
 )
 
-r_matrix <- new(
-  "dgRMatrix",
-  p = h5data$indptr,
-  x = as.numeric(h5data$data),
-  j = h5data$indices,
-  Dim = as.integer(c(h5data$no_genes, h5data$no_cells))
+rust_con$generate_gene_based_data(
+  qc_params = sc_qc_param,
+  verbose = .verbose
 )
 
-Matrix::colSums(r_matrix)
+duckdb_con <- get_sc_duckdb(object)
+duckdb_con$populate_obs_from_h5(
+  h5_path = h5_path,
+  filter = as.integer(file_res$cell_indices + 1)
+)
+duckdb_con$populate_vars_from_h5(
+  h5_path = h5_path,
+  filter = as.integer(file_res$gene_indices + 1)
+)
 
-h5data$indptr[1:25]
+length(file_res$cell_indices)
 
-length(h5data$indptr)
+duckdb_con$get_obs_table()
 
-length(h5data$data)
+cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
-# 1_406_134
-# 575_218 <- genes with 10 reads
+duckdb_con$add_data_obs(new_data = cell_res_dt)
+cell_map <- duckdb_con$get_obs_index_map()
+gene_map <- duckdb_con$get_var_index_map()
 
-length(h5data$indptr)
-h5data$indices
+S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+object <- set_cell_mapping(x = object, cell_map = cell_map)
+object <- set_gene_mapping(x = object, gene_map = gene_map)
 
+
+# Bebuild the mtx parsing ------------------------------------------------------
+
+rextendr::document()
 
 dir <- tempdir()
 f_path_cells <- file.path(dir, "cells.bin")
 f_path_genes <- file.path(dir, "genes.bin")
-
 
 single_cell_counts <- SingeCellCountData$new(
   f_path_cells = f_path_cells,
   f_path_genes = f_path_genes
 )
 
+mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
 
-cell_res <- single_cell_counts$h5_to_file(
-  cs_type = h5_meta$type,
-  h5_path = path.expand(h5_path),
-  no_cells = h5_meta$dims["obs"],
-  no_genes = h5_meta$dims["var"],
+tictoc::tic()
+res <- single_cell_counts$mtx_to_file(
+  mtx_path = mtx_path,
   qc_params = params_sc_min_quality(),
   verbose = TRUE
 )
+tictoc::toc()
 
 gene_res <- single_cell_counts$generate_gene_based_data(
   verbose = TRUE
@@ -338,10 +359,8 @@ gene_res <- single_cell_counts$generate_gene_based_data(
 
 single_cell_counts$get_cells_by_indices(indices = 1:10L, assay = "norm")
 
-single_cell_counts$get_genes_by_indices(indices = 1:25L, assay = "norm")
+single_cell_counts$get_genes_by_indices(indices = 1:25L, assay = "raw")
 
-single_cell_counts$return_full_mat(
-  assay = "norm",
-  cell_based = TRUE,
-  verbose = TRUE
-)
+length(res$cell_indices)
+
+length(res$lib_size)

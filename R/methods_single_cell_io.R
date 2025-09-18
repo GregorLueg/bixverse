@@ -65,7 +65,7 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  cell_res <- rust_con$h5_to_file(
+  file_res <- rust_con$h5_to_file(
     cs_type = h5_meta$type,
     h5_path = path.expand(h5_path),
     no_cells = h5_meta$dims["obs"],
@@ -74,34 +74,33 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     verbose = .verbose
   )
 
-  gene_res <- rust_con$generate_gene_based_data(
+  rust_con$generate_gene_based_data(
     qc_params = sc_qc_param,
     verbose = .verbose
   )
 
-  # load in the obs and vars
+  # duck db part
   duckdb_con <- get_sc_duckdb(object)
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
-    filter = cell_res$cell_mask
+    filter = as.integer(file_res$cell_indices + 1)
   )
   duckdb_con$populate_vars_from_h5(
     h5_path = h5_path,
-    filter = gene_res$gene_mask
+    filter = as.integer(file_res$gene_indices + 1)
   )
-  cell_res_dt <- data.table::setDT(cell_res)[(cell_mask)][, cell_mask := NULL]
-  gene_res_dt <- data.table::setDT(gene_res)[(gene_mask)][, gene_mask := NULL]
 
-  duckdb_con$add_data_obs(new_data = cell_res_dt)$add_data_var(
-    new_data = gene_res_dt
-  )
+  duckdb_con$get_obs_table()
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
   S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
   object <- set_cell_mapping(x = object, cell_map = cell_map)
   object <- set_gene_mapping(x = object, gene_map = gene_map)
-  object <- set_column_index_map(x = object, gene_mask = gene_res$gene_mask)
 
   return(object)
 }

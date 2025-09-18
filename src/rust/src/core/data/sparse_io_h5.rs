@@ -57,12 +57,14 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
     if verbose {
         println!(
-            "A total of {:?} genes pass the threshold",
-            file_quality.genes_to_keep.len()
+            "Genes passing QC: {}/{}",
+            file_quality.genes_to_keep.len(),
+            no_genes
         );
         println!(
-            "A total of {:?} cells pass the threshold",
-            file_quality.cells_to_keep.len()
+            "Cells passing QC: {}/{}",
+            file_quality.cells_to_keep.len(),
+            no_cells
         );
     }
 
@@ -73,7 +75,7 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
     let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
-    let (cell_chunk_vec, cell_qc) =
+    let (cell_chunk_vec, mut cell_qc): (Vec<CsrCellChunk>, CellQuality) =
         CsrCellChunk::generate_chunks_sparse_data(file_data, cell_quality);
 
     for cell_chunk in cell_chunk_vec {
@@ -84,6 +86,9 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     writer.update_header_no_cells(file_quality.cells_to_keep.len());
     writer.update_header_no_genes(file_quality.genes_to_keep.len());
     writer.finalise().unwrap();
+
+    cell_qc.set_cell_indices(&file_quality.cells_to_keep);
+    cell_qc.set_gene_indices(&file_quality.genes_to_keep);
 
     (
         file_quality.cells_to_keep.len(),

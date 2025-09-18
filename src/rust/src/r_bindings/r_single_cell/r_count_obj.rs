@@ -348,9 +348,10 @@ impl SingeCellCountData {
         self.n_genes = no_genes;
 
         list!(
-            cell_mask = cell_qc.to_keep,
-            lib_size = cell_qc.lib_size.unwrap_or_default(),
-            nnz = cell_qc.no_genes.unwrap_or_default()
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
         )
     }
 
@@ -360,27 +361,38 @@ impl SingeCellCountData {
     ///
     /// * `mtx_path` - Path to the mtx file.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
     /// A list with qc parameters.
-    pub fn mtx_to_file(&mut self, mtx_path: String, qc_params: List) -> extendr_api::Result<List> {
+    pub fn mtx_to_file(
+        &mut self,
+        mtx_path: String,
+        qc_params: List,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let mtx_reader = MtxReader::new(&mtx_path, qc_params)
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params)
+            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+
+        let mtx_quality_data = mtx_reader
+            .parse_mtx_quality(verbose)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         let mtx_res: MtxFinalData = mtx_reader
-            .process_mtx_and_write_bin(&self.f_path_cells)
+            .process_mtx_and_write_bin(&self.f_path_cells, &mtx_quality_data)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         self.n_cells = mtx_res.no_cells;
         self.n_genes = mtx_res.no_genes;
 
         Ok(list!(
-            cell_mask = mtx_res.cell_qc.to_keep,
-            lib_size = mtx_res.cell_qc.lib_size.unwrap_or_default(),
-            nnz = mtx_res.cell_qc.no_genes.unwrap_or_default()
+            cell_indices = mtx_res.cell_qc.cell_indices,
+            gene_indices = mtx_res.cell_qc.gene_indices,
+            lib_size = mtx_res.cell_qc.lib_size,
+            nnz = mtx_res.cell_qc.no_genes
         ))
     }
 

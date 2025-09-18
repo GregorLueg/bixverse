@@ -473,15 +473,14 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow of obs in the h5 object.
+    #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
     populate_obs_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(filter, c("B+", "0"))
+      checkmate::qassert(filter, c("I+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -565,15 +564,14 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow of var in the h5 object.
+    #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
     populate_vars_from_h5 = function(h5_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
-      checkmate::qassert(filter, c("B+", "0"))
+      checkmate::qassert(filter, c("I+", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path

@@ -13,16 +13,36 @@ use crate::core::data::sparse_io::*;
 ///
 /// ### Fields
 ///
-/// * `to_keep` - Boolean vector indicating if the cells passes thresholds
-/// * `lib_size` - Optional library size of the cells
-/// * `no_genes` - Optional number of genes of the cells
-/// * `mt_perc` - Optional number of mitochondrial reads per cell
+/// * `cell_indices` - Indices of which cells to keep.
+/// * `lib_size` - Optional library size of the cells.
+/// * `no_genes` - Optional number of genes of the cells.
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct CellQuality {
-    pub to_keep: Vec<bool>,
-    pub lib_size: Option<Vec<usize>>,
-    pub no_genes: Option<Vec<usize>>,
+    pub cell_indices: Vec<usize>,
+    pub gene_indices: Vec<usize>,
+    pub lib_size: Vec<usize>,
+    pub no_genes: Vec<usize>,
+}
+
+impl CellQuality {
+    /// Update the internal cell indices
+    ///
+    /// ### Params
+    ///
+    /// * `cell_indices` - Vector of cell indices to keep
+    pub fn set_cell_indices(&mut self, cell_indices: &[usize]) {
+        self.cell_indices = cell_indices.to_vec();
+    }
+
+    /// Update the internal gene indices
+    ///
+    /// ### Params
+    ///
+    /// * `gene_indices` - Vector of gene indices to keep
+    pub fn set_gene_indices(&mut self, gene_indices: &[usize]) {
+        self.gene_indices = gene_indices.to_vec();
+    }
 }
 
 /// Structure that stores minimum QC thresholds/info for single cell
