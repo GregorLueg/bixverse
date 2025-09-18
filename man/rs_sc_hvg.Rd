@@ -4,7 +4,7 @@
 \alias{rs_sc_hvg}
 \title{Calculate the percentage of gene sets in the cells}
 \usage{
-rs_sc_hvg(f_path_gene, hvg_method, cell_indices, loess_span, clip_max)
+rs_sc_hvg(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
@@ -20,6 +20,8 @@ to keep.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
 not provided.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A list with the percentages of counts per gene set group detected

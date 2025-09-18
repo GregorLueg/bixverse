@@ -1,6 +1,7 @@
 use extendr_api::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
+use std::time::Instant;
 
 use crate::core::base::loess::*;
 use crate::core::data::sparse_io::*;
@@ -139,17 +140,17 @@ pub struct HvgRes {
 /// ### Returns
 ///
 /// A vector with the percentages of these genes over the total reads.
-pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<(f32, f32, f32)>> {
+pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<f32>> {
     let reader = ParallelSparseReader::new(f_path).unwrap();
 
     let cell_chunks = reader.get_all_cells();
 
-    let mut results: Vec<Vec<(f32, f32, f32)>> = Vec::with_capacity(gene_indices.len());
+    let mut results: Vec<Vec<f32>> = Vec::with_capacity(gene_indices.len());
 
     for gene_set in gene_indices {
         let hash_gene_set: FxHashSet<&u16> = gene_set.iter().collect();
 
-        let percentage: &Vec<(f32, f32, f32)> = &cell_chunks
+        let percentage: &Vec<f32> = &cell_chunks
             .par_iter()
             .map(|chunk| {
                 let total_sum = chunk
@@ -160,7 +161,7 @@ pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<(
                     .map(|(_, val)| val)
                     .sum::<u16>() as f32;
                 let lib_size = chunk.library_size as f32;
-                (total_sum / lib_size, total_sum, lib_size)
+                total_sum / lib_size
             })
             .collect();
 
@@ -262,6 +263,7 @@ fn calculate_std_variance(
 /// * `cell_indices` - HashSet with the cell indices to keep.
 /// * `loess_span` - Span parameter for the loess function
 /// * `clip_max` - Optional clip max parameter
+/// * `verbose` - If verbose, returns the timings of the function.
 ///
 /// ### Returns
 ///
@@ -271,11 +273,24 @@ pub fn get_hvg_vst(
     cell_indices: &FxHashSet<u32>,
     loess_span: f64,
     clip_max: Option<f32>,
+    verbose: bool,
 ) -> HvgRes {
+    let start_total = Instant::now();
+
     // Get data
+    let start_read = Instant::now();
+
     let reader = ParallelSparseReader::new(f_path).unwrap();
     let mut gene_chunks: Vec<CscGeneChunk> = reader.get_all_genes();
     let no_cells = cell_indices.len();
+
+    let end_read = start_read.elapsed();
+
+    if verbose {
+        println!("Read in the data: {:.2?}", end_read);
+    }
+
+    let start_gene_stats = Instant::now();
 
     let results: Vec<(f32, f32)> = gene_chunks
         .par_iter_mut()
@@ -284,6 +299,14 @@ pub fn get_hvg_vst(
             calculate_mean_var_csc_chunk(chunk, no_cells)
         })
         .collect();
+
+    let end_gene_stats = start_gene_stats.elapsed();
+
+    if verbose {
+        println!("Calculated gene statistics: {:.2?}", end_gene_stats);
+    }
+
+    let start_loess = Instant::now();
 
     let (means, vars): (Vec<f32>, Vec<f32>) = results.into_iter().unzip();
 
@@ -294,15 +317,35 @@ pub fn get_hvg_vst(
     let loess = LoessRegression::new(loess_span, 1);
     let loess_res = loess.fit(&means_log10, &vars_log10);
 
+    let end_loess = start_loess.elapsed();
+
+    if verbose {
+        println!("Fitted Loess: {:.2?}", end_loess);
+    }
+
+    let start_standard = Instant::now();
+
     let var_standardised: Vec<f32> = gene_chunks
         .par_iter()
         .zip(loess_res.fitted_vals.par_iter())
         .zip(means.par_iter())
         .map(|((chunk_i, var_i), mean_i)| {
-            let var_32 = *var_i as f32;
-            calculate_std_variance(chunk_i, mean_i, &var_32, &clip_max, no_cells)
+            let expected_var = 10_f64.powf(*var_i) as f32;
+            calculate_std_variance(chunk_i, mean_i, &expected_var, &clip_max, no_cells)
         })
         .collect();
+
+    let end_standard = start_standard.elapsed();
+
+    if verbose {
+        println!("Standardised variance: {:.2?}", end_standard);
+    }
+
+    let total = start_total.elapsed();
+
+    if verbose {
+        println!("Total run time HVG detection: {:.2?}", total);
+    }
 
     // transform to f64 for R
     HvgRes {

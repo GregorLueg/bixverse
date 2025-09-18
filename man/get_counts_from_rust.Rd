@@ -10,7 +10,6 @@ get_counts_from_rust(
   return_format,
   cell_indices,
   gene_indices,
-  sc_map,
   .verbose = TRUE
 )
 }
@@ -26,8 +25,6 @@ return.}
 
 \item{gene_indices}{Optional integer vector. The index positions of genes to
 return.}
-
-\item{sc_map}{A \code{sc_mapper} class. Contains various mapping information.}
 
 \item{.verbose}{Boolean. Controls verbosity}
 }

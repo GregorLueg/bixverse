@@ -4,12 +4,13 @@
 \alias{set_cell_to_keep.sc_mapper}
 \title{Set cells to keep for sc_mapper}
 \usage{
-\method{set_cell_to_keep}{sc_mapper}(x, cell_indices)
+\method{set_cell_to_keep}{sc_mapper}(x, cells_to_keep)
 }
 \arguments{
 \item{x}{An \code{sc_mapper} object}
 
-\item{cell_indices}{Logical vector indicating which genes to include}
+\item{cells_to_keep}{String or integer. The names or indices of the cells
+to keep in downstream analysis.}
 }
 \value{
 Updated \code{sc_mapper} object with column index mapping set

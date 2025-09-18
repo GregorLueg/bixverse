@@ -382,7 +382,7 @@ impl SingeCellCountData {
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         let mtx_res: MtxFinalData = mtx_reader
-            .process_mtx_and_write_bin(&self.f_path_cells, &mtx_quality_data)
+            .process_mtx_and_write_bin(&self.f_path_cells, &mtx_quality_data, verbose)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         self.n_cells = mtx_res.no_cells;

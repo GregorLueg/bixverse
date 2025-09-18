@@ -46,18 +46,7 @@ fn rs_sc_get_gene_set_perc(f_path_cell: &str, gene_set_idx: List) -> extendr_api
     #[allow(clippy::needless_range_loop)]
     for i in 0..result_list.len() {
         let res_i = &res[i];
-        let mut perc_i = Vec::with_capacity(res_i.len());
-        let mut count_i = Vec::with_capacity(res_i.len());
-        let mut lib_size_i = Vec::with_capacity(res_i.len());
-
-        for val in res_i {
-            perc_i.push(val.0);
-            count_i.push(val.1);
-            lib_size_i.push(val.2);
-        }
-
-        let r_i = list!(percentage = perc_i, sum = count_i, lib_size = lib_size_i);
-        result_list.set_elt(i, Robj::from(r_i)).unwrap();
+        result_list.set_elt(i, Robj::from(res_i)).unwrap();
     }
 
     Ok(result_list)
@@ -110,6 +99,7 @@ fn get_hvg_method(s: &str) -> Option<HvgMethod> {
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
 /// in the cells:
@@ -128,6 +118,7 @@ fn rs_sc_hvg(
     cell_indices: Vec<i32>,
     loess_span: f64,
     clip_max: Option<f32>,
+    verbose: bool,
 ) -> List {
     let cell_set: FxHashSet<u32> = cell_indices.iter().map(|x| *x as u32).collect();
     let hvg_type = get_hvg_method(hvg_method)
@@ -135,7 +126,7 @@ fn rs_sc_hvg(
         .unwrap();
 
     let hvg_res: HvgRes = match hvg_type {
-        HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max),
+        HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
         HvgMethod::MeanVarBin => get_hvg_mvb(),
         HvgMethod::Dispersion => get_hvg_dispersion(),
     };

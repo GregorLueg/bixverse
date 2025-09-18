@@ -103,15 +103,7 @@ bixverse_sc <- single_cell_exp(dir_data = tempdir())
 
 bixverse_sc <- load_h5ad(object = bixverse_sc, h5_path = h5_path)
 
-
-S7::method(load_h5ad, single_cell_exp)(new_name, h5_path = h5_path)
-
-obs <- get_sc_obs(
-  bixverse_sc
-)
-
-get_sc_map(bixverse_sc)
-
+obs <- get_sc_obs(bixverse_sc)
 var <- get_sc_var(bixverse_sc)
 
 counts <- bixverse_sc[,, assay = "raw", return_format = "gene"]
@@ -124,81 +116,47 @@ tictoc::tic()
 counts_gene <- bixverse_sc[, 1:100L, assay = "norm", return_format = "cell"]
 tictoc::toc()
 
-var <- get_sc_var(bixverse_sc)
+get_gene_names(bixverse_sc)
 
 library('biomaRt')
 mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
 G_list <- getBM(
   filters = "ensembl_gene_id",
-  attributes = c("ensembl_gene_id", "external_gene_name"),
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
   values = var$gene_id,
   mart = mart
 )
 
-setDT(G_list)
-
 mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
 
-lib_size <- Matrix::rowSums(counts)
-
-mt_reads <- Matrix::rowSums(counts[, mt_genes])
-
-r_mt <- mt_reads / lib_size
-
-x <- bixverse_sc@sc_map
-
-r_gene_idx <- x[["gene_mapping"]][gene_ids]
-
-x$gene_column_index_map[as.character(r_gene_idx)]
-
-rust_gene_idx <- as.integer(names(x$gene_column_index_map[as.character(
-  r_gene_idx
-)]))
-
-get_updated_gene_indices(x, rust_gene_idx)
-
-r_gene_idx
-
-bixverse_sc@sc_map$gene_column_index_map
-
-bixverse_sc@sc_map$gene_mapping
-
-gene_idx_of_interest <- as.numeric(names(bixverse_sc@sc_map$gene_column_index_map[bixverse_sc@sc_map$gene_mapping[
-  mt_genes
-]]))
-
-gs_of_interest <- list("mt_perc" = as.integer(gene_idx_of_interest))
-
-rextendr::document()
-
-tictoc::tic()
-qc_res <- rs_sc_get_gene_set_perc(
-  f_path_cell = file.path(bixverse_sc@dir_data, "counts_cells.bin"),
-  gene_set_idx = gs_of_interest
+gs_of_interest <- list(
+  "mt_perc" = mt_genes,
+  "rb_perc" = rps_genes
 )
-tictoc::toc()
 
-qc_res$mt_perc$percentage[1:10]
-r_mt[1:10]
-
-qc_res$mt_perc$sum[1:10]
-mt_reads[1:10]
-
-qc_res$mt_perc$lib_size[1:10]
-lib_size[1:10]
+bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
 devtools::load_all()
 
-bixverse_sc[["mt_perc"]] <- qc_res$mt_perc
+cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.05, cell_id]
 
-bixverse_sc[[]]
+bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
 
-bixverse_sc[[]][mt_perc <= 0.05]
+list.files(bixverse_sc@dir_data)
+
+rextendr::document()
+
 
 tictoc::tic()
-obs <- get_sc_obs(
-  bixverse_sc
+res <- rs_sc_hvg(
+  f_path_gene = file.path(bixverse_sc@dir_data, "counts_genes.bin"),
+  hvg_method = "vst",
+  cell_indices = as.integer(bixverse_sc@sc_map$cells_to_keep_idx),
+  loess_span = 0.3,
+  clip_max = NULL,
+  verbose = TRUE
 )
 tictoc::toc()
 
@@ -262,6 +220,38 @@ object = load_mtx(
   )
 )
 tictoc::toc()
+
+
+G_list <- getBM(
+  filters = "ensembl_gene_id",
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
+  values = get_gene_names(object),
+  mart = mart
+)
+setDT(G_list)
+
+mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
+
+gs_of_interest <- list(
+  "mt_perc" = mt_genes,
+  "rb_perc" = rps_genes
+)
+
+object <- gene_set_proportions(object, gs_of_interest)
+
+object[[]]
+
+object <- set_cell_to_keep(object, get_cell_names(object))
+
+res <- rs_sc_hvg(
+  f_path_gene = file.path(object@dir_data, "counts_genes.bin"),
+  hvg_method = "vst",
+  cell_indices = as.integer(object@sc_map$cells_to_keep_idx),
+  loess_span = 0.3,
+  clip_max = NULL,
+  verbose = TRUE
+)
 
 object[1:10L, ]
 
@@ -328,39 +318,3 @@ gene_map <- duckdb_con$get_var_index_map()
 S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
 object <- set_cell_mapping(x = object, cell_map = cell_map)
 object <- set_gene_mapping(x = object, gene_map = gene_map)
-
-
-# Bebuild the mtx parsing ------------------------------------------------------
-
-rextendr::document()
-
-dir <- tempdir()
-f_path_cells <- file.path(dir, "cells.bin")
-f_path_genes <- file.path(dir, "genes.bin")
-
-single_cell_counts <- SingeCellCountData$new(
-  f_path_cells = f_path_cells,
-  f_path_genes = f_path_genes
-)
-
-mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
-
-tictoc::tic()
-res <- single_cell_counts$mtx_to_file(
-  mtx_path = mtx_path,
-  qc_params = params_sc_min_quality(),
-  verbose = TRUE
-)
-tictoc::toc()
-
-gene_res <- single_cell_counts$generate_gene_based_data(
-  verbose = TRUE
-)
-
-single_cell_counts$get_cells_by_indices(indices = 1:10L, assay = "norm")
-
-single_cell_counts$get_genes_by_indices(indices = 1:25L, assay = "raw")
-
-length(res$cell_indices)
-
-length(res$lib_size)

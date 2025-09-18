@@ -13,7 +13,6 @@ new_sc_mapping <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
     cell_mapping = NULL,
-    gene_column_index_map = NULL,
     cells_to_keep_idx = NULL
   )
 
@@ -46,23 +45,14 @@ set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
 
-#' Set column index map for sc_mapper object
-#'
-#' @param x An object to set column index mapping for
-#' @param gene_mask Boolean vector indicating which genes are being kept
-#'
-#' @export
-set_column_index_map <- function(x, gene_mask) {
-  UseMethod("set_column_index_map")
-}
-
 #' Set cells to keep for sc_mapper object
 #'
 #' @param x An object to set cells to keep for
-#' @param cell_indices Integer. The indices of the cells to keep.
+#' @param cells_to_keep String or integer. The names or indices of the cells
+#' to keep in downstream analysis.
 #'
 #' @export
-set_cell_to_keep <- function(x, cell_indices) {
+set_cell_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cell_to_keep")
 }
 
@@ -79,7 +69,7 @@ set_cell_to_keep <- function(x, cell_indices) {
 set_gene_mapping.sc_mapper <- function(x, gene_map) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(gene_map, "I+")
+  checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map)
 
   x[["gene_mapping"]] <- gene_map
@@ -98,7 +88,7 @@ set_gene_mapping.sc_mapper <- function(x, gene_map) {
 set_cell_mapping.sc_mapper <- function(x, cell_map) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(cell_map, "I+")
+  checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map)
 
   x[["cell_mapping"]] <- cell_map
@@ -106,48 +96,28 @@ set_cell_mapping.sc_mapper <- function(x, cell_map) {
   return(x)
 }
 
-#' Set column index map for sc_mapper using gene mask
-#'
-#' @param x An `sc_mapper` object
-#' @param gene_mask Logical vector indicating which genes to include
-#'
-#' @return Updated `sc_mapper` object with column index mapping set
-#'
-#' @export
-set_column_index_map.sc_mapper <- function(x, gene_mask) {
-  # checks
-  checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(gene_mask, "B+")
-
-  # set this to Rust 0 indexing...
-  original_indices <- which(gene_mask) - 1
-  new_indices <- seq_along(original_indices) - 1
-
-  gene_col_map <- setNames(
-    new_indices,
-    as.character(original_indices)
-  )
-
-  x[["gene_column_index_map"]] <- gene_col_map
-
-  return(x)
-}
-
 #' Set cells to keep for sc_mapper
 #'
 #' @param x An `sc_mapper` object
-#' @param cell_indices Logical vector indicating which genes to include
+#' @param cells_to_keep String or integer. The names or indices of the cells
+#' to keep in downstream analysis.
 #'
 #' @return Updated `sc_mapper` object with column index mapping set
 #'
 #' @export
-set_cell_to_keep.sc_mapper <- function(x, cell_indices) {
+set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(cell_indices, "I1")
+  checkmate::qassert(cells_to_keep, c("N+", "S+"))
+
+  res <- if (is.numeric(cells_to_keep)) {
+    cells_to_keep - 1
+  } else {
+    x[["cell_mapping"]][cells_to_keep] - 1
+  }
 
   # transform to Rust 0-based indexing
-  x[["cells_to_keep_idx"]] <- cell_indices - 1
+  x[["cells_to_keep_idx"]] <- res
 
   return(x)
 }
@@ -174,6 +144,15 @@ get_cell_names <- function(x) {
   UseMethod("get_cell_names")
 }
 
+#' Get the index position for a gene
+#'
+#' @param x An object to get the gene index for.
+#' @param gene_ids String vector. The gene ids to search for.
+#' @param rust_index Bool. Shall rust-based indexing be returned.
+get_gene_indices <- function(x, gene_ids, rust_index) {
+  UseMethod("get_gene_indices")
+}
+
 ### methods --------------------------------------------------------------------
 
 #' Get the gene names
@@ -193,6 +172,30 @@ get_gene_names.sc_mapper <- function(x) {
 #' Get the cell names
 #'
 #' @param x An `sc_mapper` object
+#' @param gene_ids String vector. The gene ids to search for.
+#' @param rust_index Bool. Shall rust-based indexing be returned.
+#'
+#' @return The gene indices
+#'
+#' @export
+get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  gene_map <- x$gene_mapping
+  indices <- which(names(gene_map) %in% gene_ids)
+  if (rust_index) {
+    indices <- indices - 1
+  }
+
+  return(as.integer(indices))
+}
+
+#' Get the gene indices
+#'
+#' @param x An `sc_mapper` object
 #'
 #' @return The cell names
 #'
@@ -202,69 +205,6 @@ get_cell_names.sc_mapper <- function(x) {
   checkmate::assertClass(x, "sc_mapper")
 
   return(names(x[["cell_mapping"]]))
-}
-
-## utils -----------------------------------------------------------------------
-
-### generics -------------------------------------------------------------------
-
-#' Set gene mapping for sc_mapper object
-#'
-#' @param x An object to get the updated gene indices from
-#' @param gene_indices Integers. The old gene indices
-#'
-#' @export
-get_updated_gene_indices <- function(x, gene_indices) {
-  UseMethod("get_updated_gene_indices")
-}
-
-#' Get the Rust gene indices based on gene IDs
-#'
-#' @param x An object to set gene mapping for
-#' @param gene_ids String vector. The names of the genes you wish to get the
-#' Rust index identifiers for.
-#'
-#' @export
-get_rust_gene_indices <- function(x, gene_ids) {
-  UseMethod("get_rust_gene_indices")
-}
-
-### methods --------------------------------------------------------------------
-
-#' Get updated gene indices
-#'
-#' @param x An `sc_mapper` object
-#' @param gene_indices Integer vector. The gene indices to map.
-#'
-#' @return Updated gene indices
-#'
-#' @export
-get_updated_gene_indices.sc_mapper <- function(x, gene_indices) {
-  # checks
-  checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(gene_indices, "I+")
-
-  new_indices <- x[["gene_column_index_map"]][as.character(gene_indices)]
-
-  return(new_indices)
-}
-
-#' Get updated gene indices
-#'
-#' @param x An `sc_mapper` object
-#' @param gene_ids String vector. The names of the genes you wish to get the
-#' Rust index identifiers for.
-#'
-#' @return Updated gene indices
-#'
-#' @export
-get_rust_gene_indices.sc_mapper <- function(x, gene_ids) {
-  # checks
-  checkmate::assertClass(x, "sc_mapper")
-  checkmate::qassert(gene_indices, "S+")
-
-  r_gene_idx <- x[["gene_mapping"]]
-  rust_idx <- x[[""]]
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -601,7 +541,6 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
     return_format = return_format,
     cell_indices = cell_indices,
     gene_indices = gene_indices,
-    sc_map = sc_map,
     .verbose = .verbose
   )
 
@@ -672,7 +611,6 @@ S7::method(`[`, single_cell_exp) <- function(
 #' return.
 #' @param gene_indices Optional integer vector. The index positions of genes to
 #' return.
-#' @param sc_map A `sc_mapper` class. Contains various mapping information.
 #' @param .verbose Boolean. Controls verbosity
 #'
 #' @return Returns a list with:
@@ -689,7 +627,6 @@ get_counts_from_rust <- function(
   return_format,
   cell_indices,
   gene_indices,
-  sc_map,
   .verbose = TRUE
 ) {
   # checks
@@ -698,7 +635,6 @@ get_counts_from_rust <- function(
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
-  checkmate::assertClass(sc_map, "sc_mapper")
   checkmate::qassert(.verbose, "B1")
 
   res <- if (return_format == "cell") {
@@ -722,14 +658,6 @@ get_counts_from_rust <- function(
     } else {
       rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
     }
-  }
-
-  # update the indices here to match
-  if (return_format == "cell") {
-    res$indices <- get_updated_gene_indices(
-      x = sc_map,
-      gene_indices = res$indices
-    )
   }
 
   return(res)
@@ -866,6 +794,31 @@ S7::method(get_gene_names, single_cell_exp) <- function(
   return(gene_names)
 }
 
+#' @name get_gene_indices.single_cell_exp
+#'
+#' @title Get gene indices for `single_cell_exp`
+#'
+#' @method get_gene_indices single_cell_exp
+S7::method(get_gene_indices, single_cell_exp) <- function(
+  x,
+  gene_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  # forward to S3
+  res <- get_gene_indices(
+    x = S7::prop(x, "sc_map"),
+    gene_ids = gene_ids,
+    rust_index = rust_index
+  )
+
+  return(res)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
@@ -919,10 +872,26 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
 #' @export
 S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
   checkmate::assertClass(x, "bixverse::single_cell_exp")
-  checkmate::qassert(i, "S1")
-  checkmate::qassert(value, "a")
+  checkmate::qassert(i, "S+")
+  if (length(i) == 1) {
+    checkmate::qassert(value, "a")
+  } else {
+    checkmate::assertList(value, names = "named", types = "atomic")
+  }
 
-  x <- set_sc_new_obs_col(object = x, col_name = i, new_data = value)
+  if (length(i) == 1) {
+    x <- set_sc_new_obs_col(object = x, col_name = i, new_data = value)
+  } else {
+    for (j in seq_along(i)) {
+      col_name_j <- names(value)[j]
+      new_data_j <- value[[j]]
+      x <- set_sc_new_obs_col(
+        object = x,
+        col_name = col_name_j,
+        new_data = new_data_j
+      )
+    }
+  }
 
   return(x)
 }
@@ -940,7 +909,7 @@ S7::method(set_gene_mapping, single_cell_exp) <- function(
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
-  checkmate::qassert(gene_map, "I+")
+  checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map, "named")
 
   # add the data using the S3 method
@@ -963,35 +932,13 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
-  checkmate::qassert(cell_map, "I+")
+  checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map, "named")
 
   # add the data using the S3 method
   S7::prop(x, "sc_map") <- set_cell_mapping(
     x = S7::prop(x, "sc_map"),
     cell_map = cell_map
-  )
-
-  return(x)
-}
-
-#' @name set_column_index_map.single_cell_exp
-#'
-#' @title Set column index method for `single_cell_exp`
-#'
-#' @method set_column_index_map single_cell_exp
-S7::method(set_column_index_map, single_cell_exp) <- function(
-  x,
-  gene_mask
-) {
-  # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
-  checkmate::qassert(gene_mask, "B+")
-
-  # add the data using the S3 method
-  S7::prop(x, "sc_map") <- set_column_index_map(
-    x = S7::prop(x, "sc_map"),
-    gene_mask = gene_mask
   )
 
   return(x)
@@ -1004,16 +951,16 @@ S7::method(set_column_index_map, single_cell_exp) <- function(
 #' @method set_cell_to_keep single_cell_exp
 S7::method(set_cell_to_keep, single_cell_exp) <- function(
   x,
-  cell_indices
+  cells_to_keep
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
-  checkmate::qassert(cell_indices, "I+")
+  checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_map") <- set_cell_to_keep(
     x = S7::prop(x, "sc_map"),
-    cell_indices = cell_indices
+    cells_to_keep = cells_to_keep
   )
 
   return(x)

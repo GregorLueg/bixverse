@@ -1672,6 +1672,7 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc
 #' @param loess_span Numeric. The span parameter for the loess function.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 #' not provided.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the percentages of counts per gene set group detected
 #' in the cells:
@@ -1683,7 +1684,7 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc
 #' }
 #'
 #' @export
-rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max)
+rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

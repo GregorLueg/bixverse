@@ -249,6 +249,7 @@ impl MtxReader {
         mut self,
         bin_path: &str,
         quality: &CellOnFileQuality,
+        verbose: bool,
     ) -> IoResult<MtxFinalData> {
         let mut writer = CellGeneSparseWriter::new(
             bin_path,
@@ -263,6 +264,12 @@ impl MtxReader {
 
         self.reader.rewind()?;
         Self::skip_header(&mut self.reader)?;
+
+        if verbose {
+            println!(
+                "Starting to write high quality cells, genes in a cell-friendly format to disk."
+            )
+        }
 
         while {
             line_buffer.clear();

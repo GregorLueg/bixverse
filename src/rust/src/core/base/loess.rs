@@ -1,4 +1,5 @@
 use crate::assert_same_len;
+use rayon::prelude::*;
 
 /// Structure to store the Loess results
 ///
@@ -162,98 +163,140 @@ impl LoessRegression {
             };
         }
 
-        let mut sorted_points = valid.clone();
+        let mut sorted_points = valid;
         sorted_points.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
-        let x_sorted: Vec<f64> = sorted_points.iter().map(|(_, x, _)| *x).collect();
-        let y_sorted: Vec<f64> = sorted_points.iter().map(|(_, _, y)| *y).collect();
-
-        let n_valid = valid.len();
+        let n_valid = sorted_points.len();
         let no_neighbours = ((n_valid as f64) * self.span).max(1.0) as usize;
 
         let mut fitted_values = vec![0.0; n];
         let mut residuals = vec![0.0; n];
 
-        for (orig_idx, x_val, y_val) in &valid {
-            let fitted_val = self.fit_local_regression(x_val, &x_sorted, &y_sorted, no_neighbours);
+        // parallelise for speed up
+        let results: Vec<_> = sorted_points
+            .par_iter()
+            .map(|(orig_idx, x_val, y_val)| {
+                let fitted_val = self.fit_point(&sorted_points, *x_val, no_neighbours);
+                (*orig_idx, fitted_val, y_val - fitted_val)
+            })
+            .collect();
 
-            fitted_values[*orig_idx] = fitted_val;
-            residuals[*orig_idx] = y_val - fitted_val;
+        for (orig_idx, fitted_val, residual) in results {
+            fitted_values[orig_idx] = fitted_val;
+            residuals[orig_idx] = residual;
         }
 
         LoessRes {
             fitted_vals: fitted_values,
             residuals,
-            valid_indices: valid.iter().map(|(idx, _, _)| *idx).collect(),
+            valid_indices: sorted_points.iter().map(|(idx, _, _)| *idx).collect(),
         }
     }
 
-    /// Helper to fit the local regression
+    /// Fits a given point
     ///
     /// ### Params
     ///
-    /// * `target_x` - The target variable at this point
-    /// * `x` - Slice of the predictor variable
-    /// * `y` - Slice of the response variable
-    /// * `k` - Number of neighbours to use
+    /// * `sorted_points` - A slice of tuples of the position, x and y value
+    /// * `target_x` - The target value
+    /// * `k` - Number of neighbours
     ///
     /// ### Returns
     ///
-    /// The value for the target x
-    fn fit_local_regression(&self, target_x: &f64, x: &[f64], y: &[f64], k: usize) -> f64 {
-        let neighbours = self.find_neighbors(target_x, x, k);
+    /// The fitted value
+    fn fit_point(&self, sorted_points: &[(usize, f64, f64)], target_x: f64, k: usize) -> f64 {
+        let neighbors = self.find_neighbors_binary(sorted_points, target_x, k);
 
-        // early return if there are no neighbours
-        if neighbours.is_empty() {
+        if neighbors.is_empty() {
             return 0.0;
         }
 
-        let max_dist = neighbours
+        let max_dist = neighbors
             .iter()
-            .map(|&i| (x[i] - target_x).abs())
+            .map(|&i| (sorted_points[i].1 - target_x).abs())
             .fold(0.0, f64::max);
 
-        // all neighbors are at the same x value
         if max_dist == 0.0 {
-            let weights_sum: f64 = neighbours.len() as f64;
-            return neighbours.iter().map(|&i| y[i]).sum::<f64>() / weights_sum;
+            return neighbors.iter().map(|&i| sorted_points[i].2).sum::<f64>()
+                / neighbors.len() as f64;
         }
 
-        let weights: Vec<f64> = neighbours
-            .iter()
-            .map(|&i| self.tricube_weight((x[i] - target_x).abs() / max_dist))
-            .collect();
+        let mut x_vals = [0.0; 64];
+        let mut y_vals = [0.0; 64];
+        let mut weights = [0.0; 64];
+
+        let n_neighbors = neighbors.len().min(64);
+        let inv_max_dist = 1.0 / max_dist;
+
+        for (i, &idx) in neighbors.iter().take(n_neighbors).enumerate() {
+            let (_, nx, ny) = sorted_points[idx];
+            x_vals[i] = nx;
+            y_vals[i] = ny;
+            weights[i] = self.tricube_weight((nx - target_x).abs() * inv_max_dist);
+        }
 
         self.weighted_polynomial_fit(
-            target_x,
-            &neighbours.iter().map(|&i| x[i]).collect::<Vec<_>>(),
-            &neighbours.iter().map(|&i| y[i]).collect::<Vec<_>>(),
-            &weights,
+            &target_x,
+            &x_vals[..n_neighbors],
+            &y_vals[..n_neighbors],
+            &weights[..n_neighbors],
         )
     }
 
-    /// Helper function get k nearest neighbours
+    /// Find neighhbours via binary search
+    ///
+    /// Uses binary search under the hood for speed.
     ///
     /// ### Params
     ///
-    /// * `target_x` - Target value.
-    /// * `x` - Remaining other values.
-    /// * `k` - Number of neighbours.
-    ///
-    /// ### Returns
-    ///
-    /// The neighbour positions
-    fn find_neighbors(&self, target_x: &f64, x: &[f64], k: usize) -> Vec<usize> {
-        let mut distances: Vec<(usize, f64)> = x
-            .iter()
-            .enumerate()
-            .map(|(i, x)| (i, (x - target_x).abs()))
-            .collect();
+    /// `sorted_points` - A slice of tuples of the position, x and y value
+    /// `target_x` - The target value
+    /// `k` - Number of neighbour
+    fn find_neighbors_binary(
+        &self,
+        sorted_points: &[(usize, f64, f64)],
+        target_x: f64,
+        k: usize,
+    ) -> Vec<usize> {
+        let n = sorted_points.len();
+        if k >= n {
+            return (0..n).collect();
+        }
 
-        distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-        distances.truncate(k);
+        // Binary search for insertion point
+        let insert_pos = sorted_points
+            .binary_search_by(|probe| probe.1.partial_cmp(&target_x).unwrap())
+            .unwrap_or_else(|pos| pos);
 
-        distances.into_iter().map(|(i, _)| i).collect()
+        // Expand around insertion point
+        let mut l = insert_pos;
+        let mut r = insert_pos;
+        let mut neighbors = Vec::with_capacity(k);
+
+        for _ in 0..k {
+            let left_dist = if l > 0 {
+                (sorted_points[l - 1].1 - target_x).abs()
+            } else {
+                f64::INFINITY
+            };
+            let right_dist = if r < n {
+                (sorted_points[r].1 - target_x).abs()
+            } else {
+                f64::INFINITY
+            };
+
+            if left_dist <= right_dist && l > 0 {
+                l -= 1;
+                neighbors.push(l);
+            } else if r < n {
+                neighbors.push(r);
+                r += 1;
+            } else {
+                break;
+            }
+        }
+
+        neighbors
     }
 
     /// Tricube weight function: (1 - |u|³)³ for |u| < 1, 0 otherwise
@@ -265,12 +308,13 @@ impl LoessRegression {
     /// ### Returns
     ///
     /// The tricube weight
+    #[inline]
     fn tricube_weight(&self, u: f64) -> f64 {
-        if u.abs() >= 1.0 {
+        if u >= 1.0 {
             0.0
         } else {
-            let temp = 1.0 - u.abs().powi(3);
-            temp.powi(3)
+            let temp = 1.0 - u * u * u;
+            temp * temp * temp
         }
     }
 
@@ -286,21 +330,10 @@ impl LoessRegression {
     /// ### Returns
     ///
     /// Value at this position
-    fn weighted_polynomial_fit(
-        &self,
-        target_x: &f64,
-        x_vals: &[f64],
-        y_vals: &[f64],
-        weights: &[f64],
-    ) -> f64 {
-        let n = x_vals.len();
-        if n == 0 {
-            return 0.0;
-        }
-
+    fn weighted_polynomial_fit(&self, target_x: &f64, x: &[f64], y: &[f64], w: &[f64]) -> f64 {
         match self.loess_type {
-            LoessFunc::Linear => self.weighted_linear_fit(target_x, x_vals, y_vals, weights),
-            LoessFunc::Quadratic => self.weighted_quadratic_fit(target_x, x_vals, y_vals, weights),
+            LoessFunc::Linear => self.weighted_linear_fit(target_x, x, y, w),
+            LoessFunc::Quadratic => self.weighted_quadratic_fit(target_x, x, y, w),
         }
     }
 
@@ -317,23 +350,31 @@ impl LoessRegression {
     ///
     /// Value at this position with a linear regression
     fn weighted_linear_fit(&self, target_x: &f64, x: &[f64], y: &[f64], w: &[f64]) -> f64 {
-        let w_sum = w.iter().sum::<f64>();
-        if w_sum == 0_f64 {
-            let res = y.iter().sum::<f64>() / y.len() as f64;
-            return res;
+        let mut w_sum = 0.0;
+        let mut wx_sum = 0.0;
+        let mut wy_sum = 0.0;
+        let mut wxx_sum = 0.0;
+        let mut wxy_sum = 0.0;
+
+        for i in 0..x.len() {
+            let wi = w[i];
+            let xi = x[i];
+            let yi = y[i];
+
+            w_sum += wi;
+            wx_sum += wi * xi;
+            wy_sum += wi * yi;
+            wxx_sum += wi * xi * xi;
+            wxy_sum += wi * xi * yi;
         }
 
-        let wx_sum = w.iter().zip(x).map(|(w, x)| w * x).sum::<f64>();
-        let wy_sum = w.iter().zip(y).map(|(w, y)| w * y).sum::<f64>();
-        let wxx_sum = w.iter().zip(x).map(|(w, x)| w * x * x).sum::<f64>();
-        let wxy_sum = w
-            .iter()
-            .zip(x.iter().zip(y.iter()))
-            .map(|(w, (x, y))| w * x * y)
-            .sum::<f64>();
+        if w_sum == 0.0 {
+            return y.iter().sum::<f64>() / y.len() as f64;
+        }
 
-        let x_mean = wx_sum / w_sum;
-        let y_mean = wy_sum / w_sum;
+        let inv_w_sum = 1.0 / w_sum;
+        let x_mean = wx_sum * inv_w_sum;
+        let y_mean = wy_sum * inv_w_sum;
 
         let numerator = wxy_sum - w_sum * x_mean * y_mean;
         let denominator = wxx_sum - w_sum * x_mean * x_mean;
@@ -361,39 +402,40 @@ impl LoessRegression {
     ///
     /// Value at this position with a quadratic regression
     fn weighted_quadratic_fit(&self, target_x: &f64, x: &[f64], y: &[f64], w: &[f64]) -> f64 {
-        let n = x.len();
-        // Fall back to linear for insufficient points
-        if n < 3 {
+        if x.len() < 3 {
             return self.weighted_linear_fit(target_x, x, y, w);
         }
 
-        let mut a = [[0.0; 3]; 3]; // 3x3 matrix
+        let mut a = [[0.0; 3]; 3];
         let mut b = [0.0; 3];
 
-        for i in 0..n {
-            let x_i = x[i];
-            let y_i = y[i];
-            let w_i = w[i];
+        for i in 0..x.len() {
+            let xi = x[i];
+            let yi = y[i];
+            let wi = w[i];
+            let xi2 = xi * xi;
 
-            let basis = [1.0, x_i, x_i * x_i];
+            // Manual matrix construction (faster than loops)
+            a[0][0] += wi;
+            a[0][1] += wi * xi;
+            a[0][2] += wi * xi2;
+            a[1][1] += wi * xi2;
+            a[1][2] += wi * xi * xi2;
+            a[2][2] += wi * xi2 * xi2;
 
-            for j in 0..3 {
-                for k in 0..3 {
-                    a[j][k] += w_i * basis[j] * basis[k];
-                }
-                b[j] += w_i * basis[j] * y_i;
-            }
+            b[0] += wi * yi;
+            b[1] += wi * xi * yi;
+            b[2] += wi * xi2 * yi;
         }
 
+        // Symmetric matrix
+        a[1][0] = a[0][1];
+        a[2][0] = a[0][2];
+        a[2][1] = a[1][2];
+
         match solve_3x3_system(&a, &b) {
-            Some(coeffs) => {
-                // Evaluate polynomial at target_x
-                coeffs[0] + coeffs[1] * target_x + coeffs[2] * target_x * target_x
-            }
-            None => {
-                // Fall back to linear regression
-                self.weighted_linear_fit(target_x, x, y, w)
-            }
+            Some(coeffs) => coeffs[0] + coeffs[1] * target_x + coeffs[2] * target_x * target_x,
+            None => self.weighted_linear_fit(target_x, x, y, w),
         }
     }
 }

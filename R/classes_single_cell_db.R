@@ -658,14 +658,13 @@ single_cell_duckdb_con <- R6::R6Class(
     #' Function to populate the obs table from plain text files
     #'
     #' @param f_path File path to the plain text file.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow.
+    #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal obs table.
     populate_obs_from_plain_text = function(f_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(f_path)
-      checkmate::qassert(filter, c("B+", "0"))
+      checkmate::qassert(filter, c("I+", "0"))
 
       con <- private$connect_db()
       on.exit(
@@ -696,9 +695,8 @@ single_cell_duckdb_con <- R6::R6Class(
         paste(collapse = ",\n    ")
 
       query <- if (!is.null(filter)) {
-        rows_to_keep <- which(filter)
         row_placeholders <- paste(
-          rep("?", length(rows_to_keep)),
+          rep("?", length(filter)),
           collapse = ","
         )
         sprintf(
@@ -716,7 +714,6 @@ single_cell_duckdb_con <- R6::R6Class(
           row_placeholders
         )
       } else {
-        rows_to_keep <- NULL
         sprintf(
           "
           CREATE OR REPLACE TABLE obs AS
@@ -733,7 +730,7 @@ single_cell_duckdb_con <- R6::R6Class(
       DBI::dbExecute(
         conn = con,
         statement = query,
-        params = c(list(f_path), as.list(rows_to_keep))
+        params = c(list(f_path), as.list(filter))
       )
 
       invisible(self)
@@ -742,14 +739,13 @@ single_cell_duckdb_con <- R6::R6Class(
     #' Function to populate the var table from plain text files
     #'
     #' @param f_path File path to the plain text file.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow.
+    #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal var table.
     populate_var_from_plain_text = function(f_path, filter = NULL) {
       # checks
       checkmate::assertFileExists(f_path)
-      checkmate::qassert(filter, c("B+", "0"))
+      checkmate::qassert(filter, c("I+", "0"))
 
       con <- private$connect_db()
       on.exit(
@@ -780,9 +776,8 @@ single_cell_duckdb_con <- R6::R6Class(
         paste(collapse = ",\n    ")
 
       query <- if (!is.null(filter)) {
-        rows_to_keep <- which(filter)
         row_placeholders <- paste(
-          rep("?", length(rows_to_keep)),
+          rep("?", length(filter)),
           collapse = ","
         )
         sprintf(
@@ -800,7 +795,6 @@ single_cell_duckdb_con <- R6::R6Class(
           row_placeholders
         )
       } else {
-        rows_to_keep <- NULL
         sprintf(
           "
           CREATE OR REPLACE TABLE var AS
@@ -817,7 +811,7 @@ single_cell_duckdb_con <- R6::R6Class(
       DBI::dbExecute(
         conn = con,
         statement = query,
-        params = c(list(f_path), as.list(rows_to_keep))
+        params = c(list(f_path), as.list(filter))
       )
 
       invisible(self)

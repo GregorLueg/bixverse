@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_cell_names.sc_mapper}
 \alias{get_cell_names.sc_mapper}
-\title{Get the cell names}
+\title{Get the gene indices}
 \usage{
 \method{get_cell_names}{sc_mapper}(x)
 }
@@ -13,5 +13,5 @@
 The cell names
 }
 \description{
-Get the cell names
+Get the gene indices
 }

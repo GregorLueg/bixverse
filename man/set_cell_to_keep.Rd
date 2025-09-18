@@ -4,12 +4,13 @@
 \alias{set_cell_to_keep}
 \title{Set cells to keep for sc_mapper object}
 \usage{
-set_cell_to_keep(x, cell_indices)
+set_cell_to_keep(x, cells_to_keep)
 }
 \arguments{
 \item{x}{An object to set cells to keep for}
 
-\item{cell_indices}{Integer. The indices of the cells to keep.}
+\item{cells_to_keep}{String or integer. The names or indices of the cells
+to keep in downstream analysis.}
 }
 \description{
 Set cells to keep for sc_mapper object
