@@ -2,7 +2,7 @@ use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
 use half::f16;
 use memmap2::MmapOptions;
 use rayon::iter::*;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufWriter, Seek, SeekFrom, Write};
@@ -21,6 +21,76 @@ use crate::utils::traits::*;
 /////////////////////
 // Data structures //
 /////////////////////
+
+/// CellOnFileQuality
+///
+/// This structure is being generate after a first scan of the file on disk and
+/// defining which cells and genes to actually read in.
+///
+/// ### Fields
+///
+/// * `cells_to_keep` - Vector of indices of the cells to keep.
+/// * `genes_to_keep` - Vector of indices of the genes to keep.
+/// * `cells_to_keep_set` - HashSet of the indices to keep.
+/// * `genes_to_keep_set` - HashSet of the genes to keep.
+/// * `cell_old_to_new` - Mapping of the old indices to the new indices for the
+///   cells.
+/// * `gene_old_new` - Mapping of old indices to new indices for the genes.
+#[derive(Debug, Clone)]
+pub struct CellOnFileQuality {
+    pub cells_to_keep: Vec<usize>,
+    pub genes_to_keep: Vec<usize>,
+    pub cells_to_keep_set: FxHashSet<usize>,
+    pub genes_to_keep_set: FxHashSet<usize>,
+    pub cell_old_to_new: FxHashMap<usize, usize>,
+    pub gene_old_to_new: FxHashMap<usize, usize>,
+}
+
+impl CellOnFileQuality {
+    /// Create a new CellOnFileQuality structure
+    ///
+    /// ### Params
+    ///
+    /// * cells_to_keep - Index positions of the cells to keep
+    /// * genes_to_keep - Index positions of the genes to keep
+    ///
+    /// ### Returns
+    ///
+    /// Initiliased self
+    pub fn new(cells_to_keep: Vec<usize>, genes_to_keep: Vec<usize>) -> Self {
+        Self {
+            cells_to_keep,
+            genes_to_keep,
+            cells_to_keep_set: FxHashSet::default(),
+            genes_to_keep_set: FxHashSet::default(),
+            cell_old_to_new: FxHashMap::default(),
+            gene_old_to_new: FxHashMap::default(),
+        }
+    }
+
+    /// Generate internally the sets and maps
+    pub fn generate_maps_sets(&mut self) {
+        let cells_to_keep_set: FxHashSet<usize> = self.cells_to_keep.iter().cloned().collect();
+        let genes_to_keep_set: FxHashSet<usize> = self.genes_to_keep.iter().cloned().collect();
+        let cell_old_to_new: FxHashMap<usize, usize> = self
+            .cells_to_keep
+            .iter()
+            .enumerate()
+            .map(|(new_idx, &old_idx)| (old_idx, new_idx))
+            .collect();
+        let gene_old_to_new: FxHashMap<usize, usize> = self
+            .genes_to_keep
+            .iter()
+            .enumerate()
+            .map(|(new_idx, &old_idx)| (old_idx, new_idx))
+            .collect();
+
+        self.cells_to_keep_set = cells_to_keep_set;
+        self.genes_to_keep_set = genes_to_keep_set;
+        self.cell_old_to_new = cell_old_to_new;
+        self.gene_old_to_new = gene_old_to_new
+    }
+}
 
 /// CsrCellChunk
 ///
@@ -222,6 +292,7 @@ impl CsrCellChunk {
         U: Clone + Default,
     {
         let n_cells = sparse_data.indptr.len() - 1;
+
         let (nnz, to_keep) = filter_by_nnz(&sparse_data.indptr, cell_qc.min_unique_genes);
 
         let (res, lib_size): (Vec<CsrCellChunk>, Vec<usize>) = (0..n_cells)
@@ -255,11 +326,31 @@ impl CsrCellChunk {
 
     /// Helper function to update the column index
     ///
-    /// ###
+    /// ### Params
     ///
     /// * `new_index` - Which is the new column index to set to
     pub fn update_index(&mut self, new_index: &usize) {
         self.original_index = *new_index;
+    }
+
+    /// Helper function to check if chunk passes QC
+    ///
+    /// ### Params
+    ///
+    /// * `cell_qc` - Structure containiner the required library size and min
+    ///   number of genes
+    pub fn passes_qc(&self, cell_qc: &MinCellQuality) -> bool {
+        self.col_indices.len() >= cell_qc.min_unique_genes
+            && self.library_size >= cell_qc.min_lib_size
+    }
+
+    /// Helper function to get QC parameters for this cell
+    ///
+    /// ### Reutrns
+    ///
+    /// A tuple of `(no_genes, library_size)`
+    pub fn get_qc_info(&self) -> (usize, usize) {
+        (self.col_indices.len(), self.library_size)
     }
 }
 
@@ -439,6 +530,33 @@ impl CscGeneChunk {
             original_index,
             to_keep,
         })
+    }
+
+    /// Helper function that allows to filter out cells
+    ///
+    /// ### Params
+    ///
+    /// * `cells_to_keep` - HashSet with cell index positions to keep.
+    pub fn filter_selected_cells(&mut self, cells_to_keep: &FxHashSet<u32>) {
+        let mut indices_to_keep = Vec::new();
+
+        for (i, &cell_index) in self.row_indices.iter().enumerate() {
+            if cells_to_keep.contains(&cell_index) {
+                indices_to_keep.push(i);
+            }
+        }
+
+        // Update internal values
+        self.row_indices = indices_to_keep
+            .iter()
+            .map(|&i| self.row_indices[i])
+            .collect();
+
+        self.data_raw = indices_to_keep.iter().map(|&i| self.data_raw[i]).collect();
+
+        self.data_norm = indices_to_keep.iter().map(|&i| self.data_norm[i]).collect();
+
+        self.nnz = self.row_indices.len();
     }
 }
 

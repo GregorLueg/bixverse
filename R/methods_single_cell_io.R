@@ -1,30 +1,5 @@
 # single cell i/o methods ------------------------------------------------------
 
-## helper ----------------------------------------------------------------------
-
-#' Generate an updated gene index mapping
-#'
-#' @param gene_mask Boolean vector.
-#'
-#' @return A `gene_column_index_map` class that can be used to readjust
-#' column indices to genes that were kept.
-generate_gene_index_map <- function(gene_mask) {
-  # checks
-  checkmate::qassert(gene_mask, "B+")
-
-  # set this to Rust 0 indexing...
-  original_indices <- which(gene_mask) - 1
-  new_indices <- seq_along(original_indices) - 1
-
-  gene_col_map <- setNames(
-    new_indices,
-    as.character(original_indices)
-  )
-  class(gene_col_map) <- "gene_column_index_map"
-
-  return(gene_col_map)
-}
-
 ## h5ad ------------------------------------------------------------------------
 
 #' Load in h5ad to `single_cell_exp` (nightly!)
@@ -95,7 +70,8 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     h5_path = path.expand(h5_path),
     no_cells = h5_meta$dims["obs"],
     no_genes = h5_meta$dims["var"],
-    qc_params = sc_qc_param
+    qc_params = sc_qc_param,
+    verbose = .verbose
   )
 
   gene_res <- rust_con$generate_gene_based_data(
@@ -123,11 +99,9 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   gene_map <- duckdb_con$get_var_index_map()
 
   S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
-  S7::prop(object, "index_maps")[["cell_map"]] <- cell_map
-  S7::prop(object, "index_maps")[["gene_map"]] <- gene_map
-  S7::prop(object, "index_maps")[[
-    "gene_col_idx_map"
-  ]] <- generate_gene_index_map(gene_mask = gene_res$gene_mask)
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+  object <- set_column_index_map(x = object, gene_mask = gene_res$gene_mask)
 
   return(object)
 }
@@ -236,11 +210,9 @@ S7::method(load_mtx, single_cell_exp) <- function(
   gene_map <- duckdb_con$get_var_index_map()
 
   S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
-  S7::prop(object, "index_maps")[["cell_map"]] <- cell_map
-  S7::prop(object, "index_maps")[["gene_map"]] <- gene_map
-  S7::prop(object, "index_maps")[[
-    "gene_col_idx_map"
-  ]] <- generate_gene_index_map(gene_mask = gene_res$gene_mask)
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+  object <- set_column_index_map(x = object, gene_mask = gene_res$gene_mask)
 
   return(object)
 }

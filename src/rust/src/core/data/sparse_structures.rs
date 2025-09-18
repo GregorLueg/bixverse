@@ -1,5 +1,6 @@
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
+use std::marker::Sync;
 
 /////////////
 // Helpers //
@@ -297,11 +298,10 @@ where
     pub shape: (usize, usize),
 }
 
-#[allow(dead_code)]
 impl<T, U> CompressedSparseData<T, U>
 where
-    T: Clone + Default,
-    U: Clone + Default,
+    T: Clone + Default + Into<f64> + Sync,
+    U: Clone + Default + Sync,
 {
     /// Generate a nes CSC version of the matrix
     ///
@@ -311,6 +311,7 @@ where
     /// * `indices` - The index positions (in this case row indices)
     /// * `indptr` - The index pointer (in this case the column index pointers)
     /// * `data2` - An optional second layer
+    #[allow(dead_code)]
     pub fn new_csc(
         data: &[T],
         indices: &[usize],
@@ -403,6 +404,7 @@ where
     }
 
     /// Transpose the matrix
+    #[allow(dead_code)]
     pub fn transpose_from_h5ad(&self) -> Self {
         CompressedSparseData {
             data: self.data.clone(),
@@ -451,8 +453,8 @@ where
 /// * `sparse_data` - The CompressedSparseData you want to transform
 pub fn csc_to_csr<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
-    T: Clone + Default,
-    U: Clone + Default,
+    T: Clone + Default + Into<f64> + Sync,
+    U: Clone + Default + Sync,
 {
     let (nrow, _) = sparse_data.shape();
     let nnz = sparse_data.get_nnz();
@@ -517,8 +519,8 @@ where
 /// The data in CSC format, i.e., `CscData`
 pub fn csr_to_csc<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
-    T: Clone + Default,
-    U: Clone + Default,
+    T: Clone + Default + Into<f64> + Sync,
+    U: Clone + Default + Sync,
 {
     let nnz = sparse_data.get_nnz();
     let (_, ncol) = sparse_data.shape();

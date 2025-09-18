@@ -1,3 +1,272 @@
+# s3 ---------------------------------------------------------------------------
+
+#' Helper function to construct relevant maps
+#'
+#' @description
+#' Helper class that contains various mappings and makes it easier to use
+#' getters/setters with
+#'
+#' @return Generates an empty version of the `sc_mapper` class.
+#'
+#' @export
+new_sc_mapping <- function() {
+  sc_mapper <- list(
+    gene_mapping = NULL,
+    cell_mapping = NULL,
+    gene_column_index_map = NULL,
+    cells_to_keep_idx = NULL
+  )
+
+  class(sc_mapper) <- "sc_mapper"
+
+  return(sc_mapper)
+}
+
+## setters ---------------------------------------------------------------------
+
+### generics -------------------------------------------------------------------
+
+#' Set gene mapping for sc_mapper object
+#'
+#' @param x An object to set gene mapping for
+#' @param gene_map Named integer indicating indices and names of the genes
+#'
+#' @export
+set_gene_mapping <- function(x, gene_map) {
+  UseMethod("set_gene_mapping")
+}
+
+#' Set cell mapping for sc_mapper object
+#'
+#' @param x An object to set cell mapping for
+#' @param cell_map Named integer indicating indices and names of the cells
+#'
+#' @export
+set_cell_mapping <- function(x, cell_map) {
+  UseMethod("set_cell_mapping")
+}
+
+#' Set column index map for sc_mapper object
+#'
+#' @param x An object to set column index mapping for
+#' @param gene_mask Boolean vector indicating which genes are being kept
+#'
+#' @export
+set_column_index_map <- function(x, gene_mask) {
+  UseMethod("set_column_index_map")
+}
+
+#' Set cells to keep for sc_mapper object
+#'
+#' @param x An object to set cells to keep for
+#' @param cell_indices Integer. The indices of the cells to keep.
+#'
+#' @export
+set_cell_to_keep <- function(x, cell_indices) {
+  UseMethod("set_cell_to_keep")
+}
+
+### methods --------------------------------------------------------------------
+
+#' Set gene mapping method for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param gene_map Named integer vector for gene mapping
+#'
+#' @return Updated `sc_mapper` object with gene mapping set
+#'
+#' @export
+set_gene_mapping.sc_mapper <- function(x, gene_map) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_map, "I+")
+  checkmate::assertNamed(gene_map)
+
+  x[["gene_mapping"]] <- gene_map
+
+  return(x)
+}
+
+#' Set cell mapping method for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param cell_map Named integer vector for cell mapping
+#'
+#' @return Updated `sc_mapper` object with cell mapping set
+#'
+#' @export
+set_cell_mapping.sc_mapper <- function(x, cell_map) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(cell_map, "I+")
+  checkmate::assertNamed(cell_map)
+
+  x[["cell_mapping"]] <- cell_map
+
+  return(x)
+}
+
+#' Set column index map for sc_mapper using gene mask
+#'
+#' @param x An `sc_mapper` object
+#' @param gene_mask Logical vector indicating which genes to include
+#'
+#' @return Updated `sc_mapper` object with column index mapping set
+#'
+#' @export
+set_column_index_map.sc_mapper <- function(x, gene_mask) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_mask, "B+")
+
+  # set this to Rust 0 indexing...
+  original_indices <- which(gene_mask) - 1
+  new_indices <- seq_along(original_indices) - 1
+
+  gene_col_map <- setNames(
+    new_indices,
+    as.character(original_indices)
+  )
+
+  x[["gene_column_index_map"]] <- gene_col_map
+
+  return(x)
+}
+
+#' Set cells to keep for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param cell_indices Logical vector indicating which genes to include
+#'
+#' @return Updated `sc_mapper` object with column index mapping set
+#'
+#' @export
+set_cell_to_keep.sc_mapper <- function(x, cell_indices) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(cell_indices, "I1")
+
+  # transform to Rust 0-based indexing
+  x[["cells_to_keep_idx"]] <- cell_indices - 1
+
+  return(x)
+}
+
+## getters ---------------------------------------------------------------------
+
+### generics -------------------------------------------------------------------
+
+#' Get the gene names
+#'
+#' @param x An object to get the gene names for
+#'
+#' @export
+get_gene_names <- function(x) {
+  UseMethod("get_gene_names")
+}
+
+#' Get the cell names
+#'
+#' @param x An object to get the cell names for
+#'
+#' @export
+get_cell_names <- function(x) {
+  UseMethod("get_cell_names")
+}
+
+### methods --------------------------------------------------------------------
+
+#' Get the gene names
+#'
+#' @param x An `sc_mapper` object
+#'
+#' @return The gene names
+#'
+#' @export
+get_gene_names.sc_mapper <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+
+  return(names(x[["gene_mapping"]]))
+}
+
+#' Get the cell names
+#'
+#' @param x An `sc_mapper` object
+#'
+#' @return The cell names
+#'
+#' @export
+get_cell_names.sc_mapper <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+
+  return(names(x[["cell_mapping"]]))
+}
+
+## utils -----------------------------------------------------------------------
+
+### generics -------------------------------------------------------------------
+
+#' Set gene mapping for sc_mapper object
+#'
+#' @param x An object to get the updated gene indices from
+#' @param gene_indices Integers. The old gene indices
+#'
+#' @export
+get_updated_gene_indices <- function(x, gene_indices) {
+  UseMethod("get_updated_gene_indices")
+}
+
+#' Get the Rust gene indices based on gene IDs
+#'
+#' @param x An object to set gene mapping for
+#' @param gene_ids String vector. The names of the genes you wish to get the
+#' Rust index identifiers for.
+#'
+#' @export
+get_rust_gene_indices <- function(x, gene_ids) {
+  UseMethod("get_rust_gene_indices")
+}
+
+### methods --------------------------------------------------------------------
+
+#' Get updated gene indices
+#'
+#' @param x An `sc_mapper` object
+#' @param gene_indices Integer vector. The gene indices to map.
+#'
+#' @return Updated gene indices
+#'
+#' @export
+get_updated_gene_indices.sc_mapper <- function(x, gene_indices) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_indices, "I+")
+
+  new_indices <- x[["gene_column_index_map"]][as.character(gene_indices)]
+
+  return(new_indices)
+}
+
+#' Get updated gene indices
+#'
+#' @param x An `sc_mapper` object
+#' @param gene_ids String vector. The names of the genes you wish to get the
+#' Rust index identifiers for.
+#'
+#' @return Updated gene indices
+#'
+#' @export
+get_rust_gene_indices.sc_mapper <- function(x, gene_ids) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_indices, "S+")
+
+  r_gene_idx <- x[["gene_mapping"]]
+  rust_idx <- x[[""]]
+}
+
 # s7 ---------------------------------------------------------------------------
 
 ## single cell class -----------------------------------------------------------
@@ -41,7 +310,7 @@ single_cell_exp <- S7::new_class(
     dir_data = S7::class_character,
     cache = S7::class_list,
     dims = S7::class_integer,
-    index_maps = S7::class_list
+    sc_map = S7::class_any
   ),
   constructor = function(dir_data) {
     nightly_feature()
@@ -66,10 +335,11 @@ single_cell_exp <- S7::new_class(
       dir_data = dir_data,
       cache = list(),
       dims = c(0L, 0L),
-      index_maps = list()
+      sc_map = new_sc_mapping()
     )
   }
 )
+
 
 ### getters --------------------------------------------------------------------
 
@@ -260,7 +530,7 @@ S7::method(get_sc_map, single_cell_exp) <- function(
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
 
-  res <- S7::prop(object, "index_maps")
+  res <- S7::prop(object, "sc_map")
 
   return(res)
 }
@@ -322,7 +592,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
 
   rust_con <- get_sc_rust_ptr(object)
 
-  col_index_map <- get_sc_map(object)[["gene_col_idx_map"]]
+  sc_map <- get_sc_map(object)
 
   # Get raw data from Rust
   count_data <- get_counts_from_rust(
@@ -331,7 +601,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
     return_format = return_format,
     cell_indices = cell_indices,
     gene_indices = gene_indices,
-    col_index_map = col_index_map,
+    sc_map = sc_map,
     .verbose = .verbose
   )
 
@@ -344,10 +614,10 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   # Set names and subset if needed
   count_data <- finalise_matrix(
     matrix = count_data,
-    object = object,
     return_format = return_format,
     cell_indices = cell_indices,
-    gene_indices = gene_indices
+    gene_indices = gene_indices,
+    sc_map = sc_map
   )
 
   return(count_data)
@@ -402,8 +672,7 @@ S7::method(`[`, single_cell_exp) <- function(
 #' return.
 #' @param gene_indices Optional integer vector. The index positions of genes to
 #' return.
-#' @param col_index_map A `gene_column_index_map` class. Contains information
-#' which gene column index belongs to which filtered gene column index.
+#' @param sc_map A `sc_mapper` class. Contains various mapping information.
 #' @param .verbose Boolean. Controls verbosity
 #'
 #' @return Returns a list with:
@@ -420,7 +689,7 @@ get_counts_from_rust <- function(
   return_format,
   cell_indices,
   gene_indices,
-  col_index_map,
+  sc_map,
   .verbose = TRUE
 ) {
   # checks
@@ -429,7 +698,7 @@ get_counts_from_rust <- function(
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
-  checkmate::assertClass(col_index_map, "gene_column_index_map")
+  checkmate::assertClass(sc_map, "sc_mapper")
   checkmate::qassert(.verbose, "B1")
 
   res <- if (return_format == "cell") {
@@ -456,8 +725,12 @@ get_counts_from_rust <- function(
   }
 
   # update the indices here to match
-  # NEEDS TO BE CHARACTER!!!
-  res$indices <- col_index_map[as.character(res$indices)]
+  if (return_format == "cell") {
+    res$indices <- get_updated_gene_indices(
+      x = sc_map,
+      gene_indices = res$indices
+    )
+  }
 
   return(res)
 }
@@ -498,53 +771,43 @@ create_sparse_matrix <- function(count_data, return_format) {
 #' Finalise the count matrix
 #'
 #' @param matrix The sparse matrix to finalise
-#' @param object `bixverse::single_cell_exp` class.
 #' @param return_format String. One of `c("cell", "gene")`.
-#' @param cell_indices Optional integer vector. The index positions of cells to
-#' return.
-#' @param gene_indices Optional integer vector. The index positions of genes to
-#' return.
+#' @param sc_map A `sc_mapper` class. Contains various mapping information.
 #'
 #' @return The finalised matrix.
 finalise_matrix <- function(
   matrix,
-  object,
   return_format,
   cell_indices,
-  gene_indices
+  gene_indices,
+  sc_map
 ) {
   checkmate::assert(
     checkmate::checkClass(matrix, "dgRMatrix"),
     checkmate::checkClass(matrix, "dgCMatrix")
   )
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
+  checkmate::assertClass(sc_map, "sc_mapper")
 
-  index_maps <- S7::prop(object, "index_maps")
+  gene_names <- get_gene_names(sc_map)
+  cell_names <- get_cell_names(sc_map)
 
   if (return_format == "cell") {
-    ## Cells
-    # Set row names (cells)
-    cell_names <- names(index_maps$cell_map)
     rownames(matrix) <- if (is.null(cell_indices)) {
       cell_names
     } else {
       cell_names[cell_indices]
     }
 
-    # Set column names (genes) and subset if needed
     if (is.null(gene_indices)) {
-      colnames(matrix) <- names(index_maps$gene_map)
+      colnames(matrix) <- gene_names
     } else {
       matrix <- matrix[, gene_indices]
-      colnames(matrix) <- names(index_maps$gene_map)[gene_indices]
+      colnames(matrix) <- gene_names[gene_indices]
     }
   } else {
-    ## Genes
-    # Set column names (genes)
-    gene_names <- names(index_maps$gene_map)
     colnames(matrix) <- if (is.null(gene_indices)) {
       gene_names
     } else {
@@ -553,813 +816,205 @@ finalise_matrix <- function(
 
     # Set row names (cells) and subset if needed
     if (is.null(cell_indices)) {
-      rownames(matrix) <- names(index_maps$cell_map)
+      rownames(matrix) <- cell_names
     } else {
       matrix <- matrix[cell_indices, ]
-      rownames(matrix) <- names(index_maps$cell_map)[cell_indices]
+      rownames(matrix) <- cell_names[cell_indices]
     }
   }
 
   matrix
 }
 
-# r6 ---------------------------------------------------------------------------
+#### sc map --------------------------------------------------------------------
 
-## duckdb connector ------------------------------------------------------------
-
-### base class -----------------------------------------------------------------
-
-#' @title Base class for the single cell DuckDB connection
+#' @name get_cell_names.single_cell_exp
 #'
-#' @description
-#' This is the base class for the single cell experiment DuckDB connection,
-#' containing standard functions such as retrievel of tables, connection checks,
-#' etc.
+#' @title Get cell names for `single_cell_exp`
 #'
-#' @export
-#'
-#' @import data.table
-single_cell_duckdb_base <- R6::R6Class(
-  # class name
-  classname = "single_cell_duckdb_base",
-  # public functions, slots
-  public = list(
-    #' @description
-    #' Initialises the Singe Cell DuckDB connection
-    #'
-    #' @param db_dir String. Path to where to store the db.
-    #' @param db_name String. The name of the DB. Defaults to `"sc_duckdb.db"`.
-    #'
-    #' @return Returns the initialised class
-    initialize = function(db_dir, db_name = "sc_duckdb.db") {
-      # checks
-      checkmate::assertDirectoryExists(db_dir)
-      checkmate::qassert(db_name, "S1")
-
-      # define the path
-      private$db_path = file.path(db_dir, db_name)
-    },
-
-    ###########
-    # Getters #
-    ###########
-
-    #' @description
-    #' Returns the full observation table from the DuckDB
-    #'
-    #' @param indices Optional cell/obs indices.
-    #' @param cols Optional column names to return.
-    #'
-    #' @return The observation table (if found) as a data.table with optionally
-    #' selected indices and/or columns.
-    get_obs_table = function(indices = NULL, cols = NULL) {
-      # checks
-      checkmate::qassert(indices, c("0", "I+"))
-      checkmate::qassert(cols, c("0", "S+"))
-      private$check_obs_exists()
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      col_part <- if (is.null(cols)) {
-        "*"
-      } else {
-        paste(cols, collapse = ", ")
-      }
-
-      sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM obs", col_part)
-      } else {
-        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
-        sprintf(
-          "SELECT %s FROM obs WHERE cell_idx IN (%s)",
-          col_part,
-          placeholders
-        )
-      }
-
-      obs_dt <- data.table::setDT(DBI::dbGetQuery(
-        conn = con,
-        statement = sql_query,
-        params = as.list(indices)
-      ))
-
-      return(obs_dt)
-    },
-
-    #' @description
-    #' Returns the full var table from the DuckDB.
-    #'
-    #' @param indices Optional gene/var indices.
-    #' @param cols Optional column names to return.
-    #'
-    #' @return The var table (if found) as a data.table with optionally
-    #' selected indices and/or columns.
-    get_vars_table = function(indices = NULL, cols = NULL) {
-      # checks
-      checkmate::qassert(indices, c("0", "I+"))
-      private$check_var_exists()
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      col_part <- if (is.null(cols)) {
-        "*"
-      } else {
-        paste(cols, collapse = ", ")
-      }
-
-      sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM var", col_part)
-      } else {
-        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
-        sprintf(
-          "SELECT %s FROM var WHERE gene_idx IN (%s)",
-          col_part,
-          placeholders
-        )
-      }
-
-      var_dt <- data.table::setDT(DBI::dbGetQuery(
-        conn = con,
-        statement = sql_query,
-        params = as.list(indices)
-      ))
-
-      return(var_dt)
-    },
-
-    #' @description
-    #' Returns a mapping between cell index and cell names/barcodes.
-    #'
-    #' @return A named numeric containing the cell index mapping.
-    get_obs_index_map = function() {
-      # checks
-      private$check_obs_exists()
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      data <- data.table::setDT(DBI::dbGetQuery(
-        conn = con,
-        statement = 'SELECT cell_idx, cell_id FROM obs'
-      )) %>%
-        `colnames<-`(c("index", "id"))
-
-      return(setNames(data$index, data$id))
-    },
-
-    #' @description
-    #' Returns a mapping between variable index and variable names.
-    #'
-    #' @return A named numeric containing the gene index mapping.
-    get_var_index_map = function() {
-      # checks
-      private$check_var_exists()
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      data <- data.table::setDT(DBI::dbGetQuery(
-        conn = con,
-        statement = 'SELECT gene_idx, gene_id FROM var'
-      )) %>%
-        `colnames<-`(c("index", "id"))
-
-      return(setNames(data$index, data$id))
-    },
-
-    #' Filter the obs table and reset the cell idx
-    #'
-    #' @param filter_vec Boolean vector that will be used to filter the obs
-    #' table.
-    filter_obs_table = function(filter_vec) {
-      # checks
-      checkmate::qassert(filter_vec, "B1")
-      private$check_obs_exists()
-
-      filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
-
-      # get the connection
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      DBI::dbWriteTable(
-        con,
-        "filter_temp",
-        filter_dt,
-        overwrite = TRUE
-      )
-
-      DBI::dbExecute(
-        con,
-        "
-        CREATE OR REPLACE TABLE obs AS
-        SELECT 
-          ROW_NUMBER() OVER() as cell_idx,
-          * EXCLUDE (cell_idx)  -- exclude old cell_idx column
-        FROM obs 
-        WHERE ROWID IN (SELECT cell_idx FROM temp_filter);
-        DROP TABLE filter_temp
-        "
-      )
-    },
-
-    #' Filter the var table and reset the gene idx
-    #'
-    #' @param filter_vec Boolean vector that will be used to filter the var
-    #' table.
-    filter_var_table = function(filter_vec) {
-      # checks
-      checkmate::qassert(filter_vec, "B1")
-      private$check_var_exists()
-
-      filter_dt <- data.frame(gene_idx = which(filter_vec), keep = TRUE)
-
-      # get the connection
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      DBI::dbWriteTable(
-        con,
-        "filter_temp",
-        filter_dt,
-        overwrite = TRUE
-      )
-
-      DBI::dbExecute(
-        con,
-        "
-        CREATE OR REPLACE TABLE var AS
-        SELECT 
-          ROW_NUMBER() OVER() as gene_idx,
-          * EXCLUDE (gene_idx)  -- exclude old gene_idx column
-        FROM var 
-        WHERE ROWID IN (SELECT gene_idx FROM temp_filter);
-        DROP TABLE filter_temp
-        "
-      )
-    },
-
-    ###########
-    # Setters #
-    ###########
-
-    #' @description
-    #' Add new data to the obs table in the DuckDB
-    #'
-    #' @param new_data A data.table with additional new columns. The order needs
-    #' to be the same as the original in the obs table.
-    #'
-    #' @return Invisible self while adding the new columns to the obs table
-    #' in the DuckDB.
-    add_data_obs = function(new_data) {
-      # checks
-      checkmate::assertDataTable(new_data)
-      private$check_obs_exists()
-
-      # add the data
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      new_data[, cell_idx := .I]
-
-      DBI::dbWriteTable(
-        con,
-        "new_data",
-        new_data,
-        overwrite = TRUE
-      )
-
-      DBI::dbExecute(
-        con,
-        "
-        CREATE OR REPLACE TABLE obs AS
-        SELECT
-          original.*,
-          new_data.* EXCLUDE(cell_idx)
-        FROM obs AS original
-        JOIN new_data ON original.cell_idx = new_data.cell_idx;
-        DROP TABLE new_data
-        "
-      )
-
-      invisible(self)
-    },
-
-    #' @description
-    #' Add the information which genes pass threshold to the DuckDB.
-    #'
-    #' @param new_data A data.table with additional new columns. The order needs
-    #' to be the same as the original in the var table.
-    #'
-    #' @return Invisible self while adding the new columns to the var table
-    #' in the DuckDB.
-    add_data_var = function(new_data) {
-      # checks
-      checkmate::assertDataTable(new_data)
-      private$check_obs_exists()
-
-      # add the data
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      new_data[, gene_idx := .I]
-
-      DBI::dbWriteTable(
-        con,
-        "new_data",
-        new_data,
-        overwrite = TRUE
-      )
-
-      DBI::dbExecute(
-        con,
-        "
-        CREATE OR REPLACE TABLE var AS
-        SELECT
-          original.*,
-          new_data.* EXCLUDE(gene_idx)
-        FROM var AS original
-        JOIN new_data ON original.gene_idx = new_data.gene_idx;
-        DROP TABLE new_data
-        "
-      )
-
-      invisible(self)
-    }
-  ),
-  private = list(
-    # Path to the DB
-    db_path = NULL,
-    # Helper to connect to the DB
-    connect_db = function() {
-      con <- DBI::dbConnect(duckdb::duckdb(), dbdir = private$db_path)
-      return(con)
-    },
-    # Helper to check that obs table exists
-    check_obs_exists = function() {
-      con <- private$connect_db()
-      res <- "obs" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      if (!res) {
-        error("Obs table was not found in the DB.")
-      }
-    },
-    # Helper to check that var table exists
-    check_var_exists = function() {
-      con <- private$connect_db()
-      res <- "var" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      if (!res) {
-        error("Obs table was not found in the DB.")
-      }
-    }
-  )
-)
-
-### reader helper --------------------------------------------------------------
-
-#' @title Class for storing single cell experimental data in DuckDB (nightly!)
-#'
-#' @description
-#' This class wraps up the DB connection and methods to interact with the
-#' observation/cell metadata and the feature/gene metadata.
-#'
-#' @export
-#'
-#' @import data.table
-single_cell_duckdb_con <- R6::R6Class(
-  # class name
-  classname = "single_cell_duckdb_con",
-  # public functions, slots
-  inherit = single_cell_duckdb_base,
-  public = list(
-    ##############
-    # Readers h5 #
-    ##############
-
-    #' @description
-    #' This function populates the obs table from an h5 file (if found).
-    #'
-    #' @param h5_path String. Path to the h5 file from which to load in the
-    #' observation table.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow of obs in the h5 object.
-    #'
-    #' @return Returns invisible self. As a side effect, it will load in the
-    #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, filter = NULL) {
-      # checks
-      checkmate::assertFileExists(h5_path)
-      checkmate::qassert(filter, c("B+", "0"))
-
-      h5_content <- rhdf5::h5ls(
-        h5_path
-      ) %>%
-        data.table::setDT()
-
-      obs <- h5_content[
-        group == "/obs" & otype == "H5I_DATASET",
-        setNames((paste(group, name, sep = "/")), name)
-      ]
-
-      if (length(obs) == 0) {
-        error(
-          "No obs data could be found in the h5 file. Nothing was loaded."
-        )
-      }
-
-      con <- private$connect_db()
-
-      # close everything no matter what happens
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-          tryCatch(rhdf5::h5closeAll(), error = function(e) invisible())
-        },
-        add = TRUE
-      )
-
-      names(obs) <- to_snake_case(obs)
-
-      for (i in seq_along(obs)) {
-        col_name <- names(obs)[i]
-        col_path <- obs[[i]]
-        col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name)
-        if (!is.null(filter)) {
-          col_data <- col_data[filter]
-        }
-        col_data[, cell_idx := .I]
-        setcolorder(col_data, c("cell_idx", col_name))
-
-        if (i == 1) {
-          colnames(col_data) <- c("cell_idx", "cell_id")
-          DBI::dbWriteTable(
-            con,
-            "obs",
-            col_data,
-            overwrite = TRUE
-          )
-        } else {
-          DBI::dbWriteTable(
-            con,
-            "temp_col",
-            col_data,
-            overwrite = TRUE
-          )
-
-          DBI::dbExecute(
-            con,
-            sprintf(
-              'CREATE TABLE obs_new AS
-              SELECT obs.*, temp_col.%s
-              FROM obs
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx;
-              DROP table obs;
-              ALTER TABLE obs_new RENAME TO obs;
-              DROP TABLE temp_col',
-              col_name
-            )
-          )
-        }
-      }
-
-      invisible(self)
-    },
-
-    #' @description
-    #' This populates the vars table from an h5 file (if found.)
-    #'
-    #' @param h5_path String. Path to the h5 file from which to load in the
-    #' observation table.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow of var in the h5 object.
-    #'
-    #' @return Returns invisible self. As a side effect, it will load in the
-    #' obs data from the h5ad file into the DuckDB.
-    populate_vars_from_h5 = function(h5_path, filter = NULL) {
-      # checks
-      checkmate::assertFileExists(h5_path)
-      checkmate::qassert(filter, c("B+", "0"))
-
-      h5_content <- rhdf5::h5ls(
-        h5_path
-      ) %>%
-        data.table::setDT()
-
-      var <- h5_content[
-        group == "/var" & otype == "H5I_DATASET",
-        setNames((paste(group, name, sep = "/")), name)
-      ]
-
-      if (length(var) == 0) {
-        error(
-          "No var data could be found in the h5 file. Nothing was loaded."
-        )
-      }
-
-      con <- private$connect_db()
-
-      # close everything no matter what happens
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-          tryCatch(rhdf5::h5closeAll(), error = function(e) invisible())
-        },
-        add = TRUE
-      )
-
-      names(var) <- to_snake_case(var)
-
-      for (i in seq_along(var)) {
-        col_name <- names(var)[i]
-        col_path <- var[[i]]
-        col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name)
-        if (!is.null(filter)) {
-          col_data <- col_data[filter]
-        }
-
-        col_data[, gene_idx := .I]
-        setcolorder(col_data, c("gene_idx", col_name))
-
-        if (i == 1) {
-          colnames(col_data) <- c("gene_idx", "gene_id")
-          DBI::dbWriteTable(
-            con,
-            "var",
-            col_data,
-            overwrite = TRUE
-          )
-        } else {
-          DBI::dbWriteTable(
-            con,
-            "temp_col",
-            col_data,
-            overwrite = TRUE
-          )
-
-          DBI::dbExecute(
-            con,
-            sprintf(
-              'CREATE TABLE var_new AS
-              SELECT var.*, temp_col.%s
-              FROM var
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx;
-              DROP table var;
-              ALTER TABLE var_new RENAME TO var;
-              DROP TABLE temp_col',
-              col_name
-            )
-          )
-        }
-      }
-
-      invisible(self)
-    },
-
-    ###############
-    # Readers mtx #
-    ###############
-
-    #' Function to populate the obs table from plain text files
-    #'
-    #' @param f_path File path to the plain text file.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow.
-    #'
-    #' @returns Invisible self and populates the internal obs table.
-    populate_obs_from_plain_text = function(f_path, filter = NULL) {
-      # checks
-      checkmate::assertFileExists(f_path)
-      checkmate::qassert(filter, c("B+", "0"))
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
-
-      header_df <- DBI::dbGetQuery(
-        conn = con,
-        statement = header_query,
-        params = list(f_path)
-      )
-
-      original_col_names <- colnames(header_df)
-      sanitised_cols_names <- to_snake_case(original_col_names)
-      sanitised_cols_names[1] <- "cell_id"
-
-      col_mapping <- sprintf(
-        '"%s" AS %s',
-        original_col_names,
-        sanitised_cols_names
-      ) %>%
-        paste(collapse = ",\n    ")
-
-      query <- if (!is.null(filter)) {
-        rows_to_keep <- which(filter)
-        row_placeholders <- paste(
-          rep("?", length(rows_to_keep)),
-          collapse = ","
-        )
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT
-            ROW_NUMBER() OVER() as cell_idx,
-            %s
-          FROM (
-            SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?)
-          ) t
-          WHERE t.original_row_num IN (%s)",
-          col_mapping,
-          row_placeholders
-        )
-      } else {
-        rows_to_keep <- NULL
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE obs AS
-          SELECT 
-            ROW_NUMBER() OVER() as cell_idx,
-            %s
-          FROM (
-            SELECT * FROM read_csv(?)
-          )",
-          col_mapping
-        )
-      }
-
-      DBI::dbExecute(
-        conn = con,
-        statement = query,
-        params = c(list(f_path), as.list(rows_to_keep))
-      )
-
-      invisible(self)
-    },
-
-    #' Function to populate the var table from plain text files
-    #'
-    #' @param f_path File path to the plain text file.
-    #' @param filter Optional boolean. If provided, only rows with `TRUE` will
-    #' be read in. The length needs to be same as nrow.
-    #'
-    #' @returns Invisible self and populates the internal var table.
-    populate_var_from_plain_text = function(f_path, filter = NULL) {
-      # checks
-      checkmate::assertFileExists(f_path)
-      checkmate::qassert(filter, c("B+", "0"))
-
-      con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-        }
-      )
-
-      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
-
-      header_df <- DBI::dbGetQuery(
-        conn = con,
-        statement = header_query,
-        params = list(f_path)
-      )
-
-      original_col_names <- colnames(header_df)
-      sanitised_cols_names <- to_snake_case(original_col_names)
-      sanitised_cols_names[1] <- "gene_id"
-
-      col_mapping <- sprintf(
-        '"%s" AS %s',
-        original_col_names,
-        sanitised_cols_names
-      ) %>%
-        paste(collapse = ",\n    ")
-
-      query <- if (!is.null(filter)) {
-        rows_to_keep <- which(filter)
-        row_placeholders <- paste(
-          rep("?", length(rows_to_keep)),
-          collapse = ","
-        )
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE var AS
-          SELECT
-            ROW_NUMBER() OVER() AS gene_idx,
-            %s
-          FROM (
-            SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?)
-          ) t
-          WHERE t.original_row_num IN (%s)",
-          col_mapping,
-          row_placeholders
-        )
-      } else {
-        rows_to_keep <- NULL
-        sprintf(
-          "
-          CREATE OR REPLACE TABLE var AS
-          SELECT 
-            ROW_NUMBER() OVER() AS gene_idx,
-            %s
-          FROM (
-            SELECT * FROM read_csv(?)
-          )",
-          col_mapping
-        )
-      }
-
-      DBI::dbExecute(
-        conn = con,
-        statement = query,
-        params = c(list(f_path), as.list(rows_to_keep))
-      )
-
-      invisible(self)
-    }
+#' @method get_cell_names single_cell_exp
+S7::method(get_cell_names, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # add the data using the S3 method
+  cell_names <- get_cell_names(
+    x = S7::prop(x, "sc_map")
   )
 
-  ############################
-  # Private fields/functions #
-  ############################
+  return(cell_names)
+}
+
+#' @name get_gene_names.single_cell_exp
+#'
+#' @title Get gene names for `single_cell_exp`
+#'
+#' @method get_gene_names single_cell_exp
+S7::method(get_gene_names, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # add the data using the S3 method
+  gene_names <- get_gene_names(
+    x = S7::prop(x, "sc_map")
+  )
+
+  return(gene_names)
+}
+
+### setters --------------------------------------------------------------------
+
+#### obs -----------------------------------------------------------------------
+
+#' Add a new column to the obs table
+#'
+#' @param object `bixverse::single_cell_exp` class.
+#' @param col_name String. The name of the column to add.
+#' @param new_data Atomic vector. The data to add to the column. Needs to be
+#' of same length as nrow obs table.
+#'
+#' @return The class with updated obs table in the DuckDB
+#'
+#' @export
+set_sc_new_obs_col <- S7::new_generic(
+  name = "set_sc_new_obs_col",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    col_name,
+    new_data
+  ) {
+    S7::S7_dispatch()
+  }
 )
+
+#' @method set_sc_new_obs_col single_cell_exp
+#'
+#' @export
+S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
+  object,
+  col_name,
+  new_data
+) {
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(col_name, "S1")
+  checkmate::qassert(new_data, "a")
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  new_data <- data.table::data.table(new_data)
+  data.table::setnames(new_data, "new_data", col_name)
+
+  duckdb_con$add_data_obs(new_data = new_data)
+
+  return(object)
+}
+
+#' @method `[[<-` single_cell_exp
+#'
+#' @export
+S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(i, "S1")
+  checkmate::qassert(value, "a")
+
+  x <- set_sc_new_obs_col(object = x, col_name = i, new_data = value)
+
+  return(x)
+}
+
+#### sc map --------------------------------------------------------------------
+
+#' @name set_gene_mapping.single_cell_exp
+#'
+#' @title Set gene mapping method for `single_cell_exp`
+#'
+#' @method set_gene_mapping single_cell_exp
+S7::method(set_gene_mapping, single_cell_exp) <- function(
+  x,
+  gene_map
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(gene_map, "I+")
+  checkmate::assertNamed(gene_map, "named")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_map") <- set_gene_mapping(
+    x = S7::prop(x, "sc_map"),
+    gene_map = gene_map
+  )
+
+  return(x)
+}
+
+#' @name set_cell_mapping.single_cell_exp
+#'
+#' @title Set cell mapping method for `single_cell_exp`
+#'
+#' @method set_cell_mapping single_cell_exp
+S7::method(set_cell_mapping, single_cell_exp) <- function(
+  x,
+  cell_map
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(cell_map, "I+")
+  checkmate::assertNamed(cell_map, "named")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_map") <- set_cell_mapping(
+    x = S7::prop(x, "sc_map"),
+    cell_map = cell_map
+  )
+
+  return(x)
+}
+
+#' @name set_column_index_map.single_cell_exp
+#'
+#' @title Set column index method for `single_cell_exp`
+#'
+#' @method set_column_index_map single_cell_exp
+S7::method(set_column_index_map, single_cell_exp) <- function(
+  x,
+  gene_mask
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(gene_mask, "B+")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_map") <- set_column_index_map(
+    x = S7::prop(x, "sc_map"),
+    gene_mask = gene_mask
+  )
+
+  return(x)
+}
+
+#' @name set_cell_to_keep.single_cell_exp
+#'
+#' @title Set cell method for `single_cell_exp`
+#'
+#' @method set_cell_to_keep single_cell_exp
+S7::method(set_cell_to_keep, single_cell_exp) <- function(
+  x,
+  cell_indices
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(cell_indices, "I+")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_map") <- set_cell_to_keep(
+    x = S7::prop(x, "sc_map"),
+    cell_indices = cell_indices
+  )
+
+  return(x)
+}

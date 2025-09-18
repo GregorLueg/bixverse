@@ -4,20 +4,14 @@
 \alias{finalise_matrix}
 \title{Finalise the count matrix}
 \usage{
-finalise_matrix(matrix, object, return_format, cell_indices, gene_indices)
+finalise_matrix(matrix, return_format, cell_indices, gene_indices, sc_map)
 }
 \arguments{
 \item{matrix}{The sparse matrix to finalise}
 
-\item{object}{\code{bixverse::single_cell_exp} class.}
-
 \item{return_format}{String. One of \code{c("cell", "gene")}.}
 
-\item{cell_indices}{Optional integer vector. The index positions of cells to
-return.}
-
-\item{gene_indices}{Optional integer vector. The index positions of genes to
-return.}
+\item{sc_map}{A \code{sc_mapper} class. Contains various mapping information.}
 }
 \value{
 The finalised matrix.
