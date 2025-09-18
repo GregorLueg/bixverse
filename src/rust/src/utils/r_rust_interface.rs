@@ -4,6 +4,8 @@ use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
+use crate::utils::traits::FaerRType;
+
 //////////////////
 // Type aliases //
 //////////////////
@@ -515,28 +517,14 @@ impl<'a> NamedMatrix<'a> {
 /// ### Returns
 ///
 /// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> MatRef<'_, f64> {
+pub fn r_matrix_to_faer<T>(x: &RMatrix<T>) -> MatRef<'_, T>
+where
+    T: Copy + Clone,
+    extendr_api::Robj: for<'a> extendr_api::AsTypedSlice<'a, T>,
+{
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();
-
-    MatRef::from_column_major_slice(data, nrow, ncol)
-}
-
-/// Transform an R matrix to a Faer one (i32)
-///
-/// ### Params
-///
-/// * `x` - The R matrix to transform into a faer MatRef (with `i32`)
-///
-/// ### Returns
-///
-/// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> MatRef<'_, i32> {
-    let ncol = x.ncols();
-    let nrow = x.nrows();
-    let data = x.data();
-
     MatRef::from_column_major_slice(data, nrow, ncol)
 }
 
@@ -568,11 +556,8 @@ pub fn r_matrix_to_vec_bool(x: &RMatrix<Rbool>) -> Vec<Vec<bool>> {
 /// ###
 ///
 /// The R matrix based on the faer matrix.
-pub fn faer_to_r_matrix(x: faer::MatRef<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
-    let nrow = x.nrows();
-    let ncol = x.ncols();
-
-    RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
+pub fn faer_to_r_matrix<T: FaerRType>(x: faer::MatRef<T>) -> extendr_api::RArray<T, [usize; 2]> {
+    T::to_r_matrix(x)
 }
 
 /// Transform a SparseColumnMatrix to an R list

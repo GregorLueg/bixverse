@@ -8,6 +8,7 @@ use extendr_api::prelude::*;
 // base
 pub use r_bindings::r_base::r_cors_similarity;
 pub use r_bindings::r_base::r_helpers;
+pub use r_bindings::r_base::r_loess;
 pub use r_bindings::r_base::r_rbf;
 pub use r_bindings::r_base::r_stats;
 pub use r_bindings::r_base::r_svd_pca;
@@ -39,6 +40,7 @@ pub use r_bindings::r_ontology::r_similiarity;
 
 // single cell
 pub use r_bindings::r_single_cell::r_count_obj;
+pub use r_bindings::r_single_cell::r_preprocessing;
 
 extendr_module! {
     mod bixverse;
@@ -48,6 +50,7 @@ extendr_module! {
     use r_rbf;
     use r_stats;
     use r_svd_pca;
+    use r_loess;
     // data
     use r_sparse;
     use r_synthetic;
@@ -70,4 +73,5 @@ extendr_module! {
     use r_similiarity;
     // single cell
     use r_count_obj;
+    use r_preprocessing;
 }

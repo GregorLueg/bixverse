@@ -469,6 +469,8 @@ rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap_
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span, degree)
+
 #' Generate sparse data from an upper triangle
 #'
 #' @description This function takes the values from an upper triangle matrix
@@ -640,7 +642,7 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
 #' @export
-rs_h5ad_data <- function(f_path, cs_type, nrows, ncols) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols)
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality)
 
 #' Calculates the traditional GSEA enrichment score
 #'
@@ -1639,25 +1641,74 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
+#' Calculate the percentage of gene sets in the cells
+#'
+#' @description
+#' This function allows to calculate for example the proportion of
+#' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
+#' elements of the genes of interest.
+#'
+#' @return A list with the percentages of counts per gene set group detected
+#' in the cells.
+#'
+#' @export
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx)
+
+#' Calculate the percentage of gene sets in the cells
+#'
+#' @description
+#' This function allows to calculate for example the proportion of
+#' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param hvg_method String. Which HVG detection method to use. Options
+#' are `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
+#' implemented.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param loess_span Numeric. The span parameter for the loess function.
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
+#' not provided.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the percentages of counts per gene set group detected
+#' in the cells:
+#' \itemize{
+#'   \item mean - The average expression of the gene.
+#'   \item var - The variance of the gene.
+#'   \item var_exp - The expected variance of the gene.
+#'   \item var_std - The standardised variance of the gene.
+#' }
+#'
+#' @export
+rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
+
+rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
 
 SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_shape, self)
 
-SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes) .Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, target_size, min_genes)
+SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_ptr, col_idx, qc_params) .Call(wrap__SingeCellCountData__r_csr_mat_to_file, self, no_cells, no_genes, data, row_ptr, col_idx, qc_params)
 
-SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params)
+SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params)
+SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, verbose)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingeCellCountData$generate_gene_based_data <- function(qc_params, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data, self, qc_params, verbose)
+SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
+
+SingeCellCountData$add_cells_to_keep <- function(cell_idx) invisible(.Call(wrap__SingeCellCountData__add_cells_to_keep, self, cell_idx))
 
 #' @export
 `$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }

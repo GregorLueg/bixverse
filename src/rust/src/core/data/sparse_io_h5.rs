@@ -43,7 +43,7 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
 ///
 /// ### Returns
 ///
-/// A boolean vector indicating which cells have sufficient genes.
+/// A tuple with `(no_cells, no_genes, cell quality metrics)`
 pub fn write_h5_counts<P: AsRef<Path>>(
     h5_path: P,
     bin_path: P,
@@ -51,31 +51,50 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     no_cells: usize,
     no_genes: usize,
     cell_quality: MinCellQuality,
-) -> (usize, CellQuality) {
+    verbose: bool,
+) -> (usize, usize, CellQuality) {
+    let file_quality = parse_h5_csr_quality(&h5_path, (no_genes, no_cells), &cell_quality).unwrap();
+
+    if verbose {
+        println!(
+            "Genes passing QC: {}/{}",
+            file_quality.genes_to_keep.len(),
+            no_genes
+        );
+        println!(
+            "Cells passing QC: {}/{}",
+            file_quality.cells_to_keep.len(),
+            no_cells
+        );
+    }
+
     let file_data: CompressedSparseData<u16> =
-        read_h5ad_x_data(h5_path, cs_type, (no_genes, no_cells)).unwrap();
+        read_h5ad_x_data(&h5_path, cs_type, &file_quality).unwrap();
 
     let file_data = file_data.transpose_and_convert();
 
     let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
-    let (cell_chunk_vec, cell_qc) =
+    let (cell_chunk_vec, mut cell_qc): (Vec<CsrCellChunk>, CellQuality) =
         CsrCellChunk::generate_chunks_sparse_data(file_data, cell_quality);
 
-    let mut cells_writen = 0_usize;
-
-    for mut cell_chunk in cell_chunk_vec {
-        if cell_chunk.to_keep {
-            cell_chunk.update_index(&cells_writen);
-            writer.write_cell_chunk(cell_chunk).unwrap();
-            cells_writen += 1;
-        }
+    for cell_chunk in cell_chunk_vec {
+        writer.write_cell_chunk(cell_chunk).unwrap();
     }
 
-    writer.update_header_no_cells(cells_writen);
+    // update the header with the actual files written
+    writer.update_header_no_cells(file_quality.cells_to_keep.len());
+    writer.update_header_no_genes(file_quality.genes_to_keep.len());
     writer.finalise().unwrap();
 
-    (cells_writen, cell_qc)
+    cell_qc.set_cell_indices(&file_quality.cells_to_keep);
+    cell_qc.set_gene_indices(&file_quality.genes_to_keep);
+
+    (
+        file_quality.cells_to_keep.len(),
+        file_quality.genes_to_keep.len(),
+        cell_qc,
+    )
 }
 
 /////////////
@@ -84,9 +103,13 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
 /// Helper function that reads in full CSR data from an h5 file
 ///
+/// The function assumes that the data is stored as genes x cells.
+///
 /// ### Params
 ///
-/// * `file_path` - Path to the h5ad file
+/// * `file_path` - Path to the h5ad file.
+/// * `cs_type` - Which type of sparse compression format the file is stored in.
+/// * `shape` - The final dimension of the matrix.
 ///
 /// ### Returns
 ///
@@ -94,37 +117,128 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 pub fn read_h5ad_x_data<P: AsRef<Path>>(
     file_path: P,
     cs_type: &str,
-    shape: (usize, usize),
+    quality: &CellOnFileQuality,
 ) -> Result<CompressedSparseData<u16>> {
     let cs_type = parse_cs_format(cs_type)
         .ok_or_else(|| format!("Invalid Compressed Sparse type: {}", cs_type))?;
-
     let file = File::open(file_path)?;
+
     let data_ds = file.dataset("X/data")?;
     let indices_ds = file.dataset("X/indices")?;
     let indptr_ds = file.dataset("X/indptr")?;
 
-    // Read data as f32 and convert to u16
     let data_raw: Vec<f32> = data_ds.read_1d()?.to_vec();
-    let data: Vec<u16> = data_raw.iter().map(|&x| x as u16).collect();
-
-    // Read indices as u32 and convert to usize
     let indices_raw: Vec<u32> = indices_ds.read_1d()?.to_vec();
-    let indices: Vec<usize> = indices_raw.iter().map(|&x| x as usize).collect();
-
-    // Read indptr as u32 and convert to usize
     let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
-    let indptr: Vec<usize> = indptr_raw.iter().map(|&x| x as usize).collect();
+
+    let mut new_data: Vec<u16> = Vec::new();
+    let mut new_indices: Vec<usize> = Vec::new();
+    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.genes_to_keep.len() + 1);
+    new_indptr.push(0);
+
+    for &gene_idx in &quality.genes_to_keep {
+        let start = indptr_raw[gene_idx] as usize;
+        let end = indptr_raw[gene_idx + 1] as usize;
+
+        for idx in start..end {
+            let old_cell_idx = indices_raw[idx] as usize;
+            if let Some(&new_cell_idx) = quality.cell_old_to_new.get(&old_cell_idx) {
+                new_data.push(data_raw[idx] as u16);
+                new_indices.push(new_cell_idx);
+            }
+        }
+        new_indptr.push(new_data.len());
+    }
+
+    let shape = (quality.genes_to_keep.len(), quality.cells_to_keep.len());
 
     Ok(CompressedSparseData {
-        data,
-        indices,
-        indptr,
+        data: new_data,
+        indices: new_indices,
+        indptr: new_indptr,
         cs_type,
         data_2: None::<Vec<u16>>,
         shape,
     })
 }
+
+/// Get the cell quality data from a CSR file
+///
+/// This file assumes that the rows are representing the genes and the columns
+/// the cells and the data was stored in CSR type format.
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file
+/// * `cell_quality` -
+pub fn parse_h5_csr_quality<P: AsRef<Path>>(
+    file_path: P,
+    shape: (usize, usize),
+    cell_quality: &MinCellQuality,
+) -> Result<CellOnFileQuality> {
+    let file = File::open(file_path)?;
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+
+    // First parse over the indptr to understand in how many cells the gene is
+    // expressed
+    let mut no_cells_exp_gene: Vec<usize> = Vec::with_capacity(shape.0);
+
+    let data: Vec<f32> = data_ds.read_1d()?.to_vec();
+    let indices: Vec<u32> = indices_ds.read_1d()?.to_vec();
+    let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    for i in 0..shape.0 {
+        let start_ptr_i = indptr[i] as usize;
+        let end_ptr_i = indptr[i + 1] as usize;
+
+        no_cells_exp_gene.push(end_ptr_i - start_ptr_i);
+    }
+
+    let genes_to_keep_bool: Vec<bool> = no_cells_exp_gene
+        .iter()
+        .map(|x| *x >= cell_quality.min_cells)
+        .collect();
+
+    // Calculate the cell metrics using the kept genes
+    // Bit inefficient here because we data is in CSR, but oh well...
+    let mut cell_unique_genes = vec![0usize; shape.1];
+    let mut cell_lib_size = vec![0.0f32; shape.1];
+
+    for gene_idx in 0..shape.0 {
+        if !genes_to_keep_bool[gene_idx] {
+            continue;
+        }
+
+        let start = indptr[gene_idx] as usize;
+        let end = indptr[gene_idx + 1] as usize;
+
+        for idx in start..end {
+            let cell_idx = indices[idx] as usize;
+            cell_unique_genes[cell_idx] += 1;
+            cell_lib_size[cell_idx] += data[idx];
+        }
+    }
+
+    let cells_to_keep: Vec<usize> = (0..shape.1)
+        .filter(|&i| {
+            cell_unique_genes[i] >= cell_quality.min_unique_genes
+                && cell_lib_size[i] >= cell_quality.min_lib_size as f32
+        })
+        .collect();
+
+    let genes_to_keep: Vec<usize> = (0..shape.0).filter(|&i| genes_to_keep_bool[i]).collect();
+
+    let mut file_quality_data = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
+    file_quality_data.generate_maps_sets();
+
+    Ok(file_quality_data)
+}
+
+///////////
+// Tests //
+///////////
 
 #[cfg(test)]
 mod tests {
@@ -132,6 +246,8 @@ mod tests {
 
     #[test]
     fn test_read_h5ad_file() {
+        // TODO - need to generate testing data and add to the repo itself!
+
         let file_path = "/Users/gregorlueg/Downloads/ERX11148735.h5ad";
 
         // Try to open the file

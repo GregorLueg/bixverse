@@ -1,4 +1,6 @@
 use bincode::{Decode, Encode};
+use extendr_api::*;
+use faer_entity::SimpleEntity;
 use half::f16;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -97,6 +99,11 @@ impl F16 {
     pub fn from_le_bytes(bytes: [u8; 2]) -> Self {
         F16(u16::from_le_bytes(bytes))
     }
+
+    /// Create an F16
+    pub fn to_f32(self) -> f32 {
+        f16::from_bits(self.0).to_f32()
+    }
 }
 
 ///////////////////////
@@ -143,3 +150,35 @@ impl ToF32AndU16 for u16 {
         self
     }
 }
+
+////////////////
+// R and faer //
+////////////////
+
+pub trait FaerRType: SimpleEntity + Copy + Clone + 'static {
+    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]>;
+}
+
+impl FaerRType for f64 {
+    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]> {
+        let nrow = x.nrows();
+        let ncol = x.ncols();
+        RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
+    }
+}
+
+impl FaerRType for i32 {
+    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]> {
+        let nrow = x.nrows();
+        let ncol = x.ncols();
+        RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
+    }
+}
+
+// impl FaerRType for f32 {
+//     fn to_r_matrix(x: faer::MatRef<f32>) -> extendr_api::RArray<f32, [usize; 2]> {
+//         let nrow = x.nrows();
+//         let ncol = x.ncols();
+//         RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
+//     }
+// }

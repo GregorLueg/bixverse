@@ -604,3 +604,34 @@ expect_equal(
   tolerance = 1e-7,
   info = paste("Hedge standard error with correction")
 )
+
+# loess ------------------------------------------------------------------------
+
+x <- as.numeric(seq_len(100))
+y <- 2 * x + rnorm(20, 0, 0.1)
+
+r_fit <- loess(
+  y ~ x,
+  span = 0.2,
+  degree = 1L,
+  normalise = FALSE
+)
+rs_predictions <- rs_2d_loess(x, y, 0.2, 1)
+
+# r predictions
+r_predictions <- predict(r_fit, x)
+
+expect_equal(
+  current = rs_predictions$predicted,
+  target = r_predictions,
+  tolerance = 1e-4,
+  info = "Rust version of a Loess implementation - predictions"
+)
+
+# r residuals
+r_residuals <- residuals(r_fit)
+
+expect_true(
+  current = cor(rs_predictions$residuals, r_residuals) > 0.99,
+  info = "Rust version of a Loess implementation - residuals"
+)

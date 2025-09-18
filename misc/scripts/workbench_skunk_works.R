@@ -93,97 +93,73 @@ library(duckdb)
 
 devtools::load_all()
 devtools::document()
-
 rextendr::document()
 
 h5_path <- "~/Downloads/ERX11148735.h5ad"
 
+# cells x genes
+
 bixverse_sc <- single_cell_exp(dir_data = tempdir())
 
-bixverse_sc <- load_h5ad(bixverse_sc, h5_path = h5_path)
+bixverse_sc <- load_h5ad(object = bixverse_sc, h5_path = h5_path)
 
-obs <- get_sc_obs(
-  bixverse_sc,
+obs <- get_sc_obs(bixverse_sc)
+var <- get_sc_var(bixverse_sc)
+
+counts <- bixverse_sc[,, assay = "raw", return_format = "gene"]
+
+tictoc::tic()
+counts_gene <- bixverse_sc[, 1:100L, assay = "norm", return_format = "gene"]
+tictoc::toc()
+
+tictoc::tic()
+counts_gene <- bixverse_sc[, 1:100L, assay = "norm", return_format = "cell"]
+tictoc::toc()
+
+get_gene_names(bixverse_sc)
+
+library('biomaRt')
+mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+
+G_list <- getBM(
+  filters = "ensembl_gene_id",
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
+  values = var$gene_id,
+  mart = mart
 )
 
-bixverse_sc[1:5L, ]
+mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
 
-bixverse_sc[[]]
+gs_of_interest <- list(
+  "mt_perc" = mt_genes,
+  "rb_perc" = rps_genes
+)
 
-bixverse_sc@dims
+bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
-rust_con <- get_sc_rust_ptr(bixverse_sc)
+devtools::load_all()
 
-col_index_map <- get_sc_map(bixverse_sc)[["gene_col_idx_map"]]
+cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.05, cell_id]
 
-return_format = "cell"
-cell_indices = 1:10L
-assay = "raw"
-.verbose = FALSE
+bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
 
-res <- if (return_format == "cell") {
-  if (is.null(cell_indices)) {
-    rust_con$return_full_mat(
-      assay = assay,
-      cell_based = TRUE,
-      verbose = .verbose
-    )
-  } else {
-    rust_con$get_cells_by_indices(indices = cell_indices, assay = assay)
-  }
-} else {
-  # gene
-  if (is.null(gene_indices)) {
-    rust_con$return_full_mat(
-      assay = assay,
-      cell_based = FALSE,
-      verbose = .verbose
-    )
-  } else {
-    rust_con$get_genes_by_indices(indices = gene_indices, assay = assay)
-  }
-}
+list.files(bixverse_sc@dir_data)
 
-res$indices <- col_index_map[as.character(res$indices)]
+rextendr::document()
 
-get_sc_var(bixverse_sc)
 
-length(bixverse_sc@index_maps$cell_map)
-length(bixverse_sc@index_maps$gene_col_idx_map)
+tictoc::tic()
+res <- rs_sc_hvg(
+  f_path_gene = file.path(bixverse_sc@dir_data, "counts_genes.bin"),
+  hvg_method = "vst",
+  cell_indices = as.integer(bixverse_sc@sc_map$cells_to_keep_idx),
+  loess_span = 0.3,
+  clip_max = NULL,
+  verbose = TRUE
+)
+tictoc::toc()
 
-bixverse_sc@dims
-
-count_data <- res
-
-matrix_class <- if (return_format == "cell") "dgRMatrix" else "dgCMatrix"
-index_slot <- if (return_format == "cell") "j" else "i"
-
-sparse_mat <- with(count_data, {
-  args <- list(
-    p = as.integer(indptr),
-    x = as.numeric(data),
-    Dim = as.integer(c(no_cells, no_genes))
-  )
-  args[[index_slot]] <- as.integer(indices)
-
-  do.call(new, c(matrix_class, args))
-})
-
-any(is.na(col_index_map[as.character(res$indices)]))
-
-head(obs)
-
-bixverse_sc[[1:25]]
-
-bixverse_sc[[c("cell_id", "lib_size", "nnz")]]
-
-counts <- get_sc_counts(bixverse_sc, return_format = "gene")
-
-class(counts)
-
-counts <- bixverse_sc[,, assay = "norm", return_format = "gene"]
-
-class(counts)
 
 # mtx file ---------------------------------------------------------------------
 
@@ -245,4 +221,174 @@ object = load_mtx(
 )
 tictoc::toc()
 
-object[1:10L, ]
+library(biomaRt)
+
+mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+
+G_list <- getBM(
+  filters = "ensembl_gene_id",
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
+  values = get_gene_names(object),
+  mart = mart
+)
+setDT(G_list)
+
+mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
+
+gs_of_interest <- list(
+  "mt_perc" = mt_genes,
+  "rb_perc" = rps_genes
+)
+
+object <- gene_set_proportions(object, gs_of_interest)
+
+object[[]]
+
+object <- set_cell_to_keep(object, get_cell_names(object))
+
+devtools::load_all()
+
+res <- rs_sc_hvg(
+  f_path_gene = file.path(object@dir_data, "counts_genes.bin"),
+  hvg_method = "vst",
+  cell_indices = get_cells_to_keep(object),
+  loess_span = 0.3,
+  clip_max = NULL,
+  verbose = TRUE
+)
+
+params_sc_hvg()
+
+devtools::load_all()
+devtools::document()
+
+object <- find_hvg(object = object)
+
+get_hvg(object)
+
+rextendr::document()
+
+get_rust_count_gene_f_path(object)
+
+get_cells_to_keep(object)
+
+rextendr::document()
+
+print("Using standard SVD")
+
+pc_results <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(object),
+  no_pcs = 30L,
+  random_svd = FALSE,
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = get_hvg(object),
+  seed = 42L,
+  verbose = TRUE
+)
+
+print("Using randomised SVD")
+
+pc_results_randomised <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(object),
+  no_pcs = 30L,
+  random_svd = TRUE,
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = get_hvg(object),
+  seed = 42L,
+  verbose = TRUE
+)
+
+plot(
+  pc_results_randomised$scores[, 1],
+  pc_results$scores[, 1],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC1"
+)
+
+plot(
+  pc_results_randomised$scores[, 10],
+  pc_results$scores[, 10],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC10"
+)
+
+plot(
+  pc_results_randomised$scores[, 25],
+  pc_results$scores[, 25],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC25"
+)
+
+dim(pc_results_randomised$scores)
+dim(pc_results_randomised$loadings)
+
+diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
+
+
+# data <- (idxptr, idx, val, val)
+
+# Seurat (EVERYTHING is double precision - f64)
+# raw counts -> (idxptr, idx, val)
+# norm counts -> (idxptr, idx, val)
+# SCT counts -> (idxptr, idx, val)
+# SCT data -> (idxptr, idx, val)
+# scaled data (dense) -> 2500 HVGs -> N x n_cells (dense!)
+
+# Rebuild of the h5ad parsing --------------------------------------------------
+
+rextendr::document()
+devtools::load_all()
+
+h5_path <- path.expand("~/Downloads/ERX11148735.h5ad")
+h5_meta <- get_h5ad_dimensions(h5_path)
+
+object <- single_cell_exp(dir_data = tempdir())
+h5_path
+sc_qc_param = params_sc_min_quality()
+.verbose = TRUE
+
+h5_meta <- get_h5ad_dimensions(h5_path)
+
+rust_con <- get_sc_rust_ptr(object)
+
+file_res <- rust_con$h5_to_file(
+  cs_type = h5_meta$type,
+  h5_path = path.expand(h5_path),
+  no_cells = h5_meta$dims["obs"],
+  no_genes = h5_meta$dims["var"],
+  qc_params = sc_qc_param,
+  verbose = .verbose
+)
+
+rust_con$generate_gene_based_data(
+  qc_params = sc_qc_param,
+  verbose = .verbose
+)
+
+duckdb_con <- get_sc_duckdb(object)
+duckdb_con$populate_obs_from_h5(
+  h5_path = h5_path,
+  filter = as.integer(file_res$cell_indices + 1)
+)
+duckdb_con$populate_vars_from_h5(
+  h5_path = h5_path,
+  filter = as.integer(file_res$gene_indices + 1)
+)
+
+length(file_res$cell_indices)
+
+duckdb_con$get_obs_table()
+
+cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+duckdb_con$add_data_obs(new_data = cell_res_dt)
+cell_map <- duckdb_con$get_obs_index_map()
+gene_map <- duckdb_con$get_var_index_map()
+
+S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+object <- set_cell_mapping(x = object, cell_map = cell_map)
+object <- set_gene_mapping(x = object, gene_map = gene_map)

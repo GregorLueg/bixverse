@@ -12,7 +12,7 @@ use crate::core::base::rbf::*;
 use crate::core::base::stats::{mad, median};
 use crate::core::methods::coremo::*;
 use crate::utils::general::{mat_rm_row, upper_triangle_indices};
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, r_matrix_to_faer_i32};
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Calculates the TOM over an affinity matrix
 ///
@@ -231,7 +231,7 @@ fn rs_coremo_stability(
 /// }
 #[extendr]
 fn rs_cluster_stability(data: RMatrix<i32>) -> List {
-    let data = r_matrix_to_faer_i32(&data);
+    let data = r_matrix_to_faer(&data);
 
     let n_features = data.nrows();
 

@@ -1,108 +1,10 @@
+use rustc_hash::FxHashSet;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Result as IoResult};
+use std::io::{BufRead, BufReader, Result as IoResult, Seek};
 use std::path::Path;
 
-use crate::core::data::sparse_io::{CellGeneSparseWriter, CsrCellChunk};
+use crate::core::data::sparse_io::*;
 use crate::single_cell::processing::*;
-
-////////////////////////////////
-// Cell accumulator structure //
-////////////////////////////////
-
-/// Structure to keep Cell information during MTX parsing
-///
-/// ### Fields
-///
-/// * `current_idx` - Current index position.
-/// * `gene_indices` - The gene indices for this cell.
-/// * `genen_counts` - The raw counts for this cell.
-/// * `total_umi` - Total library size of the cell.
-#[derive(Debug)]
-struct CellAccumulator {
-    current_idx: usize,
-    gene_indices: Vec<u16>,
-    gene_counts: Vec<u16>,
-    total_umi: u32,
-}
-
-impl CellAccumulator {
-    /// Generate a new instace of the accumulator
-    ///
-    /// ### Returns
-    ///
-    /// Returns initialised `CellAccumulator`.
-    fn new() -> Self {
-        Self {
-            current_idx: 0,
-            gene_indices: Vec::new(),
-            gene_counts: Vec::new(),
-            total_umi: 0,
-        }
-    }
-
-    /// Reset the accumulator
-    ///
-    /// ### Params
-    ///
-    /// * `new_index` - To which new index to set the accumulator
-    #[inline]
-    fn reset(&mut self, new_index: usize) {
-        self.current_idx = new_index;
-        self.gene_indices.clear();
-        self.gene_counts.clear();
-        self.total_umi = 0;
-    }
-
-    /// Add a gene
-    ///
-    /// * `gene_idx` - Index position of the gene
-    /// * `count` - Raw counts for this gene
-    #[inline]
-    fn add_gene(&mut self, gene_idx: u16, count: u16) {
-        self.gene_indices.push(gene_idx);
-        self.gene_counts.push(count);
-        self.total_umi += count as u32;
-    }
-
-    /// Check if the cell has any associated genes
-    ///
-    /// ### Returns
-    ///
-    /// Boolean if cell has no associated genes
-    #[inline]
-    fn is_empty(&self) -> bool {
-        self.gene_indices.is_empty()
-    }
-
-    /// Does the cell pass thresholds
-    ///
-    /// Should the cell not pass thresholds based on minimum genes per cell
-    /// and library size
-    ///
-    /// ### Params
-    ///
-    /// * `min_genes` - Minimum genes that the cell needs to have to pass the
-    ///   threshold.
-    /// * `min_umi` - Minimum library size that the cell needs to have to pass
-    ///   the threshold.
-    ///
-    /// ### Return
-    ///
-    /// Boolean indicating if the cell passes the thresholds.
-    #[inline]
-    fn to_include(&self, min_genes: usize, min_umi: u32) -> bool {
-        self.gene_indices.len() >= min_genes && self.total_umi >= min_umi
-    }
-
-    /// Return the cell data
-    ///
-    /// ### Returns
-    ///
-    /// A tuple of `(library_size, no_genes_expressed)`
-    fn get_cell_data(&self) -> (u32, usize) {
-        (self.total_umi, self.gene_indices.len())
-    }
-}
 
 /////////
 // MTX //
@@ -223,6 +125,115 @@ impl MtxReader {
         })
     }
 
+    /// Helper to parse the file to understand which cells to keep
+    ///
+    /// ### Returns
+    ///
+    /// The CellOnFileQuality file containing the indices and mappings
+    /// for the cells/genes to keep.
+    pub fn parse_mtx_quality(&mut self, verbose: bool) -> IoResult<CellOnFileQuality> {
+        let mut gene_cell_count = vec![0u32; self.header.total_genes];
+        let mut line_buffer = Vec::with_capacity(128);
+
+        self.reader.rewind()?;
+        Self::skip_header(&mut self.reader)?;
+
+        if verbose {
+            println!("First file pass - getting gene statistics");
+        }
+
+        // Pass 1: Gene statistics only
+        while {
+            line_buffer.clear();
+            self.reader.read_until(b'\n', &mut line_buffer)? > 0
+        } {
+            if line_buffer.len() < 3 {
+                continue;
+            }
+            if line_buffer[line_buffer.len() - 1] == b'\n' {
+                line_buffer.pop();
+            }
+            if !line_buffer.is_empty() && line_buffer[line_buffer.len() - 1] == b'\r' {
+                line_buffer.pop();
+            }
+
+            if let Some((_, col, _)) = parse_mtx_line(&line_buffer) {
+                let gene_idx = (col - 1) as usize;
+                if gene_idx < self.header.total_genes {
+                    gene_cell_count[gene_idx] += 1;
+                }
+            }
+        }
+
+        // Filter genes
+        let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
+            .filter(|&i| gene_cell_count[i] as usize >= self.qc_params.min_cells)
+            .collect();
+
+        if verbose {
+            println!("Second file pass - getting cell statistics");
+        }
+
+        // Pass 2: Cell statistics with filtered genes
+        let mut cell_gene_count = vec![0u32; self.header.total_cells];
+        let mut cell_lib_size = vec![0u32; self.header.total_cells];
+
+        self.reader.rewind()?;
+        Self::skip_header(&mut self.reader)?;
+
+        while {
+            line_buffer.clear();
+            self.reader.read_until(b'\n', &mut line_buffer)? > 0
+        } {
+            if line_buffer.len() < 3 {
+                continue;
+            }
+            if line_buffer[line_buffer.len() - 1] == b'\n' {
+                line_buffer.pop();
+            }
+            if !line_buffer.is_empty() && line_buffer[line_buffer.len() - 1] == b'\r' {
+                line_buffer.pop();
+            }
+
+            if let Some((row, col, value)) = parse_mtx_line(&line_buffer) {
+                let gene_idx = (col - 1) as usize;
+                let cell_idx = (row - 1) as usize;
+
+                if genes_to_keep_set.contains(&gene_idx) && cell_idx < self.header.total_cells {
+                    cell_gene_count[cell_idx] += 1;
+                    cell_lib_size[cell_idx] += value as u32;
+                }
+            }
+        }
+
+        // Filter cells
+        let cells_to_keep: Vec<usize> = (0..self.header.total_cells)
+            .filter(|&i| {
+                cell_gene_count[i] as usize >= self.qc_params.min_unique_genes
+                    && cell_lib_size[i] as f32 >= self.qc_params.min_lib_size as f32
+            })
+            .collect();
+
+        let genes_to_keep: Vec<usize> = genes_to_keep_set.into_iter().collect();
+        let mut quality = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
+        quality.generate_maps_sets();
+
+        if verbose {
+            println!(
+                "Genes passing QC: {}/{}",
+                quality.genes_to_keep.len(),
+                self.header.total_genes
+            );
+            println!(
+                "Cells passing QC: {}/{}",
+                quality.cells_to_keep.len(),
+                self.header.total_cells
+            );
+        }
+
+        Ok(quality)
+    }
+
     /// Process the mtx file and write to binarised Rust file
     ///
     /// ### Params
@@ -234,176 +245,131 @@ impl MtxReader {
     /// The `MtxFinalData` with information how many cells were written to
     /// file, how many genes were included in which cells did not parse
     /// the thresholds.
-    pub fn process_mtx_and_write_bin(mut self, bin_path: &str) -> IoResult<MtxFinalData> {
+    pub fn process_mtx_and_write_bin(
+        mut self,
+        bin_path: &str,
+        quality: &CellOnFileQuality,
+        verbose: bool,
+    ) -> IoResult<MtxFinalData> {
         let mut writer = CellGeneSparseWriter::new(
             bin_path,
-            true, // cell_based
-            self.header.total_cells,
-            self.header.total_genes,
+            true,
+            quality.cells_to_keep.len(),
+            quality.genes_to_keep.len(),
         )?;
 
-        let mut to_include = vec![false; self.header.total_cells];
-        let mut lib_size = Vec::new();
-        let mut nnz = Vec::new();
-        let mut accumulator = CellAccumulator::new();
-        let mut line = String::new();
-        let mut cells_written = 0_usize;
-        let mut last_processed_cell = 0_usize;
-
+        // Collect all data first
+        let mut cell_data: Vec<Vec<(u16, u16)>> = vec![Vec::new(); quality.cells_to_keep.len()];
         let mut line_buffer = Vec::with_capacity(64);
+
+        self.reader.rewind()?;
+        Self::skip_header(&mut self.reader)?;
+
+        if verbose {
+            println!(
+                "Starting to write high quality cells, genes in a cell-friendly format to disk."
+            )
+        }
 
         while {
             line_buffer.clear();
             self.reader.read_until(b'\n', &mut line_buffer)? > 0
         } {
-            // Remove trailing newline
             if line_buffer.last() == Some(&b'\n') {
                 line_buffer.pop();
             }
             if line_buffer.last() == Some(&b'\r') {
                 line_buffer.pop();
             }
-
             if line_buffer.is_empty() {
                 continue;
             }
 
-            // Fast parsing without string allocation
             let (row, col, value) = match parse_mtx_line(&line_buffer) {
                 Some(parsed) => parsed,
-                None => continue, // Skip malformed lines
+                None => continue,
             };
 
-            let cell_idx = (row - 1) as usize;
-            let gene_idx = (col - 1) as u16;
+            let old_gene_idx = (col - 1) as usize;
+            let old_cell_idx = (row - 1) as usize;
 
-            if !accumulator.is_empty() && cell_idx != accumulator.current_idx {
-                let (lib_size_i, nnz_i) = accumulator.get_cell_data();
-                lib_size.push(lib_size_i);
-                nnz.push(nnz_i);
-                cells_written += self.process_cell(
-                    &mut accumulator,
-                    &mut writer,
-                    &mut to_include,
-                    &cells_written,
-                )?;
-                last_processed_cell = accumulator.current_idx;
+            if !quality.genes_to_keep_set.contains(&old_gene_idx)
+                || !quality.cells_to_keep_set.contains(&old_cell_idx)
+            {
+                continue;
             }
 
-            if accumulator.is_empty() || cell_idx != accumulator.current_idx {
-                accumulator.reset(cell_idx);
+            let new_cell_idx = quality.cell_old_to_new[&old_cell_idx];
+            let new_gene_idx = quality.gene_old_to_new[&old_gene_idx] as u16;
+
+            cell_data[new_cell_idx].push((new_gene_idx, value));
+        }
+
+        // Write cells in order
+        let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());
+        let mut nnz = Vec::with_capacity(quality.cells_to_keep.len());
+
+        for (cell_idx, data) in cell_data.iter().enumerate() {
+            if data.is_empty() {
+                continue;
             }
 
-            accumulator.add_gene(gene_idx, value);
-            line.clear();
+            let gene_indices: Vec<u16> = data.iter().map(|(g, _)| *g).collect();
+            let gene_counts: Vec<u16> = data.iter().map(|(_, c)| *c).collect();
+
+            let total_umi: u32 = gene_counts.iter().map(|&x| x as u32).sum();
+            let n_genes = gene_counts.len();
+
+            lib_size.push(total_umi as usize);
+            nnz.push(n_genes);
+
+            let cell_chunk = CsrCellChunk::from_data(
+                &gene_counts,
+                &gene_indices,
+                cell_idx,
+                self.qc_params.target_size,
+                true,
+            );
+            writer.write_cell_chunk(cell_chunk)?;
         }
 
-        // Process the last accumulated cell
-        if !accumulator.is_empty() {
-            let (lib_size_i, nnz_i) = accumulator.get_cell_data();
-            lib_size.push(lib_size_i);
-            nnz.push(nnz_i);
-            cells_written += self.process_cell(
-                &mut accumulator,
-                &mut writer,
-                &mut to_include,
-                &cells_written,
-            )?;
-            last_processed_cell = accumulator.current_idx;
+        let mut to_include = vec![false; self.header.total_cells];
+        for &cell_idx in &quality.cells_to_keep {
+            to_include[cell_idx] = true;
         }
-
-        #[allow(clippy::needless_range_loop)]
-        for cell_idx in (last_processed_cell + 1)..self.header.total_cells {
-            // These cells have no entries, so they automatically fail QC
-            to_include[cell_idx] = false;
-        }
-
-        writer.update_header_no_cells(cells_written);
 
         writer.finalise()?;
 
+        let cell_quality = CellQuality {
+            cell_indices: quality.cells_to_keep.to_vec(),
+            gene_indices: quality.genes_to_keep.to_vec(),
+            lib_size,
+            no_genes: nnz,
+        };
+
         Ok(MtxFinalData {
-            cell_qc: CellQuality {
-                to_keep: to_include,
-                lib_size: Some(lib_size.iter().map(|x| *x as usize).collect()),
-                no_genes: Some(nnz),
-            },
-            no_genes: self.header.total_genes,
-            no_cells: cells_written,
+            cell_qc: cell_quality,
+            no_genes: quality.genes_to_keep.len(),
+            no_cells: quality.cells_to_keep.len(),
         })
     }
 
-    /// Helper function to process a given cell
-    ///
-    /// ### Params
-    ///
-    /// * `accumulator` - The `CellAccumulator` structure with the cell data
-    ///   to write to disk.
-    /// * `writer` - The `CellGeneSparseWriter` structure to write the cell
-    ///   data to disk.
-    /// * `to_include` - Reference to the mutable vector indicating if the cell
-    ///   will be included (or not).
-    ///
-    /// ### Returns
-    ///
-    /// A usize indicating that the cell was included (`1`) or not (`0`).
-    fn process_cell(
-        &self,
-        accumulator: &mut CellAccumulator,
-        writer: &mut CellGeneSparseWriter,
-        to_include: &mut [bool],
-        cell_written: &usize,
-    ) -> IoResult<usize> {
-        let cell_idx = accumulator.current_idx;
-        let passes_qc = accumulator.to_include(
-            self.qc_params.min_unique_genes,
-            self.qc_params.min_lib_size as u32,
-        );
-
-        to_include[cell_idx] = passes_qc;
-
-        if passes_qc {
-            let cell_chunk = CsrCellChunk::from_data(
-                &accumulator.gene_counts,
-                &accumulator.gene_indices,
-                *cell_written,
-                self.qc_params.target_size,
-                true, // to_keep = true since it passed QC
-            );
-
-            writer.write_cell_chunk(cell_chunk)?;
-            Ok(1)
-        } else {
-            Ok(0)
+    fn skip_header(reader: &mut BufReader<File>) -> IoResult<()> {
+        let mut line = String::new();
+        loop {
+            line.clear();
+            reader.read_line(&mut line)?;
+            if !line.starts_with('%') {
+                break;
+            }
         }
+        Ok(())
     }
 }
 
 /////////////
 // Helpers //
 /////////////
-
-/// Fast integer parsing from byte slice
-///
-/// ### Params
-///
-/// * `bytes` - Slice of the bytes
-///
-/// ### Return
-///
-/// Optional u32 if the bytes were an ASCII digit
-#[inline]
-fn fast_parse_u32(bytes: &[u8]) -> Option<u32> {
-    let mut result = 0u32;
-    for &byte in bytes {
-        if byte.is_ascii_digit() {
-            result = result.wrapping_mul(10).wrapping_add((byte - b'0') as u32);
-        } else {
-            return None;
-        }
-    }
-    Some(result)
-}
 
 /// Parse mtx line from bytes
 ///
@@ -417,11 +383,48 @@ fn fast_parse_u32(bytes: &[u8]) -> Option<u32> {
 /// `<cell_index, gene_index, raw_count>`
 #[inline]
 fn parse_mtx_line(line: &[u8]) -> Option<(u32, u32, u16)> {
-    let mut parts = line.split(|&b| b == b' ' || b == b'\t');
+    let mut i = 0;
+    let len = line.len();
 
-    let row = fast_parse_u32(parts.next()?)?;
-    let col = fast_parse_u32(parts.next()?)?;
-    let val = fast_parse_u32(parts.next()?)? as u16;
+    // Parse first number (row)
+    let mut row = 0u32;
+    while i < len && line[i].is_ascii_digit() {
+        row = row * 10 + (line[i] - b'0') as u32;
+        i += 1;
+    }
+    if i == 0 {
+        return None;
+    }
+
+    // Skip whitespace
+    while i < len && (line[i] == b' ' || line[i] == b'\t') {
+        i += 1;
+    }
+    if i >= len {
+        return None;
+    }
+
+    // Parse second number (col)
+    let mut col = 0u32;
+    while i < len && line[i].is_ascii_digit() {
+        col = col * 10 + (line[i] - b'0') as u32;
+        i += 1;
+    }
+
+    // Skip whitespace
+    while i < len && (line[i] == b' ' || line[i] == b'\t') {
+        i += 1;
+    }
+    if i >= len {
+        return None;
+    }
+
+    // Parse third number (value)
+    let mut val = 0u16;
+    while i < len && line[i].is_ascii_digit() {
+        val = val * 10 + (line[i] - b'0') as u16;
+        i += 1;
+    }
 
     Some((row, col, val))
 }
