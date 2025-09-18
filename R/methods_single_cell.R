@@ -264,7 +264,7 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
   names(gene_set_list_tidy) <- names(gene_set_list)
 
   rs_results <- rs_sc_get_gene_set_perc(
-    f_path_cell = file.path(object@dir_data, "counts_cells.bin"),
+    f_path_cell = get_rust_count_cell_f_path(object),
     gene_set_idx = gene_set_list_tidy
   )
 
@@ -282,19 +282,69 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 #' the implementation has only
 #'
 #' @param object `single_cell_exp` class.
-#' @param hvg_method String. One of `c("vst", "meanvarbin", "dispersion")`.
-#' Atm, only `"vst"` is implemented.
-#' @param loess_span Float. The span for the loess function,
+#' @param hvg_no Integer. Number of highly variable genes to include. Defaults
+#' to `2000L`.
+#' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
+#' \itemize{
+#'   \item method - Which method to use. One of
+#'   `c("vst", "meanvarbin", "dispersion")`
+#'   \item loess_span - The span for the loess function to standardise the
+#'   variance
+#'   \item num_bin - Integer. Not yet implemented.
+#'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
+#'   implemented yet.
+#' }
+#' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
 find_hvg <- S7::new_generic(
-  name = "gene_set_proportions",
+  name = "find_hvg",
   dispatch_args = "object",
   fun = function(
     object,
-    gene_set_list
+    hvg_no = 2000L,
+    hvg_params = params_sc_hvg(),
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
 )
+
+#' @method find_hvg single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(find_hvg, single_cell_exp) <- function(
+  object,
+  hvg_no = 2000L,
+  hvg_params = params_sc_hvg(),
+  .verbose = TRUE
+) {
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(hvg_no, "I1")
+  assertScHvg(hvg_params)
+  checkmate::qassert(.verbose, "B1")
+
+  res <- with(
+    hvg_params,
+    rs_sc_hvg(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      hvg_method = method,
+      cell_indices = get_cells_to_keep(object),
+      loess_span = loess_span,
+      clip_max = NULL,
+      verbose = .verbose
+    )
+  )
+
+  object <- set_sc_new_var_cols(object = object, data_list = res)
+
+  hvg <- order(res$var_std, decreasing = TRUE)[1:hvg_no]
+
+  object <- set_hvg(object, hvg = hvg)
+
+  return(object)
+}

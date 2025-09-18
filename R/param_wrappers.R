@@ -486,7 +486,7 @@ params_sc_hvg <- function(
   bin_method = "equal_width"
 ) {
   # check
-  checkmate::assertChoise(method, c("vst", "meanvarbin", "dispersion"))
+  checkmate::assertChoice(method, c("vst", "meanvarbin", "dispersion"))
   checkmate::qassert(loess_span, "N1[0.1, 1]")
   checkmate::qassert(num_bin, "N1")
   checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))

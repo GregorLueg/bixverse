@@ -4,15 +4,26 @@
 \alias{find_hvg}
 \title{Identify HVGs}
 \usage{
-find_hvg(object, gene_set_list)
+find_hvg(object, hvg_no = 2000L, hvg_params = params_sc_hvg(), .verbose = TRUE)
 }
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
 
-\item{hvg_method}{String. One of \code{c("vst", "meanvarbin", "dispersion")}.
-Atm, only \code{"vst"} is implemented.}
+\item{hvg_no}{Integer. Number of highly variable genes to include. Defaults
+to \code{2000L}.}
 
-\item{loess_span}{Float. The span for the loess function,}
+\item{hvg_params}{List, see \code{\link[=params_sc_hvg]{params_sc_hvg()}}. This list contains
+\itemize{
+\item method - Which method to use. One of
+\code{c("vst", "meanvarbin", "dispersion")}
+\item loess_span - The span for the loess function to standardise the
+variance
+\item num_bin - Integer. Not yet implemented.
+\item bin_method - String. One of \code{c("equal_width", "equal_freq")}. Not
+implemented yet.
+}}
+
+\item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
 \value{
 It will add the columns based on the names in the \code{gene_set_list} to

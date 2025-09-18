@@ -13,7 +13,8 @@ new_sc_mapping <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
     cell_mapping = NULL,
-    cells_to_keep_idx = NULL
+    cells_to_keep_idx = NULL,
+    hvg_gene_indices = NULL
   )
 
   class(sc_mapper) <- "sc_mapper"
@@ -54,6 +55,17 @@ set_cell_mapping <- function(x, cell_map) {
 #' @export
 set_cell_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cell_to_keep")
+}
+
+#' Set the HVG genes
+#'
+#' @param x An object to set the HVGs for
+#' @param hvg String or integer. The names or indices of the highly variable
+#' genes.
+#'
+#' @export
+set_hvg <- function(x, hvg) {
+  UseMethod("set_hvg")
 }
 
 ### methods --------------------------------------------------------------------
@@ -122,6 +134,32 @@ set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
   return(x)
 }
 
+#' Set the HVG for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param hvg String or integer. The names or indices of the highly variable
+#' genes.
+#'
+#' @return Updated `sc_mapper` object with column index mapping set
+#'
+#' @export
+set_hvg.sc_mapper <- function(x, hvg) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(hvg, c("N+", "S+"))
+
+  # transform to Rust 0-based indexing
+  res <- if (is.numeric(hvg)) {
+    hvg - 1
+  } else {
+    x[["gene_mapping"]][hvg] - 1
+  }
+
+  x[["hvg_gene_indices"]] <- res
+
+  return(x)
+}
+
 ## getters ---------------------------------------------------------------------
 
 ### generics -------------------------------------------------------------------
@@ -158,6 +196,13 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 #' @param x An object to get the gene index for.
 get_cells_to_keep <- function(x) {
   UseMethod("get_cells_to_keep")
+}
+
+#' Get the HVG
+#'
+#' @param x An object to get HVG for.
+get_hvg <- function(x) {
+  UseMethod("get_hvg")
 }
 
 ### methods --------------------------------------------------------------------
@@ -226,6 +271,20 @@ get_cell_names.sc_mapper <- function(x) {
   checkmate::assertClass(x, "sc_mapper")
 
   return(names(x[["cell_mapping"]]))
+}
+
+#' Get the indices of the HVG
+#'
+#' @param x An `sc_mapper` object
+#'
+#' @return The gene indices (0-based for Rust) of the HVG
+#'
+#' @export
+get_hvg.sc_mapper <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+
+  return(as.integer(x[["hvg_gene_indices"]]))
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -358,6 +417,60 @@ S7::method(get_sc_rust_ptr, single_cell_exp) <- function(object) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
 
   return(S7::prop(object, "count_connection"))
+}
+
+#' Get the file path to the counts in gene format
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @return The path to the `counts_genes.bin`
+get_rust_count_gene_f_path <- S7::new_generic(
+  name = "get_rust_count_gene_f_path",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_rust_count_gene_f_path single_cell_exp
+#'
+#' @export
+S7::method(get_rust_count_gene_f_path, single_cell_exp) <- function(object) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+
+  f_path <- file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
+
+  return(f_path)
+}
+
+#' Get the file path to the counts in cell format
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @return The path to the `counts_cells.bin`
+get_rust_count_cell_f_path <- S7::new_generic(
+  name = "get_rust_count_cell_f_path",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_rust_count_cell_f_path single_cell_exp
+#'
+#' @export
+S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+
+  f_path <- file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
+
+  return(f_path)
 }
 
 #### duckdb getters ------------------------------------------------------------
@@ -859,6 +972,25 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
   return(res)
 }
 
+#' @name get_hvg.single_cell_exp
+#'
+#' @title Get HVG gene indices for `single_cell_exp`
+#'
+#' @method get_hvg single_cell_exp
+S7::method(get_hvg, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_hvg(
+    x = S7::prop(x, "sc_map")
+  )
+
+  return(res)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
@@ -936,6 +1068,46 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
   return(x)
 }
 
+#' Add a new column to the obs table
+#'
+#' @param object `bixverse::single_cell_exp` class.
+#' @param data_list Named list with the data to add.
+#'
+#' @return The class with updated obs table in the DuckDB
+#'
+#' @export
+set_sc_new_var_cols <- S7::new_generic(
+  name = "set_sc_new_var_cols",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    data_list
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method set_sc_new_var_cols single_cell_exp
+#'
+#' @export
+S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
+  object,
+  data_list
+) {
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertList(data_list, types = "atomic", names = "named")
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  for (i in seq_along(data_list)) {
+    new_data_i <- data.table::data.table(new_data = data_list[[i]])
+    data.table::setnames(new_data_i, "new_data", names(data_list)[i])
+    duckdb_con$add_data_var(new_data = new_data_i)
+  }
+
+  return(object)
+}
+
 #### sc map --------------------------------------------------------------------
 
 #' @name set_gene_mapping.single_cell_exp
@@ -1001,6 +1173,28 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
   S7::prop(x, "sc_map") <- set_cell_to_keep(
     x = S7::prop(x, "sc_map"),
     cells_to_keep = cells_to_keep
+  )
+
+  return(x)
+}
+
+#' @name set_hvg.single_cell_exp
+#'
+#' @title Set HVG genes for `single_cell_exp`
+#'
+#' @method set_hvg single_cell_exp
+S7::method(set_hvg, single_cell_exp) <- function(
+  x,
+  hvg
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(hvg, c("I+", "S+"))
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_map") <- set_hvg(
+    x = S7::prop(x, "sc_map"),
+    hvg = hvg
   )
 
   return(x)

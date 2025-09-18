@@ -221,6 +221,9 @@ object = load_mtx(
 )
 tictoc::toc()
 
+library(biomaRt)
+
+mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
 G_list <- getBM(
   filters = "ensembl_gene_id",
@@ -255,10 +258,15 @@ res <- rs_sc_hvg(
   verbose = TRUE
 )
 
+params_sc_hvg()
 
-plot(log10(res$mean), res$var_std)
+devtools::load_all()
+devtools::document()
 
-object[1:10L, ]
+object <- find_hvg(object = object)
+
+get_hvg(object)
+
 
 # data <- (idxptr, idx, val, val)
 

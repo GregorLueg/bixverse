@@ -139,7 +139,7 @@ impl MtxReader {
         Self::skip_header(&mut self.reader)?;
 
         if verbose {
-            println!("Pass 1: Getting gene statistics");
+            println!("First file pass - getting gene statistics");
         }
 
         // Pass 1: Gene statistics only
@@ -171,7 +171,7 @@ impl MtxReader {
             .collect();
 
         if verbose {
-            println!("Pass 2: Getting cell statistics");
+            println!("Second file pass - getting cell statistics");
         }
 
         // Pass 2: Cell statistics with filtered genes
