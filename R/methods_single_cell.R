@@ -231,6 +231,9 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
+#'
+#' @return It will add the columns based on the names in the `gene_set_list` to
+#' the obs table.
 gene_set_proportions <- S7::new_generic(
   name = "gene_set_proportions",
   dispatch_args = "object",
@@ -271,3 +274,27 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 }
 
 ### hvg ------------------------------------------------------------------------
+
+#' Identify HVGs
+#'
+#' @description
+#' This is a helper function to identify highly variable genes. At the moment
+#' the implementation has only
+#'
+#' @param object `single_cell_exp` class.
+#' @param hvg_method String. One of `c("vst", "meanvarbin", "dispersion")`.
+#' Atm, only `"vst"` is implemented.
+#' @param loess_span Float. The span for the loess function,
+#'
+#' @return It will add the columns based on the names in the `gene_set_list` to
+#' the obs table.
+find_hvg <- S7::new_generic(
+  name = "gene_set_proportions",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gene_set_list
+  ) {
+    S7::S7_dispatch()
+  }
+)

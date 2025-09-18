@@ -13,6 +13,10 @@ gene_set_proportions(object, gene_set_list)
 identifiers of that set. These should be the same as
 \code{get_gene_names(object)}!}
 }
+\value{
+It will add the columns based on the names in the \code{gene_set_list} to
+the obs table.
+}
 \description{
 This is a helper function that calculates proportions of reads belonging to
 given gene sets. This can be used for example for the calculation of

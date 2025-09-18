@@ -110,13 +110,13 @@ set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
   checkmate::assertClass(x, "sc_mapper")
   checkmate::qassert(cells_to_keep, c("N+", "S+"))
 
+  # transform to Rust 0-based indexing
   res <- if (is.numeric(cells_to_keep)) {
     cells_to_keep - 1
   } else {
     x[["cell_mapping"]][cells_to_keep] - 1
   }
 
-  # transform to Rust 0-based indexing
   x[["cells_to_keep_idx"]] <- res
 
   return(x)
@@ -151,6 +151,13 @@ get_cell_names <- function(x) {
 #' @param rust_index Bool. Shall rust-based indexing be returned.
 get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
+}
+
+#' Get the cells to keep
+#'
+#' @param x An object to get the gene index for.
+get_cells_to_keep <- function(x) {
+  UseMethod("get_cells_to_keep")
 }
 
 ### methods --------------------------------------------------------------------
@@ -198,6 +205,20 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
 #' @param x An `sc_mapper` object
 #'
 #' @return The cell names
+#'
+#' @export
+get_cells_to_keep.sc_mapper <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+
+  return(as.integer(x[["cells_to_keep_idx"]]))
+}
+
+#' Get the indices of the cells to keep
+#'
+#' @param x An `sc_mapper` object
+#'
+#' @return The cell indices (0-based for Rust)
 #'
 #' @export
 get_cell_names.sc_mapper <- function(x) {
@@ -792,6 +813,25 @@ S7::method(get_gene_names, single_cell_exp) <- function(
   )
 
   return(gene_names)
+}
+
+#' @name get_cells_to_keep.single_cell_exp
+#'
+#' @title Get gene indices for `single_cell_exp`
+#'
+#' @method get_cells_to_keep single_cell_exp
+S7::method(get_cells_to_keep, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_cells_to_keep(
+    x = S7::prop(x, "sc_map")
+  )
+
+  return(res)
 }
 
 #' @name get_gene_indices.single_cell_exp

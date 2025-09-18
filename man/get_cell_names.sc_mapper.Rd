@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_cell_names.sc_mapper}
 \alias{get_cell_names.sc_mapper}
-\title{Get the gene indices}
+\title{Get the indices of the cells to keep}
 \usage{
 \method{get_cell_names}{sc_mapper}(x)
 }
@@ -10,8 +10,8 @@
 \item{x}{An \code{sc_mapper} object}
 }
 \value{
-The cell names
+The cell indices (0-based for Rust)
 }
 \description{
-Get the gene indices
+Get the indices of the cells to keep
 }

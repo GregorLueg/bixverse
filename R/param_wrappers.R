@@ -447,7 +447,7 @@ params_dgrdl <- function(
 #' @param target_size Float. The target size for the normalisation. Defaults
 #' to `1e5`.
 #'
-#' @returns A list with the minimum parameters
+#' @returns A list with the minimum quality parameters + target size.
 #'
 #' @export
 params_sc_min_quality <- function(
@@ -467,5 +467,34 @@ params_sc_min_quality <- function(
     min_lib_size = min_lib_size,
     min_cells = min_cells,
     target_size = target_size
+  )
+}
+
+#' Wrapper function to identify highly variable genes in single cell
+#'
+#' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
+#' @param loess_span Numeric. The span parameter for the loess function that is
+#' used to standardise the variance for `method = "vst"`.
+#' @param num_bin Integer. Not yet implemented.
+#' @param bin_method String. One of `c("equal_width", "equal_freq")`.
+#'
+#' @returns A list with the HVG parameters
+params_sc_hvg <- function(
+  method = "vst",
+  loess_span = 0.3,
+  num_bin = 20L,
+  bin_method = "equal_width"
+) {
+  # check
+  checkmate::assertChoise(method, c("vst", "meanvarbin", "dispersion"))
+  checkmate::qassert(loess_span, "N1[0.1, 1]")
+  checkmate::qassert(num_bin, "N1")
+  checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))
+
+  list(
+    method = method,
+    loess_span = loess_span,
+    num_bin = num_bin,
+    bin_method = bin_method
   )
 }

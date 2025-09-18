@@ -244,14 +244,19 @@ object[[]]
 
 object <- set_cell_to_keep(object, get_cell_names(object))
 
+devtools::load_all()
+
 res <- rs_sc_hvg(
   f_path_gene = file.path(object@dir_data, "counts_genes.bin"),
   hvg_method = "vst",
-  cell_indices = as.integer(object@sc_map$cells_to_keep_idx),
+  cell_indices = get_cells_to_keep(object),
   loess_span = 0.3,
   clip_max = NULL,
   verbose = TRUE
 )
+
+
+plot(log10(res$mean), res$var_std)
 
 object[1:10L, ]
 

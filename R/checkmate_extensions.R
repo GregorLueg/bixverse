@@ -659,6 +659,86 @@ checkScMinQC <- function(x) {
   return(TRUE)
 }
 
+### hvg ------------------------------------------------------------------------
+
+#' Check HVG selection parameters
+#'
+#' @description Checkmate extension for checking the HVG parameters for single
+#' cell.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScHvg <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "method",
+      "loess_span",
+      "num_bin",
+      "bin_method"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "loess_span" = "N1[0.1, 1]",
+    "num_bin" = "I1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in single cell HVG selection is",
+          "incorrect: loess_span needs to be between 0.1 and 1 and num_bin",
+          "an integer."
+        ),
+        broken_elem
+      )
+    )
+  }
+  # test
+  test_choice_rules <- list(
+    method = c("vst", "meanvarbin", "dispersion"),
+    bin_method = c("equal_width", "equal_freq")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in HVG params does not use one of the",
+          "expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## correlation params ----------------------------------------------------------
@@ -860,3 +940,20 @@ assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
+
+### hvg ------------------------------------------------------------------------
+
+#' Assert HVG selection parameters
+#'
+#' @description Checkmate extension for checking the HVG parameters for single
+#' cell.
+#'
+#' @inheritParams checkScHvg
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)

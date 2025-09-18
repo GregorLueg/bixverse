@@ -25,7 +25,7 @@ expressed to be included.}
 to \code{1e5}.}
 }
 \value{
-A list with the minimum parameters
+A list with the minimum quality parameters + target size.
 }
 \description{
 Wrapper function to generate minimum quality metrics for single cell

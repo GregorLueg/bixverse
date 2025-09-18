@@ -3,6 +3,7 @@
 S3method("$",SingeCellCountData)
 S3method("[[",SingeCellCountData)
 S3method(get_cell_names,sc_mapper)
+S3method(get_cells_to_keep,sc_mapper)
 S3method(get_gene_indices,sc_mapper)
 S3method(get_gene_names,sc_mapper)
 S3method(plot,cpca_synthetic_data)
