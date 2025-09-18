@@ -1,7 +1,9 @@
 use extendr_api::prelude::*;
+use faer::Mat;
 use rustc_hash::FxHashSet;
 
 use crate::single_cell::processing::*;
+use crate::utils::r_rust_interface::faer_to_r_matrix;
 
 //////////////////////////
 // Gene set proportions //
@@ -139,8 +141,51 @@ fn rs_sc_hvg(
     )
 }
 
+/////////
+// PCA //
+/////////
+
+#[extendr]
+fn rs_sc_pca(
+    f_path_gene: &str,
+    no_pcs: usize,
+    random_svd: bool,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let cell_set: FxHashSet<u32> = cell_indices.iter().map(|x| *x as u32).collect();
+    let gene_indices = gene_indices.iter().map(|x| *x as usize).collect();
+
+    let res = pca_on_sc(
+        f_path_gene,
+        &cell_set,
+        gene_indices,
+        no_pcs,
+        random_svd,
+        seed,
+        verbose,
+    );
+
+    let scores = Mat::from_fn(res.0.nrows(), res.0.ncols(), |i, j| {
+        let val = res.0.get(i, j);
+        *val as f64
+    });
+    let loadings = Mat::from_fn(res.1.nrows(), res.1.ncols(), |i, j| {
+        let val = res.1.get(i, j);
+        *val as f64
+    });
+
+    list!(
+        scores = faer_to_r_matrix(scores.as_ref()),
+        loadings = faer_to_r_matrix(loadings.as_ref())
+    )
+}
+
 extendr_module! {
     mod r_preprocessing;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
+    fn rs_sc_pca;
 }

@@ -5,6 +5,7 @@ use rustc_hash::FxHashSet;
 use std::time::Instant;
 
 use crate::core::base::loess::*;
+use crate::core::base::pca_svd::{randomised_svd_f32, RandomSvdResults};
 use crate::core::data::sparse_io::*;
 
 ////////////////
@@ -288,7 +289,7 @@ pub fn get_hvg_vst(
     let end_read = start_read.elapsed();
 
     if verbose {
-        println!("Read in the data: {:.2?}", end_read);
+        println!("Load in data: {:.2?}", end_read);
     }
 
     let start_gene_stats = Instant::now();
@@ -410,14 +411,34 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
 }
 
+/// Calculate the PCs for single cell data
+///
+/// ### Params
+///
+/// ### Fields
 pub fn pca_on_sc(
     f_path: &str,
     cell_indices: &FxHashSet<u32>,
     gene_indices: Vec<usize>,
-    no_cells: usize,
-) {
+    no_pcs: usize,
+    random_svd: bool,
+    seed: usize,
+    verbose: bool,
+) -> (Mat<f32>, Mat<f32>) {
+    let start_total = Instant::now();
+
+    let start_reading = Instant::now();
+
     let reader = ParallelSparseReader::new(f_path).unwrap();
     let mut gene_chunks: Vec<CscGeneChunk> = reader.read_gene_parallel(&gene_indices);
+
+    let end_reading = start_reading.elapsed();
+
+    if verbose {
+        println!("Loaded in data : {:.2?}", end_reading);
+    }
+
+    let start_scaling = Instant::now();
 
     gene_chunks.par_iter_mut().for_each(|chunk| {
         chunk.filter_selected_cells(cell_indices);
@@ -425,9 +446,48 @@ pub fn pca_on_sc(
 
     let scaled_data: Vec<Vec<f32>> = gene_chunks
         .par_iter()
-        .map(|chunk| scale_csc_chunk(chunk, no_cells))
+        .map(|chunk| scale_csc_chunk(chunk, cell_indices.len()))
         .collect();
 
     let num_genes = scaled_data.len();
-    let matrix = Mat::from_fn(no_cells, num_genes, |row, col| scaled_data[col][row]);
+    let scaled_data = Mat::from_fn(cell_indices.len(), num_genes, |row, col| {
+        scaled_data[col][row]
+    });
+
+    let end_scaling = start_scaling.elapsed();
+
+    if verbose {
+        println!("Finished scaling : {:.2?}", end_scaling);
+    }
+
+    let start_svd = Instant::now();
+
+    let (scores, loadings) = if random_svd {
+        let res: RandomSvdResults<f32> =
+            randomised_svd_f32(scaled_data.as_ref(), no_pcs, seed, Some(100_usize), None);
+        // Take first no_pcs components and compute scores as X * V
+        let loadings = res.v.submatrix(0, 0, num_genes, no_pcs).to_owned();
+        let scores = scaled_data * &loadings;
+        (scores, loadings)
+    } else {
+        let res = scaled_data.thin_svd().unwrap();
+        // Take only the first no_pcs components
+        let loadings = res.V().submatrix(0, 0, num_genes, no_pcs).to_owned();
+        let scores = scaled_data * &loadings;
+        (scores, loadings)
+    };
+
+    let end_svd = start_svd.elapsed();
+
+    if verbose {
+        println!("Finished PCA calculations : {:.2?}", end_svd);
+    }
+
+    let end_total = start_total.elapsed();
+
+    if verbose {
+        println!("Total run time PCA detection: {:.2?}", end_total);
+    }
+
+    (scores, loadings)
 }

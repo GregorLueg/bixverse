@@ -1686,6 +1686,8 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc
 #' @export
 rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
 
+rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)

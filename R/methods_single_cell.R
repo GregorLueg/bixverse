@@ -348,3 +348,5 @@ S7::method(find_hvg, single_cell_exp) <- function(
 
   return(object)
 }
+
+### pca ------------------------------------------------------------------------

@@ -267,6 +267,67 @@ object <- find_hvg(object = object)
 
 get_hvg(object)
 
+rextendr::document()
+
+get_rust_count_gene_f_path(object)
+
+get_cells_to_keep(object)
+
+rextendr::document()
+
+print("Using standard SVD")
+
+pc_results <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(object),
+  no_pcs = 30L,
+  random_svd = FALSE,
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = get_hvg(object),
+  seed = 42L,
+  verbose = TRUE
+)
+
+print("Using randomised SVD")
+
+pc_results_randomised <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(object),
+  no_pcs = 30L,
+  random_svd = TRUE,
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = get_hvg(object),
+  seed = 42L,
+  verbose = TRUE
+)
+
+plot(
+  pc_results_randomised$scores[, 1],
+  pc_results$scores[, 1],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC1"
+)
+
+plot(
+  pc_results_randomised$scores[, 10],
+  pc_results$scores[, 10],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC10"
+)
+
+plot(
+  pc_results_randomised$scores[, 25],
+  pc_results$scores[, 25],
+  xlab = "Randomised SVD",
+  ylab = "SVD",
+  main = "PC25"
+)
+
+dim(pc_results_randomised$scores)
+dim(pc_results_randomised$loadings)
+
+diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
+
 
 # data <- (idxptr, idx, val, val)
 
