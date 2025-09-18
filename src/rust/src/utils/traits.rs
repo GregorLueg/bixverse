@@ -97,6 +97,11 @@ impl F16 {
     pub fn from_le_bytes(bytes: [u8; 2]) -> Self {
         F16(u16::from_le_bytes(bytes))
     }
+
+    /// Create an F16
+    pub fn to_f32(self) -> f32 {
+        f16::from_bits(self.0).to_f32()
+    }
 }
 
 ///////////////////////

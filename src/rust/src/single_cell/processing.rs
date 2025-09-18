@@ -1,4 +1,5 @@
 use extendr_api::*;
+use faer::Mat;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::time::Instant;
@@ -378,4 +379,55 @@ pub fn get_hvg_mvb() -> HvgRes {
         var_exp: Vec::new(),
         var_std: Vec::new(),
     }
+}
+
+/////////
+// PCA //
+/////////
+
+/// Scales the data in a CSC chunk
+///
+/// ### Params
+///
+/// * `chunk` - The CscGeneChunk for which to scale the data
+/// * `no_cells` - Number of cells represented
+///
+/// ### Returns
+///
+/// A densified, scaled vector per gene basis.
+#[inline]
+fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
+    let mut dense_data = vec![0.0f32; no_cells];
+
+    for (idx, &row_idx) in chunk.row_indices.iter().enumerate() {
+        dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
+    }
+
+    let mean = dense_data.iter().sum::<f32>() / no_cells as f32;
+    let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
+    let std_dev = variance.sqrt();
+
+    dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
+}
+
+pub fn pca_on_sc(
+    f_path: &str,
+    cell_indices: &FxHashSet<u32>,
+    gene_indices: Vec<usize>,
+    no_cells: usize,
+) {
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let mut gene_chunks: Vec<CscGeneChunk> = reader.read_gene_parallel(&gene_indices);
+
+    gene_chunks.par_iter_mut().for_each(|chunk| {
+        chunk.filter_selected_cells(cell_indices);
+    });
+
+    let scaled_data: Vec<Vec<f32>> = gene_chunks
+        .par_iter()
+        .map(|chunk| scale_csc_chunk(chunk, no_cells))
+        .collect();
+
+    let num_genes = scaled_data.len();
+    let matrix = Mat::from_fn(no_cells, num_genes, |row, col| scaled_data[col][row]);
 }
