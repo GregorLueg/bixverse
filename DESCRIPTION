@@ -59,6 +59,7 @@ Imports:
     stringr,
     zeallot
 Suggests: 
+    biomaRt,
     BiocParallel,
     fgsea,
     GSVA,

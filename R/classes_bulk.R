@@ -544,8 +544,16 @@ S7::method(get_dge_limma_voom, bulk_dge) <-
       "bixverse::bulk_dge"
     )
 
+    limma_res <- S7::prop(object, "outputs")[['limma_voom_res']]
+    if (is.null(limma_res)) {
+      warning(paste(
+        "No results found. Did you run get_dge_limma_voom()?",
+        "Returning NULL"
+      ))
+    }
+
     # Return
-    return(S7::prop(object, "outputs")[['limma_voom_res']])
+    return(limma_res)
   }
 
 
@@ -568,7 +576,6 @@ get_dge_effect_sizes <- S7::new_generic(
   }
 )
 
-
 #' @method get_dge_effect_sizes bulk_dge
 #'
 #' @export
@@ -580,8 +587,100 @@ S7::method(get_dge_effect_sizes, bulk_dge) <-
       "bixverse::bulk_dge"
     )
 
+    hedges_g_res <- S7::prop(object, "outputs")[['hedges_g_res']]
+    if (is.null(hedges_g_res)) {
+      warning(paste(
+        "No results found. Did you run calculate_dge_hedges()?",
+        "Returning NULL"
+      ))
+    }
+
     # Return
-    return(S7::prop(object, "outputs")[['hedges_g_res']])
+    return(hedges_g_res)
+  }
+
+#' Return the TPM-normalised counts
+#'
+#' @description
+#' Getter function to extract the TPM-normalised counts from the
+#' [bixverse::bulk_dge()] class.
+#'
+#' @param object `bulk_dge` class.
+#'
+#' @return Returns the TPM-normalised counts. (If found.)
+#'
+#' @export
+get_tpm_counts <- S7::new_generic(
+  name = "get_tpm_counts",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_tpm_counts bulk_dge
+#'
+#' @export
+S7::method(get_tpm_counts, bulk_dge) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    tpm_counts <- S7::prop(object, "outputs")[['tpm_counts']]
+    if (is.null(tpm_counts)) {
+      warning(paste(
+        "No TPM counts found. Did you run normalise_bulk_dge()",
+        "with calc_tpm = TRUE? Returning NULL"
+      ))
+    }
+
+    # Return
+    return(tpm_counts)
+  }
+
+#' Return the FPKM-normalised counts
+#'
+#' @description
+#' Getter function to extract the FPKM-normalised counts from the
+#' [bixverse::bulk_dge()] class.
+#'
+#' @param object `bulk_dge` class.
+#'
+#' @return Returns the FPKM-normalised counts. (If found.)
+#'
+#' @export
+get_fpkm_counts <- S7::new_generic(
+  name = "get_fpkm_counts",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_fpkm_counts bulk_dge
+#'
+#' @export
+S7::method(get_fpkm_counts, bulk_dge) <-
+  function(object) {
+    # Checks
+    checkmate::assertClass(
+      object,
+      "bixverse::bulk_dge"
+    )
+
+    fpkm_counts <- S7::prop(object, "outputs")[['fpkm_counts']]
+    if (is.null(fpkm_counts)) {
+      warning(paste(
+        "No TPM counts found. Did you run normalise_bulk_dge()",
+        "with calc_fpkm = TRUE? Returning NULL"
+      ))
+    }
+
+    # Return
+    return(fpkm_counts)
   }
 
 ### bulk coexp class -----------------------------------------------------------

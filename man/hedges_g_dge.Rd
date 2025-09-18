@@ -2,16 +2,13 @@
 % Please edit documentation in R/functions_bulk.R
 \name{hedges_g_dge}
 \alias{hedges_g_dge}
-\title{Calculate the effect}
+\title{Calculate the effect size}
 \usage{
 hedges_g_dge(
   meta_data,
   main_contrast,
   normalised_counts,
   contrast_list = NULL,
-  small_sample_correction = NULL,
-  parallel = TRUE,
-  no_cores = NULL,
   .verbose = TRUE
 )
 }
@@ -29,14 +26,6 @@ will be tested if \code{contrast_list} is \code{NULL}.}
 contrast formatted as \code{"contrast1-contrast2"}. Default NULL will create all
 contrasts automatically.}
 
-\item{small_sample_correction}{Can be NULL (automatic determination if a
-small sample size correction should be applied) or Boolean.}
-
-\item{parallel}{Boolean. Shall parallelisation be used across the contrasts.}
-
-\item{no_cores}{Optional integer. Number of cores to use for parallelisation.
-If \code{NULL} will default to half the detected cores.}
-
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
@@ -44,5 +33,5 @@ A data.table with the effect sizes and standard errors based on the
 Hedge's G effect size for the groups.
 }
 \description{
-Calculate the effect
+Calculate the effect size
 }

@@ -33,6 +33,6 @@ Returns the class with additional data added to the outputs.
 \description{
 Runs a linear batch correction over the data regressing out batch effects
 and adding \code{normalised_counts_corrected} to the object. Should these counts
-be found by \code{\link[=calculate_all_dges]{calculate_all_dges()}}, they will be used for
+be found by \code{\link[=calculate_dge_hedges]{calculate_dge_hedges()}}, they will be used for
 calculations of effect sizes based on Hedge's G.
 }
