@@ -183,6 +183,12 @@ fn rs_sc_pca(
     )
 }
 
+///////////////
+// kNN / sNN //
+///////////////
+
+fn rs_sc_knn_snn(embd: RMatrix<f64>, no_neighbours: usize, seed: usize) {}
+
 extendr_module! {
     mod r_preprocessing;
     fn rs_sc_get_gene_set_perc;

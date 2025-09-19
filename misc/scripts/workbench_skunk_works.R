@@ -127,6 +127,7 @@ G_list <- getBM(
   values = var$gene_id,
   mart = mart
 )
+setDT(G_list)
 
 mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
 rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
@@ -138,28 +139,27 @@ gs_of_interest <- list(
 
 bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
-devtools::load_all()
-
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.05, cell_id]
 
 bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
 
-list.files(bixverse_sc@dir_data)
+length(get_cells_to_keep(bixverse_sc))
+
+bixverse_sc <- find_hvg(object = bixverse_sc)
 
 rextendr::document()
 
-
-tictoc::tic()
-res <- rs_sc_hvg(
-  f_path_gene = file.path(bixverse_sc@dir_data, "counts_genes.bin"),
-  hvg_method = "vst",
-  cell_indices = as.integer(bixverse_sc@sc_map$cells_to_keep_idx),
-  loess_span = 0.3,
-  clip_max = NULL,
+pc_results_randomised <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(bixverse_sc),
+  no_pcs = 30L,
+  random_svd = TRUE,
+  cell_indices = get_cells_to_keep(bixverse_sc),
+  gene_indices = get_hvg(bixverse_sc),
+  seed = 42L,
   verbose = TRUE
 )
-tictoc::toc()
 
+dim(pc_results_randomised$scores)
 
 # mtx file ---------------------------------------------------------------------
 

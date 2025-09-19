@@ -1,5 +1,7 @@
 # s3 ---------------------------------------------------------------------------
 
+## mapping class ---------------------------------------------------------------
+
 #' Helper function to construct relevant maps
 #'
 #' @description
@@ -9,7 +11,7 @@
 #' @return Generates an empty version of the `sc_mapper` class.
 #'
 #' @export
-new_sc_mapping <- function() {
+new_sc_mapper <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
     cell_mapping = NULL,
@@ -21,6 +23,8 @@ new_sc_mapping <- function() {
 
   return(sc_mapper)
 }
+
+## cache class -----------------------------------------------------------------
 
 ## setters ---------------------------------------------------------------------
 
@@ -355,11 +359,10 @@ single_cell_exp <- S7::new_class(
       dir_data = dir_data,
       cache = list(),
       dims = c(0L, 0L),
-      sc_map = new_sc_mapping()
+      sc_map = new_sc_mapper()
     )
   }
 )
-
 
 ### getters --------------------------------------------------------------------
 
