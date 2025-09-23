@@ -1707,7 +1707,31 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc
 #' @export
 rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
 
+#' Calculates PCA for single cell
+#'
+#' @description
+#' Helper function that will calculate the PCA for the specified highly
+#' variable genes. Has the option to use randomised SVD for faster solving
+#' of the PCA.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#' }
+#'
+#' @export
 rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+
+rs_sc_knn_snn <- function(embd, no_neighbours, pruning, seed, verbose, algorithm_type) .Call(wrap__rs_sc_knn_snn, embd, no_neighbours, pruning, seed, verbose, algorithm_type)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

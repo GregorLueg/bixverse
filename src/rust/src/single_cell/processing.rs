@@ -362,6 +362,7 @@ pub fn get_hvg_vst(
 pub fn get_hvg_dispersion() -> HvgRes {
     todo!("Dispersion method not yet implemented");
 
+    #[allow(unreachable_code)]
     HvgRes {
         mean: Vec::new(),
         var: Vec::new(),
@@ -374,6 +375,7 @@ pub fn get_hvg_dispersion() -> HvgRes {
 pub fn get_hvg_mvb() -> HvgRes {
     todo!("MeanVarianceBin method not yet implemented");
 
+    #[allow(unreachable_code)]
     HvgRes {
         mean: Vec::new(),
         var: Vec::new(),

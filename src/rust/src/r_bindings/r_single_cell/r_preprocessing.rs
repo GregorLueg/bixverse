@@ -1,9 +1,11 @@
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
+use std::time::Instant;
 
 use crate::single_cell::processing::*;
-use crate::utils::r_rust_interface::faer_to_r_matrix;
+use crate::single_cell::vec_based_sim::*;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 
 //////////////////////////
 // Gene set proportions //
@@ -145,6 +147,28 @@ fn rs_sc_hvg(
 // PCA //
 /////////
 
+/// Calculates PCA for single cell
+///
+/// @description
+/// Helper function that will calculate the PCA for the specified highly
+/// variable genes. Has the option to use randomised SVD for faster solving
+/// of the PCA.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param no_pcs Integer. Number of PCs to calculate.
+/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!)
+/// @param seed Integer. Random seed for the randomised SVD.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @returns A list with with the following items
+/// \itemize{
+///   \item scores - The samples projected on the PCA space.
+///   \item loadings - The loadings of the features for the PCA.
+/// }
+///
+/// @export
 #[extendr]
 fn rs_sc_pca(
     f_path_gene: &str,
@@ -187,11 +211,93 @@ fn rs_sc_pca(
 // kNN / sNN //
 ///////////////
 
-fn rs_sc_knn_snn(embd: RMatrix<f64>, no_neighbours: usize, seed: usize) {}
+/// Enum for the different methods
+enum KnnSearch {
+    /// Annoy-based
+    Annoy,
+    /// Hierarchical Navigable Small World
+    Hnsw,
+}
+
+/// Helper function to get the KNN method
+///
+/// ### Params
+///
+/// * `s` - Type of HVG calculation to do
+///
+/// ### Returns
+///
+/// Option of the HvgMethod (some not yet implemented)
+fn get_knn_method(s: &str) -> Option<KnnSearch> {
+    match s.to_lowercase().as_str() {
+        "annoy" => Some(KnnSearch::Annoy),
+        "hnsw" => Some(KnnSearch::Hnsw),
+        _ => None,
+    }
+}
+
+#[extendr]
+fn rs_sc_knn_snn(
+    embd: RMatrix<f64>,
+    no_neighbours: usize,
+    pruning: f64,
+    seed: usize,
+    verbose: bool,
+    algorithm_type: String,
+) -> List {
+    let embd = r_matrix_to_faer_fp32(&embd);
+
+    let start_knn = Instant::now();
+
+    let knn_method = get_knn_method(&algorithm_type)
+        .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))
+        .unwrap();
+
+    let knn = match knn_method {
+        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed),
+        KnnSearch::Annoy => generate_knn_annoy(embd.as_ref(), no_neighbours, seed),
+    };
+
+    let end_knn = start_knn.elapsed();
+
+    if verbose {
+        println!("KNN graph computer in: {:.2?}", end_knn);
+    }
+
+    let start_snn = Instant::now();
+
+    let snn = generate_snn(&knn, no_neighbours, pruning as f32);
+
+    let end_snn = start_snn.elapsed();
+
+    if verbose {
+        println!("SNN graph computer in: {:.2?}", end_snn);
+    }
+
+    let start_edge_list = Instant::now();
+
+    let snn_edge_list = snn_to_edge_list(snn);
+
+    let end_edge_list = start_edge_list.elapsed();
+
+    if verbose {
+        println!(
+            "SNN data structure transformed to edge list in: {:.2?}",
+            end_edge_list
+        );
+    }
+
+    list!(
+        from = snn_edge_list.0,
+        to = snn_edge_list.1,
+        weight = snn_edge_list.2
+    )
+}
 
 extendr_module! {
     mod r_preprocessing;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_pca;
+    fn rs_sc_knn_snn;
 }

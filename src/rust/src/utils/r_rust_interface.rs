@@ -560,6 +560,23 @@ pub fn faer_to_r_matrix<T: FaerRType>(x: faer::MatRef<T>) -> extendr_api::RArray
     T::to_r_matrix(x)
 }
 
+/// Transform an R matrix into a f32 one
+///
+/// ### Params
+///
+/// * `x` - R matrix with f64.
+///
+/// ### Returns
+///
+/// A faer Mat with f32
+pub fn r_matrix_to_faer_fp32(x: &RMatrix<f64>) -> Mat<f32> {
+    let ncol = x.ncols();
+    let nrow = x.nrows();
+    let data = x.data();
+    let data_fp32 = data.iter().map(|x| *x as f32).collect::<Vec<f32>>();
+    Mat::from_fn(nrow, ncol, |i, j| data_fp32[i + j * nrow])
+}
+
 /// Transform a SparseColumnMatrix to an R list
 ///
 /// ### Params

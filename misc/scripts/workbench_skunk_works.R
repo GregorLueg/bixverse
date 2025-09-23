@@ -249,29 +249,9 @@ object <- set_cell_to_keep(object, get_cell_names(object))
 
 devtools::load_all()
 
-res <- rs_sc_hvg(
-  f_path_gene = file.path(object@dir_data, "counts_genes.bin"),
-  hvg_method = "vst",
-  cell_indices = get_cells_to_keep(object),
-  loess_span = 0.3,
-  clip_max = NULL,
-  verbose = TRUE
-)
-
-params_sc_hvg()
-
-devtools::load_all()
-devtools::document()
-
 object <- find_hvg(object = object)
 
 get_hvg(object)
-
-rextendr::document()
-
-get_rust_count_gene_f_path(object)
-
-get_cells_to_keep(object)
 
 rextendr::document()
 
@@ -326,17 +306,42 @@ plot(
 dim(pc_results_randomised$scores)
 dim(pc_results_randomised$loadings)
 
+rextendr::document()
+
 diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
 
+test_res <- rs_sc_knn_snn(
+  embd = pc_results$scores[1:10000, ],
+  no_neighbours = 10,
+  pruning = 1 / 15,
+  seed = 101L,
+  verbose = TRUE,
+  algorithm_type = "hnsw"
+)
 
-# data <- (idxptr, idx, val, val)
+setDT(test_res)
 
-# Seurat (EVERYTHING is double precision - f64)
-# raw counts -> (idxptr, idx, val)
-# norm counts -> (idxptr, idx, val)
-# SCT counts -> (idxptr, idx, val)
-# SCT data -> (idxptr, idx, val)
-# scaled data (dense) -> 2500 HVGs -> N x n_cells (dense!)
+head(test_res, 25)
+
+test_res[26:35]
+
+rextendr::document()
+
+test_res_2 <- rs_sc_knn_snn(
+  embd = pc_results$scores[1:10000, ],
+  no_neighbours = 10,
+  pruning = 1 / 15,
+  seed = 101L,
+  verbose = TRUE,
+  algorithm_type = "annoy"
+)
+
+setDT(test_res_2)
+
+head(test_res_2, 25)
+
+test_res_2[26:35]
+
 
 # Rebuild of the h5ad parsing --------------------------------------------------
 
