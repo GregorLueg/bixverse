@@ -11,9 +11,10 @@
 - Additional Rust functions to do set similarity across a list of times in R.
 - Updates to the QC function for the bulk DGE class. This were broken down into
 two functions: `qc_bulk_dge()` and `normalise_bulk_dge()` for easier maintenance
-and clarity.
+and clarity on what each function does.
 - Also, the bulk DGE function was split into two: `calculate_dge_limma()` and
 `calculate_dge_hedges()`.
+- Splitting by correlation sign and Eigengene calculation added for CoReMo.
 
 #### Breaking changes
 
@@ -22,6 +23,10 @@ and clarity.
 calculates the set similarity across all permutations of the elements.
 - The old `preprocess_bulk_dge()` and `calculate_all_dges()` do not work 
 anymore and will throw errors.
+
+#### Bug fixes, documentation updates
+
+...
 
 ### Version **0.0.2.2**
 

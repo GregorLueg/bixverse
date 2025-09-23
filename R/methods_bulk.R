@@ -39,8 +39,7 @@ qc_bulk_dge <- S7::new_generic(
     outlier_threshold = 2,
     min_prop = 0.2,
     min_count = 10,
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -58,8 +57,7 @@ S7::method(qc_bulk_dge, bulk_dge) <- function(
   outlier_threshold = 2,
   min_prop = 0.2,
   min_count = 10,
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   # Scope checks
   . <- `:=` <- NULL
@@ -195,8 +193,7 @@ normalise_bulk_dge <- S7::new_generic(
     calc_tpm = FALSE,
     calc_fpkm = FALSE,
     gene_lengths = NULL,
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -215,8 +212,7 @@ S7::method(normalise_bulk_dge, bulk_dge) <- function(
   calc_tpm = FALSE,
   calc_fpkm = FALSE,
   gene_lengths = NULL,
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   norm_method <- match.arg(norm_method)
 
@@ -348,8 +344,7 @@ preprocess_bulk_coexp <- S7::new_generic(
     mad_threshold = NULL,
     scaling = FALSE,
     scaling_type = c("normal", "robust"),
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -364,8 +359,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   mad_threshold = NULL,
   scaling = FALSE,
   scaling_type = c("normal", "robust"),
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   # Scope checks
   feature_name <- MAD <- NULL

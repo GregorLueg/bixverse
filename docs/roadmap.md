@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 02.09.2025* </br>
+*Last update: 23.09.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -28,7 +28,6 @@ and/or [fgsea](https://www.biorxiv.org/content/10.1101/060012v3).~~ (The fgsea
 multi-level and simple method have been implemented in Rust.)
 - ~~Gene ontology enrichment with elimination/pruning for continuous values.~~ 
 - ~~Gene set variation analysis in [Rust](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7)~~
-- Mitch-like multi contrast analysis in [Rust](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
 
@@ -57,8 +56,6 @@ and/or edges, see [Ruiz et al.](https://www.nature.com/articles/s41467-021-21770
 [limma/voom](https://genomebiology.biomedcentral.com/articles/10.1186/gb-2014-15-2-r29)
 to generate structured objects.~~
 - ~~Semantic similarities for ontologies.~~
-- Add mouse gene ontology data for gene ontology elimination enrichment on top
-of mouse data.
 - ~~Gene ontology enrichment with elimination/pruning for continuous values.~~ 
 (First version implemented with fgsea simple.)
 - ~~Gene set variation analysis in 
@@ -78,9 +75,9 @@ in Rust now.
 - NMF implementations as a different way to do matrix factorisations. TBD in 
 terms of algorithm.
 - ~~TOM (topological overlap measure) for correlation-based methods.~~
-- Eigengene calculations for correlation-based methods (especially the single
+- ~~Eigengene calculations for correlation-based methods (especially the single
 correlation based one), akin to 
-[WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)
+[WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559)~~
 - ~~Hierarchical clustering-based gene module detection on top of correlation-based
 methods, inspired from [Srivastava et al.](https://www.nature.com/articles/s41467-018-06008-4).~~
 - ~~Implement [sparse dictionary learning](https://pubmed.ncbi.nlm.nih.gov/35085500/)
@@ -92,8 +89,6 @@ correlations (and set similarities), see
 sparsification/pruning of the correlation-based graph and community detection.~~
 - NMF implementations as a different way to do matrix factorisations. TBD in 
 terms of algorithm.
-- Eigengene calculations for correlation-based methods (especially the single
-correlation based one), akin to [WGCNA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-559).
 - Interpretation layers on top of gene modules, i.e., upstream regulators, 
 annotations of modules (wrappers over pathway enrichment function), etc.
 - ~~[Reciprocal best hit graphs based on correlation](https://academic.oup.com/bioinformatics/article/35/21/4307/5426054) 

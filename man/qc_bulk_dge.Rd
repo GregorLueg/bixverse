@@ -10,8 +10,7 @@ qc_bulk_dge(
   outlier_threshold = 2,
   min_prop = 0.2,
   min_count = 10,
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 )
 }
 \arguments{

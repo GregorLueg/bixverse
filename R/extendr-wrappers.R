@@ -1071,6 +1071,16 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
 
+#' Helper function to split correlation matrices by sign
+#'
+#' @param data The correlation matrix to split by sign.
+#'
+#' @return A vector of 1 and -1 indicating the respective sign of the
+#' correlation matrix.
+#'
+#' @export
+rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
+
 #' Generate a sparse dictionary with DGRDL
 #'
 #' @description This is the Rust implementation of dual graph regularised
