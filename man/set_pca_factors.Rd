@@ -9,7 +9,7 @@ set_pca_factors(x, pca_factor)
 \arguments{
 \item{x}{An object to add the PCA factors for.}
 
-\item{pca_factor}{Matrix with the PCA factors.}
+\item{pca_factor}{Numerical matrix. The matrix with the PCA factors.}
 }
 \description{
 Set/add PCA factors

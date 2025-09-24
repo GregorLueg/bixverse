@@ -215,15 +215,15 @@ set_hvg.sc_mapper <- function(x, hvg) {
 
 #### sc_cache ------------------------------------------------------------------
 
-#' Set PCA factors for sc_mapper
+#' Set PCA factors for sc_cache
 #'
-#' @param x An `sc_mapper` object
+#' @param x An `sc_cache` object
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
 #'
-#' @return Updated `sc_mapper` object with gene mapping set
+#' @return Updated `sc_cache` object with added PCA factors.
 #'
 #' @export
-set_pca_factors.sc_mapper <- function(x, pca_factor) {
+set_pca_factors.sc_cache <- function(x, pca_factor) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
@@ -235,18 +235,18 @@ set_pca_factors.sc_mapper <- function(x, pca_factor) {
 
 #' Set PCA loadings for sc_mapper
 #'
-#' @param x An `sc_mapper` object
-#' @param pca_loadings Numerical matrix. The matrix with the PCA factors.
+#' @param x An `sc_cache` object
+#' @param pca_loading Numerical matrix. The matrix with the PCA factors.
 #'
-#' @return Updated `sc_mapper` object with gene mapping set
+#' @return Updated `sc_cache` object with added PCA loadings.
 #'
 #' @export
-set_pca_loadings.sc_mapper <- function(x, pca_loadings) {
+set_pca_loadings.sc_cache <- function(x, pca_loading) {
   # checks
   checkmate::assertClass(x, "sc_cache")
-  checkmate::assertMatrix(pca_loadings, mode = "numeric")
+  checkmate::assertMatrix(pca_loading, mode = "numeric")
 
-  x[["pca_loadings"]] <- pca_loadings
+  x[["pca_loadings"]] <- pca_loading
 
   return(x)
 }
@@ -254,6 +254,8 @@ set_pca_loadings.sc_mapper <- function(x, pca_loadings) {
 ## getters ---------------------------------------------------------------------
 
 ### generics -------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Get the gene names
 #'
@@ -296,7 +298,25 @@ get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Get the PCA factors
+#'
+#' @param x An object to get PCA factors for.
+get_pca_factors <- function(x) {
+  UseMethod("get_pca_factors")
+}
+
+#' Get the PCA loadings
+#'
+#' @param x An object to get PCA loadings for.
+get_pca_loadings <- function(x) {
+  UseMethod("get_pca_loadings")
+}
+
 ### methods --------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Get the gene names
 #'
@@ -378,6 +398,36 @@ get_hvg.sc_mapper <- function(x) {
   return(as.integer(x[["hvg_gene_indices"]]))
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Get the PCA factors
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The PCA factor matrix.
+#'
+#' @export
+get_pca_factors.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["pca_factors"]])
+}
+
+#' Get the PCA loadings
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The PCA loading matrix.
+#'
+#' @export
+get_pca_loadings.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["pca_loadings"]])
+}
+
 # s7 ---------------------------------------------------------------------------
 
 ## single cell class -----------------------------------------------------------
@@ -403,7 +453,7 @@ get_hvg.sc_mapper <- function(x) {
 #'   to Rust functions that can work on the counts more specifically.}
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
-#'   \item{cache}{List with cached data. Future feature, nothing implemented
+#'   \item{sc_cache}{List with cached data. Future feature, nothing implemented
 #'   yet.}
 #'   \item{dims}{Dimensions of the original data.}
 #'   \item{index_maps}{A list of two named numerics that contains cell id to
@@ -419,7 +469,7 @@ single_cell_exp <- S7::new_class(
     db_connection = S7::class_any,
     count_connection = S7::class_any,
     dir_data = S7::class_character,
-    cache = S7::class_any,
+    sc_cache = S7::class_any,
     sc_map = S7::class_any,
     dims = S7::class_integer
   ),
@@ -444,7 +494,7 @@ single_cell_exp <- S7::new_class(
       db_connection = db_connection,
       count_connection = count_connection,
       dir_data = dir_data,
-      cache = new_sc_cache(),
+      sc_cache = new_sc_cache(),
       sc_map = new_sc_mapper(),
       dims = c(0L, 0L)
     )
@@ -1081,6 +1131,46 @@ S7::method(get_hvg, single_cell_exp) <- function(
   return(res)
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' @name get_pca_factors.single_cell_exp
+#'
+#' @title Get the PCA factors for `single_cell_exp`
+#'
+#' @method get_pca_factors single_cell_exp
+S7::method(get_pca_factors, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_factors(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_pca_loadings.single_cell_exp
+#'
+#' @title Get the PCA loadings for `single_cell_exp`
+#'
+#' @method get_pca_loadings single_cell_exp
+S7::method(get_pca_loadings, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_loadings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
@@ -1285,6 +1375,52 @@ S7::method(set_hvg, single_cell_exp) <- function(
   S7::prop(x, "sc_map") <- set_hvg(
     x = S7::prop(x, "sc_map"),
     hvg = hvg
+  )
+
+  return(x)
+}
+
+#### sc cache ------------------------------------------------------------------
+
+#' @name set_pca_factors.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_pca_factors single_cell_exp
+S7::method(set_pca_factors, single_cell_exp) <- function(
+  x,
+  pca_factor
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(pca_factor, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_pca_factors(
+    x = S7::prop(x, "sc_cache"),
+    pca_factor = pca_factor
+  )
+
+  return(x)
+}
+
+#' @name set_pca_loadings.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_pca_loadings single_cell_exp
+S7::method(set_pca_loadings, single_cell_exp) <- function(
+  x,
+  pca_loading
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(pca_loading, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_pca_loadings(
+    x = S7::prop(x, "sc_cache"),
+    pca_loading = pca_loading
   )
 
   return(x)

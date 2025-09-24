@@ -350,3 +350,77 @@ S7::method(find_hvg, single_cell_exp) <- function(
 }
 
 ### pca ------------------------------------------------------------------------
+
+#' Run PCA for single cell
+#'
+#' @description
+#' This function will run PCA (option of full SVD and randomised SVD for now)
+#' on the detected highly variable genes.
+#'
+#' @param object `single_cell_exp` class.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
+#' less precise.
+#' @param seed Integer. Controls reproducibility. Only relevant if
+#' `randomised_svd = TRUE`.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return It will add the columns based on the names in the `gene_set_list` to
+#' the obs table.
+calculate_pca_single_cell <- S7::new_generic(
+  name = "calculate_pca_single_cell",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    no_pcs,
+    randomised_svd = TRUE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_pca_single_cell single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
+  object,
+  no_pcs,
+  randomised_svd = TRUE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(randomised_svd, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  if (length(get_hvg(object)) == 0) {
+    warning(paste(
+      "No HVGs identified in this object. Did you run find_hvg()?",
+      "Returning object as is."
+    ))
+    return(object)
+  }
+
+  c(pca_factors, pca_loadings) %<-%
+    rs_sc_pca(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      no_pcs = no_pcs,
+      random_svd = randomised_svd,
+      cell_indices = get_cells_to_keep(object),
+      gene_indices = get_hvg(object),
+      seed = seed,
+      verbose = .verbose
+    )
+
+  object <- set_pca_factors(object, pca_factors)
+  object <- set_pca_loadings(object, pca_loadings)
+
+  return(object)
+}

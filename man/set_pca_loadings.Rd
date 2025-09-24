@@ -9,7 +9,7 @@ set_pca_loadings(x, pca_loading)
 \arguments{
 \item{x}{An object to add the PCA loadings for.}
 
-\item{pca_loading}{Matrix with the PCA loadings.}
+\item{pca_loading}{Numerical matrix. The Matrix with the PCA loadings.}
 }
 \description{
 Set/add PCA loadings
