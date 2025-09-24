@@ -119,6 +119,16 @@ set_pca_loadings <- function(x, pca_loading) {
   UseMethod("set_pca_loadings")
 }
 
+#' Set/add KNN
+#'
+#' @param x An object to add the KNN data to
+#' @param knn_mat Numerical matrix. The matrix with the KNN data
+#'
+#' @export
+set_knn <- function(x, knn_matrix) {
+  UseMethod("set_knn")
+}
+
 ### methods --------------------------------------------------------------------
 
 #### sc_mapper -----------------------------------------------------------------
@@ -247,6 +257,24 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   x[["pca_loadings"]] <- pca_loading
+
+  return(x)
+}
+
+#' Set KNN for sc_mapper
+#'
+#' @param x An `sc_cache` object
+#' @param knn_mat Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_cache` object with added PCA loadings.
+#'
+#' @export
+set_pca_loadings.sc_cache <- function(x, knn_mat) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(knn_mat, mode = "numeric")
+
+  x[["knn_matrix"]] <- knn_mat
 
   return(x)
 }
@@ -1421,6 +1449,28 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
   S7::prop(x, "sc_cache") <- set_pca_loadings(
     x = S7::prop(x, "sc_cache"),
     pca_loading = pca_loading
+  )
+
+  return(x)
+}
+
+#' @name set_knn.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_knn single_cell_exp
+S7::method(set_knn, single_cell_exp) <- function(
+  x,
+  knn_mat
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(knn_mat, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_knn(
+    x = S7::prop(x, "sc_cache"),
+    knn_mat = knn_mat
   )
 
   return(x)

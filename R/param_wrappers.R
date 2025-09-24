@@ -436,7 +436,7 @@ params_dgrdl <- function(
 
 ### qc -------------------------------------------------------------------------
 
-#' Wrapper function to generate minimum quality metrics for single cell
+#' Wrapper function to generate QC metric params for single cell
 #'
 #' @param min_unique_genes Integer. Minimum number of unique genes per cell/spot
 #' to be included.
@@ -470,7 +470,7 @@ params_sc_min_quality <- function(
   )
 }
 
-#' Wrapper function to identify highly variable genes in single cell
+#' Wrapper function for HVG detection parameters.
 #'
 #' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
 #' @param loess_span Numeric. The span parameter for the loess function that is
@@ -496,5 +496,34 @@ params_sc_hvg <- function(
     loess_span = loess_span,
     num_bin = num_bin,
     bin_method = bin_method
+  )
+}
+
+#' Wrapper function for kNN generation parameters for single cell
+#'
+#' @param k Integer. Number of neighbours to return.
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw")`.
+#'
+#' @returns A list with the HVG parameters
+params_sc_knn <- function(
+  k = 10L,
+  n_trees = 100L,
+  search_budget = 100L,
+  knn_algorithm = c("annoy", "hnsw")
+) {
+  # check
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "N1")
+  checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw"))
+
+  list(
+    k = k,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    knn_algorithm = knn_algorithm
   )
 }

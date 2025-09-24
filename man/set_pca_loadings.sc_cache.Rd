@@ -4,16 +4,24 @@
 \alias{set_pca_loadings.sc_cache}
 \title{Set PCA loadings for sc_mapper}
 \usage{
-\method{set_pca_loadings}{sc_cache}(x, pca_loading)
+\method{set_pca_loadings}{sc_cache}(x, knn_mat)
+
+\method{set_pca_loadings}{sc_cache}(x, knn_mat)
 }
 \arguments{
 \item{x}{An \code{sc_cache} object}
+
+\item{knn_mat}{Numerical matrix. The matrix with the PCA factors.}
 
 \item{pca_loading}{Numerical matrix. The matrix with the PCA factors.}
 }
 \value{
 Updated \code{sc_cache} object with added PCA loadings.
+
+Updated \code{sc_cache} object with added PCA loadings.
 }
 \description{
 Set PCA loadings for sc_mapper
+
+Set KNN for sc_mapper
 }

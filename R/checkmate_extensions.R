@@ -728,8 +728,87 @@ checkScHvg <- function(x) {
     return(
       sprintf(
         paste0(
-          "The following element `%s` in HVG params does not use one of the",
+          "The following element `%s` in HVG params is not one of the",
           "expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+### knn ------------------------------------------------------------------------
+
+#' Check KNN generation parameters
+#'
+#' @description Checkmate extension for checking the KNN generation parameters
+#' for single cell.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScKnn <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "n_trees",
+      "search_budget",
+      "knn_algorithm"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in single cell KNN generation is",
+          "incorrect: k, n_trees and search budged need to be integers."
+        ),
+        broken_elem
+      )
+    )
+  }
+  # test
+  test_choice_rules <- list(
+    knn_algorithm = c("annoy", "hnsw")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the KNN generation is not one of",
+          "the expected choices. Please double check the documentation."
         ),
         broken_elem
       )
@@ -957,3 +1036,20 @@ assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
+
+### knn ------------------------------------------------------------------------
+
+#' Assert KNN generation parameters
+#'
+#' @description Checkmate extension for asserting the KNN generation parameters
+#' for single cell.
+#'
+#' @inheritParams checkScHvg
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScKnn <- checkmate::makeAssertionFunction(checkScKnn)
