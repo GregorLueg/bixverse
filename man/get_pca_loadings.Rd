@@ -7,7 +7,7 @@
 get_pca_loadings(x)
 }
 \arguments{
-\item{x}{An object to get PCA loadings for.}
+\item{x}{An object to get PCA loadings from.}
 }
 \description{
 Get the PCA loadings

@@ -19,7 +19,8 @@ params_sc_knn(
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
 
-\item{knn_algorithm}{String. One of \code{c("annoy", "hnsw")}.}
+\item{knn_algorithm}{String. One of \code{c("annoy", "hnsw")}. Defaults to
+\code{"annoy"}}
 }
 \value{
 A list with the HVG parameters

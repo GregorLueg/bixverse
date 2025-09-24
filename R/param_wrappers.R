@@ -505,7 +505,8 @@ params_sc_hvg <- function(
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
-#' @param knn_algorithm String. One of `c("annoy", "hnsw")`.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`
 #'
 #' @returns A list with the HVG parameters
 params_sc_knn <- function(
@@ -514,6 +515,8 @@ params_sc_knn <- function(
   search_budget = 100L,
   knn_algorithm = c("annoy", "hnsw")
 ) {
+  knn_algorithm <- match.arg(knn_algorithm)
+
   # check
   checkmate::qassert(k, "I1")
   checkmate::qassert(n_trees, "I1")

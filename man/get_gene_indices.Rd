@@ -7,7 +7,7 @@
 get_gene_indices(x, gene_ids, rust_index)
 }
 \arguments{
-\item{x}{An object to get the gene index for.}
+\item{x}{An object to get the gene index from.}
 
 \item{gene_ids}{String vector. The gene ids to search for.}
 

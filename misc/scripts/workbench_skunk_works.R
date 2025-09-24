@@ -163,52 +163,12 @@ dim(pc_results_randomised$scores)
 
 # mtx file ---------------------------------------------------------------------
 
-rextendr::document()
+## demo ------------------------------------------------------------------------
 
-dir <- tempdir()
-f_path_cells <- file.path(dir, "cells.bin")
-f_path_genes <- file.path(dir, "genes.bin")
-
-single_cell_counts <- SingeCellCountData$new(
-  f_path_cells = f_path_cells,
-  f_path_genes = f_path_genes
-)
-
-mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
-
-res <- single_cell_counts$mtx_to_file(
-  mtx_path = mtx_path,
-  qc_params = params_sc_min_quality()
-)
-
-genes_to_keep = single_cell_counts$generate_gene_based_data(
-  qc_params = params_sc_min_quality(),
-  verbose = TRUE
-)
-tictoc::toc()
-
-count_data <- single_cell_counts$get_cells_by_indices(1:10, assay = "norm")
-
-count_data
-
-max(count_data$indices)
-
-length(genes_to_keep$gene_mask)
-
-table(genes_to_keep$gene_mask)
-
-
-single_cell_counts$get_shape()
-
-single_cell_counts$get_genes_by_indices(indices = 1:10, assay = "norm")
-
-rextendr::document()
-devtools::load_all()
-
-rextendr::document()
-
+# generate the object
 object = single_cell_exp(dir_data = tempdir())
 
+# load in the mtx file
 tictoc::tic()
 object = load_mtx(
   object = object,
@@ -223,30 +183,38 @@ object = load_mtx(
 )
 tictoc::toc()
 
-get_hvg(object)
-
-library(biomaRt)
-
+# show size of the object
 pryr::object_size(object)
 
+# get obs table
+object[[]]
+
+# get specific columns obs table
 object[[c("cell_idx", "cell_id")]]
 
-tictoc::tic()
-object[[]]
-tictoc::toc()
-
+# subset rows
 object[[1:1500]]
 
+# get vars
+get_sc_var(object)
+
+# demo count retrieval
+
+# gene centric version
 tictoc::tic()
 counts_gene <- object[, 1:20L, assay = "norm", return_format = "gene"]
 tictoc::toc()
+
+class(counts_gene)
 
 tictoc::tic()
 counts_gene <- object[, 1:20L, assay = "norm", return_format = "cell"]
 tictoc::toc()
 
-list.files(tempdir())
+class(counts_gene)
 
+# get gene set proportions
+library(biomaRt)
 mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
 G_list <- getBM(
@@ -271,11 +239,15 @@ object[[]]
 
 object <- set_cell_to_keep(object, get_cell_names(object))
 
+# identify HVGs
 object <- find_hvg(object = object)
 
 get_hvg(object)
 
+# run PCA
 object <- calculate_pca_single_cell(object, no_pcs = 30L)
+
+# demo difference PCA vs randomised SVD
 
 # pc_results <- rs_sc_pca(
 #   f_path_gene = get_rust_count_gene_f_path(object),
@@ -323,142 +295,25 @@ object <- calculate_pca_single_cell(object, no_pcs = 30L)
 
 # diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
 
-get_pca_factors(object)
+get_pca_factors(object)[1:5, ]
 
-devtools::load_all()
+get_pca_loadings(object)[1:5, ]
 
-sc_cache = new_sc_cache()
-
-sc_cache <- set_pca_loadings(sc_cache, pc_results_randomised$loadings)
-
-sc_cache <- set_pca_factors(sc_cache, pc_results_randomised$scores)
-
-pc_results$scores[1:5, 1:5]
-
-pc_results$loadings[1:5, 1:5]
-
-
-dim(pc_results_randomised$scores)
-dim(pc_results_randomised$loadings)
-
-rextendr::document()
-
-BiocManager::install("BiocNeighbors")
-
-
-dim(pc_results$scores)
-
-tictoc::tic()
-bioc_knn = BiocNeighbors::findKNN(pc_results$scores, 10, num.threads = 10L)
-tictoc::toc()
-
-bioc_knn$index[1:10, ]
-
-bioc_knn$distance[1:10, ]
-
-dim(bioc_knn$index)
-
-rextendr::document()
-
-tictoc::tic()
-test_res <- rs_sc_knn(
-  embd = pc_results$scores,
-  no_neighbours = 10,
-  seed = 101L,
-  n_trees = 100L,
-  search_budget = 200L,
-  verbose = TRUE,
-  algorithm_type = "hnsw"
-)
-tictoc::toc()
-
-setDT(test_res)
-
-head(test_res, 25)
-
-tictoc::tic()
-test_res_2 <- rs_sc_knn(
-  embd = pc_results$scores,
-  no_neighbours = 10,
-  seed = 101L,
-  n_trees = 100L,
-  search_budget = 100L,
-  verbose = TRUE,
-  algorithm_type = "annoy"
-)
-tictoc::toc()
-
-setDT(test_res_2)
-
-
-head(test_res_2, 25)
-
-length(unique(test_res$from))
-
-length(unique(c(test_res$from, test_res$to)))
-
-test_res[26:35]
-
-rextendr::document()
-
-BiocManager::install("scran")
-
-
-adj_mat <- new(
-  "dgRMatrix",
-  p = as.integer(test_res$indptr),
-  x = test_res$data,
-  j = as.integer(test_res$indices),
-  Dim = c(dim(pc_results$scores)[1], dim(pc_results$scores)[1])
+object <- generate_knn_single_cell(
+  object,
+  no_embd_to_use = 50L
 )
 
-g <- igraph::graph_from_data_frame(test_res_2, directed = FALSE)
+get_knn_mat(object)
 
-communities <- igraph::cluster_louvain(g, resolution = 0.25)
-
-table(communities$membership)
-
-communities <- igraph::cluster_leiden(
-  g,
-  objective_function = "modularity",
-  n_iterations = 5L
-)
-
-table(communities$membership)
-
-setDT(test_res_2)
-
-rextendr::document()
 
 tictoc::tic()
-leiden <- rs_leiden_clustering(
-  from = as.integer(test_res_2$from),
-  to = as.integer(test_res_2$to),
-  weights = test_res$weight,
-  max_iterations = 5L,
-  res = 1,
-  seed = 42L
+bioc_knn = BiocNeighbors::findKNN(
+  get_pca_factors(object),
+  10,
+  num.threads = 10L
 )
 tictoc::toc()
-
-length(unique(leiden))
-
-summary(as.numeric(table(leiden)))
-
-library(igraph)
-
-tictoc::tic()
-
-
-tictoc::toc()
-
-?igraph::graph_from_adjacency_matrix()
-
-hist(table(communities$membership))
-
-summary(as.numeric(table(communities$membership)))
-
-length(unique(communities$membership))
 
 
 # Rebuild of the h5ad parsing --------------------------------------------------

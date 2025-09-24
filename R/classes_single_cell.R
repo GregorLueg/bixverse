@@ -269,7 +269,7 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
 #' @return Updated `sc_cache` object with added PCA loadings.
 #'
 #' @export
-set_pca_loadings.sc_cache <- function(x, knn_mat) {
+set_knn.sc_cache <- function(x, knn_mat) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
@@ -287,7 +287,7 @@ set_pca_loadings.sc_cache <- function(x, knn_mat) {
 
 #' Get the gene names
 #'
-#' @param x An object to get the gene names for
+#' @param x An object to get the gene names from.
 #'
 #' @export
 get_gene_names <- function(x) {
@@ -296,7 +296,7 @@ get_gene_names <- function(x) {
 
 #' Get the cell names
 #'
-#' @param x An object to get the cell names for
+#' @param x An object to get the cell names from.
 #'
 #' @export
 get_cell_names <- function(x) {
@@ -305,7 +305,7 @@ get_cell_names <- function(x) {
 
 #' Get the index position for a gene
 #'
-#' @param x An object to get the gene index for.
+#' @param x An object to get the gene index from.
 #' @param gene_ids String vector. The gene ids to search for.
 #' @param rust_index Bool. Shall rust-based indexing be returned.
 get_gene_indices <- function(x, gene_ids, rust_index) {
@@ -314,14 +314,14 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 
 #' Get the cells to keep
 #'
-#' @param x An object to get the gene index for.
+#' @param x An object to get the gene index from.
 get_cells_to_keep <- function(x) {
   UseMethod("get_cells_to_keep")
 }
 
 #' Get the HVG
 #'
-#' @param x An object to get HVG for.
+#' @param x An object to get HVG from.
 get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
@@ -330,16 +330,23 @@ get_hvg <- function(x) {
 
 #' Get the PCA factors
 #'
-#' @param x An object to get PCA factors for.
+#' @param x An object to get PCA factors from.
 get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
 }
 
 #' Get the PCA loadings
 #'
-#' @param x An object to get PCA loadings for.
+#' @param x An object to get PCA loadings from.
 get_pca_loadings <- function(x) {
   UseMethod("get_pca_loadings")
+}
+
+#' Get the KNN matrix
+#'
+#' @param x An object to
+get_knn_mat <- function(x) {
+  UseMethod("get_knn_mat")
 }
 
 ### methods --------------------------------------------------------------------
@@ -454,6 +461,20 @@ get_pca_loadings.sc_cache <- function(x) {
   checkmate::assertClass(x, "sc_cache")
 
   return(x[["pca_loadings"]])
+}
+
+#' Get the KNN matrix
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The KNN matrix (0-indexed).
+#'
+#' @export
+get_knn_mat.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["knn_matrix"]])
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -1163,7 +1184,7 @@ S7::method(get_hvg, single_cell_exp) <- function(
 
 #' @name get_pca_factors.single_cell_exp
 #'
-#' @title Get the PCA factors for `single_cell_exp`
+#' @title Get the PCA factors from `single_cell_exp`
 #'
 #' @method get_pca_factors single_cell_exp
 S7::method(get_pca_factors, single_cell_exp) <- function(
@@ -1182,7 +1203,7 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
 
 #' @name get_pca_loadings.single_cell_exp
 #'
-#' @title Get the PCA loadings for `single_cell_exp`
+#' @title Get the PCA loadings from `single_cell_exp`
 #'
 #' @method get_pca_loadings single_cell_exp
 S7::method(get_pca_loadings, single_cell_exp) <- function(
@@ -1193,6 +1214,25 @@ S7::method(get_pca_loadings, single_cell_exp) <- function(
 
   # forward to S3
   res <- get_pca_loadings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_mat.single_cell_exp
+#'
+#' @title Get the KNN matrix from `single_cell_exp`
+#'
+#' @method get_knn_mat single_cell_exp
+S7::method(get_knn_mat, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_knn_mat(
     x = S7::prop(x, "sc_cache")
   )
 

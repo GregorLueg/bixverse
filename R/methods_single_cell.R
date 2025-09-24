@@ -349,6 +349,8 @@ S7::method(find_hvg, single_cell_exp) <- function(
   return(object)
 }
 
+## dimension reduction and knn/snn ---------------------------------------------
+
 ### pca ------------------------------------------------------------------------
 
 #' Run PCA for single cell
@@ -365,8 +367,8 @@ S7::method(find_hvg, single_cell_exp) <- function(
 #' `randomised_svd = TRUE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
-#' the obs table.
+#' @return The function will add the PCA factors and loadings to the object
+#' cache in memory.
 calculate_pca_single_cell <- S7::new_generic(
   name = "calculate_pca_single_cell",
   dispatch_args = "object",
@@ -421,6 +423,104 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 
   object <- set_pca_factors(object, pca_factors)
   object <- set_pca_loadings(object, pca_loadings)
+
+  return(object)
+}
+
+### knn ------------------------------------------------------------------------
+
+#' Generate kNN graph for single cell
+#'
+#' @description
+#' This function will generate the kNN graph based on a given embedding (atm,
+#' only option is PCA). Two different algorithms are implemented with different
+#' speed and accuracy to approximate the nearest neighbours. `"annoy"` is more
+#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm,
+#' whereas `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
+#' search that is slower, but more precise.
+#'
+#' @param object `single_cell_exp` class.
+#' @param embd_to_use String. The embedding to use. Atm, the only option is
+#' `"pca"`.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param knn_params List. Output of [bixverse::params_sc_knn()]. A list with
+#' the following items:
+#' \itemize{
+#'   \item k - Integer. Number of neighbours to identify.
+#'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
+#'   The higher, the longer the algorithm takes, but the more precise the
+#'   approximated nearest neighbours.
+#'   \item search_budget - Integer. Search budget per tree for the `annoy`
+#'   algorithm. The higher, the longer the algorithm takes, but the more precise
+#'   the approximated nearest neighbours.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`.
+#' }
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return The object with added KNN matrix.
+#'
+#' @export
+generate_knn_single_cell <- S7::new_generic(
+  name = "generate_knn_single_cell",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    no_embd_to_use = NULL,
+    knn_params = params_sc_knn(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method generate_knn_single_cell single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(generate_knn_single_cell, single_cell_exp) <- function(
+  object,
+  embd_to_use = "pca",
+  no_embd_to_use = NULL,
+  knn_params = params_sc_knn(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertChoice(embd_to_use, c("pca"))
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  assertScKnn(knn_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the embedding
+  embd <- switch(embd_to_use, pca = get_pca_factors(object))
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  knn_data <- with(
+    knn_params,
+    rs_sc_knn(
+      embd = embd,
+      no_neighbours = k,
+      seed = seed,
+      n_trees = n_trees,
+      search_budget = search_budget,
+      verbose = .verbose,
+      algorithm_type = knn_algorithm
+    )
+  )
+
+  object <- set_knn(object, knn_data)
 
   return(object)
 }

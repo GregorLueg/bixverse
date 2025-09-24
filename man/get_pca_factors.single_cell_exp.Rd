@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_pca_factors.single_cell_exp}
 \alias{get_pca_factors.single_cell_exp}
-\title{Get the PCA factors for \code{single_cell_exp}}
+\title{Get the PCA factors from \code{single_cell_exp}}
 \description{
-Get the PCA factors for \code{single_cell_exp}
+Get the PCA factors from \code{single_cell_exp}
 }

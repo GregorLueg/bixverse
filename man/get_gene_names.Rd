@@ -7,7 +7,7 @@
 get_gene_names(x)
 }
 \arguments{
-\item{x}{An object to get the gene names for}
+\item{x}{An object to get the gene names from.}
 }
 \description{
 Get the gene names

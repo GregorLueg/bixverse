@@ -26,8 +26,8 @@ less precise.}
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
 \value{
-It will add the columns based on the names in the \code{gene_set_list} to
-the obs table.
+The function will add the PCA factors and loadings to the object
+cache in memory.
 }
 \description{
 This function will run PCA (option of full SVD and randomised SVD for now)
