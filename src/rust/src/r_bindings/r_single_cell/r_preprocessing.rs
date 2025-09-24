@@ -3,8 +3,9 @@ use faer::Mat;
 use rustc_hash::FxHashSet;
 use std::time::Instant;
 
+use crate::core::graph::leiden::leiden_clustering;
 use crate::single_cell::processing::*;
-use crate::single_cell::vec_based_sim::*;
+use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 
 //////////////////////////
@@ -237,14 +238,15 @@ fn get_knn_method(s: &str) -> Option<KnnSearch> {
 }
 
 #[extendr]
-fn rs_sc_knn_snn(
+fn rs_sc_knn(
     embd: RMatrix<f64>,
     no_neighbours: usize,
-    pruning: f64,
     seed: usize,
+    n_trees: usize,
+    search_budget: usize,
     verbose: bool,
     algorithm_type: String,
-) -> List {
+) -> extendr_api::RArray<i32, [usize; 2]> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
     let start_knn = Instant::now();
@@ -255,43 +257,42 @@ fn rs_sc_knn_snn(
 
     let knn = match knn_method {
         KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed),
-        KnnSearch::Annoy => generate_knn_annoy(embd.as_ref(), no_neighbours, seed),
+        KnnSearch::Annoy => {
+            generate_knn_annoy(embd.as_ref(), no_neighbours, n_trees, search_budget, seed)
+        }
     };
 
     let end_knn = start_knn.elapsed();
 
     if verbose {
-        println!("KNN graph computer in: {:.2?}", end_knn);
+        println!("KNN generation : {:.2?}", end_knn);
     }
 
-    let start_snn = Instant::now();
+    let index_mat = Mat::from_fn(embd.nrows(), no_neighbours, |i, j| knn[i][j] as i32);
 
-    let snn = generate_snn(&knn, no_neighbours, pruning as f32);
+    faer_to_r_matrix(index_mat.as_ref())
+}
 
-    let end_snn = start_snn.elapsed();
+////////////
+// Leiden //
+////////////
 
-    if verbose {
-        println!("SNN graph computer in: {:.2?}", end_snn);
-    }
+#[extendr]
+fn rs_leiden_clustering(
+    from: Vec<i32>,
+    to: Vec<i32>,
+    weights: Vec<f64>,
+    max_iterations: usize,
+    res: f64,
+    seed: Option<u64>,
+) -> Vec<i32> {
+    let from = from.iter().map(|x| *x as usize).collect::<Vec<usize>>();
+    let to = to.iter().map(|x| *x as usize).collect::<Vec<usize>>();
+    let weights = weights.iter().map(|x| *x as f32).collect::<Vec<f32>>();
 
-    let start_edge_list = Instant::now();
+    let leiden_communities = leiden_clustering(from, to, weights, max_iterations, res as f32, seed);
 
-    let snn_edge_list = snn_to_edge_list(snn);
-
-    let end_edge_list = start_edge_list.elapsed();
-
-    if verbose {
-        println!(
-            "SNN data structure transformed to edge list in: {:.2?}",
-            end_edge_list
-        );
-    }
-
-    list!(
-        from = snn_edge_list.0,
-        to = snn_edge_list.1,
-        weight = snn_edge_list.2
-    )
+    leiden_communities.iter().map(|x| *x as i32).collect()
 }
 
 extendr_module! {
@@ -299,5 +300,6 @@ extendr_module! {
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_pca;
-    fn rs_sc_knn_snn;
+    fn rs_sc_knn;
+    fn rs_leiden_clustering;
 }

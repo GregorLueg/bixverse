@@ -26,9 +26,34 @@ new_sc_mapper <- function() {
 
 ## cache class -----------------------------------------------------------------
 
+#' Helper function to hold relevant cached data
+#'
+#' @description
+#' Helper class that contains various data that is held in memory and not on
+#' disk.
+#'
+#' @return Generates an empty version of the `sc_cache` class.
+#'
+#' @export
+new_sc_cache <- function() {
+  sc_cache <- list(
+    pca_factors = NULL,
+    pca_loadings = NULL,
+    other_embeddings = list(),
+    knn_matrix = NULL,
+    snn_matrix = NULL
+  )
+
+  class(sc_cache) <- "sc_cache"
+
+  return(sc_cache)
+}
+
 ## setters ---------------------------------------------------------------------
 
 ### generics -------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Set gene mapping for sc_mapper object
 #'
@@ -72,7 +97,31 @@ set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Set/add PCA factors
+#'
+#' @param x An object to add the PCA factors for.
+#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#'
+#' @export
+set_pca_factors <- function(x, pca_factor) {
+  UseMethod("set_pca_factors")
+}
+
+#' Set/add PCA loadings
+#'
+#' @param x An object to add the PCA loadings for.
+#' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
+#'
+#' @export
+set_pca_loadings <- function(x, pca_loading) {
+  UseMethod("set_pca_loadings")
+}
+
 ### methods --------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Set gene mapping method for sc_mapper
 #'
@@ -160,6 +209,44 @@ set_hvg.sc_mapper <- function(x, hvg) {
   }
 
   x[["hvg_gene_indices"]] <- res
+
+  return(x)
+}
+
+#### sc_cache ------------------------------------------------------------------
+
+#' Set PCA factors for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_mapper` object with gene mapping set
+#'
+#' @export
+set_pca_factors.sc_mapper <- function(x, pca_factor) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(pca_factor, mode = "numeric")
+
+  x[["pca_factors"]] <- pca_factor
+
+  return(x)
+}
+
+#' Set PCA loadings for sc_mapper
+#'
+#' @param x An `sc_mapper` object
+#' @param pca_loadings Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_mapper` object with gene mapping set
+#'
+#' @export
+set_pca_loadings.sc_mapper <- function(x, pca_loadings) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(pca_loadings, mode = "numeric")
+
+  x[["pca_loadings"]] <- pca_loadings
 
   return(x)
 }
@@ -332,9 +419,9 @@ single_cell_exp <- S7::new_class(
     db_connection = S7::class_any,
     count_connection = S7::class_any,
     dir_data = S7::class_character,
-    cache = S7::class_list,
-    dims = S7::class_integer,
-    sc_map = S7::class_any
+    cache = S7::class_any,
+    sc_map = S7::class_any,
+    dims = S7::class_integer
   ),
   constructor = function(dir_data) {
     nightly_feature()
@@ -357,9 +444,9 @@ single_cell_exp <- S7::new_class(
       db_connection = db_connection,
       count_connection = count_connection,
       dir_data = dir_data,
-      cache = list(),
-      dims = c(0L, 0L),
-      sc_map = new_sc_mapper()
+      cache = new_sc_cache(),
+      sc_map = new_sc_mapper(),
+      dims = c(0L, 0L)
     )
   }
 )

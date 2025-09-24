@@ -320,10 +320,12 @@ impl MtxReader {
         let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());
         let mut nnz = Vec::with_capacity(quality.cells_to_keep.len());
 
-        for (cell_idx, data) in cell_data.iter().enumerate() {
+        for (cell_idx, data) in cell_data.iter_mut().enumerate() {
             if data.is_empty() {
                 continue;
             }
+
+            data.sort_by_key(|(gene_idx, _)| *gene_idx);
 
             let gene_indices: Vec<u16> = data.iter().map(|(g, _)| *g).collect();
             let gene_counts: Vec<u16> = data.iter().map(|(_, c)| *c).collect();

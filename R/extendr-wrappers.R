@@ -1731,7 +1731,9 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #' @export
 rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
 
-rs_sc_knn_snn <- function(embd, no_neighbours, pruning, seed, verbose, algorithm_type) .Call(wrap__rs_sc_knn_snn, embd, no_neighbours, pruning, seed, verbose, algorithm_type)
+rs_sc_knn <- function(embd, no_neighbours, seed, n_trees, search_budget, verbose, algorithm_type) .Call(wrap__rs_sc_knn, embd, no_neighbours, seed, n_trees, search_budget, verbose, algorithm_type)
+
+rs_leiden_clustering <- function(from, to, weights, max_iterations, res, seed) .Call(wrap__rs_leiden_clustering, from, to, weights, max_iterations, res, seed)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

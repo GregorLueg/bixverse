@@ -205,7 +205,11 @@ single_cell_counts$get_genes_by_indices(indices = 1:10, assay = "norm")
 rextendr::document()
 devtools::load_all()
 
+rextendr::document()
+
 object = single_cell_exp(dir_data = tempdir())
+
+list.files(tempdir())
 
 tictoc::tic()
 object = load_mtx(
@@ -222,6 +226,34 @@ object = load_mtx(
 tictoc::toc()
 
 library(biomaRt)
+
+pryr::object_size(object)
+
+object[[c("cell_idx", "cell_id")]]
+
+tictoc::tic()
+object[[]]
+tictoc::toc()
+
+object[[1:1500]]
+
+tictoc::tic()
+counts_gene <- object[, 1:20L, assay = "norm", return_format = "gene"]
+tictoc::toc()
+
+tictoc::tic()
+counts_gene <- object[, 1:20L, assay = "norm", return_format = "cell"]
+tictoc::toc()
+
+tictoc::tic()
+counts_cell <- object[,, assay = "norm", return_format = "cell"]
+tictoc::toc()
+
+list.files(tempdir())
+
+counts_gene
+
+class(counts_gene)
 
 mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
@@ -245,15 +277,20 @@ object <- gene_set_proportions(object, gs_of_interest)
 
 object[[]]
 
-object <- set_cell_to_keep(object, get_cell_names(object))
+get_sc_var(object)
 
-devtools::load_all()
+
+get_gene_names(object)
+
+object <- set_cell_to_keep(object, get_cell_names(object))
 
 object <- find_hvg(object = object)
 
 get_hvg(object)
 
 rextendr::document()
+
+pryr::object_size(object)
 
 print("Using standard SVD")
 
@@ -267,6 +304,10 @@ pc_results <- rs_sc_pca(
   verbose = TRUE
 )
 
+pc_results$scores[1:5, ]
+
+object
+
 print("Using randomised SVD")
 
 pc_results_randomised <- rs_sc_pca(
@@ -278,6 +319,10 @@ pc_results_randomised <- rs_sc_pca(
   seed = 42L,
   verbose = TRUE
 )
+
+pc_results$scores[1:5, 1:5]
+
+pc_results$loadings[1:5, 1:5]
 
 plot(
   pc_results_randomised$scores[, 1],
@@ -308,39 +353,123 @@ dim(pc_results_randomised$loadings)
 
 rextendr::document()
 
+BiocManager::install("BiocNeighbors")
+
 diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
 
-test_res <- rs_sc_knn_snn(
-  embd = pc_results$scores[1:10000, ],
+dim(pc_results$scores)
+
+tictoc::tic()
+bioc_knn = BiocNeighbors::findKNN(pc_results$scores, 10, num.threads = 10L)
+tictoc::toc()
+
+bioc_knn$index[1:10, ]
+
+bioc_knn$distance[1:10, ]
+
+dim(bioc_knn$index)
+
+rextendr::document()
+
+tictoc::tic()
+test_res <- rs_sc_knn(
+  embd = pc_results$scores,
   no_neighbours = 10,
-  pruning = 1 / 15,
   seed = 101L,
+  n_trees = 100L,
+  search_budget = 200L,
   verbose = TRUE,
   algorithm_type = "hnsw"
 )
+tictoc::toc()
 
 setDT(test_res)
 
 head(test_res, 25)
 
+tictoc::tic()
+test_res_2 <- rs_sc_knn(
+  embd = pc_results$scores,
+  no_neighbours = 10,
+  seed = 101L,
+  n_trees = 100L,
+  search_budget = 100L,
+  verbose = TRUE,
+  algorithm_type = "annoy"
+)
+tictoc::toc()
+
+setDT(test_res_2)
+
+
+head(test_res_2, 25)
+
+length(unique(test_res$from))
+
+length(unique(c(test_res$from, test_res$to)))
+
 test_res[26:35]
 
 rextendr::document()
 
-test_res_2 <- rs_sc_knn_snn(
-  embd = pc_results$scores[1:10000, ],
-  no_neighbours = 10,
-  pruning = 1 / 15,
-  seed = 101L,
-  verbose = TRUE,
-  algorithm_type = "annoy"
+BiocManager::install("scran")
+
+
+adj_mat <- new(
+  "dgRMatrix",
+  p = as.integer(test_res$indptr),
+  x = test_res$data,
+  j = as.integer(test_res$indices),
+  Dim = c(dim(pc_results$scores)[1], dim(pc_results$scores)[1])
 )
+
+g <- igraph::graph_from_data_frame(test_res_2, directed = FALSE)
+
+communities <- igraph::cluster_louvain(g, resolution = 0.25)
+
+table(communities$membership)
+
+communities <- igraph::cluster_leiden(
+  g,
+  objective_function = "modularity",
+  n_iterations = 5L
+)
+
+table(communities$membership)
 
 setDT(test_res_2)
 
-head(test_res_2, 25)
+rextendr::document()
 
-test_res_2[26:35]
+tictoc::tic()
+leiden <- rs_leiden_clustering(
+  from = as.integer(test_res_2$from),
+  to = as.integer(test_res_2$to),
+  weights = test_res$weight,
+  max_iterations = 5L,
+  res = 1,
+  seed = 42L
+)
+tictoc::toc()
+
+length(unique(leiden))
+
+summary(as.numeric(table(leiden)))
+
+library(igraph)
+
+tictoc::tic()
+
+
+tictoc::toc()
+
+?igraph::graph_from_adjacency_matrix()
+
+hist(table(communities$membership))
+
+summary(as.numeric(table(communities$membership)))
+
+length(unique(communities$membership))
 
 
 # Rebuild of the h5ad parsing --------------------------------------------------
