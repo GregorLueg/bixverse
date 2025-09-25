@@ -499,7 +499,7 @@ params_sc_hvg <- function(
   )
 }
 
-#' Wrapper function for kNN generation parameters for single cell
+#' Wrapper function for parameters for neighbour identification in single cell
 #'
 #' @param k Integer. Number of neighbours to return.
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
@@ -507,26 +507,48 @@ params_sc_hvg <- function(
 #' algorithm.
 #' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
 #' `"annoy"`
+#' @param full_snn Boolean. Shall the full shared nearest neighbour graph
+#' be generated that generates edges between all cells instead of between
+#' only neighbours.
+#' @param pruning Numeric. Weights below this threshold will be set to 0 in
+#' the generation of the sNN graph.
+#' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
+#' similarity calculates the Jaccard between the neighbours, whereas the rank
+#' method calculates edge weights based on the ranking of shared neighbours.
+#' For the rank method, the weight is determined by finding the shared
+#' neighbour with the lowest combined rank across both cells, where
+#' lower-ranked (closer) shared neighbors result in higher edge weights
+#' Both methods produce weights normalised to the range `[0, 1]`.
 #'
-#' @returns A list with the HVG parameters
-params_sc_knn <- function(
-  k = 10L,
+#' @returns A list with the neighbour parameters.
+params_sc_neighbours <- function(
+  k = 15L,
   n_trees = 100L,
   search_budget = 100L,
-  knn_algorithm = c("annoy", "hnsw")
+  knn_algorithm = c("annoy", "hnsw"),
+  full_snn = FALSE,
+  pruning = 1 / 15,
+  snn_similarity = c("rank", "jaccard")
 ) {
   knn_algorithm <- match.arg(knn_algorithm)
+  snn_similarity <- match.arg(snn_similarity)
 
   # check
   checkmate::qassert(k, "I1")
   checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "N1")
   checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw"))
+  checkmate::qassert(full_snn, "B1")
+  checkmate::qassert(pruning, "N1[0, 1]")
+  checkmate::assertChoice(snn_similarity, c("rank", "jaccard"))
 
   list(
     k = k,
     n_trees = n_trees,
     search_budget = search_budget,
-    knn_algorithm = knn_algorithm
+    knn_algorithm = knn_algorithm,
+    full_snn = full_snn,
+    pruning = pruning,
+    snn_similarity = snn_similarity
   )
 }

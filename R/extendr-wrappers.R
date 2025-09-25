@@ -1731,9 +1731,47 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #' @export
 rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
 
-rs_sc_knn <- function(embd, no_neighbours, seed, n_trees, search_budget, verbose, algorithm_type) .Call(wrap__rs_sc_knn, embd, no_neighbours, seed, n_trees, search_budget, verbose, algorithm_type)
+#' Generates the kNN graph
+#'
+#' @description
+#' This function is a wrapper over the Rust-based generation of the approximate
+#' nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
+#' `"hnsw"`.
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param no_neighbours Integer. Number of neighbours to return
+#' @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `"annoy"`
+#' algorithm.
+#' @param verbose Boolean. Controls verbosity of the function and returns
+#' how long certain operations took.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return A integer matrix of N x k with N being the number of cells and k the
+#' number of neighbours.
+#'
+#' @export
+rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed)
 
-rs_leiden_clustering <- function(from, to, weights, max_iterations, res, seed) .Call(wrap__rs_leiden_clustering, from, to, weights, max_iterations, res, seed)
+#' Generates the sNN graph for igraph
+#'
+#' @description
+#' This function takes a kNN matrix and generates the inputs for an SNN
+#' graph based on it.
+#'
+#' @param knn_mat Integer matrix. Rows represent cells and the columns
+#' represent the neighbours.
+#' @param snn_method String. Which method to use to calculate the similarity.
+#' Choice of `c("jaccard", "rank")`.
+#' @param pruning Float. Below which value for the Jaccard similarity to prune
+#' the weight to 0.
+#'
+#' @return A integer matrix of N x k with N being the number of cells and k the
+#' number of neighbours.
+#'
+#' @export
+rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

@@ -75,11 +75,11 @@ pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64
 /// * `rank` - The target rank of the approximation (number of singular values,
 ///   vectors to compute).
 /// * `seed` - Random seed for reproducible results.
-/// * `oversampling` - Additional samples beyond the target rank to improve accuracy.
-///   Defaults to 10 if not specified.
-/// * `n_power_iter` - Number of power iterations to perform for better approximation quality.
-///   More iterations generally improve accuracy but increase computation time.
-///   Defaults to 2 if not specified.
+/// * `oversampling` - Additional samples beyond the target rank to improve
+///   accuracy. Defaults to 10 if not specified.
+/// * `n_power_iter` - Number of power iterations to perform for better
+///   approximation quality. More iterations generally improve accuracy but
+///   increase computation time. Defaults to 2 if not specified.
 ///
 /// ### Returns
 ///

@@ -3,7 +3,6 @@ use faer::Mat;
 use rustc_hash::FxHashSet;
 use std::time::Instant;
 
-use crate::core::graph::leiden::leiden_clustering;
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
@@ -212,48 +211,43 @@ fn rs_sc_pca(
 // kNN / sNN //
 ///////////////
 
-/// Enum for the different methods
-enum KnnSearch {
-    /// Annoy-based
-    Annoy,
-    /// Hierarchical Navigable Small World
-    Hnsw,
-}
-
-/// Helper function to get the KNN method
+/// Generates the kNN graph
 ///
-/// ### Params
+/// @description
+/// This function is a wrapper over the Rust-based generation of the approximate
+/// nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
+/// `"hnsw"`.
 ///
-/// * `s` - Type of HVG calculation to do
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// kNN graph.
+/// @param no_neighbours Integer. Number of neighbours to return
+/// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
+/// @param search_budget Integer. Search budget per tree for the `"annoy"`
+/// algorithm.
+/// @param verbose Boolean. Controls verbosity of the function and returns
+/// how long certain operations took.
+/// @param seed Integer. Seed for reproducibility purposes.
 ///
-/// ### Returns
+/// @return A integer matrix of N x k with N being the number of cells and k the
+/// number of neighbours.
 ///
-/// Option of the HvgMethod (some not yet implemented)
-fn get_knn_method(s: &str) -> Option<KnnSearch> {
-    match s.to_lowercase().as_str() {
-        "annoy" => Some(KnnSearch::Annoy),
-        "hnsw" => Some(KnnSearch::Hnsw),
-        _ => None,
-    }
-}
-
+/// @export
 #[extendr]
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     no_neighbours: usize,
-    seed: usize,
     n_trees: usize,
     search_budget: usize,
-    verbose: bool,
     algorithm_type: String,
-) -> extendr_api::RArray<i32, [usize; 2]> {
+    verbose: bool,
+    seed: usize,
+) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
     let start_knn = Instant::now();
 
     let knn_method = get_knn_method(&algorithm_type)
-        .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))
-        .unwrap();
+        .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
 
     let knn = match knn_method {
         KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed),
@@ -270,29 +264,65 @@ fn rs_sc_knn(
 
     let index_mat = Mat::from_fn(embd.nrows(), no_neighbours, |i, j| knn[i][j] as i32);
 
-    faer_to_r_matrix(index_mat.as_ref())
+    Ok(faer_to_r_matrix(index_mat.as_ref()))
 }
 
-////////////
-// Leiden //
-////////////
-
+/// Generates the sNN graph for igraph
+///
+/// @description
+/// This function takes a kNN matrix and generates the inputs for an SNN
+/// graph based on it.
+///
+/// @param knn_mat Integer matrix. Rows represent cells and the columns
+/// represent the neighbours.
+/// @param snn_method String. Which method to use to calculate the similarity.
+/// Choice of `c("jaccard", "rank")`.
+/// @param pruning Float. Below which value for the Jaccard similarity to prune
+/// the weight to 0.
+///
+/// @return A integer matrix of N x k with N being the number of cells and k the
+/// number of neighbours.
+///
+/// @export
 #[extendr]
-fn rs_leiden_clustering(
-    from: Vec<i32>,
-    to: Vec<i32>,
-    weights: Vec<f64>,
-    max_iterations: usize,
-    res: f64,
-    seed: Option<u64>,
-) -> Vec<i32> {
-    let from = from.iter().map(|x| *x as usize).collect::<Vec<usize>>();
-    let to = to.iter().map(|x| *x as usize).collect::<Vec<usize>>();
-    let weights = weights.iter().map(|x| *x as f32).collect::<Vec<f32>>();
+fn rs_sc_snn(
+    knn_mat: RMatrix<i32>,
+    snn_method: String,
+    limited_graph: bool,
+    pruning: f64,
+) -> extendr_api::Result<List> {
+    let n_neighbours = knn_mat.ncols();
+    let data = knn_mat
+        .data()
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
 
-    let leiden_communities = leiden_clustering(from, to, weights, max_iterations, res as f32, seed);
+    let snn_method = get_snn_similiarity_method(&snn_method)
+        .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
 
-    leiden_communities.iter().map(|x| *x as i32).collect()
+    let snn_data = if limited_graph {
+        generate_snn_limited(
+            &data,
+            n_neighbours,
+            knn_mat.nrows(),
+            pruning as f32,
+            snn_method,
+        )
+    } else {
+        generate_snn_full(
+            &data,
+            n_neighbours,
+            knn_mat.nrows(),
+            pruning as f32,
+            snn_method,
+        )
+    };
+
+    Ok(list!(
+        edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
+        weights = snn_data.1
+    ))
 }
 
 extendr_module! {
@@ -301,5 +331,5 @@ extendr_module! {
     fn rs_sc_hvg;
     fn rs_sc_pca;
     fn rs_sc_knn;
-    fn rs_leiden_clustering;
+    fn rs_sc_snn;
 }

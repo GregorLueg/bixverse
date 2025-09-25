@@ -429,23 +429,24 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 
 ### knn ------------------------------------------------------------------------
 
-#' Generate kNN graph for single cell
+#' Find the neighbours for single cell.
 #'
 #' @description
-#' This function will generate the kNN graph based on a given embedding (atm,
+#' This function will generate the kNNs based on a given embedding (atm,
 #' only option is PCA). Two different algorithms are implemented with different
 #' speed and accuracy to approximate the nearest neighbours. `"annoy"` is more
 #' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm,
 #' whereas `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
-#' search that is slower, but more precise.
+#' search that is slower, but more precise. Subsequently, the kNN data will
+#' be used to generate an sNN igraph for clustering methods.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Atm, the only option is
 #' `"pca"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param knn_params List. Output of [bixverse::params_sc_knn()]. A list with
-#' the following items:
+#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
+#' A list with the following items:
 #' \itemize{
 #'   \item k - Integer. Number of neighbours to identify.
 #'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
@@ -455,6 +456,12 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #'   algorithm. The higher, the longer the algorithm takes, but the more precise
 #'   the approximated nearest neighbours.
 #'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`.
+#'   \item full_snn - Boolean. Shall the sNN graph be generated across all
+#'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
+#'   \item pruning - Value below which the weight in the sNN graph is set to 0.
+#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
+#'   the weight is calculated. For details, please see
+#'   [bixverse::params_sc_neighbours()].
 #' }
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
@@ -462,14 +469,14 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #' @return The object with added KNN matrix.
 #'
 #' @export
-generate_knn_single_cell <- S7::new_generic(
+find_neigbours_single_cell <- S7::new_generic(
   name = "generate_knn_single_cell",
   dispatch_args = "object",
   fun = function(
     object,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
-    knn_params = params_sc_knn(),
+    neighbours_params = params_sc_neighbours(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -477,17 +484,17 @@ generate_knn_single_cell <- S7::new_generic(
   }
 )
 
-#' @method generate_knn_single_cell single_cell_exp
+#' @method find_neigbours_single_cell single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(generate_knn_single_cell, single_cell_exp) <- function(
+S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  knn_params = params_sc_knn(),
+  neighbours_params = params_sc_neighbours(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -495,7 +502,7 @@ S7::method(generate_knn_single_cell, single_cell_exp) <- function(
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  assertScKnn(knn_params)
+  assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -507,8 +514,15 @@ S7::method(generate_knn_single_cell, single_cell_exp) <- function(
     embd <- embd[, 1:to_take]
   }
 
+  if (.verbose) {
+    message(sprintf(
+      "Generating kNN data with %s method.",
+      neighbours_params$knn_algorithm
+    ))
+  }
+
   knn_data <- with(
-    knn_params,
+    neighbours_params,
     rs_sc_knn(
       embd = embd,
       no_neighbours = k,
@@ -521,6 +535,28 @@ S7::method(generate_knn_single_cell, single_cell_exp) <- function(
   )
 
   object <- set_knn(object, knn_data)
+
+  if (.verbose) {
+    message(sprintf(
+      "Generating sNN graph (full: %s).",
+      neighbours_params$full_snn
+    ))
+  }
+
+  snn_graph_rs <- with(
+    neighbours_params,
+    rs_sc_snn(
+      knn_data,
+      snn_method = snn_similarity,
+      pruning = pruning,
+      limited_graph = !full_snn
+    )
+  )
+
+  snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
+  igraph::E(snn_g)$weight <- snn_graph_rs$weights
+
+  object <- set_snn_graph(object, snn_graph = snn_g)
 
   return(object)
 }

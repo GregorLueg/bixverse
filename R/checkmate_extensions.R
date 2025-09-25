@@ -741,15 +741,15 @@ checkScHvg <- function(x) {
 
 ### knn ------------------------------------------------------------------------
 
-#' Check KNN generation parameters
+#' Check neighbour generation parameters
 #'
-#' @description Checkmate extension for checking the KNN generation parameters
-#' for single cell.
+#' @description Checkmate extension for checking the neighbour generation
+#' parameters for single cell.
 #'
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
-checkScKnn <- function(x) {
+checkScNeighbours <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -761,7 +761,9 @@ checkScKnn <- function(x) {
       "k",
       "n_trees",
       "search_budget",
-      "knn_algorithm"
+      "knn_algorithm",
+      "full_snn",
+      "pruning"
     )
   )
   if (!isTRUE(res)) {
@@ -770,7 +772,9 @@ checkScKnn <- function(x) {
   rules <- list(
     "k" = "I1",
     "n_trees" = "I1",
-    "search_budget" = "I1"
+    "search_budget" = "I1",
+    "full_snn" = "B1",
+    "pruning" = "N1[0, 1]"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(rules)) {
@@ -785,7 +789,8 @@ checkScKnn <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees and search budged need to be integers."
+          "incorrect: k, n_trees and search budged need to be integers.",
+          "full_snn needs to be boolean and pruning a number between 0 and 1."
         ),
         broken_elem
       )
@@ -793,7 +798,8 @@ checkScKnn <- function(x) {
   }
   # test
   test_choice_rules <- list(
-    knn_algorithm = c("annoy", "hnsw")
+    knn_algorithm = c("annoy", "hnsw"),
+    snn_similarity = c("rank", "jaccard")
   )
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(test_choice_rules)) {
@@ -1039,12 +1045,12 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 
 ### knn ------------------------------------------------------------------------
 
-#' Assert KNN generation parameters
+#' Assert neighbour generation parameters
 #'
-#' @description Checkmate extension for asserting the KNN generation parameters
-#' for single cell.
+#' @description Checkmate extension for assert the neighbour generation
+#' parameters for single cell.
 #'
-#' @inheritParams checkScHvg
+#' @inheritParams checkScNeighbours
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -1052,4 +1058,4 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
-assertScKnn <- checkmate::makeAssertionFunction(checkScKnn)
+assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)

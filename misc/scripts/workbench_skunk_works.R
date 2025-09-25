@@ -165,10 +165,21 @@ dim(pc_results_randomised$scores)
 
 ## demo ------------------------------------------------------------------------
 
+rextendr::document()
+
 # generate the object
 object = single_cell_exp(dir_data = tempdir())
 
 # load in the mtx file
+
+# several things are happening here...
+# 1.) we scan which genes to include
+# 2.) we scan which cells to include
+# 3.) we load in the data and save to a binarised CSR file and generate at the
+# same time the normalised counts
+# 4.) we take the raw counts and normalised counts from the cells and save
+# them additionally in a CSC format again to disk.
+
 tictoc::tic()
 object = load_mtx(
   object = object,
@@ -299,13 +310,52 @@ get_pca_factors(object)[1:5, ]
 
 get_pca_loadings(object)[1:5, ]
 
-object <- generate_knn_single_cell(
+?generate_knn_single_cell
+
+devtools::load_all()
+
+object <- find_neigbours_single_cell(
   object,
   no_embd_to_use = 50L
 )
 
 get_knn_mat(object)
 
+rextendr::document()
+
+tictoc::tic()
+snn_graph_rs <- rs_sc_snn(
+  get_knn_mat(object),
+  snn_method = "rank",
+  pruning = 0,
+  limited_graph = TRUE
+)
+
+g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
+
+igraph::E(g)$weight <- snn_graph_rs$weights
+tictoc::toc()
+
+
+class(g)
+
+summary(snn_graph_rs$weights)
+
+length(snn_graph_rs$weights)
+
+clustering <- igraph::cluster_leiden(g, objective_function = "modularity")
+
+table(clustering$membership)
+
+pryr::object_size(g)
+
+dim(get_knn_mat(object))
+
+length(unique(snn_graph_rs$edges))
+
+length(snn_graph_rs$weights)
+
+rextendr::document()
 
 tictoc::tic()
 bioc_knn = BiocNeighbors::findKNN(
@@ -315,6 +365,20 @@ bioc_knn = BiocNeighbors::findKNN(
 )
 tictoc::toc()
 
+tictoc::tic()
+g.out <- bluster:::build_snn_graph(
+  t(bioc_knn$index),
+  "rank",
+  num_threads = 8L
+)
+tictoc::toc()
+
+g_2 <- igraph::make_graph(g.out$edges, directed = FALSE)
+igraph::E(g_2)$weight <- g.out$weights
+
+clustering_2 <- igraph::cluster_leiden(g_2, objective_function = "modularity")
+
+table(clustering_2$membership)
 
 # Rebuild of the h5ad parsing --------------------------------------------------
 

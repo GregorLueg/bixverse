@@ -41,7 +41,7 @@ new_sc_cache <- function() {
     pca_loadings = NULL,
     other_embeddings = list(),
     knn_matrix = NULL,
-    snn_matrix = NULL
+    snn_graph = NULL
   )
 
   class(sc_cache) <- "sc_cache"
@@ -127,6 +127,16 @@ set_pca_loadings <- function(x, pca_loading) {
 #' @export
 set_knn <- function(x, knn_matrix) {
   UseMethod("set_knn")
+}
+
+#' Set/add KNN
+#'
+#' @param x An object to add the KNN data to
+#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#'
+#' @export
+set_snn_graph <- function(x, snn_graph) {
+  UseMethod("set_snn_graph")
 }
 
 ### methods --------------------------------------------------------------------
@@ -275,6 +285,24 @@ set_knn.sc_cache <- function(x, knn_mat) {
   checkmate::assertMatrix(knn_mat, mode = "numeric")
 
   x[["knn_matrix"]] <- knn_mat
+
+  return(x)
+}
+
+#' Set the sNN graph for sc_mapper
+#'
+#' @param x An `sc_cache` object
+#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#'
+#' @return Updated `sc_cache` object with added PCA loadings.
+#'
+#' @export
+set_snn_graph.sc_cache <- function(x, snn_graph) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(snn_graph, "igraph")
+
+  x[["snn_graph"]] <- snn_graph
 
   return(x)
 }
@@ -1511,6 +1539,29 @@ S7::method(set_knn, single_cell_exp) <- function(
   S7::prop(x, "sc_cache") <- set_knn(
     x = S7::prop(x, "sc_cache"),
     knn_mat = knn_mat
+  )
+
+  return(x)
+}
+
+
+#' @name set_snn_graph.single_cell_exp
+#'
+#' @title Set SNN graph method for `single_cell_exp`
+#'
+#' @method set_snn_graph single_cell_exp
+S7::method(set_snn_graph, single_cell_exp) <- function(
+  x,
+  snn_graph
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(snn_graph, "igraph")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_snn_graph(
+    x = S7::prop(x, "sc_cache"),
+    snn_graph = snn_graph
   )
 
   return(x)
