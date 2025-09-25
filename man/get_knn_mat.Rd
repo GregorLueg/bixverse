@@ -7,7 +7,7 @@
 get_knn_mat(x)
 }
 \arguments{
-\item{x}{An object to}
+\item{x}{An object to get the kNN matrix from.}
 }
 \description{
 Get the KNN matrix

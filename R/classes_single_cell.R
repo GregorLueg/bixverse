@@ -372,9 +372,16 @@ get_pca_loadings <- function(x) {
 
 #' Get the KNN matrix
 #'
-#' @param x An object to
+#' @param x An object to get the kNN matrix from.
 get_knn_mat <- function(x) {
   UseMethod("get_knn_mat")
+}
+
+#' Get the sNN graph
+#'
+#' @param x An object to get the sNN graph from.
+get_snn_graph <- function(x) {
+  UseMethod("get_snn_graph")
 }
 
 ### methods --------------------------------------------------------------------
@@ -503,6 +510,20 @@ get_knn_mat.sc_cache <- function(x) {
   checkmate::assertClass(x, "sc_cache")
 
   return(x[["knn_matrix"]])
+}
+
+#' Get the sNN graph
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The sNN igraph.
+#'
+#' @export
+get_snn_graph.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["snn_graph"]])
 }
 
 # s7 ---------------------------------------------------------------------------
@@ -1261,6 +1282,25 @@ S7::method(get_knn_mat, single_cell_exp) <- function(
 
   # forward to S3
   res <- get_knn_mat(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_snn_graph.single_cell_exp
+#'
+#' @title Get the sNN graph from `single_cell_exp`
+#'
+#' @method get_snn_graph single_cell_exp
+S7::method(get_snn_graph, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_snn_graph(
     x = S7::prop(x, "sc_cache")
   )
 

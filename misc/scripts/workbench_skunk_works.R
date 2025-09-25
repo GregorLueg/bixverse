@@ -310,8 +310,6 @@ get_pca_factors(object)[1:5, ]
 
 get_pca_loadings(object)[1:5, ]
 
-?generate_knn_single_cell
-
 devtools::load_all()
 
 object <- find_neigbours_single_cell(
@@ -319,66 +317,10 @@ object <- find_neigbours_single_cell(
   no_embd_to_use = 50L
 )
 
+get_snn_graph(object)
+
 get_knn_mat(object)
 
-rextendr::document()
-
-tictoc::tic()
-snn_graph_rs <- rs_sc_snn(
-  get_knn_mat(object),
-  snn_method = "rank",
-  pruning = 0,
-  limited_graph = TRUE
-)
-
-g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
-
-igraph::E(g)$weight <- snn_graph_rs$weights
-tictoc::toc()
-
-
-class(g)
-
-summary(snn_graph_rs$weights)
-
-length(snn_graph_rs$weights)
-
-clustering <- igraph::cluster_leiden(g, objective_function = "modularity")
-
-table(clustering$membership)
-
-pryr::object_size(g)
-
-dim(get_knn_mat(object))
-
-length(unique(snn_graph_rs$edges))
-
-length(snn_graph_rs$weights)
-
-rextendr::document()
-
-tictoc::tic()
-bioc_knn = BiocNeighbors::findKNN(
-  get_pca_factors(object),
-  10,
-  num.threads = 10L
-)
-tictoc::toc()
-
-tictoc::tic()
-g.out <- bluster:::build_snn_graph(
-  t(bioc_knn$index),
-  "rank",
-  num_threads = 8L
-)
-tictoc::toc()
-
-g_2 <- igraph::make_graph(g.out$edges, directed = FALSE)
-igraph::E(g_2)$weight <- g.out$weights
-
-clustering_2 <- igraph::cluster_leiden(g_2, objective_function = "modularity")
-
-table(clustering_2$membership)
 
 # Rebuild of the h5ad parsing --------------------------------------------------
 
