@@ -349,4 +349,214 @@ S7::method(find_hvg, single_cell_exp) <- function(
   return(object)
 }
 
+## dimension reduction and knn/snn ---------------------------------------------
+
 ### pca ------------------------------------------------------------------------
+
+#' Run PCA for single cell
+#'
+#' @description
+#' This function will run PCA (option of full SVD and randomised SVD for now)
+#' on the detected highly variable genes.
+#'
+#' @param object `single_cell_exp` class.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
+#' less precise.
+#' @param seed Integer. Controls reproducibility. Only relevant if
+#' `randomised_svd = TRUE`.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return The function will add the PCA factors and loadings to the object
+#' cache in memory.
+calculate_pca_single_cell <- S7::new_generic(
+  name = "calculate_pca_single_cell",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    no_pcs,
+    randomised_svd = TRUE,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_pca_single_cell single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
+  object,
+  no_pcs,
+  randomised_svd = TRUE,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(randomised_svd, "B1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  if (length(get_hvg(object)) == 0) {
+    warning(paste(
+      "No HVGs identified in this object. Did you run find_hvg()?",
+      "Returning object as is."
+    ))
+    return(object)
+  }
+
+  c(pca_factors, pca_loadings) %<-%
+    rs_sc_pca(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      no_pcs = no_pcs,
+      random_svd = randomised_svd,
+      cell_indices = get_cells_to_keep(object),
+      gene_indices = get_hvg(object),
+      seed = seed,
+      verbose = .verbose
+    )
+
+  object <- set_pca_factors(object, pca_factors)
+  object <- set_pca_loadings(object, pca_loadings)
+
+  return(object)
+}
+
+### knn ------------------------------------------------------------------------
+
+#' Find the neighbours for single cell.
+#'
+#' @description
+#' This function will generate the kNNs based on a given embedding (atm,
+#' only option is PCA). Two different algorithms are implemented with different
+#' speed and accuracy to approximate the nearest neighbours. `"annoy"` is more
+#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm,
+#' whereas `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
+#' search that is slower, but more precise. Subsequently, the kNN data will
+#' be used to generate an sNN igraph for clustering methods.
+#'
+#' @param object `single_cell_exp` class.
+#' @param embd_to_use String. The embedding to use. Atm, the only option is
+#' `"pca"`.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
+#' A list with the following items:
+#' \itemize{
+#'   \item k - Integer. Number of neighbours to identify.
+#'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
+#'   The higher, the longer the algorithm takes, but the more precise the
+#'   approximated nearest neighbours.
+#'   \item search_budget - Integer. Search budget per tree for the `annoy`
+#'   algorithm. The higher, the longer the algorithm takes, but the more precise
+#'   the approximated nearest neighbours.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`.
+#'   \item full_snn - Boolean. Shall the sNN graph be generated across all
+#'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
+#'   \item pruning - Value below which the weight in the sNN graph is set to 0.
+#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
+#'   the weight is calculated. For details, please see
+#'   [bixverse::params_sc_neighbours()].
+#' }
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return The object with added KNN matrix.
+#'
+#' @export
+find_neigbours_single_cell <- S7::new_generic(
+  name = "generate_knn_single_cell",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    no_embd_to_use = NULL,
+    neighbours_params = params_sc_neighbours(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_neigbours_single_cell single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
+  object,
+  embd_to_use = "pca",
+  no_embd_to_use = NULL,
+  neighbours_params = params_sc_neighbours(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertChoice(embd_to_use, c("pca"))
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  assertScNeighbours(neighbours_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the embedding
+  embd <- switch(embd_to_use, pca = get_pca_factors(object))
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  if (.verbose) {
+    message(sprintf(
+      "Generating kNN data with %s method.",
+      neighbours_params$knn_algorithm
+    ))
+  }
+
+  knn_data <- with(
+    neighbours_params,
+    rs_sc_knn(
+      embd = embd,
+      no_neighbours = k,
+      seed = seed,
+      n_trees = n_trees,
+      search_budget = search_budget,
+      verbose = .verbose,
+      algorithm_type = knn_algorithm
+    )
+  )
+
+  object <- set_knn(object, knn_data)
+
+  if (.verbose) {
+    message(sprintf(
+      "Generating sNN graph (full: %s).",
+      neighbours_params$full_snn
+    ))
+  }
+
+  snn_graph_rs <- with(
+    neighbours_params,
+    rs_sc_snn(
+      knn_data,
+      snn_method = snn_similarity,
+      pruning = pruning,
+      limited_graph = !full_snn
+    )
+  )
+
+  snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
+  igraph::E(snn_g)$weight <- snn_graph_rs$weights
+
+  object <- set_snn_graph(object, snn_graph = snn_g)
+
+  return(object)
+}

@@ -7,7 +7,7 @@
 get_cells_to_keep(x)
 }
 \arguments{
-\item{x}{An object to get the gene index for.}
+\item{x}{An object to get the gene index from.}
 }
 \description{
 Get the cells to keep

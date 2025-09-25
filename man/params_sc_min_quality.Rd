@@ -2,7 +2,7 @@
 % Please edit documentation in R/param_wrappers.R
 \name{params_sc_min_quality}
 \alias{params_sc_min_quality}
-\title{Wrapper function to generate minimum quality metrics for single cell}
+\title{Wrapper function to generate QC metric params for single cell}
 \usage{
 params_sc_min_quality(
   min_unique_genes = 100L,
@@ -28,5 +28,5 @@ to \code{1e5}.}
 A list with the minimum quality parameters + target size.
 }
 \description{
-Wrapper function to generate minimum quality metrics for single cell
+Wrapper function to generate QC metric params for single cell
 }

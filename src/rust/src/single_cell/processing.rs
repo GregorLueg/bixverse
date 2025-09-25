@@ -1,7 +1,7 @@
 use extendr_api::*;
 use faer::Mat;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::core::base::loess::*;
@@ -362,6 +362,7 @@ pub fn get_hvg_vst(
 pub fn get_hvg_dispersion() -> HvgRes {
     todo!("Dispersion method not yet implemented");
 
+    #[allow(unreachable_code)]
     HvgRes {
         mean: Vec::new(),
         var: Vec::new(),
@@ -374,6 +375,7 @@ pub fn get_hvg_dispersion() -> HvgRes {
 pub fn get_hvg_mvb() -> HvgRes {
     todo!("MeanVarianceBin method not yet implemented");
 
+    #[allow(unreachable_code)]
     HvgRes {
         mean: Vec::new(),
         var: Vec::new(),
@@ -400,14 +402,27 @@ pub fn get_hvg_mvb() -> HvgRes {
 fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let mut dense_data = vec![0.0f32; no_cells];
 
+    // need to do some additional manipulations here, as I remove cells
+    // in the step before...
+    let mut unique_rows: Vec<u32> = chunk.row_indices.to_vec();
+    unique_rows.sort();
+    unique_rows.dedup();
+
+    let row_map: FxHashMap<u32, usize> = unique_rows
+        .into_iter()
+        .enumerate()
+        .map(|(pos, row_idx)| (row_idx, pos))
+        .collect();
+
     for (idx, &row_idx) in chunk.row_indices.iter().enumerate() {
-        dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
+        if let Some(&mapped_pos) = row_map.get(&row_idx) {
+            dense_data[mapped_pos] = chunk.data_norm[idx].to_f32();
+        }
     }
 
     let mean = dense_data.iter().sum::<f32>() / no_cells as f32;
     let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
     let std_dev = variance.sqrt();
-
     dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
 }
 
@@ -415,7 +430,16 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
 ///
 /// ### Params
 ///
-/// ### Fields
+/// * `f_path` - Path to the gene-based binary file.
+/// * `cell_indices` - HashSet with the cell indices to keep.
+/// * `no_pcs` - Number of principal components to calculate
+/// * `random_svd` - Shall randomised singular value decompostion be used. This
+///   has the advantage of speed-ups, but loses precision.
+/// * `seed` - Seed for randomised SVD.
+///
+/// ### Return
+///
+/// A tuple of the samples projected on the PC space and gene loadings
 pub fn pca_on_sc(
     f_path: &str,
     cell_indices: &FxHashSet<u32>,

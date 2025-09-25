@@ -1,5 +1,7 @@
 # s3 ---------------------------------------------------------------------------
 
+## mapping class ---------------------------------------------------------------
+
 #' Helper function to construct relevant maps
 #'
 #' @description
@@ -9,7 +11,7 @@
 #' @return Generates an empty version of the `sc_mapper` class.
 #'
 #' @export
-new_sc_mapping <- function() {
+new_sc_mapper <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
     cell_mapping = NULL,
@@ -22,9 +24,36 @@ new_sc_mapping <- function() {
   return(sc_mapper)
 }
 
+## cache class -----------------------------------------------------------------
+
+#' Helper function to hold relevant cached data
+#'
+#' @description
+#' Helper class that contains various data that is held in memory and not on
+#' disk.
+#'
+#' @return Generates an empty version of the `sc_cache` class.
+#'
+#' @export
+new_sc_cache <- function() {
+  sc_cache <- list(
+    pca_factors = NULL,
+    pca_loadings = NULL,
+    other_embeddings = list(),
+    knn_matrix = NULL,
+    snn_graph = NULL
+  )
+
+  class(sc_cache) <- "sc_cache"
+
+  return(sc_cache)
+}
+
 ## setters ---------------------------------------------------------------------
 
 ### generics -------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Set gene mapping for sc_mapper object
 #'
@@ -68,7 +97,51 @@ set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Set/add PCA factors
+#'
+#' @param x An object to add the PCA factors for.
+#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#'
+#' @export
+set_pca_factors <- function(x, pca_factor) {
+  UseMethod("set_pca_factors")
+}
+
+#' Set/add PCA loadings
+#'
+#' @param x An object to add the PCA loadings for.
+#' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
+#'
+#' @export
+set_pca_loadings <- function(x, pca_loading) {
+  UseMethod("set_pca_loadings")
+}
+
+#' Set/add KNN
+#'
+#' @param x An object to add the KNN data to
+#' @param knn_mat Numerical matrix. The matrix with the KNN data
+#'
+#' @export
+set_knn <- function(x, knn_matrix) {
+  UseMethod("set_knn")
+}
+
+#' Set/add KNN
+#'
+#' @param x An object to add the KNN data to
+#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#'
+#' @export
+set_snn_graph <- function(x, snn_graph) {
+  UseMethod("set_snn_graph")
+}
+
 ### methods --------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Set gene mapping method for sc_mapper
 #'
@@ -160,13 +233,89 @@ set_hvg.sc_mapper <- function(x, hvg) {
   return(x)
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Set PCA factors for sc_cache
+#'
+#' @param x An `sc_cache` object
+#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_cache` object with added PCA factors.
+#'
+#' @export
+set_pca_factors.sc_cache <- function(x, pca_factor) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(pca_factor, mode = "numeric")
+
+  x[["pca_factors"]] <- pca_factor
+
+  return(x)
+}
+
+#' Set PCA loadings for sc_mapper
+#'
+#' @param x An `sc_cache` object
+#' @param pca_loading Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_cache` object with added PCA loadings.
+#'
+#' @export
+set_pca_loadings.sc_cache <- function(x, pca_loading) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(pca_loading, mode = "numeric")
+
+  x[["pca_loadings"]] <- pca_loading
+
+  return(x)
+}
+
+#' Set KNN for sc_mapper
+#'
+#' @param x An `sc_cache` object
+#' @param knn_mat Numerical matrix. The matrix with the PCA factors.
+#'
+#' @return Updated `sc_cache` object with added PCA loadings.
+#'
+#' @export
+set_knn.sc_cache <- function(x, knn_mat) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(knn_mat, mode = "numeric")
+
+  x[["knn_matrix"]] <- knn_mat
+
+  return(x)
+}
+
+#' Set the sNN graph for sc_mapper
+#'
+#' @param x An `sc_cache` object
+#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#'
+#' @return Updated `sc_cache` object with added PCA loadings.
+#'
+#' @export
+set_snn_graph.sc_cache <- function(x, snn_graph) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(snn_graph, "igraph")
+
+  x[["snn_graph"]] <- snn_graph
+
+  return(x)
+}
+
 ## getters ---------------------------------------------------------------------
 
 ### generics -------------------------------------------------------------------
 
+#### sc_mapper -----------------------------------------------------------------
+
 #' Get the gene names
 #'
-#' @param x An object to get the gene names for
+#' @param x An object to get the gene names from.
 #'
 #' @export
 get_gene_names <- function(x) {
@@ -175,7 +324,7 @@ get_gene_names <- function(x) {
 
 #' Get the cell names
 #'
-#' @param x An object to get the cell names for
+#' @param x An object to get the cell names from.
 #'
 #' @export
 get_cell_names <- function(x) {
@@ -184,7 +333,7 @@ get_cell_names <- function(x) {
 
 #' Get the index position for a gene
 #'
-#' @param x An object to get the gene index for.
+#' @param x An object to get the gene index from.
 #' @param gene_ids String vector. The gene ids to search for.
 #' @param rust_index Bool. Shall rust-based indexing be returned.
 get_gene_indices <- function(x, gene_ids, rust_index) {
@@ -193,19 +342,51 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 
 #' Get the cells to keep
 #'
-#' @param x An object to get the gene index for.
+#' @param x An object to get the gene index from.
 get_cells_to_keep <- function(x) {
   UseMethod("get_cells_to_keep")
 }
 
 #' Get the HVG
 #'
-#' @param x An object to get HVG for.
+#' @param x An object to get HVG from.
 get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Get the PCA factors
+#'
+#' @param x An object to get PCA factors from.
+get_pca_factors <- function(x) {
+  UseMethod("get_pca_factors")
+}
+
+#' Get the PCA loadings
+#'
+#' @param x An object to get PCA loadings from.
+get_pca_loadings <- function(x) {
+  UseMethod("get_pca_loadings")
+}
+
+#' Get the KNN matrix
+#'
+#' @param x An object to get the kNN matrix from.
+get_knn_mat <- function(x) {
+  UseMethod("get_knn_mat")
+}
+
+#' Get the sNN graph
+#'
+#' @param x An object to get the sNN graph from.
+get_snn_graph <- function(x) {
+  UseMethod("get_snn_graph")
+}
+
 ### methods --------------------------------------------------------------------
+
+#### sc_mapper -----------------------------------------------------------------
 
 #' Get the gene names
 #'
@@ -287,6 +468,64 @@ get_hvg.sc_mapper <- function(x) {
   return(as.integer(x[["hvg_gene_indices"]]))
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' Get the PCA factors
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The PCA factor matrix.
+#'
+#' @export
+get_pca_factors.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["pca_factors"]])
+}
+
+#' Get the PCA loadings
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The PCA loading matrix.
+#'
+#' @export
+get_pca_loadings.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["pca_loadings"]])
+}
+
+#' Get the KNN matrix
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The KNN matrix (0-indexed).
+#'
+#' @export
+get_knn_mat.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["knn_matrix"]])
+}
+
+#' Get the sNN graph
+#'
+#' @param x An `sc_cache` object
+#'
+#' @return The sNN igraph.
+#'
+#' @export
+get_snn_graph.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  return(x[["snn_graph"]])
+}
+
 # s7 ---------------------------------------------------------------------------
 
 ## single cell class -----------------------------------------------------------
@@ -312,7 +551,7 @@ get_hvg.sc_mapper <- function(x) {
 #'   to Rust functions that can work on the counts more specifically.}
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
-#'   \item{cache}{List with cached data. Future feature, nothing implemented
+#'   \item{sc_cache}{List with cached data. Future feature, nothing implemented
 #'   yet.}
 #'   \item{dims}{Dimensions of the original data.}
 #'   \item{index_maps}{A list of two named numerics that contains cell id to
@@ -328,9 +567,9 @@ single_cell_exp <- S7::new_class(
     db_connection = S7::class_any,
     count_connection = S7::class_any,
     dir_data = S7::class_character,
-    cache = S7::class_list,
-    dims = S7::class_integer,
-    sc_map = S7::class_any
+    sc_cache = S7::class_any,
+    sc_map = S7::class_any,
+    dims = S7::class_integer
   ),
   constructor = function(dir_data) {
     nightly_feature()
@@ -353,13 +592,12 @@ single_cell_exp <- S7::new_class(
       db_connection = db_connection,
       count_connection = count_connection,
       dir_data = dir_data,
-      cache = list(),
-      dims = c(0L, 0L),
-      sc_map = new_sc_mapping()
+      sc_cache = new_sc_cache(),
+      sc_map = new_sc_mapper(),
+      dims = c(0L, 0L)
     )
   }
 )
-
 
 ### getters --------------------------------------------------------------------
 
@@ -991,6 +1229,84 @@ S7::method(get_hvg, single_cell_exp) <- function(
   return(res)
 }
 
+#### sc_cache ------------------------------------------------------------------
+
+#' @name get_pca_factors.single_cell_exp
+#'
+#' @title Get the PCA factors from `single_cell_exp`
+#'
+#' @method get_pca_factors single_cell_exp
+S7::method(get_pca_factors, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_factors(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_pca_loadings.single_cell_exp
+#'
+#' @title Get the PCA loadings from `single_cell_exp`
+#'
+#' @method get_pca_loadings single_cell_exp
+S7::method(get_pca_loadings, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_loadings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_mat.single_cell_exp
+#'
+#' @title Get the KNN matrix from `single_cell_exp`
+#'
+#' @method get_knn_mat single_cell_exp
+S7::method(get_knn_mat, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_knn_mat(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_snn_graph.single_cell_exp
+#'
+#' @title Get the sNN graph from `single_cell_exp`
+#'
+#' @method get_snn_graph single_cell_exp
+S7::method(get_snn_graph, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_snn_graph(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
@@ -1195,6 +1511,97 @@ S7::method(set_hvg, single_cell_exp) <- function(
   S7::prop(x, "sc_map") <- set_hvg(
     x = S7::prop(x, "sc_map"),
     hvg = hvg
+  )
+
+  return(x)
+}
+
+#### sc cache ------------------------------------------------------------------
+
+#' @name set_pca_factors.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_pca_factors single_cell_exp
+S7::method(set_pca_factors, single_cell_exp) <- function(
+  x,
+  pca_factor
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(pca_factor, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_pca_factors(
+    x = S7::prop(x, "sc_cache"),
+    pca_factor = pca_factor
+  )
+
+  return(x)
+}
+
+#' @name set_pca_loadings.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_pca_loadings single_cell_exp
+S7::method(set_pca_loadings, single_cell_exp) <- function(
+  x,
+  pca_loading
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(pca_loading, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_pca_loadings(
+    x = S7::prop(x, "sc_cache"),
+    pca_loading = pca_loading
+  )
+
+  return(x)
+}
+
+#' @name set_knn.single_cell_exp
+#'
+#' @title Set PCA factors method for `single_cell_exp`
+#'
+#' @method set_knn single_cell_exp
+S7::method(set_knn, single_cell_exp) <- function(
+  x,
+  knn_mat
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(knn_mat, mode = "numeric")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_knn(
+    x = S7::prop(x, "sc_cache"),
+    knn_mat = knn_mat
+  )
+
+  return(x)
+}
+
+
+#' @name set_snn_graph.single_cell_exp
+#'
+#' @title Set SNN graph method for `single_cell_exp`
+#'
+#' @method set_snn_graph single_cell_exp
+S7::method(set_snn_graph, single_cell_exp) <- function(
+  x,
+  snn_graph
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(snn_graph, "igraph")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_snn_graph(
+    x = S7::prop(x, "sc_cache"),
+    snn_graph = snn_graph
   )
 
   return(x)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/param_wrappers.R
 \name{params_sc_hvg}
 \alias{params_sc_hvg}
-\title{Wrapper function to identify highly variable genes in single cell}
+\title{Wrapper function for HVG detection parameters.}
 \usage{
 params_sc_hvg(
   method = "vst",
@@ -25,5 +25,5 @@ used to standardise the variance for \code{method = "vst"}.}
 A list with the HVG parameters
 }
 \description{
-Wrapper function to identify highly variable genes in single cell
+Wrapper function for HVG detection parameters.
 }

@@ -7,7 +7,7 @@
 get_hvg(x)
 }
 \arguments{
-\item{x}{An object to get HVG for.}
+\item{x}{An object to get HVG from.}
 }
 \description{
 Get the HVG

@@ -16,7 +16,7 @@ use rustc_hash::FxHashMap;
 /// ### Returns
 ///
 /// Intersection between the two sorted slices.
-fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
+pub fn intersection_size_sorted(a: &[usize], b: &[usize]) -> usize {
     let mut count = 0;
     let mut i = 0;
     let mut j = 0;

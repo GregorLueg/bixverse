@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Result as IoResult, Seek};
 use std::path::Path;
+use std::time::Instant;
 
 use crate::core::data::sparse_io::*;
 use crate::single_cell::processing::*;
@@ -139,8 +140,10 @@ impl MtxReader {
         Self::skip_header(&mut self.reader)?;
 
         if verbose {
-            println!("First file pass - getting gene statistics");
+            println!("First file pass - getting gene statistics:");
         }
+
+        let first_scan_time = Instant::now();
 
         // Pass 1: Gene statistics only
         while {
@@ -170,9 +173,14 @@ impl MtxReader {
             .filter(|&i| gene_cell_count[i] as usize >= self.qc_params.min_cells)
             .collect();
 
+        let first_scan_end = first_scan_time.elapsed();
+
         if verbose {
+            println!("First file scan done: {:.2?}", first_scan_end);
             println!("Second file pass - getting cell statistics");
         }
+
+        let second_scan_time = Instant::now();
 
         // Pass 2: Cell statistics with filtered genes
         let mut cell_gene_count = vec![0u32; self.header.total_cells];
@@ -218,7 +226,10 @@ impl MtxReader {
         let mut quality = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
         quality.generate_maps_sets();
 
+        let second_scan_end = second_scan_time.elapsed();
+
         if verbose {
+            println!("Second file scan done: {:.2?}", second_scan_end);
             println!(
                 "Genes passing QC: {}/{}",
                 quality.genes_to_keep.len(),
@@ -309,10 +320,12 @@ impl MtxReader {
         let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());
         let mut nnz = Vec::with_capacity(quality.cells_to_keep.len());
 
-        for (cell_idx, data) in cell_data.iter().enumerate() {
+        for (cell_idx, data) in cell_data.iter_mut().enumerate() {
             if data.is_empty() {
                 continue;
             }
+
+            data.sort_by_key(|(gene_idx, _)| *gene_idx);
 
             let gene_indices: Vec<u16> = data.iter().map(|(g, _)| *g).collect();
             let gene_counts: Vec<u16> = data.iter().map(|(_, c)| *c).collect();

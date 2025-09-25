@@ -1,9 +1,11 @@
 use extendr_api::prelude::*;
 use faer::Mat;
 use rustc_hash::FxHashSet;
+use std::time::Instant;
 
 use crate::single_cell::processing::*;
-use crate::utils::r_rust_interface::faer_to_r_matrix;
+use crate::single_cell::sc_knn_snn::*;
+use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 
 //////////////////////////
 // Gene set proportions //
@@ -145,6 +147,28 @@ fn rs_sc_hvg(
 // PCA //
 /////////
 
+/// Calculates PCA for single cell
+///
+/// @description
+/// Helper function that will calculate the PCA for the specified highly
+/// variable genes. Has the option to use randomised SVD for faster solving
+/// of the PCA.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param no_pcs Integer. Number of PCs to calculate.
+/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!)
+/// @param seed Integer. Random seed for the randomised SVD.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @returns A list with with the following items
+/// \itemize{
+///   \item scores - The samples projected on the PCA space.
+///   \item loadings - The loadings of the features for the PCA.
+/// }
+///
+/// @export
 #[extendr]
 fn rs_sc_pca(
     f_path_gene: &str,
@@ -183,9 +207,129 @@ fn rs_sc_pca(
     )
 }
 
+///////////////
+// kNN / sNN //
+///////////////
+
+/// Generates the kNN graph
+///
+/// @description
+/// This function is a wrapper over the Rust-based generation of the approximate
+/// nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
+/// `"hnsw"`.
+///
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// kNN graph.
+/// @param no_neighbours Integer. Number of neighbours to return
+/// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
+/// @param search_budget Integer. Search budget per tree for the `"annoy"`
+/// algorithm.
+/// @param verbose Boolean. Controls verbosity of the function and returns
+/// how long certain operations took.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return A integer matrix of N x k with N being the number of cells and k the
+/// number of neighbours.
+///
+/// @export
+#[extendr]
+fn rs_sc_knn(
+    embd: RMatrix<f64>,
+    no_neighbours: usize,
+    n_trees: usize,
+    search_budget: usize,
+    algorithm_type: String,
+    verbose: bool,
+    seed: usize,
+) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+
+    let start_knn = Instant::now();
+
+    let knn_method = get_knn_method(&algorithm_type)
+        .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
+
+    let knn = match knn_method {
+        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed),
+        KnnSearch::Annoy => {
+            generate_knn_annoy(embd.as_ref(), no_neighbours, n_trees, search_budget, seed)
+        }
+    };
+
+    let end_knn = start_knn.elapsed();
+
+    if verbose {
+        println!("KNN generation : {:.2?}", end_knn);
+    }
+
+    let index_mat = Mat::from_fn(embd.nrows(), no_neighbours, |i, j| knn[i][j] as i32);
+
+    Ok(faer_to_r_matrix(index_mat.as_ref()))
+}
+
+/// Generates the sNN graph for igraph
+///
+/// @description
+/// This function takes a kNN matrix and generates the inputs for an SNN
+/// graph based on it.
+///
+/// @param knn_mat Integer matrix. Rows represent cells and the columns
+/// represent the neighbours.
+/// @param snn_method String. Which method to use to calculate the similarity.
+/// Choice of `c("jaccard", "rank")`.
+/// @param pruning Float. Below which value for the Jaccard similarity to prune
+/// the weight to 0.
+///
+/// @return A integer matrix of N x k with N being the number of cells and k the
+/// number of neighbours.
+///
+/// @export
+#[extendr]
+fn rs_sc_snn(
+    knn_mat: RMatrix<i32>,
+    snn_method: String,
+    limited_graph: bool,
+    pruning: f64,
+) -> extendr_api::Result<List> {
+    let n_neighbours = knn_mat.ncols();
+    let data = knn_mat
+        .data()
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
+
+    let snn_method = get_snn_similiarity_method(&snn_method)
+        .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
+
+    let snn_data = if limited_graph {
+        generate_snn_limited(
+            &data,
+            n_neighbours,
+            knn_mat.nrows(),
+            pruning as f32,
+            snn_method,
+        )
+    } else {
+        generate_snn_full(
+            &data,
+            n_neighbours,
+            knn_mat.nrows(),
+            pruning as f32,
+            snn_method,
+        )
+    };
+
+    Ok(list!(
+        edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
+        weights = snn_data.1
+    ))
+}
+
 extendr_module! {
     mod r_preprocessing;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_pca;
+    fn rs_sc_knn;
+    fn rs_sc_snn;
 }

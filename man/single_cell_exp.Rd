@@ -30,7 +30,7 @@ wrappers to interact with the table-like data for this experiment.}
 to Rust functions that can work on the counts more specifically.}
 \item{dir_data}{Path to the directory in which the data will be saved on
 disk.}
-\item{cache}{List with cached data. Future feature, nothing implemented
+\item{sc_cache}{List with cached data. Future feature, nothing implemented
 yet.}
 \item{dims}{Dimensions of the original data.}
 \item{index_maps}{A list of two named numerics that contains cell id to

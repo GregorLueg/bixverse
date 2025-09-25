@@ -127,6 +127,7 @@ G_list <- getBM(
   values = var$gene_id,
   mart = mart
 )
+setDT(G_list)
 
 mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
 rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
@@ -138,74 +139,46 @@ gs_of_interest <- list(
 
 bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
-devtools::load_all()
-
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.05, cell_id]
 
 bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
 
-list.files(bixverse_sc@dir_data)
+length(get_cells_to_keep(bixverse_sc))
+
+bixverse_sc <- find_hvg(object = bixverse_sc)
 
 rextendr::document()
 
-
-tictoc::tic()
-res <- rs_sc_hvg(
-  f_path_gene = file.path(bixverse_sc@dir_data, "counts_genes.bin"),
-  hvg_method = "vst",
-  cell_indices = as.integer(bixverse_sc@sc_map$cells_to_keep_idx),
-  loess_span = 0.3,
-  clip_max = NULL,
+pc_results_randomised <- rs_sc_pca(
+  f_path_gene = get_rust_count_gene_f_path(bixverse_sc),
+  no_pcs = 30L,
+  random_svd = TRUE,
+  cell_indices = get_cells_to_keep(bixverse_sc),
+  gene_indices = get_hvg(bixverse_sc),
+  seed = 42L,
   verbose = TRUE
 )
-tictoc::toc()
 
+dim(pc_results_randomised$scores)
 
 # mtx file ---------------------------------------------------------------------
 
-rextendr::document()
-
-dir <- tempdir()
-f_path_cells <- file.path(dir, "cells.bin")
-f_path_genes <- file.path(dir, "genes.bin")
-
-single_cell_counts <- SingeCellCountData$new(
-  f_path_cells = f_path_cells,
-  f_path_genes = f_path_genes
-)
-
-mtx_path <- path.expand("~/Downloads/ex053/DGE.mtx")
-
-res <- single_cell_counts$mtx_to_file(
-  mtx_path = mtx_path,
-  qc_params = params_sc_min_quality()
-)
-
-genes_to_keep = single_cell_counts$generate_gene_based_data(
-  qc_params = params_sc_min_quality(),
-  verbose = TRUE
-)
-tictoc::toc()
-
-count_data <- single_cell_counts$get_cells_by_indices(1:10, assay = "norm")
-
-count_data
-
-max(count_data$indices)
-
-length(genes_to_keep$gene_mask)
-
-table(genes_to_keep$gene_mask)
-
-
-single_cell_counts$get_shape()
-
-single_cell_counts$get_genes_by_indices(indices = 1:10, assay = "norm")
+## demo ------------------------------------------------------------------------
 
 rextendr::document()
-devtools::load_all()
 
+# generate the object
 object = single_cell_exp(dir_data = tempdir())
+
+# load in the mtx file
+
+# several things are happening here...
+# 1.) we scan which genes to include
+# 2.) we scan which cells to include
+# 3.) we load in the data and save to a binarised CSR file and generate at the
+# same time the normalised counts
+# 4.) we take the raw counts and normalised counts from the cells and save
+# them additionally in a CSC format again to disk.
 
 tictoc::tic()
 object = load_mtx(
@@ -221,8 +194,38 @@ object = load_mtx(
 )
 tictoc::toc()
 
-library(biomaRt)
+# show size of the object
+pryr::object_size(object)
 
+# get obs table
+object[[]]
+
+# get specific columns obs table
+object[[c("cell_idx", "cell_id")]]
+
+# subset rows
+object[[1:1500]]
+
+# get vars
+get_sc_var(object)
+
+# demo count retrieval
+
+# gene centric version
+tictoc::tic()
+counts_gene <- object[, 1:20L, assay = "norm", return_format = "gene"]
+tictoc::toc()
+
+class(counts_gene)
+
+tictoc::tic()
+counts_gene <- object[, 1:20L, assay = "norm", return_format = "cell"]
+tictoc::toc()
+
+class(counts_gene)
+
+# get gene set proportions
+library(biomaRt)
 mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
 G_list <- getBM(
@@ -247,96 +250,77 @@ object[[]]
 
 object <- set_cell_to_keep(object, get_cell_names(object))
 
-devtools::load_all()
-
-res <- rs_sc_hvg(
-  f_path_gene = file.path(object@dir_data, "counts_genes.bin"),
-  hvg_method = "vst",
-  cell_indices = get_cells_to_keep(object),
-  loess_span = 0.3,
-  clip_max = NULL,
-  verbose = TRUE
-)
-
-params_sc_hvg()
-
-devtools::load_all()
-devtools::document()
-
+# identify HVGs
 object <- find_hvg(object = object)
 
 get_hvg(object)
 
-rextendr::document()
+# run PCA
+object <- calculate_pca_single_cell(object, no_pcs = 30L)
 
-get_rust_count_gene_f_path(object)
+# demo difference PCA vs randomised SVD
 
-get_cells_to_keep(object)
+# pc_results <- rs_sc_pca(
+#   f_path_gene = get_rust_count_gene_f_path(object),
+#   no_pcs = 30L,
+#   random_svd = FALSE,
+#   cell_indices = get_cells_to_keep(object),
+#   gene_indices = get_hvg(object),
+#   seed = 42L,
+#   verbose = TRUE
+# )
 
-rextendr::document()
+# pc_results_randomised <- rs_sc_pca(
+#   f_path_gene = get_rust_count_gene_f_path(object),
+#   no_pcs = 30L,
+#   random_svd = TRUE,
+#   cell_indices = get_cells_to_keep(object),
+#   gene_indices = get_hvg(object),
+#   seed = 42L,
+#   verbose = TRUE
+# )
 
-print("Using standard SVD")
+# plot(
+#   pc_results_randomised$scores[, 1],
+#   pc_results$scores[, 1],
+#   xlab = "Randomised SVD",
+#   ylab = "SVD",
+#   main = "PC1"
+# )
 
-pc_results <- rs_sc_pca(
-  f_path_gene = get_rust_count_gene_f_path(object),
-  no_pcs = 30L,
-  random_svd = FALSE,
-  cell_indices = get_cells_to_keep(object),
-  gene_indices = get_hvg(object),
-  seed = 42L,
-  verbose = TRUE
+# plot(
+#   pc_results_randomised$scores[, 10],
+#   pc_results$scores[, 10],
+#   xlab = "Randomised SVD",
+#   ylab = "SVD",
+#   main = "PC10"
+# )
+
+# plot(
+#   pc_results_randomised$scores[, 25],
+#   pc_results$scores[, 25],
+#   xlab = "Randomised SVD",
+#   ylab = "SVD",
+#   main = "PC25"
+# )
+
+# diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
+
+get_pca_factors(object)[1:5, ]
+
+get_pca_loadings(object)[1:5, ]
+
+devtools::load_all()
+
+object <- find_neigbours_single_cell(
+  object,
+  no_embd_to_use = 50L
 )
 
-print("Using randomised SVD")
+get_snn_graph(object)
 
-pc_results_randomised <- rs_sc_pca(
-  f_path_gene = get_rust_count_gene_f_path(object),
-  no_pcs = 30L,
-  random_svd = TRUE,
-  cell_indices = get_cells_to_keep(object),
-  gene_indices = get_hvg(object),
-  seed = 42L,
-  verbose = TRUE
-)
+get_knn_mat(object)
 
-plot(
-  pc_results_randomised$scores[, 1],
-  pc_results$scores[, 1],
-  xlab = "Randomised SVD",
-  ylab = "SVD",
-  main = "PC1"
-)
-
-plot(
-  pc_results_randomised$scores[, 10],
-  pc_results$scores[, 10],
-  xlab = "Randomised SVD",
-  ylab = "SVD",
-  main = "PC10"
-)
-
-plot(
-  pc_results_randomised$scores[, 25],
-  pc_results$scores[, 25],
-  xlab = "Randomised SVD",
-  ylab = "SVD",
-  main = "PC25"
-)
-
-dim(pc_results_randomised$scores)
-dim(pc_results_randomised$loadings)
-
-diag(rs_cor2(pc_results_randomised$scores, pc_results$scores, spearman = FALSE))
-
-
-# data <- (idxptr, idx, val, val)
-
-# Seurat (EVERYTHING is double precision - f64)
-# raw counts -> (idxptr, idx, val)
-# norm counts -> (idxptr, idx, val)
-# SCT counts -> (idxptr, idx, val)
-# SCT data -> (idxptr, idx, val)
-# scaled data (dense) -> 2500 HVGs -> N x n_cells (dense!)
 
 # Rebuild of the h5ad parsing --------------------------------------------------
 

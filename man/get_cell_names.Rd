@@ -7,7 +7,7 @@
 get_cell_names(x)
 }
 \arguments{
-\item{x}{An object to get the cell names for}
+\item{x}{An object to get the cell names from.}
 }
 \description{
 Get the cell names

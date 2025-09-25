@@ -728,8 +728,93 @@ checkScHvg <- function(x) {
     return(
       sprintf(
         paste0(
-          "The following element `%s` in HVG params does not use one of the",
+          "The following element `%s` in HVG params is not one of the",
           "expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+### knn ------------------------------------------------------------------------
+
+#' Check neighbour generation parameters
+#'
+#' @description Checkmate extension for checking the neighbour generation
+#' parameters for single cell.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScNeighbours <- function(x) {
+  # Checkmate extension
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "n_trees",
+      "search_budget",
+      "knn_algorithm",
+      "full_snn",
+      "pruning"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  rules <- list(
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1",
+    "full_snn" = "B1",
+    "pruning" = "N1[0, 1]"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in single cell KNN generation is",
+          "incorrect: k, n_trees and search budged need to be integers.",
+          "full_snn needs to be boolean and pruning a number between 0 and 1."
+        ),
+        broken_elem
+      )
+    )
+  }
+  # test
+  test_choice_rules <- list(
+    knn_algorithm = c("annoy", "hnsw"),
+    snn_similarity = c("rank", "jaccard")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the KNN generation is not one of",
+          "the expected choices. Please double check the documentation."
         ),
         broken_elem
       )
@@ -957,3 +1042,20 @@ assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
+
+### knn ------------------------------------------------------------------------
+
+#' Assert neighbour generation parameters
+#'
+#' @description Checkmate extension for assert the neighbour generation
+#' parameters for single cell.
+#'
+#' @inheritParams checkScNeighbours
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
