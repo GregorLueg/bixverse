@@ -105,7 +105,14 @@ pub fn get_snn_similiarity_method(s: &str) -> Option<SnnSimilarityMethod> {
 /// ### Returns
 ///
 /// The k-nearest neighbours based on the HNSW algorithm
-pub fn generate_knn_hnsw(mat: MatRef<f32>, no_neighbours: usize, seed: usize) -> Vec<Vec<usize>> {
+pub fn generate_knn_hnsw(
+    mat: MatRef<f32>,
+    no_neighbours: usize,
+    seed: usize,
+    verbose: bool,
+) -> Vec<Vec<usize>> {
+    let start_index = Instant::now();
+
     let n_samples = mat.nrows();
     let points: Vec<Point> = (0..n_samples)
         .into_par_iter()
@@ -115,6 +122,14 @@ pub fn generate_knn_hnsw(mat: MatRef<f32>, no_neighbours: usize, seed: usize) ->
     let map = Builder::default()
         .seed(seed as u64)
         .build(points.clone(), (0..n_samples).collect::<Vec<_>>());
+
+    let end_index = start_index.elapsed();
+
+    if verbose {
+        println!("Generated HNSW index: {:.2?}", end_index);
+    }
+
+    let start_search = Instant::now();
 
     let res: Vec<Vec<usize>> = points
         .par_iter()
@@ -132,6 +147,15 @@ pub fn generate_knn_hnsw(mat: MatRef<f32>, no_neighbours: usize, seed: usize) ->
             nearest_neighbours
         })
         .collect();
+
+    let end_search = start_search.elapsed();
+
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via HNSW: {:.2?}",
+            end_search
+        );
+    }
 
     res
 }
@@ -159,6 +183,7 @@ pub fn generate_knn_annoy(
     n_trees: usize,
     search_budget: usize,
     seed: usize,
+    verbose: bool,
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
 
@@ -166,7 +191,11 @@ pub fn generate_knn_annoy(
 
     let end_index = start_index.elapsed();
 
-    println!("Alloy index generation : {:.2?}", end_index);
+    if verbose {
+        println!("Generated Annoy index: {:.2?}", end_index);
+    }
+
+    let start_search = Instant::now();
 
     let res: Vec<Vec<usize>> = (0..mat.nrows())
         .into_par_iter()
@@ -179,6 +208,15 @@ pub fn generate_knn_annoy(
             neighbors
         })
         .collect();
+
+    let end_search = start_search.elapsed();
+
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via Annoy: {:.2?}",
+            end_search
+        );
+    }
 
     res
 }
@@ -196,6 +234,7 @@ pub fn generate_knn_annoy(
 /// * `pruning` - Below which Jaccard similarity to prune the edge. In this case
 ///   the weight is set to `0`.
 /// * `method` - Which similarity method to use
+/// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
 ///
@@ -208,8 +247,11 @@ pub fn generate_snn_full(
     n_samples: usize,
     pruning: f32,
     method: SnnSimilarityMethod,
+    verbose: bool,
 ) -> (Vec<usize>, Vec<f32>) {
     let mut reverse_mappings: Vec<Vec<(usize, usize)>> = vec![Vec::new(); n_samples];
+
+    let start_time = Instant::now();
 
     for i in 0..n_samples {
         reverse_mappings[i].push((i, 0));
@@ -289,6 +331,12 @@ pub fn generate_snn_full(
         weights.push(weight);
     }
 
+    let end_snn = start_time.elapsed();
+
+    if verbose {
+        println!("Transformed kNN into a full sNN graph: {:.2?}", end_snn);
+    }
+
     (edges, weights)
 }
 
@@ -303,7 +351,8 @@ pub fn generate_snn_full(
 /// * `no_neighbours` - Number of neighbours in the kNN graph
 /// * `pruning` - Below which Jaccard similarity to prune the edge. In this case
 ///   the weight is set to `0`.
-/// * `method` - Which similarity method to use
+/// * `method` - Which similarity method to use.
+/// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
 ///
@@ -316,9 +365,12 @@ pub fn generate_snn_limited(
     n_samples: usize,
     pruning: f32,
     method: SnnSimilarityMethod,
+    verbose: bool,
 ) -> (Vec<usize>, Vec<f32>) {
     // We need to use a hashmap to store unique edges (smaller_idx, larger_idx)
     // -> weight
+    let start_time = Instant::now();
+
     let edge_map: FxHashMap<(usize, usize), f32> = (0..n_samples)
         .into_par_iter()
         .flat_map(|i| {
@@ -414,6 +466,12 @@ pub fn generate_snn_limited(
         weights.push(weight);
     }
 
+    let end_snn = start_time.elapsed();
+
+    if verbose {
+        println!("Transformed kNN into an sNN graph: {:.2?}", end_snn);
+    }
+
     (edges, weights)
 }
 
@@ -469,8 +527,8 @@ mod tests {
     #[test]
     fn test_no_self_neighbors() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
 
         for (i, neighbors) in hnsw_result.iter().enumerate() {
             assert!(
@@ -493,8 +551,8 @@ mod tests {
     fn test_neighbor_count() {
         let data = create_clustered_data();
         let k = 10;
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), k, 42);
-        let annoy_result = generate_knn_annoy(data.as_ref(), k, 100, 200, 42);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), k, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), k, 100, 200, 42, false);
 
         for neighbors in &hnsw_result {
             assert_eq!(neighbors.len(), k, "HNSW: Wrong number of neighbors");
@@ -508,8 +566,8 @@ mod tests {
     #[test]
     fn test_cluster_structure() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
 
         // Test that nodes in same cluster find each other
         // Node 0 (cluster 1) should have neighbors mostly in range [0, 49]
@@ -532,15 +590,15 @@ mod tests {
     fn test_deterministic_results() {
         let data = create_clustered_data();
 
-        let hnsw1 = generate_knn_hnsw(data.as_ref(), 5, 42);
-        let hnsw2 = generate_knn_hnsw(data.as_ref(), 5, 42);
+        let hnsw1 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
+        let hnsw2 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
         assert_eq!(
             hnsw1, hnsw2,
             "HNSW results should be deterministic with same seed"
         );
 
-        let annoy1 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42);
-        let annoy2 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42);
+        let annoy1 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
+        let annoy2 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
         assert_eq!(
             annoy1, annoy2,
             "Annoy results should be deterministic with same seed"
@@ -550,8 +608,8 @@ mod tests {
     #[test]
     fn test_algorithm_overlap() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 10, 42);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 10, 100, 200, 42);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), 10, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), 10, 100, 200, 42, false);
 
         let mut total_jaccard = 0.0;
         let mut valid_comparisons = 0;
@@ -578,8 +636,8 @@ mod tests {
     #[test]
     fn test_sorted_neighbors() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
 
         for neighbors in &hnsw_result {
             let mut sorted = neighbors.clone();

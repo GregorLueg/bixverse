@@ -276,7 +276,7 @@ sparse_list_to_mat <- function(ls) {
 
 #' Helper function to get the dimensions and compressed sparse format
 #'
-#' @param h5_path File path to the `.h5ad` file.
+#' @param f_path File path to the `.h5ad` file.
 #'
 #' @return A list with the following elements:
 #' \itemize{
@@ -284,13 +284,13 @@ sparse_list_to_mat <- function(ls) {
 #'   \item type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
 #'   genes).
 #' }
-get_h5ad_dimensions <- function(h5_path) {
+get_h5ad_dimensions <- function(f_path) {
   # checks
-  checkmate::assertFileExists(h5_path)
+  checkmate::assertFileExists(f_path)
 
   # function
   h5_content <- rhdf5::h5ls(
-    h5_path
+    f_path
   ) %>%
     data.table::setDT()
 
@@ -309,7 +309,7 @@ get_h5ad_dimensions <- function(h5_path) {
     as.numeric(dim)
   ]
 
-  cs_format <- ifelse(no_var == indptr, "CSC", "CSR")
+  cs_format <- ifelse(no_var + 1 == indptr, "CSR", "CSC")
 
   return(list(
     dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
@@ -462,7 +462,7 @@ nightly_feature <- function() {
   invisible()
 }
 
-## user options ----------------------------------------------------------------
+## user options --------------------q--------------------------------------------
 
 #' Helper function for user option selection
 #'

@@ -142,10 +142,24 @@ pub struct HvgRes {
 /// ### Returns
 ///
 /// A vector with the percentages of these genes over the total reads.
-pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<f32>> {
+pub fn get_gene_set_perc(
+    f_path: &str,
+    gene_indices: Vec<Vec<u16>>,
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_reading = Instant::now();
+
     let reader = ParallelSparseReader::new(f_path).unwrap();
 
     let cell_chunks = reader.get_all_cells();
+
+    let end_read = start_reading.elapsed();
+
+    if verbose {
+        println!("Load in data: {:.2?}", end_read);
+    }
+
+    let start_calculations = Instant::now();
 
     let mut results: Vec<Vec<f32>> = Vec::with_capacity(gene_indices.len());
 
@@ -169,6 +183,16 @@ pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<f
 
         results.push(percentage.clone());
     }
+
+    let end_calculations = start_calculations.elapsed();
+
+    if verbose {
+        println!(
+            "Finished the gene set proportion calculations: {:.2?}",
+            end_calculations
+        );
+    }
+
     results
 }
 

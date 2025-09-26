@@ -20,13 +20,18 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
 /// elements of the genes of interest.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
 /// in the cells.
 ///
 /// @export
 #[extendr]
-fn rs_sc_get_gene_set_perc(f_path_cell: &str, gene_set_idx: List) -> extendr_api::Result<List> {
+fn rs_sc_get_gene_set_perc(
+    f_path_cell: &str,
+    gene_set_idx: List,
+    verbose: bool,
+) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
 
     for i in 0..gene_set_idx.len() {
@@ -40,7 +45,7 @@ fn rs_sc_get_gene_set_perc(f_path_cell: &str, gene_set_idx: List) -> extendr_api
         gene_set_indices.push(indices_i);
     }
 
-    let res = get_gene_set_perc(f_path_cell, gene_set_indices);
+    let res = get_gene_set_perc(f_path_cell, gene_set_indices, verbose);
 
     let mut result_list = List::new(gene_set_idx.len());
     if let Some(names) = gene_set_idx.names() {
@@ -250,16 +255,21 @@ fn rs_sc_knn(
         .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
 
     let knn = match knn_method {
-        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed),
-        KnnSearch::Annoy => {
-            generate_knn_annoy(embd.as_ref(), no_neighbours, n_trees, search_budget, seed)
-        }
+        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed, verbose),
+        KnnSearch::Annoy => generate_knn_annoy(
+            embd.as_ref(),
+            no_neighbours,
+            n_trees,
+            search_budget,
+            seed,
+            verbose,
+        ),
     };
 
     let end_knn = start_knn.elapsed();
 
     if verbose {
-        println!("KNN generation : {:.2?}", end_knn);
+        println!("KNN generation done : {:.2?}", end_knn);
     }
 
     let index_mat = Mat::from_fn(embd.nrows(), no_neighbours, |i, j| knn[i][j] as i32);
@@ -279,6 +289,7 @@ fn rs_sc_knn(
 /// Choice of `c("jaccard", "rank")`.
 /// @param pruning Float. Below which value for the Jaccard similarity to prune
 /// the weight to 0.
+/// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A integer matrix of N x k with N being the number of cells and k the
 /// number of neighbours.
@@ -290,6 +301,7 @@ fn rs_sc_snn(
     snn_method: String,
     limited_graph: bool,
     pruning: f64,
+    verbose: bool,
 ) -> extendr_api::Result<List> {
     let n_neighbours = knn_mat.ncols();
     let data = knn_mat
@@ -308,6 +320,7 @@ fn rs_sc_snn(
             knn_mat.nrows(),
             pruning as f32,
             snn_method,
+            verbose,
         )
     } else {
         generate_snn_full(
@@ -316,6 +329,7 @@ fn rs_sc_snn(
             knn_mat.nrows(),
             pruning as f32,
             snn_method,
+            verbose,
         )
     };
 

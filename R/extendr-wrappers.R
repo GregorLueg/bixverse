@@ -663,7 +663,7 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
 #' @export
-rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality)
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
 #' Calculates the traditional GSEA enrichment score
 #'
@@ -1671,12 +1671,13 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' @param f_path_cell String. Path to the `counts_cells.bin` file.
 #' @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
 #' elements of the genes of interest.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the percentages of counts per gene set group detected
 #' in the cells.
 #'
 #' @export
-rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx)
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'
@@ -1766,12 +1767,13 @@ rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_typ
 #' Choice of `c("jaccard", "rank")`.
 #' @param pruning Float. Below which value for the Jaccard similarity to prune
 #' the weight to 0.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A integer matrix of N x k with N being the number of cells and k the
 #' number of neighbours.
 #'
 #' @export
-rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning)
+rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 
@@ -1790,6 +1792,8 @@ SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
 SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
+
+SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose))
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 

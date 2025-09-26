@@ -376,3 +376,144 @@ gene_map <- duckdb_con$get_var_index_map()
 S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
 object <- set_cell_mapping(x = object, cell_map = cell_map)
 object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+# test tahoe 100m h5ad ---------------------------------------------------------
+
+rextendr::document()
+
+devtools::load_all()
+
+tahoe_h5ad_f_path <- path.expand(
+  "~/Downloads/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
+)
+
+h5_meta <- get_h5ad_dimensions(tahoe_h5ad_f_path)
+
+
+object <- single_cell_exp(dir_data = tempdir())
+sc_qc_param = params_sc_min_quality()
+.verbose = TRUE
+
+rust_con <- get_sc_rust_ptr(object)
+
+tictoc::tic()
+file_res <- rust_con$h5_to_file(
+  cs_type = h5_meta$type,
+  h5_path = path.expand(tahoe_h5ad_f_path),
+  no_cells = h5_meta$dims["obs"],
+  no_genes = h5_meta$dims["var"],
+  qc_params = sc_qc_param,
+  verbose = .verbose
+)
+tictoc::toc()
+
+tictoc::tic()
+rust_con$generate_gene_based_data_streaming(
+  verbose = .verbose
+)
+tictoc::toc()
+
+devtools::load_all()
+
+bixverse_sc <- single_cell_exp(dir_data = tempdir())
+
+tictoc::tic()
+bixverse_sc <- load_h5ad(object = bixverse_sc, h5_path = tahoe_h5ad_f_path)
+tictoc::toc()
+
+obs <- get_sc_obs(bixverse_sc)
+var <- get_sc_var(bixverse_sc)
+
+library(biomaRt)
+mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+
+G_list <- getBM(
+  filters = "ensembl_gene_id",
+  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
+  values = get_gene_names(bixverse_sc),
+  mart = mart
+)
+setDT(G_list)
+
+mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
+
+gs_of_interest <- list(
+  "rb_perc" = rps_genes
+)
+
+bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
+
+bixverse_sc <- set_cell_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
+
+bixverse_sc <- find_hvg(object = bixverse_sc)
+
+bixverse_sc <- calculate_pca_single_cell(bixverse_sc, no_pcs = 30L)
+
+tictoc::tic()
+bixverse_sc <- find_neigbours_single_cell(
+  bixverse_sc,
+  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw")
+)
+tictoc::toc()
+
+pryr::object_size(bixverse_sc)
+
+tictoc::tic()
+test_count <- bixverse_sc[1:100000L, , return_format = "cell", assay = "raw"]
+tictoc::toc()
+
+# debug function ---------------------------------------------------------------
+
+devtools::load_all()
+
+get_h5ad_dimensions(tahoe_h5ad_f_path)
+
+get_h5ad_dimensions(h5_path)
+
+rextendr::document()
+
+h5_content <- rhdf5::h5ls(
+  h5_path
+) %>%
+  data.table::setDT()
+
+no_obs <- h5_content[
+  group == "/obs" & otype == "H5I_DATASET"
+][1, as.numeric(dim)]
+
+
+no_var <- h5_content[
+  group == "/var" & otype == "H5I_DATASET"
+][1, as.numeric(dim)]
+
+indptr <- h5_content[
+  group == "/X" & name == "indptr",
+  as.numeric(dim)
+]
+
+cs_format <- ifelse(no_var + 1 == indptr, "CSR", "CSC")
+
+# version 2
+
+h5_content <- rhdf5::h5ls(
+  tahoe_h5ad_f_path
+) %>%
+  data.table::setDT()
+
+h5_path <- "~/Downloads/ERX11148735.h5ad"
+
+h5_content_2 <- rhdf5::h5ls(
+  h5_path
+) %>%
+  data.table::setDT()
+
+
+no_var <- h5_content[
+  group == "/var" & otype == "H5I_DATASET"
+][1, as.numeric(dim)]
+
+indptr <- h5_content[
+  group == "/X" & name == "indptr",
+  as.numeric(dim)
+]

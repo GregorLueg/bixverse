@@ -4,7 +4,7 @@
 \alias{rs_sc_snn}
 \title{Generates the sNN graph for igraph}
 \usage{
-rs_sc_snn(knn_mat, snn_method, limited_graph, pruning)
+rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 }
 \arguments{
 \item{knn_mat}{Integer matrix. Rows represent cells and the columns
@@ -15,6 +15,8 @@ Choice of \code{c("jaccard", "rank")}.}
 
 \item{pruning}{Float. Below which value for the Jaccard similarity to prune
 the weight to 0.}
+
+\item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 A integer matrix of N x k with N being the number of cells and k the

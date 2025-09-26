@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
@@ -624,6 +624,114 @@ impl SingeCellCountData {
         }
 
         writer.finalise().unwrap();
+    }
+
+    /// Generate gene-based data with streaming to reduce memory pressure
+    ///
+    /// This approach builds CSC format directly without creating intermediate
+    /// CSR structures. Ideal for very large data sets.
+    ///
+    /// ### Params
+    ///
+    /// * `batch_size` - Size of the batch to process in one go. The larger, the
+    ///   more memory pressure will occur.
+    /// * `verbose` - Controls verbosity of the function.
+    pub fn generate_gene_based_data_streaming(&mut self, batch_size: usize, verbose: bool) {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+        let header = reader.get_header();
+        let no_cells = header.total_cells;
+        let no_genes = header.total_genes;
+
+        if verbose {
+            println!("Streaming cell data to gene-friendly format with reduced memory usage.");
+        }
+
+        // Use HashMap to accumulate gene data - only keep current batch in memory
+        let mut gene_data_map: FxHashMap<u16, Vec<(u32, u16, F16)>> = FxHashMap::default();
+
+        // Process cells in batches to control memory usage
+        let total_batches = no_cells.div_ceil(batch_size);
+
+        let mut writer =
+            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+
+        for batch_idx in 0..total_batches {
+            let start_cell = batch_idx * batch_size;
+            let end_cell = std::cmp::min(start_cell + batch_size, no_cells);
+            let cell_indices: Vec<usize> = (start_cell..end_cell).collect();
+
+            if verbose {
+                let progress = (batch_idx + 1) as f32 / total_batches as f32 * 100.0;
+                if batch_idx % (total_batches / 10).max(1) == 0 || batch_idx == total_batches - 1 {
+                    println!(
+                        "Progress: {:.1}% ( {} / {} batches)",
+                        progress,
+                        batch_idx + 1,
+                        total_batches
+                    );
+                }
+            }
+
+            // Load current batch of cells
+            let cell_batch = reader.read_cells_parallel(&cell_indices);
+
+            // Distribute cell data to genes
+            for cell in cell_batch {
+                let cell_id = cell.original_index as u32;
+
+                for (idx, &gene_id) in cell.col_indices.iter().enumerate() {
+                    let raw_count = cell.data_raw[idx];
+                    let norm_count = cell.data_norm[idx];
+
+                    gene_data_map
+                        .entry(gene_id)
+                        .or_default()
+                        .push((cell_id, raw_count, norm_count));
+                }
+            }
+        }
+
+        if verbose {
+            println!("All cells processed, writing gene chunks to disk");
+        }
+
+        // Write gene data to disk
+        for gene_id in 0..no_genes {
+            let gene_id_u16 = gene_id as u16;
+
+            if let Some(mut gene_entries) = gene_data_map.remove(&gene_id_u16) {
+                // Sort by cell_id to maintain order
+                gene_entries.sort_by_key(|&(cell_id, _, _)| cell_id);
+
+                // Extract data for this gene
+                let data_raw: Vec<u16> = gene_entries.iter().map(|(_, raw, _)| *raw).collect();
+                let data_norm: Vec<F16> = gene_entries.iter().map(|(_, _, norm)| *norm).collect();
+                let row_indices: Vec<usize> = gene_entries
+                    .iter()
+                    .map(|(cell_id, _, _)| *cell_id as usize)
+                    .collect();
+
+                let chunk = CscGeneChunk::from_conversion(
+                    &data_raw,
+                    &data_norm,
+                    &row_indices,
+                    gene_id,
+                    true,
+                );
+
+                writer.write_gene_chunk(chunk).unwrap();
+            } else {
+                // Gene has no expression - write empty chunk
+                let chunk = CscGeneChunk::from_conversion(&[], &[], &[], gene_id, true);
+                writer.write_gene_chunk(chunk).unwrap();
+            }
+        }
+
+        writer.finalise().unwrap();
+
+        if verbose {
+            println!("Gene-based data generation completed");
+        }
     }
 
     /// Return genes by index positions

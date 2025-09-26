@@ -25,6 +25,10 @@
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return It will populate the files on disk and return the class with updated
@@ -38,6 +42,8 @@ load_h5ad <- S7::new_generic(
     object,
     h5_path,
     sc_qc_param = params_sc_min_quality(),
+    streaming = TRUE,
+    batch_size = 1000L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -54,16 +60,19 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
+  streaming = TRUE,
+  batch_size = 1000L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
-  checkmate::assertFileExists(h5_path)
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScMinQC(sc_qc_param)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
   # rust part
-  h5_meta <- get_h5ad_dimensions(h5_path)
+  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
 
   rust_con <- get_sc_rust_ptr(object)
 
@@ -76,16 +85,29 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     verbose = .verbose
   )
 
-  rust_con$generate_gene_based_data(
-    verbose = .verbose
-  )
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
 
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from h5ad into the DuckDB.")
+  }
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
     filter = as.integer(file_res$cell_indices + 1)
   )
+  if (.verbose) {
+    message("Loading variables data from h5ad into the DuckDB.")
+  }
   duckdb_con$populate_vars_from_h5(
     h5_path = h5_path,
     filter = as.integer(file_res$gene_indices + 1)
@@ -189,10 +211,16 @@ S7::method(load_mtx, single_cell_exp) <- function(
 
   # duckDB part
   duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from flat file into the DuckDB.")
+  }
   duckdb_con$populate_obs_from_plain_text(
     f_path = obs_path,
     filter = as.integer(file_res$cell_indices + 1)
   )
+  if (.verbose) {
+    message("Loading variable data from flat file into the DuckDB.")
+  }
   duckdb_con$populate_var_from_plain_text(
     f_path = var_path,
     filter = as.integer(file_res$gene_indices + 1)
@@ -231,6 +259,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
@@ -239,7 +268,8 @@ gene_set_proportions <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    gene_set_list
+    gene_set_list,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -253,7 +283,8 @@ gene_set_proportions <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 S7::method(gene_set_proportions, single_cell_exp) <- function(
   object,
-  gene_set_list
+  gene_set_list,
+  .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
@@ -265,10 +296,16 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 
   rs_results <- rs_sc_get_gene_set_perc(
     f_path_cell = get_rust_count_cell_f_path(object),
-    gene_set_idx = gene_set_list_tidy
+    gene_set_idx = gene_set_list_tidy,
+    verbose = .verbose
   )
 
-  object[[names(rs_results)]] <- rs_results
+  if (length(rs_results) == 1) {
+    # need to deal with the case of only one gene set here...
+    object[[names(rs_results)]] <- rs_results[[1]]
+  } else {
+    object[[names(rs_results)]] <- rs_results
+  }
 
   return(object)
 }
@@ -427,7 +464,7 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
   return(object)
 }
 
-### knn ------------------------------------------------------------------------
+### neighbours -----------------------------------------------------------------
 
 #' Find the neighbours for single cell.
 #'
@@ -455,7 +492,9 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #'   \item search_budget - Integer. Search budget per tree for the `annoy`
 #'   algorithm. The higher, the longer the algorithm takes, but the more precise
 #'   the approximated nearest neighbours.
-#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`. `"hnsw"` takes
+#'   longer, is more precise and more memory friendly. `"annoy"` is faster, less
+#'   precise and will take more memory.
 #'   \item full_snn - Boolean. Shall the sNN graph be generated across all
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
@@ -549,9 +588,14 @@ S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
       knn_data,
       snn_method = snn_similarity,
       pruning = pruning,
-      limited_graph = !full_snn
+      limited_graph = !full_snn,
+      verbose = .verbose
     )
   )
+
+  if (.verbose) {
+    message("Transforming sNN data to igraph.")
+  }
 
   snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
   igraph::E(snn_g)$weight <- snn_graph_rs$weights
@@ -560,3 +604,5 @@ S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
 
   return(object)
 }
+
+### clustering -----------------------------------------------------------------
