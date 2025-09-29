@@ -664,6 +664,29 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #' @export
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
+#' Load in h5ad data via Rust
+#'
+#' @description
+#' Loads in h5ad data within Rust and automatically converts the data into
+#' CSR with cells x genes.
+#'
+#' @param f_path File path. The path to the h5ad file.
+#' @param cs_type String. Is the data stored in CSC or CSR.
+#' @param nrows Integer. Number of rows in the file.
+#' @param ncols Integer. Number of columns in the file.
+#' @param cell_quality List. Specifiying the cell quality. Please refer
+#' to [bixverse::params_sc_min_quality()].
+#' @param verbose Boolean. Controls verbosity of the function
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item data - The data of the sparse matrix stored on the h5ad file.
+#'   \item indices - The indices of the sparse matrix stored in the h5ad file.
+#'   \item indptr - The indptr of the sparse matrix stored in the h5ad file.
+#'   \item no_genes - No of genes in the sparse matrix (i.e., ncol).
+#'   \item no_cells - No of cells in the sparse matrix (i.e., nrow).
+#' }
+#'
 #' @export
 rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
 

@@ -64,12 +64,14 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
     let file_format = parse_cs_format(cs_type).unwrap();
 
+    println!("Which file format is this ... {:?}", file_format);
+
     let file_quality = match file_format {
-        CompressedSparseFormat::Csc => {
-            parse_h5_csc_quality(&h5_path, (no_genes, no_cells), &cell_quality, verbose).unwrap()
-        }
         CompressedSparseFormat::Csr => {
-            parse_h5_csr_quality(&h5_path, (no_genes, no_cells), &cell_quality, verbose).unwrap()
+            parse_h5_csr_quality(&h5_path, (no_cells, no_genes), &cell_quality, verbose).unwrap()
+        }
+        CompressedSparseFormat::Csc => {
+            parse_h5_csc_quality(&h5_path, (no_cells, no_genes), &cell_quality, verbose).unwrap()
         }
     };
 
@@ -89,11 +91,11 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     }
 
     let file_data: CompressedSparseData<u16> = match file_format {
-        CompressedSparseFormat::Csc => {
-            read_h5ad_x_data_csc(&h5_path, &file_quality, verbose).unwrap()
-        }
         CompressedSparseFormat::Csr => {
-            let data = read_h5ad_x_data_csr(&h5_path, &file_quality, verbose).unwrap();
+            read_h5ad_x_data_csr(&h5_path, &file_quality, verbose).unwrap()
+        }
+        CompressedSparseFormat::Csc => {
+            let data = read_h5ad_x_data_csc(&h5_path, &file_quality, verbose).unwrap();
             data.transpose_and_convert()
         }
     };
@@ -149,7 +151,7 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 
 /// Helper function that reads in full CSR data from an h5 file
 ///
-/// The function assumes that the data is stored as genes x cells.
+/// The function assumes that the data is stored as cells x genes.
 ///
 /// ### Params
 ///
@@ -160,7 +162,7 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 /// ### Returns
 ///
 /// The `CompressedSparseData` in CSR format with the counts stored as u16.
-pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
+pub fn read_h5ad_x_data_csc<P: AsRef<Path>>(
     file_path: P,
     quality: &CellOnFileQuality,
     verbose: bool,
@@ -262,7 +264,7 @@ pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
 
 /// Helper function that reads in full CSC data from an h5 file
 ///
-/// The function assumes that the data is stored as genes x cells.
+/// The function assumes that the data is stored as cells x genes.
 ///
 /// ### Params
 ///
@@ -273,7 +275,7 @@ pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
 /// ### Returns
 ///
 /// The `CompressedSparseData` in CSC format with the counts stored as u16.
-pub fn read_h5ad_x_data_csc<P: AsRef<Path>>(
+pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
     file_path: P,
     quality: &CellOnFileQuality,
     verbose: bool,
@@ -386,15 +388,192 @@ pub fn read_h5ad_x_data_csc<P: AsRef<Path>>(
     })
 }
 
-/// Get the cell quality data from a CSR file
+/// Get the cell quality data from a CSC file
 ///
-/// This file assumes that the rows are representing the genes and the columns
-/// the cells and the data was stored in CSR type format.
+/// This file assumes that the rows are representing cells and the columns
+/// represent genes (typical for h5ad).
 ///
 /// ### Params
 ///
 /// * `file_path` - Path to the h5ad file
-/// * `shape` - Tuple with `(no_genes, no_cells)`.
+/// * `shape` - Tuple with `(no_cells, no_genes)`.
+/// * `cell_quality` - Structure defining the minimum quality values that are
+///   expected here.
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// `CellOnFileQuality` structure that contains all of the information about
+/// which cells and genes to include.
+pub fn parse_h5_csc_quality<P: AsRef<Path>>(
+    file_path: P,
+    shape: (usize, usize),
+    cell_quality: &MinCellQuality,
+    verbose: bool,
+) -> Result<CellOnFileQuality> {
+    let file = File::open(file_path)?;
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+
+    if verbose {
+        println!(
+            "  Reading CSC matrix structure (shape: {} x {})...",
+            shape.0.separate_with_underscores(),
+            shape.1.separate_with_underscores()
+        );
+        println!(
+            "  Data size: {}, Indices size: {}, Indptr size: {}",
+            data_ds.size().separate_with_underscores(),
+            indices_ds.size().separate_with_underscores(),
+            indptr_ds.size().separate_with_underscores()
+        );
+    }
+
+    let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    if (indptr.len() != shape.1 + 1) && verbose {
+        println!(
+            "  WARNING: indptr length {} doesn't match expected {} (shape.1 + 1)",
+            indptr.len().separate_with_underscores(),
+            (shape.1 + 1).separate_with_underscores()
+        );
+    }
+
+    // Count cells per gene
+    let mut no_cells_exp_gene: Vec<usize> = Vec::with_capacity(shape.1);
+    for i in 0..shape.1 {
+        let start_ptr = indptr[i] as usize;
+        let end_ptr = indptr[i + 1] as usize;
+        no_cells_exp_gene.push(end_ptr - start_ptr);
+    }
+
+    if verbose {
+        let max_expr = no_cells_exp_gene.iter().max().unwrap_or(&0);
+        let min_expr = no_cells_exp_gene.iter().min().unwrap_or(&0);
+        let avg_expr = if shape.1 > 0 {
+            no_cells_exp_gene.iter().sum::<usize>() / shape.1
+        } else {
+            0
+        };
+        println!(
+            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
+            min_expr.separate_with_underscores(),
+            max_expr.separate_with_underscores(),
+            avg_expr.separate_with_underscores()
+        );
+    }
+
+    // Filter genes first
+    let genes_to_keep: Vec<usize> = (0..shape.1)
+        .filter(|&i| no_cells_exp_gene[i] >= cell_quality.min_cells)
+        .collect();
+
+    if verbose {
+        println!(
+            "  Genes passing filter: {} / {}",
+            genes_to_keep.len().separate_with_underscores(),
+            shape.1.separate_with_underscores()
+        );
+    }
+
+    // Calculate cell metrics using only kept genes
+    let mut cell_unique_genes = vec![0usize; shape.0];
+    let mut cell_lib_size = vec![0.0f32; shape.0];
+
+    if verbose {
+        println!("  Calculating cell metrics in chunks...");
+    }
+
+    const GENE_CHUNK_SIZE: usize = 10000;
+
+    for (chunk_idx, gene_chunk) in genes_to_keep.chunks(GENE_CHUNK_SIZE).enumerate() {
+        if verbose && chunk_idx % 10 == 0 {
+            let processed = chunk_idx * GENE_CHUNK_SIZE;
+            println!(
+                "   Processing genes {} / {}",
+                processed
+                    .min(genes_to_keep.len())
+                    .separate_with_underscores(),
+                genes_to_keep.len().separate_with_underscores()
+            );
+        }
+
+        let chunk_start_gene = gene_chunk[0];
+        let chunk_end_gene = gene_chunk[gene_chunk.len() - 1];
+
+        let data_start = indptr[chunk_start_gene] as usize;
+        let data_end = indptr[chunk_end_gene + 1] as usize;
+
+        if data_start >= data_end {
+            continue;
+        }
+
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(data_start..data_end)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
+
+        for &gene_idx in gene_chunk {
+            let gene_data_start = indptr[gene_idx] as usize;
+            let gene_data_end = indptr[gene_idx + 1] as usize;
+
+            for idx in gene_data_start..gene_data_end {
+                let local_idx = idx - data_start;
+                let cell_idx = chunk_indices[local_idx] as usize;
+
+                if cell_idx < shape.0 {
+                    cell_unique_genes[cell_idx] += 1;
+                    cell_lib_size[cell_idx] += chunk_data[local_idx];
+                }
+            }
+        }
+    }
+
+    if verbose {
+        println!(
+            "   Processing genes {} / {} (complete)",
+            genes_to_keep.len().separate_with_underscores(),
+            genes_to_keep.len().separate_with_underscores()
+        );
+
+        let max_genes = cell_unique_genes.iter().max().unwrap_or(&0);
+        let min_genes = cell_unique_genes.iter().min().unwrap_or(&0);
+        let max_lib = cell_lib_size.iter().fold(0.0f32, |a, &b| a.max(b));
+        let min_lib = cell_lib_size.iter().fold(f32::INFINITY, |a, &b| a.min(b));
+
+        println!(
+            "  Cell stats: genes per cell: min={}, max={}",
+            min_genes.separate_with_underscores(),
+            max_genes.separate_with_underscores()
+        );
+        println!(
+            "  Cell stats: library size: min={:.1}, max={:.1}",
+            min_lib.separate_with_underscores(),
+            max_lib.separate_with_underscores()
+        );
+    }
+
+    let cells_to_keep: Vec<usize> = (0..shape.0)
+        .filter(|&i| {
+            cell_unique_genes[i] >= cell_quality.min_unique_genes
+                && cell_lib_size[i] >= cell_quality.min_lib_size as f32
+        })
+        .collect();
+
+    let mut file_quality_data = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
+    file_quality_data.generate_maps_sets();
+
+    Ok(file_quality_data)
+}
+
+/// Get the cell quality data from a CSR file
+///
+/// This file assumes that the rows are representing the cells and the columns
+/// the genes and the data was stored in CSR type format.
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file
+/// * `shape` - Tuple with `(no_cells, no_genes)`.
 /// * `cell_quality` - Structure defining the minimum quality values that are
 ///   expected here.
 /// * `verbose` - Controls verbosity of the function.
@@ -416,7 +595,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
     if verbose {
         println!(
-            "  Reading matrix structure (shape: {} x {})...",
+            "  Reading CSR matrix structure (shape: {} x {} )...",
             shape.0.separate_with_underscores(),
             shape.1.separate_with_underscores()
         );
@@ -430,224 +609,31 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
     let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
 
-    // Check if dimensions make sense
     if (indptr.len() != shape.0 + 1) && verbose {
-        println!(
-            "  WARNING: indptr length {} doesn't match expected {} (shape.0 + 1)",
-            indptr.len().separate_with_underscores(),
-            (shape.0 + 1).separate_with_underscores()
-        );
-        println!("  Data might be transposed or shape is incorrect");
-    }
-
-    // Count cells per gene (genes are rows in CSR format)
-    let mut no_cells_exp_gene: Vec<usize> = Vec::with_capacity(shape.0);
-    let mut total_expressed = 0;
-
-    for i in 0..shape.0 {
-        let start_ptr_i = indptr[i] as usize;
-        let end_ptr_i = indptr[i + 1] as usize;
-        let gene_expression_count = end_ptr_i - start_ptr_i;
-        no_cells_exp_gene.push(gene_expression_count);
-        total_expressed += gene_expression_count;
-    }
-
-    if verbose {
-        let max_expr = no_cells_exp_gene.iter().max().unwrap_or(&0);
-        let min_expr = no_cells_exp_gene.iter().min().unwrap_or(&0);
-        let avg_expr = if shape.0 > 0 {
-            total_expressed / shape.0
-        } else {
-            0
-        };
-        println!(
-            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
-            min_expr.separate_with_underscores(),
-            max_expr.separate_with_underscores(),
-            avg_expr.separate_with_underscores()
-        );
-        println!(
-            "  Filtering genes with min_cells >= {}",
-            cell_quality.min_cells.separate_with_underscores()
-        );
-    }
-
-    let genes_to_keep_bool: Vec<bool> = no_cells_exp_gene
-        .iter()
-        .map(|x| *x >= cell_quality.min_cells)
-        .collect();
-
-    let genes_passing = genes_to_keep_bool.iter().filter(|&&x| x).count();
-    if verbose {
-        println!(
-            "  Genes passing filter: {} / {}",
-            genes_passing.separate_with_underscores(),
-            shape.0.separate_with_underscores()
-        );
-    }
-
-    // Read data in chunks to calculate cell metrics
-    let data: Vec<f32> = data_ds.read_1d()?.to_vec();
-    let indices: Vec<u32> = indices_ds.read_1d()?.to_vec();
-
-    let mut cell_unique_genes = vec![0usize; shape.1];
-    let mut cell_lib_size = vec![0.0f32; shape.1];
-
-    if verbose {
-        println!(
-            "  Calculating cell metrics using {} kept genes...",
-            genes_passing.separate_with_underscores()
-        );
-    }
-
-    let mut processed_genes = 0;
-    for gene_idx in 0..shape.0 {
-        if !genes_to_keep_bool[gene_idx] {
-            continue;
-        }
-
-        processed_genes += 1;
-        if verbose && processed_genes % 10000 == 0 {
-            println!(
-                "   Processed {} / {} kept genes",
-                processed_genes.separate_with_underscores(),
-                genes_passing.separate_with_underscores()
-            );
-        }
-
-        let start = indptr[gene_idx] as usize;
-        let end = indptr[gene_idx + 1] as usize;
-
-        for idx in start..end {
-            let cell_idx = indices[idx] as usize;
-            if cell_idx < shape.1 {
-                cell_unique_genes[cell_idx] += 1;
-                cell_lib_size[cell_idx] += data[idx];
-            }
-        }
-    }
-
-    if verbose && processed_genes > 0 {
-        println!(
-            "   Processed {} / {} kept genes (complete)",
-            processed_genes.separate_with_underscores(),
-            genes_passing.separate_with_underscores()
-        );
-    }
-
-    // Filter cells
-    if verbose {
-        let max_genes = cell_unique_genes.iter().max().unwrap_or(&0);
-        let min_genes = cell_unique_genes.iter().min().unwrap_or(&0);
-        let max_lib = cell_lib_size.iter().fold(0.0f32, |a, &b| a.max(b));
-        let min_lib = cell_lib_size.iter().fold(f32::INFINITY, |a, &b| a.min(b));
-
-        println!(
-            "  Cell stats: genes per cell: min={}, max={}",
-            min_genes.separate_with_underscores(),
-            max_genes.separate_with_underscores()
-        );
-        println!(
-            "  Cell stats: library size: min={:.1}, max={:.1}",
-            min_lib.separate_with_underscores(),
-            max_lib.separate_with_underscores()
-        );
-        println!(
-            "  Filtering cells with min_unique_genes >= {} and min_lib_size >= {}",
-            cell_quality.min_unique_genes.separate_with_underscores(),
-            cell_quality.min_lib_size.separate_with_underscores()
-        );
-    }
-
-    let cells_to_keep: Vec<usize> = (0..shape.1)
-        .filter(|&i| {
-            cell_unique_genes[i] >= cell_quality.min_unique_genes
-                && cell_lib_size[i] >= cell_quality.min_lib_size as f32
-        })
-        .collect();
-
-    let genes_to_keep: Vec<usize> = (0..shape.0).filter(|&i| genes_to_keep_bool[i]).collect();
-
-    let mut file_quality_data = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
-    file_quality_data.generate_maps_sets();
-
-    Ok(file_quality_data)
-}
-
-/// Get the cell quality data from a CSC file
-///
-/// This file assumes that the rows are representing the genes and the columns
-/// the cells and the data was stored in CSC type format.
-///
-/// ### Params
-///
-/// * `file_path` - Path to the h5ad file
-/// * `shape` - Tuple with `(no_genes, no_cells)`.
-/// * `cell_quality` - Structure defining the minimum quality values that are
-///   expected here.
-/// * `verbose` - Controls verbosity of the function.
-///
-/// ### Returns
-///
-/// `CellOnFileQuality` structure that contains all of the information about
-/// which cells and genes to include.
-pub fn parse_h5_csc_quality<P: AsRef<Path>>(
-    file_path: P,
-    shape: (usize, usize), // Still (no_genes, no_cells) for consistency
-    cell_quality: &MinCellQuality,
-    verbose: bool,
-) -> Result<CellOnFileQuality> {
-    let file = File::open(file_path)?;
-    let data_ds = file.dataset("X/data")?;
-    let indices_ds = file.dataset("X/indices")?;
-    let indptr_ds = file.dataset("X/indptr")?;
-
-    if verbose {
-        println!(
-            "  Reading CSC matrix structure (shape: {} x {} )...",
-            shape.1.separate_with_underscores(),
-            shape.0.separate_with_underscores()
-        );
-        println!(
-            "  Data size: {}, Indices size: {}, Indptr size: {}",
-            data_ds.size().separate_with_underscores(),
-            indices_ds.size().separate_with_underscores(),
-            indptr_ds.size().separate_with_underscores()
-        );
-    }
-
-    // only load indptr (much smaller array)
-    let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
-
-    if (indptr.len() != shape.1 + 1) && verbose {
-        // I have been stupid... Beter to make sure this is as expected...
         println!(
             "  WARNING: indptr length {} doesn't match expected {} (no_cells + 1)",
             indptr.len().separate_with_underscores(),
-            (shape.1 + 1).separate_with_underscores()
+            (shape.0 + 1).separate_with_underscores()
         );
     }
 
-    // calculate genes per cell from indptr
-    let mut cell_unique_genes = Vec::with_capacity(shape.1);
-    for i in 0..shape.1 {
+    // PASS 1: Calculate cell metrics to filter cells
+    let mut cell_unique_genes = Vec::with_capacity(shape.0);
+    for i in 0..shape.0 {
         let start_ptr = indptr[i] as usize;
         let end_ptr = indptr[i + 1] as usize;
         cell_unique_genes.push(end_ptr - start_ptr);
     }
 
-    // initialise accumulator arrays
-    let mut no_cells_exp_gene = vec![0usize; shape.0];
-    let mut cell_lib_size = vec![0.0f32; shape.1];
+    let mut cell_lib_size = vec![0.0f32; shape.0];
 
     if verbose {
-        println!("  Calculating gene expression counts in chunks...");
+        println!("  Pass 1: Calculating cell library sizes in chunks...");
     }
 
-    // Process cells in chunks to reduce memory usage
-    const CELL_CHUNK_SIZE: usize = 10000; // Process 10k cells at a time
+    const CELL_CHUNK_SIZE: usize = 10000;
 
-    for (chunk_idx, cell_chunk_range) in (0..shape.1)
+    for (chunk_idx, cell_chunk_range) in (0..shape.0)
         .collect::<Vec<_>>()
         .chunks(CELL_CHUNK_SIZE)
         .enumerate()
@@ -656,12 +642,11 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
             let processed = chunk_idx * CELL_CHUNK_SIZE;
             println!(
                 "   Processing cells {} / {}",
-                processed.min(shape.1).separate_with_underscores(),
-                shape.1.separate_with_underscores()
+                processed.min(shape.0).separate_with_underscores(),
+                shape.0.separate_with_underscores()
             );
         }
 
-        // Find data range needed for this chunk of cells
         let chunk_start_cell = cell_chunk_range[0];
         let chunk_end_cell = cell_chunk_range[cell_chunk_range.len() - 1];
 
@@ -669,53 +654,31 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
         let data_end = indptr[chunk_end_cell + 1] as usize;
 
         if data_start >= data_end {
-            continue; // No data for this chunk
+            continue;
         }
 
-        // Load only the data slice needed for this chunk
         let chunk_data: Vec<f32> = data_ds.read_slice_1d(data_start..data_end)?.to_vec();
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
 
-        // Process each cell in this chunk
         for &cell_idx in cell_chunk_range {
             let cell_data_start = indptr[cell_idx] as usize;
             let cell_data_end = indptr[cell_idx + 1] as usize;
 
-            // Convert to local indices within the chunk
             for idx in cell_data_start..cell_data_end {
                 let local_idx = idx - data_start;
-                let gene_idx = chunk_indices[local_idx] as usize;
-
-                if gene_idx < shape.0 {
-                    no_cells_exp_gene[gene_idx] += 1;
-                    cell_lib_size[cell_idx] += chunk_data[local_idx];
-                }
+                cell_lib_size[cell_idx] += chunk_data[local_idx];
             }
         }
     }
 
+    // Filter cells first
+    let cells_to_keep: Vec<usize> = (0..shape.0)
+        .filter(|&i| {
+            cell_unique_genes[i] >= cell_quality.min_unique_genes
+                && cell_lib_size[i] >= cell_quality.min_lib_size as f32
+        })
+        .collect();
+
     if verbose {
-        println!(
-            "   Processing cells {} / {} (complete)",
-            shape.1.separate_with_underscores(),
-            shape.1.separate_with_underscores()
-        );
-
-        let max_expr = no_cells_exp_gene.iter().max().unwrap_or(&0);
-        let min_expr = no_cells_exp_gene.iter().min().unwrap_or(&0);
-        let avg_expr = if shape.0 > 0 {
-            no_cells_exp_gene.iter().sum::<usize>() / shape.0
-        } else {
-            0
-        };
-
-        println!(
-            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
-            min_expr.separate_with_underscores(),
-            max_expr.separate_with_underscores(),
-            avg_expr.separate_with_underscores()
-        );
-
         let max_genes = cell_unique_genes.iter().max().unwrap_or(&0);
         let min_genes = cell_unique_genes.iter().min().unwrap_or(&0);
         let max_lib = cell_lib_size.iter().fold(0.0f32, |a, &b| a.max(b));
@@ -731,18 +694,85 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
             min_lib.separate_with_underscores(),
             max_lib.separate_with_underscores()
         );
+        println!(
+            "  Cells passing filter: {} / {}",
+            cells_to_keep.len().separate_with_underscores(),
+            shape.0.separate_with_underscores()
+        );
     }
 
-    // Filter genes and cells
-    let genes_to_keep: Vec<usize> = (0..shape.0)
-        .filter(|&i| no_cells_exp_gene[i] >= cell_quality.min_cells)
-        .collect();
+    // PASS 2: Count gene expression using only kept cells
+    let mut no_cells_exp_gene = vec![0usize; shape.1];
 
-    let cells_to_keep: Vec<usize> = (0..shape.1)
-        .filter(|&i| {
-            cell_unique_genes[i] >= cell_quality.min_unique_genes
-                && cell_lib_size[i] >= cell_quality.min_lib_size as f32
-        })
+    if verbose {
+        println!("  Pass 2: Calculating gene expression from kept cells in chunks...");
+    }
+
+    for (chunk_idx, cell_chunk) in cells_to_keep.chunks(CELL_CHUNK_SIZE).enumerate() {
+        if verbose && chunk_idx % 10 == 0 {
+            let processed = chunk_idx * CELL_CHUNK_SIZE;
+            println!(
+                "   Processing cells {} / {}",
+                processed
+                    .min(cells_to_keep.len())
+                    .separate_with_underscores(),
+                cells_to_keep.len().separate_with_underscores()
+            );
+        }
+
+        let chunk_start_cell = cell_chunk[0];
+        let chunk_end_cell = cell_chunk[cell_chunk.len() - 1];
+
+        let data_start = indptr[chunk_start_cell] as usize;
+        let data_end = indptr[chunk_end_cell + 1] as usize;
+
+        if data_start >= data_end {
+            continue;
+        }
+
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
+
+        for &cell_idx in cell_chunk {
+            let cell_data_start = indptr[cell_idx] as usize;
+            let cell_data_end = indptr[cell_idx + 1] as usize;
+
+            for idx in cell_data_start..cell_data_end {
+                let local_idx = idx - data_start;
+                let gene_idx = chunk_indices[local_idx] as usize;
+
+                if gene_idx < shape.1 {
+                    no_cells_exp_gene[gene_idx] += 1;
+                }
+            }
+        }
+    }
+
+    if verbose {
+        println!(
+            "   Processing cells {} / {} (complete)",
+            cells_to_keep.len().separate_with_underscores(),
+            cells_to_keep.len().separate_with_underscores()
+        );
+
+        let max_expr = no_cells_exp_gene.iter().max().unwrap_or(&0);
+        let min_expr = no_cells_exp_gene.iter().min().unwrap_or(&0);
+        let avg_expr = if shape.1 > 0 {
+            no_cells_exp_gene.iter().sum::<usize>() / shape.1
+        } else {
+            0
+        };
+
+        println!(
+            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
+            min_expr.separate_with_underscores(),
+            max_expr.separate_with_underscores(),
+            avg_expr.separate_with_underscores()
+        );
+    }
+
+    // Filter genes based on kept cells only
+    let genes_to_keep: Vec<usize> = (0..shape.1)
+        .filter(|&i| no_cells_exp_gene[i] >= cell_quality.min_cells)
         .collect();
 
     let mut file_quality_data = CellOnFileQuality::new(cells_to_keep, genes_to_keep);

@@ -97,6 +97,11 @@ rextendr::document()
 
 h5_path <- "~/Downloads/ERX11148735.h5ad"
 
+h5_content <- rhdf5::h5ls(
+  h5_path
+) %>%
+  data.table::setDT()
+
 # cells x genes
 
 bixverse_sc <- single_cell_exp(dir_data = tempdir())
@@ -713,4 +718,23 @@ obs <- data.table(
 var <- data.table(
   gene_id = sprintf("gene_%03d", 1:100),
   ensembl_id = sprintf("ens_%03d", 1:100)
+)
+
+
+obs[[1]]
+
+class(counts)
+
+single_cell_test_data <- generate_single_cell_test_data()
+
+devtools::load_all()
+
+f_path = file.path(tempdir(), "csr_test.h5ad")
+
+write_h5ad_sc(
+  f_path = f_path,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  single_cell_test_data$var,
+  .verbose = FALSE
 )
