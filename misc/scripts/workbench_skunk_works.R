@@ -409,9 +409,16 @@ tictoc::toc()
 
 tictoc::tic()
 rust_con$generate_gene_based_data_streaming(
-  verbose = .verbose
+  verbose = .verbose,
+  batch_size = 10000L
 )
 tictoc::toc()
+
+summary(file_res$cell_indices)
+
+length(file_res$cell_indices)
+
+length(file_res$gene_indices)
 
 devtools::load_all()
 
@@ -423,6 +430,10 @@ tictoc::toc()
 
 obs <- get_sc_obs(bixverse_sc)
 var <- get_sc_var(bixverse_sc)
+
+table(duplicated(obs$cell_idx))
+
+summary(obs$cell_idx)
 
 # summary(obs$rb_perc)
 
@@ -456,6 +467,10 @@ bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
 bixverse_sc <- set_cell_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
 
+get_cells_to_keep(bixverse_sc)
+
+bixverse_sc@sc_map$cell_mapping
+
 bixverse_sc <- find_hvg(object = bixverse_sc)
 
 bixverse_sc <- calculate_pca_single_cell(bixverse_sc, no_pcs = 30L)
@@ -472,7 +487,7 @@ pryr::object_size(bixverse_sc)
 bixverse_sc@sc_map$cells_to_keep_idx
 
 tictoc::tic()
-test_count <- bixverse_sc[1:100000L, , return_format = "cell", assay = "raw"]
+test_count <- bixverse_sc[2857392L, , return_format = "cell", assay = "raw"]
 tictoc::toc()
 
 get_rust_count_cell_f_path(bixverse_sc)
@@ -481,11 +496,13 @@ rextendr::document()
 
 dge_test <- rs_calculate_dge_mann_whitney(
   f_path = get_rust_count_cell_f_path(bixverse_sc),
-  cell_indices_1 = 1:100000L,
-  cell_indices_2 = 100001:200000L,
+  cell_indices_1 = 1:10000L,
+  cell_indices_2 = 10001:20000L,
   min_prop = 0.05,
   TRUE
 )
+
+summary(dge_test$lfc)
 
 hist(dge_test$lfc)
 
@@ -494,6 +511,92 @@ hist(dge_test$prop1)
 hist(dge_test$prop2)
 
 hist(dge_test$z_scores)
+
+# install.packages("devtools")
+devtools::install_github("immunogenomics/presto")
+
+tictoc::tic()
+test_count <- bixverse_sc[1:200000L, , return_format = "cell", assay = "norm"]
+tictoc::toc()
+
+presto_input <- Matrix::t(test_count)
+presto_output <- as(presto_input, "CsparseMatrix")
+
+y <- factor(c(rep("A", 100000), rep("B", 100000)))
+
+tictoc::tic()
+x <- presto::wilcoxauc(presto_output, y)
+tictoc::toc()
+
+tictoc::tic()
+dge_test_v2 <- rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(bixverse_sc),
+  cell_indices_1 = 1:100000L,
+  cell_indices_2 = 100001:200000L,
+  min_prop = 0.0,
+  alternative = "greater",
+  verbose = TRUE
+)
+tictoc::toc()
+
+dim(x)
+
+rextendr::document()
+
+tictoc::tic()
+dge_test <- rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(bixverse_sc),
+  cell_indices_1 = 1:10000L,
+  cell_indices_2 = 10001:20000L,
+  min_prop = 0.0,
+  alternative = "less",
+  verbose = TRUE
+)
+tictoc::toc()
+
+tictoc::tic()
+dge_test_v2 <- rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(bixverse_sc),
+  cell_indices_1 = 1:10000L,
+  cell_indices_2 = 10001:20000L,
+  min_prop = 0.0,
+  alternative = "greater",
+  verbose = TRUE
+)
+tictoc::toc()
+
+tictoc::tic()
+dge_test_v3 <- rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(bixverse_sc),
+  cell_indices_1 = 1:10000L,
+  cell_indices_2 = 10001:20000L,
+  min_prop = 0.0,
+  alternative = "twosided",
+  verbose = TRUE
+)
+tictoc::toc()
+
+plot(dge_test$p_values, dge_test$p_values)
+
+plot(dge_test_v3$p_values, dge_test_v2$p_values)
+
+class(x)
+
+plot(x[x$group == "A", ]$pval, dge_test_v3$p_values)
+
+plot(x[x$group == "A", ]$logFC, dge_test$lfc)
+
+cor(x[x$group == "A", ]$logFC, dge_test$lfc, method = "spearman")
+
+plot(x[x$group == "A", ]$logFC[1:10], dge_test$lfc[1:10])
+
+x[x$group == "A", ]$pval[1:10]
+
+dge_test$p_values[1:10]
+
+gc()
+
+?wilcox.test
 
 # debug function ---------------------------------------------------------------
 

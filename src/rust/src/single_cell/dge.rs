@@ -10,6 +10,17 @@ use crate::single_cell::fast_ranking::rank_csr_chunk_vec;
 ////////////////
 
 /// Structure to store the Mann Whitney U-based DGE results in
+///
+/// ### Fields
+///
+/// * `lfc` -
+/// * `prop1` -
+/// * `prop2` -
+/// * `z_scores` -
+/// * `p_vals` -
+/// * `fdr` -
+/// * `genes_to_keep` -
+#[derive(Clone, Debug)]
 pub struct DgeMannWhitneyRes {
     pub lfc: Vec<f32>,
     pub prop1: Vec<f32>,
@@ -17,6 +28,7 @@ pub struct DgeMannWhitneyRes {
     pub z_scores: Vec<f64>,
     pub p_vals: Vec<f64>,
     pub fdr: Vec<f64>,
+    pub genes_to_keep: Vec<bool>,
 }
 
 /////////////
@@ -88,13 +100,28 @@ fn mann_whitney_u_test(ranks1: &[f32], ranks2: &[f32]) -> f64 {
 // Main functions //
 ////////////////////
 
+/// Get differential expression based on Mann-Whitney
+///
+/// ### Params
+///
+/// * `f_path` -
+/// * `grp_1_indices` -
+/// * `grp_2_indices` -
+/// * `min_proportion` -
+/// * `alternative` -
+/// * `verbose` -
+///
+/// ### Returns
+///
+/// The `DgeMannWhitneyRes` structure with results
 pub fn calculate_dge_grps_mann_whitney(
     f_path: &str,
     grp_1_indices: &[usize],
     grp_2_indices: &[usize],
     min_proportion: f32,
+    alternative: &str,
     verbose: bool,
-) -> DgeMannWhitneyRes {
+) -> Result<DgeMannWhitneyRes, String> {
     let start_read = Instant::now();
 
     let reader = ParallelSparseReader::new(f_path).unwrap();
@@ -177,7 +204,7 @@ pub fn calculate_dge_grps_mann_whitney(
         z_scores.push(z_i);
     }
 
-    let p_vals = z_scores_to_pval(&z_scores);
+    let p_vals = z_scores_to_pval(&z_scores, alternative)?;
     let fdr = calc_fdr(&p_vals);
 
     let end_calculations = start_calculations.elapsed();
@@ -186,12 +213,13 @@ pub fn calculate_dge_grps_mann_whitney(
         println!("Finished DGE calculations: {:.2?}", end_calculations);
     }
 
-    DgeMannWhitneyRes {
+    Ok(DgeMannWhitneyRes {
         lfc: log_fc,
         prop1,
         prop2,
         z_scores,
         p_vals,
         fdr,
-    }
+        genes_to_keep,
+    })
 }

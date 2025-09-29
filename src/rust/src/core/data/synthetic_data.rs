@@ -394,6 +394,10 @@ pub fn simulate_dropouts_power_decay(
     sparse_mat
 }
 
+/////////////////////////
+// Random sparse data ///
+/////////////////////////
+
 /// Create weighted sparse data resembling single cell counts in CSC
 ///
 /// ### Params
@@ -539,4 +543,17 @@ pub fn create_sparse_csr_data(
         data_2: None::<Vec<i32>>,
         shape: (nrow, ncol),
     }
+}
+
+///////////////////////////
+// Specific sparse data ///
+///////////////////////////
+
+pub struct CellTypeConfig {
+    /// Marker gene indices for this cell type (0-based)
+    pub marker_genes: Vec<usize>,
+    /// Expression range for marker genes (min, max)
+    pub marker_exp_range: (i32, i32),
+    /// Number of marker genes to express per cell
+    pub markers_per_cell: (usize, usize),
 }

@@ -1,4 +1,4 @@
-# single cell methods ----------------------------------------------------------
+# single cell processing methods -----------------------------------------------
 
 ## i/o -------------------------------------------------------------------------
 
@@ -335,8 +335,8 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
-find_hvg <- S7::new_generic(
-  name = "find_hvg",
+find_hvg_sc <- S7::new_generic(
+  name = "find_hvg_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -348,13 +348,13 @@ find_hvg <- S7::new_generic(
   }
 )
 
-#' @method find_hvg single_cell_exp
+#' @method find_hvg_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_hvg, single_cell_exp) <- function(
+S7::method(find_hvg_sc, single_cell_exp) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
@@ -406,8 +406,8 @@ S7::method(find_hvg, single_cell_exp) <- function(
 #'
 #' @return The function will add the PCA factors and loadings to the object
 #' cache in memory.
-calculate_pca_single_cell <- S7::new_generic(
-  name = "calculate_pca_single_cell",
+calculate_pca_sc <- S7::new_generic(
+  name = "calculate_pca_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -420,13 +420,13 @@ calculate_pca_single_cell <- S7::new_generic(
   }
 )
 
-#' @method calculate_pca_single_cell single_cell_exp
+#' @method calculate_pca_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
+S7::method(calculate_pca_sc, single_cell_exp) <- function(
   object,
   no_pcs,
   randomised_svd = TRUE,
@@ -441,7 +441,7 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 
   if (length(get_hvg(object)) == 0) {
     warning(paste(
-      "No HVGs identified in this object. Did you run find_hvg()?",
+      "No HVGs identified in this object. Did you run find_hvg_sc()?",
       "Returning object as is."
     ))
     return(object)
@@ -508,8 +508,8 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #' @return The object with added KNN matrix.
 #'
 #' @export
-find_neigbours_single_cell <- S7::new_generic(
-  name = "generate_knn_single_cell",
+find_neigbours_single_sc <- S7::new_generic(
+  name = "find_neigbours_single_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -523,13 +523,13 @@ find_neigbours_single_cell <- S7::new_generic(
   }
 )
 
-#' @method find_neigbours_single_cell single_cell_exp
+#' @method find_neigbours_single_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
+S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,

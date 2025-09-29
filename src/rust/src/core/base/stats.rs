@@ -20,6 +20,42 @@ use crate::assert_same_len;
 /// * `1` - The corresponding standard errors
 pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 
+/////////////////////
+// Enums | Helpers //
+/////////////////////
+
+#[derive(Clone, Debug)]
+pub enum TestAlternative {
+    /// Two sided test for the Z-score
+    TwoSided,
+    /// One-sided test for greater than
+    Greater,
+    /// One-sided test for lesser than
+    Less,
+}
+
+/// Helper function to get the test alternative
+///
+/// ### Params
+///
+/// * `s` - String, type of test to run.
+///
+/// ### Returns
+///
+/// Option of the `TestAlternative`
+pub fn get_test_alternative(s: &str) -> Option<TestAlternative> {
+    match s.to_lowercase().as_str() {
+        "greater" => Some(TestAlternative::Greater),
+        "less" => Some(TestAlternative::Less),
+        "twosided" => Some(TestAlternative::TwoSided),
+        _ => None,
+    }
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Transform Z-scores into p-values (assuming normality).
 ///
 /// ### Params
@@ -29,22 +65,43 @@ pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 /// ### Returns
 ///
 /// The p-value vector based on the Z scores (two sided)
-pub fn z_scores_to_pval(z_scores: &[f64]) -> Vec<f64> {
+pub fn z_scores_to_pval(z_scores: &[f64], test_alternative: &str) -> Result<Vec<f64>, String> {
+    let test_alternative = get_test_alternative(test_alternative)
+        .ok_or_else(|| format!("Invalid Test alternative: {}", test_alternative))?;
     let normal = Normal::new(0.0, 1.0).unwrap();
-    z_scores
+    let res = z_scores
         .iter()
-        .map(|&z| {
-            let abs_z = z.abs();
-            if abs_z > 6.0 {
-                // Deal with numeric precision problems for very large z-scores.
-                let pdf = normal.pdf(abs_z);
-                let p = pdf / abs_z * (1.0 - 1.0 / (abs_z * abs_z));
-                2.0 * p
-            } else {
-                2.0 * (1.0 - normal.cdf(abs_z))
+        .map(|&z| match test_alternative {
+            TestAlternative::TwoSided => {
+                let abs_z = z.abs();
+                if abs_z > 6.0 {
+                    let pdf = normal.pdf(abs_z);
+                    let p = pdf / abs_z * (1.0 - 1.0 / (abs_z * abs_z));
+                    2.0 * p
+                } else {
+                    2.0 * (1.0 - normal.cdf(abs_z))
+                }
+            }
+            TestAlternative::Greater => {
+                if z > 6.0 {
+                    let pdf = normal.pdf(z);
+                    pdf / z * (1.0 - 1.0 / (z * z))
+                } else {
+                    1.0 - normal.cdf(z)
+                }
+            }
+            TestAlternative::Less => {
+                if z < -6.0 {
+                    let abs_z = z.abs();
+                    let pdf = normal.pdf(abs_z);
+                    pdf / abs_z * (1.0 - 1.0 / (abs_z * abs_z))
+                } else {
+                    normal.cdf(z)
+                }
             }
         })
-        .collect()
+        .collect();
+    Ok(res)
 }
 
 /// Calculate the p-value of a hypergeometric test.
