@@ -1,3 +1,4 @@
+use extendr_api::*;
 use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand_distr::weighted::WeightedAliasIndex;
@@ -10,7 +11,7 @@ use crate::core::data::sparse_structures::{CompressedSparseData, CompressedSpars
 // Enums //
 ///////////
 
-/// Enum for the ICA types
+/// Enum for the sparsity types
 #[derive(Clone, Debug)]
 pub enum SparsityFunction {
     /// Use the `Logistic` type function for sparisification
@@ -549,11 +550,167 @@ pub fn create_sparse_csr_data(
 // Specific sparse data ///
 ///////////////////////////
 
+/// Structure to keep the CellTypeConfig
+///
+/// ### Fields
+///
+/// * `marker_genes` - Which indices are the marker genes for this specific
+///   cell type
+/// * `marker_exp_range` - Range of expression of the marker genes with
+///   `(min, max)`.
+/// * `markers_per_cell` - Number of markers per cell.
+#[derive(Clone, Debug)]
 pub struct CellTypeConfig {
-    /// Marker gene indices for this cell type (0-based)
     pub marker_genes: Vec<usize>,
-    /// Expression range for marker genes (min, max)
-    pub marker_exp_range: (i32, i32),
-    /// Number of marker genes to express per cell
+    pub marker_exp_range: (u32, u32),
     pub markers_per_cell: (usize, usize),
+}
+
+impl CellTypeConfig {
+    /// Generate the CellTypeConfig from an R list
+    ///
+    /// If values are not found, will use default values
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The R list containing the parameters. Should have the
+    ///   elements `"marker_genes"`, `"marker_exp_range"`, `"markers_per_cell"`.
+    ///
+    /// ### Returns
+    ///
+    /// The `CellTypeConfig` based on the R list.
+    pub fn from_r_list(r_list: List) -> Self {
+        let map = r_list.into_hashmap();
+
+        let marker_genes = map
+            .get("marker_genes")
+            .and_then(|v| v.as_integer_vector())
+            .map(|v| v.iter().map(|x| *x as usize).collect())
+            .unwrap_or_default();
+
+        let marker_exp_range = map
+            .get("marker_exp_range")
+            .and_then(|v| v.as_integer_vector())
+            .and_then(|v| {
+                if v.len() >= 2 {
+                    Some((v[0] as u32, v[1] as u32))
+                } else {
+                    None
+                }
+            })
+            .unwrap_or((10, 50));
+
+        let markers_per_cell = map
+            .get("markers_per_cell")
+            .and_then(|v| v.as_integer_vector())
+            .and_then(|v| {
+                if v.len() >= 2 {
+                    Some((v[0] as usize, v[1] as usize))
+                } else {
+                    None
+                }
+            })
+            .unwrap_or((2, 4));
+
+        CellTypeConfig {
+            marker_genes,
+            marker_exp_range,
+            markers_per_cell,
+        }
+    }
+}
+
+/// Helper function to create synthetic data with specific cell types
+///
+/// ### Params
+///
+/// * `nrow` - Number of rows (cells).
+/// * `ncol` - Number of columns (genes).
+/// * `cell_type_configs` - A vector of cell type configurations.
+/// * `background_genes_exp` - The number of background genes to express per
+///   cell type.
+/// * `background_exp_range` - The range of the expression in the background
+///   genes.
+/// * `seed` - Integer for reproducibility purposes
+///
+/// ### Returns
+///
+/// A tuple with `(csr data, indices of cell types)`
+pub fn create_celltype_sparse_csr_data(
+    nrow: usize,
+    ncol: usize,
+    cell_type_configs: Vec<CellTypeConfig>,
+    background_genes_exp: (usize, usize),
+    background_exp_range: (u32, u32),
+    seed: usize,
+) -> (CompressedSparseData<u32>, Vec<usize>) {
+    let mut indptr = Vec::with_capacity(nrow + 1);
+    let mut indices = Vec::with_capacity(nrow * 100);
+    let mut data = Vec::with_capacity(nrow * 100);
+    let mut cell_type_labels = Vec::with_capacity(nrow);
+    indptr.push(0);
+    let n_cell_types = cell_type_configs.len();
+    let mut temp_vec = Vec::with_capacity(ncol);
+
+    // Create weights for background genes - inverse distribution makes genes sparse
+    let weights: Vec<f64> = (1..=ncol).map(|i| 1.0 / i as f64).collect();
+    let alias = WeightedAliasIndex::new(weights).unwrap();
+
+    for cell_idx in 0..nrow {
+        let mut rng = StdRng::seed_from_u64(seed as u64 + cell_idx as u64);
+        let cell_type = cell_idx % n_cell_types;
+        cell_type_labels.push(cell_type);
+        let config = &cell_type_configs[cell_type];
+        temp_vec.clear();
+
+        // sample marker genes for this cell type
+        let n_markers = rng.random_range(config.markers_per_cell.0..=config.markers_per_cell.1);
+        let marker_indices: Vec<usize> = config
+            .marker_genes
+            .choose_multiple(&mut rng, n_markers.min(config.marker_genes.len()))
+            .copied()
+            .collect();
+
+        for &gene_idx in &marker_indices {
+            let count = rng.random_range(config.marker_exp_range.0..=config.marker_exp_range.1);
+            temp_vec.push((gene_idx, count));
+        }
+
+        // sample background genes with weighted distribution
+        let n_background = rng.random_range(background_genes_exp.0..=background_genes_exp.1);
+        for _ in 0..n_background {
+            let gene_idx = alias.sample(&mut rng);
+            if !marker_indices.contains(&gene_idx) {
+                let count = rng.random_range(background_exp_range.0..=background_exp_range.1);
+                temp_vec.push((gene_idx, count));
+            }
+        }
+
+        // sort and deduplicate by summing counts
+        temp_vec.sort_unstable_by_key(|(gene_idx, _)| *gene_idx);
+        let mut i = 0;
+        while i < temp_vec.len() {
+            let gene_idx = temp_vec[i].0;
+            let mut total_count = temp_vec[i].1;
+            let mut j = i + 1;
+            while j < temp_vec.len() && temp_vec[j].0 == gene_idx {
+                total_count += temp_vec[j].1;
+                j += 1;
+            }
+            indices.push(gene_idx);
+            data.push(total_count);
+            i = j;
+        }
+        indptr.push(indices.len());
+    }
+
+    let csr = CompressedSparseData {
+        data,
+        indices,
+        indptr,
+        cs_type: CompressedSparseFormat::Csr,
+        data_2: None::<Vec<u32>>,
+        shape: (nrow, ncol),
+    };
+    (csr, cell_type_labels)
 }

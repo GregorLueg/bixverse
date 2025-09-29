@@ -348,6 +348,8 @@ file_res <- rust_con$h5_to_file(
   verbose = .verbose
 )
 
+file_res$cell_indices
+
 rust_con$generate_gene_based_data(
   qc_params = sc_qc_param,
   verbose = .verbose
@@ -419,6 +421,8 @@ summary(file_res$cell_indices)
 length(file_res$cell_indices)
 
 length(file_res$gene_indices)
+
+summary(file_res$gene_indices)
 
 devtools::load_all()
 
@@ -652,3 +656,61 @@ indptr <- h5_content[
   group == "/X" & name == "indptr",
   as.numeric(dim)
 ]
+
+
+# generating test data ---------------------------------------------------------
+
+rextendr::document()
+
+n_cells = 1000L
+n_genes = 100L
+n_background_genes_exp = c(3L, 15L)
+background_exp_range = c(5L, 10L)
+
+marker_genes <- list(
+  cell_type_1 = list(
+    marker_genes = 0:9L,
+    marker_exp_range = c(10L, 50L),
+    markers_per_cell = c(2L, 8L)
+  ),
+  cell_type_2 = list(
+    marker_genes = 10:19L,
+    marker_exp_range = c(10L, 50L),
+    markers_per_cell = c(2L, 8L)
+  ),
+  cell_type_3 = list(
+    marker_genes = 20:29L,
+    marker_exp_range = c(10L, 50L),
+    markers_per_cell = c(2L, 8L)
+  )
+)
+
+data <- rs_synthetic_sc_data_with_cell_types(
+  n_cells = n_cells,
+  n_genes = n_genes,
+  n_background_genes_exp = n_background_genes_exp,
+  background_exp_range = n_background_genes_exp,
+  cell_configs = marker_genes,
+  seed = 42L
+)
+
+counts <- new(
+  "dgRMatrix",
+  p = as.integer(data$indptr),
+  x = as.numeric(data$data),
+  j = as.integer(data$indices),
+  Dim = as.integer(c(n_cells, n_genes))
+)
+
+rownames(counts) <- sprintf("cell_%04d", 1:1000)
+colnames(counts) <- sprintf("gene_%03d", 1:100)
+
+obs <- data.table(
+  cell_id = sprintf("cell_%04d", 1:1000),
+  cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1)
+)
+
+var <- data.table(
+  gene_id = sprintf("gene_%03d", 1:100),
+  ensembl_id = sprintf("ens_%03d", 1:100)
+)

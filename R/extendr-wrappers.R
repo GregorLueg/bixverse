@@ -585,6 +585,8 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_background_genes_exp, background_exp_range, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_background_genes_exp, background_exp_range, cell_configs, seed)
+
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
 #' @description
