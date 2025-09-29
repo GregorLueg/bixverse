@@ -4,10 +4,10 @@
 \alias{get_h5ad_dimensions}
 \title{Helper function to get the dimensions and compressed sparse format}
 \usage{
-get_h5ad_dimensions(h5_path)
+get_h5ad_dimensions(f_path)
 }
 \arguments{
-\item{h5_path}{File path to the \code{.h5ad} file.}
+\item{f_path}{File path to the \code{.h5ad} file.}
 }
 \value{
 A list with the following elements:

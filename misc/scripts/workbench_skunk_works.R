@@ -424,23 +424,33 @@ tictoc::toc()
 obs <- get_sc_obs(bixverse_sc)
 var <- get_sc_var(bixverse_sc)
 
-library(biomaRt)
-mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
+# summary(obs$rb_perc)
 
-G_list <- getBM(
-  filters = "ensembl_gene_id",
-  attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
-  values = get_gene_names(bixverse_sc),
-  mart = mart
-)
-setDT(G_list)
+# library(biomaRt)
+# mart <- useDataset("hsapiens_gene_ensembl", useMart("ensembl"))
 
-mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
-rps_genes <- G_list[external_gene_name %like% "^RPS", ensembl_gene_id]
+# G_list <- getBM(
+#   filters = "ensembl_gene_id",
+#   attributes = c("ensembl_gene_id", "external_gene_name", "hgnc_symbol"),
+#   values = get_gene_names(bixverse_sc),
+#   mart = mart
+# )
+# setDT(G_list)
+
+# get_gene_names(bixverse_sc)
+
+# mt_genes <- G_list[external_gene_name %like% "MT-", ensembl_gene_id]
+# rps_genes <- G_list[external_gene_name %like% "^RPL", ensembl_gene_id]
 
 gs_of_interest <- list(
-  "rb_perc" = rps_genes
+  "mt_perc" = get_gene_names(bixverse_sc)[
+    get_gene_names(bixverse_sc) %like% "MT-"
+  ],
+  "rps_perc" = get_gene_names(bixverse_sc)[
+    get_gene_names(bixverse_sc) %like% "^RPS"
+  ],
 )
+
 
 bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
@@ -459,9 +469,31 @@ tictoc::toc()
 
 pryr::object_size(bixverse_sc)
 
+bixverse_sc@sc_map$cells_to_keep_idx
+
 tictoc::tic()
 test_count <- bixverse_sc[1:100000L, , return_format = "cell", assay = "raw"]
 tictoc::toc()
+
+get_rust_count_cell_f_path(bixverse_sc)
+
+rextendr::document()
+
+dge_test <- rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(bixverse_sc),
+  cell_indices_1 = 1:100000L,
+  cell_indices_2 = 100001:200000L,
+  min_prop = 0.05,
+  TRUE
+)
+
+hist(dge_test$lfc)
+
+hist(dge_test$prop1)
+
+hist(dge_test$prop2)
+
+hist(dge_test$z_scores)
 
 # debug function ---------------------------------------------------------------
 

@@ -353,6 +353,42 @@ impl CsrCellChunk {
     pub fn get_qc_info(&self) -> (usize, usize) {
         (self.col_indices.len(), self.library_size)
     }
+
+    /// Filter to keep only specified genes
+    ///
+    /// This will remove the genes that are not set to `true` in the boolean
+    /// vector. This assumes that the indices of the genes and the booleans
+    /// are the same!
+    ///
+    /// ### Params
+    ///
+    /// * `genes_to_keep` - Keep only the genes within this boolean vectors.
+    pub fn filter_genes(&mut self, genes_to_keep: &[bool]) {
+        let mut index_map = vec![None; genes_to_keep.len()];
+        let mut new_idx = 0;
+        for (old_idx, &keep) in genes_to_keep.iter().enumerate() {
+            if keep {
+                index_map[old_idx] = Some(new_idx);
+                new_idx += 1;
+            }
+        }
+
+        let mut new_indices = Vec::new();
+        let mut new_raw = Vec::new();
+        let mut new_norm = Vec::new();
+
+        for (i, &gene_idx) in self.col_indices.iter().enumerate() {
+            if let Some(new_gene_idx) = index_map[gene_idx as usize] {
+                new_indices.push(new_gene_idx as u16);
+                new_raw.push(self.data_raw[i]);
+                new_norm.push(self.data_norm[i]);
+            }
+        }
+
+        self.col_indices = new_indices;
+        self.data_raw = new_raw;
+        self.data_norm = new_norm;
+    }
 }
 
 /// CscGeneChunk

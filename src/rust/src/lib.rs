@@ -40,7 +40,8 @@ pub use r_bindings::r_ontology::r_similiarity;
 
 // single cell
 pub use r_bindings::r_single_cell::r_count_obj;
-pub use r_bindings::r_single_cell::r_preprocessing;
+pub use r_bindings::r_single_cell::r_sc_analysis;
+pub use r_bindings::r_single_cell::r_sc_processing;
 
 extendr_module! {
     mod bixverse;
@@ -73,5 +74,6 @@ extendr_module! {
     use r_similiarity;
     // single cell
     use r_count_obj;
-    use r_preprocessing;
+    use r_sc_processing;
+    use r_sc_analysis;
 }

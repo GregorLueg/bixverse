@@ -340,7 +340,7 @@ fn rs_sc_snn(
 }
 
 extendr_module! {
-    mod r_preprocessing;
+    mod r_sc_processing;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_pca;
