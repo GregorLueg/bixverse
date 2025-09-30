@@ -434,6 +434,34 @@ params_dgrdl <- function(
 
 ## single cell -----------------------------------------------------------------
 
+### io -------------------------------------------------------------------------
+
+#' Wrapper function to provide data for mtx-based loading
+#'
+#' @param path_mtx String. Path to the .mtx file
+#' @param path_obs String. Path to the file containing cell/barcode info.
+#' @param path_var String. Path to the file containing gene/variable info.
+#' @param cells_as_rows Boolean. Do cells represent the rows or columns.
+#'
+#' @returns A list with the mtx loading parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
+  # checks
+  checkmate::assertFileExists(path_mtx)
+  checkmate::assertFileExists(path_obs)
+  checkmate::assertFileExists(path_var)
+  checkmate::qassert(cells_as_rows, "B1")
+
+  list(
+    path_mtx = path_mtx,
+    path_obs = path_obs,
+    path_var = path_var,
+    cells_as_rows = cells_as_rows
+  )
+}
+
 ### qc -------------------------------------------------------------------------
 
 #' Wrapper function to generate QC metric params for single cell

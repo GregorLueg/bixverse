@@ -1,0 +1,302 @@
+# single cell synthetic data ---------------------------------------------------
+
+## data generation -------------------------------------------------------------
+
+#' Single cell test data
+#'
+#' @description
+#' This function generates synthetic data for single cell test purposes. It has
+#' hard-coded parameters and will generate a count matrix of 1000 cells x 100
+#' genes, an obs table and a var table. There are three distinct cell types
+#' that can be found in the data that each express between 2 to 8 marker genes
+#' with higher expression compared to the background. The background genes
+#' have some with higher expression and then less and less cells expressing
+#' them.
+#'
+#'
+#' @param seed Integer. The seed for the generation of the seed data.
+#'
+#' @returns List with the following items
+#' \itemize{
+#'   \item counts - dgRMatrix with cells x genes.
+#'   \item obs - data.table that contains the cell information.
+#'   \item var - data.table that contains the var information.
+#' }
+#'
+#' @export
+generate_single_cell_test_data <- function(seed = 42L) {
+  # checks
+  checkmate::qassert(seed, "I1")
+
+  n_cells = 1000L
+  n_genes = 100L
+
+  marker_genes <- list(
+    cell_type_1 = list(
+      marker_genes = 0:9L
+    ),
+    cell_type_2 = list(
+      marker_genes = 10:19L
+    ),
+    cell_type_3 = list(
+      marker_genes = 20:29L
+    )
+  )
+
+  data <- rs_synthetic_sc_data_with_cell_types(
+    n_cells = n_cells,
+    n_genes = n_genes,
+    cell_configs = marker_genes,
+    seed = seed
+  )
+
+  counts <- new(
+    "dgRMatrix",
+    p = as.integer(data$indptr),
+    x = as.numeric(data$data),
+    j = as.integer(data$indices),
+    Dim = as.integer(c(n_cells, n_genes))
+  )
+
+  rownames(counts) <- sprintf("cell_%04d", 1:1000)
+  colnames(counts) <- sprintf("gene_%03d", 1:100)
+
+  obs <- data.table(
+    cell_id = sprintf("cell_%04d", 1:1000),
+    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1)
+  )
+
+  var <- data.table(
+    gene_id = sprintf("gene_%03d", 1:100),
+    ensembl_id = sprintf("ens_%03d", 1:100)
+  )
+
+  res <- list(
+    counts = counts,
+    obs = obs,
+    var = var
+  )
+}
+
+## data saving -----------------------------------------------------------------
+
+### write h5ad type formats ----------------------------------------------------
+
+#' Helper function to write data to h5ad format
+#'
+#' @description This is a helper to write synthetic data to h5ad file.
+#'
+#' @param f_path String. The filepath to which to save the data
+#' @param counts Sparse matrix. Needs to be of class `dgRMatrix` or
+#' `dgCMatrix`.
+#' @param obs data.table. The observations. Needs to have
+#' `nrow(obs) == nrow(counts)`.
+#' @param var data.table. The variable data. Needs to have
+#' `ncol(var) == ncol(counts)`.
+#' @param overwrite Boolean. Shall any found h5ad file be overwritten.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return Returns invisible
+#'
+#' @export
+write_h5ad_sc <- function(
+  f_path,
+  counts,
+  obs,
+  var,
+  overwrite = TRUE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertPathForOutput(f_path, overwrite = TRUE)
+  checkmate::assert(
+    checkmate::testClass(counts, "dgRMatrix"),
+    checkmate::testClass(counts, "dgCMatrix")
+  )
+  checkmate::assertDataTable(
+    obs,
+    min.rows = nrow(counts),
+    max.rows = nrow(counts)
+  )
+  checkmate::assertDataTable(
+    var,
+    min.rows = ncol(counts),
+    max.rows = ncol(counts)
+  )
+  checkmate::qassert(overwrite, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  if (file.exists(f_path) & !overwrite) {
+    stop("The h5ad file already exists and overwrite = FALSE.")
+  } else if (file.exists(f_path)) {
+    file.remove(f_path)
+  }
+
+  rhdf5::h5createFile(f_path)
+
+  if (.verbose) {
+    message("Writing the counts to h5ad.")
+  }
+  # Write X (sparse matrix)
+  rhdf5::h5createGroup(f_path, "X")
+
+  if (inherits(counts, "dgCMatrix")) {
+    # CSC format
+    rhdf5::h5write(counts@x, f_path, "X/data")
+    rhdf5::h5write(counts@i, f_path, "X/indices")
+    rhdf5::h5write(counts@p, f_path, "X/indptr")
+  } else if (inherits(counts, "dgRMatrix")) {
+    # CSR format
+    rhdf5::h5write(counts@x, f_path, "X/data")
+    rhdf5::h5write(counts@j, f_path, "X/indices")
+    rhdf5::h5write(counts@p, f_path, "X/indptr")
+  }
+
+  if (.verbose) {
+    message("Writing the obs to h5ad.")
+  }
+
+  rhdf5::h5createGroup(f_path, "obs")
+  rhdf5::h5write(obs[[1]], f_path, "obs/_index")
+  for (col in names(obs)[-1]) {
+    rhdf5::h5write(obs[[col]], f_path, paste0("obs/", col))
+  }
+
+  if (.verbose) {
+    message("Writing the var to h5ad.")
+  }
+
+  rhdf5::h5createGroup(f_path, "var")
+  rhdf5::h5write(var[[1]], f_path, "var/_index")
+  for (col in names(var)[-1]) {
+    rhdf5::h5write(var[[col]], f_path, paste0("var/", col))
+  }
+
+  rhdf5::h5closeAll()
+
+  invisible()
+}
+
+#' Helper function to write data to a cell ranger like output
+#'
+#' @description This is a helper to write synthetic data to cell ranger like
+#' output, i.e., an .mtx file, an barcodes.csv (or .tsv) and a features.csv (or
+#' .tsv).
+#'
+#' @param f_path String. The filepath to which to save the data
+#' @param counts Sparse matrix. Needs to be of class `dgRMatrix` or
+#' `dgCMatrix`.
+#' @param obs data.table. The observations. Needs to have
+#' `nrow(obs) == nrow(counts)`.
+#' @param var data.table. The variable data. Needs to have
+#' `ncol(var) == ncol(counts)`.
+#' @param overwrite Boolean. Shall any found h5ad file be overwritten.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return Returns invisible
+#'
+#' @export
+write_cellranger_output <- function(
+  f_path,
+  counts,
+  obs,
+  var,
+  format_type = c("csv", "tsv"),
+  rows = c("cells", "genes"),
+  overwrite = TRUE,
+  .verbose = TRUE
+) {
+  format_type <- match.arg(format_type)
+  rows <- match.arg(rows)
+
+  # checks
+  checkmate::assertPathForOutput(f_path, overwrite = TRUE)
+  checkmate::assert(
+    checkmate::testClass(counts, "dgRMatrix"),
+    checkmate::testClass(counts, "dgCMatrix")
+  )
+  checkmate::assertDataTable(
+    obs,
+    min.rows = nrow(counts),
+    max.rows = nrow(counts)
+  )
+  checkmate::assertDataTable(
+    var,
+    min.rows = ncol(counts),
+    max.rows = ncol(counts)
+  )
+  checkmate::assertChoice(format_type, c("csv", "tsv"))
+  checkmate::assertChoice(rows, c("cells", "genes"))
+
+  f_path_mtx <- file.path(f_path, "mat.mtx")
+  f_path_obs <- file.path(f_path, sprintf("barcodes.%s", format_type))
+  f_path_var <- file.path(f_path, sprintf("features.%s", format_type))
+
+  if (
+    (file.exists(f_path_mtx) ||
+      file.exists(f_path_obs) ||
+      file.exists(f_path_var)) &
+      !overwrite
+  ) {
+    stop("The to be written files already exist and overwrite = FALSE.")
+  }
+
+  # extract triplets from dgRMatrix
+  row_idx <- rep(seq_len(nrow(counts)), diff(counts@p))
+  col_idx <- counts@j + 1L
+  values <- counts@x
+
+  if (rows == "cells") {
+    rows_dim <- nrow(counts)
+    cols_dim <- ncol(counts)
+  } else {
+    # swap for genes x cells
+    rows_dim <- ncol(counts)
+    cols_dim <- nrow(counts)
+    temp <- row_idx
+    row_idx <- col_idx
+    col_idx <- temp
+  }
+
+  if (.verbose) {
+    message("Writing the .mtx file to disk.")
+  }
+
+  # write matrix.mtx
+  mtx_file <- file.path(f_path_mtx)
+  con <- file(mtx_file, "w")
+  writeLines("%%MatrixMarket matrix coordinate integer general", con)
+  writeLines(
+    sprintf(
+      "%%Rows=%s (%d), Cols=%s (%d)",
+      ifelse(rows == "cells", "cells", "genes"),
+      rows_dim,
+      ifelse(rows == "cells", "genes", "cells"),
+      cols_dim
+    ),
+    con
+  )
+  writeLines(sprintf("%d %d %d", rows_dim, cols_dim, length(values)), con)
+  writeLines(sprintf("%d %d %d", row_idx, col_idx, as.integer(values)), con)
+  close(con)
+
+  if (.verbose) {
+    message("Writing the obs and var files to disk.")
+  }
+
+  # write barcodes / obs
+  data.table::fwrite(
+    x = obs,
+    file = f_path_obs,
+    sep = ifelse(format_type == "csv", ",", "\t")
+  )
+
+  # write features / var
+  data.table::fwrite(
+    x = var,
+    file = f_path_var,
+    sep = ifelse(format_type == "csv", ",", "\t")
+  )
+
+  invisible()
+}

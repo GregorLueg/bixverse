@@ -237,23 +237,10 @@ fn rs_simulate_dropouts(
 fn rs_synthetic_sc_data_with_cell_types(
     n_cells: usize,
     n_genes: usize,
-    n_background_genes_exp: Vec<i32>,
-    background_exp_range: Vec<i32>,
     cell_configs: List,
     seed: usize,
 ) -> extendr_api::Result<List> {
-    if n_background_genes_exp.len() != 2 {
-        return Err(extendr_api::Error::Other(
-            "n_background_genes_exp must have length 2".into(),
-        ));
-    }
-    if background_exp_range.len() != 2 {
-        return Err(extendr_api::Error::Other(
-            "background_exp_range must have length 2".into(),
-        ));
-    }
     let mut cell_configs_vec = Vec::with_capacity(cell_configs.len());
-
     for i in 0..cell_configs.len() {
         let elem_i = cell_configs.elt(i)?;
         let list_i = elem_i
@@ -263,20 +250,7 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data: (CompressedSparseData<u32>, Vec<usize>) = create_celltype_sparse_csr_data(
-        n_cells,
-        n_genes,
-        cell_configs_vec,
-        (
-            n_background_genes_exp[0] as usize,
-            n_background_genes_exp[1] as usize,
-        ),
-        (
-            background_exp_range[0] as u32,
-            background_exp_range[1] as u32,
-        ),
-        seed,
-    );
+    let synthetic_data = create_celltype_sparse_csr_data(n_cells, n_genes, cell_configs_vec, seed);
 
     Ok(list!(
         data = synthetic_data.0.data,

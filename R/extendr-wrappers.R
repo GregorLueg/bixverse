@@ -585,7 +585,7 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_background_genes_exp, background_exp_range, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_background_genes_exp, background_exp_range, cell_configs, seed)
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, cell_configs, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -1812,7 +1812,7 @@ SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_p
 
 SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, verbose)
+SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
 

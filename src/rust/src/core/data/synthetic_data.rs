@@ -2,7 +2,7 @@ use extendr_api::*;
 use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand_distr::weighted::WeightedAliasIndex;
-use rand_distr::{Beta, Binomial, Distribution, Gamma, Normal, Poisson};
+use rand_distr::{Beta, Binomial, Distribution, Gamma, Normal, Poisson, StandardNormal};
 use rayon::prelude::*;
 
 use crate::core::data::sparse_structures::{CompressedSparseData, CompressedSparseFormat};
@@ -556,14 +556,9 @@ pub fn create_sparse_csr_data(
 ///
 /// * `marker_genes` - Which indices are the marker genes for this specific
 ///   cell type
-/// * `marker_exp_range` - Range of expression of the marker genes with
-///   `(min, max)`.
-/// * `markers_per_cell` - Number of markers per cell.
 #[derive(Clone, Debug)]
 pub struct CellTypeConfig {
     pub marker_genes: Vec<usize>,
-    pub marker_exp_range: (u32, u32),
-    pub markers_per_cell: (usize, usize),
 }
 
 impl CellTypeConfig {
@@ -588,35 +583,7 @@ impl CellTypeConfig {
             .map(|v| v.iter().map(|x| *x as usize).collect())
             .unwrap_or_default();
 
-        let marker_exp_range = map
-            .get("marker_exp_range")
-            .and_then(|v| v.as_integer_vector())
-            .and_then(|v| {
-                if v.len() >= 2 {
-                    Some((v[0] as u32, v[1] as u32))
-                } else {
-                    None
-                }
-            })
-            .unwrap_or((10, 50));
-
-        let markers_per_cell = map
-            .get("markers_per_cell")
-            .and_then(|v| v.as_integer_vector())
-            .and_then(|v| {
-                if v.len() >= 2 {
-                    Some((v[0] as usize, v[1] as usize))
-                } else {
-                    None
-                }
-            })
-            .unwrap_or((2, 4));
-
-        CellTypeConfig {
-            marker_genes,
-            marker_exp_range,
-            markers_per_cell,
-        }
+        CellTypeConfig { marker_genes }
     }
 }
 
@@ -640,8 +607,6 @@ pub fn create_celltype_sparse_csr_data(
     nrow: usize,
     ncol: usize,
     cell_type_configs: Vec<CellTypeConfig>,
-    background_genes_exp: (usize, usize),
-    background_exp_range: (u32, u32),
     seed: usize,
 ) -> (CompressedSparseData<u32>, Vec<usize>) {
     let mut indptr = Vec::with_capacity(nrow + 1);
@@ -649,58 +614,73 @@ pub fn create_celltype_sparse_csr_data(
     let mut data = Vec::with_capacity(nrow * 100);
     let mut cell_type_labels = Vec::with_capacity(nrow);
     indptr.push(0);
+
     let n_cell_types = cell_type_configs.len();
     let mut temp_vec = Vec::with_capacity(ncol);
 
-    // Create weights for background genes - inverse distribution makes genes sparse
-    let weights: Vec<f64> = (1..=ncol).map(|i| 1.0 / i as f64).collect();
-    let alias = WeightedAliasIndex::new(weights).unwrap();
+    let mut gene_rng = StdRng::seed_from_u64(seed as u64);
+    let mut gene_base_mean = vec![0.0; ncol];
+    let mut gene_dispersion = vec![0.0; ncol];
+
+    let mut marker_to_celltype = std::collections::HashMap::new();
+    for (ct_idx, config) in cell_type_configs.iter().enumerate() {
+        for &gene_idx in &config.marker_genes {
+            marker_to_celltype.insert(gene_idx, ct_idx);
+        }
+    }
+
+    for gene_idx in 0..ncol {
+        let u: f64 = gene_rng.random();
+
+        if marker_to_celltype.contains_key(&gene_idx) {
+            gene_base_mean[gene_idx] = 3.0 + u * 8.0;
+            gene_dispersion[gene_idx] = 0.5 + u * 1.5;
+        } else {
+            let exp = (-u * 3.5).exp();
+            gene_base_mean[gene_idx] = 0.5 + exp * 15.0;
+            gene_dispersion[gene_idx] = 0.1 + u * 0.6;
+        }
+    }
 
     for cell_idx in 0..nrow {
         let mut rng = StdRng::seed_from_u64(seed as u64 + cell_idx as u64);
         let cell_type = cell_idx % n_cell_types;
         cell_type_labels.push(cell_type);
-        let config = &cell_type_configs[cell_type];
+
         temp_vec.clear();
 
-        // sample marker genes for this cell type
-        let n_markers = rng.random_range(config.markers_per_cell.0..=config.markers_per_cell.1);
-        let marker_indices: Vec<usize> = config
-            .marker_genes
-            .choose_multiple(&mut rng, n_markers.min(config.marker_genes.len()))
-            .copied()
-            .collect();
+        for gene_idx in 0..ncol {
+            let mut mu = gene_base_mean[gene_idx];
 
-        for &gene_idx in &marker_indices {
-            let count = rng.random_range(config.marker_exp_range.0..=config.marker_exp_range.1);
-            temp_vec.push((gene_idx, count));
-        }
+            if let Some(&marker_ct) = marker_to_celltype.get(&gene_idx) {
+                if marker_ct == cell_type {
+                    mu *= 4.0;
+                } else {
+                    mu *= 0.3;
+                }
+            }
 
-        // sample background genes with weighted distribution
-        let n_background = rng.random_range(background_genes_exp.0..=background_genes_exp.1);
-        for _ in 0..n_background {
-            let gene_idx = alias.sample(&mut rng);
-            if !marker_indices.contains(&gene_idx) {
-                let count = rng.random_range(background_exp_range.0..=background_exp_range.1);
+            let p = gene_dispersion[gene_idx] / (gene_dispersion[gene_idx] + mu);
+            let r = gene_dispersion[gene_idx];
+
+            let shape = r;
+            let scale = (1.0 - p) / p;
+            let gamma_sample = gamma_sample(&mut rng, shape, scale);
+            let lambda = gamma_sample;
+            let count = poisson_sample(&mut rng, lambda);
+
+            if count > 0 {
                 temp_vec.push((gene_idx, count));
             }
         }
 
-        // sort and deduplicate by summing counts
         temp_vec.sort_unstable_by_key(|(gene_idx, _)| *gene_idx);
-        let mut i = 0;
-        while i < temp_vec.len() {
-            let gene_idx = temp_vec[i].0;
-            let mut total_count = temp_vec[i].1;
-            let mut j = i + 1;
-            while j < temp_vec.len() && temp_vec[j].0 == gene_idx {
-                total_count += temp_vec[j].1;
-                j += 1;
-            }
+
+        for &(gene_idx, count) in &temp_vec {
             indices.push(gene_idx);
-            data.push(total_count);
-            i = j;
+            data.push(count);
         }
+
         indptr.push(indices.len());
     }
 
@@ -712,5 +692,65 @@ pub fn create_celltype_sparse_csr_data(
         data_2: None::<Vec<u32>>,
         shape: (nrow, ncol),
     };
+
     (csr, cell_type_labels)
+}
+
+fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {
+    if shape < 1.0 {
+        let u = rng.random::<f64>();
+        return gamma_sample(rng, 1.0 + shape, scale) * u.powf(1.0 / shape);
+    }
+
+    let d = shape - 1.0 / 3.0;
+    let c = 1.0 / (9.0 * d).sqrt();
+
+    loop {
+        let x: f64 = rng.sample(StandardNormal);
+        let v = (1.0 + c * x).powi(3);
+
+        if v > 0.0 {
+            let u = rng.random::<f64>();
+            if u < 1.0 - 0.0331 * x.powi(4) || u.ln() < 0.5 * x.powi(2) + d * (1.0 - v + v.ln()) {
+                return d * v * scale;
+            }
+        }
+    }
+}
+
+fn poisson_sample<R: Rng>(rng: &mut R, lambda: f64) -> u32 {
+    if lambda < 30.0 {
+        let l = (-lambda).exp();
+        let mut k = 0;
+        let mut p = 1.0;
+        loop {
+            k += 1;
+            p *= rng.random::<f64>();
+            if p <= l {
+                return (k - 1) as u32;
+            }
+        }
+    } else {
+        let beta = std::f64::consts::PI / (3.0 * lambda).sqrt();
+        let alpha = beta * lambda;
+        let k = (2.83 + 5.1 / lambda).ln();
+
+        loop {
+            let u = rng.random::<f64>();
+            let x = (alpha - ((1.0 - u) / u).ln()) / beta;
+            let n = (x + 0.5).floor();
+            if n < 0.0 {
+                continue;
+            }
+
+            let v = rng.random::<f64>();
+            let y = alpha - beta * x;
+            let lhs = y + (v / (1.0 + y.exp()).powi(2)).ln();
+            let rhs = k + n * lambda.ln() - (1..=(n as u32)).map(|i| (i as f64).ln()).sum::<f64>();
+
+            if lhs <= rhs {
+                return n as u32;
+            }
+        }
+    }
 }

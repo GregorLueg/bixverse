@@ -361,6 +361,7 @@ impl SingeCellCountData {
     ///
     /// * `mtx_path` - Path to the mtx file.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
     /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
@@ -370,11 +371,12 @@ impl SingeCellCountData {
         &mut self,
         mtx_path: String,
         qc_params: List,
+        cells_as_rows: bool,
         verbose: bool,
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params)
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows)
             .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
 
         let mtx_quality_data = mtx_reader

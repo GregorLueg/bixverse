@@ -48,15 +48,15 @@ pub struct MtxFinalData {
 ///
 /// * `reader` - Buffered reader of the mtx file
 /// * `header` - The header of the mtx file
-/// * `min_genes` - Minimum number of unique genes identified in the cell to
-///   be included in the binarised file.
-/// * `min_lib_size` - Minimum library size in the cell to be included in the
-///   binarised file.
-/// * `target_size` - Target size for the normalised counts.
+/// * `qc_params` - The min quality parameters that genes and cells have to
+///   reach and the target library size
+/// * `cells_as_rows` - Boolean. Are the cells the rows (= true) or columns in
+///   the mtx file.
 pub struct MtxReader {
     reader: BufReader<File>,
     header: MtxHeader,
     qc_params: MinCellQuality,
+    cells_as_rows: bool,
 }
 
 impl MtxReader {
@@ -65,20 +65,25 @@ impl MtxReader {
     /// ### Params
     ///
     /// * `path` - Path to the mtx file.
-    /// * `min_genes` - Minimum number of genes to that have to be found in the
-    ///   cell to be included.
-    /// * `min_lib_size` - Minimum library size in the cell to be included.
-    /// * `target_size` - Target size after normalisation.
-    pub fn new<P: AsRef<Path>>(path: P, qc_params: MinCellQuality) -> IoResult<Self> {
+    /// * `qc_params` - The min quality parameters that genes and cells have to
+    ///   reach and the target library size
+    /// * `cells_as_rows` - Boolean. Are the cells the rows (= true) or columns in
+    ///   the mtx file.
+    pub fn new<P: AsRef<Path>>(
+        path: P,
+        qc_params: MinCellQuality,
+        cells_as_rows: bool,
+    ) -> IoResult<Self> {
         let file = File::open(path)?;
         let mut reader = BufReader::new(file);
 
-        let header = Self::parse_header(&mut reader)?;
+        let header = Self::parse_header(&mut reader, cells_as_rows)?;
 
         Ok(Self {
             reader,
             header,
             qc_params,
+            cells_as_rows,
         })
     }
 
@@ -87,7 +92,7 @@ impl MtxReader {
     /// ### Returns
     ///
     /// The `MtxHeader`
-    fn parse_header(reader: &mut BufReader<File>) -> IoResult<MtxHeader> {
+    fn parse_header(reader: &mut BufReader<File>, cells_as_rows: bool) -> IoResult<MtxHeader> {
         let mut line = String::new();
 
         loop {
@@ -107,13 +112,27 @@ impl MtxReader {
             ));
         }
 
-        let total_cells = parts[0].parse().map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid cell count")
-        })?;
-
-        let total_genes = parts[1].parse().map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid gene count")
-        })?;
+        let (total_cells, total_genes) = if cells_as_rows {
+            // Header format: cells genes entries
+            (
+                parts[0].parse().map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid cell count")
+                })?,
+                parts[1].parse().map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid gene count")
+                })?,
+            )
+        } else {
+            // Header format: genes cells entries
+            (
+                parts[1].parse().map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid cell count")
+                })?,
+                parts[0].parse().map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid gene count")
+                })?,
+            )
+        };
 
         let total_entries = parts[2].parse().map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid entry count")
@@ -128,12 +147,19 @@ impl MtxReader {
 
     /// Helper to parse the file to understand which cells to keep
     ///
+    /// ### Params
+    ///
+    /// * `verbose` - Controls verbosity of the function.
+    ///
     /// ### Returns
     ///
     /// The CellOnFileQuality file containing the indices and mappings
     /// for the cells/genes to keep.
     pub fn parse_mtx_quality(&mut self, verbose: bool) -> IoResult<CellOnFileQuality> {
-        let mut gene_cell_count = vec![0u32; self.header.total_genes];
+        // Track unique cells per gene
+        let mut gene_cells: Vec<FxHashSet<usize>> = (0..self.header.total_genes)
+            .map(|_| FxHashSet::default())
+            .collect();
         let mut line_buffer = Vec::with_capacity(128);
 
         self.reader.rewind()?;
@@ -145,7 +171,7 @@ impl MtxReader {
 
         let first_scan_time = Instant::now();
 
-        // Pass 1: Gene statistics only
+        // Pass 1: Count unique cells per gene
         while {
             line_buffer.clear();
             self.reader.read_until(b'\n', &mut line_buffer)? > 0
@@ -160,17 +186,22 @@ impl MtxReader {
                 line_buffer.pop();
             }
 
-            if let Some((_, col, _)) = parse_mtx_line(&line_buffer) {
-                let gene_idx = (col - 1) as usize;
+            if let Some((row, col, _)) = parse_mtx_line(&line_buffer) {
+                let (cell_idx, gene_idx) = if self.cells_as_rows {
+                    ((row - 1) as usize, (col - 1) as usize)
+                } else {
+                    ((col - 1) as usize, (row - 1) as usize)
+                };
+
                 if gene_idx < self.header.total_genes {
-                    gene_cell_count[gene_idx] += 1;
+                    gene_cells[gene_idx].insert(cell_idx);
                 }
             }
         }
 
-        // Filter genes
+        // Filter genes based on minimum cells
         let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
-            .filter(|&i| gene_cell_count[i] as usize >= self.qc_params.min_cells)
+            .filter(|&i| gene_cells[i].len() >= self.qc_params.min_cells)
             .collect();
 
         let first_scan_end = first_scan_time.elapsed();
@@ -204,8 +235,11 @@ impl MtxReader {
             }
 
             if let Some((row, col, value)) = parse_mtx_line(&line_buffer) {
-                let gene_idx = (col - 1) as usize;
-                let cell_idx = (row - 1) as usize;
+                let (cell_idx, gene_idx) = if self.cells_as_rows {
+                    ((row - 1) as usize, (col - 1) as usize)
+                } else {
+                    ((col - 1) as usize, (row - 1) as usize)
+                };
 
                 if genes_to_keep_set.contains(&gene_idx) && cell_idx < self.header.total_cells {
                     cell_gene_count[cell_idx] += 1;
@@ -222,7 +256,9 @@ impl MtxReader {
             })
             .collect();
 
-        let genes_to_keep: Vec<usize> = genes_to_keep_set.into_iter().collect();
+        let mut genes_to_keep: Vec<usize> = genes_to_keep_set.into_iter().collect();
+        genes_to_keep.sort_unstable();
+
         let mut quality = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
         quality.generate_maps_sets();
 
@@ -249,7 +285,9 @@ impl MtxReader {
     ///
     /// ### Params
     ///
-    /// * `bin_path` - Where to save the binarised file
+    /// * `bin_path` - Where to save the binarised file.
+    /// * `quality` - Structure indicating which cells and genes to keep.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
@@ -269,7 +307,6 @@ impl MtxReader {
             quality.genes_to_keep.len(),
         )?;
 
-        // Collect all data first
         let mut cell_data: Vec<Vec<(u16, u16)>> = vec![Vec::new(); quality.cells_to_keep.len()];
         let mut line_buffer = Vec::with_capacity(64);
 
@@ -301,8 +338,11 @@ impl MtxReader {
                 None => continue,
             };
 
-            let old_gene_idx = (col - 1) as usize;
-            let old_cell_idx = (row - 1) as usize;
+            let (old_cell_idx, old_gene_idx) = if self.cells_as_rows {
+                ((row - 1) as usize, (col - 1) as usize)
+            } else {
+                ((col - 1) as usize, (row - 1) as usize)
+            };
 
             if !quality.genes_to_keep_set.contains(&old_gene_idx)
                 || !quality.cells_to_keep_set.contains(&old_cell_idx)
@@ -316,7 +356,6 @@ impl MtxReader {
             cell_data[new_cell_idx].push((new_gene_idx, value));
         }
 
-        // Write cells in order
         let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());
         let mut nnz = Vec::with_capacity(quality.cells_to_keep.len());
 
@@ -344,11 +383,6 @@ impl MtxReader {
                 true,
             );
             writer.write_cell_chunk(cell_chunk)?;
-        }
-
-        let mut to_include = vec![false; self.header.total_cells];
-        for &cell_idx in &quality.cells_to_keep {
-            to_include[cell_idx] = true;
         }
 
         writer.finalise()?;

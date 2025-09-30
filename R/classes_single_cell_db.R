@@ -395,7 +395,7 @@ single_cell_duckdb_base <- R6::R6Class(
       res <- "obs" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
 
       if (!res) {
-        error("Obs table was not found in the DB.")
+        stop("Obs table was not found in the DB.")
       }
     },
     # Helper to check that var table exists
@@ -412,7 +412,7 @@ single_cell_duckdb_base <- R6::R6Class(
       res <- "var" %in% DBI::dbGetQuery(con, "SHOW TABLES")[, "name"]
 
       if (!res) {
-        error("Obs table was not found in the DB.")
+        stop("Obs table was not found in the DB.")
       }
     },
     # Check number of rows in the obs table
@@ -493,7 +493,7 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(obs) == 0) {
-        error(
+        stop(
           "No obs data could be found in the h5 file. Nothing was loaded."
         )
       }
@@ -584,7 +584,7 @@ single_cell_duckdb_con <- R6::R6Class(
       ]
 
       if (length(var) == 0) {
-        error(
+        stop(
           "No var data could be found in the h5 file. Nothing was loaded."
         )
       }
@@ -638,7 +638,7 @@ single_cell_duckdb_con <- R6::R6Class(
               'CREATE TABLE var_new AS
               SELECT var.*, temp_col.%s
               FROM var
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx;
+              JOIN temp_col ON var.gene_idx = temp_col.gene_idx;
               DROP table var;
               ALTER TABLE var_new RENAME TO var;
               DROP TABLE temp_col',
@@ -675,7 +675,17 @@ single_cell_duckdb_con <- R6::R6Class(
         }
       )
 
-      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+      # detect delimiter from file extension
+      delimiter <- if (grepl("\\.tsv$", f_path, ignore.case = TRUE)) {
+        "'\t'"
+      } else {
+        "','"
+      }
+
+      header_query <- sprintf(
+        "SELECT * FROM read_csv(?, delim=%s) LIMIT 0",
+        delimiter
+      )
 
       header_df <- DBI::dbGetQuery(
         conn = con,
@@ -707,10 +717,11 @@ single_cell_duckdb_con <- R6::R6Class(
             %s
           FROM (
             SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?)
+            FROM read_csv(?, delim=%s)
           ) t
           WHERE t.original_row_num IN (%s)",
           col_mapping,
+          delimiter,
           row_placeholders
         )
       } else {
@@ -721,9 +732,10 @@ single_cell_duckdb_con <- R6::R6Class(
             ROW_NUMBER() OVER() as cell_idx,
             %s
           FROM (
-            SELECT * FROM read_csv(?)
+            SELECT * FROM read_csv(?, delim=%s)
           )",
-          col_mapping
+          col_mapping,
+          delimiter
         )
       }
 
@@ -743,7 +755,6 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @returns Invisible self and populates the internal var table.
     populate_var_from_plain_text = function(f_path, filter = NULL) {
-      # checks
       checkmate::assertFileExists(f_path)
       checkmate::qassert(filter, c("I+", "0"))
 
@@ -756,7 +767,17 @@ single_cell_duckdb_con <- R6::R6Class(
         }
       )
 
-      header_query <- "SELECT * FROM read_csv(?) LIMIT 0"
+      # Detect delimiter from file extension
+      delimiter <- if (grepl("\\.tsv$", f_path, ignore.case = TRUE)) {
+        "'\t'"
+      } else {
+        "','"
+      }
+
+      header_query <- sprintf(
+        "SELECT * FROM read_csv(?, delim=%s) LIMIT 0",
+        delimiter
+      )
 
       header_df <- DBI::dbGetQuery(
         conn = con,
@@ -788,10 +809,11 @@ single_cell_duckdb_con <- R6::R6Class(
             %s
           FROM (
             SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?)
+            FROM read_csv(?, delim=%s)
           ) t
           WHERE t.original_row_num IN (%s)",
           col_mapping,
+          delimiter,
           row_placeholders
         )
       } else {
@@ -802,9 +824,10 @@ single_cell_duckdb_con <- R6::R6Class(
             ROW_NUMBER() OVER() AS gene_idx,
             %s
           FROM (
-            SELECT * FROM read_csv(?)
+            SELECT * FROM read_csv(?, delim=%s)
           )",
-          col_mapping
+          col_mapping,
+          delimiter
         )
       }
 

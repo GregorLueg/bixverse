@@ -229,7 +229,7 @@ fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, 
         })
         .sum::<f32>();
 
-    let var = (sum_sq_diff + n_zero * mean * mean) / no_cells;
+    let var = (sum_sq_diff + n_zero * mean * mean) / (no_cells);
 
     (mean, var)
 }
@@ -244,6 +244,10 @@ fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, 
 /// * `expected_var` - Expected variance based on the Loess function
 /// * `clip_max` - Which values to clip
 /// * `no_cells` - The number of represented cells
+///
+/// ### Returns
+///
+/// The standardised variance
 #[inline]
 fn calculate_std_variance(
     chunk: &CscGeneChunk,
@@ -340,7 +344,7 @@ pub fn get_hvg_vst(
     let means_log10: Vec<f32> = means.iter().map(|x| x.log10()).collect();
     let vars_log10: Vec<f32> = vars.iter().map(|x| x.log10()).collect();
 
-    let loess = LoessRegression::new(loess_span, 1);
+    let loess = LoessRegression::new(loess_span, 2);
     let loess_res = loess.fit(&means_log10, &vars_log10);
 
     let end_loess = start_loess.elapsed();

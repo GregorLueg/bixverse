@@ -10,6 +10,7 @@ get_sc_counts(
   return_format = c("cell", "gene"),
   cell_indices = NULL,
   gene_indices = NULL,
+  use_cells_to_keep = FALSE,
   .verbose = TRUE
 )
 }
@@ -26,6 +27,11 @@ Defaults to \code{"cell"}.}
 \item{cell_indices}{Optional cell indices.}
 
 \item{gene_indices}{Optional gene indices.}
+
+\item{use_cells_to_keep}{Boolean. Shall cells to keep be found in the class,
+shall the counts be reduced to these.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 The obs table
