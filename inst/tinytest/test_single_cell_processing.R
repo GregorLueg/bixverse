@@ -63,6 +63,28 @@ sc_object <- load_h5ad(
 
 # tests ------------------------------------------------------------------------
 
+## function warnings -----------------------------------------------------------
+
+expect_warning(
+  current = find_hvg_sc(sc_object),
+  info = "warning that no cells to keep were specified"
+)
+
+expect_warning(
+  current = calculate_pca_sc(sc_object, no_pcs = 10L),
+  info = "warning that no HVGs are detected"
+)
+
+expect_warning(
+  current = find_neigbours_single_sc(sc_object),
+  info = "warning that no PCA data are detected"
+)
+
+expect_warning(
+  current = find_clusters_sc(sc_object),
+  info = "warning that no kNN/sNN data was found"
+)
+
 ## gene set proportions --------------------------------------------------------
 
 gs_of_interest <- list(
@@ -97,6 +119,18 @@ expect_equivalent(
   info = "gene proportion calculations gene set 2"
 )
 
+# rerun and test that columns are not duplicated
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(!c("gs_1.1", "gs_2.1") %in% colnames(sc_object[[]])),
+  info = "overwriting of obs data works"
+)
+
 ## cells to keep logic ---------------------------------------------------------
 
 threshold <- 0.05
@@ -109,6 +143,11 @@ expect_true(
 )
 
 sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+
+expect_true(
+  current = all(unlist(sc_object[["cell_id"]]) == cells_to_keep),
+  info = "setting genes to keep removes them from the obs table"
+)
 
 counts_more_filtered <- counts_filtered[which(props_gs_2 < threshold), ]
 
@@ -269,6 +308,11 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
     .verbose = FALSE
   )
 
+  expect_true(
+    current = class(get_snn_graph(sc_object)) == "igraph",
+    info = "igraph correctly returned"
+  )
+
   bioc_knn <- BiocNeighbors::findKNN(
     X = get_pca_factors(sc_object),
     k = 15L
@@ -311,11 +355,65 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
   expect_equal(
     current = bixverse_snn$edges + 1,
     target = bluster_snn$edges,
-    info = "sNN full generation between bluster and bixverse - edges"
+    info = "sNN full generation (rank) between bluster and bixverse - edges"
   )
 
   expect_true(
     current = cor(bixverse_snn$weights, bluster_snn$weights) >= 0.99,
-    info = "sNN full generation between bluster and bixverse - weights"
+    info = "sNN full generation (rank) between bluster and bixverse - weights"
+  )
+
+  bluster_snn <- bluster:::build_snn_graph(
+    t(bioc_knn),
+    "jaccard",
+    num_threads = 1
+  )
+
+  bixverse_snn <- rs_sc_snn(
+    sc_object@sc_cache$knn_matrix,
+    snn_method = "jaccard",
+    limited_graph = FALSE,
+    pruning = 0,
+    verbose = FALSE
+  )
+
+  expect_equal(
+    current = bixverse_snn$edges + 1,
+    target = bluster_snn$edges,
+    info = "sNN full generation (jaccard) between bluster and bixverse - edges"
+  )
+
+  expect_true(
+    current = cor(bixverse_snn$weights, bluster_snn$weights) >= 0.99,
+    info = "sNN full generation (jaccard) between bluster and bixverse - weights"
   )
 }
+
+## community detection ---------------------------------------------------------
+
+sc_object <- find_clusters_sc(sc_object)
+
+cell_grps <- unlist(sc_object[["obs_cell_grp"]])
+leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+
+cm <- table(cell_grps, leiden_clusters)
+
+best_match <- apply(cm, 1, which.max)
+
+f1_scores <- sapply(seq_len(nrow(cm)), function(i) {
+  tp <- cm[i, best_match[i]]
+  fp <- sum(cm[, best_match[i]]) - tp
+  fn <- sum(cm[i, ]) - tp
+
+  precision <- tp / (tp + fp)
+  recall <- tp / (tp + fn)
+
+  2 * precision * recall / (precision + recall)
+})
+
+names(f1_scores) <- rownames(cm)
+
+expect_true(
+  current = all(f1_scores > 0.95),
+  info = "leiden clustering identifies the cell groups"
+)

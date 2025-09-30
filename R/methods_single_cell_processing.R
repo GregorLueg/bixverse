@@ -384,6 +384,14 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
   assertScHvg(hvg_params)
   checkmate::qassert(.verbose, "B1")
 
+  if (length(get_cells_to_keep(object)) == 0) {
+    warning(paste(
+      "You need to set the cells to keep with set_cell_to_keep().",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+
   res <- with(
     hvg_params,
     rs_sc_hvg(
@@ -567,6 +575,18 @@ S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
   # get the embedding
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
 
+  # early return
+  if (is.null(embd)) {
+    warning(
+      paste(
+        "The desired embedding was not found. Please check what you are doing",
+        "Returning class as is"
+      )
+    )
+
+    return(object)
+  }
+
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
     embd <- embd[, 1:to_take]
@@ -625,3 +645,70 @@ S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
 }
 
 ### clustering -----------------------------------------------------------------
+
+#' Graph-based clustering of cells on the sNN graph
+#'
+#' @description
+#' This function will apply Leiden clustering on the sNN graph with the
+#' given resolution and add a column to the obs table.
+#'
+#' @param object `single_cell_exp` class.
+#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
+#' @param name String. The name to add to the obs table in the DuckDB.
+#'
+#' @return The object with added clustering in the obs table.
+#'
+#' @export
+find_clusters_sc <- S7::new_generic(
+  name = "find_clusters_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    res = 1,
+    name = "leiden_clustering"
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_clusters_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(find_clusters_sc, single_cell_exp) <- function(
+  object,
+  res = 1,
+  name = "leiden_clustering"
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(res, "N1")
+  checkmate::qassert(name, "S1")
+
+  snn_graph <- get_snn_graph(object)
+
+  if (is.null(snn_graph)) {
+    warning(paste(
+      "No sNN graph found. Did you run find_neigbours_single_sc()",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+
+  leiden_clusters <- igraph::cluster_leiden(
+    snn_graph,
+    objective_function = "modularity",
+    resolution = res
+  )
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  new_data <- data.table::data.table(new_data = leiden_clusters$membership)
+  data.table::setnames(new_data, "new_data", name)
+
+  duckdb_con$add_data_obs(new_data = new_data)
+
+  return(object)
+}

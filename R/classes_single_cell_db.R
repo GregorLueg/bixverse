@@ -194,7 +194,7 @@ single_cell_duckdb_base <- R6::R6Class(
     #' table.
     filter_obs_table = function(filter_vec) {
       # checks
-      checkmate::qassert(filter_vec, "B1")
+      checkmate::qassert(filter_vec, "B+")
       private$check_obs_exists()
 
       filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
@@ -211,7 +211,7 @@ single_cell_duckdb_base <- R6::R6Class(
 
       DBI::dbWriteTable(
         con,
-        "filter_temp",
+        "temp_filter",
         filter_dt,
         overwrite = TRUE
       )
@@ -224,8 +224,8 @@ single_cell_duckdb_base <- R6::R6Class(
           ROW_NUMBER() OVER() as cell_idx,
           * EXCLUDE (cell_idx)  -- exclude old cell_idx column
         FROM obs 
-        WHERE ROWID IN (SELECT cell_idx FROM temp_filter);
-        DROP TABLE filter_temp
+        WHERE cell_idx IN (SELECT cell_idx FROM temp_filter);
+        DROP TABLE temp_filter
         "
       )
     },
@@ -236,7 +236,7 @@ single_cell_duckdb_base <- R6::R6Class(
     #' table.
     filter_var_table = function(filter_vec) {
       # checks
-      checkmate::qassert(filter_vec, "B1")
+      checkmate::qassert(filter_vec, "B+")
       private$check_var_exists()
 
       filter_dt <- data.frame(gene_idx = which(filter_vec), keep = TRUE)
@@ -253,7 +253,7 @@ single_cell_duckdb_base <- R6::R6Class(
 
       DBI::dbWriteTable(
         con,
-        "filter_temp",
+        "temp_filter",
         filter_dt,
         overwrite = TRUE
       )
@@ -266,8 +266,8 @@ single_cell_duckdb_base <- R6::R6Class(
           ROW_NUMBER() OVER() as gene_idx,
           * EXCLUDE (gene_idx)  -- exclude old gene_idx column
         FROM var 
-        WHERE ROWID IN (SELECT gene_idx FROM temp_filter);
-        DROP TABLE filter_temp
+        WHERE gene_idx IN (SELECT gene_idx FROM temp_filter);
+        DROP TABLE temp_filter
         "
       )
     },
@@ -285,41 +285,47 @@ single_cell_duckdb_base <- R6::R6Class(
     #' @return Invisible self while adding the new columns to the obs table
     #' in the DuckDB.
     add_data_obs = function(new_data) {
-      # checks
       checkmate::assertDataTable(new_data)
       private$check_obs_exists()
       checkmate::assertTRUE(nrow(new_data) == private$check_obs_row())
 
-      # add the data
       con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
         }
-      )
+      })
 
       new_data[, cell_idx := .I]
+      DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
 
-      DBI::dbWriteTable(
+      existing_cols <- DBI::dbGetQuery(
         con,
-        "new_data",
-        new_data,
-        overwrite = TRUE
-      )
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
+      )$column_name
+      new_cols <- setdiff(names(new_data), "cell_idx")
+      cols_to_exclude <- intersect(existing_cols, new_cols)
+
+      exclude_clause <- if (length(cols_to_exclude) > 0) {
+        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+      } else {
+        ""
+      }
 
       DBI::dbExecute(
         con,
-        "
-        CREATE OR REPLACE TABLE obs AS
-        SELECT
-          original.*,
-          new_data.* EXCLUDE(cell_idx)
-        FROM obs AS original
-        JOIN new_data ON original.cell_idx = new_data.cell_idx;
-        DROP TABLE new_data
-        "
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT
+            original.*%s,
+            new_data.* EXCLUDE(cell_idx)
+          FROM obs AS original
+          JOIN new_data ON original.cell_idx = new_data.cell_idx;
+          DROP TABLE new_data
+          ",
+          exclude_clause
+        )
       )
 
       invisible(self)
@@ -339,36 +345,43 @@ single_cell_duckdb_base <- R6::R6Class(
       private$check_obs_exists()
       checkmate::assertTRUE(nrow(new_data) == private$check_var_row())
 
-      # add the data
       con <- private$connect_db()
-      on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
         }
-      )
+      })
 
       new_data[, gene_idx := .I]
+      DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
 
-      DBI::dbWriteTable(
+      existing_cols <- DBI::dbGetQuery(
         con,
-        "new_data",
-        new_data,
-        overwrite = TRUE
-      )
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'var'"
+      )$column_name
+      new_cols <- setdiff(names(new_data), "gene_idx")
+      cols_to_exclude <- intersect(existing_cols, new_cols)
+
+      exclude_clause <- if (length(cols_to_exclude) > 0) {
+        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+      } else {
+        ""
+      }
 
       DBI::dbExecute(
         con,
-        "
-        CREATE OR REPLACE TABLE var AS
-        SELECT
-          original.*,
-          new_data.* EXCLUDE(gene_idx)
-        FROM var AS original
-        JOIN new_data ON original.gene_idx = new_data.gene_idx;
-        DROP TABLE new_data
-        "
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE var AS
+          SELECT
+            original.*%s,
+            new_data.* EXCLUDE(gene_idx)
+          FROM var AS original
+          JOIN new_data ON original.gene_idx = new_data.gene_idx;
+          DROP TABLE new_data
+          ",
+          exclude_clause
+        )
       )
 
       invisible(self)

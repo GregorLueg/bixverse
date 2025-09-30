@@ -1509,6 +1509,13 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
     cells_to_keep = cells_to_keep
   )
 
+  # remove the cells from the obs table
+  duckdb_con <- get_sc_duckdb(x)
+
+  to_keep <- get_cell_names(x) %in% cells_to_keep
+
+  duckdb_con$filter_obs_table(filter_vec = to_keep)
+
   return(x)
 }
 
