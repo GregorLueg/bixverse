@@ -594,10 +594,6 @@ impl CellTypeConfig {
 /// * `nrow` - Number of rows (cells).
 /// * `ncol` - Number of columns (genes).
 /// * `cell_type_configs` - A vector of cell type configurations.
-/// * `background_genes_exp` - The number of background genes to express per
-///   cell type.
-/// * `background_exp_range` - The range of the expression in the background
-///   genes.
 /// * `seed` - Integer for reproducibility purposes
 ///
 /// ### Returns

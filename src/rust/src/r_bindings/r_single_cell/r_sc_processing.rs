@@ -1,6 +1,5 @@
 use extendr_api::prelude::*;
 use faer::Mat;
-use rustc_hash::FxHashSet;
 use std::time::Instant;
 
 use crate::single_cell::processing::*;
@@ -129,7 +128,10 @@ fn rs_sc_hvg(
     clip_max: Option<f32>,
     verbose: bool,
 ) -> List {
-    let cell_set: FxHashSet<u32> = cell_indices.iter().map(|x| *x as u32).collect();
+    let cell_set = cell_indices
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
     let hvg_type = get_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
@@ -184,13 +186,19 @@ fn rs_sc_pca(
     seed: usize,
     verbose: bool,
 ) -> List {
-    let cell_set: FxHashSet<u32> = cell_indices.iter().map(|x| *x as u32).collect();
-    let gene_indices = gene_indices.iter().map(|x| *x as usize).collect();
+    let cell_set = cell_indices
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
+    let gene_indices = gene_indices
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
 
     let res = pca_on_sc(
         f_path_gene,
         &cell_set,
-        gene_indices,
+        &gene_indices,
         no_pcs,
         random_svd,
         seed,

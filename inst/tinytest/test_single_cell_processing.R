@@ -16,8 +16,8 @@ write_h5ad_sc(
 
 # thresholds
 # absurd numbers, but this is due to the synthetic data
-min_lib_size <- 500L
-min_genes_exp <- 55L
+min_lib_size <- 300L
+min_genes_exp <- 45L
 min_cells_exp <- 500L
 
 genes_pass <- which(
@@ -29,6 +29,16 @@ cells_pass <- which(
     min_lib_size) &
     (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
       min_genes_exp)
+)
+
+expect_true(
+  current = length(genes_pass) > 80 & length(genes_pass) != 100,
+  info = "sc processing - sensible amount of genes pass"
+)
+
+expect_true(
+  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
+  info = "sc processing - sensible amount of cells pass"
 )
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
@@ -89,15 +99,22 @@ expect_equivalent(
 
 ## cells to keep logic ---------------------------------------------------------
 
-cells_to_keep <- sc_object[[]][gs_2 == 0, cell_id]
+threshold <- 0.05
+
+cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
+
+expect_true(
+  current = length(cells_to_keep) > 600,
+  info = "sensible cell filtering based on the threshold"
+)
 
 sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
 
-counts_more_filtered <- counts_filtered[which(props_gs_2 == 0), ]
+counts_more_filtered <- counts_filtered[which(props_gs_2 < threshold), ]
 
 expect_equivalent(
   current = get_cells_to_keep(sc_object),
-  target = which(props_gs_2 == 0) - 1, # zero indexed in Rust
+  target = which(props_gs_2 < threshold) - 1, # zero indexed in Rust
   info = "cell to keep logic"
 )
 
@@ -193,3 +210,112 @@ expect_true(
   current = length(intersect(hvg_r, hvg_rs)) == 25L,
   info = "Overlap in the detected HVGs"
 )
+
+## pca -------------------------------------------------------------------------
+
+### r --------------------------------------------------------------------------
+
+pca_input <- as.matrix(sc_object[,
+  as.integer(hvg_r + 1),
+  assay = "norm",
+  return_type = "gene",
+  use_cells_to_keep = TRUE
+])
+
+pca_r <- prcomp(pca_input, scale. = TRUE)
+
+### rust -----------------------------------------------------------------------
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 10L,
+  randomised_svd = FALSE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
+    rep(1, 10),
+    tolerance = 1e-8
+  ),
+  info = "PCA on single cell data compared to R"
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 10L,
+  randomised_svd = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
+    rep(1, 10),
+    tolerance = 1e-8
+  ),
+  info = "PCA on single cell data compared to R (randomised SVD)"
+)
+
+## knn and snn -----------------------------------------------------------------
+
+if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
+  # annoy algorithm
+
+  sc_object <- find_neigbours_single_sc(
+    sc_object,
+    neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
+    .verbose = FALSE
+  )
+
+  bioc_knn <- BiocNeighbors::findKNN(
+    X = get_pca_factors(sc_object),
+    k = 15L
+  )$index
+
+  expect_true(
+    current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
+      (dim(bioc_knn)[1] *
+        dim(bioc_knn)[2])) >=
+      0.99,
+    info = "kNN overlap with BiocNeighbors >= 0.99 - annoy algorithm"
+  )
+
+  # hnsw
+  sc_object <- find_neigbours_single_sc(
+    sc_object,
+    neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
+    .verbose = FALSE
+  )
+
+  expect_true(
+    current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
+      (dim(bioc_knn)[1] *
+        dim(bioc_knn)[2])) >=
+      0.99,
+    info = "kNN overlap with BiocNeighbors >= 0.99 - hnsw"
+  )
+
+  # snn generation
+  bluster_snn <- bluster:::build_snn_graph(t(bioc_knn), "rank", num_threads = 1)
+
+  bixverse_snn <- rs_sc_snn(
+    sc_object@sc_cache$knn_matrix,
+    snn_method = "rank",
+    limited_graph = FALSE,
+    pruning = 0,
+    verbose = FALSE
+  )
+
+  expect_equal(
+    current = bixverse_snn$edges + 1,
+    target = bluster_snn$edges,
+    info = "sNN full generation between bluster and bixverse - edges"
+  )
+
+  expect_true(
+    current = cor(bixverse_snn$weights, bluster_snn$weights) >= 0.99,
+    info = "sNN full generation between bluster and bixverse - weights"
+  )
+}

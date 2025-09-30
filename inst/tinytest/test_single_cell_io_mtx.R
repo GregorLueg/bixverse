@@ -10,6 +10,8 @@ f_path_v2 <- file.path(tempdir(), "genes_tsv")
 dir.create(f_path_v1, showWarnings = FALSE, recursive = TRUE)
 dir.create(f_path_v2, showWarnings = FALSE, recursive = TRUE)
 
+counts_csc <- as(single_cell_test_data$counts, "CsparseMatrix")
+
 # save a version with rows = cells and format type csv for the rest
 
 write_cellranger_output(
@@ -38,8 +40,8 @@ write_cellranger_output(
 
 # thresholds
 # absurd numbers, but this is due to the synthetic data
-min_lib_size <- 500L
-min_genes_exp <- 55L
+min_lib_size <- 300L
+min_genes_exp <- 45L
 min_cells_exp <- 500L
 
 genes_pass <- which(
@@ -51,6 +53,16 @@ cells_pass <- which(
     min_lib_size) &
     (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
       min_genes_exp)
+)
+
+expect_true(
+  current = length(genes_pass) > 80 & length(genes_pass) != 100,
+  info = "mtx - sensible amount of genes pass"
+)
+
+expect_true(
+  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
+  info = "mtx - sensible amount of cells pass"
 )
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
@@ -175,26 +187,26 @@ sc_object <- load_mtx(
 obs_table_obj <- sc_object[[]]
 
 expect_equal(
-  current = obs_object$cell_id,
+  current = obs_table_obj$cell_id,
   target = obs_filtered$cell_id,
   info = "obs table from csv (from object) - correct cells kept"
 )
 
 expect_equal(
-  current = obs_object$obs_cell_grp,
+  current = obs_table_obj$cell_grp,
   target = obs_filtered$cell_grp,
   info = "obs table from csv (from object) - cell group correct"
 )
 
 expect_equivalent(
-  current = Matrix::rowSums(counts_filtered),
-  target = obs_object$lib_size,
+  current = obs_table_obj$lib_size,
+  target = Matrix::rowSums(counts_filtered),
   info = "obs table from csv (from object) - library size correct"
 )
 
 expect_equivalent(
-  current = Matrix::rowSums(counts_filtered != 0),
-  target = obs_object$nnz,
+  current = obs_table_obj$nnz,
+  target = Matrix::rowSums(counts_filtered != 0),
   info = "obs table from csv (from object) - nnz correct"
 )
 
@@ -344,26 +356,26 @@ sc_object <- load_mtx(
 obs_table_obj <- sc_object[[]]
 
 expect_equal(
-  current = obs_object$cell_id,
+  current = obs_table_obj$cell_id,
   target = obs_filtered$cell_id,
   info = "obs table from csv (from object) - correct cells kept"
 )
 
 expect_equal(
-  current = obs_object$obs_cell_grp,
+  current = obs_table_obj$cell_grp,
   target = obs_filtered$cell_grp,
   info = "obs table from csv (from object) - cell group correct"
 )
 
 expect_equivalent(
-  current = Matrix::rowSums(counts_filtered),
-  target = obs_object$lib_size,
+  current = obs_table_obj$lib_size,
+  target = Matrix::rowSums(counts_filtered),
   info = "obs table from csv (from object) - library size correct"
 )
 
 expect_equivalent(
-  current = Matrix::rowSums(counts_filtered != 0),
-  target = obs_object$nnz,
+  current = obs_table_obj$nnz,
+  target = Matrix::rowSums(counts_filtered != 0),
   info = "obs table from csv (from object) - nnz correct"
 )
 

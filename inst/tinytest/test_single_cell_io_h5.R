@@ -132,10 +132,9 @@ expect_true(
 
 # thresholds
 # absurd numbers, but this is due to the synthetic data
-min_lib_size <- 500L
-min_genes_exp <- 55L
+min_lib_size <- 300L
+min_genes_exp <- 45L
 min_cells_exp <- 500L
-
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
@@ -146,6 +145,16 @@ cells_pass <- which(
     min_lib_size) &
     (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
       min_genes_exp)
+)
+
+expect_true(
+  current = length(genes_pass) > 80 & length(genes_pass) != 100,
+  info = "h5 - sensible amount of genes pass"
+)
+
+expect_true(
+  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
+  info = "h5 - sensible amount of cells pass"
 )
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
