@@ -33,8 +33,8 @@ correlation graph, see \code{\link[=params_cor_graph]{params_cor_graph()}}. Cont
 \item Epsilon - Defines the epsilon parameter for the radial basis
 function. Defaults to 1, but should be ideally optimised.
 \item min_cor - Float. Minimum absolute correlation that needs to be
-observed in either data set. Only relevant for differential correlation-based
-graphs.
+observed in either data set. Only relevant for differential
+correlation-based graphs.
 \item fdr_threshold - Float. Maximum FDR for the differential correlation
 p-value.
 \item verbose - Boolean. Controls verbosity of the graph generation.
@@ -68,5 +68,6 @@ the defined minimum thresholds.\cr
 Subsequently, Leiden community detection is applied on the respective graph
 through a range of resolutions that the user can define. The function then
 returns meta information about the resolutions (which can also be plotted) to
-identify the best suitable resolution parameter to identify co-expression modules.
+identify the best suitable resolution parameter to identify co-expression
+modules.
 }

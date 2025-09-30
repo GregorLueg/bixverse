@@ -39,8 +39,7 @@ qc_bulk_dge <- S7::new_generic(
     outlier_threshold = 2,
     min_prop = 0.2,
     min_count = 10,
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -58,8 +57,7 @@ S7::method(qc_bulk_dge, bulk_dge) <- function(
   outlier_threshold = 2,
   min_prop = 0.2,
   min_count = 10,
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   # Scope checks
   . <- `:=` <- NULL
@@ -195,8 +193,7 @@ normalise_bulk_dge <- S7::new_generic(
     calc_tpm = FALSE,
     calc_fpkm = FALSE,
     gene_lengths = NULL,
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -215,8 +212,7 @@ S7::method(normalise_bulk_dge, bulk_dge) <- function(
   calc_tpm = FALSE,
   calc_fpkm = FALSE,
   gene_lengths = NULL,
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   norm_method <- match.arg(norm_method)
 
@@ -348,8 +344,7 @@ preprocess_bulk_coexp <- S7::new_generic(
     mad_threshold = NULL,
     scaling = FALSE,
     scaling_type = c("normal", "robust"),
-    .verbose = TRUE,
-    ...
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
@@ -364,8 +359,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   mad_threshold = NULL,
   scaling = FALSE,
   scaling_type = c("normal", "robust"),
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 ) {
   # Scope checks
   feature_name <- MAD <- NULL
@@ -777,36 +771,6 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   ) +
     ggplot2::ggtitle("Post batch correction")
 
-  # ggplot2::ggplot(
-  #   data = pca_dt_uncor,
-  #   mapping = aes(x = PC_1, y = PC_2)
-  # ) +
-  #   ggplot2::geom_point(
-  #     mapping = aes(col = .data[[contrast_column]]),
-  #     size = 3,
-  #     alpha = 0.7
-  #   ) +
-  #   ggplot2::theme_bw() +
-  #   ggplot2::ggtitle("Pre batch correction") +
-  #   ggplot2::xlab("PC1") +
-  #   ggplot2::ylab("PC2") +
-  #   ggplot2::theme(legend.position = "none")
-
-  # plot_cor <- ggplot2::ggplot(
-  #   data = pca_dt_cor,
-  #   mapping = aes(x = PC_1, y = PC_2)
-  # ) +
-  #   ggplot2::geom_point(
-  #     mapping = aes(col = .data[[contrast_column]]),
-  #     size = 3,
-  #     alpha = 0.7
-  #   ) +
-  #   ggplot2::theme_bw() +
-  #   ggplot2::ggtitle("Post batch correction") +
-  #   ggplot2::xlab("PC1") +
-  #   ggplot2::ylab("PC2") +
-  #   ggplot2::theme(legend.position = "bottom")
-
   p6_batch_correction_plot <- plot_uncor +
     plot_cor +
     patchwork::plot_annotation(
@@ -1152,4 +1116,136 @@ S7::method(calculate_dge_hedges, bulk_dge) <- function(
   S7::prop(object, "params")[["effect_size_dge"]] <- dge_params
 
   return(object)
+}
+
+# deprecated methods -----------------------------------------------------------
+
+## qc --------------------------------------------------------------------------
+
+#' QC on the bulk dge data (DEPRECATED!)
+#'
+#' @description
+#' This is a deprecated method and will raise an error. Please use
+#' [bixverse::qc_bulk_dge()] and [bixverse::normalise_bulk_dge()] instead.
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param group_col String. The column in the metadata that will contain the
+#' contrast groups. Needs to be part of the metadata stored in the class.
+#' @param norm_method String. One of
+#' `c("TMM", "TMMwsp", "RLE", "upperquartile", "none")`. Please refer to
+#' [edgeR::normLibSizes()].
+#' @param outlier_threshold Float. Number of standard deviations in terms of
+#' percentage genes detected you allow before removing a sample. Defaults to `2`.
+#' @param min_prop Float. Minimum proportion of samples in which the gene has
+#' to be identified in.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return Throws an error, as it is deprecated.
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+preprocess_bulk_dge <- S7::new_generic(
+  "preprocess_bulk_dge",
+  "object",
+  fun = function(
+    object,
+    group_col,
+    norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+    outlier_threshold = 2,
+    min_prop = 0.2,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method preprocess_bulk_dge bulk_dge
+#'
+#' @import ggplot2
+#'
+#' @export
+S7::method(preprocess_bulk_dge, bulk_dge) <- function(
+  object,
+  group_col,
+  norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
+  outlier_threshold = 2,
+  min_prop = 0.2,
+  .verbose = TRUE
+) {
+  stop(paste(
+    "This function has been depracated.",
+    "Please use qc_bulk_dge() and normalise_bulk_dge() instead."
+  ))
+}
+
+## dge -------------------------------------------------------------------------
+
+#' Calculate all possible DGE variants (DEPRECATED!)
+#'
+#' @description
+#' This is a deprecated method and will raise an error. Please use
+#' [bixverse::calculate_dge_limma()] and [bixverse::calculate_dge_hedges()].
+#'
+#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param contrast_column String. The contrast column in which the groupings
+#' are stored. Needs to be found in the meta_data within the properties.
+#' @param filter_column Optional String. If there is a column you wish to use as
+#' sub groupings, this can be provided here. An example could be different
+#' sampled tissues and you wish to run the DGE analyses within each tissue
+#' separately.
+#' @param co_variates Optional string vector. Any co-variates you wish to
+#' consider during the Limma Voom modelling.
+#' @param contrast_list Optional string vector. A vectors that contains the
+#' contrast formatted as `"contrast1-contrast2"`. Default `NULL` will create
+#' all possible contrast automatically.
+#' @param ... Additional parameters to forward to [limma::eBayes()] or
+#' [limma::voom()].
+#' @param small_sample_correction Can be NULL (automatic determination if a
+#' small sample size correction should be applied) or a Boolean.
+#' @param .verbose Controls verbosity of the function.
+#'
+#' @return Throws an error, as it is deprecated.
+#'
+#' @export
+calculate_all_dges <- S7::new_generic(
+  "calculate_all_dges",
+  "object",
+  fun = function(
+    object,
+    contrast_column,
+    contrast_list = NULL,
+    filter_column = NULL,
+    co_variates = NULL,
+    small_sample_correction = NULL,
+    ...,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_all_dges bulk_dge
+#'
+#' @export
+#'
+#' @import data.table
+#' @importFrom magrittr `%>%`
+#' @importFrom magrittr `%$%`
+S7::method(calculate_all_dges, bulk_dge) <- function(
+  object,
+  contrast_column,
+  contrast_list = NULL,
+  filter_column = NULL,
+  co_variates = NULL,
+  small_sample_correction = NULL,
+  ...,
+  .verbose = TRUE
+) {
+  stop(paste(
+    "This function has been depracated.",
+    "Please use calculate_dge_limma() and calculate_dge_hedges() instead."
+  ))
 }

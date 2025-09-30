@@ -16,14 +16,14 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Calculates the TOM over an affinity matrix
 ///
-/// @description Calculates the topological overlap measure for a given affinity matrix
-/// x. Has the option to calculate the signed and unsigned version.
+/// @description Calculates the topological overlap measure for a given affinity
+/// matrix x. Has the option to calculate the signed and unsigned version.
 ///
 /// @param x Numerical matrix. Affinity matrix.
-/// @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
-/// normalisation method will be used.
-/// @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-/// should be ≥ 0.
+/// @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
+/// different normalisation method will be used.
+/// @param signed Boolean. Shall the signed TOM be calculated. If set to
+/// `FALSE`, values should be ≥ 0.
 ///
 /// @return Returns the TOM matrix.
 ///
@@ -56,7 +56,8 @@ fn rs_tom(
 /// deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
 /// to a random set of 1000 genes.
 ///
-/// @param cluster_genes A list. Contains the cluster and their respective genes.
+/// @param cluster_genes A list. Contains the cluster and their respective
+/// genes.
 /// @param cor_mat Numerical matrix. Contains the correlation coefficients.
 /// @param row_names String vector. The row names (or column names) of the
 /// correlation matrix.
@@ -248,10 +249,26 @@ fn rs_cluster_stability(data: RMatrix<i32>) -> List {
     list!(mean_jaccard = mean_jaccard, std_jaccard = std_jaccard)
 }
 
+/// Helper function to split correlation matrices by sign
+///
+/// @param data The correlation matrix to split by sign.
+///
+/// @return A vector of 1 and -1 indicating the respective sign of the
+/// correlation matrix.
+///
+/// @export
+#[extendr]
+fn rs_split_cor_signs(data: RMatrix<f64>) -> Vec<i32> {
+    let data = r_matrix_to_faer(&data);
+
+    split_cor_mat_by_sign(&data)
+}
+
 extendr_module! {
     mod r_coremo;
     fn rs_tom;
     fn rs_coremo_quality;
     fn rs_coremo_stability;
     fn rs_cluster_stability;
+    fn rs_split_cor_signs;
 }
