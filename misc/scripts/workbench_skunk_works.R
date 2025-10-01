@@ -429,12 +429,12 @@ length(file_res$gene_indices)
 
 summary(file_res$gene_indices)
 
-devtools::load_all()
+devtools::document()
 
 bixverse_sc <- single_cell_exp(dir_data = tempdir())
 
 tictoc::tic()
-bixverse_sc <- load_h5ad(object = bixverse_sc, h5_path = tahoe_h5ad_f_path)
+bixverse_sc <- stream_h5ad(object = bixverse_sc, h5_path = tahoe_h5ad_f_path)
 tictoc::toc()
 
 obs <- get_sc_obs(bixverse_sc)

@@ -1812,6 +1812,8 @@ SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_p
 
 SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
+SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+
 SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
@@ -1821,6 +1823,8 @@ SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__
 SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
 
 SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose))
+
+SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose))
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 

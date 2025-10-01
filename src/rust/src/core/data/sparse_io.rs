@@ -892,7 +892,6 @@ pub struct ParallelSparseReader {
     chunks_start: u64,
 }
 
-#[allow(dead_code)]
 impl ParallelSparseReader {
     /// Generate a new parallelised streaming reader
     ///
@@ -1039,5 +1038,14 @@ impl ParallelSparseReader {
     /// Returns the header file
     pub fn get_header(&self) -> SparseDataHeader {
         self.header.clone()
+    }
+
+    /// Read cells in a specific range
+    ///
+    /// Helper for memory-bounded gene generation
+    pub fn read_cells_range(&self, start: usize, end: usize) -> Vec<CsrCellChunk> {
+        assert!(self.header.cell_based, "File not cell-based");
+        let indices: Vec<usize> = (start..end).collect();
+        self.read_cells_parallel(&indices)
     }
 }

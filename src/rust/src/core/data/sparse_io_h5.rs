@@ -1,4 +1,5 @@
 use hdf5::{File, Result};
+use std::io::Result as IoResult;
 use std::path::Path;
 use thousands::Separable;
 
@@ -143,248 +144,104 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     )
 }
 
-/////////////
-// Helpers //
-/////////////
-
-/// Helper function that reads in full CSR data from an h5 file
+/// Function that streams the h5 counts to disk
 ///
-/// The function assumes that the data is stored as cells x genes.
+/// This function will avoid (as far as possible) loading in the data into
+/// memory and leverage direct streaming to disk where possible. Works best
+/// with data that is already stored in CSR on disk (assuming genes * cells).
 ///
 /// ### Params
 ///
-/// * `file_path` - Path to the h5ad file.
-/// * `cs_type` - Which type of sparse compression format the file is stored in.
-/// * `shape` - The final dimension of the matrix.
+/// * `h5_path` - Path to the h5 object.
+/// * `bin_path` - Path to the binarised object on disk to write to
+/// * `cs_type` - Was the h5ad data stored in "csc" or "csr". Important! h5ad
+///   stores data in genes x cells; bixverse stores in cells x genes!
+/// * `no_cells` - Total number of obversations in the data.
+/// * `no_genes` - Total number of vars in the data.
+/// * `min_genes` - Minimum number of genes to be detected in the cell.
+/// * `size_factor` - To which library size to normalise the data
 ///
 /// ### Returns
 ///
-/// The `CompressedSparseData` in CSR format with the counts stored as u16.
-pub fn read_h5ad_x_data_csc<P: AsRef<Path>>(
-    file_path: P,
-    quality: &CellOnFileQuality,
+/// A tuple with `(no_cells, no_genes, cell quality metrics)`
+pub fn stream_h5_counts<P: AsRef<Path>>(
+    h5_path: P,
+    bin_path: P,
+    cs_type: &str,
+    no_cells: usize,
+    no_genes: usize,
+    cell_quality: MinCellQuality,
     verbose: bool,
-) -> Result<CompressedSparseData<u16>> {
-    let file = File::open(file_path)?;
-
-    let data_ds = file.dataset("X/data")?;
-    let indices_ds = file.dataset("X/indices")?;
-    let indptr_ds = file.dataset("X/indptr")?;
-
-    // Read indptr first (small array)
-    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
-
-    let mut new_data: Vec<u16> = Vec::new();
-    let mut new_indices: Vec<usize> = Vec::new();
-    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.genes_to_keep.len() + 1);
-    new_indptr.push(0);
-
-    let total_genes = quality.genes_to_keep.len();
-
+) -> (usize, usize, CellQuality) {
     if verbose {
-        println!(
-            "  Processing {} genes in chunks...",
-            total_genes.separate_with_underscores()
-        );
+        println!("Step 1/3: Analysing data structure and calculating QC metrics...");
     }
 
-    // Process genes in chunks to reduce memory usage
-    // should think about exposing this as a function parameter... ?
-    const CHUNK_SIZE: usize = 1000;
+    let file_format = parse_cs_format(cs_type).unwrap();
 
-    for (chunk_idx, gene_chunk) in quality.genes_to_keep.chunks(CHUNK_SIZE).enumerate() {
-        if verbose && chunk_idx % 10 == 0 {
-            let processed = chunk_idx * CHUNK_SIZE;
-            println!(
-                "   Processed {} / {} genes",
-                processed.min(total_genes).separate_with_underscores(),
-                total_genes.separate_with_underscores()
-            );
+    let file_quality = match file_format {
+        CompressedSparseFormat::Csr => {
+            parse_h5_csr_quality(&h5_path, (no_cells, no_genes), &cell_quality, verbose).unwrap()
         }
-
-        // calculate range for this chunk
-        let start_pos = gene_chunk
-            .iter()
-            .map(|&g| indptr_raw[g] as usize)
-            .min()
-            .unwrap_or(0);
-        let end_pos = gene_chunk
-            .iter()
-            .map(|&g| indptr_raw[g + 1] as usize)
-            .max()
-            .unwrap_or(0);
-
-        if start_pos >= end_pos {
-            continue;
+        CompressedSparseFormat::Csc => {
+            parse_h5_csc_quality(&h5_path, (no_cells, no_genes), &cell_quality, verbose).unwrap()
         }
+    };
 
-        // read only the data range needed for this chunk
-        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+    if verbose {
+        println!("Step 2/3: QC Results:");
+        println!(
+            "  Genes passing QC: {} / {}",
+            file_quality.genes_to_keep.len().separate_with_underscores(),
+            no_genes.separate_with_underscores()
+        );
+        println!(
+            "  Cells passing QC: {} / {}",
+            file_quality.cells_to_keep.len().separate_with_underscores(),
+            no_cells.separate_with_underscores()
+        );
+        println!("Step 3/3: Writing cells to CSR format...");
+    }
 
-        // process each gene in the chunk
-        for &gene_idx in gene_chunk {
-            let gene_start = indptr_raw[gene_idx] as usize;
-            let gene_end = indptr_raw[gene_idx + 1] as usize;
-
-            for idx in gene_start..gene_end {
-                let local_idx = idx - start_pos;
-                let old_cell_idx = chunk_indices[local_idx] as usize;
-
-                if let Some(&new_cell_idx) = quality.cell_old_to_new.get(&old_cell_idx) {
-                    new_data.push(chunk_data[local_idx] as u16);
-                    new_indices.push(new_cell_idx);
-                }
+    let mut cell_qc = match file_format {
+        CompressedSparseFormat::Csr => {
+            write_h5_csr_streaming(&h5_path, &bin_path, &file_quality, cell_quality, verbose)
+                .unwrap()
+        }
+        CompressedSparseFormat::Csc => {
+            if verbose {
+                println!("  Pass 1/2: Scanning library sizes...");
             }
-            new_indptr.push(new_data.len());
+            let cell_lib_sizes = scan_h5_csc_library_sizes(&h5_path, &file_quality).unwrap();
+
+            if verbose {
+                println!("  Pass 2/2: Writing cells with normalization...");
+            }
+            write_h5_csc_to_csr_streaming(
+                &h5_path,
+                &bin_path,
+                &file_quality,
+                &cell_lib_sizes,
+                cell_quality.target_size,
+                verbose,
+            )
+            .unwrap()
         }
-    }
+    };
 
-    if verbose {
-        println!(
-            "   Processed {} / {} genes (complete)",
-            total_genes.separate_with_underscores(),
-            total_genes.separate_with_underscores()
-        );
-    }
+    cell_qc.set_cell_indices(&file_quality.cells_to_keep);
+    cell_qc.set_gene_indices(&file_quality.genes_to_keep);
 
-    let shape = (quality.genes_to_keep.len(), quality.cells_to_keep.len());
-
-    Ok(CompressedSparseData {
-        data: new_data,
-        indices: new_indices,
-        indptr: new_indptr,
-        cs_type: CompressedSparseFormat::Csr,
-        data_2: None::<Vec<u16>>,
-        shape,
-    })
+    (
+        file_quality.cells_to_keep.len(),
+        file_quality.genes_to_keep.len(),
+        cell_qc,
+    )
 }
 
-/// Helper function that reads in full CSC data from an h5 file
-///
-/// The function assumes that the data is stored as cells x genes.
-///
-/// ### Params
-///
-/// * `file_path` - Path to the h5ad file.
-/// * `cs_type` - Which type of sparse compression format the file is stored in.
-/// * `shape` - The final dimension of the matrix.
-///
-/// ### Returns
-///
-/// The `CompressedSparseData` in CSC format with the counts stored as u16.
-pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
-    file_path: P,
-    quality: &CellOnFileQuality,
-    verbose: bool,
-) -> Result<CompressedSparseData<u16>> {
-    let file = File::open(file_path)?;
-
-    let data_ds = file.dataset("X/data")?;
-    let indices_ds = file.dataset("X/indices")?;
-    let indptr_ds = file.dataset("X/indptr")?;
-
-    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
-
-    // Build CSC format directly: indptr = cells, indices = genes
-    let mut new_data: Vec<u16> = Vec::new();
-    let mut new_indices: Vec<usize> = Vec::new();
-    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.cells_to_keep.len() + 1);
-    new_indptr.push(0);
-
-    let total_cells = quality.cells_to_keep.len();
-
-    if verbose {
-        println!(
-            "  Processing {} cells in chunks (CSC format)...",
-            total_cells.separate_with_underscores()
-        );
-    }
-
-    // should think about moving this into a function parameter ... ?
-    const CHUNK_SIZE: usize = 1000;
-
-    for (chunk_idx, cell_chunk) in quality.cells_to_keep.chunks(CHUNK_SIZE).enumerate() {
-        if verbose && chunk_idx % 100 == 0 {
-            let processed = chunk_idx * CHUNK_SIZE;
-            println!(
-                "   Processed {} / {} cells",
-                processed.min(total_cells).separate_with_underscores(),
-                total_cells.separate_with_underscores()
-            );
-        }
-
-        let start_pos = cell_chunk
-            .iter()
-            .map(|&c| indptr_raw[c] as usize)
-            .min()
-            .unwrap_or(0);
-        let end_pos = cell_chunk
-            .iter()
-            .map(|&c| indptr_raw[c + 1] as usize)
-            .max()
-            .unwrap_or(0);
-
-        if start_pos >= end_pos {
-            // Add empty cells to maintain indptr structure
-            for _ in cell_chunk {
-                new_indptr.push(new_data.len());
-            }
-            continue;
-        }
-
-        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
-
-        for &old_cell_idx in cell_chunk {
-            let cell_start = indptr_raw[old_cell_idx] as usize;
-            let cell_end = indptr_raw[old_cell_idx + 1] as usize;
-
-            // Collect this cell's data with gene filtering
-            let mut cell_data: Vec<(usize, u16)> = Vec::new();
-
-            for idx in cell_start..cell_end {
-                let local_idx = idx - start_pos;
-                let old_gene_idx = chunk_indices[local_idx] as usize;
-
-                if let Some(&new_gene_idx) = quality.gene_old_to_new.get(&old_gene_idx) {
-                    cell_data.push((new_gene_idx, chunk_data[local_idx] as u16));
-                }
-            }
-
-            // Sort by gene index to maintain consistent ordering
-            // IMPORTANT!
-            cell_data.sort_by_key(|&(gene_idx, _)| gene_idx);
-
-            // Add to CSC arrays
-            for (gene_idx, value) in cell_data {
-                new_data.push(value);
-                new_indices.push(gene_idx);
-            }
-
-            new_indptr.push(new_data.len());
-        }
-    }
-
-    if verbose {
-        println!(
-            "   Processed {} / {} cells (complete)",
-            total_cells.separate_with_underscores(),
-            total_cells.separate_with_underscores()
-        );
-    }
-
-    let shape = (quality.genes_to_keep.len(), quality.cells_to_keep.len());
-
-    Ok(CompressedSparseData {
-        data: new_data,
-        indices: new_indices,
-        indptr: new_indptr,
-        cs_type: CompressedSparseFormat::Csc, // Return CSC format
-        data_2: None::<Vec<u16>>,
-        shape,
-    })
-}
+//////////////
+// CSC data //
+//////////////
 
 /// Get the cell quality data from a CSC file
 ///
@@ -563,6 +420,342 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
     Ok(file_quality_data)
 }
 
+/// Helper function to scan a CSC file and get the lib sizes
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file.
+/// * `quality` - Information on the which cells and genes to include after a
+///   first pass of the file.
+///
+/// ### Returns
+///
+/// A vector of library sizes in the cells.
+pub fn scan_h5_csc_library_sizes<P: AsRef<Path>>(
+    file_path: P,
+    quality: &CellOnFileQuality,
+) -> Result<Vec<u32>> {
+    let file = File::open(file_path)?;
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    // Only track library sizes - very light memory
+    let mut cell_lib_sizes = vec![0u32; quality.cells_to_keep.len()];
+
+    const GENE_CHUNK_SIZE: usize = 5000;
+
+    for gene_chunk in quality.genes_to_keep.chunks(GENE_CHUNK_SIZE) {
+        let start_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            continue;
+        }
+
+        // Only read data values, not indices - saves memory
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        for &gene_idx in gene_chunk {
+            let gene_start = indptr_raw[gene_idx] as usize;
+            let gene_end = indptr_raw[gene_idx + 1] as usize;
+
+            for idx in gene_start..gene_end {
+                let local_idx = idx - start_pos;
+                let old_cell_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_cell_idx) = quality.cell_old_to_new.get(&old_cell_idx) {
+                    cell_lib_sizes[new_cell_idx] += chunk_data[local_idx] as u32;
+                }
+            }
+        }
+    }
+
+    Ok(cell_lib_sizes)
+}
+
+/// Helper function that reads in full CSC data from an h5 file
+///
+/// The function assumes that the data is stored as cells x genes.
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file.
+/// * `quality` - Information on the which cells and genes to include after a
+///   first pass of the file.
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// The `CompressedSparseData` in CSR format with the counts stored as u16.
+pub fn read_h5ad_x_data_csc<P: AsRef<Path>>(
+    file_path: P,
+    quality: &CellOnFileQuality,
+    verbose: bool,
+) -> Result<CompressedSparseData<u16>> {
+    let file = File::open(file_path)?;
+
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+
+    // Read indptr first (small array)
+    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    let mut new_data: Vec<u16> = Vec::new();
+    let mut new_indices: Vec<usize> = Vec::new();
+    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.genes_to_keep.len() + 1);
+    new_indptr.push(0);
+
+    let total_genes = quality.genes_to_keep.len();
+
+    if verbose {
+        println!(
+            "  Processing {} genes in chunks...",
+            total_genes.separate_with_underscores()
+        );
+    }
+
+    // Process genes in chunks to reduce memory usage
+    // should think about exposing this as a function parameter... ?
+    const CHUNK_SIZE: usize = 1000;
+
+    for (chunk_idx, gene_chunk) in quality.genes_to_keep.chunks(CHUNK_SIZE).enumerate() {
+        if verbose && chunk_idx % 10 == 0 {
+            let processed = chunk_idx * CHUNK_SIZE;
+            println!(
+                "   Processed {} / {} genes",
+                processed.min(total_genes).separate_with_underscores(),
+                total_genes.separate_with_underscores()
+            );
+        }
+
+        // calculate range for this chunk
+        let start_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            continue;
+        }
+
+        // read only the data range needed for this chunk
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        // process each gene in the chunk
+        for &gene_idx in gene_chunk {
+            let gene_start = indptr_raw[gene_idx] as usize;
+            let gene_end = indptr_raw[gene_idx + 1] as usize;
+
+            for idx in gene_start..gene_end {
+                let local_idx = idx - start_pos;
+                let old_cell_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_cell_idx) = quality.cell_old_to_new.get(&old_cell_idx) {
+                    new_data.push(chunk_data[local_idx] as u16);
+                    new_indices.push(new_cell_idx);
+                }
+            }
+            new_indptr.push(new_data.len());
+        }
+    }
+
+    if verbose {
+        println!(
+            "   Processed {} / {} genes (complete)",
+            total_genes.separate_with_underscores(),
+            total_genes.separate_with_underscores()
+        );
+    }
+
+    let shape = (quality.genes_to_keep.len(), quality.cells_to_keep.len());
+
+    Ok(CompressedSparseData {
+        data: new_data,
+        indices: new_indices,
+        indptr: new_indptr,
+        cs_type: CompressedSparseFormat::Csr,
+        data_2: None::<Vec<u16>>,
+        shape,
+    })
+}
+
+/// Helper function that streams CSC data to CSR format on disk
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file.
+/// * `bin_path` - Path to the binary file on disk to write to.
+/// * `quality` - Information on the which cells and genes to include after a
+///   first pass of the file.
+/// * `cell_lib_sizes` - Vector with the pre-calculated library sizes, see
+///   scan_h5_csc_library_sizes().
+/// * `target_size` - Target size for the library normalisation.
+///
+/// ### Returns
+///
+/// After writing, information on the CellQuality with cell and gene indices,
+/// NNZ and lib size per gene.
+pub fn write_h5_csc_to_csr_streaming<P: AsRef<Path>>(
+    file_path: P,
+    bin_path: P,
+    quality: &CellOnFileQuality,
+    cell_lib_sizes: &[u32],
+    target_size: f32,
+    verbose: bool,
+) -> IoResult<CellQuality> {
+    let file = File::open(file_path)?;
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    // accumulate cells in memory (necessary for CSR)
+    let mut cell_data: Vec<Vec<(u16, u16)>> = vec![Vec::new(); quality.cells_to_keep.len()];
+
+    const GENE_CHUNK_SIZE: usize = 5000;
+    let total_genes = quality.genes_to_keep.len();
+
+    if verbose {
+        println!(
+            "  Processing {} genes in chunks...",
+            total_genes.separate_with_underscores()
+        );
+    }
+
+    for (chunk_idx, gene_chunk) in quality.genes_to_keep.chunks(GENE_CHUNK_SIZE).enumerate() {
+        if verbose && chunk_idx % 10 == 0 {
+            let processed = chunk_idx * GENE_CHUNK_SIZE;
+            println!(
+                "   Processed {} / {} genes",
+                processed.min(total_genes).separate_with_underscores(),
+                total_genes.separate_with_underscores()
+            );
+        }
+
+        let start_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = gene_chunk
+            .iter()
+            .map(|&g| indptr_raw[g + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            continue;
+        }
+
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        for &gene_idx in gene_chunk {
+            let new_gene_idx = quality.gene_old_to_new[&gene_idx] as u16;
+            let gene_start = indptr_raw[gene_idx] as usize;
+            let gene_end = indptr_raw[gene_idx + 1] as usize;
+
+            for idx in gene_start..gene_end {
+                let local_idx = idx - start_pos;
+                let old_cell_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_cell_idx) = quality.cell_old_to_new.get(&old_cell_idx) {
+                    let raw_count = chunk_data[local_idx] as u16;
+                    cell_data[new_cell_idx].push((new_gene_idx, raw_count));
+                }
+            }
+        }
+    }
+
+    if verbose {
+        println!(
+            "   Processed {} / {} genes (complete)",
+            total_genes.separate_with_underscores(),
+            total_genes.separate_with_underscores()
+        );
+        println!(
+            "  Writing {} cells to disk...",
+            cell_lib_sizes.len().separate_with_underscores()
+        );
+    }
+
+    // Now write cells with correct normalisation
+    let mut writer = CellGeneSparseWriter::new(
+        bin_path,
+        true,
+        cell_lib_sizes.len(),
+        quality.genes_to_keep.len(),
+    )?;
+    let mut lib_size = Vec::with_capacity(cell_lib_sizes.len());
+    let mut nnz = Vec::with_capacity(cell_lib_sizes.len());
+
+    let total_cells = cell_data.len();
+
+    for (cell_idx, mut data) in cell_data.into_iter().enumerate() {
+        if verbose && (cell_idx + 1) % 100000 == 0 {
+            println!(
+                "   Written {} / {} cells to disk.",
+                (cell_idx + 1).separate_with_underscores(),
+                total_cells.separate_with_underscores()
+            );
+        }
+
+        data.sort_by_key(|(gene_idx, _)| *gene_idx);
+
+        let gene_indices: Vec<u16> = data.iter().map(|(g, _)| *g).collect();
+        let gene_counts: Vec<u16> = data.iter().map(|(_, c)| *c).collect();
+
+        let cell_chunk =
+            CsrCellChunk::from_data(&gene_counts, &gene_indices, cell_idx, target_size, true);
+
+        let (nnz_i, lib_size_i) = cell_chunk.get_qc_info();
+        nnz.push(nnz_i);
+        lib_size.push(lib_size_i);
+
+        writer.write_cell_chunk(cell_chunk)?;
+    }
+
+    writer.finalise()?;
+
+    if verbose {
+        println!(
+            "   Written {} / {} cells (complete).",
+            total_cells.separate_with_underscores(),
+            total_cells.separate_with_underscores()
+        );
+    }
+
+    Ok(CellQuality {
+        cell_indices: Vec::new(),
+        gene_indices: Vec::new(),
+        lib_size,
+        no_genes: nnz,
+    })
+}
+
+/////////
+// CSR //
+/////////
+
 /// Get the cell quality data from a CSR file
 ///
 /// This file assumes that the rows are representing the cells and the columns
@@ -624,22 +817,16 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
     const CELL_CHUNK_SIZE: usize = 10000;
 
-    for (chunk_idx, cell_chunk_range) in (0..shape.0)
-        .collect::<Vec<_>>()
-        .chunks(CELL_CHUNK_SIZE)
-        .enumerate()
-    {
-        if verbose && chunk_idx % 10 == 0 {
-            let processed = chunk_idx * CELL_CHUNK_SIZE;
+    for chunk_start_cell in (0..shape.0).step_by(CELL_CHUNK_SIZE) {
+        let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
+
+        if verbose && (chunk_start_cell / CELL_CHUNK_SIZE) % 10 == 0 {
             println!(
                 "   Processing cells {} / {}",
-                processed.min(shape.0).separate_with_underscores(),
+                chunk_start_cell.separate_with_underscores(),
                 shape.0.separate_with_underscores()
             );
         }
-
-        let chunk_start_cell = cell_chunk_range[0];
-        let chunk_end_cell = cell_chunk_range[cell_chunk_range.len() - 1];
 
         let data_start = indptr[chunk_start_cell] as usize;
         let data_end = indptr[chunk_end_cell + 1] as usize;
@@ -650,14 +837,16 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
         let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
 
-        for &cell_idx in cell_chunk_range {
+        for cell_idx in chunk_start_cell..=chunk_end_cell {
             let cell_data_start = indptr[cell_idx] as usize;
             let cell_data_end = indptr[cell_idx + 1] as usize;
 
-            for idx in cell_data_start..cell_data_end {
-                let local_idx = idx - data_start;
-                let gene_idx = chunk_indices[local_idx] as usize;
+            let local_start = cell_data_start - data_start;
+            let local_end = cell_data_end - data_start;
 
+            #[allow(clippy::needless_range_loop)]
+            for local_idx in local_start..local_end {
+                let gene_idx = chunk_indices[local_idx] as usize;
                 if gene_idx < shape.1 {
                     no_cells_exp_gene[gene_idx] += 1;
                 }
@@ -695,9 +884,11 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         );
     }
 
-    // Create a set for fast lookup
-    let genes_to_keep_set: std::collections::HashSet<usize> =
-        genes_to_keep.iter().cloned().collect();
+    // Create a boolean lookup vector for faster gene filtering
+    let mut genes_to_keep_lookup = vec![false; shape.1];
+    for &gene_idx in &genes_to_keep {
+        genes_to_keep_lookup[gene_idx] = true;
+    }
 
     // PASS 2: Calculate cell metrics using only kept genes
     let mut cell_unique_genes = vec![0usize; shape.0];
@@ -707,22 +898,16 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         println!("  Pass 2: Calculating cell metrics from kept genes in chunks...");
     }
 
-    for (chunk_idx, cell_chunk_range) in (0..shape.0)
-        .collect::<Vec<_>>()
-        .chunks(CELL_CHUNK_SIZE)
-        .enumerate()
-    {
-        if verbose && chunk_idx % 10 == 0 {
-            let processed = chunk_idx * CELL_CHUNK_SIZE;
+    for chunk_start_cell in (0..shape.0).step_by(CELL_CHUNK_SIZE) {
+        let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
+
+        if verbose && (chunk_start_cell / CELL_CHUNK_SIZE) % 10 == 0 {
             println!(
                 "   Processing cells {} / {}",
-                processed.min(shape.0).separate_with_underscores(),
+                chunk_start_cell.separate_with_underscores(),
                 shape.0.separate_with_underscores()
             );
         }
-
-        let chunk_start_cell = cell_chunk_range[0];
-        let chunk_end_cell = cell_chunk_range[cell_chunk_range.len() - 1];
 
         let data_start = indptr[chunk_start_cell] as usize;
         let data_end = indptr[chunk_end_cell + 1] as usize;
@@ -734,15 +919,17 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         let chunk_data: Vec<f32> = data_ds.read_slice_1d(data_start..data_end)?.to_vec();
         let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
 
-        for &cell_idx in cell_chunk_range {
+        for cell_idx in chunk_start_cell..=chunk_end_cell {
             let cell_data_start = indptr[cell_idx] as usize;
             let cell_data_end = indptr[cell_idx + 1] as usize;
 
-            for idx in cell_data_start..cell_data_end {
-                let local_idx = idx - data_start;
+            let local_start = cell_data_start - data_start;
+            let local_end = cell_data_end - data_start;
+
+            for local_idx in local_start..local_end {
                 let gene_idx = chunk_indices[local_idx] as usize;
 
-                if genes_to_keep_set.contains(&gene_idx) {
+                if genes_to_keep_lookup[gene_idx] {
                     cell_unique_genes[cell_idx] += 1;
                     cell_lib_size[cell_idx] += chunk_data[local_idx];
                 }
@@ -788,4 +975,289 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
     file_quality_data.generate_maps_sets();
 
     Ok(file_quality_data)
+}
+
+/// Helper function that reads in full CSR data from an h5 file
+///
+/// The function assumes that the data is stored as cells x genes.
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file.
+/// * `quality` - Information on the which cells and genes to include after a
+///   first pass of the file.
+/// * `shape` - The final dimension of the matrix.
+///
+/// ### Returns
+///
+/// The `CompressedSparseData` in CSR format with the counts stored as u16.
+pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
+    file_path: P,
+    quality: &CellOnFileQuality,
+    verbose: bool,
+) -> Result<CompressedSparseData<u16>> {
+    let file = File::open(file_path)?;
+
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+
+    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    // Build CSC format directly: indptr = cells, indices = genes
+    let mut new_data: Vec<u16> = Vec::new();
+    let mut new_indices: Vec<usize> = Vec::new();
+    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.cells_to_keep.len() + 1);
+    new_indptr.push(0);
+
+    let total_cells = quality.cells_to_keep.len();
+
+    if verbose {
+        println!(
+            "  Processing {} cells in chunks (CSC format)...",
+            total_cells.separate_with_underscores()
+        );
+    }
+
+    // should think about moving this into a function parameter ... ?
+    const CHUNK_SIZE: usize = 1000;
+
+    for (chunk_idx, cell_chunk) in quality.cells_to_keep.chunks(CHUNK_SIZE).enumerate() {
+        if verbose && chunk_idx % 100 == 0 {
+            let processed = chunk_idx * CHUNK_SIZE;
+            println!(
+                "   Processed {} / {} cells",
+                processed.min(total_cells).separate_with_underscores(),
+                total_cells.separate_with_underscores()
+            );
+        }
+
+        let start_pos = cell_chunk
+            .iter()
+            .map(|&c| indptr_raw[c] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = cell_chunk
+            .iter()
+            .map(|&c| indptr_raw[c + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            // Add empty cells to maintain indptr structure
+            for _ in cell_chunk {
+                new_indptr.push(new_data.len());
+            }
+            continue;
+        }
+
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        for &old_cell_idx in cell_chunk {
+            let cell_start = indptr_raw[old_cell_idx] as usize;
+            let cell_end = indptr_raw[old_cell_idx + 1] as usize;
+
+            // Collect this cell's data with gene filtering
+            let mut cell_data: Vec<(usize, u16)> = Vec::new();
+
+            for idx in cell_start..cell_end {
+                let local_idx = idx - start_pos;
+                let old_gene_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_gene_idx) = quality.gene_old_to_new.get(&old_gene_idx) {
+                    cell_data.push((new_gene_idx, chunk_data[local_idx] as u16));
+                }
+            }
+
+            // Sort by gene index to maintain consistent ordering
+            // IMPORTANT!
+            cell_data.sort_by_key(|&(gene_idx, _)| gene_idx);
+
+            // Add to CSC arrays
+            for (gene_idx, value) in cell_data {
+                new_data.push(value);
+                new_indices.push(gene_idx);
+            }
+
+            new_indptr.push(new_data.len());
+        }
+    }
+
+    if verbose {
+        println!(
+            "   Processed {} / {} cells (complete)",
+            total_cells.separate_with_underscores(),
+            total_cells.separate_with_underscores()
+        );
+    }
+
+    let shape = (quality.genes_to_keep.len(), quality.cells_to_keep.len());
+
+    Ok(CompressedSparseData {
+        data: new_data,
+        indices: new_indices,
+        indptr: new_indptr,
+        cs_type: CompressedSparseFormat::Csc, // Return CSC format
+        data_2: None::<Vec<u16>>,
+        shape,
+    })
+}
+
+/// Stream h5 CSR data directly to disk with batched reading
+///
+/// This is memory-efficient because we process cells in batches and write
+/// immediately. CSR format is ideal since we can calculate library size and
+/// normalisation per-cell.
+///
+/// ### Params
+///
+/// * `file_path` - Path to the h5ad file
+/// * `bin_path` - Path to the to-be-written binary file for the cell data
+/// * `quality` - Information on the which cells and genes to include after a
+///   first pass of the file.
+/// * `cell_qc` - Structure containing the information on which minimum criteria
+///   cells and genes need to pass.
+/// * `verbose` - Controls verbosity of the function
+///
+/// ### Returns
+///
+/// After writing, information on the CellQuality with cell and gene indices,
+/// NNZ and lib size per gene.
+pub fn write_h5_csr_streaming<P: AsRef<Path>>(
+    file_path: P,
+    bin_path: P,
+    quality: &CellOnFileQuality,
+    cell_qc: MinCellQuality,
+    verbose: bool,
+) -> IoResult<CellQuality> {
+    let file = File::open(file_path)?;
+    let data_ds = file.dataset("X/data")?;
+    let indices_ds = file.dataset("X/indices")?;
+    let indptr_ds = file.dataset("X/indptr")?;
+    let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+
+    let mut writer = CellGeneSparseWriter::new(
+        bin_path,
+        true,
+        quality.cells_to_keep.len(),
+        quality.genes_to_keep.len(),
+    )?;
+
+    let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());
+    let mut nnz = Vec::with_capacity(quality.cells_to_keep.len());
+
+    const CELL_BATCH_SIZE: usize = 1000;
+    let total_cells = quality.cells_to_keep.len();
+
+    if verbose {
+        println!(
+            "  Processing {} cells in batches of {}...",
+            total_cells.separate_with_underscores(),
+            CELL_BATCH_SIZE.separate_with_underscores()
+        );
+    }
+
+    for (batch_idx, cell_batch) in quality.cells_to_keep.chunks(CELL_BATCH_SIZE).enumerate() {
+        if verbose && batch_idx % 100 == 0 {
+            let processed = batch_idx * CELL_BATCH_SIZE;
+            println!(
+                "   Processed {} / {} cells",
+                processed.min(total_cells).separate_with_underscores(),
+                total_cells.separate_with_underscores()
+            );
+        }
+
+        // Find data range for this batch
+        let start_pos = cell_batch
+            .iter()
+            .map(|&c| indptr_raw[c] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = cell_batch
+            .iter()
+            .map(|&c| indptr_raw[c + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            // Empty cells in this batch
+            for _ in cell_batch {
+                lib_size.push(0);
+                nnz.push(0);
+                let empty_chunk = CsrCellChunk::from_data(
+                    &[] as &[u16],
+                    &[] as &[u16],
+                    0,
+                    cell_qc.target_size,
+                    true,
+                );
+                writer.write_cell_chunk(empty_chunk)?;
+            }
+            continue;
+        }
+
+        // Load batch data
+        let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        // Process each cell in batch
+        for &old_cell_idx in cell_batch {
+            let cell_start = indptr_raw[old_cell_idx] as usize;
+            let cell_end = indptr_raw[old_cell_idx + 1] as usize;
+
+            // Collect and filter this cell's data
+            let mut cell_data: Vec<(usize, u16)> = Vec::new();
+
+            for idx in cell_start..cell_end {
+                let local_idx = idx - start_pos;
+                let old_gene_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_gene_idx) = quality.gene_old_to_new.get(&old_gene_idx) {
+                    let raw_val = chunk_data[local_idx] as u16;
+                    cell_data.push((new_gene_idx, raw_val));
+                }
+            }
+
+            // Sort by gene index for consistent ordering
+            cell_data.sort_by_key(|&(gene_idx, _)| gene_idx);
+
+            let gene_indices: Vec<u16> = cell_data.iter().map(|(g, _)| *g as u16).collect();
+            let gene_counts: Vec<u16> = cell_data.iter().map(|(_, c)| *c).collect();
+
+            let new_cell_idx = quality.cell_old_to_new[&old_cell_idx];
+            let cell_chunk = CsrCellChunk::from_data(
+                &gene_counts,
+                &gene_indices,
+                new_cell_idx,
+                cell_qc.target_size,
+                true,
+            );
+
+            let (nnz_i, lib_size_i) = cell_chunk.get_qc_info();
+            nnz.push(nnz_i);
+            lib_size.push(lib_size_i);
+
+            // Write immediately - memory is freed after this
+            writer.write_cell_chunk(cell_chunk)?;
+        }
+        // Batch data dropped here - memory freed
+    }
+
+    writer.finalise()?;
+
+    if verbose {
+        println!(
+            "   Processed {} / {} cells (complete)",
+            total_cells.separate_with_underscores(),
+            total_cells.separate_with_underscores()
+        );
+    }
+
+    Ok(CellQuality {
+        cell_indices: Vec::new(),
+        gene_indices: Vec::new(),
+        lib_size,
+        no_genes: nnz,
+    })
 }
