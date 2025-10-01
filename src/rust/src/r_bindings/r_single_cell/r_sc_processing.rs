@@ -107,6 +107,8 @@ fn get_hvg_method(s: &str) -> Option<HvgMethod> {
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
+/// @param streaming Boolean. Shall the genes be streamed in to reduce memory
+/// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
@@ -126,6 +128,7 @@ fn rs_sc_hvg(
     cell_indices: Vec<i32>,
     loess_span: f64,
     clip_max: Option<f32>,
+    streaming: bool,
     verbose: bool,
 ) -> List {
     let cell_set = cell_indices
@@ -136,10 +139,20 @@ fn rs_sc_hvg(
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_res: HvgRes = match hvg_type {
-        HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
-        HvgMethod::MeanVarBin => get_hvg_mvb(),
-        HvgMethod::Dispersion => get_hvg_dispersion(),
+    let hvg_res: HvgRes = if streaming {
+        match hvg_type {
+            HvgMethod::Vst => {
+                get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span, clip_max, verbose)
+            }
+            HvgMethod::MeanVarBin => get_hvg_mvb_streaming(),
+            HvgMethod::Dispersion => get_hvg_dispersion_streaming(),
+        }
+    } else {
+        match hvg_type {
+            HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
+            HvgMethod::MeanVarBin => get_hvg_mvb(),
+            HvgMethod::Dispersion => get_hvg_dispersion(),
+        }
     };
 
     list!(

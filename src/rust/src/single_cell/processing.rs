@@ -2,8 +2,9 @@ use extendr_api::*;
 use faer::Mat;
 use indexmap::IndexSet;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
+use thousands::Separable;
 
 use crate::core::base::loess::*;
 use crate::core::base::pca_svd::{randomised_svd_f32, RandomSvdResults};
@@ -213,24 +214,36 @@ pub fn get_gene_set_perc(
 ///
 /// A tuple of `(mean, var)`
 #[inline]
-fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, f32) {
+pub fn calculate_mean_var_filtered(
+    gene: &CscGeneChunk,
+    cell_idx_map: &FxHashMap<u32, u32>,
+    no_cells: usize,
+) -> (f32, f32) {
     let no_cells = no_cells as f32;
-    let nnz = chunk.nnz as f32;
-    let sum: f32 = chunk.data_raw.iter().map(|x| *x as f32).sum();
-    let n_zero = no_cells - nnz;
+    let mut sum = 0f32;
+    let mut nnz = 0usize;
 
+    // Only process cells that are in the filter
+    for i in 0..gene.row_indices.len() {
+        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+            sum += gene.data_raw[i] as f32;
+            nnz += 1;
+        }
+    }
+
+    let n_zero = no_cells - nnz as f32;
     let mean = sum / no_cells;
-    let sum_sq_diff = chunk
-        .data_raw
-        .iter()
-        .map(|&val| {
-            let val: f32 = val.into();
-            let diff = val - mean;
-            diff * diff
-        })
-        .sum::<f32>();
 
-    let var = (sum_sq_diff + n_zero * mean * mean) / (no_cells);
+    let mut sum_sq_diff = 0f32;
+    for i in 0..gene.row_indices.len() {
+        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+            let val = gene.data_raw[i] as f32;
+            let diff = val - mean;
+            sum_sq_diff += diff * diff;
+        }
+    }
+
+    let var = (sum_sq_diff + n_zero * mean * mean) / no_cells;
 
     (mean, var)
 }
@@ -250,39 +263,43 @@ fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, 
 ///
 /// The standardised variance
 #[inline]
-fn calculate_std_variance(
-    chunk: &CscGeneChunk,
-    mean: &f32,
-    expected_var: &f32,
-    clip_max: &f32,
+pub fn calculate_std_variance_filtered(
+    gene: &CscGeneChunk,
+    cell_idx_map: &FxHashMap<u32, u32>,
+    mean: f32,
+    expected_var: f32,
+    clip_max: f32,
     no_cells: usize,
 ) -> f32 {
     let no_cells_f32 = no_cells as f32;
     let expected_sd = expected_var.sqrt();
 
-    let mut sum_standardised = 0_f32;
-    let mut sum_sq_standardised = 0_f32;
+    let mut sum_standardised = 0f32;
+    let mut sum_sq_standardised = 0f32;
+    let mut nnz = 0usize;
 
-    // process the non-zero entries
-    for val in &chunk.data_raw {
-        let val_f32 = *val as f32;
-        let norm = ((val_f32 - mean) / expected_sd)
-            .min(*clip_max)
-            .max(-clip_max);
-        sum_standardised += norm;
-        sum_sq_standardised += norm * norm;
+    // Process non-zero entries that pass filter
+    for i in 0..gene.row_indices.len() {
+        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+            let val_f32 = gene.data_raw[i] as f32;
+            let norm = ((val_f32 - mean) / expected_sd)
+                .min(clip_max)
+                .max(-clip_max);
+            sum_standardised += norm;
+            sum_sq_standardised += norm * norm;
+            nnz += 1;
+        }
     }
 
-    // process the zero entries
-    let n_zeros = no_cells - chunk.nnz;
+    // Process zero entries
+    let n_zeros = no_cells - nnz;
     if n_zeros > 0 {
-        let standardised_zero = ((-mean) / expected_sd).min(*clip_max).max(-clip_max);
+        let standardised_zero = ((-mean) / expected_sd).min(clip_max).max(-clip_max);
         sum_standardised += n_zeros as f32 * standardised_zero;
         sum_sq_standardised += n_zeros as f32 * standardised_zero * standardised_zero;
     }
 
     let standardised_mean = sum_standardised / no_cells_f32;
-
     (sum_sq_standardised / no_cells_f32) - (standardised_mean * standardised_mean)
 }
 
@@ -315,7 +332,12 @@ pub fn get_hvg_vst(
     let mut gene_chunks: Vec<CscGeneChunk> = reader.get_all_genes();
     let no_cells = cell_indices.len();
 
-    let cell_set: IndexSet<u32> = cell_indices.iter().map(|&x| x as u32).collect();
+    // build cell mapping ONCE... Before I was doing stupid shit
+    let cell_idx_map: FxHashMap<u32, u32> = cell_indices
+        .iter()
+        .enumerate()
+        .map(|(new_idx, &old_idx)| (old_idx as u32, new_idx as u32))
+        .collect();
 
     let end_read = start_read.elapsed();
 
@@ -327,10 +349,7 @@ pub fn get_hvg_vst(
 
     let results: Vec<(f32, f32)> = gene_chunks
         .par_iter_mut()
-        .map(|chunk| {
-            chunk.filter_selected_cells(&cell_set);
-            calculate_mean_var_csc_chunk(chunk, no_cells)
-        })
+        .map(|chunk| calculate_mean_var_filtered(chunk, &cell_idx_map, no_cells))
         .collect();
 
     let end_gene_stats = start_gene_stats.elapsed();
@@ -364,7 +383,14 @@ pub fn get_hvg_vst(
         .zip(means.par_iter())
         .map(|((chunk_i, var_i), mean_i)| {
             let expected_var = 10_f64.powf(*var_i) as f32;
-            calculate_std_variance(chunk_i, mean_i, &expected_var, &clip_max, no_cells)
+            calculate_std_variance_filtered(
+                chunk_i,
+                &cell_idx_map,
+                *mean_i,
+                expected_var,
+                clip_max,
+                no_cells,
+            )
         })
         .collect();
 
@@ -372,6 +398,196 @@ pub fn get_hvg_vst(
 
     if verbose {
         println!("Standardised variance: {:.2?}", end_standard);
+    }
+
+    let total = start_total.elapsed();
+
+    if verbose {
+        println!("Total run time HVG detection: {:.2?}", total);
+    }
+
+    // transform to f64 for R
+    HvgRes {
+        mean: means.iter().map(|x| *x as f64).collect(),
+        var: vars.iter().map(|x| *x as f64).collect(),
+        var_exp: loess_res.fitted_vals,
+        var_std: var_standardised.iter().map(|x| *x as f64).collect(),
+    }
+}
+
+/// Implementation of the variance stabilised version of the HVG selection
+///
+/// This uses a two-pass approach to minimise memory usage:
+/// - Pass 1: Calculate mean/variance for loess fitting (genes processed in
+///   batches)
+/// - Pass 2: Calculate standardized variance using loess results (genes
+///   processed in batches)
+///
+/// ### Params
+///
+/// * `f_path` - Path to the gene-based binary file
+/// * `cell_indices` - Slice with the cell indices to keep.
+/// * `loess_span` - Span parameter for the loess function
+/// * `clip_max` - Optional clip max parameter
+/// * `verbose` - If verbose, returns the timings of the function.
+///
+/// ### Returns
+///
+/// The `HvgRes`
+pub fn get_hvg_vst_streaming(
+    f_path: &str,
+    cell_indices: &[usize],
+    loess_span: f64,
+    clip_max: Option<f32>,
+    verbose: bool,
+) -> HvgRes {
+    let start_total = Instant::now();
+
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let header = reader.get_header();
+    let no_genes = header.total_genes;
+    let no_cells = cell_indices.len();
+
+    let cell_idx_map: FxHashMap<u32, u32> = cell_indices
+        .iter()
+        .enumerate()
+        .map(|(new_idx, &old_idx)| (old_idx as u32, new_idx as u32))
+        .collect();
+
+    if verbose {
+        println!(
+            "Pass 1/2: Calculating mean and variance for {} genes...",
+            no_genes.separate_with_underscores()
+        );
+    }
+
+    // Pass 1: Calculate mean and variance in batches
+    let start_pass1 = Instant::now();
+
+    const GENE_BATCH_SIZE: usize = 1000;
+    let num_batches = no_genes.div_ceil(GENE_BATCH_SIZE);
+
+    let mut means = Vec::with_capacity(no_genes);
+    let mut vars = Vec::with_capacity(no_genes);
+
+    for batch_idx in 0..num_batches {
+        if verbose && batch_idx % 5 == 0 {
+            let progress = (batch_idx + 1) as f32 / num_batches as f32 * 100.0;
+            println!("  Progress: {:.1}%", progress);
+        }
+
+        let start_gene = batch_idx * GENE_BATCH_SIZE;
+        let end_gene = ((batch_idx + 1) * GENE_BATCH_SIZE).min(no_genes);
+        let gene_indices: Vec<usize> = (start_gene..end_gene).collect();
+
+        let start_loading = Instant::now();
+
+        let mut genes = reader.read_gene_parallel(&gene_indices);
+
+        let end_loading = start_loading.elapsed();
+
+        if verbose {
+            println!("   Loaded batch in: {:.2?}.", end_loading);
+        }
+
+        let start_batch = Instant::now();
+
+        let batch_results: Vec<(f32, f32)> = genes
+            .par_iter_mut()
+            .map(|gene| calculate_mean_var_filtered(gene, &cell_idx_map, no_cells))
+            .collect();
+
+        let end_batch = start_batch.elapsed();
+
+        if verbose {
+            println!("   Finished calculations in: {:.2?}.", end_batch);
+        }
+
+        for (mean, var) in batch_results {
+            means.push(mean);
+            vars.push(var);
+        }
+        // genes vec dropped here - memory freed
+    }
+
+    let end_pass1 = start_pass1.elapsed();
+
+    if verbose {
+        println!("  Calculated gene statistics: {:.2?}", end_pass1);
+    }
+
+    // Fit loess
+    let start_loess = Instant::now();
+
+    let clip_max = clip_max.unwrap_or((no_cells as f32).sqrt());
+    let means_log10: Vec<f32> = means.iter().map(|x| x.log10()).collect();
+    let vars_log10: Vec<f32> = vars.iter().map(|x| x.log10()).collect();
+
+    let loess = LoessRegression::new(loess_span, 2);
+    let loess_res = loess.fit(&means_log10, &vars_log10);
+
+    let end_loess = start_loess.elapsed();
+
+    if verbose {
+        println!("  Fitted Loess: {:.2?}", end_loess);
+        println!("Pass 2/2: Calculating standardised variance...");
+    }
+
+    // Pass 2: Calculate standardised variance in batches
+    let start_pass2 = Instant::now();
+
+    let mut var_standardised = Vec::with_capacity(no_genes);
+
+    for batch_idx in 0..num_batches {
+        if verbose && batch_idx % 5 == 0 {
+            let progress = (batch_idx + 1) as f32 / num_batches as f32 * 100.0;
+            println!("  Progress: {:.1}%", progress);
+        }
+
+        let start_gene = batch_idx * GENE_BATCH_SIZE;
+        let end_gene = ((batch_idx + 1) * GENE_BATCH_SIZE).min(no_genes);
+        let gene_indices: Vec<usize> = (start_gene..end_gene).collect();
+
+        let mut genes = reader.read_gene_parallel(&gene_indices);
+
+        let start_batch = Instant::now();
+
+        let batch_std_vars: Vec<f32> = genes
+            .par_iter_mut()
+            .enumerate()
+            .map(|(local_idx, gene)| {
+                let gene_idx = start_gene + local_idx;
+                let expected_var = 10_f64.powf(loess_res.fitted_vals[gene_idx]) as f32;
+                calculate_std_variance_filtered(
+                    gene,
+                    &cell_idx_map,
+                    means[gene_idx],
+                    expected_var,
+                    clip_max,
+                    no_cells,
+                )
+            })
+            .collect();
+
+        let end_batch = start_batch.elapsed();
+
+        if verbose {
+            println!(
+                "   Finished calculating standardised variance in: {:.2?}.",
+                end_batch
+            );
+        }
+
+        var_standardised.extend(batch_std_vars);
+    }
+
+    let end_pass2 = start_pass2.elapsed();
+
+    if verbose {
+        println!(
+            "  Calculated standardised variance total: {:.2?}",
+            end_pass2
+        );
     }
 
     let total = start_total.elapsed();
@@ -403,8 +619,34 @@ pub fn get_hvg_dispersion() -> HvgRes {
 }
 
 /// To be implemented
+pub fn get_hvg_dispersion_streaming() -> HvgRes {
+    todo!("Dispersion method with streaming not yet implemented");
+
+    #[allow(unreachable_code)]
+    HvgRes {
+        mean: Vec::new(),
+        var: Vec::new(),
+        var_exp: Vec::new(),
+        var_std: Vec::new(),
+    }
+}
+
+/// To be implemented
 pub fn get_hvg_mvb() -> HvgRes {
     todo!("MeanVarianceBin method not yet implemented");
+
+    #[allow(unreachable_code)]
+    HvgRes {
+        mean: Vec::new(),
+        var: Vec::new(),
+        var_exp: Vec::new(),
+        var_std: Vec::new(),
+    }
+}
+
+/// To be implemented
+pub fn get_hvg_mvb_streaming() -> HvgRes {
+    todo!("MeanVarianceBin method with streaming not yet implemented");
 
     #[allow(unreachable_code)]
     HvgRes {

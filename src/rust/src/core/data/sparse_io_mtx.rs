@@ -170,6 +170,8 @@ impl MtxReader {
         }
 
         let first_scan_time = Instant::now();
+        let mut lines_read = 0usize;
+        let report_interval = (self.header.total_entries / 10).max(1);
 
         // Pass 1: Count unique cells per gene
         while {
@@ -196,6 +198,13 @@ impl MtxReader {
                 if gene_idx < self.header.total_genes {
                     gene_cells[gene_idx].insert(cell_idx);
                 }
+
+                lines_read += 1;
+                if verbose && lines_read % report_interval == 0 {
+                    let progress =
+                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                    println!("  Processed {}% of entries", progress);
+                }
             }
         }
 
@@ -219,6 +228,8 @@ impl MtxReader {
 
         self.reader.rewind()?;
         Self::skip_header(&mut self.reader)?;
+
+        lines_read = 0;
 
         while {
             line_buffer.clear();
@@ -244,6 +255,13 @@ impl MtxReader {
                 if genes_to_keep_set.contains(&gene_idx) && cell_idx < self.header.total_cells {
                     cell_gene_count[cell_idx] += 1;
                     cell_lib_size[cell_idx] += value as u32;
+                }
+
+                lines_read += 1;
+                if verbose && lines_read % report_interval == 0 {
+                    let progress =
+                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                    println!("  Processed {}% of entries (second pass)", progress);
                 }
             }
         }
@@ -319,6 +337,9 @@ impl MtxReader {
             )
         }
 
+        let mut lines_read = 0usize;
+        let report_interval = (self.header.total_entries / 10).max(1);
+
         while {
             line_buffer.clear();
             self.reader.read_until(b'\n', &mut line_buffer)? > 0
@@ -354,6 +375,13 @@ impl MtxReader {
             let new_gene_idx = quality.gene_old_to_new[&old_gene_idx] as u16;
 
             cell_data[new_cell_idx].push((new_gene_idx, value));
+
+            lines_read += 1;
+            if verbose && lines_read % report_interval == 0 {
+                let progress =
+                    (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                println!("  Processed {}% of entries", progress);
+            }
         }
 
         let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());

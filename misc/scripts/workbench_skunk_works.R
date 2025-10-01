@@ -188,9 +188,12 @@ object = single_cell_exp(dir_data = tempdir())
 tictoc::tic()
 object = load_mtx(
   object = object,
-  mtx_path = path.expand("~/Downloads/ex053/DGE.mtx"),
-  obs_path = path.expand("~/Downloads/ex053/cell_metadata.csv"),
-  var_path = path.expand("~/Downloads/ex053/all_genes.csv"),
+  sc_mtx_io_param = params_sc_mtx_io(
+    path_mtx = path.expand("~/Downloads/ex053/DGE.mtx"),
+    path_obs = path.expand("~/Downloads/ex053/cell_metadata.csv"),
+    path_var = path.expand("~/Downloads/ex053/all_genes.csv"),
+    cells_as_rows = TRUE
+  ),
   sc_qc_param = params_sc_min_quality(
     min_unique_genes = 100L,
     min_lib_size = 250L,
@@ -256,12 +259,12 @@ object[[]]
 object <- set_cell_to_keep(object, get_cell_names(object))
 
 # identify HVGs
-object <- find_hvg(object = object)
+object <- find_hvg_sc(object = object, streaming = FALSE)
 
 get_hvg(object)
 
 # run PCA
-object <- calculate_pca_single_cell(object, no_pcs = 30L)
+object <- calculate_pca_sc(object, no_pcs = 30L)
 
 # demo difference PCA vs randomised SVD
 
@@ -317,14 +320,10 @@ get_pca_loadings(object)[1:5, ]
 
 devtools::load_all()
 
-object <- find_neigbours_single_cell(
+object <- find_neighbours_sc(
   object,
   no_embd_to_use = 50L
 )
-
-get_snn_graph(object)
-
-get_knn_mat(object)
 
 
 # Rebuild of the h5ad parsing --------------------------------------------------
@@ -468,28 +467,27 @@ gs_of_interest <- list(
   ],
   "rps_perc" = get_gene_names(bixverse_sc)[
     get_gene_names(bixverse_sc) %like% "^RPS"
-  ],
+  ]
 )
 
+bixverse_sc <- gene_set_proportions_sc(bixverse_sc, gs_of_interest)
 
-bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
+cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.10, cell_id]
 
-bixverse_sc <- set_cell_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
+bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
 
-get_cells_to_keep(bixverse_sc)
+bixverse_sc <- find_hvg_sc(object = bixverse_sc, streaming = TRUE)
 
-bixverse_sc@sc_map$cell_mapping
-
-bixverse_sc <- find_hvg(object = bixverse_sc)
-
-bixverse_sc <- calculate_pca_single_cell(bixverse_sc, no_pcs = 30L)
+bixverse_sc <- calculate_pca_sc(bixverse_sc, no_pcs = 30L)
 
 tictoc::tic()
-bixverse_sc <- find_neigbours_single_cell(
+bixverse_sc <- find_neighbours_sc(
   bixverse_sc,
   neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw")
 )
 tictoc::toc()
+
+rextendr::document()
 
 pryr::object_size(bixverse_sc)
 

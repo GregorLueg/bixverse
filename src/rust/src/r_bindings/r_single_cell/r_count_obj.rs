@@ -852,7 +852,7 @@ impl SingeCellCountData {
                 let cell_start = cell_batch_idx * cell_batch_size;
                 let cell_end = ((cell_batch_idx + 1) * cell_batch_size).min(no_cells);
 
-                if verbose && cell_batch_idx % 10 == 0 {
+                if verbose && cell_batch_idx % 5 == 0 {
                     let progress = (cell_batch_idx + 1) as f32 / num_cell_batches as f32 * 100.0;
                     println!("  Reading cells: {:.1}%", progress);
                 }

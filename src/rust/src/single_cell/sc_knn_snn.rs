@@ -2,7 +2,10 @@ use faer::MatRef;
 use instant_distance::{Builder, Point as DistancePoint, Search};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
+use thousands::Separable;
 
 use crate::core::graph::annoy::AnnoyIndex;
 
@@ -130,6 +133,7 @@ pub fn generate_knn_hnsw(
     }
 
     let start_search = Instant::now();
+    let counter = Arc::new(AtomicUsize::new(0));
 
     let res: Vec<Vec<usize>> = points
         .par_iter()
@@ -144,6 +148,16 @@ pub fn generate_knn_hnsw(
 
             nearest_neighbours.retain(|&x| x != i);
             nearest_neighbours.truncate(no_neighbours);
+
+            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+            if verbose && count % 100_000 == 0 {
+                println!(
+                    " Processed {} / {} samples",
+                    count.separate_with_underscores(),
+                    n_samples.separate_with_underscores()
+                );
+            }
+
             nearest_neighbours
         })
         .collect();
@@ -188,6 +202,7 @@ pub fn generate_knn_annoy(
     let start_index = Instant::now();
 
     let index = AnnoyIndex::new(mat, n_trees, seed);
+    let n_samples = mat.nrows();
 
     let end_index = start_index.elapsed();
 
@@ -196,6 +211,7 @@ pub fn generate_knn_annoy(
     }
 
     let start_search = Instant::now();
+    let counter = Arc::new(AtomicUsize::new(0));
 
     let res: Vec<Vec<usize>> = (0..mat.nrows())
         .into_par_iter()
@@ -205,6 +221,16 @@ pub fn generate_knn_annoy(
             let mut neighbors = index.query(&query_vec, no_neighbours + 1, search_k);
             neighbors.retain(|&x| x != i);
             neighbors.truncate(no_neighbours);
+
+            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+            if verbose && count % 100_000 == 0 {
+                println!(
+                    " Processed {} / {} samples",
+                    count.separate_with_underscores(),
+                    n_samples.separate_with_underscores()
+                );
+            }
+
             neighbors
         })
         .collect();

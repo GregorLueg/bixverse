@@ -76,7 +76,7 @@ expect_warning(
 )
 
 expect_warning(
-  current = find_neigbours_single_sc(sc_object),
+  current = find_neighbours_sc(sc_object),
   info = "warning that no PCA data are detected"
 )
 
@@ -217,6 +217,43 @@ hvg_r <- order(var_std, decreasing = TRUE)[1:25L] - 1
 
 #### rust part -----------------------------------------------------------------
 
+##### direct load --------------------------------------------------------------
+
+sc_object <- find_hvg_sc(object = sc_object, hvg_no = 25L, .verbose = FALSE)
+
+var_data <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data$mean,
+  target = mean_values_r,
+  tolerance = 10e-7,
+  info = "Correct mean calculations for genes"
+)
+
+expect_equivalent(
+  current = var_data$var,
+  target = var_values_r,
+  tolerance = 10e-7,
+  info = "Correct variance calculations for genes"
+)
+
+# due to differences in the loess implementation, this is set higher...
+expect_equivalent(
+  current = var_data$var_std,
+  target = var_std,
+  tolerance = 10e-3,
+  info = "Correct standardised variance calculations for genes"
+)
+
+hvg_rs <- get_hvg(sc_object)
+
+expect_true(
+  current = length(intersect(hvg_r, hvg_rs)) == 25L,
+  info = "Overlap in the detected HVGs"
+)
+
+##### streaming version --------------------------------------------------------
+
 sc_object <- find_hvg_sc(object = sc_object, hvg_no = 25L, .verbose = FALSE)
 
 var_data <- get_sc_var(sc_object)
@@ -302,7 +339,7 @@ expect_true(
 if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
   # annoy algorithm
 
-  sc_object <- find_neigbours_single_sc(
+  sc_object <- find_neighbours_sc(
     sc_object,
     neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
     .verbose = FALSE
@@ -327,7 +364,7 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
   )
 
   # hnsw
-  sc_object <- find_neigbours_single_sc(
+  sc_object <- find_neighbours_sc(
     sc_object,
     neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
     .verbose = FALSE

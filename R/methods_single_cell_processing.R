@@ -335,7 +335,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
       mtx_path = path_mtx,
       qc_params = sc_qc_param,
       cells_as_rows = cells_as_rows,
-      verbose = FALSE
+      verbose = .verbose
     )
   )
 
@@ -474,6 +474,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
+#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
@@ -485,6 +487,7 @@ find_hvg_sc <- S7::new_generic(
     object,
     hvg_no = 2000L,
     hvg_params = params_sc_hvg(),
+    streaming = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -501,11 +504,13 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
+  streaming = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
+  checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
 
   if (length(get_cells_to_keep(object)) == 0) {
@@ -524,6 +529,7 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
       cell_indices = get_cells_to_keep(object),
       loess_span = loess_span,
       clip_max = NULL,
+      streaming = streaming,
       verbose = .verbose
     )
   )
@@ -659,8 +665,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' @return The object with added KNN matrix.
 #'
 #' @export
-find_neigbours_single_sc <- S7::new_generic(
-  name = "find_neigbours_single_sc",
+find_neighbours_sc <- S7::new_generic(
+  name = "find_neighbours_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -674,13 +680,13 @@ find_neigbours_single_sc <- S7::new_generic(
   }
 )
 
-#' @method find_neigbours_single_sc single_cell_exp
+#' @method find_neighbours_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
+S7::method(find_neighbours_sc, single_cell_exp) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -815,7 +821,7 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 
   if (is.null(snn_graph)) {
     warning(paste(
-      "No sNN graph found. Did you run find_neigbours_single_sc()",
+      "No sNN graph found. Did you run find_neighbours_sc()",
       "Returning class as is."
     ))
     return(object)

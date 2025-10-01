@@ -574,17 +574,26 @@ impl CscGeneChunk {
     ///
     /// ### Params
     ///
-    /// * `cells_to_keep` - HashSet with cell index positions to keep.
+    /// * `cells_to_keep` - IndexSet with cell index positions to keep.
     pub fn filter_selected_cells(&mut self, cells_to_keep: &IndexSet<u32>) {
+        // build reverse mapping: cell_id -> position in this gene's data
+        let cell_positions: FxHashMap<u32, usize> = self
+            .row_indices
+            .iter()
+            .enumerate()
+            .map(|(pos, &cell_id)| (cell_id, pos))
+            .collect();
+
         let mut new_data_raw = Vec::new();
         let mut new_data_norm = Vec::new();
         let mut new_row_indices = Vec::new();
 
+        // tterate in cells_to_keep order (critical for PCA! tripped over this one...)
         for (new_row_idx, &cell_index) in cells_to_keep.iter().enumerate() {
-            if let Some(pos) = self.row_indices.iter().position(|&idx| idx == cell_index) {
+            if let Some(&pos) = cell_positions.get(&cell_index) {
                 new_data_raw.push(self.data_raw[pos]);
                 new_data_norm.push(self.data_norm[pos]);
-                new_row_indices.push(new_row_idx as u32); // Use sequential row position, not cell ID
+                new_row_indices.push(new_row_idx as u32);
             }
         }
 

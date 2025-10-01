@@ -8,6 +8,7 @@ find_hvg_sc(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
+  streaming = FALSE,
   .verbose = TRUE
 )
 }
@@ -27,6 +28,9 @@ variance
 \item bin_method - String. One of \code{c("equal_width", "equal_freq")}. Not
 implemented yet.
 }}
+
+\item{streaming}{Boolean. Shall the genes be streamed in. Useful for larger
+data sets where you wish to avoid loading in the whole data.}
 
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }

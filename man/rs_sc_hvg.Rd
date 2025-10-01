@@ -4,7 +4,15 @@
 \alias{rs_sc_hvg}
 \title{Calculate the percentage of gene sets in the cells}
 \usage{
-rs_sc_hvg(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, verbose)
+rs_sc_hvg(
+  f_path_gene,
+  hvg_method,
+  cell_indices,
+  loess_span,
+  clip_max,
+  streaming,
+  verbose
+)
 }
 \arguments{
 \item{f_path_gene}{String. Path to the \code{counts_genes.bin} file.}
@@ -20,6 +28,9 @@ to keep.}
 
 \item{clip_max}{Optional clipping number. Defaults to \code{sqrt(no_cells)} if
 not provided.}
+
+\item{streaming}{Boolean. Shall the genes be streamed in to reduce memory
+pressure.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
