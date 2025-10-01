@@ -1,4 +1,4 @@
-# single cell methods ----------------------------------------------------------
+# single cell processing methods -----------------------------------------------
 
 ## i/o -------------------------------------------------------------------------
 
@@ -25,6 +25,10 @@
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return It will populate the files on disk and return the class with updated
@@ -38,6 +42,8 @@ load_h5ad <- S7::new_generic(
     object,
     h5_path,
     sc_qc_param = params_sc_min_quality(),
+    streaming = TRUE,
+    batch_size = 1000L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -54,16 +60,19 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
+  streaming = TRUE,
+  batch_size = 1000L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
-  checkmate::assertFileExists(h5_path)
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScMinQC(sc_qc_param)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
   # rust part
-  h5_meta <- get_h5ad_dimensions(h5_path)
+  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
 
   rust_con <- get_sc_rust_ptr(object)
 
@@ -76,22 +85,33 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     verbose = .verbose
   )
 
-  rust_con$generate_gene_based_data(
-    verbose = .verbose
-  )
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
 
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from h5ad into the DuckDB.")
+  }
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
     filter = as.integer(file_res$cell_indices + 1)
   )
+  if (.verbose) {
+    message("Loading variables data from h5ad into the DuckDB.")
+  }
   duckdb_con$populate_vars_from_h5(
     h5_path = h5_path,
     filter = as.integer(file_res$gene_indices + 1)
   )
-
-  duckdb_con$get_obs_table()
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
@@ -117,9 +137,15 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 #' files are being used to store the counts.
 #'
 #' @param object `single_cell_exp` class.
-#' @param mtx_path File path to the mtx file you wish to load in.
-#' @param obs_path File path
-#' @param var_path File path
+#' @param sc_mtx_io_param List. Please generate this one via
+#' [bixverse::params_sc_mtx_io()]. Needs to contain:
+#' \itemize{
+#'   \item path_mtx - String. Path to the .mtx file
+#'   \item path_obs - String. Path to the file containing cell/barcode info.
+#'   \item path_var - String. String. Path to the file containing gene/variable
+#'   info.
+#'   \item cells_as_rows - Boolean. Do cells represent the rows or columns.
+#' }
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
 #' \itemize{
@@ -131,6 +157,10 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return It will populate the files on disk and return the class with updated
@@ -142,10 +172,10 @@ load_mtx <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    mtx_path,
-    obs_path,
-    var_path,
+    sc_mtx_io_param = params_sc_mtx_io(),
     sc_qc_param = params_sc_min_quality(),
+    streaming = TRUE,
+    batch_size = 1000L,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -160,47 +190,64 @@ load_mtx <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 S7::method(load_mtx, single_cell_exp) <- function(
   object,
-  mtx_path,
-  obs_path,
-  var_path,
+  sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
+  streaming = TRUE,
+  batch_size = 1000L,
   .verbose = TRUE
 ) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
-  checkmate::assertFileExists(mtx_path)
-  checkmate::assertFileExists(obs_path)
-  checkmate::assertFileExists(var_path)
+  assertScMtxIO(sc_mtx_io_param)
   assertScMinQC(sc_qc_param)
   checkmate::qassert(.verbose, "B1")
 
   # rust part
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- rust_con$mtx_to_file(
-    mtx_path = mtx_path,
-    qc_params = sc_qc_param,
-    verbose = .verbose
+  file_res <- with(
+    sc_mtx_io_param,
+    rust_con$mtx_to_file(
+      mtx_path = path_mtx,
+      qc_params = sc_qc_param,
+      cells_as_rows = cells_as_rows,
+      verbose = FALSE
+    )
   )
 
-  rust_con$generate_gene_based_data(
-    verbose = .verbose
-  )
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
 
   # duckDB part
   duckdb_con <- get_sc_duckdb(object)
-  duckdb_con$populate_obs_from_plain_text(
-    f_path = obs_path,
-    filter = as.integer(file_res$cell_indices + 1)
-  )
-  duckdb_con$populate_var_from_plain_text(
-    f_path = var_path,
-    filter = as.integer(file_res$gene_indices + 1)
-  )
 
-  duckdb_con$get_obs_table()
-
-  duckdb_con$get_vars_table()
+  with(
+    sc_mtx_io_param,
+    {
+      if (.verbose) {
+        message("Loading observations data from flat file into the DuckDB.")
+      }
+      duckdb_con$populate_obs_from_plain_text(
+        f_path = path_obs,
+        filter = as.integer(file_res$cell_indices + 1)
+      )
+      if (.verbose) {
+        message("Loading variable data from flat file into the DuckDB.")
+      }
+      duckdb_con$populate_var_from_plain_text(
+        f_path = path_var,
+        filter = as.integer(file_res$gene_indices + 1)
+      )
+    }
+  )
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
@@ -231,29 +278,32 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
-gene_set_proportions <- S7::new_generic(
-  name = "gene_set_proportions",
+gene_set_proportions_sc <- S7::new_generic(
+  name = "gene_set_proportions_sc",
   dispatch_args = "object",
   fun = function(
     object,
-    gene_set_list
+    gene_set_list,
+    .verbose = TRUE
   ) {
     S7::S7_dispatch()
   }
 )
 
-#' @method gene_set_proportions single_cell_exp
+#' @method gene_set_proportions_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(gene_set_proportions, single_cell_exp) <- function(
+S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
   object,
-  gene_set_list
+  gene_set_list,
+  .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
@@ -265,10 +315,16 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 
   rs_results <- rs_sc_get_gene_set_perc(
     f_path_cell = get_rust_count_cell_f_path(object),
-    gene_set_idx = gene_set_list_tidy
+    gene_set_idx = gene_set_list_tidy,
+    verbose = .verbose
   )
 
-  object[[names(rs_results)]] <- rs_results
+  if (length(rs_results) == 1) {
+    # need to deal with the case of only one gene set here...
+    object[[names(rs_results)]] <- rs_results[[1]]
+  } else {
+    object[[names(rs_results)]] <- rs_results
+  }
 
   return(object)
 }
@@ -298,8 +354,8 @@ S7::method(gene_set_proportions, single_cell_exp) <- function(
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
-find_hvg <- S7::new_generic(
-  name = "find_hvg",
+find_hvg_sc <- S7::new_generic(
+  name = "find_hvg_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -311,13 +367,13 @@ find_hvg <- S7::new_generic(
   }
 )
 
-#' @method find_hvg single_cell_exp
+#' @method find_hvg_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_hvg, single_cell_exp) <- function(
+S7::method(find_hvg_sc, single_cell_exp) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
@@ -327,6 +383,14 @@ S7::method(find_hvg, single_cell_exp) <- function(
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(.verbose, "B1")
+
+  if (length(get_cells_to_keep(object)) == 0) {
+    warning(paste(
+      "You need to set the cells to keep with set_cell_to_keep().",
+      "Returning class as is."
+    ))
+    return(object)
+  }
 
   res <- with(
     hvg_params,
@@ -369,8 +433,8 @@ S7::method(find_hvg, single_cell_exp) <- function(
 #'
 #' @return The function will add the PCA factors and loadings to the object
 #' cache in memory.
-calculate_pca_single_cell <- S7::new_generic(
-  name = "calculate_pca_single_cell",
+calculate_pca_sc <- S7::new_generic(
+  name = "calculate_pca_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -383,13 +447,13 @@ calculate_pca_single_cell <- S7::new_generic(
   }
 )
 
-#' @method calculate_pca_single_cell single_cell_exp
+#' @method calculate_pca_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
+S7::method(calculate_pca_sc, single_cell_exp) <- function(
   object,
   no_pcs,
   randomised_svd = TRUE,
@@ -404,7 +468,7 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 
   if (length(get_hvg(object)) == 0) {
     warning(paste(
-      "No HVGs identified in this object. Did you run find_hvg()?",
+      "No HVGs identified in this object. Did you run find_hvg_sc()?",
       "Returning object as is."
     ))
     return(object)
@@ -427,7 +491,7 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
   return(object)
 }
 
-### knn ------------------------------------------------------------------------
+### neighbours -----------------------------------------------------------------
 
 #' Find the neighbours for single cell.
 #'
@@ -455,7 +519,9 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #'   \item search_budget - Integer. Search budget per tree for the `annoy`
 #'   algorithm. The higher, the longer the algorithm takes, but the more precise
 #'   the approximated nearest neighbours.
-#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`. `"hnsw"` takes
+#'   longer, is more precise and more memory friendly. `"annoy"` is faster, less
+#'   precise and will take more memory.
 #'   \item full_snn - Boolean. Shall the sNN graph be generated across all
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
@@ -469,8 +535,8 @@ S7::method(calculate_pca_single_cell, single_cell_exp) <- function(
 #' @return The object with added KNN matrix.
 #'
 #' @export
-find_neigbours_single_cell <- S7::new_generic(
-  name = "generate_knn_single_cell",
+find_neigbours_single_sc <- S7::new_generic(
+  name = "find_neigbours_single_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -484,13 +550,13 @@ find_neigbours_single_cell <- S7::new_generic(
   }
 )
 
-#' @method find_neigbours_single_cell single_cell_exp
+#' @method find_neigbours_single_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
+S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -508,6 +574,18 @@ S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
 
   # get the embedding
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
+
+  # early return
+  if (is.null(embd)) {
+    warning(
+      paste(
+        "The desired embedding was not found. Please check what you are doing",
+        "Returning class as is"
+      )
+    )
+
+    return(object)
+  }
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
@@ -549,14 +627,88 @@ S7::method(find_neigbours_single_cell, single_cell_exp) <- function(
       knn_data,
       snn_method = snn_similarity,
       pruning = pruning,
-      limited_graph = !full_snn
+      limited_graph = !full_snn,
+      verbose = .verbose
     )
   )
+
+  if (.verbose) {
+    message("Transforming sNN data to igraph.")
+  }
 
   snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
   igraph::E(snn_g)$weight <- snn_graph_rs$weights
 
   object <- set_snn_graph(object, snn_graph = snn_g)
+
+  return(object)
+}
+
+### clustering -----------------------------------------------------------------
+
+#' Graph-based clustering of cells on the sNN graph
+#'
+#' @description
+#' This function will apply Leiden clustering on the sNN graph with the
+#' given resolution and add a column to the obs table.
+#'
+#' @param object `single_cell_exp` class.
+#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
+#' @param name String. The name to add to the obs table in the DuckDB.
+#'
+#' @return The object with added clustering in the obs table.
+#'
+#' @export
+find_clusters_sc <- S7::new_generic(
+  name = "find_clusters_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    res = 1,
+    name = "leiden_clustering"
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_clusters_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(find_clusters_sc, single_cell_exp) <- function(
+  object,
+  res = 1,
+  name = "leiden_clustering"
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::qassert(res, "N1")
+  checkmate::qassert(name, "S1")
+
+  snn_graph <- get_snn_graph(object)
+
+  if (is.null(snn_graph)) {
+    warning(paste(
+      "No sNN graph found. Did you run find_neigbours_single_sc()",
+      "Returning class as is."
+    ))
+    return(object)
+  }
+
+  leiden_clusters <- igraph::cluster_leiden(
+    snn_graph,
+    objective_function = "modularity",
+    resolution = res
+  )
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  new_data <- data.table::data.table(new_data = leiden_clusters$membership)
+  data.table::setnames(new_data, "new_data", name)
+
+  duckdb_con$add_data_obs(new_data = new_data)
 
   return(object)
 }

@@ -1,5 +1,6 @@
 use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
 use half::f16;
+use indexmap::IndexSet;
 use memmap2::MmapOptions;
 use rayon::iter::*;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -353,6 +354,42 @@ impl CsrCellChunk {
     pub fn get_qc_info(&self) -> (usize, usize) {
         (self.col_indices.len(), self.library_size)
     }
+
+    /// Filter to keep only specified genes
+    ///
+    /// This will remove the genes that are not set to `true` in the boolean
+    /// vector. This assumes that the indices of the genes and the booleans
+    /// are the same!
+    ///
+    /// ### Params
+    ///
+    /// * `genes_to_keep` - Keep only the genes within this boolean vectors.
+    pub fn filter_genes(&mut self, genes_to_keep: &[bool]) {
+        let mut index_map = vec![None; genes_to_keep.len()];
+        let mut new_idx = 0;
+        for (old_idx, &keep) in genes_to_keep.iter().enumerate() {
+            if keep {
+                index_map[old_idx] = Some(new_idx);
+                new_idx += 1;
+            }
+        }
+
+        let mut new_indices = Vec::new();
+        let mut new_raw = Vec::new();
+        let mut new_norm = Vec::new();
+
+        for (i, &gene_idx) in self.col_indices.iter().enumerate() {
+            if let Some(new_gene_idx) = index_map[gene_idx as usize] {
+                new_indices.push(new_gene_idx as u16);
+                new_raw.push(self.data_raw[i]);
+                new_norm.push(self.data_norm[i]);
+            }
+        }
+
+        self.col_indices = new_indices;
+        self.data_raw = new_raw;
+        self.data_norm = new_norm;
+    }
 }
 
 /// CscGeneChunk
@@ -538,26 +575,24 @@ impl CscGeneChunk {
     /// ### Params
     ///
     /// * `cells_to_keep` - HashSet with cell index positions to keep.
-    pub fn filter_selected_cells(&mut self, cells_to_keep: &FxHashSet<u32>) {
-        let mut indices_to_keep = Vec::new();
+    pub fn filter_selected_cells(&mut self, cells_to_keep: &IndexSet<u32>) {
+        let mut new_data_raw = Vec::new();
+        let mut new_data_norm = Vec::new();
+        let mut new_row_indices = Vec::new();
 
-        for (i, &cell_index) in self.row_indices.iter().enumerate() {
-            if cells_to_keep.contains(&cell_index) {
-                indices_to_keep.push(i);
+        for (new_row_idx, &cell_index) in cells_to_keep.iter().enumerate() {
+            if let Some(pos) = self.row_indices.iter().position(|&idx| idx == cell_index) {
+                new_data_raw.push(self.data_raw[pos]);
+                new_data_norm.push(self.data_norm[pos]);
+                new_row_indices.push(new_row_idx as u32); // Use sequential row position, not cell ID
             }
         }
 
-        // Update internal values
-        self.row_indices = indices_to_keep
-            .iter()
-            .map(|&i| self.row_indices[i])
-            .collect();
-
-        self.data_raw = indices_to_keep.iter().map(|&i| self.data_raw[i]).collect();
-
-        self.data_norm = indices_to_keep.iter().map(|&i| self.data_norm[i]).collect();
-
-        self.nnz = self.row_indices.len();
+        let nnz = new_data_raw.len();
+        self.data_raw = new_data_raw;
+        self.data_norm = new_data_norm;
+        self.row_indices = new_row_indices;
+        self.nnz = nnz;
     }
 }
 

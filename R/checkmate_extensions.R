@@ -606,6 +606,48 @@ checkDGRDLparams <- function(x) {
 
 ## single cell -----------------------------------------------------------------
 
+### io -------------------------------------------------------------------------
+
+#' Check SC MTX load parameters
+#'
+#' @description Checkmate extension for checking MTX loading parameters
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScMtxIO <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "path_mtx",
+      "path_obs",
+      "path_var",
+      "cells_as_rows"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- purrr::map_lgl(c("path_mtx", "path_obs", "path_var"), \(n) {
+    checkmate::testFileExists(x[[n]])
+  })
+  if (!isTRUE(all(res))) {
+    return(paste(
+      "Some of the files specified in the config for mtx ingest are not",
+      "existing. Please check the provided params."
+    ))
+  }
+  res <- checkmate::qtest(x[["cells_as_rows"]], "B1")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  return(TRUE)
+}
+
 ### qc -------------------------------------------------------------------------
 
 #' Check SC minimum QC parameters
@@ -1008,6 +1050,22 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 
 ## single cell -----------------------------------------------------------------
+
+### io -------------------------------------------------------------------------
+
+#' Assert SC MTX load parameters
+#'
+#' @description Checkmate extension for asserting MTX loading parameters.
+#'
+#' @inheritParams checkScMtxIO
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
 
 ### qc -------------------------------------------------------------------------
 

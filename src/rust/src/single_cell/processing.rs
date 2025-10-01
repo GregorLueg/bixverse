@@ -1,7 +1,8 @@
 use extendr_api::*;
 use faer::Mat;
+use indexmap::IndexSet;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 use std::time::Instant;
 
 use crate::core::base::loess::*;
@@ -142,10 +143,24 @@ pub struct HvgRes {
 /// ### Returns
 ///
 /// A vector with the percentages of these genes over the total reads.
-pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<f32>> {
+pub fn get_gene_set_perc(
+    f_path: &str,
+    gene_indices: Vec<Vec<u16>>,
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_reading = Instant::now();
+
     let reader = ParallelSparseReader::new(f_path).unwrap();
 
     let cell_chunks = reader.get_all_cells();
+
+    let end_read = start_reading.elapsed();
+
+    if verbose {
+        println!("Load in data: {:.2?}", end_read);
+    }
+
+    let start_calculations = Instant::now();
 
     let mut results: Vec<Vec<f32>> = Vec::with_capacity(gene_indices.len());
 
@@ -169,6 +184,16 @@ pub fn get_gene_set_perc(f_path: &str, gene_indices: Vec<Vec<u16>>) -> Vec<Vec<f
 
         results.push(percentage.clone());
     }
+
+    let end_calculations = start_calculations.elapsed();
+
+    if verbose {
+        println!(
+            "Finished the gene set proportion calculations: {:.2?}",
+            end_calculations
+        );
+    }
+
     results
 }
 
@@ -205,7 +230,7 @@ fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, 
         })
         .sum::<f32>();
 
-    let var = (sum_sq_diff + n_zero * mean * mean) / no_cells;
+    let var = (sum_sq_diff + n_zero * mean * mean) / (no_cells);
 
     (mean, var)
 }
@@ -220,6 +245,10 @@ fn calculate_mean_var_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (f32, 
 /// * `expected_var` - Expected variance based on the Loess function
 /// * `clip_max` - Which values to clip
 /// * `no_cells` - The number of represented cells
+///
+/// ### Returns
+///
+/// The standardised variance
 #[inline]
 fn calculate_std_variance(
     chunk: &CscGeneChunk,
@@ -272,7 +301,7 @@ fn calculate_std_variance(
 /// The `HvgRes`
 pub fn get_hvg_vst(
     f_path: &str,
-    cell_indices: &FxHashSet<u32>,
+    cell_indices: &[usize],
     loess_span: f64,
     clip_max: Option<f32>,
     verbose: bool,
@@ -286,6 +315,8 @@ pub fn get_hvg_vst(
     let mut gene_chunks: Vec<CscGeneChunk> = reader.get_all_genes();
     let no_cells = cell_indices.len();
 
+    let cell_set: IndexSet<u32> = cell_indices.iter().map(|&x| x as u32).collect();
+
     let end_read = start_read.elapsed();
 
     if verbose {
@@ -297,7 +328,7 @@ pub fn get_hvg_vst(
     let results: Vec<(f32, f32)> = gene_chunks
         .par_iter_mut()
         .map(|chunk| {
-            chunk.filter_selected_cells(cell_indices);
+            chunk.filter_selected_cells(&cell_set);
             calculate_mean_var_csc_chunk(chunk, no_cells)
         })
         .collect();
@@ -316,7 +347,7 @@ pub fn get_hvg_vst(
     let means_log10: Vec<f32> = means.iter().map(|x| x.log10()).collect();
     let vars_log10: Vec<f32> = vars.iter().map(|x| x.log10()).collect();
 
-    let loess = LoessRegression::new(loess_span, 1);
+    let loess = LoessRegression::new(loess_span, 2);
     let loess_res = loess.fit(&means_log10, &vars_log10);
 
     let end_loess = start_loess.elapsed();
@@ -402,27 +433,14 @@ pub fn get_hvg_mvb() -> HvgRes {
 fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let mut dense_data = vec![0.0f32; no_cells];
 
-    // need to do some additional manipulations here, as I remove cells
-    // in the step before...
-    let mut unique_rows: Vec<u32> = chunk.row_indices.to_vec();
-    unique_rows.sort();
-    unique_rows.dedup();
-
-    let row_map: FxHashMap<u32, usize> = unique_rows
-        .into_iter()
-        .enumerate()
-        .map(|(pos, row_idx)| (row_idx, pos))
-        .collect();
-
     for (idx, &row_idx) in chunk.row_indices.iter().enumerate() {
-        if let Some(&mapped_pos) = row_map.get(&row_idx) {
-            dense_data[mapped_pos] = chunk.data_norm[idx].to_f32();
-        }
+        dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
     }
 
     let mean = dense_data.iter().sum::<f32>() / no_cells as f32;
     let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
     let std_dev = variance.sqrt();
+
     dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
 }
 
@@ -442,8 +460,8 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
 /// A tuple of the samples projected on the PC space and gene loadings
 pub fn pca_on_sc(
     f_path: &str,
-    cell_indices: &FxHashSet<u32>,
-    gene_indices: Vec<usize>,
+    cell_indices: &[usize],
+    gene_indices: &[usize],
     no_pcs: usize,
     random_svd: bool,
     seed: usize,
@@ -451,10 +469,12 @@ pub fn pca_on_sc(
 ) -> (Mat<f32>, Mat<f32>) {
     let start_total = Instant::now();
 
+    let cell_set: IndexSet<u32> = cell_indices.iter().map(|&x| x as u32).collect();
+
     let start_reading = Instant::now();
 
     let reader = ParallelSparseReader::new(f_path).unwrap();
-    let mut gene_chunks: Vec<CscGeneChunk> = reader.read_gene_parallel(&gene_indices);
+    let mut gene_chunks: Vec<CscGeneChunk> = reader.read_gene_parallel(gene_indices);
 
     let end_reading = start_reading.elapsed();
 
@@ -465,7 +485,7 @@ pub fn pca_on_sc(
     let start_scaling = Instant::now();
 
     gene_chunks.par_iter_mut().for_each(|chunk| {
-        chunk.filter_selected_cells(cell_indices);
+        chunk.filter_selected_cells(&cell_set);
     });
 
     let scaled_data: Vec<Vec<f32>> = gene_chunks

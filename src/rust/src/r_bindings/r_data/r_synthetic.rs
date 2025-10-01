@@ -233,10 +233,44 @@ fn rs_simulate_dropouts(
     Ok(faer_to_r_matrix(sparse_data.as_ref()))
 }
 
+#[extendr]
+fn rs_synthetic_sc_data_with_cell_types(
+    n_cells: usize,
+    n_genes: usize,
+    cell_configs: List,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let mut cell_configs_vec = Vec::with_capacity(cell_configs.len());
+    for i in 0..cell_configs.len() {
+        let elem_i = cell_configs.elt(i)?;
+        let list_i = elem_i
+            .as_list()
+            .ok_or_else(|| extendr_api::Error::Other("Expected list".into()))?;
+        let cell_config = CellTypeConfig::from_r_list(list_i);
+        cell_configs_vec.push(cell_config);
+    }
+
+    let synthetic_data = create_celltype_sparse_csr_data(n_cells, n_genes, cell_configs_vec, seed);
+
+    Ok(list!(
+        data = synthetic_data.0.data,
+        indptr = synthetic_data.0.indptr,
+        indices = synthetic_data.0.indices,
+        nrow = synthetic_data.0.shape.0,
+        ncol = synthetic_data.0.shape.1,
+        cell_type_indices = synthetic_data
+            .1
+            .iter()
+            .map(|x| *x as i32)
+            .collect::<Vec<i32>>()
+    ))
+}
+
 extendr_module! {
     mod r_synthetic;
     fn rs_synthetic_sc_data_csc;
     fn rs_synthetic_sc_data_csr;
+    fn rs_synthetic_sc_data_with_cell_types;
     fn rs_generate_bulk_rnaseq;
     fn rs_simulate_dropouts;
 }

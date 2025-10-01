@@ -31,7 +31,11 @@ use crate::utils::r_rust_interface::*;
 ///
 /// @export
 #[extendr]
-fn rs_differential_cor(x_a: RMatrix<f64>, x_b: RMatrix<f64>, spearman: bool) -> List {
+fn rs_differential_cor(
+    x_a: RMatrix<f64>,
+    x_b: RMatrix<f64>,
+    spearman: bool,
+) -> extendr_api::Result<List> {
     assert!(
         x_a.ncols() == x_b.ncols(),
         "Input matrices must have the same number of columns. Found {} columns in first matrix and {} in second.",
@@ -46,14 +50,14 @@ fn rs_differential_cor(x_a: RMatrix<f64>, x_b: RMatrix<f64>, spearman: bool) -> 
     let cor_a = column_cor(&mat_a, spearman);
     let cor_b = column_cor(&mat_b, spearman);
 
-    let diff_cor = calculate_diff_correlation(&cor_a, &cor_b, n_sample_a, n_sample_b, spearman);
+    let diff_cor = calculate_diff_correlation(&cor_a, &cor_b, n_sample_a, n_sample_b, spearman)?;
 
-    list!(
+    Ok(list!(
         r_a = diff_cor.r_a,
         r_b = diff_cor.r_b,
         z_score = diff_cor.z_score,
         p_val = diff_cor.p_vals
-    )
+    ))
 }
 
 extendr_module! {

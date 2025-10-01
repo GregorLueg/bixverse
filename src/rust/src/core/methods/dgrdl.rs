@@ -42,7 +42,6 @@ pub struct DgrdlParams {
     pub rho: f64,
 }
 
-#[allow(dead_code)]
 impl DgrdlParams {
     /// Generate the DGRDL parameters from an R list
     ///
@@ -108,6 +107,7 @@ impl DgrdlParams {
     /// ### Returns
     ///
     /// `DgrdlParams` with default parameter configuration
+    #[allow(dead_code)]
     fn default() -> Self {
         Self {
             sparsity: 5,

@@ -585,6 +585,8 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, cell_configs, seed)
+
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
 #' @description
@@ -662,8 +664,31 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #' @export
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
 
+#' Load in h5ad data via Rust
+#'
+#' @description
+#' Loads in h5ad data within Rust and automatically converts the data into
+#' CSR with cells x genes.
+#'
+#' @param f_path File path. The path to the h5ad file.
+#' @param cs_type String. Is the data stored in CSC or CSR.
+#' @param nrows Integer. Number of rows in the file.
+#' @param ncols Integer. Number of columns in the file.
+#' @param cell_quality List. Specifiying the cell quality. Please refer
+#' to [bixverse::params_sc_min_quality()].
+#' @param verbose Boolean. Controls verbosity of the function
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item data - The data of the sparse matrix stored on the h5ad file.
+#'   \item indices - The indices of the sparse matrix stored in the h5ad file.
+#'   \item indptr - The indptr of the sparse matrix stored in the h5ad file.
+#'   \item no_genes - No of genes in the sparse matrix (i.e., ncol).
+#'   \item no_cells - No of cells in the sparse matrix (i.e., nrow).
+#' }
+#'
 #' @export
-rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality)
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
 #' Calculates the traditional GSEA enrichment score
 #'
@@ -1671,12 +1696,13 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' @param f_path_cell String. Path to the `counts_cells.bin` file.
 #' @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
 #' elements of the genes of interest.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the percentages of counts per gene set group detected
 #' in the cells.
 #'
 #' @export
-rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx)
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'
@@ -1766,12 +1792,15 @@ rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_typ
 #' Choice of `c("jaccard", "rank")`.
 #' @param pruning Float. Below which value for the Jaccard similarity to prune
 #' the weight to 0.
+#' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A integer matrix of N x k with N being the number of cells and k the
 #' number of neighbours.
 #'
 #' @export
-rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning)
+rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
+
+rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 
@@ -1783,13 +1812,15 @@ SingeCellCountData$r_csr_mat_to_file <- function(no_cells, no_genes, data, row_p
 
 SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, verbose)
+SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
 SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
+
+SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose))
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 

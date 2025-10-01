@@ -51,7 +51,7 @@ pub fn calculate_diff_correlation(
     no_sample_a: usize,
     no_sample_b: usize,
     spearman: bool,
-) -> DiffCorRes {
+) -> Result<DiffCorRes, String> {
     assert_symmetric_mat!(mat_a);
     assert_symmetric_mat!(mat_b);
     assert_same_dims!(mat_a, mat_b);
@@ -88,12 +88,12 @@ pub fn calculate_diff_correlation(
         .map(|(a, b)| (a - b) / denominator)
         .collect();
 
-    let p_values = z_scores_to_pval(&z_scores);
+    let p_values = z_scores_to_pval(&z_scores, "twosided")?;
 
-    DiffCorRes {
+    Ok(DiffCorRes {
         r_a: original_cor_a,
         r_b: original_cor_b,
         z_score: z_scores,
         p_vals: p_values,
-    }
+    })
 }

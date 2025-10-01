@@ -859,6 +859,9 @@ S7::method(get_sc_map, single_cell_exp) <- function(
 #' Defaults to `"cell"`.
 #' @param cell_indices Optional cell indices.
 #' @param gene_indices Optional gene indices.
+#' @param use_cells_to_keep Boolean. Shall cells to keep be found in the class,
+#' shall the counts be reduced to these.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The obs table
 #'
@@ -872,6 +875,7 @@ get_sc_counts <- S7::new_generic(
     return_format = c("cell", "gene"),
     cell_indices = NULL,
     gene_indices = NULL,
+    use_cells_to_keep = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -887,6 +891,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   return_format = c("cell", "gene"),
   cell_indices = NULL,
   gene_indices = NULL,
+  use_cells_to_keep = FALSE,
   .verbose = TRUE
 ) {
   assay <- match.arg(assay)
@@ -905,6 +910,17 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   rust_con <- get_sc_rust_ptr(object)
 
   sc_map <- get_sc_map(object)
+
+  cells_to_keep <- get_cells_to_keep(object)
+
+  if (use_cells_to_keep) {
+    if (!is.null(cell_indices) & length(cells_to_keep) > 0) {
+      # deal with the case that the cells to keep where specified
+      cell_indices <- as.integer(intersect(cell_indices, cells_to_keep + 1))
+    } else if (length(cells_to_keep) > 0) {
+      cell_indices <- as.integer(cells_to_keep + 1)
+    }
+  }
 
   # Get raw data from Rust
   count_data <- get_counts_from_rust(
@@ -944,6 +960,7 @@ S7::method(`[`, single_cell_exp) <- function(
   ...,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
+  use_cells_to_keep = FALSE,
   drop = TRUE
 ) {
   if (missing(i)) {
@@ -968,6 +985,7 @@ S7::method(`[`, single_cell_exp) <- function(
     return_format = return_format,
     cell_indices = i,
     gene_indices = j,
+    use_cells_to_keep = use_cells_to_keep,
     .verbose = FALSE
   )
 }
@@ -1490,6 +1508,13 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
     x = S7::prop(x, "sc_map"),
     cells_to_keep = cells_to_keep
   )
+
+  # remove the cells from the obs table
+  duckdb_con <- get_sc_duckdb(x)
+
+  to_keep <- get_cell_names(x) %in% cells_to_keep
+
+  duckdb_con$filter_obs_table(filter_vec = to_keep)
 
   return(x)
 }
