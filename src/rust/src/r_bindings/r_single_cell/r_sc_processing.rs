@@ -256,6 +256,8 @@ fn rs_sc_pca(
 /// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
 /// @param search_budget Integer. Search budget per tree for the `"annoy"`
 /// algorithm.
+/// @param algorithm_type String. Which of the two implemented algorithms to
+/// use. One of `c("annoy", "hnsw")`
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.

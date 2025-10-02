@@ -507,6 +507,8 @@ params_sc_min_quality <- function(
 #' @param bin_method String. One of `c("equal_width", "equal_freq")`.
 #'
 #' @returns A list with the HVG parameters
+#'
+#' @export
 params_sc_hvg <- function(
   method = "vst",
   loess_span = 0.3,
@@ -549,6 +551,8 @@ params_sc_hvg <- function(
 #' Both methods produce weights normalised to the range `[0, 1]`.
 #'
 #' @returns A list with the neighbour parameters.
+#'
+#' @export
 params_sc_neighbours <- function(
   k = 15L,
   n_trees = 100L,

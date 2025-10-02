@@ -2,9 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_snn_graph}
 \alias{set_snn_graph}
+\alias{set_snn_graph.sc_cache}
+\alias{set_snn_graph.single_cell_exp}
 \title{Set/add KNN}
 \usage{
 set_snn_graph(x, snn_graph)
+
+\method{set_snn_graph}{sc_cache}(x, snn_graph)
 }
 \arguments{
 \item{x}{An object to add the KNN data to}
@@ -13,4 +17,6 @@ set_snn_graph(x, snn_graph)
 }
 \description{
 Set/add KNN
+
+Set the sNN graph for a \code{single_cell_exp} class.
 }

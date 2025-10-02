@@ -2,13 +2,19 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_pca_loadings}
 \alias{get_pca_loadings}
+\alias{get_pca_loadings.sc_cache}
+\alias{get_pca_loadings.single_cell_exp}
 \title{Get the PCA loadings}
 \usage{
 get_pca_loadings(x)
+
+\method{get_pca_loadings}{sc_cache}(x)
 }
 \arguments{
 \item{x}{An object to get PCA loadings from.}
 }
 \description{
 Get the PCA loadings
+
+Get the PCA loadings from a \code{single_cell_exp}.
 }

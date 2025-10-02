@@ -2,13 +2,19 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_gene_names}
 \alias{get_gene_names}
+\alias{get_gene_names.sc_mapper}
+\alias{get_gene_names.single_cell_exp}
 \title{Get the gene names}
 \usage{
 get_gene_names(x)
+
+\method{get_gene_names}{sc_mapper}(x)
 }
 \arguments{
 \item{x}{An object to get the gene names from.}
 }
 \description{
 Get the gene names
+
+Get the gene names from a \code{single_cell_exp}.
 }

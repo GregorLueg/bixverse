@@ -409,6 +409,8 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
+#'
+#' @export
 gene_set_proportions_sc <- S7::new_generic(
   name = "gene_set_proportions_sc",
   dispatch_args = "object",
@@ -490,6 +492,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
+#'
+#' @export
 find_hvg_sc <- S7::new_generic(
   name = "find_hvg_sc",
   dispatch_args = "object",
@@ -573,6 +577,8 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #'
 #' @return The function will add the PCA factors and loadings to the object
 #' cache in memory.
+#'
+#' @export
 calculate_pca_sc <- S7::new_generic(
   name = "calculate_pca_sc",
   dispatch_args = "object",

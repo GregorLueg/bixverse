@@ -2,9 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_hvg}
 \alias{set_hvg}
+\alias{set_hvg.sc_mapper}
+\alias{set_hvg.single_cell_exp}
 \title{Set the HVG genes}
 \usage{
 set_hvg(x, hvg)
+
+\method{set_hvg}{sc_mapper}(x, hvg)
 }
 \arguments{
 \item{x}{An object to set the HVGs for}
@@ -14,4 +18,6 @@ genes.}
 }
 \description{
 Set the HVG genes
+
+Set the highly variable genes for a \code{single_cell_exp} class.
 }

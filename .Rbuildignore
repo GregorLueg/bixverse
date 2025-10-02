@@ -16,3 +16,4 @@
 ^Cargo\.toml$
 ^Cargo\.lock$
 ^target$
+^.github$

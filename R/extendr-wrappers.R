@@ -490,6 +490,22 @@ rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap_
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+#' Rust implementation of a Loess function
+#'
+#' @param x Numeric. The x values to fit.
+#' @param y Numeric. The y values to fit.
+#' @param span Numeric. The span parameter. Needs to be between 0.1 and 1.
+#' @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
+#' will cause an error.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item predicted - The predicted values.
+#'   \item residuals - The residuals for every data point.
+#'   \item valid_idx - Which data indices were included.
+#' }
+#'
+#' @export
 rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span, degree)
 
 #' Generate sparse data from an upper triangle
@@ -1773,6 +1789,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
 #' @param search_budget Integer. Search budget per tree for the `"annoy"`
 #' algorithm.
+#' @param algorithm_type String. Which of the two implemented algorithms to
+#' use. One of `c("annoy", "hnsw")`
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.

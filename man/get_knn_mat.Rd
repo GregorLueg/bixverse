@@ -2,13 +2,19 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_knn_mat}
 \alias{get_knn_mat}
+\alias{get_knn_mat.sc_cache}
+\alias{get_knn_mat.single_cell_exp}
 \title{Get the KNN matrix}
 \usage{
 get_knn_mat(x)
+
+\method{get_knn_mat}{sc_cache}(x)
 }
 \arguments{
 \item{x}{An object to get the kNN matrix from.}
 }
 \description{
 Get the KNN matrix
+
+Get the KNN matrix from a \code{single_cell_exp}.
 }

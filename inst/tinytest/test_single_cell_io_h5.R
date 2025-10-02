@@ -34,9 +34,9 @@ write_h5ad_sc(
 
 expected_dims <- setNames(c(1000, 100), c("obs", "var"))
 
-h5_meta_csr <- get_h5ad_dimensions(f_path_csr)
+h5_meta_csr <- bixverse:::get_h5ad_dimensions(f_path_csr)
 
-h5_meta_csc <- get_h5ad_dimensions(f_path_csc)
+h5_meta_csc <- bixverse:::get_h5ad_dimensions(f_path_csc)
 
 expect_equal(
   current = h5_meta_csr$dims,

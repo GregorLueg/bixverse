@@ -2,13 +2,19 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_snn_graph}
 \alias{get_snn_graph}
+\alias{get_snn_graph.sc_cache}
+\alias{get_snn_graph.single_cell_exp}
 \title{Get the sNN graph}
 \usage{
 get_snn_graph(x)
+
+\method{get_snn_graph}{sc_cache}(x)
 }
 \arguments{
 \item{x}{An object to get the sNN graph from.}
 }
 \description{
 Get the sNN graph
+
+Get the SNN graph from a \code{single_cell_exp}.
 }
