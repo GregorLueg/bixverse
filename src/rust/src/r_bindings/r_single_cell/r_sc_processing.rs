@@ -257,7 +257,7 @@ fn rs_sc_pca(
 /// @param search_budget Integer. Search budget per tree for the `"annoy"`
 /// algorithm.
 /// @param algorithm_type String. Which of the two implemented algorithms to
-/// use. One of `c("annoy", "hnsw")`
+/// use. One of `c("annoy", "hnsw")`.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -316,6 +316,8 @@ fn rs_sc_knn(
 /// represent the neighbours.
 /// @param snn_method String. Which method to use to calculate the similarity.
 /// Choice of `c("jaccard", "rank")`.
+/// @param limited_graph Boolean. Shall the sNNs only be calculated between
+/// direct neighbours in the graph, or between all possible combinations.
 /// @param pruning Float. Below which value for the Jaccard similarity to prune
 /// the weight to 0.
 /// @param verbose Boolean. Controls verbosity of the function.

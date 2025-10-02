@@ -1342,11 +1342,13 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
   return(object)
 }
 
-
+#' @method `[[<-` single_cell_exp
+#'
 #' @export
-S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
+S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(i, "S+")
+
   if (length(i) == 1) {
     checkmate::qassert(value, "a")
   } else {
@@ -1369,6 +1371,7 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
 
   return(x)
 }
+
 
 #' Add a new column to the obs table
 #'

@@ -406,7 +406,11 @@ expect_true(
 ## knn and snn -----------------------------------------------------------------
 
 if (
-  requireNamespace(c("BiocNeighbors", "bluster", "cluster"), quietly = TRUE)
+  all(sapply(
+    c("BiocNeighbors", "bluster", "cluster"),
+    requireNamespace,
+    quietly = TRUE
+  ))
 ) {
   # annoy algorithm
 
@@ -499,6 +503,12 @@ if (
 }
 
 ## community detection ---------------------------------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
+  .verbose = FALSE
+)
 
 sc_object <- find_clusters_sc(sc_object)
 

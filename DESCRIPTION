@@ -61,6 +61,7 @@ Imports:
 Suggests: 
     biomaRt,
     BiocParallel,
+    cluster,
     fgsea,
     GSVA,
     infotheo,
