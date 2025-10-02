@@ -39,7 +39,7 @@ precise and will take more memory.
 cells (standard in the \code{bluster} package.) Defaults to \code{FALSE}.
 \item pruning - Value below which the weight in the sNN graph is set to 0.
 \item snn_similarity - String. One of \code{c("rank", "jaccard")}. Defines how
-the weight is calculated. For details, please see
+the weight form the SNN graph is calculated. For details, please see
 \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
 }}
 

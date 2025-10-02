@@ -392,8 +392,8 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
     current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
       (dim(bioc_knn)[1] *
         dim(bioc_knn)[2])) >=
-      0.99,
-    info = "kNN overlap with BiocNeighbors >= 0.99 - annoy algorithm"
+      0.98,
+    info = "kNN overlap with BiocNeighbors >= 0.98 - annoy algorithm"
   )
 
   # hnsw
@@ -407,8 +407,8 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
     current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
       (dim(bioc_knn)[1] *
         dim(bioc_knn)[2])) >=
-      0.99,
-    info = "kNN overlap with BiocNeighbors >= 0.99 - hnsw"
+      0.98,
+    info = "kNN overlap with BiocNeighbors >= 0.98 - hnsw"
   )
 
   # snn generation

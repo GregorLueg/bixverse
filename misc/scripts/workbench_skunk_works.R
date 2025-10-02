@@ -487,7 +487,8 @@ bixverse_sc <- calculate_pca_sc(bixverse_sc, no_pcs = 30L)
 tictoc::tic()
 bixverse_sc <- find_neighbours_sc(
   bixverse_sc,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw")
+  no_embd_to_use = 15L,
+  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy")
 )
 tictoc::toc()
 

@@ -152,7 +152,7 @@ pub fn generate_knn_hnsw(
             let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
             if verbose && count % 100_000 == 0 {
                 println!(
-                    " Processed {} / {} samples",
+                    " Processed {} / {} cells.",
                     count.separate_with_underscores(),
                     n_samples.separate_with_underscores()
                 );
@@ -166,7 +166,7 @@ pub fn generate_knn_hnsw(
 
     if verbose {
         println!(
-            "Identified approximate nearest neighbours via HNSW: {:.2?}",
+            "Identified approximate nearest neighbours via HNSW: {:.2?}.",
             end_search
         );
     }
@@ -213,33 +213,43 @@ pub fn generate_knn_annoy(
     let start_search = Instant::now();
     let counter = Arc::new(AtomicUsize::new(0));
 
-    let res: Vec<Vec<usize>> = (0..mat.nrows())
-        .into_par_iter()
-        .map(|i| {
-            let query_vec: Vec<f32> = mat.row(i).iter().cloned().collect();
-            let search_k = Some(no_neighbours * search_budget);
-            let mut neighbors = index.query(&query_vec, no_neighbours + 1, search_k);
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
+    // process in chunks to reduce peak memory
+    // this allows memory to be freed up in between...
+    let chunk_size = 50_000;
+    let mut res = Vec::with_capacity(n_samples);
 
-            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-            if verbose && count % 100_000 == 0 {
-                println!(
-                    " Processed {} / {} samples",
-                    count.separate_with_underscores(),
-                    n_samples.separate_with_underscores()
-                );
-            }
+    for chunk_start in (0..n_samples).step_by(chunk_size) {
+        let chunk_end = (chunk_start + chunk_size).min(n_samples);
 
-            neighbors
-        })
-        .collect();
+        let chunk_res: Vec<Vec<usize>> = (chunk_start..chunk_end)
+            .into_par_iter()
+            .map(|i| {
+                let search_k = Some(no_neighbours * search_budget);
+                let mut neighbors = index.query_row(mat.row(i), no_neighbours + 1, search_k);
+                neighbors.retain(|&x| x != i);
+                neighbors.truncate(no_neighbours);
+
+                let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                if verbose && count % 100_000 == 0 {
+                    println!(
+                        " Processed {} / {} cells.",
+                        count.separate_with_underscores(),
+                        n_samples.separate_with_underscores()
+                    );
+                }
+
+                neighbors
+            })
+            .collect();
+
+        res.extend(chunk_res);
+    }
 
     let end_search = start_search.elapsed();
 
     if verbose {
         println!(
-            "Identified approximate nearest neighbours via Annoy: {:.2?}",
+            "Identified approximate nearest neighbours via Annoy: {:.2?}.",
             end_search
         );
     }
