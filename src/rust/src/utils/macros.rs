@@ -5,15 +5,33 @@
 /// Assertion that a matrix is symmetric.
 #[macro_export]
 macro_rules! assert_symmetric_mat {
-    ($matrix:expr) => {
+    ($matrix:expr) => {{
+        let nrows = $matrix.nrows();
+        let ncols = $matrix.ncols();
+
         assert_eq!(
-            $matrix.nrows(),
-            $matrix.ncols(),
-            "Matrix is not symmetric: {} rows != {} cols",
-            $matrix.nrows(),
-            $matrix.ncols()
+            nrows, ncols,
+            "Matrix is not square: {} rows != {} cols",
+            nrows, ncols
         );
-    };
+
+        let check_size = nrows.min(10);
+
+        for i in 0..check_size {
+            for j in (i + 1)..check_size {
+                let val_ij = $matrix.get(i, j);
+                let val_ji = $matrix.get(j, i);
+                assert!(
+                    (val_ij - val_ji).abs() < 1e-10,
+                    "Matrix not symmetric at ({}, {}): {} != {}",
+                    i,
+                    j,
+                    val_ij,
+                    val_ji
+                );
+            }
+        }
+    }};
 }
 
 /// Assertion that two matrices have the same number of rows.

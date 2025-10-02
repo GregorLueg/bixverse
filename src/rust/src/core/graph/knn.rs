@@ -16,9 +16,9 @@ use crate::assert_symmetric_mat;
 /// * `index` - Index position of that neighbours
 /// * `similiarity` - Similarity value for that Neighbour
 #[derive(Debug)]
-struct SimilarityItem {
-    index: usize,
-    similarity: f64,
+pub struct SimilarityItem {
+    pub index: usize,
+    pub similarity: f64,
 }
 
 /// Equality Trait for SimilarityItem

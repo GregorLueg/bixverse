@@ -2,3 +2,4 @@
 
 pub mod knn;
 pub mod pagerank;
+pub mod snf;
