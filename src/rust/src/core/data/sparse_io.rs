@@ -36,7 +36,7 @@ use crate::utils::traits::*;
 /// * `genes_to_keep_set` - HashSet of the genes to keep.
 /// * `cell_old_to_new` - Mapping of the old indices to the new indices for the
 ///   cells.
-/// * `gene_old_new` - Mapping of old indices to new indices for the genes.
+/// * `gene_old_to_new` - Mapping of old indices to new indices for the genes.
 #[derive(Debug, Clone)]
 pub struct CellOnFileQuality {
     pub cells_to_keep: Vec<usize>,
@@ -104,7 +104,7 @@ impl CellOnFileQuality {
 /// * `data_norm` - Array of the normalised counts of this cell. This will do a
 ///   CPM-type transformation and then calculate the ln_1p.
 /// * `library_size` - Total library size/UMI counts of the cell.
-/// * `col_indices` - The col indices of the genes.
+/// * `indices` - The col indices of the genes.
 /// * `original_index` - Original (row) index of the cell.
 /// * `to_keep` - Flat if the cell should be included in certain analysis.
 ///   Future feature.
@@ -113,7 +113,7 @@ pub struct CsrCellChunk {
     pub data_raw: Vec<u16>,
     pub data_norm: Vec<F16>,
     pub library_size: usize,
-    pub col_indices: Vec<u16>,
+    pub indices: Vec<u16>,
     pub original_index: usize,
     pub to_keep: bool,
 }
@@ -157,7 +157,7 @@ impl CsrCellChunk {
             data_raw: data.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(),
             data_norm,
             library_size: sum as usize,
-            col_indices: col_idx.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(),
+            indices: col_idx.iter().map(|&x| x.to_u16()).collect::<Vec<u16>>(),
             original_index,
             to_keep,
         }
@@ -172,7 +172,7 @@ impl CsrCellChunk {
     pub fn write_to_bytes(&self, writer: &mut impl Write) -> std::io::Result<()> {
         writer.write_all(&(self.data_raw.len() as u32).to_le_bytes())?;
         writer.write_all(&(self.data_norm.len() as u32).to_le_bytes())?;
-        writer.write_all(&(self.col_indices.len() as u32).to_le_bytes())?;
+        writer.write_all(&(self.indices.len() as u32).to_le_bytes())?;
         writer.write_all(&(self.library_size as u64).to_le_bytes())?;
         writer.write_all(&(self.original_index as u64).to_le_bytes())?;
         // include some padding
@@ -193,10 +193,7 @@ impl CsrCellChunk {
         writer.write_all(data_norm_bytes)?;
 
         let col_indices_bytes = unsafe {
-            std::slice::from_raw_parts(
-                self.col_indices.as_ptr() as *const u8,
-                self.col_indices.len() * 2,
-            )
+            std::slice::from_raw_parts(self.indices.as_ptr() as *const u8, self.indices.len() * 2)
         };
         writer.write_all(col_indices_bytes)?;
 
@@ -258,7 +255,7 @@ impl CsrCellChunk {
             norm
         };
 
-        let col_indices = unsafe {
+        let indices = unsafe {
             let ptr = buffer.as_ptr().add(norm_end) as *const u16;
             std::slice::from_raw_parts(ptr, col_indices_len).to_vec()
         };
@@ -267,7 +264,7 @@ impl CsrCellChunk {
             data_raw,
             data_norm,
             library_size,
-            col_indices,
+            indices,
             original_index,
             to_keep,
         })
@@ -342,8 +339,7 @@ impl CsrCellChunk {
     /// * `cell_qc` - Structure containiner the required library size and min
     ///   number of genes
     pub fn passes_qc(&self, cell_qc: &MinCellQuality) -> bool {
-        self.col_indices.len() >= cell_qc.min_unique_genes
-            && self.library_size >= cell_qc.min_lib_size
+        self.indices.len() >= cell_qc.min_unique_genes && self.library_size >= cell_qc.min_lib_size
     }
 
     /// Helper function to get QC parameters for this cell
@@ -352,7 +348,7 @@ impl CsrCellChunk {
     ///
     /// A tuple of `(no_genes, library_size)`
     pub fn get_qc_info(&self) -> (usize, usize) {
-        (self.col_indices.len(), self.library_size)
+        (self.indices.len(), self.library_size)
     }
 
     /// Filter to keep only specified genes
@@ -378,7 +374,7 @@ impl CsrCellChunk {
         let mut new_raw = Vec::new();
         let mut new_norm = Vec::new();
 
-        for (i, &gene_idx) in self.col_indices.iter().enumerate() {
+        for (i, &gene_idx) in self.indices.iter().enumerate() {
             if let Some(new_gene_idx) = index_map[gene_idx as usize] {
                 new_indices.push(new_gene_idx as u16);
                 new_raw.push(self.data_raw[i]);
@@ -386,7 +382,7 @@ impl CsrCellChunk {
             }
         }
 
-        self.col_indices = new_indices;
+        self.indices = new_indices;
         self.data_raw = new_raw;
         self.data_norm = new_norm;
     }
@@ -404,7 +400,7 @@ impl CsrCellChunk {
 ///   log-normalised).
 /// * `avg_exp` - Vector with average expression.
 /// * `nnz` - Number non-zero values.
-/// * `row_indices` - The column indices of the data.
+/// * `indices` - The column indices of the data.
 /// * `original_index` - Original index of the gene.
 /// * `to_keep` - Boolean if the gene should be included into anything.
 ///   Future feature.
@@ -416,7 +412,7 @@ pub struct CscGeneChunk {
     pub nnz: usize,
     // u32 as there might be clearly more than 65_535 cells in the data
     // 4_294_967_295 should be enough however...
-    pub row_indices: Vec<u32>,
+    pub indices: Vec<u32>,
     pub original_index: usize,
     pub to_keep: bool,
 }
@@ -450,7 +446,7 @@ impl CscGeneChunk {
             data_norm: data_norm.to_vec(),
             avg_exp,
             nnz,
-            row_indices: col_idx.iter().map(|x| *x as u32).collect::<Vec<u32>>(),
+            indices: col_idx.iter().map(|x| *x as u32).collect::<Vec<u32>>(),
             original_index,
             to_keep,
         }
@@ -465,7 +461,7 @@ impl CscGeneChunk {
     pub fn write_to_bytes(&self, writer: &mut impl Write) -> std::io::Result<()> {
         writer.write_all(&(self.data_raw.len() as u32).to_le_bytes())?;
         writer.write_all(&(self.data_norm.len() as u32).to_le_bytes())?;
-        writer.write_all(&(self.row_indices.len() as u32).to_le_bytes())?;
+        writer.write_all(&(self.indices.len() as u32).to_le_bytes())?;
         writer.write_all(&self.avg_exp.to_le_bytes())?;
         // first padding
         writer.write_all(&[0, 0])?;
@@ -488,10 +484,7 @@ impl CscGeneChunk {
         writer.write_all(data_norm_bytes)?;
 
         let row_indices_bytes = unsafe {
-            std::slice::from_raw_parts(
-                self.row_indices.as_ptr() as *const u8,
-                self.row_indices.len() * 4,
-            )
+            std::slice::from_raw_parts(self.indices.as_ptr() as *const u8, self.indices.len() * 4)
         };
         writer.write_all(row_indices_bytes)?;
 
@@ -554,7 +547,7 @@ impl CscGeneChunk {
             norm
         };
 
-        let row_indices = unsafe {
+        let indices = unsafe {
             let ptr = buffer.as_ptr().add(norm_end) as *const u32;
             std::slice::from_raw_parts(ptr, row_indices_len).to_vec()
         };
@@ -564,7 +557,7 @@ impl CscGeneChunk {
             data_norm,
             avg_exp,
             nnz,
-            row_indices,
+            indices,
             original_index,
             to_keep,
         })
@@ -578,7 +571,7 @@ impl CscGeneChunk {
     pub fn filter_selected_cells(&mut self, cells_to_keep: &IndexSet<u32>) {
         // build reverse mapping: cell_id -> position in this gene's data
         let cell_positions: FxHashMap<u32, usize> = self
-            .row_indices
+            .indices
             .iter()
             .enumerate()
             .map(|(pos, &cell_id)| (cell_id, pos))
@@ -600,7 +593,7 @@ impl CscGeneChunk {
         let nnz = new_data_raw.len();
         self.data_raw = new_data_raw;
         self.data_norm = new_data_norm;
-        self.row_indices = new_row_indices;
+        self.indices = new_row_indices;
         self.nnz = nnz;
     }
 }
@@ -783,7 +776,7 @@ impl CellGeneSparseWriter {
         let size = 32 + // header size
                (cell_chunk.data_raw.len() * 2) +
                (cell_chunk.data_norm.len() * 2) +
-               (cell_chunk.col_indices.len() * 2);
+               (cell_chunk.indices.len() * 2);
 
         self.writer.write_all(&(size as u64).to_le_bytes())?;
 
@@ -818,7 +811,7 @@ impl CellGeneSparseWriter {
         let size = 36 + // header size
         (gene_chunk.data_raw.len() * 2) +
         (gene_chunk.data_norm.len() * 2) +
-        (gene_chunk.row_indices.len() * 4);
+        (gene_chunk.indices.len() * 4);
 
         self.writer.write_all(&(size as u64).to_le_bytes())?;
 
@@ -946,7 +939,7 @@ impl ParallelSparseReader {
         })
     }
 
-    /// Read in cells by indices in a multithreaded manner
+    /// Read in cells by indices in a multi-threaded manner
     ///
     /// ### Params
     ///
@@ -982,7 +975,7 @@ impl ParallelSparseReader {
             .collect()
     }
 
-    /// Read in genes by indices in a multithreaded manner
+    /// Read in genes by indices in a multi-threaded manner
     ///
     /// ### Params
     ///

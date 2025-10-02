@@ -140,6 +140,7 @@ pub struct HvgRes {
 /// * `f_path` - File path to the binarised format that contains the cell-based
 ///   data
 /// * `gene_indices` - Vector of index positions of the genes of interest
+/// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
 ///
@@ -172,7 +173,7 @@ pub fn get_gene_set_perc(
             .par_iter()
             .map(|chunk| {
                 let total_sum = chunk
-                    .col_indices
+                    .indices
                     .iter()
                     .zip(&chunk.data_raw)
                     .filter(|(col_idx, _)| hash_gene_set.contains(col_idx))
@@ -192,6 +193,87 @@ pub fn get_gene_set_perc(
         println!(
             "Finished the gene set proportion calculations: {:.2?}",
             end_calculations
+        );
+    }
+
+    results
+}
+
+/// Calculates the percentage within the gene set(s)
+///
+/// Helper function to calculate QC metrics such as mitochondrial proportions,
+/// ribosomal proportions, etc. This function implements streaming and reads in
+/// the cells in chunks to avoid memory pressure.
+///
+/// ### Params
+///
+/// * `f_path` - File path to the binarised format that contains the cell-based
+///   data
+/// * `gene_indices` - Vector of index positions of the genes of interest
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// A vector with the percentages of these genes over the total reads.
+pub fn get_gene_set_perc_streaming(
+    f_path: &str,
+    gene_indices: Vec<Vec<u16>>,
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_total = Instant::now();
+
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let no_cells = reader.get_header().total_cells;
+
+    const CELL_BATCH_SIZE: usize = 100000;
+
+    let num_cell_batches = no_cells.div_ceil(CELL_BATCH_SIZE);
+
+    let mut results: Vec<Vec<f32>> = vec![Vec::new(); gene_indices.len()];
+
+    let hash_gene_sets: Vec<FxHashSet<&u16>> =
+        gene_indices.iter().map(|gs| gs.iter().collect()).collect();
+
+    for cell_batch_idx in 0..num_cell_batches {
+        let cell_start = cell_batch_idx * CELL_BATCH_SIZE;
+        let cell_end = ((cell_batch_idx + 1) * CELL_BATCH_SIZE).min(no_cells);
+
+        let cell_chunks = reader.read_cells_range(cell_start, cell_end);
+
+        for (gs_idx, hash_gene_set) in hash_gene_sets.iter().enumerate() {
+            let percentage: &Vec<f32> = &cell_chunks
+                .par_iter()
+                .map(|chunk| {
+                    let total_sum = chunk
+                        .indices
+                        .iter()
+                        .zip(&chunk.data_raw)
+                        .filter(|(col_idx, _)| hash_gene_set.contains(col_idx))
+                        .map(|(_, val)| val)
+                        .sum::<u16>() as f32;
+                    let lib_size = chunk.library_size as f32;
+                    total_sum / lib_size
+                })
+                .collect();
+
+            results[gs_idx].extend(percentage);
+        }
+
+        if verbose && cell_batch_idx % 5 == 0 {
+            let progress = (cell_batch_idx + 1) as f32 / num_cell_batches as f32 * 100.0;
+            println!(
+                "  Reading cells and calculating proportions: {:.1}%",
+                progress
+            );
+        }
+    }
+
+    let end_total = start_total.elapsed();
+
+    if verbose {
+        println!(
+            "Finished the gene set proportion calculations: {:.2?}",
+            end_total
         );
     }
 
@@ -224,8 +306,8 @@ pub fn calculate_mean_var_filtered(
     let mut nnz = 0usize;
 
     // Only process cells that are in the filter
-    for i in 0..gene.row_indices.len() {
-        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+    for i in 0..gene.indices.len() {
+        if cell_idx_map.contains_key(&gene.indices[i]) {
             sum += gene.data_raw[i] as f32;
             nnz += 1;
         }
@@ -235,8 +317,8 @@ pub fn calculate_mean_var_filtered(
     let mean = sum / no_cells;
 
     let mut sum_sq_diff = 0f32;
-    for i in 0..gene.row_indices.len() {
-        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+    for i in 0..gene.indices.len() {
+        if cell_idx_map.contains_key(&gene.indices[i]) {
             let val = gene.data_raw[i] as f32;
             let diff = val - mean;
             sum_sq_diff += diff * diff;
@@ -279,8 +361,8 @@ pub fn calculate_std_variance_filtered(
     let mut nnz = 0usize;
 
     // Process non-zero entries that pass filter
-    for i in 0..gene.row_indices.len() {
-        if cell_idx_map.contains_key(&gene.row_indices[i]) {
+    for i in 0..gene.indices.len() {
+        if cell_idx_map.contains_key(&gene.indices[i]) {
             let val_f32 = gene.data_raw[i] as f32;
             let norm = ((val_f32 - mean) / expected_sd)
                 .min(clip_max)
@@ -675,7 +757,7 @@ pub fn get_hvg_mvb_streaming() -> HvgRes {
 fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let mut dense_data = vec![0.0f32; no_cells];
 
-    for (idx, &row_idx) in chunk.row_indices.iter().enumerate() {
+    for (idx, &row_idx) in chunk.indices.iter().enumerate() {
         dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
     }
 

@@ -131,6 +131,29 @@ expect_true(
   info = "overwriting of obs data works"
 )
 
+### streaming ------------------------------------------------------------------
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_1"]]),
+  target = props_gs_1,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 1 - streaming version"
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_2"]]),
+  target = props_gs_2,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 2 - streaming version"
+)
+
 ## cells to keep logic ---------------------------------------------------------
 
 threshold <- 0.05
@@ -173,6 +196,8 @@ expect_equal(
 
 ## hvg selection ---------------------------------------------------------------
 
+hvg_to_keep <- 30L
+
 ### vst version ----------------------------------------------------------------
 
 #### r version -----------------------------------------------------------------
@@ -213,13 +238,17 @@ var_std <- sapply(1:ncol(counts_more_filtered), function(i) {
 var_std[is.na(var_std)] <- 0
 
 # need to 0-index
-hvg_r <- order(var_std, decreasing = TRUE)[1:25L] - 1
+hvg_r <- order(var_std, decreasing = TRUE)[1:hvg_to_keep] - 1
 
 #### rust part -----------------------------------------------------------------
 
 ##### direct load --------------------------------------------------------------
 
-sc_object <- find_hvg_sc(object = sc_object, hvg_no = 25L, .verbose = FALSE)
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
 
 var_data <- get_sc_var(sc_object)
 
@@ -248,13 +277,17 @@ expect_equivalent(
 hvg_rs <- get_hvg(sc_object)
 
 expect_true(
-  current = length(intersect(hvg_r, hvg_rs)) == 25L,
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
   info = "Overlap in the detected HVGs"
 )
 
 ##### streaming version --------------------------------------------------------
 
-sc_object <- find_hvg_sc(object = sc_object, hvg_no = 25L, .verbose = FALSE)
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
 
 var_data <- get_sc_var(sc_object)
 
@@ -283,7 +316,7 @@ expect_equivalent(
 hvg_rs <- get_hvg(sc_object)
 
 expect_true(
-  current = length(intersect(hvg_r, hvg_rs)) == 25L,
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
   info = "Overlap in the detected HVGs"
 )
 

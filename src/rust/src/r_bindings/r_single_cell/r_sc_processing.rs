@@ -17,8 +17,9 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 /// mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 ///
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
-/// @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
+/// @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 /// elements of the genes of interest.
+/// @param streaming Boolean. Shall the data be worked on in chunks.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
@@ -29,6 +30,7 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 fn rs_sc_get_gene_set_perc(
     f_path_cell: &str,
     gene_set_idx: List,
+    streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
@@ -44,7 +46,11 @@ fn rs_sc_get_gene_set_perc(
         gene_set_indices.push(indices_i);
     }
 
-    let res = get_gene_set_perc(f_path_cell, gene_set_indices, verbose);
+    let res = if streaming {
+        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, verbose)
+    } else {
+        get_gene_set_perc(f_path_cell, gene_set_indices, verbose)
+    };
 
     let mut result_list = List::new(gene_set_idx.len());
     if let Some(names) = gene_set_idx.names() {

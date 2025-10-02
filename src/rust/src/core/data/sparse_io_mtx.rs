@@ -32,7 +32,8 @@ pub struct MtxHeader {
 ///
 /// ### Fields
 ///
-/// * `to_keep` - Vector of cells that passed the threshold as booleans.
+/// * `cell_qc` - Structure containing the information on which cells/genes to
+///   keep and library size and NNZ for cells.
 /// * `no_genes` - Number of genes that were read in.
 /// * `no_cells` - Number of cells that were read in.
 #[derive(Debug, Clone)]
@@ -173,7 +174,7 @@ impl MtxReader {
         let mut lines_read = 0usize;
         let report_interval = (self.header.total_entries / 10).max(1);
 
-        // Pass 1: Count unique cells per gene
+        // first pass - count unique cells per gene
         while {
             line_buffer.clear();
             self.reader.read_until(b'\n', &mut line_buffer)? > 0
@@ -208,7 +209,7 @@ impl MtxReader {
             }
         }
 
-        // Filter genes based on minimum cells
+        // filter genes based on minimum cells
         let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
             .filter(|&i| gene_cells[i].len() >= self.qc_params.min_cells)
             .collect();
@@ -222,7 +223,7 @@ impl MtxReader {
 
         let second_scan_time = Instant::now();
 
-        // Pass 2: Cell statistics with filtered genes
+        // second pass - cell statistics with filtered genes
         let mut cell_gene_count = vec![0u32; self.header.total_cells];
         let mut cell_lib_size = vec![0u32; self.header.total_cells];
 
@@ -304,7 +305,8 @@ impl MtxReader {
     /// ### Params
     ///
     /// * `bin_path` - Where to save the binarised file.
-    /// * `quality` - Structure indicating which cells and genes to keep.
+    /// * `quality` - Structure indicating which cells and genes to keep from
+    ///   the mtx file.
     /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns

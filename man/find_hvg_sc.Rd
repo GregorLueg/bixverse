@@ -30,7 +30,8 @@ implemented yet.
 }}
 
 \item{streaming}{Boolean. Shall the genes be streamed in. Useful for larger
-data sets where you wish to avoid loading in the whole data.}
+data sets where you wish to avoid loading in the whole data. Defaults to
+\code{FALSE}.}
 
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
@@ -40,5 +41,6 @@ the obs table.
 }
 \description{
 This is a helper function to identify highly variable genes. At the moment
-the implementation has only
+the implementation has only the VST-based version (known as Seurat v3). The
+other methods will be implemented in the future.
 }

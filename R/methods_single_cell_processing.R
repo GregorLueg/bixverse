@@ -402,6 +402,9 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
+#' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Default to
+#' `FALSE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
@@ -412,6 +415,7 @@ gene_set_proportions_sc <- S7::new_generic(
   fun = function(
     object,
     gene_set_list,
+    streaming = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -427,10 +431,13 @@ gene_set_proportions_sc <- S7::new_generic(
 S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
   object,
   gene_set_list,
+  streaming = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
 
   gene_set_list_tidy <- purrr::map(gene_set_list, \(g) {
     get_gene_indices(object, gene_ids = g, rust_index = TRUE)
@@ -440,6 +447,7 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
   rs_results <- rs_sc_get_gene_set_perc(
     f_path_cell = get_rust_count_cell_f_path(object),
     gene_set_idx = gene_set_list_tidy,
+    streaming = streaming,
     verbose = .verbose
   )
 
@@ -459,7 +467,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This is a helper function to identify highly variable genes. At the moment
-#' the implementation has only
+#' the implementation has only the VST-based version (known as Seurat v3). The
+#' other methods will be implemented in the future.
 #'
 #' @param object `single_cell_exp` class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
@@ -475,7 +484,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'   implemented yet.
 #' }
 #' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data.
+#' data sets where you wish to avoid loading in the whole data. Defaults to
+#' `FALSE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
@@ -656,7 +666,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
 #'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight is calculated. For details, please see
+#'   the weight form the SNN graph is calculated. For details, please see
 #'   [bixverse::params_sc_neighbours()].
 #' }
 #' @param seed Integer. For reproducibility.

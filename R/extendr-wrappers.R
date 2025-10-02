@@ -1694,15 +1694,16 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 #'
 #' @param f_path_cell String. Path to the `counts_cells.bin` file.
-#' @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
+#' @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 #' elements of the genes of interest.
+#' @param streaming Boolean. Shall the data be worked on in chunks.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A list with the percentages of counts per gene set group detected
 #' in the cells.
 #'
 #' @export
-rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, verbose)
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, streaming, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'

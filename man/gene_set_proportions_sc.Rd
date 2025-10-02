@@ -4,7 +4,12 @@
 \alias{gene_set_proportions_sc}
 \title{Calculate the proportions of reads for specific gene sets}
 \usage{
-gene_set_proportions_sc(object, gene_set_list, .verbose = TRUE)
+gene_set_proportions_sc(
+  object,
+  gene_set_list,
+  streaming = FALSE,
+  .verbose = TRUE
+)
 }
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
@@ -12,6 +17,10 @@ gene_set_proportions_sc(object, gene_set_list, .verbose = TRUE)
 \item{gene_set_list}{A named list with each element containing the gene
 identifiers of that set. These should be the same as
 \code{get_gene_names(object)}!}
+
+\item{streaming}{Boolean. Shall the cells be streamed in. Useful for larger
+data sets where you wish to avoid loading in the whole data. Default to
+\code{FALSE}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

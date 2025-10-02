@@ -44,8 +44,9 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
 ///   stores data in genes x cells; bixverse stores in cells x genes!
 /// * `no_cells` - Total number of obversations in the data.
 /// * `no_genes` - Total number of vars in the data.
-/// * `min_genes` - Minimum number of genes to be detected in the cell.
-/// * `size_factor` - To which library size to normalise the data
+/// * `cell_quality` - Structure containing information on the desired minimum
+///   cell and gene quality + target size for library normalisation.
+/// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
 ///
@@ -158,8 +159,9 @@ pub fn write_h5_counts<P: AsRef<Path>>(
 ///   stores data in genes x cells; bixverse stores in cells x genes!
 /// * `no_cells` - Total number of obversations in the data.
 /// * `no_genes` - Total number of vars in the data.
-/// * `min_genes` - Minimum number of genes to be detected in the cell.
-/// * `size_factor` - To which library size to normalise the data
+/// * `cell_quality` - Structure containing information on the desired minimum
+///   cell and gene quality + target size for library normalisation.
+/// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
 ///
@@ -312,7 +314,7 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
             0
         };
         println!(
-            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
+            "  Gene expression stats: min = {} | max = {} | avg = {} cells per gene",
             min_expr.separate_with_underscores(),
             max_expr.separate_with_underscores(),
             avg_expr.separate_with_underscores()
@@ -396,12 +398,12 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
         let min_lib = cell_lib_size.iter().fold(f32::INFINITY, |a, &b| a.min(b));
 
         println!(
-            "  Cell stats: genes per cell: min={}, max={}",
+            "  Cell stats: genes per cell: min = {} | max={}",
             min_genes.separate_with_underscores(),
             max_genes.separate_with_underscores()
         );
         println!(
-            "  Cell stats: library size: min={:.1}, max={:.1}",
+            "  Cell stats: library size: min = {:.1} | max={:.1}",
             min_lib.separate_with_underscores(),
             max_lib.separate_with_underscores()
         );
@@ -441,7 +443,7 @@ pub fn scan_h5_csc_library_sizes<P: AsRef<Path>>(
     let indptr_ds = file.dataset("X/indptr")?;
     let indptr_raw: Vec<u32> = indptr_ds.read_1d()?.to_vec();
 
-    // Only track library sizes - very light memory
+    // Only track library sizes - very light in terms of memory
     let mut cell_lib_sizes = vec![0u32; quality.cells_to_keep.len()];
 
     const GENE_CHUNK_SIZE: usize = 5000;
@@ -462,7 +464,7 @@ pub fn scan_h5_csc_library_sizes<P: AsRef<Path>>(
             continue;
         }
 
-        // Only read data values, not indices - saves memory
+        // only read data values, not indices - saves memory
         let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
         let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
 
@@ -698,7 +700,7 @@ pub fn write_h5_csc_to_csr_streaming<P: AsRef<Path>>(
         );
     }
 
-    // Now write cells with correct normalisation
+    // now write cells with correct normalisation
     let mut writer = CellGeneSparseWriter::new(
         bin_path,
         true,
@@ -808,7 +810,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         );
     }
 
-    // PASS 1: Count how many cells express each gene
+    // first pass - count how many cells express each gene
     let mut no_cells_exp_gene = vec![0usize; shape.1];
 
     if verbose {
@@ -864,7 +866,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         };
 
         println!(
-            "  Gene expression stats: min={}, max={}, avg={} cells per gene",
+            "  Gene expression stats: min = {} | max = {} | avg = {} cells per gene",
             min_expr.separate_with_underscores(),
             max_expr.separate_with_underscores(),
             avg_expr.separate_with_underscores()
@@ -890,7 +892,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         genes_to_keep_lookup[gene_idx] = true;
     }
 
-    // PASS 2: Calculate cell metrics using only kept genes
+    // second pass - calculate cell metrics using only kept genes
     let mut cell_unique_genes = vec![0usize; shape.0];
     let mut cell_lib_size = vec![0.0f32; shape.0];
 
@@ -944,12 +946,12 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         let min_lib = cell_lib_size.iter().fold(f32::INFINITY, |a, &b| a.min(b));
 
         println!(
-            "  Cell stats: genes per cell: min={}, max={}",
+            "  Cell stats: genes per cell: min = {} | max={}",
             min_genes.separate_with_underscores(),
             max_genes.separate_with_underscores()
         );
         println!(
-            "  Cell stats: library size: min={:.1}, max={:.1}",
+            "  Cell stats: library size: min = {:.1} | max = {:.1}",
             min_lib.separate_with_underscores(),
             max_lib.separate_with_underscores()
         );
@@ -1197,16 +1199,15 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
             continue;
         }
 
-        // Load batch data
+        // load batch data
         let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
         let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
 
-        // Process each cell in batch
+        // process each cell in batch
         for &old_cell_idx in cell_batch {
             let cell_start = indptr_raw[old_cell_idx] as usize;
             let cell_end = indptr_raw[old_cell_idx + 1] as usize;
 
-            // Collect and filter this cell's data
             let mut cell_data: Vec<(usize, u16)> = Vec::new();
 
             for idx in cell_start..cell_end {

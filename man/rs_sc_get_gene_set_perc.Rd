@@ -4,13 +4,15 @@
 \alias{rs_sc_get_gene_set_perc}
 \title{Calculate the percentage of gene sets in the cells}
 \usage{
-rs_sc_get_gene_set_perc(f_path_cell, gene_set_idx, verbose)
+rs_sc_get_gene_set_perc(f_path_cell, gene_set_idx, streaming, verbose)
 }
 \arguments{
 \item{f_path_cell}{String. Path to the \code{counts_cells.bin} file.}
 
-\item{gene_set_idx}{Named list with integer(!) positions (1-indexed!) as
+\item{gene_set_idx}{Named list with integer(!) positions (0-indexed!) as
 elements of the genes of interest.}
+
+\item{streaming}{Boolean. Shall the data be worked on in chunks.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }

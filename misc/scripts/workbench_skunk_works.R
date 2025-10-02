@@ -470,7 +470,11 @@ gs_of_interest <- list(
   ]
 )
 
-bixverse_sc <- gene_set_proportions_sc(bixverse_sc, gs_of_interest)
+bixverse_sc <- gene_set_proportions_sc(
+  bixverse_sc,
+  gs_of_interest,
+  streaming = TRUE
+)
 
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.10, cell_id]
 

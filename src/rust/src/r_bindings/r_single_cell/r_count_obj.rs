@@ -140,7 +140,6 @@ fn get_cell_data(
 /// * `indices` - The original indices (in this case column).
 /// * `data_raw`- The raw counts for the cell.
 /// * `data_norm` - The normalised counts for the cell.
-/// * `cell_mask` - HashSet containing the index positions of the cells to keep.
 /// * `assay_type` - Which assay to return
 ///
 /// ### Returns
@@ -198,6 +197,9 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 ///
 /// * `f_path_cells` - Path to the .bin file for the cells.
 /// * `f_path_genes` - Path to the .bin file for the genes.
+/// * `n_cells` - No of cells represented in the data.
+/// * `n_genes` - No of genes represented in the data.
+/// * `cell_mask` - HashSet for which cells to keep.
 #[extendr]
 struct SingeCellCountData {
     pub f_path_cells: String,
@@ -230,6 +232,10 @@ impl SingeCellCountData {
     /////////////
 
     /// Get the shape
+    ///
+    /// ### Returns
+    ///
+    /// Vector with rows x cells
     pub fn get_shape(&mut self) -> Vec<usize> {
         vec![self.n_cells, self.n_genes]
     }
@@ -247,8 +253,8 @@ impl SingeCellCountData {
     /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
     /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
     /// * `data` - Slice of the data (`csc_matrix@x`).
-    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
     /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
+    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
     /// * `qc_params` - List with the quality control parameters.
     ///
     /// ### Returns
@@ -320,6 +326,7 @@ impl SingeCellCountData {
     /// * `no_cells` - Number of cells in the h5 file.
     /// * `no_genes` - Number of genes in the h5 file.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
@@ -368,6 +375,7 @@ impl SingeCellCountData {
     /// * `no_cells` - Number of cells in the h5 file.
     /// * `no_genes` - Number of genes in the h5 file.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
@@ -477,12 +485,8 @@ impl SingeCellCountData {
             indptr.push(current_ptr);
 
             for cell in cell_chunks {
-                let (indices_i, data_i) = get_cell_data(
-                    &cell.col_indices,
-                    &cell.data_raw,
-                    &cell.data_norm,
-                    &assay_type,
-                );
+                let (indices_i, data_i) =
+                    get_cell_data(&cell.indices, &cell.data_raw, &cell.data_norm, &assay_type);
 
                 let len_data_i = data_i.len();
                 current_ptr += len_data_i;
@@ -503,12 +507,8 @@ impl SingeCellCountData {
             indptr.push(current_ptr);
 
             for gene in gene_chunks {
-                let (indices_i, data_i) = get_gene_data(
-                    &gene.row_indices,
-                    &gene.data_raw,
-                    &gene.data_norm,
-                    &assay_type,
-                );
+                let (indices_i, data_i) =
+                    get_gene_data(&gene.indices, &gene.data_raw, &gene.data_norm, &assay_type);
                 let len_data_i = data_i.len();
                 current_ptr += len_data_i;
                 data.push(data_i);
@@ -553,14 +553,7 @@ impl SingeCellCountData {
         // Parallel processing of results
         let results: Vec<(Vec<i32>, AssayData)> = cells
             .par_iter()
-            .map(|cell| {
-                get_cell_data(
-                    &cell.col_indices,
-                    &cell.data_raw,
-                    &cell.data_norm,
-                    &assay_type,
-                )
-            })
+            .map(|cell| get_cell_data(&cell.indices, &cell.data_raw, &cell.data_norm, &assay_type))
             .collect();
 
         // Sequential assembly (required for row_ptr)
@@ -632,7 +625,7 @@ impl SingeCellCountData {
             // Add data
             data.push(data_i);
             data_2.push(data_norm_i);
-            col_idx.push(cell.col_indices);
+            col_idx.push(cell.indices);
             row_ptr.push(current_row_ptr);
         }
 
@@ -730,7 +723,7 @@ impl SingeCellCountData {
             for cell in cell_batch {
                 let cell_id = cell.original_index as u32;
 
-                for (idx, &gene_id) in cell.col_indices.iter().enumerate() {
+                for (idx, &gene_id) in cell.indices.iter().enumerate() {
                     let raw_count = cell.data_raw[idx];
                     let norm_count = cell.data_norm[idx];
 
@@ -797,9 +790,9 @@ impl SingeCellCountData {
     /// ### Params
     ///
     /// * `max_genes_in_memory` - Maximum genes to accumulate at once
-    ///   (e.g., 5000)
+    ///   (e.g., 2000)
     /// * `cell_batch_size` - How many cells to process at once
-    ///   (e.g., 10000)
+    ///   (e.g., 100000)
     /// * `verbose` - Controls verbosity
     pub fn generate_gene_based_data_memory_bounded(
         &mut self,
@@ -864,7 +857,7 @@ impl SingeCellCountData {
                 for cell in cells {
                     let cell_id = cell.original_index as u32;
 
-                    for (idx, &gene_id) in cell.col_indices.iter().enumerate() {
+                    for (idx, &gene_id) in cell.indices.iter().enumerate() {
                         // Only accumulate if gene is in current phase
                         if (gene_id as usize) >= gene_phase_start
                             && (gene_id as usize) < gene_phase_end
@@ -961,12 +954,8 @@ impl SingeCellCountData {
         row_ptr.push(current_col_ptr);
 
         for gene in &genes {
-            let (indices_i, data_i) = get_gene_data(
-                &gene.row_indices,
-                &gene.data_raw,
-                &gene.data_norm,
-                &assay_type,
-            );
+            let (indices_i, data_i) =
+                get_gene_data(&gene.indices, &gene.data_raw, &gene.data_norm, &assay_type);
             let len_data_i = data_i.len();
             current_col_ptr += len_data_i;
             data.push(data_i);
