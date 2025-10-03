@@ -894,3 +894,12 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
+
+# tests ------------------------------------------------------------------------
+
+## SNF -------------------------------------------------------------------------
+
+#' @rdname checkSNFParams
+#'
+#' @export
+testSNFParams <- checkmate::makeTestFunction(checkSNFParams)

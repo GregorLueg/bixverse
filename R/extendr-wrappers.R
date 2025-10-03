@@ -1021,6 +1021,63 @@ rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, 
 #' @references Ruiz, et al., Nat Commun, 2021
 rs_constrained_page_rank_list <- function(personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank_list, personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges)
 
+#' Calculate the SNF affinity matrix for continuous values
+#'
+#' @param data Numerical matrix. Needs to be oriented features x samples!
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use here.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#'
+#' @return The affinity matrix based on continuous values.
+#'
+#' @export
+rs_snf_affinity_continuous <- function(data, distance_type, k, mu, normalise) .Call(wrap__rs_snf_affinity_continuous, data, distance_type, k, mu, normalise)
+
+#' Calculate the SNF affinity matrix for categorical values
+#'
+#' @param data Integer matrix. Needs to be oriented features x samples! The
+#' integers represent the factor values of the catagories.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on categorical values.
+#'
+#' @export
+rs_snf_affinity_cat <- function(data, k, mu) .Call(wrap__rs_snf_affinity_cat, data, k, mu)
+
+#' Calculate the SNF affinity matrix for mixed values
+#'
+#' @param data Numerical matrix. Needs to be oriented features x samples! This
+#' function will calculate the Gower distance under the hood for the affinity
+#' calculation.
+#' @param is_cat Boolean vector. Which of the features are categorical. Needs
+#' to be of `nrow(data)`.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on mixed values.
+#'
+#' @export
+rs_snf_affinity_mixed <- function(data, is_cat, k, mu) .Call(wrap__rs_snf_affinity_mixed, data, is_cat, k, mu)
+
+#' Similarity network fusion
+#'
+#' @description This function iteratively fuses the affinity matrices together.
+#'
+#' @param aff_mat_list A list of numerical matrices. The affinity matrices to
+#' fuse together.
+#' @param k Integer. Number of neighbours to consider.
+#' @param t Integer. Number of iterations for the algorithm.
+#' @param alpha Float. Normalisation parameter controlling the fusion strength.
+#'
+#' @return The final affinity matrix after the fusion.
+#'
+#' @export
+rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, k, t, alpha)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description Calculates the topological overlap measure for a given affinity

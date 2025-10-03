@@ -23,6 +23,7 @@ pub use r_bindings::r_enrichment::r_oea;
 
 // graphs
 pub use r_bindings::r_graph::r_page_rank;
+pub use r_bindings::r_graph::r_snf;
 
 // methods
 pub use r_bindings::r_methods::r_coremo;
@@ -53,6 +54,7 @@ extendr_module! {
     use r_oea;
     // graphs
     use r_page_rank;
+    use r_snf;
     // methods
     use r_coremo;
     use r_dgrdl;

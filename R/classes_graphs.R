@@ -334,9 +334,26 @@ S7::method(get_rbh_res, rbh_graph) <- function(object) {
 #'
 #' @param data Optional data to already transform into adjacency data. Any data
 #' supplied will be assumed to be samples x features. The provided data taype
-#' can be a data.frame (for categorical and/or mixed types) or a matrix (for
-#' continous types). If you provide a data.frame, the function will assume the
+#' can be a data.table (for categorical and/or mixed types) or a matrix (for
+#' continous types). If you provide a data.table, the function will assume the
 #' first column are the sample identifiers. Please ensure that setting.
+#' @param data_name Optional string. Name of the data modality.
+#' @param snf_params List. The SNF parameters, see [bixverse::params_snf()]. The
+#' list contains the following elements:
+#' \itemize{
+#'   \item k - Integer. Number of neighbours to consider.
+#'   \item t - Integer. Number of iterations for the SNF algorithm.
+#'   \item mu - Float. Normalisation factor for the Gaussian kernel width.
+#'   \item alpha - Float. Normalisation parameter controlling the fusion
+#'   strength.
+#'   \item normalise - Boolean. Shall continuous values be Z-scored.
+#'   \item distance_metric - String. One of
+#'   `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#'   to use for the continuous calculations. In case of pure categorical,
+#'   Hamming will be used, for mixed data types Gower distance is used.
+#' }
+#' The parameters will be internally stored for subsequent usage in other
+#' functions.
 #'
 #' @return Returns the `snf` class for further operations.
 #'
@@ -356,26 +373,90 @@ snf <- S7::new_class(
 
   constructor = function(
     data = NULL,
+    data_name = NULL,
     snf_params = params_snf()
   ) {
     # checks
     checkmate::assert(
       checkmate::testNull(data),
-      checkmate::testDataFrame(data),
+      checkmate::testDataTable(data),
       checkmate::testMatrix(data, mode = "numeric")
     )
     assertSNFParams(snf_params)
+    checkmate::qassert(data_name, c("0", "S1"))
+
+    if (!is.null(data)) {
+      checkmate::qassert(data_name, c("S1"))
+    }
+
+    affinity <- switch(
+      class(data),
+      `NULL` = NULL,
+      data.table = with(
+        snf_params,
+        snf_process_aff_cat_mixed(data = data, k = k, mu = mu)
+      ),
+      matrix = with(
+        snf_params,
+        snf_process_aff_continuous(
+          data = data,
+          k = k,
+          mu = mu,
+          distance_metric = distance_metric,
+          normalise = normalise
+        )
+      )
+    )
+
+    adj_matrices <- list()
+
+    if (!is.null(affinity)) {
+      adj_matrices[[data_name]] <- affinity
+    }
 
     # Finalise object
     S7::new_object(
       S7::S7_object(),
-      module_data = data,
-      rbh_edge_df = data.table(),
-      rbh_graph = NULL,
-      final_results = data.table(),
+      adj_matrices = adj_matrices,
+      snf_adj = NULL,
       params = list(
-        rbh_type = rbh_type
-      )
+        "snf" = snf_params,
+        "no_samples" = ifelse(is.null(affinity), NULL, nrow(affinity))
+      ),
+      final_results = data.table()
     )
   }
 )
+
+## methods ---------------------------------------------------------------------
+
+### getters --------------------------------------------------------------------
+
+#' Get the SNF params
+#'
+#' @param object The underlying class [bixverse::snf()].
+#'
+#' @return Returns the stored SNF params
+#'
+#' @export
+get_snf_params <- S7::new_generic(
+  name = "get_snf_params",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_snf_params rbh_graph
+S7::method(get_snf_params, rbh_graph) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::rbh_graph")
+  # Get the data
+  snf_params <- S7::prop(object, "params")[["snf"]]
+
+  return(snf_params)
+}

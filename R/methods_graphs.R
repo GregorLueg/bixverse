@@ -1245,6 +1245,152 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
   return(object)
 }
 
+# snf --------------------------------------------------------------------------
+
+#' Add a data modality for SNF generation
+#'
+#' @description
+#' This function will add a modality as an affinity matrix for subsequent fusion
+#' to the object. To note: all of the modalities need to have the same number
+#' of rows, i.e., samples!
+#'
+#' @param object The underlying class, see [bixverse::snf()].
+#' @param data matrix or data.table. The data to transform into adjacency data
+#' and add to the class. Any data supplied will be assumed to be samples x
+#' features. The provided data type can be a data.table (for categorical and/or
+#' mixed types) or a matrix (for continous types). If you provide a data.table,
+#' the function will assume the first column are the sample identifiers. Please
+#' ensure that setting.
+#' @param data_name String. The data modality name.
+#' @param params Optional List. If you wish to overwite the already set up
+#' parameters for SNF, see [bixverse::params_snf()]. If `NULL`, the settings
+#' from within the object will be used. If not NULL, the new parameters will
+#' be used for this modality specifically and only for this modality!
+#'
+#' @return The class with added adjacency matrix for this data.
+#'
+#' @export
+add_snf_data_modality <- S7::new_generic(
+  name = "add_snf_data_modality",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    data,
+    data_name,
+    params = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @import data.table
+#'
+#' @method add_snf_data_modality snf
+S7::method(add_snf_data_modality, snf) <- function(
+  object,
+  data,
+  data_name,
+  params = NULL
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::snf")
+  checkmate::assert(
+    checkmate::testDataTable(data),
+    checkmate::testMatrix(data, mode = "numeric")
+  )
+  checkmate::qassert(data_name, "S1")
+  checkmate::assert(
+    checkmate::test_null(params),
+    testSNFParams(params)
+  )
+
+  no_samples <- nrow(data)
+
+  object <- check_dim(object = object, no_samples = no_samples)
+
+  snf_params <- if (is.null(params)) {
+    get_snf_params(object = object)
+  } else {
+    params
+  }
+
+  affinity <- switch(
+    class(data),
+    data.table = with(
+      snf_params,
+      snf_process_aff_cat_mixed(data = data, k = k, mu = mu)
+    ),
+    matrix = with(
+      snf_params,
+      snf_process_aff_continuous(
+        data = data,
+        k = k,
+        mu = mu,
+        distance_metric = distance_metric,
+        normalise = normalise
+      )
+    )
+  )
+
+  S7::prop(adj_matrices, "adj_matrices")[[data_name]] <- affinity
+  if (!is.null(params)) {
+    S7::prop(adj_matrices, "params")[[sprintf(
+      "params_%s",
+      data_name
+    )]] <- params
+  }
+
+  return(object)
+}
+
+## snf helpers -----------------------------------------------------------------
+
+#' Helper to assert same number of samples
+#'
+#' @param object `snf` class.
+#' @param no_samples Integer. New number of samples
+#'
+#' @returns The object. If no dimensions were found in the object yet, it will
+#' be added. If the addition of the new data has dimensions that do not fit
+#' with what has been stored in the class so far, it will throw an error.
+check_dim <- S7::new_generic(
+  name = "check_dim",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    no_samples
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @import data.table
+#'
+#' @method check_dim snf
+S7::method(check_dim, snf) <- function(object, no_samples) {
+  # checks
+  checkmate::assertClass(object, "bixverse::snf")
+  checkmate::qassert(no_samples, "I1")
+
+  if (is.null(S7::prop(object, "params")[["no_samples"]])) {
+    S7::prop(object, "params")[["no_samples"]] <- no_samples
+    return(object)
+  } else {
+    expect_sample_no <- S7::prop(object, "params")[["no_samples"]]
+    if (expect_sample_no != no_samples) {
+      stop(
+        "The data you try to add has a different number of samples. Please check."
+      )
+    }
+    return(object)
+  }
+}
 
 # helpers ----------------------------------------------------------------------
 

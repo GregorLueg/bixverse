@@ -2,9 +2,12 @@
 % Please edit documentation in R/checkmate_extensions.R
 \name{checkSNFParams}
 \alias{checkSNFParams}
+\alias{testSNFParams}
 \title{Check SNF parameters}
 \usage{
 checkSNFParams(x)
+
+testSNFParams(x)
 }
 \arguments{
 \item{x}{The list to check/assert}
