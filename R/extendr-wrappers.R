@@ -1114,6 +1114,31 @@ rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, m
 #' @export
 rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
 
+#' kNN label propagation
+#'
+#' @description
+#' The function is a helper function to do kNN label propagation. This can
+#' be useful for semi-supervised tasks. It implements the label spreading
+#' method.
+#'
+#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
+#' which indicates alternating pairs (node_1, node_2), etc in terms of edges
+#' @param one_hot_encoding Integer matrix. Each row represents a sample, the
+#' columns the one-hot encodings. Everything 0 denotes the unlabelled data.
+#' @param label_mask Boolean vector. Which of the samples do not have a label.
+#' Needs to be same length as `nrow(one_hot_encoding)`.
+#' @param alpha Numeric. Parameter that controls the spreading. Usually between
+#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
+#' conversative.
+#' @param iterations For how many (max) iterations to run the algorithm.
+#' @param tolerance If the value below this is reached, an early stop is
+#' initialised
+#'
+#' @return The matrix with the probabilities of being of a certain class
+#'
+#' @export
+rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description Calculates the topological overlap measure for a given affinity

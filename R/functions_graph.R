@@ -276,3 +276,64 @@ snf_process_aff_cat_mixed <- function(
 
   return(res)
 }
+
+# knn graph label propagation --------------------------------------------------
+
+#' kNN-based graph label propagation
+#'
+#' @description
+#' In case of a kNN graph with a subset of nodes having labels, this function
+#' can be used to propagate the labels through the graph. This function uses
+#' the label spreading version of the algorithm.
+#'
+#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
+#' which indicates alternating pairs (node_1, node_2), etc in terms of edges.
+#' @param labels String. The labels with `NA` indicating unlabelled.
+#' @param iterations Integer. Maximum iterations for the algorithm.
+#' @param alpha Numeric. Parameter that controls the spreading. Usually between
+#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
+#' conversative.
+#' @param tolerance Tolerance parameter for early stopping.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item assignment_probs - Matrix with the assignment probabilities.
+#'   \item final_labels - Final labels in the graph
+#' }
+#'
+#' @export
+knn_graph_label_propagation <- function(
+  edge_list,
+  labels,
+  iterations = 100L,
+  alpha = 0.9,
+  tolerance = 1e-6
+) {
+  # checks
+  checkmate::qassert(edge_list, "I+")
+  checkmate::qassert(labels, "s+")
+  checkmate::qassert(iterations, "I1")
+  checkmate::qassert(alpha, "N1[0, 1]")
+  checkmate::qassert(tolerance, "N1")
+
+  one_hot_encoding <- one_hot_encode(labels = labels)
+  label_mask <- is.na(labels)
+  no_nodes <- length(labels)
+
+  res <- rs_knn_label_propagation(
+    edge_list = edge_list,
+    one_hot_encoding = one_hot_encoding,
+    label_mask = label_mask,
+    alpha = 0.95,
+    iterations = 100L,
+    tolerance = 1e-7
+  )
+
+  colnames(res) <- colnames(one_hot_encoding)
+
+  final_labels <- colnames(res)[max.col(res)]
+
+  res <- list(assignment_probs = res, final_labels = final_labels)
+
+  return(res)
+}

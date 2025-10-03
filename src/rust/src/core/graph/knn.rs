@@ -168,3 +168,155 @@ pub fn adjacency_to_laplacian(adjacency: &MatRef<f64>, normalise: bool) -> Mat<f
         laplacian
     }
 }
+
+///////////////////////////
+// KNN label propagation //
+///////////////////////////
+
+/// Structure to store KNN graphs and do label propagation
+///
+/// ### Fields
+///
+/// * `offsets` - Stores the offsets for node i's neighbours
+/// * `neighbours`- Flat array with neighbour indices
+/// * `weights` - Normalised edge weights
+#[derive(Debug, Clone)]
+pub struct KnnLabPropGraph {
+    pub offsets: Vec<usize>,
+    pub neighbours: Vec<usize>,
+    pub weights: Vec<f32>,
+}
+
+impl KnnLabPropGraph {
+    /// Generate the KnnLabelPropGraph
+    ///
+    /// ### Params
+    ///
+    /// * `edges` - edge list in form of [node_1, node_2, node_3, ...] which
+    ///   indicates alternating pairs (node_1, node_2), etc in terms of edges.
+    /// * `n_nodes` - Number of nodes in the graph
+    ///
+    /// ### Returns
+    ///
+    /// Self with the data stored in the structure.
+    pub fn from_edge_list(edges: &[usize], n_nodes: usize) -> Self {
+        // generate an adjaceny matrix for normalisation; could be faer
+        let mut adj: Vec<Vec<(usize, f32)>> = vec![vec![]; n_nodes];
+
+        for chunk in edges.chunks(2) {
+            let (u, v) = (chunk[0], chunk[1]);
+            adj[u].push((v, 1_f32));
+            adj[v].push((u, 1_f32));
+        }
+
+        for neighbours in &mut adj {
+            let sum = neighbours.len() as f32;
+            for (_, w) in neighbours {
+                *w /= sum;
+            }
+        }
+
+        // conversion to CSR for better cache locality and look-ups
+        let mut offsets: Vec<usize> = vec![0];
+        let mut neighbours: Vec<usize> = Vec::with_capacity(edges.len());
+        let mut weights: Vec<f32> = Vec::with_capacity(edges.len());
+
+        for node_neighbours in adj {
+            for (neighbour, weight) in node_neighbours {
+                neighbours.push(neighbour);
+                weights.push(weight);
+            }
+            offsets.push(neighbours.len())
+        }
+
+        Self {
+            offsets,
+            neighbours,
+            weights,
+        }
+    }
+
+    /// Label spreading algorithm
+    ///
+    /// Function will spread the labels (one hot encoding for categorical data)
+    /// over the graph. The input needs to be of structure:
+    ///
+    /// class 1 -> `[1.0, 0.0, 0.0, 0.0]`
+    ///
+    /// class 2 -> `[0.0, 1.0, 0.0, 0.0]`
+    ///
+    /// unlabelled -> `[0.0, 0.0, 0.0, 0.0]`
+    ///
+    /// ### Params
+    ///
+    /// * `labels` - One-hot encoded group membership. All zeroes == unlabelled.
+    /// * `mask` - Boolean indicating which samples are unlabelled.
+    /// * `alpha` - Controls the spreading. Usually between 0.9 to 0.95. Larger
+    ///   values goes further labelling, smaller values are more conversative.
+    ///
+    /// ### Returns
+    ///
+    /// A Vec<Vec<f32>> with the probabilities of a given group being of that
+    /// class.
+    pub fn label_spreading(
+        &self,
+        labels: &[Vec<f32>],
+        mask: &[bool],
+        alpha: f32,
+        iterations: usize,
+        tolerance: f32,
+    ) -> Vec<Vec<f32>> {
+        let n = labels.len();
+        let num_classes = labels[0].len();
+        let mut y = labels.to_vec();
+        let mut y_new = vec![vec![0.0; num_classes]; n];
+
+        for _ in 0..iterations {
+            y_new.par_iter_mut().enumerate().for_each(|(node, y_dist)| {
+                let start = self.offsets[node];
+                let end = self.offsets[node + 1];
+
+                y_dist.fill(0.0);
+                for i in start..end {
+                    let neighbor_dist = &y[self.neighbours[i]];
+                    for c in 0..num_classes {
+                        y_dist[c] += self.weights[i] * neighbor_dist[c];
+                    }
+                }
+            });
+
+            let max_change = y
+                .par_iter_mut()
+                .enumerate()
+                .map(|(i, y_dist)| {
+                    let mut max_diff = 0.0_f32;
+
+                    if mask[i] {
+                        // unlabeled - pure propagation
+                        #[allow(clippy::needless_range_loop)]
+                        for c in 0..num_classes {
+                            max_diff = max_diff.max((y_new[i][c] - y_dist[c]).abs());
+                            y_dist[c] = y_new[i][c];
+                        }
+                    } else {
+                        // labeled - anchor to original
+                        #[allow(clippy::needless_range_loop)]
+                        for c in 0..num_classes {
+                            let new_val = alpha * labels[i][c] + (1.0 - alpha) * y_new[i][c];
+                            max_diff = max_diff.max((new_val - y_dist[c]).abs());
+                            y_dist[c] = new_val;
+                        }
+                    }
+
+                    max_diff
+                })
+                .reduce(|| 0.0, f32::max);
+
+            if max_change < tolerance {
+                break;
+            }
+        }
+
+        y
+    }
+}
