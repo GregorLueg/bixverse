@@ -176,3 +176,103 @@ generate_personalisation_vec <- function(graph, node_weights) {
 
   return(diffusion_vec)
 }
+
+# snf --------------------------------------------------------------------------
+
+## helpers ---------------------------------------------------------------------
+
+#' Helper function to process continuous data for SNF
+#'
+#' @param data Numerical matrix. Is of type samples x features and is named.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param distance_metric String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use for the continuous calculations.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#'
+#' @return The affinity matrix based on continuous values.
+snf_process_aff_continuous <- function(
+  data,
+  k,
+  mu,
+  distance_metric,
+  normalise
+) {
+  # checks
+  checkmate::assertMatrix(
+    data,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::qassert(k, "I1(0,)")
+  checkmate::qassert(mu, "N1[0,1]")
+  checkmate::assertChoice(
+    distance_metric,
+    c("euclidean", "manhattan", "canberra", "cosine")
+  )
+  checkmate::qassert(normalise, "B1")
+
+  # transpose to features x samples
+  data_t <- t(data)
+
+  # get the affinity matrix
+  res <- rs_snf_affinity_continuous(
+    data = data_t,
+    distance_type = distance_metric,
+    k = k,
+    mu = mu,
+    normalise = normalise
+  )
+
+  rownames(res) <- colnames(res) <- rownames(data)
+
+  return(res)
+}
+
+
+#' Helper function to process categorical or mixed data for SNF
+#'
+#' @param data data.table of structure samples x features. The function will
+#' assume that the first column represents the sample identifiers.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on categorical and/or mixed values.
+snf_process_aff_cat_mixed <- function(
+  data,
+  k,
+  mu
+) {
+  # checks
+  checkmate::assertDataTable(data)
+  checkmate::qassert(k, "I1(0,)")
+  checkmate::qassert(mu, "N1[0,1]")
+
+  data_prep <- prep_data_gower_hamming_dist(
+    dt = data[, -1],
+    sample_names = data[[1]]
+  )
+
+  res <- if (sum(data_prep$is_cat) == (ncol(data) - 1)) {
+    # fully categorical case
+    rs_snf_affinity_cat(
+      data = t(data_prep$dat),
+      k = k,
+      mu = mu
+    )
+  } else {
+    # mixed case
+    rs_snf_affinity_mixed(
+      data = t(data_prep$dat),
+      is_cat = data_prep$is_cat,
+      k = k,
+      mu = mu
+    )
+  }
+
+  rownames(res) <- colnames(res) <- data[[1]]
+
+  return(res)
+}

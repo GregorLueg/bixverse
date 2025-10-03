@@ -862,7 +862,7 @@ fn get_dgrdl_laplacian(data: &MatRef<f64>, k: usize, features: bool) -> Mat<f64>
 
     let knn_adjacency = get_knn_graph_adj(&cosine_sim.as_ref(), k);
 
-    adjacency_to_laplacian(&knn_adjacency.as_ref())
+    adjacency_to_laplacian(&knn_adjacency.as_ref(), false)
 }
 
 /// Function to do the ADMM on the GRSC

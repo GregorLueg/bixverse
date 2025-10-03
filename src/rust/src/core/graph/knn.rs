@@ -16,9 +16,9 @@ use crate::assert_symmetric_mat;
 /// * `index` - Index position of that neighbours
 /// * `similiarity` - Similarity value for that Neighbour
 #[derive(Debug)]
-struct SimilarityItem {
-    index: usize,
-    similarity: f64,
+pub struct SimilarityItem {
+    pub index: usize,
+    pub similarity: f64,
 }
 
 /// Equality Trait for SimilarityItem
@@ -130,23 +130,41 @@ pub fn get_knn_graph_adj(similarities: &MatRef<f64>, k: usize) -> Mat<f64> {
 /// ### Returns
 ///
 /// The Laplacian matrix
-pub fn adjacency_to_laplacian(adjacency: &MatRef<f64>) -> Mat<f64> {
+pub fn adjacency_to_laplacian(adjacency: &MatRef<f64>, normalise: bool) -> Mat<f64> {
     assert_symmetric_mat!(adjacency);
-
     let n = adjacency.nrows();
 
-    let mut laplacian = adjacency.cloned();
+    // Compute degrees
+    let degrees: Vec<f64> = (0..n)
+        .map(|i| adjacency.row(i).iter().sum::<f64>())
+        .collect();
 
-    for i in 0..n {
-        let degree = adjacency.row(i).iter().sum::<f64>();
-        laplacian[(i, i)] = degree - adjacency[(i, i)];
-
-        for j in 0..n {
-            if i != j {
-                laplacian[(i, j)] = -adjacency[(i, j)];
+    if !normalise {
+        // Unnormalised: L = D - A
+        let mut laplacian = adjacency.cloned();
+        for i in 0..n {
+            laplacian[(i, i)] = degrees[i] - adjacency[(i, i)];
+            for j in 0..n {
+                if i != j {
+                    laplacian[(i, j)] = -adjacency[(i, j)];
+                }
             }
         }
-    }
+        laplacian
+    } else {
+        // Normalised: L_sym = I - D^(-1/2) * A * D^(-1/2)
+        let inv_sqrt_d: Vec<f64> = degrees
+            .iter()
+            .map(|&d| if d > 1e-10 { 1.0 / d.sqrt() } else { 0.0 })
+            .collect();
 
-    laplacian
+        let mut laplacian = Mat::zeros(n, n);
+        for i in 0..n {
+            laplacian[(i, i)] = 1.0;
+            for j in 0..n {
+                laplacian[(i, j)] -= inv_sqrt_d[i] * adjacency[(i, j)] * inv_sqrt_d[j];
+            }
+        }
+        laplacian
+    }
 }

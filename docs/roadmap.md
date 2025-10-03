@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 23.09.2025* </br>
+*Last update: 03.10.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -49,6 +49,7 @@ and identify 'privileged' sub communities in the graph.~~
 background diffusion scores for statistical testing.~~
 - ~~Constrained PageRank implementation for heterogenous graphs with sink nodes
 and/or edges, see [Ruiz et al.](https://www.nature.com/articles/s41467-021-21770-8).~~
+- ~~Similarity network fusion, see [Wang, et al.](https://www.nature.com/articles/nmeth.2810)~~
 
 #### bulkRNAseq methods
 

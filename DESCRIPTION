@@ -59,6 +59,7 @@ Imports:
 Suggests: 
     biomaRt,
     BiocParallel,
+    e1071,
     fgsea,
     GSVA,
     infotheo,
@@ -69,6 +70,7 @@ Suggests:
     ontologySimilarity,
     qs2,
     quarto,
+    StatMatch,
     tictoc,
     tinytest
 SystemRequirements: 
