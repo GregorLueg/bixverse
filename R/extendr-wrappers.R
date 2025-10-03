@@ -194,6 +194,26 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculates the Hamming distance between categorical columns
+#'
+#' @param x Integer matrix. The integers represent the factor data.
+#'
+#' @return The Hamming distance matrix
+#'
+#' @export
+rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
+
+#' Calculates the Gower distance for a given matrix
+#'
+#' @param x Numerical matrix. Converted matrix of continuous and categorical
+#' variables as numerical values.
+#' @param is_cat Boolean. Which of the columns represent categorical values.
+#'
+#' @return The Gower distance matrix.
+#'
+#' @export
+rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
+
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'
 #' @description This function takes a flattened vector of the upper triangle
@@ -1101,16 +1121,134 @@ rs_constrained_page_rank <- function(node_names, node_types, from, to, weights, 
 #' @references Ruiz, et al., Nat Commun, 2021
 rs_constrained_page_rank_list <- function(personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges) .Call(wrap__rs_constrained_page_rank_list, personalisation_list, node_names, node_types, from, to, weights, edge_type, sink_nodes, sink_edges)
 
+#' Calculate the SNF affinity matrix for continuous values
+#'
+#' @param data Numerical matrix. Needs to be oriented features x samples!
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use here.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#'
+#' @return The affinity matrix based on continuous values.
+#'
+#' @export
+rs_snf_affinity_continuous <- function(data, distance_type, k, mu, normalise) .Call(wrap__rs_snf_affinity_continuous, data, distance_type, k, mu, normalise)
+
+#' Calculate the SNF affinity matrix for categorical values
+#'
+#' @param data Integer matrix. Needs to be oriented features x samples! The
+#' integers represent the factor values of the catagories.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on categorical values.
+#'
+#' @export
+rs_snf_affinity_cat <- function(data, k, mu) .Call(wrap__rs_snf_affinity_cat, data, k, mu)
+
+#' Calculate the SNF affinity matrix for mixed values
+#'
+#' @param data Numerical matrix. Needs to be oriented features x samples! This
+#' function will calculate the Gower distance under the hood for the affinity
+#' calculation.
+#' @param is_cat Boolean vector. Which of the features are categorical. Needs
+#' to be of `nrow(data)`.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on mixed values.
+#'
+#' @export
+rs_snf_affinity_mixed <- function(data, is_cat, k, mu) .Call(wrap__rs_snf_affinity_mixed, data, is_cat, k, mu)
+
+#' Similarity network fusion
+#'
+#' @description This function iteratively fuses the affinity matrices together.
+#'
+#' @param aff_mat_list A list of numerical matrices. The affinity matrices to
+#' fuse together.
+#' @param k Integer. Number of neighbours to consider.
+#' @param t Integer. Number of iterations for the algorithm.
+#' @param alpha Float. Normalisation parameter controlling the fusion strength.
+#'
+#' @return The final affinity matrix after the fusion.
+#'
+#' @export
+rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, k, t, alpha)
+
+#' Rust implementation of spectral clustering
+#'
+#' @description Spectral clustering on a pre-calculated similarity matrix.
+#'
+#' @param similarities Numerical matrix representing the similarities. Needs
+#' to be symmetric!
+#' @param k_neighbours Integer. Number of neighbours to consider in the kNN
+#' graph generation
+#' @param n_clusters Integer. Number of clusters to identify
+#' @param max_iters Integer. Number of iterations for k-means clustering
+#' @param seed Integer. Seed for reproducibility
+#'
+#' @return A vector with the membership of the samples
+#'
+#' @export
+rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering_sim, similarities, k_neighbours, n_clusters, max_iters, seed)
+
+#' Rust implementation of spectral clustering
+#'
+#' @param data Numerical matrix. The data to cluster. Rows = samples, columns =
+#' features.
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#' @param epsilon Numerical. The epsilon parameter for the Gaussian Radial
+#' Basis function
+#' @param k_neighbours Integer. Number of neighbours to consider in the kNN
+#' graph generation
+#' @param n_clusters Integer. Number of clusters to identify
+#' @param max_iters Integer. Number of iterations for k-means clustering
+#' @param seed Integer. Seed for reproducibility
+#'
+#' @return A vector with the membership of the samples
+#'
+#' @export
+rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
+
+#' kNN label propagation
+#'
+#' @description
+#' The function is a helper function to do kNN label propagation. This can
+#' be useful for semi-supervised tasks. It implements the label spreading
+#' method.
+#'
+#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
+#' which indicates alternating pairs (node_1, node_2), etc in terms of edges
+#' @param one_hot_encoding Integer matrix. Each row represents a sample, the
+#' columns the one-hot encodings. Everything 0 denotes the unlabelled data.
+#' @param label_mask Boolean vector. Which of the samples do not have a label.
+#' Needs to be same length as `nrow(one_hot_encoding)`.
+#' @param alpha Numeric. Parameter that controls the spreading. Usually between
+#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
+#' conversative.
+#' @param iterations For how many (max) iterations to run the algorithm.
+#' @param tolerance If the value below this is reached, an early stop is
+#' initialised
+#'
+#' @return The matrix with the probabilities of being of a certain class
+#'
+#' @export
+rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
+
 #' Calculates the TOM over an affinity matrix
 #'
-#' @description Calculates the topological overlap measure for a given affinity matrix
-#' x. Has the option to calculate the signed and unsigned version.
+#' @description Calculates the topological overlap measure for a given affinity
+#' matrix x. Has the option to calculate the signed and unsigned version.
 #'
 #' @param x Numerical matrix. Affinity matrix.
-#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
-#' normalisation method will be used.
-#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-#' should be ≥ 0.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
+#' different normalisation method will be used.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to
+#' `FALSE`, values should be ≥ 0.
 #'
 #' @return Returns the TOM matrix.
 #'
@@ -1124,7 +1262,8 @@ rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 #' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
 #' to a random set of 1000 genes.
 #'
-#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cluster_genes A list. Contains the cluster and their respective
+#' genes.
 #' @param cor_mat Numerical matrix. Contains the correlation coefficients.
 #' @param row_names String vector. The row names (or column names) of the
 #' correlation matrix.
@@ -1170,6 +1309,16 @@ rs_coremo_stability <- function(data, indices, epsilon, rbf_type, spearman) .Cal
 #'   this feature across all the bootstraps, resamplings.
 #' }
 rs_cluster_stability <- function(data) .Call(wrap__rs_cluster_stability, data)
+
+#' Helper function to split correlation matrices by sign
+#'
+#' @param data The correlation matrix to split by sign.
+#'
+#' @return A vector of 1 and -1 indicating the respective sign of the
+#' correlation matrix.
+#'
+#' @export
+rs_split_cor_signs <- function(data) .Call(wrap__rs_split_cor_signs, data)
 
 #' Generate a sparse dictionary with DGRDL
 #'

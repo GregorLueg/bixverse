@@ -413,7 +413,12 @@ pub fn column_mutual_information(
     Ok(mi_matrix)
 }
 
-/// Calculate the pointwise mutual information for a boolean matrix representation
+////////////////////////////////////////
+// Binary and other distance measures //
+////////////////////////////////////////
+
+/// Calculate the pointwise mutual information for a boolean matrix
+/// representation
 ///
 /// This function takes in a representation of binary values (`true`, `false`)
 /// and calculations the column-wise pointwise mutual information.
@@ -422,7 +427,8 @@ pub fn column_mutual_information(
 ///
 /// * `x` - A slice of boolean vectors representing the data. The outer vector
 ///   represents the columns.
-/// * `normalise` - Shall the normalised pointwise mutual information be calculated
+/// * `normalise` - Shall the normalised pointwise mutual information be
+///   calculated
 ///
 /// ### Returns
 ///
@@ -496,6 +502,150 @@ pub fn calc_pmi(x: &[Vec<bool>], normalise: bool) -> Mat<f64> {
     }
 
     sim_mat
+}
+
+/// Calculate Hamming distance between columns
+///
+/// ### Params
+///
+/// * `mat` - Integer matrix where categorical values are encoded as integers
+///
+/// ### Returns
+///
+/// The Hamming distance matrix with values in [0, 1]
+pub fn column_pairwise_hamming_cat(mat: &MatRef<i32>) -> Mat<f64> {
+    let (nrows, ncols) = mat.shape();
+    let mut res = Mat::zeros(ncols, ncols);
+
+    let pairs: Vec<(usize, usize)> = (0..ncols)
+        .flat_map(|i| ((i + 1)..ncols).map(move |j| (i, j)))
+        .collect();
+
+    let results: Vec<(usize, usize, f64)> = pairs
+        .par_iter()
+        .map(|&(i, j)| {
+            let mut mismatches = 0;
+            for k in 0..nrows {
+                if mat.get(k, i) != mat.get(k, j) {
+                    mismatches += 1;
+                }
+            }
+            let dist = mismatches as f64 / nrows as f64;
+            (i, j, dist)
+        })
+        .collect();
+
+    for (i, j, dist) in results {
+        res[(i, j)] = dist;
+        res[(j, i)] = dist;
+    }
+
+    res
+}
+
+/// Calculate Gower distance between rows (samples) for mixed data types
+///
+/// Gower distance handles mixed continuous and categorical data by:
+/// - Continuous: normalised Manhattan distance |x_i - x_j| / range
+/// - Categorical: simple mismatch (0 if same, 1 if different)
+///
+/// ### Params
+///
+/// * `mat` - The data matrix (samples × features)
+/// * `is_cat` - Boolean vector indicating which columns are categorical
+/// * `ranges` - Optional pre-computed ranges for continuous variables. If None,
+///   computed from data as max - min for each column.
+///
+/// ### Returns
+///
+/// The Gower distance matrix with values in [0, 1]
+pub fn column_pairwise_gower(
+    mat: &MatRef<f64>,
+    is_cat: &[bool],
+    ranges: Option<&[f64]>,
+) -> Result<Mat<f64>, String> {
+    let (nrow, ncol) = mat.shape();
+
+    if is_cat.len() != ncol {
+        return Err(format!(
+            "is_categorical length {} doesn't match features {}",
+            is_cat.len(),
+            ncol
+        ));
+    }
+
+    let computed_ranges: Vec<f64> = if let Some(r) = ranges {
+        if r.len() != ncol {
+            return Err(format!(
+                "ranges length {} doesn't match features {}",
+                r.len(),
+                ncol
+            ));
+        }
+        r.to_vec()
+    } else {
+        (0..ncol)
+            .into_par_iter()
+            .map(|j| {
+                if is_cat[j] {
+                    1.0
+                } else {
+                    let mut min_val = f64::INFINITY;
+                    let mut max_val = f64::NEG_INFINITY;
+                    for i in 0..nrow {
+                        let val = *mat.get(i, j);
+                        min_val = min_val.min(val);
+                        max_val = max_val.max(val);
+                    }
+                    let range = max_val - min_val;
+                    if range < f64::EPSILON {
+                        1.0
+                    } else {
+                        range
+                    }
+                }
+            })
+            .collect()
+    };
+
+    let pairs: Vec<(usize, usize)> = (0..nrow)
+        .flat_map(|i| ((i + 1)..nrow).map(move |j| (i, j)))
+        .collect();
+
+    let results: Vec<(usize, usize, f64)> = pairs
+        .par_iter()
+        .map(|&(i, j)| {
+            let mut total_dist = 0.0;
+
+            for k in 0..ncol {
+                let val_i = *mat.get(i, k);
+                let val_j = *mat.get(j, k);
+
+                let dist = if is_cat[k] {
+                    if (val_i - val_j).abs() < f64::EPSILON {
+                        0.0
+                    } else {
+                        1.0
+                    }
+                } else {
+                    (val_i - val_j).abs() / computed_ranges[k]
+                };
+
+                total_dist += dist;
+            }
+
+            (i, j, total_dist / ncol as f64)
+        })
+        .collect();
+
+    let mut res = Mat::zeros(nrow, nrow);
+
+    for (i, j, dist) in results {
+        res[(i, j)] = dist;
+        res[(j, i)] = dist;
+    }
+
+    Ok(res)
 }
 
 /////////////////////////////////

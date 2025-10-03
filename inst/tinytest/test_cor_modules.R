@@ -290,6 +290,81 @@ expect_equal(
   info = "CoReMo - final module data"
 )
 
+### split modules by sign ------------------------------------------------------
+
+#### test rust implementation --------------------------------------------------
+
+# fmt: skip
+pos_corr <- matrix(
+  c(1.0, 0.7, 0.5, 
+    0.7, 1.0, 0.6, 
+    0.5, 0.6, 1.0), 
+  nrow = 3
+)
+rownames(pos_corr) <- colnames(pos_corr) <- letters[1:3]
+
+# fmt: skip
+neg_corr <- matrix(
+  c(1.0, -0.7, -0.5, 
+    -0.7, 1.0, -0.6, 
+    -0.5, -0.6, 1.0),
+  nrow = 3L
+)
+rownames(neg_corr) <- colnames(neg_corr) <- letters[1:3]
+
+# fmt: skip
+mixed_corr <- matrix(
+  c(
+    1.0, 0.8, -0.6, -0.7,
+    0.8, 1.0, -0.5, -0.8,
+    -0.6, -0.5, 1.0, 0.7,
+    -0.7, -0.8, 0.7, 1.0
+  ),
+  nrow = 4
+)
+rownames(mixed_corr) <- colnames(mixed_corr) <- letters[1:4]
+
+expect_equal(
+  current = rs_split_cor_signs(pos_corr),
+  target = as.integer(c(1, 1, 1)),
+  info = "CoReMo - correlation splits work - only positive"
+)
+
+expect_equal(
+  current = rs_split_cor_signs(neg_corr),
+  target = as.integer(c(-1, -1, -1)),
+  info = "CoReMo - correlation splits work - only negative"
+)
+
+expect_equal(
+  current = rs_split_cor_signs(mixed_corr),
+  target = as.integer(c(1, 1, -1, -1)),
+  info = "CoReMo - correlation splits work - mixed case"
+)
+
+#### actual method -------------------------------------------------------------
+
+cor_test <- cor_module_coremo_cor_sign(cor_test)
+
+expect_true(
+  current = all(cor_test@outputs$final_modules$sign == "pos"),
+  info = "CoReMo - correlation sign info added"
+)
+
+### eigen gene calculation -----------------------------------------------------
+
+cor_test <- cor_module_coremo_eigengene(cor_test)
+
+expect_true(
+  current = "cor" %in% names(cor_test@outputs$final_modules),
+  info = "CoReMo - gene to eigengene correlation info added."
+)
+
+expect_true(
+  current = !is.null(cor_test@outputs$eigengene_sample),
+  info = "CoReMo - per sample values for the eigengene added."
+)
+
 ## graph-based clustering ------------------------------------------------------
 
 ### expected data --------------------------------------------------------------

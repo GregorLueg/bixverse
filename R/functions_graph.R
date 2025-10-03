@@ -176,3 +176,164 @@ generate_personalisation_vec <- function(graph, node_weights) {
 
   return(diffusion_vec)
 }
+
+# snf --------------------------------------------------------------------------
+
+## helpers ---------------------------------------------------------------------
+
+#' Helper function to process continuous data for SNF
+#'
+#' @param data Numerical matrix. Is of type samples x features and is named.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param distance_metric String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use for the continuous calculations.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#'
+#' @return The affinity matrix based on continuous values.
+snf_process_aff_continuous <- function(
+  data,
+  k,
+  mu,
+  distance_metric,
+  normalise
+) {
+  # checks
+  checkmate::assertMatrix(
+    data,
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::qassert(k, "I1(0,)")
+  checkmate::qassert(mu, "N1[0,1]")
+  checkmate::assertChoice(
+    distance_metric,
+    c("euclidean", "manhattan", "canberra", "cosine")
+  )
+  checkmate::qassert(normalise, "B1")
+
+  # transpose to features x samples
+  data_t <- t(data)
+
+  # get the affinity matrix
+  res <- rs_snf_affinity_continuous(
+    data = data_t,
+    distance_type = distance_metric,
+    k = k,
+    mu = mu,
+    normalise = normalise
+  )
+
+  rownames(res) <- colnames(res) <- rownames(data)
+
+  return(res)
+}
+
+
+#' Helper function to process categorical or mixed data for SNF
+#'
+#' @param data data.table of structure samples x features. The function will
+#' assume that the first column represents the sample identifiers.
+#' @param k Integer. Number of neighbours to consider.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#'
+#' @return The affinity matrix based on categorical and/or mixed values.
+snf_process_aff_cat_mixed <- function(
+  data,
+  k,
+  mu
+) {
+  # checks
+  checkmate::assertDataTable(data)
+  checkmate::qassert(k, "I1(0,)")
+  checkmate::qassert(mu, "N1[0,1]")
+
+  data_prep <- prep_data_gower_hamming_dist(
+    dt = data[, -1],
+    sample_names = data[[1]]
+  )
+
+  res <- if (sum(data_prep$is_cat) == (ncol(data) - 1)) {
+    # fully categorical case
+    rs_snf_affinity_cat(
+      data = t(data_prep$dat),
+      k = k,
+      mu = mu
+    )
+  } else {
+    # mixed case
+    rs_snf_affinity_mixed(
+      data = t(data_prep$dat),
+      is_cat = data_prep$is_cat,
+      k = k,
+      mu = mu
+    )
+  }
+
+  rownames(res) <- colnames(res) <- data[[1]]
+
+  return(res)
+}
+
+# knn graph label propagation --------------------------------------------------
+
+#' kNN-based graph label propagation
+#'
+#' @description
+#' In case of a kNN graph with a subset of nodes having labels, this function
+#' can be used to propagate the labels through the graph. This function uses
+#' the label spreading version of the algorithm.
+#'
+#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
+#' which indicates alternating pairs (node_1, node_2), etc in terms of edges.
+#' @param labels String. The labels with `NA` indicating unlabelled.
+#' @param iterations Integer. Maximum iterations for the algorithm.
+#' @param alpha Numeric. Parameter that controls the spreading. Usually between
+#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
+#' conversative.
+#' @param tolerance Tolerance parameter for early stopping.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item assignment_probs - Matrix with the assignment probabilities.
+#'   \item final_labels - Final labels in the graph
+#' }
+#'
+#' @export
+knn_graph_label_propagation <- function(
+  edge_list,
+  labels,
+  iterations = 100L,
+  alpha = 0.9,
+  tolerance = 1e-6
+) {
+  # checks
+  checkmate::qassert(edge_list, "I+")
+  checkmate::qassert(labels, "s+")
+  checkmate::qassert(iterations, "I1")
+  checkmate::qassert(alpha, "N1[0, 1]")
+  checkmate::qassert(tolerance, "N1")
+
+  one_hot_encoding <- one_hot_encode(labels = labels)
+  label_mask <- is.na(labels)
+  no_nodes <- length(labels)
+
+  res <- rs_knn_label_propagation(
+    edge_list = edge_list,
+    one_hot_encoding = one_hot_encoding,
+    label_mask = label_mask,
+    alpha = 0.95,
+    iterations = 100L,
+    tolerance = 1e-7
+  )
+
+  colnames(res) <- colnames(one_hot_encoding)
+
+  final_labels <- colnames(res)[max.col(res)]
+
+  res <- list(assignment_probs = res, final_labels = final_labels)
+
+  return(res)
+}

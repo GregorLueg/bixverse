@@ -1,6 +1,9 @@
 use faer::MatRef;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use std::collections::VecDeque;
+
+use crate::assert_symmetric_mat;
 
 ///////////////////////
 // Cluster stability //
@@ -112,4 +115,81 @@ pub fn cluster_stability(cluster_matrix: &MatRef<i32>) -> Vec<(f64, f64)> {
             (mean_jaccard, std_jaccard)
         })
         .collect()
+}
+
+/// Helper to split correlation matrices
+///
+/// Function will check the signs of the correlation matrix and return a vector
+/// of only `1` if everything has a positive sign, `-1` if everything has a
+/// negative sign and a mix if the correlation signs differ. Under the hood it
+/// uses a graph-based approach which is fast.
+///
+/// ### Params
+///
+/// * `cor_mat` - The correlation matrix to split
+///
+/// ### Returns
+///
+/// A vector containing -1 and/or 1, pending input correlation matrix.
+pub fn split_cor_mat_by_sign(cor_mat: &MatRef<f64>) -> Vec<i32> {
+    assert_symmetric_mat!(cor_mat);
+
+    let n = cor_mat.ncols();
+    let total_elem = n * (n - 1) / 2;
+    let mut off_diag = Vec::with_capacity(total_elem);
+
+    for i in 0..n {
+        for j in (i + 1)..n {
+            off_diag.push(*cor_mat.get(i, j));
+        }
+    }
+
+    let all_pos = off_diag.iter().all(|x| *x >= 0_f64);
+    let all_neg = off_diag.iter().all(|x| *x <= 0_f64);
+
+    if all_pos {
+        return vec![1; n];
+    }
+    if all_neg {
+        return vec![-1; n];
+    }
+
+    let mut visited = vec![false; n];
+    let mut groups = Vec::new();
+
+    for i in 0..n {
+        if !visited[i] {
+            let mut component = Vec::new();
+            let mut queue = VecDeque::new();
+            queue.push_back(i);
+            visited[i] = true;
+
+            while let Some(node) = queue.pop_front() {
+                component.push(node);
+
+                #[allow(clippy::needless_range_loop)]
+                for j in 0..n {
+                    if !visited[j] && *cor_mat.get(node, j) > 0.0 {
+                        visited[j] = true;
+                        queue.push_back(j);
+                    }
+                }
+            }
+            groups.push(component);
+        }
+    }
+
+    let mut result = vec![-1; n];
+    for group in groups {
+        // check if this group correlates positively with feature 0
+        let has_positive_with_first =
+            group.contains(&0) || group.iter().any(|&idx| *cor_mat.get(0, idx) > 0.0);
+
+        let label = if has_positive_with_first { 1 } else { -1 };
+        for &idx in &group {
+            result[idx] = label;
+        }
+    }
+
+    result
 }
