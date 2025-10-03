@@ -1247,6 +1247,8 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
 
 # snf --------------------------------------------------------------------------
 
+## add other modalities --------------------------------------------------------
+
 #' Add a data modality for SNF generation
 #'
 #' @description
@@ -1318,12 +1320,12 @@ S7::method(add_snf_data_modality, snf) <- function(
   }
 
   affinity <- switch(
-    class(data),
-    data.table = with(
+    class(data)[1],
+    "data.table" = with(
       snf_params,
       snf_process_aff_cat_mixed(data = data, k = k, mu = mu)
     ),
-    matrix = with(
+    "matrix" = with(
       snf_params,
       snf_process_aff_continuous(
         data = data,
@@ -1335,12 +1337,102 @@ S7::method(add_snf_data_modality, snf) <- function(
     )
   )
 
-  S7::prop(adj_matrices, "adj_matrices")[[data_name]] <- affinity
+  S7::prop(object, "adj_matrices")[[data_name]] <- affinity
   if (!is.null(params)) {
     S7::prop(adj_matrices, "params")[[sprintf(
       "params_%s",
       data_name
     )]] <- params
+  }
+
+  return(object)
+}
+
+## run snf ---------------------------------------------------------------------
+
+#' Run the SNF algorithm
+#'
+#' @description
+#' This function will run the SNF algorithm on top of the adjacency matrices
+#' found in the object. You can also optionally specify which adjacency matrices
+#' to use via the `to_include` parameter.
+#'
+#' @param object The underlying class, see [bixverse::snf()].
+#' @param to_include Optional string, if you wish to only use a subset of the
+#' generated adjacency matrices. If `NULL` all matrices will be used for the
+#' fusion process.
+#' @param params Optional List. If you wish to overwite the already set up
+#' parameters for SNF, see [bixverse::params_snf()]. If `NULL`, the settings
+#' from within the object will be used. If not NULL, the new parameters will
+#' be used for this modality specifically and only for this modality!
+#'
+#' @return The class with added adjacency matrix based on the SNF algorithm.
+#'
+#' @export
+run_snf <- S7::new_generic(
+  name = "run_snf",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    to_include = NULL,
+    params = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#' @import data.table
+#'
+#' @method run_snf snf
+S7::method(run_snf, snf) <- function(
+  object,
+  to_include = NULL,
+  params = NULL
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::snf")
+  checkmate::qassert(to_include, c("S+", "0"))
+  checkmate::assert(
+    checkmate::test_null(params),
+    testSNFParams(params)
+  )
+
+  adj_matrices <- S7::prop(object, "adj_matrices")
+
+  if (!is.null(to_include)) {
+    to_take <- intersect(names(adj_matrices), to_include)
+    adj_matrices <- adj_matrices[to_take]
+  }
+
+  if (length(adj_matrices) == 0) {
+    warning("No adjacency data found in the class. Returning class as is.")
+    return(object)
+  }
+
+  snf_params <- if (is.null(params)) {
+    get_snf_params(object = object)
+  } else {
+    params
+  }
+
+  snf_matrix <- with(
+    snf_params,
+    rs_snf(
+      aff_mat_list = adj_matrices,
+      k = k,
+      t = t,
+      alpha = alpha
+    )
+  )
+
+  rownames(snf_matrix) <- colnames(snf_matrix) <- rownames(adj_matrices[[1]])
+
+  S7::prop(object, "snf_adj") <- snf_matrix
+  if (!is.null(params)) {
+    S7::prop(adj_matrices, "params")[["snf_run_params"]] <- params
   }
 
   return(object)

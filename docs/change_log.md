@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 23.09.2025* </br>
+*Last update: 03.10.2025* </br>
 
 ### Version **0.0.2.2**
 
@@ -15,6 +15,9 @@ and clarity on what each function does.
 - Also, the bulk DGE function was split into two: `calculate_dge_limma()` and
 `calculate_dge_hedges()`.
 - Splitting by correlation sign and Eigengene calculation added for CoReMo.
+- Addition of the SNF algorithm from 
+[Wang, et al.](https://www.nature.com/articles/nmeth.2810)
+- Spectral clustering methods implemented in Rust.
 
 #### Breaking changes
 

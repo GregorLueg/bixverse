@@ -638,8 +638,8 @@ checkSNFParams <- function(x) {
 
   # qtest checks
   qtest_rules <- list(
-    k = "I1(0,)",
-    t = "I1(0,)",
+    k = "I1",
+    t = "I1",
     mu = "N1[0,1]",
     alpha = "N1",
     normalise = "B1"

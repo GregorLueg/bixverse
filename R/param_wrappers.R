@@ -460,8 +460,8 @@ params_snf <- function(
   distance_metric <- match.arg(distance_metric)
 
   # checks
-  checkmate::qassert(k, "I1(0, )")
-  checkmate::qassert(t, "I1(0, )")
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(t, "I1")
   checkmate::qassert(mu, "N1[0, 1]")
   checkmate::qassert(alpha, "N1")
   checkmate::qassert(normalise, "B1")
@@ -475,6 +475,7 @@ params_snf <- function(
     t = t,
     mu = mu,
     alpha = alpha,
+    distance_metric = distance_metric,
     normalise = normalise
   )
 }

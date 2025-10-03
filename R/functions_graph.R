@@ -226,6 +226,8 @@ snf_process_aff_continuous <- function(
     normalise = normalise
   )
 
+  rownames(res) <- colnames(res) <- rownames(data)
+
   return(res)
 }
 
@@ -250,7 +252,7 @@ snf_process_aff_cat_mixed <- function(
 
   data_prep <- prep_data_gower_hamming_dist(
     dt = data[, -1],
-    sample_names = data[[i]]
+    sample_names = data[[1]]
   )
 
   res <- if (sum(data_prep$is_cat) == (ncol(data) - 1)) {
@@ -269,6 +271,8 @@ snf_process_aff_cat_mixed <- function(
       mu = mu
     )
   }
+
+  rownames(res) <- colnames(res) <- data[[1]]
 
   return(res)
 }

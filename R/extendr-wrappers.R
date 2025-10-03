@@ -1078,6 +1078,42 @@ rs_snf_affinity_mixed <- function(data, is_cat, k, mu) .Call(wrap__rs_snf_affini
 #' @export
 rs_snf <- function(aff_mat_list, k, t, alpha) .Call(wrap__rs_snf, aff_mat_list, k, t, alpha)
 
+#' Rust implementation of spectral clustering
+#'
+#' @description Spectral clustering on a pre-calculated similarity matrix.
+#'
+#' @param similarities Numerical matrix representing the similarities. Needs
+#' to be symmetric!
+#' @param k_neighbours Integer. Number of neighbours to consider in the kNN
+#' graph generation
+#' @param n_clusters Integer. Number of clusters to identify
+#' @param max_iters Integer. Number of iterations for k-means clustering
+#' @param seed Integer. Seed for reproducibility
+#'
+#' @return A vector with the membership of the samples
+#'
+#' @export
+rs_spectral_clustering_sim <- function(similarities, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering_sim, similarities, k_neighbours, n_clusters, max_iters, seed)
+
+#' Rust implementation of spectral clustering
+#'
+#' @param data Numerical matrix. The data to cluster. Rows = samples, columns =
+#' features.
+#' @param distance_type String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`.
+#' @param epsilon Numerical. The epsilon parameter for the Gaussian Radial
+#' Basis function
+#' @param k_neighbours Integer. Number of neighbours to consider in the kNN
+#' graph generation
+#' @param n_clusters Integer. Number of clusters to identify
+#' @param max_iters Integer. Number of iterations for k-means clustering
+#' @param seed Integer. Seed for reproducibility
+#'
+#' @return A vector with the membership of the samples
+#'
+#' @export
+rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed) .Call(wrap__rs_spectral_clustering, data, distance_type, epsilon, k_neighbours, n_clusters, max_iters, seed)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description Calculates the topological overlap measure for a given affinity

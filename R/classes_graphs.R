@@ -390,13 +390,13 @@ snf <- S7::new_class(
     }
 
     affinity <- switch(
-      class(data),
-      `NULL` = NULL,
-      data.table = with(
+      class(data)[1],
+      "NULL" = NULL,
+      "data.table" = with(
         snf_params,
         snf_process_aff_cat_mixed(data = data, k = k, mu = mu)
       ),
-      matrix = with(
+      "matrix" = with(
         snf_params,
         snf_process_aff_continuous(
           data = data,
@@ -405,7 +405,8 @@ snf <- S7::new_class(
           distance_metric = distance_metric,
           normalise = normalise
         )
-      )
+      ),
+      NULL
     )
 
     adj_matrices <- list()
@@ -414,6 +415,8 @@ snf <- S7::new_class(
       adj_matrices[[data_name]] <- affinity
     }
 
+    sample_no <- if (is.null(affinity)) NULL else nrow(affinity)
+
     # Finalise object
     S7::new_object(
       S7::S7_object(),
@@ -421,7 +424,7 @@ snf <- S7::new_class(
       snf_adj = NULL,
       params = list(
         "snf" = snf_params,
-        "no_samples" = ifelse(is.null(affinity), NULL, nrow(affinity))
+        "no_samples" = sample_no
       ),
       final_results = data.table()
     )
@@ -451,12 +454,83 @@ get_snf_params <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_snf_params rbh_graph
-S7::method(get_snf_params, rbh_graph) <- function(object) {
+#' @method get_snf_params snf
+S7::method(get_snf_params, snf) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::rbh_graph")
+  checkmate::assertClass(object, "bixverse::snf")
   # Get the data
   snf_params <- S7::prop(object, "params")[["snf"]]
 
   return(snf_params)
+}
+
+
+#' Get an individual affinity matrix
+#'
+#' @param object The underlying class [bixverse::snf()].
+#' @param name String. The name of the individual data modality affinity
+#' matrix to return.
+#'
+#' @return Returns adjcacency matrix if found.
+#'
+#' @export
+get_snf_adjcacency_mat <- S7::new_generic(
+  name = "get_snf_adjcacency_mat",
+  dispatch_args = "object",
+  fun = function(object, name) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_snf_adjcacency_mat snf
+S7::method(get_snf_adjcacency_mat, snf) <- function(object, name) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::snf")
+  checkmate::qassert(name, "S1")
+  # Get the data
+  adj_matrix <- S7::prop(object, "adj_matrices")[[name]]
+
+  if (is.null(adj_matrix)) {
+    warning(paste("No adjcacency matrix with this name found. Returning NULL"))
+  }
+
+  return(adj_matrix)
+}
+
+
+#' Get the final SNF matrix
+#'
+#' @param object The underlying class [bixverse::snf()].
+#'
+#' @return Returns the SNF adjacency/similarity matrix.
+#'
+#' @export
+get_snf_final_mat <- S7::new_generic(
+  name = "get_snf_final_mat",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+#'
+#' @method get_snf_final_mat snf
+S7::method(get_snf_final_mat, snf) <- function(object) {
+  # Checks
+  checkmate::assertClass(object, "bixverse::snf")
+  # Get the data
+  res <- S7::prop(object, "snf_adj")
+
+  if (is.null(res)) {
+    warning(paste("No adjcacency matrix with this name found. Returning NULL"))
+  }
+
+  return(res)
 }
