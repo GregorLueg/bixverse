@@ -194,6 +194,26 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculates the Hamming distance between categorical columns
+#'
+#' @param x Integer matrix. The integers represent the factor data.
+#'
+#' @return The Hamming distance matrix
+#'
+#' @export
+rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
+
+#' Calculates the Gower distance for a given matrix
+#'
+#' @param x Numerical matrix. Converted matrix of continuous and categorical
+#' variables as numerical values.
+#' @param is_cat Boolean. Which of the columns represent categorical values.
+#'
+#' @return The Gower distance matrix.
+#'
+#' @export
+rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
+
 #' Reconstruct a matrix from a flattened upper triangle vector
 #'
 #' @description This function takes a flattened vector of the upper triangle
@@ -1003,14 +1023,14 @@ rs_constrained_page_rank_list <- function(personalisation_list, node_names, node
 
 #' Calculates the TOM over an affinity matrix
 #'
-#' @description Calculates the topological overlap measure for a given affinity matrix
-#' x. Has the option to calculate the signed and unsigned version.
+#' @description Calculates the topological overlap measure for a given affinity
+#' matrix x. Has the option to calculate the signed and unsigned version.
 #'
 #' @param x Numerical matrix. Affinity matrix.
-#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a different
-#' normalisation method will be used.
-#' @param signed Boolean. Shall the signed TOM be calculated. If set to `FALSE`, values
-#' should be ≥ 0.
+#' @param tom_type String. One of `c("v1", "v2")` - pending on choice, a
+#' different normalisation method will be used.
+#' @param signed Boolean. Shall the signed TOM be calculated. If set to
+#' `FALSE`, values should be ≥ 0.
 #'
 #' @return Returns the TOM matrix.
 #'
@@ -1024,7 +1044,8 @@ rs_tom <- function(x, tom_type, signed) .Call(wrap__rs_tom, x, tom_type, signed)
 #' deviation (MAD) of the clusters. Large clusters (≥1000) are subsampled
 #' to a random set of 1000 genes.
 #'
-#' @param cluster_genes A list. Contains the cluster and their respective genes.
+#' @param cluster_genes A list. Contains the cluster and their respective
+#' genes.
 #' @param cor_mat Numerical matrix. Contains the correlation coefficients.
 #' @param row_names String vector. The row names (or column names) of the
 #' correlation matrix.

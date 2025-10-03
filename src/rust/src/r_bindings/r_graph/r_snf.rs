@@ -6,6 +6,19 @@ use crate::core::graph::snf::*;
 use crate::core::methods::rbh::r_matrix_list_to_vec;
 use crate::utils::r_rust_interface::*;
 
+/// Calculate the SNF affinity matrix for continuous values
+///
+/// @param data Numerical matrix. Needs to be oriented features x samples!
+/// @param distance_type String. One of
+/// `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+/// to use here.
+/// @param k Integer. Number of neighbours to consider.
+/// @param mu Float. Normalisation factor for the Gaussian kernel width.
+/// @param normalise Boolean. Shall continuous values be Z-scored.
+///
+/// @return The affinity matrix based on continuous values.
+///
+/// @export
 #[extendr]
 fn rs_snf_affinity_continuous(
     data: RMatrix<f64>,
@@ -21,6 +34,16 @@ fn rs_snf_affinity_continuous(
     Ok(faer_to_r_matrix(affinity_data.as_ref()))
 }
 
+/// Calculate the SNF affinity matrix for categorical values
+///
+/// @param data Integer matrix. Needs to be oriented features x samples! The
+/// integers represent the factor values of the catagories.
+/// @param k Integer. Number of neighbours to consider.
+/// @param mu Float. Normalisation factor for the Gaussian kernel width.
+///
+/// @return The affinity matrix based on categorical values.
+///
+/// @export
 #[extendr]
 fn rs_snf_affinity_cat(
     data: RMatrix<i32>,
@@ -34,6 +57,19 @@ fn rs_snf_affinity_cat(
     Ok(faer_to_r_matrix(affinity_data.as_ref()))
 }
 
+/// Calculate the SNF affinity matrix for mixed values
+///
+/// @param data Numerical matrix. Needs to be oriented features x samples! This
+/// function will calculate the Gower distance under the hood for the affinity
+/// calculation.
+/// @param is_cat Boolean vector. Which of the features are categorical. Needs
+/// to be of `nrow(data)`.
+/// @param k Integer. Number of neighbours to consider.
+/// @param mu Float. Normalisation factor for the Gaussian kernel width.
+///
+/// @return The affinity matrix based on mixed values.
+///
+/// @export
 #[extendr]
 fn rs_snf_affinity_mixed(
     data: RMatrix<f64>,
@@ -53,6 +89,19 @@ fn rs_snf_affinity_mixed(
     Ok(faer_to_r_matrix(affinity_data.as_ref()))
 }
 
+/// Similarity network fusion
+///
+/// @description This function iteratively fuses the affinity matrices together.
+///
+/// @param aff_mat_list A list of numerical matrices. The affinity matrices to
+/// fuse together.
+/// @param k Integer. Number of neighbours to consider.
+/// @param t Integer. Number of iterations for the algorithm.
+/// @param alpha Float. Normalisation parameter controlling the fusion strength.
+///
+/// @return The final affinity matrix after the fusion.
+///
+/// @export
 #[extendr]
 fn rs_snf(
     aff_mat_list: List,
@@ -77,4 +126,6 @@ extendr_module! {
     mod r_snf;
     fn rs_snf_affinity_continuous;
     fn rs_snf_affinity_cat;
+    fn rs_snf_affinity_mixed;
+    fn rs_snf;
 }

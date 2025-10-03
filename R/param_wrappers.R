@@ -431,3 +431,50 @@ params_dgrdl <- function(
     rho = rho
   )
 }
+
+## SNF -------------------------------------------------------------------------
+
+#' Wrapper function to generate SNF parameters
+#'
+#' @param k Integer. Number of neighbours to consider.
+#' @param t Integer. Number of iterations for the SNF algorithm.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param alpha Float. Normalisation parameter controlling the fusion strength.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#' @param distance_metric String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use for the continuous calculations. In case of pure categorical, Hamming
+#' will be used, for mixed data types Gower distance is used.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_snf <- function(
+  k = 20L,
+  t = 20L,
+  mu = 0.5,
+  alpha = 1.0,
+  normalise = TRUE,
+  distance_metric = c("euclidean", "manhattan", "canberra", "cosine")
+) {
+  distance_metric <- match.arg(distance_metric)
+
+  # checks
+  checkmate::qassert(k, "I1(0, )")
+  checkmate::qassert(t, "I1(0, )")
+  checkmate::qassert(mu, "N1[0, 1]")
+  checkmate::qassert(alpha, "N1")
+  checkmate::qassert(normalise, "B1")
+  checkmate::assertChoice(
+    distance_metric,
+    c("euclidean", "manhattan", "canberra", "cosine")
+  )
+
+  list(
+    k = k,
+    t = t,
+    mu = mu,
+    alpha = alpha,
+    normalise = normalise
+  )
+}

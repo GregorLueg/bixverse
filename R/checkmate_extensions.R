@@ -604,6 +604,98 @@ checkDGRDLparams <- function(x) {
   return(TRUE)
 }
 
+## snf -------------------------------------------------------------------------
+
+#' Check SNF parameters
+#'
+#' @description Checkmate extension for checking the SNF parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkSNFParams <- function(x) {
+  # Check it's a list
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check required names
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "t",
+      "mu",
+      "alpha",
+      "normalise",
+      "distance_metric"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # qtest checks
+  qtest_rules <- list(
+    k = "I1(0,)",
+    t = "I1(0,)",
+    mu = "N1[0,1]",
+    alpha = "N1",
+    normalise = "B1"
+  )
+
+  q_test_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(qtest_rules)) {
+      checkmate::qtest(x, qtest_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(q_test_res))) {
+    broken_elem <- names(q_test_res)[which(!q_test_res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in SNF params does not conform to the",
+          "expected format. k and t need to be positive integers, mu a float",
+          "in [0, 1], alpha a float, and normalise a boolean."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # test choice rules
+  test_choice_rules <- list(
+    distance_metric = c("euclidean", "manhattan", "canberra", "cosine")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in SNF params does not use one of the",
+          " expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## correlation params ----------------------------------------------------------
@@ -754,6 +846,22 @@ assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 
+## coremo ----------------------------------------------------------------------
+
+#' Assert CoReMo parameter
+#'
+#' @description Checkmate extension for asserting the CoReMo parameters.
+#'
+#' @inheritParams checkCoReMoParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
+
 ## DGRDL ------------------------------------------------------------------------
 
 #' Assert DGRDL parameter
@@ -771,13 +879,13 @@ assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 
-## coremo ----------------------------------------------------------------------
+## SNF -------------------------------------------------------------------------
 
-#' Assert CoReMo parameter
+#' Assert SNF parameter
 #'
-#' @description Checkmate extension for asserting the CoReMo parameters.
+#' @description Checkmate extension for asserting the SNF parameters.
 #'
-#' @inheritParams checkCoReMoParams
+#' @inheritParams checkSNFParams
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -785,4 +893,4 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
-assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
+assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)

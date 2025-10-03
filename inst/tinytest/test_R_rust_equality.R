@@ -244,6 +244,58 @@ if (requireNamespace("coop", quietly = TRUE)) {
   )
 }
 
+### hamming distance -----------------------------------------------------------
+
+set.seed(42L)
+hamming_example_data <- list()
+for (i in seq_len(10L)) {
+  hamming_example_data[[sprintf("feature_%i", i)]] <- sample(
+    letters[1:5],
+    12,
+    replace = TRUE
+  )
+}
+data.table::setDT(hamming_example_data)
+
+if (requireNamespace("e1071", quietly = TRUE)) {
+  hamming_data <- prep_data_gower_hamming_dist(
+    dt = hamming_example_data,
+    sample_names = LETTERS[1:12]
+  )
+
+  rs_res <- rs_hamming_dist(hamming_data$data)
+
+  expect_equivalent(
+    current = rs_res,
+    target = e1071::hamming.distance(t(hamming_data$data)) / 12,
+    info = "Rust <> R hamming distance equivalent"
+  )
+}
+
+### gower distance -------------------------------------------------------------
+
+gower_example_data <- data.table::copy(hamming_example_data)
+
+set.seed(123L)
+for (i in seq_len(5L)) {
+  gower_example_data[[sprintf("feature_%i", i + 10)]] <- rnorm(12)
+}
+
+if (requireNamespace("StatMatch", quietly = TRUE)) {
+  gower_data <- prep_data_gower_hamming_dist(
+    dt = gower_example_data,
+    sample_names = LETTERS[1:12]
+  )
+
+  rs_res <- rs_gower_dist(x = gower_data$data, is_cat = gower_data$is_cat)
+
+  expect_equal(
+    current = rs_res,
+    target = StatMatch::gower.dist(gower_example_data),
+    info = "Rust <> R hamming distance equivalent"
+  )
+}
+
 # hypergeom distributions ------------------------------------------------------
 
 m <- 10

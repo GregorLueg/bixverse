@@ -364,7 +364,10 @@ pub fn make_affinity_categorical(
 
 /// Run similarity network fusion
 ///
-/// Add more details @Claude
+/// Fuses multiple affinity matrices representing different data types into
+/// a unified similarity network. The algorithm iteratively updates each
+/// affinity matrix by diffusing information through local neighborhoods while
+/// incorporating global structure from other modalities.
 ///
 /// ### Params
 ///
@@ -378,7 +381,7 @@ pub fn make_affinity_categorical(
 ///
 /// ### Returns
 ///
-/// Final results
+/// The adjcaceny matrix of the finally fused network.
 pub fn snf(aff_mats: &[MatRef<f64>], k: usize, t: usize, alpha: f64) -> Result<Mat<f64>, String> {
     if aff_mats.is_empty() {
         return Err("At least one affinity matrix required".to_string());
