@@ -440,3 +440,31 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
 
   return(res)
 }
+
+# one hot encoding -------------------------------------------------------------
+
+#' Helper to generate one-hot encodings
+#'
+#' @description Helper function that generate one-hot encoding with the option
+#' of unlabelled data. (Denoted as `NA` in the labels vector.)
+#'
+#' @param labels String vector. `NA`s signify unlabelled data.
+#'
+#' @return One-hot encoded matrix.
+one_hot_encode <- function(labels) {
+  # checks
+  checkmate::qassert(labels, "s+")
+
+  unique_labels <- sort(unique(labels[!is.na(labels)]))
+  n <- length(labels)
+  k <- length(unique_labels)
+
+  mat <- matrix(0L, nrow = n, ncol = k)
+  colnames(mat) <- unique_labels
+
+  for (i in seq_along(unique_labels)) {
+    mat[labels == unique_labels[i] & !is.na(labels), i] <- 1L
+  }
+
+  mat
+}

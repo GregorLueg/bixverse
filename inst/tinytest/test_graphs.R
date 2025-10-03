@@ -390,3 +390,39 @@ expect_true(
     0.99,
   info = "Constraint comparison"
 )
+
+# label propogation ------------------------------------------------------------
+
+## synthetic data --------------------------------------------------------------
+
+# fmt: skip
+edge_list <- c(
+  1, 2,   # Sample 1 (A) connects to 2
+  1, 5,   # Sample 1 (A) connects to 5
+  2, 3,   # Sample 2 connects to 3 (B)
+  2, 4,   # Sample 2 connects to 4
+  3, 4,   # Sample 3 (B) connects to 4
+  3, 6,   # Sample 3 (B) connects to 6
+  4, 7,   # Sample 4 connects to 7
+  5, 6,   # Sample 5 connects to 6
+  5, 9,   # Sample 5 connects to 9
+  6, 7,   # Sample 6 connects to 7
+  7, 8,   # Sample 7 connects to 8 (C)
+  8, 9,   # Sample 8 (C) connects to 9
+  8, 10,  # Sample 8 (C) connects to 10
+  9, 10   # Sample 9 connects to 10
+)
+edge_list <- as.integer(edge_list)
+
+labels <- c("A", NA, "B", NA, NA, NA, NA, "C", NA, NA)
+
+propagated_labels <- knn_graph_label_propagation(
+  edge_list = edge_list,
+  labels = labels
+)
+
+expect_equal(
+  current = propagated_labels$final_labels,
+  target = c("A", "B", "B", "B", "A", "B", "C", "C", "C", "C"),
+  info = "graph label propagation working as expected"
+)
