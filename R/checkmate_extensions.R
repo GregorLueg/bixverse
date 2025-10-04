@@ -1,5 +1,34 @@
 # checks -----------------------------------------------------------------------
 
+## others ----------------------------------------------------------------------
+
+#' Check that files exist
+#'
+#' @description Checkmate extension for checking if files exist in the
+#' directory.
+#'
+#' @param x String. The directory to check the files for.
+#' @param file_names String. Vector of names of the expected files in this
+#' directory.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkFilesExist <- function(x, file_names) {
+  res <- purrr::map(file_names, \(file) {
+    checkmate::checkFileExists(file.path(x, file))
+  })
+  res <- purrr::keep(
+    res,
+    ~ {
+      !is.logical(.x)
+    }
+  )
+  if (length(res) == 0) {
+    return(TRUE)
+  } else {
+    return(res[[1]])
+  }
+}
+
 ## correlation params ----------------------------------------------------------
 
 #' Check correlation graph parameters
@@ -718,7 +747,8 @@ checkScMtxIO <- function(x) {
       "path_mtx",
       "path_obs",
       "path_var",
-      "cells_as_rows"
+      "cells_as_rows",
+      "has_hdr"
     )
   )
   if (!isTRUE(res)) {
@@ -734,6 +764,10 @@ checkScMtxIO <- function(x) {
     ))
   }
   res <- checkmate::qtest(x[["cells_as_rows"]], "B1")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::qtest(x[["has_hdr"]], "B1")
   if (!isTRUE(res)) {
     return(res)
   }
@@ -959,6 +993,23 @@ checkScNeighbours <- function(x) {
 }
 
 # asserts ----------------------------------------------------------------------
+
+## other -----------------------------------------------------------------------
+
+#' Assert that files exist
+#'
+#' @description Checkmate extension for asserting if files exist in the
+#' directory.
+#'
+#' @inheritParams checkCorGraphParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
 
 ## correlation params ----------------------------------------------------------
 

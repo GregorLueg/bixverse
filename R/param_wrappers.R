@@ -490,23 +490,32 @@ params_snf <- function(
 #' @param path_obs String. Path to the file containing cell/barcode info.
 #' @param path_var String. Path to the file containing gene/variable info.
 #' @param cells_as_rows Boolean. Do cells represent the rows or columns.
+#' @param has_hdr Boolean. Do the plain text files have headers.
 #'
 #' @returns A list with the mtx loading parameters for usage in subsequent
 #' functions.
 #'
 #' @export
-params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
+params_sc_mtx_io <- function(
+  path_mtx,
+  path_obs,
+  path_var,
+  cells_as_rows,
+  has_hdr
+) {
   # checks
   checkmate::assertFileExists(path_mtx)
   checkmate::assertFileExists(path_obs)
   checkmate::assertFileExists(path_var)
   checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
 
   list(
     path_mtx = path_mtx,
     path_obs = path_obs,
     path_var = path_var,
-    cells_as_rows = cells_as_rows
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
   )
 }
 
@@ -521,7 +530,7 @@ params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
 #' @param min_cells Integer. Minimum number of cells a gene has to be
 #' expressed to be included.
 #' @param target_size Float. The target size for the normalisation. Defaults
-#' to `1e5`.
+#' to `1e4`.
 #'
 #' @returns A list with the minimum quality parameters + target size.
 #'
@@ -530,7 +539,7 @@ params_sc_min_quality <- function(
   min_unique_genes = 100L,
   min_lib_size = 250L,
   min_cells = 10L,
-  target_size = 1e5
+  target_size = 1e4
 ) {
   # checks
   checkmate::qassert(min_unique_genes, "I1")
@@ -632,4 +641,3 @@ params_sc_neighbours <- function(
     snn_similarity = snn_similarity
   )
 }
-

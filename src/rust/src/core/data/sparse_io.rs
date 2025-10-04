@@ -323,25 +323,6 @@ impl CsrCellChunk {
         (res, qc_data)
     }
 
-    /// Helper function to update the column index
-    ///
-    /// ### Params
-    ///
-    /// * `new_index` - Which is the new column index to set to
-    pub fn update_index(&mut self, new_index: &usize) {
-        self.original_index = *new_index;
-    }
-
-    /// Helper function to check if chunk passes QC
-    ///
-    /// ### Params
-    ///
-    /// * `cell_qc` - Structure containiner the required library size and min
-    ///   number of genes
-    pub fn passes_qc(&self, cell_qc: &MinCellQuality) -> bool {
-        self.indices.len() >= cell_qc.min_unique_genes && self.library_size >= cell_qc.min_lib_size
-    }
-
     /// Helper function to get QC parameters for this cell
     ///
     /// ### Reutrns

@@ -1,91 +1,154 @@
-# sparse data format -----------------------------------------------------------
+# rework R to Rust -------------------------------------------------------------
 
-library(magrittr)
+## pmbc tutorial ---------------------------------------------------------------
 
-rextendr::document()
+library(dplyr)
+library(Seurat)
+library(patchwork)
 
-## csr (cell-centric) ----------------------------------------------------------
+f_path <- "~/Downloads/filtered_gene_bc_matrices/hg19/"
 
-# based on the h5ad format with cells -> rows; genes -> columns
-seed <- 123L
-no_genes <- 100L
-no_cells <- 1000L
+devtools::load_all()
 
-rs_sparse_data <- rs_synthetic_sc_data_csr(
-  n_genes = no_genes,
-  n_cells = no_cells,
-  min_genes = 25,
-  max_genes = 50,
-  max_exp = 50,
-  seed = seed
-)
+get_cell_ranger_params(f_path)
 
-length(rs_sparse_data$data)
-
-# rm(rs_sparse_data)
-
-# csr_matrix <- as(csr_matrix, "RsparseMatrix")
-
-dir <- tempdir()
-f_path_cells <- file.path(dir, "cells.bin")
-f_path_genes <- file.path(dir, "genes.bin")
-
-single_cell_counts <- SingeCellCountData$new(
-  f_path_cells = f_path_cells,
-  f_path_genes = f_path_genes
-)
-
-# list.files(dir)
-
-# rextendr::document()
+# generate the object
+object = single_cell_exp(dir_data = tempdir())
 
 tictoc::tic()
-x <- single_cell_counts$r_csr_mat_to_file(
-  no_cells = no_cells,
-  no_genes = no_genes,
-  data = as.integer(rs_sparse_data$data),
-  row_ptr = as.integer(rs_sparse_data$indptr),
-  col_idx = as.integer(rs_sparse_data$indices),
-  target_size = 1e5,
-  min_genes = 30L
+object = load_mtx(
+  object = object,
+  sc_mtx_io_param = get_cell_ranger_params(f_path),
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 200L,
+    min_lib_size = 250L,
+    min_cells = 3L
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
 )
 tictoc::toc()
 
-tictoc::tic()
-single_cell_counts$generate_gene_based_data(min_cells = 5L)
-tictoc::toc()
+object@dims
 
-indices <- sort(sample(1:no_cells, 10))
 
-tictoc::tic()
-return_data <- single_cell_counts$get_cells_by_indices(
-  indices = order(indices),
-  assay = "norm"
-)
-tictoc::toc()
-
-single_cell_counts$return_full_mat(
-  assay = "raw",
-  cell_based = FALSE,
-  verbose = TRUE
-)
-
-file.size(f_path_cells) / 1024^2
-file.size(f_path_genes) / 1024^2
-
-# csc (gene-centric) -----------------------------------------------------------
-
-gene_indices <- sample(1:no_genes, 10)
+## seurat version --------------------------------------------------------------
 
 tictoc::tic()
-return_gene_data <- single_cell_counts$get_genes_by_indices(
-  indices = gene_indices,
-  assay = "raw"
+pbmc.data <- Read10X(
+  data.dir = f_path
+)
+# Initialize the Seurat object with the raw (non-normalized data).
+pbmc <- CreateSeuratObject(
+  counts = pbmc.data,
+  project = "pbmc3k",
+  min.cells = 3,
+  min.features = 200
 )
 tictoc::toc()
+pbmc[[]]
 
-return_gene_data$row_ptr
+class(pbmc)
 
+pbmc@assays$RNA@layers$counts
+
+Seurat::Assays(pbmc)
+x <- Seurat::GetAssayData(pbmc, assay = "RNA", layer = "counts")
+x
+class(x)
+
+x <- Seurat::GetAssayData(pbmc, assay = "RNA", layer = "counts")
+
+str(x)
+
+x@p
+
+sparse_mat_to_list(x_csr)
+
+devtools::document()
+
+str(attributes(x))
+
+length(x@p)
+
+library(Matrix)
+
+x_csr <- as(x, "RsparseMatrix")
+
+length(x_csr@p)
+
+str(x_csr)
+
+class(x_csr)
+
+res <- list(
+  indptr
+)
+
+length(assay@i)
+length(assay@p)
+length(assay@x)
+assay@Dim
+
+rownames(pbmc)
+
+class(assay)
+
+## write the functions ---------------------------------------------------------
+
+devtools::document()
+
+object = single_cell_exp(dir_data = tempdir())
+seurat = pbmc
+sc_qc_param = params_sc_min_quality(
+  min_unique_genes = 200L,
+  min_lib_size = 250L,
+  min_cells = 3L
+)
+batch_size = 1000L
+streaming = TRUE
+.verbose = TRUE
+
+counts <- get_seurat_counts_to_list(seurat)
+obs_dt <- data.table::as.data.table(seurat@meta.data, keep.rownames = "barcode")
+var_dt <- data.table::data.table(gene_id = rownames(seurat))
+
+rust_con <- get_sc_rust_ptr(object)
+
+file_res <- rust_con$r_data_to_file(
+  r_data = counts,
+  qc_params = sc_qc_param,
+  verbose = .verbose
+)
+
+if (streaming) {
+  rust_con$generate_gene_based_data_streaming(
+    batch_size = batch_size,
+    verbose = .verbose
+  )
+} else {
+  rust_con$generate_gene_based_data(
+    verbose = .verbose
+  )
+}
+
+duckdb_con <- get_sc_duckdb(object)
+
+duckdb_con$populate_obs_from_data.table(
+  obs_dt = obs_dt,
+  filter = as.integer(file_res$cell_indices + 1)
+)
+
+duckdb_con$populate_var_from_data.table(
+  var_dt = var_dt,
+  filter = as.integer(file_res$gene_indices + 1)
+)
+
+cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+duckdb_con$add_data_obs(new_data = cell_res_dt)
+cell_map <- duckdb_con$get_obs_index_map()
+gene_map <- duckdb_con$get_var_index_map()
 
 # h5 files ---------------------------------------------------------------------
 
