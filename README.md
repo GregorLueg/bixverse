@@ -23,6 +23,13 @@ update the following has been updated/changed:
 
 - Mitch multi-contrast enrichment, see 
 [Kaspi and Ziemann](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
+- Rehaul of the DGE structure interface. Large functions got split into smaller
+sub functions.
+- Addition of eigengene calculations and module splitting for CoReMo modules.
+- Similarity network fusion implemented, see 
+[Wang, et al.](https://www.nature.com/articles/nmeth.2810).
+- Spectral clustering and additionally graph-label propoagation for 
+semi-supervised (label spreading algorithm) in Rust with interfaces to R.
 
 ## *Installation*
 
