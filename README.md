@@ -76,4 +76,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 07.09.2025*
+*Last update to the read-me: 04.10.2025*
