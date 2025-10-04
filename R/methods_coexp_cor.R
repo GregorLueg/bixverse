@@ -142,8 +142,8 @@ S7::method(cor_module_tom, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection.",
-        "Returning class as is."
+        "This class does not seem to be set for correlation-based module",
+        "detection. Returning class as is."
       )
     )
     return(object)
@@ -251,9 +251,12 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
   }
   if (.verbose) {
     message(
-      sprintf(
-        "A total of %i shared features were identified and used for differential correlation.",
-        length(shared_features)
+      paste(
+        sprintf(
+          "A total of %i shared features were",
+          length(shared_features)
+        ),
+        "identified and used for differential correlation.",
       )
     )
   }
@@ -359,8 +362,8 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection.",
-        "Returning class as is."
+        "This class does not seem to be set for correlation-based module",
+        "detection. Returning class as is.",
       )
     )
     return(object)
@@ -398,7 +401,8 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 }
 
 
-#' @title Iterate through Leiden resolutions for graph-based community detection.
+#' @title
+#' Iterate through Leiden resolutions for graph-based community detection.
 #'
 #' @description
 #' This function will identify gene modules based on affinity graphs from the
@@ -412,7 +416,8 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #' Subsequently, Leiden community detection is applied on the respective graph
 #' through a range of resolutions that the user can define. The function then
 #' returns meta information about the resolutions (which can also be plotted) to
-#' identify the best suitable resolution parameter to identify co-expression modules.
+#' identify the best suitable resolution parameter to identify co-expression
+#' modules.
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution_params List. Parameters for the resolution search, see
@@ -429,8 +434,8 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #'  \item Epsilon - Defines the epsilon parameter for the radial basis
 #'  function. Defaults to 1, but should be ideally optimised.
 #'  \item min_cor - Float. Minimum absolute correlation that needs to be
-#'  observed in either data set. Only relevant for differential correlation-based
-#'  graphs.
+#'  observed in either data set. Only relevant for differential
+#'  correlation-based graphs.
 #'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
 #'  p-value.
 #'  \item verbose - Boolean. Controls verbosity of the graph generation.
@@ -503,8 +508,8 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection",
-        "Returning class as is."
+        "This class does not seem to be set for correlation-based module",
+        "detection. Returning class as is."
       )
     )
     return(object)
@@ -661,29 +666,31 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
 #'
 #' @param object The class, see [bixverse::bulk_coexp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
-#' it will use the optimal one identified by [bixverse::cor_module_graph_check_res()].
-#' If nothing can be found, will default to 1.
+#' it will use the optimal one identified by
+#' [bixverse::cor_module_graph_check_res()]. If nothing can be found, will
+#' default to 1.
 #' @param min_size Integer. Minimum size of the communities.
 #' @param max_size Integer. Maximum size of the communities.
 #' @param subclustering Boolean. Shall after a first clustering communities that
 #' are too large be further sub clustered. Defaults to `TRUE`.
 #' @param random_seed Integer. Random seed.
-#' @param .graph_params List. Parameters for the generation of the (differential)
-#' correlation graph, see [bixverse::params_cor_graph()]. Contains:
+#' @param .graph_params List. Parameters for the generation of the
+#' (differential) correlation graph, see [bixverse::params_cor_graph()].
+#' Contains:
 #' \itemize{
 #'  \item Epsilon - Defines the epsilon parameter for the radial basis
 #'  function. Defaults to 2, but should be ideally optimised.
 #'  \item min_cor - Float. Minimum absolute correlation that needs to be
-#'  observed in either data set. Only relevant for differential correlation-based
-#'  graphs.
+#'  observed in either data set. Only relevant for differential
+#'  correlation-based graphs.
 #'  \item fdr_threshold - Float. Maximum FDR for the differential correlation
 #'  p-value.
 #'  \item verbose - Boolean. Controls verbosity of the graph generation.
 #' }
 #' This parameter is only relevant if you did *not* run
 #' [bixverse::cor_module_graph_check_res()].
-#' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be the
-#' maximum number of iterations. Defaults to 100L.
+#' @param .max_iters Integer. If sub clustering is set to `TRUE`, what shall be
+#' the maximum number of iterations. Defaults to 100L.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
 #' @return The class with added data to the properties.
@@ -763,8 +770,8 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection",
-        "Returning class as is."
+        "This class does not seem to be set for correlation-based module",
+        "detection. Returning class as is."
       )
     )
     return(object)
@@ -962,6 +969,8 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 
 # methods - coremo -------------------------------------------------------------
 
+## clustering ------------------------------------------------------------------
+
 #' @title Generates CoReMo-based gene modules
 #'
 #' @description
@@ -1044,8 +1053,8 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   ) {
     warning(
       paste(
-        "This class does not seem to be set for correlation-based module detection.",
-        "Returning class as is."
+        "This class does not seem to be set for correlation-based module",
+        "detection. Returning class as is."
       )
     )
     return(object)
@@ -1162,6 +1171,8 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   return(object)
 }
 
+## stability -------------------------------------------------------------------
+
 #' @title Assesses CoReMo-based gene module stability
 #'
 #' @description
@@ -1196,6 +1207,8 @@ cor_module_coremo_stability <- S7::new_generic(
 )
 
 #' @method cor_module_coremo_stability bulk_coexp
+#'
+#' @export
 S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   object,
   chunk_size = 15L,
@@ -1294,6 +1307,241 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
   final_modules[, c("stability", "std_stability") := stability]
 
   S7::prop(object, "outputs")[["final_modules"]] <- final_modules
+
+  return(object)
+}
+
+## module splitting ------------------------------------------------------------
+
+#' @title Split CoReMo modules by correlation sign
+#'
+#' @description
+#' This function will split the identified modules by their correlation sign.
+#' In certain cases, positive and negatively correlated genes can be part of
+#' the same module. This function will annotate them with `"_pos"` and `"_neg"`
+#' respectively.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param min_stability Optional float. The minimum stability for the gene
+#' you wish to filter for based on the leave-one-out resampling. If `NULL`,
+#' no filtering will be applied.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with updated correlation module names.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
+#' et al., Nat. Commun., 2024.
+#'
+#' @export
+cor_module_coremo_cor_sign <- S7::new_generic(
+  name = "cor_module_coremo_cor_sign",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    min_stability = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method cor_module_coremo_cor_sign bulk_coexp
+#'
+#' @export
+S7::method(cor_module_coremo_cor_sign, bulk_coexp) <- function(
+  object,
+  min_stability = NULL,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(min_stability, c("0", "N1[0, 1]"))
+  checkmate::qassert(.verbose, "B1")
+
+  module_data <- data.table::copy(S7::prop(object, "outputs")[[
+    "final_modules"
+  ]])
+
+  # early return
+  if (is.null(module_data)) {
+    warning(paste(
+      "No module data found. Returning object as is.",
+      "Did you run cor_module_coremo_clustering()?"
+    ))
+    return(object)
+  }
+
+  cor_matrix <- S7::prop(object, "processed_data")[[
+    "correlation_res"
+  ]]$get_sym_matrix(
+    .verbose = FALSE
+  )
+
+  if ("stability" %in% names(module_data) && !is.null(min_stability)) {
+    if (.verbose) {
+      message(paste(
+        "Stability values found in the module data and threshold provided.",
+        "Modules will be filtered to stable genes."
+      ))
+    }
+    module_data <- module_data[stability >= min_stability]
+  } else if (!is.null(min_stability)) {
+    warning(paste(
+      "No stability values found to filter on. Will ignore this.",
+      "You need to run cor_module_coremo_stability() to filter on stability."
+    ))
+  }
+
+  module_membership <- split(module_data$gene, module_data$cluster_id)
+
+  sign_vector <- vector(mode = "list", length = length(module_membership))
+
+  for (i in seq_along(module_membership)) {
+    module_i <- module_membership[[i]]
+
+    signs_i <- data.table::fifelse(
+      rs_split_cor_signs(cor_matrix[module_i, module_i]) == 1,
+      "pos",
+      "neg"
+    )
+
+    sign_vector[[i]] <- signs_i
+  }
+
+  sign_vector <- do.call(c, sign_vector)
+
+  module_data[, sign := sign_vector][,
+    cluster_id := paste(cluster_id, sign, sep = "_")
+  ]
+
+  S7::prop(object, "outputs")[["final_modules"]] <- module_data
+
+  return(object)
+}
+
+## eigengenes ------------------------------------------------------------------
+
+#' @title Calculate Eigengenes for CoReMo modules
+#'
+#' @description
+#' This function will calculate the eigengene values for the modules on a per
+#' sample basis and add correlations of the gene expression of a given gene
+#' within the module to its eigengene.
+#'
+#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param min_stability Optional float. The minimum stability for the gene
+#' you wish to filter for based on the leave-one-out resampling. If `NULL`,
+#' no filtering will be applied.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The class with added correlations to the modules and the values for
+#' a given eigengene per sample as a data.table.
+#'
+#' @references Srivastava, et al., Nat. Commun., 2018; Francois, Romagnolo,
+#' et al., Nat. Commun., 2024.
+#'
+#' @export
+cor_module_coremo_eigengene <- S7::new_generic(
+  name = "cor_module_coremo_eigengene",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    min_stability = NULL,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method cor_module_coremo_eigengene bulk_coexp
+#'
+#' @export
+S7::method(cor_module_coremo_eigengene, bulk_coexp) <- function(
+  object,
+  min_stability = NULL,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::qassert(min_stability, c("0", "N1[0, 1]"))
+  checkmate::qassert(.verbose, "B1")
+
+  module_data <- data.table::copy(S7::prop(object, "outputs")[[
+    "final_modules"
+  ]])
+
+  # early return
+  if (is.null(module_data)) {
+    warning(paste(
+      "No module data found. Returning object as is.",
+      "Did you run cor_module_coremo_clustering()?"
+    ))
+    return(object)
+  }
+
+  processed_data <- S7::prop(object, "processed_data")[["processed_data"]]
+
+  if ("stability" %in% names(module_data) && !is.null(min_stability)) {
+    if (.verbose) {
+      message(paste(
+        "Stability values found in the module data and threshold provided.",
+        "Modules will be filtered to stable genes."
+      ))
+    }
+    module_data <- module_data[stability >= min_stability]
+  } else if (!is.null(min_stability)) {
+    warning(paste(
+      "No stability values found to filter on. Will ignore this.",
+      "You need to run cor_module_coremo_stability() to filter on stability."
+    ))
+  }
+
+  module_membership <- split(module_data$gene, module_data$cluster_id)
+
+  eigengene_samples <- eigengene_features <- vector(
+    mode = "list",
+    length = length(module_membership)
+  )
+
+  for (i in seq_along(eigengene_samples)) {
+    module_i <- module_membership[[i]]
+    name_i <- names(module_membership)[[i]]
+
+    data_i <- processed_data[, module_i]
+
+    pc_scores_i <- rs_prcomp(data_i, scale = TRUE)
+
+    eigengene_samples_i <- data.table::data.table(
+      sample_name = rownames(data_i),
+      eigengene = pc_scores_i$scores[, 1]
+    )
+    data.table::setnames(eigengene_samples_i, old = "eigengene", new = name_i)
+
+    eigengene_features_i <- data.table::data.table(
+      feature_name = colnames(data_i),
+      cor = cor(pc_scores_i$scores[, 1], data_i)[1, ]
+    )
+
+    eigengene_samples[[i]] <- eigengene_samples_i
+    eigengene_features[[i]] <- eigengene_features_i
+  }
+
+  eigengene_cors <- data.table::rbindlist(eigengene_features)
+
+  eigengene_samples_dt <- Reduce(
+    function(x, y) merge(x, y, by = "sample_name"),
+    eigengene_samples
+  )
+
+  module_data <- merge(
+    module_data,
+    eigengene_cors,
+    by.x = "gene",
+    by.y = "feature_name"
+  )
+
+  S7::prop(object, "outputs")[["final_modules"]] <- module_data
+  S7::prop(object, "outputs")[["eigengene_sample"]] <- eigengene_samples_dt
 
   return(object)
 }

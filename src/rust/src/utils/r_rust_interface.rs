@@ -1,4 +1,4 @@
-use crate::helpers::structs_sparse::SparseColumnMatrix;
+use crate::core::data::sparse_structures::SparseColumnMatrix;
 use extendr_api::prelude::*;
 use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
@@ -515,28 +515,14 @@ impl<'a> NamedMatrix<'a> {
 /// ### Returns
 ///
 /// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer(x: &RMatrix<f64>) -> MatRef<'_, f64> {
+pub fn r_matrix_to_faer<T>(x: &RMatrix<T>) -> MatRef<'_, T>
+where
+    T: Copy + Clone,
+    extendr_api::Robj: for<'a> extendr_api::AsTypedSlice<'a, T>,
+{
     let ncol = x.ncols();
     let nrow = x.nrows();
     let data = x.data();
-
-    MatRef::from_column_major_slice(data, nrow, ncol)
-}
-
-/// Transform an R matrix to a Faer one (i32)
-///
-/// ### Params
-///
-/// * `x` - The R matrix to transform into a faer MatRef (with `i32`)
-///
-/// ### Returns
-///
-/// The faer `MatRef` from the original R matrix.
-pub fn r_matrix_to_faer_i32(x: &RMatrix<i32>) -> MatRef<'_, i32> {
-    let ncol = x.ncols();
-    let nrow = x.nrows();
-    let data = x.data();
-
     MatRef::from_column_major_slice(data, nrow, ncol)
 }
 

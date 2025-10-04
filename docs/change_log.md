@@ -1,6 +1,42 @@
 # *bixverse* change log
 
-*Last update: 04.09.2025* </br>
+*Last update: 03.10.2025* </br>
+
+### Version **0.0.2.2**
+
+#### New features
+
+- Mitch multi contrast enrichment in Rust.
+- Rework and -factor of sub modules in the Rust code.
+- Additional Rust functions to do set similarity across a list of times in R.
+- Updates to the QC function for the bulk DGE class. This were broken down into
+two functions: `qc_bulk_dge()` and `normalise_bulk_dge()` for easier maintenance
+and clarity on what each function does.
+- Also, the bulk DGE function was split into two: `calculate_dge_limma()` and
+`calculate_dge_hedges()`.
+- Splitting by correlation sign and Eigengene calculation added for CoReMo.
+- Addition of the SNF algorithm from 
+[Wang, et al.](https://www.nature.com/articles/nmeth.2810)
+- Spectral clustering methods implemented in Rust.
+
+#### Breaking changes
+
+- The interface for `rs_set_similarity_list()` has changed its name and is now
+`rs_set_similarity_list2()`. The former now takes in a single list and 
+calculates the set similarity across all permutations of the elements.
+- The old `preprocess_bulk_dge()` and `calculate_all_dges()` do not work 
+anymore and will throw errors.
+
+#### Bug fixes, documentation updates
+
+...
+
+### Version **0.0.2.2**
+
+#### New features
+
+- Mitch multi contrast enrichment in Rust.
+- Rework and -factor of sub modules in the Rust code.
 
 ### Version **0.0.2.1**
 

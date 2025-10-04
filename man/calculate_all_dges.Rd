@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_bulk.R
 \name{calculate_all_dges}
 \alias{calculate_all_dges}
-\title{Calculate all possible DGE variants}
+\title{Calculate all possible DGE variants (DEPRECATED!)}
 \usage{
 calculate_all_dges(
   object,
@@ -42,24 +42,9 @@ small sample size correction should be applied) or a Boolean.}
 \item{.verbose}{Controls verbosity of the function.}
 }
 \value{
-Returns the class with additional data added to the outputs.
+Throws an error, as it is deprecated.
 }
 \description{
-This class is a wrapper class around applying various differential gene
-expression on the data. At a minimum you will need to provide a
-\code{contrast_column} that can be found in the meta-data. If you do not provide
-a vector of contrasts that you wish to test for, every permutation of
-groups represented in that column will be tested against each other. Two
-variants of differential gene expression analyses will be applied:
-\enumerate{
-\item A standard Limma Voom approach will be applied. For this specific
-approach you can also provide co-variates that will be used in the model
-fitting. The function will return the Limma Voom results for every
-combination of contrasts found. For more details, please refer to
-\code{\link[=run_limma_voom]{run_limma_voom()}}.
-\item Secondly, the Hedge's effect size for each gene between all
-combinations of the groups will be calculated. The effect sizes can
-subsequently be used for e.g., meta-analyses across various studies of
-interest.
-}
+This is a deprecated method and will raise an error. Please use
+\code{\link[=calculate_dge_limma]{calculate_dge_limma()}} and \code{\link[=calculate_dge_hedges]{calculate_dge_hedges()}}.
 }

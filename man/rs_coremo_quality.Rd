@@ -7,7 +7,8 @@
 rs_coremo_quality(cluster_genes, cor_mat, row_names, seed)
 }
 \arguments{
-\item{cluster_genes}{A list. Contains the cluster and their respective genes.}
+\item{cluster_genes}{A list. Contains the cluster and their respective
+genes.}
 
 \item{cor_mat}{Numerical matrix. Contains the correlation coefficients.}
 

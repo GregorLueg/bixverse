@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_bulk.R
 \name{preprocess_bulk_dge}
 \alias{preprocess_bulk_dge}
-\title{QC on the bulk dge data}
+\title{QC on the bulk dge data (DEPRECATED!)}
 \usage{
 preprocess_bulk_dge(
   object,
@@ -32,9 +32,9 @@ to be identified in.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-Returns the class with the \code{processed_data} data slot populated and
-applied parameters added to the \code{params} slot.
+Throws an error, as it is deprecated.
 }
 \description{
-This function generates general QC metrics for bulk DGE experiments.
+This is a deprecated method and will raise an error. Please use
+\code{\link[=qc_bulk_dge]{qc_bulk_dge()}} and \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}} instead.
 }

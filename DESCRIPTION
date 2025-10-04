@@ -1,6 +1,6 @@
 Package: bixverse
 Title: Rust-accelerated standard bioinformatics, computational biology workflows
-Version: 0.0.2.1
+Version: 0.0.2.2
 Authors@R: 
     c(
       person(
@@ -57,7 +57,9 @@ Imports:
     stringr,
     zeallot
 Suggests: 
+    biomaRt,
     BiocParallel,
+    e1071,
     fgsea,
     GSVA,
     infotheo,
@@ -68,6 +70,7 @@ Suggests:
     ontologySimilarity,
     qs2,
     quarto,
+    StatMatch,
     tictoc,
     tinytest
 SystemRequirements: 
