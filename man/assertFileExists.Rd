@@ -7,7 +7,10 @@
 assertFileExists(x, file_names, .var.name = checkmate::vname(x), add = NULL)
 }
 \arguments{
-\item{x}{The list to check/assert}
+\item{x}{String. The directory to check the files for.}
+
+\item{file_names}{String. Vector of names of the expected files in this
+directory.}
 
 \item{.var.name}{Name of the checked object to print in assertions. Defaults
 to the heuristic implemented in checkmate.}

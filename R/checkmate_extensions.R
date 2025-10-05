@@ -1001,7 +1001,7 @@ checkScNeighbours <- function(x) {
 #' @description Checkmate extension for asserting if files exist in the
 #' directory.
 #'
-#' @inheritParams checkCorGraphParams
+#' @inheritParams checkFilesExist
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.

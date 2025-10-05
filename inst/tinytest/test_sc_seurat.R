@@ -1,6 +1,8 @@
 # comparisons with seurat ------------------------------------------------------
 
-exit_if_not(requireNamespace("Seurat", quietly = TRUE))
+if (!requireNamespace("Seurat", quietly = TRUE)) {
+  exit_file("Seurat not available")
+}
 
 ## synthetic data --------------------------------------------------------------
 
@@ -14,7 +16,7 @@ single_cell_test_data <- generate_single_cell_test_data()
 
 ## seurat tests ----------------------------------------------------------------
 
-counts_transposed <- t(single_cell_test_data$counts)
+counts_transposed <- Matrix::t(single_cell_test_data$counts)
 
 # comparison to seurat... conversion, similar results, etc. pp.
 # key differences are likely due to f16 vs f64 in terms of count storage
@@ -22,7 +24,7 @@ counts_transposed <- t(single_cell_test_data$counts)
 
 ### transformation from seurat to bixverse single cell -----------------------
 
-seurat_obj <- suppressWarnings(CreateSeuratObject(
+seurat_obj <- suppressWarnings(Seurat::CreateSeuratObject(
   counts = counts_transposed,
   project = "test",
   meta.data = single_cell_test_data$obs,
@@ -76,7 +78,7 @@ expect_equivalent(
 
 ### count dimensions ---------------------------------------------------------
 
-seurat_counts <- GetAssayData(seurat_obj, layer = "counts")
+seurat_counts <- Seurat::GetAssayData(seurat_obj, layer = "counts")
 sc_object_counts <- sc_object[,, return_format = "cell"]
 
 # seurat stores genes x cells in CSC; bixverse stores cells x genes in CSR
@@ -101,9 +103,9 @@ expect_equal(
 
 ### normalisations -----------------------------------------------------------
 
-seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+seurat_obj <- Seurat::NormalizeData(seurat_obj, verbose = FALSE)
 
-seurat_norm_counts <- GetAssayData(seurat_obj, layer = "data")
+seurat_norm_counts <- Seurat::GetAssayData(seurat_obj, layer = "data")
 
 sc_object_norm_counts <- sc_object[,, assay = "norm", return_format = "cell"]
 
@@ -130,11 +132,11 @@ expect_equal(
 
 #### calculation -------------------------------------------------------------
 
-seurat_obj[["gs_1"]] <- PercentageFeatureSet(
+seurat_obj[["gs_1"]] <- Seurat::PercentageFeatureSet(
   object = seurat_obj,
   features = c("gene-001", "gene-002", "gene-003", "gene-004")
 )
-seurat_obj[["gs_2"]] <- PercentageFeatureSet(
+seurat_obj[["gs_2"]] <- Seurat::PercentageFeatureSet(
   object = seurat_obj,
   features = c("gene-096", "gene-097", "gene-100")
 )
@@ -179,7 +181,7 @@ expect_equal(
 
 hvgs_to_keep <- 30L
 
-seurat_obj <- FindVariableFeatures(
+seurat_obj <- Seurat::FindVariableFeatures(
   seurat_obj,
   selection.method = "vst",
   nfeatures = hvgs_to_keep,
@@ -194,7 +196,7 @@ sc_object <- find_hvg_sc(
 
 expect_true(
   current = length(intersect(
-    VariableFeatures(seurat_obj),
+    Seurat::VariableFeatures(seurat_obj),
     get_gene_names(sc_object)[get_hvg(sc_object) + 1]
   )) ==
     hvgs_to_keep,
@@ -203,16 +205,16 @@ expect_true(
 
 ### pca ----------------------------------------------------------------------
 
-seurat_obj <- ScaleData(
+seurat_obj <- Seurat::ScaleData(
   seurat_obj,
-  features = VariableFeatures(seurat_obj),
+  features = Seurat::VariableFeatures(seurat_obj),
   verbose = FALSE
 )
 
-seurat_obj <- RunPCA(
+seurat_obj <- Seurat::RunPCA(
   seurat_obj,
   npcs = 10L,
-  features = VariableFeatures(object = seurat_obj),
+  features = Seurat::VariableFeatures(object = seurat_obj),
   verbose = FALSE,
   weight.by.var = TRUE
 )
@@ -227,7 +229,7 @@ sc_object <- calculate_pca_sc(
 expect_true(
   current = all(
     abs(diag(cor(
-      Embeddings(seurat_obj),
+      Seurat::Embeddings(seurat_obj),
       get_pca_factors(sc_object)
     ))) >=
       0.99
@@ -245,7 +247,7 @@ sc_object <- calculate_pca_sc(
 expect_true(
   current = all(
     abs(diag(cor(
-      Embeddings(seurat_obj),
+      Seurat::Embeddings(seurat_obj),
       get_pca_factors(sc_object)
     ))) >=
       0.99
@@ -256,14 +258,14 @@ expect_true(
 ### neighbours ---------------------------------------------------------------
 
 # seurat part
-seurat_obj <- FindNeighbors(
+seurat_obj <- Seurat::FindNeighbors(
   seurat_obj,
   dims = 1:10,
   k.param = 15L,
   verbose = FALSE
 )
 
-seurat_obj <- FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
+seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 
 #bixverse part
 sc_object <- find_neighbours_sc(

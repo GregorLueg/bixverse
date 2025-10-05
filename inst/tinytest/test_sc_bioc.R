@@ -1,10 +1,14 @@
 # comparisons with blusters, BiocNeighbors -------------------------------------
 
-exit_if_not(all(sapply(
-  c("BiocNeighbors", "bluster", "cluster"),
-  requireNamespace,
-  quietly = TRUE
-)))
+if (
+  !all(sapply(
+    c("BiocNeighbors", "bluster", "cluster"),
+    requireNamespace,
+    quietly = TRUE
+  ))
+) {
+  exit_file("BiocNeighbors, bluster and cluster not available")
+}
 
 ## test parameters -------------------------------------------------------------
 
