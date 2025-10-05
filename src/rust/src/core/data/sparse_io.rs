@@ -290,32 +290,83 @@ impl CsrCellChunk {
         U: Clone + Default,
     {
         let n_cells = sparse_data.indptr.len() - 1;
+        let n_genes = sparse_data.shape.1;
 
-        let (nnz, to_keep) = filter_by_nnz(&sparse_data.indptr, cell_qc.min_unique_genes);
+        // count how many cells express each gene
+        let mut no_cells_exp_gene = vec![0usize; n_genes];
+        for i in 0..n_cells {
+            let start_i = sparse_data.indptr[i];
+            let end_i = sparse_data.indptr[i + 1];
+            for &gene_idx in &sparse_data.indices[start_i..end_i] {
+                no_cells_exp_gene[gene_idx] += 1;
+            }
+        }
 
-        let (res, lib_size): (Vec<CsrCellChunk>, Vec<usize>) = (0..n_cells)
+        // filter genes
+        let genes_to_keep: Vec<usize> = (0..n_genes)
+            .filter(|&i| no_cells_exp_gene[i] >= cell_qc.min_cells)
+            .collect();
+
+        // create index mapping: old gene index -> new gene index
+        // these f--king reindexing bugs -.-
+        let mut gene_index_map = vec![None; n_genes];
+        for (new_idx, &old_idx) in genes_to_keep.iter().enumerate() {
+            gene_index_map[old_idx] = Some(new_idx);
+        }
+
+        // Process cells
+        let results: Vec<_> = (0..n_cells)
             .into_par_iter()
             .map(|i| {
                 let start_i = sparse_data.indptr[i];
                 let end_i = sparse_data.indptr[i + 1];
-                let indices_i = &sparse_data.indices[start_i..end_i];
-                let data_i: &Vec<u32> = &sparse_data.data[start_i..end_i]
-                    .iter()
-                    .map(|i| i.clone().into())
-                    .collect();
-                let sum_data_i = data_i.iter().sum::<u32>() as usize;
-                let to_keep_i = to_keep[i] & (sum_data_i >= cell_qc.min_lib_size);
 
-                let chunk_i =
-                    CsrCellChunk::from_data(data_i, indices_i, i, cell_qc.target_size, to_keep_i);
+                let mut filtered_data = Vec::new();
+                let mut filtered_indices = Vec::new();
 
-                (chunk_i, sum_data_i)
+                for idx in start_i..end_i {
+                    let old_gene_idx = sparse_data.indices[idx];
+                    if let Some(new_gene_idx) = gene_index_map[old_gene_idx] {
+                        filtered_data.push(sparse_data.data[idx].clone().into());
+                        filtered_indices.push(new_gene_idx);
+                    }
+                }
+
+                let sum_data_i = filtered_data.iter().sum::<u32>() as usize;
+                let nnz_i = filtered_indices.len();
+
+                let to_keep_i =
+                    (nnz_i >= cell_qc.min_unique_genes) && (sum_data_i >= cell_qc.min_lib_size);
+
+                let chunk_i = CsrCellChunk::from_data(
+                    &filtered_data,
+                    &filtered_indices,
+                    i,
+                    cell_qc.target_size,
+                    to_keep_i,
+                );
+
+                (chunk_i, sum_data_i, nnz_i, to_keep_i, i)
             })
-            .unzip();
+            .collect();
+
+        let mut res = Vec::with_capacity(n_cells);
+        let mut lib_size = Vec::new();
+        let mut nnz = Vec::new();
+        let mut cells_to_keep = Vec::new();
+
+        for (chunk, lib, n, keep, idx) in results {
+            res.push(chunk);
+            if keep {
+                lib_size.push(lib);
+                nnz.push(n);
+                cells_to_keep.push(idx);
+            }
+        }
 
         let qc_data = CellQuality {
-            cell_indices: Vec::new(),
-            gene_indices: Vec::new(),
+            cell_indices: cells_to_keep,
+            gene_indices: genes_to_keep,
             lib_size,
             no_genes: nnz,
         };

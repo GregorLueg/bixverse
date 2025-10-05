@@ -428,7 +428,12 @@ get_hvg.sc_mapper <- function(x) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
 
-  return(as.integer(x[["hvg_gene_indices"]]))
+  hvg_indices <- as.integer(x[["hvg_gene_indices"]])
+  if (length(hvg_indices) == 0) {
+    warning("No highly variable features found in the class.")
+  }
+
+  return(hvg_indices)
 }
 
 #### sc_cache ------------------------------------------------------------------
@@ -1373,12 +1378,12 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
 }
 
 
-#' Add a new column to the obs table
+#' Add a new column to the var table
 #'
 #' @param object `bixverse::single_cell_exp` class.
 #' @param data_list Named list with the data to add.
 #'
-#' @return The class with updated obs table in the DuckDB
+#' @return The class with updated var table in the DuckDB
 #'
 #' @export
 set_sc_new_var_cols <- S7::new_generic(
@@ -1402,13 +1407,10 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(data_list, types = "atomic", names = "named")
 
-  duckdb_con <- get_sc_duckdb(object)
+  new_data <- data.table::as.data.table(data_list)
 
-  for (i in seq_along(data_list)) {
-    new_data_i <- data.table::data.table(new_data = data_list[[i]])
-    data.table::setnames(new_data_i, "new_data", names(data_list)[i])
-    duckdb_con$add_data_var(new_data = new_data_i)
-  }
+  duckdb_con <- get_sc_duckdb(object)
+  duckdb_con$add_data_var(new_data = new_data)
 
   return(object)
 }

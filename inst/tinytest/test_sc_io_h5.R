@@ -77,7 +77,7 @@ direct_load_csr <- rs_h5ad_data(
     min_unique_genes = 0L,
     min_lib_size = 0L,
     min_cells = 0L,
-    target_size = 1000
+    target_size = 1e5
   ),
   verbose = FALSE
 )
@@ -91,7 +91,7 @@ direct_load_csc <- rs_h5ad_data(
     min_unique_genes = 0L,
     min_lib_size = 0L,
     min_cells = 0L,
-    target_size = 1000
+    target_size = 1e5
   ),
   verbose = FALSE
 )

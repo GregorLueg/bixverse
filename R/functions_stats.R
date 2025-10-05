@@ -1,4 +1,4 @@
-# helpers ----------------------------------------------------------------------
+# stat helpers -----------------------------------------------------------------
 
 ## topological overlap ---------------------------------------------------------
 
@@ -236,4 +236,46 @@ calculate_effect_size <- function(
   )
 
   results
+}
+
+## F1 scores on confusion matrix -----------------------------------------------
+
+#' F1 scores on top of a confusion matrix
+#'
+#' @description
+#' Helper function to check for expected clustering vs actual clustering.
+#'
+#' @param clusters_a String or factor. The clustering of algorithm 1.
+#' @param clusters_b String or factor. The clustering of algorithm 2.
+#'
+#' @return Named vector with the F1 scores between the two clustering
+#' algorithms.
+#'
+#' @export
+f1_score_confusion_mat <- function(clusters_a, clusters_b) {
+  # checks
+  len_a <- length(clusters_a)
+  len_b <- length(clusters_b)
+  checkmate::qassert(clusters_a, sprintf("A%i", len_b))
+  checkmate::qassert(clusters_b, sprintf("A%i", len_a))
+
+  # function
+  cm <- table(clusters_a, clusters_b)
+
+  best_match <- apply(cm, 1, which.max)
+
+  f1_scores <- sapply(seq_len(nrow(cm)), function(i) {
+    tp <- cm[i, best_match[i]]
+    fp <- sum(cm[, best_match[i]]) - tp
+    fn <- sum(cm[i, ]) - tp
+
+    precision <- tp / (tp + fp)
+    recall <- tp / (tp + fn)
+
+    2 * precision * recall / (precision + recall)
+  })
+
+  names(f1_scores) <- rownames(cm)
+
+  return(f1_scores)
 }

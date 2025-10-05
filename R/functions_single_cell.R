@@ -53,8 +53,8 @@ get_seurat_counts_to_list <- function(seurat_obj) {
     indices = raw_counts@i,
     data = raw_counts@x,
     format = "csr",
-    nrow = raw_counts@Dim[1],
-    ncol = raw_counts@Dim[2]
+    nrow = raw_counts@Dim[2],
+    ncol = raw_counts@Dim[1]
   )
 
   return(res)

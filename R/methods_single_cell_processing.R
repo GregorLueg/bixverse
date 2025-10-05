@@ -75,6 +75,7 @@ S7::method(load_seurat, single_cell_exp) <- function(
     seurat@meta.data,
     keep.rownames = "barcode"
   )
+
   var_dt <- data.table::data.table(gene_id = rownames(seurat))
 
   rust_con <- get_sc_rust_ptr(object)
@@ -741,7 +742,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
     return(object)
   }
 
-  c(pca_factors, pca_loadings) %<-%
+  c(pca_factors, pca_loadings, scaled) %<-%
     rs_sc_pca(
       f_path_gene = get_rust_count_gene_f_path(object),
       no_pcs = no_pcs,
@@ -749,6 +750,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
       cell_indices = get_cells_to_keep(object),
       gene_indices = get_hvg(object),
       seed = seed,
+      return_scaled = FALSE,
       verbose = .verbose
     )
 

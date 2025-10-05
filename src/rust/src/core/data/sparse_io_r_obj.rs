@@ -89,35 +89,48 @@ where
         println!("Generating cell chunks...");
     }
 
-    let (cell_chunk_vec, mut cell_qc): (Vec<CsrCellChunk>, CellQuality) =
+    let (cell_chunk_vec, cell_qc): (Vec<CsrCellChunk>, CellQuality) =
         CsrCellChunk::generate_chunks_sparse_data(compressed_data, cell_quality);
 
+    let cells_passing = cell_qc.cell_indices.len();
+    let genes_passing = cell_qc.gene_indices.len();
+
     if verbose {
-        let cells_passing = cell_chunk_vec.iter().filter(|c| c.to_keep).count();
         println!(
             "Cells passing QC: {} / {}",
             cells_passing.separate_with_underscores(),
             no_cells.separate_with_underscores()
         );
+        println!(
+            "Genes passing QC: {} / {}",
+            genes_passing.separate_with_underscores(),
+            no_genes.separate_with_underscores()
+        );
         println!("Writing to binary format...");
     }
 
-    let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
+    let mut writer =
+        CellGeneSparseWriter::new(bin_path, true, cells_passing, genes_passing).unwrap();
 
-    let total_chunks = cell_chunk_vec.len();
-    let mut final_cells = 0;
+    // Filter to passing cells and remap indices to sequential
+    let mut passing_chunks: Vec<_> = cell_chunk_vec
+        .into_iter()
+        .filter(|chunk| chunk.to_keep)
+        .collect();
 
-    for (i, cell_chunk) in cell_chunk_vec.into_iter().enumerate() {
-        if cell_chunk.to_keep {
-            final_cells += 1;
-        }
+    // CRITICAL: Remap original_index to sequential 0, 1, 2, ... for correct transpose
+    for (new_idx, chunk) in passing_chunks.iter_mut().enumerate() {
+        chunk.original_index = new_idx;
+    }
+
+    for (i, cell_chunk) in passing_chunks.into_iter().enumerate() {
         writer.write_cell_chunk(cell_chunk).unwrap();
 
         if verbose && (i + 1) % 100000 == 0 {
             println!(
                 "  Written {} / {} cells to disk.",
                 (i + 1).separate_with_underscores(),
-                total_chunks.separate_with_underscores()
+                cells_passing.separate_with_underscores()
             );
         }
     }
@@ -125,18 +138,15 @@ where
     if verbose {
         println!(
             "  Written {} / {} cells (complete).",
-            total_chunks.separate_with_underscores(),
-            total_chunks.separate_with_underscores()
+            cells_passing.separate_with_underscores(),
+            cells_passing.separate_with_underscores()
         );
         println!("Finalising file...");
     }
 
-    writer.update_header_no_cells(final_cells);
-    writer.update_header_no_genes(no_genes);
     writer.finalise().unwrap();
 
-    cell_qc.set_cell_indices(&(0..final_cells).collect::<Vec<usize>>());
-    cell_qc.set_gene_indices(&(0..no_genes).collect::<Vec<usize>>());
-
-    (final_cells, no_genes, cell_qc)
+    // Return cell_qc as-is - it already contains correct original indices
+    // from generate_chunks_sparse_data
+    (cells_passing, genes_passing, cell_qc)
 }
