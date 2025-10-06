@@ -2,8 +2,7 @@
 
 ## parameters ------------------------------------------------------------------
 
-# thresholds
-# absurd numbers, but this is due to the synthetic data
+# testing parameters
 min_lib_size <- 300L
 min_genes_exp <- 45L
 min_cells_exp <- 500L

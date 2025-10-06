@@ -4,23 +4,27 @@ if (!requireNamespace("Seurat", quietly = TRUE)) {
   exit_file("Seurat not available")
 }
 
-## synthetic data --------------------------------------------------------------
-
-# thresholds
-# absurd numbers, but this is due to the synthetic data
-min_lib_size <- 300L
-min_genes_exp <- 45L
-min_cells_exp <- 500L
-
-single_cell_test_data <- generate_single_cell_test_data()
-
-## seurat tests ----------------------------------------------------------------
-
-counts_transposed <- Matrix::t(single_cell_test_data$counts)
-
 # comparison to seurat... conversion, similar results, etc. pp.
 # key differences are likely due to f16 vs f64 in terms of count storage
 # for norm counts
+
+## parameters ------------------------------------------------------------------
+
+# thresholds
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+# hvg
+hvgs_to_keep <- 30L
+# pcs
+no_pcs <- 10L
+
+## synthetic data --------------------------------------------------------------
+
+single_cell_test_data <- generate_single_cell_test_data()
+counts_transposed <- Matrix::t(single_cell_test_data$counts)
+
+## seurat tests ----------------------------------------------------------------
 
 ### transformation from seurat to bixverse single cell -----------------------
 
@@ -179,8 +183,6 @@ expect_equal(
 
 ### hvg ----------------------------------------------------------------------
 
-hvgs_to_keep <- 30L
-
 seurat_obj <- Seurat::FindVariableFeatures(
   seurat_obj,
   selection.method = "vst",
@@ -213,7 +215,7 @@ seurat_obj <- Seurat::ScaleData(
 
 seurat_obj <- Seurat::RunPCA(
   seurat_obj,
-  npcs = 10L,
+  npcs = no_pcs,
   features = Seurat::VariableFeatures(object = seurat_obj),
   verbose = FALSE,
   weight.by.var = TRUE
@@ -221,7 +223,7 @@ seurat_obj <- Seurat::RunPCA(
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 10L,
+  no_pcs = no_pcs,
   randomised_svd = FALSE,
   .verbose = FALSE
 )
@@ -239,7 +241,7 @@ expect_true(
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 10L,
+  no_pcs = no_pcs,
   randomised_svd = TRUE,
   .verbose = FALSE
 )
@@ -260,7 +262,7 @@ expect_true(
 # seurat part
 seurat_obj <- Seurat::FindNeighbors(
   seurat_obj,
-  dims = 1:10,
+  dims = 1:no_pcs,
   k.param = 15L,
   verbose = FALSE
 )
