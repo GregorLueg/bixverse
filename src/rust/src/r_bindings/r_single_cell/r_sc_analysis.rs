@@ -84,6 +84,27 @@ fn rs_calculate_dge_mann_whitney(
     ))
 }
 
+/// Calculate AUCell in Rust
+///
+/// @description
+/// The function will take in a list of gene set indices (0-indexed!) and
+/// calculate an AUCell type statistic. Two options here: calculate this
+/// with proper AUROC calculations (useful for marker gene expression) or
+/// based on the Mann-Whitney statistic (useful for pathway activity
+/// measurs). Data can be streamed in chunks of 50k cells per or loaded in
+/// in one go.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param gs_list List. List with the gene set indices (0-indexed!) of the
+/// genes of interest.
+/// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
+/// which statistic you wish to calculate.
+/// @param streaming Boolean. Shall the data be streamed.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return A matrix of gene set AUCs x cells.
+///
+/// @export
 #[extendr]
 fn rs_aucell(
     f_path: String,
