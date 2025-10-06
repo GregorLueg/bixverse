@@ -25,7 +25,6 @@ write_h5ad_sc(
   .verbose = FALSE
 )
 
-
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
 )
@@ -418,11 +417,11 @@ expect_true(
 cell_names_1 <- sc_object[[]][leiden_clustering == 1, cell_id]
 cell_names_2 <- sc_object[[]][leiden_clustering == 2, cell_id]
 
-?get_cell_indices
+# ?get_cell_indices
 
-devtools::load_all()
+# devtools::load_all()
 
-rextendr::document()
+# rextendr::document()
 
 get_cell_names(sc_object)
 
@@ -433,29 +432,13 @@ get_cell_indices(
 )
 
 
-devtools::load_all()
-
-x <- find_markers_sc(
+dge_test <- find_markers_sc(
   object = sc_object,
-  cells_1 = c(cell_names_1),
+  cells_1 = cell_names_1,
   cells_2 = cell_names_2
 )
 
-get_rust_count_cell_f_path(sc_object)
-
-rs_calculate_dge_mann_whitney(
-  f_path = get_rust_count_cell_f_path(sc_object),
-  cell_indices_1 = get_cell_indices(
-    x = sc_object,
-    cell_ids = cell_names_1,
-    rust_index = TRUE
-  ),
-  cell_indices_2 = get_cell_indices(
-    x = sc_object,
-    cell_ids = cell_names_2,
-    rust_index = TRUE
-  ),
-  min_prop = 0.6,
-  alternative = "greater",
-  verbose = TRUE
+dge_test_2 <- find_all_markers_sc(
+  object = sc_object,
+  column_of_interest = "leiden_clustering"
 )

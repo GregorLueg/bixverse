@@ -1239,7 +1239,7 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' @export
 rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
 
-#' Flatten kNN matrix
+#' Flatten kNN matrix to edge list
 #'
 #' @description
 #' Helper function to leverage Rust to transform a kNN matrix into an edge

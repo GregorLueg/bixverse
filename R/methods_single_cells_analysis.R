@@ -210,10 +210,10 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
       ))
     }
 
-    cell_ids_i <- dge_dts[, column_of_interest == unique_groups[i], cell_ids]
-    cell_ids_not_i <- dge_dts[,
-      column_of_interest == unique_groups[i],
-      cell_ids
+    cell_ids_i <- obs_data[get(column_of_interest) == unique_groups[i], cell_id]
+    cell_ids_not_i <- obs_data[
+      get(column_of_interest) != unique_groups[i],
+      cell_id
     ]
     if (downsampling && length(cell_ids_not_i) > 100000) {
       if (.verbose) {

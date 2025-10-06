@@ -28,7 +28,7 @@ At the moment the only option is \code{"wilcox"}, but the parameter is reserved
 for future features.}
 
 \item{alternative}{String. Test alternative. One of
-\code{c("twosided", "greater", "less")}}
+\code{c("twosided", "greater", "less")}. Function will default to \code{"twosided"}.}
 
 \item{min_prop}{Numeric. The minimum proportion of cells that need to express
 the gene to be tested in any of the two groups.}
