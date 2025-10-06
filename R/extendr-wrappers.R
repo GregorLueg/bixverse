@@ -1239,6 +1239,22 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' @export
 rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
 
+#' Flatten kNN matrix
+#'
+#' @description
+#' Helper function to leverage Rust to transform a kNN matrix into an edge
+#' list.
+#'
+#' @param knn_mat Integer matrix. Rows represent the samples and the columns
+#' the indices of the k-nearest neighbours.
+#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
+#' data be returned.
+#'
+#' @return A flat vector representing the edge list.
+#'
+#' @export
+rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
+
 #' Calculates the TOM over an affinity matrix
 #'
 #' @description Calculates the topological overlap measure for a given affinity
