@@ -97,8 +97,6 @@ gs_of_interest <- list(
 
 object <- gene_set_proportions_sc(object, gs_of_interest)
 
-object[[]]
-
 mito_pcs <- object[["mt_perc"]]
 
 hist(unlist(mito_pcs), breaks = 25L)
@@ -148,7 +146,7 @@ demuxlet_data <- fread("~/Downloads/demuxlet_result.best")[,
 
 filtered_cells <- get_cell_names(object, filtered = TRUE)
 
-length(filtered_cells)
+doublets <- demuxlet_data[classification == "DBL", BARCODE]
 
 demuxlet_data_red <- demuxlet_data[
   BARCODE %in% get_cell_names(object, filtered = TRUE) & classification == "SNG"
@@ -156,79 +154,97 @@ demuxlet_data_red <- demuxlet_data[
 
 head(demuxlet_data_red)
 
-# get a look up
+# make it 1 -index
+knn_data <- get_knn_mat(object)
+rownames(knn_data) <- get_cell_names(object, filtered = TRUE)
 
-look_up <- data.table(
-  cell_idx = seq_len(length(filtered_cells)),
-  cell_name = filtered_cells
-) %>%
+knn_edge_list <- rs_knn_mat_to_edge_list(knn_data, TRUE)
+
+label_vec <- data.table(cell_id = rownames(knn_data)) %>%
   merge(
-    demuxlet_data_red[, c("BARCODE", "classified_sample"), with = FALSE],
-    by.x = "cell_name",
-    by.y = "BARCODE"
+    .,
+    demuxlet_data_red[, c("BARCODE", "classified_sample")],
+    by.x = "cell_id",
+    by.y = "BARCODE",
+    all.x = TRUE
   )
 
-head(look_up)
-
-index_to_sample = setNames(look_up$classified_sample, look_up$cell_name)
-
-table(index_to_sample)
-
-# make it 1 -index
-knn_data <- get_knn_mat(object) + 1
-rownames(knn_data) <- filtered_cells
-
-to_label <- knn_data[!rownames(knn_data) %in% demuxlet_data_red$BARCODE, ]
-
-nrow(to_label)
-
-result <- vector(mode = "list", length = nrow(to_label))
-
-pb = txtProgressBar(
-  min = 0,
-  max = nrow(to_label),
-  initial = 0,
-  style = 3
+predicted_samples <- knn_graph_label_propagation(
+  edge_list = knn_edge_list,
+  labels = label_vec$classified_sample
 )
 
-for (i in seq_along(result)) {
-  row_i <- to_label[i, ]
-  barcode_i <- rownames(to_label)[i]
-  names_i <- filtered_cells[row_i]
-  neighbours <- index_to_sample[names_i]
+doublets_bool <- rownames(knn_data) %in% doublets
 
-  res_i <- data.table(
-    barcode = barcode,
-    pdm147 = sum(neighbours == "PDM-147", na.rm = TRUE),
-    pdm18 = sum(neighbours == "PDM-18", na.rm = TRUE),
-    pdm297 = sum(neighbours == "PDM-297", na.rm = TRUE),
-    pdm379 = sum(neighbours == "PDM-379", na.rm = TRUE),
-    unlabelled = sum(is.na(neighbours))
-  )
+table(list(
+  predictions = predicted_samples$final_labels[
+    !doublets_bool &
+      is.na(
+        label_vec$classified_sample
+      )
+  ],
+  actual = samples[
+    !doublets_bool &
+      is.na(
+        label_vec$classified_sample
+      )
+  ]
+))
 
-  result[[i]] <- res_i
-
-  setTxtProgressBar(pb, i)
-}
-
-close(pb)
-
-result_dt <- rbindlist(result)
-
-fwrite(result_dt, "~/Desktop/neighbours_test.csv")
-
-table(result_dt$unlabelled == 15)
+table(list(
+  predictions = predicted_samples$final_labels[is.na(
+    label_vec$classified_sample
+  )],
+  actual = samples[is.na(label_vec$classified_sample)]
+))
 
 
-result_dt[pdm147 >= 10 | pdm18 >= 10 | pdm297 >= 10 | pdm379 >= 10]
+f1_score_confusion_mat(
+  predicted_samples$final_labels[is.na(
+    label_vec$classified_sample
+  )],
+  samples[is.na(label_vec$classified_sample)]
+)
 
+f1_score_confusion_mat(
+  predicted_samples$final_labels[
+    !doublets_bool &
+      is.na(
+        label_vec$classified_sample
+      )
+  ],
+  samples[
+    !doublets_bool &
+      is.na(
+        label_vec$classified_sample
+      )
+  ]
+)
 
-files <- list.files("R", full.names = TRUE, pattern = "\\.R$")
-for (f in files) {
-  lines <- readLines(f)
-  matches <- grep("<- *function", lines)
-  if (length(matches) > 0) {
-    cat(f, ":\n")
-    cat(paste0("  Line ", matches, ": ", lines[matches]), sep = "\n")
-  }
+f1_score_confusion_mat <- function(clusters_a, clusters_b) {
+  # checks
+  len_a <- length(clusters_a)
+  len_b <- length(clusters_b)
+  checkmate::qassert(clusters_a, sprintf("A%i", len_b))
+  checkmate::qassert(clusters_b, sprintf("A%i", len_a))
+
+  # function
+  cm <- table(clusters_a, clusters_b)
+
+  best_match <- apply(cm, 1, which.max)
+
+  f1_scores <- sapply(seq_len(nrow(cm)), function(i) {
+    tp <- cm[i, best_match[i]]
+    fp <- sum(cm[, best_match[i]]) - tp
+    fn <- sum(cm[i, ]) - tp
+
+    precision <- tp / (tp + fp)
+    recall <- tp / (tp + fn)
+
+    2 * precision * recall / (precision + recall)
+  })
+
+  names(f1_scores) <- rownames(cm)
+
+  return(f1_scores)
 }
