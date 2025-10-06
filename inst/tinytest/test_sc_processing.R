@@ -1,5 +1,16 @@
 # sc processing ----------------------------------------------------------------
 
+## testing parameters ----------------------------------------------------------
+
+# thresholds
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+# hvg
+hvg_to_keep <- 30L
+# pca
+no_pcs <- 10L
+
 ## synthetic test data ---------------------------------------------------------
 
 single_cell_test_data <- generate_single_cell_test_data()
@@ -14,11 +25,6 @@ write_h5ad_sc(
   .verbose = FALSE
 )
 
-# thresholds
-# absurd numbers, but this is due to the synthetic data
-min_lib_size <- 300L
-min_genes_exp <- 45L
-min_cells_exp <- 500L
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
@@ -209,8 +215,6 @@ expect_equal(
 
 ## hvg selection ---------------------------------------------------------------
 
-hvg_to_keep <- 30L
-
 ### vst version ----------------------------------------------------------------
 
 #### r version -----------------------------------------------------------------
@@ -348,15 +352,15 @@ pca_r <- prcomp(pca_input, scale. = TRUE)
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 10L,
+  no_pcs = no_pcs,
   randomised_svd = FALSE,
   .verbose = FALSE
 )
 
 expect_true(
   current = all.equal(
-    abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
-    rep(1, 10),
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:no_pcs], pca_r$x[, 1:no_pcs]))),
+    rep(1, no_pcs),
     tolerance = 1e-8
   ),
   info = "PCA on single cell data compared to R"
@@ -364,15 +368,15 @@ expect_true(
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 10L,
+  no_pcs = no_pcs,
   randomised_svd = TRUE,
   .verbose = FALSE
 )
 
 expect_true(
   current = all.equal(
-    abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
-    rep(1, 10),
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:no_pcs], pca_r$x[, 1:no_pcs]))),
+    rep(1, no_pcs),
     tolerance = 1e-8
   ),
   info = "PCA on single cell data compared to R (randomised SVD)"
@@ -409,4 +413,49 @@ f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
 expect_true(
   current = all(f1_scores > 0.95),
   info = "leiden clustering identifies the cell groups"
+)
+
+cell_names_1 <- sc_object[[]][leiden_clustering == 1, cell_id]
+cell_names_2 <- sc_object[[]][leiden_clustering == 2, cell_id]
+
+?get_cell_indices
+
+devtools::load_all()
+
+rextendr::document()
+
+get_cell_names(sc_object)
+
+get_cell_indices(
+  x = sc_object,
+  cell_ids = cell_names_1,
+  rust_index = TRUE
+)
+
+
+devtools::load_all()
+
+x <- find_markers_sc(
+  object = sc_object,
+  cells_1 = c(cell_names_1),
+  cells_2 = cell_names_2
+)
+
+get_rust_count_cell_f_path(sc_object)
+
+rs_calculate_dge_mann_whitney(
+  f_path = get_rust_count_cell_f_path(sc_object),
+  cell_indices_1 = get_cell_indices(
+    x = sc_object,
+    cell_ids = cell_names_1,
+    rust_index = TRUE
+  ),
+  cell_indices_2 = get_cell_indices(
+    x = sc_object,
+    cell_ids = cell_names_2,
+    rust_index = TRUE
+  ),
+  min_prop = 0.6,
+  alternative = "greater",
+  verbose = TRUE
 )

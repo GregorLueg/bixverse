@@ -13,13 +13,14 @@ use crate::single_cell::fast_ranking::rank_csr_chunk_vec;
 ///
 /// ### Fields
 ///
-/// * `lfc` -
-/// * `prop1` -
-/// * `prop2` -
-/// * `z_scores` -
-/// * `p_vals` -
-/// * `fdr` -
-/// * `genes_to_keep` -
+/// * `lfc` - The log folc changes
+/// * `prop1` - Proportions of cells in group 1 expressing the gene.
+/// * `prop2` - Proportions of cells in group 2 expressing the gene.
+/// * `z_scores` - The Z-scores based on the Mann-Whitney U test.
+/// * `p_vals` - The p-values from the Mann-Whitney U test.
+/// * `fdr` - FDR values given the p-values.
+/// * `genes_to_keep` - Boolean indicating if the gene was included in the
+///   analysis, i.e., passed the proportion thresholds.
 #[derive(Clone, Debug)]
 pub struct DgeMannWhitneyRes {
     pub lfc: Vec<f32>,
@@ -93,7 +94,7 @@ fn mann_whitney_u_test(ranks1: &[f32], ranks2: &[f32]) -> f64 {
     let mean = n1 * n2 / 2.0;
     let variance = n1 * n2 * (n1 + n2 + 1.0) / 12.0;
 
-    (u1 - mean) / variance.sqrt()
+    (mean - u1) / variance.sqrt()
 }
 
 ////////////////////
@@ -104,12 +105,14 @@ fn mann_whitney_u_test(ranks1: &[f32], ranks2: &[f32]) -> f64 {
 ///
 /// ### Params
 ///
-/// * `f_path` -
-/// * `grp_1_indices` -
-/// * `grp_2_indices` -
-/// * `min_proportion` -
-/// * `alternative` -
-/// * `verbose` -
+/// * `f_path` - File path to the cell-based binary file.
+/// * `grp_1_indices` - The cell indices of group 1.
+/// * `grp_2_indices` - The cell indices of group 2.
+/// * `min_proportion` - The minimum proportion that a gene needs to be
+///   expressed in at least one of the two groups.
+/// * `alternative` - The test alternative. One of `"twosided"`, `"greater"`,
+///   or `"less"`
+/// * `verbose` - Boolean. Controls the verbosity of the function.
 ///
 /// ### Returns
 ///

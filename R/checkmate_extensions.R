@@ -992,6 +992,39 @@ checkScNeighbours <- function(x) {
   return(TRUE)
 }
 
+### cells in object ------------------------------------------------------------
+
+#' Check that the cell name exists in the object
+#'
+#' @description Checkmate extension for checking if the prodivided cell names
+#' exist in the object.
+#'
+#' @param x The `single_cell_exp` object to check/assert.
+#' @param cell_names String. The provided cell names.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCellsExist <- function(x, cell_names) {
+  res <- checkmate::checkClass(x, "bixverse::single_cell_exp")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::qtest(cell_names, "S+")
+  if (!isTRUE(res)) {
+    return("The cell names need be a string vector.")
+  }
+  all_cell_names <- get_cell_names(x)
+  res <- all(cell_names %in% all_cell_names)
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "Some of the provided cell names do not exist in the object.",
+        "Please check."
+      )
+    )
+  }
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## other -----------------------------------------------------------------------
@@ -1276,6 +1309,23 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
+
+### cell exists ----------------------------------------------------------------
+
+#' Assert neighbour generation parameters
+#'
+#' @description Checkmate extension for asserting if the prodivided cell names
+#  exist in the object.
+#'
+#' @inheritParams checkCellsExist
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 
 # tests ------------------------------------------------------------------------
 

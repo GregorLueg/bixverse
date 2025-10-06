@@ -1,5 +1,13 @@
 # h5 io ------------------------------------------------------------------------
 
+## parameters ------------------------------------------------------------------
+
+# thresholds
+# absurd numbers, but this is due to the synthetic data
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+
 ## synthetic data --------------------------------------------------------------
 
 single_cell_test_data <- generate_single_cell_test_data()
@@ -129,12 +137,6 @@ expect_true(
 ### qc params work -------------------------------------------------------------
 
 #### expected data -------------------------------------------------------------
-
-# thresholds
-# absurd numbers, but this is due to the synthetic data
-min_lib_size <- 300L
-min_genes_exp <- 45L
-min_cells_exp <- 500L
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp

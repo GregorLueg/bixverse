@@ -303,6 +303,17 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
 
+#' Get the index position for a gene
+#'
+#' @param x An object to get the gene index from.
+#' @param cell_ids String vector. The cell ids to search for.
+#' @param rust_index Bool. Shall rust-based indexing be returned.
+#'
+#' @export
+get_cell_indices <- function(x, cell_ids, rust_index) {
+  UseMethod("get_cell_indices")
+}
+
 #' Get the cells to keep
 #'
 #' @param x An object to get the gene index from.
@@ -384,6 +395,24 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
 
   gene_map <- x$gene_mapping
   indices <- which(names(gene_map) %in% gene_ids)
+  if (rust_index) {
+    indices <- indices - 1
+  }
+
+  return(as.integer(indices))
+}
+
+#' @rdname get_cell_indices
+#'
+#' @export
+get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  cell_map <- x$cell_mapping
+  indices <- which(names(cell_map) %in% cell_ids)
   if (rust_index) {
     indices <- indices - 1
   }
@@ -1186,6 +1215,34 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
   res <- get_gene_indices(
     x = S7::prop(x, "sc_map"),
     gene_ids = gene_ids,
+    rust_index = rust_index
+  )
+
+  return(res)
+}
+
+
+#' @name get_cell_indices.single_cell_exp
+#'
+#' @title Set the gene mapping for a `single_cell_exp` class.
+#'
+#' @rdname get_cell_indices
+#'
+#' @method get_cell_indices single_cell_exp
+S7::method(get_cell_indices, single_cell_exp) <- function(
+  x,
+  cell_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  # add the data using the S3 method
+  res <- get_cell_indices(
+    x = S7::prop(x, "sc_map"),
+    cell_ids = cell_ids,
     rust_index = rust_index
   )
 
