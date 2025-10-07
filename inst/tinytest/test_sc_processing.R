@@ -482,43 +482,81 @@ auc_gene_sets <- list(
 auc_res_wilcox <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
-  auc_type = "wilcox"
+  auc_type = "wilcox",
+  .verbose = FALSE
 )
 
 auc_res_auroc <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
-  auc_type = "auroc"
+  auc_type = "auroc",
+  .verbose = FALSE
 )
 
-# obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
+obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
 
-# cells_per_cluster <- split(
-#   obs_table_red$cell_id,
-#   obs_table_red$obs_cell_grp
-# )
+cells_per_cluster <- split(
+  obs_table_red$cell_id,
+  obs_table_red$obs_cell_grp
+)
 
-# hist(auc_res_wilcox[1, ])
+expect_true(
+  current = mean(auc_res_wilcox[
+    "markers_cell_type_1",
+    cells_per_cluster$cell_type_1
+  ]) >=
+    mean(auc_res_wilcox[
+      "markers_cell_type_1",
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_1
+      )
+    ]),
+  info = paste(
+    "auc values of expected cells",
+    "with expected genes is higher (cell type 1)"
+  )
+)
 
-# plot(x = auc_res_wilcox[1, ], y = auc_res_auroc[1, ])
+expect_true(
+  current = mean(auc_res_wilcox[
+    "markers_cell_type_2",
+    cells_per_cluster$cell_type_2
+  ]) >=
+    mean(auc_res_wilcox[
+      "markers_cell_type_2",
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_2
+      )
+    ]),
+  info = paste(
+    "auc values of expected cells",
+    "with expected genes is higher (cell type 2)"
+  )
+)
 
-# hist(auc_res_auroc[1, ])
+expect_true(
+  current = mean(auc_res_wilcox[
+    "markers_cell_type_3",
+    cells_per_cluster$cell_type_3
+  ]) >=
+    mean(auc_res_wilcox[
+      "markers_cell_type_3",
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_3
+      )
+    ]),
+  info = paste(
+    "auc values of expected cells",
+    "with expected genes is higher (cell type 3)"
+  )
+)
 
-# cluster <- cells_per_cluster[[1]]
-# not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
-
-# test_i <- t.test(
-#   x = auc_res_auroc[names(auc_gene_sets)[[1]], cluster],
-#   y = auc_res_auroc[names(auc_gene_sets)[[1]], not_in_cluster],
-#   alternative = "greater"
-# )
-
-# test_i$p.value
-# test_i$statistic
-
-# for (i in seq_along(cells_per_cluster)) {
-#   cluster <- cells_per_cluster[[i]]
-#   not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
-# }
-
-# auc_res_wilcox[names(auc_gene_sets)[1], cells_per_cluster$`1`]
+expect_true(
+  current = all(diag(cor(auc_res_wilcox, auc_res_auroc)) >= 0.99),
+  info = paste(
+    "auc values between the two methods are highly correlated"
+  )
+)
