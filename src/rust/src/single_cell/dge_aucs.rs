@@ -1,5 +1,5 @@
+use extendr_api::List;
 use faer::Mat;
-use half::f16;
 use rand::prelude::IndexedRandom;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
@@ -49,6 +49,83 @@ pub struct DgeMannWhitneyRes {
     pub p_vals: Vec<f64>,
     pub fdr: Vec<f64>,
     pub genes_to_keep: Vec<bool>,
+}
+
+/// Structure for the MetaCell parameters
+///
+/// ### Fields
+///
+/// * `max_shared` - Maximum number of shared cells for the meta cell
+///   aggregation
+/// * `target_no_metacells` - Number of target meta cells.
+/// * `max_iter` - Maximum iterations for the algorithm.
+/// * `k` - Number of neighbours for the kNN algorithm.
+/// * `knn_method` - Which method to use for the generation of the kNN graph.
+///   One of `"hnsw"` or `"annoy"`
+#[derive(Clone, Debug)]
+pub struct MetaCellParams {
+    pub max_shared: usize,
+    pub target_no_metacells: usize,
+    pub max_iter: usize,
+    pub k: usize,
+    pub knn_method: String,
+    pub n_trees: usize,
+    pub search_budget: usize,
+}
+
+impl MetaCellParams {
+    /// Generate the MetaCellParams from an R list
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The R list with the parameters.
+    ///
+    /// ### Return
+    ///
+    /// The `MetaCellParams` structure.
+    pub fn from_r_list(r_list: List) -> Self {
+        let meta_cell_params = r_list.into_hashmap();
+
+        let max_shared = meta_cell_params
+            .get("max_shared")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+        let target_no_metacells = meta_cell_params
+            .get("no_metacells")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(1000) as usize;
+        let max_iter = meta_cell_params
+            .get("max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(5000) as usize;
+        let k = meta_cell_params
+            .get("k")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(25) as usize;
+        let knn_method = meta_cell_params
+            .get("knn_method")
+            .and_then(|v| v.as_str())
+            .unwrap_or("hnsw")
+            .to_string();
+        let n_trees = meta_cell_params
+            .get("n_trees")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+        let search_budget = meta_cell_params
+            .get("search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        Self {
+            max_shared,
+            target_no_metacells,
+            max_iter,
+            k,
+            knn_method,
+            n_trees,
+            search_budget,
+        }
+    }
 }
 
 /////////////
@@ -555,9 +632,26 @@ pub fn identify_meta_cells(
         .collect()
 }
 
+/// Helper function to aggregate the meta cells
+///
+/// The function will recalculate the normalised counts on a per meta cell
+/// basis.
+///
+/// ### Params
+///
+/// * `reader` - The reader structure to get the cells from disk
+/// * `meta_cells` - The indices of the meta cells
+/// * `target_size` - Float defining the target size for the normalisation
+///   procedure. Usually defaults to `1e4` in single cell.
+/// * `n_genes` - Total number of genes in the data
+///
+/// ### Return
+///
+/// `CompressedSparseData` in CSR format with aggregated raw counts and re-
+/// normalised counts per meta cell.
 pub fn aggregate_meta_cells(
     reader: &ParallelSparseReader,
-    metacells: &[Vec<usize>],
+    metacells: &[&[usize]],
     target_size: f32,
     n_genes: usize,
 ) -> CompressedSparseData<u32, f32> {
@@ -576,7 +670,7 @@ pub fn aggregate_meta_cells(
         let results: Vec<(Vec<usize>, Vec<u32>, Vec<f32>)> = chunk
             .par_iter()
             .map(|cell_idx| {
-                let cells = reader.read_cells_parallel(&cell_idx);
+                let cells = reader.read_cells_parallel(cell_idx);
                 let mut gene_counts: FxHashMap<usize, u32> = FxHashMap::default();
                 let mut library_size: u32 = 0;
 
@@ -637,6 +731,7 @@ pub fn aggregate_meta_cells(
 /// ### Return
 ///
 /// Matrix of samples x genes pseudo-bulked.
+#[allow(dead_code)]
 pub fn get_pseudo_bulked_counts(
     f_path: &str,
     cell_indices: &[Vec<usize>],

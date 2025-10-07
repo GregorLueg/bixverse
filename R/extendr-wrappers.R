@@ -1990,7 +1990,93 @@ rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_typ
 #' @export
 rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
 
+#' Calculate DGEs between cells based on Mann Whitney stats
+#'
+#' @description
+#' The function will take two sets of cell indices and calculate the
+#' differential gene expression based on the Mann Whitney test between the
+#' two groups.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_1 Integer. Index positions (0-indexed) of the cells
+#' of group 1.
+#' @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
+#' of group 2.
+#' @param min_prop Minimum proportion of expression in at least one of the
+#' two groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item lfc - Log fold changes between the two groups.
+#'   \item prop1 - Proportion of cells expressing the gene in group 1.
+#'   \item prop2 - Proportion of cells expressing the gene in group 2.
+#'   \item z_scores - Z-scores based on the Mann Whitney statistic.
+#'   \item p_values - P-values of the Mann Whitney statistic.
+#'   \item fdr - False discovery rate after BH adjustment
+#'   \item genes_to_keep - Boolean indicating which genes were tested.
+#' }
+#'
+#' @export
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
+
+#' Calculate AUCell in Rust
+#'
+#' @description
+#' The function will take in a list of gene set indices (0-indexed!) and
+#' calculate an AUCell type statistic. Two options here: calculate this
+#' with proper AUROC calculations (useful for marker gene expression) or
+#' based on the Mann-Whitney statistic (useful for pathway activity
+#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
+#' in one go.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list List. List with the gene set indices (0-indexed!) of the
+#' genes of interest.
+#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
+#' which statistic you wish to calculate.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of gene set AUCs x cells.
+#'
+#' @export
+rs_aucell <- function(f_path, gs_list, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, auc_type, streaming, verbose)
+
+#' Generate meta cells
+#'
+#' @description This function implements the approach from Morabito, et al.
+#' to generate meta cells. You can provide a already pre-computed kNN matrix
+#' or an embedding to regenerate the kNN matrix with specified parameters in
+#' the meta_cell_params. If `knn_mat` is provided, this one will be used. You
+#' need to at least provide `knn_mat` or `embd`!
+#'
+#' @param String. Path to the `counts_cells.bin` file.
+#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
+#' for the generation of the meta cells. This function expects 0-indices!
+#' @param embd Optional numerical matrix. The embedding matrix (for example
+#' PCA embedding) you wish to use for the generation of the kNN graph that
+#' is used subsequently for aggregation of the meta cells.
+#' @param meta_cell_params A list containing the meta cell parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typicall `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item indptr - Index pointers of the cells
+#'  \item indices - The gene indices of that specific gene
+#'  \item raw_counts - The aggregated raw counts.
+#'  \item norm_counts - The re-normalised counts.
+#'  \item nrow - The number of rows represented in the sparse format.
+#'  \item ncol - The number of columns represented in the sparse format.
+#' }
+#'
+#' @export
+rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

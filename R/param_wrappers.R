@@ -641,3 +641,51 @@ params_sc_neighbours <- function(
     snn_similarity = snn_similarity
   )
 }
+
+### analysis -------------------------------------------------------------------
+
+#' Wrapper function for parameters for meta cell generation
+#'
+#' @param max_shared Integer. Maximum number of shared neighbours.
+#' @param target_no_metacells Integer. Number of meta-cells to generate
+#' @param max_iter Integer. Maximum number of iterations for the algorithm.
+#' @param k Integer. Number of neighbours to return.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#'
+#' @returns A list with the neighbour parameters.
+#'
+#' @export
+params_sc_metacells <- function(
+  max_shared = 15L,
+  target_no_metacells = 1000L,
+  max_iter = 5000L,
+  k = 25L,
+  knn_method = c("hnsw", "annoy"),
+  n_trees = 100L,
+  search_budget = 100L
+) {
+  knn_method <- match.arg(knn_method)
+
+  # checks
+  checkmate::qassert(max_shared, "I1")
+  checkmate::qassert(target_no_metacells, "I1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+
+  list(
+    max_shared = max_shared,
+    target_no_metacells = target_no_metacells,
+    max_iter = max_iter,
+    k = k,
+    knn_method = knn_method,
+    n_trees = n_trees,
+    search_budget = search_budget
+  )
+}
