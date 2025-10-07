@@ -726,6 +726,30 @@ rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, 
 #' @export
 rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
+#' Detect h5 file format
+#'
+#' @description
+#' Auto-detects whether an h5 file is in h5ad, h5v3, or h5v2 format.
+#'
+#' @param f_path String. Path to h5 file.
+#'
+#' @returns String indicating format: "h5ad", "h5v3", "h5v2", or "unknown"
+#'
+#' @export
+rs_detect_h5_format <- function(f_path) .Call(wrap__rs_detect_h5_format, f_path)
+
+#' Get h5 file dimensions
+#'
+#' @description
+#' Gets dimensions from any h5 format with auto-detection.
+#'
+#' @param f_path String. Path to h5 file.
+#'
+#' @returns List with obs (n_cells), var (n_genes), and format
+#'
+#' @export
+rs_get_h5_dimensions <- function(f_path) .Call(wrap__rs_get_h5_dimensions, f_path)
+
 #' Calculates the traditional GSEA enrichment score
 #'
 #' @param stats Named numerical vector. Needs to be sorted. The gene level statistics.
@@ -2086,9 +2110,9 @@ SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_s
 
 SingeCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingeCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
-SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingeCellCountData$h5_to_file <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, h5_path, feature_type, qc_params, verbose)
 
-SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+SingeCellCountData$h5_to_file_streaming <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, h5_path, feature_type, qc_params, verbose)
 
 SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 

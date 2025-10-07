@@ -900,7 +900,9 @@ single_cell_duckdb_con <- R6::R6Class(
       )
       # seurat has in times cell_id as a column, causing problems
       # they are the same as the row.names, so dealt with. just set to NULL
-      obs_dt[, cell_id := NULL]
+      if ("cell_id" %in% names(obs_dt)) {
+        obs_dt[, cell_id := NULL]
+      }
 
       # deal with column names
       colnames(obs_dt) <- to_snake_case(colnames(obs_dt))

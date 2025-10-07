@@ -50,6 +50,7 @@ pub struct AnnoyIndex {
     trees: Vec<Vec<AnnoyNode>>,
     vectors_flat: Vec<f32>,
     dim: usize,
+    _n_vectors: usize,
     n_trees: usize,
 }
 
@@ -116,7 +117,7 @@ impl AnnoyIndex {
             trees,
             vectors_flat,
             dim,
-
+            _n_vectors: n_vectors,
             n_trees,
         }
     }

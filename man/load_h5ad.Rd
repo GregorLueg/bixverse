@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_processing.R
 \name{load_h5ad}
 \alias{load_h5ad}
-\title{Load in h5ad to \code{single_cell_exp}}
+\title{Load h5ad files (deprecated)}
 \usage{
 load_h5ad(
   object,
@@ -16,7 +16,9 @@ load_h5ad(
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
 
-\item{h5_path}{File path to the h5ad object you wish to load in.}
+\item{h5_path}{File path to the h5 file. Supports h5ad (AnnData),
+CellRanger v3 (10x Genomics), and CellRanger v2 formats. Format is
+automatically detected.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
 list with the following elements:
@@ -39,12 +41,11 @@ in one batch. Defaults to \code{1000L}.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-It will populate the files on disk and return the class with updated
-shape information.
+A \code{single_cell_exp} object with loaded data
 }
 \description{
-This function takes an h5ad file and loads the obs and var data into the
-DuckDB of the \code{single_cell_exp} class and the counts into a Rust-binarised
-format for rapid access. During the reading in of the counts, the log CPM
-transformation will occur automatically.
+\lifecycle{deprecated}
+
+\code{load_h5ad()} has been renamed to \code{\link[=load_h5]{load_h5()}} to reflect support for
+multiple h5 formats (h5ad, CellRanger v2, CellRanger v3).
 }

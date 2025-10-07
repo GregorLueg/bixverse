@@ -1,4 +1,5 @@
 use hdf5::{File, Result};
+use rustc_hash::FxHashSet;
 use std::io::Result as IoResult;
 use std::path::Path;
 use thousands::Separable;
@@ -6,6 +7,21 @@ use thousands::Separable;
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
+
+/// H5 file format types
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum H5Format {
+    H5ad,
+    H5v3,  // CellRanger v3+ with /matrix prefix
+    H5v2,  // CellRanger v2 with root-level datasets
+}
+
+/// H5 version for generic h5 files (CellRanger-style)
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum H5Version {
+    V2,
+    V3,
+}
 
 /// Helper function to parse compressed sparse format
 ///
@@ -24,6 +40,139 @@ pub fn parse_cs_format(s: &str) -> Option<CompressedSparseFormat> {
     };
 
     res
+}
+
+/// Detect generic h5 version (non-h5ad files)
+fn detect_h5_version<P: AsRef<Path>>(file_path: P) -> Option<H5Version> {
+    let file = File::open(file_path).ok()?;
+
+    if file.dataset("matrix/data").is_ok() {
+        Some(H5Version::V3)
+    } else if file.dataset("data").is_ok() && file.dataset("genes").is_ok() {
+        Some(H5Version::V2)
+    } else {
+        None
+    }
+}
+
+/// Detect h5 file format
+///
+/// ### Params
+///
+/// * `file_path` - Path to h5 file
+///
+/// ### Returns
+///
+/// Result with detected H5Format
+pub fn detect_h5_format<P: AsRef<Path>>(file_path: P) -> Result<H5Format> {
+    let file = File::open(file_path.as_ref())?;
+
+    // Check h5ad first
+    if file.dataset("X/data").is_ok() {
+        return Ok(H5Format::H5ad);
+    }
+
+    // Check generic h5 formats
+    if let Some(version) = detect_h5_version(file_path.as_ref()) {
+        return Ok(match version {
+            H5Version::V3 => H5Format::H5v3,
+            H5Version::V2 => H5Format::H5v2,
+        });
+    }
+
+    Err(hdf5::Error::from("Unknown h5 format"))
+}
+
+/// Get dimensions from any h5 format
+///
+/// ### Params
+///
+/// * `file_path` - Path to h5 file
+///
+/// ### Returns
+///
+/// Tuple: (n_cells, n_genes, format)
+pub fn get_h5_dimensions<P: AsRef<Path>>(file_path: P) -> Result<(usize, usize, H5Format)> {
+    let format = detect_h5_format(&file_path)?;
+    let file = File::open(file_path.as_ref())?;
+
+    let (n_cells, n_genes) = match format {
+        H5Format::H5ad => {
+            let shape_result = file.dataset("X/shape");
+            if let Ok(shape_ds) = shape_result {
+                let shape: Vec<i32> = shape_ds.read_1d()?.to_vec();
+                (shape[0] as usize, shape[1] as usize)
+            } else {
+                let indptr_ds = file.dataset("X/indptr")?;
+                let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+                ((indptr.len() - 1), 0)
+            }
+        }
+        H5Format::H5v3 => {
+            let shape: Vec<i32> = file.dataset("matrix/shape")?.read_1d()?.to_vec();
+            (shape[1] as usize, shape[0] as usize)
+        }
+        H5Format::H5v2 => {
+            let shape: Vec<i32> = file.dataset("shape")?.read_1d()?.to_vec();
+            (shape[1] as usize, shape[0] as usize)
+        }
+    };
+
+    Ok((n_cells, n_genes, format))
+}
+
+/// Get dataset paths based on h5 version
+fn get_dataset_paths(version: H5Version) -> (&'static str, &'static str, &'static str) {
+    match version {
+        H5Version::V3 => ("matrix/data", "matrix/indices", "matrix/indptr"),
+        H5Version::V2 => ("data", "indices", "indptr"),
+    }
+}
+
+/// Validate and filter feature types for h5 v3 files
+///
+/// Returns indices of features matching target_feature_type
+fn validate_feature_types<P: AsRef<Path>>(
+    file_path: P,
+    target_feature_type: Option<&str>,
+) -> Result<Vec<usize>> {
+    let file = File::open(file_path)?;
+
+    let feature_type_ds = file.dataset("matrix/features/feature_type")?;
+
+    // Read all feature types as FixedAscii<15> array
+    let feature_types_raw: Vec<hdf5::types::FixedAscii<15>> = feature_type_ds.read_raw()?;
+
+    let feature_types: Vec<String> = feature_types_raw
+        .iter()
+        .map(|ft| ft.as_str().trim().to_string())
+        .collect();
+
+    let unique_types: FxHashSet<&str> = feature_types
+        .iter()
+        .map(|s| s.as_str())
+        .collect();
+
+    if unique_types.len() == 1 {
+        return Ok((0..feature_types.len()).collect());
+    }
+
+    let target = target_feature_type.unwrap_or("Gene Expression");
+
+    if !unique_types.contains(target) {
+        let types_list: Vec<&str> = unique_types.into_iter().collect();
+        return Err(hdf5::Error::from(format!(
+            "Multiple feature types found: {:?}. Requested type '{}' not found.",
+            types_list, target
+        )));
+    }
+
+    Ok(feature_types
+        .iter()
+        .enumerate()
+        .filter(|(_, ft)| ft.as_str() == target)
+        .map(|(i, _)| i)
+        .collect())
 }
 
 /////////////
@@ -1278,4 +1427,267 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
         lib_size,
         no_genes: nnz,
     })
+}
+
+///////////////////////
+// Generic H5 Files  //
+///////////////////////
+
+/// Parse generic h5 quality (v2/v3 formats, CSC storage)
+///
+/// Generic h5 files store genes × cells in CSC format
+pub fn parse_h5_quality<P: AsRef<Path>>(
+    file_path: P,
+    version: H5Version,
+    shape: (usize, usize),
+    cell_quality: &MinCellQuality,
+    feature_type: Option<&str>,
+    verbose: bool,
+) -> Result<(CellOnFileQuality, Vec<usize>)> {
+    let file = File::open(&file_path)?;
+    let (data_path, indices_path, indptr_path) = get_dataset_paths(version);
+
+    let feature_indices = if version == H5Version::V3 {
+        validate_feature_types(&file_path, feature_type)?
+    } else {
+        (0..shape.0).collect()
+    };
+
+    if verbose && version == H5Version::V3 {
+        println!(
+            "  Features after type filtering: {} / {}",
+            feature_indices.len().separate_with_underscores(),
+            shape.0.separate_with_underscores()
+        );
+    }
+
+    let feature_set: FxHashSet<usize> = feature_indices.iter().copied().collect();
+
+    let data_ds = file.dataset(data_path)?;
+    let indices_ds = file.dataset(indices_path)?;
+    let indptr_ds = file.dataset(indptr_path)?;
+
+    let indptr: Vec<i32> = indptr_ds.read_1d()?.to_vec();
+
+    let mut gene_cell_counts = vec![0usize; shape.0];
+    let mut cell_lib_sizes = vec![0usize; shape.1];
+    let mut cell_nnz = vec![0usize; shape.1];
+
+    const CHUNK_SIZE: usize = 1000;
+
+    for chunk_start in (0..shape.1).step_by(CHUNK_SIZE) {
+        let chunk_end = (chunk_start + CHUNK_SIZE).min(shape.1);
+        let start_pos = indptr[chunk_start] as usize;
+        let end_pos = indptr[chunk_end] as usize;
+
+        if start_pos >= end_pos {
+            continue;
+        }
+
+        let chunk_data: Vec<f64> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<i32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        for cell_idx in chunk_start..chunk_end {
+            let cell_start = indptr[cell_idx] as usize;
+            let cell_end = indptr[cell_idx + 1] as usize;
+
+            for idx in cell_start..cell_end {
+                let local_idx = idx - start_pos;
+                let gene_idx = chunk_indices[local_idx] as usize;
+                let value = chunk_data[local_idx];
+
+                if feature_set.contains(&gene_idx) && value > 0.0 {
+                    gene_cell_counts[gene_idx] += 1;
+                    cell_lib_sizes[cell_idx] += value as usize;
+                    cell_nnz[cell_idx] += 1;
+                }
+            }
+        }
+    }
+
+    let genes_to_keep: Vec<usize> = feature_indices
+        .iter()
+        .copied()
+        .filter(|&i| gene_cell_counts[i] >= cell_quality.min_cells)
+        .collect();
+
+    let cells_to_keep: Vec<usize> = (0..shape.1)
+        .filter(|&i| {
+            cell_lib_sizes[i] >= cell_quality.min_lib_size
+                && cell_nnz[i] >= cell_quality.min_unique_genes
+        })
+        .collect();
+
+    Ok((
+        CellOnFileQuality::new(cells_to_keep, genes_to_keep),
+        feature_indices,
+    ))
+}
+
+/// Read generic h5 CSC data
+pub fn read_h5_data<P: AsRef<Path>>(
+    file_path: P,
+    version: H5Version,
+    quality: &CellOnFileQuality,
+    _verbose: bool,
+) -> Result<CompressedSparseData<u16>> {
+    let file = File::open(file_path)?;
+    let (data_path, indices_path, indptr_path) = get_dataset_paths(version);
+
+    let data_ds = file.dataset(data_path)?;
+    let indices_ds = file.dataset(indices_path)?;
+    let indptr_ds = file.dataset(indptr_path)?;
+
+    let indptr: Vec<i32> = indptr_ds.read_1d()?.to_vec();
+
+    let mut new_data: Vec<u16> = Vec::new();
+    let mut new_indices: Vec<usize> = Vec::new();
+    let mut new_indptr: Vec<usize> = Vec::with_capacity(quality.cells_to_keep.len() + 1);
+    new_indptr.push(0);
+
+    const CHUNK_SIZE: usize = 1000;
+
+    for cell_chunk in quality.cells_to_keep.chunks(CHUNK_SIZE) {
+        let start_pos = cell_chunk
+            .iter()
+            .map(|&c| indptr[c] as usize)
+            .min()
+            .unwrap_or(0);
+        let end_pos = cell_chunk
+            .iter()
+            .map(|&c| indptr[c + 1] as usize)
+            .max()
+            .unwrap_or(0);
+
+        if start_pos >= end_pos {
+            for _ in cell_chunk {
+                new_indptr.push(new_data.len());
+            }
+            continue;
+        }
+
+        let chunk_data: Vec<f64> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+        let chunk_indices: Vec<i32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
+
+        for &old_cell_idx in cell_chunk {
+            let cell_start = indptr[old_cell_idx] as usize;
+            let cell_end = indptr[old_cell_idx + 1] as usize;
+
+            let mut cell_data: Vec<(usize, u16)> = Vec::new();
+
+            for idx in cell_start..cell_end {
+                let local_idx = idx - start_pos;
+                let old_gene_idx = chunk_indices[local_idx] as usize;
+
+                if let Some(&new_gene_idx) = quality.gene_old_to_new.get(&old_gene_idx) {
+                    cell_data.push((new_gene_idx, chunk_data[local_idx] as u16));
+                }
+            }
+
+            cell_data.sort_by_key(|&(g, _)| g);
+
+            for (gene_idx, value) in cell_data {
+                new_data.push(value);
+                new_indices.push(gene_idx);
+            }
+
+            new_indptr.push(new_data.len());
+        }
+    }
+
+    Ok(CompressedSparseData {
+        data: new_data,
+        indices: new_indices,
+        indptr: new_indptr,
+        cs_type: CompressedSparseFormat::Csr,
+        data_2: None,
+        shape: (quality.cells_to_keep.len(), quality.genes_to_keep.len()),
+    })
+}
+
+/// Write generic h5 files to bixverse format
+pub fn write_generic_h5_counts<P: AsRef<Path>>(
+    h5_path: P,
+    bin_path: P,
+    version: H5Version,
+    no_cells: usize,
+    no_genes: usize,
+    cell_quality: MinCellQuality,
+    feature_type: Option<&str>,
+    verbose: bool,
+) -> (usize, usize, CellQuality) {
+    if verbose {
+        println!("Reading h5 file and calculating QC...");
+    }
+
+    let (file_quality, _) = parse_h5_quality(
+        &h5_path,
+        version,
+        (no_genes, no_cells),
+        &cell_quality,
+        feature_type,
+        verbose,
+    )
+    .unwrap();
+
+    if verbose {
+        println!(
+            "  Cells passing QC: {} / {}",
+            file_quality.cells_to_keep.len().separate_with_underscores(),
+            no_cells.separate_with_underscores()
+        );
+        println!(
+            "  Genes passing QC: {} / {}",
+            file_quality.genes_to_keep.len().separate_with_underscores(),
+            no_genes.separate_with_underscores()
+        );
+    }
+
+    let file_data = read_h5_data(&h5_path, version, &file_quality, verbose).unwrap();
+
+    if verbose {
+        println!("Writing to binary format...");
+    }
+
+    let n_cells = file_data.indptr.len() - 1;
+    let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
+
+    let mut lib_size = Vec::with_capacity(n_cells);
+    let mut nnz = Vec::with_capacity(n_cells);
+
+    for i in 0..n_cells {
+        let start_i = file_data.indptr[i];
+        let end_i = file_data.indptr[i + 1];
+
+        let cell_chunk = CsrCellChunk::from_data(
+            &file_data.data[start_i..end_i],
+            &file_data.indices[start_i..end_i],
+            i,
+            cell_quality.target_size,
+            true,
+        );
+
+        let (nnz_i, lib_size_i) = cell_chunk.get_qc_info();
+        nnz.push(nnz_i);
+        lib_size.push(lib_size_i);
+
+        writer.write_cell_chunk(cell_chunk).unwrap();
+    }
+
+    writer.update_header_no_cells(file_quality.cells_to_keep.len());
+    writer.update_header_no_genes(file_quality.genes_to_keep.len());
+    writer.finalise().unwrap();
+
+    let cell_quality_out = CellQuality {
+        cell_indices: file_quality.cells_to_keep.clone(),
+        gene_indices: file_quality.genes_to_keep.clone(),
+        no_genes: nnz,
+        lib_size,
+    };
+
+    (
+        file_quality.cells_to_keep.len(),
+        file_quality.genes_to_keep.len(),
+        cell_quality_out,
+    )
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_processing.R
 \name{stream_h5ad}
 \alias{stream_h5ad}
-\title{Stream in h5ad to \code{single_cell_exp}}
+\title{Stream h5ad files (deprecated)}
 \usage{
 stream_h5ad(
   object,
@@ -16,7 +16,9 @@ stream_h5ad(
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
 
-\item{h5_path}{File path to the h5ad object you wish to load in.}
+\item{h5_path}{File path to the h5 file. Supports h5ad (AnnData),
+CellRanger v3 (10x Genomics), and CellRanger v2 formats. Format is
+automatically detected.}
 
 \item{sc_qc_param}{List. Output of \code{\link[=params_sc_min_quality]{params_sc_min_quality()}}. A
 list with the following elements:
@@ -40,14 +42,11 @@ in the transformation from the cell-based to gene-based format. Defaults to
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-It will populate the files on disk and return the class with updated
-shape information.
+A \code{single_cell_exp} object with loaded data
 }
 \description{
-This function takes an h5ad file and loads (via streaming) the obs and var
-data into the DuckDB of the \code{single_cell_exp} class and the counts into
-a Rust-binarised format for rapid access. During the reading in of the
-counts, the log CPM transformation will occur automatically. This function
-is specifically designed to deal with larger amounts of data and is slower
-than \code{\link[=load_h5ad]{load_h5ad()}}.
+\lifecycle{deprecated}
+
+\code{stream_h5ad()} has been renamed to \code{\link[=stream_h5]{stream_h5()}} to reflect support for
+multiple h5 formats.
 }

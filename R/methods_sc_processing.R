@@ -126,16 +126,26 @@ S7::method(load_seurat, single_cell_exp) <- function(
 
 #### fast ----------------------------------------------------------------------
 
-#' Load in h5ad to `single_cell_exp`
+#' Load h5 files into `single_cell_exp`
 #'
 #' @description
-#' This function takes an h5ad file and loads the obs and var data into the
+#' This function loads h5 files (h5ad, CellRanger v2, or CellRanger v3 formats)
+#' with automatic format detection. It loads the obs and var data into the
 #' DuckDB of the `single_cell_exp` class and the counts into a Rust-binarised
 #' format for rapid access. During the reading in of the counts, the log CPM
 #' transformation will occur automatically.
 #'
+#' Supported formats:
+#' \itemize{
+#'   \item h5ad - AnnData format with /obs and /var groups
+#'   \item h5v3 - CellRanger v3+ format with /matrix prefix
+#'   \item h5v2 - CellRanger v2 format with root-level datasets
+#' }
+#'
 #' @param object `single_cell_exp` class.
-#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param h5_path File path to the h5 file. Supports h5ad (AnnData),
+#'   CellRanger v3 (10x Genomics), and CellRanger v2 formats. Format is
+#'   automatically detected.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
 #' \itemize{
@@ -157,8 +167,8 @@ S7::method(load_seurat, single_cell_exp) <- function(
 #' shape information.
 #'
 #' @export
-load_h5ad <- S7::new_generic(
-  name = "load_h5ad",
+load_h5 <- S7::new_generic(
+  name = "load_h5",
   dispatch_args = "object",
   fun = function(
     object,
@@ -172,13 +182,13 @@ load_h5ad <- S7::new_generic(
   }
 )
 
-#' @method load_h5ad single_cell_exp
+#' @method load_h5 single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_h5ad, single_cell_exp) <- function(
+S7::method(load_h5, single_cell_exp) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
@@ -193,16 +203,12 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   checkmate::qassert(batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  # rust part
-  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
-
+  # rust part - auto-detect format (h5ad, h5v3, or h5v2)
   rust_con <- get_sc_rust_ptr(object)
 
   file_res <- rust_con$h5_to_file(
-    cs_type = h5_meta$type,
     h5_path = path.expand(h5_path),
-    no_cells = h5_meta$dims["obs"],
-    no_genes = h5_meta$dims["var"],
+    feature_type = NULL,  # defaults to "Gene Expression"
     qc_params = sc_qc_param,
     verbose = .verbose
   )
@@ -220,20 +226,56 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
-  if (.verbose) {
-    message("Loading observations data from h5ad into the DuckDB.")
+
+  # Detect format to determine how to load metadata
+  h5_format <- rs_detect_h5_format(h5_path)
+
+  if (h5_format == "h5ad") {
+    # h5ad files have obs/var metadata in the file
+    if (.verbose) {
+      message("Loading observations data from h5ad into the DuckDB.")
+    }
+    duckdb_con$populate_obs_from_h5(
+      h5_path = h5_path,
+      filter = as.integer(file_res$cell_indices + 1)
+    )
+    if (.verbose) {
+      message("Loading variables data from h5ad into the DuckDB.")
+    }
+    duckdb_con$populate_vars_from_h5(
+      h5_path = h5_path,
+      filter = as.integer(file_res$gene_indices + 1)
+    )
+  } else {
+    # CellRanger h5 files need barcodes and feature names
+    if (.verbose) {
+      message("Loading cell and gene identifiers from h5 file.")
+    }
+
+    # Read barcodes and feature names from h5
+    prefix <- if (h5_format == "h5v3") "/matrix/" else "/"
+    barcodes <- rhdf5::h5read(h5_path, paste0(prefix, "barcodes"))
+    feature_names <- rhdf5::h5read(h5_path, paste0(prefix, "features/name"))
+    rhdf5::H5close()
+
+    # Filter to cells and genes that passed QC
+    cell_indices <- file_res$cell_indices + 1
+    gene_indices <- file_res$gene_indices + 1
+
+    # Create minimal obs table
+    # First column will be renamed to "cell_id" by populate_obs_from_data.table
+    obs_table <- data.table::data.table(
+      barcodes[cell_indices]
+    )
+    duckdb_con$populate_obs_from_data.table(obs_table)
+
+    # Create minimal var table
+    # First column will be renamed to "gene_id" by populate_var_from_data.table
+    var_table <- data.table::data.table(
+      feature_names[gene_indices]
+    )
+    duckdb_con$populate_var_from_data.table(var_table)
   }
-  duckdb_con$populate_obs_from_h5(
-    h5_path = h5_path,
-    filter = as.integer(file_res$cell_indices + 1)
-  )
-  if (.verbose) {
-    message("Loading variables data from h5ad into the DuckDB.")
-  }
-  duckdb_con$populate_vars_from_h5(
-    h5_path = h5_path,
-    filter = as.integer(file_res$gene_indices + 1)
-  )
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
@@ -250,18 +292,21 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 
 #### slower streaming version --------------------------------------------------
 
-#' Stream in h5ad to `single_cell_exp`
+#' Stream in h5 files to `single_cell_exp`
 #'
 #' @description
-#' This function takes an h5ad file and loads (via streaming) the obs and var
+#' This function loads h5 files (h5ad, CellRanger v2, or CellRanger v3 formats)
+#' via streaming with automatic format detection. It loads the obs and var
 #' data into the DuckDB of the `single_cell_exp` class and the counts into
 #' a Rust-binarised format for rapid access. During the reading in of the
 #' counts, the log CPM transformation will occur automatically. This function
 #' is specifically designed to deal with larger amounts of data and is slower
-#' than [bixverse::load_h5ad()].
+#' than [bixverse::load_h5()].
 #'
 #' @param object `single_cell_exp` class.
-#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param h5_path File path to the h5 file. Supports h5ad (AnnData),
+#'   CellRanger v3 (10x Genomics), and CellRanger v2 formats. Format is
+#'   automatically detected.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
 #' \itemize{
@@ -284,8 +329,8 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 #' shape information.
 #'
 #' @export
-stream_h5ad <- S7::new_generic(
-  name = "stream_h5ad",
+stream_h5 <- S7::new_generic(
+  name = "stream_h5",
   dispatch_args = "object",
   fun = function(
     object,
@@ -299,13 +344,13 @@ stream_h5ad <- S7::new_generic(
   }
 )
 
-#' @method stream_h5ad single_cell_exp
+#' @method stream_h5 single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(stream_h5ad, single_cell_exp) <- function(
+S7::method(stream_h5, single_cell_exp) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
@@ -320,16 +365,12 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
   checkmate::qassert(max_genes_in_memory, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  # rust part
-  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
-
+  # rust part - auto-detect format (h5ad, h5v3, or h5v2)
   rust_con <- get_sc_rust_ptr(object)
 
   file_res <- rust_con$h5_to_file_streaming(
-    cs_type = h5_meta$type,
     h5_path = path.expand(h5_path),
-    no_cells = h5_meta$dims["obs"],
-    no_genes = h5_meta$dims["var"],
+    feature_type = NULL,  # defaults to "Gene Expression"
     qc_params = sc_qc_param,
     verbose = .verbose
   )
@@ -342,20 +383,56 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
 
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
-  if (.verbose) {
-    message("Loading observations data from h5ad into the DuckDB.")
+
+  # Detect format to determine how to load metadata
+  h5_format <- rs_detect_h5_format(h5_path)
+
+  if (h5_format == "h5ad") {
+    # h5ad files have obs/var metadata in the file
+    if (.verbose) {
+      message("Loading observations data from h5ad into the DuckDB.")
+    }
+    duckdb_con$populate_obs_from_h5(
+      h5_path = h5_path,
+      filter = as.integer(file_res$cell_indices + 1)
+    )
+    if (.verbose) {
+      message("Loading variables data from h5ad into the DuckDB.")
+    }
+    duckdb_con$populate_vars_from_h5(
+      h5_path = h5_path,
+      filter = as.integer(file_res$gene_indices + 1)
+    )
+  } else {
+    # CellRanger h5 files need barcodes and feature names
+    if (.verbose) {
+      message("Loading cell and gene identifiers from h5 file.")
+    }
+
+    # Read barcodes and feature names from h5
+    prefix <- if (h5_format == "h5v3") "/matrix/" else "/"
+    barcodes <- rhdf5::h5read(h5_path, paste0(prefix, "barcodes"))
+    feature_names <- rhdf5::h5read(h5_path, paste0(prefix, "features/name"))
+    rhdf5::H5close()
+
+    # Filter to cells and genes that passed QC
+    cell_indices <- file_res$cell_indices + 1
+    gene_indices <- file_res$gene_indices + 1
+
+    # Create minimal obs table
+    # First column will be renamed to "cell_id" by populate_obs_from_data.table
+    obs_table <- data.table::data.table(
+      barcodes[cell_indices]
+    )
+    duckdb_con$populate_obs_from_data.table(obs_table)
+
+    # Create minimal var table
+    # First column will be renamed to "gene_id" by populate_var_from_data.table
+    var_table <- data.table::data.table(
+      feature_names[gene_indices]
+    )
+    duckdb_con$populate_var_from_data.table(var_table)
   }
-  duckdb_con$populate_obs_from_h5(
-    h5_path = h5_path,
-    filter = as.integer(file_res$cell_indices + 1)
-  )
-  if (.verbose) {
-    message("Loading variables data from h5ad into the DuckDB.")
-  }
-  duckdb_con$populate_vars_from_h5(
-    h5_path = h5_path,
-    filter = as.integer(file_res$gene_indices + 1)
-  )
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
@@ -980,4 +1057,62 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
   duckdb_con$add_data_obs(new_data = new_data)
 
   return(object)
+}
+
+### Deprecated aliases ---------------------------------------------------------
+
+#' Load h5ad files (deprecated)
+#'
+#' @description
+#' \lifecycle{deprecated}
+#'
+#' `load_h5ad()` has been renamed to [load_h5()] to reflect support for
+#' multiple h5 formats (h5ad, CellRanger v2, CellRanger v3).
+#'
+#' @inheritParams load_h5
+#' @return A `single_cell_exp` object with loaded data
+#' @export
+load_h5ad <- function(object,
+                      h5_path,
+                      sc_qc_param = params_sc_min_quality(),
+                      streaming = TRUE,
+                      batch_size = 1000L,
+                      .verbose = TRUE) {
+  .Deprecated("load_h5")
+  load_h5(
+    object = object,
+    h5_path = h5_path,
+    sc_qc_param = sc_qc_param,
+    streaming = streaming,
+    batch_size = batch_size,
+    .verbose = .verbose
+  )
+}
+
+#' Stream h5ad files (deprecated)
+#'
+#' @description
+#' \lifecycle{deprecated}
+#'
+#' `stream_h5ad()` has been renamed to [stream_h5()] to reflect support for
+#' multiple h5 formats.
+#'
+#' @inheritParams stream_h5
+#' @return A `single_cell_exp` object with loaded data
+#' @export
+stream_h5ad <- function(object,
+                        h5_path,
+                        sc_qc_param = params_sc_min_quality(),
+                        max_genes_in_memory = 2000L,
+                        cell_batch_size = 100000L,
+                        .verbose = TRUE) {
+  .Deprecated("stream_h5")
+  stream_h5(
+    object = object,
+    h5_path = h5_path,
+    sc_qc_param = sc_qc_param,
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    .verbose = .verbose
+  )
 }
