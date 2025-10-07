@@ -53,7 +53,7 @@ fn calculate_avg_exp_prop(cells: &[CsrCellChunk], num_genes: usize) -> (Vec<f32>
     let mut count_exp = vec![0usize; num_genes];
 
     for cell in cells {
-        for (&gene_idx, &norm_val) in cell.col_indices.iter().zip(cell.data_norm.iter()) {
+        for (&gene_idx, &norm_val) in cell.indices.iter().zip(cell.data_norm.iter()) {
             sum_exp[gene_idx as usize] += norm_val.to_f32();
             count_exp[gene_idx as usize] += 1;
         }

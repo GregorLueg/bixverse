@@ -32,7 +32,8 @@ pub struct MtxHeader {
 ///
 /// ### Fields
 ///
-/// * `to_keep` - Vector of cells that passed the threshold as booleans.
+/// * `cell_qc` - Structure containing the information on which cells/genes to
+///   keep and library size and NNZ for cells.
 /// * `no_genes` - Number of genes that were read in.
 /// * `no_cells` - Number of cells that were read in.
 #[derive(Debug, Clone)]
@@ -170,8 +171,10 @@ impl MtxReader {
         }
 
         let first_scan_time = Instant::now();
+        let mut lines_read = 0usize;
+        let report_interval = (self.header.total_entries / 10).max(1);
 
-        // Pass 1: Count unique cells per gene
+        // first pass - count unique cells per gene
         while {
             line_buffer.clear();
             self.reader.read_until(b'\n', &mut line_buffer)? > 0
@@ -196,10 +199,17 @@ impl MtxReader {
                 if gene_idx < self.header.total_genes {
                     gene_cells[gene_idx].insert(cell_idx);
                 }
+
+                lines_read += 1;
+                if verbose && lines_read % report_interval == 0 {
+                    let progress =
+                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                    println!("  Processed {}% of entries", progress);
+                }
             }
         }
 
-        // Filter genes based on minimum cells
+        // filter genes based on minimum cells
         let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
             .filter(|&i| gene_cells[i].len() >= self.qc_params.min_cells)
             .collect();
@@ -213,12 +223,14 @@ impl MtxReader {
 
         let second_scan_time = Instant::now();
 
-        // Pass 2: Cell statistics with filtered genes
+        // second pass - cell statistics with filtered genes
         let mut cell_gene_count = vec![0u32; self.header.total_cells];
         let mut cell_lib_size = vec![0u32; self.header.total_cells];
 
         self.reader.rewind()?;
         Self::skip_header(&mut self.reader)?;
+
+        lines_read = 0;
 
         while {
             line_buffer.clear();
@@ -244,6 +256,13 @@ impl MtxReader {
                 if genes_to_keep_set.contains(&gene_idx) && cell_idx < self.header.total_cells {
                     cell_gene_count[cell_idx] += 1;
                     cell_lib_size[cell_idx] += value as u32;
+                }
+
+                lines_read += 1;
+                if verbose && lines_read % report_interval == 0 {
+                    let progress =
+                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                    println!("  Processed {}% of entries (second pass)", progress);
                 }
             }
         }
@@ -286,7 +305,8 @@ impl MtxReader {
     /// ### Params
     ///
     /// * `bin_path` - Where to save the binarised file.
-    /// * `quality` - Structure indicating which cells and genes to keep.
+    /// * `quality` - Structure indicating which cells and genes to keep from
+    ///   the mtx file.
     /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
@@ -318,6 +338,9 @@ impl MtxReader {
                 "Starting to write high quality cells, genes in a cell-friendly format to disk."
             )
         }
+
+        let mut lines_read = 0usize;
+        let report_interval = (self.header.total_entries / 10).max(1);
 
         while {
             line_buffer.clear();
@@ -354,6 +377,13 @@ impl MtxReader {
             let new_gene_idx = quality.gene_old_to_new[&old_gene_idx] as u16;
 
             cell_data[new_cell_idx].push((new_gene_idx, value));
+
+            lines_read += 1;
+            if verbose && lines_read % report_interval == 0 {
+                let progress =
+                    (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
+                println!("  Processed {}% of entries", progress);
+            }
         }
 
         let mut lib_size = Vec::with_capacity(quality.cells_to_keep.len());

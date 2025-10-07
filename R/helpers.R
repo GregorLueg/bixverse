@@ -488,3 +488,88 @@ select_user_option <- function(options) {
     }
   }
 }
+
+# data transforms --------------------------------------------------------------
+
+#' Transform data.tables into matrices for distance calculations
+#'
+#' @description
+#' This function can take in data.tables with categorical and continuous data
+#' and will transform them into matrices for subsequent distance calculations
+#' based on Hamming distance (everything categorical) or for Gower distance
+#' (mixed types).
+#'
+#' @param dt data.table. The data.table you want to prepare for Gower distance
+#' calculation in Rust. Assumes samples x features.
+#' @param sample_names String. The sample names. Needs to be same length as
+#' `nrow(dt)`.
+#'
+#' @return List with the following items:
+#' \itemize{
+#'   \item dat - A numerical matrix ready for Gower distance calculations
+#'   across samples based on mixed features.
+#'   \item is_cat - Boolean vector, indicating which columns are categorical.
+#' }
+#'
+#' @export
+prep_data_gower_hamming_dist <- function(dt, sample_names) {
+  # checks
+  checkmate::assertDataTable(dt)
+  checkmate::qassert(sample_names, sprintf("S%i", nrow(dt)))
+
+  # function body
+  is_cat <- sapply(dt, function(x) is.factor(x) || is.character(x))
+
+  mat <- suppressWarnings(as.matrix(dt))
+
+  is_cat <- sapply(dt, function(x) is.factor(x) || is.character(x))
+
+  for (i in seq_along(dt)) {
+    if (is_cat[i]) {
+      mat[, i] <- as.integer(as.factor(dt[[i]]))
+    } else {
+      mat[, i] <- as.numeric(dt[[i]])
+    }
+  }
+
+  rownames(mat) <- sample_names
+  colnames(mat) <- colnames(dt)
+
+  if (sum(is_cat) == ncol(mat)) {
+    storage.mode(mat) <- "integer"
+  } else {
+    storage.mode(mat) <- "numeric"
+  }
+
+  res <- list(data = mat, is_cat = is_cat)
+
+  return(res)
+}
+
+# one hot encoding -------------------------------------------------------------
+
+#' Helper to generate one-hot encodings
+#'
+#' @description Helper function that generate one-hot encoding with the option
+#' of unlabelled data. (Denoted as `NA` in the labels vector.)
+#'
+#' @param labels String vector. `NA`s signify unlabelled data.
+#'
+#' @return One-hot encoded matrix.
+one_hot_encode <- function(labels) {
+  # checks
+  checkmate::qassert(labels, "s+")
+
+  unique_labels <- sort(unique(labels[!is.na(labels)]))
+  n <- length(labels)
+  k <- length(unique_labels)
+
+  mat <- matrix(0L, nrow = n, ncol = k)
+  colnames(mat) <- unique_labels
+
+  for (i in seq_along(unique_labels)) {
+    mat[labels == unique_labels[i] & !is.na(labels), i] <- 1L
+  }
+
+  mat
+}

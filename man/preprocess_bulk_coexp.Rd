@@ -10,8 +10,7 @@ preprocess_bulk_coexp(
   mad_threshold = NULL,
   scaling = FALSE,
   scaling_type = c("normal", "robust"),
-  .verbose = TRUE,
-  ...
+  .verbose = TRUE
 )
 }
 \arguments{

@@ -348,6 +348,48 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
     Ok(list!(from = name_i, to = name_j, sim = sim))
 }
 
+/// Calculates the Hamming distance between categorical columns
+///
+/// @param x Integer matrix. The integers represent the factor data.
+///
+/// @return The Hamming distance matrix
+///
+/// @export
+#[extendr]
+fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
+    let data = r_matrix_to_faer(&x);
+
+    let hamming_dist = column_pairwise_hamming_cat(&data);
+
+    faer_to_r_matrix(hamming_dist.as_ref())
+}
+
+/// Calculates the Gower distance for a given matrix
+///
+/// @param x Numerical matrix. Converted matrix of continuous and categorical
+/// variables as numerical values.
+/// @param is_cat Boolean. Which of the columns represent categorical values.
+///
+/// @return The Gower distance matrix.
+///
+/// @export
+#[extendr]
+fn rs_gower_dist(
+    x: RMatrix<f64>,
+    is_cat: Vec<Rbool>,
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+    let data = r_matrix_to_faer(&x);
+
+    let is_cat = is_cat
+        .iter()
+        .map(|r_obj| r_obj.to_bool())
+        .collect::<Vec<bool>>();
+
+    let gower_dist = column_pairwise_gower(&data, &is_cat, None)?;
+
+    Ok(faer_to_r_matrix(gower_dist.as_ref()))
+}
+
 extendr_module! {
   mod r_cors_similarity;
   fn rs_covariance;
@@ -362,4 +404,6 @@ extendr_module! {
   fn rs_set_similarity;
   fn rs_set_similarity_list;
   fn rs_set_similarity_list2;
+  fn rs_hamming_dist;
+  fn rs_gower_dist;
 }

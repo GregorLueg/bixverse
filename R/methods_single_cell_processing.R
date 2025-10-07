@@ -4,7 +4,9 @@
 
 ### h5ad -----------------------------------------------------------------------
 
-#' Load in h5ad to `single_cell_exp` (nightly!)
+#### fast ----------------------------------------------------------------------
+
+#' Load in h5ad to `single_cell_exp`
 #'
 #' @description
 #' This function takes an h5ad file and loads the obs and var data into the
@@ -126,6 +128,128 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   return(object)
 }
 
+#### slower streaming version --------------------------------------------------
+
+#' Stream in h5ad to `single_cell_exp`
+#'
+#' @description
+#' This function takes an h5ad file and loads (via streaming) the obs and var
+#' data into the DuckDB of the `single_cell_exp` class and the counts into
+#' a Rust-binarised format for rapid access. During the reading in of the
+#' counts, the log CPM transformation will occur automatically. This function
+#' is specifically designed to deal with larger amounts of data and is slower
+#' than [bixverse::load_h5ad()].
+#'
+#' @param object `single_cell_exp` class.
+#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param max_genes_in_memory Integer. How many genes shall be held in memory
+#' at a given point. Defaults to `2000L`.
+#' @param cell_batch_size Integer. How big are the batch sizes for the cells
+#' in the transformation from the cell-based to gene-based format. Defaults to
+#' `100000L`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+stream_h5ad <- S7::new_generic(
+  name = "stream_h5ad",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    sc_qc_param = params_sc_min_quality(),
+    max_genes_in_memory = 2000L,
+    cell_batch_size = 100000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method stream_h5ad single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(stream_h5ad, single_cell_exp) <- function(
+  object,
+  h5_path,
+  sc_qc_param = params_sc_min_quality(),
+  max_genes_in_memory = 2000L,
+  cell_batch_size = 100000L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(max_genes_in_memory, "I1")
+  checkmate::qassert(max_genes_in_memory, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # rust part
+  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$h5_to_file_streaming(
+    cs_type = h5_meta$type,
+    h5_path = path.expand(h5_path),
+    no_cells = h5_meta$dims["obs"],
+    no_genes = h5_meta$dims["var"],
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  rust_con$generate_gene_based_data_memory_bounded(
+    max_genes_in_memory = max_genes_in_memory,
+    cell_batch_size = cell_batch_size,
+    verbose = .verbose
+  )
+
+  # duck db part
+  duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_obs_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$cell_indices + 1)
+  )
+  if (.verbose) {
+    message("Loading variables data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_vars_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
 ### mtx ------------------------------------------------------------------------
 
 #' Load in mtx/plain text files to `single_cell_exp` (nightly!)
@@ -211,7 +335,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
       mtx_path = path_mtx,
       qc_params = sc_qc_param,
       cells_as_rows = cells_as_rows,
-      verbose = FALSE
+      verbose = .verbose
     )
   )
 
@@ -278,16 +402,22 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
+#' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Default to
+#' `FALSE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
+#'
+#' @export
 gene_set_proportions_sc <- S7::new_generic(
   name = "gene_set_proportions_sc",
   dispatch_args = "object",
   fun = function(
     object,
     gene_set_list,
+    streaming = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -303,10 +433,13 @@ gene_set_proportions_sc <- S7::new_generic(
 S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
   object,
   gene_set_list,
+  streaming = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
 
   gene_set_list_tidy <- purrr::map(gene_set_list, \(g) {
     get_gene_indices(object, gene_ids = g, rust_index = TRUE)
@@ -316,6 +449,7 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
   rs_results <- rs_sc_get_gene_set_perc(
     f_path_cell = get_rust_count_cell_f_path(object),
     gene_set_idx = gene_set_list_tidy,
+    streaming = streaming,
     verbose = .verbose
   )
 
@@ -335,7 +469,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This is a helper function to identify highly variable genes. At the moment
-#' the implementation has only
+#' the implementation has only the VST-based version (known as Seurat v3). The
+#' other methods will be implemented in the future.
 #'
 #' @param object `single_cell_exp` class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
@@ -350,10 +485,15 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
 #'   implemented yet.
 #' }
+#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Defaults to
+#' `FALSE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return It will add the columns based on the names in the `gene_set_list` to
 #' the obs table.
+#'
+#' @export
 find_hvg_sc <- S7::new_generic(
   name = "find_hvg_sc",
   dispatch_args = "object",
@@ -361,6 +501,7 @@ find_hvg_sc <- S7::new_generic(
     object,
     hvg_no = 2000L,
     hvg_params = params_sc_hvg(),
+    streaming = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -377,11 +518,13 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
+  streaming = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
+  checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
 
   if (length(get_cells_to_keep(object)) == 0) {
@@ -400,6 +543,7 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
       cell_indices = get_cells_to_keep(object),
       loess_span = loess_span,
       clip_max = NULL,
+      streaming = streaming,
       verbose = .verbose
     )
   )
@@ -433,6 +577,8 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #'
 #' @return The function will add the PCA factors and loadings to the object
 #' cache in memory.
+#'
+#' @export
 calculate_pca_sc <- S7::new_generic(
   name = "calculate_pca_sc",
   dispatch_args = "object",
@@ -526,7 +672,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
 #'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight is calculated. For details, please see
+#'   the weight form the SNN graph is calculated. For details, please see
 #'   [bixverse::params_sc_neighbours()].
 #' }
 #' @param seed Integer. For reproducibility.
@@ -535,8 +681,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' @return The object with added KNN matrix.
 #'
 #' @export
-find_neigbours_single_sc <- S7::new_generic(
-  name = "find_neigbours_single_sc",
+find_neighbours_sc <- S7::new_generic(
+  name = "find_neighbours_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -550,13 +696,13 @@ find_neigbours_single_sc <- S7::new_generic(
   }
 )
 
-#' @method find_neigbours_single_sc single_cell_exp
+#' @method find_neighbours_sc single_cell_exp
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_neigbours_single_sc, single_cell_exp) <- function(
+S7::method(find_neighbours_sc, single_cell_exp) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -691,7 +837,7 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 
   if (is.null(snn_graph)) {
     warning(paste(
-      "No sNN graph found. Did you run find_neigbours_single_sc()",
+      "No sNN graph found. Did you run find_neighbours_sc()",
       "Returning class as is."
     ))
     return(object)

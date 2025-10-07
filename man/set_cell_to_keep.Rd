@@ -2,9 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_cell_to_keep}
 \alias{set_cell_to_keep}
+\alias{set_cell_to_keep.sc_mapper}
+\alias{set_cell_to_keep.single_cell_exp}
 \title{Set cells to keep for sc_mapper object}
 \usage{
 set_cell_to_keep(x, cells_to_keep)
+
+\method{set_cell_to_keep}{sc_mapper}(x, cells_to_keep)
 }
 \arguments{
 \item{x}{An object to set cells to keep for}
@@ -14,4 +18,6 @@ to keep in downstream analysis.}
 }
 \description{
 Set cells to keep for sc_mapper object
+
+Set the cell mapping for a \code{single_cell_exp} class.
 }

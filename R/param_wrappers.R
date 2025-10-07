@@ -432,6 +432,54 @@ params_dgrdl <- function(
   )
 }
 
+## SNF -------------------------------------------------------------------------
+
+#' Wrapper function to generate SNF parameters
+#'
+#' @param k Integer. Number of neighbours to consider.
+#' @param t Integer. Number of iterations for the SNF algorithm.
+#' @param mu Float. Normalisation factor for the Gaussian kernel width.
+#' @param alpha Float. Normalisation parameter controlling the fusion strength.
+#' @param normalise Boolean. Shall continuous values be Z-scored.
+#' @param distance_metric String. One of
+#' `c("euclidean", "manhattan", "canberra", "cosine")`. Which distance metric
+#' to use for the continuous calculations. In case of pure categorical, Hamming
+#' will be used, for mixed data types Gower distance is used.
+#'
+#' @returns List with parameters for usage in subsequent function.
+#'
+#' @export
+params_snf <- function(
+  k = 20L,
+  t = 20L,
+  mu = 0.5,
+  alpha = 1.0,
+  normalise = TRUE,
+  distance_metric = c("euclidean", "manhattan", "canberra", "cosine")
+) {
+  distance_metric <- match.arg(distance_metric)
+
+  # checks
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(t, "I1")
+  checkmate::qassert(mu, "N1[0, 1]")
+  checkmate::qassert(alpha, "N1")
+  checkmate::qassert(normalise, "B1")
+  checkmate::assertChoice(
+    distance_metric,
+    c("euclidean", "manhattan", "canberra", "cosine")
+  )
+
+  list(
+    k = k,
+    t = t,
+    mu = mu,
+    alpha = alpha,
+    distance_metric = distance_metric,
+    normalise = normalise
+  )
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### io -------------------------------------------------------------------------
@@ -507,6 +555,8 @@ params_sc_min_quality <- function(
 #' @param bin_method String. One of `c("equal_width", "equal_freq")`.
 #'
 #' @returns A list with the HVG parameters
+#'
+#' @export
 params_sc_hvg <- function(
   method = "vst",
   loess_span = 0.3,
@@ -549,6 +599,8 @@ params_sc_hvg <- function(
 #' Both methods produce weights normalised to the range `[0, 1]`.
 #'
 #' @returns A list with the neighbour parameters.
+#'
+#' @export
 params_sc_neighbours <- function(
   k = 15L,
   n_trees = 100L,
@@ -580,3 +632,4 @@ params_sc_neighbours <- function(
     snn_similarity = snn_similarity
   )
 }
+

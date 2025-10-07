@@ -188,7 +188,7 @@ pub fn rank_csr_chunk_vec(
     for chunk in chunk_vec {
         let data_len = chunk.data_norm.len();
         all_data.push(chunk.data_norm);
-        all_indices.push(chunk.col_indices);
+        all_indices.push(chunk.indices);
         current_indptr += data_len;
         indptr.push(current_indptr);
     }

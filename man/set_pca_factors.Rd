@@ -2,9 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_pca_factors}
 \alias{set_pca_factors}
+\alias{set_pca_factors.sc_cache}
+\alias{set_pca_factors.single_cell_exp}
 \title{Set/add PCA factors}
 \usage{
 set_pca_factors(x, pca_factor)
+
+\method{set_pca_factors}{sc_cache}(x, pca_factor)
 }
 \arguments{
 \item{x}{An object to add the PCA factors for.}
@@ -13,4 +17,6 @@ set_pca_factors(x, pca_factor)
 }
 \description{
 Set/add PCA factors
+
+Set the PCA factors for a \code{single_cell_exp} class.
 }

@@ -2,7 +2,7 @@
 
 ## *Why a code style?* 
 
-*Last update: 05.08.2025* </br>
+*Last update: 23.09.2025* </br>
 
 If you wish to contribute to the package, please, follow this code style. It is 
 not set in stone, but is just designed to generally make the maintenance of this
@@ -135,3 +135,10 @@ checking for these nasty bugs.
 10. If you wish to implement a more complex analytical workflow, it might be
 worth adding a vignette. `bixverse` is using [quarto](https://quarto.org) for
 vignettes. This is not a must, but makes usage easier.
+
+## *Code formatting*
+
+The package uses [air](https://posit-dev.github.io/air/formatter.html) as a
+formatter. Please set this up if you want to contribute. Also, strict 80 line
+width for R code and documentation. Just mark the lines in your IDE of choice.
+`bixverse` has a pre-commit set up, so, just use that one.

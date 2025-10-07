@@ -1,4 +1,4 @@
-use faer::MatRef;
+use faer::{MatRef, RowRef};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
@@ -41,12 +41,17 @@ enum AnnoyNode {
 ///
 /// * `trees` - Collection of binary trees, each with different random
 ///   partitioning.
-/// * `vectors` - Original vector data for distance calculations.
+/// * `vectors_flat` - Original vector data for distance calculations. Flattened
+///   for better cache locality
+/// * `dim` - Number of dimensions in the vector
+/// * `n_vectors` - Number of vectors stored (i.e., samples)
 /// * `n_trees` - Number of trees built (more trees = better accuracy, slower
 ///   queries)
 pub struct AnnoyIndex {
     trees: Vec<Vec<AnnoyNode>>,
-    vectors: Vec<Vec<f32>>,
+    vectors_flat: Vec<f32>,
+    dim: usize,
+    n_vectors: usize,
     n_trees: usize,
 }
 
@@ -90,9 +95,14 @@ impl AnnoyIndex {
     pub fn new(mat: MatRef<f32>, n_trees: usize, seed: usize) -> Self {
         let mut rng = StdRng::seed_from_u64(seed as u64);
 
-        let vectors: Vec<Vec<f32>> = (0..mat.nrows())
-            .map(|i| mat.row(i).iter().cloned().collect())
-            .collect();
+        let n_vectors = mat.nrows();
+        let dim = mat.ncols();
+
+        // flat structure for better cache locality
+        let mut vectors_flat = Vec::with_capacity(n_vectors * dim);
+        for i in 0..n_vectors {
+            vectors_flat.extend(mat.row(i).iter().cloned());
+        }
 
         let seeds: Vec<u64> = (0..n_trees).map(|_| rng.random()).collect();
 
@@ -100,13 +110,15 @@ impl AnnoyIndex {
             .into_par_iter()
             .map(|tree_seed| {
                 let mut tree_rng = StdRng::seed_from_u64(tree_seed);
-                Self::build_tree(&vectors, (0..vectors.len()).collect(), &mut tree_rng)
+                Self::build_tree(&vectors_flat, dim, (0..n_vectors).collect(), &mut tree_rng)
             })
             .collect();
 
         AnnoyIndex {
             trees,
-            vectors,
+            vectors_flat,
+            dim,
+            n_vectors,
             n_trees,
         }
     }
@@ -115,16 +127,23 @@ impl AnnoyIndex {
     ///
     /// ### Params
     ///
-    /// * `vectors` - All vectors in the dataset.
+    /// * `vectors_flat` - All vectors in the dataset. (As a flattened
+    ///   structure.)
+    /// * `dim` - The original dimensions (row numbers).
     /// * `items` - Subset of vector indices to include in this tree.
     /// * `rng` - Random number generator for this tree.
     ///
     /// ### Returns
     ///
     /// Vector of AnnoyNodes representing the tree structure (index 0 = root)
-    fn build_tree(vectors: &[Vec<f32>], items: Vec<usize>, rng: &mut StdRng) -> Vec<AnnoyNode> {
+    fn build_tree(
+        vectors_flat: &[f32],
+        dim: usize,
+        items: Vec<usize>,
+        rng: &mut StdRng,
+    ) -> Vec<AnnoyNode> {
         let mut nodes = Vec::with_capacity(items.len() * 2);
-        Self::build_node(vectors, items, &mut nodes, rng);
+        Self::build_node(vectors_flat, dim, items, &mut nodes, rng);
         nodes
     }
 
@@ -148,7 +167,8 @@ impl AnnoyIndex {
     /// - Threshold: median of dot products (balanced split)
     /// - Fallback: creates leaf if split fails (empty partitions)
     fn build_node(
-        vectors: &[Vec<f32>],
+        vectors_flat: &[f32],
+        dim: usize,
         items: Vec<usize>,
         nodes: &mut Vec<AnnoyNode>,
         rng: &mut StdRng,
@@ -160,14 +180,15 @@ impl AnnoyIndex {
             return node_idx;
         }
 
-        let dim = vectors[0].len();
         let hyperplane: Vec<f32> = (0..dim).map(|_| rng.random_range(-1.0..1.0)).collect();
 
         // calculate dot products and sort to find splitting threshold
         let mut item_dots: Vec<(usize, f32)> = items
             .iter()
             .map(|&item| {
-                let dot = vectors[item]
+                let vec_start = item * dim;
+                let vec_slice = &vectors_flat[vec_start..vec_start + dim];
+                let dot = vec_slice
                     .iter()
                     .zip(&hyperplane)
                     .fold(0.0, |acc, (v, h)| acc + v * h);
@@ -190,14 +211,12 @@ impl AnnoyIndex {
             }
         }
 
-        // fallback to leaf if split failed
         if left_items.is_empty() || right_items.is_empty() {
             let node_idx = nodes.len();
             nodes.push(AnnoyNode::Leaf { items });
             return node_idx;
         }
 
-        // create split node and recursively build children
         let node_idx = nodes.len();
         nodes.push(AnnoyNode::Split {
             hyperplane: hyperplane.clone(),
@@ -206,10 +225,9 @@ impl AnnoyIndex {
             right: 0,
         });
 
-        let left_idx = Self::build_node(vectors, left_items, nodes, rng);
-        let right_idx = Self::build_node(vectors, right_items, nodes, rng);
+        let left_idx = Self::build_node(vectors_flat, dim, left_items, nodes, rng);
+        let right_idx = Self::build_node(vectors_flat, dim, right_items, nodes, rng);
 
-        // update child pointers
         if let AnnoyNode::Split {
             ref mut left,
             ref mut right,
@@ -252,8 +270,11 @@ impl AnnoyIndex {
 
         let mut scored = Vec::with_capacity(candidates.len());
         for idx in candidates {
+            let vec_start = idx * self.dim;
+            let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
+
             let mut dist = 0.0f32;
-            for (a, b) in self.vectors[idx].iter().zip(query_vec.iter()) {
+            for (a, b) in vec_slice.iter().zip(query_vec.iter()) {
                 let diff = a - b;
                 dist += diff * diff;
             }
@@ -265,35 +286,37 @@ impl AnnoyIndex {
         scored.into_iter().take(k).map(|(idx, _)| idx).collect()
     }
 
-    // pub fn query_row(
-    //     &self,
-    //     query_row: faer::RowRef<f32>,
-    //     k: usize,
-    //     search_k: Option<usize>,
-    // ) -> Vec<usize> {
-    //     let search_k = search_k.unwrap_or(k * self.n_trees);
-    //     let mut candidates = Vec::with_capacity(search_k * 2);
-    //     let budget_per_tree = (search_k / self.n_trees).max(k);
+    /// Queries the index for k nearest neighbors with enhanced search
+    ///
+    /// ### Params
+    ///
+    /// * `query_row` - RowRef from a matrix in which rows = samples and columns
+    ///   = features.
+    /// * `k` - Number of neighbors to return
+    /// * `search_k` - Search budget (None = k * n_trees, higher = better
+    ///   recall)
+    ///
+    /// ### Returns
+    ///
+    /// Vector of k nearest neighbor indices, sorted by distance
+    pub fn query_row(
+        &self,
+        query_row: RowRef<f32>,
+        k: usize,
+        search_k: Option<usize>,
+    ) -> Vec<usize> {
+        // check if row is contiguous; if yes, generate slice directly from it
+        // via unsafe
+        if query_row.col_stride() == 1 {
+            let slice =
+                unsafe { std::slice::from_raw_parts(query_row.as_ptr(), query_row.ncols()) };
+            return self.query(slice, k, search_k);
+        }
 
-    //     for tree in &self.trees {
-    //         self.query_tree_enhanced_row(tree, query_row, &mut candidates, budget_per_tree);
-    //     }
-
-    //     candidates.sort_unstable();
-    //     candidates.dedup();
-
-    //     let mut scored = Vec::with_capacity(candidates.len());
-    //     for idx in candidates {
-    //         let dist = self.vectors[idx]
-    //             .iter()
-    //             .zip(query_row.iter())
-    //             .fold(0.0, |acc, (a, b)| acc + (a - b).powi(2));
-    //         scored.push((idx, dist));
-    //     }
-
-    //     scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-    //     scored.into_iter().take(k).map(|(idx, _)| idx).collect()
-    // }
+        // Non-contiguous fallback
+        let query_vec: Vec<f32> = query_row.iter().cloned().collect();
+        self.query(&query_vec, k, search_k)
+    }
 
     /// Enhanced tree query with multi-path traversal and search budget
     ///

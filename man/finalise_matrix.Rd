@@ -11,6 +11,10 @@ finalise_matrix(matrix, return_format, cell_indices, gene_indices, sc_map)
 
 \item{return_format}{String. One of \code{c("cell", "gene")}.}
 
+\item{cell_indices}{Optional integer. The cell indices to return.}
+
+\item{gene_indices}{Optional integer. The gene indices to return.}
+
 \item{sc_map}{A \code{sc_mapper} class. Contains various mapping information.}
 }
 \value{

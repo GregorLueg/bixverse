@@ -25,6 +25,9 @@ kNN graph.}
 \item{search_budget}{Integer. Search budget per tree for the \code{"annoy"}
 algorithm.}
 
+\item{algorithm_type}{String. Which of the two implemented algorithms to
+use. One of \code{c("annoy", "hnsw")}.}
+
 \item{verbose}{Boolean. Controls verbosity of the function and returns
 how long certain operations took.}
 

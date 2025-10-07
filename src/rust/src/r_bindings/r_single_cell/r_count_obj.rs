@@ -1,6 +1,7 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use thousands::Separable;
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
@@ -139,7 +140,6 @@ fn get_cell_data(
 /// * `indices` - The original indices (in this case column).
 /// * `data_raw`- The raw counts for the cell.
 /// * `data_norm` - The normalised counts for the cell.
-/// * `cell_mask` - HashSet containing the index positions of the cells to keep.
 /// * `assay_type` - Which assay to return
 ///
 /// ### Returns
@@ -197,6 +197,9 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 ///
 /// * `f_path_cells` - Path to the .bin file for the cells.
 /// * `f_path_genes` - Path to the .bin file for the genes.
+/// * `n_cells` - No of cells represented in the data.
+/// * `n_genes` - No of genes represented in the data.
+/// * `cell_mask` - HashSet for which cells to keep.
 #[extendr]
 struct SingeCellCountData {
     pub f_path_cells: String,
@@ -229,6 +232,10 @@ impl SingeCellCountData {
     /////////////
 
     /// Get the shape
+    ///
+    /// ### Returns
+    ///
+    /// Vector with rows x cells
     pub fn get_shape(&mut self) -> Vec<usize> {
         vec![self.n_cells, self.n_genes]
     }
@@ -246,8 +253,8 @@ impl SingeCellCountData {
     /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
     /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
     /// * `data` - Slice of the data (`csc_matrix@x`).
-    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
     /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
+    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
     /// * `qc_params` - List with the quality control parameters.
     ///
     /// ### Returns
@@ -319,6 +326,7 @@ impl SingeCellCountData {
     /// * `no_cells` - Number of cells in the h5 file.
     /// * `no_genes` - Number of genes in the h5 file.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
@@ -335,6 +343,55 @@ impl SingeCellCountData {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = write_h5_counts(
+            &h5_path,
+            &self.f_path_cells,
+            &cs_type,
+            no_cells,
+            no_genes,
+            qc_params,
+            verbose,
+        );
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
+        )
+    }
+
+    /// Save h5 to file
+    ///
+    /// Slower version that is less memory heavy and will make usage of
+    /// streaming where possible.
+    ///
+    /// ### Params
+    ///
+    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
+    /// * `h5_path` - Path to the h5 file.
+    /// * `no_cells` - Number of cells in the h5 file.
+    /// * `no_genes` - Number of genes in the h5 file.
+    /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// A list with qc parameters.
+    pub fn h5_to_file_streaming(
+        &mut self,
+        cs_type: String,
+        h5_path: String,
+        no_cells: usize,
+        no_genes: usize,
+        qc_params: List,
+        verbose: bool,
+    ) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = stream_h5_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -428,12 +485,8 @@ impl SingeCellCountData {
             indptr.push(current_ptr);
 
             for cell in cell_chunks {
-                let (indices_i, data_i) = get_cell_data(
-                    &cell.col_indices,
-                    &cell.data_raw,
-                    &cell.data_norm,
-                    &assay_type,
-                );
+                let (indices_i, data_i) =
+                    get_cell_data(&cell.indices, &cell.data_raw, &cell.data_norm, &assay_type);
 
                 let len_data_i = data_i.len();
                 current_ptr += len_data_i;
@@ -454,12 +507,8 @@ impl SingeCellCountData {
             indptr.push(current_ptr);
 
             for gene in gene_chunks {
-                let (indices_i, data_i) = get_gene_data(
-                    &gene.row_indices,
-                    &gene.data_raw,
-                    &gene.data_norm,
-                    &assay_type,
-                );
+                let (indices_i, data_i) =
+                    get_gene_data(&gene.indices, &gene.data_raw, &gene.data_norm, &assay_type);
                 let len_data_i = data_i.len();
                 current_ptr += len_data_i;
                 data.push(data_i);
@@ -504,14 +553,7 @@ impl SingeCellCountData {
         // Parallel processing of results
         let results: Vec<(Vec<i32>, AssayData)> = cells
             .par_iter()
-            .map(|cell| {
-                get_cell_data(
-                    &cell.col_indices,
-                    &cell.data_raw,
-                    &cell.data_norm,
-                    &assay_type,
-                )
-            })
+            .map(|cell| get_cell_data(&cell.indices, &cell.data_raw, &cell.data_norm, &assay_type))
             .collect();
 
         // Sequential assembly (required for row_ptr)
@@ -583,7 +625,7 @@ impl SingeCellCountData {
             // Add data
             data.push(data_i);
             data_2.push(data_norm_i);
-            col_idx.push(cell.col_indices);
+            col_idx.push(cell.indices);
             row_ptr.push(current_row_ptr);
         }
 
@@ -681,7 +723,7 @@ impl SingeCellCountData {
             for cell in cell_batch {
                 let cell_id = cell.original_index as u32;
 
-                for (idx, &gene_id) in cell.col_indices.iter().enumerate() {
+                for (idx, &gene_id) in cell.indices.iter().enumerate() {
                     let raw_count = cell.data_raw[idx];
                     let norm_count = cell.data_norm[idx];
 
@@ -736,6 +778,148 @@ impl SingeCellCountData {
         }
     }
 
+    /// Generate gene-based data with memory-bounded accumulation
+    ///
+    /// This processes genes in phases to limit memory usage. Each phase:
+    ///
+    /// 1. Reads all cells (unavoidable for CSC conversion)
+    /// 2. Only accumulates data for genes in current phase
+    /// 3. Writes those genes to disk
+    /// 4. Clears memory and moves to next phase
+    ///
+    /// ### Params
+    ///
+    /// * `max_genes_in_memory` - Maximum genes to accumulate at once
+    ///   (e.g., 2000)
+    /// * `cell_batch_size` - How many cells to process at once
+    ///   (e.g., 100000)
+    /// * `verbose` - Controls verbosity
+    pub fn generate_gene_based_data_memory_bounded(
+        &mut self,
+        max_genes_in_memory: usize,
+        cell_batch_size: usize,
+        verbose: bool,
+    ) {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+        let header = reader.get_header();
+        let no_cells = header.total_cells;
+        let no_genes = header.total_genes;
+
+        if verbose {
+            println!("Converting CSR to CSC with memory-bounded approach:");
+            println!("  Total cells: {}", no_cells.separate_with_underscores());
+            println!("  Total genes: {}", no_genes.separate_with_underscores());
+            println!(
+                "  Processing {} genes per phase",
+                max_genes_in_memory.separate_with_underscores()
+            );
+        }
+
+        let mut writer =
+            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+
+        // Process genes in phases
+        let num_phases = no_genes.div_ceil(max_genes_in_memory);
+
+        for phase in 0..num_phases {
+            let gene_phase_start = phase * max_genes_in_memory;
+            let gene_phase_end = ((phase + 1) * max_genes_in_memory).min(no_genes);
+
+            if verbose {
+                println!(
+                    "Phase {}/{}: Processing genes {}-{}",
+                    phase + 1,
+                    num_phases,
+                    gene_phase_start,
+                    gene_phase_end
+                );
+            }
+
+            // Accumulator only for current phase genes
+            let mut gene_data: FxHashMap<u16, Vec<(u32, u16, F16)>> = FxHashMap::default();
+
+            // Process all cells in batches
+            let num_cell_batches = no_cells.div_ceil(cell_batch_size);
+
+            for cell_batch_idx in 0..num_cell_batches {
+                let cell_start = cell_batch_idx * cell_batch_size;
+                let cell_end = ((cell_batch_idx + 1) * cell_batch_size).min(no_cells);
+
+                if verbose && cell_batch_idx % 5 == 0 {
+                    let progress = (cell_batch_idx + 1) as f32 / num_cell_batches as f32 * 100.0;
+                    println!("  Reading cells: {:.1}%", progress);
+                }
+
+                // Read batch of cells
+                let cells = reader.read_cells_range(cell_start, cell_end);
+
+                // Extract data only for genes in current phase
+                for cell in cells {
+                    let cell_id = cell.original_index as u32;
+
+                    for (idx, &gene_id) in cell.indices.iter().enumerate() {
+                        // Only accumulate if gene is in current phase
+                        if (gene_id as usize) >= gene_phase_start
+                            && (gene_id as usize) < gene_phase_end
+                        {
+                            let raw_count = cell.data_raw[idx];
+                            let norm_count = cell.data_norm[idx];
+
+                            gene_data
+                                .entry(gene_id)
+                                .or_default()
+                                .push((cell_id, raw_count, norm_count));
+                        }
+                    }
+                }
+                // Cell batch is dropped here - memory freed
+            }
+
+            if verbose {
+                println!("  Writing {} genes to disk...", gene_data.len());
+            }
+
+            // Write genes in this phase in sorted order
+            for gene_id in gene_phase_start..gene_phase_end {
+                if let Some(mut entries) = gene_data.remove(&(gene_id as u16)) {
+                    // Sort by cell_id
+                    entries.sort_unstable_by_key(|&(cell_id, _, _)| cell_id);
+
+                    let data_raw: Vec<u16> = entries.iter().map(|(_, raw, _)| *raw).collect();
+                    let data_norm: Vec<F16> = entries.iter().map(|(_, _, norm)| *norm).collect();
+                    let row_indices: Vec<usize> = entries
+                        .iter()
+                        .map(|(cell_id, _, _)| *cell_id as usize)
+                        .collect();
+
+                    let chunk = CscGeneChunk::from_conversion(
+                        &data_raw,
+                        &data_norm,
+                        &row_indices,
+                        gene_id,
+                        true,
+                    );
+                    writer.write_gene_chunk(chunk).unwrap();
+                } else {
+                    // Gene has no expression
+                    let empty_chunk = CscGeneChunk::from_conversion(&[], &[], &[], gene_id, true);
+                    writer.write_gene_chunk(empty_chunk).unwrap();
+                }
+            }
+
+            // gene_data HashMap is dropped here - memory freed before next phase
+            if verbose {
+                println!("Phase {}/{} complete", phase + 1, num_phases);
+            }
+        }
+
+        writer.finalise().unwrap();
+
+        if verbose {
+            println!("Gene-based data generation complete");
+        }
+    }
+
     /// Return genes by index positions
     ///
     /// Leverages the CSC-stored data for fast gene retrieval
@@ -770,12 +954,8 @@ impl SingeCellCountData {
         row_ptr.push(current_col_ptr);
 
         for gene in &genes {
-            let (indices_i, data_i) = get_gene_data(
-                &gene.row_indices,
-                &gene.data_raw,
-                &gene.data_norm,
-                &assay_type,
-            );
+            let (indices_i, data_i) =
+                get_gene_data(&gene.indices, &gene.data_raw, &gene.data_norm, &assay_type);
             let len_data_i = data_i.len();
             current_col_ptr += len_data_i;
             data.push(data_i);

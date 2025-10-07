@@ -125,7 +125,7 @@ set_pca_loadings <- function(x, pca_loading) {
 #' @param knn_mat Numerical matrix. The matrix with the KNN data
 #'
 #' @export
-set_knn <- function(x, knn_matrix) {
+set_knn <- function(x, knn_mat) {
   UseMethod("set_knn")
 }
 
@@ -143,12 +143,7 @@ set_snn_graph <- function(x, snn_graph) {
 
 #### sc_mapper -----------------------------------------------------------------
 
-#' Set gene mapping method for sc_mapper
-#'
-#' @param x An `sc_mapper` object
-#' @param gene_map Named integer vector for gene mapping
-#'
-#' @return Updated `sc_mapper` object with gene mapping set
+#' @rdname set_gene_mapping
 #'
 #' @export
 set_gene_mapping.sc_mapper <- function(x, gene_map) {
@@ -162,12 +157,7 @@ set_gene_mapping.sc_mapper <- function(x, gene_map) {
   return(x)
 }
 
-#' Set cell mapping method for sc_mapper
-#'
-#' @param x An `sc_mapper` object
-#' @param cell_map Named integer vector for cell mapping
-#'
-#' @return Updated `sc_mapper` object with cell mapping set
+#' @rdname set_cell_mapping
 #'
 #' @export
 set_cell_mapping.sc_mapper <- function(x, cell_map) {
@@ -181,13 +171,7 @@ set_cell_mapping.sc_mapper <- function(x, cell_map) {
   return(x)
 }
 
-#' Set cells to keep for sc_mapper
-#'
-#' @param x An `sc_mapper` object
-#' @param cells_to_keep String or integer. The names or indices of the cells
-#' to keep in downstream analysis.
-#'
-#' @return Updated `sc_mapper` object with column index mapping set
+#' @rdname set_cell_to_keep
 #'
 #' @export
 set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
@@ -207,13 +191,7 @@ set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
   return(x)
 }
 
-#' Set the HVG for sc_mapper
-#'
-#' @param x An `sc_mapper` object
-#' @param hvg String or integer. The names or indices of the highly variable
-#' genes.
-#'
-#' @return Updated `sc_mapper` object with column index mapping set
+#' @rdname set_hvg
 #'
 #' @export
 set_hvg.sc_mapper <- function(x, hvg) {
@@ -235,12 +213,7 @@ set_hvg.sc_mapper <- function(x, hvg) {
 
 #### sc_cache ------------------------------------------------------------------
 
-#' Set PCA factors for sc_cache
-#'
-#' @param x An `sc_cache` object
-#' @param pca_factor Numerical matrix. The matrix with the PCA factors.
-#'
-#' @return Updated `sc_cache` object with added PCA factors.
+#' @rdname set_pca_factors
 #'
 #' @export
 set_pca_factors.sc_cache <- function(x, pca_factor) {
@@ -253,12 +226,7 @@ set_pca_factors.sc_cache <- function(x, pca_factor) {
   return(x)
 }
 
-#' Set PCA loadings for sc_mapper
-#'
-#' @param x An `sc_cache` object
-#' @param pca_loading Numerical matrix. The matrix with the PCA factors.
-#'
-#' @return Updated `sc_cache` object with added PCA loadings.
+#' @rdname set_pca_loadings
 #'
 #' @export
 set_pca_loadings.sc_cache <- function(x, pca_loading) {
@@ -271,12 +239,7 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
   return(x)
 }
 
-#' Set KNN for sc_mapper
-#'
-#' @param x An `sc_cache` object
-#' @param knn_mat Numerical matrix. The matrix with the PCA factors.
-#'
-#' @return Updated `sc_cache` object with added PCA loadings.
+#' @rdname set_knn
 #'
 #' @export
 set_knn.sc_cache <- function(x, knn_mat) {
@@ -289,12 +252,7 @@ set_knn.sc_cache <- function(x, knn_mat) {
   return(x)
 }
 
-#' Set the sNN graph for sc_mapper
-#'
-#' @param x An `sc_cache` object
-#' @param snn_graph Igraph. The sNN graph for subsequent clustering.
-#'
-#' @return Updated `sc_cache` object with added PCA loadings.
+#' @rdname set_snn_graph
 #'
 #' @export
 set_snn_graph.sc_cache <- function(x, snn_graph) {
@@ -325,9 +283,12 @@ get_gene_names <- function(x) {
 #' Get the cell names
 #'
 #' @param x An object to get the cell names from.
+#' @param filtered Boolean. Shall, if found only the cell names of the
+#' `cells_to_keep` be returned (see [bixverse::set_cell_to_keep()]. Defaults
+#' to `FALSE`
 #'
 #' @export
-get_cell_names <- function(x) {
+get_cell_names <- function(x, filtered = FALSE) {
   UseMethod("get_cell_names")
 }
 
@@ -336,6 +297,8 @@ get_cell_names <- function(x) {
 #' @param x An object to get the gene index from.
 #' @param gene_ids String vector. The gene ids to search for.
 #' @param rust_index Bool. Shall rust-based indexing be returned.
+#'
+#' @export
 get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
@@ -343,6 +306,8 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
 #' Get the cells to keep
 #'
 #' @param x An object to get the gene index from.
+#'
+#' @export
 get_cells_to_keep <- function(x) {
   UseMethod("get_cells_to_keep")
 }
@@ -350,6 +315,8 @@ get_cells_to_keep <- function(x) {
 #' Get the HVG
 #'
 #' @param x An object to get HVG from.
+#'
+#' @export
 get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
@@ -359,6 +326,8 @@ get_hvg <- function(x) {
 #' Get the PCA factors
 #'
 #' @param x An object to get PCA factors from.
+#'
+#' @export
 get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
 }
@@ -366,6 +335,8 @@ get_pca_factors <- function(x) {
 #' Get the PCA loadings
 #'
 #' @param x An object to get PCA loadings from.
+#'
+#' @export
 get_pca_loadings <- function(x) {
   UseMethod("get_pca_loadings")
 }
@@ -373,6 +344,8 @@ get_pca_loadings <- function(x) {
 #' Get the KNN matrix
 #'
 #' @param x An object to get the kNN matrix from.
+#'
+#' @export
 get_knn_mat <- function(x) {
   UseMethod("get_knn_mat")
 }
@@ -380,6 +353,8 @@ get_knn_mat <- function(x) {
 #' Get the sNN graph
 #'
 #' @param x An object to get the sNN graph from.
+#'
+#' @export
 get_snn_graph <- function(x) {
   UseMethod("get_snn_graph")
 }
@@ -388,11 +363,7 @@ get_snn_graph <- function(x) {
 
 #### sc_mapper -----------------------------------------------------------------
 
-#' Get the gene names
-#'
-#' @param x An `sc_mapper` object
-#'
-#' @return The gene names
+#' @rdname get_gene_names
 #'
 #' @export
 get_gene_names.sc_mapper <- function(x) {
@@ -402,13 +373,7 @@ get_gene_names.sc_mapper <- function(x) {
   return(names(x[["gene_mapping"]]))
 }
 
-#' Get the cell names
-#'
-#' @param x An `sc_mapper` object
-#' @param gene_ids String vector. The gene ids to search for.
-#' @param rust_index Bool. Shall rust-based indexing be returned.
-#'
-#' @return The gene indices
+#' @rdname get_gene_indices
 #'
 #' @export
 get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
@@ -426,11 +391,7 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
   return(as.integer(indices))
 }
 
-#' Get the gene indices
-#'
-#' @param x An `sc_mapper` object
-#'
-#' @return The cell names
+#' @rdname get_cells_to_keep
 #'
 #' @export
 get_cells_to_keep.sc_mapper <- function(x) {
@@ -440,25 +401,27 @@ get_cells_to_keep.sc_mapper <- function(x) {
   return(as.integer(x[["cells_to_keep_idx"]]))
 }
 
-#' Get the indices of the cells to keep
-#'
-#' @param x An `sc_mapper` object
-#'
-#' @return The cell indices (0-based for Rust)
+#' @rdname get_cell_names
 #'
 #' @export
-get_cell_names.sc_mapper <- function(x) {
+get_cell_names.sc_mapper <- function(x, filtered = FALSE) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(filtered, "B1")
 
-  return(names(x[["cell_mapping"]]))
+  cell_names <- names(x[["cell_mapping"]])
+
+  if (filtered) {
+    cells_to_keep <- get_cells_to_keep(x)
+    if (length(cells_to_keep) > 0) {
+      cell_names <- cell_names[cells_to_keep + 1]
+    }
+  }
+
+  return(cell_names)
 }
 
-#' Get the indices of the HVG
-#'
-#' @param x An `sc_mapper` object
-#'
-#' @return The gene indices (0-based for Rust) of the HVG
+#' @rdname get_hvg
 #'
 #' @export
 get_hvg.sc_mapper <- function(x) {
@@ -470,11 +433,7 @@ get_hvg.sc_mapper <- function(x) {
 
 #### sc_cache ------------------------------------------------------------------
 
-#' Get the PCA factors
-#'
-#' @param x An `sc_cache` object
-#'
-#' @return The PCA factor matrix.
+#' @rdname get_pca_factors
 #'
 #' @export
 get_pca_factors.sc_cache <- function(x) {
@@ -484,11 +443,7 @@ get_pca_factors.sc_cache <- function(x) {
   return(x[["pca_factors"]])
 }
 
-#' Get the PCA loadings
-#'
-#' @param x An `sc_cache` object
-#'
-#' @return The PCA loading matrix.
+#' @rdname get_pca_loadings
 #'
 #' @export
 get_pca_loadings.sc_cache <- function(x) {
@@ -498,11 +453,7 @@ get_pca_loadings.sc_cache <- function(x) {
   return(x[["pca_loadings"]])
 }
 
-#' Get the KNN matrix
-#'
-#' @param x An `sc_cache` object
-#'
-#' @return The KNN matrix (0-indexed).
+#' @rdname get_knn_mat
 #'
 #' @export
 get_knn_mat.sc_cache <- function(x) {
@@ -512,11 +463,7 @@ get_knn_mat.sc_cache <- function(x) {
   return(x[["knn_matrix"]])
 }
 
-#' Get the sNN graph
-#'
-#' @param x An `sc_cache` object
-#'
-#' @return The sNN igraph.
+#' @rdname get_snn_graph
 #'
 #' @export
 get_snn_graph.sc_cache <- function(x) {
@@ -551,11 +498,11 @@ get_snn_graph.sc_cache <- function(x) {
 #'   to Rust functions that can work on the counts more specifically.}
 #'   \item{dir_data}{Path to the directory in which the data will be saved on
 #'   disk.}
-#'   \item{sc_cache}{List with cached data. Future feature, nothing implemented
-#'   yet.}
+#'   \item{sc_cache}{Class with cached data. Contains less memory-heavy objects
+#'   such as embeddings, kNN information or sNN graphs.}
+#'   \item{sc_map}{Class containing various mapping information such as HVG
+#'   indices, cells to keep, etc.}
 #'   \item{dims}{Dimensions of the original data.}
-#'   \item{index_maps}{A list of two named numerics that contains cell id to
-#'   cell idx and gene id to gene idx info.}
 #' }
 #'
 #' @return Returns the `single_cell_exp` class for further operations.
@@ -1090,6 +1037,8 @@ create_sparse_matrix <- function(count_data, return_format) {
 #'
 #' @param matrix The sparse matrix to finalise
 #' @param return_format String. One of `c("cell", "gene")`.
+#' @param cell_indices Optional integer. The cell indices to return.
+#' @param gene_indices Optional integer. The gene indices to return.
 #' @param sc_map A `sc_mapper` class. Contains various mapping information.
 #'
 #' @return The finalised matrix.
@@ -1148,18 +1097,22 @@ finalise_matrix <- function(
 
 #' @name get_cell_names.single_cell_exp
 #'
-#' @title Get cell names for `single_cell_exp`
+#' @title Get the cell names from a `single_cell_exp`.
+#'
+#' @rdname get_cell_names
 #'
 #' @method get_cell_names single_cell_exp
 S7::method(get_cell_names, single_cell_exp) <- function(
-  x
+  x,
+  filtered = FALSE
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
   # add the data using the S3 method
   cell_names <- get_cell_names(
-    x = S7::prop(x, "sc_map")
+    x = S7::prop(x, "sc_map"),
+    filtered = filtered
   )
 
   return(cell_names)
@@ -1167,7 +1120,9 @@ S7::method(get_cell_names, single_cell_exp) <- function(
 
 #' @name get_gene_names.single_cell_exp
 #'
-#' @title Get gene names for `single_cell_exp`
+#' @title Get the gene names from a `single_cell_exp`.
+#'
+#' @rdname get_gene_names
 #'
 #' @method get_gene_names single_cell_exp
 S7::method(get_gene_names, single_cell_exp) <- function(
@@ -1186,7 +1141,9 @@ S7::method(get_gene_names, single_cell_exp) <- function(
 
 #' @name get_cells_to_keep.single_cell_exp
 #'
-#' @title Get gene indices for `single_cell_exp`
+#' @title Get the cells to keep from a `single_cell_exp`.
+#'
+#' @rdname get_cells_to_keep
 #'
 #' @method get_cells_to_keep single_cell_exp
 S7::method(get_cells_to_keep, single_cell_exp) <- function(
@@ -1205,7 +1162,9 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
 
 #' @name get_gene_indices.single_cell_exp
 #'
-#' @title Get gene indices for `single_cell_exp`
+#' @title Get the gene indices from a `single_cell_exp`.
+#'
+#' @rdname get_gene_indices
 #'
 #' @method get_gene_indices single_cell_exp
 S7::method(get_gene_indices, single_cell_exp) <- function(
@@ -1230,7 +1189,9 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
 
 #' @name get_hvg.single_cell_exp
 #'
-#' @title Get HVG gene indices for `single_cell_exp`
+#' @title Get the highly variable gene indices from a `single_cell_exp`.
+#'
+#' @rdname get_hvg
 #'
 #' @method get_hvg single_cell_exp
 S7::method(get_hvg, single_cell_exp) <- function(
@@ -1251,7 +1212,9 @@ S7::method(get_hvg, single_cell_exp) <- function(
 
 #' @name get_pca_factors.single_cell_exp
 #'
-#' @title Get the PCA factors from `single_cell_exp`
+#' @title Get the PCA factors from a `single_cell_exp`.
+#'
+#' @rdname get_pca_factors
 #'
 #' @method get_pca_factors single_cell_exp
 S7::method(get_pca_factors, single_cell_exp) <- function(
@@ -1270,7 +1233,9 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
 
 #' @name get_pca_loadings.single_cell_exp
 #'
-#' @title Get the PCA loadings from `single_cell_exp`
+#' @title Get the PCA loadings from a `single_cell_exp`.
+#'
+#' @rdname get_pca_loadings
 #'
 #' @method get_pca_loadings single_cell_exp
 S7::method(get_pca_loadings, single_cell_exp) <- function(
@@ -1289,7 +1254,9 @@ S7::method(get_pca_loadings, single_cell_exp) <- function(
 
 #' @name get_knn_mat.single_cell_exp
 #'
-#' @title Get the KNN matrix from `single_cell_exp`
+#' @title Get the KNN matrix from a `single_cell_exp`.
+#'
+#' @rdname get_knn_mat
 #'
 #' @method get_knn_mat single_cell_exp
 S7::method(get_knn_mat, single_cell_exp) <- function(
@@ -1308,7 +1275,9 @@ S7::method(get_knn_mat, single_cell_exp) <- function(
 
 #' @name get_snn_graph.single_cell_exp
 #'
-#' @title Get the sNN graph from `single_cell_exp`
+#' @title Get the SNN graph from a `single_cell_exp`.
+#'
+#' @rdname get_snn_graph
 #'
 #' @method get_snn_graph single_cell_exp
 S7::method(get_snn_graph, single_cell_exp) <- function(
@@ -1376,9 +1345,10 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
 #' @method `[[<-` single_cell_exp
 #'
 #' @export
-S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
+S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(i, "S+")
+
   if (length(i) == 1) {
     checkmate::qassert(value, "a")
   } else {
@@ -1401,6 +1371,7 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, value) {
 
   return(x)
 }
+
 
 #' Add a new column to the obs table
 #'
@@ -1446,7 +1417,9 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
 
 #' @name set_gene_mapping.single_cell_exp
 #'
-#' @title Set gene mapping method for `single_cell_exp`
+#' @title Set the gene mapping for a `single_cell_exp` class.
+#'
+#' @rdname set_gene_mapping
 #'
 #' @method set_gene_mapping single_cell_exp
 S7::method(set_gene_mapping, single_cell_exp) <- function(
@@ -1469,7 +1442,9 @@ S7::method(set_gene_mapping, single_cell_exp) <- function(
 
 #' @name set_cell_mapping.single_cell_exp
 #'
-#' @title Set cell mapping method for `single_cell_exp`
+#' @title Set the cell mapping for a `single_cell_exp` class.
+#'
+#' @rdname set_cell_mapping
 #'
 #' @method set_cell_mapping single_cell_exp
 S7::method(set_cell_mapping, single_cell_exp) <- function(
@@ -1492,7 +1467,9 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
 
 #' @name set_cell_to_keep.single_cell_exp
 #'
-#' @title Set cell method for `single_cell_exp`
+#' @title Set the cell mapping for a `single_cell_exp` class.
+#'
+#' @rdname set_cell_to_keep
 #'
 #' @method set_cell_to_keep single_cell_exp
 S7::method(set_cell_to_keep, single_cell_exp) <- function(
@@ -1521,7 +1498,9 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
 
 #' @name set_hvg.single_cell_exp
 #'
-#' @title Set HVG genes for `single_cell_exp`
+#' @title Set the highly variable genes for a `single_cell_exp` class.
+#'
+#' @rdname set_hvg
 #'
 #' @method set_hvg single_cell_exp
 S7::method(set_hvg, single_cell_exp) <- function(
@@ -1545,7 +1524,9 @@ S7::method(set_hvg, single_cell_exp) <- function(
 
 #' @name set_pca_factors.single_cell_exp
 #'
-#' @title Set PCA factors method for `single_cell_exp`
+#' @title Set the PCA factors for a `single_cell_exp` class.
+#'
+#' @rdname set_pca_factors
 #'
 #' @method set_pca_factors single_cell_exp
 S7::method(set_pca_factors, single_cell_exp) <- function(
@@ -1567,7 +1548,9 @@ S7::method(set_pca_factors, single_cell_exp) <- function(
 
 #' @name set_pca_loadings.single_cell_exp
 #'
-#' @title Set PCA factors method for `single_cell_exp`
+#' @title Set the PCA factors for a `single_cell_exp` class.
+#'
+#' @rdname set_pca_loadings
 #'
 #' @method set_pca_loadings single_cell_exp
 S7::method(set_pca_loadings, single_cell_exp) <- function(
@@ -1589,7 +1572,9 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
 
 #' @name set_knn.single_cell_exp
 #'
-#' @title Set PCA factors method for `single_cell_exp`
+#' @title Set the KNN matrix for a `single_cell_exp` class.
+#'
+#' @rdname set_knn
 #'
 #' @method set_knn single_cell_exp
 S7::method(set_knn, single_cell_exp) <- function(
@@ -1612,7 +1597,9 @@ S7::method(set_knn, single_cell_exp) <- function(
 
 #' @name set_snn_graph.single_cell_exp
 #'
-#' @title Set SNN graph method for `single_cell_exp`
+#' @title Set the sNN graph for a `single_cell_exp` class.
+#'
+#' @rdname set_snn_graph
 #'
 #' @method set_snn_graph single_cell_exp
 S7::method(set_snn_graph, single_cell_exp) <- function(

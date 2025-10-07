@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_single_cell_processing.R
 \name{load_h5ad}
 \alias{load_h5ad}
-\title{Load in h5ad to \code{single_cell_exp} (nightly!)}
+\title{Load in h5ad to \code{single_cell_exp}}
 \usage{
 load_h5ad(
   object,

@@ -2,13 +2,23 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_cell_names}
 \alias{get_cell_names}
+\alias{get_cell_names.sc_mapper}
+\alias{get_cell_names.single_cell_exp}
 \title{Get the cell names}
 \usage{
-get_cell_names(x)
+get_cell_names(x, filtered = FALSE)
+
+\method{get_cell_names}{sc_mapper}(x, filtered = FALSE)
 }
 \arguments{
 \item{x}{An object to get the cell names from.}
+
+\item{filtered}{Boolean. Shall, if found only the cell names of the
+\code{cells_to_keep} be returned (see \code{\link[=set_cell_to_keep]{set_cell_to_keep()}}. Defaults
+to \code{FALSE}}
 }
 \description{
 Get the cell names
+
+Get the cell names from a \code{single_cell_exp}.
 }

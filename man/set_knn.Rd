@@ -2,9 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_knn}
 \alias{set_knn}
+\alias{set_knn.sc_cache}
+\alias{set_knn.single_cell_exp}
 \title{Set/add KNN}
 \usage{
-set_knn(x, knn_matrix)
+set_knn(x, knn_mat)
+
+\method{set_knn}{sc_cache}(x, knn_mat)
 }
 \arguments{
 \item{x}{An object to add the KNN data to}
@@ -13,4 +17,6 @@ set_knn(x, knn_matrix)
 }
 \description{
 Set/add KNN
+
+Set the KNN matrix for a \code{single_cell_exp} class.
 }

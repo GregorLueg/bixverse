@@ -17,8 +17,9 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 /// mitochondrial genes, or ribosomal genes in the cells for QC purposes.
 ///
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
-/// @param gene_set_idx Named list with integer(!) positions (1-indexed!) as
+/// @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 /// elements of the genes of interest.
+/// @param streaming Boolean. Shall the data be worked on in chunks.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
@@ -29,6 +30,7 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 fn rs_sc_get_gene_set_perc(
     f_path_cell: &str,
     gene_set_idx: List,
+    streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
@@ -44,7 +46,11 @@ fn rs_sc_get_gene_set_perc(
         gene_set_indices.push(indices_i);
     }
 
-    let res = get_gene_set_perc(f_path_cell, gene_set_indices, verbose);
+    let res = if streaming {
+        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, verbose)
+    } else {
+        get_gene_set_perc(f_path_cell, gene_set_indices, verbose)
+    };
 
     let mut result_list = List::new(gene_set_idx.len());
     if let Some(names) = gene_set_idx.names() {
@@ -107,6 +113,8 @@ fn get_hvg_method(s: &str) -> Option<HvgMethod> {
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
+/// @param streaming Boolean. Shall the genes be streamed in to reduce memory
+/// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @return A list with the percentages of counts per gene set group detected
@@ -126,6 +134,7 @@ fn rs_sc_hvg(
     cell_indices: Vec<i32>,
     loess_span: f64,
     clip_max: Option<f32>,
+    streaming: bool,
     verbose: bool,
 ) -> List {
     let cell_set = cell_indices
@@ -136,10 +145,20 @@ fn rs_sc_hvg(
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_res: HvgRes = match hvg_type {
-        HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
-        HvgMethod::MeanVarBin => get_hvg_mvb(),
-        HvgMethod::Dispersion => get_hvg_dispersion(),
+    let hvg_res: HvgRes = if streaming {
+        match hvg_type {
+            HvgMethod::Vst => {
+                get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span, clip_max, verbose)
+            }
+            HvgMethod::MeanVarBin => get_hvg_mvb_streaming(),
+            HvgMethod::Dispersion => get_hvg_dispersion_streaming(),
+        }
+    } else {
+        match hvg_type {
+            HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
+            HvgMethod::MeanVarBin => get_hvg_mvb(),
+            HvgMethod::Dispersion => get_hvg_dispersion(),
+        }
     };
 
     list!(
@@ -237,6 +256,8 @@ fn rs_sc_pca(
 /// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
 /// @param search_budget Integer. Search budget per tree for the `"annoy"`
 /// algorithm.
+/// @param algorithm_type String. Which of the two implemented algorithms to
+/// use. One of `c("annoy", "hnsw")`.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -295,6 +316,8 @@ fn rs_sc_knn(
 /// represent the neighbours.
 /// @param snn_method String. Which method to use to calculate the similarity.
 /// Choice of `c("jaccard", "rank")`.
+/// @param limited_graph Boolean. Shall the sNNs only be calculated between
+/// direct neighbours in the graph, or between all possible combinations.
 /// @param pruning Float. Below which value for the Jaccard similarity to prune
 /// the weight to 0.
 /// @param verbose Boolean. Controls verbosity of the function.

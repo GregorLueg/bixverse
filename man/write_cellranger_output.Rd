@@ -27,6 +27,12 @@ write_cellranger_output(
 \item{var}{data.table. The variable data. Needs to have
 \code{ncol(var) == ncol(counts)}.}
 
+\item{format_type}{String. One of \code{c("csv", "tsv")}. Shall the data be
+saved in TSV or CSV.}
+
+\item{rows}{String. One of \code{c("cells", "genes")}. Shall the rows represent
+cells or genes in the .mtx file.}
+
 \item{overwrite}{Boolean. Shall any found h5ad file be overwritten.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}

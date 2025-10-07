@@ -13,6 +13,9 @@ represent the neighbours.}
 \item{snn_method}{String. Which method to use to calculate the similarity.
 Choice of \code{c("jaccard", "rank")}.}
 
+\item{limited_graph}{Boolean. Shall the sNNs only be calculated between
+direct neighbours in the graph, or between all possible combinations.}
+
 \item{pruning}{Float. Below which value for the Jaccard similarity to prune
 the weight to 0.}
 

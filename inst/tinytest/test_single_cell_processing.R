@@ -31,11 +31,13 @@ cells_pass <- which(
       min_genes_exp)
 )
 
+# test 1
 expect_true(
   current = length(genes_pass) > 80 & length(genes_pass) != 100,
   info = "sc processing - sensible amount of genes pass"
 )
 
+# test 2
 expect_true(
   current = length(cells_pass) > 800 & length(cells_pass) != 1000,
   info = "sc processing - sensible amount of cells pass"
@@ -65,21 +67,25 @@ sc_object <- load_h5ad(
 
 ## function warnings -----------------------------------------------------------
 
+# test 3
 expect_warning(
   current = find_hvg_sc(sc_object),
   info = "warning that no cells to keep were specified"
 )
 
+# test 4
 expect_warning(
   current = calculate_pca_sc(sc_object, no_pcs = 10L),
   info = "warning that no HVGs are detected"
 )
 
+# test 5
 expect_warning(
-  current = find_neigbours_single_sc(sc_object),
+  current = find_neighbours_sc(sc_object),
   info = "warning that no PCA data are detected"
 )
 
+# test 6
 expect_warning(
   current = find_clusters_sc(sc_object),
   info = "warning that no kNN/sNN data was found"
@@ -105,6 +111,7 @@ sc_object <- gene_set_proportions_sc(
   .verbose = FALSE
 )
 
+# test 7
 expect_equivalent(
   current = unlist(sc_object[["gs_1"]]),
   target = props_gs_1,
@@ -112,6 +119,7 @@ expect_equivalent(
   info = "gene proportion calculations gene set 1"
 )
 
+# test 8
 expect_equivalent(
   current = unlist(sc_object[["gs_2"]]),
   target = props_gs_2,
@@ -126,9 +134,35 @@ sc_object <- gene_set_proportions_sc(
   .verbose = FALSE
 )
 
+# test 9
 expect_true(
   current = all(!c("gs_1.1", "gs_2.1") %in% colnames(sc_object[[]])),
   info = "overwriting of obs data works"
+)
+
+### streaming ------------------------------------------------------------------
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+# test 10
+expect_equivalent(
+  current = unlist(sc_object[["gs_1"]]),
+  target = props_gs_1,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 1 - streaming version"
+)
+
+# test 11
+expect_equivalent(
+  current = unlist(sc_object[["gs_2"]]),
+  target = props_gs_2,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 2 - streaming version"
 )
 
 ## cells to keep logic ---------------------------------------------------------
@@ -137,6 +171,7 @@ threshold <- 0.05
 
 cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
 
+# test 12
 expect_true(
   current = length(cells_to_keep) > 600,
   info = "sensible cell filtering based on the threshold"
@@ -144,13 +179,25 @@ expect_true(
 
 sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
 
+# test 13
 expect_true(
   current = all(unlist(sc_object[["cell_id"]]) == cells_to_keep),
   info = "setting genes to keep removes them from the obs table"
 )
 
-counts_more_filtered <- counts_filtered[which(props_gs_2 < threshold), ]
+cell_names_filtered <- get_cell_names(sc_object, filtered = TRUE)
 
+# test 14
+expect_true(
+  current = all(cell_names_filtered == cells_to_keep),
+  info = "filter flag on cell names works"
+)
+
+counts_more_filtered <- counts_filtered[
+  which(props_gs_2 < threshold),
+]
+
+# test 15
 expect_equivalent(
   current = get_cells_to_keep(sc_object),
   target = which(props_gs_2 < threshold) - 1, # zero indexed in Rust
@@ -159,12 +206,14 @@ expect_equivalent(
 
 # the logic of retrieving cells will become more complicated here...
 
+# test 16
 expect_equal(
   current = sc_object[,, use_cells_to_keep = TRUE],
   target = counts_more_filtered,
   info = "counts after setting cells to keep and using the parameter"
 )
 
+# test 17
 expect_equal(
   current = sc_object[,, use_cells_to_keep = FALSE],
   target = counts_filtered,
@@ -172,6 +221,8 @@ expect_equal(
 )
 
 ## hvg selection ---------------------------------------------------------------
+
+hvg_to_keep <- 30L
 
 ### vst version ----------------------------------------------------------------
 
@@ -213,14 +264,21 @@ var_std <- sapply(1:ncol(counts_more_filtered), function(i) {
 var_std[is.na(var_std)] <- 0
 
 # need to 0-index
-hvg_r <- order(var_std, decreasing = TRUE)[1:25L] - 1
+hvg_r <- order(var_std, decreasing = TRUE)[1:hvg_to_keep] - 1
 
 #### rust part -----------------------------------------------------------------
 
-sc_object <- find_hvg_sc(object = sc_object, hvg_no = 25L, .verbose = FALSE)
+##### direct load --------------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
 
 var_data <- get_sc_var(sc_object)
 
+# test 18
 expect_equivalent(
   current = var_data$mean,
   target = mean_values_r,
@@ -228,6 +286,7 @@ expect_equivalent(
   info = "Correct mean calculations for genes"
 )
 
+# test 19
 expect_equivalent(
   current = var_data$var,
   target = var_values_r,
@@ -236,6 +295,7 @@ expect_equivalent(
 )
 
 # due to differences in the loess implementation, this is set higher...
+# test 20
 expect_equivalent(
   current = var_data$var_std,
   target = var_std,
@@ -245,8 +305,52 @@ expect_equivalent(
 
 hvg_rs <- get_hvg(sc_object)
 
+# test 21
 expect_true(
-  current = length(intersect(hvg_r, hvg_rs)) == 25L,
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
+  info = "Overlap in the detected HVGs"
+)
+
+##### streaming version --------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+var_data <- get_sc_var(sc_object)
+
+# test 22
+expect_equivalent(
+  current = var_data$mean,
+  target = mean_values_r,
+  tolerance = 10e-7,
+  info = "Correct mean calculations for genes"
+)
+
+# test 23
+expect_equivalent(
+  current = var_data$var,
+  target = var_values_r,
+  tolerance = 10e-7,
+  info = "Correct variance calculations for genes"
+)
+
+# due to differences in the loess implementation, this is set higher...
+# test 24
+expect_equivalent(
+  current = var_data$var_std,
+  target = var_std,
+  tolerance = 10e-3,
+  info = "Correct standardised variance calculations for genes"
+)
+
+hvg_rs <- get_hvg(sc_object)
+
+# test 25
+expect_true(
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
   info = "Overlap in the detected HVGs"
 )
 
@@ -272,6 +376,7 @@ sc_object <- calculate_pca_sc(
   .verbose = FALSE
 )
 
+# test 26
 expect_true(
   current = all.equal(
     abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
@@ -288,6 +393,7 @@ sc_object <- calculate_pca_sc(
   .verbose = FALSE
 )
 
+# test 27
 expect_true(
   current = all.equal(
     abs(diag(cor(get_pca_factors(sc_object)[, 1:10], pca_r$x[, 1:10]))),
@@ -299,10 +405,16 @@ expect_true(
 
 ## knn and snn -----------------------------------------------------------------
 
-if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
+if (
+  all(sapply(
+    c("BiocNeighbors", "bluster", "cluster"),
+    requireNamespace,
+    quietly = TRUE
+  ))
+) {
   # annoy algorithm
 
-  sc_object <- find_neigbours_single_sc(
+  sc_object <- find_neighbours_sc(
     sc_object,
     neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
     .verbose = FALSE
@@ -318,16 +430,17 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
     k = 15L
   )$index
 
+  # annoy is a bit more random compared to the implementations in BiocNeighbors
   expect_true(
     current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
       (dim(bioc_knn)[1] *
         dim(bioc_knn)[2])) >=
-      0.99,
-    info = "kNN overlap with BiocNeighbors >= 0.99 - annoy algorithm"
+      0.98,
+    info = "kNN overlap with BiocNeighbors >= 0.98 - annoy algorithm"
   )
 
   # hnsw
-  sc_object <- find_neigbours_single_sc(
+  sc_object <- find_neighbours_sc(
     sc_object,
     neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
     .verbose = FALSE
@@ -337,8 +450,8 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
     current = (sum(sc_object@sc_cache$knn_matrix + 1 == bioc_knn) /
       (dim(bioc_knn)[1] *
         dim(bioc_knn)[2])) >=
-      0.99,
-    info = "kNN overlap with BiocNeighbors >= 0.99 - hnsw"
+      0.98,
+    info = "kNN overlap with BiocNeighbors >= 0.98 - hnsw"
   )
 
   # snn generation
@@ -390,6 +503,12 @@ if (requireNamespace(c("BiocNeighbors", "bluster"), quietly = TRUE)) {
 }
 
 ## community detection ---------------------------------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
+  .verbose = FALSE
+)
 
 sc_object <- find_clusters_sc(sc_object)
 

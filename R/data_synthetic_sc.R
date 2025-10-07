@@ -28,6 +28,13 @@ generate_single_cell_test_data <- function(seed = 42L) {
   # checks
   checkmate::qassert(seed, "I1")
 
+  if (!requireNamespace("Matrix", quietly = TRUE)) {
+    stop(
+      "Package 'Matrix' needed for this function to work. Please install it.",
+      call. = FALSE
+    )
+  }
+
   n_cells = 1000L
   n_genes = 100L
 
@@ -190,6 +197,10 @@ write_h5ad_sc <- function(
 #' `nrow(obs) == nrow(counts)`.
 #' @param var data.table. The variable data. Needs to have
 #' `ncol(var) == ncol(counts)`.
+#' @param format_type String. One of `c("csv", "tsv")`. Shall the data be
+#' saved in TSV or CSV.
+#' @param rows String. One of `c("cells", "genes")`. Shall the rows represent
+#' cells or genes in the .mtx file.
 #' @param overwrite Boolean. Shall any found h5ad file be overwritten.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'

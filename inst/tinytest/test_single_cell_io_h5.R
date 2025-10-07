@@ -34,9 +34,9 @@ write_h5ad_sc(
 
 expected_dims <- setNames(c(1000, 100), c("obs", "var"))
 
-h5_meta_csr <- get_h5ad_dimensions(f_path_csr)
+h5_meta_csr <- bixverse:::get_h5ad_dimensions(f_path_csr)
 
-h5_meta_csc <- get_h5ad_dimensions(f_path_csc)
+h5_meta_csc <- bixverse:::get_h5ad_dimensions(f_path_csc)
 
 expect_equal(
   current = h5_meta_csr$dims,
@@ -173,6 +173,8 @@ sc_qc_param = params_sc_min_quality(
   min_cells = min_cells_exp
 )
 
+#### direct writing ------------------------------------------------------------
+
 # test the underlying rust directly
 sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
 
@@ -220,7 +222,51 @@ expect_equivalent(
   info = paste("h5ad to binary - correct genes being kept (with reading CSC)")
 )
 
-#### duckdb part ---------------------------------------------------------------
+#### streaming engine ----------------------------------------------------------
+
+file_res <- rust_con$h5_to_file_streaming(
+  cs_type = h5_meta_csr$type,
+  h5_path = path.expand(f_path_csr),
+  no_cells = h5_meta_csr$dims["obs"],
+  no_genes = h5_meta_csr$dims["var"],
+  qc_params = sc_qc_param,
+  verbose = FALSE
+)
+
+expect_equivalent(
+  current = file_res$cell_indices + 1,
+  target = cells_pass,
+  info = paste("h5ad to binary - correct cells being kept")
+)
+
+expect_equivalent(
+  current = file_res$gene_indices + 1,
+  target = genes_pass,
+  info = paste("h5ad to binary - correct genes being kept")
+)
+
+file_res <- rust_con$h5_to_file_streaming(
+  cs_type = h5_meta_csc$type,
+  h5_path = path.expand(f_path_csc),
+  no_cells = h5_meta_csc$dims["obs"],
+  no_genes = h5_meta_csc$dims["var"],
+  qc_params = sc_qc_param,
+  verbose = FALSE
+)
+
+expect_equivalent(
+  current = file_res$cell_indices + 1,
+  target = cells_pass,
+  info = paste("h5ad to binary - correct cells being kept (with reading CSC)")
+)
+
+expect_equivalent(
+  current = file_res$gene_indices + 1,
+  target = genes_pass,
+  info = paste("h5ad to binary - correct genes being kept (with reading CSC)")
+)
+
+### duckdb part ----------------------------------------------------------------
 
 duckdb_con <- get_sc_duckdb(sc_object)
 
@@ -310,6 +356,110 @@ expect_true(
 sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
 
 sc_object <- load_h5ad(
+  object = sc_object,
+  h5_path = path.expand(f_path_csr),
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+### test obs -------------------------------------------------------------------
+
+obs_object <- sc_object[[]]
+
+expect_equal(
+  current = obs_object$cell_id,
+  target = obs_filtered$cell_id,
+  info = "obs table from h5ad csr (from object) - correct cells kept"
+)
+
+expect_equal(
+  current = obs_object$obs_cell_grp,
+  target = obs_filtered$cell_grp,
+  info = "obs table from h5ad csr (from object) - cell group correct"
+)
+
+expect_equivalent(
+  current = Matrix::rowSums(counts_filtered),
+  target = obs_object$lib_size,
+  info = "obs table from h5ad csr (from object) - library size correct"
+)
+
+expect_equivalent(
+  current = Matrix::rowSums(counts_filtered != 0),
+  target = obs_object$nnz,
+  info = "obs table from h5ad csr (from object) - nnz correct"
+)
+
+### test vars ------------------------------------------------------------------
+
+vars_object <- get_sc_var(sc_object)
+
+expect_equal(
+  current = vars_object$gene_id,
+  target = vars_filtered$gene_id,
+  info = "var table from h5ad csr (from object) - correct genes kept"
+)
+
+### test counts ----------------------------------------------------------------
+
+counts_csr_obj <- sc_object[,, return_format = "cell"]
+
+expect_equal(
+  current = counts_csr_obj,
+  target = counts_filtered,
+  info = paste("count retrieval - full CSR")
+)
+
+set.seed(42L)
+
+random_cell_indices <- sample(1:nrow(counts_csr_obj), size = 20L)
+
+expect_equal(
+  current = sc_object[random_cell_indices, , return_format = "cell"],
+  target = counts_filtered[random_cell_indices, ],
+  info = paste("count retrieval - CSR - random index selection")
+)
+
+counts_csc_object <- sc_object[,, return_format = "gene"]
+
+expect_equal(
+  current = counts_csc_object,
+  target = counts_filtered_csc,
+  info = paste("count retrieval - full CSC")
+)
+
+set.seed(123L)
+
+random_gene_indices <- sample(1:ncol(counts_csr_obj), size = 20L)
+
+expect_equal(
+  current = sc_object[, random_gene_indices, return_format = "gene"],
+  target = counts_filtered_csc[, random_gene_indices],
+  info = paste("count retrieval - full CSC - random index selection")
+)
+
+### test getters ---------------------------------------------------------------
+
+cell_names_obj <- get_cell_names(sc_object)
+gene_names_obj <- get_gene_names(sc_object)
+
+expect_equal(
+  current = cell_names_obj,
+  target = obs_filtered$cell_id,
+  info = "correct cell names"
+)
+
+expect_equal(
+  current = gene_names_obj,
+  target = vars_filtered$gene_id,
+  info = "correct gene names"
+)
+
+## streaming h5ad --------------------------------------------------------------
+
+sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+
+sc_object <- stream_h5ad(
   object = sc_object,
   h5_path = path.expand(f_path_csr),
   sc_qc_param = sc_qc_param,

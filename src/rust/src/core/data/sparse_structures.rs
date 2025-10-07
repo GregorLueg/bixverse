@@ -508,11 +508,7 @@ where
 ///
 /// ### Params
 ///
-/// * `data` - The data stored in CSR format.
-/// * `col_ind` - The column indices from the CSR format.
-/// * `row_ptr` - The row pointers from the CSR format.
-/// * `ncols` - The number of columns in the data.
-/// * `data2` - An optional second data layer.
+/// * `sparse_data` - The CompressedSparseData you want to transform
 ///
 /// ### Returns
 ///
