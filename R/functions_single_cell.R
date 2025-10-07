@@ -46,7 +46,7 @@ get_seurat_counts_to_list <- function(seurat_obj) {
   checkmate::assertClass(seurat_obj, "Seurat")
 
   # get the counts
-  raw_counts <- seurat_obj@assays$RNA@layers$counts
+  raw_counts <- Seurat::GetAssayData(seurat_obj, layer = "counts")
 
   res <- list(
     indptr = raw_counts@p,

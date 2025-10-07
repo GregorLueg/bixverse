@@ -2110,9 +2110,13 @@ SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_s
 
 SingeCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingeCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
 
-SingeCellCountData$h5_to_file <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, h5_path, feature_type, qc_params, verbose)
+SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
-SingeCellCountData$h5_to_file_streaming <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, h5_path, feature_type, qc_params, verbose)
+SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+
+SingeCellCountData$h5_cellranger_to_file <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_cellranger_to_file, self, h5_path, feature_type, qc_params, verbose)
+
+SingeCellCountData$h5_cellranger_to_file_streaming <- function(h5_path, feature_type, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_cellranger_to_file_streaming, self, h5_path, feature_type, qc_params, verbose)
 
 SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 

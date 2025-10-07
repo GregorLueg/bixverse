@@ -3,6 +3,7 @@
 if (!requireNamespace("Seurat", quietly = TRUE)) {
   exit_file("Seurat not available")
 }
+options(lifecycle_verbosity = "quiet")
 
 # comparison to seurat... conversion, similar results, etc. pp.
 # key differences are likely due to f16 vs f64 in terms of count storage

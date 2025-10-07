@@ -76,12 +76,12 @@ S7::method(find_markers_sc, single_cell_exp) <- function(
       f_path = get_rust_count_cell_f_path(object),
       cell_indices_1 = get_cell_indices(
         x = object,
-        cell_ids = cell_names_1,
+        cell_ids = cells_1,
         rust_index = TRUE
       ),
       cell_indices_2 = get_cell_indices(
         x = object,
-        cell_ids = cell_names_2,
+        cell_ids = cells_2,
         rust_index = TRUE
       ),
       min_prop = min_prop,
