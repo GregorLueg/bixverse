@@ -100,6 +100,7 @@ fn rs_calculate_dge_mann_whitney(
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param gs_list List. List with the gene set indices (0-indexed!) of the
 /// genes of interest.
+/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
 /// @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 /// which statistic you wish to calculate.
 /// @param streaming Boolean. Shall the data be streamed.
@@ -112,11 +113,17 @@ fn rs_calculate_dge_mann_whitney(
 fn rs_aucell(
     f_path: String,
     gs_list: List,
+    cells_to_keep: Vec<i32>,
     auc_type: &str,
     streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
+
+    let cells_to_keep = cells_to_keep
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
 
     for i in 0..gs_list.len() {
         let r_obj = gs_list.elt(i).unwrap();
@@ -130,9 +137,9 @@ fn rs_aucell(
     }
 
     let res = if streaming {
-        calculate_aucell_streaming(&f_path, &gs_indices, auc_type, verbose)?
+        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
     } else {
-        calculate_aucell(&f_path, &gs_indices, auc_type, verbose)?
+        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
     };
 
     let auc_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);

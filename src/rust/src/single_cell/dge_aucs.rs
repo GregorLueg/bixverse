@@ -426,6 +426,7 @@ pub fn calculate_dge_grps_mann_whitney(
 pub fn calculate_aucell(
     f_path: &str,
     gene_sets: &[Vec<usize>],
+    cells_to_keep: &[usize],
     auc_type: &str,
     verbose: bool,
 ) -> Result<Vec<Vec<f32>>, String> {
@@ -436,7 +437,7 @@ pub fn calculate_aucell(
     let start_read = Instant::now();
     let reader = ParallelSparseReader::new(f_path).unwrap();
     let no_genes = reader.get_header().total_genes;
-    let cell_chunks: Vec<CsrCellChunk> = reader.get_all_cells();
+    let cell_chunks: Vec<CsrCellChunk> = reader.read_cells_parallel(cells_to_keep);
     let total_cells = cell_chunks.len();
     let end_read = start_read.elapsed();
 
@@ -498,6 +499,7 @@ pub fn calculate_aucell(
 pub fn calculate_aucell_streaming(
     f_path: &str,
     gene_sets: &[Vec<usize>],
+    cells_to_keep: &[usize],
     auc_type: &str,
     verbose: bool,
 ) -> Result<Vec<Vec<f32>>, String> {
@@ -509,18 +511,14 @@ pub fn calculate_aucell_streaming(
 
     let reader = ParallelSparseReader::new(f_path).unwrap();
     let no_genes = reader.get_header().total_genes;
-    let total_cells = reader.get_header().total_cells;
-    let total_chunks = total_cells.div_ceil(CHUNK_SIZE);
+    let total_chunks = cells_to_keep.len().div_ceil(CHUNK_SIZE);
+    let mut all_results: Vec<Vec<f32>> =
+        vec![Vec::with_capacity(cells_to_keep.len()); gene_sets.len()];
 
-    let mut all_results: Vec<Vec<f32>> = vec![Vec::with_capacity(total_cells); gene_sets.len()];
-
-    for (chunk_idx, chunk_start) in (0..total_cells).step_by(CHUNK_SIZE).enumerate() {
+    for (chunk_idx, cell_indices_chunk) in cells_to_keep.chunks(CHUNK_SIZE).enumerate() {
         let start_chunk = Instant::now();
 
-        let chunk_end = (chunk_start + CHUNK_SIZE).min(total_cells);
-        let cell_indices: Vec<usize> = (chunk_start..chunk_end).collect();
-
-        let cell_chunks = reader.read_cells_parallel(&cell_indices);
+        let cell_chunks = reader.read_cells_parallel(cell_indices_chunk);
         let ranks = rank_csr_chunk_vec(cell_chunks, no_genes, true);
 
         for cell_ranks in ranks {

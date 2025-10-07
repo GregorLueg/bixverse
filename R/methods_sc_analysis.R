@@ -284,4 +284,79 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
   return(dge_dt_final)
 }
 
-## gene set calculations -------------------------------------------------------
+## aucell ----------------------------------------------------------------------
+
+#' Calculate AUC scores (akin to AUCell)
+#'
+#' @description
+#' Calculates an AUC-type score akin to AUCell across the gene sets. You have
+#' the options to calculate the AUC. Two options here: calculate this
+#' with proper AUROC calculations (useful for marker gene expression, use the
+#' `"auroc"` version) or based on the Mann-Whitney statistic (useful for pathway
+#' activity measurs, use the `"wilcox"`). Data can be streamed in chunks of 50k
+#' cells per or loaded in in one go.
+#'
+#' @param object `single_cell_exp` class.
+#' @param gs_list Named list. The elements have the gene identifiers of the
+#' respective gene sets.
+#' @param auc_type String. Which type of AUC to calculate. Choice of
+#' `c("wilcox", "auroc")`.
+#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
+#' larger data sets.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return data.table with the DGE results from the test.
+#'
+#' @export
+aucell_sc <- S7::new_generic(
+  name = "aucell_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    auc_type = c("wilcox", "auroc"),
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method aucell_sc single_cell_exp
+#'
+#' @export
+S7::method(aucell_sc, single_cell_exp) <- function(
+  object,
+  gs_list,
+  auc_type = c("wilcox", "auroc"),
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  auc_type <- match.arg(auc_type)
+
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertList(gs_list, types = "character", names = "named")
+  checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the gene indices
+  gs_list <- purrr::map(gs_list, \(e) {
+    get_gene_indices(x = sc_object, gene_ids = e, rust_index = TRUE)
+  })
+
+  auc_res <- rs_aucell(
+    f_path = get_rust_count_cell_f_path(object),
+    gs_list = gs_list,
+    cells_to_keep = get_cells_to_keep(object),
+    auc_type = auc_type,
+    streaming = streaming,
+    verbose = .verbose
+  )
+
+  rownames(auc_res) <- names(auc_gene_sets)
+  colnames(auc_res) <- get_cell_names(sc_object, filtered = TRUE)
+
+  return(auc_res)
+}

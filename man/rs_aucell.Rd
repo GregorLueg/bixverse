@@ -4,13 +4,15 @@
 \alias{rs_aucell}
 \title{Calculate AUCell in Rust}
 \usage{
-rs_aucell(f_path, gs_list, auc_type, streaming, verbose)
+rs_aucell(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 }
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
 \item{gs_list}{List. List with the gene set indices (0-indexed!) of the
 genes of interest.}
+
+\item{cells_to_keep}{Integer. Vector of indices of the cells to keep.}
 
 \item{auc_type}{String. One of \code{"wilcox"} or \code{"auroc"}, pending on
 which statistic you wish to calculate.}

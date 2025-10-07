@@ -2035,6 +2035,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param gs_list List. List with the gene set indices (0-indexed!) of the
 #' genes of interest.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
 #' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
 #' which statistic you wish to calculate.
 #' @param streaming Boolean. Shall the data be streamed.
@@ -2043,7 +2044,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @return A matrix of gene set AUCs x cells.
 #'
 #' @export
-rs_aucell <- function(f_path, gs_list, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, auc_type, streaming, verbose)
+rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
 #' Generate meta cells
 #'
