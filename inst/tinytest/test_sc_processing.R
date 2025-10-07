@@ -414,31 +414,61 @@ expect_true(
   info = "leiden clustering identifies the cell groups"
 )
 
+## dges ------------------------------------------------------------------------
+
+### between two groups ---------------------------------------------------------
+
 cell_names_1 <- sc_object[[]][leiden_clustering == 1, cell_id]
 cell_names_2 <- sc_object[[]][leiden_clustering == 2, cell_id]
 
-# ?get_cell_indices
-
-# devtools::load_all()
-
-# rextendr::document()
-
-get_cell_names(sc_object)
-
-get_cell_indices(
-  x = sc_object,
-  cell_ids = cell_names_1,
-  rust_index = TRUE
+expect_error(
+  current = find_markers_sc(
+    object = sc_object,
+    cells_1 = c(cell_names_1, "x"),
+    cells_2 = cell_names_2
+  ),
+  info = "error if weird cells are selected"
 )
-
 
 dge_test <- find_markers_sc(
   object = sc_object,
   cells_1 = cell_names_1,
-  cells_2 = cell_names_2
+  cells_2 = cell_names_2,
+  .verbose = FALSE
 )
+
+expected_upregulated <- sprintf("gene_%03d", 1:10)
+expected_downregulated <- sprintf("gene_%03d", 21:30)
+
+expect_true(
+  current = all(
+    expected_upregulated %in% dge_test[lfc > 0 & fdr <= 0.05, gene_id]
+  ),
+  info = "all expected up-regulated genes identified"
+)
+
+expect_true(
+  current = all(
+    expected_downregulated %in% dge_test[lfc < 0 & fdr <= 0.05, gene_id]
+  ),
+  info = "all expected down-regulated genes identified"
+)
+
+### find all markers -----------------------------------------------------------
 
 dge_test_2 <- find_all_markers_sc(
   object = sc_object,
-  column_of_interest = "leiden_clustering"
+  column_of_interest = "leiden_clustering",
+  .verbose = FALSE
 )
+
+all_cell_markers <- expected_upregulated <- sprintf("gene_%03d", 1:30)
+
+expect_true(
+  current = all(
+    all_cell_markers %in% dge_test_2[fdr <= 0.05, gene_id]
+  ),
+  info = "all expected cell markers identified"
+)
+
+## aucell ----------------------------------------------------------------------
