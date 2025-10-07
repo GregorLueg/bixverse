@@ -1838,8 +1838,13 @@ pub fn calc_simple_and_multi_error(
             left_border.push(f64::NEG_INFINITY);
         }
         // Right broder
-        let beta = Beta::new(n + 1.0, nperm_f64 - n).unwrap();
-        right_border.push(beta.inverse_cdf(1.0 - 0.025).log2());
+        if n < &nperm_f64 {
+            let beta = Beta::new(n + 1.0, nperm_f64 - n).unwrap();
+            right_border.push(beta.inverse_cdf(1.0 - 0.025).log2());
+        } else {
+            // When n == nperm, p-value is 1.0, log2(1.0) = 0.0
+            right_border.push(0.0);
+        }
         // Crude
         crude_est.push(((n + 1.0) / (nperm_f64 + 1.0)).log2());
     }
