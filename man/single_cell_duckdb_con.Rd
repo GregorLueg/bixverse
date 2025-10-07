@@ -8,6 +8,12 @@ Invisible self and populates the internal obs table.
 Function to populate the var table from plain text files
 
 Invisible self and populates the internal var table.
+Function to populate the obs table from R
+
+Invisible self and populates the internal obs table.
+Function to populate the var table from R
+
+Invisible self and populates the internal obs table.
 }
 \description{
 This class wraps up the DB connection and methods to interact with the
@@ -23,6 +29,8 @@ observation/cell metadata and the feature/gene metadata.
 \item \href{#method-single_cell_duckdb_con-populate_vars_from_h5}{\code{single_cell_duckdb_con$populate_vars_from_h5()}}
 \item \href{#method-single_cell_duckdb_con-populate_obs_from_plain_text}{\code{single_cell_duckdb_con$populate_obs_from_plain_text()}}
 \item \href{#method-single_cell_duckdb_con-populate_var_from_plain_text}{\code{single_cell_duckdb_con$populate_var_from_plain_text()}}
+\item \href{#method-single_cell_duckdb_con-populate_obs_from_data.table}{\code{single_cell_duckdb_con$populate_obs_from_data.table()}}
+\item \href{#method-single_cell_duckdb_con-populate_var_from_data.table}{\code{single_cell_duckdb_con$populate_var_from_data.table()}}
 \item \href{#method-single_cell_duckdb_con-clone}{\code{single_cell_duckdb_con$clone()}}
 }
 }
@@ -95,13 +103,19 @@ Function to populate the obs table from plain text files
 \if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_obs_from_plain_text}{}}}
 \subsection{Method \code{populate_obs_from_plain_text()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_plain_text(f_path, filter = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_plain_text(
+  f_path,
+  has_hdr,
+  filter = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{f_path}}{File path to the plain text file.}
+
+\item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
 
 \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
 }
@@ -113,7 +127,11 @@ Function to populate the obs table from plain text files
 \if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_var_from_plain_text}{}}}
 \subsection{Method \code{populate_var_from_plain_text()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_var_from_plain_text(f_path, filter = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_var_from_plain_text(
+  f_path,
+  has_hdr,
+  filter = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -121,7 +139,45 @@ Function to populate the obs table from plain text files
 \describe{
 \item{\code{f_path}}{File path to the plain text file.}
 
+\item{\code{has_hdr}}{Boolean. Does the flat file have a header.}
+
 \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_con-populate_obs_from_data.table"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_obs_from_data.table}{}}}
+\subsection{Method \code{populate_obs_from_data.table()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_data.table(obs_dt, filter = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{obs_dt}}{data.table}
+
+\item{\code{filter}}{Optional integer. Row indices to keep}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_con-populate_var_from_data.table"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_con-populate_var_from_data.table}{}}}
+\subsection{Method \code{populate_var_from_data.table()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_var_from_data.table(var_dt, filter = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{var_dt}}{data.table}
+
+\item{\code{filter}}{Optional integer. Row indices to keep}
 }
 \if{html}{\out{</div>}}
 }

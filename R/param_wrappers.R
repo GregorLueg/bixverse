@@ -490,23 +490,32 @@ params_snf <- function(
 #' @param path_obs String. Path to the file containing cell/barcode info.
 #' @param path_var String. Path to the file containing gene/variable info.
 #' @param cells_as_rows Boolean. Do cells represent the rows or columns.
+#' @param has_hdr Boolean. Do the plain text files have headers.
 #'
 #' @returns A list with the mtx loading parameters for usage in subsequent
 #' functions.
 #'
 #' @export
-params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
+params_sc_mtx_io <- function(
+  path_mtx,
+  path_obs,
+  path_var,
+  cells_as_rows,
+  has_hdr
+) {
   # checks
   checkmate::assertFileExists(path_mtx)
   checkmate::assertFileExists(path_obs)
   checkmate::assertFileExists(path_var)
   checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
 
   list(
     path_mtx = path_mtx,
     path_obs = path_obs,
     path_var = path_var,
-    cells_as_rows = cells_as_rows
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
   )
 }
 
@@ -521,7 +530,7 @@ params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
 #' @param min_cells Integer. Minimum number of cells a gene has to be
 #' expressed to be included.
 #' @param target_size Float. The target size for the normalisation. Defaults
-#' to `1e5`.
+#' to `1e4`.
 #'
 #' @returns A list with the minimum quality parameters + target size.
 #'
@@ -530,7 +539,7 @@ params_sc_min_quality <- function(
   min_unique_genes = 100L,
   min_lib_size = 250L,
   min_cells = 10L,
-  target_size = 1e5
+  target_size = 1e4
 ) {
   # checks
   checkmate::qassert(min_unique_genes, "I1")
@@ -633,3 +642,50 @@ params_sc_neighbours <- function(
   )
 }
 
+### analysis -------------------------------------------------------------------
+
+#' Wrapper function for parameters for meta cell generation
+#'
+#' @param max_shared Integer. Maximum number of shared neighbours.
+#' @param target_no_metacells Integer. Number of meta-cells to generate
+#' @param max_iter Integer. Maximum number of iterations for the algorithm.
+#' @param k Integer. Number of neighbours to return.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#'
+#' @returns A list with the neighbour parameters.
+#'
+#' @export
+params_sc_metacells <- function(
+  max_shared = 15L,
+  target_no_metacells = 1000L,
+  max_iter = 5000L,
+  k = 25L,
+  knn_method = c("hnsw", "annoy"),
+  n_trees = 100L,
+  search_budget = 100L
+) {
+  knn_method <- match.arg(knn_method)
+
+  # checks
+  checkmate::qassert(max_shared, "I1")
+  checkmate::qassert(target_no_metacells, "I1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+
+  list(
+    max_shared = max_shared,
+    target_no_metacells = target_no_metacells,
+    max_iter = max_iter,
+    k = k,
+    knn_method = knn_method,
+    n_trees = n_trees,
+    search_budget = search_budget
+  )
+}

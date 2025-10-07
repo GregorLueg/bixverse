@@ -89,6 +89,26 @@ pub fn get_snn_similiarity_method(s: &str) -> Option<SnnSimilarityMethod> {
     }
 }
 
+/// Helper function to create a kNN mat with self
+///
+/// ### Params
+///
+/// * knn_graph - The kNN graph structure in which rows represent samples and
+///   the columns represent the neighbours
+///
+/// ### Results
+///
+/// Updated version with self added
+pub fn build_nn_map(knn_graph: &[Vec<usize>]) -> Vec<Vec<usize>> {
+    (0..knn_graph.len())
+        .map(|i| {
+            let mut neighbors = knn_graph[i].clone();
+            neighbors.push(i);
+            neighbors
+        })
+        .collect()
+}
+
 ////////////////////
 // Main functions //
 ////////////////////

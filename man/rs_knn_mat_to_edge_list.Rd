@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_knn_mat_to_edge_list}
 \alias{rs_knn_mat_to_edge_list}
-\title{Flatten kNN matrix}
+\title{Flatten kNN matrix to edge list}
 \usage{
 rs_knn_mat_to_edge_list(knn_mat, one_index)
 }

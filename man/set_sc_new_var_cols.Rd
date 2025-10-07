@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_sc_new_var_cols}
 \alias{set_sc_new_var_cols}
-\title{Add a new column to the obs table}
+\title{Add a new column to the var table}
 \usage{
 set_sc_new_var_cols(object, data_list)
 }
@@ -12,8 +12,8 @@ set_sc_new_var_cols(object, data_list)
 \item{data_list}{Named list with the data to add.}
 }
 \value{
-The class with updated obs table in the DuckDB
+The class with updated var table in the DuckDB
 }
 \description{
-Add a new column to the obs table
+Add a new column to the var table
 }

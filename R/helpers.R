@@ -491,6 +491,8 @@ select_user_option <- function(options) {
 
 # data transforms --------------------------------------------------------------
 
+## data.table to matrices ------------------------------------------------------
+
 #' Transform data.tables into matrices for distance calculations
 #'
 #' @description
@@ -546,7 +548,7 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
   return(res)
 }
 
-# one hot encoding -------------------------------------------------------------
+## one hot encoding ------------------------------------------------------------
 
 #' Helper to generate one-hot encodings
 #'
@@ -572,4 +574,49 @@ one_hot_encode <- function(labels) {
   }
 
   mat
+}
+
+## sparse to list --------------------------------------------------------------
+
+#' Helper function to transform R sparse matrices to list
+#'
+#' @param sparse_mat Sparse matrix. The matrix to transform into a list.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item indptr - Index pointers of the sparse data.
+#'   \item indices - Indices of the data.
+#'   \item data - The underlying data.
+#'   \item format - String that defines if the data is CSR or CSC.
+#'   \item nrow - The number of rows.
+#'   \item ncol - The number of columns.
+#' }
+sparse_mat_to_list <- function(sparse_mat) {
+  # checks
+  checkmate::assert(
+    checkmate::testClass(sparse_mat, "dgCMatrix"),
+    checkmate::testClass(sparse_mat, "dgRMatrix")
+  )
+
+  res <- if (checkmate::testClass(sparse_mat, "dgCMatrix")) {
+    list(
+      indptr = sparse_mat@p,
+      indices = sparse_mat@i,
+      data = sparse_mat@x,
+      format = "csc",
+      nrow = sparse_mat@Dim[1],
+      ncol = sparse_mat@Dim[2]
+    )
+  } else {
+    list(
+      indptr = sparse_mat@p,
+      indices = sparse_mat@j,
+      data = sparse_mat@x,
+      format = "csr",
+      nrow = sparse_mat@Dim[1],
+      ncol = sparse_mat@Dim[2]
+    )
+  }
+
+  return(res)
 }

@@ -81,7 +81,58 @@ fn rs_h5ad_data(
     ))
 }
 
+/// Detect h5 file format
+///
+/// @description
+/// Auto-detects whether an h5 file is in h5ad, h5v3, or h5v2 format.
+///
+/// @param f_path String. Path to h5 file.
+///
+/// @returns String indicating format: "h5ad", "h5v3", "h5v2", or "unknown"
+///
+/// @export
+#[extendr]
+fn rs_detect_h5_format(f_path: String) -> String {
+    match detect_h5_format(&f_path) {
+        Ok(H5Format::H5ad) => "h5ad".to_string(),
+        Ok(H5Format::H5v3) => "h5v3".to_string(),
+        Ok(H5Format::H5v2) => "h5v2".to_string(),
+        Err(_) => "unknown".to_string(),
+    }
+}
+
+/// Get h5 file dimensions
+///
+/// @description
+/// Gets dimensions from any h5 format with auto-detection.
+///
+/// @param f_path String. Path to h5 file.
+///
+/// @returns List with obs (n_cells), var (n_genes), and format
+///
+/// @export
+#[extendr]
+fn rs_get_h5_dimensions(f_path: String) -> List {
+    match get_h5_dimensions(&f_path) {
+        Ok((n_cells, n_genes, format)) => {
+            let format_str = match format {
+                H5Format::H5ad => "h5ad",
+                H5Format::H5v3 => "h5v3",
+                H5Format::H5v2 => "h5v2",
+            };
+            list!(
+                obs = n_cells as i32,
+                var = n_genes as i32,
+                format = format_str
+            )
+        }
+        Err(_) => list!(obs = 0i32, var = 0i32, format = "unknown"),
+    }
+}
+
 extendr_module! {
     mod r_h5;
     fn rs_h5ad_data;
+    fn rs_detect_h5_format;
+    fn rs_get_h5_dimensions;
 }

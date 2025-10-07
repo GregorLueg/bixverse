@@ -1,14 +1,17 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::path::Path;
 use thousands::Separable;
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
 use crate::core::data::sparse_io_mtx::*;
+use crate::core::data::sparse_io_r_obj::*;
 use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
 use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::list_to_sparse_matrix;
 use crate::utils::traits::F16;
 
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
@@ -209,6 +212,39 @@ struct SingeCellCountData {
     pub cell_mask: FxHashSet<u32>,
 }
 
+/// Helper function to detect h5ad CS format from file
+fn detect_h5ad_cs_format<P: AsRef<Path>>(file_path: P) -> String {
+    let file = match hdf5::File::open(file_path.as_ref()) {
+        Ok(f) => f,
+        Err(_) => return "CSR".to_string(),
+    };
+
+    let x_group = match file.group("X") {
+        Ok(g) => g,
+        Err(_) => return "CSR".to_string(),
+    };
+
+    // Check for indptr dataset to determine format
+    if x_group.dataset("indptr").is_ok() {
+        // Has indptr - need to check encoding metadata
+        if let Ok(ds) = x_group.dataset("data") {
+            if let Ok(encoding) = ds.attr("encoding-type") {
+                let encoding_str: std::result::Result<hdf5::types::VarLenUnicode, _> =
+                    encoding.read_scalar();
+                if let Ok(enc) = encoding_str {
+                    let enc_string = enc.as_str();
+                    if enc_string.contains("csc") {
+                        return "CSC".to_string();
+                    }
+                }
+            }
+        }
+        "CSR".to_string()
+    } else {
+        "CSR".to_string()
+    }
+}
+
 #[extendr]
 impl SingeCellCountData {
     /// Create new instance of the class
@@ -250,81 +286,42 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
-    /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
-    /// * `data` - Slice of the data (`csc_matrix@x`).
-    /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
-    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
+    /// * `r_data` - A list that can be transformed into CompressedSparseData.
+    ///   Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
+    ///   `"nrow"`, `"ncol"` and `"format"`.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
     /// A list with QC parameters.
-    pub fn r_csr_mat_to_file(
-        &mut self,
-        no_cells: usize,
-        no_genes: usize,
-        data: &[i32],
-        row_ptr: &[i32],
-        col_idx: &[i32],
-        qc_params: List,
-    ) -> List {
+    pub fn r_data_to_file(&mut self, r_data: List, qc_params: List, verbose: bool) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let compressed_data: CompressedSparseData<u32> = list_to_sparse_matrix(r_data);
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
+            write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
+
         self.n_cells = no_cells;
         self.n_genes = no_genes;
-        let qc_params = MinCellQuality::from_r_list(qc_params);
-        let row_ptr_usize = row_ptr.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
-
-        let mut no_cells_written = 0_usize;
-        let mut cell_mask = vec![false; no_cells];
-        let mut nnz = Vec::with_capacity(no_cells);
-        let mut lib_size = Vec::with_capacity(no_cells);
-
-        for i in 0..self.n_cells {
-            // get the index position
-            let start_i = row_ptr_usize[i];
-            let end_i = row_ptr_usize[i + 1];
-
-            // create chunk from raw data
-            let mut chunk_i = CsrCellChunk::from_data(
-                &data[start_i..end_i],
-                &col_idx[start_i..end_i],
-                i,
-                qc_params.target_size,
-                true,
-            );
-
-            let (nnz_i, lib_size_i) = chunk_i.get_qc_info();
-
-            nnz.push(nnz_i);
-            lib_size.push(lib_size_i);
-
-            if chunk_i.passes_qc(&qc_params) {
-                chunk_i.update_index(&no_cells_written);
-                writer.write_cell_chunk(chunk_i).unwrap();
-                no_cells_written += 1;
-                cell_mask[i] = true;
-            }
-        }
-
-        // update the header and internal values
-        writer.update_header_no_cells(no_cells_written);
-        writer.finalise().unwrap();
-        self.n_cells = no_cells_written;
-
-        list!(cell_mask = cell_mask, lib_size = lib_size, nnz = nnz)
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
+        )
     }
 
-    /// Save h5 to file
+    /// Save h5ad to file
     ///
     /// ### Params
     ///
     /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
-    /// * `no_cells` - Number of cells in the h5 file.
-    /// * `no_genes` - Number of genes in the h5 file.
+    /// * `h5_path` - Path to the h5ad file.
+    /// * `no_cells` - Number of cells in the h5ad file.
+    /// * `no_genes` - Number of genes in the h5ad file.
     /// * `qc_params` - List with the quality control parameters.
     /// * `verbose` - Controls verbosity of the function.
     ///
@@ -363,7 +360,7 @@ impl SingeCellCountData {
         )
     }
 
-    /// Save h5 to file
+    /// Save h5ad to file (streaming version)
     ///
     /// Slower version that is less memory heavy and will make usage of
     /// streaming where possible.
@@ -371,9 +368,9 @@ impl SingeCellCountData {
     /// ### Params
     ///
     /// * `cs_type` - How was the h5 data saved. CSC or CSR.
-    /// * `h5_path` - Path to the h5 file.
-    /// * `no_cells` - Number of cells in the h5 file.
-    /// * `no_genes` - Number of genes in the h5 file.
+    /// * `h5_path` - Path to the h5ad file.
+    /// * `no_cells` - Number of cells in the h5ad file.
+    /// * `no_genes` - Number of genes in the h5ad file.
     /// * `qc_params` - List with the quality control parameters.
     /// * `verbose` - Controls verbosity of the function.
     ///
@@ -400,6 +397,149 @@ impl SingeCellCountData {
             qc_params,
             verbose,
         );
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
+        )
+    }
+
+    /// Save CellRanger h5 to file
+    ///
+    /// Supports h5v3 and h5v2 formats with auto-detection.
+    ///
+    /// ### Params
+    ///
+    /// * `h5_path` - Path to the CellRanger h5 file.
+    /// * `feature_type` - Optional feature type filter (default: "Gene Expression").
+    /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// A list with qc parameters.
+    pub fn h5_cellranger_to_file(
+        &mut self,
+        h5_path: String,
+        feature_type: Nullable<String>,
+        qc_params: List,
+        verbose: bool,
+    ) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+        let feature_type = feature_type.into_option();
+
+        // Detect format
+        let format = detect_h5_format(&h5_path).expect("Failed to detect h5 format");
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = match format {
+            H5Format::H5v3 => {
+                let dims = get_h5_dimensions(&h5_path).expect("Failed to get dimensions");
+                write_generic_h5_counts(
+                    &h5_path,
+                    &self.f_path_cells,
+                    H5Version::V3,
+                    dims.0,
+                    dims.1,
+                    qc_params,
+                    feature_type.as_deref(),
+                    verbose,
+                )
+            }
+            H5Format::H5v2 => {
+                let dims = get_h5_dimensions(&h5_path).expect("Failed to get dimensions");
+                write_generic_h5_counts(
+                    &h5_path,
+                    &self.f_path_cells,
+                    H5Version::V2,
+                    dims.0,
+                    dims.1,
+                    qc_params,
+                    feature_type.as_deref(),
+                    verbose,
+                )
+            }
+            H5Format::H5ad => {
+                panic!("h5ad format detected. Use h5_to_file() for h5ad files instead.")
+            }
+        };
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
+        )
+    }
+
+    /// Save CellRanger h5 to file (streaming version)
+    ///
+    /// Slower version that is less memory heavy and will make usage of
+    /// streaming where possible. Supports h5v3 and h5v2 formats with auto-detection.
+    ///
+    /// ### Params
+    ///
+    /// * `h5_path` - Path to the CellRanger h5 file.
+    /// * `feature_type` - Optional feature type filter (default: "Gene Expression").
+    /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// A list with qc parameters.
+    pub fn h5_cellranger_to_file_streaming(
+        &mut self,
+        h5_path: String,
+        feature_type: Nullable<String>,
+        qc_params: List,
+        verbose: bool,
+    ) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+        let feature_type = feature_type.into_option();
+
+        // Detect format
+        let format = detect_h5_format(&h5_path).expect("Failed to detect h5 format");
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = match format {
+            H5Format::H5v3 => {
+                // For generic h5 formats, use same logic as non-streaming
+                // (no streaming implementation available yet)
+                let dims = get_h5_dimensions(&h5_path).expect("Failed to get dimensions");
+                write_generic_h5_counts(
+                    &h5_path,
+                    &self.f_path_cells,
+                    H5Version::V3,
+                    dims.0,
+                    dims.1,
+                    qc_params,
+                    feature_type.as_deref(),
+                    verbose,
+                )
+            }
+            H5Format::H5v2 => {
+                let dims = get_h5_dimensions(&h5_path).expect("Failed to get dimensions");
+                write_generic_h5_counts(
+                    &h5_path,
+                    &self.f_path_cells,
+                    H5Version::V2,
+                    dims.0,
+                    dims.1,
+                    qc_params,
+                    feature_type.as_deref(),
+                    verbose,
+                )
+            }
+            H5Format::H5ad => {
+                panic!("h5ad format detected. Use h5_to_file_streaming() for h5ad files instead.")
+            }
+        };
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;

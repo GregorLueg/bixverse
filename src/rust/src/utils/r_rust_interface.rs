@@ -1,9 +1,9 @@
-use crate::core::data::sparse_structures::SparseColumnMatrix;
 use extendr_api::prelude::*;
 use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 
+use crate::core::data::sparse_structures::*;
 use crate::utils::traits::FaerRType;
 
 //////////////////
@@ -615,4 +615,65 @@ where
         ncol = ncol,
         nrow = nrow
     ]
+}
+
+/// Transform an R list storing CSR/C data into CompressedSparseData
+///
+/// ### Params
+///
+/// * `r_list` - R list that has the following elements: `indptr`, `indices`,
+///   `data`, `nrow`, `ncol` and `format`
+///
+/// ### Returns
+///
+/// The CompressedSparseData Rust object with the data
+pub fn list_to_sparse_matrix<T>(r_list: List) -> CompressedSparseData<T>
+where
+    T: Clone + Default + TryFrom<Robj> + Into<u32>,
+{
+    let r_data = r_list.into_hashmap();
+
+    let indptr: Vec<usize> = r_data
+        .get("indptr")
+        .and_then(|v| v.as_integer_slice())
+        .unwrap()
+        .iter()
+        .map(|&x| x as usize)
+        .collect();
+
+    let indices: Vec<usize> = r_data
+        .get("indices")
+        .and_then(|v| v.as_integer_slice())
+        .unwrap()
+        .iter()
+        .map(|&x| x as usize)
+        .collect();
+
+    let data: Vec<T> = r_data
+        .get("data")
+        .unwrap()
+        .as_real_slice()
+        .unwrap()
+        .iter()
+        .map(|&x| T::try_from(Robj::from(x)).ok().unwrap())
+        .collect();
+
+    let nrow = r_data.get("nrow").and_then(|v| v.as_integer()).unwrap() as usize;
+    let ncol = r_data.get("ncol").and_then(|v| v.as_integer()).unwrap() as usize;
+
+    let format_str = r_data.get("format").and_then(|v| v.as_str()).unwrap();
+    let cs_type = match format_str {
+        "csr" => CompressedSparseFormat::Csr,
+        "csc" => CompressedSparseFormat::Csc,
+        _ => panic!("Unknown format"),
+    };
+
+    CompressedSparseData {
+        data,
+        indices,
+        indptr,
+        cs_type,
+        data_2: None,
+        shape: (nrow, ncol),
+    }
 }

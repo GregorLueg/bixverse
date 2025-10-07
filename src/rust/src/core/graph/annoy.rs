@@ -44,14 +44,13 @@ enum AnnoyNode {
 /// * `vectors_flat` - Original vector data for distance calculations. Flattened
 ///   for better cache locality
 /// * `dim` - Number of dimensions in the vector
-/// * `n_vectors` - Number of vectors stored (i.e., samples)
 /// * `n_trees` - Number of trees built (more trees = better accuracy, slower
 ///   queries)
 pub struct AnnoyIndex {
     trees: Vec<Vec<AnnoyNode>>,
     vectors_flat: Vec<f32>,
     dim: usize,
-    n_vectors: usize,
+    _n_vectors: usize,
     n_trees: usize,
 }
 
@@ -118,7 +117,7 @@ impl AnnoyIndex {
             trees,
             vectors_flat,
             dim,
-            n_vectors,
+            _n_vectors: n_vectors,
             n_trees,
         }
     }

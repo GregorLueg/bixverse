@@ -42,33 +42,6 @@ where
     (total_zeroes, row_zeroes, col_zeroes)
 }
 
-/// Helper to filter compressed sparse by NNZ
-///
-/// Returns a boolean vector for a given indptr if the row, column has sufficient
-/// NNZ
-///
-/// ### Params
-///
-/// * `indptr` - Index pointers of the CSC or CSR format
-/// * `min_nnz` - Minimum number of NNZ eleents
-///
-/// ### Returns
-///
-/// A vector of booleans if the column/row passes the threshold.
-pub fn filter_by_nnz(indptr: &[usize], min_nnz: usize) -> (Vec<usize>, Vec<bool>) {
-    let n = indptr.len() - 1;
-    let mut nnz = Vec::with_capacity(n);
-    let mut filter = Vec::with_capacity(n);
-
-    for i in 0..n {
-        let no_nnz = indptr[i + 1] - indptr[i];
-        nnz.push(no_nnz);
-        filter.push(no_nnz >= min_nnz);
-    }
-
-    (nnz, filter)
-}
-
 ////////////////
 // Structures //
 ////////////////

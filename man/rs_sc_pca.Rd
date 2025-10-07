@@ -11,6 +11,7 @@ rs_sc_pca(
   cell_indices,
   gene_indices,
   seed,
+  return_scaled,
   verbose
 )
 }
@@ -27,6 +28,8 @@ rs_sc_pca(
 
 \item{seed}{Integer. Random seed for the randomised SVD.}
 
+\item{return_scaled}{Boolean. Shall the scaled data be returned.}
+
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
@@ -34,6 +37,7 @@ A list with with the following items
 \itemize{
 \item scores - The samples projected on the PCA space.
 \item loadings - The loadings of the features for the PCA.
+\item scaled - The scaled matrix if you set return_scaled to \code{TRUE}.
 }
 }
 \description{
