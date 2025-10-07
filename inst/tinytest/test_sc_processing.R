@@ -15,10 +15,6 @@ no_pcs <- 10L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-heatmap(as.matrix(single_cell_test_data$counts))
-
-heatmap
-
 f_path_csr = file.path(tempdir(), "csr_test.h5ad")
 
 write_h5ad_sc(
@@ -495,34 +491,34 @@ auc_res_auroc <- aucell_sc(
   auc_type = "auroc"
 )
 
-obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
+# obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
 
-cells_per_cluster <- split(
-  obs_table_red$cell_id,
-  obs_table_red$obs_cell_grp
-)
+# cells_per_cluster <- split(
+#   obs_table_red$cell_id,
+#   obs_table_red$obs_cell_grp
+# )
 
-hist(auc_res_wilcox[1, ])
+# hist(auc_res_wilcox[1, ])
 
-plot(x = auc_res_wilcox[1, ], y = auc_res_auroc[1, ])
+# plot(x = auc_res_wilcox[1, ], y = auc_res_auroc[1, ])
 
-hist(auc_res_auroc[1, ])
+# hist(auc_res_auroc[1, ])
 
-cluster <- cells_per_cluster[[1]]
-not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
+# cluster <- cells_per_cluster[[1]]
+# not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
 
-test_i <- t.test(
-  x = auc_res_auroc[names(auc_gene_sets)[[1]], cluster],
-  y = auc_res_auroc[names(auc_gene_sets)[[1]], not_in_cluster],
-  alternative = "greater"
-)
+# test_i <- t.test(
+#   x = auc_res_auroc[names(auc_gene_sets)[[1]], cluster],
+#   y = auc_res_auroc[names(auc_gene_sets)[[1]], not_in_cluster],
+#   alternative = "greater"
+# )
 
-test_i$p.value
-test_i$statistic
+# test_i$p.value
+# test_i$statistic
 
-for (i in seq_along(cells_per_cluster)) {
-  cluster <- cells_per_cluster[[i]]
-  not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
-}
+# for (i in seq_along(cells_per_cluster)) {
+#   cluster <- cells_per_cluster[[i]]
+#   not_in_cluster <- setdiff(get_cell_names(sc_object, filtered = TRUE), cluster)
+# }
 
-auc_res_wilcox[names(auc_gene_sets)[1], cells_per_cluster$`1`]
+# auc_res_wilcox[names(auc_gene_sets)[1], cells_per_cluster$`1`]
