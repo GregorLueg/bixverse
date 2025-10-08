@@ -727,6 +727,69 @@ checkSNFParams <- function(x) {
 
 ## single cell -----------------------------------------------------------------
 
+### synthetic data -------------------------------------------------------------
+
+#' Check synthetic data parameters
+#'
+#' @description Checkmate extension for checking the synthetic data
+#' parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScSyntheticData <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c("n_cells", "n_genes", "marker_genes", "n_batches")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "n_cells" = "I1",
+    "n_genes" = "I1",
+    "n_batches" = "I1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in synthetic data is incorrect:",
+          "n_cells, n_genes and n_batches need to be integers."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  res <- checkmate::checkList(
+    x$marker_genes,
+    types = "list",
+    names = "named"
+  )
+  if (!isTRUE(res)) {
+    return("marker_genes must be a named list of lists.")
+  }
+
+  return(TRUE)
+}
+
 ### io -------------------------------------------------------------------------
 
 #' Check SC MTX load parameters
@@ -967,7 +1030,8 @@ checkScNeighbours <- function(x) {
   # test
   test_choice_rules <- list(
     knn_algorithm = c("annoy", "hnsw"),
-    snn_similarity = c("rank", "jaccard")
+    snn_similarity = c("rank", "jaccard"),
+    ann_dist = c("cosine", "euclidean")
   )
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(test_choice_rules)) {
@@ -1333,6 +1397,23 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
 
 ## single cell -----------------------------------------------------------------
+
+### synthetic data -------------------------------------------------------------
+
+#' Assert synthetic data parameters
+#'
+#' @description Checkmate extension for asserting the synthetic data
+#' parameters.
+#'
+#' @inheritParams checkScSyntheticData
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
 
 ### io -------------------------------------------------------------------------
 

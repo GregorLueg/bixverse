@@ -594,6 +594,7 @@ impl CellTypeConfig {
 /// * `nrow` - Number of rows (cells).
 /// * `ncol` - Number of columns (genes).
 /// * `cell_type_configs` - A vector of cell type configurations.
+/// * `n_batches` - Number of batches to introduce in the data.
 /// * `seed` - Integer for reproducibility purposes
 ///
 /// ### Returns
@@ -603,12 +604,14 @@ pub fn create_celltype_sparse_csr_data(
     nrow: usize,
     ncol: usize,
     cell_type_configs: Vec<CellTypeConfig>,
+    n_batches: usize,
     seed: usize,
-) -> (CompressedSparseData<u32>, Vec<usize>) {
+) -> (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) {
     let mut indptr = Vec::with_capacity(nrow + 1);
     let mut indices = Vec::with_capacity(nrow * 100);
     let mut data = Vec::with_capacity(nrow * 100);
     let mut cell_type_labels = Vec::with_capacity(nrow);
+    let mut batch_labels = Vec::with_capacity(nrow);
     indptr.push(0);
 
     let n_cell_types = cell_type_configs.len();
@@ -617,6 +620,17 @@ pub fn create_celltype_sparse_csr_data(
     let mut gene_rng = StdRng::seed_from_u64(seed as u64);
     let mut gene_base_mean = vec![0.0; ncol];
     let mut gene_dispersion = vec![0.0; ncol];
+
+    // Batch effect multipliers: batch_effect[batch][gene]
+    let mut batch_effect = vec![vec![1.0; ncol]; n_batches];
+
+    #[allow(clippy::needless_range_loop)]
+    for batch_idx in 1..n_batches {
+        for gene_idx in 0..ncol {
+            let u: f64 = gene_rng.random();
+            batch_effect[batch_idx][gene_idx] = 0.5 + u * 1.0;
+        }
+    }
 
     let mut marker_to_celltype = std::collections::HashMap::new();
     for (ct_idx, config) in cell_type_configs.iter().enumerate() {
@@ -641,7 +655,10 @@ pub fn create_celltype_sparse_csr_data(
     for cell_idx in 0..nrow {
         let mut rng = StdRng::seed_from_u64(seed as u64 + cell_idx as u64);
         let cell_type = cell_idx % n_cell_types;
+        let batch = cell_idx % n_batches;
+
         cell_type_labels.push(cell_type);
+        batch_labels.push(batch);
 
         temp_vec.clear();
 
@@ -655,6 +672,9 @@ pub fn create_celltype_sparse_csr_data(
                     mu *= 0.3;
                 }
             }
+
+            // Apply batch effect
+            mu *= batch_effect[batch][gene_idx];
 
             let p = gene_dispersion[gene_idx] / (gene_dispersion[gene_idx] + mu);
             let r = gene_dispersion[gene_idx];
@@ -689,7 +709,7 @@ pub fn create_celltype_sparse_csr_data(
         shape: (nrow, ncol),
     };
 
-    (csr, cell_type_labels)
+    (csr, cell_type_labels, batch_labels)
 }
 
 fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {

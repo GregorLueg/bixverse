@@ -482,6 +482,46 @@ params_snf <- function(
 
 ## single cell -----------------------------------------------------------------
 
+### synthetic data -------------------------------------------------------------
+
+#' Default parameters for generation of synthetic data
+#'
+#' @param n_cells Integer. Number of cells.
+#' @param n_genes Integer. Number of genes.
+#' @param marker_genes List. A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param n_batches Integer. Number of batches.
+#'
+#' @return A list with the parameters.
+params_sc_synthetic_data <- function(
+  n_cells = 1000L,
+  n_genes = 100L,
+  marker_genes = list(
+    cell_type_1 = list(
+      marker_genes = 0:9L
+    ),
+    cell_type_2 = list(
+      marker_genes = 10:19L
+    ),
+    cell_type_3 = list(
+      marker_genes = 20:29L
+    )
+  ),
+  n_batches = 1L
+) {
+  # checks
+  checkmate::qassert(n_cells, "I1")
+  checkmate::qassert(n_genes, "I1")
+  checkmate::assertList(marker_genes, types = "list", names = "named")
+  checkmate::qassert(n_batches, "I1")
+  list(
+    n_cells = n_cells,
+    n_genes = n_genes,
+    marker_genes = marker_genes,
+    n_batches = n_batches
+  )
+}
+
 ### io -------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading
@@ -593,7 +633,9 @@ params_sc_hvg <- function(
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
 #' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`
+#' `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
 #' @param full_snn Boolean. Shall the full shared nearest neighbour graph
 #' be generated that generates edges between all cells instead of between
 #' only neighbours.
@@ -615,18 +657,21 @@ params_sc_neighbours <- function(
   n_trees = 100L,
   search_budget = 100L,
   knn_algorithm = c("annoy", "hnsw"),
+  ann_dist = c("cosine", "euclidean"),
   full_snn = FALSE,
   pruning = 1 / 15,
   snn_similarity = c("rank", "jaccard")
 ) {
   knn_algorithm <- match.arg(knn_algorithm)
   snn_similarity <- match.arg(snn_similarity)
+  ann_dist <- match.arg(ann_dist)
 
   # check
   checkmate::qassert(k, "I1")
   checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "N1")
   checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
   checkmate::qassert(full_snn, "B1")
   checkmate::qassert(pruning, "N1[0, 1]")
   checkmate::assertChoice(snn_similarity, c("rank", "jaccard"))
@@ -636,6 +681,7 @@ params_sc_neighbours <- function(
     n_trees = n_trees,
     search_budget = search_budget,
     knn_algorithm = knn_algorithm,
+    ann_dist = ann_dist,
     full_snn = full_snn,
     pruning = pruning,
     snn_similarity = snn_similarity

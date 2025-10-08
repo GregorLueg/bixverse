@@ -5,15 +5,19 @@
 #' Single cell test data
 #'
 #' @description
-#' This function generates synthetic data for single cell test purposes. It has
-#' hard-coded parameters and will generate a count matrix of 1000 cells x 100
-#' genes, an obs table and a var table. There are three distinct cell types
-#' that can be found in the data that each express between 2 to 8 marker genes
-#' with higher expression compared to the background. The background genes
-#' have some with higher expression and then less and less cells expressing
-#' them.
+#' This function generates synthetic data for single cell test purposes. These
+#' data can be used for testing functionality of various single cell functions.
 #'
-#'
+#' @param syn_data_params List. Contains the parameters for the generation of
+#' synthetic data, see: [bixverse::params_sc_synthetic_data()]. Has the
+#' following elements:
+#' \itemize{
+#'   \item n_cells - Integer. Number of cells.
+#'   \item n_genes - Integer. Number of genes.
+#'   \item marker_genes - List. A nested list that indicates which gene indices
+#'   are markers for which cell.
+#'   \item n_batches - Integer. Number of batches.
+#' }
 #' @param seed Integer. The seed for the generation of the seed data.
 #'
 #' @returns List with the following items
@@ -24,7 +28,10 @@
 #' }
 #'
 #' @export
-generate_single_cell_test_data <- function(seed = 42L) {
+generate_single_cell_test_data <- function(
+  syn_data_params = params_sc_synthetic_data(),
+  seed = 42L
+) {
   # checks
   checkmate::qassert(seed, "I1")
 
@@ -35,26 +42,15 @@ generate_single_cell_test_data <- function(seed = 42L) {
     )
   }
 
-  n_cells = 1000L
-  n_genes = 100L
-
-  marker_genes <- list(
-    cell_type_1 = list(
-      marker_genes = 0:9L
-    ),
-    cell_type_2 = list(
-      marker_genes = 10:19L
-    ),
-    cell_type_3 = list(
-      marker_genes = 20:29L
+  data <- with(
+    syn_data_params,
+    rs_synthetic_sc_data_with_cell_types(
+      n_cells = n_cells,
+      n_genes = n_genes,
+      n_batches = n_batches,
+      cell_configs = marker_genes,
+      seed = seed
     )
-  )
-
-  data <- rs_synthetic_sc_data_with_cell_types(
-    n_cells = n_cells,
-    n_genes = n_genes,
-    cell_configs = marker_genes,
-    seed = seed
   )
 
   counts <- new(

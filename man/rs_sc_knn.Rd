@@ -10,6 +10,7 @@ rs_sc_knn(
   n_trees,
   search_budget,
   algorithm_type,
+  ann_dist,
   verbose,
   seed
 )

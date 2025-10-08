@@ -8,6 +8,7 @@ use std::time::Instant;
 use thousands::Separable;
 
 use crate::core::graph::annoy::AnnoyIndex;
+use crate::core::graph::knn::{parse_ann_dist, AnnDist};
 
 ///////////
 // Enums //
@@ -35,19 +36,36 @@ pub enum KnnSearch {
 ////////////////
 
 #[derive(Clone, Debug)]
-struct Point(Vec<f32>);
+struct Point(Vec<f32>, AnnDist);
 
 impl DistancePoint for Point {
     /// Distance function. This is Euclidean distance without squaring for
     /// speed gains. Does not change the rank order in KNN generation.
     fn distance(&self, other: &Self) -> f32 {
-        let mut sum = 0.0f32;
+        match self.1 {
+            // No & needed, Copy does the work
+            AnnDist::Euclidean => {
+                let mut sum = 0.0f32;
+                for i in 0..self.0.len() {
+                    let diff = self.0[i] - other.0[i];
+                    sum += diff * diff;
+                }
+                sum
+            }
+            AnnDist::Cosine => {
+                let mut dot = 0.0f32;
+                let mut norm_a = 0.0f32;
+                let mut norm_b = 0.0f32;
 
-        for i in 0..self.0.len() {
-            let diff = self.0[i] - other.0[i];
-            sum += diff * diff;
+                for i in 0..self.0.len() {
+                    dot += self.0[i] * other.0[i];
+                    norm_a += self.0[i] * self.0[i];
+                    norm_b += other.0[i] * other.0[i];
+                }
+
+                1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+            }
         }
-        sum
     }
 }
 
@@ -130,16 +148,19 @@ pub fn build_nn_map(knn_graph: &[Vec<usize>]) -> Vec<Vec<usize>> {
 /// The k-nearest neighbours based on the HNSW algorithm
 pub fn generate_knn_hnsw(
     mat: MatRef<f32>,
+    dist_metric: &str,
     no_neighbours: usize,
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
 
+    let ann_dist = parse_ann_dist(dist_metric).unwrap();
+
     let n_samples = mat.nrows();
     let points: Vec<Point> = (0..n_samples)
         .into_par_iter()
-        .map(|i| Point(mat.row(i).iter().cloned().collect()))
+        .map(|i| Point(mat.row(i).iter().cloned().collect(), ann_dist))
         .collect();
 
     let map = Builder::default()
@@ -213,6 +234,7 @@ pub fn generate_knn_hnsw(
 /// The k-nearest neighbours based on the HNSW algorithm
 pub fn generate_knn_annoy(
     mat: MatRef<f32>,
+    dist_metric: &str,
     no_neighbours: usize,
     n_trees: usize,
     search_budget: usize,
@@ -220,6 +242,8 @@ pub fn generate_knn_annoy(
     verbose: bool,
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
+
+    let ann_dist = parse_ann_dist(dist_metric).unwrap();
 
     let index = AnnoyIndex::new(mat, n_trees, seed);
     let n_samples = mat.nrows();
@@ -245,7 +269,8 @@ pub fn generate_knn_annoy(
             .into_par_iter()
             .map(|i| {
                 let search_k = Some(no_neighbours * search_budget);
-                let mut neighbors = index.query_row(mat.row(i), no_neighbours + 1, search_k);
+                let mut neighbors =
+                    index.query_row(mat.row(i), &ann_dist, no_neighbours + 1, search_k);
                 neighbors.retain(|&x| x != i);
                 neighbors.truncate(no_neighbours);
 
@@ -583,8 +608,8 @@ mod tests {
     #[test]
     fn test_no_self_neighbors() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
 
         for (i, neighbors) in hnsw_result.iter().enumerate() {
             assert!(
@@ -607,8 +632,8 @@ mod tests {
     fn test_neighbor_count() {
         let data = create_clustered_data();
         let k = 10;
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), k, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), k, 100, 200, 42, false);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", k, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", k, 100, 200, 42, false);
 
         for neighbors in &hnsw_result {
             assert_eq!(neighbors.len(), k, "HNSW: Wrong number of neighbors");
@@ -622,8 +647,8 @@ mod tests {
     #[test]
     fn test_cluster_structure() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
 
         // Test that nodes in same cluster find each other
         // Node 0 (cluster 1) should have neighbors mostly in range [0, 49]
@@ -646,15 +671,15 @@ mod tests {
     fn test_deterministic_results() {
         let data = create_clustered_data();
 
-        let hnsw1 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let hnsw2 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
+        let hnsw1 = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
+        let hnsw2 = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
         assert_eq!(
             hnsw1, hnsw2,
             "HNSW results should be deterministic with same seed"
         );
 
-        let annoy1 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-        let annoy2 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
+        let annoy1 = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
+        let annoy2 = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
         assert_eq!(
             annoy1, annoy2,
             "Annoy results should be deterministic with same seed"
@@ -664,8 +689,8 @@ mod tests {
     #[test]
     fn test_algorithm_overlap() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 10, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 10, 100, 200, 42, false);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 10, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 10, 100, 200, 42, false);
 
         let mut total_jaccard = 0.0;
         let mut valid_comparisons = 0;
@@ -692,8 +717,8 @@ mod tests {
     #[test]
     fn test_sorted_neighbors() {
         let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
+        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
+        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
 
         for neighbors in &hnsw_result {
             let mut sorted = neighbors.clone();

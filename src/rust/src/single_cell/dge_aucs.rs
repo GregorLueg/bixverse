@@ -69,6 +69,7 @@ pub struct MetaCellParams {
     pub max_iter: usize,
     pub k: usize,
     pub knn_method: String,
+    pub ann_dist: String,
     pub n_trees: usize,
     pub search_budget: usize,
 }
@@ -107,6 +108,11 @@ impl MetaCellParams {
             .and_then(|v| v.as_str())
             .unwrap_or("hnsw")
             .to_string();
+        let ann_dist = meta_cell_params
+            .get("ann_dist")
+            .and_then(|v| v.as_str())
+            .unwrap_or("cosine")
+            .to_string();
         let n_trees = meta_cell_params
             .get("n_trees")
             .and_then(|v| v.as_integer())
@@ -122,6 +128,7 @@ impl MetaCellParams {
             max_iter,
             k,
             knn_method,
+            ann_dist,
             n_trees,
             search_budget,
         }

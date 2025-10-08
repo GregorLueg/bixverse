@@ -621,7 +621,31 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, cell_configs, seed)
+#' Generates synthetic data for single cell
+#'
+#' @description
+#' Helper function to generate synthetic single cell data with optional
+#'
+#' @param n_cells Integer. Number of cells to generate.
+#' @param n_genes Integer. Number of genes to generate.
+#' @param n_batches Integer. Number of the batches to generated.
+#' @param cell_configs A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The indices of the genes for the given cells.
+#'   \item nrow - Number of rows.
+#'   \item ncol - Number of columns
+#'   \item cell_type_indices - Vector indicating which cell type this is.
+#'   \item batch_indices - Vector indicating the batch.
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -1966,7 +1990,7 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' number of neighbours.
 #'
 #' @export
-rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed)
+rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'

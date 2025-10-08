@@ -233,10 +233,35 @@ fn rs_simulate_dropouts(
     Ok(faer_to_r_matrix(sparse_data.as_ref()))
 }
 
+/// Generates synthetic data for single cell
+///
+/// @description
+/// Helper function to generate synthetic single cell data with optional
+///
+/// @param n_cells Integer. Number of cells to generate.
+/// @param n_genes Integer. Number of genes to generate.
+/// @param n_batches Integer. Number of the batches to generated.
+/// @param cell_configs A nested list that indicates which gene indices
+/// are markers for which cell.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @return A list with the following items.
+/// \itemize{
+///   \item data - The synthetic raw counts.
+///   \item indptr - The index pointers of the cells.
+///   \item indices - The indices of the genes for the given cells.
+///   \item nrow - Number of rows.
+///   \item ncol - Number of columns
+///   \item cell_type_indices - Vector indicating which cell type this is.
+///   \item batch_indices - Vector indicating the batch.
+/// }
+///
+/// @export
 #[extendr]
 fn rs_synthetic_sc_data_with_cell_types(
     n_cells: usize,
     n_genes: usize,
+    n_batches: usize,
     cell_configs: List,
     seed: usize,
 ) -> extendr_api::Result<List> {
@@ -250,7 +275,8 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data = create_celltype_sparse_csr_data(n_cells, n_genes, cell_configs_vec, seed);
+    let synthetic_data =
+        create_celltype_sparse_csr_data(n_cells, n_genes, cell_configs_vec, n_batches, seed);
 
     Ok(list!(
         data = synthetic_data.0.data,
@@ -260,6 +286,11 @@ fn rs_synthetic_sc_data_with_cell_types(
         ncol = synthetic_data.0.shape.1,
         cell_type_indices = synthetic_data
             .1
+            .iter()
+            .map(|x| *x as i32)
+            .collect::<Vec<i32>>(),
+        batch_indices = synthetic_data
+            .2
             .iter()
             .map(|x| *x as i32)
             .collect::<Vec<i32>>()

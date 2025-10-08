@@ -227,11 +227,16 @@ fn rs_get_metacells(
             })?;
 
             match knn_method {
-                KnnSearch::Hnsw => {
-                    generate_knn_hnsw(embd.as_ref(), meta_cell_params.k, seed, verbose)
-                }
+                KnnSearch::Hnsw => generate_knn_hnsw(
+                    embd.as_ref(),
+                    &meta_cell_params.ann_dist,
+                    meta_cell_params.k,
+                    seed,
+                    verbose,
+                ),
                 KnnSearch::Annoy => generate_knn_annoy(
                     embd.as_ref(),
+                    &meta_cell_params.ann_dist,
                     meta_cell_params.k,
                     meta_cell_params.n_trees,
                     meta_cell_params.search_budget,

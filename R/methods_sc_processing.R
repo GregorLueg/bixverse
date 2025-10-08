@@ -791,6 +791,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`. `"hnsw"` takes
 #'   longer, is more precise and more memory friendly. `"annoy"` is faster, less
 #'   precise and will take more memory.
+#'   \item ann_dist - String. One of `c("cosine", "euclidean")`.
 #'   \item full_snn - Boolean. Shall the sNN graph be generated across all
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
@@ -877,7 +878,8 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
       n_trees = n_trees,
       search_budget = search_budget,
       verbose = .verbose,
-      algorithm_type = knn_algorithm
+      algorithm_type = knn_algorithm,
+      ann_dist = ann_dist
     )
   )
 
