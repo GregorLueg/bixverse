@@ -91,7 +91,7 @@ impl MetaCellParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(15) as usize;
         let target_no_metacells = meta_cell_params
-            .get("no_metacells")
+            .get("target_no_metacells")
             .and_then(|v| v.as_integer())
             .unwrap_or(1000) as usize;
         let max_iter = meta_cell_params
@@ -560,7 +560,7 @@ pub fn calculate_aucell_streaming(
 /// ### Params
 ///
 /// * `nn_map` - Nearest neighbours with self
-/// * `max_shared` - Maximum number of shared neighbours to be considered
+/// * `max_shared` - Maximum number of shared neighbours to allow
 /// * `target_no` - Target number of meta cells
 /// * `max_iter` - Maximum iterations for the algorithm
 /// * `seed` - seed for reproducibility purposes
@@ -574,6 +574,7 @@ pub fn identify_meta_cells(
     target_no: usize,
     max_iter: usize,
     seed: usize,
+    verbose: bool,
 ) -> Vec<&[usize]> {
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed as u64);
     let k = nn_map[0].len();
@@ -619,6 +620,13 @@ pub fn identify_meta_cells(
             max_overlap = max_overlap.max(shared);
         }
 
+        if verbose && it % 10000 == 0 {
+            println!(
+                "Meta cell neighbour search - iter {} out of {} max iters",
+                it, max_iter
+            );
+        }
+
         if max_overlap <= max_shared {
             chosen.push(candidate);
         }
@@ -632,8 +640,9 @@ pub fn identify_meta_cells(
 
 /// Helper function to aggregate the meta cells
 ///
-/// The function will recalculate the normalised counts on a per meta cell
-/// basis.
+/// The function will generate the metacells based on the provided indices.
+/// Per meta-cell it will aggregate the raw counts and recalculate the norm
+/// counts based on the aggregated counts.
 ///
 /// ### Params
 ///

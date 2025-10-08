@@ -15,9 +15,10 @@ params_sc_metacells(
 )
 }
 \arguments{
-\item{max_shared}{Integer. Maximum number of shared neighbours.}
+\item{max_shared}{Integer. Maximum number of allowed shared neighbours for
+the meta cell to be considered.}
 
-\item{target_no_metacells}{Integer. Number of meta-cells to generate}
+\item{target_no_metacells}{Integer. Target number of meta-cells to generate.}
 
 \item{max_iter}{Integer. Maximum number of iterations for the algorithm.}
 

@@ -76,12 +76,12 @@ S7::method(find_markers_sc, single_cell_exp) <- function(
       f_path = get_rust_count_cell_f_path(object),
       cell_indices_1 = get_cell_indices(
         x = object,
-        cell_ids = cell_names_1,
+        cell_ids = cells_1,
         rust_index = TRUE
       ),
       cell_indices_2 = get_cell_indices(
         x = object,
-        cell_ids = cell_names_2,
+        cell_ids = cells_2,
         rust_index = TRUE
       ),
       min_prop = min_prop,
@@ -343,7 +343,7 @@ S7::method(aucell_sc, single_cell_exp) <- function(
 
   # get the gene indices
   gs_list <- purrr::map(gs_list, \(e) {
-    get_gene_indices(x = sc_object, gene_ids = e, rust_index = TRUE)
+    get_gene_indices(x = object, gene_ids = e, rust_index = TRUE)
   })
 
   auc_res <- rs_aucell(
@@ -355,8 +355,8 @@ S7::method(aucell_sc, single_cell_exp) <- function(
     verbose = .verbose
   )
 
-  rownames(auc_res) <- names(auc_gene_sets)
-  colnames(auc_res) <- get_cell_names(sc_object, filtered = TRUE)
+  rownames(auc_res) <- names(gs_list)
+  colnames(auc_res) <- get_cell_names(object, filtered = TRUE)
 
   return(auc_res)
 }

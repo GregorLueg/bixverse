@@ -201,7 +201,18 @@ fn rs_get_metacells(
             let data = knn_mat.data();
 
             (0..nrow)
-                .map(|j| (0..ncol).map(|i| data[i + j * nrow] as usize).collect())
+                .map(|j| {
+                    (0..ncol)
+                        .filter_map(|i| {
+                            let val = data[j + i * nrow];
+                            if val > 0 {
+                                Some((val - 1) as usize)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect()
+                })
                 .collect()
         }
         // second case - knn needs to be re-calculated
@@ -237,13 +248,22 @@ fn rs_get_metacells(
 
     let nn_map = build_nn_map(&knn_graph);
 
+    if verbose {
+        println!("Identifying meta cells.");
+    }
+
     let meta_cell_indices = identify_meta_cells(
         &nn_map,
         meta_cell_params.max_shared,
         meta_cell_params.target_no_metacells,
         meta_cell_params.max_iter,
         seed,
+        verbose,
     );
+
+    if verbose {
+        println!("Aggregating meta cells.");
+    }
 
     let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;

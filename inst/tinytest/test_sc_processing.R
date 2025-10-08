@@ -560,3 +560,65 @@ expect_true(
     "auc values between the two methods are highly correlated"
   )
 )
+
+## meta cell -------------------------------------------------------------------
+
+meta_cell_data_v1 <- get_meta_cells_sc(
+  object = sc_object,
+  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 10L),
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = dim(meta_cell_data_v1$meta_raw_counts),
+  target = c(10, 81),
+  info = paste(
+    "meta cell aggregation - correct dimensions raw counts"
+  )
+)
+
+expect_equivalent(
+  current = dim(meta_cell_data_v1$meta_norm_counts),
+  target = c(10, 81),
+  info = paste(
+    "meta cell aggregation - correct dimensions norm counts"
+  )
+)
+
+expect_true(
+  current = checkmate::testClass(
+    meta_cell_data_v1$meta_raw_counts,
+    "dgRMatrix"
+  ),
+  info = paste("meta cell aggregation - expected return class")
+)
+
+expect_true(
+  current = checkmate::testClass(
+    meta_cell_data_v1$meta_norm_counts,
+    "dgRMatrix"
+  ),
+  info = paste("meta cell aggregation - expected return class")
+)
+
+meta_cell_data_v2 <- get_meta_cells_sc(
+  object = sc_object,
+  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 100L),
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = dim(meta_cell_data_v2$meta_raw_counts),
+  target = c(100, 81),
+  info = paste(
+    "meta cell aggregation - correct dimensions raw counts (second version)"
+  )
+)
+
+expect_equivalent(
+  current = dim(meta_cell_data_v2$meta_norm_counts),
+  target = c(100, 81),
+  info = paste(
+    "meta cell aggregation - correct dimensions norm counts (second version)"
+  )
+)

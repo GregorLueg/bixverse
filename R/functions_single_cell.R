@@ -59,3 +59,48 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 
   return(res)
 }
+
+## meta cell matrices ----------------------------------------------------------
+
+#' Create sparse dgRMatrix matrices for raw and norm counts
+#'
+#' @param meta_cell_data Named list. This contains the indptr, indices and data
+#' for both raw counts and norm counts.
+#'
+#' @returns A list of two items
+#' \itemize{
+#'  \item raw - Sparse matrix representing the raw counts.
+#'  \item norm - Sparse matrix representing the norm counts.
+#' }
+get_meta_cell_matrices <- function(meta_cell_data) {
+  # checks
+  checkmate::assertList(meta_cell_data, names = "named")
+  checkmate::assertNames(
+    names(meta_cell_data),
+    must.include = c(
+      "indptr",
+      "indices",
+      "raw_counts",
+      "norm_counts",
+      "nrow",
+      "ncol"
+    )
+  )
+
+  list(
+    raw = new(
+      "dgRMatrix",
+      p = as.integer(meta_cell_data$indptr),
+      j = as.integer(meta_cell_data$indices),
+      x = as.numeric(meta_cell_data$raw_counts),
+      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+    ),
+    norm = new(
+      "dgRMatrix",
+      p = as.integer(meta_cell_data$indptr),
+      j = as.integer(meta_cell_data$indices),
+      x = as.numeric(meta_cell_data$norm_counts),
+      Dim = as.integer(c(meta_cell_data$nrow, meta_cell_data$ncol))
+    )
+  )
+}

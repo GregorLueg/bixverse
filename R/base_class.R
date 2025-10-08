@@ -1,3 +1,6 @@
+# contains a base class definition and generics for common getters/setters that
+# are applied on this base class
+
 # classes ----------------------------------------------------------------------
 
 ## bixverse_base_class ---------------------------------------------------------
