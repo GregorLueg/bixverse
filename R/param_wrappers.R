@@ -651,7 +651,7 @@ params_sc_neighbours <- function(
 #' @param target_no_metacells Integer. Target number of meta-cells to generate.
 #' @param max_iter Integer. Maximum number of iterations for the algorithm.
 #' @param k Integer. Number of neighbours to return.
-#' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
+#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
 #' `"annoy"`
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
 #' @param search_budget Integer. Search budget per tree for the `annoy`

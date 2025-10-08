@@ -15,6 +15,8 @@ rs_get_metacells(
 )
 }
 \arguments{
+\item{f_path}{String. Path to the \code{counts_cells.bin} file.}
+
 \item{knn_mat}{Optional integer matrix. The kNN matrix you wish to use
 for the generation of the meta cells. This function expects 0-indices!}
 
@@ -30,8 +32,6 @@ the meta cells. Typicall \code{1e4}.}
 \item{seed}{Integer. For reproducibility purposes.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
-
-\item{String.}{Path to the \code{counts_cells.bin} file.}
 }
 \value{
 A list with the following elements:

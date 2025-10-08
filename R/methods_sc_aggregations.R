@@ -28,6 +28,7 @@
 #'   to use. Defaults to `"annoy"`. Only relevant if you set regenerate_knn to
 #'   `TRUE`.
 #' }
+#' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Atm, the only option is
 #' `"pca"`. Only relevant if you set regenerate_knn to `TRUE`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -35,7 +36,10 @@
 #' `TRUE`.
 #' @param target_size Numeric. The library target size to normalise the meta
 #' cells to.
+#' @param seed Integer. Seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @export
 #'
 #' @references
 #' Morabito, et al. Cell Rep Methods, 2023

@@ -24,13 +24,13 @@ the meta cell to be considered.}
 
 \item{k}{Integer. Number of neighbours to return.}
 
+\item{knn_method}{String. One of \code{c("annoy", "hnsw")}. Defaults to
+\code{"annoy"}}
+
 \item{n_trees}{Integer. Number of trees to use for the \code{annoy} algorithm.}
 
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
-
-\item{knn_algorithm}{String. One of \code{c("annoy", "hnsw")}. Defaults to
-\code{"annoy"}}
 }
 \value{
 A list with the neighbour parameters.

@@ -155,7 +155,7 @@ fn rs_aucell(
 /// the meta_cell_params. If `knn_mat` is provided, this one will be used. You
 /// need to at least provide `knn_mat` or `embd`!
 ///
-/// @param String. Path to the `counts_cells.bin` file.
+/// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param knn_mat Optional integer matrix. The kNN matrix you wish to use
 /// for the generation of the meta cells. This function expects 0-indices!
 /// @param embd Optional numerical matrix. The embedding matrix (for example

@@ -37,6 +37,8 @@ to use. Defaults to \code{"annoy"}. Only relevant if you set regenerate_knn to
 \code{TRUE}.
 }}
 
+\item{regenerate_knn}{Boolean. Shall a kNN graph be regenerated.}
+
 \item{embd_to_use}{String. The embedding to use. Atm, the only option is
 \code{"pca"}. Only relevant if you set regenerate_knn to \code{TRUE}.}
 
@@ -46,6 +48,8 @@ use. If \code{NULL} all will be used. Only relevant if you set regenerate_knn to
 
 \item{target_size}{Numeric. The library target size to normalise the meta
 cells to.}
+
+\item{seed}{Integer. Seed for reproducibility.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
