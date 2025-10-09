@@ -4,9 +4,24 @@ use crate::single_cell::batch_corrections::*;
 
 /// Calculate kBET type scores
 ///
+/// @description
+/// The function takes in a kNN matrix and a batch vector indicating which
+/// cell belongs to which batch. The function will check for the neighbourhood
+/// of each cell if the proportion of represented batches are different from
+/// the overall batch proportions. Good mixing of batches would mean very
+/// cells have significant differences; bad mixing a lot of the batches
+/// have bad mixing.
+///
+/// @param knn_mat Integer matrix. The rows represent the cells and the
+/// columns the neighbour indices.
+/// @param batch_vector Integer vector. The integers indicate to which
+/// batch a given cell belongs.
+///
+/// @return A vector of p-values based on the ChiSquare statistic per cell.
+///
 /// @export
 #[extendr]
-fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, threshold: f64) -> Vec<bool> {
+fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
     let n_cells = knn_mat.nrows();
     let k_neighbours = knn_mat.ncols();
 
@@ -21,7 +36,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>, threshold: f64) -> Vec
     // Convert batch_vector to Vec<usize>
     let batches: Vec<usize> = batch_vector.iter().map(|&x| x as usize).collect();
 
-    kbet(&knn_matrix, &batches, threshold)
+    kbet(&knn_matrix, &batches)
 }
 
 extendr_module! {

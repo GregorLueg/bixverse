@@ -16,14 +16,11 @@ use statrs::distribution::ContinuousCDF;
 /// * `knn_data` - KNN data. Outer vector represents the cells, while the inner
 ///   vector represents
 /// * `batches` - Vector indicating the batches.
-/// * `pval_threshold`- Value below which we consider the lack of mixing
-///   signficant.
 ///
 /// ### Return
 ///
-/// Boolean vector indicating which cells have not the mixing across batches
-/// as one would expect from background distributions.
-pub fn kbet(knn_data: &Vec<Vec<usize>>, batches: &Vec<usize>, pval_threshold: f64) -> Vec<bool> {
+/// Numerical vector indicating with the p-values from the ChiSquare test
+pub fn kbet(knn_data: &Vec<Vec<usize>>, batches: &Vec<usize>) -> Vec<f64> {
     let mut batch_counts = FxHashMap::default();
     for &batch in batches {
         *batch_counts.entry(batch).or_insert(0) += 1;
@@ -50,129 +47,7 @@ pub fn kbet(knn_data: &Vec<Vec<usize>>, batches: &Vec<usize>, pval_threshold: f6
             }
 
             // Compute p-value from chi-square distribution
-            let p_value = 1.0 - ChiSquared::new(dof).unwrap().cdf(chi_square);
-
-            // Low p-value = poor mixing (reject null hypothesis of good mixing)
-            p_value <= pval_threshold
+            1.0 - ChiSquared::new(dof).unwrap().cdf(chi_square)
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_kbet_no_mixing() {
-        // Perfect batch separation with k=10 neighbors
-        let knn_data = vec![
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // batch 0: all batch 0 neighbors
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // batch 1: all batch 1 neighbors
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-        ];
-        let batches = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-
-        let result = kbet(&knn_data, &batches, 0.05);
-        let poor_mixing_count = result.iter().filter(|&&x| x).count();
-
-        println!(
-            "No mixing: {}/{} cells have poor mixing",
-            poor_mixing_count,
-            result.len()
-        );
-        assert!(poor_mixing_count > 15); // Should be almost all
-    }
-
-    #[test]
-    fn test_kbet_perfect_mixing() {
-        // Perfect 50/50 mixing with k=10
-        let knn_data = vec![
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14], // 5 from each batch
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-            vec![0, 1, 2, 3, 4, 10, 11, 12, 13, 14],
-        ];
-        let batches = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-
-        let result = kbet(&knn_data, &batches, 0.05);
-        let poor_mixing_count = result.iter().filter(|&&x| x).count();
-
-        println!(
-            "Perfect mixing: {}/{} cells have poor mixing",
-            poor_mixing_count,
-            result.len()
-        );
-        assert!(poor_mixing_count < 3); // Should be almost none
-    }
-
-    #[test]
-    fn test_kbet_partial_mixing() {
-        // 90/10 mixing - much more skewed
-        let knn_data = vec![
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10], // 9 batch 0, 1 batch 1
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 10],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0], // 9 batch 1, 1 batch 0
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-            vec![10, 11, 12, 13, 14, 15, 16, 17, 18, 0],
-        ];
-        let batches = vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-
-        let result = kbet(&knn_data, &batches, 0.05);
-        let poor_mixing_count = result.iter().filter(|&&x| x).count();
-
-        println!(
-            "Partial mixing: {}/{} cells have poor mixing",
-            poor_mixing_count,
-            result.len()
-        );
-        assert!(poor_mixing_count > 10); // 90/10 split should show significant poor mixing
-    }
 }

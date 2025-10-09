@@ -151,7 +151,8 @@ sc_object.medium_batch_effect <- calculate_pca_sc(
 )
 
 sc_object.medium_batch_effect <- find_neighbours_sc(
-  sc_object.medium_batch_effect
+  sc_object.medium_batch_effect,
+  .verbose = FALSE
 )
 
 ### strong batch effect --------------------------------------------------------
@@ -193,44 +194,56 @@ sc_object.strong_batch_effect <- calculate_pca_sc(
 )
 
 sc_object.strong_batch_effect <- find_neighbours_sc(
-  sc_object.strong_batch_effect
+  sc_object.strong_batch_effect,
+  .verbose = FALSE
 )
 
-## batch corrections -----------------------------------------------------------
+# tests ------------------------------------------------------------------------
 
-pca_data <- as.data.table(get_pca_factors(sc_object)[, c(1:3)]) %>%
-  `colnames<-`(c("PC1", "PC2", "PC3")) %>%
-  .[, `:=`(
-    batch_idx = unlist(sc_object[["batch_index"]]),
-    cell_group = unlist(sc_object[["cell_grp"]])
-  )]
+## kbet scores -----------------------------------------------------------------
 
-p1.weak <- ggplot(data = pca_data, mapping = aes(x = PC1, y = PC2)) +
-  geom_point(mapping = aes(col = batch_idx))
+kbet_scores.weak_batch_effect <- calculate_kbet_sc(
+  object = sc_object.weak_batch_effect,
+  batch_column = "batch_index"
+)
 
-p2.weak <- ggplot(data = pca_data, mapping = aes(x = PC1, y = PC2)) +
-  geom_point(mapping = aes(col = cell_group))
+kbet_scores.medium_batch_effect <- calculate_kbet_sc(
+  object = sc_object.medium_batch_effect,
+  batch_column = "batch_index"
+)
 
-library(patchwork)
+kbet_scores.strong_batch_effect <- calculate_kbet_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index"
+)
 
-p1.weak + p2.weak
+expect_true(
+  current = is.logical(kbet_scores.weak_batch_effect$significant_tests),
+  info = paste("kbet scores - returns booleans where expected")
+)
 
-p1.strong <- ggplot(data = pca_data, mapping = aes(x = PC1, y = PC2)) +
-  geom_point(mapping = aes(col = batch_idx))
-
-p2.strong <- ggplot(data = pca_data, mapping = aes(x = PC1, y = PC2)) +
-  geom_point(mapping = aes(col = cell_group))
-
-p1.strong + p2.strong
-
-### bbknn ----------------------------------------------------------------------
-
-res <- rs_kbet(
-  knn_mat = get_knn_mat(sc_object.weak_batch_effect),
-  batch_vector = as.integer(
-    single_cell_test_data.weak_batch_effect$obs$batch_index
+expect_true(
+  current = checkmate::qtest(
+    kbet_scores.weak_batch_effect$chisquare_pvals,
+    "N[0, 1]"
   ),
-  0.05
+  info = paste("kbet scores - p-values are expected type and range")
 )
 
-sum(res) / length(res)
+expect_true(
+  current = kbet_scores.weak_batch_effect$kbet_score <
+    kbet_scores.medium_batch_effect$kbet_score,
+  info = paste("kbet scores - weak kbet < medium kbet")
+)
+
+expect_true(
+  current = kbet_scores.weak_batch_effect$kbet_score <
+    kbet_scores.strong_batch_effect$kbet_score,
+  info = paste("kbet scores - weak kbet < strong kbet")
+)
+
+expect_true(
+  current = kbet_scores.medium_batch_effect$kbet_score <
+    kbet_scores.strong_batch_effect$kbet_score,
+  info = paste("kbet scores - weak kbet < strong kbet")
+)

@@ -1894,8 +1894,23 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 
 #' Calculate kBET type scores
 #'
+#' @description
+#' The function takes in a kNN matrix and a batch vector indicating which
+#' cell belongs to which batch. The function will check for the neighbourhood
+#' of each cell if the proportion of represented batches are different from
+#' the overall batch proportions. Good mixing of batches would mean very
+#' cells have significant differences; bad mixing a lot of the batches
+#' have bad mixing.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A vector of p-values based on the ChiSquare statistic per cell.
+#'
 #' @export
-rs_kbet <- function(knn_mat, batch_vector, threshold) .Call(wrap__rs_kbet, knn_mat, batch_vector, threshold)
+rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
 
 #' Calculate the percentage of gene sets in the cells
 #'
