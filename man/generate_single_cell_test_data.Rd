@@ -19,6 +19,8 @@ following elements:
 \item marker_genes - List. A nested list that indicates which gene indices
 are markers for which cell.
 \item n_batches - Integer. Number of batches.
+\item batch_effect_strength - String. Indicates the strength of the batch
+effect to add.
 }}
 
 \item{seed}{Integer. The seed for the generation of the seed data.}

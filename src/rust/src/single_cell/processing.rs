@@ -756,14 +756,17 @@ pub fn get_hvg_mvb_streaming() -> HvgRes {
 #[inline]
 fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let mut dense_data = vec![0.0f32; no_cells];
-
     for (idx, &row_idx) in chunk.indices.iter().enumerate() {
         dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
     }
-
     let mean = dense_data.iter().sum::<f32>() / no_cells as f32;
     let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
     let std_dev = variance.sqrt();
+
+    if std_dev < 1e-8 {
+        // Zero variance gene - just return centered data (all zeros after centering)
+        return vec![0.0f32; no_cells];
+    }
 
     dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
 }

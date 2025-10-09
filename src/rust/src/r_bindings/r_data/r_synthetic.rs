@@ -263,6 +263,7 @@ fn rs_synthetic_sc_data_with_cell_types(
     n_genes: usize,
     n_batches: usize,
     cell_configs: List,
+    batch_effect_strength: String,
     seed: usize,
 ) -> extendr_api::Result<List> {
     let mut cell_configs_vec = Vec::with_capacity(cell_configs.len());
@@ -275,8 +276,14 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data =
-        create_celltype_sparse_csr_data(n_cells, n_genes, cell_configs_vec, n_batches, seed);
+    let synthetic_data = create_celltype_sparse_csr_data(
+        n_cells,
+        n_genes,
+        cell_configs_vec,
+        n_batches,
+        &batch_effect_strength,
+        seed,
+    );
 
     Ok(list!(
         data = synthetic_data.0.data,

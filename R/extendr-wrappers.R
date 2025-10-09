@@ -645,7 +645,7 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #' }
 #'
 #' @export
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, seed)
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -1891,6 +1891,11 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #'
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
+
+#' Calculate kBET type scores
+#'
+#' @export
+rs_kbet <- function(knn_mat, batch_vector, threshold) .Call(wrap__rs_kbet, knn_mat, batch_vector, threshold)
 
 #' Calculate the percentage of gene sets in the cells
 #'

@@ -17,6 +17,8 @@
 #'   \item marker_genes - List. A nested list that indicates which gene indices
 #'   are markers for which cell.
 #'   \item n_batches - Integer. Number of batches.
+#'   \item batch_effect_strength - String. Indicates the strength of the batch
+#'   effect to add.
 #' }
 #' @param seed Integer. The seed for the generation of the seed data.
 #'
@@ -34,6 +36,7 @@ generate_single_cell_test_data <- function(
 ) {
   # checks
   checkmate::qassert(seed, "I1")
+  assertScSyntheticData(syn_data_params)
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
     stop(
@@ -49,29 +52,55 @@ generate_single_cell_test_data <- function(
       n_genes = n_genes,
       n_batches = n_batches,
       cell_configs = marker_genes,
+      batch_effect_strength = batch_effect_strength,
       seed = seed
     )
   )
 
-  counts <- new(
-    "dgRMatrix",
-    p = as.integer(data$indptr),
-    x = as.numeric(data$data),
-    j = as.integer(data$indices),
-    Dim = as.integer(c(n_cells, n_genes))
+  counts <- with(
+    syn_data_params,
+    new(
+      "dgRMatrix",
+      p = as.integer(data$indptr),
+      x = as.numeric(data$data),
+      j = as.integer(data$indices),
+      Dim = as.integer(c(n_cells, n_genes))
+    )
   )
 
-  rownames(counts) <- sprintf("cell_%04d", 1:1000)
-  colnames(counts) <- sprintf("gene_%03d", 1:100)
+  n_digits <- nchar(as.character(syn_data_params$n_cells))
+  format_str <- sprintf("cell_%%0%dd", n_digits)
+  rownames(counts) <- sprintf(
+    format_str,
+    1:syn_data_params$n_cells
+  )
 
   obs <- data.table(
-    cell_id = sprintf("cell_%04d", 1:1000),
-    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1)
+    cell_id = sprintf(
+      format_str,
+      1:syn_data_params$n_cells
+    ),
+    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1),
+    batch_index = data$batch_indices + 1
+  )
+
+  n_digits <- nchar(as.character(syn_data_params$n_genes))
+  format_str <- sprintf("gene_%%0%dd", n_digits)
+  format_str_2 <- sprintf("ens_%%0%dd", n_digits)
+  colnames(counts) <- sprintf(
+    format_str,
+    1:syn_data_params$n_genes
   )
 
   var <- data.table(
-    gene_id = sprintf("gene_%03d", 1:100),
-    ensembl_id = sprintf("ens_%03d", 1:100)
+    gene_id = sprintf(
+      format_str,
+      1:syn_data_params$n_genes
+    ),
+    ensembl_id = sprintf(
+      format_str_2,
+      1:syn_data_params$n_genes
+    )
   )
 
   res <- list(

@@ -76,6 +76,10 @@ S7::method(load_seurat, single_cell_exp) <- function(
     keep.rownames = "barcode"
   )
 
+  if ("cell_id" %in% names(obs_dt)) {
+    obs_dt[, cell_id := NULL]
+  }
+
   var_dt <- data.table::data.table(gene_id = rownames(seurat))
 
   rust_con <- get_sc_rust_ptr(object)
@@ -106,6 +110,131 @@ S7::method(load_seurat, single_cell_exp) <- function(
 
   duckdb_con$populate_var_from_data.table(
     var_dt = var_dt,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
+### direct r -------------------------------------------------------------------
+
+#' Load in Seurat to `single_cell_exp`
+#'
+#' @description
+#' This function takes a Seurat file and generates `single_cell_exp` class
+#' from it.
+#'
+#' @param object `single_cell_exp` class.
+#' @param counts Sparse matrix. The cells represent the rows, the genes the
+#' indices. Needs to be `"dgRMatrix"`.
+#' @param obs data.table. The data.table representing the observations, i.e.,
+#' cell information.
+#' @param var data.table. The data.table representing the features, i.e., the
+#' feature information.
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+load_r_data <- S7::new_generic(
+  name = "load_h5ad",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    counts,
+    obs,
+    var,
+    sc_qc_param = params_sc_min_quality(),
+    batch_size = 1000L,
+    streaming = TRUE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_r_data single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_r_data, single_cell_exp) <- function(
+  object,
+  counts,
+  obs,
+  var,
+  sc_qc_param = params_sc_min_quality(),
+  batch_size = 1000L,
+  streaming = TRUE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertClass(counts, "dgRMatrix")
+  no_cells <- nrow(counts)
+  no_genes <- ncol(counts)
+  checkmate::assertDataTable(obs, nrows = no_cells)
+  checkmate::assertDataTable(var, nrows = no_genes)
+  checkmate::qassert(.verbose, "B1")
+
+  # body
+  counts <- sparse_mat_to_list(counts)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$r_data_to_file(
+    r_data = counts,
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  duckdb_con$populate_obs_from_data.table(
+    obs_dt = obs,
+    filter = as.integer(file_res$cell_indices + 1)
+  )
+
+  duckdb_con$populate_var_from_data.table(
+    var_dt = var,
     filter = as.integer(file_res$gene_indices + 1)
   )
 

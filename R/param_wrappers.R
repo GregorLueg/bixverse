@@ -491,6 +491,8 @@ params_snf <- function(
 #' @param marker_genes List. A nested list that indicates which gene indices
 #' are markers for which cell.
 #' @param n_batches Integer. Number of batches.
+#' @param batch_effect_strength String. One of
+#' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
 #'
 #' @return A list with the parameters.
 params_sc_synthetic_data <- function(
@@ -507,18 +509,24 @@ params_sc_synthetic_data <- function(
       marker_genes = 20:29L
     )
   ),
-  n_batches = 1L
+  n_batches = 1L,
+  batch_effect_strength = c("strong", "medium", "weak")
 ) {
+  batch_effect_strength <- match.arg(batch_effect_strength)
+
   # checks
   checkmate::qassert(n_cells, "I1")
   checkmate::qassert(n_genes, "I1")
   checkmate::assertList(marker_genes, types = "list", names = "named")
   checkmate::qassert(n_batches, "I1")
+  checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+
   list(
     n_cells = n_cells,
     n_genes = n_genes,
     marker_genes = marker_genes,
-    n_batches = n_batches
+    n_batches = n_batches,
+    batch_effect_strength = batch_effect_strength
   )
 }
 

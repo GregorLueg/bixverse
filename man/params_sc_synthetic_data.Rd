@@ -9,7 +9,8 @@ params_sc_synthetic_data(
   n_genes = 100L,
   marker_genes = list(cell_type_1 = list(marker_genes = 0:9L), cell_type_2 =
     list(marker_genes = 10:19L), cell_type_3 = list(marker_genes = 20:29L)),
-  n_batches = 1L
+  n_batches = 1L,
+  batch_effect_strength = c("strong", "medium", "weak")
 )
 }
 \arguments{
@@ -21,6 +22,9 @@ params_sc_synthetic_data(
 are markers for which cell.}
 
 \item{n_batches}{Integer. Number of batches.}
+
+\item{batch_effect_strength}{String. One of
+\code{c("strong", "medium", "weak")}. The strength of the batch effect to add.}
 }
 \value{
 A list with the parameters.

@@ -9,6 +9,7 @@ rs_synthetic_sc_data_with_cell_types(
   n_genes,
   n_batches,
   cell_configs,
+  batch_effect_strength,
   seed
 )
 }

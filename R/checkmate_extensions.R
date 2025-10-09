@@ -745,7 +745,13 @@ checkScSyntheticData <- function(x) {
 
   res <- checkmate::checkNames(
     names(x),
-    must.include = c("n_cells", "n_genes", "marker_genes", "n_batches")
+    must.include = c(
+      "n_cells",
+      "n_genes",
+      "marker_genes",
+      "n_batches",
+      "batch_effect_strength"
+    )
   )
   if (!isTRUE(res)) {
     return(res)
@@ -785,6 +791,14 @@ checkScSyntheticData <- function(x) {
   )
   if (!isTRUE(res)) {
     return("marker_genes must be a named list of lists.")
+  }
+
+  res <- checkmate::checkChoice(
+    x[["batch_effect_strength"]],
+    c("strong", "medium", "weak")
+  )
+  if (!isTRUE(res)) {
+    return(res)
   }
 
   return(TRUE)

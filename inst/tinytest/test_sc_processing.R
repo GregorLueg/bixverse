@@ -339,13 +339,18 @@ expect_true(
 ### r --------------------------------------------------------------------------
 
 pca_input <- as.matrix(sc_object[,
-  as.integer(hvg_r + 1),
+  as.integer(get_hvg(sc_object) + 1),
   assay = "norm",
-  return_type = "gene",
+  return_format = "gene",
   use_cells_to_keep = TRUE
 ])
 
+scaled_data <- scale(pca_input)
+
 pca_r <- prcomp(pca_input, scale. = TRUE)
+
+expected_names <- get_gene_names(sc_object)[hvg_r + 1]
+actual_names <- colnames(pca_input)
 
 ### rust -----------------------------------------------------------------------
 
@@ -380,6 +385,23 @@ expect_true(
   ),
   info = "PCA on single cell data compared to R (randomised SVD)"
 )
+
+#### scaling within the rust function ------------------------------------------
+
+# test if the scaling results in the same data
+c(pca_factors, pca_loadings, scaled) %<-%
+  rs_sc_pca(
+    f_path_gene = get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = FALSE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    return_scaled = TRUE,
+    verbose = FALSE
+  )
+
+expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 
 ## knn and snn -----------------------------------------------------------------
 
