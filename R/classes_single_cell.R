@@ -440,7 +440,9 @@ get_pca_factors.sc_cache <- function(x) {
   # checks
   checkmate::assertClass(x, "sc_cache")
 
-  return(x[["pca_factors"]])
+  res <- x[["pca_factors"]]
+
+  return(res)
 }
 
 #' @rdname get_pca_loadings
@@ -450,7 +452,9 @@ get_pca_loadings.sc_cache <- function(x) {
   # checks
   checkmate::assertClass(x, "sc_cache")
 
-  return(x[["pca_loadings"]])
+  res <- x[["pca_loadings"]]
+
+  return(res)
 }
 
 #' @rdname get_knn_mat
@@ -1228,6 +1232,13 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
     x = S7::prop(x, "sc_cache")
   )
 
+  if (is.null(res)) {
+    return(NULL)
+  }
+
+  rownames(res) <- get_cell_names(x, filtered = TRUE)
+  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
+
   return(res)
 }
 
@@ -1248,6 +1259,9 @@ S7::method(get_pca_loadings, single_cell_exp) <- function(
   res <- get_pca_loadings(
     x = S7::prop(x, "sc_cache")
   )
+
+  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
+  rownames(res) <- get_gene_names(x)[get_hvg(x) + 1]
 
   return(res)
 }

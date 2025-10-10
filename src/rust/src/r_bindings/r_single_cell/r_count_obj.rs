@@ -985,6 +985,19 @@ impl SingeCellCountData {
         let cell_idx_set: FxHashSet<u32> = cell_idx.into_iter().collect();
         self.cell_mask = cell_idx_set;
     }
+
+    /// Set cell numbers and genes
+    ///
+    /// ### Params
+    ///
+    /// * `cell_no` - No of cells
+    /// * `gene_no` - No of genes
+    pub fn set_from_file(&mut self) {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+        let header = reader.get_header();
+        self.n_cells = header.total_cells;
+        self.n_genes = header.total_genes;
+    }
 }
 
 extendr_module! {
