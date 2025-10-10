@@ -1198,6 +1198,122 @@ checkScMetacells <- function(x) {
   return(TRUE)
 }
 
+### bbknn ----------------------------------------------------------------------
+
+#' Check BBKNN parameters
+#'
+#' @description Checkmate extension for checking the BBKNN parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScBbknn <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "neighbours_within_batch",
+      "knn_method",
+      "ann_dist",
+      "set_op_mix_ratio",
+      "local_connectivity",
+      "annoy_n_trees",
+      "search_budget",
+      "trim"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "neighbours_within_batch" = "I1",
+    "annoy_n_trees" = "I1",
+    "search_budget" = "I1",
+    "trim" = c("0", "I1")
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in BBKNN parameters is incorrect:",
+          "neighbours_within_batch, annoy_n_trees, and search_budget need to be integers;",
+          "trim needs to be NULL or an integer."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  numeric_rules <- list(
+    "set_op_mix_ratio" = "N1",
+    "local_connectivity" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in BBKNN parameters is incorrect:",
+          "set_op_mix_ratio and local_connectivity need to be numeric."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw"),
+    ann_dist = c("cosine", "euclidean")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the BBKNN parameters is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## other -----------------------------------------------------------------------
@@ -1533,6 +1649,22 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+
+### bbknn ----------------------------------------------------------------------
+
+#' Assert BBKNN parameters
+#'
+#' @description Checkmate extension for asserting the BBKNN parameters.
+#'
+#' @inheritParams checkScBbknn
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 
 # tests ------------------------------------------------------------------------
 

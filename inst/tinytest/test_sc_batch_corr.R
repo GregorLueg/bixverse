@@ -393,3 +393,96 @@ expect_true(
     "(medium batch effect)"
   )
 )
+
+sc_object.medium_batch_effect[[]]
+
+object = sc_object.medium_batch_effect
+batch_column = "batch_index"
+embd_to_use = "pca"
+k = 10L
+no_embd_to_use = NULL
+sc_bbknn_params = params_sc_bbknn()
+.verbose = TRUE
+
+class(object)
+
+checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+checkmate::qassert(batch_column, "S1")
+checkmate::assertChoice(embd_to_use, c("pca"))
+checkmate::qassert(no_embd_to_use, c("I1", "0"))
+assertScBbknn(sc_bbknn_params)
+
+embd <- switch(embd_to_use, pca = get_pca_factors(object))
+# early return
+if (is.null(embd)) {
+  warning(
+    paste(
+      "The desired embedding was not found. Please check the parameters.",
+      "Returning NULL."
+    )
+  )
+
+  return(NULL)
+}
+if (!is.null(no_embd_to_use)) {
+  to_take <- min(c(no_embd_to_use, ncol(embd)))
+  embd <- embd[, 1:to_take]
+}
+
+batch_index <- unlist(object[[batch_column]])
+
+if (!length(levels(factor(batch_index))) > 1) {
+  warning("The batch column only has one batch. Returning NULL")
+  return(NULL)
+}
+
+no_generated_neighbours <- length(levels(factor(batch_index))) *
+  sc_bbknn_params$neighbours_within_batch
+
+if (k > no_generated_neighbours) {
+  warning(paste(
+    "The number of desired neighbours cannot be generated with these BBKNN",
+    "Please adopt neighbours_within_batch accordingly"
+  ))
+}
+
+message("Running BBKNN algorithm")
+
+bbknn_res <- rs_bbknn(
+  embd = embd,
+  batch_labels = as.integer(batch_index),
+  bbknn_params = sc_bbknn_params,
+  seed = 42L,
+  verbose = .verbose
+)
+
+knn_mat <- if (no_generated_neighbours <= k) {
+  matrix(data = bbknn_res$distances$indices, nrow = nrow(embd), byrow = TRUE)
+} else {
+  rs_bbknn_filtering(
+    indptr = bbknn_res$distances$indptr,
+    indices = bbknn_res$distances$indices,
+    k
+  )
+}
+
+object <- set_knn(object, knn_mat = knn_mat)
+
+message("Generating graph based on BBKNN connectivities.")
+
+sparse_mat <- Matrix::sparseMatrix(
+  i = rep(
+    seq_along(bbknn_res$connectivities$indptr[-1]),
+    diff(bbknn_res$connectivities$indptr)
+  ),
+  j = bbknn_res$connectivities$indices + 1,
+  x = bbknn_res$connectivities$data,
+  dims = c(bbknn_res$connectivities$nrow, bbknn_res$connectivities$ncol),
+  index1 = TRUE
+)
+
+snn_graph <- igraph::graph_from_adjacency_matrix(
+  sparse_mat,
+  mode = "max",
+  weighted = TRUE
+)
