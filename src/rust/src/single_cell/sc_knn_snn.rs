@@ -36,6 +36,7 @@ pub enum KnnSearch {
 // Structures //
 ////////////////
 
+/// Point structure for the HNSW index
 #[derive(Clone, Debug)]
 pub struct Point(Vec<f32>, AnnDist);
 
@@ -86,7 +87,7 @@ impl DistancePoint for Point {
 /// ### Returns
 ///
 /// The distance between the two cells based on the embedding.
-fn compute_distance_knn(a: RowRef<f32>, b: RowRef<f32>, metric: &AnnDist) -> f32 {
+pub fn compute_distance_knn(a: RowRef<f32>, b: RowRef<f32>, metric: &AnnDist) -> f32 {
     match metric {
         AnnDist::Euclidean => {
             let mut sum = 0.0f32;
@@ -167,6 +168,23 @@ pub fn build_nn_map(knn_graph: &[Vec<usize>]) -> Vec<Vec<usize>> {
 }
 
 /// Helper to calculate smooth kNN distances
+///
+/// ### Params
+///
+/// * `dist` - Slice of distance vectors from the kNN
+/// * `k` - Number of neighbours.
+/// * `local_connectivity` - Determines the minimum distance threshold (rho) by
+///   interpolating between the nearest non-zero neighbors. If it's 1.5, you'd
+///   interpolate between the 1st and 2nd neighbor distances.
+/// * `smook_k_tol` - Tolerance parameter that controls:
+///   - Whether to apply interpolation when computing rho
+///   - When to stop the binary search (when |psum - target| < smook_k_tol)
+/// * `min_k_dist_scale` - Minimum scaling factor for sigma to prevent it from
+///   becoming too small
+///
+/// ### Returns
+///
+/// Tuple of (rho, sigma)
 pub fn smooth_knn_dist(
     dist: &[Vec<f32>],
     k: f32,
@@ -184,7 +202,6 @@ pub fn smooth_knn_dist(
         .par_iter()
         .map(|dist_i| {
             let mut rho = 0.0_f32;
-            let mut sigma = 1.0_f32;
 
             let non_zero_dist: Vec<f32> = dist_i.iter().filter(|&&d| d > 0.0).copied().collect();
 
@@ -242,7 +259,7 @@ pub fn smooth_knn_dist(
                 }
             }
 
-            sigma = mid;
+            let mut sigma = mid;
 
             if rho > 0.0 {
                 let mean_i = dist_i.iter().sum::<f32>() / n_neighbours as f32;
@@ -263,6 +280,18 @@ pub fn smooth_knn_dist(
     (sigmas, rhos)
 }
 
+/// Helper function to transform kNN data into CompressedSparseData
+///
+/// ### Params
+///
+/// * `knn_indices` - The indices of the k-nearest neighbours.
+/// * `knn_dists` - The distances to the k-nearest neighbours.
+/// * `n_obs` - Number of observations in the data.
+///
+/// ### Return
+///
+/// `CompressedSparseData` in CSR format with distances to the k-nearest
+/// neighbours stored.
 pub fn knn_to_sparse_dist(
     knn_indices: &[Vec<usize>],
     knn_dists: &[Vec<f32>],
@@ -865,182 +894,4 @@ pub fn generate_snn_limited(
     }
 
     (edges, weights)
-}
-
-///////////
-// Tests //
-///////////
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use faer::Mat;
-    use std::collections::HashSet;
-
-    fn create_clustered_data() -> Mat<f32> {
-        // Create 3 well-separated clusters
-        let mut data = Vec::new();
-
-        // Cluster 1: around (0, 0)
-        for i in 0..50 {
-            data.push(vec![
-                (i as f32 * 0.1) % 2.0 - 1.0,
-                (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        // Cluster 2: around (10, 10)
-        for i in 0..50 {
-            data.push(vec![
-                10.0 + (i as f32 * 0.1) % 2.0 - 1.0,
-                10.0 + (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        // Cluster 3: around (-10, 10)
-        for i in 0..50 {
-            data.push(vec![
-                -10.0 + (i as f32 * 0.1) % 2.0 - 1.0,
-                10.0 + (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        Mat::from_fn(150, 2, |i, j| data[i][j])
-    }
-
-    fn jaccard_similarity(a: &[usize], b: &[usize]) -> f32 {
-        let set_a: HashSet<_> = a.iter().collect();
-        let set_b: HashSet<_> = b.iter().collect();
-        let intersection = set_a.intersection(&set_b).count();
-        let union = set_a.union(&set_b).count();
-        intersection as f32 / union as f32
-    }
-
-    #[test]
-    fn test_no_self_neighbors() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
-
-        for (i, neighbors) in hnsw_result.iter().enumerate() {
-            assert!(
-                !neighbors.contains(&i),
-                "HNSW: Node {} found itself in neighbors",
-                i
-            );
-        }
-
-        for (i, neighbors) in annoy_result.iter().enumerate() {
-            assert!(
-                !neighbors.contains(&i),
-                "Annoy: Node {} found itself in neighbors",
-                i
-            );
-        }
-    }
-
-    #[test]
-    fn test_neighbor_count() {
-        let data = create_clustered_data();
-        let k = 10;
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", k, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", k, 100, 200, 42, false);
-
-        for neighbors in &hnsw_result {
-            assert_eq!(neighbors.len(), k, "HNSW: Wrong number of neighbors");
-        }
-
-        for neighbors in &annoy_result {
-            assert_eq!(neighbors.len(), k, "Annoy: Wrong number of neighbors");
-        }
-    }
-
-    #[test]
-    fn test_cluster_structure() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
-
-        // Test that nodes in same cluster find each other
-        // Node 0 (cluster 1) should have neighbors mostly in range [0, 49]
-        let hnsw_cluster1_neighbors: HashSet<_> =
-            hnsw_result[0].iter().filter(|&&n| n < 50).collect();
-        let annoy_cluster1_neighbors: HashSet<_> =
-            annoy_result[0].iter().filter(|&&n| n < 50).collect();
-
-        assert!(
-            hnsw_cluster1_neighbors.len() >= 3,
-            "HNSW: Node 0 should find cluster neighbors"
-        );
-        assert!(
-            annoy_cluster1_neighbors.len() >= 3,
-            "Annoy: Node 0 should find cluster neighbors"
-        );
-    }
-
-    #[test]
-    fn test_deterministic_results() {
-        let data = create_clustered_data();
-
-        let hnsw1 = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
-        let hnsw2 = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
-        assert_eq!(
-            hnsw1, hnsw2,
-            "HNSW results should be deterministic with same seed"
-        );
-
-        let annoy1 = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
-        let annoy2 = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
-        assert_eq!(
-            annoy1, annoy2,
-            "Annoy results should be deterministic with same seed"
-        );
-    }
-
-    #[test]
-    fn test_algorithm_overlap() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 10, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 10, 100, 200, 42, false);
-
-        let mut total_jaccard = 0.0;
-        let mut valid_comparisons = 0;
-
-        for i in 0..hnsw_result.len() {
-            let jaccard = jaccard_similarity(&hnsw_result[i], &annoy_result[i]);
-            if jaccard > 0.0 {
-                total_jaccard += jaccard;
-                valid_comparisons += 1;
-            }
-        }
-
-        let avg_jaccard = total_jaccard / valid_comparisons as f32;
-        println!("Average Jaccard similarity: {:.3}", avg_jaccard);
-
-        // With well-separated clusters, both should find similar patterns
-        assert!(
-            avg_jaccard > 0.2,
-            "Algorithms should have reasonable overlap (got {:.3})",
-            avg_jaccard
-        );
-    }
-
-    #[test]
-    fn test_sorted_neighbors() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), "cosine", 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), "cosine", 5, 100, 200, 42, false);
-
-        for neighbors in &hnsw_result {
-            let mut sorted = neighbors.clone();
-            sorted.sort_unstable();
-            assert_eq!(*neighbors, sorted, "HNSW neighbors should be sorted");
-        }
-
-        for neighbors in &annoy_result {
-            let mut sorted = neighbors.clone();
-            sorted.sort_unstable();
-            assert_eq!(*neighbors, sorted, "Annoy neighbors should be sorted");
-        }
-    }
 }

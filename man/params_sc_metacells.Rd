@@ -31,6 +31,9 @@ the meta cell to be considered.}
 
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
+
+\item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
+metric to be used for the approximate neighbour search.}
 }
 \value{
 A list with the neighbour parameters.

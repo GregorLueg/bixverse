@@ -757,7 +757,7 @@ where
 /// ### Returns
 ///
 /// The multiplied matrix.
-pub fn sparse_multiply_elementwise<T>(
+pub fn sparse_multiply_elementwise_csr<T>(
     a: &CompressedSparseData<T>,
     b: &CompressedSparseData<T>,
 ) -> CompressedSparseData<T>
@@ -813,7 +813,7 @@ where
 /// ### Returns
 ///
 /// The Matrix with 0's removed.
-pub fn eliminate_zeros<T>(mat: CompressedSparseData<T>) -> CompressedSparseData<T>
+pub fn eliminate_zeros_csr<T>(mat: CompressedSparseData<T>) -> CompressedSparseData<T>
 where
     T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul<Output = T>,
     <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,

@@ -5,11 +5,11 @@
 # thresholds
 min_lib_size <- 300L
 min_genes_exp <- 45L
-min_cells_exp <- 1100L
+min_cells_exp <- 750L
 # hvg
 hvg_to_keep <- 30L
 # pca
-no_pcs <- 25L
+no_pcs <- 15L
 
 # slighty more complex data
 cell_markers <- list(
@@ -24,9 +24,9 @@ cell_markers <- list(
 # weak batch effect in the data
 single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 2000L,
+    n_cells = 1500L,
     marker_genes = cell_markers,
-    n_batches = 2L,
+    n_batches = 3L,
     batch_effect_strength = "weak"
   )
 )
@@ -34,9 +34,9 @@ single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
 # medium batch effect in the data
 single_cell_test_data.medium_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 2000L,
+    n_cells = 1500L,
     marker_genes = cell_markers,
-    n_batches = 2L,
+    n_batches = 3L,
     batch_effect_strength = "medium"
   )
 )
@@ -44,9 +44,9 @@ single_cell_test_data.medium_batch_effect <- generate_single_cell_test_data(
 # strong batch effect in the data
 single_cell_test_data.strong_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 2000L,
+    n_cells = 1500L,
     marker_genes = cell_markers,
-    n_batches = 2L,
+    n_batches = 3L,
     batch_effect_strength = "strong"
   )
 )
@@ -109,6 +109,7 @@ sc_object.weak_batch_effect <- calculate_pca_sc(
 
 sc_object.weak_batch_effect <- find_neighbours_sc(
   sc_object.weak_batch_effect,
+  neighbours_params = params_sc_neighbours(k = 10L),
   .verbose = FALSE
 )
 
@@ -152,6 +153,7 @@ sc_object.medium_batch_effect <- calculate_pca_sc(
 
 sc_object.medium_batch_effect <- find_neighbours_sc(
   sc_object.medium_batch_effect,
+  neighbours_params = params_sc_neighbours(k = 10L),
   .verbose = FALSE
 )
 
@@ -195,6 +197,7 @@ sc_object.strong_batch_effect <- calculate_pca_sc(
 
 sc_object.strong_batch_effect <- find_neighbours_sc(
   sc_object.strong_batch_effect,
+  neighbours_params = params_sc_neighbours(k = 10L),
   .verbose = FALSE
 )
 
@@ -250,136 +253,143 @@ expect_true(
 
 ## bbknn -----------------------------------------------------------------------
 
-# write this stuff...
+### helper function for assessment of batch correction
 
-single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
-  syn_data_params = params_sc_synthetic_data(
-    n_cells = 2000L,
-    marker_genes = cell_markers,
-    n_batches = 2L,
-    batch_effect_strength = "medium"
+assess_bbknn_impact <- function(object) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+
+  # get key data from the object
+  batch_labels <- unlist(object[["batch_index"]])
+  emdb_mat <- get_pca_factors(object)
+  knn_original <- get_knn_mat(object)
+  cell_types <- unlist(object[["cell_grp"]])
+  batch_effects <- unlist(object[["batch_index"]])
+
+  checkmate::assertTRUE(nrow(emdb_mat) == length(batch_effects))
+
+  # get the original kbet score and see how many cells are neighbour
+  # of same cell type as itself
+  original_kbet <- kbet_scores.weak_batch_effect <- calculate_kbet_sc(
+    object = object,
+    batch_column = "batch_index"
+  )
+
+  correct_neighbours_uncor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_uncor[cell_idx] <- sum(
+      cell_types[knn_original[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  bbknn_corrected_data <- rs_bbknn(
+    embd = emdb_mat,
+    batch_labels = as.integer(batch_labels),
+    bbknn_params = list(
+      knn_method = "annoy",
+      neighbours_within_batch = 5L,
+      set_op_mix_ratio = 0.5
+    ),
+    seed = 42L,
+    verbose = FALSE
+  )
+
+  knn_corr <- rs_bbknn_filtering(
+    indptr = bbknn_corrected_data$distances$indptr,
+    indices = bbknn_corrected_data$distances$indices,
+    10L
+  )
+
+  storage.mode(knn_corr) <- "integer"
+
+  k_bet_corrected <- sum(rs_kbet(knn_corr, as.integer(batch_effects)) < 0.05)
+
+  correct_neighbours_cor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_cor[cell_idx] <- sum(
+      cell_types[knn_corr[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  res <- list(
+    kbet_original = original_kbet$kbet_score,
+    kbet_correct = k_bet_corrected,
+    neighbours_original = correct_neighbours_uncor,
+    neighbours_corrected = correct_neighbours_cor
+  )
+
+  return(res)
+}
+
+### general logic of the rust code ---------------------------------------------
+
+#### weak batch effects --------------------------------------------------------
+
+weak_batch_effect_res <- assess_bbknn_impact(
+  object = sc_object.weak_batch_effect
+)
+
+expect_true(
+  current = weak_batch_effect_res$kbet_original >
+    weak_batch_effect_res$kbet_correct,
+  info = paste("bbknn - weak batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(weak_batch_effect_res$neighbours_corrected) >
+    (mean(weak_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "bbknn - biological signal is not regressed out",
+    "(weak batch effect)"
   )
 )
 
-object <- suppressWarnings(single_cell_exp(
-  dir_data = tempdir()
-))
+#### medium batch effects ------------------------------------------------------
 
-object <- load_r_data(
-  object = object,
-  counts = single_cell_test_data.weak_batch_effect$counts,
-  obs = single_cell_test_data.weak_batch_effect$obs,
-  var = single_cell_test_data.weak_batch_effect$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = FALSE,
-  .verbose = FALSE
+medium_batch_effect_res <- assess_bbknn_impact(
+  object = sc_object.medium_batch_effect
 )
 
-object <- set_cell_to_keep(
-  object,
-  get_cell_names(object)
+expect_true(
+  current = medium_batch_effect_res$kbet_original >
+    medium_batch_effect_res$kbet_correct,
+  info = paste("bbknn - medium batch effects get regressed out")
 )
 
-object <- find_hvg_sc(
-  object = object,
-  hvg_no = hvg_to_keep,
-  .verbose = FALSE
+expect_true(
+  current = mean(medium_batch_effect_res$neighbours_corrected) >
+    (mean(medium_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "bbknn - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
 )
 
-object <- calculate_pca_sc(
-  object = object,
-  no_pcs = no_pcs,
-  randomised_svd = FALSE,
-  .verbose = FALSE
+#### strong batch effects ------------------------------------------------------
+
+strong_batch_effect_res <- assess_bbknn_impact(
+  object = sc_object.strong_batch_effect
 )
 
-?get_hvg
-
-object <- find_neighbours_sc(
-  object,
-  neighbours_params = params_sc_neighbours(k = 10L),
-  .verbose = FALSE
+expect_true(
+  current = strong_batch_effect_res$kbet_original >
+    strong_batch_effect_res$kbet_correct,
+  info = paste("bbknn - medium batch effects get regressed out")
 )
 
-kbet_scores_original <- calculate_kbet_sc(
-  object = object,
-  batch_column = "batch_index"
+expect_true(
+  current = mean(strong_batch_effect_res$neighbours_corrected) >
+    (mean(strong_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "bbknn - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
 )
-
-kbet_scores_original$kbet_score
-
-batch_labels = unlist(object[["batch_index"]])
-emdb_mat = get_pca_factors(object)
-original_knn <- get_knn_mat(object)
-
-cell_types <- unlist(object[["cell_grp"]])
-batch_effects <- unlist(object[["batch_index"]])
-
-# rextendr::document()
-
-cell_idx <- 1
-
-cell_types[cell_idx]
-batch_effects[cell_idx]
-
-original_knn[cell_idx, ]
-
-cell_types[original_knn[cell_idx, ] + 1]
-table(batch_effects[original_knn[cell_idx, ] + 1])
-
-test <- rs_bbknn(
-  embd = emdb_mat,
-  batch_labels = as.integer(batch_labels),
-  bbknn_params = list(
-    knn_method = "annoy",
-    neighbours_within_batch = 5L,
-    set_op_mix_ratio = 0.5
-  ),
-  seed = 42L,
-  verbose = TRUE
-)
-
-knn_cor <- matrix(test$distances$indices, ncol = 10, byrow = TRUE)
-
-dim(original_knn)
-
-dim(knn_cor)
-
-all(knn_cor == original_knn)
-
-knn_cor[1, ]
-
-cell_types[knn_cor[cell_idx, ] + 1]
-batch_effects[knn_cor[cell_idx, ] + 1]
-
-table(batch_effects[knn_cor[cell_idx, ] + 1])
-
-kbet_test_val <- rs_kbet(knn_cor, as.integer(batch_effects))
-
-hist(kbet_test_val)
-
-sum(rs_kbet(knn_cor, as.integer(batch_effects)) < 0.05)
-
-snn_graph <- rs_sc_snn(
-  knn_cor,
-  snn_method = "jaccard",
-  limited_graph = TRUE,
-  pruning = 0.0,
-  verbose = TRUE
-)
-
-graph <- igraph::make_graph(snn_graph$edges + 1, directed = FALSE)
-
-clusters <- igraph::cluster_leiden(
-  graph,
-  objective_function = "modularity",
-  resolution = 0.8
-)
-
-length(clusters$membership)
-
-length(cell_types$cell_grp)

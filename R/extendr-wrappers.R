@@ -1912,7 +1912,26 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' @export
 rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
 
+#' BBKNN implementation in Rust
+#'
+#' @description
+#' This function implements the BBKNN algorithm from TO ADD
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' BBKNN parameters. Usually PCA. Rows represent cells.
+#' @param batch_labels Integer vector. These represent to which batch a given
+#' cell belongs.
+#' @param bbknn_params List. Contains all of the BBKNN parameters.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list of two lists representing the sparse matrix representation
+#' of the distances and the connectivities.
+#'
+#' @export
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
+
+rs_bbknn_filtering <- function(indptr, indices, cells_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, cells_to_keep)
 
 #' Calculate the percentage of gene sets in the cells
 #'

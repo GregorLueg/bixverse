@@ -1,7 +1,8 @@
 use extendr_api::*;
+use faer::Mat;
 
-use crate::single_cell::batch_corrections::*;
-use crate::utils::r_rust_interface::{r_matrix_to_faer_fp32, sparse_data_to_list};
+use crate::single_cell::bbknn::*;
+use crate::utils::r_rust_interface::*;
 
 /// Calculate kBET type scores
 ///
@@ -40,6 +41,23 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
     kbet(&knn_matrix, &batches)
 }
 
+/// BBKNN implementation in Rust
+///
+/// @description
+/// This function implements the BBKNN algorithm from TO ADD
+///
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// BBKNN parameters. Usually PCA. Rows represent cells.
+/// @param batch_labels Integer vector. These represent to which batch a given
+/// cell belongs.
+/// @param bbknn_params List. Contains all of the BBKNN parameters.
+/// @param seed Integer. Seed for reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return A list of two lists representing the sparse matrix representation
+/// of the distances and the connectivities.
+///
+/// @export
 #[extendr]
 fn rs_bbknn(
     embd: RMatrix<f64>,
@@ -64,8 +82,44 @@ fn rs_bbknn(
     )
 }
 
+/// Reduce BBKNN matrix to Top X neighbours
+///
+/// @param indptr Integer vector. The index pointers of the underlying data.
+/// @param indices Integer vector. The indices of the nearest neighbours.
+/// @param cells_to_keep Integer. Number of nearest neighbours to keep.
+///
+/// @return A numerical matrix with the Top X neighbours per row. If
+/// `cells_to_keep` is larger than the number of neighbours in the data, these
+/// positions will be `NA`.
+#[extendr]
+fn rs_bbknn_filtering(
+    indptr: Vec<i32>,
+    indices: Vec<i32>,
+    cells_to_keep: usize,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let nrow = indptr.len() - 1;
+    let ncol = cells_to_keep;
+    let mut mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
+
+    for i in 0..nrow {
+        let start_i = indptr[i] as usize;
+        let end_i = indptr[i + 1] as usize;
+        let vals = end_i - start_i;
+        let neighbours = if vals <= cells_to_keep {
+            &indices[start_i..end_i]
+        } else {
+            &indices[start_i..(start_i + cells_to_keep)]
+        };
+        for (j, idx) in neighbours.iter().enumerate() {
+            mat[(i, j)] = *idx as f64;
+        }
+    }
+    faer_to_r_matrix(mat.as_ref())
+}
+
 extendr_module! {
     mod r_sc_batch_corr;
     fn rs_kbet;
     fn rs_bbknn;
+    fn rs_bbknn_filtering;
 }

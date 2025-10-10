@@ -1008,7 +1008,9 @@ checkScNeighbours <- function(x) {
       "search_budget",
       "knn_algorithm",
       "full_snn",
-      "pruning"
+      "pruning",
+      "snn_similarity",
+      "ann_dist"
     )
   )
   if (!isTRUE(res)) {
@@ -1128,7 +1130,8 @@ checkScMetacells <- function(x) {
       "k",
       "knn_method",
       "n_trees",
-      "search_budget"
+      "search_budget",
+      "ann_dist"
     )
   )
   if (!isTRUE(res)) {
@@ -1167,7 +1170,8 @@ checkScMetacells <- function(x) {
   }
 
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw")
+    knn_method = c("annoy", "hnsw"),
+    ann_dist = c("cosine", "euclidean")
   )
 
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {

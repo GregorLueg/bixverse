@@ -67,6 +67,19 @@ pub fn kbet(knn_data: &Vec<Vec<usize>>, batches: &Vec<usize>) -> Vec<f64> {
 const SMOOTH_K_TOLERANCE: f32 = 1e-5;
 const MIN_K_DIST_SCALE: f32 = 1e-3;
 
+/// Structure to store the BBKNN pamareters
+///
+/// ### Fields
+///
+/// * `neighbours_within_batch` - How many neighbours per batch to identify
+/// * `knn_methd` - Which of the two approximate nearest neighbour searches
+///   to use. Can be "annoy" or "hnsw".
+/// * `dist_metrc` - Which distance type to use. One of `"cosine"` or
+///   `"euclidean"`.
+/// * `set_op_mix_ratio` - TO ADD
+/// * `local_connectivity` - TO ADD
+/// * `annoy_n_trees` - Number of trees to use for the Annoy index generation
+/// * `trim` - TO ADD
 #[derive(Clone, Debug)]
 pub struct BbknnParams {
     pub neighbours_within_batch: usize,
@@ -75,11 +88,23 @@ pub struct BbknnParams {
     pub set_op_mix_ratio: f32,
     pub local_connectivity: f32,
     pub annoy_n_trees: usize,
-    pub annoy_search_budget: usize,
+    pub search_budget: usize,
     pub trim: Option<usize>,
 }
 
 impl BbknnParams {
+    /// Generate the BbknnParams from a R list
+    ///
+    /// Should values not be found within the List, the parameters will default
+    /// to sensible defaults.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The list with the BBKNN parameters.
+    ///
+    /// ### Return
+    ///
+    /// The `BbknnParams` with all of the parameters.
     pub fn from_r_list(r_list: List) -> Self {
         let bbknn_list = r_list.into_hashmap();
 
@@ -117,8 +142,8 @@ impl BbknnParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
-        let annoy_search_budget = bbknn_list
-            .get("annoy_search_budget")
+        let search_budget = bbknn_list
+            .get("search_budget")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
@@ -134,7 +159,7 @@ impl BbknnParams {
             set_op_mix_ratio,
             local_connectivity,
             annoy_n_trees,
-            annoy_search_budget,
+            search_budget,
             trim: Some(trim),
         }
     }
@@ -144,14 +169,29 @@ impl BbknnParams {
 // Helpers BBKNN //
 ///////////////////
 
-/// The function pulls out the batch specific indices of the cells
+/// Generate batch balanced kNN graph
+///
+/// The function generates on a per batch basis an approximate nearest neighbour
+/// search index and then runs all cells against this batch-specific index.
+/// The resulting indices across all cells/batches are combined subsequntly.
 ///
 /// ### Params
 ///
+/// * `mat` - The embedding matrix to use. Usually PCA. cells = rows, features
+///   = columns.
+/// * `batch_labels` - Slice indicating which cell belongs to which batch.
+/// * `knn_method` - Which KnnSearch to use.
+/// * `bbknn_params` - `BbknnParams` with the parameters for the BBKNN batch
+///   correction.
+/// * `seed` - Random seed.
+/// * `verbose` - Controls verbosity.
+///
 /// ### Returns
+///
+/// A tuple with (nearest_neighbour_indices, nearest_neighbour_distances)
 fn get_batch_balanced_knn(
     mat: MatRef<f32>,
-    batch_labels: &[usize], // Changed to usize
+    batch_labels: &[usize],
     knn_method: &KnnSearch,
     bbknn_params: &BbknnParams,
     seed: usize,
@@ -196,7 +236,7 @@ fn get_batch_balanced_knn(
         let sub_matrix = MatSliceView::new(mat, &batch_cell_indices, &col_indices);
         let sub_matrix = sub_matrix.to_owned();
 
-        let (neighbor_indices, neighbour_dists) = match knn_method {
+        let (neighbor_indices, _) = match knn_method {
             KnnSearch::Annoy => {
                 // annoy path with updated functions
                 let index =
@@ -206,7 +246,7 @@ fn get_batch_balanced_knn(
                     &index,
                     &bbknn_params.dist_metric,
                     bbknn_params.neighbours_within_batch + 1,
-                    bbknn_params.annoy_search_budget,
+                    bbknn_params.search_budget,
                     false,
                     verbose,
                 )
@@ -225,17 +265,6 @@ fn get_batch_balanced_knn(
             }
         };
 
-        // PRINT HERE - after querying, before the loop
-        println!(
-            "Batch {}: neighbor_indices[0] = {:?}",
-            batch_idx, &neighbor_indices[0]
-        );
-        println!(
-            "Batch {}: batch_cell_indices = {:?}",
-            batch_idx,
-            &batch_cell_indices[..10.min(batch_cell_indices.len())]
-        );
-
         let col_start = batch_idx * bbknn_params.neighbours_within_batch;
 
         for cell_idx in 0..n_cells {
@@ -246,32 +275,9 @@ fn get_batch_balanced_knn(
                 let local_idx = neighbor_indices[cell_idx][k_idx];
                 let global_idx = batch_cell_indices[local_idx];
 
-                // Skip self-loops
                 if global_idx != cell_idx {
-                    let dist = match dist_metric {
-                        AnnDist::Euclidean => mat
-                            .row(cell_idx)
-                            .iter()
-                            .zip(mat.row(global_idx).iter())
-                            .map(|(a, b)| (a - b).powi(2))
-                            .sum::<f32>()
-                            .sqrt(),
-                        AnnDist::Cosine => {
-                            1.0 - mat
-                                .row(cell_idx)
-                                .iter()
-                                .zip(mat.row(global_idx).iter())
-                                .map(|(a, b)| a * b)
-                                .sum::<f32>()
-                                / (mat.row(cell_idx).iter().map(|x| x * x).sum::<f32>().sqrt()
-                                    * mat
-                                        .row(global_idx)
-                                        .iter()
-                                        .map(|x| x * x)
-                                        .sum::<f32>()
-                                        .sqrt())
-                        }
-                    };
+                    let dist =
+                        compute_distance_knn(mat.row(cell_idx), mat.row(global_idx), &dist_metric);
 
                     all_indices[cell_idx][col_start + added] = global_idx;
                     all_distances[cell_idx][col_start + added] = dist;
@@ -281,22 +287,21 @@ fn get_batch_balanced_knn(
                 k_idx += 1;
             }
         }
-
-        // PRINT HERE - after the population loop
-        println!(
-            "After batch {}, all_indices[0] = {:?}",
-            batch_idx, &all_indices[0]
-        );
-        println!(
-            "After batch {}, all_distances[0] = {:?}",
-            batch_idx, &all_distances[0]
-        );
     }
 
     (all_indices, all_distances)
 }
 
-/// Sorts the kNN by distance
+/// Sorts the kNN data by distance
+///
+/// ### Params
+///
+/// * `knn_indices` - The indices of the k-nearest neighbours.
+/// * `knn_dists` - The distances of the k-nearest neighbours.
+///
+/// ### Side effect
+///
+/// Resorts the indices and distances of the mutable inputs.
 fn sort_knn_by_distance(knn_indices: &mut [Vec<usize>], knn_dists: &mut [Vec<f32>]) {
     for i in 0..knn_indices.len() {
         let mut pairs: Vec<_> = knn_dists[i]
@@ -315,6 +320,22 @@ fn sort_knn_by_distance(knn_indices: &mut [Vec<usize>], knn_dists: &mut [Vec<f32
 }
 
 /// Compute membership strengths
+///
+/// Converts kNN distances into fuzzy membership weights using UMAP-style
+/// exponential decay. Distances within rho get weight 1.0, distances beyond
+/// decay as exp(-(dist - rho) / sigma).
+///
+/// ### Params
+///
+/// * `knn_indices` - Indices of k-nearest neighbours for each sample.
+/// * `knn_dists` - Distances to k-nearest neighbours for each sample.
+/// * `sigmas` - Bandwidth parameters for exponential decay per sample.
+/// * `rhos` - Distance thresholds for hard-core similarity per sample.
+///
+/// ### Returns
+///
+/// Tuple of (rows, cols, vals) in COO format representing the weighted
+/// connectivity graph
 fn compute_membership_strengths(
     knn_indices: &[Vec<usize>],
     knn_dists: &[Vec<f32>],
@@ -349,6 +370,23 @@ fn compute_membership_strengths(
     (rows, cols, vals)
 }
 
+/// Apply set operations to symmetrize connectivity graph
+///
+/// Applies fuzzy set union/intersection operations to create a symmetrized
+/// connectivity matrix. Computes:
+///
+/// `ratio * (A + A^T - A.*A^T) + (1-ratio) * (A.*A^T)`
+///
+/// where ratio = 1.0 is pure union and ratio = 0.0 is pure intersection.
+///
+/// ### Params
+///
+/// * `connectivities` - Asymmetric connectivity matrix in CSR format
+/// * `set_op_mix_ratio` - Mixing ratio between union (1.0) and intersection (0.0)
+///
+/// ### Returns
+///
+/// Symmetrised connectivity matrix in CSR format
 fn apply_set_operations(
     connectivities: CompressedSparseData<f32>,
     set_op_mix_ratio: f32,
@@ -374,7 +412,7 @@ fn apply_set_operations(
     };
 
     // Element-wise multiply: A .* A^T
-    let prod = sparse_multiply_elementwise(&connectivities, &transpose);
+    let prod = sparse_multiply_elementwise_csr(&connectivities, &transpose);
 
     // set_op_mix_ratio * (A + A^T - A.*A^T) + (1 - set_op_mix_ratio) * (A.*A^T)
     let union_part = sparse_add_csr(&connectivities, &transpose);
@@ -385,9 +423,23 @@ fn apply_set_operations(
 
     let res = sparse_add_csr(&union_part, &intersect_part);
 
-    eliminate_zeros(res)
+    eliminate_zeros_csr(res)
 }
 
+/// Trim weak edges from connectivity graph
+///
+/// For each node, keeps only the top-k strongest connections by zeroing out
+/// weights below the k-th strongest edge. Applies trimming in both row and
+/// column directions to ensure symmetry.
+///
+/// ### Params
+///
+/// * `connectivities` - Connectivity matrix in CSR format
+/// * `trim` - Number of strongest connections to keep per node
+///
+/// ### Returns
+///
+/// Trimmed connectivity matrix in CSR format
 fn trim_graph(
     mut connectivities: CompressedSparseData<f32>,
     trim: usize,
@@ -395,7 +447,8 @@ fn trim_graph(
     let n = connectivities.shape.0;
     let mut thresholds = vec![0.0f32; n];
 
-    // Compute thresholds
+    // compute thresholds
+    #[allow(clippy::needless_range_loop)]
     for i in 0..n {
         let row_start = connectivities.indptr[i];
         let row_end = connectivities.indptr[i + 1];
@@ -412,6 +465,7 @@ fn trim_graph(
 
     // Apply trimming twice (row then column)
     for _ in 0..2 {
+        #[allow(clippy::needless_range_loop)]
         for i in 0..n {
             let row_start = connectivities.indptr[i];
             let row_end = connectivities.indptr[i + 1];
@@ -423,7 +477,7 @@ fn trim_graph(
             }
         }
 
-        connectivities = eliminate_zeros(connectivities);
+        connectivities = eliminate_zeros_csr(connectivities);
         connectivities = connectivities.transform();
     }
 
@@ -434,6 +488,23 @@ fn trim_graph(
 // Main BBKNN //
 ////////////////
 
+/// Run batch-balanced KNN
+///
+/// This is the main function that implements the BBKNN logic into Rust.
+///
+/// ### Params
+///
+/// * `mat` - The embedding matrix to use. Usually PCA. cells = rows, features
+///   = columns.
+/// * `batch_labels` - Slice indicating which cell belongs to which batch.
+/// * `bbknn_params` - `BbknnParams` with the parameters for the BBKNN batch
+///   correction.
+/// * `seed` - Random seed.
+/// * `verbose` - Controls verbosity.
+///
+/// ### Returns
+///
+/// A tuple of two CompressedSparseData with `(indices, connectivities)`.
 pub fn bbknn(
     mat: MatRef<f32>,
     batch_labels: &[usize],
@@ -444,16 +515,20 @@ pub fn bbknn(
     // parse it and worst case, I default to Annoy
     let knn_method = get_knn_method(&bbknn_params.knn_method).unwrap_or(KnnSearch::Annoy);
 
+    if verbose {
+        println!("BBKNN: generating the batch balanced kNN values.")
+    }
+
     // 1. Get batch-balanced k-NN
     let (mut knn_indices, mut knn_dists) =
         get_batch_balanced_knn(mat, batch_labels, &knn_method, bbknn_params, seed, verbose);
 
-    // 2. Sort the distance by KNN <- Revisit if needed...
+    // 2. Sort the distance by KNN
     sort_knn_by_distance(&mut knn_indices, &mut knn_dists);
 
-    // After sort_knn_by_distance
-    println!("After sorting, knn_indices[0] = {:?}", &knn_indices[0]);
-    println!("After sorting, knn_dists[0] = {:?}", &knn_dists[0]);
+    if verbose {
+        println!("BBKNN: Calculating UMAP-based connectivities and removing weak connections.")
+    }
 
     // 3. Compute UMAP connectivities
     let n_neighbours = knn_indices[0].len();
@@ -472,6 +547,10 @@ pub fn bbknn(
 
     // 4. Apply set operations
     connectivities = apply_set_operations(connectivities, bbknn_params.set_op_mix_ratio);
+
+    if verbose {
+        println!("BBKNN: Finalising data.")
+    }
 
     // 5. Create the distance matrix
     let dist = knn_to_sparse_dist(&knn_indices, &knn_dists, n_obs);

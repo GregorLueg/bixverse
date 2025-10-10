@@ -696,6 +696,63 @@ params_sc_neighbours <- function(
   )
 }
 
+### batch corrections ----------------------------------------------------------
+
+#' Wrapper function for the BBKNN parameters
+#'
+#' @param neighbours_within_batch Integer. Number of neighbours to consider
+#' per batch.
+#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
+#' @param set_op_mix_ratio Numeric. TO BE WRITTEN.
+#' @param local_connectivity Numeric. TO BE WRITTEN.
+#' @param annoy_n_trees Integer. Number of trees to use in the generation of
+#' the Annoy index.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#' @param trim Optional integer. TO BE WRITTEN.
+#'
+#' @returns A list with the BBKNN parameters.
+#'
+#' @export
+params_sc_bbknn <- function(
+  neighbours_within_batch = 5L,
+  knn_method = c("annoy", "hnsw"),
+  ann_dist = c("cosine", "euclidean"),
+  set_op_mix_ratio = 1.0,
+  local_connectivity = 1.0,
+  annoy_n_trees = 100L,
+  search_budget = 100L,
+  trim = NULL
+) {
+  knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
+
+  # checks
+  checkmate::qassert(neighbours_within_batch, "I1")
+  checkmate::assertChoice(knn_method, c("hnsw", "annoy"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(set_op_mix_ratio, "N1")
+  checkmate::qassert(local_connectivity, "N1")
+  checkmate::qassert(annoy_n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(trim, c("0", "I1"))
+
+  # returns
+  list(
+    neighbours_within_batch = neighbours_within_batch,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    set_op_mix_ratio = set_op_mix_ratio,
+    local_connectivity = local_connectivity,
+    annoy_n_trees = annoy_n_trees,
+    search_budget = search_budget,
+    trim = trim
+  )
+}
+
 ### analysis -------------------------------------------------------------------
 
 #' Wrapper function for parameters for meta cell generation
@@ -707,6 +764,8 @@ params_sc_neighbours <- function(
 #' @param k Integer. Number of neighbours to return.
 #' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
 #' `"annoy"`
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
@@ -720,10 +779,12 @@ params_sc_metacells <- function(
   max_iter = 5000L,
   k = 25L,
   knn_method = c("hnsw", "annoy"),
+  ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L
 ) {
   knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
 
   # checks
   checkmate::qassert(max_shared, "I1")
@@ -740,6 +801,7 @@ params_sc_metacells <- function(
     max_iter = max_iter,
     k = k,
     knn_method = knn_method,
+    ann_dist = ann_dist,
     n_trees = n_trees,
     search_budget = search_budget
   )
