@@ -2,6 +2,7 @@ use extendr_api::prelude::*;
 use faer::{Mat, MatRef};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
+use std::ops::{Add, Mul};
 
 use crate::core::data::sparse_structures::*;
 use crate::utils::traits::FaerRType;
@@ -615,6 +616,54 @@ where
         ncol = ncol,
         nrow = nrow
     ]
+}
+
+/// Transform a SparseColumnMatrix to an R list
+///
+/// ### Params
+///
+/// * `sparse` - SparseColumnMatrix structure
+///
+/// ### Returns
+///
+/// R list with the following slots:
+/// * `data` - The values
+/// * `row_indices` - The row indices
+/// * `col_ptr` - The column pointers
+/// * `ncol` - Number of columns
+/// * `nrow` - Number of rows
+pub fn sparse_data_to_list<T>(sparse: CompressedSparseData<T>) -> List
+where
+    T: Into<Robj> + Clone + Default + Into<f64> + Sync + Add + PartialEq + Mul,
+{
+    let data: Vec<f64> = sparse
+        .data
+        .into_iter()
+        .map(|x| {
+            let robj: Robj = x.into();
+            robj.as_real().unwrap()
+        })
+        .collect();
+    let indptr = sparse
+        .indptr
+        .iter()
+        .map(|x| *x as i32)
+        .collect::<Vec<i32>>();
+    let indices = sparse
+        .indices
+        .iter()
+        .map(|x| *x as i32)
+        .collect::<Vec<i32>>();
+    let nrow = sparse.shape.0;
+    let ncol = sparse.shape.1;
+
+    list!(
+        data = data,
+        indptr = indptr,
+        indices = indices,
+        nrow = nrow,
+        ncol = ncol
+    )
 }
 
 /// Transform an R list storing CSR/C data into CompressedSparseData

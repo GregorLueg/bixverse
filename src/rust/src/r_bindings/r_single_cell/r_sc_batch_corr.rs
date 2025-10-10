@@ -1,6 +1,7 @@
 use extendr_api::*;
 
 use crate::single_cell::batch_corrections::*;
+use crate::utils::r_rust_interface::{r_matrix_to_faer_fp32, sparse_data_to_list};
 
 /// Calculate kBET type scores
 ///
@@ -39,7 +40,32 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
     kbet(&knn_matrix, &batches)
 }
 
+#[extendr]
+fn rs_bbknn(
+    embd: RMatrix<f64>,
+    batch_labels: Vec<i32>,
+    bbknn_params: List,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let bbknn_params = BbknnParams::from_r_list(bbknn_params);
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let batch_labels = batch_labels
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
+
+    let (distances, connectivities) =
+        bbknn(embd.as_ref(), &batch_labels, &bbknn_params, seed, verbose);
+
+    list!(
+        distances = sparse_data_to_list(distances),
+        connectivities = sparse_data_to_list(connectivities)
+    )
+}
+
 extendr_module! {
     mod r_sc_batch_corr;
     fn rs_kbet;
+    fn rs_bbknn;
 }

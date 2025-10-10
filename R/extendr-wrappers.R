@@ -1912,6 +1912,8 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' @export
 rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
 
+rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description

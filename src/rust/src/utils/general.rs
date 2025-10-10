@@ -6,6 +6,7 @@ use std::hash::Hash;
 use std::ops::AddAssign;
 
 use faer::{concat, Mat, MatRef};
+use faer_entity::Entity;
 
 //////////////////
 // VECTOR STUFF //
@@ -205,14 +206,14 @@ pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec
 /// * `col_indices` - The col indices you want to slice out.
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
-pub struct MatSliceView<'a, 'r, 'c> {
-    data: MatRef<'a, f64>,
+pub struct MatSliceView<'a, 'r, 'c, E: Entity> {
+    data: MatRef<'a, E>,
     row_indices: &'r [usize],
     col_indices: &'c [usize],
 }
 
 #[allow(dead_code)]
-impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
+impl<'a, 'r, 'c, E: Entity> MatSliceView<'a, 'r, 'c, E> {
     /// Generate a new MatSliceView
     ///
     /// This function will panic if you try to select indices larger than the
@@ -223,17 +224,16 @@ impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
     /// * `data` - The original MatRef from which you want to slice out data
     /// * `row_indices` - The row indices you want to slice out.
     /// * `col_indices` - The col indices you want to slice out.
-    pub fn new(data: MatRef<'a, f64>, row_indices: &'r [usize], col_indices: &'c [usize]) -> Self {
-        let max_col_index = array_max(col_indices);
-        let max_row_index = array_min(row_indices);
+    pub fn new(data: MatRef<'a, E>, row_indices: &'r [usize], col_indices: &'c [usize]) -> Self {
+        let max_col_index = col_indices.iter().max().copied().unwrap_or(0);
+        let max_row_index = row_indices.iter().max().copied().unwrap_or(0);
 
         assert!(
-            max_col_index <= data.ncols(),
+            max_col_index < data.ncols(),
             "You selected indices larger than ncol."
         );
-
         assert!(
-            max_row_index <= data.nrows(),
+            max_row_index < data.nrows(),
             "You selected indices larger than nrow."
         );
 
@@ -270,9 +270,9 @@ impl<'a, 'r, 'c> MatSliceView<'a, 'r, 'c> {
     /// ### Returns
     ///
     /// Owned sliced matrix for subsequent usage.
-    pub fn to_owned(&self) -> Mat<f64> {
+    pub fn to_owned(&self) -> Mat<E> {
         Mat::from_fn(self.nrows(), self.ncols(), |i, j| {
-            self.data[(self.row_indices[i], self.col_indices[j])]
+            *self.data.get(self.row_indices[i], self.col_indices[j])
         })
     }
 }
