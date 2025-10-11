@@ -76,10 +76,14 @@ const MIN_K_DIST_SCALE: f32 = 1e-3;
 ///   to use. Can be "annoy" or "hnsw".
 /// * `dist_metrc` - Which distance type to use. One of `"cosine"` or
 ///   `"euclidean"`.
-/// * `set_op_mix_ratio` - TO ADD
-/// * `local_connectivity` - TO ADD
+/// * `set_op_mix_ratio` - Mixing ratio between union (1.0) and intersection
+///   (0.0).
+/// * `local_connectivity` - UMAP connectivity computation parameter, how many
+///   nearest neighbours of each cell are assumed to be fully connected.
 /// * `annoy_n_trees` - Number of trees to use for the Annoy index generation
-/// * `trim` - TO ADD
+/// * `trim` - Trim the neighbours of each cell to these many top
+///   connectivities. May help with population independence and improve the
+///   tidiness of clustering.
 #[derive(Clone, Debug)]
 pub struct BbknnParams {
     pub neighbours_within_batch: usize,

@@ -25,9 +25,11 @@ per batch.}
 \item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
 metric to be used for the approximate neighbour search.}
 
-\item{set_op_mix_ratio}{Numeric. TO BE WRITTEN.}
+\item{set_op_mix_ratio}{Numeric. Mixing ratio between union (1.0) and
+intersection (0.0).}
 
-\item{local_connectivity}{Numeric. TO BE WRITTEN.}
+\item{local_connectivity}{Numeric. UMAP connectivity computation parameter,
+how many nearest neighbours of each cell are assumed to be fully connected.}
 
 \item{annoy_n_trees}{Integer. Number of trees to use in the generation of
 the Annoy index.}
@@ -35,7 +37,10 @@ the Annoy index.}
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
 
-\item{trim}{Optional integer. TO BE WRITTEN.}
+\item{trim}{Optional integer. Trim the neighbours of each cell to these many
+top connectivities. May help with population independence and improve the
+tidiness of clustering. If \code{NULL}, it defaults to
+\code{10 * neighbours_within_batch}.}
 }
 \value{
 A list with the BBKNN parameters.

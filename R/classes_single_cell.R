@@ -139,6 +139,24 @@ set_snn_graph <- function(x, snn_graph) {
   UseMethod("set_snn_graph")
 }
 
+#' Remove the KNN data
+#'
+#' @param x An object from which to remove the kNN data
+#'
+#' @export
+remove_knn <- function(x) {
+  UseMethod("remove_knn")
+}
+
+#' Remove the sNN graph
+#'
+#' @param x An object from which to remove the sNN graph
+#'
+#' @export
+remove_snn_graph <- function(x) {
+  UseMethod("remove_knn")
+}
+
 ### methods --------------------------------------------------------------------
 
 #### sc_mapper -----------------------------------------------------------------
@@ -261,6 +279,30 @@ set_snn_graph.sc_cache <- function(x, snn_graph) {
   checkmate::assertClass(snn_graph, "igraph")
 
   x[["snn_graph"]] <- snn_graph
+
+  return(x)
+}
+
+#' @rdname remove_knn
+#'
+#' @export
+remove_knn.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  x[["knn_matrix"]] <- NULL
+
+  return(x)
+}
+
+#' @rdname remove_snn_graph
+#'
+#' @export
+remove_snn_graph.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  x[["snn_graph"]] <- NULL
 
   return(x)
 }
@@ -1673,6 +1715,49 @@ S7::method(set_snn_graph, single_cell_exp) <- function(
   S7::prop(x, "sc_cache") <- set_snn_graph(
     x = S7::prop(x, "sc_cache"),
     snn_graph = snn_graph
+  )
+
+  return(x)
+}
+
+#' @name remove_knn.single_cell_exp
+#'
+#' @title Remove the KNN matrix from a `single_cell_exp` class.
+#'
+#' @rdname remove_knn
+#'
+#' @method remove_knn single_cell_exp
+S7::method(remove_knn, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- remove_knn(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(x)
+}
+
+
+#' @name remove_snn_graph.single_cell_exp
+#'
+#' @title Remove the sNN graph from a `single_cell_exp` class.
+#'
+#' @rdname remove_snn_graph
+#'
+#' @method remove_snn_graph single_cell_exp
+S7::method(remove_snn_graph, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- remove_snn_graph(
+    x = S7::prop(x, "sc_cache")
   )
 
   return(x)

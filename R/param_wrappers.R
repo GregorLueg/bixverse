@@ -706,13 +706,18 @@ params_sc_neighbours <- function(
 #' `"annoy"`.
 #' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
 #' metric to be used for the approximate neighbour search.
-#' @param set_op_mix_ratio Numeric. TO BE WRITTEN.
-#' @param local_connectivity Numeric. TO BE WRITTEN.
+#' @param set_op_mix_ratio Numeric. Mixing ratio between union (1.0) and
+#' intersection (0.0).
+#' @param local_connectivity Numeric. UMAP connectivity computation parameter,
+#' how many nearest neighbours of each cell are assumed to be fully connected.
 #' @param annoy_n_trees Integer. Number of trees to use in the generation of
 #' the Annoy index.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
-#' @param trim Optional integer. TO BE WRITTEN.
+#' @param trim Optional integer. Trim the neighbours of each cell to these many
+#' top connectivities. May help with population independence and improve the
+#' tidiness of clustering. If `NULL`, it defaults to
+#' `10 * neighbours_within_batch`.
 #'
 #' @returns A list with the BBKNN parameters.
 #'
@@ -734,7 +739,7 @@ params_sc_bbknn <- function(
   checkmate::qassert(neighbours_within_batch, "I1")
   checkmate::assertChoice(knn_method, c("hnsw", "annoy"))
   checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(set_op_mix_ratio, "N1")
+  checkmate::qassert(set_op_mix_ratio, "N1[0, 1]")
   checkmate::qassert(local_connectivity, "N1")
   checkmate::qassert(annoy_n_trees, "I1")
   checkmate::qassert(search_budget, "I1")

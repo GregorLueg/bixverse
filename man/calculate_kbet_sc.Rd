@@ -28,12 +28,13 @@ was below the threshold
 }
 }
 \description{
-This function calculates the k-nearest neighbou batch-effect test (kBET).
-Briefly, the function leverages a ChiSquare statistic to calculate the
+This function calculates the k-nearest neighbour batch-effect test (kBET).
+Briefly, the function leverages a Chi-Square statistic to calculate the
 differences in batch proportions observed in the neighbourhood of a given
 cell with the overall batch proportions. If the test is significant for that
-cell it indicates poor mixing there. Large number of positive tests indicate
-bad mixing overall. For more details, please see Büttner et al.
+cell it indicates poor mixing for that cell specifically.
+Large number of positive tests indicate bad mixing overall. For more details,
+please see Büttner et al.
 }
 \references{
 Büttner, et al., Nat. Methods, 2019

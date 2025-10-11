@@ -86,29 +86,31 @@ fn rs_bbknn(
 ///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
-/// @param cells_to_keep Integer. Number of nearest neighbours to keep.
+/// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
 /// @return A numerical matrix with the Top X neighbours per row. If
-/// `cells_to_keep` is larger than the number of neighbours in the data, these
-/// positions will be `NA`.
+/// `no_neighbours_to_keep` is larger than the number of neighbours in the data,
+/// these positions will be `NA`.
+///
+/// @export
 #[extendr]
 fn rs_bbknn_filtering(
     indptr: Vec<i32>,
     indices: Vec<i32>,
-    cells_to_keep: usize,
+    no_neighbours_to_keep: usize,
 ) -> extendr_api::RArray<f64, [usize; 2]> {
     let nrow = indptr.len() - 1;
-    let ncol = cells_to_keep;
+    let ncol = no_neighbours_to_keep;
     let mut mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
 
     for i in 0..nrow {
         let start_i = indptr[i] as usize;
         let end_i = indptr[i + 1] as usize;
         let vals = end_i - start_i;
-        let neighbours = if vals <= cells_to_keep {
+        let neighbours = if vals <= no_neighbours_to_keep {
             &indices[start_i..end_i]
         } else {
-            &indices[start_i..(start_i + cells_to_keep)]
+            &indices[start_i..(start_i + no_neighbours_to_keep)]
         };
         for (j, idx) in neighbours.iter().enumerate() {
             mat[(i, j)] = *idx as f64;

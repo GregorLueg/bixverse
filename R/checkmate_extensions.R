@@ -1260,7 +1260,7 @@ checkScBbknn <- function(x) {
   }
 
   numeric_rules <- list(
-    "set_op_mix_ratio" = "N1",
+    "set_op_mix_ratio" = "N1[0, 1]",
     "local_connectivity" = "N1"
   )
 

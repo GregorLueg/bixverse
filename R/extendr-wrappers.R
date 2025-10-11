@@ -1931,7 +1931,18 @@ rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_v
 #' @export
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
 
-rs_bbknn_filtering <- function(indptr, indices, cells_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, cells_to_keep)
+#' Reduce BBKNN matrix to Top X neighbours
+#'
+#' @param indptr Integer vector. The index pointers of the underlying data.
+#' @param indices Integer vector. The indices of the nearest neighbours.
+#' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
+#'
+#' @return A numerical matrix with the Top X neighbours per row. If
+#' `no_neighbours_to_keep` is larger than the number of neighbours in the data,
+#' these positions will be `NA`.
+#'
+#' @export
+rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
 
 #' Calculate the percentage of gene sets in the cells
 #'
