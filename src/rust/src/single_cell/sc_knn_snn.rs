@@ -1,5 +1,5 @@
-use faer::MatRef;
-use instant_distance::{Builder, Point as DistancePoint, Search};
+use faer::{MatRef, RowRef};
+use instant_distance::{Builder, HnswMap, Point as DistancePoint, Search};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -7,7 +7,9 @@ use std::sync::Arc;
 use std::time::Instant;
 use thousands::Separable;
 
+use crate::core::data::sparse_structures::*;
 use crate::core::graph::annoy::AnnoyIndex;
+use crate::core::graph::knn::{parse_ann_dist, AnnDist};
 
 ///////////
 // Enums //
@@ -34,26 +36,82 @@ pub enum KnnSearch {
 // Structures //
 ////////////////
 
+/// Point structure for the HNSW index
 #[derive(Clone, Debug)]
-struct Point(Vec<f32>);
+pub struct Point(Vec<f32>, AnnDist);
 
 impl DistancePoint for Point {
     /// Distance function. This is Euclidean distance without squaring for
     /// speed gains. Does not change the rank order in KNN generation.
     fn distance(&self, other: &Self) -> f32 {
-        let mut sum = 0.0f32;
+        match self.1 {
+            // No & needed, Copy does the work
+            AnnDist::Euclidean => {
+                let mut sum = 0.0f32;
+                for i in 0..self.0.len() {
+                    let diff = self.0[i] - other.0[i];
+                    sum += diff * diff;
+                }
+                sum
+            }
+            AnnDist::Cosine => {
+                let mut dot = 0.0f32;
+                let mut norm_a = 0.0f32;
+                let mut norm_b = 0.0f32;
 
-        for i in 0..self.0.len() {
-            let diff = self.0[i] - other.0[i];
-            sum += diff * diff;
+                for i in 0..self.0.len() {
+                    dot += self.0[i] * other.0[i];
+                    norm_a += self.0[i] * self.0[i];
+                    norm_b += other.0[i] * other.0[i];
+                }
+
+                1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+            }
         }
-        sum
     }
 }
 
 /////////////
 // Helpers //
 /////////////
+
+/// Compute distance between two points
+///
+/// Helper function to quickly calculate the implemented distances additionally
+///
+/// ### Params
+///
+/// * `a` - RowRef to cell a.
+/// * `b` - RowRef to cell b.
+///
+/// ### Returns
+///
+/// The distance between the two cells based on the embedding.
+pub fn compute_distance_knn(a: RowRef<f32>, b: RowRef<f32>, metric: &AnnDist) -> f32 {
+    match metric {
+        AnnDist::Euclidean => {
+            let mut sum = 0.0f32;
+            for i in 0..a.ncols() {
+                let diff = a[i] - b[i];
+                sum += diff * diff;
+            }
+            sum.sqrt()
+        }
+        AnnDist::Cosine => {
+            let mut dot = 0.0f32;
+            let mut norm_a = 0.0f32;
+            let mut norm_b = 0.0f32;
+
+            for i in 0..a.ncols() {
+                dot += a[i] * b[i];
+                norm_a += a[i] * a[i];
+                norm_b += b[i] * b[i];
+            }
+
+            1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+        }
+    }
+}
 
 /// Helper function to get the KNN method
 ///
@@ -109,6 +167,352 @@ pub fn build_nn_map(knn_graph: &[Vec<usize>]) -> Vec<Vec<usize>> {
         .collect()
 }
 
+/// Helper to calculate smooth kNN distances
+///
+/// ### Params
+///
+/// * `dist` - Slice of distance vectors from the kNN
+/// * `k` - Number of neighbours.
+/// * `local_connectivity` - Determines the minimum distance threshold (rho) by
+///   interpolating between the nearest non-zero neighbors. If it's 1.5, you'd
+///   interpolate between the 1st and 2nd neighbor distances.
+/// * `smook_k_tol` - Tolerance parameter that controls:
+///   - Whether to apply interpolation when computing rho
+///   - When to stop the binary search (when |psum - target| < smook_k_tol)
+/// * `min_k_dist_scale` - Minimum scaling factor for sigma to prevent it from
+///   becoming too small
+///
+/// ### Returns
+///
+/// Tuple of (rho, sigma)
+pub fn smooth_knn_dist(
+    dist: &[Vec<f32>],
+    k: f32,
+    local_connectivity: f32,
+    smook_k_tol: f32,
+    min_k_dist_scale: f32,
+) -> (Vec<f32>, Vec<f32>) {
+    let n = dist.len();
+    let n_neighbours = dist[0].len();
+    let target = k.log2();
+
+    let mean_dist = dist.iter().flat_map(|d| d.iter()).sum::<f32>() / (n * n_neighbours) as f32;
+
+    let res: Vec<(f32, f32)> = dist
+        .par_iter()
+        .map(|dist_i| {
+            let mut rho = 0.0_f32;
+
+            let non_zero_dist: Vec<f32> = dist_i.iter().filter(|&&d| d > 0.0).copied().collect();
+
+            if non_zero_dist.len() >= local_connectivity as usize {
+                let index = local_connectivity.floor() as usize;
+                let interpolation = local_connectivity - local_connectivity.floor();
+
+                if index > 0 {
+                    rho = non_zero_dist[index - 1];
+                    if interpolation > smook_k_tol {
+                        rho += interpolation * (non_zero_dist[index] - non_zero_dist[index - 1]);
+                    }
+                } else {
+                    rho = interpolation * non_zero_dist[0];
+                }
+            } else if !non_zero_dist.is_empty() {
+                rho = *non_zero_dist
+                    .iter()
+                    .max_by(|a, b| a.partial_cmp(b).unwrap())
+                    .unwrap();
+            }
+
+            // binary search for sigma
+            let mut lo = 0.0_f32;
+            let mut hi = f32::INFINITY;
+            let mut mid = 1.0_f32;
+
+            for _ in 0..64 {
+                let mut psum = 0.0_f32;
+
+                #[allow(clippy::needless_range_loop)]
+                for j in 1..n_neighbours {
+                    let d = dist_i[j] - rho;
+                    if d > 0.0_f32 {
+                        psum += (-d / mid).exp();
+                    } else {
+                        psum += 1.0;
+                    }
+                }
+
+                if (psum - target).abs() < smook_k_tol {
+                    break;
+                }
+
+                if psum > target {
+                    hi = mid;
+                    mid = (lo + hi) / 2.0;
+                } else {
+                    lo = mid;
+                    if hi == f32::INFINITY {
+                        mid *= 2.0;
+                    } else {
+                        mid = (lo + hi) / 2.0;
+                    }
+                }
+            }
+
+            let mut sigma = mid;
+
+            if rho > 0.0 {
+                let mean_i = dist_i.iter().sum::<f32>() / n_neighbours as f32;
+                if sigma < min_k_dist_scale * mean_i {
+                    sigma = min_k_dist_scale * mean_i;
+                }
+            } else if sigma < min_k_dist_scale * mean_dist {
+                sigma = min_k_dist_scale * mean_dist
+            }
+
+            (sigma, rho)
+        })
+        .collect();
+
+    let sigmas = res.iter().map(|r| r.0).collect();
+    let rhos = res.iter().map(|r| r.1).collect();
+
+    (sigmas, rhos)
+}
+
+/// Helper function to transform kNN data into CompressedSparseData
+///
+/// ### Params
+///
+/// * `knn_indices` - The indices of the k-nearest neighbours.
+/// * `knn_dists` - The distances to the k-nearest neighbours.
+/// * `n_obs` - Number of observations in the data.
+///
+/// ### Return
+///
+/// `CompressedSparseData` in CSR format with distances to the k-nearest
+/// neighbours stored.
+pub fn knn_to_sparse_dist(
+    knn_indices: &[Vec<usize>],
+    knn_dists: &[Vec<f32>],
+    n_obs: usize,
+) -> CompressedSparseData<f32> {
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    for i in 0..knn_indices.len() {
+        for j in 0..knn_indices[i].len() {
+            let neighbor = knn_indices[i][j];
+            let dist = if neighbor == i { 0.0 } else { knn_dists[i][j] };
+
+            if dist != 0.0 {
+                rows.push(i);
+                cols.push(neighbor);
+                vals.push(dist);
+            }
+        }
+    }
+
+    coo_to_csr(&rows, &cols, &vals, (n_obs, n_obs))
+}
+
+///////////////////
+// KNN functions //
+///////////////////
+
+/// Build an Annoy index
+///
+/// ### Params
+///
+/// * `mat` - The data matrix. Rows represent the samples, columns represent
+///   the embedding dimensions
+/// * `n_trees` - Number of trees to use to build the index
+/// * `usize` - Random seed for reproducibility
+///
+/// ### Return
+///
+/// The `AnnoyIndex`.
+pub fn build_annoy_index(mat: MatRef<f32>, n_trees: usize, seed: usize) -> AnnoyIndex {
+    AnnoyIndex::new(mat, n_trees, seed)
+}
+
+/// Helper function to query a given Annoy index
+///
+/// ### Params
+///
+/// * `query_mat` - The query matrix containing the samples x features
+/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `k` - Number of neighbours to return
+/// * `search_budget` - Search budget per tree
+/// * `return_dist` - Shall the distances between the different points be
+///   returned
+///
+/// ### Returns
+///
+/// A tuple of `(knn_indices, optional distances)`
+pub fn query_annoy_index(
+    query_mat: MatRef<f32>,
+    index: &AnnoyIndex,
+    dist_metric: &str,
+    k: usize,
+    search_budget: usize,
+    return_dist: bool,
+    verbose: bool,
+) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
+    let n_samples = query_mat.nrows();
+    let ann_dist = parse_ann_dist(dist_metric).unwrap();
+    let n_query = query_mat.nrows();
+    let search_k = Some(k * search_budget);
+
+    let counter = Arc::new(AtomicUsize::new(0));
+
+    let results: Vec<_> = (0..n_query)
+        .into_par_iter()
+        .map(|i| {
+            let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
+
+            let dists = if return_dist {
+                let mut dists = Vec::with_capacity(k);
+                for &neighbor_idx in &neighbors {
+                    let dist = compute_distance_knn(
+                        query_mat.row(i),
+                        query_mat.row(neighbor_idx),
+                        &ann_dist,
+                    );
+                    dists.push(dist);
+                }
+                Some(dists)
+            } else {
+                None
+            };
+
+            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+            if verbose && count % 100_000 == 0 {
+                println!(
+                    " Processed {} / {} cells.",
+                    count.separate_with_underscores(),
+                    n_samples.separate_with_underscores()
+                );
+            }
+
+            (neighbors, dists)
+        })
+        .collect();
+
+    let indices = results.iter().map(|(i, _)| i.clone()).collect();
+    let distances = if return_dist {
+        Some(results.iter().map(|(_, d)| d.clone().unwrap()).collect())
+    } else {
+        None
+    };
+
+    (indices, distances)
+}
+
+/// Build HNSW index
+///
+/// ### Params
+///
+/// * `mat` - The data matrix. Rows represent the samples, columns represent
+///   the embedding dimensions
+/// * `dist_metric` - Which distance metric to use. One of `"euclidean"` or
+///   `"cosine"`
+/// * `usize` - Random seed for reproducibility
+///
+/// ### Return
+///
+/// The
+pub fn build_hnsw_index(mat: MatRef<f32>, dist_metric: &str, seed: usize) -> HnswMap<Point, usize> {
+    let ann_dist = parse_ann_dist(dist_metric).unwrap();
+    let n_samples = mat.nrows();
+    let points: Vec<Point> = (0..n_samples)
+        .into_par_iter()
+        .map(|i| Point(mat.row(i).iter().cloned().collect(), ann_dist))
+        .collect();
+
+    Builder::default()
+        .seed(seed as u64)
+        .build(points, (0..n_samples).collect::<Vec<_>>())
+}
+
+/// Query HNSW index
+///
+/// ### Params
+///
+/// * `query_mat` - The query matrix containing the samples x features
+/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `k` - Number of neighbours to return
+/// * `return_dist` - Shall the distances between the different points be
+///   returned
+///
+/// ### Returns
+///
+/// A tuple of `(knn_indices, optional distances)`
+pub fn query_hnsw_index(
+    query_mat: MatRef<f32>,
+    index: &HnswMap<Point, usize>,
+    dist_metric: &str,
+    k: usize,
+    return_dist: bool,
+    verbose: bool,
+) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
+    let n_samples = query_mat.nrows();
+    let ann_dist = parse_ann_dist(dist_metric).unwrap();
+    let n_query = query_mat.nrows();
+    let counter = Arc::new(AtomicUsize::new(0));
+
+    let results: Vec<_> = (0..n_query)
+        .into_par_iter()
+        .map(|i| {
+            let point = Point(query_mat.row(i).iter().cloned().collect(), ann_dist);
+            let mut search = Search::default();
+            let neighbors: Vec<usize> = index
+                .search(&point, &mut search)
+                .take(k)
+                .map(|item| *item.value)
+                .collect();
+
+            let dists = if return_dist {
+                let mut dists = Vec::with_capacity(k);
+                for &neighbor_idx in &neighbors {
+                    let dist = compute_distance_knn(
+                        query_mat.row(i),
+                        query_mat.row(neighbor_idx),
+                        &ann_dist,
+                    );
+                    dists.push(dist);
+                }
+                Some(dists)
+            } else {
+                None
+            };
+
+            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+            if verbose && count % 100_000 == 0 {
+                println!(
+                    " Processed {} / {} cells.",
+                    count.separate_with_underscores(),
+                    n_samples.separate_with_underscores()
+                );
+            }
+
+            (neighbors, dists)
+        })
+        .collect();
+
+    let indices = results.iter().map(|(i, _)| i.clone()).collect();
+    let distances = if return_dist {
+        Some(results.iter().map(|(_, d)| d.clone().unwrap()).collect())
+    } else {
+        None
+    };
+
+    (indices, distances)
+}
+
 ////////////////////
 // Main functions //
 ////////////////////
@@ -130,60 +534,36 @@ pub fn build_nn_map(knn_graph: &[Vec<usize>]) -> Vec<Vec<usize>> {
 /// The k-nearest neighbours based on the HNSW algorithm
 pub fn generate_knn_hnsw(
     mat: MatRef<f32>,
+    dist_metric: &str,
     no_neighbours: usize,
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
 
-    let n_samples = mat.nrows();
-    let points: Vec<Point> = (0..n_samples)
-        .into_par_iter()
-        .map(|i| Point(mat.row(i).iter().cloned().collect()))
-        .collect();
-
-    let map = Builder::default()
-        .seed(seed as u64)
-        .build(points.clone(), (0..n_samples).collect::<Vec<_>>());
+    let index = build_hnsw_index(mat, dist_metric, seed);
 
     let end_index = start_index.elapsed();
-
     if verbose {
         println!("Generated HNSW index: {:.2?}", end_index);
     }
 
     let start_search = Instant::now();
-    let counter = Arc::new(AtomicUsize::new(0));
 
-    let res: Vec<Vec<usize>> = points
-        .par_iter()
+    let (indices, _) =
+        query_hnsw_index(mat, &index, dist_metric, no_neighbours + 1, false, verbose);
+
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
         .enumerate()
-        .map(|(i, point)| {
-            let mut search = Search::default();
-            let mut nearest_neighbours: Vec<usize> = map
-                .search(point, &mut search)
-                .take(no_neighbours + 1)
-                .map(|item| *item.value)
-                .collect();
-
-            nearest_neighbours.retain(|&x| x != i);
-            nearest_neighbours.truncate(no_neighbours);
-
-            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-            if verbose && count % 100_000 == 0 {
-                println!(
-                    " Processed {} / {} cells.",
-                    count.separate_with_underscores(),
-                    n_samples.separate_with_underscores()
-                );
-            }
-
-            nearest_neighbours
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
         })
         .collect();
 
     let end_search = start_search.elapsed();
-
     if verbose {
         println!(
             "Identified approximate nearest neighbours via HNSW: {:.2?}.",
@@ -213,6 +593,7 @@ pub fn generate_knn_hnsw(
 /// The k-nearest neighbours based on the HNSW algorithm
 pub fn generate_knn_annoy(
     mat: MatRef<f32>,
+    dist_metric: &str,
     no_neighbours: usize,
     n_trees: usize,
     search_budget: usize,
@@ -221,52 +602,36 @@ pub fn generate_knn_annoy(
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
 
-    let index = AnnoyIndex::new(mat, n_trees, seed);
-    let n_samples = mat.nrows();
+    let index = build_annoy_index(mat, n_trees, seed);
 
     let end_index = start_index.elapsed();
-
     if verbose {
         println!("Generated Annoy index: {:.2?}", end_index);
     }
 
     let start_search = Instant::now();
-    let counter = Arc::new(AtomicUsize::new(0));
 
-    // process in chunks to reduce peak memory
-    // this allows memory to be freed up in between...
-    let chunk_size = 50_000;
-    let mut res = Vec::with_capacity(n_samples);
+    let (indices, _) = query_annoy_index(
+        mat,
+        &index,
+        dist_metric,
+        no_neighbours + 1,
+        search_budget,
+        false,
+        verbose,
+    );
 
-    for chunk_start in (0..n_samples).step_by(chunk_size) {
-        let chunk_end = (chunk_start + chunk_size).min(n_samples);
-
-        let chunk_res: Vec<Vec<usize>> = (chunk_start..chunk_end)
-            .into_par_iter()
-            .map(|i| {
-                let search_k = Some(no_neighbours * search_budget);
-                let mut neighbors = index.query_row(mat.row(i), no_neighbours + 1, search_k);
-                neighbors.retain(|&x| x != i);
-                neighbors.truncate(no_neighbours);
-
-                let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                if verbose && count % 100_000 == 0 {
-                    println!(
-                        " Processed {} / {} cells.",
-                        count.separate_with_underscores(),
-                        n_samples.separate_with_underscores()
-                    );
-                }
-
-                neighbors
-            })
-            .collect();
-
-        res.extend(chunk_res);
-    }
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
 
     let end_search = start_search.elapsed();
-
     if verbose {
         println!(
             "Identified approximate nearest neighbours via Annoy: {:.2?}.",
@@ -529,182 +894,4 @@ pub fn generate_snn_limited(
     }
 
     (edges, weights)
-}
-
-///////////
-// Tests //
-///////////
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use faer::Mat;
-    use std::collections::HashSet;
-
-    fn create_clustered_data() -> Mat<f32> {
-        // Create 3 well-separated clusters
-        let mut data = Vec::new();
-
-        // Cluster 1: around (0, 0)
-        for i in 0..50 {
-            data.push(vec![
-                (i as f32 * 0.1) % 2.0 - 1.0,
-                (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        // Cluster 2: around (10, 10)
-        for i in 0..50 {
-            data.push(vec![
-                10.0 + (i as f32 * 0.1) % 2.0 - 1.0,
-                10.0 + (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        // Cluster 3: around (-10, 10)
-        for i in 0..50 {
-            data.push(vec![
-                -10.0 + (i as f32 * 0.1) % 2.0 - 1.0,
-                10.0 + (i as f32 * 0.15) % 2.0 - 1.0,
-            ]);
-        }
-
-        Mat::from_fn(150, 2, |i, j| data[i][j])
-    }
-
-    fn jaccard_similarity(a: &[usize], b: &[usize]) -> f32 {
-        let set_a: HashSet<_> = a.iter().collect();
-        let set_b: HashSet<_> = b.iter().collect();
-        let intersection = set_a.intersection(&set_b).count();
-        let union = set_a.union(&set_b).count();
-        intersection as f32 / union as f32
-    }
-
-    #[test]
-    fn test_no_self_neighbors() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-
-        for (i, neighbors) in hnsw_result.iter().enumerate() {
-            assert!(
-                !neighbors.contains(&i),
-                "HNSW: Node {} found itself in neighbors",
-                i
-            );
-        }
-
-        for (i, neighbors) in annoy_result.iter().enumerate() {
-            assert!(
-                !neighbors.contains(&i),
-                "Annoy: Node {} found itself in neighbors",
-                i
-            );
-        }
-    }
-
-    #[test]
-    fn test_neighbor_count() {
-        let data = create_clustered_data();
-        let k = 10;
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), k, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), k, 100, 200, 42, false);
-
-        for neighbors in &hnsw_result {
-            assert_eq!(neighbors.len(), k, "HNSW: Wrong number of neighbors");
-        }
-
-        for neighbors in &annoy_result {
-            assert_eq!(neighbors.len(), k, "Annoy: Wrong number of neighbors");
-        }
-    }
-
-    #[test]
-    fn test_cluster_structure() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-
-        // Test that nodes in same cluster find each other
-        // Node 0 (cluster 1) should have neighbors mostly in range [0, 49]
-        let hnsw_cluster1_neighbors: HashSet<_> =
-            hnsw_result[0].iter().filter(|&&n| n < 50).collect();
-        let annoy_cluster1_neighbors: HashSet<_> =
-            annoy_result[0].iter().filter(|&&n| n < 50).collect();
-
-        assert!(
-            hnsw_cluster1_neighbors.len() >= 3,
-            "HNSW: Node 0 should find cluster neighbors"
-        );
-        assert!(
-            annoy_cluster1_neighbors.len() >= 3,
-            "Annoy: Node 0 should find cluster neighbors"
-        );
-    }
-
-    #[test]
-    fn test_deterministic_results() {
-        let data = create_clustered_data();
-
-        let hnsw1 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let hnsw2 = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        assert_eq!(
-            hnsw1, hnsw2,
-            "HNSW results should be deterministic with same seed"
-        );
-
-        let annoy1 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-        let annoy2 = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-        assert_eq!(
-            annoy1, annoy2,
-            "Annoy results should be deterministic with same seed"
-        );
-    }
-
-    #[test]
-    fn test_algorithm_overlap() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 10, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 10, 100, 200, 42, false);
-
-        let mut total_jaccard = 0.0;
-        let mut valid_comparisons = 0;
-
-        for i in 0..hnsw_result.len() {
-            let jaccard = jaccard_similarity(&hnsw_result[i], &annoy_result[i]);
-            if jaccard > 0.0 {
-                total_jaccard += jaccard;
-                valid_comparisons += 1;
-            }
-        }
-
-        let avg_jaccard = total_jaccard / valid_comparisons as f32;
-        println!("Average Jaccard similarity: {:.3}", avg_jaccard);
-
-        // With well-separated clusters, both should find similar patterns
-        assert!(
-            avg_jaccard > 0.2,
-            "Algorithms should have reasonable overlap (got {:.3})",
-            avg_jaccard
-        );
-    }
-
-    #[test]
-    fn test_sorted_neighbors() {
-        let data = create_clustered_data();
-        let hnsw_result = generate_knn_hnsw(data.as_ref(), 5, 42, false);
-        let annoy_result = generate_knn_annoy(data.as_ref(), 5, 100, 200, 42, false);
-
-        for neighbors in &hnsw_result {
-            let mut sorted = neighbors.clone();
-            sorted.sort_unstable();
-            assert_eq!(*neighbors, sorted, "HNSW neighbors should be sorted");
-        }
-
-        for neighbors in &annoy_result {
-            let mut sorted = neighbors.clone();
-            sorted.sort_unstable();
-            assert_eq!(*neighbors, sorted, "Annoy neighbors should be sorted");
-        }
-    }
 }

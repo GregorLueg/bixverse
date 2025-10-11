@@ -621,7 +621,31 @@ rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @export
 rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
 
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, cell_configs, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, cell_configs, seed)
+#' Generates synthetic data for single cell
+#'
+#' @description
+#' Helper function to generate synthetic single cell data with optional
+#'
+#' @param n_cells Integer. Number of cells to generate.
+#' @param n_genes Integer. Number of genes to generate.
+#' @param n_batches Integer. Number of the batches to generated.
+#' @param cell_configs A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The indices of the genes for the given cells.
+#'   \item nrow - Number of rows.
+#'   \item ncol - Number of columns
+#'   \item cell_type_indices - Vector indicating which cell type this is.
+#'   \item batch_indices - Vector indicating the batch.
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -1868,6 +1892,58 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
+#' Calculate kBET type scores
+#'
+#' @description
+#' The function takes in a kNN matrix and a batch vector indicating which
+#' cell belongs to which batch. The function will check for the neighbourhood
+#' of each cell if the proportion of represented batches are different from
+#' the overall batch proportions. Good mixing of batches would mean very
+#' cells have significant differences; bad mixing a lot of the batches
+#' have bad mixing.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A vector of p-values based on the ChiSquare statistic per cell.
+#'
+#' @export
+rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+
+#' BBKNN implementation in Rust
+#'
+#' @description
+#' This function implements the BBKNN algorithm from TO ADD
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' BBKNN parameters. Usually PCA. Rows represent cells.
+#' @param batch_labels Integer vector. These represent to which batch a given
+#' cell belongs.
+#' @param bbknn_params List. Contains all of the BBKNN parameters.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list of two lists representing the sparse matrix representation
+#' of the distances and the connectivities.
+#'
+#' @export
+rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
+
+#' Reduce BBKNN matrix to Top X neighbours
+#'
+#' @param indptr Integer vector. The index pointers of the underlying data.
+#' @param indices Integer vector. The indices of the nearest neighbours.
+#' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
+#'
+#' @return A numerical matrix with the Top X neighbours per row. If
+#' `no_neighbours_to_keep` is larger than the number of neighbours in the data,
+#' these positions will be `NA`.
+#'
+#' @export
+rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description
@@ -1966,7 +2042,7 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' number of neighbours.
 #'
 #' @export
-rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, verbose, seed)
+rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'

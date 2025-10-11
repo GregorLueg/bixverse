@@ -1,3 +1,4 @@
+pub mod bbknn;
 pub mod dge_aucs;
 pub mod fast_ranking;
 pub mod processing;

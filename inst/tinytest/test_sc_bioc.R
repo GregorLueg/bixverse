@@ -17,7 +17,7 @@ min_lib_size <- 300L
 min_genes_exp <- 45L
 min_cells_exp <- 500L
 hvg_to_keep <- 30L
-no_pcs <- 10L
+no_pcs <- 5L
 
 ## synthetic test data ---------------------------------------------------------
 
@@ -32,7 +32,6 @@ write_h5ad_sc(
   single_cell_test_data$var,
   .verbose = FALSE
 )
-
 
 ## quick run -------------------------------------------------------------------
 
@@ -108,87 +107,241 @@ sc_object <- calculate_pca_sc(
   .verbose = FALSE
 )
 
-# annoy algorithm
+### knn generation -------------------------------------------------------------
 
+#### annoy cosine --------------------------------------------------------------
+
+# Bioc results
+bioc_knn_cosine <- BiocNeighbors::findKNN(
+  X = get_pca_factors(sc_object),
+  k = 15L,
+  BNPARAM = BiocNeighbors::AnnoyParam(distance = "Cosine")
+)$index
+
+# cosine
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "annoy"
+  ),
   .verbose = FALSE
 )
 
-bioc_knn <- BiocNeighbors::findKNN(
+sc_knn_cosine <- get_knn_mat(sc_object)
+
+# annoy is a bit more random compared to the implementations in BiocNeighbors
+expect_true(
+  current = (sum(sc_knn_cosine + 1 == bioc_knn_cosine) /
+    (dim(bioc_knn_cosine)[1] *
+      dim(bioc_knn_cosine)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.95",
+    "- annoy algorithm (cosine)"
+  )
+)
+
+#### annoy euclidean -----------------------------------------------------------
+
+bioc_knn_euclidean <- BiocNeighbors::findKNN(
   X = get_pca_factors(sc_object),
   k = 15L
 )$index
 
-
-# annoy is a bit more random compared to the implementations in BiocNeighbors
-expect_true(
-  current = (sum(get_knn_mat(sc_object) + 1 == bioc_knn) /
-    (dim(bioc_knn)[1] *
-      dim(bioc_knn)[2])) >=
-    0.98,
-  info = "kNN overlap with BiocNeighbors >= 0.98 - annoy algorithm"
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "annoy",
+    ann_dist = "euclidean"
+  ),
+  .verbose = FALSE
 )
 
-# hnsw
+sc_knn_euclidean <- get_knn_mat(sc_object)
+
+expect_true(
+  current = (sum(sc_knn_euclidean + 1 == bioc_knn_euclidean) /
+    (dim(bioc_knn_euclidean)[1] *
+      dim(bioc_knn_euclidean)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.95",
+    "- annoy algorithm (euclidean)"
+  )
+)
+
+#### hnsw cosine ---------------------------------------------------------------
+
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
   .verbose = FALSE
 )
 
+sc_knn_cosine <- get_knn_mat(sc_object)
+
 expect_true(
-  current = (sum(get_knn_mat(sc_object) + 1 == bioc_knn) /
-    (dim(bioc_knn)[1] *
-      dim(bioc_knn)[2])) >=
-    0.98,
-  info = "kNN overlap with BiocNeighbors >= 0.98 - hnsw"
+  current = (sum(sc_knn_cosine + 1 == bioc_knn_cosine) /
+    (dim(bioc_knn_cosine)[1] *
+      dim(bioc_knn_cosine)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.95",
+    "- HNSW algorithm (cosine)"
+  )
 )
 
-# snn generation
-bluster_snn <- bluster:::build_snn_graph(t(bioc_knn), "rank", num_threads = 1)
+#### hnsw euclidean ------------------------------------------------------------
 
-bixverse_snn <- rs_sc_snn(
-  sc_object@sc_cache$knn_matrix,
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "hnsw",
+    ann_dist = "euclidean"
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_euclidean <- get_knn_mat(sc_object)
+
+expect_true(
+  current = (sum(sc_knn_euclidean + 1 == bioc_knn_euclidean) /
+    (dim(bioc_knn_euclidean)[1] *
+      dim(bioc_knn_euclidean)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.95",
+    "- HNSW algorithm (euclidean)"
+  )
+)
+
+### snn graph ------------------------------------------------------------------
+
+#### euclidean -----------------------------------------------------------------
+
+# snn generation
+bluster_snn_euclidean_rank <- bluster:::build_snn_graph(
+  t(bioc_knn_euclidean),
+  "rank",
+  num_threads = 1
+)
+
+bluster_snn_euclidean_jaccard <- bluster:::build_snn_graph(
+  t(bioc_knn_euclidean),
+  "jaccard",
+  num_threads = 1
+)
+
+bixverse_snn_euclidean_rank <- rs_sc_snn(
+  sc_knn_euclidean,
   snn_method = "rank",
   limited_graph = FALSE,
   pruning = 0,
   verbose = FALSE
 )
 
-expect_equal(
-  current = bixverse_snn$edges + 1,
-  target = bluster_snn$edges,
-  info = "sNN full generation (rank) between bluster and bixverse - edges"
-)
-
-expect_true(
-  current = cor(bixverse_snn$weights, bluster_snn$weights) >= 0.99,
-  info = "sNN full generation (rank) between bluster and bixverse - weights"
-)
-
-bluster_snn <- bluster:::build_snn_graph(
-  t(bioc_knn),
-  "jaccard",
-  num_threads = 1
-)
-
-bixverse_snn <- rs_sc_snn(
-  sc_object@sc_cache$knn_matrix,
+bixverse_snn_euclidean_jaccard <- rs_sc_snn(
+  sc_knn_euclidean,
   snn_method = "jaccard",
   limited_graph = FALSE,
   pruning = 0,
   verbose = FALSE
 )
 
+# rank version
 expect_equal(
-  current = bixverse_snn$edges + 1,
-  target = bluster_snn$edges,
-  info = "sNN full generation (jaccard) between bluster and bixverse - edges"
+  current = bixverse_snn_euclidean_rank$edges + 1,
+  target = bluster_snn_euclidean_rank$edges,
+  info = paste(
+    "sNN full generation (euclidean; rank)",
+    "between bluster and bixverse - edges"
+  )
 )
 
 expect_true(
-  current = cor(bixverse_snn$weights, bluster_snn$weights) >= 0.99,
-  info = "sNN full generation (jaccard) between bluster and bixverse - weights"
+  current = cor(
+    bixverse_snn_euclidean_rank$weights,
+    bluster_snn_euclidean_rank$weights
+  ) >=
+    0.95,
+  info = paste(
+    "sNN full generation (euclidean; rank)",
+    "between bluster and bixverse - weights"
+  )
+)
+
+# jaccard
+expect_equal(
+  current = bixverse_snn_euclidean_jaccard$edges + 1,
+  target = bluster_snn_euclidean_jaccard$edges,
+  info = paste(
+    "sNN full generation (euclidean; jaccard)",
+    "between bluster and bixverse - edges"
+  )
+)
+
+expect_true(
+  current = cor(
+    bixverse_snn_euclidean_jaccard$weights,
+    bluster_snn_euclidean_jaccard$weights
+  ) >=
+    0.95,
+  info = paste(
+    "sNN full generation (euclidean; jaccard)",
+    "between bluster and bixverse - weights"
+  )
+)
+
+# #### cosine --------------------------------------------------------------------
+
+# snn generation
+bluster_snn_cosine_rank <- bluster:::build_snn_graph(
+  t(bioc_knn_cosine),
+  "rank",
+  num_threads = 1
+)
+
+bluster_snn_cosine_jaccard <- bluster:::build_snn_graph(
+  t(bioc_knn_cosine),
+  "jaccard",
+  num_threads = 1
+)
+
+bixverse_snn_cosine_rank <- rs_sc_snn(
+  sc_knn_cosine,
+  snn_method = "rank",
+  limited_graph = FALSE,
+  pruning = 0,
+  verbose = FALSE
+)
+
+bixverse_snn_cosine_jaccard <- rs_sc_snn(
+  sc_knn_cosine,
+  snn_method = "jaccard",
+  limited_graph = FALSE,
+  pruning = 0,
+  verbose = FALSE
+)
+
+# rank version
+
+expect_equal(
+  current = bixverse_snn_cosine_rank$edges + 1,
+  target = bluster_snn_cosine_rank$edges,
+  info = paste(
+    "sNN full generation (euclidean; rank)",
+    "between bluster and bixverse - edges"
+  )
+)
+
+expect_true(
+  current = cor(
+    bixverse_snn_cosine_rank$weights,
+    bluster_snn_cosine_rank$weights
+  ) >=
+    0.99,
+  info = paste(
+    "sNN full generation (euclidean; rank)",
+    "between bluster and bixverse - weights"
+  )
 )

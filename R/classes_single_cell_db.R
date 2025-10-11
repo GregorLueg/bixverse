@@ -890,6 +890,8 @@ single_cell_duckdb_con <- R6::R6Class(
       checkmate::assertDataTable(obs_dt)
       checkmate::qassert(filter, c("I+", "0"))
 
+      obs_dt <- data.table::copy(obs_dt)
+
       con <- private$connect_db()
       on.exit(
         {
@@ -899,8 +901,6 @@ single_cell_duckdb_con <- R6::R6Class(
         }
       )
       # seurat has in times cell_id as a column, causing problems
-      # they are the same as the row.names, so dealt with. just set to NULL
-      obs_dt[, cell_id := NULL]
 
       # deal with column names
       colnames(obs_dt) <- to_snake_case(colnames(obs_dt))
@@ -939,6 +939,8 @@ single_cell_duckdb_con <- R6::R6Class(
       # checks
       checkmate::assertDataTable(var_dt)
       checkmate::qassert(filter, c("I+", "0"))
+
+      var_dt <- data.table::copy(var_dt)
 
       con <- private$connect_db()
       on.exit(

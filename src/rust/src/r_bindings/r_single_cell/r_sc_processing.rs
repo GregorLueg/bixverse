@@ -280,12 +280,14 @@ fn rs_sc_pca(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     no_neighbours: usize,
     n_trees: usize,
     search_budget: usize,
     algorithm_type: String,
+    ann_dist: String,
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
@@ -297,9 +299,12 @@ fn rs_sc_knn(
         .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
 
     let knn = match knn_method {
-        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed, verbose),
+        KnnSearch::Hnsw => {
+            generate_knn_hnsw(embd.as_ref(), &ann_dist, no_neighbours, seed, verbose)
+        }
         KnnSearch::Annoy => generate_knn_annoy(
             embd.as_ref(),
+            &ann_dist,
             no_neighbours,
             n_trees,
             search_budget,

@@ -39,6 +39,46 @@ impl<'a> Sum<&'a F16> for F16 {
     }
 }
 
+impl std::ops::Add for F16 {
+    type Output = F16;
+
+    fn add(self, other: F16) -> F16 {
+        let a = f16::from(self);
+        let b = f16::from(other);
+        F16::from(a + b)
+    }
+}
+
+impl<'a> std::ops::Add<&'a F16> for F16 {
+    type Output = F16;
+
+    fn add(self, other: &'a F16) -> F16 {
+        let a = f16::from(self);
+        let b = f16::from(*other);
+        F16::from(a + b)
+    }
+}
+
+impl std::ops::Mul for F16 {
+    type Output = F16;
+
+    fn mul(self, other: F16) -> F16 {
+        let a = f16::from(self);
+        let b = f16::from(other);
+        F16::from(a * b)
+    }
+}
+
+impl<'a> std::ops::Mul<&'a F16> for F16 {
+    type Output = F16;
+
+    fn mul(self, other: &'a F16) -> F16 {
+        let a = f16::from(self);
+        let b = f16::from(*other);
+        F16::from(a * b)
+    }
+}
+
 impl PartialEq for F16 {
     fn eq(&self, other: &Self) -> bool {
         let a = f16::from(*self);

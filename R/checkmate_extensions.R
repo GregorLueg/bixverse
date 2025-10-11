@@ -727,6 +727,83 @@ checkSNFParams <- function(x) {
 
 ## single cell -----------------------------------------------------------------
 
+### synthetic data -------------------------------------------------------------
+
+#' Check synthetic data parameters
+#'
+#' @description Checkmate extension for checking the synthetic data
+#' parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScSyntheticData <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "n_cells",
+      "n_genes",
+      "marker_genes",
+      "n_batches",
+      "batch_effect_strength"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "n_cells" = "I1",
+    "n_genes" = "I1",
+    "n_batches" = "I1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in synthetic data is incorrect:",
+          "n_cells, n_genes and n_batches need to be integers."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  res <- checkmate::checkList(
+    x$marker_genes,
+    types = "list",
+    names = "named"
+  )
+  if (!isTRUE(res)) {
+    return("marker_genes must be a named list of lists.")
+  }
+
+  res <- checkmate::checkChoice(
+    x[["batch_effect_strength"]],
+    c("strong", "medium", "weak")
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  return(TRUE)
+}
+
 ### io -------------------------------------------------------------------------
 
 #' Check SC MTX load parameters
@@ -931,7 +1008,9 @@ checkScNeighbours <- function(x) {
       "search_budget",
       "knn_algorithm",
       "full_snn",
-      "pruning"
+      "pruning",
+      "snn_similarity",
+      "ann_dist"
     )
   )
   if (!isTRUE(res)) {
@@ -967,7 +1046,8 @@ checkScNeighbours <- function(x) {
   # test
   test_choice_rules <- list(
     knn_algorithm = c("annoy", "hnsw"),
-    snn_similarity = c("rank", "jaccard")
+    snn_similarity = c("rank", "jaccard"),
+    ann_dist = c("cosine", "euclidean")
   )
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(test_choice_rules)) {
@@ -1050,7 +1130,8 @@ checkScMetacells <- function(x) {
       "k",
       "knn_method",
       "n_trees",
-      "search_budget"
+      "search_budget",
+      "ann_dist"
     )
   )
   if (!isTRUE(res)) {
@@ -1089,7 +1170,8 @@ checkScMetacells <- function(x) {
   }
 
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw")
+    knn_method = c("annoy", "hnsw"),
+    ann_dist = c("cosine", "euclidean")
   )
 
   test_choice_res <- purrr::imap_lgl(x, \(x, name) {
@@ -1106,6 +1188,122 @@ checkScMetacells <- function(x) {
       sprintf(
         paste0(
           "The following element `%s` in the metacell generation is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+### bbknn ----------------------------------------------------------------------
+
+#' Check BBKNN parameters
+#'
+#' @description Checkmate extension for checking the BBKNN parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScBbknn <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "neighbours_within_batch",
+      "knn_method",
+      "ann_dist",
+      "set_op_mix_ratio",
+      "local_connectivity",
+      "annoy_n_trees",
+      "search_budget",
+      "trim"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "neighbours_within_batch" = "I1",
+    "annoy_n_trees" = "I1",
+    "search_budget" = "I1",
+    "trim" = c("0", "I1")
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in BBKNN parameters is incorrect:",
+          "neighbours_within_batch, annoy_n_trees, and search_budget need to be integers;",
+          "trim needs to be NULL or an integer."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  numeric_rules <- list(
+    "set_op_mix_ratio" = "N1[0, 1]",
+    "local_connectivity" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in BBKNN parameters is incorrect:",
+          "set_op_mix_ratio and local_connectivity need to be numeric."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw"),
+    ann_dist = c("cosine", "euclidean")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the BBKNN parameters is not one of",
           " the expected choices. Please double check the documentation."
         ),
         broken_elem
@@ -1334,6 +1532,23 @@ assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
 
 ## single cell -----------------------------------------------------------------
 
+### synthetic data -------------------------------------------------------------
+
+#' Assert synthetic data parameters
+#'
+#' @description Checkmate extension for asserting the synthetic data
+#' parameters.
+#'
+#' @inheritParams checkScSyntheticData
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
+
 ### io -------------------------------------------------------------------------
 
 #' Assert SC MTX load parameters
@@ -1434,6 +1649,22 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+
+### bbknn ----------------------------------------------------------------------
+
+#' Assert BBKNN parameters
+#'
+#' @description Checkmate extension for asserting the BBKNN parameters.
+#'
+#' @inheritParams checkScBbknn
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 
 # tests ------------------------------------------------------------------------
 

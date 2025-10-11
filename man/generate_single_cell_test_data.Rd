@@ -4,9 +4,25 @@
 \alias{generate_single_cell_test_data}
 \title{Single cell test data}
 \usage{
-generate_single_cell_test_data(seed = 42L)
+generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(),
+  seed = 42L
+)
 }
 \arguments{
+\item{syn_data_params}{List. Contains the parameters for the generation of
+synthetic data, see: \code{\link[=params_sc_synthetic_data]{params_sc_synthetic_data()}}. Has the
+following elements:
+\itemize{
+\item n_cells - Integer. Number of cells.
+\item n_genes - Integer. Number of genes.
+\item marker_genes - List. A nested list that indicates which gene indices
+are markers for which cell.
+\item n_batches - Integer. Number of batches.
+\item batch_effect_strength - String. Indicates the strength of the batch
+effect to add.
+}}
+
 \item{seed}{Integer. The seed for the generation of the seed data.}
 }
 \value{
@@ -18,11 +34,6 @@ List with the following items
 }
 }
 \description{
-This function generates synthetic data for single cell test purposes. It has
-hard-coded parameters and will generate a count matrix of 1000 cells x 100
-genes, an obs table and a var table. There are three distinct cell types
-that can be found in the data that each express between 2 to 8 marker genes
-with higher expression compared to the background. The background genes
-have some with higher expression and then less and less cells expressing
-them.
+This function generates synthetic data for single cell test purposes. These
+data can be used for testing functionality of various single cell functions.
 }

@@ -1,3 +1,4 @@
+use std::ops::{Add, Mul};
 use std::path::Path;
 use thousands::Separable;
 
@@ -30,7 +31,7 @@ pub fn write_r_counts<P: AsRef<Path>, T>(
     verbose: bool,
 ) -> (usize, usize, CellQuality)
 where
-    T: Clone + Default + Into<u32> + Sync + Into<f64>,
+    T: Clone + Default + Into<u32> + Sync + Into<f64> + Add + PartialEq + Mul,
 {
     let (no_cells, no_genes) = compressed_data.shape();
 
@@ -81,7 +82,7 @@ pub fn write_r_counts_csr<P: AsRef<Path>, T>(
     verbose: bool,
 ) -> (usize, usize, CellQuality)
 where
-    T: Clone + Default + Into<u32> + Sync + Into<f64>,
+    T: Clone + Default + Into<u32> + Sync + Into<f64> + Add + PartialEq + Mul,
 {
     let (no_cells, no_genes) = compressed_data.shape();
 

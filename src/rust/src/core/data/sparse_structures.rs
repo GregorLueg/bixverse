@@ -1,6 +1,8 @@
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
+use std::cmp::PartialEq;
 use std::marker::Sync;
+use std::ops::{Add, Mul};
 
 /////////////
 // Helpers //
@@ -273,8 +275,8 @@ where
 
 impl<T, U> CompressedSparseData<T, U>
 where
-    T: Clone + Default + Into<f64> + Sync,
-    U: Clone + Default + Sync,
+    T: Clone + Default + Into<f64> + Sync + Add + PartialEq + Mul,
+    U: Clone + Default + Sync + Add + PartialEq + Mul,
 {
     /// Generate a nes CSC version of the matrix
     ///
@@ -426,8 +428,8 @@ where
 /// * `sparse_data` - The CompressedSparseData you want to transform
 pub fn csc_to_csr<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
-    T: Clone + Default + Into<f64> + Sync,
-    U: Clone + Default + Sync,
+    T: Clone + Default + Into<f64> + Sync + Add + PartialEq + Mul,
+    U: Clone + Default + Sync + Add + PartialEq + Mul,
 {
     let (nrow, _) = sparse_data.shape();
     let nnz = sparse_data.get_nnz();
@@ -488,8 +490,8 @@ where
 /// The data in CSC format, i.e., `CscData`
 pub fn csr_to_csc<T, U>(sparse_data: &CompressedSparseData<T, U>) -> CompressedSparseData<T, U>
 where
-    T: Clone + Default + Into<f64> + Sync,
-    U: Clone + Default + Sync,
+    T: Clone + Default + Into<f64> + Sync + Add + PartialEq + Mul,
+    U: Clone + Default + Sync + Add + PartialEq + Mul,
 {
     let nnz = sparse_data.get_nnz();
     let (_, ncol) = sparse_data.shape();
@@ -538,6 +540,303 @@ where
         data_2: csc_data2,
         shape: sparse_data.shape(),
     }
+}
+
+/// Transform COO stored data into CSR
+///
+/// ### Params
+///
+/// * `rows` - Row indices
+/// * `cols` - Col indices
+/// * `vals` - The values to store in the matrix
+///
+/// ### Returns
+///
+/// `CompressedSparseData` in CSR format
+pub fn coo_to_csr<T>(
+    rows: &[usize],
+    cols: &[usize],
+    vals: &[T],
+    shape: (usize, usize),
+) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    let nnz = vals.len();
+    let n_rows = shape.0;
+
+    // Count non-zeros per row
+    let mut row_counts = vec![0usize; n_rows];
+    for &row in rows {
+        row_counts[row] += 1;
+    }
+
+    // Build indptr
+    let mut indptr = vec![0usize; n_rows + 1];
+    for i in 0..n_rows {
+        indptr[i + 1] = indptr[i] + row_counts[i];
+    }
+
+    // Fill data and indices
+    let mut data = vec![T::default(); nnz];
+    let mut indices = vec![0usize; nnz];
+    let mut row_positions = vec![0usize; n_rows];
+
+    for i in 0..nnz {
+        let row = rows[i];
+        let pos = indptr[row] + row_positions[row];
+        data[pos] = vals[i];
+        indices[pos] = cols[i];
+        row_positions[row] += 1;
+    }
+
+    CompressedSparseData::new_csr(&data, &indices, &indptr, None, shape)
+}
+
+/// Add two CSR matrices together
+///
+/// ### Params
+///
+/// * `a` - Reference to the first CompressedSparseData (in CSR format!)
+/// * `b` - Reference to the second CompressedSparseData (in CSR format!)
+///
+/// ### Returns
+///
+/// `CompressedSparseData` with added values between the two.
+pub fn sparse_add_csr<T>(
+    a: &CompressedSparseData<T>,
+    b: &CompressedSparseData<T>,
+) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    assert_eq!(a.shape, b.shape);
+    assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
+
+    let n_rows = a.shape.0;
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    for i in 0..n_rows {
+        let a_start = a.indptr[i];
+        let a_end = a.indptr[i + 1];
+        let b_start = b.indptr[i];
+        let b_end = b.indptr[i + 1];
+
+        let mut a_idx = a_start;
+        let mut b_idx = b_start;
+
+        while a_idx < a_end || b_idx < b_end {
+            if a_idx < a_end && (b_idx >= b_end || a.indices[a_idx] < b.indices[b_idx]) {
+                rows.push(i);
+                cols.push(a.indices[a_idx]);
+                vals.push(a.data[a_idx]);
+                a_idx += 1;
+            } else if b_idx < b_end && (a_idx >= a_end || b.indices[b_idx] < a.indices[a_idx]) {
+                rows.push(i);
+                cols.push(b.indices[b_idx]);
+                vals.push(b.data[b_idx]);
+                b_idx += 1;
+            } else {
+                // Same column
+                let val = a.data[a_idx] + b.data[b_idx];
+                if val != T::default() {
+                    rows.push(i);
+                    cols.push(a.indices[a_idx]);
+                    vals.push(val);
+                }
+                a_idx += 1;
+                b_idx += 1;
+            }
+        }
+    }
+
+    coo_to_csr(&rows, &cols, &vals, a.shape)
+}
+
+/// Scalar multiplication of CSR matrix
+///
+/// ### Params
+///
+/// * `a` - Reference to the first CompressedSparseData (in CSR format!)
+/// * `scalar` - The scalar value to multiply with
+///
+/// ### Returns
+///
+/// `CompressedSparseData` with the data multiplied by the scalar.
+pub fn sparse_scalar_multiply_csr<T>(
+    a: &CompressedSparseData<T>,
+    scalar: T,
+) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul<Output = T>,
+{
+    let data: Vec<T> = a.data.iter().map(|&v| v * scalar).collect();
+    CompressedSparseData::new_csr(&data, &a.indices, &a.indptr, None, a.shape)
+}
+
+/// Sparse matrix subtraction
+///
+/// ### Params
+///
+/// * `a` - Reference to the first CompressedSparseData (in CSR format!)
+/// * `b` - Reference to the second CompressedSparseData (in CSR format!)
+///
+/// ### Returns
+///
+/// The subtracted new matrix
+pub fn sparse_subtract_csr<T>(
+    a: &CompressedSparseData<T>,
+    b: &CompressedSparseData<T>,
+) -> CompressedSparseData<T>
+where
+    T: Clone
+        + Default
+        + Into<f64>
+        + Sync
+        + Add<Output = T>
+        + PartialEq
+        + Copy
+        + Mul<Output = T>
+        + std::ops::Sub<Output = T>,
+{
+    assert_eq!(a.shape, b.shape);
+    assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
+
+    let n_rows = a.shape.0;
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    for i in 0..n_rows {
+        let a_start = a.indptr[i];
+        let a_end = a.indptr[i + 1];
+        let b_start = b.indptr[i];
+        let b_end = b.indptr[i + 1];
+
+        let mut a_idx = a_start;
+        let mut b_idx = b_start;
+
+        while a_idx < a_end || b_idx < b_end {
+            if a_idx < a_end && (b_idx >= b_end || a.indices[a_idx] < b.indices[b_idx]) {
+                rows.push(i);
+                cols.push(a.indices[a_idx]);
+                vals.push(a.data[a_idx]);
+                a_idx += 1;
+            } else if b_idx < b_end && (a_idx >= a_end || b.indices[b_idx] < a.indices[a_idx]) {
+                rows.push(i);
+                cols.push(b.indices[b_idx]);
+                vals.push(T::default() - b.data[b_idx]);
+                b_idx += 1;
+            } else {
+                let val = a.data[a_idx] - b.data[b_idx];
+                if val != T::default() {
+                    rows.push(i);
+                    cols.push(a.indices[a_idx]);
+                    vals.push(val);
+                }
+                a_idx += 1;
+                b_idx += 1;
+            }
+        }
+    }
+
+    coo_to_csr(&rows, &cols, &vals, a.shape)
+}
+
+/// Element-wise sparse multiplication
+///
+/// ### Params
+///
+/// * `a` - Reference to the first CompressedSparseData (in CSR format!)
+/// * `b` - Reference to the second CompressedSparseData (in CSR format!)
+///
+/// ### Returns
+///
+/// The multiplied matrix.
+pub fn sparse_multiply_elementwise_csr<T>(
+    a: &CompressedSparseData<T>,
+    b: &CompressedSparseData<T>,
+) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul<Output = T>,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    assert_eq!(a.shape, b.shape);
+    assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
+
+    let n_rows = a.shape.0;
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    for i in 0..n_rows {
+        let a_start = a.indptr[i];
+        let a_end = a.indptr[i + 1];
+        let b_start = b.indptr[i];
+        let b_end = b.indptr[i + 1];
+
+        let mut a_idx = a_start;
+        let mut b_idx = b_start;
+
+        while a_idx < a_end && b_idx < b_end {
+            if a.indices[a_idx] < b.indices[b_idx] {
+                a_idx += 1;
+            } else if b.indices[b_idx] < a.indices[a_idx] {
+                b_idx += 1;
+            } else {
+                // Same column - multiply
+                let val = a.data[a_idx] * b.data[b_idx];
+                if val != T::default() {
+                    rows.push(i);
+                    cols.push(a.indices[a_idx]);
+                    vals.push(val);
+                }
+                a_idx += 1;
+                b_idx += 1;
+            }
+        }
+    }
+
+    coo_to_csr(&rows, &cols, &vals, a.shape)
+}
+
+/// Remove zeros from sparse matrix
+///
+/// ### Params
+///
+/// * `mat` - Matrix from which to remove the zeroes
+///
+/// ### Returns
+///
+/// The Matrix with 0's removed.
+pub fn eliminate_zeros_csr<T>(mat: CompressedSparseData<T>) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + PartialEq + Copy + Mul<Output = T>,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    let n_rows = mat.shape.0;
+    for i in 0..n_rows {
+        let start = mat.indptr[i];
+        let end = mat.indptr[i + 1];
+
+        for j in start..end {
+            if mat.data[j] != T::default() {
+                rows.push(i);
+                cols.push(mat.indices[j]);
+                vals.push(mat.data[j]);
+            }
+        }
+    }
+
+    coo_to_csr(&rows, &cols, &vals, mat.shape)
 }
 
 ///////////

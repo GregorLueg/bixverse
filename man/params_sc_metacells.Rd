@@ -10,6 +10,7 @@ params_sc_metacells(
   max_iter = 5000L,
   k = 25L,
   knn_method = c("hnsw", "annoy"),
+  ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L
 )
@@ -26,6 +27,9 @@ the meta cell to be considered.}
 
 \item{knn_method}{String. One of \code{c("annoy", "hnsw")}. Defaults to
 \code{"annoy"}}
+
+\item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
+metric to be used for the approximate neighbour search.}
 
 \item{n_trees}{Integer. Number of trees to use for the \code{annoy} algorithm.}
 
