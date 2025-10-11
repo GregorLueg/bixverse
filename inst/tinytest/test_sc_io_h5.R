@@ -1,5 +1,12 @@
 # h5 io ------------------------------------------------------------------------
 
+## parameters ------------------------------------------------------------------
+
+# testing parameters
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+
 ## synthetic data --------------------------------------------------------------
 
 single_cell_test_data <- generate_single_cell_test_data()
@@ -77,7 +84,7 @@ direct_load_csr <- rs_h5ad_data(
     min_unique_genes = 0L,
     min_lib_size = 0L,
     min_cells = 0L,
-    target_size = 1000
+    target_size = 1e5
   ),
   verbose = FALSE
 )
@@ -91,7 +98,7 @@ direct_load_csc <- rs_h5ad_data(
     min_unique_genes = 0L,
     min_lib_size = 0L,
     min_cells = 0L,
-    target_size = 1000
+    target_size = 1e5
   ),
   verbose = FALSE
 )
@@ -129,12 +136,6 @@ expect_true(
 ### qc params work -------------------------------------------------------------
 
 #### expected data -------------------------------------------------------------
-
-# thresholds
-# absurd numbers, but this is due to the synthetic data
-min_lib_size <- 300L
-min_genes_exp <- 45L
-min_cells_exp <- 500L
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp

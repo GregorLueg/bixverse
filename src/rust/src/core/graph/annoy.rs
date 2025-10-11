@@ -3,6 +3,8 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
 
+use crate::core::graph::knn::AnnDist;
+
 //////////////////
 // Annoy search //
 //////////////////
@@ -44,14 +46,12 @@ enum AnnoyNode {
 /// * `vectors_flat` - Original vector data for distance calculations. Flattened
 ///   for better cache locality
 /// * `dim` - Number of dimensions in the vector
-/// * `n_vectors` - Number of vectors stored (i.e., samples)
 /// * `n_trees` - Number of trees built (more trees = better accuracy, slower
 ///   queries)
 pub struct AnnoyIndex {
     trees: Vec<Vec<AnnoyNode>>,
     vectors_flat: Vec<f32>,
     dim: usize,
-    n_vectors: usize,
     n_trees: usize,
 }
 
@@ -118,7 +118,7 @@ impl AnnoyIndex {
             trees,
             vectors_flat,
             dim,
-            n_vectors,
+
             n_trees,
         }
     }
@@ -246,6 +246,7 @@ impl AnnoyIndex {
     /// ### Params
     ///
     /// * `query_vec` - Vector to find neighbors for.
+    /// * `dist_metric` - Which distance metric to use.
     /// * `k` - Number of neighbors to return
     /// * `search_k` - Search budget (None = k * n_trees, higher = better
     ///   recall)
@@ -253,7 +254,13 @@ impl AnnoyIndex {
     /// ### Returns
     ///
     /// Vector of k nearest neighbor indices, sorted by distance
-    pub fn query(&self, query_vec: &[f32], k: usize, search_k: Option<usize>) -> Vec<usize> {
+    pub fn query(
+        &self,
+        query_vec: &[f32],
+        dist_metric: &AnnDist,
+        k: usize,
+        search_k: Option<usize>,
+    ) -> Vec<usize> {
         let search_k = search_k.unwrap_or(k * self.n_trees);
         let mut candidates = Vec::with_capacity(search_k * 2);
 
@@ -269,16 +276,42 @@ impl AnnoyIndex {
         candidates.dedup();
 
         let mut scored = Vec::with_capacity(candidates.len());
-        for idx in candidates {
-            let vec_start = idx * self.dim;
-            let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
+        match dist_metric {
+            AnnDist::Euclidean => {
+                for idx in candidates {
+                    let vec_start = idx * self.dim;
+                    let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
 
-            let mut dist = 0.0f32;
-            for (a, b) in vec_slice.iter().zip(query_vec.iter()) {
-                let diff = a - b;
-                dist += diff * diff;
+                    let mut dist = 0.0f32;
+                    for (a, b) in vec_slice.iter().zip(query_vec.iter()) {
+                        let diff = a - b;
+                        dist += diff * diff;
+                    }
+                    scored.push((idx, dist));
+                }
             }
-            scored.push((idx, dist));
+            AnnDist::Cosine => {
+                let mut norm_query = 0.0f32;
+                for &v in query_vec {
+                    norm_query += v * v;
+                }
+                let norm_query = norm_query.sqrt();
+
+                for idx in candidates {
+                    let vec_start = idx * self.dim;
+                    let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
+
+                    let mut dot = 0.0f32;
+                    let mut norm_vec = 0.0f32;
+                    for i in 0..self.dim {
+                        dot += vec_slice[i] * query_vec[i];
+                        norm_vec += vec_slice[i] * vec_slice[i];
+                    }
+
+                    let dist = 1.0 - (dot / (norm_query * norm_vec.sqrt()));
+                    scored.push((idx, dist));
+                }
+            }
         }
 
         // return k closest neighbors
@@ -291,7 +324,8 @@ impl AnnoyIndex {
     /// ### Params
     ///
     /// * `query_row` - RowRef from a matrix in which rows = samples and columns
-    ///   = features.
+    ///   features.
+    /// * `dist_metric` - Which distance metric to use.
     /// * `k` - Number of neighbors to return
     /// * `search_k` - Search budget (None = k * n_trees, higher = better
     ///   recall)
@@ -302,6 +336,7 @@ impl AnnoyIndex {
     pub fn query_row(
         &self,
         query_row: RowRef<f32>,
+        dist_metric: &AnnDist,
         k: usize,
         search_k: Option<usize>,
     ) -> Vec<usize> {
@@ -310,12 +345,12 @@ impl AnnoyIndex {
         if query_row.col_stride() == 1 {
             let slice =
                 unsafe { std::slice::from_raw_parts(query_row.as_ptr(), query_row.ncols()) };
-            return self.query(slice, k, search_k);
+            return self.query(slice, dist_metric, k, search_k);
         }
 
         // Non-contiguous fallback
         let query_vec: Vec<f32> = query_row.iter().cloned().collect();
-        self.query(&query_vec, k, search_k)
+        self.query(&query_vec, dist_metric, k, search_k)
     }
 
     /// Enhanced tree query with multi-path traversal and search budget

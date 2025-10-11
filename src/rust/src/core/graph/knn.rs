@@ -5,6 +5,33 @@ use std::collections::BinaryHeap;
 
 use crate::assert_symmetric_mat;
 
+/// Enum for the approximate nearest neighbour search
+#[derive(Clone, Debug, Copy)]
+pub enum AnnDist {
+    /// Euclidean distance
+    Euclidean,
+    /// Cosine distance
+    Cosine,
+}
+
+/// Parsing the approximate nearest neighbour distance
+///
+/// ### Params
+///
+/// * `s` - The string that defines the tied summarisation type
+///
+/// ### Results
+///
+/// The `AnnDist` defining the distance metric to use for the approximate
+/// neighbour search.
+pub fn parse_ann_dist(s: &str) -> Option<AnnDist> {
+    match s.to_lowercase().as_str() {
+        "euclidean" => Some(AnnDist::Euclidean),
+        "cosine" => Some(AnnDist::Cosine),
+        _ => None,
+    }
+}
+
 ///////////////////////
 // KNN and Laplacian //
 ///////////////////////

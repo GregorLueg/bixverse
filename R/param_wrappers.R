@@ -482,6 +482,54 @@ params_snf <- function(
 
 ## single cell -----------------------------------------------------------------
 
+### synthetic data -------------------------------------------------------------
+
+#' Default parameters for generation of synthetic data
+#'
+#' @param n_cells Integer. Number of cells.
+#' @param n_genes Integer. Number of genes.
+#' @param marker_genes List. A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param n_batches Integer. Number of batches.
+#' @param batch_effect_strength String. One of
+#' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
+#'
+#' @return A list with the parameters.
+params_sc_synthetic_data <- function(
+  n_cells = 1000L,
+  n_genes = 100L,
+  marker_genes = list(
+    cell_type_1 = list(
+      marker_genes = 0:9L
+    ),
+    cell_type_2 = list(
+      marker_genes = 10:19L
+    ),
+    cell_type_3 = list(
+      marker_genes = 20:29L
+    )
+  ),
+  n_batches = 1L,
+  batch_effect_strength = c("strong", "medium", "weak")
+) {
+  batch_effect_strength <- match.arg(batch_effect_strength)
+
+  # checks
+  checkmate::qassert(n_cells, "I1")
+  checkmate::qassert(n_genes, "I1")
+  checkmate::assertList(marker_genes, types = "list", names = "named")
+  checkmate::qassert(n_batches, "I1")
+  checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+
+  list(
+    n_cells = n_cells,
+    n_genes = n_genes,
+    marker_genes = marker_genes,
+    n_batches = n_batches,
+    batch_effect_strength = batch_effect_strength
+  )
+}
+
 ### io -------------------------------------------------------------------------
 
 #' Wrapper function to provide data for mtx-based loading
@@ -490,23 +538,32 @@ params_snf <- function(
 #' @param path_obs String. Path to the file containing cell/barcode info.
 #' @param path_var String. Path to the file containing gene/variable info.
 #' @param cells_as_rows Boolean. Do cells represent the rows or columns.
+#' @param has_hdr Boolean. Do the plain text files have headers.
 #'
 #' @returns A list with the mtx loading parameters for usage in subsequent
 #' functions.
 #'
 #' @export
-params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
+params_sc_mtx_io <- function(
+  path_mtx,
+  path_obs,
+  path_var,
+  cells_as_rows,
+  has_hdr
+) {
   # checks
   checkmate::assertFileExists(path_mtx)
   checkmate::assertFileExists(path_obs)
   checkmate::assertFileExists(path_var)
   checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
 
   list(
     path_mtx = path_mtx,
     path_obs = path_obs,
     path_var = path_var,
-    cells_as_rows = cells_as_rows
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
   )
 }
 
@@ -521,7 +578,7 @@ params_sc_mtx_io <- function(path_mtx, path_obs, path_var, cells_as_rows) {
 #' @param min_cells Integer. Minimum number of cells a gene has to be
 #' expressed to be included.
 #' @param target_size Float. The target size for the normalisation. Defaults
-#' to `1e5`.
+#' to `1e4`.
 #'
 #' @returns A list with the minimum quality parameters + target size.
 #'
@@ -530,7 +587,7 @@ params_sc_min_quality <- function(
   min_unique_genes = 100L,
   min_lib_size = 250L,
   min_cells = 10L,
-  target_size = 1e5
+  target_size = 1e4
 ) {
   # checks
   checkmate::qassert(min_unique_genes, "I1")
@@ -584,7 +641,9 @@ params_sc_hvg <- function(
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
 #' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`
+#' `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
 #' @param full_snn Boolean. Shall the full shared nearest neighbour graph
 #' be generated that generates edges between all cells instead of between
 #' only neighbours.
@@ -606,18 +665,21 @@ params_sc_neighbours <- function(
   n_trees = 100L,
   search_budget = 100L,
   knn_algorithm = c("annoy", "hnsw"),
+  ann_dist = c("cosine", "euclidean"),
   full_snn = FALSE,
   pruning = 1 / 15,
   snn_similarity = c("rank", "jaccard")
 ) {
   knn_algorithm <- match.arg(knn_algorithm)
   snn_similarity <- match.arg(snn_similarity)
+  ann_dist <- match.arg(ann_dist)
 
   # check
   checkmate::qassert(k, "I1")
   checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "N1")
   checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
   checkmate::qassert(full_snn, "B1")
   checkmate::qassert(pruning, "N1[0, 1]")
   checkmate::assertChoice(snn_similarity, c("rank", "jaccard"))
@@ -627,9 +689,125 @@ params_sc_neighbours <- function(
     n_trees = n_trees,
     search_budget = search_budget,
     knn_algorithm = knn_algorithm,
+    ann_dist = ann_dist,
     full_snn = full_snn,
     pruning = pruning,
     snn_similarity = snn_similarity
   )
 }
 
+### batch corrections ----------------------------------------------------------
+
+#' Wrapper function for the BBKNN parameters
+#'
+#' @param neighbours_within_batch Integer. Number of neighbours to consider
+#' per batch.
+#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
+#' @param set_op_mix_ratio Numeric. Mixing ratio between union (1.0) and
+#' intersection (0.0).
+#' @param local_connectivity Numeric. UMAP connectivity computation parameter,
+#' how many nearest neighbours of each cell are assumed to be fully connected.
+#' @param annoy_n_trees Integer. Number of trees to use in the generation of
+#' the Annoy index.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#' @param trim Optional integer. Trim the neighbours of each cell to these many
+#' top connectivities. May help with population independence and improve the
+#' tidiness of clustering. If `NULL`, it defaults to
+#' `10 * neighbours_within_batch`.
+#'
+#' @returns A list with the BBKNN parameters.
+#'
+#' @export
+params_sc_bbknn <- function(
+  neighbours_within_batch = 5L,
+  knn_method = c("annoy", "hnsw"),
+  ann_dist = c("cosine", "euclidean"),
+  set_op_mix_ratio = 1.0,
+  local_connectivity = 1.0,
+  annoy_n_trees = 100L,
+  search_budget = 100L,
+  trim = NULL
+) {
+  knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
+
+  # checks
+  checkmate::qassert(neighbours_within_batch, "I1")
+  checkmate::assertChoice(knn_method, c("hnsw", "annoy"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(set_op_mix_ratio, "N1[0, 1]")
+  checkmate::qassert(local_connectivity, "N1")
+  checkmate::qassert(annoy_n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(trim, c("0", "I1"))
+
+  # returns
+  list(
+    neighbours_within_batch = neighbours_within_batch,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    set_op_mix_ratio = set_op_mix_ratio,
+    local_connectivity = local_connectivity,
+    annoy_n_trees = annoy_n_trees,
+    search_budget = search_budget,
+    trim = trim
+  )
+}
+
+### analysis -------------------------------------------------------------------
+
+#' Wrapper function for parameters for meta cell generation
+#'
+#' @param max_shared Integer. Maximum number of allowed shared neighbours for
+#' the meta cell to be considered.
+#' @param target_no_metacells Integer. Target number of meta-cells to generate.
+#' @param max_iter Integer. Maximum number of iterations for the algorithm.
+#' @param k Integer. Number of neighbours to return.
+#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#'
+#' @returns A list with the neighbour parameters.
+#'
+#' @export
+params_sc_metacells <- function(
+  max_shared = 15L,
+  target_no_metacells = 1000L,
+  max_iter = 5000L,
+  k = 25L,
+  knn_method = c("hnsw", "annoy"),
+  ann_dist = c("cosine", "euclidean"),
+  n_trees = 100L,
+  search_budget = 100L
+) {
+  knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
+
+  # checks
+  checkmate::qassert(max_shared, "I1")
+  checkmate::qassert(target_no_metacells, "I1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+
+  list(
+    max_shared = max_shared,
+    target_no_metacells = target_no_metacells,
+    max_iter = max_iter,
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget
+  )
+}

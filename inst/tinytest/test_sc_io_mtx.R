@@ -1,5 +1,12 @@
 # mtx io -----------------------------------------------------------------------
 
+## parameters ------------------------------------------------------------------
+
+# testing parameters
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+
 ## synthetic data --------------------------------------------------------------
 
 single_cell_test_data <- generate_single_cell_test_data()
@@ -37,12 +44,6 @@ write_cellranger_output(
 )
 
 ### expected data --------------------------------------------------------------
-
-# thresholds
-# absurd numbers, but this is due to the synthetic data
-min_lib_size <- 300L
-min_genes_exp <- 45L
-min_cells_exp <- 500L
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
@@ -83,14 +84,16 @@ params_cells_rows_csv <- params_sc_mtx_io(
   path_mtx = file.path(f_path_v1, "mat.mtx"),
   path_obs = file.path(f_path_v1, "barcodes.csv"),
   path_var = file.path(f_path_v1, "features.csv"),
-  cells_as_rows = TRUE
+  cells_as_rows = TRUE,
+  has_hdr = TRUE
 )
 
 params_genes_rows_tsv <- params_sc_mtx_io(
   path_mtx = file.path(f_path_v2, "mat.mtx"),
   path_obs = file.path(f_path_v2, "barcodes.tsv"),
   path_var = file.path(f_path_v2, "features.tsv"),
-  cells_as_rows = FALSE
+  cells_as_rows = FALSE,
+  has_hdr = TRUE
 )
 
 ### param checks ---------------------------------------------------------------
@@ -145,11 +148,13 @@ with(
   {
     duckdb_con$populate_obs_from_plain_text(
       f_path = path_obs,
-      filter = as.integer(file_res$cell_indices + 1)
+      filter = as.integer(file_res$cell_indices + 1),
+      has_hdr = TRUE
     )
     duckdb_con$populate_var_from_plain_text(
       f_path = path_var,
-      filter = as.integer(file_res$gene_indices + 1)
+      filter = as.integer(file_res$gene_indices + 1),
+      has_hdr = TRUE
     )
   }
 )
@@ -314,11 +319,13 @@ with(
   {
     duckdb_con$populate_obs_from_plain_text(
       f_path = path_obs,
-      filter = as.integer(file_res$cell_indices + 1)
+      filter = as.integer(file_res$cell_indices + 1),
+      has_hdr = TRUE
     )
     duckdb_con$populate_var_from_plain_text(
       f_path = path_var,
-      filter = as.integer(file_res$gene_indices + 1)
+      filter = as.integer(file_res$gene_indices + 1),
+      has_hdr = TRUE
     )
   }
 )

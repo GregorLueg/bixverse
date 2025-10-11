@@ -4,6 +4,7 @@ use rand::prelude::*;
 use rand_distr::weighted::WeightedAliasIndex;
 use rand_distr::{Beta, Binomial, Distribution, Gamma, Normal, Poisson, StandardNormal};
 use rayon::prelude::*;
+use rustc_hash::FxHashMap;
 
 use crate::core::data::sparse_structures::{CompressedSparseData, CompressedSparseFormat};
 
@@ -550,6 +551,34 @@ pub fn create_sparse_csr_data(
 // Specific sparse data ///
 ///////////////////////////
 
+/// Helper function to get the Batch effect strength
+///
+/// ### Params
+///
+/// * `s` - Type of KNN algorithm to use
+///
+/// ### Returns
+///
+/// Option of the BatchEffectStrength
+pub fn get_batch_strength(s: &str) -> Option<BatchEffectStrength> {
+    match s.to_lowercase().as_str() {
+        "weak" => Some(BatchEffectStrength::Weak),
+        "medium" => Some(BatchEffectStrength::Medium),
+        "strong" => Some(BatchEffectStrength::Strong),
+        _ => None,
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum BatchEffectStrength {
+    /// Weak batch effects
+    Weak,
+    /// Medium batch effects
+    Medium,
+    /// Strong batch effecst
+    Strong,
+}
+
 /// Structure to keep the CellTypeConfig
 ///
 /// ### Fields
@@ -594,6 +623,9 @@ impl CellTypeConfig {
 /// * `nrow` - Number of rows (cells).
 /// * `ncol` - Number of columns (genes).
 /// * `cell_type_configs` - A vector of cell type configurations.
+/// * `n_batches` - Number of batches to introduce in the data.
+/// * `batch_effect_strength` - String indicating the strength of the batch
+///   effect to add.
 /// * `seed` - Integer for reproducibility purposes
 ///
 /// ### Returns
@@ -603,12 +635,18 @@ pub fn create_celltype_sparse_csr_data(
     nrow: usize,
     ncol: usize,
     cell_type_configs: Vec<CellTypeConfig>,
+    n_batches: usize,
+    batch_effect_strength: &str,
     seed: usize,
-) -> (CompressedSparseData<u32>, Vec<usize>) {
+) -> (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) {
+    let batch_strength =
+        get_batch_strength(batch_effect_strength).unwrap_or(BatchEffectStrength::Strong);
+
     let mut indptr = Vec::with_capacity(nrow + 1);
     let mut indices = Vec::with_capacity(nrow * 100);
     let mut data = Vec::with_capacity(nrow * 100);
     let mut cell_type_labels = Vec::with_capacity(nrow);
+    let mut batch_labels = Vec::with_capacity(nrow);
     indptr.push(0);
 
     let n_cell_types = cell_type_configs.len();
@@ -618,7 +656,28 @@ pub fn create_celltype_sparse_csr_data(
     let mut gene_base_mean = vec![0.0; ncol];
     let mut gene_dispersion = vec![0.0; ncol];
 
-    let mut marker_to_celltype = std::collections::HashMap::new();
+    // Batch effect parameters based on strength
+    let (base_range, max_range, systematic_mult, module_mult) = match batch_strength {
+        BatchEffectStrength::Weak => (0.8, 1.5, 0.3, 1.3),
+        BatchEffectStrength::Medium => (0.5, 3.0, 1.5, 2.5),
+        BatchEffectStrength::Strong => (0.3, 5.0, 4.0, 4.0),
+    };
+
+    let mut batch_effect = vec![vec![1.0; ncol]; n_batches];
+
+    #[allow(clippy::needless_range_loop)]
+    for batch_idx in 1..n_batches {
+        for gene_idx in 0..ncol {
+            let u: f64 = gene_rng.random();
+            if gene_idx % 5 != 0 {
+                batch_effect[batch_idx][gene_idx] = base_range + u * max_range;
+            } else {
+                batch_effect[batch_idx][gene_idx] = base_range * 2.0 + u * (max_range / 2.0);
+            }
+        }
+    }
+
+    let mut marker_to_celltype = FxHashMap::default();
     for (ct_idx, config) in cell_type_configs.iter().enumerate() {
         for &gene_idx in &config.marker_genes {
             marker_to_celltype.insert(gene_idx, ct_idx);
@@ -641,7 +700,10 @@ pub fn create_celltype_sparse_csr_data(
     for cell_idx in 0..nrow {
         let mut rng = StdRng::seed_from_u64(seed as u64 + cell_idx as u64);
         let cell_type = cell_idx % n_cell_types;
+        let batch = (cell_idx * n_batches) / nrow;
+
         cell_type_labels.push(cell_type);
+        batch_labels.push(batch);
 
         temp_vec.clear();
 
@@ -655,6 +717,28 @@ pub fn create_celltype_sparse_csr_data(
                     mu *= 0.3;
                 }
             }
+
+            // Apply batch effect
+            mu *= batch_effect[batch][gene_idx];
+
+            // Global coherent batch shift (creates separation in expression space)
+            if batch > 0 {
+                mu *= 1.0 + (batch as f64) * systematic_mult;
+            }
+
+            // Cap to prevent explosion
+            mu = mu.min(50.0);
+
+            // Batch-specific gene module effects
+            if batch > 0 {
+                let module = gene_idx / 100;
+                if module % n_batches == batch {
+                    mu *= module_mult;
+                }
+            }
+
+            // Final cap to keep Poisson sampler fast
+            mu = mu.min(100.0);
 
             let p = gene_dispersion[gene_idx] / (gene_dispersion[gene_idx] + mu);
             let r = gene_dispersion[gene_idx];
@@ -689,7 +773,7 @@ pub fn create_celltype_sparse_csr_data(
         shape: (nrow, ncol),
     };
 
-    (csr, cell_type_labels)
+    (csr, cell_type_labels, batch_labels)
 }
 
 fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {

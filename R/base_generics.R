@@ -1,3 +1,7 @@
+# generics that are shared across various S7 classes
+
+# shared generics --------------------------------------------------------------
+
 #' @title Plot the resolution results.
 #'
 #' @description

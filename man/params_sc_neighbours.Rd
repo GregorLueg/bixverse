@@ -9,6 +9,7 @@ params_sc_neighbours(
   n_trees = 100L,
   search_budget = 100L,
   knn_algorithm = c("annoy", "hnsw"),
+  ann_dist = c("cosine", "euclidean"),
   full_snn = FALSE,
   pruning = 1/15,
   snn_similarity = c("rank", "jaccard")
@@ -23,7 +24,10 @@ params_sc_neighbours(
 algorithm.}
 
 \item{knn_algorithm}{String. One of \code{c("annoy", "hnsw")}. Defaults to
-\code{"annoy"}}
+\code{"annoy"}.}
+
+\item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
+metric to be used for the approximate neighbour search.}
 
 \item{full_snn}{Boolean. Shall the full shared nearest neighbour graph
 be generated that generates edges between all cells instead of between

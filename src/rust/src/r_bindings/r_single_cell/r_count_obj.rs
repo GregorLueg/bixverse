@@ -6,9 +6,11 @@ use thousands::Separable;
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_io_h5::*;
 use crate::core::data::sparse_io_mtx::*;
+use crate::core::data::sparse_io_r_obj::*;
 use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
 use crate::utils::general::flatten_vector;
+use crate::utils::r_rust_interface::list_to_sparse_matrix;
 use crate::utils::traits::F16;
 
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
@@ -250,71 +252,32 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `no_cells` - Number of cells, i.e., columns in the data (`csc_matrix@Dim[2]`).
-    /// * `no_genes` - Number of genes, i.e., rows in the data (`csc_matrix@Dim[1]`).
-    /// * `data` - Slice of the data (`csc_matrix@x`).
-    /// * `row_idx` - The row indices of the data (`csc_matrix@i`).
-    /// * `col_ptr` - The column pointers of the data (`csc_matrix@p`).
+    /// * `r_data` - A list that can be transformed into CompressedSparseData.
+    ///   Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
+    ///   `"nrow"`, `"ncol"` and `"format"`.
     /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
     ///
     /// ### Returns
     ///
     /// A list with QC parameters.
-    pub fn r_csr_mat_to_file(
-        &mut self,
-        no_cells: usize,
-        no_genes: usize,
-        data: &[i32],
-        row_ptr: &[i32],
-        col_idx: &[i32],
-        qc_params: List,
-    ) -> List {
+    pub fn r_data_to_file(&mut self, r_data: List, qc_params: List, verbose: bool) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let compressed_data: CompressedSparseData<u32> = list_to_sparse_matrix(r_data);
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
+            write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
+
         self.n_cells = no_cells;
         self.n_genes = no_genes;
-        let qc_params = MinCellQuality::from_r_list(qc_params);
-        let row_ptr_usize = row_ptr.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_cells, true, no_cells, no_genes).unwrap();
-
-        let mut no_cells_written = 0_usize;
-        let mut cell_mask = vec![false; no_cells];
-        let mut nnz = Vec::with_capacity(no_cells);
-        let mut lib_size = Vec::with_capacity(no_cells);
-
-        for i in 0..self.n_cells {
-            // get the index position
-            let start_i = row_ptr_usize[i];
-            let end_i = row_ptr_usize[i + 1];
-
-            // create chunk from raw data
-            let mut chunk_i = CsrCellChunk::from_data(
-                &data[start_i..end_i],
-                &col_idx[start_i..end_i],
-                i,
-                qc_params.target_size,
-                true,
-            );
-
-            let (nnz_i, lib_size_i) = chunk_i.get_qc_info();
-
-            nnz.push(nnz_i);
-            lib_size.push(lib_size_i);
-
-            if chunk_i.passes_qc(&qc_params) {
-                chunk_i.update_index(&no_cells_written);
-                writer.write_cell_chunk(chunk_i).unwrap();
-                no_cells_written += 1;
-                cell_mask[i] = true;
-            }
-        }
-
-        // update the header and internal values
-        writer.update_header_no_cells(no_cells_written);
-        writer.finalise().unwrap();
-        self.n_cells = no_cells_written;
-
-        list!(cell_mask = cell_mask, lib_size = lib_size, nnz = nnz)
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.no_genes
+        )
     }
 
     /// Save h5 to file

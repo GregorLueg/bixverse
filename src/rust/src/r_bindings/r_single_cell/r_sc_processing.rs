@@ -186,15 +186,18 @@ fn rs_sc_hvg(
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!)
 /// @param seed Integer. Random seed for the randomised SVD.
+/// @param return_scaled Boolean. Shall the scaled data be returned.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
 /// @returns A list with with the following items
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space.
 ///   \item loadings - The loadings of the features for the PCA.
+///   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
 /// }
 ///
 /// @export
+#[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_sc_pca(
     f_path_gene: &str,
@@ -203,6 +206,7 @@ fn rs_sc_pca(
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     seed: usize,
+    return_scaled: bool,
     verbose: bool,
 ) -> List {
     let cell_set = cell_indices
@@ -221,6 +225,7 @@ fn rs_sc_pca(
         no_pcs,
         random_svd,
         seed,
+        return_scaled,
         verbose,
     );
 
@@ -232,10 +237,18 @@ fn rs_sc_pca(
         let val = res.1.get(i, j);
         *val as f64
     });
+    let scaled = res.2.map(|s| {
+        let scaled_f64 = Mat::from_fn(s.nrows(), s.ncols(), |i, j| {
+            let val = s.get(i, j);
+            *val as f64
+        });
+        faer_to_r_matrix(scaled_f64.as_ref())
+    });
 
     list!(
         scores = faer_to_r_matrix(scores.as_ref()),
-        loadings = faer_to_r_matrix(loadings.as_ref())
+        loadings = faer_to_r_matrix(loadings.as_ref()),
+        scaled = scaled
     )
 }
 
@@ -267,12 +280,14 @@ fn rs_sc_pca(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     no_neighbours: usize,
     n_trees: usize,
     search_budget: usize,
     algorithm_type: String,
+    ann_dist: String,
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
@@ -284,9 +299,12 @@ fn rs_sc_knn(
         .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
 
     let knn = match knn_method {
-        KnnSearch::Hnsw => generate_knn_hnsw(embd.as_ref(), no_neighbours, seed, verbose),
+        KnnSearch::Hnsw => {
+            generate_knn_hnsw(embd.as_ref(), &ann_dist, no_neighbours, seed, verbose)
+        }
         KnnSearch::Annoy => generate_knn_annoy(
             embd.as_ref(),
+            &ann_dist,
             no_neighbours,
             n_trees,
             search_budget,

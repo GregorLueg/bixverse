@@ -104,20 +104,33 @@ pub fn write_h5_counts<P: AsRef<Path>>(
         println!("Step 4/4: Writing to binary format...");
     }
 
+    let n_cells = file_data.indptr.len() - 1;
     let mut writer = CellGeneSparseWriter::new(bin_path, true, no_cells, no_genes).unwrap();
 
-    let (cell_chunk_vec, mut cell_qc): (Vec<CsrCellChunk>, CellQuality) =
-        CsrCellChunk::generate_chunks_sparse_data(file_data, cell_quality);
+    let mut lib_size = Vec::with_capacity(n_cells);
+    let mut nnz = Vec::with_capacity(n_cells);
 
-    let total_chunks = cell_chunk_vec.len();
-    for (i, cell_chunk) in cell_chunk_vec.into_iter().enumerate() {
+    for i in 0..n_cells {
+        let start_i = file_data.indptr[i];
+        let end_i = file_data.indptr[i + 1];
+
+        let cell_data = &file_data.data[start_i..end_i];
+        let cell_indices = &file_data.indices[start_i..end_i];
+
+        let cell_chunk =
+            CsrCellChunk::from_data(cell_data, cell_indices, i, cell_quality.target_size, true);
+
+        let (nnz_i, lib_size_i) = cell_chunk.get_qc_info();
+        nnz.push(nnz_i);
+        lib_size.push(lib_size_i);
+
         writer.write_cell_chunk(cell_chunk).unwrap();
 
         if verbose && (i + 1) % 100000 == 0 {
             println!(
                 "  Written {} / {} cells to disk.",
                 (i + 1).separate_with_underscores(),
-                total_chunks.separate_with_underscores()
+                n_cells.separate_with_underscores()
             );
         }
     }
@@ -125,8 +138,8 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     if verbose {
         println!(
             "  Written {} / {} cells (complete).",
-            total_chunks.separate_with_underscores(),
-            total_chunks.separate_with_underscores()
+            n_cells.separate_with_underscores(),
+            n_cells.separate_with_underscores()
         );
         println!("Finalising file...");
     }
@@ -135,8 +148,12 @@ pub fn write_h5_counts<P: AsRef<Path>>(
     writer.update_header_no_genes(file_quality.genes_to_keep.len());
     writer.finalise().unwrap();
 
-    cell_qc.set_cell_indices(&file_quality.cells_to_keep);
-    cell_qc.set_gene_indices(&file_quality.genes_to_keep);
+    let cell_qc = CellQuality {
+        cell_indices: file_quality.cells_to_keep.clone(),
+        gene_indices: file_quality.genes_to_keep.clone(),
+        lib_size,
+        no_genes: nnz,
+    };
 
     (
         file_quality.cells_to_keep.len(),

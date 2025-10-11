@@ -5,15 +5,21 @@
 #' Single cell test data
 #'
 #' @description
-#' This function generates synthetic data for single cell test purposes. It has
-#' hard-coded parameters and will generate a count matrix of 1000 cells x 100
-#' genes, an obs table and a var table. There are three distinct cell types
-#' that can be found in the data that each express between 2 to 8 marker genes
-#' with higher expression compared to the background. The background genes
-#' have some with higher expression and then less and less cells expressing
-#' them.
+#' This function generates synthetic data for single cell test purposes. These
+#' data can be used for testing functionality of various single cell functions.
 #'
-#'
+#' @param syn_data_params List. Contains the parameters for the generation of
+#' synthetic data, see: [bixverse::params_sc_synthetic_data()]. Has the
+#' following elements:
+#' \itemize{
+#'   \item n_cells - Integer. Number of cells.
+#'   \item n_genes - Integer. Number of genes.
+#'   \item marker_genes - List. A nested list that indicates which gene indices
+#'   are markers for which cell.
+#'   \item n_batches - Integer. Number of batches.
+#'   \item batch_effect_strength - String. Indicates the strength of the batch
+#'   effect to add.
+#' }
 #' @param seed Integer. The seed for the generation of the seed data.
 #'
 #' @returns List with the following items
@@ -24,9 +30,13 @@
 #' }
 #'
 #' @export
-generate_single_cell_test_data <- function(seed = 42L) {
+generate_single_cell_test_data <- function(
+  syn_data_params = params_sc_synthetic_data(),
+  seed = 42L
+) {
   # checks
   checkmate::qassert(seed, "I1")
+  assertScSyntheticData(syn_data_params)
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
     stop(
@@ -35,47 +45,62 @@ generate_single_cell_test_data <- function(seed = 42L) {
     )
   }
 
-  n_cells = 1000L
-  n_genes = 100L
-
-  marker_genes <- list(
-    cell_type_1 = list(
-      marker_genes = 0:9L
-    ),
-    cell_type_2 = list(
-      marker_genes = 10:19L
-    ),
-    cell_type_3 = list(
-      marker_genes = 20:29L
+  data <- with(
+    syn_data_params,
+    rs_synthetic_sc_data_with_cell_types(
+      n_cells = n_cells,
+      n_genes = n_genes,
+      n_batches = n_batches,
+      cell_configs = marker_genes,
+      batch_effect_strength = batch_effect_strength,
+      seed = seed
     )
   )
 
-  data <- rs_synthetic_sc_data_with_cell_types(
-    n_cells = n_cells,
-    n_genes = n_genes,
-    cell_configs = marker_genes,
-    seed = seed
+  counts <- with(
+    syn_data_params,
+    new(
+      "dgRMatrix",
+      p = as.integer(data$indptr),
+      x = as.numeric(data$data),
+      j = as.integer(data$indices),
+      Dim = as.integer(c(n_cells, n_genes))
+    )
   )
 
-  counts <- new(
-    "dgRMatrix",
-    p = as.integer(data$indptr),
-    x = as.numeric(data$data),
-    j = as.integer(data$indices),
-    Dim = as.integer(c(n_cells, n_genes))
+  n_digits <- nchar(as.character(syn_data_params$n_cells))
+  format_str <- sprintf("cell_%%0%dd", n_digits)
+  rownames(counts) <- sprintf(
+    format_str,
+    1:syn_data_params$n_cells
   )
-
-  rownames(counts) <- sprintf("cell_%04d", 1:1000)
-  colnames(counts) <- sprintf("gene_%03d", 1:100)
 
   obs <- data.table(
-    cell_id = sprintf("cell_%04d", 1:1000),
-    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1)
+    cell_id = sprintf(
+      format_str,
+      1:syn_data_params$n_cells
+    ),
+    cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1),
+    batch_index = data$batch_indices + 1
+  )
+
+  n_digits <- nchar(as.character(syn_data_params$n_genes))
+  format_str <- sprintf("gene_%%0%dd", n_digits)
+  format_str_2 <- sprintf("ens_%%0%dd", n_digits)
+  colnames(counts) <- sprintf(
+    format_str,
+    1:syn_data_params$n_genes
   )
 
   var <- data.table(
-    gene_id = sprintf("gene_%03d", 1:100),
-    ensembl_id = sprintf("ens_%03d", 1:100)
+    gene_id = sprintf(
+      format_str,
+      1:syn_data_params$n_genes
+    ),
+    ensembl_id = sprintf(
+      format_str_2,
+      1:syn_data_params$n_genes
+    )
   )
 
   res <- list(

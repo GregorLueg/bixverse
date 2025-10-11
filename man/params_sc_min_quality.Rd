@@ -8,7 +8,7 @@ params_sc_min_quality(
   min_unique_genes = 100L,
   min_lib_size = 250L,
   min_cells = 10L,
-  target_size = 1e+05
+  target_size = 10000
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ included.}
 expressed to be included.}
 
 \item{target_size}{Float. The target size for the normalisation. Defaults
-to \code{1e5}.}
+to \code{1e4}.}
 }
 \value{
 A list with the minimum quality parameters + target size.

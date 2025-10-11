@@ -756,14 +756,17 @@ pub fn get_hvg_mvb_streaming() -> HvgRes {
 #[inline]
 fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let mut dense_data = vec![0.0f32; no_cells];
-
     for (idx, &row_idx) in chunk.indices.iter().enumerate() {
         dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
     }
-
     let mean = dense_data.iter().sum::<f32>() / no_cells as f32;
     let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
     let std_dev = variance.sqrt();
+
+    if std_dev < 1e-8 {
+        // Zero variance gene - just return centered data (all zeros after centering)
+        return vec![0.0f32; no_cells];
+    }
 
     dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
 }
@@ -777,11 +780,13 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
 /// * `no_pcs` - Number of principal components to calculate
 /// * `random_svd` - Shall randomised singular value decompostion be used. This
 ///   has the advantage of speed-ups, but loses precision.
+/// * `return_scaled` - Return the scaled data.
 /// * `seed` - Seed for randomised SVD.
 ///
 /// ### Return
 ///
 /// A tuple of the samples projected on the PC space and gene loadings
+#[allow(clippy::too_many_arguments)]
 pub fn pca_on_sc(
     f_path: &str,
     cell_indices: &[usize],
@@ -789,8 +794,9 @@ pub fn pca_on_sc(
     no_pcs: usize,
     random_svd: bool,
     seed: usize,
+    return_scaled: bool,
     verbose: bool,
-) -> (Mat<f32>, Mat<f32>) {
+) -> (Mat<f32>, Mat<f32>, Option<Mat<f32>>) {
     let start_total = Instant::now();
 
     let cell_set: IndexSet<u32> = cell_indices.iter().map(|&x| x as u32).collect();
@@ -835,13 +841,13 @@ pub fn pca_on_sc(
             randomised_svd_f32(scaled_data.as_ref(), no_pcs, seed, Some(100_usize), None);
         // Take first no_pcs components and compute scores as X * V
         let loadings = res.v.submatrix(0, 0, num_genes, no_pcs).to_owned();
-        let scores = scaled_data * &loadings;
+        let scores = &scaled_data * &loadings;
         (scores, loadings)
     } else {
         let res = scaled_data.thin_svd().unwrap();
         // Take only the first no_pcs components
         let loadings = res.V().submatrix(0, 0, num_genes, no_pcs).to_owned();
-        let scores = scaled_data * &loadings;
+        let scores = &scaled_data * &loadings;
         (scores, loadings)
     };
 
@@ -857,5 +863,11 @@ pub fn pca_on_sc(
         println!("Total run time PCA detection: {:.2?}", end_total);
     }
 
-    (scores, loadings)
+    let scaled = if return_scaled {
+        Some(scaled_data)
+    } else {
+        None
+    };
+
+    (scores, loadings, scaled)
 }
