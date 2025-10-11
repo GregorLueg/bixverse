@@ -4,7 +4,7 @@
 \alias{params_sc_mtx_io}
 \title{Wrapper function to provide data for mtx-based loading}
 \usage{
-params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows)
+params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows, has_hdr)
 }
 \arguments{
 \item{path_mtx}{String. Path to the .mtx file}
@@ -14,6 +14,8 @@ params_sc_mtx_io(path_mtx, path_obs, path_var, cells_as_rows)
 \item{path_var}{String. Path to the file containing gene/variable info.}
 
 \item{cells_as_rows}{Boolean. Do cells represent the rows or columns.}
+
+\item{has_hdr}{Boolean. Do the plain text files have headers.}
 }
 \value{
 A list with the mtx loading parameters for usage in subsequent

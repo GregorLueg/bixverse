@@ -147,7 +147,8 @@ expected_filtered <- data.table::data.table(
 
 ### ancestry ------------------------------------------------------------------
 
-c(ancestors, descendants) %<-% get_ontology_ancestry(test_onto)
+zeallot::`%<-%`(c(ancestors, descendants), get_ontology_ancestry(test_onto))
+
 
 expect_equivalent(
   current = ancestors[names(expected_ancestors)],

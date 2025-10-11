@@ -1,5 +1,34 @@
 # checks -----------------------------------------------------------------------
 
+## others ----------------------------------------------------------------------
+
+#' Check that files exist
+#'
+#' @description Checkmate extension for checking if files exist in the
+#' directory.
+#'
+#' @param x String. The directory to check the files for.
+#' @param file_names String. Vector of names of the expected files in this
+#' directory.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkFilesExist <- function(x, file_names) {
+  res <- purrr::map(file_names, \(file) {
+    checkmate::checkFileExists(file.path(x, file))
+  })
+  res <- purrr::keep(
+    res,
+    ~ {
+      !is.logical(.x)
+    }
+  )
+  if (length(res) == 0) {
+    return(TRUE)
+  } else {
+    return(res[[1]])
+  }
+}
+
 ## correlation params ----------------------------------------------------------
 
 #' Check correlation graph parameters
@@ -718,7 +747,8 @@ checkScMtxIO <- function(x) {
       "path_mtx",
       "path_obs",
       "path_var",
-      "cells_as_rows"
+      "cells_as_rows",
+      "has_hdr"
     )
   )
   if (!isTRUE(res)) {
@@ -734,6 +764,10 @@ checkScMtxIO <- function(x) {
     ))
   }
   res <- checkmate::qtest(x[["cells_as_rows"]], "B1")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::qtest(x[["has_hdr"]], "B1")
   if (!isTRUE(res)) {
     return(res)
   }
@@ -958,7 +992,148 @@ checkScNeighbours <- function(x) {
   return(TRUE)
 }
 
+### cells in object ------------------------------------------------------------
+
+#' Check that the cell name exists in the object
+#'
+#' @description Checkmate extension for checking if the prodivided cell names
+#' exist in the object.
+#'
+#' @param x The `single_cell_exp` object to check/assert.
+#' @param cell_names String. The provided cell names.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCellsExist <- function(x, cell_names) {
+  res <- checkmate::checkClass(x, "bixverse::single_cell_exp")
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::qtest(cell_names, "S+")
+  if (!isTRUE(res)) {
+    return("The cell names need be a string vector.")
+  }
+  all_cell_names <- get_cell_names(x)
+  res <- all(cell_names %in% all_cell_names)
+  if (!isTRUE(res)) {
+    return(
+      paste(
+        "Some of the provided cell names do not exist in the object.",
+        "Please check."
+      )
+    )
+  }
+  return(TRUE)
+}
+
+### meta cells -----------------------------------------------------------------
+
+#' Check metacell generation parameters
+#'
+#' @description Checkmate extension for checking the metacell generation
+#' parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScMetacells <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "max_shared",
+      "target_no_metacells",
+      "max_iter",
+      "k",
+      "knn_method",
+      "n_trees",
+      "search_budget"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "max_shared" = "I1",
+    "target_no_metacells" = "I1",
+    "max_iter" = "I1",
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(rules)) {
+      checkmate::qtest(x, rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in metacell generation is incorrect:",
+          "max_shared, target_no_metacells, max_iter, k, n_trees and",
+          "search_budget need to be integers."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the metacell generation is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
+
+## other -----------------------------------------------------------------------
+
+#' Assert that files exist
+#'
+#' @description Checkmate extension for asserting if files exist in the
+#' directory.
+#'
+#' @inheritParams checkFilesExist
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
 
 ## correlation params ----------------------------------------------------------
 
@@ -1225,6 +1400,40 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
+
+### cell exists ----------------------------------------------------------------
+
+#' Assert neighbour generation parameters
+#'
+#' @description Checkmate extension for asserting if the prodivided cell names
+#  exist in the object.
+#'
+#' @inheritParams checkCellsExist
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
+
+### meta cells -----------------------------------------------------------------
+
+#' Assert metacell generation parameters
+#'
+#' @description Checkmate extension for assert the metacell generation
+#' parameters.
+#'
+#' @inheritParams checkScMetacells
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
 
 # tests ------------------------------------------------------------------------
 

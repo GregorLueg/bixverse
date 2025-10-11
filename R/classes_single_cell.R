@@ -303,6 +303,17 @@ get_gene_indices <- function(x, gene_ids, rust_index) {
   UseMethod("get_gene_indices")
 }
 
+#' Get the index position for a gene
+#'
+#' @param x An object to get the gene index from.
+#' @param cell_ids String vector. The cell ids to search for.
+#' @param rust_index Bool. Shall rust-based indexing be returned.
+#'
+#' @export
+get_cell_indices <- function(x, cell_ids, rust_index) {
+  UseMethod("get_cell_indices")
+}
+
 #' Get the cells to keep
 #'
 #' @param x An object to get the gene index from.
@@ -391,6 +402,24 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
   return(as.integer(indices))
 }
 
+#' @rdname get_cell_indices
+#'
+#' @export
+get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  cell_map <- x$cell_mapping
+  indices <- which(names(cell_map) %in% cell_ids)
+  if (rust_index) {
+    indices <- indices - 1
+  }
+
+  return(as.integer(indices))
+}
+
 #' @rdname get_cells_to_keep
 #'
 #' @export
@@ -428,7 +457,12 @@ get_hvg.sc_mapper <- function(x) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
 
-  return(as.integer(x[["hvg_gene_indices"]]))
+  hvg_indices <- as.integer(x[["hvg_gene_indices"]])
+  if (length(hvg_indices) == 0) {
+    warning("No highly variable features found in the class.")
+  }
+
+  return(hvg_indices)
 }
 
 #### sc_cache ------------------------------------------------------------------
@@ -1187,6 +1221,34 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
   return(res)
 }
 
+
+#' @name get_cell_indices.single_cell_exp
+#'
+#' @title Set the gene mapping for a `single_cell_exp` class.
+#'
+#' @rdname get_cell_indices
+#'
+#' @method get_cell_indices single_cell_exp
+S7::method(get_cell_indices, single_cell_exp) <- function(
+  x,
+  cell_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  # add the data using the S3 method
+  res <- get_cell_indices(
+    x = S7::prop(x, "sc_map"),
+    cell_ids = cell_ids,
+    rust_index = rust_index
+  )
+
+  return(res)
+}
+
 #' @name get_hvg.single_cell_exp
 #'
 #' @title Get the highly variable gene indices from a `single_cell_exp`.
@@ -1373,12 +1435,12 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
 }
 
 
-#' Add a new column to the obs table
+#' Add a new column to the var table
 #'
 #' @param object `bixverse::single_cell_exp` class.
 #' @param data_list Named list with the data to add.
 #'
-#' @return The class with updated obs table in the DuckDB
+#' @return The class with updated var table in the DuckDB
 #'
 #' @export
 set_sc_new_var_cols <- S7::new_generic(
@@ -1402,13 +1464,10 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(data_list, types = "atomic", names = "named")
 
-  duckdb_con <- get_sc_duckdb(object)
+  new_data <- data.table::as.data.table(data_list)
 
-  for (i in seq_along(data_list)) {
-    new_data_i <- data.table::data.table(new_data = data_list[[i]])
-    data.table::setnames(new_data_i, "new_data", names(data_list)[i])
-    duckdb_con$add_data_var(new_data = new_data_i)
-  }
+  duckdb_con <- get_sc_duckdb(object)
+  duckdb_con$add_data_var(new_data = new_data)
 
   return(object)
 }

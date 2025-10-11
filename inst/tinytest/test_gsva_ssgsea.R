@@ -273,65 +273,68 @@ expect_equivalent(
 
 ## comparison against GSVA -----------------------------------------------------
 
-if (requireNamespace("GSVA", quietly = TRUE)) {
-  ### Gaussian version
-
-  gsvaPar <- GSVA::gsvaParam(data, random_gene_sets)
-  gsva_results <- as.matrix(GSVA::gsva(
-    gsvaPar,
-    verbose = FALSE
-  ))
-
-  # There are tiny differences due to Gaussian optimisation
-  expect_equivalent(
-    current = gaussian,
-    target = gsva_results,
-    info = "GSVA Rust vs R original implementation (Gaussian)",
-    tolerance = 1e-3
-  )
-
-  # However, the correlations are super high, so okay
-  expect_true(
-    current = all(diag(cor(gaussian, gsva_results)) > 0.99),
-    info = "GSVA Rust vs R original implementation correlation (Gaussian)"
-  )
-
-  ### Poisson version
-
-  gsvaPar <- GSVA::gsvaParam(data_2, random_gene_sets, kcdf = "Poisson")
-  gsva_results <- as.matrix(GSVA::gsva(
-    gsvaPar,
-    verbose = FALSE
-  ))
-
-  expect_equivalent(
-    current = poisson,
-    target = gsva_results,
-    info = "GSVA Rust vs R original implementation (Poisson)"
-  )
-
-  # However, the correlations are super high, so okay
-  expect_true(
-    current = all(diag(cor(poisson, gsva_results)) > 0.99),
-    info = "GSVA Rust vs R original implementation correlation (Poisson)"
-  )
-
-  ### ssGSEA
-
-  ssgseaPar <- GSVA::ssgseaParam(data, random_gene_sets)
-  ssgsea_res <- as.matrix(GSVA::gsva(
-    ssgseaPar,
-    verbose = FALSE
-  ))
-
-  expect_equivalent(
-    current = ssgsea_r_res,
-    target = ssgsea_res,
-    info = "ssGSEA Rust vs R original implementation"
-  )
-
-  expect_true(
-    current = all(diag(cor(ssgsea_r_res, ssgsea_res)) > 0.99),
-    info = "ssGSEA Rust vs R original implementation correlation"
-  )
+if (!requireNamespace("GSVA", quietly = TRUE)) {
+  exit_file("GSVA not available")
 }
+
+
+### Gaussian version
+
+gsvaPar <- GSVA::gsvaParam(data, random_gene_sets)
+gsva_results <- as.matrix(GSVA::gsva(
+  gsvaPar,
+  verbose = FALSE
+))
+
+# There are tiny differences due to Gaussian optimisation
+expect_equivalent(
+  current = gaussian,
+  target = gsva_results,
+  info = "GSVA Rust vs R original implementation (Gaussian)",
+  tolerance = 1e-3
+)
+
+# However, the correlations are super high, so okay
+expect_true(
+  current = all(diag(cor(gaussian, gsva_results)) > 0.99),
+  info = "GSVA Rust vs R original implementation correlation (Gaussian)"
+)
+
+### Poisson version
+
+gsvaPar <- GSVA::gsvaParam(data_2, random_gene_sets, kcdf = "Poisson")
+gsva_results <- as.matrix(GSVA::gsva(
+  gsvaPar,
+  verbose = FALSE
+))
+
+expect_equivalent(
+  current = poisson,
+  target = gsva_results,
+  info = "GSVA Rust vs R original implementation (Poisson)"
+)
+
+# However, the correlations are super high, so okay
+expect_true(
+  current = all(diag(cor(poisson, gsva_results)) > 0.99),
+  info = "GSVA Rust vs R original implementation correlation (Poisson)"
+)
+
+### ssGSEA
+
+ssgseaPar <- GSVA::ssgseaParam(data, random_gene_sets)
+ssgsea_res <- as.matrix(GSVA::gsva(
+  ssgseaPar,
+  verbose = FALSE
+))
+
+expect_equivalent(
+  current = ssgsea_r_res,
+  target = ssgsea_res,
+  info = "ssGSEA Rust vs R original implementation"
+)
+
+expect_true(
+  current = all(diag(cor(ssgsea_r_res, ssgsea_res)) > 0.99),
+  info = "ssGSEA Rust vs R original implementation correlation"
+)

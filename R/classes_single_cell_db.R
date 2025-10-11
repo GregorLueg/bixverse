@@ -671,12 +671,14 @@ single_cell_duckdb_con <- R6::R6Class(
     #' Function to populate the obs table from plain text files
     #'
     #' @param f_path File path to the plain text file.
+    #' @param has_hdr Boolean. Does the flat file have a header.
     #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal obs table.
-    populate_obs_from_plain_text = function(f_path, filter = NULL) {
+    populate_obs_from_plain_text = function(f_path, has_hdr, filter = NULL) {
       # checks
       checkmate::assertFileExists(f_path)
+      checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
 
       con <- private$connect_db()
@@ -696,8 +698,9 @@ single_cell_duckdb_con <- R6::R6Class(
       }
 
       header_query <- sprintf(
-        "SELECT * FROM read_csv(?, delim=%s) LIMIT 0",
-        delimiter
+        "SELECT * FROM read_csv(?, delim=%s, header=%s) LIMIT 0",
+        delimiter,
+        has_hdr
       )
 
       header_df <- DBI::dbGetQuery(
@@ -707,8 +710,14 @@ single_cell_duckdb_con <- R6::R6Class(
       )
 
       original_col_names <- colnames(header_df)
-      sanitised_cols_names <- to_snake_case(original_col_names)
-      sanitised_cols_names[1] <- "cell_id"
+
+      if (has_hdr) {
+        sanitised_cols_names <- to_snake_case(original_col_names)
+        sanitised_cols_names[1] <- "cell_id"
+      } else {
+        sanitised_cols_names <- original_col_names
+        sanitised_cols_names[1] <- "cell_id"
+      }
 
       col_mapping <- sprintf(
         '"%s" AS %s',
@@ -730,11 +739,12 @@ single_cell_duckdb_con <- R6::R6Class(
             %s
           FROM (
             SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?, delim=%s)
+            FROM read_csv(?, delim=%s, header=%s)
           ) t
           WHERE t.original_row_num IN (%s)",
           col_mapping,
           delimiter,
+          has_hdr,
           row_placeholders
         )
       } else {
@@ -745,10 +755,11 @@ single_cell_duckdb_con <- R6::R6Class(
             ROW_NUMBER() OVER() as cell_idx,
             %s
           FROM (
-            SELECT * FROM read_csv(?, delim=%s)
+            SELECT * FROM read_csv(?, delim=%s, header=%s)
           )",
           col_mapping,
-          delimiter
+          delimiter,
+          has_hdr
         )
       }
 
@@ -764,11 +775,13 @@ single_cell_duckdb_con <- R6::R6Class(
     #' Function to populate the var table from plain text files
     #'
     #' @param f_path File path to the plain text file.
+    #' @param has_hdr Boolean. Does the flat file have a header.
     #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal var table.
-    populate_var_from_plain_text = function(f_path, filter = NULL) {
+    populate_var_from_plain_text = function(f_path, has_hdr, filter = NULL) {
       checkmate::assertFileExists(f_path)
+      checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
 
       con <- private$connect_db()
@@ -788,8 +801,9 @@ single_cell_duckdb_con <- R6::R6Class(
       }
 
       header_query <- sprintf(
-        "SELECT * FROM read_csv(?, delim=%s) LIMIT 0",
-        delimiter
+        "SELECT * FROM read_csv(?, delim=%s, header=%s) LIMIT 0",
+        delimiter,
+        has_hdr
       )
 
       header_df <- DBI::dbGetQuery(
@@ -799,8 +813,14 @@ single_cell_duckdb_con <- R6::R6Class(
       )
 
       original_col_names <- colnames(header_df)
-      sanitised_cols_names <- to_snake_case(original_col_names)
-      sanitised_cols_names[1] <- "gene_id"
+
+      if (has_hdr) {
+        sanitised_cols_names <- to_snake_case(original_col_names)
+        sanitised_cols_names[1] <- "gene_id"
+      } else {
+        sanitised_cols_names <- original_col_names
+        sanitised_cols_names[1] <- "gene_id"
+      }
 
       col_mapping <- sprintf(
         '"%s" AS %s',
@@ -822,11 +842,12 @@ single_cell_duckdb_con <- R6::R6Class(
             %s
           FROM (
             SELECT *, ROW_NUMBER() OVER() as original_row_num
-            FROM read_csv(?, delim=%s)
+            FROM read_csv(?, delim=%s, header=%s)
           ) t
           WHERE t.original_row_num IN (%s)",
           col_mapping,
           delimiter,
+          has_hdr,
           row_placeholders
         )
       } else {
@@ -837,10 +858,11 @@ single_cell_duckdb_con <- R6::R6Class(
             ROW_NUMBER() OVER() AS gene_idx,
             %s
           FROM (
-            SELECT * FROM read_csv(?, delim=%s)
+            SELECT * FROM read_csv(?, delim=%s, header=%s)
           )",
           col_mapping,
-          delimiter
+          delimiter,
+          has_hdr
         )
       }
 
@@ -848,6 +870,108 @@ single_cell_duckdb_con <- R6::R6Class(
         conn = con,
         statement = query,
         params = c(list(f_path), as.list(filter))
+      )
+
+      invisible(self)
+    },
+
+    #########################
+    # Readers R data.tables #
+    #########################
+
+    #' Function to populate the obs table from R
+    #'
+    #' @param obs_dt data.table
+    #' @param filter Optional integer. Row indices to keep
+    #'
+    #' @returns Invisible self and populates the internal obs table.
+    populate_obs_from_data.table = function(obs_dt, filter = NULL) {
+      # checks
+      checkmate::assertDataTable(obs_dt)
+      checkmate::qassert(filter, c("I+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+      # seurat has in times cell_id as a column, causing problems
+      # they are the same as the row.names, so dealt with. just set to NULL
+      obs_dt[, cell_id := NULL]
+
+      # deal with column names
+      colnames(obs_dt) <- to_snake_case(colnames(obs_dt))
+      colnames(obs_dt)[1] <- "cell_id"
+
+      if (!is.null(filter)) {
+        obs_dt <- obs_dt[filter]
+      }
+      obs_dt[, cell_idx := .I]
+      setcolorder(
+        obs_dt,
+        c(
+          "cell_idx",
+          "cell_id",
+          setdiff(names(obs_dt), c("cell_idx", "cell_id"))
+        )
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "obs",
+        obs_dt,
+        overwrite = TRUE
+      )
+
+      invisible(self)
+    },
+
+    #' Function to populate the var table from R
+    #'
+    #' @param var_dt data.table
+    #' @param filter Optional integer. Row indices to keep
+    #'
+    #' @returns Invisible self and populates the internal obs table.
+    populate_var_from_data.table = function(var_dt, filter = NULL) {
+      # checks
+      checkmate::assertDataTable(var_dt)
+      checkmate::qassert(filter, c("I+", "0"))
+
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      # deal with column names
+      colnames(var_dt) <- to_snake_case(colnames(var_dt))
+      colnames(var_dt)[1] <- "gene_id"
+
+      if (!is.null(filter)) {
+        var_dt <- var_dt[filter]
+      }
+
+      var_dt[, gene_idx := .I]
+      setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      DBI::dbWriteTable(
+        con,
+        "var",
+        var_dt,
+        overwrite = TRUE
       )
 
       invisible(self)

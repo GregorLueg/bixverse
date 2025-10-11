@@ -61,68 +61,70 @@ expect_error(
 
 ## direct comparison mitch -----------------------------------------------------
 
-if (requireNamespace("mitch", quietly = TRUE)) {
-  # load in the mitch example data
-  data(myImportedData, genesetsExample, package = "mitch")
+local({
+  if (requireNamespace("mitch", quietly = TRUE)) {
+    # load in the mitch example data
+    data(myImportedData, genesetsExample, package = "mitch")
 
-  mitch_res <- suppressMessages(mitch::mitch_calc(
-    myImportedData,
-    genesetsExample,
-    priority = 'significance',
-    minsetsize = 5,
-    cores = 2
-  ))
+    mitch_res <- suppressMessages(mitch::mitch_calc(
+      myImportedData,
+      genesetsExample,
+      priority = 'significance',
+      minsetsize = 5,
+      cores = 2
+    ))
 
-  bixverse_res <- calc_mitch(
-    contrast_mat = as.matrix(myImportedData),
-    gene_set_list = genesetsExample
-  )
+    bixverse_res <- calc_mitch(
+      contrast_mat = as.matrix(myImportedData),
+      gene_set_list = genesetsExample
+    )
 
-  expect_equal(
-    current = bixverse_res$pathway_names,
-    target = mitch_res$enrichment_result$set,
-    info = "mitch direct comparison - pathways"
-  )
+    expect_equal(
+      current = bixverse_res$pathway_names,
+      target = mitch_res$enrichment_result$set,
+      info = "mitch direct comparison - pathways"
+    )
 
-  expect_equal(
-    current = bixverse_res$manova_fdr,
-    target = mitch_res$enrichment_result$p.adjustMANOVA,
-    info = "mitch direct comparison - adjusted MANOVA pvalues"
-  )
+    expect_equal(
+      current = bixverse_res$manova_fdr,
+      target = mitch_res$enrichment_result$p.adjustMANOVA,
+      info = "mitch direct comparison - adjusted MANOVA pvalues"
+    )
 
-  expect_equal(
-    current = bixverse_res$s.rna,
-    target = mitch_res$enrichment_result$s.rna,
-    info = "mitch direct comparison - s.rna"
-  )
+    expect_equal(
+      current = bixverse_res$s.rna,
+      target = mitch_res$enrichment_result$s.rna,
+      info = "mitch direct comparison - s.rna"
+    )
 
-  expect_equal(
-    current = bixverse_res$s.k9a,
-    target = mitch_res$enrichment_result$s.k9a,
-    info = "mitch direct comparison - s.k9a"
-  )
+    expect_equal(
+      current = bixverse_res$s.k9a,
+      target = mitch_res$enrichment_result$s.k9a,
+      info = "mitch direct comparison - s.k9a"
+    )
 
-  expect_equal(
-    current = bixverse_res$s.k36a,
-    target = mitch_res$enrichment_result$s.k36a,
-    info = "mitch direct comparison - s.k36a"
-  )
+    expect_equal(
+      current = bixverse_res$s.k36a,
+      target = mitch_res$enrichment_result$s.k36a,
+      info = "mitch direct comparison - s.k36a"
+    )
 
-  expect_equal(
-    current = bixverse_res$p.rna,
-    target = mitch_res$enrichment_result$p.rna,
-    info = "mitch direct comparison - p.rna"
-  )
+    expect_equal(
+      current = bixverse_res$p.rna,
+      target = mitch_res$enrichment_result$p.rna,
+      info = "mitch direct comparison - p.rna"
+    )
 
-  expect_equal(
-    current = bixverse_res$p.k9a,
-    target = mitch_res$enrichment_result$p.k9a,
-    info = "mitch direct comparison - p.k9a"
-  )
+    expect_equal(
+      current = bixverse_res$p.k9a,
+      target = mitch_res$enrichment_result$p.k9a,
+      info = "mitch direct comparison - p.k9a"
+    )
 
-  expect_equal(
-    current = bixverse_res$p.k36a,
-    target = mitch_res$enrichment_result$p.k36a,
-    info = "mitch direct comparison - p.k36a"
-  )
-}
+    expect_equal(
+      current = bixverse_res$p.k36a,
+      target = mitch_res$enrichment_result$p.k36a,
+      info = "mitch direct comparison - p.k36a"
+    )
+  }
+})
