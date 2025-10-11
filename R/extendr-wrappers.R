@@ -2183,6 +2183,8 @@ SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__
 
 SingeCellCountData$add_cells_to_keep <- function(cell_idx) invisible(.Call(wrap__SingeCellCountData__add_cells_to_keep, self, cell_idx))
 
+SingeCellCountData$set_from_file <- function() invisible(.Call(wrap__SingeCellCountData__set_from_file, self))
+
 #' @export
 `$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
 

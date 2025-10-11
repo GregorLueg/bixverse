@@ -637,6 +637,68 @@ S7::method(load_mtx, single_cell_exp) <- function(
   return(object)
 }
 
+### from disk ------------------------------------------------------------------
+
+#' Load an existing single_cell_exp from disk
+#'
+#' @description
+#' Helper function that can load the parameters to access the on-disk stored
+#' data into the class.
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @returns The object with added information on the data on disk.
+#'
+#' @export
+load_existing <- S7::new_generic(
+  name = "load_existing",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_mtx single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_existing, single_cell_exp) <- function(object) {
+  dir_data <- S7::prop(object, "dir_data")
+
+  checkmate::assertFileExists(file.path(dir_data, "counts_cells.bin"))
+  checkmate::assertFileExists(file.path(dir_data, "counts_genes.bin"))
+  checkmate::assertFileExists(file.path(dir_data, "sc_duckdb.db"))
+
+  # function body
+  rust_con <- get_sc_rust_ptr(object)
+  rust_con$set_from_file()
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+
+  if (
+    (length(cell_map) != rust_con$get_shape()[1]) |
+      (length(gene_map) != rust_con$get_shape()[2])
+  ) {
+    stop(paste(
+      "The data in the observation table and or var table do not match",
+      "with what is stored on disk. Loading of the file failed"
+    ))
+  }
+
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
 ## qc --------------------------------------------------------------------------
 
 ### gene proportions -----------------------------------------------------------
