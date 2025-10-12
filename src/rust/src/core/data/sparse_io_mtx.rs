@@ -1,7 +1,8 @@
+use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Result as IoResult, Seek};
-use std::path::Path;
+use std::io::{BufRead, BufReader, Read, Result as IoResult, Seek};
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use crate::core::data::sparse_io::*;
@@ -54,6 +55,7 @@ pub struct MtxFinalData {
 /// * `cells_as_rows` - Boolean. Are the cells the rows (= true) or columns in
 ///   the mtx file.
 pub struct MtxReader {
+    path: PathBuf,
     reader: BufReader<File>,
     header: MtxHeader,
     qc_params: MinCellQuality,
@@ -75,12 +77,14 @@ impl MtxReader {
         qc_params: MinCellQuality,
         cells_as_rows: bool,
     ) -> IoResult<Self> {
-        let file = File::open(path)?;
-        let mut reader = BufReader::new(file);
+        let path = path.as_ref().to_path_buf();
+        let file = File::open(&path)?;
+        let mut reader = BufReader::with_capacity(1024 * 1024, file);
 
         let header = Self::parse_header(&mut reader, cells_as_rows)?;
 
         Ok(Self {
+            path,
             reader,
             header,
             qc_params,
@@ -157,59 +161,81 @@ impl MtxReader {
     /// The CellOnFileQuality file containing the indices and mappings
     /// for the cells/genes to keep.
     pub fn parse_mtx_quality(&mut self, verbose: bool) -> IoResult<CellOnFileQuality> {
-        // Track unique cells per gene
-        let mut gene_cells: Vec<FxHashSet<usize>> = (0..self.header.total_genes)
-            .map(|_| FxHashSet::default())
-            .collect();
-        let mut line_buffer = Vec::with_capacity(128);
-
-        self.reader.rewind()?;
-        Self::skip_header(&mut self.reader)?;
+        const CHUNK_SIZE: u64 = 64 * 1024 * 1024;
+        let file_size = self.reader.get_ref().metadata()?.len();
+        let num_chunks = ((file_size / CHUNK_SIZE) as usize).max(1);
 
         if verbose {
             println!("First file pass - getting gene statistics:");
         }
 
         let first_scan_time = Instant::now();
-        let mut lines_read = 0usize;
-        let report_interval = (self.header.total_entries / 10).max(1);
 
-        // first pass - count unique cells per gene
-        while {
-            line_buffer.clear();
-            self.reader.read_until(b'\n', &mut line_buffer)? > 0
-        } {
-            if line_buffer.len() < 3 {
-                continue;
-            }
-            if line_buffer[line_buffer.len() - 1] == b'\n' {
-                line_buffer.pop();
-            }
-            if !line_buffer.is_empty() && line_buffer[line_buffer.len() - 1] == b'\r' {
-                line_buffer.pop();
-            }
+        let boundaries = self.find_chunk_boundaries(num_chunks)?;
 
-            if let Some((row, col, _)) = parse_mtx_line(&line_buffer) {
-                let (cell_idx, gene_idx) = if self.cells_as_rows {
-                    ((row - 1) as usize, (col - 1) as usize)
-                } else {
-                    ((col - 1) as usize, (row - 1) as usize)
-                };
+        let results: Vec<_> = boundaries
+            .par_iter()
+            .map(|&(start, end)| {
+                let mut local_gene_cells = vec![FxHashSet::default(); self.header.total_genes];
 
-                if gene_idx < self.header.total_genes {
-                    gene_cells[gene_idx].insert(cell_idx);
+                if let Ok(file) = File::open(&self.path) {
+                    let mut reader = BufReader::with_capacity(256 * 1024, file);
+                    if reader.seek(std::io::SeekFrom::Start(start)).is_ok() {
+                        let mut line_buffer = Vec::with_capacity(64);
+                        let mut bytes_read = 0u64;
+
+                        while bytes_read < (end - start) {
+                            line_buffer.clear();
+                            if let Ok(n) = reader.read_until(b'\n', &mut line_buffer) {
+                                if n == 0 {
+                                    break;
+                                }
+                                bytes_read += n as u64;
+
+                                let len = line_buffer.len();
+                                if len < 3 {
+                                    continue;
+                                }
+                                let trim_end = if line_buffer[len - 1] == b'\n' {
+                                    if len > 1 && line_buffer[len - 2] == b'\r' {
+                                        len - 2
+                                    } else {
+                                        len - 1
+                                    }
+                                } else {
+                                    len
+                                };
+
+                                if let Some((row, col, _)) =
+                                    parse_mtx_line(&line_buffer[..trim_end])
+                                {
+                                    let (cell_idx, gene_idx) = if self.cells_as_rows {
+                                        ((row - 1) as usize, (col - 1) as usize)
+                                    } else {
+                                        ((col - 1) as usize, (row - 1) as usize)
+                                    };
+
+                                    if gene_idx < self.header.total_genes {
+                                        local_gene_cells[gene_idx].insert(cell_idx);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
-                lines_read += 1;
-                if verbose && lines_read % report_interval == 0 {
-                    let progress =
-                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
-                    println!("  Processed {}% of entries", progress);
-                }
+                local_gene_cells
+            })
+            .collect();
+
+        let mut gene_cells = vec![FxHashSet::default(); self.header.total_genes];
+        for local_genes in results {
+            for (i, local_set) in local_genes.into_iter().enumerate() {
+                gene_cells[i].extend(local_set);
             }
         }
 
-        // filter genes based on minimum cells
+        // Filter genes
         let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
             .filter(|&i| gene_cells[i].len() >= self.qc_params.min_cells)
             .collect();
@@ -217,53 +243,79 @@ impl MtxReader {
         let first_scan_end = first_scan_time.elapsed();
 
         if verbose {
-            println!("First file scan done: {:.2?}", first_scan_end);
-            println!("Second file pass - getting cell statistics");
+            println!("First pass done: {:.2?}", first_scan_end);
+            println!("Second pass - cell statistics:");
         }
 
         let second_scan_time = Instant::now();
 
-        // second pass - cell statistics with filtered genes
+        // Parallel second pass - cell stats with filtered genes
+        let results: Vec<_> = boundaries
+            .par_iter()
+            .map(|&(start, end)| {
+                let mut local_cell_stats = vec![(0u32, 0u32); self.header.total_cells];
+
+                if let Ok(file) = File::open(&self.path) {
+                    let mut reader = BufReader::with_capacity(256 * 1024, file);
+                    if reader.seek(std::io::SeekFrom::Start(start)).is_ok() {
+                        let mut line_buffer = Vec::with_capacity(64);
+                        let mut bytes_read = 0u64;
+
+                        while bytes_read < (end - start) {
+                            line_buffer.clear();
+                            if let Ok(n) = reader.read_until(b'\n', &mut line_buffer) {
+                                if n == 0 {
+                                    break;
+                                }
+                                bytes_read += n as u64;
+
+                                let len = line_buffer.len();
+                                if len < 3 {
+                                    continue;
+                                }
+                                let trim_end = if line_buffer[len - 1] == b'\n' {
+                                    if len > 1 && line_buffer[len - 2] == b'\r' {
+                                        len - 2
+                                    } else {
+                                        len - 1
+                                    }
+                                } else {
+                                    len
+                                };
+
+                                if let Some((row, col, value)) =
+                                    parse_mtx_line(&line_buffer[..trim_end])
+                                {
+                                    let (cell_idx, gene_idx) = if self.cells_as_rows {
+                                        ((row - 1) as usize, (col - 1) as usize)
+                                    } else {
+                                        ((col - 1) as usize, (row - 1) as usize)
+                                    };
+
+                                    if genes_to_keep_set.contains(&gene_idx)
+                                        && cell_idx < self.header.total_cells
+                                    {
+                                        local_cell_stats[cell_idx].0 += 1;
+                                        local_cell_stats[cell_idx].1 += value as u32;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                local_cell_stats
+            })
+            .collect();
+
+        // Merge cell results
         let mut cell_gene_count = vec![0u32; self.header.total_cells];
         let mut cell_lib_size = vec![0u32; self.header.total_cells];
 
-        self.reader.rewind()?;
-        Self::skip_header(&mut self.reader)?;
-
-        lines_read = 0;
-
-        while {
-            line_buffer.clear();
-            self.reader.read_until(b'\n', &mut line_buffer)? > 0
-        } {
-            if line_buffer.len() < 3 {
-                continue;
-            }
-            if line_buffer[line_buffer.len() - 1] == b'\n' {
-                line_buffer.pop();
-            }
-            if !line_buffer.is_empty() && line_buffer[line_buffer.len() - 1] == b'\r' {
-                line_buffer.pop();
-            }
-
-            if let Some((row, col, value)) = parse_mtx_line(&line_buffer) {
-                let (cell_idx, gene_idx) = if self.cells_as_rows {
-                    ((row - 1) as usize, (col - 1) as usize)
-                } else {
-                    ((col - 1) as usize, (row - 1) as usize)
-                };
-
-                if genes_to_keep_set.contains(&gene_idx) && cell_idx < self.header.total_cells {
-                    cell_gene_count[cell_idx] += 1;
-                    cell_lib_size[cell_idx] += value as u32;
-                }
-
-                lines_read += 1;
-                if verbose && lines_read % report_interval == 0 {
-                    let progress =
-                        (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
-                    println!("  Processed {}% of entries (second pass)", progress);
-                }
+        for local_cells in results {
+            for (i, (count, size)) in local_cells.into_iter().enumerate() {
+                cell_gene_count[i] += count;
+                cell_lib_size[i] += size;
             }
         }
 
@@ -284,7 +336,7 @@ impl MtxReader {
         let second_scan_end = second_scan_time.elapsed();
 
         if verbose {
-            println!("Second file scan done: {:.2?}", second_scan_end);
+            println!("Second pass done: {:.2?}", second_scan_end);
             println!(
                 "Genes passing QC: {}/{}",
                 quality.genes_to_keep.len(),
@@ -431,6 +483,7 @@ impl MtxReader {
         })
     }
 
+    /// Helper function to skip the header
     fn skip_header(reader: &mut BufReader<File>) -> IoResult<()> {
         let mut line = String::new();
         loop {
@@ -441,6 +494,66 @@ impl MtxReader {
             }
         }
         Ok(())
+    }
+
+    /// Generate chunk boundaries for parallel processing
+    ///
+    /// ### Params
+    ///
+    /// * `num_chunks` - Number of desired chunks
+    ///
+    /// ### Results
+    ///
+    /// A vector of tuples indicating the chunk boundaries.
+    fn find_chunk_boundaries(&mut self, num_chunks: usize) -> IoResult<Vec<(u64, u64)>> {
+        let file_size = self.reader.get_ref().metadata()?.len();
+
+        self.reader.rewind()?;
+        let mut line = String::new();
+        loop {
+            line.clear();
+            self.reader.read_line(&mut line)?;
+            if !line.starts_with('%') {
+                break;
+            }
+        }
+
+        let data_start = self.reader.stream_position()?;
+
+        let data_size = file_size - data_start;
+        let chunk_size = data_size / num_chunks as u64;
+
+        let mut boundaries = vec![(data_start, data_start)];
+
+        // idea is to chunk the data into a vector of boundaries that can
+        // be dealt with in parallel via Rayon
+        for i in 1..num_chunks {
+            let target_pos = data_start + (chunk_size * i as u64);
+            if target_pos >= file_size {
+                break;
+            }
+
+            self.reader.seek(std::io::SeekFrom::Start(target_pos))?;
+
+            let mut byte = [0u8; 1];
+            while self.reader.read(&mut byte)? > 0 {
+                if byte[0] == b'\n' {
+                    break;
+                }
+            }
+
+            let boundary = self.reader.stream_position()?;
+            boundaries.push((boundary, boundary));
+        }
+
+        boundaries.push((file_size, file_size));
+
+        for i in 0..boundaries.len() - 1 {
+            boundaries[i].1 = boundaries[i + 1].0;
+        }
+        boundaries.pop();
+
+        Ok(boundaries)
     }
 }
 
