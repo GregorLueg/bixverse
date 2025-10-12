@@ -1,6 +1,10 @@
 use hdf5::{File, Result};
+use rayon::prelude::*;
 use std::io::Result as IoResult;
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Instant;
 use thousands::Separable;
 
 use crate::core::data::sparse_io::*;
@@ -234,7 +238,7 @@ pub fn stream_h5_counts<P: AsRef<Path>>(
             let cell_lib_sizes = scan_h5_csc_library_sizes(&h5_path, &file_quality).unwrap();
 
             if verbose {
-                println!("  Pass 2/2: Writing cells with normalization...");
+                println!("  Pass 2/2: Writing cells with normalisation...");
             }
             write_h5_csc_to_csr_streaming(
                 &h5_path,
@@ -285,10 +289,7 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
     cell_quality: &MinCellQuality,
     verbose: bool,
 ) -> Result<CellOnFileQuality> {
-    let file = File::open(file_path)?;
-    let data_ds = file.dataset("X/data")?;
-    let indices_ds = file.dataset("X/indices")?;
-    let indptr_ds = file.dataset("X/indptr")?;
+    let file_path = file_path.as_ref();
 
     if verbose {
         println!(
@@ -296,30 +297,14 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
             shape.0.separate_with_underscores(),
             shape.1.separate_with_underscores()
         );
-        println!(
-            "  Data size: {}, Indices size: {}, Indptr size: {}",
-            data_ds.size().separate_with_underscores(),
-            indices_ds.size().separate_with_underscores(),
-            indptr_ds.size().separate_with_underscores()
-        );
     }
 
-    let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
+    let file = File::open(file_path)?;
+    let indptr: Vec<u32> = file.dataset("X/indptr")?.read_1d()?.to_vec();
 
-    if (indptr.len() != shape.1 + 1) && verbose {
-        println!(
-            "  WARNING: indptr length {} doesn't match expected {} (shape.1 + 1)",
-            indptr.len().separate_with_underscores(),
-            (shape.1 + 1).separate_with_underscores()
-        );
-    }
-
-    // Count cells per gene
     let mut no_cells_exp_gene: Vec<usize> = Vec::with_capacity(shape.1);
     for i in 0..shape.1 {
-        let start_ptr = indptr[i] as usize;
-        let end_ptr = indptr[i + 1] as usize;
-        no_cells_exp_gene.push(end_ptr - start_ptr);
+        no_cells_exp_gene.push((indptr[i + 1] - indptr[i]) as usize);
     }
 
     if verbose {
@@ -338,7 +323,6 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
         );
     }
 
-    // Filter genes first
     let genes_to_keep: Vec<usize> = (0..shape.1)
         .filter(|&i| no_cells_exp_gene[i] >= cell_quality.min_cells)
         .collect();
@@ -349,65 +333,87 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
             genes_to_keep.len().separate_with_underscores(),
             shape.1.separate_with_underscores()
         );
-    }
-
-    // Calculate cell metrics using only kept genes
-    let mut cell_unique_genes = vec![0usize; shape.0];
-    let mut cell_lib_size = vec![0.0f32; shape.0];
-
-    if verbose {
-        println!("  Calculating cell metrics in chunks...");
+        println!("Calculating cell metrics in parallel...");
     }
 
     const GENE_CHUNK_SIZE: usize = 10000;
+    let gene_chunks: Vec<&[usize]> = genes_to_keep.chunks(GENE_CHUNK_SIZE).collect();
+    let num_chunks = gene_chunks.len();
 
-    for (chunk_idx, gene_chunk) in genes_to_keep.chunks(GENE_CHUNK_SIZE).enumerate() {
-        if verbose && chunk_idx % 10 == 0 {
-            let processed = chunk_idx * GENE_CHUNK_SIZE;
-            println!(
-                "   Processing genes {} / {}",
-                processed
-                    .min(genes_to_keep.len())
-                    .separate_with_underscores(),
-                genes_to_keep.len().separate_with_underscores()
-            );
-        }
+    let calc_time = Instant::now();
+    let completed_chunks = Arc::new(AtomicUsize::new(0));
+    let report_interval = (num_chunks / 10).max(1);
 
-        let chunk_start_gene = gene_chunk[0];
-        let chunk_end_gene = gene_chunk[gene_chunk.len() - 1];
+    let cell_stats: Vec<(Vec<usize>, Vec<f32>)> = gene_chunks
+        .par_iter()
+        .map(|gene_chunk| {
+            let mut local_unique = vec![0usize; shape.0];
+            let mut local_lib_size = vec![0.0f32; shape.0];
 
-        let data_start = indptr[chunk_start_gene] as usize;
-        let data_end = indptr[chunk_end_gene + 1] as usize;
+            if let Ok(file) = File::open(file_path) {
+                if let (Ok(data_ds), Ok(indices_ds)) =
+                    (file.dataset("X/data"), file.dataset("X/indices"))
+                {
+                    let chunk_start_gene = gene_chunk[0];
+                    let chunk_end_gene = gene_chunk[gene_chunk.len() - 1];
+                    let data_start = indptr[chunk_start_gene] as usize;
+                    let data_end = indptr[chunk_end_gene + 1] as usize;
 
-        if data_start >= data_end {
-            continue;
-        }
+                    if data_start < data_end {
+                        if let (Ok(chunk_data), Ok(chunk_indices)) = (
+                            data_ds.read_slice_1d(data_start..data_end),
+                            indices_ds.read_slice_1d(data_start..data_end),
+                        ) {
+                            let chunk_data: Vec<f32> = chunk_data.to_vec();
+                            let chunk_indices: Vec<u32> = chunk_indices.to_vec();
 
-        let chunk_data: Vec<f32> = data_ds.read_slice_1d(data_start..data_end)?.to_vec();
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
+                            for &gene_idx in gene_chunk.iter() {
+                                let gene_data_start = indptr[gene_idx] as usize - data_start;
+                                let gene_data_end = indptr[gene_idx + 1] as usize - data_start;
 
-        for &gene_idx in gene_chunk {
-            let gene_data_start = indptr[gene_idx] as usize;
-            let gene_data_end = indptr[gene_idx + 1] as usize;
-
-            for idx in gene_data_start..gene_data_end {
-                let local_idx = idx - data_start;
-                let cell_idx = chunk_indices[local_idx] as usize;
-
-                if cell_idx < shape.0 {
-                    cell_unique_genes[cell_idx] += 1;
-                    cell_lib_size[cell_idx] += chunk_data[local_idx];
+                                for idx in gene_data_start..gene_data_end {
+                                    let cell_idx = chunk_indices[idx] as usize;
+                                    if cell_idx < shape.0 {
+                                        local_unique[cell_idx] += 1;
+                                        local_lib_size[cell_idx] += chunk_data[idx];
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
+            if verbose {
+                let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
+                if completed % report_interval == 0 || completed == num_chunks {
+                    let progress =
+                        ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
+                    println!(
+                        "  Processed {}% of chunks ({}/{})",
+                        progress, completed, num_chunks
+                    );
+                }
+            }
+
+            (local_unique, local_lib_size)
+        })
+        .collect();
+
+    let mut cell_unique_genes = vec![0usize; shape.0];
+    let mut cell_lib_size = vec![0.0f32; shape.0];
+
+    for (local_unique, local_lib) in cell_stats {
+        for i in 0..shape.0 {
+            cell_unique_genes[i] += local_unique[i];
+            cell_lib_size[i] += local_lib[i];
         }
     }
 
+    let calc_elapsed = calc_time.elapsed();
+
     if verbose {
-        println!(
-            "   Processing genes {} / {} (complete)",
-            genes_to_keep.len().separate_with_underscores(),
-            genes_to_keep.len().separate_with_underscores()
-        );
+        println!("Cell metrics calculation done: {:.2?}", calc_elapsed);
 
         let max_genes = cell_unique_genes.iter().max().unwrap_or(&0);
         let min_genes = cell_unique_genes.iter().min().unwrap_or(&0);
@@ -432,6 +438,14 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
                 && cell_lib_size[i] >= cell_quality.min_lib_size as f32
         })
         .collect();
+
+    if verbose {
+        println!(
+            "  Cells passing filter: {} / {}",
+            cells_to_keep.len().separate_with_underscores(),
+            shape.0.separate_with_underscores()
+        );
+    }
 
     let mut file_quality_data = CellOnFileQuality::new(cells_to_keep, genes_to_keep);
     file_quality_data.generate_maps_sets();
@@ -798,10 +812,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
     cell_quality: &MinCellQuality,
     verbose: bool,
 ) -> Result<CellOnFileQuality> {
-    let file = File::open(file_path)?;
-    let data_ds = file.dataset("X/data")?;
-    let indices_ds = file.dataset("X/indices")?;
-    let indptr_ds = file.dataset("X/indptr")?;
+    let file_path = file_path.as_ref();
 
     if verbose {
         println!(
@@ -809,67 +820,75 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
             shape.0.separate_with_underscores(),
             shape.1.separate_with_underscores()
         );
-        println!(
-            "  Data size: {}, Indices size: {}, Indptr size: {}",
-            data_ds.size().separate_with_underscores(),
-            indices_ds.size().separate_with_underscores(),
-            indptr_ds.size().separate_with_underscores()
-        );
     }
 
-    let indptr: Vec<u32> = indptr_ds.read_1d()?.to_vec();
-
-    if (indptr.len() != shape.0 + 1) && verbose {
-        println!(
-            "  WARNING: indptr length {} doesn't match expected {} (no_cells + 1)",
-            indptr.len().separate_with_underscores(),
-            (shape.0 + 1).separate_with_underscores()
-        );
-    }
-
-    // first pass - count how many cells express each gene
-    let mut no_cells_exp_gene = vec![0usize; shape.1];
-
-    if verbose {
-        println!("  Pass 1: Calculating gene expression in chunks...");
-    }
+    let file = File::open(file_path)?;
+    let indptr: Vec<u32> = file.dataset("X/indptr")?.read_1d()?.to_vec();
 
     const CELL_CHUNK_SIZE: usize = 10000;
+    let chunks: Vec<usize> = (0..shape.0).step_by(CELL_CHUNK_SIZE).collect();
+    let num_chunks = chunks.len();
 
-    for chunk_start_cell in (0..shape.0).step_by(CELL_CHUNK_SIZE) {
-        let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
+    if verbose {
+        println!("First pass - gene expression statistics:");
+    }
 
-        if verbose && (chunk_start_cell / CELL_CHUNK_SIZE) % 10 == 0 {
-            println!(
-                "   Processing cells {} / {}",
-                chunk_start_cell.separate_with_underscores(),
-                shape.0.separate_with_underscores()
-            );
-        }
+    let first_pass_time = Instant::now();
+    let completed_chunks = Arc::new(AtomicUsize::new(0));
+    let report_interval = (num_chunks / 10).max(1);
 
-        let data_start = indptr[chunk_start_cell] as usize;
-        let data_end = indptr[chunk_end_cell + 1] as usize;
+    let gene_counts: Vec<Vec<usize>> = chunks
+        .par_iter()
+        .map(|&chunk_start_cell| {
+            let mut local_counts = vec![0usize; shape.1];
 
-        if data_start >= data_end {
-            continue;
-        }
+            if let Ok(file) = File::open(file_path) {
+                if let Ok(indices_ds) = file.dataset("X/indices") {
+                    let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
+                    let data_start = indptr[chunk_start_cell] as usize;
+                    let data_end = indptr[chunk_end_cell + 1] as usize;
 
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
+                    if data_start < data_end {
+                        if let Ok(chunk_indices) = indices_ds.read_slice_1d(data_start..data_end) {
+                            let chunk_indices: Vec<u32> = chunk_indices.to_vec();
 
-        for cell_idx in chunk_start_cell..=chunk_end_cell {
-            let cell_data_start = indptr[cell_idx] as usize;
-            let cell_data_end = indptr[cell_idx + 1] as usize;
+                            for cell_idx in chunk_start_cell..=chunk_end_cell {
+                                let cell_data_start = indptr[cell_idx] as usize - data_start;
+                                let cell_data_end = indptr[cell_idx + 1] as usize - data_start;
 
-            let local_start = cell_data_start - data_start;
-            let local_end = cell_data_end - data_start;
-
-            #[allow(clippy::needless_range_loop)]
-            for local_idx in local_start..local_end {
-                let gene_idx = chunk_indices[local_idx] as usize;
-                if gene_idx < shape.1 {
-                    no_cells_exp_gene[gene_idx] += 1;
+                                #[allow(clippy::needless_range_loop)]
+                                for local_idx in cell_data_start..cell_data_end {
+                                    let gene_idx = chunk_indices[local_idx] as usize;
+                                    if gene_idx < shape.1 {
+                                        local_counts[gene_idx] += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
+            if verbose {
+                let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
+                if completed % report_interval == 0 || completed == num_chunks {
+                    let progress =
+                        ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
+                    println!(
+                        "  Processed {}% of chunks ({}/{})",
+                        progress, completed, num_chunks
+                    );
+                }
+            }
+
+            local_counts
+        })
+        .collect();
+
+    let mut no_cells_exp_gene = vec![0usize; shape.1];
+    for local_counts in gene_counts {
+        for (i, count) in local_counts.into_iter().enumerate() {
+            no_cells_exp_gene[i] += count;
         }
     }
 
@@ -890,69 +909,94 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         );
     }
 
-    // Filter genes first
     let genes_to_keep: Vec<usize> = (0..shape.1)
         .filter(|&i| no_cells_exp_gene[i] >= cell_quality.min_cells)
         .collect();
 
+    let first_pass_elapsed = first_pass_time.elapsed();
+
     if verbose {
+        println!("First pass done: {:.2?}", first_pass_elapsed);
         println!(
             "  Genes passing filter: {} / {}",
             genes_to_keep.len().separate_with_underscores(),
             shape.1.separate_with_underscores()
         );
+        println!("Second pass - cell statistics:");
     }
 
-    // Create a boolean lookup vector for faster gene filtering
     let mut genes_to_keep_lookup = vec![false; shape.1];
     for &gene_idx in &genes_to_keep {
         genes_to_keep_lookup[gene_idx] = true;
     }
 
-    // second pass - calculate cell metrics using only kept genes
+    let second_pass_time = Instant::now();
+    let completed_chunks = Arc::new(AtomicUsize::new(0));
+
+    let cell_stats: Vec<(Vec<usize>, Vec<f32>)> = chunks
+        .par_iter()
+        .map(|&chunk_start_cell| {
+            let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
+            let mut local_unique = vec![0usize; chunk_end_cell - chunk_start_cell + 1];
+            let mut local_lib_size = vec![0.0f32; chunk_end_cell - chunk_start_cell + 1];
+
+            if let Ok(file) = File::open(file_path) {
+                if let (Ok(data_ds), Ok(indices_ds)) =
+                    (file.dataset("X/data"), file.dataset("X/indices"))
+                {
+                    let data_start = indptr[chunk_start_cell] as usize;
+                    let data_end = indptr[chunk_end_cell + 1] as usize;
+
+                    if data_start < data_end {
+                        if let (Ok(chunk_data), Ok(chunk_indices)) = (
+                            data_ds.read_slice_1d(data_start..data_end),
+                            indices_ds.read_slice_1d(data_start..data_end),
+                        ) {
+                            let chunk_data: Vec<f32> = chunk_data.to_vec();
+                            let chunk_indices: Vec<u32> = chunk_indices.to_vec();
+
+                            for cell_idx in chunk_start_cell..=chunk_end_cell {
+                                let cell_data_start = indptr[cell_idx] as usize - data_start;
+                                let cell_data_end = indptr[cell_idx + 1] as usize - data_start;
+                                let local_cell_idx = cell_idx - chunk_start_cell;
+
+                                for local_idx in cell_data_start..cell_data_end {
+                                    let gene_idx = chunk_indices[local_idx] as usize;
+                                    if genes_to_keep_lookup[gene_idx] {
+                                        local_unique[local_cell_idx] += 1;
+                                        local_lib_size[local_cell_idx] += chunk_data[local_idx];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if verbose {
+                let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
+                if completed % report_interval == 0 || completed == num_chunks {
+                    let progress =
+                        ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
+                    println!(
+                        "  Processed {}% of chunks ({}/{})",
+                        progress, completed, num_chunks
+                    );
+                }
+            }
+
+            (local_unique, local_lib_size)
+        })
+        .collect();
+
     let mut cell_unique_genes = vec![0usize; shape.0];
     let mut cell_lib_size = vec![0.0f32; shape.0];
 
-    if verbose {
-        println!("  Pass 2: Calculating cell metrics from kept genes in chunks...");
-    }
-
-    for chunk_start_cell in (0..shape.0).step_by(CELL_CHUNK_SIZE) {
-        let chunk_end_cell = (chunk_start_cell + CELL_CHUNK_SIZE).min(shape.0) - 1;
-
-        if verbose && (chunk_start_cell / CELL_CHUNK_SIZE) % 10 == 0 {
-            println!(
-                "   Processing cells {} / {}",
-                chunk_start_cell.separate_with_underscores(),
-                shape.0.separate_with_underscores()
-            );
-        }
-
-        let data_start = indptr[chunk_start_cell] as usize;
-        let data_end = indptr[chunk_end_cell + 1] as usize;
-
-        if data_start >= data_end {
-            continue;
-        }
-
-        let chunk_data: Vec<f32> = data_ds.read_slice_1d(data_start..data_end)?.to_vec();
-        let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(data_start..data_end)?.to_vec();
-
-        for cell_idx in chunk_start_cell..=chunk_end_cell {
-            let cell_data_start = indptr[cell_idx] as usize;
-            let cell_data_end = indptr[cell_idx + 1] as usize;
-
-            let local_start = cell_data_start - data_start;
-            let local_end = cell_data_end - data_start;
-
-            for local_idx in local_start..local_end {
-                let gene_idx = chunk_indices[local_idx] as usize;
-
-                if genes_to_keep_lookup[gene_idx] {
-                    cell_unique_genes[cell_idx] += 1;
-                    cell_lib_size[cell_idx] += chunk_data[local_idx];
-                }
-            }
+    for (chunk_idx, (local_unique, local_lib)) in cell_stats.into_iter().enumerate() {
+        let chunk_start = chunks[chunk_idx];
+        for (i, (unique, lib)) in local_unique.into_iter().zip(local_lib).enumerate() {
+            cell_unique_genes[chunk_start + i] = unique;
+            cell_lib_size[chunk_start + i] = lib;
         }
     }
 
@@ -969,12 +1013,10 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         );
         println!(
             "  Cell stats: library size: min = {:.1} | max = {:.1}",
-            min_lib.separate_with_underscores(),
-            max_lib.separate_with_underscores()
+            min_lib, max_lib
         );
     }
 
-    // Filter cells based on kept genes
     let cells_to_keep: Vec<usize> = (0..shape.0)
         .filter(|&i| {
             cell_unique_genes[i] >= cell_quality.min_unique_genes
@@ -982,7 +1024,10 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
         })
         .collect();
 
+    let second_pass_elapsed = second_pass_time.elapsed();
+
     if verbose {
+        println!("Second pass done: {:.2?}", second_pass_elapsed);
         println!(
             "  Cells passing filter: {} / {}",
             cells_to_keep.len().separate_with_underscores(),
@@ -1030,6 +1075,8 @@ pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
     new_indptr.push(0);
 
     let total_cells = quality.cells_to_keep.len();
+
+    let start_write = Instant::now();
 
     if verbose {
         println!(
@@ -1103,11 +1150,14 @@ pub fn read_h5ad_x_data_csr<P: AsRef<Path>>(
         }
     }
 
+    let end_write = start_write.elapsed();
+
     if verbose {
         println!(
-            "   Processed {} / {} cells (complete)",
+            "   Processed {} / {} cells (complete) in {:.2?}.",
             total_cells.separate_with_underscores(),
-            total_cells.separate_with_underscores()
+            total_cells.separate_with_underscores(),
+            end_write
         );
     }
 
@@ -1150,7 +1200,7 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
     cell_qc: MinCellQuality,
     verbose: bool,
 ) -> IoResult<CellQuality> {
-    let file = File::open(file_path)?;
+    let file = File::open(&file_path)?;
     let data_ds = file.dataset("X/data")?;
     let indices_ds = file.dataset("X/indices")?;
     let indptr_ds = file.dataset("X/indptr")?;
@@ -1168,6 +1218,7 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
 
     const CELL_BATCH_SIZE: usize = 1000;
     let total_cells = quality.cells_to_keep.len();
+    let num_batches = total_cells.div_ceil(CELL_BATCH_SIZE);
 
     if verbose {
         println!(
@@ -1177,17 +1228,26 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
         );
     }
 
+    let start_write = Instant::now();
+
+    // Reusable buffers to avoid allocations
+    let mut cell_data: Vec<(usize, u16)> = Vec::with_capacity(10000);
+    let mut gene_indices: Vec<u16> = Vec::with_capacity(10000);
+    let mut gene_counts: Vec<u16> = Vec::with_capacity(10000);
+
     for (batch_idx, cell_batch) in quality.cells_to_keep.chunks(CELL_BATCH_SIZE).enumerate() {
-        if verbose && batch_idx % 100 == 0 {
-            let processed = batch_idx * CELL_BATCH_SIZE;
+        if verbose && (batch_idx % ((num_batches / 10).max(1)) == 0 || batch_idx == num_batches - 1)
+        {
+            let progress = ((batch_idx as f64 / num_batches as f64 * 10.0).round() as usize) * 10;
+            let processed = (batch_idx + 1) * CELL_BATCH_SIZE;
             println!(
-                "   Processed {} / {} cells",
+                "  Processed {}% ({} / {} cells)",
+                progress,
                 processed.min(total_cells).separate_with_underscores(),
                 total_cells.separate_with_underscores()
             );
         }
 
-        // Find data range for this batch
         let start_pos = cell_batch
             .iter()
             .map(|&c| indptr_raw[c] as usize)
@@ -1200,14 +1260,14 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
             .unwrap_or(0);
 
         if start_pos >= end_pos {
-            // Empty cells in this batch
-            for _ in cell_batch {
+            for &old_cell_idx in cell_batch {
                 lib_size.push(0);
                 nnz.push(0);
+                let new_cell_idx = quality.cell_old_to_new[&old_cell_idx];
                 let empty_chunk = CsrCellChunk::from_data(
                     &[] as &[u16],
                     &[] as &[u16],
-                    0,
+                    new_cell_idx,
                     cell_qc.target_size,
                     true,
                 );
@@ -1216,16 +1276,16 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
             continue;
         }
 
-        // load batch data
         let chunk_data: Vec<f32> = data_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
         let chunk_indices: Vec<u32> = indices_ds.read_slice_1d(start_pos..end_pos)?.to_vec();
 
-        // process each cell in batch
         for &old_cell_idx in cell_batch {
             let cell_start = indptr_raw[old_cell_idx] as usize;
             let cell_end = indptr_raw[old_cell_idx + 1] as usize;
 
-            let mut cell_data: Vec<(usize, u16)> = Vec::new();
+            cell_data.clear();
+            gene_indices.clear();
+            gene_counts.clear();
 
             for idx in cell_start..cell_end {
                 let local_idx = idx - start_pos;
@@ -1237,11 +1297,16 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
                 }
             }
 
-            // Sort by gene index for consistent ordering
-            cell_data.sort_by_key(|&(gene_idx, _)| gene_idx);
+            if !cell_data.is_empty() {
+                // Check if already sorted (common in CSR)
+                let needs_sort = cell_data.windows(2).any(|w| w[0].0 > w[1].0);
+                if needs_sort {
+                    cell_data.sort_unstable_by_key(|&(gene_idx, _)| gene_idx);
+                }
 
-            let gene_indices: Vec<u16> = cell_data.iter().map(|(g, _)| *g as u16).collect();
-            let gene_counts: Vec<u16> = cell_data.iter().map(|(_, c)| *c).collect();
+                gene_indices.extend(cell_data.iter().map(|(g, _)| *g as u16));
+                gene_counts.extend(cell_data.iter().map(|(_, c)| *c));
+            }
 
             let new_cell_idx = quality.cell_old_to_new[&old_cell_idx];
             let cell_chunk = CsrCellChunk::from_data(
@@ -1256,20 +1321,16 @@ pub fn write_h5_csr_streaming<P: AsRef<Path>>(
             nnz.push(nnz_i);
             lib_size.push(lib_size_i);
 
-            // Write immediately - memory is freed after this
             writer.write_cell_chunk(cell_chunk)?;
         }
-        // Batch data dropped here - memory freed
     }
 
     writer.finalise()?;
 
+    let end_write = start_write.elapsed();
+
     if verbose {
-        println!(
-            "   Processed {} / {} cells (complete)",
-            total_cells.separate_with_underscores(),
-            total_cells.separate_with_underscores()
-        );
+        println!("  Writing complete in {:.2?}", end_write);
     }
 
     Ok(CellQuality {

@@ -767,40 +767,39 @@ where
 {
     assert_eq!(a.shape, b.shape);
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
-
     let n_rows = a.shape.0;
     let mut rows = Vec::new();
     let mut cols = Vec::new();
     let mut vals = Vec::new();
-
     for i in 0..n_rows {
         let a_start = a.indptr[i];
         let a_end = a.indptr[i + 1];
         let b_start = b.indptr[i];
         let b_end = b.indptr[i + 1];
-
         let mut a_idx = a_start;
         let mut b_idx = b_start;
-
         while a_idx < a_end && b_idx < b_end {
-            if a.indices[a_idx] < b.indices[b_idx] {
-                a_idx += 1;
-            } else if b.indices[b_idx] < a.indices[a_idx] {
-                b_idx += 1;
-            } else {
-                // Same column - multiply
-                let val = a.data[a_idx] * b.data[b_idx];
-                if val != T::default() {
-                    rows.push(i);
-                    cols.push(a.indices[a_idx]);
-                    vals.push(val);
+            match a.indices[a_idx].cmp(&b.indices[b_idx]) {
+                std::cmp::Ordering::Less => {
+                    a_idx += 1;
                 }
-                a_idx += 1;
-                b_idx += 1;
+                std::cmp::Ordering::Greater => {
+                    b_idx += 1;
+                }
+                std::cmp::Ordering::Equal => {
+                    // Same column - multiply
+                    let val = a.data[a_idx] * b.data[b_idx];
+                    if val != T::default() {
+                        rows.push(i);
+                        cols.push(a.indices[a_idx]);
+                        vals.push(val);
+                    }
+                    a_idx += 1;
+                    b_idx += 1;
+                }
             }
         }
     }
-
     coo_to_csr(&rows, &cols, &vals, a.shape)
 }
 

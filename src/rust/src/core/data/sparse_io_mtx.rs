@@ -3,6 +3,8 @@ use rustc_hash::FxHashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Result as IoResult, Seek};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 use crate::core::data::sparse_io::*;
@@ -172,6 +174,8 @@ impl MtxReader {
         let first_scan_time = Instant::now();
 
         let boundaries = self.find_chunk_boundaries(num_chunks)?;
+        let completed_chunks = Arc::new(AtomicUsize::new(0));
+        let report_interval = (num_chunks / 10).max(1);
 
         let results: Vec<_> = boundaries
             .par_iter()
@@ -224,16 +228,31 @@ impl MtxReader {
                     }
                 }
 
+                if verbose {
+                    let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
+                    if completed % report_interval == 0 || completed == num_chunks {
+                        let progress = (completed as f64 / num_chunks as f64 * 100.0) as usize;
+                        println!(
+                            "  Processed {}% of chunks ({}/{})",
+                            progress, completed, num_chunks
+                        );
+                    }
+                }
+
                 local_gene_cells
             })
             .collect();
 
-        let mut gene_cells = vec![FxHashSet::default(); self.header.total_genes];
-        for local_genes in results {
-            for (i, local_set) in local_genes.into_iter().enumerate() {
-                gene_cells[i].extend(local_set);
-            }
-        }
+        let gene_cells: Vec<FxHashSet<usize>> = (0..self.header.total_genes)
+            .into_par_iter()
+            .map(|i| {
+                let mut merged = FxHashSet::default();
+                for local_genes in &results {
+                    merged.extend(&local_genes[i]);
+                }
+                merged
+            })
+            .collect();
 
         // Filter genes
         let genes_to_keep_set: FxHashSet<usize> = (0..self.header.total_genes)
@@ -248,6 +267,7 @@ impl MtxReader {
         }
 
         let second_scan_time = Instant::now();
+        let completed_chunks = Arc::new(AtomicUsize::new(0));
 
         // Parallel second pass - cell stats with filtered genes
         let results: Vec<_> = boundaries
@@ -301,6 +321,17 @@ impl MtxReader {
                                 }
                             }
                         }
+                    }
+                }
+
+                if verbose {
+                    let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
+                    if completed % report_interval == 0 || completed == num_chunks {
+                        let progress = (completed as f64 / num_chunks as f64 * 100.0) as usize;
+                        println!(
+                            "  Processed {}% of chunks ({}/{})",
+                            progress, completed, num_chunks
+                        );
                     }
                 }
 
@@ -381,6 +412,8 @@ impl MtxReader {
 
         let mut cell_data: Vec<Vec<(u16, u16)>> = vec![Vec::new(); quality.cells_to_keep.len()];
         let mut line_buffer = Vec::with_capacity(64);
+
+        let start_read = Instant::now();
 
         self.reader.rewind()?;
         Self::skip_header(&mut self.reader)?;
@@ -468,6 +501,12 @@ impl MtxReader {
         }
 
         writer.finalise()?;
+
+        let end_read = start_read.elapsed();
+
+        if verbose {
+            println!("Reading in cell data done: {:.2?}", end_read);
+        }
 
         let cell_quality = CellQuality {
             cell_indices: quality.cells_to_keep.to_vec(),

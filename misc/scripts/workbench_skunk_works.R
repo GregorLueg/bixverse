@@ -255,7 +255,8 @@ object = load_mtx(
     path_mtx = path.expand("~/Downloads/ex053/DGE.mtx"),
     path_obs = path.expand("~/Downloads/ex053/cell_metadata.csv"),
     path_var = path.expand("~/Downloads/ex053/all_genes.csv"),
-    cells_as_rows = TRUE
+    cells_as_rows = TRUE,
+    has_hdr = TRUE
   ),
   sc_qc_param = params_sc_min_quality(
     min_unique_genes = 100L,
@@ -493,11 +494,20 @@ summary(file_res$gene_indices)
 
 devtools::document()
 
+rextendr::document()
+
+# 696.992 sec elapsed
+# 632.574 sec elapsed
+# 529.257 sec elapsed
+# 459.093 sec elapsed
+
 bixverse_sc <- single_cell_exp(dir_data = tempdir())
 
 tictoc::tic()
 bixverse_sc <- stream_h5ad(object = bixverse_sc, h5_path = tahoe_h5ad_f_path)
 tictoc::toc()
+
+bixverse_sc[1:100L, 1:100L, return_format = "gene"]
 
 obs <- get_sc_obs(bixverse_sc)
 var <- get_sc_var(bixverse_sc)
@@ -539,9 +549,11 @@ bixverse_sc <- gene_set_proportions_sc(
   streaming = TRUE
 )
 
+bixverse_sc[[]]
+
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.10, cell_id]
 
-bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
+bixverse_sc <- set_cell_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
 
 bixverse_sc <- find_hvg_sc(object = bixverse_sc, streaming = TRUE)
 
