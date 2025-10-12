@@ -750,7 +750,7 @@ impl SingeCellCountData {
 
                 writer.write_gene_chunk(chunk).unwrap();
             } else {
-                // Gene has no expression - write empty chunk
+                // gene has no expression - write empty chunk
                 let chunk = CscGeneChunk::from_conversion(&[], &[], &[], gene_id, true);
                 writer.write_gene_chunk(chunk).unwrap();
             }

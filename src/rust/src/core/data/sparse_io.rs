@@ -247,12 +247,12 @@ impl CsrCellChunk {
         };
 
         // For F16, I need to convert
-        let data_norm = unsafe {
+        let data_norm: Vec<F16> = unsafe {
             let ptr = buffer.as_ptr().add(data_end) as *const u16;
-            let slice = std::slice::from_raw_parts(ptr, data_norm_len);
-            let mut norm = Vec::with_capacity(data_norm_len);
-            norm.extend(slice.iter().map(|&bits| F16::from_bits(bits)));
-            norm
+            std::slice::from_raw_parts(ptr, data_norm_len)
+                .iter()
+                .map(|&bits| F16::from_bits(bits))
+                .collect()
         };
 
         let indices = unsafe {
@@ -747,7 +747,7 @@ impl CellGeneSparseWriter {
         total_genes: usize,
     ) -> std::io::Result<Self> {
         let file = File::create(path_f)?;
-        let mut writer = BufWriter::with_capacity(10 * 1024 * 1024, file);
+        let mut writer = BufWriter::with_capacity(128 * 1024 * 1024, file);
 
         let file_header = FileHeader::new(cell_based);
         let file_header_enc = encode_to_vec(&file_header, config::standard()).unwrap();
@@ -938,7 +938,18 @@ impl ParallelSparseReader {
     /// Initialised `ParallelSparseReader`.
     pub fn new(f_path: &str) -> std::io::Result<Self> {
         let file = File::open(f_path)?;
-        let mmap = unsafe { MmapOptions::new().map(&file)? };
+        let file_size = file.metadata()?.len();
+
+        let mmap = unsafe {
+            let mut opts = MmapOptions::new();
+            // if the file size is ≤ 8 GB, it loads the full thing into memory
+            // otherwise lazy load
+            if file_size <= 8 * 1024 * 1024 * 1024 {
+                // 8GB
+                opts.populate();
+            }
+            opts.map(&file)?
+        };
 
         // Parse headers from mmap
         let file_header_bytes = &mmap[0..64];
