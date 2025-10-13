@@ -237,7 +237,8 @@ fn rs_sc_pca(
         let val = res.1.get(i, j);
         *val as f64
     });
-    let scaled = res.2.map(|s| {
+    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
+    let scaled = res.3.map(|s| {
         let scaled_f64 = Mat::from_fn(s.nrows(), s.ncols(), |i, j| {
             let val = s.get(i, j);
             *val as f64
@@ -248,6 +249,7 @@ fn rs_sc_pca(
     list!(
         scores = faer_to_r_matrix(scores.as_ref()),
         loadings = faer_to_r_matrix(loadings.as_ref()),
+        singular_values = singular_values_f64,
         scaled = scaled
     )
 }
@@ -271,6 +273,8 @@ fn rs_sc_pca(
 /// algorithm.
 /// @param algorithm_type String. Which of the two implemented algorithms to
 /// use. One of `c("annoy", "hnsw")`.
+/// @param ann_dist String. The distance metric to use the approximate nearest
+/// neighbour search. One of `c("cosine", "euclidean")`.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.

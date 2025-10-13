@@ -39,6 +39,7 @@ new_sc_cache <- function() {
   sc_cache <- list(
     pca_factors = NULL,
     pca_loadings = NULL,
+    pca_singular_vals = NULL,
     other_embeddings = list(),
     knn_matrix = NULL,
     snn_graph = NULL
@@ -117,6 +118,16 @@ set_pca_factors <- function(x, pca_factor) {
 #' @export
 set_pca_loadings <- function(x, pca_loading) {
   UseMethod("set_pca_loadings")
+}
+
+#' Set/add PCA singular values
+#'
+#' @param x An object to add the singular values for.
+#' @param singular_vals Numerical vector. The singular values.
+#'
+#' @export
+set_pca_singular_vals <- function(x, singular_vals) {
+  UseMethod("set_pca_singular_vals")
 }
 
 #' Set/add KNN
@@ -257,6 +268,19 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
   return(x)
 }
 
+#' @rdname set_pca_singular_vals
+#'
+#' @export
+set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::qassert(singular_vals, "N+")
+
+  x[["pca_singular_vals"]] <- singular_vals
+
+  return(x)
+}
+
 #' @rdname set_knn
 #'
 #' @export
@@ -383,6 +407,15 @@ get_hvg <- function(x) {
 #' @export
 get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
+}
+
+#' Get the PCA singular values
+#'
+#' @param x An object to get PCA singular values from.
+#'
+#' @export
+get_pca_singular_val <- function(x) {
+  UseMethod("get_pca_singular_val")
 }
 
 #' Get the PCA loadings
@@ -529,6 +562,18 @@ get_pca_loadings.sc_cache <- function(x) {
   checkmate::assertClass(x, "sc_cache")
 
   res <- x[["pca_loadings"]]
+
+  return(res)
+}
+
+#' @rdname get_pca_singular_val
+#'
+#' @export
+get_pca_singular_val.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  res <- x[["pca_singular_vals"]]
 
   return(res)
 }
@@ -1346,6 +1391,27 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
   return(res)
 }
 
+#' @name get_pca_singular_val.single_cell_exp
+#'
+#' @title Get the PCA singular values from a `single_cell_exp`.
+#'
+#' @rdname get_pca_singular_val
+#'
+#' @method get_pca_singular_val single_cell_exp
+S7::method(get_pca_singular_val, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_singular_val(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
 #' @name get_pca_loadings.single_cell_exp
 #'
 #' @title Get the PCA loadings from a `single_cell_exp`.
@@ -1680,6 +1746,30 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
   S7::prop(x, "sc_cache") <- set_pca_loadings(
     x = S7::prop(x, "sc_cache"),
     pca_loading = pca_loading
+  )
+
+  return(x)
+}
+
+#' @name set_pca_singular_vals.single_cell_exp
+#'
+#' @title Set the PCA singular values for a `single_cell_exp` class.
+#'
+#' @rdname set_pca_singular_vals
+#'
+#' @method set_pca_singular_vals single_cell_exp
+S7::method(set_pca_singular_vals, single_cell_exp) <- function(
+  x,
+  singular_vals
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(singular_vals, "N+")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_pca_singular_vals(
+    x = S7::prop(x, "sc_cache"),
+    singular_vals = singular_vals
   )
 
   return(x)

@@ -495,6 +495,8 @@ params_snf <- function(
 #' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
 #'
 #' @return A list with the parameters.
+#'
+#' @export
 params_sc_synthetic_data <- function(
   n_cells = 1000L,
   n_genes = 100L,

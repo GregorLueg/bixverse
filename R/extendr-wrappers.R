@@ -631,6 +631,8 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @param n_batches Integer. Number of the batches to generated.
 #' @param cell_configs A nested list that indicates which gene indices
 #' are markers for which cell.
+#' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
+#' Defines the strength of the added batch effect.
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @return A list with the following items.
@@ -2034,6 +2036,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' algorithm.
 #' @param algorithm_type String. Which of the two implemented algorithms to
 #' use. One of `c("annoy", "hnsw")`.
+#' @param ann_dist String. The distance metric to use the approximate nearest
+#' neighbour search. One of `c("cosine", "euclidean")`.
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.

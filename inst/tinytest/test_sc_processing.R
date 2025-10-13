@@ -391,7 +391,7 @@ expect_true(
 # test if the scaling results in the same data
 c(pca_factors, pca_loadings, scaled) %<-%
   rs_sc_pca(
-    f_path_gene = get_rust_count_gene_f_path(sc_object),
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
     random_svd = FALSE,
     cell_indices = get_cells_to_keep(sc_object),

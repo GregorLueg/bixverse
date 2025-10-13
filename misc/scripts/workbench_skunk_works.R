@@ -316,7 +316,7 @@ gs_of_interest <- list(
   "rb_perc" = rps_genes
 )
 
-object <- gene_set_proportions(object, gs_of_interest)
+object <- gene_set_proportions_sc(object, gs_of_interest)
 
 object[[]]
 
@@ -328,7 +328,7 @@ object <- find_hvg_sc(object = object, streaming = FALSE)
 get_hvg(object)
 
 # run PCA
-object <- calculate_pca_sc(object, no_pcs = 30L)
+object <- calculate_pca_sc(object, no_pcs = 20L, randomised_svd = FALSE)
 
 # demo difference PCA vs randomised SVD
 
@@ -381,6 +381,8 @@ object <- calculate_pca_sc(object, no_pcs = 30L)
 get_pca_factors(object)[1:5, ]
 
 get_pca_loadings(object)[1:5, ]
+
+get_pca_singular_val(object)
 
 devtools::load_all()
 
