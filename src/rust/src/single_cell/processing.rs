@@ -284,6 +284,34 @@ pub fn get_gene_set_perc_streaming(
 // HVG //
 /////////
 
+/// Enum for the different methods
+pub enum HvgMethod {
+    /// Variance stabilising transformation
+    Vst,
+    /// Binned version by average expression
+    MeanVarBin,
+    /// Simple dispersion
+    Dispersion,
+}
+
+/// Helper function to parse the HVG
+///
+/// ### Params
+///
+/// * `s` - Type of HVG calculation to do
+///
+/// ### Returns
+///
+/// Option of the HvgMethod (some not yet implemented)
+pub fn get_hvg_method(s: &str) -> Option<HvgMethod> {
+    match s.to_lowercase().as_str() {
+        "vst" => Some(HvgMethod::Vst),
+        "meanvarbin" => Some(HvgMethod::MeanVarBin),
+        "dispersion" => Some(HvgMethod::Dispersion),
+        _ => None,
+    }
+}
+
 /// Calculate the mean and variance of a CSC gene chunk
 ///
 /// ### Params
@@ -754,7 +782,7 @@ pub fn get_hvg_mvb_streaming() -> HvgRes {
 ///
 /// A densified, scaled vector per gene basis.
 #[inline]
-fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
+pub fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> (Vec<f32>, f32, f32) {
     let mut dense_data = vec![0.0f32; no_cells];
     for (idx, &row_idx) in chunk.indices.iter().enumerate() {
         dense_data[row_idx as usize] = chunk.data_norm[idx].to_f32();
@@ -763,12 +791,14 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
     let variance = dense_data.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / no_cells as f32;
     let std_dev = variance.sqrt();
 
-    if std_dev < 1e-8 {
+    let scaled = if std_dev < 1e-8 {
         // Zero variance gene - just return centered data (all zeros after centering)
-        return vec![0.0f32; no_cells];
-    }
+        vec![0.0f32; no_cells]
+    } else {
+        dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
+    };
 
-    dense_data.iter().map(|&x| (x - mean) / std_dev).collect()
+    (scaled, mean, std_dev)
 }
 
 /// Calculate the PCs for single cell data
@@ -776,7 +806,8 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
 /// ### Params
 ///
 /// * `f_path` - Path to the gene-based binary file.
-/// * `cell_indices` - HashSet with the cell indices to keep.
+/// * `cell_indices` - Slice of indices for the cells.
+/// * `gene_indices` - Slice of indices for the genes.
 /// * `no_pcs` - Number of principal components to calculate
 /// * `random_svd` - Shall randomised singular value decompostion be used. This
 ///   has the advantage of speed-ups, but loses precision.
@@ -785,7 +816,8 @@ fn scale_csc_chunk(chunk: &CscGeneChunk, no_cells: usize) -> Vec<f32> {
 ///
 /// ### Return
 ///
-/// A tuple of the samples projected on the PC space and gene loadings
+/// A tuple of the samples projected on thePC space, gene loadings and singular
+/// values.
 #[allow(clippy::too_many_arguments)]
 pub fn pca_on_sc(
     f_path: &str,
@@ -820,7 +852,10 @@ pub fn pca_on_sc(
 
     let scaled_data: Vec<Vec<f32>> = gene_chunks
         .par_iter()
-        .map(|chunk| scale_csc_chunk(chunk, cell_indices.len()))
+        .map(|chunk| {
+            let (scaled, _, _) = scale_csc_chunk(chunk, cell_indices.len());
+            scaled
+        })
         .collect();
 
     let num_genes = scaled_data.len();

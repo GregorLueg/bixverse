@@ -70,34 +70,6 @@ fn rs_sc_get_gene_set_perc(
 // Highly variable genes //
 ///////////////////////////
 
-/// Enum for the different methods
-enum HvgMethod {
-    /// Variance stabilising transformation
-    Vst,
-    /// Binned version by average expression
-    MeanVarBin,
-    /// Simple dispersion
-    Dispersion,
-}
-
-/// Helper function to parse the HVG
-///
-/// ### Params
-///
-/// * `s` - Type of HVG calculation to do
-///
-/// ### Returns
-///
-/// Option of the HvgMethod (some not yet implemented)
-fn get_hvg_method(s: &str) -> Option<HvgMethod> {
-    match s.to_lowercase().as_str() {
-        "vst" => Some(HvgMethod::Vst),
-        "meanvarbin" => Some(HvgMethod::MeanVarBin),
-        "dispersion" => Some(HvgMethod::Dispersion),
-        _ => None,
-    }
-}
-
 /// Calculate the percentage of gene sets in the cells
 ///
 /// @description
