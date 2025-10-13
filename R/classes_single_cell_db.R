@@ -321,7 +321,8 @@ single_cell_duckdb_base <- R6::R6Class(
             original.*%s,
             new_data.* EXCLUDE(cell_idx)
           FROM obs AS original
-          JOIN new_data ON original.cell_idx = new_data.cell_idx;
+          JOIN new_data ON original.cell_idx = new_data.cell_idx
+          ORDER BY original.cell_idx;
           DROP TABLE new_data
           ",
           exclude_clause
@@ -377,7 +378,8 @@ single_cell_duckdb_base <- R6::R6Class(
             original.*%s,
             new_data.* EXCLUDE(gene_idx)
           FROM var AS original
-          JOIN new_data ON original.gene_idx = new_data.gene_idx;
+          JOIN new_data ON original.gene_idx = new_data.gene_idx
+          ORDER BY original.gene_idx;
           DROP TABLE new_data
           ",
           exclude_clause
@@ -559,7 +561,8 @@ single_cell_duckdb_con <- R6::R6Class(
               'CREATE TABLE obs_new AS
               SELECT obs.*, temp_col.%s
               FROM obs
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx;
+              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
+              ORDER BY obs.cell_idx;
               DROP table obs;
               ALTER TABLE obs_new RENAME TO obs;
               DROP TABLE temp_col',
@@ -651,7 +654,8 @@ single_cell_duckdb_con <- R6::R6Class(
               'CREATE TABLE var_new AS
               SELECT var.*, temp_col.%s
               FROM var
-              JOIN temp_col ON var.gene_idx = temp_col.gene_idx;
+              JOIN temp_col ON var.gene_idx = temp_col.gene_idx
+              ORDER BY var.gene_idx;
               DROP table var;
               ALTER TABLE var_new RENAME TO var;
               DROP TABLE temp_col',

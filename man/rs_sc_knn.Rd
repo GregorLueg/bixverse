@@ -29,6 +29,9 @@ algorithm.}
 \item{algorithm_type}{String. Which of the two implemented algorithms to
 use. One of \code{c("annoy", "hnsw")}.}
 
+\item{ann_dist}{String. The distance metric to use the approximate nearest
+neighbour search. One of \code{c("cosine", "euclidean")}.}
+
 \item{verbose}{Boolean. Controls verbosity of the function and returns
 how long certain operations took.}
 

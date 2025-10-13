@@ -1,6 +1,8 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::sync::Arc;
+use std::time::Instant;
 use thousands::Separable;
 
 use crate::core::data::sparse_io::*;
@@ -16,6 +18,13 @@ use crate::utils::traits::F16;
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
 // classes. This will have to be done manually in R... Documentation
 // still here to make it easier.
+
+//////////////////
+// Type aliases //
+//////////////////
+
+/// Type to store the GeneData during streaming
+type GeneData = Vec<FxHashMap<u16, Vec<(u32, u16, F16)>>>;
 
 ///////////
 // Enums //
@@ -564,6 +573,8 @@ impl SingeCellCountData {
         let no_cells = reader.get_header().total_cells;
         let no_genes = reader.get_header().total_genes;
 
+        let start_conversion = Instant::now();
+
         if verbose {
             println!("Loading in the cell data and saving it into a gene-friendly file")
         }
@@ -630,6 +641,15 @@ impl SingeCellCountData {
             writer.write_gene_chunk(chunk_i).unwrap();
         }
 
+        let end_conversion = start_conversion.elapsed();
+
+        if verbose {
+            println!(
+                "Convertion data into gene-friendly format done: {:.2?}",
+                end_conversion
+            );
+        }
+
         writer.finalise().unwrap();
     }
 
@@ -653,6 +673,8 @@ impl SingeCellCountData {
             println!("Streaming cell data to gene-friendly format with reduced memory usage.");
         }
 
+        let start_conversion = Instant::now();
+
         // Use HashMap to accumulate gene data - only keep current batch in memory
         let mut gene_data_map: FxHashMap<u16, Vec<(u32, u16, F16)>> = FxHashMap::default();
 
@@ -671,7 +693,7 @@ impl SingeCellCountData {
                 let progress = (batch_idx + 1) as f32 / total_batches as f32 * 100.0;
                 if batch_idx % (total_batches / 10).max(1) == 0 || batch_idx == total_batches - 1 {
                     println!(
-                        "Progress: {:.1}% ( {} / {} batches)",
+                        " Progress: {:.1}% ( {} / {} batches)",
                         progress,
                         batch_idx + 1,
                         total_batches
@@ -728,17 +750,22 @@ impl SingeCellCountData {
 
                 writer.write_gene_chunk(chunk).unwrap();
             } else {
-                // Gene has no expression - write empty chunk
+                // gene has no expression - write empty chunk
                 let chunk = CscGeneChunk::from_conversion(&[], &[], &[], gene_id, true);
                 writer.write_gene_chunk(chunk).unwrap();
             }
         }
 
-        writer.finalise().unwrap();
+        let end_conversion = start_conversion.elapsed();
 
         if verbose {
-            println!("Gene-based data generation completed");
+            println!(
+                "Convertion data into gene-friendly format done: {:.2?}",
+                end_conversion
+            );
         }
+
+        writer.finalise().unwrap();
     }
 
     /// Generate gene-based data with memory-bounded accumulation
@@ -763,7 +790,7 @@ impl SingeCellCountData {
         cell_batch_size: usize,
         verbose: bool,
     ) {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+        let reader = Arc::new(ParallelSparseReader::new(&self.f_path_cells).unwrap());
         let header = reader.get_header();
         let no_cells = header.total_cells;
         let no_genes = header.total_genes;
@@ -778,10 +805,11 @@ impl SingeCellCountData {
             );
         }
 
+        let start_conversion = Instant::now();
+
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
 
-        // Process genes in phases
         let num_phases = no_genes.div_ceil(max_genes_in_memory);
 
         for phase in 0..num_phases {
@@ -798,54 +826,68 @@ impl SingeCellCountData {
                 );
             }
 
-            // Accumulator only for current phase genes
-            let mut gene_data: FxHashMap<u16, Vec<(u32, u16, F16)>> = FxHashMap::default();
-
-            // Process all cells in batches
             let num_cell_batches = no_cells.div_ceil(cell_batch_size);
+            let cell_batches: Vec<(usize, usize)> = (0..num_cell_batches)
+                .map(|i| {
+                    let start = i * cell_batch_size;
+                    let end = ((i + 1) * cell_batch_size).min(no_cells);
+                    (start, end)
+                })
+                .collect();
 
-            for cell_batch_idx in 0..num_cell_batches {
-                let cell_start = cell_batch_idx * cell_batch_size;
-                let cell_end = ((cell_batch_idx + 1) * cell_batch_size).min(no_cells);
+            // Parallel accumulation
+            let gene_data_parts: GeneData = cell_batches
+                .par_iter()
+                .map(|&(cell_start, cell_end)| {
+                    let mut local_gene_data: FxHashMap<u16, Vec<(u32, u16, F16)>> =
+                        FxHashMap::default();
 
-                if verbose && cell_batch_idx % 5 == 0 {
-                    let progress = (cell_batch_idx + 1) as f32 / num_cell_batches as f32 * 100.0;
-                    println!("  Reading cells: {:.1}%", progress);
-                }
+                    // Create a separate reader for this thread
+                    if let Ok(local_reader) = ParallelSparseReader::new(&self.f_path_cells) {
+                        let cells = local_reader.read_cells_range(cell_start, cell_end);
 
-                // Read batch of cells
-                let cells = reader.read_cells_range(cell_start, cell_end);
+                        for cell in cells {
+                            let cell_id = cell.original_index as u32;
 
-                // Extract data only for genes in current phase
-                for cell in cells {
-                    let cell_id = cell.original_index as u32;
+                            for (idx, &gene_id) in cell.indices.iter().enumerate() {
+                                if (gene_id as usize) >= gene_phase_start
+                                    && (gene_id as usize) < gene_phase_end
+                                {
+                                    let raw_count = cell.data_raw[idx];
+                                    let norm_count = cell.data_norm[idx];
 
-                    for (idx, &gene_id) in cell.indices.iter().enumerate() {
-                        // Only accumulate if gene is in current phase
-                        if (gene_id as usize) >= gene_phase_start
-                            && (gene_id as usize) < gene_phase_end
-                        {
-                            let raw_count = cell.data_raw[idx];
-                            let norm_count = cell.data_norm[idx];
-
-                            gene_data
-                                .entry(gene_id)
-                                .or_default()
-                                .push((cell_id, raw_count, norm_count));
+                                    local_gene_data
+                                        .entry(gene_id)
+                                        .or_insert_with(|| Vec::with_capacity(100))
+                                        .push((cell_id, raw_count, norm_count));
+                                }
+                            }
                         }
                     }
+
+                    local_gene_data
+                })
+                .collect();
+
+            if verbose {
+                println!("  Merging parallel results...");
+            }
+
+            // Merge results
+            let mut gene_data: FxHashMap<u16, Vec<(u32, u16, F16)>> = FxHashMap::default();
+            for local_data in gene_data_parts {
+                for (gene_id, mut entries) in local_data {
+                    gene_data.entry(gene_id).or_default().append(&mut entries);
                 }
-                // Cell batch is dropped here - memory freed
             }
 
             if verbose {
                 println!("  Writing {} genes to disk...", gene_data.len());
             }
 
-            // Write genes in this phase in sorted order
+            // Write genes in sorted order
             for gene_id in gene_phase_start..gene_phase_end {
                 if let Some(mut entries) = gene_data.remove(&(gene_id as u16)) {
-                    // Sort by cell_id
                     entries.sort_unstable_by_key(|&(cell_id, _, _)| cell_id);
 
                     let data_raw: Vec<u16> = entries.iter().map(|(_, raw, _)| *raw).collect();
@@ -864,13 +906,11 @@ impl SingeCellCountData {
                     );
                     writer.write_gene_chunk(chunk).unwrap();
                 } else {
-                    // Gene has no expression
                     let empty_chunk = CscGeneChunk::from_conversion(&[], &[], &[], gene_id, true);
                     writer.write_gene_chunk(empty_chunk).unwrap();
                 }
             }
 
-            // gene_data HashMap is dropped here - memory freed before next phase
             if verbose {
                 println!("Phase {}/{} complete", phase + 1, num_phases);
             }
@@ -878,8 +918,13 @@ impl SingeCellCountData {
 
         writer.finalise().unwrap();
 
+        let end_conversion = start_conversion.elapsed();
+
         if verbose {
-            println!("Gene-based data generation complete");
+            println!(
+                "Conversion into gene-friendly format done: {:.2?}",
+                end_conversion
+            );
         }
     }
 

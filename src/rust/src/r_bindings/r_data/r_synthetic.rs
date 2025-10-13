@@ -243,6 +243,8 @@ fn rs_simulate_dropouts(
 /// @param n_batches Integer. Number of the batches to generated.
 /// @param cell_configs A nested list that indicates which gene indices
 /// are markers for which cell.
+/// @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
+/// Defines the strength of the added batch effect.
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @return A list with the following items.

@@ -26,8 +26,8 @@ less precise.}
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
 \value{
-The function will add the PCA factors and loadings to the object
-cache in memory.
+The function will add the PCA factors, loadings and singular values
+to the object cache in memory.
 }
 \description{
 This function will run PCA (option of full SVD and randomised SVD for now)

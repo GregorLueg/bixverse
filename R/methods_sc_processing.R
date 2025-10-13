@@ -888,8 +888,8 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #' `randomised_svd = TRUE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
-#' @return The function will add the PCA factors and loadings to the object
-#' cache in memory.
+#' @return The function will add the PCA factors, loadings and singular values
+#' to the object cache in memory.
 #'
 #' @export
 calculate_pca_sc <- S7::new_generic(
@@ -933,7 +933,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
     return(object)
   }
 
-  c(pca_factors, pca_loadings, scaled) %<-%
+  c(pca_factors, pca_loadings, singular_values, scaled) %<-%
     rs_sc_pca(
       f_path_gene = get_rust_count_gene_f_path(object),
       no_pcs = no_pcs,
@@ -947,6 +947,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 
   object <- set_pca_factors(object, pca_factors)
   object <- set_pca_loadings(object, pca_loadings)
+  object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
 
   return(object)
 }

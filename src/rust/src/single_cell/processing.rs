@@ -796,7 +796,7 @@ pub fn pca_on_sc(
     seed: usize,
     return_scaled: bool,
     verbose: bool,
-) -> (Mat<f32>, Mat<f32>, Option<Mat<f32>>) {
+) -> (Mat<f32>, Mat<f32>, Vec<f32>, Option<Mat<f32>>) {
     let start_total = Instant::now();
 
     let cell_set: IndexSet<u32> = cell_indices.iter().map(|&x| x as u32).collect();
@@ -836,19 +836,26 @@ pub fn pca_on_sc(
 
     let start_svd = Instant::now();
 
-    let (scores, loadings) = if random_svd {
+    let (scores, loadings, s) = if random_svd {
         let res: RandomSvdResults<f32> =
             randomised_svd_f32(scaled_data.as_ref(), no_pcs, seed, Some(100_usize), None);
         // Take first no_pcs components and compute scores as X * V
         let loadings = res.v.submatrix(0, 0, num_genes, no_pcs).to_owned();
         let scores = &scaled_data * &loadings;
-        (scores, loadings)
+        (scores, loadings, res.s)
     } else {
         let res = scaled_data.thin_svd().unwrap();
         // Take only the first no_pcs components
         let loadings = res.V().submatrix(0, 0, num_genes, no_pcs).to_owned();
         let scores = &scaled_data * &loadings;
-        (scores, loadings)
+        let s: Vec<f32> = res
+            .S()
+            .column_vector()
+            .iter()
+            .take(no_pcs)
+            .copied()
+            .collect();
+        (scores, loadings, s)
     };
 
     let end_svd = start_svd.elapsed();
@@ -869,5 +876,5 @@ pub fn pca_on_sc(
         None
     };
 
-    (scores, loadings, scaled)
+    (scores, loadings, s, scaled)
 }

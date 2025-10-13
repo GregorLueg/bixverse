@@ -23,6 +23,9 @@ rs_synthetic_sc_data_with_cell_types(
 \item{cell_configs}{A nested list that indicates which gene indices
 are markers for which cell.}
 
+\item{batch_effect_strength}{String. One of \code{c("strong", "medium", "low")}.
+Defines the strength of the added batch effect.}
+
 \item{seed}{Integer. Random seed for reproducibility.}
 }
 \value{
