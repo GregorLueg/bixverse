@@ -1018,6 +1018,22 @@ impl ParallelSparseReader {
             .collect()
     }
 
+    /// Read a single cell by index
+    ///
+    /// ### Params
+    ///
+    /// * `index` - Cell index
+    ///
+    /// ### Return
+    ///
+    /// The CsrCellChunk of this cell
+    pub fn read_cell(&self, index: usize) -> CsrCellChunk {
+        self.read_cells_parallel(&[index])
+            .into_iter()
+            .next()
+            .unwrap()
+    }
+
     /// Read in genes by indices in a multi-threaded manner
     ///
     /// ### Params
