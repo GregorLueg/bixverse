@@ -389,7 +389,7 @@ expect_true(
 #### scaling within the rust function ------------------------------------------
 
 # test if the scaling results in the same data
-c(pca_factors, pca_loadings, scaled) %<-%
+c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
   rs_sc_pca(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
