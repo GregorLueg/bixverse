@@ -17,11 +17,14 @@ single_cell_test_data <- generate_single_cell_test_data()
 
 f_path_csr = file.path(tempdir(), "csr_test.h5ad")
 
+obs_table <- single_cell_test_data$obs
+obs_table$to_keep <- TRUE
+
 write_h5ad_sc(
   f_path = f_path_csr,
   counts = single_cell_test_data$counts,
   obs = single_cell_test_data$obs,
-  single_cell_test_data$var,
+  var = single_cell_test_data$var,
   .verbose = FALSE
 )
 
@@ -177,8 +180,10 @@ expect_true(
 sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
 
 expect_true(
-  current = all(unlist(sc_object[["cell_id"]]) == cells_to_keep),
-  info = "setting genes to keep removes them from the obs table"
+  current = all(
+    unlist(sc_object[[]][to_keep == TRUE, cell_id]) == cells_to_keep
+  ),
+  info = "setting cells to keep removes them from the obs table"
 )
 
 cell_names_filtered <- get_cell_names(sc_object, filtered = TRUE)
@@ -426,8 +431,12 @@ expect_true(
 
 sc_object <- find_clusters_sc(sc_object)
 
-cell_grps <- unlist(sc_object[["obs_cell_grp"]])
+
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+filter_ind <- is.na(leiden_clusters)
+
+leiden_clusters <- leiden_clusters[!filter_ind]
+cell_grps <- unlist(sc_object[["obs_cell_grp"]])[!filter_ind]
 
 f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
 

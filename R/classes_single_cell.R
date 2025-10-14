@@ -791,6 +791,7 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
+#' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
 #'
 #' @return The obs table
 #'
@@ -801,7 +802,8 @@ get_sc_obs <- S7::new_generic(
   fun = function(
     object,
     indices = NULL,
-    cols = NULL
+    cols = NULL,
+    filtered = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -813,15 +815,22 @@ get_sc_obs <- S7::new_generic(
 S7::method(get_sc_obs, single_cell_exp) <- function(
   object,
   indices = NULL,
-  cols = NULL
+  cols = NULL,
+  filtered = FALSE
 ) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(indices, c("0", "I+"))
-
+  checkmate::qassert(filtered, "B1")
   duckdb_con <- get_sc_duckdb(object)
 
-  obs_table <- duckdb_con$get_obs_table(indices = indices, cols = cols)
+  obs_table <- duckdb_con$get_obs_table(
+    indices = indices,
+    cols = cols,
+    filtered = filtered
+  )
+
+  obs_table
 
   return(obs_table)
 }
@@ -876,11 +885,11 @@ S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
   }
 
   if (checkmate::qtest(i, "S+")) {
-    get_sc_obs(x, cols = i)
+    get_sc_obs(x, cols = i, filtered = TRUE)
   } else if (checkmate::qtest(i, "I+")) {
-    get_sc_obs(x, indices = i)
+    get_sc_obs(x, indices = i, filtered = TRUE)
   } else if (checkmate::qtest(i, "0")) {
-    get_sc_obs(x)
+    get_sc_obs(x, filtered = TRUE)
   } else {
     stop("Invalid type")
   }
@@ -935,11 +944,11 @@ S7::method(get_sc_map, single_cell_exp) <- function(
 #' shall the counts be reduced to these.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The obs table
+#' @return The counts table
 #'
 #' @export
 get_sc_counts <- S7::new_generic(
-  name = "get_sc_obs",
+  name = "get_sc_counts",
   dispatch_args = "object",
   fun = function(
     object,

@@ -1168,10 +1168,13 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 
   duckdb_con <- get_sc_duckdb(object)
 
-  new_data <- data.table::data.table(new_data = leiden_clusters$membership)
+  new_data <- data.table::data.table(
+    cell_id = get_cell_names(object, filtered = TRUE),
+    new_data = leiden_clusters$membership
+  )
   data.table::setnames(new_data, "new_data", name)
 
-  duckdb_con$add_data_obs(new_data = new_data)
+  duckdb_con$join_data_obs(new_data = new_data)
 
   return(object)
 }

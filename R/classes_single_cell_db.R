@@ -44,13 +44,15 @@ single_cell_duckdb_base <- R6::R6Class(
     #'
     #' @param indices Optional cell/obs indices.
     #' @param cols Optional column names to return.
+    #' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
     #'
     #' @return The observation table (if found) as a data.table with optionally
     #' selected indices and/or columns.
-    get_obs_table = function(indices = NULL, cols = NULL) {
+    get_obs_table = function(indices = NULL, cols = NULL, filtered = FALSE) {
       # checks
       checkmate::qassert(indices, c("0", "I+"))
       checkmate::qassert(cols, c("0", "S+"))
+      checkmate::qassert(filtered, "B1")
       private$check_obs_exists()
 
       con <- private$connect_db()
@@ -68,21 +70,34 @@ single_cell_duckdb_base <- R6::R6Class(
         paste(cols, collapse = ", ")
       }
 
-      sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM obs", col_part)
-      } else {
-        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
-        sprintf(
-          "SELECT %s FROM obs WHERE cell_idx IN (%s)",
-          col_part,
-          placeholders
-        )
+      where_clauses <- character()
+      params <- list()
+
+      if (filtered) {
+        where_clauses <- c(where_clauses, "to_keep = TRUE")
       }
+
+      if (!is.null(indices)) {
+        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
+        where_clauses <- c(
+          where_clauses,
+          sprintf("cell_idx IN (%s)", placeholders)
+        )
+        params <- as.list(indices)
+      }
+
+      where_part <- if (length(where_clauses) > 0) {
+        paste("WHERE", paste(where_clauses, collapse = " AND "))
+      } else {
+        ""
+      }
+
+      sql_query <- sprintf("SELECT %s FROM obs %s", col_part, where_part)
 
       obs_dt <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
         statement = sql_query,
-        params = as.list(indices)
+        params = params
       ))
 
       return(obs_dt)
@@ -197,7 +212,10 @@ single_cell_duckdb_base <- R6::R6Class(
       checkmate::qassert(filter_vec, "B+")
       private$check_obs_exists()
 
-      filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
+      filter_dt <- data.frame(
+        cell_idx = seq_along(filter_vec),
+        to_keep = filter_vec
+      )
 
       # get the connection
       con <- private$connect_db()
@@ -221,10 +239,10 @@ single_cell_duckdb_base <- R6::R6Class(
         "
         CREATE OR REPLACE TABLE obs AS
         SELECT 
-          ROW_NUMBER() OVER() as cell_idx,
-          * EXCLUDE (cell_idx)  -- exclude old cell_idx column
+          obs.*,
+          COALESCE(temp_filter.to_keep, FALSE) as to_keep
         FROM obs 
-        WHERE cell_idx IN (SELECT cell_idx FROM temp_filter);
+        LEFT JOIN temp_filter ON obs.cell_idx = temp_filter.cell_idx;
         DROP TABLE temp_filter
         "
       )
@@ -325,6 +343,60 @@ single_cell_duckdb_base <- R6::R6Class(
           ORDER BY original.cell_idx;
           DROP TABLE new_data
           ",
+          exclude_clause
+        )
+      )
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Left join new data to the obs table in the DuckDB by cell_idx
+    #'
+    #' @param new_data A data.table with a cell_idx column to join on.
+    #'
+    #' @return Invisible self while left joining the new data to the obs table
+    #' in the DuckDB.
+    join_data_obs = function(new_data) {
+      checkmate::assertDataTable(new_data)
+      private$check_obs_exists()
+      checkmate::assertTRUE("cell_id" %in% names(new_data))
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
+
+      existing_cols <- DBI::dbGetQuery(
+        con,
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
+      )$column_name
+      new_cols <- setdiff(names(new_data), "cell_id")
+      cols_to_exclude <- intersect(existing_cols, new_cols)
+
+      exclude_clause <- if (length(cols_to_exclude) > 0) {
+        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+      } else {
+        ""
+      }
+
+      DBI::dbExecute(
+        con,
+        sprintf(
+          "
+      CREATE OR REPLACE TABLE obs AS
+      SELECT
+        original.*%s,
+        new_data.* EXCLUDE(cell_id)
+      FROM obs AS original
+      LEFT JOIN new_data ON original.cell_id = new_data.cell_id
+      ORDER BY original.cell_idx;
+      DROP TABLE new_data
+      ",
           exclude_clause
         )
       )
