@@ -4,7 +4,66 @@ use std::time::Instant;
 
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
+use crate::single_cell::scrublet::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
+
+///////////////////////
+// Doublet detection //
+///////////////////////
+
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_sc_scrublet(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cells_to_keep: Vec<i32>,
+    scrublet_params: List,
+    target_size: f64,
+    seed: usize,
+    verbose: bool,
+    streaming: bool,
+) -> List {
+    let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
+
+    let cells_to_keep = cells_to_keep
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
+
+    let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
+
+    let scrublet_res: ScrubletResult =
+        scrublet.run_scrublet(streaming, target_size as f32, seed, verbose);
+
+    list!(
+        predicted_doublets = scrublet_res.predicted_doublets,
+        doublet_scores_obs = scrublet_res
+            .doublet_scores_obs
+            .iter()
+            .map(|x| *x as f64)
+            .collect::<Vec<f64>>(),
+        doublet_scores_sim = scrublet_res
+            .doublet_scores_sim
+            .iter()
+            .map(|x| *x as f64)
+            .collect::<Vec<f64>>(),
+        doublet_errors_obs = scrublet_res
+            .doublet_errors_obs
+            .iter()
+            .map(|x| *x as f64)
+            .collect::<Vec<f64>>(),
+        z_scores = scrublet_res
+            .z_scores
+            .iter()
+            .map(|x| *x as f64)
+            .collect::<Vec<f64>>(),
+        threshold = scrublet_res.threshold as f64,
+        detected_doublet_rate = scrublet_res.detected_doublet_rate as f64,
+        detectable_doublet_fraction = scrublet_res.detectable_doublet_fraction as f64,
+        overall_doublet_rate = scrublet_res.overall_doublet_rate as f64
+    )
+}
 
 //////////////////////////
 // Gene set proportions //
@@ -366,6 +425,7 @@ fn rs_sc_snn(
 
 extendr_module! {
     mod r_sc_processing;
+    fn rs_sc_scrublet;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_pca;
