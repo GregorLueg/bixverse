@@ -15,16 +15,6 @@ no_pcs <- 10L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-write_h5ad_sc(
-  f_path = f_path_csr,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  .verbose = FALSE
-)
-
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
 )
@@ -48,7 +38,7 @@ expect_true(
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp,
@@ -59,12 +49,20 @@ sc_qc_param = params_sc_min_quality(
 
 sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_h5ad(
-  object = sc_object,
-  h5_path = path.expand(f_path_csr),
-  sc_qc_param = sc_qc_param,
-  .verbose = FALSE
-)
+sc_object <- # keep all cells for the sake of this
+  sc_object <- load_r_data(
+    object = sc_object,
+    counts = single_cell_test_data$counts,
+    obs = single_cell_test_data$obs,
+    var = single_cell_test_data$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = min_genes_exp,
+      min_lib_size = min_lib_size,
+      min_cells = min_cells_exp
+    ),
+    streaming = FALSE,
+    .verbose = FALSE
+  )
 
 # tests ------------------------------------------------------------------------
 
@@ -82,7 +80,6 @@ expect_true(
 
 ## function warnings -----------------------------------------------------------
 
-# throws no warning anymore after the update
 # expect_warning(
 #   current = find_hvg_sc(sc_object),
 #   info = "warning that no cells to keep were specified"
@@ -218,13 +215,13 @@ expect_equivalent(
 # the logic of retrieving cells will become more complicated here...
 
 expect_equal(
-  current = sc_object[,, use_cells_to_keep = TRUE],
+  current = sc_object[, , use_cells_to_keep = TRUE],
   target = counts_more_filtered,
   info = "counts after setting cells to keep and using the parameter"
 )
 
 expect_equal(
-  current = sc_object[,, use_cells_to_keep = FALSE],
+  current = sc_object[, , use_cells_to_keep = FALSE],
   target = counts_filtered,
   info = "counts after setting cells to keep and NOT using the parameter"
 )
@@ -450,6 +447,7 @@ expect_true(
 
 sc_object <- find_clusters_sc(sc_object)
 
+cell_grps <- unlist(sc_object[["cell_grp"]])
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
 
 cell_grps <- unlist(sc_object[["cell_grp"]])

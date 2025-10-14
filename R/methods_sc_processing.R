@@ -713,13 +713,142 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
 ### doublet detection ----------------------------------------------------------
 
+#' Doublet detection with Scrublet
+#'
+#' @description This function implements the doublet detection from Scrublet,
+#' see Wolock, et al. Briefly, arteficial doublets are being generated from
+#' the data via random combination of initial cells. Highly variable genes (HVG)
+#' are being identified and the observed cells are being projected on a PCA
+#' space. Subsequently, the simulated doublets are being projected on the same
+#' PCA space given the same HVGs; kNN graphs are being generated and a kNN
+#' classifier is used to assign a probability that a given cell in the original
+#' data is a doublet. For more details, please check the publication.
+#'
+#' @param object `single_cell_exp` class.
+#' @param target_size Numeric. The library target size for the simulated cells.
+#' Needs to be the same as the initial one (usually `1e5`).
+#' @param scrublet_params A list with the scrublet parameters, see
+#' [bixverse::params_scrublet()]. This list contains:
+#' \itemize{
+#'   \item min_gene_var_pctl - Numeric. Percentile threshold for highly variable
+#'   genes. For example, 0.85 means keep genes in top 15% of variability.
+#'   \item hvg_method - String. Method for highly variable gene selection. One
+#'   of c("vst", "mvb", "dispersion"). Defaults to "vst" (variance stabilising
+#'   transformation).
+#'   \item loess_span - Numeric. Span parameter for loess fitting in VST method.
+#'   Controls smoothness of the fitted curve.
+#'   \item clip_max - Optional numeric. Optional maximum value for clipping in
+#'   variance stabilisation.
+#'   \item sim_doublet_ratio - Numeric. Number of doublets to simulate relative
+#'   to the number of observed cells. For example, 2.0 simulates twice as many
+#'   doublets as there are cells. Defaults to `1.0`.
+#'   \item expected_doublet_rate - Numeric. Expected doublet rate for the
+#'   experiment, typically 0.05-0.10 depending on cell loading. Must be between
+#'   0 and 1.
+#'   \item stdev_doublet_rate - Numeric. Uncertainty in the expected doublet
+#'   rate.
+#'   \item no_pcs - Integer. Number of principal components to use for
+#'   embedding.
+#'   \item random_svd - Boolean. Whether to use randomised SVD (faster) vs
+#'   exact SVD.
+#'   \item k - Integer. Number of nearest neighbours for the kNN graph. If 0
+#'   (default), automatically calculated as `round(0.5 * sqrt(n_cells))`.
+#'   \item knn_method - String. Distance metric to use. One of
+#'   `c("cosine", "euclidean")`. Defaults to `"cosine"`.
+#'   \item search_budget - Integer. Search budget for Annoy algorithm (higher =
+#'   more accurate but slower).
+#'   \item n_trees - Integer. Number of trees for Annoy index generation.
+#'   \item n_bins - Integer. Number of bins for histogram-based automatic
+#'   threshold detection. Typically 50-100.
+#'   \item manual_threshold - Optional numeric. Optional manual doublet score
+#'   threshold. If NULL (default), threshold is automatically detected from
+#'   simulated doublet score distribution.
+#' }
+#' @param seed Integer. Random seed.
+#' @param streaming Boolean. Shall streaming be used during the HVG
+#' calculations. Slower, but less memory usage.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A `scrublet_res` class that has with the following items:
+#' \itemize{
+#'   \item predicted_doublets - Boolean vector indicating which observed cells
+#'   predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'   \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'   a doublet for the observed cells.
+#'   \item doublet_scores_sim - Numerical vector with the likelihood of being
+#'   a doublet for the simulated cells.
+#'   \item doublet_errors_obs - Numerical vector with the standard errors of
+#'   the scores for the observed cells.
+#'   \item z_scores - Z-scores for the observed cells. Represents:
+#'   `score - threshold / error`.
+#'   \item threshold - Used threshold.
+#'   \item detected_doublet_rate - Fraction of cells that are called as
+#'   doublet.
+#'   \item detectable_doublet_fraction - Fraction of simulated doublets with
+#'   scores above the threshold.
+#'   \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
+#'   match the expected doublet rate.
+#' }
+#'
+#' @export
+#'
+#' @references Wollock, et al., Cell Syst, 2020
 scrublet_sc <- S7::new_generic(
   name = "scrublet_sc",
   dispatch_args = "object",
-  fun = function(object) {
+  fun = function(
+    object,
+    target_size,
+    scrublet_params = params_scrublet(),
+    seed = 42L,
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
     S7::S7_dispatch()
   }
 )
+
+#' @method scrublet_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(scrublet_sc, single_cell_exp) <- function(
+  object,
+  target_size,
+  scrublet_params = params_scrublet(),
+  seed = 42L,
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(target_size, "N1")
+  assertScScrublet(scrublet_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  cells_to_keep <- get_cells_to_keep(object)
+
+  scrublet_res <- rs_sc_scrublet(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cells_to_keep = cells_to_keep,
+    scrublet_params = scrublet_params,
+    target_size = target_size,
+    seed = seed,
+    verbose = .verbose,
+    streaming = streaming
+  )
+
+  attr(scrublet_res, "cell_indices") <- cells_to_keep
+  class(scrublet_res) <- "scrublet_res"
+
+  return(scrublet_res)
+}
 
 ### gene proportions -----------------------------------------------------------
 

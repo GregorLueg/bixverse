@@ -1946,6 +1946,45 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #' @export
 rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
 
+#' Scrublet Rust interface
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+#' to include in this analysis.
+#' @param scrublet_params List. Parameter list, see
+#' [bixverse::params_scrublet()].
+#' @param target_size Numeric. The library target size for the simulated
+#' droplets. Should be the same normalisation as for the original cells.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity
+#' @param streaming Boolean. Shall the data be streamed for the HVG
+#' calculations.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'  a doublet for the observed cells.
+#'  \item doublet_scores_sim - Numerical vector with the likelihood of being
+#'  a doublet for the simulated cells.
+#'  \item doublet_errors_obs - Numerical vector with the standard errors of
+#'  the scores for the observed cells.
+#'  \item z_scores - Z-scores for the observed cells. Represents:
+#'  `score - threshold / error`.
+#'  \item threshold - Used threshold.
+#'  \item detected_doublet_rate - Fraction of cells that are called as
+#'  doublet.
+#'  \item detectable_doublet_fraction - Fraction of simulated doublets with
+#'  scores above the threshold.
+#'  \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
+#'  match the expected doublet rate.
+#' }
+#'
+#' @export
+rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, target_size, seed, verbose, streaming) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, target_size, seed, verbose, streaming)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description

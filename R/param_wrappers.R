@@ -605,6 +605,117 @@ params_sc_min_quality <- function(
   )
 }
 
+#' Wrapper function for Scrublet doublet detection parameters
+#'
+#' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
+#' genes. For example, 0.85 means keep genes in top 15% of variability.
+#' @param hvg_method String. Method for highly variable gene selection. One of
+#' `c("vst", "mvb", "dispersion")`. Defaults to `"vst"` (variance stabilising
+#' transformation).
+#' @param loess_span Numeric. Span parameter for loess fitting in VST method.
+#' Controls smoothness of the fitted curve.
+#' @param clip_max Optional numeric. Optional maximum value for clipping in
+#' variance stabilisation.
+#' @param sim_doublet_ratio Numeric. Number of doublets to simulate relative to
+#' the number of observed cells. For example, 2.0 simulates twice as many
+#' doublets as there are cells.
+#' @param expected_doublet_rate Numeric. Expected doublet rate for the
+#' experiment, typically 0.05-0.10 depending on cell loading. Must be between
+#' 0 and 1.
+#' @param stdev_doublet_rate Numeric. Uncertainty in the expected doublet rate.
+#' @param no_pcs Integer. Number of principal components to use for embedding.
+#' @param random_svd Boolean. Whether to use randomised SVD (faster) vs exact
+#' SVD.
+#' @param k Integer. Number of nearest neighbours for the kNN graph. If 0
+#' (default), automatically calculated as round(0.5 * sqrt(n_cells)).
+#' @param knn_method String. Method for approximate nearest neighbor search.
+#' One of `c("annoy", "hnsw")`. Defaults to `"annoy"`.
+#' @param dist_metric String. Distance metric to use. One of
+#' `c("cosine", "euclidean")`. Defaults to `"cosine"`.
+#' @param search_budget Integer. Search budget for Annoy algorithm (higher =
+#' more accurate but slower).
+#' @param n_trees Integer. Number of trees for Annoy index generation.
+#' @param n_bins Integer. Number of bins for histogram-based automatic threshold
+#' detection. Typically 50-100.
+#' @param manual_threshold Optional numeric. Optional manual doublet score
+#' threshold. If NULL (default), threshold is automatically detected from
+#' simulated doublet score distribution.
+#'
+#' @returns A list with the Scrublet parameters.
+#'
+#' @export
+params_scrublet <- function(
+  min_gene_var_pctl = 0.85,
+  hvg_method = c("vst", "mvb", "dispersion"),
+  loess_span = 0.3,
+  clip_max = NULL,
+  sim_doublet_ratio = 1.0,
+  expected_doublet_rate = 0.1,
+  stdev_doublet_rate = 0.02,
+  no_pcs = 30L,
+  random_svd = TRUE,
+  k = 0L,
+  knn_method = c("annoy", "hnsw"),
+  dist_metric = c("cosine", "euclidean"),
+  search_budget = 100L,
+  n_trees = 100L,
+  n_bins = 100L,
+  manual_threshold = NULL
+) {
+  hvg_method <- match.arg(hvg_method)
+  knn_method <- match.arg(knn_method)
+  dist_metric <- match.arg(dist_metric)
+
+  # HVG detection checks
+  checkmate::qassert(min_gene_var_pctl, "N1[0,1]")
+  checkmate::assertChoice(hvg_method, c("vst", "mvb", "dispersion"))
+  checkmate::qassert(loess_span, "N1(0,)")
+  if (!is.null(clip_max)) {
+    checkmate::qassert(clip_max, "N1(0,)")
+  }
+
+  # Doublet simulation checks
+  checkmate::qassert(sim_doublet_ratio, "N1(0,)")
+  checkmate::qassert(expected_doublet_rate, "N1[0,1]")
+  checkmate::qassert(stdev_doublet_rate, "N1[0,1]")
+
+  # PCA checks
+  checkmate::qassert(no_pcs, "I1[1,)")
+  checkmate::qassert(random_svd, "B1")
+
+  # kNN checks
+  checkmate::qassert(k, "I1[0,)")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::assertChoice(dist_metric, c("euclidean", "cosine"))
+  checkmate::qassert(search_budget, "I1[1,)")
+  checkmate::qassert(n_trees, "I1[1,)")
+
+  # Doublet calling checks
+  checkmate::qassert(n_bins, "I1[10,)")
+  if (!is.null(manual_threshold)) {
+    checkmate::qassert(manual_threshold, "N1[0,)")
+  }
+
+  list(
+    min_gene_var_pctl = min_gene_var_pctl,
+    hvg_method = hvg_method,
+    loess_span = loess_span,
+    clip_max = clip_max,
+    sim_doublet_ratio = sim_doublet_ratio,
+    expected_doublet_rate = expected_doublet_rate,
+    stdev_doublet_rate = stdev_doublet_rate,
+    no_pcs = no_pcs,
+    random_svd = random_svd,
+    k = k,
+    knn_method = knn_method,
+    dist_metric = dist_metric,
+    search_budget = search_budget,
+    n_trees = n_trees,
+    n_bins = n_bins,
+    manual_threshold = manual_threshold
+  )
+}
+
 #' Wrapper function for HVG detection parameters.
 #'
 #' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.

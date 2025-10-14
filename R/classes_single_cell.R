@@ -686,8 +686,7 @@ get_sc_duckdb <- S7::new_generic(
   name = "get_sc_duckdb",
   dispatch_args = "object",
   fun = function(
-    object
-  ) {
+      object) {
     S7::S7_dispatch()
   }
 )
@@ -713,8 +712,7 @@ get_sc_rust_ptr <- S7::new_generic(
   name = "get_sc_rust_ptr",
   dispatch_args = "object",
   fun = function(
-    object
-  ) {
+      object) {
     S7::S7_dispatch()
   }
 )
@@ -738,8 +736,7 @@ get_rust_count_gene_f_path <- S7::new_generic(
   name = "get_rust_count_gene_f_path",
   dispatch_args = "object",
   fun = function(
-    object
-  ) {
+      object) {
     S7::S7_dispatch()
   }
 )
@@ -765,8 +762,7 @@ get_rust_count_cell_f_path <- S7::new_generic(
   name = "get_rust_count_cell_f_path",
   dispatch_args = "object",
   fun = function(
-    object
-  ) {
+      object) {
     S7::S7_dispatch()
   }
 )
@@ -791,7 +787,8 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
-#' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
+#' @param filtered Boolean. Whether to return all cells or filtered to to_keep
+#' cells.
 #'
 #' @return The obs table
 #'
@@ -800,11 +797,10 @@ get_sc_obs <- S7::new_generic(
   name = "get_sc_obs",
   dispatch_args = "object",
   fun = function(
-    object,
-    indices = NULL,
-    cols = NULL,
-    filtered = FALSE
-  ) {
+      object,
+      indices = NULL,
+      cols = NULL,
+      filtered = FALSE) {
     S7::S7_dispatch()
   }
 )
@@ -813,11 +809,10 @@ get_sc_obs <- S7::new_generic(
 #'
 #' @export
 S7::method(get_sc_obs, single_cell_exp) <- function(
-  object,
-  indices = NULL,
-  cols = NULL,
-  filtered = FALSE
-) {
+    object,
+    indices = NULL,
+    cols = NULL,
+    filtered = FALSE) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(indices, c("0", "I+"))
@@ -849,10 +844,9 @@ get_sc_var <- S7::new_generic(
   name = "get_sc_var",
   dispatch_args = "object",
   fun = function(
-    object,
-    indices = NULL,
-    cols = NULL
-  ) {
+      object,
+      indices = NULL,
+      cols = NULL) {
     S7::S7_dispatch()
   }
 )
@@ -861,10 +855,9 @@ get_sc_var <- S7::new_generic(
 #'
 #' @export
 S7::method(get_sc_var, single_cell_exp) <- function(
-  object,
-  indices = NULL,
-  cols = NULL
-) {
+    object,
+    indices = NULL,
+    cols = NULL) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(indices, c("0", "I+"))
@@ -908,8 +901,7 @@ get_sc_map <- S7::new_generic(
   name = "get_sc_maps",
   dispatch_args = "object",
   fun = function(
-    object
-  ) {
+      object) {
     S7::S7_dispatch()
   }
 )
@@ -918,8 +910,7 @@ get_sc_map <- S7::new_generic(
 #'
 #' @export
 S7::method(get_sc_map, single_cell_exp) <- function(
-  object
-) {
+    object) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
 
@@ -951,14 +942,13 @@ get_sc_counts <- S7::new_generic(
   name = "get_sc_counts",
   dispatch_args = "object",
   fun = function(
-    object,
-    assay = c("raw", "norm"),
-    return_format = c("cell", "gene"),
-    cell_indices = NULL,
-    gene_indices = NULL,
-    use_cells_to_keep = FALSE,
-    .verbose = TRUE
-  ) {
+      object,
+      assay = c("raw", "norm"),
+      return_format = c("cell", "gene"),
+      cell_indices = NULL,
+      gene_indices = NULL,
+      use_cells_to_keep = FALSE,
+      .verbose = TRUE) {
     S7::S7_dispatch()
   }
 )
@@ -967,14 +957,13 @@ get_sc_counts <- S7::new_generic(
 #'
 #' @export
 S7::method(get_sc_counts, single_cell_exp) <- function(
-  object,
-  assay = c("raw", "norm"),
-  return_format = c("cell", "gene"),
-  cell_indices = NULL,
-  gene_indices = NULL,
-  use_cells_to_keep = FALSE,
-  .verbose = TRUE
-) {
+    object,
+    assay = c("raw", "norm"),
+    return_format = c("cell", "gene"),
+    cell_indices = NULL,
+    gene_indices = NULL,
+    use_cells_to_keep = FALSE,
+    .verbose = TRUE) {
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
 
@@ -1035,15 +1024,14 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
 #'
 #' @export
 S7::method(`[`, single_cell_exp) <- function(
-  x,
-  i,
-  j,
-  ...,
-  assay = c("raw", "norm"),
-  return_format = c("cell", "gene"),
-  use_cells_to_keep = FALSE,
-  drop = TRUE
-) {
+    x,
+    i,
+    j,
+    ...,
+    assay = c("raw", "norm"),
+    return_format = c("cell", "gene"),
+    use_cells_to_keep = FALSE,
+    drop = TRUE) {
   if (missing(i)) {
     i <- NULL
   }
@@ -1093,13 +1081,12 @@ S7::method(`[`, single_cell_exp) <- function(
 #'  \item no_genes - Number of genes.
 #' }
 get_counts_from_rust <- function(
-  rust_con,
-  assay,
-  return_format,
-  cell_indices,
-  gene_indices,
-  .verbose = TRUE
-) {
+    rust_con,
+    assay,
+    return_format,
+    cell_indices,
+    gene_indices,
+    .verbose = TRUE) {
   # checks
   checkmate::assertClass(rust_con, "SingeCellCountData")
   checkmate::assertChoice(assay, c("raw", "norm"))
@@ -1177,12 +1164,11 @@ create_sparse_matrix <- function(count_data, return_format) {
 #'
 #' @return The finalised matrix.
 finalise_matrix <- function(
-  matrix,
-  return_format,
-  cell_indices,
-  gene_indices,
-  sc_map
-) {
+    matrix,
+    return_format,
+    cell_indices,
+    gene_indices,
+    sc_map) {
   checkmate::assert(
     checkmate::checkClass(matrix, "dgRMatrix"),
     checkmate::checkClass(matrix, "dgCMatrix")
@@ -1237,9 +1223,8 @@ finalise_matrix <- function(
 #'
 #' @method get_cell_names single_cell_exp
 S7::method(get_cell_names, single_cell_exp) <- function(
-  x,
-  filtered = FALSE
-) {
+    x,
+    filtered = FALSE) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1260,8 +1245,7 @@ S7::method(get_cell_names, single_cell_exp) <- function(
 #'
 #' @method get_gene_names single_cell_exp
 S7::method(get_gene_names, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1281,8 +1265,7 @@ S7::method(get_gene_names, single_cell_exp) <- function(
 #'
 #' @method get_cells_to_keep single_cell_exp
 S7::method(get_cells_to_keep, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1290,9 +1273,10 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
   res <- get_cells_to_keep(
     x = S7::prop(x, "sc_map")
   )
-
+  # special case that this has not been set. Return all cell indices then
   if (length(res) == 0) {
-    res = seq_len(S7::prop(x, "dims")[1]) - 1
+    no_cells <- S7::prop(x, "dims")[1]
+    res <- seq_len(no_cells) - 1 # 0 index for Rust
   }
 
   return(as.integer(res))
@@ -1306,10 +1290,9 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
 #'
 #' @method get_gene_indices single_cell_exp
 S7::method(get_gene_indices, single_cell_exp) <- function(
-  x,
-  gene_ids,
-  rust_index
-) {
+    x,
+    gene_ids,
+    rust_index) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(gene_ids, "S+")
@@ -1334,10 +1317,9 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
 #'
 #' @method get_cell_indices single_cell_exp
 S7::method(get_cell_indices, single_cell_exp) <- function(
-  x,
-  cell_ids,
-  rust_index
-) {
+    x,
+    cell_ids,
+    rust_index) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(cell_ids, "S+")
@@ -1361,8 +1343,7 @@ S7::method(get_cell_indices, single_cell_exp) <- function(
 #'
 #' @method get_hvg single_cell_exp
 S7::method(get_hvg, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1384,8 +1365,7 @@ S7::method(get_hvg, single_cell_exp) <- function(
 #'
 #' @method get_pca_factors single_cell_exp
 S7::method(get_pca_factors, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1412,8 +1392,7 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
 #'
 #' @method get_pca_singular_val single_cell_exp
 S7::method(get_pca_singular_val, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1433,8 +1412,7 @@ S7::method(get_pca_singular_val, single_cell_exp) <- function(
 #'
 #' @method get_pca_loadings single_cell_exp
 S7::method(get_pca_loadings, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1457,8 +1435,7 @@ S7::method(get_pca_loadings, single_cell_exp) <- function(
 #'
 #' @method get_knn_mat single_cell_exp
 S7::method(get_knn_mat, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1478,8 +1455,7 @@ S7::method(get_knn_mat, single_cell_exp) <- function(
 #'
 #' @method get_snn_graph single_cell_exp
 S7::method(get_snn_graph, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1509,10 +1485,9 @@ set_sc_new_obs_col <- S7::new_generic(
   name = "set_sc_new_obs_col",
   dispatch_args = "object",
   fun = function(
-    object,
-    col_name,
-    new_data
-  ) {
+      object,
+      col_name,
+      new_data) {
     S7::S7_dispatch()
   }
 )
@@ -1521,10 +1496,9 @@ set_sc_new_obs_col <- S7::new_generic(
 #'
 #' @export
 S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
-  object,
-  col_name,
-  new_data
-) {
+    object,
+    col_name,
+    new_data) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(col_name, "S1")
   checkmate::qassert(new_data, "a")
@@ -1582,9 +1556,8 @@ set_sc_new_var_cols <- S7::new_generic(
   name = "set_sc_new_var_cols",
   dispatch_args = "object",
   fun = function(
-    object,
-    data_list
-  ) {
+      object,
+      data_list) {
     S7::S7_dispatch()
   }
 )
@@ -1593,9 +1566,8 @@ set_sc_new_var_cols <- S7::new_generic(
 #'
 #' @export
 S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
-  object,
-  data_list
-) {
+    object,
+    data_list) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::assertList(data_list, types = "atomic", names = "named")
 
@@ -1617,9 +1589,8 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
 #'
 #' @method set_gene_mapping single_cell_exp
 S7::method(set_gene_mapping, single_cell_exp) <- function(
-  x,
-  gene_map
-) {
+    x,
+    gene_map) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(gene_map, "N+")
@@ -1642,9 +1613,8 @@ S7::method(set_gene_mapping, single_cell_exp) <- function(
 #'
 #' @method set_cell_mapping single_cell_exp
 S7::method(set_cell_mapping, single_cell_exp) <- function(
-  x,
-  cell_map
-) {
+    x,
+    cell_map) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(cell_map, "N+")
@@ -1667,9 +1637,8 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
 #'
 #' @method set_cells_to_keep single_cell_exp
 S7::method(set_cells_to_keep, single_cell_exp) <- function(
-  x,
-  cells_to_keep
-) {
+    x,
+    cells_to_keep) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
@@ -1698,9 +1667,8 @@ S7::method(set_cells_to_keep, single_cell_exp) <- function(
 #'
 #' @method set_hvg single_cell_exp
 S7::method(set_hvg, single_cell_exp) <- function(
-  x,
-  hvg
-) {
+    x,
+    hvg) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(hvg, c("I+", "S+"))
@@ -1724,9 +1692,8 @@ S7::method(set_hvg, single_cell_exp) <- function(
 #'
 #' @method set_pca_factors single_cell_exp
 S7::method(set_pca_factors, single_cell_exp) <- function(
-  x,
-  pca_factor
-) {
+    x,
+    pca_factor) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
@@ -1748,9 +1715,8 @@ S7::method(set_pca_factors, single_cell_exp) <- function(
 #'
 #' @method set_pca_loadings single_cell_exp
 S7::method(set_pca_loadings, single_cell_exp) <- function(
-  x,
-  pca_loading
-) {
+    x,
+    pca_loading) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(pca_loading, mode = "numeric")
@@ -1772,9 +1738,8 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
 #'
 #' @method set_pca_singular_vals single_cell_exp
 S7::method(set_pca_singular_vals, single_cell_exp) <- function(
-  x,
-  singular_vals
-) {
+    x,
+    singular_vals) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(singular_vals, "N+")
@@ -1796,9 +1761,8 @@ S7::method(set_pca_singular_vals, single_cell_exp) <- function(
 #'
 #' @method set_knn single_cell_exp
 S7::method(set_knn, single_cell_exp) <- function(
-  x,
-  knn_mat
-) {
+    x,
+    knn_mat) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
@@ -1821,9 +1785,8 @@ S7::method(set_knn, single_cell_exp) <- function(
 #'
 #' @method set_snn_graph single_cell_exp
 S7::method(set_snn_graph, single_cell_exp) <- function(
-  x,
-  snn_graph
-) {
+    x,
+    snn_graph) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertClass(snn_graph, "igraph")
@@ -1845,8 +1808,7 @@ S7::method(set_snn_graph, single_cell_exp) <- function(
 #'
 #' @method remove_knn single_cell_exp
 S7::method(remove_knn, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
@@ -1867,8 +1829,7 @@ S7::method(remove_knn, single_cell_exp) <- function(
 #'
 #' @method remove_snn_graph single_cell_exp
 S7::method(remove_snn_graph, single_cell_exp) <- function(
-  x
-) {
+    x) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
