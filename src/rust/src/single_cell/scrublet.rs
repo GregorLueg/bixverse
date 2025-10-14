@@ -1,18 +1,14 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-
-use faer::{concat, Mat, MatRef};
+use extendr_api::List;
+use faer::{concat, Mat};
 use half::f16;
 use indexmap::IndexSet;
 use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::path::Path;
 use std::time::Instant;
 
 use crate::core::base::pca_svd::{randomised_svd_f32, RandomSvdResults};
 use crate::core::data::sparse_io::*;
-use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::general::array_max_min;
@@ -46,7 +42,50 @@ type ScrubletDoubletScores = (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>);
 // Params and results //
 ////////////////////////
 
-/// Structure that stores the Scrublet parameters
+/// Structure to store the Scrublet parameters
+///
+/// ### Fields
+///
+/// **HVG Detection:**
+///
+/// * `min_gene_var_pctl` - Percentile threshold for highly variable genes.
+/// * `hvg_method` - Method for HVG selection. One of `"vst"`, `"mvb"`, or
+///   `"dispersion"`.
+/// * `loess_span` - Span parameter for loess fitting in VST method.
+/// * `clip_max` - Optional maximum value for clipping in variance
+///   stabilisation.
+///
+/// **Doublet Simulation:**
+///
+/// * `sim_doublet_ratio` - Number of doublets to simulate relative to the
+///   number of observed cells (e.g., 2.0 simulates 2x as many doublets).
+/// * `expected_doublet_rate` - Expected doublet rate for the experiment
+///   (typically 0.05-0.10 depending on cell loading).
+/// * `stdev_doublet_rate` - Uncertainty in the expected doublet rate.
+///
+/// **PCA:**
+///
+/// * `no_pcs` - Number of principal components to use for embedding.
+/// * `random_svd` - Whether to use randomized SVD (faster) vs exact SVD.
+///
+/// **kNN Graph:**
+///
+/// * `k` - Number of nearest neighbours for the kNN graph.
+/// * `knn_method` - Method for approximate nearest neighbor search.
+///   One of `"annoy"` or `"hnsw"`.
+/// * `dist_metric` - Distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `search_budget` - Search budget for Annoy (higher = more accurate but
+///   slower).
+/// * `n_trees` - Number of trees for Annoy index generation.
+///
+/// **Doublet calling:**
+///
+/// * `n_bins` - Number of bins for histogram-based automatic threshold
+///   detection (typically 50-100).
+/// * `manual_threshold` - Optional manual doublet score threshold. If `None`,
+///   threshold is automatically detected from simulated doublet score
+///   distribution.
 #[derive(Clone, Debug)]
 pub struct ScrubletParams {
     // hvg detection
@@ -54,32 +93,192 @@ pub struct ScrubletParams {
     pub hvg_method: String,
     pub loess_span: f64,
     pub clip_max: Option<f32>,
-
     // doublet generation
     pub sim_doublet_ratio: f32,
     pub expected_doublet_rate: f32,
     pub stdev_doublet_rate: f32,
-
     // pca
     pub no_pcs: usize,
     pub random_svd: bool,
-
     // knn
     pub k: usize,
     pub knn_method: String,
     pub dist_metric: String,
     pub search_budget: usize,
     pub n_trees: usize,
+    // doublet calling
+    pub n_bins: usize,
+    pub manual_threshold: Option<f32>,
 }
 
 impl ScrubletParams {
-    /// Generate Scrublet parameters with sensible defaults
-    pub fn new() {
-        // to be written
+    /// Generate ScrubletParams from an R list
+    ///
+    /// Should values not be found within the List, the parameters will default
+    /// to sensible defaults based on Scrublet's original implementation.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The list with the Scrublet parameters.
+    ///
+    /// ### Returns
+    ///
+    /// The `ScrubletParams` with all parameters set.
+    pub fn from_r_list(r_list: List) -> Self {
+        let scrublet_list = r_list.into_hashmap();
+
+        // HVG detection parameters
+        let min_gene_var_pctl = scrublet_list
+            .get("min_gene_var_pctl")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.85) as f32;
+
+        let hvg_method = std::string::String::from(
+            scrublet_list
+                .get("hvg_method")
+                .and_then(|v| v.as_str())
+                .unwrap_or("vst"),
+        );
+
+        let loess_span = scrublet_list
+            .get("loess_span")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.3);
+
+        let clip_max = scrublet_list
+            .get("clip_max")
+            .and_then(|v| v.as_real())
+            .map(|x| x as f32);
+
+        // Doublet simulation parameters
+        let sim_doublet_ratio = scrublet_list
+            .get("sim_doublet_ratio")
+            .and_then(|v| v.as_real())
+            .unwrap_or(2.0) as f32;
+
+        let expected_doublet_rate = scrublet_list
+            .get("expected_doublet_rate")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.1) as f32;
+
+        let stdev_doublet_rate = scrublet_list
+            .get("stdev_doublet_rate")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.02) as f32;
+
+        // PCA parameters
+        let no_pcs = scrublet_list
+            .get("no_pcs")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(30) as usize;
+
+        let random_svd = scrublet_list
+            .get("random_svd")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+
+        // kNN parameters
+        let k = scrublet_list
+            .get("k")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(0) as usize; // 0 = auto-calculate as round(0.5 * sqrt(n_cells))
+
+        let knn_method = std::string::String::from(
+            scrublet_list
+                .get("knn_method")
+                .and_then(|v| v.as_str())
+                .unwrap_or("annoy"),
+        );
+
+        let dist_metric = std::string::String::from(
+            scrublet_list
+                .get("dist_metric")
+                .and_then(|v| v.as_str())
+                .unwrap_or("euclidean"),
+        );
+
+        let search_budget = scrublet_list
+            .get("search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let n_trees = scrublet_list
+            .get("n_trees")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(10) as usize;
+
+        // Doublet calling parameters
+        let n_bins = scrublet_list
+            .get("n_bins")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(50) as usize;
+
+        let manual_threshold = scrublet_list
+            .get("manual_threshold")
+            .and_then(|v| v.as_real())
+            .map(|x| x as f32);
+
+        Self {
+            min_gene_var_pctl,
+            hvg_method,
+            loess_span,
+            clip_max,
+            sim_doublet_ratio,
+            expected_doublet_rate,
+            stdev_doublet_rate,
+            no_pcs,
+            random_svd,
+            k,
+            knn_method,
+            dist_metric,
+            search_budget,
+            n_trees,
+            n_bins,
+            manual_threshold,
+        }
     }
 }
 
-/// Result structure for Scrublet
+/// Result structure for Scrublet doublet detection
+///
+/// Contains predictions, scores, and statistics from the Scrublet algorithm.
+///
+/// ### Fields
+///
+/// **Predictions:**
+///
+/// * `predicted_doublets` - Boolean vector indicating which observed cells are
+///   predicted as doublets (true = doublet, false = singlet).
+///
+/// **Doublet Scores:**
+///
+/// * `doublet_scores_obs` - Doublet scores for each observed cell. Higher
+///   scores indicate higher likelihood of being a doublet.
+/// * `doublet_scores_sim` - Doublet scores for simulated doublets. Used to
+///   determine the threshold and validate detection performance.
+///
+/// **Confidence Metrics:**
+///
+/// * `doublet_errors_obs` - Standard errors for doublet scores of observed
+///   cells. Indicates uncertainty in each score.
+/// * `z_scores` - Z-scores for observed cells, calculated as
+///   `(score - threshold) / error`. Higher absolute values indicate more
+///   confident predictions.
+///
+/// **Threshold:**
+///
+/// * `threshold` - Doublet score threshold used to classify cells. Cells with
+///   scores above this value are called doublets.
+///
+/// **Detection Statistics:**
+///
+/// * `detected_doublet_rate` - Fraction of observed cells called as doublets.
+/// * `detectable_doublet_fraction` - Fraction of simulated doublets with scores
+///   above the threshold. Indicates what proportion of doublets can be
+///   detected.
+/// * `overall_doublet_rate` - Estimated overall doublet rate, calculated as
+///   `detected_doublet_rate / detectable_doublet_fraction`. Should roughly
+///   match the expected doublet rate if detection is working well.
 #[derive(Clone, Debug)]
 pub struct ScrubletResult {
     pub predicted_doublets: Vec<bool>,
@@ -103,8 +302,8 @@ impl CsrCellChunk {
     /// This combines two cells by:
     /// 1. Filtering both to HVG genes only
     /// 2. Adding their raw counts
-    /// 3. Using the combined library size (from ALL genes) for normalization
-    /// 4. Normalizing to target size
+    /// 3. Using the combined library size (from ALL genes) for normalisation
+    /// 4. Normalising to target size
     ///
     /// ### Params
     ///
@@ -190,8 +389,7 @@ impl CsrCellChunk {
 ///
 /// ### Return
 ///
-/// A tuple of the samples projected on thePC space, gene loadings and singular
-/// values.
+/// A tuple of `(scores, loadings, mean exp of the gene, std of the gene)`.
 pub fn pca_on_sc_with_stats(
     f_path: &str,
     cell_indices: &[usize],
@@ -308,7 +506,39 @@ pub fn scale_cell_chunks_with_stats(
     scaled
 }
 
-pub fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
+/// Find optimal doublet score threshold by detecting valley between histogram
+/// modes
+///
+/// This function automatically determines the doublet score threshold by:
+/// 1. Creating a histogram of doublet scores
+/// 2. Smoothing the histogram to reduce noise
+/// 3. Finding the first significant peak (singlets)
+/// 4. Identifying the minimum (valley) after the first peak
+/// 5. This valley represents the optimal separation between singlets and
+///    doublets
+///
+/// The score distribution is typically bimodal:
+/// - Left peak: Singlets (lower doublet scores)
+/// - Valley: Optimal threshold
+/// - Right peak: Doublets (higher doublet scores)
+///
+/// ### Params
+///
+/// * `scores` - Slice of doublet scores (typically from simulated doublets)
+/// * `n_bins` - Number of bins for histogram construction (typically 50-100)
+///
+/// ### Returns
+///
+/// The optimal threshold score. If no clear valley is found, returns the
+/// median score as a fallback.
+///
+/// ### Algorithm Details
+///
+/// - Uses a 3-bin moving average to smooth the histogram
+/// - Defines "significant peak" as bins with counts > 10% of maximum
+/// - Stops searching if it encounters another peak (prevents over-shooting)
+/// - Falls back to median if no bimodal distribution is detected
+fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
     let (min_score, max_score) = array_max_min(scores);
 
     if (max_score - min_score).abs() < 1e-6 {
@@ -364,7 +594,29 @@ pub fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
     min_score + (min_idx as f32 + 0.5) * bin_width
 }
 
-// Moving average function for the binning
+/// Apply moving average smoothing to histogram data
+///
+/// Smooths a histogram by averaging each bin with its neighbours. This reduces
+/// noise and makes peak/valley detection more robust.
+///
+/// ### Params
+///
+/// * `data` - Histogram bin counts
+/// * `window` - Size of the moving average window (e.g., 3 means average with
+///   1 neighbor on each side)
+///
+/// ### Returns
+///
+/// Smoothed histogram with the same length as input
+///
+/// ### Example
+///
+/// With window = 3, each bin is averaged with its immediate neighbors:
+///
+/// ```text
+/// Input:  [1, 5, 2, 8, 3]
+/// Output: [3, 3, 5, 4, 5]  // (1+5+2)/3, (1+5+2)/3, (5+2+8)/3, (2+8+3)/3, (8+3)/2
+/// ```
 fn moving_average(data: &[usize], window: usize) -> Vec<usize> {
     let half_window = window / 2;
     data.iter()
@@ -382,6 +634,16 @@ fn moving_average(data: &[usize], window: usize) -> Vec<usize> {
 // Main structure //
 ////////////////////
 
+/// Structure for Scrublet algorithm
+///
+/// ### Fields
+///
+/// * `f_path_gene` - Path to the binarised file in CSC format.
+/// * `f_path_cell` - Path to the binarised file in CSR format.
+/// * `params` - The Scrublet parameters
+/// * `n_cells` - Number of observed cells.
+/// * `n_cells_sim` - Number of simulated cells.
+/// * `cells_to_keep` - Indices of cells to keep/include in this analysis
 #[derive(Clone, Debug)]
 pub struct Scrublet {
     // paths
@@ -397,13 +659,21 @@ pub struct Scrublet {
 
 impl Scrublet {
     /// Generate a new instance
+    ///
+    /// ### Params
+    ///
+    /// * `f_path_gene` - Path to the binarised file in CSC format.
+    /// * `f_path_cell` - Path to the binarised file in CSR format.
+    /// * `params` - The Scrublet parameters to use.
+    /// * `cell_indices` - Slice of usizes indicating which cells to keep/use.
     pub fn new(
         f_path_gene: &str,
         f_path_cells: &str,
         params: ScrubletParams,
-        n_cells: usize,
         cell_indices: &[usize],
     ) -> Self {
+        let n_cells = cell_indices.len();
+
         Scrublet {
             f_path_gene: f_path_gene.to_string(),
             f_path_cell: f_path_cells.to_string(),
@@ -414,11 +684,26 @@ impl Scrublet {
         }
     }
 
+    /// Main function to run Scrublet
+    ///
+    /// ### Params
+    ///
+    /// * `streaming` - Shall the data be streamed. Reduces memory pressure
+    ///   during HVG detection.
+    /// * `manual_threshold` - Optional threshold for when to call doublets. If
+    ///   not provided, will be estimated from the data.
+    /// * `n_bins` - Number of bins to use for histogram construction
+    ///   (typically 50 - 100).
+    /// * `seed` - Seed for reproducibility.
+    /// * `verbose` - Controls verbosity of the function
+    ///
+    /// ### Returns
+    ///
+    /// Initialised self.
     pub fn run_scrublet(
         &mut self,
         streaming: bool,
-        manual_threshold: Option<f32>,
-        n_bins: usize,
+        target_size: f32,
         seed: usize,
         verbose: bool,
     ) -> ScrubletResult {
@@ -427,13 +712,11 @@ impl Scrublet {
             println!("Identifying highly variable genes...");
         }
         let start_all = Instant::now();
-
         let start_hvg = Instant::now();
 
         let hvg_genes = self.get_hvg(streaming, verbose);
 
         let end_hvg = start_hvg.elapsed();
-
         if verbose {
             println!(
                 "Using {} highly variable genes. Done in {:.2?}",
@@ -448,10 +731,9 @@ impl Scrublet {
         }
         let start_doublet_gen = Instant::now();
 
-        let sim_chunks = self.simulate_doublets(&hvg_genes, seed);
+        let sim_chunks = self.simulate_doublets(&hvg_genes, target_size, seed);
 
         let end_doublet_gen = start_doublet_gen.elapsed();
-
         if verbose {
             println!(
                 "Simulated {} doublets. Done in {:.2?}",
@@ -464,13 +746,11 @@ impl Scrublet {
         if verbose {
             println!("Running PCA...");
         }
-
         let start_pca = Instant::now();
 
         let combined_pca = self.run_pca(&sim_chunks, &hvg_genes, verbose, seed);
 
         let end_pca = start_pca.elapsed();
-
         if verbose {
             println!("Done with PCA in {:.2?}", end_pca);
         }
@@ -479,7 +759,6 @@ impl Scrublet {
         if verbose {
             println!("Building kNN graph...");
         }
-
         let start_knn = Instant::now();
 
         let knn_indices = self
@@ -487,11 +766,11 @@ impl Scrublet {
             .expect("Failed to build kNN graph");
 
         let end_knn = start_knn.elapsed();
-
         if verbose {
             println!("Done with KNN generation in {:.2?}", end_knn);
         }
 
+        // Doublet scoring
         if verbose {
             println!("Calculating doublet scores...");
         }
@@ -499,16 +778,19 @@ impl Scrublet {
 
         let doublet_scores: ScrubletDoubletScores = self.calculate_doublet_scores(&knn_indices);
 
-        let res = self.call_doublets(doublet_scores, manual_threshold, n_bins, verbose);
+        let res = self.call_doublets(
+            doublet_scores,
+            self.params.manual_threshold,
+            self.params.n_bins,
+            verbose,
+        );
 
         let end_doublets = start_doublets.elapsed();
-
         if verbose {
             println!("Done with doublet scoring and calling {:.2?}", end_doublets);
         }
 
         let end_all = start_all.elapsed();
-
         if verbose {
             println!("Finished Scrublet {:.2?}", end_all);
         }
@@ -517,6 +799,18 @@ impl Scrublet {
     }
 
     /// Get the indices of the highly variable genes
+    ///
+    /// Identify the HVGs for subsequent PCA.
+    ///
+    /// ### Params
+    ///
+    /// * `streaming` - Shall the data be loaded in a streaming fashion. Reduces
+    ///   memory pressure
+    /// * `verbose` - Controls verbosity
+    ///
+    /// ### Returns
+    ///
+    /// Vector of indices of the HVG.
     fn get_hvg(&self, streaming: bool, verbose: bool) -> Vec<usize> {
         // identify highly variable genes
         let hvg_type = get_hvg_method(&self.params.hvg_method)
@@ -563,8 +857,27 @@ impl Scrublet {
         indices.into_iter().map(|(i, _)| i).collect()
     }
 
-    /// Generate a vector of doublets
-    fn simulate_doublets(&mut self, hvg_genes: &[usize], seed: usize) -> Vec<CsrCellChunk> {
+    /// Simulate doublets
+    ///
+    /// Generate artifical doublets based on the real data. The algorithm
+    /// will only construct doublets from the
+    ///
+    /// ### Params
+    ///
+    /// * `hvg_genes` - Indices of the highly variable genes.
+    /// * `target_size` - The library target size. Needs to be the same as the
+    ///   original one (in single cell typicall `1e4`).
+    /// * `seed` - Seed for reproducibility.
+    ///
+    /// ### Returns
+    ///
+    /// A `Vec<CsrCellChunk>` that contains the artificially created doublets.
+    fn simulate_doublets(
+        &mut self,
+        hvg_genes: &[usize],
+        target_size: f32,
+        seed: usize,
+    ) -> Vec<CsrCellChunk> {
         let n_sim_doublets = (self.n_cells as f32 * self.params.sim_doublet_ratio) as usize;
         self.n_cells_sim = n_sim_doublets;
         let mut rng = StdRng::seed_from_u64(seed as u64);
@@ -592,7 +905,7 @@ impl Scrublet {
                     &cell1,
                     &cell2,
                     &hvg_set,
-                    1e6, // CPM normalization
+                    target_size, // CPM normalization
                     doublet_idx,
                 )
             })
@@ -601,7 +914,23 @@ impl Scrublet {
         doublets
     }
 
-    /// Run the PCA
+    /// Run PCA
+    ///
+    /// Runs PCA prior to kNN construction.
+    ///
+    /// ### Params
+    ///
+    /// * `sim_chunks` - Slice of `CsrCellChunk` containing the simulated
+    ///   doublets.
+    /// * `hvg_genes` - The indices of the highly variable genes.
+    /// * `verbose` - Controls verbosity of the function.
+    /// * `seed` - Seed for reproducibility. Relevant when using randomised
+    ///   SVD.
+    ///
+    /// ### Returns
+    ///
+    /// The PCA scores with the top rows representing the actual data and
+    /// the bottom rows the simulated data.
     fn run_pca(
         &self,
         sim_chunks: &[CsrCellChunk],
@@ -628,6 +957,17 @@ impl Scrublet {
     }
 
     /// Generate the kNN graph
+    ///
+    /// ### Params
+    ///
+    /// * `embd` - The embedding matrix to use for the generation of the kNN
+    ///   graph. Usually the PCA of observed and simulated doublet cells.
+    /// * `seed` - Seed for reproducibility. Relevant when using randomised
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// The kNN graph as a `Vec<Vec<usize>>`.
     fn build_combined_knn(
         &self,
         embd: Mat<f32>,
@@ -663,6 +1003,16 @@ impl Scrublet {
     }
 
     /// Calculate the doublet scores
+    ///
+    /// ### Params
+    ///
+    /// * `knn_indices` - A slice of `Vec<usize>` indicating the nearest
+    ///   neighbours.
+    ///
+    /// ### Returns
+    ///
+    /// `ScrubletDoubletScores` type alias that represents the scores and errors
+    /// of the observed and simulated cells.
     fn calculate_doublet_scores(&self, knn_indices: &[Vec<usize>]) -> ScrubletDoubletScores {
         let n_obs = self.n_cells;
         let n_sim = self.n_cells_sim;
@@ -705,6 +1055,20 @@ impl Scrublet {
         (scores_obs, errors_obs, scores_sim, errors_sim)
     }
 
+    /// Call the doublets
+    ///
+    /// ### Params
+    ///
+    /// * `doublet_scores` - type alias that represents the scores and errors
+    ///   of the observed and simulated cells.
+    /// * `manual_threshold` - Optional manual threshold for when to call a
+    ///   singlet or doublet.
+    /// * `n_bins` - Number of bins to use.
+    /// * `verbose` - Controls verbosity of the function
+    ///
+    /// ### Returns
+    ///
+    /// `ScrubletResult` with the final results of the algorithm.
     fn call_doublets(
         &self,
         doublet_scores: ScrubletDoubletScores,

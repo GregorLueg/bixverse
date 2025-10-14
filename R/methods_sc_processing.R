@@ -711,6 +711,16 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
 ## qc --------------------------------------------------------------------------
 
+### doublet detection ----------------------------------------------------------
+
+scrublet_sc <- S7::new_generic(
+  name = "scrublet_sc",
+  dispatch_args = "object",
+  fun = function(object) {
+    S7::S7_dispatch()
+  }
+)
+
 ### gene proportions -----------------------------------------------------------
 
 #' Calculate the proportions of reads for specific gene sets
