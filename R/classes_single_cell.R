@@ -1282,7 +1282,13 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
     x = S7::prop(x, "sc_map")
   )
 
-  return(res)
+  # special case that this has not been set. Return all cell indices then
+  if (length(res) == 0) {
+    no_cells <- S7::prop(x, "dims")[1]
+    res <- seq_len(no_cells) - 1 # 0 index for Rust
+  }
+
+  return(as.integer(res))
 }
 
 #' @name get_gene_indices.single_cell_exp

@@ -844,7 +844,7 @@ impl Scrublet {
         };
 
         let n_genes = hvg_res.mean.len() as f32;
-        let n_genes_to_take = (n_genes * self.params.min_gene_var_pctl).ceil() as usize;
+        let n_genes_to_take = (n_genes * (1.0 - self.params.min_gene_var_pctl)).ceil() as usize; // FIX HERE
 
         let mut indices: Vec<(usize, f64)> = hvg_res
             .var_std
@@ -892,6 +892,13 @@ impl Scrublet {
 
         let hvg_set: FxHashSet<usize> = hvg_genes.iter().copied().collect();
 
+        // Create mapping from original gene index to HVG index
+        let gene_to_hvg_idx: FxHashMap<usize, u16> = hvg_genes
+            .iter()
+            .enumerate()
+            .map(|(hvg_idx, &orig_idx)| (orig_idx, hvg_idx as u16))
+            .collect();
+
         let reader = ParallelSparseReader::new(&self.f_path_cell).unwrap();
 
         let doublets: Vec<CsrCellChunk> = pairs
@@ -901,13 +908,20 @@ impl Scrublet {
                 let cell1 = reader.read_cell(i);
                 let cell2 = reader.read_cell(j);
 
-                CsrCellChunk::add_cells_scrublet(
+                let mut doublet = CsrCellChunk::add_cells_scrublet(
                     &cell1,
                     &cell2,
                     &hvg_set,
-                    target_size, // CPM normalization
+                    target_size,
                     doublet_idx,
-                )
+                );
+
+                // Remap indices from original gene space to HVG space
+                for idx in doublet.indices.iter_mut() {
+                    *idx = gene_to_hvg_idx[&(*idx as usize)];
+                }
+
+                doublet
             })
             .collect();
 
@@ -977,8 +991,18 @@ impl Scrublet {
         let knn_method = get_knn_method(&self.params.knn_method)
             .ok_or_else(|| format!("Invalid KNN search method: {}", &self.params.knn_method))?;
 
+        let k = if self.params.k == 0 {
+            ((self.n_cells as f32).sqrt() * 0.5).round() as usize
+        } else {
+            self.params.k
+        };
+
         let r = self.n_cells_sim as f32 / self.n_cells as f32;
-        let k_adj = (self.params.k as f32 * (1.0 + r)).round() as usize;
+        let k_adj = (k as f32 * (1.0 + r)).round() as usize;
+
+        if verbose {
+            println!("Using {} neighbours in the kNN generation.", k_adj);
+        }
 
         let knn = match knn_method {
             KnnSearch::Hnsw => generate_knn_hnsw(

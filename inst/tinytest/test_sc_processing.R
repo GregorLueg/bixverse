@@ -15,16 +15,6 @@ no_pcs <- 10L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-write_h5ad_sc(
-  f_path = f_path_csr,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  single_cell_test_data$var,
-  .verbose = FALSE
-)
-
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
 )
@@ -57,23 +47,33 @@ sc_qc_param = params_sc_min_quality(
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_h5ad(
-  object = sc_object,
-  h5_path = path.expand(f_path_csr),
-  sc_qc_param = sc_qc_param,
-  .verbose = FALSE
-)
+sc_object <- # keep all cells for the sake of this
+  sc_object <- load_r_data(
+    object = sc_object,
+    counts = single_cell_test_data$counts,
+    obs = single_cell_test_data$obs,
+    var = single_cell_test_data$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = min_genes_exp,
+      min_lib_size = min_lib_size,
+      min_cells = min_cells_exp
+    ),
+    streaming = FALSE,
+    .verbose = FALSE
+  )
 
 # tests ------------------------------------------------------------------------
 
 ## function warnings -----------------------------------------------------------
 
-expect_warning(
-  current = find_hvg_sc(sc_object),
-  info = "warning that no cells to keep were specified"
-)
+# this will now calculate on all cells - test irrelevant
+#
+# expect_warning(
+#   current = find_hvg_sc(sc_object),
+#   info = "warning that no cells to keep were specified"
+# )
 
 expect_warning(
   current = get_hvg(sc_object),
@@ -426,7 +426,7 @@ expect_true(
 
 sc_object <- find_clusters_sc(sc_object)
 
-cell_grps <- unlist(sc_object[["obs_cell_grp"]])
+cell_grps <- unlist(sc_object[["cell_grp"]])
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
 
 f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
@@ -515,11 +515,11 @@ auc_res_auroc <- aucell_sc(
   .verbose = FALSE
 )
 
-obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
+obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 
 cells_per_cluster <- split(
   obs_table_red$cell_id,
-  obs_table_red$obs_cell_grp
+  obs_table_red$cell_grp
 )
 
 expect_true(
