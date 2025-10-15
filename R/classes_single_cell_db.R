@@ -237,12 +237,13 @@ single_cell_duckdb_base <- R6::R6Class(
       DBI::dbExecute(
         con,
         "
+        ALTER TABLE obs DROP COLUMN IF EXISTS to_keep;
         CREATE OR REPLACE TABLE obs AS
         SELECT 
-          obs.*,
-          COALESCE(temp_filter.to_keep, FALSE) as to_keep
+          obs.*, 
+          temp_filter.to_keep AS to_keep
         FROM obs 
-        LEFT JOIN temp_filter ON obs.cell_idx = temp_filter.cell_idx;
+        JOIN temp_filter ON obs.cell_idx = temp_filter.cell_idx;
         DROP TABLE temp_filter
         "
       )
@@ -564,9 +565,10 @@ single_cell_duckdb_con <- R6::R6Class(
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, filter = NULL) {
+    populate_obs_from_h5 = function(h5_path, filtered = FALSE, filter = NULL) {
       # checks
       checkmate::assertFileExists(h5_path)
+      checkmate::qassert(filtered, "B1")
       checkmate::qassert(filter, c("I+", "0"))
 
       h5_content <- rhdf5::h5ls(
@@ -598,51 +600,72 @@ single_cell_duckdb_con <- R6::R6Class(
         add = TRUE
       )
 
+      ## adds `obs_` prefix which needs to be removed
       names(obs) <- to_snake_case(obs)
+      names(obs) <- gsub("^obs_", "", names(obs))
+
+      obs_col_names <- names(obs)
+      obs_values <- vector(mode = "list", length = length(obs))
 
       for (i in seq_along(obs)) {
-        col_name <- names(obs)[i]
-        col_path <- obs[[i]]
-        col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name)
-        if (!is.null(filter)) {
-          col_data <- col_data[filter]
-        }
-        col_data[, cell_idx := .I]
-        setcolorder(col_data, c("cell_idx", col_name))
-
-        if (i == 1) {
-          colnames(col_data) <- c("cell_idx", "cell_id")
-          DBI::dbWriteTable(
-            con,
-            "obs",
-            col_data,
-            overwrite = TRUE
-          )
-        } else {
-          DBI::dbWriteTable(
-            con,
-            "temp_col",
-            col_data,
-            overwrite = TRUE
-          )
-
-          DBI::dbExecute(
-            con,
-            sprintf(
-              'CREATE TABLE obs_new AS
-              SELECT obs.*, temp_col.%s
-              FROM obs
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
-              ORDER BY obs.cell_idx;
-              DROP table obs;
-              ALTER TABLE obs_new RENAME TO obs;
-              DROP TABLE temp_col',
-              col_name
-            )
-          )
-        }
+        obs_values[[i]] <- rhdf5::h5read(h5_path, obs[[i]])
       }
+
+      obs_dt <- data.table::as.data.table(obs_values)
+      data.table::setnames(obs_dt, obs_col_names)
+
+      # Ensure first column is cell_id
+      colnames(obs_dt)[1] <- "cell_id"
+
+      # Ensure to_keep column exists (default TRUE if missing)
+      if (!("to_keep" %in% names(obs_dt))) {
+        obs_dt[, to_keep := TRUE]
+      }
+
+      if (!is.null(filter)) {
+        obs_dt <- obs_dt[filter]
+      }
+
+      # Apply filtering if requested
+      if (isTRUE(filtered)) {
+        obs_dt <- obs_dt[to_keep == TRUE]
+      }
+
+      # Add cell_idx and order columns
+      obs_dt[, cell_idx := .I]
+      data.table::setcolorder(
+        obs_dt,
+        c(
+          "cell_idx",
+          "cell_id",
+          setdiff(names(obs_dt), c("cell_idx", "cell_id"))
+        )
+      )
+
+      # Write once to DuckDB
+      DBI::dbWriteTable(
+        con,
+        "obs",
+        obs_dt,
+        overwrite = TRUE
+      )
+
+      ### Don't think this is needed, as we are just adding the obs data to the lake
+
+      # DBI::dbExecute(
+      #   con,
+      #   sprintf(
+      #     'CREATE TABLE obs_new AS
+      #         SELECT obs.*, temp_col.%s
+      #         FROM obs
+      #         JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
+      #         ORDER BY obs.cell_idx;
+      #         DROP table obs;
+      #         ALTER TABLE obs_new RENAME TO obs;
+      #         DROP TABLE temp_col',
+      #     col_name
+      #   )
+      # )
 
       invisible(self)
     },
@@ -751,12 +774,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal obs table.
-    populate_obs_from_plain_text = function(f_path, has_hdr, filter = NULL) {
+    populate_obs_from_plain_text = function(
+      f_path,
+      has_hdr,
+      filter = NULL
+    ) {
       # checks
       checkmate::assertFileExists(f_path)
       checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
-
       con <- private$connect_db()
       on.exit(
         {
@@ -843,6 +869,15 @@ single_cell_duckdb_con <- R6::R6Class(
         conn = con,
         statement = query,
         params = c(list(f_path), as.list(filter))
+      )
+
+      # Ensure to_keep exists and is TRUE by default
+      DBI::dbExecute(
+        conn = con,
+        statement = "
+        ALTER TABLE obs ADD COLUMN IF NOT EXISTS to_keep BOOLEAN;
+        UPDATE obs SET to_keep = TRUE WHERE to_keep IS NULL;
+        "
       )
 
       invisible(self)

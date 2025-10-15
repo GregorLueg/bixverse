@@ -354,7 +354,8 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   }
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
-    filter = as.integer(file_res$cell_indices + 1)
+    filter = as.integer(file_res$cell_indices + 1),
+    filtered = FALSE
   )
   if (.verbose) {
     message("Loading variables data from h5ad into the DuckDB.")

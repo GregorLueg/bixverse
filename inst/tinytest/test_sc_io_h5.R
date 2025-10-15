@@ -374,7 +374,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = obs_object$obs_cell_grp,
+  current = obs_object$cell_grp,
   target = obs_filtered$cell_grp,
   info = "obs table from h5ad csr (from object) - cell group correct"
 )
@@ -478,7 +478,7 @@ expect_equal(
 )
 
 expect_equal(
-  current = obs_object$obs_cell_grp,
+  current = obs_object$cell_grp,
   target = obs_filtered$cell_grp,
   info = "obs table from h5ad csr (from object) - cell group correct"
 )

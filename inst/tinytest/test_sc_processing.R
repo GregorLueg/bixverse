@@ -23,7 +23,7 @@ obs_table$to_keep <- TRUE
 write_h5ad_sc(
   f_path = f_path_csr,
   counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
+  obs = obs_table,
   var = single_cell_test_data$var,
   .verbose = FALSE
 )
@@ -181,7 +181,7 @@ sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
 
 expect_true(
   current = all(
-    unlist(sc_object[[]][to_keep == TRUE, cell_id]) == cells_to_keep
+    unlist(sc_object[["cell_id"]]) == cells_to_keep
   ),
   info = "setting cells to keep removes them from the obs table"
 )
@@ -436,7 +436,7 @@ leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
 filter_ind <- is.na(leiden_clusters)
 
 leiden_clusters <- leiden_clusters[!filter_ind]
-cell_grps <- unlist(sc_object[["obs_cell_grp"]])[!filter_ind]
+cell_grps <- unlist(sc_object[["cell_grp"]])[!filter_ind]
 
 f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
 
@@ -524,11 +524,11 @@ auc_res_auroc <- aucell_sc(
   .verbose = FALSE
 )
 
-obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
+obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 
 cells_per_cluster <- split(
   obs_table_red$cell_id,
-  obs_table_red$obs_cell_grp
+  obs_table_red$cell_grp
 )
 
 expect_true(
