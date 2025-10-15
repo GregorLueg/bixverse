@@ -788,7 +788,6 @@ scrublet_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
-    target_size,
     scrublet_params = params_scrublet(),
     seed = 42L,
     streaming = FALSE,
@@ -806,7 +805,6 @@ scrublet_sc <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 S7::method(scrublet_sc, single_cell_exp) <- function(
   object,
-  target_size,
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
@@ -814,7 +812,6 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
-  checkmate::qassert(target_size, "N1")
   assertScScrublet(scrublet_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
@@ -828,7 +825,6 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
     f_path_cell = get_rust_count_cell_f_path(object),
     cells_to_keep = cells_to_keep,
     scrublet_params = scrublet_params,
-    target_size = target_size,
     seed = seed,
     verbose = .verbose,
     streaming = streaming

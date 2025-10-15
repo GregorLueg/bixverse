@@ -9,7 +9,6 @@ rs_sc_scrublet(
   f_path_cell,
   cells_to_keep,
   scrublet_params,
-  target_size,
   seed,
   verbose,
   streaming
@@ -25,9 +24,6 @@ to include in this analysis.}
 
 \item{scrublet_params}{List. Parameter list, see
 \code{\link[=params_scrublet]{params_scrublet()}}.}
-
-\item{target_size}{Numeric. The library target size for the simulated
-droplets. Should be the same normalisation as for the original cells.}
 
 \item{seed}{Integer. Seed for reproducibility purposes.}
 

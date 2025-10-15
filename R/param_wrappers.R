@@ -607,6 +607,9 @@ params_sc_min_quality <- function(
 
 #' Wrapper function for Scrublet doublet detection parameters
 #'
+#' @param log_transform Boolean. Shall the counts be log-transformed. Defaults
+#' to `FALSE`.
+#' @param target_size Numeric. The target size for library size normalisation.
 #' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
 #' genes. For example, 0.85 means keep genes in top 15% of variability.
 #' @param hvg_method String. Method for highly variable gene selection. One of
@@ -631,7 +634,7 @@ params_sc_min_quality <- function(
 #' @param knn_method String. Method for approximate nearest neighbor search.
 #' One of `c("annoy", "hnsw")`. Defaults to `"annoy"`.
 #' @param dist_metric String. Distance metric to use. One of
-#' `c("cosine", "euclidean")`. Defaults to `"cosine"`.
+#' `c("euclidean", "cosine")`. Defaults to `"euclidean"`.
 #' @param search_budget Integer. Search budget for Annoy algorithm (higher =
 #' more accurate but slower).
 #' @param n_trees Integer. Number of trees for Annoy index generation.
@@ -645,6 +648,8 @@ params_sc_min_quality <- function(
 #'
 #' @export
 params_scrublet <- function(
+  log_transform = FALSE,
+  target_size = 1e4,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -656,7 +661,7 @@ params_scrublet <- function(
   random_svd = TRUE,
   k = 0L,
   knn_method = c("annoy", "hnsw"),
-  dist_metric = c("cosine", "euclidean"),
+  dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
   n_trees = 100L,
   n_bins = 100L,
@@ -666,6 +671,10 @@ params_scrublet <- function(
   knn_method <- match.arg(knn_method)
   dist_metric <- match.arg(dist_metric)
 
+  # general checks
+  checkmate::qassert(log_transform, "B1")
+  checkmate::qassert(target_size, "N1(0,)")
+
   # HVG detection checks
   checkmate::qassert(min_gene_var_pctl, "N1[0,1]")
   checkmate::assertChoice(hvg_method, c("vst", "mvb", "dispersion"))
@@ -674,16 +683,16 @@ params_scrublet <- function(
     checkmate::qassert(clip_max, "N1(0,)")
   }
 
-  # Doublet simulation checks
+  # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
   checkmate::qassert(expected_doublet_rate, "N1[0,1]")
   checkmate::qassert(stdev_doublet_rate, "N1[0,1]")
 
-  # PCA checks
+  # pca checks
   checkmate::qassert(no_pcs, "I1[1,)")
   checkmate::qassert(random_svd, "B1")
 
-  # kNN checks
+  # knn checks
   checkmate::qassert(k, "I1[0,)")
   checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
   checkmate::assertChoice(dist_metric, c("euclidean", "cosine"))
@@ -697,6 +706,8 @@ params_scrublet <- function(
   }
 
   list(
+    log_transform = log_transform,
+    target_size = target_size,
     min_gene_var_pctl = min_gene_var_pctl,
     hvg_method = hvg_method,
     loess_span = loess_span,

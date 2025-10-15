@@ -19,8 +19,6 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 /// to include in this analysis.
 /// @param scrublet_params List. Parameter list, see
 /// [bixverse::params_scrublet()].
-/// @param target_size Numeric. The library target size for the simulated
-/// droplets. Should be the same normalisation as for the original cells.
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Boolean. Controls verbosity
 /// @param streaming Boolean. Shall the data be streamed for the HVG
@@ -55,7 +53,6 @@ fn rs_sc_scrublet(
     f_path_cell: &str,
     cells_to_keep: Vec<i32>,
     scrublet_params: List,
-    target_size: f64,
     seed: usize,
     verbose: bool,
     streaming: bool,
@@ -69,8 +66,7 @@ fn rs_sc_scrublet(
 
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
 
-    let scrublet_res: ScrubletResult =
-        scrublet.run_scrublet(streaming, target_size as f32, seed, verbose);
+    let scrublet_res: ScrubletResult = scrublet.run_scrublet(streaming, seed, verbose);
 
     list!(
         predicted_doublets = scrublet_res.predicted_doublets,

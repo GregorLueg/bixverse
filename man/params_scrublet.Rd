@@ -5,6 +5,8 @@
 \title{Wrapper function for Scrublet doublet detection parameters}
 \usage{
 params_scrublet(
+  log_transform = FALSE,
+  target_size = 10000,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -16,7 +18,7 @@ params_scrublet(
   random_svd = TRUE,
   k = 0L,
   knn_method = c("annoy", "hnsw"),
-  dist_metric = c("cosine", "euclidean"),
+  dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
   n_trees = 100L,
   n_bins = 100L,
@@ -24,6 +26,11 @@ params_scrublet(
 )
 }
 \arguments{
+\item{log_transform}{Boolean. Shall the counts be log-transformed. Defaults
+to \code{FALSE}.}
+
+\item{target_size}{Numeric. The target size for library size normalisation.}
+
 \item{min_gene_var_pctl}{Numeric. Percentile threshold for highly variable
 genes. For example, 0.85 means keep genes in top 15\% of variability.}
 
@@ -59,7 +66,7 @@ SVD.}
 One of \code{c("annoy", "hnsw")}. Defaults to \code{"annoy"}.}
 
 \item{dist_metric}{String. Distance metric to use. One of
-\code{c("cosine", "euclidean")}. Defaults to \code{"cosine"}.}
+\code{c("euclidean", "cosine")}. Defaults to \code{"euclidean"}.}
 
 \item{search_budget}{Integer. Search budget for Annoy algorithm (higher =
 more accurate but slower).}

@@ -6,7 +6,6 @@
 \usage{
 scrublet_sc(
   object,
-  target_size,
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
@@ -15,9 +14,6 @@ scrublet_sc(
 }
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
-
-\item{target_size}{Numeric. The library target size for the simulated cells.
-Needs to be the same as the initial one (usually \code{1e5}).}
 
 \item{scrublet_params}{A list with the scrublet parameters, see
 \code{\link[=params_scrublet]{params_scrublet()}}. This list contains:
@@ -63,6 +59,9 @@ simulated doublet score distribution.
 calculations. Slower, but less memory usage.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
+
+\item{target_size}{Numeric. The library target size for the simulated cells.
+Needs to be the same as the initial one (usually \code{1e5}).}
 }
 \value{
 A \code{scrublet_res} class that has with the following items:
