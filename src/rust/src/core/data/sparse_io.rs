@@ -1121,6 +1121,7 @@ impl ParallelSparseReader {
     /// ### Returns
     ///
     /// Vector of library sizes
+    #[allow(dead_code)]
     pub fn read_cell_library_sizes(&self, indices: &[usize]) -> Vec<usize> {
         assert!(self.header.cell_based, "File not cell-based");
 

@@ -5,8 +5,10 @@
 \title{Wrapper function for Scrublet doublet detection parameters}
 \usage{
 params_scrublet(
-  log_transform = FALSE,
-  target_size = 10000,
+  log_transform = TRUE,
+  mean_center = FALSE,
+  normalise_variance = FALSE,
+  target_size = NULL,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -21,15 +23,23 @@ params_scrublet(
   dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
   n_trees = 100L,
-  n_bins = 100L,
+  n_bins = 50L,
   manual_threshold = NULL
 )
 }
 \arguments{
 \item{log_transform}{Boolean. Shall the counts be log-transformed. Defaults
-to \code{FALSE}.}
+to \code{TRUE}.}
 
-\item{target_size}{Numeric. The target size for library size normalisation.}
+\item{mean_center}{Boolean. Shall the data be mean centred. Defaults to
+\code{FALSE}.}
+
+\item{normalise_variance}{Boolean. Shall the data be variance normalised.
+Defaults to \code{FALSE}.}
+
+\item{target_size}{Optional Numeric. The target size for library size
+normalisation. If not provided, it will default to the mean library size
+observed in the data.}
 
 \item{min_gene_var_pctl}{Numeric. Percentile threshold for highly variable
 genes. For example, 0.85 means keep genes in top 15\% of variability.}

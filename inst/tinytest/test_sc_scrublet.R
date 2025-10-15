@@ -5,13 +5,11 @@
 n_doublets <- 200
 
 test_wide_scrublet_params <- params_scrublet(
-  log_transform = TRUE,
   no_pcs = 5L,
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 2.0,
   min_gene_var_pctl = 0.7,
-  k = 3L,
-  target_size = 1e4
+  k = 3L
 )
 
 ## helper functions ------------------------------------------------------------
@@ -101,6 +99,17 @@ sc_object <- load_r_data(
 
 ## rust logic ------------------------------------------------------------------
 
+test_wide_scrublet_params <- params_scrublet(
+  log_transform = TRUE,
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  no_pcs = 5L,
+  expected_doublet_rate = 0.2,
+  sim_doublet_ratio = 1.5,
+  min_gene_var_pctl = 0.7,
+  target_size = 1e4
+)
+
 scrublet_res = rs_sc_scrublet(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
@@ -109,6 +118,19 @@ scrublet_res = rs_sc_scrublet(
   seed = 42L,
   verbose = TRUE,
   streaming = FALSE
+)
+
+hist(scrublet_res$doublet_scores_obs)
+
+hist(scrublet_res$doublet_scores_sim)
+
+table(list(
+  actual = new_obs$doublet,
+  predicted = scrublet_res$predicted_doublets
+))
+
+metrics_helper(
+  cm = table(new_obs$doublet, scrublet_res$predicted_doublets)
 )
 
 expect_true(
@@ -154,14 +176,15 @@ metrics <- metrics_helper(
 )
 
 expect_true(
-  current = metrics["recall"] > 0.6,
+  current = metrics["recall"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
 expect_true(
-  current = sum(new_obs$doublet[1001:1200]) == 200,
-  info = "rust scrublet: synthetic doublets are recognised"
+  current = metrics["f1"] >= 0.7,
+  info = "rust scrublet: 'good' recall on synthetic data"
 )
+
 
 ## object ----------------------------------------------------------------------
 
@@ -358,6 +381,8 @@ if (exists("new_obs")) {
 
 # check some other data --------------------------------------------------------
 
+demuxlet_result <- fread("~/Downloads/demuxlet_PBMCs/demuxlet_calls.tsv")
+
 sc_object_pmbc <- single_cell_exp(
   dir_data = tempdir()
 )
@@ -370,31 +395,56 @@ mtx_params <- params_sc_mtx_io(
   has_hdr = FALSE
 )
 
-sc_object_pmbc <- load_mtx(sc_object_pmbc, sc_mtx_io_param = mtx_params)
+sc_object_pmbc <- load_mtx(
+  sc_object_pmbc,
+  sc_mtx_io_param = mtx_params,
+  sc_qc_param = params_sc_min_quality()
+)
+
+sc_object_pmbc@dims
+
+devtools::load_all()
 
 rextendr::document()
 
+scrublet_params = params_scrublet(
+  log_transform = FALSE,
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  expected_doublet_rate = 0.05,
+  dist_metric = "euclidean",
+  target_size = 1e4,
+  sim_doublet_ratio = 2.0
+)
+
+scrublet_res = rs_sc_scrublet(
+  f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object_pmbc),
+  f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object_pmbc),
+  cells_to_keep = get_cells_to_keep(sc_object_pmbc),
+  scrublet_params = scrublet_params,
+  seed = 1210103L,
+  verbose = TRUE,
+  streaming = FALSE
+)
+
+scrublet_res$doublet_scores_obs[1:10]
+
 pmbc_scrublet <- scrublet_sc(
   sc_object_pmbc,
-  scrublet_params = params_scrublet(
-    log_transform = TRUE,
-    target_size = 1e5,
-    sim_doublet_ratio = 2.0,
-    k = 15L
-  ),
+  scrublet_params = scrublet_params,
   .verbose = TRUE
 )
 
-pmbc_scrublet <- call_doublets_manual(pmbc_scrublet, threshold = 0.1)
+plot(pmbc_scrublet)
+
+pmbc_scrublet <- call_doublets_manual(pmbc_scrublet, threshold = 0.05)
+
+pmbc_scrublet$doublet_scores_obs[1:10]
 
 plot(pmbc_scrublet)
 
 obs <- sc_object_pmbc[[]]
 obs[, doublet := pmbc_scrublet$predicted_doublets]
-
-head(obs)
-
-demuxlet_result <- fread("~/Downloads/demuxlet_PBMCs/demuxlet_calls.tsv")
 
 demuxlet_result_combined <- merge(
   obs,
@@ -403,17 +453,25 @@ demuxlet_result_combined <- merge(
   by.y = "Barcode"
 )[Call != "AMB"][, doublet_demuxlet := Call == "DBL"]
 
+table(
+  list(
+    predicted = demuxlet_result_combined$doublet,
+    actual = demuxlet_result_combined$doublet_demuxlet
+  )
+)
+
+metrics_helper(table(
+  list(
+    predicted = demuxlet_result_combined$doublet,
+    actual = demuxlet_result_combined$doublet_demuxlet
+  )
+))
+
+
+sum(demuxlet_result_combined$doublet_demuxlet) /
+  nrow(demuxlet_result_combined)
+
 print(table(
   demuxlet_result_combined$doublet,
   demuxlet_result_combined$Call
 ))
-
-metrics_helper(table(
-  demuxlet_result_combined$doublet,
-  demuxlet_result_combined$doublet_demuxlet
-))
-
-
-plot(pmbc_scrublet)
-
-devtools::load_all()

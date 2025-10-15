@@ -923,6 +923,8 @@ checkScScrublet <- function(x) {
     names(x),
     must.include = c(
       "log_transform",
+      "mean_center",
+      "normalise_variance",
       "target_size",
       "min_gene_var_pctl",
       "hvg_method",
@@ -980,7 +982,6 @@ checkScScrublet <- function(x) {
   # Numeric rules
   numeric_rules <- list(
     "min_gene_var_pctl" = "N1[0,1]",
-    "target_size" = "N1(0,)",
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
@@ -1011,23 +1012,32 @@ checkScScrublet <- function(x) {
   }
 
   # Boolean rules
-  if (!checkmate::qtest(x$random_svd, "B1")) {
+  boolean_rules <- c(
+    "random_svd",
+    "log_transform",
+    "mean_center",
+    "normalise_variance"
+  )
+
+  res <- purrr::map_lgl(boolean_rules, \(name) {
+    checkmate::qtest(x[[name]], "B1")
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- boolean_rules[which(!res)][1]
     return(
-      "The element `random_svd` in Scrublet parameters must be a boolean",
-      "(TRUE/FALSE)."
-    )
-  }
-  if (!checkmate::qtest(x$log_transform, "B1")) {
-    return(
-      "The element `log_transform` in Scrublet parameters must be a boolean",
-      "(TRUE/FALSE)."
+      sprintf(
+        "The element `%s` in Scrublet parameters must be a boolean (TRUE/FALSE).",
+        broken_elem
+      )
     )
   }
 
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
     "clip_max" = c("0", "N1(0,)"),
-    "manual_threshold" = c("0", "N1[0,)")
+    "manual_threshold" = c("0", "N1[0,)"),
+    "target_size" = c("0", "N1[0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
