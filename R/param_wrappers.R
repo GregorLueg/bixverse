@@ -608,8 +608,14 @@ params_sc_min_quality <- function(
 #' Wrapper function for Scrublet doublet detection parameters
 #'
 #' @param log_transform Boolean. Shall the counts be log-transformed. Defaults
-#' to `FALSE`.
-#' @param target_size Numeric. The target size for library size normalisation.
+#' to `TRUE`.
+#' @param mean_center Boolean. Shall the data be mean centred. Defaults to
+#' `FALSE`.
+#' @param normalise_variance Boolean. Shall the data be variance normalised.
+#' Defaults to `FALSE`.
+#' @param target_size Optional Numeric. The target size for library size
+#' normalisation. If not provided, it will default to the mean library size
+#' observed in the data.
 #' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
 #' genes. For example, 0.85 means keep genes in top 15% of variability.
 #' @param hvg_method String. Method for highly variable gene selection. One of
@@ -648,8 +654,10 @@ params_sc_min_quality <- function(
 #'
 #' @export
 params_scrublet <- function(
-  log_transform = FALSE,
-  target_size = 1e4,
+  log_transform = TRUE,
+  mean_center = FALSE,
+  normalise_variance = FALSE,
+  target_size = NULL,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -664,7 +672,7 @@ params_scrublet <- function(
   dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
   n_trees = 100L,
-  n_bins = 100L,
+  n_bins = 50L,
   manual_threshold = NULL
 ) {
   hvg_method <- match.arg(hvg_method)
@@ -673,7 +681,9 @@ params_scrublet <- function(
 
   # general checks
   checkmate::qassert(log_transform, "B1")
-  checkmate::qassert(target_size, "N1(0,)")
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  checkmate::qassert(target_size, c("0", "N1(0,)"))
 
   # HVG detection checks
   checkmate::qassert(min_gene_var_pctl, "N1[0,1]")
@@ -707,6 +717,8 @@ params_scrublet <- function(
 
   list(
     log_transform = log_transform,
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
     target_size = target_size,
     min_gene_var_pctl = min_gene_var_pctl,
     hvg_method = hvg_method,
