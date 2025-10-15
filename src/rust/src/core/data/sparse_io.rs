@@ -1109,4 +1109,37 @@ impl ParallelSparseReader {
         let indices: Vec<usize> = (start..end).collect();
         self.read_cells_parallel(&indices)
     }
+
+    /// Read only library sizes for specified cells
+    ///
+    /// More efficient than reading full chunks when you only need library sizes.
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - Cell indices
+    ///
+    /// ### Returns
+    ///
+    /// Vector of library sizes
+    pub fn read_cell_library_sizes(&self, indices: &[usize]) -> Vec<usize> {
+        assert!(self.header.cell_based, "File not cell-based");
+
+        indices
+            .par_iter()
+            .map(|&original_index| {
+                let chunk_index = *self.header.index_map.get(&original_index).unwrap();
+                let chunk_offset =
+                    (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
+
+                // Skip size bytes (8 bytes), then read header (32 bytes)
+                let header = &self.mmap[chunk_offset + 8..chunk_offset + 40];
+
+                // Library size is at bytes 12-19 of the header
+                u64::from_le_bytes([
+                    header[12], header[13], header[14], header[15], header[16], header[17],
+                    header[18], header[19],
+                ]) as usize
+            })
+            .collect()
+    }
 }

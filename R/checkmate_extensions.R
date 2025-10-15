@@ -922,6 +922,8 @@ checkScScrublet <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
+      "log_transform",
+      "target_size",
       "min_gene_var_pctl",
       "hvg_method",
       "loess_span",
@@ -978,6 +980,7 @@ checkScScrublet <- function(x) {
   # Numeric rules
   numeric_rules <- list(
     "min_gene_var_pctl" = "N1[0,1]",
+    "target_size" = "N1(0,)",
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
@@ -999,7 +1002,8 @@ checkScScrublet <- function(x) {
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
           "min_gene_var_pctl, expected_doublet_rate, and stdev_doublet_rate",
-          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0."
+          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
+          "target_size must be a numeric ≥ 1"
         ),
         broken_elem
       )
@@ -1010,6 +1014,12 @@ checkScScrublet <- function(x) {
   if (!checkmate::qtest(x$random_svd, "B1")) {
     return(
       "The element `random_svd` in Scrublet parameters must be a boolean",
+      "(TRUE/FALSE)."
+    )
+  }
+  if (!checkmate::qtest(x$log_transform, "B1")) {
+    return(
+      "The element `log_transform` in Scrublet parameters must be a boolean",
       "(TRUE/FALSE)."
     )
   }

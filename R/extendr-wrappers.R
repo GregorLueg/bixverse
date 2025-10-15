@@ -1954,8 +1954,6 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' to include in this analysis.
 #' @param scrublet_params List. Parameter list, see
 #' [bixverse::params_scrublet()].
-#' @param target_size Numeric. The library target size for the simulated
-#' droplets. Should be the same normalisation as for the original cells.
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity
 #' @param streaming Boolean. Shall the data be streamed for the HVG
@@ -1983,7 +1981,7 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' }
 #'
 #' @export
-rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, target_size, seed, verbose, streaming) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, target_size, seed, verbose, streaming)
+rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming)
 
 #' Calculate the percentage of gene sets in the cells
 #'

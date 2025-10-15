@@ -252,9 +252,9 @@ tictoc::tic()
 object = load_mtx(
   object = object,
   sc_mtx_io_param = params_sc_mtx_io(
-    path_mtx = path.expand("~/Downloads/ex053/DGE.mtx"),
-    path_obs = path.expand("~/Downloads/ex053/cell_metadata.csv"),
-    path_var = path.expand("~/Downloads/ex053/all_genes.csv"),
+    path_mtx = path.expand("~/Downloads/mosaic_poc/count_matrix.mtx"),
+    path_obs = path.expand("~/Downloads/mosaic_poc/cell_metadata.csv"),
+    path_var = path.expand("~/Downloads/mosaic_poc/all_genes.csv"),
     cells_as_rows = TRUE,
     has_hdr = TRUE
   ),
@@ -265,6 +265,12 @@ object = load_mtx(
   )
 )
 tictoc::toc()
+
+rust_scrublet <- scrublet_sc(object = object, target_size = 1e4)
+
+rust_scrublet$doublet_scores_obs
+
+rust_scrublet$doublet_scores_sim
 
 # show size of the object
 pryr::object_size(object)
