@@ -17,3 +17,5 @@
 ^target$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
+^_pkgdown\.yml$
+^pkgdown$

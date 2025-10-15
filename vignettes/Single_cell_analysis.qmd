@@ -1,0 +1,310 @@
+---
+title: "Single Cell Analysis"
+vignette: >
+  %\VignetteIndexEntry{Single Cell Analysis}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+# Introduction
+
+This vignette shows how to use the `bixverse` package to perform single cell analysis.
+
+## Problem statement
+
+The size of single cell datasets is growing rapidly, however the computational
+tools used to to analyze them are not keeping up. The current tools solution ot
+bigger datasets is just use a larger memory machine, however this is not always possible especially if analysis is required to be run locally on a laptop.
+
+The aim of this package is to be able to run a 1 million cell dataset on a
+standard laptop. 
+
+To make this possible data will be stored on disk and will only be loaded into
+memory for required computations. This takes advantage of rapid streaming from
+duckdb and the super fast computational power of rust.
+
+```{r}
+#| label: setup
+library(bixverse)
+```
+
+
+```{r save-temp-data, echo=TRUE}
+
+## This function is used to create synthetic data 
+single_cell_test_data <- generate_single_cell_test_data()
+
+f_path_csr = file.path(tempdir(), "csr_test.h5ad")
+
+obs_table <- single_cell_test_data$obs
+obs_table$to_keep <- TRUE
+
+
+
+write_h5ad_sc(
+  f_path = "inst/extdata/csr_test.h5ad",
+  counts = single_cell_test_data$counts,
+  obs = obs_table,
+  var = single_cell_test_data$var,
+  .verbose = FALSE
+)
+
+single_cell_test_data <- generate_single_cell_test_data()
+
+f_path_v1 <- file.path(tempdir(), "cells_csv")
+f_path_v2 <- file.path(tempdir(), "genes_tsv")
+
+dir.create(f_path_v1, showWarnings = FALSE, recursive = TRUE)
+dir.create(f_path_v2, showWarnings = FALSE, recursive = TRUE)
+
+counts_csc <- as(single_cell_test_data$counts, "CsparseMatrix")
+
+# save a version with rows = cells and format type csv for the rest
+
+write_cellranger_output(
+  f_path = f_path_v1,
+  counts = single_cell_test_data$counts,
+  obs = obs_table,
+  var = single_cell_test_data$var,
+  rows = "cells",
+  format_type = "csv",
+  .verbose = FALSE
+)
+
+# save a version with rows = genes and format type tsv for the rest
+
+write_cellranger_output(
+  f_path = f_path_v2,
+  counts = single_cell_test_data$counts,
+  obs = obs_table,
+  var = single_cell_test_data$var,
+  rows = "genes",
+  format_type = "tsv",
+  .verbose = FALSE
+)
+
+```
+
+# Load in data
+
+The core of the single cell analysis is createing a `sc_object` this object
+contains the connections to the data on disk that can be accessed in rust and
+accessed and indexed by the duckdb.
+
+Here we are setting the path to store the duckdb and files to `tempdir` but in
+reality you want to keep these accessible such that you can always access the
+data.
+
+Another core of the bixverse is the `sc_qc_param` this is a set of parameters
+that will be used to filter out poor quality cells from the start as these are
+not required in the analysis.
+
+Currently these parameters are:
+
+- min_unique_genes = minimum number of genes expressed in a cell for it to be considered 
+- min_lib_size = minimum number of UMTs in a cell for it to be considered
+- min_cells = minimum number of cells for a gene to be expressed for the gene to be considered
+- target_size = library size to be normalised to during the lognorm step
+
+
+** Note your obs table will have a `to_keep` column appended to it when the
+`sc_object` is created this allows tracking of what cells are to be used in each
+analysis by default it will be set to all TRUE **
+
+```{r}
+
+## The QC parameters are set using the constructor function
+sc_qc_param = params_sc_min_quality(
+  min_unique_genes = 45L,
+  min_lib_size = 300L,
+  min_cells = 500L,
+  target_size = 1000
+)
+
+```
+
+
+There are different ways to process single cell data and users may have data
+stored in a number of ways we have tried to account for these when developing this package.
+
+However when an `sc_object` is created from whatever the source a number of things happen
+
+1) 1st pass over the data to assess which genes to include based on threshold
+2) 2nd pass over the data to assess which cells to include based on threshold
+3) CSR and CSC orientations of the data are saved in .bin files for rapid indexing of the data (more on this later)
+4) Data is log normalised based on the `target_size` parameter
+
+Two columns are also added to the obs table `nnz` which is number of genes detected in the cell and `lib_size` which is number of UMTs
+
+## H5AD
+
+```{r load-h5ad}
+
+##  For demonstration 
+
+# sc_object <- single_cell_exp(dir_data = tempdir())
+
+
+# sc_object <- load_h5ad(
+#   object = sc_object,
+#   h5_path = system.file("extdata", "csr_test.h5ad", package="bixverse"),
+#   sc_qc_param = sc_qc_param,
+#   .verbose = TRUE
+# )
+
+```
+
+
+## Cell Ranger
+
+We have accounted for all possible combinations of outputs when loading data
+from mtx files it can either be cells as rows or cells as columns, and the obs and var tables can either be loaded as `.tsv` or `.csv` 
+
+```{r load-mtx}
+sc_object <- single_cell_exp(dir_data = tempdir())
+
+
+params_cells_rows_csv <- params_sc_mtx_io(
+  path_mtx = file.path(f_path_v1, "mat.mtx"),
+  path_obs = file.path(f_path_v1, "barcodes.csv"),
+  path_var = file.path(f_path_v1, "features.csv"),
+  cells_as_rows = TRUE,
+  has_hdr = TRUE
+)
+
+## Data can also be loaded in this way, not run here shown purely as an example
+
+# params_genes_rows_tsv <- params_sc_mtx_io(
+#   path_mtx = file.path(f_path_v2, "mat.mtx"),
+#   path_obs = file.path(f_path_v2, "barcodes.tsv"),
+#   path_var = file.path(f_path_v2, "features.tsv"),
+#   cells_as_rows = FALSE,
+#   has_hdr = TRUE
+# )
+
+sc_object <- load_mtx(
+  object = sc_object,
+  sc_mtx_io_param = params_cells_rows_csv,
+  sc_qc_param = sc_qc_param,
+  streaming = FALSE, #  Shall the data be streamed during the conversion of CSR to CSC. Defaults to TRUE and should be used for larger data sets.
+  .verbose = TRUE
+)
+```
+
+# Accessing data
+
+A duckdb with the single cell data has been created and it does not live in
+memory, however for some operations (plotting) you do need the data, A number
+of helpful getter functions have to been written to retrieve the data.
+
+## Obs table (cell info)
+
+```{r obs-table}
+
+# this returns a data.table of the obs table which can then be interacted with
+sc_object[[]]
+
+# The obs can also be retrieved using the obs getter which has mutliple arguments for fitlering
+get_sc_obs(sc_object)
+
+```
+
+## Var table (gene info)
+
+```{r var-table}
+
+# Returns gene info as a data.table
+head(get_sc_var(sc_object))
+
+```
+
+## Accessing Count data
+
+This is where things get interesting and were the power of saving the mtx as
+both a Compressed sparse Row (CSR) and compressed sparse column (CSC) format becomes apparent. 
+For gene wise operations (highly variable genes) we want to be able to rapidly index through the columns (genes) so we would opt for selecting the CSC notation of the matrix.
+For cell wise operations (PCA) we want to be able to rapidly index through the rows (cells) so we would opt for selecting the CSR notation of the matrix.
+
+Most of the algorithms will automatically select the correct orientation so you
+don't need to worry about it but below is a demonstration of the time difference
+when retrieving a selection of cells from the db
+
+
+```{r cell-wise-selection}
+
+## We are selecting 20:30 cells in the matrix which is a cellwise opperation so the correct thing to do would be to return the cells
+tictoc::tic()
+matrix <- get_sc_counts(
+  object = sc_object,
+  assay = "norm",
+  cell_indices = 20:30,
+  return_format = "cell"
+  )
+tictoc::toc()
+
+## Now we are to select the incorrect orientation 
+## This dataset is too small to see a difference however try it on your own larger and it will shock you
+tictoc::tic()
+matrix <- get_sc_counts(
+  object = sc_object,
+  assay = "norm",
+  cell_indices = 20:30,
+  return_format = "gene"
+  )
+tictoc::toc()
+
+
+## matrices can also be accessed with sinle brackets
+
+matrix <- sc_object[,, return_format = "cell", assay = "norm"]
+```
+
+
+## Gene proportions
+
+Usual QC procedure involves checking the proportions of mitochondrial and ribosomal genes in you sample bixverse can do this as follows
+
+```{r gene-props}
+
+gs_of_interest <- list(
+  gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
+  gs_2 = c("gene_096", "gene_097", "gene_100")
+)
+
+## This will add proportions to the obs table
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  .verbose = TRUE
+)
+
+head(sc_object[[]])
+
+```
+
+We can then set cells to keep based on proportions of reads mapping to genes,
+the filtered out cells will not actullay be removed from the duckdb rather just
+have their `to_keep` column in the obs table set to FALSE. 
+
+`set_cell_to_keep()` accepts both cell ids and cell indices as a vector of cells to keep.
+
+By default using the [[]] notation to load in the obs will only retain the `to_keep` cells. To access all cells the `get_sc_obs()` needs to be used.
+
+```{r removing-cells}
+
+threshold <- 0.05
+
+cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
+
+sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+
+obs_data <- get_sc_obs(sc_object, filtered = FALSE)
+table(obs_data$to_keep)
+
+table(sc_object[["to_keep"]])
+
+```
