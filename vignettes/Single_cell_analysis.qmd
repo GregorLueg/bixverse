@@ -35,7 +35,10 @@ library(ggplot2)
 ```
 
 
-```{r save-temp-data, echo=TRUE}
+```{r}
+#| echo: true
+#| label: save-temp-data
+
 ## This function is used to create synthetic data
 single_cell_test_data <- generate_single_cell_test_data()
 
@@ -113,6 +116,8 @@ Currently these parameters are:
 analysis by default it will be set to all TRUE **
 
 ```{r}
+#| label: sc-qc-param
+
 ## The QC parameters are set using the constructor function
 sc_qc_param <- params_sc_min_quality(
   min_unique_genes = 45L,
@@ -137,9 +142,12 @@ Two columns are also added to the obs table `nnz` which is number of genes detec
 
 ### H5AD
 
-```{r load-h5ad, eval=FALSE}
-#  For demonstration
+```{r}
+#| label: load-h5ad
+#| eval: false
 
+
+#  For demonstration
 sc_object <- single_cell_exp(dir_data = tempdir())
 
 
@@ -157,7 +165,8 @@ sc_object <- load_h5ad(
 We have accounted for all possible combinations of outputs when loading data
 from mtx files it can either be cells as rows or cells as columns, and the obs and var tables can either be loaded as `.tsv` or `.csv` 
 
-```{r load-mtx}
+```{r}
+#| label: load-mtx
 sc_object <- single_cell_exp(dir_data = tempdir())
 
 
@@ -196,7 +205,9 @@ of helpful getter functions have to been written to retrieve the data.
 
 ### Obs table (cell info)
 
-```{r obs-table}
+```{r}
+#| label: obs-table
+
 # this returns a data.table of the obs table which can then be interacted with
 sc_object[[]]
 
@@ -206,7 +217,9 @@ get_sc_obs(sc_object)
 
 ### Var table (gene info)
 
-```{r var-table}
+```{r}
+#| label: var-table
+
 # Returns gene info as a data.table
 head(get_sc_var(sc_object))
 ```
@@ -223,7 +236,9 @@ don't need to worry about it but below is a demonstration of the time difference
 when retrieving a selection of cells from the db
 
 
-```{r cell-wise-selection}
+```{r}
+#| label: cell-wise-selection
+
 ## We are selecting 20:30 cells in the matrix which is a cellwise opperation so the correct thing to do would be to return the cells
 tictoc::tic()
 matrix <- get_sc_counts(
@@ -256,7 +271,8 @@ matrix <- sc_object[, , return_format = "cell", assay = "norm"]
 
 Usual QC procedure involves checking the proportions of mitochondrial and ribosomal genes in you sample bixverse can do this as follows
 
-```{r gene-props}
+```{r}
+#| label: gene-props
 gs_of_interest <- list(
   gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
   gs_2 = c("gene_096", "gene_097", "gene_100")
@@ -286,7 +302,8 @@ Once this `set_cells_to_keep()` function has been applied to the `sc_object`
 only cells marked TRUE in the `to_keep` column will be used in the downstream
 analysis
 
-```{r removing-cells}
+```{r}
+#| label: removing-cells
 threshold <- 0.05
 
 cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
@@ -314,7 +331,8 @@ This also has the option for the data to be chunked in which is useful for
 larger datasets where you may run into memory constraints.
 
 
-```{r HVG-analysis}
+```{r}
+#| label: hvg-analysis
 hvg_params <- params_sc_hvg(
   method = "vst"
 )
@@ -330,7 +348,7 @@ head(get_sc_var(sc_object))
 
 
 ## You can then which genes are highly variable as follows
-get_sc_var(sc_object)[get_hvg(sc_object)]
+head(get_sc_var(sc_object)[get_hvg(sc_object)],5)
 ```
 
 
@@ -345,7 +363,8 @@ Note the PCS are not currently saved to to the duckdb and after calculations are
 currently stored in memory and will need to be recalculated on the object if
 session is closed.
 
-```{r PCA}
+```{r}
+#| label: pca-analysis
 sc_object <- calculate_pca_sc(
   object = sc_object,
   no_pcs = 10L, # Number PC to calculate
@@ -354,13 +373,14 @@ sc_object <- calculate_pca_sc(
 )
 
 # get the PCA factors
-head(get_pca_factors(sc_object))
+get_pca_factors(sc_object)[1:5,1:5]
 
 # Get PCA loadings for each gene
-get_pca_loadings(sc_object)
+get_pca_loadings(sc_object)[1:5,1:5]
 ```
 
-```{r plot-pca}
+```{r}
+#| label: plot-pca
 pca_plot_df <- cbind(sc_object[[]], get_pca_factors(sc_object))
 
 
@@ -405,7 +425,8 @@ Like PCA the results for these are not stored in the duckdb rather in memory so
 will need to be saved or rerun each time.
 
 
-```{r KNN}
+```{r}
+#| label: knn-analysis
 neighbours_params <- params_sc_neighbours(knn_algorithm = "hnsw")
 
 
@@ -416,9 +437,9 @@ sc_object <- find_neighbours_sc(
 )
 
 
-head(get_knn_mat(sc_object))
+head(get_knn_mat(sc_object))[1:5,1:5]
 
-head(get_snn_graph(sc_object))
+head(get_snn_graph(sc_object))[1:5,1:5]
 ```
 
 
@@ -426,7 +447,8 @@ head(get_snn_graph(sc_object))
 
 Currently only Leiden clustering is implemented in the package these cluster are then added to the obs table of the `sc_object`
 
-```{r Leiden-clustering}
+```{r}
+#| label: leiden-clustering
 sc_object <- find_clusters_sc(sc_object, name = "leiden_clusters")
 
 cbind(sc_object[[]], get_pca_factors(sc_object)) |>
@@ -445,7 +467,8 @@ analysis between the 2 groups of cell lines or group verses all style analysis.
 Currently the wilcox method is used to assess DGE with a default `twosided` test
 run. 
 
-```{r DGE-analysis}
+```{r}
+#| label: dge-analysis
 cell_names_1 <- sc_object[[]][leiden_clusters == 1, cell_id]
 cell_names_2 <- sc_object[[]][leiden_clusters == 2, cell_id]
 
@@ -471,7 +494,8 @@ Currently this functions alternative hypothesis is set to "greater", i.e., genes
 upregulated in the group.
 
 
-```{r DGE-one-vs-all}
+```{r}
+#| label: dge-one-vs-all
 dge_test_2 <- find_all_markers_sc(
   object = sc_object,
   column_of_interest = "leiden_clusters",
@@ -493,7 +517,8 @@ measuring overall pathway activity. For large datasets, you can load all cells
 at once or stream them in chunks of 50,000 cells for memory efficiency.
 
 
-```{r auc-cell}
+```{r}
+#| label: auc-cell
 auc_gene_sets <- list(
   markers_cell_type_1 = sprintf("gene_%03d", 1:10),
   markers_cell_type_2 = sprintf("gene_%03d", 11:20),
@@ -535,7 +560,9 @@ metacells. You can optionally regenerate the k-NN graph with regenerate_knn,
 specify which embedding to use (embd_to_use, currently "pca"), and control
 library size normalization with target_size. Set a seed for reproducibility.
 
-```{r meta-cell}
+```{r}
+#| label: meta-cell
+
 sc_meta_cell_params <- params_sc_metacells(target_no_metacells = 10L)
 
 meta_cell_data_v1 <- get_meta_cells_sc(
@@ -560,7 +587,9 @@ proportions etc and any information in var table will be retained as it has been
 stored in the duckdb. However analysis that was created and storied in memory
 e.g knn and PCA will no longer exist and have to be rerun.
 
-```{r load-existing}
+```{r}
+#| label: load-existing
+
 sc_object_loaded <- single_cell_exp(dir_data = tempdir())
 
 sc_object_loaded <- load_existing(sc_object_loaded)
@@ -573,16 +602,18 @@ dim(sc_object[[]])
 dim(sc_object_loaded[[]])
 ```
 
-```{r PCA-knn}
+```{r}
+#| label: pca-knn
+
 ## PCA in original object exists
-head(get_pca_factors(sc_object))
+head(get_pca_factors(sc_object))[1:5,1:5]
 
 ## PCA in loaded in object does not exist
 head(get_pca_factors(sc_object_loaded))
 
 
 ## Same for knn
-head(get_knn_mat(sc_object))
+head(get_knn_mat(sc_object))[1:5,1:5]
 
 head(get_knn_mat(sc_object_loaded))
 ```

@@ -19,3 +19,4 @@
 ^vignettes/\.quarto$
 ^_pkgdown\.yml$
 ^pkgdown$
+^\.github$

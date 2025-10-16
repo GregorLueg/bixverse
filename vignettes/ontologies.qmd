@@ -22,6 +22,9 @@ library(bixverse)
 library(data.table)
 library(magrittr)
 library(zeallot)
+if (!requireNamespace("ontologyIndex", quietly = TRUE)) install.packages("ontologyIndex")
+if (!requireNamespace("ontologySimilarity", quietly = TRUE)) install.packages("ontologySimilarity")
+
 ```
 
 ### Data
