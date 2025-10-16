@@ -11,7 +11,9 @@ rs_sc_scrublet(
   scrublet_params,
   seed,
   verbose,
-  streaming
+  streaming,
+  return_combined_pca,
+  return_pairs
 )
 }
 \arguments{

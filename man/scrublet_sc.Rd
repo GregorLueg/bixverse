@@ -9,6 +9,8 @@ scrublet_sc(
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
+  return_combined_pca = FALSE,
+  return_pairs = FALSE,
   .verbose = TRUE
 )
 }
@@ -57,6 +59,11 @@ simulated doublet score distribution.
 
 \item{streaming}{Boolean. Shall streaming be used during the HVG
 calculations. Slower, but less memory usage.}
+
+\item{return_combined_pca}{Boolean. Shall the PCA of the observed cells and
+simulated doublets be returned.}
+
+\item{return_pairs}{Boolean. Shall the pairs be returned.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 
