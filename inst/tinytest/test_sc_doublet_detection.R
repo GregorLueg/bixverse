@@ -1,4 +1,4 @@
-# test scrublet ----------------------------------------------------------------
+# test data and params ---------------------------------------------------------
 
 ## parameters ------------------------------------------------------------------
 
@@ -66,8 +66,6 @@ new_obs <- data.table::rbindlist(list(
   doublet_obs
 ))
 
-# test scrublet ----------------------------------------------------------------
-
 ## generate the object ---------------------------------------------------------
 
 sc_object <- single_cell_exp(
@@ -89,6 +87,8 @@ sc_object <- load_r_data(
   .verbose = FALSE
 )
 
+# test scrublet ----------------------------------------------------------------
+
 ## rust logic ------------------------------------------------------------------
 
 ### optimal parameters according to the original paper -------------------------
@@ -103,7 +103,7 @@ optimal_params <- params_scrublet(
   no_pcs = 15L,
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
-  min_gene_var_pctl = 0.5,
+  min_gene_var_pctl = 0.0,
   n_bins = 100L
 )
 
@@ -177,17 +177,17 @@ expect_true(
 metrics <- metrics_helper(
   cm = table(
     new_obs$doublet,
-    scrublet_res$doublet_scores_obs >= 0.175
+    scrublet_res$predicted_doublets
   )
 )
 
 expect_true(
-  current = metrics["recall"] >= 0.5,
+  current = metrics["recall"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
 expect_true(
-  current = metrics["f1"] >= 0.5,
+  current = metrics["f1"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
@@ -221,20 +221,20 @@ scrublet_res.full_norm <- rs_sc_scrublet(
 metrics.full_norm <- metrics_helper(
   cm = table(
     new_obs$doublet,
-    scrublet_res.full_norm$doublet_scores_obs >= 0.175
+    scrublet_res.full_norm$predicted_doublets
   )
 )
 
 # should still behave VERY similar
 
 expect_true(
-  current = metrics.full_norm["recall"] >= 0.5,
+  current = metrics.full_norm["recall"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
 expect_true(
-  current = metrics.full_norm["f1"] >= 0.5,
-  info = "rust scrublet: 'good' recall on synthetic data"
+  current = metrics.full_norm["f1"] <= metrics["f1"],
+  info = "rust scrublet: worse recall with bad paramters"
 )
 
 expect_true(
@@ -290,12 +290,12 @@ metrics_obj <- metrics_helper(
 )
 
 expect_true(
-  current = metrics_obj["recall"] >= 0.5,
+  current = metrics_obj["recall"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
 expect_true(
-  current = metrics_obj["f1"] >= 0.5,
+  current = metrics_obj["f1"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
@@ -312,4 +312,80 @@ expect_true(
     must.include = c("doublet", "doublet_score", "cell_idx")
   ),
   info = "getter on scrublet res working - expected columns"
+)
+
+# test doublet detection -------------------------------------------------------
+
+## rust logic ------------------------------------------------------------------
+
+doublet_detection_res <- rs_sc_doublet_detection(
+  f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+  f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+  cells_to_keep = get_cells_to_keep(sc_object),
+  boost_params = list(
+    no_pcs = 10L,
+    min_gene_var_pctl = 0.0,
+    voter_thresh = 0.25,
+    n_iters = 25L,
+    resolution = 0.5
+  ),
+  seed = 42L,
+  verbose = FALSE,
+  streaming = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(
+    doublet_detection_res$predicted_doublet,
+    sprintf("B%s", nrow(new_obs))
+  ),
+  info = paste(
+    "rust boost classified doublet detection:",
+    "predicted doublets correct return type"
+  )
+)
+
+expect_true(
+  current = checkmate::qtest(
+    doublet_detection_res$doublet_scores,
+    sprintf("N%s", nrow(new_obs))
+  ),
+  info = paste(
+    "rust boost classified doublet detection:",
+    "doublet scores correct return type"
+  )
+)
+
+expect_true(
+  current = checkmate::qtest(
+    doublet_detection_res$voting_avg,
+    sprintf("N%s", nrow(new_obs))
+  ),
+  info = paste(
+    "rust boost classified doublet detection:",
+    "voting average correct return type"
+  )
+)
+
+metrics <- metrics_helper(
+  cm = table(
+    new_obs$doublet,
+    doublet_detection_res$predicted_doublet
+  )
+)
+
+expect_true(
+  current = metrics["recall"] >= 0.7,
+  info = paste(
+    "rust boost classified doublet detection:",
+    "good recall"
+  )
+)
+
+expect_true(
+  current = metrics["f1"] >= 0.7,
+  info = paste(
+    "rust boost classified doublet detection:",
+    "good f1 scores"
+  )
 )

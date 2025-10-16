@@ -54,6 +54,12 @@ doublet.
 scores above the threshold.
 \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
 match the expected doublet rate.
+\item pca - Optional PCA embeddings across the original cells and simulated
+doublets.
+\item pair_1 - Optional integer vector representing the first parent of the
+simulated doublets.
+\item pair_2 -  Optional integer vector representing the second parent of
+the simulated doublets.
 }
 }
 \description{

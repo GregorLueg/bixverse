@@ -856,7 +856,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
                                 let cell_data_start = indptr[cell_idx] as usize - data_start;
                                 let cell_data_end = indptr[cell_idx + 1] as usize - data_start;
 
-                                #[allow(clippy::needless_range_loop)]
+                                
                                 for local_idx in cell_data_start..cell_data_end {
                                     let gene_idx = chunk_indices[local_idx] as usize;
                                     if gene_idx < shape.1 {

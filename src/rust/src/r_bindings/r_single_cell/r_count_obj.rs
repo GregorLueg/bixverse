@@ -624,7 +624,7 @@ impl SingeCellCountData {
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
 
-        #[allow(clippy::needless_range_loop)]
+        
         for i in 0..no_genes {
             // get the index position
             let start_i = sparse_data.indptr[i];

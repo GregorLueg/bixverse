@@ -1978,6 +1978,12 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #'  scores above the threshold.
 #'  \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
 #'  match the expected doublet rate.
+#'  \item pca - Optional PCA embeddings across the original cells and simulated
+#'  doublets.
+#'  \item pair_1 - Optional integer vector representing the first parent of the
+#'  simulated doublets.
+#'  \item pair_2 -  Optional integer vector representing the second parent of
+#'  the simulated doublets.
 #' }
 #'
 #' @export
@@ -2108,6 +2114,31 @@ rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_typ
 #'
 #' @export
 rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
+
+#' Detect Doublets via BoostClassifier (in Rust)
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+#' to include in this analysis.
+#' @param scrublet_params List. Parameter list, see
+#' [bixverse::params_boost()].
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity
+#' @param streaming Boolean. Shall the data be streamed for the HVG
+#' calculations.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'  a doublet for the observed cells.
+#'  \item voting_avg - Voting average across the different iterations.
+#' }
+#'
+#' @export
+rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
 
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'

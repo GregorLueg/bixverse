@@ -38,6 +38,21 @@ type ScrubletPcaRes = (Mat<f32>, Mat<f32>, Vec<f32>, Vec<f32>);
 /// * `3` - Errors simulated cells
 type ScrubletDoubletScores = (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>);
 
+/// Type alias for final Scrublet results
+///
+/// ### Fields
+///
+/// * `0` - The actual Scrublet results from the algorithm
+/// * `1` - Optional PCA embeddings across observed and simulated cells
+/// * `2` - First parent of the simulated parent
+/// * `3` - Second parent of the simualted parent
+pub type FinalScrubletRes = (
+    ScrubletResult,
+    Option<Mat<f32>>,
+    Option<Vec<usize>>,
+    Option<Vec<usize>>,
+);
+
 ////////////////////////
 // Params and results //
 ////////////////////////
@@ -833,12 +848,7 @@ impl Scrublet {
         verbose: bool,
         return_combined_pca: bool,
         return_pairs: bool,
-    ) -> (
-        ScrubletResult,
-        Option<Mat<f32>>,
-        Option<Vec<usize>>,
-        Option<Vec<usize>>,
-    ) {
+    ) -> FinalScrubletRes {
         if verbose {
             println!("Identifying highly variable genes...");
         }
@@ -1336,6 +1346,8 @@ impl Scrublet {
         }
     }
 
+    /// Calculates the adjusted k based on number actual cells and simulated
+    /// cells
     fn calculate_k_adj(&self) -> usize {
         let k = if self.params.k == 0 {
             ((self.n_cells as f32).sqrt() * 0.5).round() as usize

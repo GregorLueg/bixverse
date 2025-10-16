@@ -1,3 +1,5 @@
+#![allow(clippy::needless_range_loop)] // I want these loops!
+
 mod core;
 mod r_bindings;
 mod single_cell;

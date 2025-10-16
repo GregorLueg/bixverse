@@ -194,7 +194,7 @@ pub fn generate_bulk_rnaseq(
                     let signal_mean = module_signal.iter().sum::<f64>() * inv_num_samples;
                     let scale_factor = mean_exp[i] / signal_mean;
 
-                    #[allow(clippy::needless_range_loop)]
+                    
                     for j in 0..num_samples {
                         let scaled_signal = module_signal[j] * scale_factor;
 
@@ -283,7 +283,7 @@ pub fn simulate_dropouts_logistic(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            #[allow(clippy::needless_range_loop)]
+            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -366,7 +366,7 @@ pub fn simulate_dropouts_power_decay(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            #[allow(clippy::needless_range_loop)]
+            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -455,7 +455,7 @@ pub fn create_sparse_csc_data(
     let mut data = Vec::with_capacity(estimated_total);
     indptr.push(0);
 
-    #[allow(clippy::needless_range_loop)]
+    
     for gene_idx in 0..ncol {
         // Sort cells for this gene
         gene_data[gene_idx].sort_unstable_by_key(|(cell_idx, _)| *cell_idx);
@@ -665,7 +665,7 @@ pub fn create_celltype_sparse_csr_data(
 
     let mut batch_effect = vec![vec![1.0; ncol]; n_batches];
 
-    #[allow(clippy::needless_range_loop)]
+    
     for batch_idx in 1..n_batches {
         for gene_idx in 0..ncol {
             let u: f64 = gene_rng.random();

@@ -1,5 +1,7 @@
 use faer::{Mat, MatRef};
+use petgraph::graph::{Graph, NodeIndex, UnGraph};
 use rayon::prelude::*;
+use rustc_hash::FxHashSet;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
@@ -320,14 +322,14 @@ impl KnnLabPropGraph {
 
                     if mask[i] {
                         // unlabeled - pure propagation
-                        #[allow(clippy::needless_range_loop)]
+
                         for c in 0..num_classes {
                             max_diff = max_diff.max((y_new[i][c] - y_dist[c]).abs());
                             y_dist[c] = y_new[i][c];
                         }
                     } else {
                         // labeled - anchor to original
-                        #[allow(clippy::needless_range_loop)]
+
                         for c in 0..num_classes {
                             let new_val = alpha * labels[i][c] + (1.0 - alpha) * y_new[i][c];
                             max_diff = max_diff.max((new_val - y_dist[c]).abs());
@@ -346,4 +348,36 @@ impl KnnLabPropGraph {
 
         y
     }
+}
+
+/////////////////////
+// kNN to PetGraph //
+/////////////////////
+
+/// Convert kNN indices to undirected petgraph
+///
+/// ### Params
+///
+/// * `knn` - kNN indices. Excludes self.
+///
+/// ### Returns
+///
+/// Undirected pet graph, i.e., `UnGraph`
+pub fn knn_to_graph(knn: &[Vec<usize>]) -> UnGraph<(), f32> {
+    let n_nodes = knn.len();
+    let mut graph = Graph::new_undirected();
+    let nodes: Vec<NodeIndex> = (0..n_nodes).map(|_| graph.add_node(())).collect();
+
+    let mut added_edges: FxHashSet<(usize, usize)> = FxHashSet::default();
+
+    for (i, neighbours) in knn.iter().enumerate() {
+        for &j in neighbours {
+            let edge = if i < j { (i, j) } else { (j, i) };
+            if added_edges.insert(edge) {
+                graph.add_edge(nodes[edge.0], nodes[edge.1], 1.0);
+            }
+        }
+    }
+
+    graph
 }

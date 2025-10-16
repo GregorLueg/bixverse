@@ -215,13 +215,13 @@ expect_equivalent(
 # the logic of retrieving cells will become more complicated here...
 
 expect_equal(
-  current = sc_object[, , use_cells_to_keep = TRUE],
+  current = sc_object[,, use_cells_to_keep = TRUE],
   target = counts_more_filtered,
   info = "counts after setting cells to keep and using the parameter"
 )
 
 expect_equal(
-  current = sc_object[, , use_cells_to_keep = FALSE],
+  current = sc_object[,, use_cells_to_keep = FALSE],
   target = counts_filtered,
   info = "counts after setting cells to keep and NOT using the parameter"
 )
@@ -410,7 +410,8 @@ expect_true(
 #### scaling within the rust function ------------------------------------------
 
 # test if the scaling results in the same data
-c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
+zeallot::`%<-%`(
+  c(pca_factors, pca_loadings, pca_eigenvals, scaled),
   rs_sc_pca(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
@@ -421,6 +422,7 @@ c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
     return_scaled = TRUE,
     verbose = FALSE
   )
+)
 
 expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 

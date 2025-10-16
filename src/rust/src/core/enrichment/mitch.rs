@@ -83,7 +83,7 @@ pub fn prepare_mitch_pathways(
     let mut filtered_pathways = Vec::new();
     let mut filtered_names = Vec::new();
 
-    #[allow(clippy::needless_range_loop)]
+    
     for i in 0..pathway_list.len() {
         let element = pathway_list.elt(i)?;
         if let Some(internal_vals) = element.as_string_vector() {

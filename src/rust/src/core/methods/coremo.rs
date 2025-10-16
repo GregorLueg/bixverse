@@ -167,7 +167,7 @@ pub fn split_cor_mat_by_sign(cor_mat: &MatRef<f64>) -> Vec<i32> {
             while let Some(node) = queue.pop_front() {
                 component.push(node);
 
-                #[allow(clippy::needless_range_loop)]
+                
                 for j in 0..n {
                     if !visited[j] && *cor_mat.get(node, j) > 0.0 {
                         visited[j] = true;

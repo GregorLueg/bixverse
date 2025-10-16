@@ -29,7 +29,7 @@ where
 
     let zero = T::default();
 
-    #[allow(clippy::needless_range_loop)]
+    
     for j in 0..ncol {
         for i in 0..nrow {
             let val = unsafe { mat.get_unchecked(i, j) };
