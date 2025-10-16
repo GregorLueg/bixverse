@@ -1,5 +1,3 @@
-
-
 single_cell_test_data <- generate_single_cell_test_data()
 
 f_path_csr = file.path(tempdir(), "csr_test.h5ad")
@@ -38,14 +36,10 @@ sc_object <- load_h5ad(
 )
 
 
-
 rust_con <- get_sc_rust_ptr(sc_object)
 
 
-
-
 duckdb_con <- get_sc_duckdb(sc_object)
-
 
 
 get_cell_names(sc_object)
@@ -54,7 +48,6 @@ get_cells_to_keep(sc_object)
 
 cells_to_keep <- c("cell_0001", "cell_0003", "cell_0005")
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 get_cells_to_keep(sc_object)
-

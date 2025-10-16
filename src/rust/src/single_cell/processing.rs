@@ -140,6 +140,7 @@ pub struct HvgRes {
 /// * `f_path` - File path to the binarised format that contains the cell-based
 ///   data
 /// * `gene_indices` - Vector of index positions of the genes of interest
+/// * `cell_indices` - Vector of cell positions to use.
 /// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
@@ -148,13 +149,14 @@ pub struct HvgRes {
 pub fn get_gene_set_perc(
     f_path: &str,
     gene_indices: Vec<Vec<u16>>,
+    cell_indices: &[usize],
     verbose: bool,
 ) -> Vec<Vec<f32>> {
     let start_reading = Instant::now();
 
     let reader = ParallelSparseReader::new(f_path).unwrap();
 
-    let cell_chunks = reader.get_all_cells();
+    let cell_chunks = reader.read_cells_parallel(cell_indices);
 
     let end_read = start_reading.elapsed();
 
@@ -210,6 +212,7 @@ pub fn get_gene_set_perc(
 /// * `f_path` - File path to the binarised format that contains the cell-based
 ///   data
 /// * `gene_indices` - Vector of index positions of the genes of interest
+/// * `cell_indices` - Vector of cell positions to use.
 /// * `verbose` - Controls verbosity of the function.
 ///
 /// ### Returns
@@ -218,27 +221,24 @@ pub fn get_gene_set_perc(
 pub fn get_gene_set_perc_streaming(
     f_path: &str,
     gene_indices: Vec<Vec<u16>>,
+    cell_indices: &[usize],
     verbose: bool,
 ) -> Vec<Vec<f32>> {
     let start_total = Instant::now();
 
     let reader = ParallelSparseReader::new(f_path).unwrap();
-    let no_cells = reader.get_header().total_cells;
-
-    const CELL_BATCH_SIZE: usize = 100000;
-
-    let num_cell_batches = no_cells.div_ceil(CELL_BATCH_SIZE);
 
     let mut results: Vec<Vec<f32>> = vec![Vec::new(); gene_indices.len()];
-
     let hash_gene_sets: Vec<FxHashSet<&u16>> =
         gene_indices.iter().map(|gs| gs.iter().collect()).collect();
 
-    for cell_batch_idx in 0..num_cell_batches {
-        let cell_start = cell_batch_idx * CELL_BATCH_SIZE;
-        let cell_end = ((cell_batch_idx + 1) * CELL_BATCH_SIZE).min(no_cells);
+    const CELL_BATCH_SIZE: usize = 100000;
 
-        let cell_chunks = reader.read_cells_range(cell_start, cell_end);
+    for batch_start in (0..cell_indices.len()).step_by(CELL_BATCH_SIZE) {
+        let batch_end = (batch_start + CELL_BATCH_SIZE).min(cell_indices.len());
+        let cell_batch = &cell_indices[batch_start..batch_end];
+
+        let cell_chunks = reader.read_cells_parallel(cell_batch);
 
         for (gs_idx, hash_gene_set) in hash_gene_sets.iter().enumerate() {
             let percentage: &Vec<f32> = &cell_chunks
@@ -255,14 +255,13 @@ pub fn get_gene_set_perc_streaming(
                     total_sum / lib_size
                 })
                 .collect();
-
             results[gs_idx].extend(percentage);
         }
 
-        if verbose && cell_batch_idx % 5 == 0 {
-            let progress = (cell_batch_idx + 1) as f32 / num_cell_batches as f32 * 100.0;
+        if verbose && batch_start % (CELL_BATCH_SIZE * 5) == 0 {
+            let progress = ((batch_start + 1) as f32 / cell_indices.len() as f32) * 100.0;
             println!(
-                "  Reading cells and calculating proportions: {:.1}%",
+                " Reading cells and calculating proportions: {:.1}%",
                 progress
             );
         }
