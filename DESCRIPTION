@@ -76,7 +76,9 @@ Suggests:
     StatMatch,
     Seurat,
     tictoc,
-    tinytest
+    tinytest,
+    furrr,
+    future
 SystemRequirements: 
     Cargo (Rust's package manager), rustc
 VignetteBuilder: quarto
