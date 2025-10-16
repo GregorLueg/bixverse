@@ -36,8 +36,8 @@ data sets where you wish to avoid loading in the whole data. Defaults to
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
 \value{
-It will add the columns based on the names in the \code{gene_set_list} to
-the obs table.
+It will add the mean, var, var_exp, var_std of each gene to the
+the var table.
 }
 \description{
 This is a helper function to identify highly variable genes. At the moment

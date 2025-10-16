@@ -10,7 +10,7 @@ get_sc_counts(
   return_format = c("cell", "gene"),
   cell_indices = NULL,
   gene_indices = NULL,
-  use_cells_to_keep = FALSE,
+  use_cells_to_keep = TRUE,
   .verbose = TRUE
 )
 }
