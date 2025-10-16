@@ -308,3 +308,32 @@ table(obs_data$to_keep)
 table(sc_object[["to_keep"]])
 
 ```
+
+## Highly Variable Genes (HVG)
+
+It is most common to perform downstream analysis (PCA, Knn graph, clustering) on HVG as these usually are the most informative genes.
+
+Currently the only implemented method is the VST-based version (known as Seurat v3). The
+other methods (meanvarbin, dispersion) will be implemented in the future.
+
+See `params_sc_hvg()` for details. 
+
+This also has the option for the data to be chunked in which is useful for larger datasets where you may run into memory constraints.
+
+
+```{r HVG-analysis}
+
+hvg_params <- params_sc_hvg(
+  method = "vst"
+)
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_params = hvg_params,
+  hvg_no = 30L, # Number of HVGs
+  .verbose = TRUE
+)
+
+
+head(get_sc_var(sc_object))
+```
