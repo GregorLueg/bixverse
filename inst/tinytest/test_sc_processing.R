@@ -38,7 +38,7 @@ expect_true(
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp,
@@ -66,10 +66,20 @@ sc_object <- # keep all cells for the sake of this
 
 # tests ------------------------------------------------------------------------
 
+## test filter column and cells to get -----------------------------------------
+
+expect_true(
+  current = checkmate::qtest(unlist(sc_object[["to_keep"]]), "B+"),
+  info = "to_keep column added"
+)
+
+expect_true(
+  current = checkmate::qtest(get_cells_to_keep(sc_object), "I+"),
+  info = "cells_to_keep loaded independently of setting"
+)
+
 ## function warnings -----------------------------------------------------------
 
-# this will now calculate on all cells - test irrelevant
-#
 # expect_warning(
 #   current = find_hvg_sc(sc_object),
 #   info = "warning that no cells to keep were specified"
@@ -174,11 +184,15 @@ expect_true(
   info = "sensible cell filtering based on the threshold"
 )
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+
+get_sc_obs(sc_object)
 
 expect_true(
-  current = all(unlist(sc_object[["cell_id"]]) == cells_to_keep),
-  info = "setting genes to keep removes them from the obs table"
+  current = all(
+    unlist(sc_object[["cell_id"]]) == cells_to_keep
+  ),
+  info = "setting cells to keep removes them from the obs table"
 )
 
 cell_names_filtered <- get_cell_names(sc_object, filtered = TRUE)
@@ -210,6 +224,13 @@ expect_equal(
   current = sc_object[,, use_cells_to_keep = FALSE],
   target = counts_filtered,
   info = "counts after setting cells to keep and NOT using the parameter"
+)
+
+### test that the original data is still in there ------------------------------
+
+expect_true(
+  current = nrow(get_sc_obs(sc_object)) == sc_object@dims[1],
+  info = "original rows are still in the DB"
 )
 
 ## hvg selection ---------------------------------------------------------------
@@ -389,7 +410,8 @@ expect_true(
 #### scaling within the rust function ------------------------------------------
 
 # test if the scaling results in the same data
-c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
+zeallot::`%<-%`(
+  c(pca_factors, pca_loadings, pca_eigenvals, scaled),
   rs_sc_pca(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
@@ -400,6 +422,7 @@ c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
     return_scaled = TRUE,
     verbose = FALSE
   )
+)
 
 expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 
@@ -429,11 +452,20 @@ sc_object <- find_clusters_sc(sc_object)
 cell_grps <- unlist(sc_object[["cell_grp"]])
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
 
+cell_grps <- unlist(sc_object[["cell_grp"]])
+
 f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
 
 expect_true(
   current = all(f1_scores > 0.95),
   info = "leiden clustering identifies the cell groups"
+)
+
+### check the DB structure -----------------------------------------------------
+
+expect_true(
+  current = all(is.na(get_sc_obs(sc_object)[!(to_keep), leiden_clustering])),
+  info = "leiden clustering for cells that are not kept should be NA"
 )
 
 ## dges ------------------------------------------------------------------------

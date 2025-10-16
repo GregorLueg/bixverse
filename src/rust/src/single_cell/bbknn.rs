@@ -452,7 +452,7 @@ fn trim_graph(
     let mut thresholds = vec![0.0f32; n];
 
     // compute thresholds
-    #[allow(clippy::needless_range_loop)]
+    
     for i in 0..n {
         let row_start = connectivities.indptr[i];
         let row_end = connectivities.indptr[i + 1];
@@ -469,7 +469,7 @@ fn trim_graph(
 
     // Apply trimming twice (row then column)
     for _ in 0..2 {
-        #[allow(clippy::needless_range_loop)]
+        
         for i in 0..n {
             let row_start = connectivities.indptr[i];
             let row_end = connectivities.indptr[i + 1];

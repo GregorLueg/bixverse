@@ -44,13 +44,15 @@ single_cell_duckdb_base <- R6::R6Class(
     #'
     #' @param indices Optional cell/obs indices.
     #' @param cols Optional column names to return.
+    #' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
     #'
     #' @return The observation table (if found) as a data.table with optionally
     #' selected indices and/or columns.
-    get_obs_table = function(indices = NULL, cols = NULL) {
+    get_obs_table = function(indices = NULL, cols = NULL, filtered = FALSE) {
       # checks
       checkmate::qassert(indices, c("0", "I+"))
       checkmate::qassert(cols, c("0", "S+"))
+      checkmate::qassert(filtered, "B1")
       private$check_obs_exists()
 
       con <- private$connect_db()
@@ -68,21 +70,34 @@ single_cell_duckdb_base <- R6::R6Class(
         paste(cols, collapse = ", ")
       }
 
-      sql_query <- if (is.null(indices)) {
-        sprintf("SELECT %s FROM obs", col_part)
-      } else {
-        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
-        sprintf(
-          "SELECT %s FROM obs WHERE cell_idx IN (%s)",
-          col_part,
-          placeholders
-        )
+      where_clauses <- character()
+      params <- list()
+
+      if (filtered) {
+        where_clauses <- c(where_clauses, "to_keep = TRUE")
       }
+
+      if (!is.null(indices)) {
+        placeholders <- paste(rep("?", length(indices)), collapse = ", ")
+        where_clauses <- c(
+          where_clauses,
+          sprintf("cell_idx IN (%s)", placeholders)
+        )
+        params <- as.list(indices)
+      }
+
+      where_part <- if (length(where_clauses) > 0) {
+        paste("WHERE", paste(where_clauses, collapse = " AND "))
+      } else {
+        ""
+      }
+
+      sql_query <- sprintf("SELECT %s FROM obs %s", col_part, where_part)
 
       obs_dt <- data.table::setDT(DBI::dbGetQuery(
         conn = con,
         statement = sql_query,
-        params = as.list(indices)
+        params = params
       ))
 
       return(obs_dt)
@@ -188,16 +203,47 @@ single_cell_duckdb_base <- R6::R6Class(
       return(setNames(data$index, data$id))
     },
 
-    #' Filter the obs table and reset the cell idx
+    #' @description
+    #' Returns the indices of the cells that have to_keep = TRUE in the DB.
     #'
-    #' @param filter_vec Boolean vector that will be used to filter the obs
-    #' table.
-    filter_obs_table = function(filter_vec) {
+    #' @return The index positions (1-index) of the cells to keep.
+    get_cells_to_keep = function() {
       # checks
-      checkmate::qassert(filter_vec, "B+")
       private$check_obs_exists()
 
-      filter_dt <- data.frame(cell_idx = which(filter_vec), keep = TRUE)
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        }
+      )
+
+      data <- data.table::setDT(DBI::dbGetQuery(
+        conn = con,
+        statement = 'SELECT cell_idx FROM obs WHERE to_keep'
+      ))
+
+      return(as.integer(data$cell_idx))
+    },
+
+    #####################
+    # Setters / filters #
+    #####################
+
+    #' Filter the obs table and reset the cell idx
+    #'
+    #' @param cell_idx_to_keep Integer vector with the cell indices to keep.
+    #' Needs to be 1-indexed!
+    #'
+    #' @return Invisible self after updating the to_keep column in the DuckDB.
+    set_cells_to_keep = function(cell_idx_to_keep) {
+      # checks
+      checkmate::qassert(cell_idx_to_keep, "I+")
+      private$check_obs_exists()
+
+      filter_dt <- data.frame(cell_idx = cell_idx_to_keep)
 
       # get the connection
       con <- private$connect_db()
@@ -209,25 +255,18 @@ single_cell_duckdb_base <- R6::R6Class(
         }
       )
 
-      DBI::dbWriteTable(
-        con,
-        "temp_filter",
-        filter_dt,
-        overwrite = TRUE
-      )
+      DBI::dbWriteTable(con, "temp_filter", filter_dt, overwrite = TRUE)
 
       DBI::dbExecute(
         con,
         "
-        CREATE OR REPLACE TABLE obs AS
-        SELECT 
-          ROW_NUMBER() OVER() as cell_idx,
-          * EXCLUDE (cell_idx)  -- exclude old cell_idx column
-        FROM obs 
-        WHERE cell_idx IN (SELECT cell_idx FROM temp_filter);
+        UPDATE obs
+        SET to_keep = cell_idx IN (SELECT cell_idx FROM temp_filter);
         DROP TABLE temp_filter
         "
       )
+
+      invisible(self)
     },
 
     #' Filter the var table and reset the gene idx
@@ -235,6 +274,8 @@ single_cell_duckdb_base <- R6::R6Class(
     #' @param filter_vec Boolean vector that will be used to filter the var
     #' table.
     filter_var_table = function(filter_vec) {
+      # TODO needs also updating...
+
       # checks
       checkmate::qassert(filter_vec, "B+")
       private$check_var_exists()
@@ -271,10 +312,6 @@ single_cell_duckdb_base <- R6::R6Class(
         "
       )
     },
-
-    ###########
-    # Setters #
-    ###########
 
     #' @description
     #' Add new data to the obs table in the DuckDB
@@ -327,6 +364,83 @@ single_cell_duckdb_base <- R6::R6Class(
           ",
           exclude_clause
         )
+      )
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Left join new data to the obs table in the DuckDB by cell_idx
+    #'
+    #' @param new_data A data.table with a cell_idx column to join on.
+    #'
+    #' @return Invisible self while left joining the new data to the obs table
+    #' in the DuckDB.
+    join_data_obs = function(new_data) {
+      checkmate::assertDataTable(new_data)
+      private$check_obs_exists()
+      checkmate::assertTRUE("cell_idx" %in% names(new_data))
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbWriteTable(con, "new_data", new_data, overwrite = TRUE)
+
+      existing_cols <- DBI::dbGetQuery(
+        con,
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
+      )$column_name
+      new_cols <- setdiff(names(new_data), "cell_idx")
+      cols_to_exclude <- intersect(existing_cols, new_cols)
+
+      exclude_clause <- if (length(cols_to_exclude) > 0) {
+        paste0(" EXCLUDE(", paste(cols_to_exclude, collapse = ", "), ")")
+      } else {
+        ""
+      }
+
+      DBI::dbExecute(
+        con,
+        sprintf(
+          "
+          CREATE OR REPLACE TABLE obs AS
+          SELECT
+            original.*%s,
+            new_data.* EXCLUDE(cell_idx)
+          FROM obs AS original
+          LEFT JOIN new_data ON original.cell_idx = new_data.cell_idx
+          ORDER BY original.cell_idx;
+          DROP TABLE new_data
+          ",
+          exclude_clause
+        )
+      )
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Indepenent of the loader, set the to_keep column to `TRUE` initially
+    set_to_keep_column = function() {
+      private$check_obs_exists()
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      # Ensure to_keep exists and is TRUE by default
+      DBI::dbExecute(
+        conn = con,
+        statement = "
+        ALTER TABLE obs ADD COLUMN IF NOT EXISTS to_keep BOOLEAN;
+        UPDATE obs SET to_keep = TRUE WHERE to_keep IS NULL;
+        "
       )
 
       invisible(self)
@@ -526,51 +640,62 @@ single_cell_duckdb_con <- R6::R6Class(
         add = TRUE
       )
 
+      ## adds `obs_` prefix which needs to be removed
       names(obs) <- to_snake_case(obs)
+      names(obs) <- gsub("^obs_", "", names(obs))
+
+      obs_col_names <- names(obs)
+      obs_values <- vector(mode = "list", length = length(obs))
 
       for (i in seq_along(obs)) {
-        col_name <- names(obs)[i]
-        col_path <- obs[[i]]
-        col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name)
-        if (!is.null(filter)) {
-          col_data <- col_data[filter]
-        }
-        col_data[, cell_idx := .I]
-        setcolorder(col_data, c("cell_idx", col_name))
-
-        if (i == 1) {
-          colnames(col_data) <- c("cell_idx", "cell_id")
-          DBI::dbWriteTable(
-            con,
-            "obs",
-            col_data,
-            overwrite = TRUE
-          )
-        } else {
-          DBI::dbWriteTable(
-            con,
-            "temp_col",
-            col_data,
-            overwrite = TRUE
-          )
-
-          DBI::dbExecute(
-            con,
-            sprintf(
-              'CREATE TABLE obs_new AS
-              SELECT obs.*, temp_col.%s
-              FROM obs
-              JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
-              ORDER BY obs.cell_idx;
-              DROP table obs;
-              ALTER TABLE obs_new RENAME TO obs;
-              DROP TABLE temp_col',
-              col_name
-            )
-          )
-        }
+        obs_values[[i]] <- rhdf5::h5read(h5_path, obs[[i]])
       }
+
+      obs_dt <- data.table::as.data.table(obs_values)
+      data.table::setnames(obs_dt, obs_col_names)
+
+      # Ensure first column is cell_id
+      colnames(obs_dt)[1] <- "cell_id"
+
+      if (!is.null(filter)) {
+        obs_dt <- obs_dt[filter]
+      }
+
+      # Add cell_idx and order columns
+      obs_dt[, cell_idx := .I]
+      data.table::setcolorder(
+        obs_dt,
+        c(
+          "cell_idx",
+          "cell_id",
+          setdiff(names(obs_dt), c("cell_idx", "cell_id"))
+        )
+      )
+
+      # Write once to DuckDB
+      DBI::dbWriteTable(
+        con,
+        "obs",
+        obs_dt,
+        overwrite = TRUE
+      )
+
+      ### Don't think this is needed, as we are just adding the obs data to the lake
+
+      # DBI::dbExecute(
+      #   con,
+      #   sprintf(
+      #     'CREATE TABLE obs_new AS
+      #         SELECT obs.*, temp_col.%s
+      #         FROM obs
+      #         JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
+      #         ORDER BY obs.cell_idx;
+      #         DROP table obs;
+      #         ALTER TABLE obs_new RENAME TO obs;
+      #         DROP TABLE temp_col',
+      #     col_name
+      #   )
+      # )
 
       invisible(self)
     },
@@ -679,12 +804,15 @@ single_cell_duckdb_con <- R6::R6Class(
     #' @param filter Optional integer. Positions of obs to read in from file.
     #'
     #' @returns Invisible self and populates the internal obs table.
-    populate_obs_from_plain_text = function(f_path, has_hdr, filter = NULL) {
+    populate_obs_from_plain_text = function(
+      f_path,
+      has_hdr,
+      filter = NULL
+    ) {
       # checks
       checkmate::assertFileExists(f_path)
       checkmate::qassert(has_hdr, "B1")
       checkmate::qassert(filter, c("I+", "0"))
-
       con <- private$connect_db()
       on.exit(
         {

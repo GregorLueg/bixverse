@@ -83,8 +83,8 @@ set_cell_mapping <- function(x, cell_map) {
 #' to keep in downstream analysis.
 #'
 #' @export
-set_cell_to_keep <- function(x, cells_to_keep) {
-  UseMethod("set_cell_to_keep")
+set_cells_to_keep <- function(x, cells_to_keep) {
+  UseMethod("set_cells_to_keep")
 }
 
 #' Set the HVG genes
@@ -200,10 +200,10 @@ set_cell_mapping.sc_mapper <- function(x, cell_map) {
   return(x)
 }
 
-#' @rdname set_cell_to_keep
+#' @rdname set_cells_to_keep
 #'
 #' @export
-set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
+set_cells_to_keep.sc_mapper <- function(x, cells_to_keep) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
   checkmate::qassert(cells_to_keep, c("N+", "S+"))
@@ -350,7 +350,7 @@ get_gene_names <- function(x) {
 #'
 #' @param x An object to get the cell names from.
 #' @param filtered Boolean. Shall, if found only the cell names of the
-#' `cells_to_keep` be returned (see [bixverse::set_cell_to_keep()]. Defaults
+#' `cells_to_keep` be returned (see [bixverse::set_cells_to_keep()]. Defaults
 #' to `FALSE`
 #'
 #' @export
@@ -791,6 +791,8 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
+#' @param filtered Boolean. Whether to return all cells or filtered to to_keep
+#' cells.
 #'
 #' @return The obs table
 #'
@@ -801,7 +803,8 @@ get_sc_obs <- S7::new_generic(
   fun = function(
     object,
     indices = NULL,
-    cols = NULL
+    cols = NULL,
+    filtered = FALSE
   ) {
     S7::S7_dispatch()
   }
@@ -813,15 +816,22 @@ get_sc_obs <- S7::new_generic(
 S7::method(get_sc_obs, single_cell_exp) <- function(
   object,
   indices = NULL,
-  cols = NULL
+  cols = NULL,
+  filtered = FALSE
 ) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(indices, c("0", "I+"))
-
+  checkmate::qassert(filtered, "B1")
   duckdb_con <- get_sc_duckdb(object)
 
-  obs_table <- duckdb_con$get_obs_table(indices = indices, cols = cols)
+  obs_table <- duckdb_con$get_obs_table(
+    indices = indices,
+    cols = cols,
+    filtered = filtered
+  )
+
+  obs_table
 
   return(obs_table)
 }
@@ -876,11 +886,11 @@ S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
   }
 
   if (checkmate::qtest(i, "S+")) {
-    get_sc_obs(x, cols = i)
+    get_sc_obs(x, cols = i, filtered = TRUE)
   } else if (checkmate::qtest(i, "I+")) {
-    get_sc_obs(x, indices = i)
+    get_sc_obs(x, indices = i, filtered = TRUE)
   } else if (checkmate::qtest(i, "0")) {
-    get_sc_obs(x)
+    get_sc_obs(x, filtered = TRUE)
   } else {
     stop("Invalid type")
   }
@@ -935,11 +945,11 @@ S7::method(get_sc_map, single_cell_exp) <- function(
 #' shall the counts be reduced to these.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return The obs table
+#' @return The counts table
 #'
 #' @export
 get_sc_counts <- S7::new_generic(
-  name = "get_sc_obs",
+  name = "get_sc_counts",
   dispatch_args = "object",
   fun = function(
     object,
@@ -1281,7 +1291,6 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
   res <- get_cells_to_keep(
     x = S7::prop(x, "sc_map")
   )
-
   # special case that this has not been set. Return all cell indices then
   if (length(res) == 0) {
     no_cells <- S7::prop(x, "dims")[1]
@@ -1652,14 +1661,14 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_cell_to_keep.single_cell_exp
+#' @name set_cells_to_keep.single_cell_exp
 #'
 #' @title Set the cell mapping for a `single_cell_exp` class.
 #'
-#' @rdname set_cell_to_keep
+#' @rdname set_cells_to_keep
 #'
-#' @method set_cell_to_keep single_cell_exp
-S7::method(set_cell_to_keep, single_cell_exp) <- function(
+#' @method set_cells_to_keep single_cell_exp
+S7::method(set_cells_to_keep, single_cell_exp) <- function(
   x,
   cells_to_keep
 ) {
@@ -1668,7 +1677,7 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
-  S7::prop(x, "sc_map") <- set_cell_to_keep(
+  S7::prop(x, "sc_map") <- set_cells_to_keep(
     x = S7::prop(x, "sc_map"),
     cells_to_keep = cells_to_keep
   )
@@ -1676,9 +1685,9 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
   # remove the cells from the obs table
   duckdb_con <- get_sc_duckdb(x)
 
-  to_keep <- get_cell_names(x) %in% cells_to_keep
-
-  duckdb_con$filter_obs_table(filter_vec = to_keep)
+  duckdb_con$set_cells_to_keep(
+    cell_idx_to_keep = as.integer(get_cells_to_keep(x) + 1)
+  )
 
   return(x)
 }

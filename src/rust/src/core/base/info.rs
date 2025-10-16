@@ -34,7 +34,7 @@ pub fn calculate_mi(col_i: ColRef<usize>, col_j: ColRef<usize>, n_bins: Option<u
     let n = n_rows as f64;
     let mut mi = 0.0;
 
-    #[allow(clippy::needless_range_loop)]
+    
     for i in 0..n_bins {
         for j in 0..n_bins {
             let joint_prob = joint_counts[i][j] as f64 / n;
@@ -79,7 +79,7 @@ pub fn calculate_joint_entropy(
     let n = n_rows as f64;
     let mut joint_entropy = 0.0;
 
-    #[allow(clippy::needless_range_loop)]
+    
     for i in 0..n_bins {
         for j in 0..n_bins {
             let joint_prob = joint_counts[i][j] as f64 / n;

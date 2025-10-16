@@ -482,6 +482,10 @@ params_snf <- function(
 
 ## single cell -----------------------------------------------------------------
 
+### general --------------------------------------------------------------------
+
+# TODO - too many kNN parameters - refactor them out
+
 ### synthetic data -------------------------------------------------------------
 
 #' Default parameters for generation of synthetic data
@@ -657,12 +661,12 @@ params_scrublet <- function(
   log_transform = TRUE,
   mean_center = FALSE,
   normalise_variance = FALSE,
-  target_size = NULL,
+  target_size = 1e4,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
   clip_max = NULL,
-  sim_doublet_ratio = 1.0,
+  sim_doublet_ratio = 1.5,
   expected_doublet_rate = 0.1,
   stdev_doublet_rate = 0.02,
   no_pcs = 30L,
@@ -736,6 +740,130 @@ params_scrublet <- function(
     n_trees = n_trees,
     n_bins = n_bins,
     manual_threshold = manual_threshold
+  )
+}
+
+#' Wrapper function for Boost parameters
+#'
+#' @param log_transform Boolean. Shall the counts be log-transformed. Defaults
+#' to `FALSE`.
+#' @param mean_center Boolean. Shall the data be mean centred. Defaults to
+#' `TRUE`.
+#' @param normalise_variance Boolean. Shall the data be variance normalised.
+#' Defaults to `TRUE`.
+#' @param target_size Optional Numeric. The target size for library size
+#' normalisation.
+#' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
+#' genes. For example, 0.85 means keep genes in top 15% of variability.
+#' @param hvg_method String. Method for highly variable gene selection. One of
+#' `c("vst", "mvb", "dispersion")`. Defaults to `"vst"` (variance stabilising
+#' transformation).
+#' @param loess_span Numeric. Span parameter for loess fitting in VST method.
+#' Controls smoothness of the fitted curve.
+#' @param clip_max Optional numeric. Optional maximum value for clipping in
+#' variance stabilisation.
+#' @param boost_rate Numeric. Boosting rate. Defaults to `0.25`.
+#' @param replace Boolean. Whether to use replacement. Defaults to `FALSE`.
+#' @param no_pcs Integer. Number of principal components to use for embedding.
+#' @param random_svd Boolean. Whether to use randomised SVD (faster) vs exact
+#' SVD.
+#' @param resolution Numeric. Resolution parameter for the graph clustering.
+#' @param n_iters Integer. Number of iterations to run the algorithm for.
+#' @param p_thresh Numeric. P-value threshold.
+#' @param voter_thresh Numeric. Voter threshold across the different iterations.
+#' @param k Integer. Number of nearest neighbours for the kNN graph. If 0
+#' (default), automatically calculated as round(0.5 * sqrt(n_cells)).
+#' @param knn_method String. Method for approximate nearest neighbor search.
+#' One of `c("annoy", "hnsw")`. Defaults to `"annoy"`.
+#' @param dist_metric String. Distance metric to use. One of
+#' `c("euclidean", "cosine")`. Defaults to `"euclidean"`.
+#' @param search_budget Integer. Search budget for Annoy algorithm (higher =
+#' more accurate but slower).
+#' @param n_trees Integer. Number of trees for Annoy index generation.
+#' @param n_bins Integer. Number of bins for histogram-based automatic threshold
+#' detection. Typically 50-100.
+#'
+#' @returns A list with the Boost parameters.
+#'
+#' @export
+params_boost <- function(
+  log_transform = FALSE,
+  mean_center = TRUE,
+  normalise_variance = TRUE,
+  target_size = NULL,
+  min_gene_var_pctl = 0.85,
+  hvg_method = c("vst", "mvb", "dispersion"),
+  loess_span = 0.3,
+  clip_max = NULL,
+  boost_rate = 0.25,
+  replace = FALSE,
+  no_pcs = 30L,
+  random_svd = TRUE,
+  resolution = 1.0,
+  n_iters = 10L,
+  p_thresh = 1e-7,
+  voter_thresh = 0.9,
+  k = 0L,
+  knn_method = c("annoy", "hnsw"),
+  dist_metric = c("euclidean", "cosine"),
+  search_budget = 100L,
+  n_trees = 10L
+) {
+  hvg_method <- match.arg(hvg_method)
+  knn_method <- match.arg(knn_method)
+  dist_metric <- match.arg(dist_metric)
+
+  checkmate::qassert(log_transform, "B1")
+  checkmate::qassert(mean_center, "B1")
+  checkmate::qassert(normalise_variance, "B1")
+  if (!is.null(target_size)) {
+    checkmate::qassert(target_size, "N1(0,)")
+  }
+
+  checkmate::qassert(min_gene_var_pctl, "N1[0,1]")
+  checkmate::assertChoice(hvg_method, c("vst", "mvb", "dispersion"))
+  checkmate::qassert(loess_span, "N1(0,)")
+  if (!is.null(clip_max)) {
+    checkmate::qassert(clip_max, "N1(0,)")
+  }
+
+  checkmate::qassert(boost_rate, "N1[0,1]")
+  checkmate::qassert(replace, "B1")
+  checkmate::qassert(no_pcs, "I1[1,)")
+  checkmate::qassert(random_svd, "B1")
+  checkmate::qassert(resolution, "N1(0,)")
+  checkmate::qassert(n_iters, "I1[1,)")
+  checkmate::qassert(p_thresh, "N1(0,)")
+  checkmate::qassert(voter_thresh, "N1[0,1]")
+
+  checkmate::qassert(k, "I1[0,)")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::assertChoice(dist_metric, c("euclidean", "cosine"))
+  checkmate::qassert(search_budget, "I1[1,)")
+  checkmate::qassert(n_trees, "I1[1,)")
+
+  list(
+    log_transform = log_transform,
+    mean_center = mean_center,
+    normalise_variance = normalise_variance,
+    target_size = target_size,
+    min_gene_var_pctl = min_gene_var_pctl,
+    hvg_method = hvg_method,
+    loess_span = loess_span,
+    clip_max = clip_max,
+    boost_rate = boost_rate,
+    replace = replace,
+    no_pcs = no_pcs,
+    random_svd = random_svd,
+    resolution = resolution,
+    n_iters = n_iters,
+    p_thresh = p_thresh,
+    voter_thresh = voter_thresh,
+    k = k,
+    knn_method = knn_method,
+    dist_metric = dist_metric,
+    search_budget = search_budget,
+    n_trees = n_trees
   )
 }
 

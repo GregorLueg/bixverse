@@ -232,7 +232,7 @@ pub fn smooth_knn_dist(
             for _ in 0..64 {
                 let mut psum = 0.0_f32;
 
-                #[allow(clippy::needless_range_loop)]
+                
                 for j in 1..n_neighbours {
                     let d = dist_i[j] - rho;
                     if d > 0.0_f32 {

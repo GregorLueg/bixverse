@@ -16,9 +16,12 @@ etc.
 \item \href{#method-single_cell_duckdb_base-get_vars_table}{\code{single_cell_duckdb_base$get_vars_table()}}
 \item \href{#method-single_cell_duckdb_base-get_obs_index_map}{\code{single_cell_duckdb_base$get_obs_index_map()}}
 \item \href{#method-single_cell_duckdb_base-get_var_index_map}{\code{single_cell_duckdb_base$get_var_index_map()}}
-\item \href{#method-single_cell_duckdb_base-filter_obs_table}{\code{single_cell_duckdb_base$filter_obs_table()}}
+\item \href{#method-single_cell_duckdb_base-get_cells_to_keep}{\code{single_cell_duckdb_base$get_cells_to_keep()}}
+\item \href{#method-single_cell_duckdb_base-set_cells_to_keep}{\code{single_cell_duckdb_base$set_cells_to_keep()}}
 \item \href{#method-single_cell_duckdb_base-filter_var_table}{\code{single_cell_duckdb_base$filter_var_table()}}
 \item \href{#method-single_cell_duckdb_base-add_data_obs}{\code{single_cell_duckdb_base$add_data_obs()}}
+\item \href{#method-single_cell_duckdb_base-join_data_obs}{\code{single_cell_duckdb_base$join_data_obs()}}
+\item \href{#method-single_cell_duckdb_base-set_to_keep_column}{\code{single_cell_duckdb_base$set_to_keep_column()}}
 \item \href{#method-single_cell_duckdb_base-add_data_var}{\code{single_cell_duckdb_base$add_data_var()}}
 \item \href{#method-single_cell_duckdb_base-clone}{\code{single_cell_duckdb_base$clone()}}
 }
@@ -51,7 +54,11 @@ Returns the initialised class
 \subsection{Method \code{get_obs_table()}}{
 Returns the full observation table from the DuckDB
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_obs_table(indices = NULL, cols = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_obs_table(
+  indices = NULL,
+  cols = NULL,
+  filtered = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -60,6 +67,8 @@ Returns the full observation table from the DuckDB
 \item{\code{indices}}{Optional cell/obs indices.}
 
 \item{\code{cols}}{Optional column names to return.}
+
+\item{\code{filtered}}{Boolean. Whether to return all cells or filtered to to_keep cells.}
 }
 \if{html}{\out{</div>}}
 }
@@ -115,25 +124,41 @@ Returns a mapping between variable index and variable names.
 
 \subsection{Returns}{
 A named numeric containing the gene index mapping.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-get_cells_to_keep"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-get_cells_to_keep}{}}}
+\subsection{Method \code{get_cells_to_keep()}}{
+Returns the indices of the cells that have to_keep = TRUE in the DB.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$get_cells_to_keep()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The index positions (1-index) of the cells to keep.
 Filter the obs table and reset the cell idx
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-single_cell_duckdb_base-filter_obs_table"></a>}}
-\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-filter_obs_table}{}}}
-\subsection{Method \code{filter_obs_table()}}{
+\if{html}{\out{<a id="method-single_cell_duckdb_base-set_cells_to_keep"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-set_cells_to_keep}{}}}
+\subsection{Method \code{set_cells_to_keep()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$filter_obs_table(filter_vec)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$set_cells_to_keep(cell_idx_to_keep)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{filter_vec}}{Boolean vector that will be used to filter the obs
-table.
-Filter the var table and reset the gene idx}
+\item{\code{cell_idx_to_keep}}{Integer vector with the cell indices to keep.
+Needs to be 1-indexed!}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self after updating the to_keep column in the DuckDB.
+Filter the var table and reset the gene idx
 }
 }
 \if{html}{\out{<hr>}}
@@ -174,6 +199,37 @@ to be the same as the original in the obs table.}
 Invisible self while adding the new columns to the obs table
 in the DuckDB.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-join_data_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-join_data_obs}{}}}
+\subsection{Method \code{join_data_obs()}}{
+Left join new data to the obs table in the DuckDB by cell_idx
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$join_data_obs(new_data)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_data}}{A data.table with a cell_idx column to join on.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self while left joining the new data to the obs table
+in the DuckDB.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-single_cell_duckdb_base-set_to_keep_column"></a>}}
+\if{latex}{\out{\hypertarget{method-single_cell_duckdb_base-set_to_keep_column}{}}}
+\subsection{Method \code{set_to_keep_column()}}{
+Indepenent of the loader, set the to_keep column to \code{TRUE} initially
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_base$set_to_keep_column()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-single_cell_duckdb_base-add_data_var"></a>}}

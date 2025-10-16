@@ -209,7 +209,7 @@ bixverse_sc <- gene_set_proportions(bixverse_sc, gs_of_interest)
 
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.05, cell_id]
 
-bixverse_sc <- set_cell_to_keep(bixverse_sc, cells_to_keep)
+bixverse_sc <- set_cells_to_keep(bixverse_sc, cells_to_keep)
 
 length(get_cells_to_keep(bixverse_sc))
 
@@ -326,7 +326,7 @@ object <- gene_set_proportions_sc(object, gs_of_interest)
 
 object[[]]
 
-object <- set_cell_to_keep(object, get_cell_names(object))
+object <- set_cells_to_keep(object, get_cell_names(object))
 
 # identify HVGs
 object <- find_hvg_sc(object = object, streaming = FALSE)
@@ -561,7 +561,7 @@ bixverse_sc[[]]
 
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.10, cell_id]
 
-bixverse_sc <- set_cell_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
+bixverse_sc <- set_cells_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
 
 bixverse_sc <- find_hvg_sc(object = bixverse_sc, streaming = TRUE)
 

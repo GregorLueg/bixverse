@@ -34,7 +34,7 @@ shall the counts be reduced to these.}
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-The obs table
+The counts table
 }
 \description{
 Getter the counts

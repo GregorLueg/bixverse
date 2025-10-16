@@ -2,6 +2,7 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use std::time::Instant;
 
+use crate::single_cell::doublet_detection::*;
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::single_cell::scrublet::*;
@@ -44,6 +45,12 @@ use crate::utils::traits::*;
 ///  scores above the threshold.
 ///  \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
 ///  match the expected doublet rate.
+///  \item pca - Optional PCA embeddings across the original cells and simulated
+///  doublets.
+///  \item pair_1 - Optional integer vector representing the first parent of the
+///  simulated doublets.
+///  \item pair_2 -  Optional integer vector representing the second parent of
+///  the simulated doublets.
 /// }
 ///
 /// @export
@@ -61,12 +68,9 @@ fn rs_sc_scrublet(
     return_pairs: bool,
 ) -> List {
     let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
-    let cells_to_keep = cells_to_keep
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cells_to_keep = cells_to_keep.r_int_convert();
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
-    let (scrublet_res, pca, pair_1, pair_2) =
+    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes =
         scrublet.run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs);
 
     let pca_out = pca.map(|m| faer_to_r_matrix(m.as_ref()));
@@ -95,6 +99,54 @@ fn rs_sc_scrublet(
     )
 }
 
+/// Detect Doublets via BoostClassifier (in Rust)
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param f_path_cell String. Path to the `counts_cells.bin` file.
+/// @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+/// to include in this analysis.
+/// @param scrublet_params List. Parameter list, see
+/// [bixverse::params_boost()].
+/// @param seed Integer. Seed for reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity
+/// @param streaming Boolean. Shall the data be streamed for the HVG
+/// calculations.
+///
+/// @returns A list with
+/// \itemize{
+///  \item predicted_doublets - Boolean vector indicating which observed cells
+///  predicted as doublets (TRUE = doublet, FALSE = singlet).
+///  \item doublet_scores_obs - Numerical vector with the likelihood of being
+///  a doublet for the observed cells.
+///  \item voting_avg - Voting average across the different iterations.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_sc_doublet_detection(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cells_to_keep: Vec<i32>,
+    boost_params: List,
+    seed: usize,
+    streaming: bool,
+    verbose: bool,
+) -> List {
+    let boost_params = BoostParams::from_r_list(boost_params);
+    let cells_to_keep = cells_to_keep.r_int_convert();
+
+    let mut boost_classifier =
+        BoostClassifier::new(f_path_gene, f_path_cell, boost_params, &cells_to_keep);
+
+    let boost_res: BoostResult = boost_classifier.run_boost(streaming, seed, verbose);
+
+    list!(
+        predicted_doublets = boost_res.predicted_doublets,
+        doublet_scores = boost_res.doublet_scores,
+        voting_avg = boost_res.voting_average
+    )
+}
+
 //////////////////////////
 // Gene set proportions //
 //////////////////////////
@@ -108,6 +160,8 @@ fn rs_sc_scrublet(
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 /// elements of the genes of interest.
+/// @param cell_indices Integer. The indices of the cells for which to calculate
+/// the proportions. (0-indexed!)
 /// @param streaming Boolean. Shall the data be worked on in chunks.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
@@ -119,10 +173,16 @@ fn rs_sc_scrublet(
 fn rs_sc_get_gene_set_perc(
     f_path_cell: &str,
     gene_set_idx: List,
+    cell_indices: Vec<i32>,
     streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
+
+    let cell_indices = cell_indices
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
 
     for i in 0..gene_set_idx.len() {
         let element = gene_set_idx.elt(i).unwrap();
@@ -136,9 +196,9 @@ fn rs_sc_get_gene_set_perc(
     }
 
     let res = if streaming {
-        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, verbose)
+        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, &cell_indices, verbose)
     } else {
-        get_gene_set_perc(f_path_cell, gene_set_indices, verbose)
+        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose)
     };
 
     let mut result_list = List::new(gene_set_idx.len());
@@ -146,7 +206,6 @@ fn rs_sc_get_gene_set_perc(
         result_list.set_names(names).unwrap();
     }
 
-    #[allow(clippy::needless_range_loop)]
     for i in 0..result_list.len() {
         let res_i = &res[i];
         result_list.set_elt(i, Robj::from(res_i)).unwrap();
@@ -447,4 +506,5 @@ extendr_module! {
     fn rs_sc_pca;
     fn rs_sc_knn;
     fn rs_sc_snn;
+    fn rs_sc_doublet_detection;
 }
