@@ -116,6 +116,7 @@ S7::method(load_seurat, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -241,6 +242,7 @@ S7::method(load_r_data, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -367,6 +369,7 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -489,6 +492,7 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -627,6 +631,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
 
@@ -681,6 +686,7 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
+  cells_to_keep <- duckdb_con$get_cells_to_keep()
   S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
 
   if (
@@ -695,6 +701,10 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
   object <- set_cell_mapping(x = object, cell_map = cell_map)
   object <- set_gene_mapping(x = object, gene_map = gene_map)
+  S7::prop(object, "sc_map") <- set_cells_to_keep(
+    S7::prop(object, "sc_map"),
+    cells_to_keep
+  )
 
   return(object)
 }
@@ -761,10 +771,18 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 
   rs_results <- rs_sc_get_gene_set_perc(
     f_path_cell = get_rust_count_cell_f_path(object),
+    cell_indices = get_cells_to_keep(object),
     gene_set_idx = gene_set_list_tidy,
     streaming = streaming,
     verbose = .verbose
   )
+
+  class(rs_results) <- "sc_proportion_res"
+  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  duckdb_con$join_data_obs(get_obs_data(rs_results))
 
   if (length(rs_results) == 1) {
     # need to deal with the case of only one gene set here...
@@ -842,7 +860,7 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 
   if (length(get_cells_to_keep(object)) == 0) {
     warning(paste(
-      "You need to set the cells to keep with set_cell_to_keep().",
+      "You need to set the cells to keep with set_cells_to_keep().",
       "Returning class as is."
     ))
     return(object)
@@ -1168,10 +1186,13 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 
   duckdb_con <- get_sc_duckdb(object)
 
-  new_data <- data.table::data.table(new_data = leiden_clusters$membership)
+  new_data <- data.table::data.table(
+    cell_idx = get_cells_to_keep(object) + 1, # needs to be 1-indexed
+    new_data = leiden_clusters$membership
+  )
   data.table::setnames(new_data, "new_data", name)
 
-  duckdb_con$add_data_obs(new_data = new_data)
+  duckdb_con$join_data_obs(new_data = new_data)
 
   return(object)
 }

@@ -92,7 +92,7 @@ expect_true(
   info = "sensible cell filtering based on the threshold"
 )
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 sc_object <- find_hvg_sc(
   object = sc_object,

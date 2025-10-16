@@ -194,7 +194,9 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  obs_data <- object[[c("cell_id", column_of_interest)]]
+  obs_data <- object[[c("cell_id", column_of_interest)]][
+    !is.na(get(column_of_interest))
+  ]
 
   unique_groups <- unique(obs_data[[column_of_interest]])
 

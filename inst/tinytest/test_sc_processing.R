@@ -21,7 +21,7 @@ write_h5ad_sc(
   f_path = f_path_csr,
   counts = single_cell_test_data$counts,
   obs = single_cell_test_data$obs,
-  single_cell_test_data$var,
+  var = single_cell_test_data$var,
   .verbose = FALSE
 )
 
@@ -57,7 +57,7 @@ sc_qc_param = params_sc_min_quality(
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = tempdir())
 
 sc_object <- load_h5ad(
   object = sc_object,
@@ -68,12 +68,25 @@ sc_object <- load_h5ad(
 
 # tests ------------------------------------------------------------------------
 
+## test filter column and cells to get -----------------------------------------
+
+expect_true(
+  current = checkmate::qtest(unlist(sc_object[["to_keep"]]), "B+"),
+  info = "to_keep column added"
+)
+
+expect_true(
+  current = checkmate::qtest(get_cells_to_keep(sc_object), "I+"),
+  info = "cells_to_keep loaded independently of setting"
+)
+
 ## function warnings -----------------------------------------------------------
 
-expect_warning(
-  current = find_hvg_sc(sc_object),
-  info = "warning that no cells to keep were specified"
-)
+# throws no warning anymore after the update
+# expect_warning(
+#   current = find_hvg_sc(sc_object),
+#   info = "warning that no cells to keep were specified"
+# )
 
 expect_warning(
   current = get_hvg(sc_object),
@@ -174,11 +187,15 @@ expect_true(
   info = "sensible cell filtering based on the threshold"
 )
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+
+get_sc_obs(sc_object)
 
 expect_true(
-  current = all(unlist(sc_object[["cell_id"]]) == cells_to_keep),
-  info = "setting genes to keep removes them from the obs table"
+  current = all(
+    unlist(sc_object[["cell_id"]]) == cells_to_keep
+  ),
+  info = "setting cells to keep removes them from the obs table"
 )
 
 cell_names_filtered <- get_cell_names(sc_object, filtered = TRUE)
@@ -210,6 +227,13 @@ expect_equal(
   current = sc_object[,, use_cells_to_keep = FALSE],
   target = counts_filtered,
   info = "counts after setting cells to keep and NOT using the parameter"
+)
+
+### test that the original data is still in there ------------------------------
+
+expect_true(
+  current = nrow(get_sc_obs(sc_object)) == sc_object@dims[1],
+  info = "original rows are still in the DB"
 )
 
 ## hvg selection ---------------------------------------------------------------
@@ -426,14 +450,22 @@ expect_true(
 
 sc_object <- find_clusters_sc(sc_object)
 
-cell_grps <- unlist(sc_object[["obs_cell_grp"]])
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
 
 f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
 
 expect_true(
   current = all(f1_scores > 0.95),
   info = "leiden clustering identifies the cell groups"
+)
+
+### check the DB structure -----------------------------------------------------
+
+expect_true(
+  current = all(is.na(get_sc_obs(sc_object)[!(to_keep), leiden_clustering])),
+  info = "leiden clustering for cells that are not kept should be NA"
 )
 
 ## dges ------------------------------------------------------------------------
@@ -515,11 +547,11 @@ auc_res_auroc <- aucell_sc(
   .verbose = FALSE
 )
 
-obs_table_red <- sc_object[[c("cell_id", "obs_cell_grp")]]
+obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 
 cells_per_cluster <- split(
   obs_table_red$cell_id,
-  obs_table_red$obs_cell_grp
+  obs_table_red$cell_grp
 )
 
 expect_true(

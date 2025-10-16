@@ -14,7 +14,7 @@ get_cell_names(x, filtered = FALSE)
 \item{x}{An object to get the cell names from.}
 
 \item{filtered}{Boolean. Shall, if found only the cell names of the
-\code{cells_to_keep} be returned (see \code{\link[=set_cell_to_keep]{set_cell_to_keep()}}. Defaults
+\code{cells_to_keep} be returned (see \code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. Defaults
 to \code{FALSE}}
 }
 \description{

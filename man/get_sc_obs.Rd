@@ -4,7 +4,7 @@
 \alias{get_sc_obs}
 \title{Getter the obs table}
 \usage{
-get_sc_obs(object, indices = NULL, cols = NULL)
+get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 }
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
@@ -13,6 +13,8 @@ get_sc_obs(object, indices = NULL, cols = NULL)
 to return.}
 
 \item{cols}{Optional string vector. The columns from the obs table to return.}
+
+\item{filtered}{Boolean. Whether to return all cells or filtered to to_keep cells.}
 }
 \value{
 The obs table
