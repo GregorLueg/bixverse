@@ -42,7 +42,7 @@ sc_object <- load_h5ad(
 )
 
 # do a filtering on the obs column
-sc_object <- set_cell_to_keep(sc_object, unlist(sc_object[["cell_id"]][1:500]))
+sc_object <- set_cells_to_keep(sc_object, unlist(sc_object[["cell_id"]][1:500]))
 
 # remove it...
 rm(sc_object)

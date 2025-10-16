@@ -89,7 +89,7 @@ sc_object.weak_batch_effect <- load_r_data(
   .verbose = FALSE
 )
 
-sc_object.weak_batch_effect <- set_cell_to_keep(
+sc_object.weak_batch_effect <- set_cells_to_keep(
   sc_object.weak_batch_effect,
   get_cell_names(sc_object.weak_batch_effect)
 )
@@ -133,7 +133,7 @@ sc_object.medium_batch_effect <- load_r_data(
   .verbose = FALSE
 )
 
-sc_object.medium_batch_effect <- set_cell_to_keep(
+sc_object.medium_batch_effect <- set_cells_to_keep(
   sc_object.medium_batch_effect,
   get_cell_names(sc_object.medium_batch_effect)
 )
@@ -177,7 +177,7 @@ sc_object.strong_batch_effect <- load_r_data(
   .verbose = FALSE
 )
 
-sc_object.strong_batch_effect <- set_cell_to_keep(
+sc_object.strong_batch_effect <- set_cells_to_keep(
   sc_object.strong_batch_effect,
   get_cell_names(sc_object.strong_batch_effect)
 )

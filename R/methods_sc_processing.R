@@ -701,7 +701,7 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
   object <- set_cell_mapping(x = object, cell_map = cell_map)
   object <- set_gene_mapping(x = object, gene_map = gene_map)
-  S7::prop(object, "sc_map") <- set_cell_to_keep(
+  S7::prop(object, "sc_map") <- set_cells_to_keep(
     S7::prop(object, "sc_map"),
     cells_to_keep
   )
@@ -860,7 +860,7 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 
   if (length(get_cells_to_keep(object)) == 0) {
     warning(paste(
-      "You need to set the cells to keep with set_cell_to_keep().",
+      "You need to set the cells to keep with set_cells_to_keep().",
       "Returning class as is."
     ))
     return(object)

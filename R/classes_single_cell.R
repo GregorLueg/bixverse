@@ -83,8 +83,8 @@ set_cell_mapping <- function(x, cell_map) {
 #' to keep in downstream analysis.
 #'
 #' @export
-set_cell_to_keep <- function(x, cells_to_keep) {
-  UseMethod("set_cell_to_keep")
+set_cells_to_keep <- function(x, cells_to_keep) {
+  UseMethod("set_cells_to_keep")
 }
 
 #' Set the HVG genes
@@ -200,10 +200,10 @@ set_cell_mapping.sc_mapper <- function(x, cell_map) {
   return(x)
 }
 
-#' @rdname set_cell_to_keep
+#' @rdname set_cells_to_keep
 #'
 #' @export
-set_cell_to_keep.sc_mapper <- function(x, cells_to_keep) {
+set_cells_to_keep.sc_mapper <- function(x, cells_to_keep) {
   # checks
   checkmate::assertClass(x, "sc_mapper")
   checkmate::qassert(cells_to_keep, c("N+", "S+"))
@@ -350,7 +350,7 @@ get_gene_names <- function(x) {
 #'
 #' @param x An object to get the cell names from.
 #' @param filtered Boolean. Shall, if found only the cell names of the
-#' `cells_to_keep` be returned (see [bixverse::set_cell_to_keep()]. Defaults
+#' `cells_to_keep` be returned (see [bixverse::set_cells_to_keep()]. Defaults
 #' to `FALSE`
 #'
 #' @export
@@ -1659,14 +1659,14 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_cell_to_keep.single_cell_exp
+#' @name set_cells_to_keep.single_cell_exp
 #'
 #' @title Set the cell mapping for a `single_cell_exp` class.
 #'
-#' @rdname set_cell_to_keep
+#' @rdname set_cells_to_keep
 #'
-#' @method set_cell_to_keep single_cell_exp
-S7::method(set_cell_to_keep, single_cell_exp) <- function(
+#' @method set_cells_to_keep single_cell_exp
+S7::method(set_cells_to_keep, single_cell_exp) <- function(
   x,
   cells_to_keep
 ) {
@@ -1675,7 +1675,7 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
-  S7::prop(x, "sc_map") <- set_cell_to_keep(
+  S7::prop(x, "sc_map") <- set_cells_to_keep(
     x = S7::prop(x, "sc_map"),
     cells_to_keep = cells_to_keep
   )

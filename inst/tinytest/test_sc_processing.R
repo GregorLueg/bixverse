@@ -187,7 +187,7 @@ expect_true(
   info = "sensible cell filtering based on the threshold"
 )
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 get_sc_obs(sc_object)
 
