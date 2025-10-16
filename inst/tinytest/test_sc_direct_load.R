@@ -41,6 +41,9 @@ sc_object <- load_h5ad(
   .verbose = FALSE
 )
 
+# do a filtering on the obs column
+sc_object <- set_cell_to_keep(sc_object, unlist(sc_object[["cell_id"]][1:500]))
+
 # remove it...
 rm(sc_object)
 
@@ -48,7 +51,7 @@ rm(sc_object)
 
 ## load from disk --------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = tempdir())
 
 sc_object <- load_existing(sc_object)
 
@@ -77,6 +80,21 @@ expect_true(
   info = "loading from disk directly - var table"
 )
 
+expect_true(
+  current = nrow(obs_dt) == 500L,
+  info = "obs_table filtering works"
+)
+
+expect_true(
+  current = nrow(get_sc_obs(sc_object)) == sc_object@dims[1],
+  info = "obs_table full table is still accessible"
+)
+
+expect_true(
+  current = length(get_cells_to_keep(sc_object)) == 500L,
+  info = "cell_to_keep filtering also worked"
+)
+
 ## count getters ---------------------------------------------------------------
 
 cell_counts <- sc_object[]
@@ -91,11 +109,6 @@ expect_true(
 expect_true(
   current = checkmate::testClass(gene_counts, "dgCMatrix"),
   info = "loading from disk directly - counts in gene friendly format"
-)
-
-expect_true(
-  current = dim(cell_counts)[1] == nrow(obs_dt),
-  info = "loading from disk directly - expected dimensions of counts and obs"
 )
 
 expect_true(

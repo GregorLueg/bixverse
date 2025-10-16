@@ -1955,6 +1955,8 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' @param f_path_cell String. Path to the `counts_cells.bin` file.
 #' @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 #' elements of the genes of interest.
+#' @param cell_indices Integer. The indices of the cells for which to calculate
+#' the proportions. (0-indexed!)
 #' @param streaming Boolean. Shall the data be worked on in chunks.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
@@ -1962,7 +1964,7 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' in the cells.
 #'
 #' @export
-rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, streaming, verbose)
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, cell_indices, streaming, verbose)
 
 #' Calculate the percentage of gene sets in the cells
 #'

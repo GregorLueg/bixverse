@@ -1291,7 +1291,11 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
     x = S7::prop(x, "sc_map")
   )
 
-  return(res)
+  if (length(res) == 0) {
+    res = seq_len(S7::prop(x, "dims")[1]) - 1
+  }
+
+  return(as.integer(res))
 }
 
 #' @name get_gene_indices.single_cell_exp
@@ -1679,9 +1683,9 @@ S7::method(set_cell_to_keep, single_cell_exp) <- function(
   # remove the cells from the obs table
   duckdb_con <- get_sc_duckdb(x)
 
-  to_keep <- get_cell_names(x) %in% cells_to_keep
-
-  duckdb_con$filter_obs_table(filter_vec = to_keep)
+  duckdb_con$set_cells_to_keep(
+    cell_idx_to_keep = as.integer(get_cells_to_keep(x) + 1)
+  )
 
   return(x)
 }
