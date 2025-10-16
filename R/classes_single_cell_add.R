@@ -52,7 +52,7 @@ plot.scrublet_res <- function(
     x,
     log_scale_obs = FALSE,
     log_scale_sim = FALSE,
-    break_number = 51L,
+    break_number = 31L,
     ...) {
   # checks
   checkmate::assertClass(x, "scrublet_res")

@@ -23,7 +23,7 @@ params_scrublet(
   dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
   n_trees = 100L,
-  n_bins = 50L,
+  n_bins = 100L,
   manual_threshold = NULL
 )
 }

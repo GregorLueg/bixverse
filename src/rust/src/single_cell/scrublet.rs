@@ -1,5 +1,5 @@
 use extendr_api::List;
-use faer::{concat, Mat};
+use faer::{concat, Mat, MatRef};
 use half::f16;
 use indexmap::IndexSet;
 use rand::prelude::*;
@@ -144,17 +144,17 @@ impl ScrubletParams {
         let log_transform = scrublet_list
             .get("log_transform")
             .and_then(|v| v.as_bool())
-            .unwrap_or(true);
+            .unwrap_or(false);
 
         let mean_center = scrublet_list
             .get("mean_center")
             .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+            .unwrap_or(true);
 
         let normalise_variance = scrublet_list
             .get("normalise_variance")
             .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+            .unwrap_or(true);
 
         let target_size = scrublet_list
             .get("target_size")
@@ -355,24 +355,18 @@ impl CsrCellChunk {
     /// ### Returns
     ///
     /// New `CsrCellChunk` representing the doublet
+    #[allow(clippy::too_many_arguments)]
     pub fn add_cells_scrublet(
         cell1: &CsrCellChunk,
         cell2: &CsrCellChunk,
         hvg_indices: &FxHashSet<usize>,
-        cell1_hvg_libsize: usize, // NEW
-        cell2_hvg_libsize: usize, // NEW
+        hvg_lib_size_combined: usize,
         target_size: f32,
         log_transform: bool,
         doublet_index: usize,
     ) -> Self {
-        let combined_lib_size = cell1_hvg_libsize + cell2_hvg_libsize; // HVG only!
         let mut gene_counts: FxHashMap<u16, u32> = FxHashMap::default();
 
-        if combined_lib_size == 0 {
-            panic!("Cannot create doublet with zero combined HVG library size");
-        }
-
-        // Add counts (unchanged)
         for i in 0..cell1.indices.len() {
             let gene_idx = cell1.indices[i] as usize;
             if hvg_indices.contains(&gene_idx) {
@@ -393,7 +387,7 @@ impl CsrCellChunk {
         let mut data_norm = Vec::with_capacity(gene_vec.len());
         let mut indices = Vec::with_capacity(gene_vec.len());
 
-        let norm_factor = target_size / combined_lib_size as f32; // Now uses HVG lib size!
+        let norm_factor = target_size / hvg_lib_size_combined as f32;
 
         for (gene, count) in gene_vec {
             let count_u16 = count.min(u16::MAX as u32) as u16;
@@ -412,7 +406,7 @@ impl CsrCellChunk {
         Self {
             data_raw,
             data_norm,
-            library_size: combined_lib_size, // Store HVG lib size
+            library_size: hvg_lib_size_combined,
             indices,
             original_index: doublet_index,
             to_keep: true,
@@ -451,7 +445,6 @@ pub fn scale_cell_chunks_with_stats(
     for (cell_idx, chunk) in chunks.iter().enumerate() {
         match (mean_center, normalise_variance) {
             (false, false) => {
-                // No scaling - just convert to dense
                 for i in 0..chunk.indices.len() {
                     let gene = chunk.indices[i] as usize;
                     let val = chunk.data_norm[i].to_f32();
@@ -459,12 +452,9 @@ pub fn scale_cell_chunks_with_stats(
                 }
             }
             (true, false) => {
-                // Mean center only
-                // Fill with -mean for zeros
                 for gene in 0..n_genes {
                     *result.get_mut(cell_idx, gene) = -gene_means[gene];
                 }
-                // Overwrite with centered values
                 for i in 0..chunk.indices.len() {
                     let gene = chunk.indices[i] as usize;
                     let val = chunk.data_norm[i].to_f32();
@@ -472,7 +462,6 @@ pub fn scale_cell_chunks_with_stats(
                 }
             }
             (false, true) => {
-                // Variance normalize only (zeros stay zero)
                 for i in 0..chunk.indices.len() {
                     let gene = chunk.indices[i] as usize;
                     let val = chunk.data_norm[i].to_f32();
@@ -480,12 +469,9 @@ pub fn scale_cell_chunks_with_stats(
                 }
             }
             (true, true) => {
-                // Full z-score
-                // Fill with -mean/std for zeros
                 for gene in 0..n_genes {
                     *result.get_mut(cell_idx, gene) = -gene_means[gene] / gene_stds[gene];
                 }
-                // Overwrite with z-scored values
                 for i in 0..chunk.indices.len() {
                     let gene = chunk.indices[i] as usize;
                     let val = chunk.data_norm[i].to_f32();
@@ -560,31 +546,12 @@ pub fn pca_scrublet(
 
     let num_genes = scaled_and_stats.len();
 
-    // Extract scaled data and statistics
     let scaled_data = Mat::from_fn(cell_indices.len(), num_genes, |row, col| {
         scaled_and_stats[col].0[row]
     });
 
-    // DEBUG: Print first 5x5 of scaled data
-    println!("\n=== Scaled Data (first 5x5) ===");
-    for row in 0..5.min(scaled_data.nrows()) {
-        print!("[");
-        for col in 0..5.min(scaled_data.ncols()) {
-            print!("{:8.4}", scaled_data[(row, col)]);
-            if col < 4 {
-                print!(", ");
-            }
-        }
-        println!("]");
-    }
-
     let means: Vec<f32> = scaled_and_stats.iter().map(|(_, m, _)| *m).collect();
     let stds: Vec<f32> = scaled_and_stats.iter().map(|(_, _, s)| *s).collect();
-
-    // DEBUG: Print first 5 gene means and stds
-    println!("\n=== Gene Stats (first 5) ===");
-    println!("Means: {:?}", &means[..5.min(means.len())]);
-    println!("Stds:  {:?}", &stds[..5.min(stds.len())]);
 
     let end_scaling = start_scaling.elapsed();
     if verbose {
@@ -626,19 +593,6 @@ pub fn pca_scrublet(
         println!("Total run time PCA detection: {:.2?}", end_total);
     }
 
-    // DEBUG: Print first 5x5 of PCA scores
-    println!("\n=== PCA Scores (first 5x5) ===");
-    for row in 0..5.min(scores.nrows()) {
-        print!("[");
-        for col in 0..5.min(scores.ncols()) {
-            print!("{:8.4}", scores[(row, col)]);
-            if col < 4 {
-                print!(", ");
-            }
-        }
-        println!("]");
-    }
-
     (scores, loadings, means, stds)
 }
 
@@ -668,12 +622,11 @@ fn scale_gene_with_stats(
     normalise_variance: bool,
     n_cells: usize,
 ) -> (Vec<f32>, f32, f32) {
-    // Create dense vector with CPM-normalized values (no log)
     let mut normalized = vec![0.0f32; n_cells];
 
     for (i, &pos) in chunk.indices.iter().enumerate() {
         let raw_count = chunk.data_raw[i] as f32;
-        let lib_size = hvg_library_sizes[pos as usize] as f32; // pos is already the position!
+        let lib_size = hvg_library_sizes[pos as usize] as f32;
 
         normalized[pos as usize] = if log_transform {
             ((raw_count / lib_size) * target_size).ln_1p()
@@ -694,22 +647,10 @@ fn scale_gene_with_stats(
         1.0
     };
     let result = match (mean_center, normalise_variance) {
-        (true, true) => {
-            // Full z-score
-            normalized.iter().map(|&x| (x - mean) / std).collect()
-        }
-        (true, false) => {
-            // Mean center only
-            normalized.iter().map(|&x| x - mean).collect()
-        }
-        (false, true) => {
-            // Variance normalize only (unusual but supported)
-            normalized.iter().map(|&x| x / std).collect()
-        }
-        (false, false) => {
-            // No scaling
-            normalized
-        }
+        (true, true) => normalized.iter().map(|&x| (x - mean) / std).collect(),
+        (true, false) => normalized.iter().map(|&x| x - mean).collect(),
+        (false, true) => normalized.iter().map(|&x| x / std).collect(),
+        (false, false) => normalized,
     };
 
     (result, mean, std)
@@ -744,13 +685,11 @@ fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
         hist[bin.min(n_bins - 1)] += 1;
     }
 
-    // Smooth histogram (matches scikit-image behavior)
     let smoothed: Vec<f32> = moving_average(&hist, 3)
         .into_iter()
-        .map(|x| x as f32) // Convert to float for comparisons
+        .map(|x| x as f32)
         .collect();
 
-    // Find first local maximum
     let mut max_idx = 0;
     let mut max_val = 0.0f32;
     for i in 1..(smoothed.len() - 1) {
@@ -760,7 +699,6 @@ fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
         }
     }
 
-    // Find minimum after the peak
     let mut min_idx = max_idx;
     let mut min_val = smoothed[max_idx];
 
@@ -769,13 +707,11 @@ fn find_threshold_min(scores: &[f32], n_bins: usize) -> f32 {
             min_val = smoothed[i];
             min_idx = i;
         }
-        // Stop if we encounter another peak
         if smoothed[i] > min_val * 1.5 {
             break;
         }
     }
 
-    // Fallback if no valley found
     if min_idx == max_idx {
         let mut sorted = scores.to_vec();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -837,12 +773,9 @@ fn moving_average(data: &[usize], window: usize) -> Vec<usize> {
 /// * `cells_to_keep` - Indices of cells to keep/include in this analysis
 #[derive(Clone, Debug)]
 pub struct Scrublet {
-    // paths
     f_path_gene: String,
     f_path_cell: String,
-    // parameters
     params: ScrubletParams,
-    // other
     n_cells: usize,
     n_cells_sim: usize,
     cells_to_keep: Vec<usize>,
@@ -893,8 +826,19 @@ impl Scrublet {
     /// ### Returns
     ///
     /// Initialised self.
-    pub fn run_scrublet(&mut self, streaming: bool, seed: usize, verbose: bool) -> ScrubletResult {
-        // HVG
+    pub fn run_scrublet(
+        &mut self,
+        streaming: bool,
+        seed: usize,
+        verbose: bool,
+        return_combined_pca: bool,
+        return_pairs: bool,
+    ) -> (
+        ScrubletResult,
+        Option<Mat<f32>>,
+        Option<Vec<usize>>,
+        Option<Vec<usize>>,
+    ) {
         if verbose {
             println!("Identifying highly variable genes...");
         }
@@ -912,7 +856,6 @@ impl Scrublet {
             );
         }
 
-        // Pull out the library sizes
         let cell_reader = ParallelSparseReader::new(&self.f_path_cell).unwrap();
         let hvg_set: FxHashSet<usize> = hvg_genes.iter().copied().collect();
 
@@ -931,44 +874,19 @@ impl Scrublet {
             })
             .collect();
 
-        let valid_cells: Vec<(usize, usize)> = hvg_library_sizes
-            .iter()
-            .enumerate()
-            .filter(|(_, &lib_size)| lib_size > 0)
-            .map(|(idx, &lib_size)| (idx, lib_size))
-            .collect();
-
-        if valid_cells.len() < self.cells_to_keep.len() {
-            let n_filtered = self.cells_to_keep.len() - valid_cells.len();
-            if verbose {
-                println!(
-                    "Warning: Filtered out {} cells with zero HVG counts",
-                    n_filtered
-                );
-            }
-        }
-
-        // Update to use only valid cells
-        let (valid_indices, valid_lib_sizes): (Vec<_>, Vec<_>) = valid_cells.into_iter().unzip();
-        self.cells_to_keep = valid_indices
-            .iter()
-            .map(|&i| self.cells_to_keep[i])
-            .collect();
-        self.hvg_library_sizes = valid_lib_sizes;
-        self.n_cells = self.cells_to_keep.len();
-
         let target_size = self.params.target_size.unwrap_or_else(|| {
-            let sum = self.hvg_library_sizes.iter().sum::<usize>() as f32;
-            sum / self.hvg_library_sizes.len() as f32
+            let sum = hvg_library_sizes.iter().sum::<usize>() as f32;
+            sum / hvg_library_sizes.len() as f32
         });
 
-        // simulate doublets
+        self.hvg_library_sizes = hvg_library_sizes;
+
         if verbose {
             println!("Simulating doublets...");
         }
         let start_doublet_gen = Instant::now();
 
-        let sim_chunks = self.simulate_doublets(target_size, &hvg_genes, seed);
+        let (sim_chunks, pair_1, pair_2) = self.simulate_doublets(target_size, &hvg_genes, seed);
 
         let end_doublet_gen = start_doublet_gen.elapsed();
         if verbose {
@@ -979,7 +897,6 @@ impl Scrublet {
             );
         }
 
-        // PCA
         if verbose {
             println!("Running PCA...");
         }
@@ -992,14 +909,13 @@ impl Scrublet {
             println!("Done with PCA in {:.2?}", end_pca);
         }
 
-        // KNN
         if verbose {
             println!("Building kNN graph...");
         }
         let start_knn = Instant::now();
 
         let knn_indices = self
-            .build_combined_knn(combined_pca, seed, verbose)
+            .build_combined_knn(combined_pca.as_ref(), seed, verbose)
             .expect("Failed to build kNN graph");
 
         let end_knn = start_knn.elapsed();
@@ -1007,7 +923,6 @@ impl Scrublet {
             println!("Done with KNN generation in {:.2?}", end_knn);
         }
 
-        // Doublet scoring
         if verbose {
             println!("Calculating doublet scores...");
         }
@@ -1032,7 +947,15 @@ impl Scrublet {
             println!("Finished Scrublet {:.2?}", end_all);
         }
 
-        res
+        let pca_out = if return_combined_pca {
+            Some(combined_pca)
+        } else {
+            None
+        };
+        let pair_1_out = if return_pairs { Some(pair_1) } else { None };
+        let pair_2_out = if return_pairs { Some(pair_2) } else { None };
+
+        (res, pca_out, pair_1_out, pair_2_out)
     }
 
     /// Get the indices of the highly variable genes
@@ -1049,7 +972,6 @@ impl Scrublet {
     ///
     /// Vector of indices of the HVG.
     fn get_hvg(&self, streaming: bool, verbose: bool) -> Vec<usize> {
-        // identify highly variable genes
         let hvg_type = get_hvg_method(&self.params.hvg_method)
             .ok_or_else(|| format!("Invalid HVG method: {}", &self.params.hvg_method))
             .unwrap();
@@ -1081,7 +1003,7 @@ impl Scrublet {
         };
 
         let n_genes = hvg_res.mean.len() as f32;
-        let n_genes_to_take = (n_genes * (1.0 - self.params.min_gene_var_pctl)).ceil() as usize; // FIX HERE
+        let n_genes_to_take = (n_genes * (1.0 - self.params.min_gene_var_pctl)).ceil() as usize;
 
         let mut indices: Vec<(usize, f64)> = hvg_res
             .var_std
@@ -1091,7 +1013,11 @@ impl Scrublet {
             .collect();
         indices.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
         indices.truncate(n_genes_to_take);
-        indices.into_iter().map(|(i, _)| i).collect()
+
+        let mut result: Vec<usize> = indices.into_iter().map(|(i, _)| i).collect();
+        result.sort_unstable();
+
+        result
     }
 
     /// Simulate doublets
@@ -1114,17 +1040,16 @@ impl Scrublet {
         target_size: f32,
         hvg_genes: &[usize],
         seed: usize,
-    ) -> Vec<CsrCellChunk> {
+    ) -> (Vec<CsrCellChunk>, Vec<usize>, Vec<usize>) {
         let n_sim_doublets = (self.n_cells as f32 * self.params.sim_doublet_ratio) as usize;
         self.n_cells_sim = n_sim_doublets;
         let mut rng = StdRng::seed_from_u64(seed as u64);
 
-        // Generate pairs using POSITIONS in cells_to_keep
         let pairs: Vec<(usize, usize)> = (0..n_sim_doublets)
             .map(|_| {
                 let pos_i = rng.random_range(0..self.cells_to_keep.len());
                 let pos_j = rng.random_range(0..self.cells_to_keep.len());
-                (pos_i, pos_j) // Store positions, not global indices
+                (pos_i, pos_j)
             })
             .collect();
 
@@ -1141,25 +1066,25 @@ impl Scrublet {
             .par_iter()
             .enumerate()
             .map(|(doublet_idx, &(pos_i, pos_j))| {
-                // Convert position to global cell index
                 let cell_idx_i = self.cells_to_keep[pos_i];
                 let cell_idx_j = self.cells_to_keep[pos_j];
 
                 let cell1 = reader.read_cell(cell_idx_i);
                 let cell2 = reader.read_cell(cell_idx_j);
 
+                let hvg_combined_lib_size =
+                    self.hvg_library_sizes[pos_i] + self.hvg_library_sizes[pos_j];
+
                 let mut doublet = CsrCellChunk::add_cells_scrublet(
                     &cell1,
                     &cell2,
                     &hvg_set,
-                    self.hvg_library_sizes[pos_i], // ✅ Now uses position
-                    self.hvg_library_sizes[pos_j], // ✅ Now uses position
+                    hvg_combined_lib_size,
                     target_size,
                     self.params.log_transform,
                     doublet_idx,
                 );
 
-                // Remap indices from original gene space to HVG space
                 for idx in doublet.indices.iter_mut() {
                     *idx = gene_to_hvg_idx[&(*idx as usize)];
                 }
@@ -1168,7 +1093,9 @@ impl Scrublet {
             })
             .collect();
 
-        doublets
+        let (pair_1, pair_2): (Vec<usize>, Vec<usize>) = pairs.into_iter().unzip();
+
+        (doublets, pair_1, pair_2)
     }
 
     /// Run PCA
@@ -1218,7 +1145,9 @@ impl Scrublet {
 
         let pca_sim = &scaled_sim * pca_res.1;
 
-        concat![[pca_res.0], [pca_sim]]
+        let combined = concat![[pca_res.0], [pca_sim]];
+
+        combined
     }
 
     /// Generate the kNN graph
@@ -1235,7 +1164,7 @@ impl Scrublet {
     /// The kNN graph as a `Vec<Vec<usize>>`.
     fn build_combined_knn(
         &self,
-        embd: Mat<f32>,
+        embd: MatRef<f32>,
         seed: usize,
         verbose: bool,
     ) -> Result<Vec<Vec<usize>>, String> {
@@ -1243,8 +1172,6 @@ impl Scrublet {
             .ok_or_else(|| format!("Invalid KNN search method: {}", &self.params.knn_method))?;
 
         let k_adj = self.calculate_k_adj();
-
-        // let k_adj = 15;
 
         if verbose {
             println!("Using {} neighbours in the kNN generation.", k_adj);
@@ -1293,21 +1220,6 @@ impl Scrublet {
 
         let k_adj = self.calculate_k_adj();
         let n_adj = k_adj as f32;
-
-        println!("\n=== Rust Scoring Debug ===");
-        println!("First cell neighbors: {:?}", &knn_indices[0][..10]);
-        let n_sim_first = knn_indices[0].iter().filter(|&&idx| idx >= n_obs).count();
-        println!(
-            "First cell: {} sim neighbors out of {}",
-            n_sim_first,
-            knn_indices[0].len()
-        );
-
-        // Check a few more cells
-        for i in 0..5 {
-            let n_sim_i = knn_indices[i].iter().filter(|&&idx| idx >= n_obs).count();
-            println!("Cell {}: {} sim neighbors", i, n_sim_i);
-        }
 
         let scores_errors: Vec<(f32, f32)> = knn_indices
             .par_iter()
@@ -1362,21 +1274,19 @@ impl Scrublet {
         verbose: bool,
     ) -> ScrubletResult {
         let threshold = manual_threshold.unwrap_or_else(|| {
-            let t = find_threshold_min(&doublet_scores.2, n_bins);
+            let t = find_threshold_min(&doublet_scores.0, n_bins);
             if verbose {
                 println!("Automatically set threshold at doublet score = {:.4}", t);
             }
             t
         });
 
-        // Call doublets
         let predicted_doublets: Vec<bool> = doublet_scores
             .0
             .iter()
             .map(|&score| score > threshold)
             .collect();
 
-        // Calculate z-scores
         let z_scores: Vec<f32> = doublet_scores
             .0
             .iter()
@@ -1384,7 +1294,6 @@ impl Scrublet {
             .map(|(&score, &error)| (score - threshold) / error)
             .collect();
 
-        // Calculate statistics
         let n_detected = predicted_doublets.iter().filter(|&&x| x).count();
         let detected_doublet_rate = n_detected as f32 / doublet_scores.0.len() as f32;
 
@@ -1412,7 +1321,7 @@ impl Scrublet {
                 100.0 * self.params.expected_doublet_rate
             );
             println!("  Estimated = {:.1}%", 100.0 * overall_doublet_rate);
-        }
+        };
 
         ScrubletResult {
             predicted_doublets,

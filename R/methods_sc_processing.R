@@ -767,6 +767,9 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
+#' @param return_combined_pca Boolean. Shall the PCA of the observed cells and
+#' simulated doublets be returned.
+#' @param return_pairs Boolean. Shall the pairs be returned.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return A `scrublet_res` class that has with the following items:
@@ -801,6 +804,8 @@ scrublet_sc <- S7::new_generic(
     scrublet_params = params_scrublet(),
     seed = 42L,
     streaming = FALSE,
+    return_combined_pca = FALSE,
+    return_pairs = FALSE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -818,6 +823,8 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
   scrublet_params = params_scrublet(),
   seed = 42L,
   streaming = FALSE,
+  return_combined_pca = FALSE,
+  return_pairs = FALSE,
   .verbose = TRUE
 ) {
   # checks
@@ -825,6 +832,8 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
   assertScScrublet(scrublet_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
+  checkmate::qassert(return_combined_pca, "B1")
+  checkmate::qassert(return_pairs, "B1")
   checkmate::qassert(.verbose, "B1")
 
   # function body
@@ -837,7 +846,9 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
     scrublet_params = scrublet_params,
     seed = seed,
     verbose = .verbose,
-    streaming = streaming
+    streaming = streaming,
+    return_combined_pca = return_combined_pca,
+    return_pairs = return_pairs
   )
 
   attr(scrublet_res, "cell_indices") <- cells_to_keep
@@ -1086,7 +1097,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
     return(object)
   }
 
-  c(pca_factors, pca_loadings, singular_values, scaled) %<-%
+  zeallot::`%<-%`(
+    c(pca_factors, pca_loadings, singular_values, scaled),
     rs_sc_pca(
       f_path_gene = get_rust_count_gene_f_path(object),
       no_pcs = no_pcs,
@@ -1097,6 +1109,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
       return_scaled = FALSE,
       verbose = .verbose
     )
+  )
 
   object <- set_pca_factors(object, pca_factors)
   object <- set_pca_loadings(object, pca_loadings)

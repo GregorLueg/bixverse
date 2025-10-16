@@ -1981,7 +1981,7 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' }
 #'
 #' @export
-rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming)
+rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs)
 
 #' Calculate the percentage of gene sets in the cells
 #'

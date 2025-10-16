@@ -6,6 +6,7 @@ use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::single_cell::scrublet::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
+use crate::utils::traits::*;
 
 ///////////////////////
 // Doublet detection //
@@ -56,44 +57,41 @@ fn rs_sc_scrublet(
     seed: usize,
     verbose: bool,
     streaming: bool,
+    return_combined_pca: bool,
+    return_pairs: bool,
 ) -> List {
     let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
-
     let cells_to_keep = cells_to_keep
         .iter()
         .map(|x| *x as usize)
         .collect::<Vec<usize>>();
-
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
+    let (scrublet_res, pca, pair_1, pair_2) =
+        scrublet.run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs);
 
-    let scrublet_res: ScrubletResult = scrublet.run_scrublet(streaming, seed, verbose);
+    let pca_out = pca.map(|m| faer_to_r_matrix(m.as_ref()));
+    let pair_1_out: Robj = match pair_1 {
+        Some(p) => p.r_int_convert().into(),
+        None => NULL.into(),
+    };
+    let pair_2_out: Robj = match pair_2 {
+        Some(p) => p.r_int_convert().into(),
+        None => NULL.into(),
+    };
 
     list!(
         predicted_doublets = scrublet_res.predicted_doublets,
-        doublet_scores_obs = scrublet_res
-            .doublet_scores_obs
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
-        doublet_scores_sim = scrublet_res
-            .doublet_scores_sim
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
-        doublet_errors_obs = scrublet_res
-            .doublet_errors_obs
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
-        z_scores = scrublet_res
-            .z_scores
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
+        doublet_scores_obs = scrublet_res.doublet_scores_obs.r_float_convert(),
+        doublet_scores_sim = scrublet_res.doublet_scores_sim.r_float_convert(),
+        doublet_errors_obs = scrublet_res.doublet_errors_obs.r_float_convert(),
+        z_scores = scrublet_res.z_scores.r_float_convert(),
         threshold = scrublet_res.threshold as f64,
         detected_doublet_rate = scrublet_res.detected_doublet_rate as f64,
         detectable_doublet_fraction = scrublet_res.detectable_doublet_fraction as f64,
-        overall_doublet_rate = scrublet_res.overall_doublet_rate as f64
+        overall_doublet_rate = scrublet_res.overall_doublet_rate as f64,
+        pca = pca_out,
+        pair_1 = pair_1_out,
+        pair_2 = pair_2_out
     )
 }
 
@@ -300,26 +298,12 @@ fn rs_sc_pca(
         verbose,
     );
 
-    let scores = Mat::from_fn(res.0.nrows(), res.0.ncols(), |i, j| {
-        let val = res.0.get(i, j);
-        *val as f64
-    });
-    let loadings = Mat::from_fn(res.1.nrows(), res.1.ncols(), |i, j| {
-        let val = res.1.get(i, j);
-        *val as f64
-    });
     let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
-    let scaled = res.3.map(|s| {
-        let scaled_f64 = Mat::from_fn(s.nrows(), s.ncols(), |i, j| {
-            let val = s.get(i, j);
-            *val as f64
-        });
-        faer_to_r_matrix(scaled_f64.as_ref())
-    });
+    let scaled = res.3.map(|s| faer_to_r_matrix(s.as_ref()));
 
     list!(
-        scores = faer_to_r_matrix(scores.as_ref()),
-        loadings = faer_to_r_matrix(loadings.as_ref()),
+        scores = faer_to_r_matrix(res.0.as_ref()),
+        loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = singular_values_f64,
         scaled = scaled
     )
