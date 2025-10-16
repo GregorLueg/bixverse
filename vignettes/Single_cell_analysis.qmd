@@ -18,7 +18,8 @@ This vignette shows how to use the `bixverse` package to perform single cell ana
 
 The size of single cell datasets is growing rapidly, however the computational
 tools used to to analyze them are not keeping up. The current tools solution ot
-bigger datasets is just use a larger memory machine, however this is not always possible especially if analysis is required to be run locally on a laptop.
+bigger datasets is just use a larger memory machine, however this is not always
+possible especially if analysis is required to be run locally on a laptop.
 
 The aim of this package is to be able to run a 1 million cell dataset on a
 standard laptop. 
@@ -30,25 +31,20 @@ duckdb and the super fast computational power of rust.
 ```{r}
 #| label: setup
 library(bixverse)
+library(ggplot2)
 ```
 
 
 ```{r save-temp-data, echo=TRUE}
-
-## This function is used to create synthetic data 
+## This function is used to create synthetic data
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-obs_table <- single_cell_test_data$obs
-obs_table$to_keep <- TRUE
-
-
+f_path_csr <- file.path(tempdir(), "csr_test.h5ad")
 
 write_h5ad_sc(
-  f_path = "inst/extdata/csr_test.h5ad",
+  f_path = f_path_csr,
   counts = single_cell_test_data$counts,
-  obs = obs_table,
+  obs = single_cell_test_data$obs,
   var = single_cell_test_data$var,
   .verbose = FALSE
 )
@@ -68,7 +64,7 @@ counts_csc <- as(single_cell_test_data$counts, "CsparseMatrix")
 write_cellranger_output(
   f_path = f_path_v1,
   counts = single_cell_test_data$counts,
-  obs = obs_table,
+  obs = single_cell_test_data$obs,
   var = single_cell_test_data$var,
   rows = "cells",
   format_type = "csv",
@@ -80,16 +76,17 @@ write_cellranger_output(
 write_cellranger_output(
   f_path = f_path_v2,
   counts = single_cell_test_data$counts,
-  obs = obs_table,
+  obs = single_cell_test_data$obs,
   var = single_cell_test_data$var,
   rows = "genes",
   format_type = "tsv",
   .verbose = FALSE
 )
-
 ```
 
-# Load in data
+# Single cell data processing using bixverse
+
+## Load in data
 
 The core of the single cell analysis is createing a `sc_object` this object
 contains the connections to the data on disk that can be accessed in rust and
@@ -116,15 +113,13 @@ Currently these parameters are:
 analysis by default it will be set to all TRUE **
 
 ```{r}
-
 ## The QC parameters are set using the constructor function
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = 45L,
   min_lib_size = 300L,
   min_cells = 500L,
   target_size = 1000
 )
-
 ```
 
 
@@ -140,26 +135,24 @@ However when an `sc_object` is created from whatever the source a number of thin
 
 Two columns are also added to the obs table `nnz` which is number of genes detected in the cell and `lib_size` which is number of UMTs
 
-## H5AD
+### H5AD
 
-```{r load-h5ad}
+```{r load-h5ad, eval=FALSE}
+#  For demonstration
 
-##  For demonstration 
-
-# sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = tempdir())
 
 
-# sc_object <- load_h5ad(
-#   object = sc_object,
-#   h5_path = system.file("extdata", "csr_test.h5ad", package="bixverse"),
-#   sc_qc_param = sc_qc_param,
-#   .verbose = TRUE
-# )
-
+sc_object <- load_h5ad(
+  object = sc_object,
+  h5_path = system.file("extdata", "csr_test.h5ad", package = "bixverse"),
+  sc_qc_param = sc_qc_param,
+  .verbose = TRUE
+)
 ```
 
 
-## Cell Ranger
+### Cell Ranger
 
 We have accounted for all possible combinations of outputs when loading data
 from mtx files it can either be cells as rows or cells as columns, and the obs and var tables can either be loaded as `.tsv` or `.csv` 
@@ -195,34 +188,30 @@ sc_object <- load_mtx(
 )
 ```
 
-# Accessing data
+## Accessing data
 
 A duckdb with the single cell data has been created and it does not live in
 memory, however for some operations (plotting) you do need the data, A number
 of helpful getter functions have to been written to retrieve the data.
 
-## Obs table (cell info)
+### Obs table (cell info)
 
 ```{r obs-table}
-
 # this returns a data.table of the obs table which can then be interacted with
 sc_object[[]]
 
 # The obs can also be retrieved using the obs getter which has mutliple arguments for fitlering
 get_sc_obs(sc_object)
-
 ```
 
-## Var table (gene info)
+### Var table (gene info)
 
 ```{r var-table}
-
 # Returns gene info as a data.table
 head(get_sc_var(sc_object))
-
 ```
 
-## Accessing Count data
+### Accessing Count data
 
 This is where things get interesting and were the power of saving the mtx as
 both a Compressed sparse Row (CSR) and compressed sparse column (CSC) format becomes apparent. 
@@ -235,7 +224,6 @@ when retrieving a selection of cells from the db
 
 
 ```{r cell-wise-selection}
-
 ## We are selecting 20:30 cells in the matrix which is a cellwise opperation so the correct thing to do would be to return the cells
 tictoc::tic()
 matrix <- get_sc_counts(
@@ -243,10 +231,10 @@ matrix <- get_sc_counts(
   assay = "norm",
   cell_indices = 20:30,
   return_format = "cell"
-  )
+)
 tictoc::toc()
 
-## Now we are to select the incorrect orientation 
+## Now we are to select the incorrect orientation
 ## This dataset is too small to see a difference however try it on your own larger and it will shock you
 tictoc::tic()
 matrix <- get_sc_counts(
@@ -254,13 +242,13 @@ matrix <- get_sc_counts(
   assay = "norm",
   cell_indices = 20:30,
   return_format = "gene"
-  )
+)
 tictoc::toc()
 
 
 ## matrices can also be accessed with sinle brackets
 
-matrix <- sc_object[,, return_format = "cell", assay = "norm"]
+matrix <- sc_object[, , return_format = "cell", assay = "norm"]
 ```
 
 
@@ -269,7 +257,6 @@ matrix <- sc_object[,, return_format = "cell", assay = "norm"]
 Usual QC procedure involves checking the proportions of mitochondrial and ribosomal genes in you sample bixverse can do this as follows
 
 ```{r gene-props}
-
 gs_of_interest <- list(
   gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
   gs_2 = c("gene_096", "gene_097", "gene_100")
@@ -283,46 +270,51 @@ sc_object <- gene_set_proportions_sc(
 )
 
 head(sc_object[[]])
-
 ```
 
 We can then set cells to keep based on proportions of reads mapping to genes,
 the filtered out cells will not actullay be removed from the duckdb rather just
 have their `to_keep` column in the obs table set to FALSE. 
 
-`set_cell_to_keep()` accepts both cell ids and cell indices as a vector of cells to keep.
+`set_cells_to_keep()` accepts both cell ids and cell indices as a vector of
+cells to keep.
 
-By default using the [[]] notation to load in the obs will only retain the `to_keep` cells. To access all cells the `get_sc_obs()` needs to be used.
+By default using the [[]] notation to load in the obs will only retain the
+`to_keep` cells. To access all cells the `get_sc_obs()` needs to be used.
+
+Once this `set_cells_to_keep()` function has been applied to the `sc_object`
+only cells marked TRUE in the `to_keep` column will be used in the downstream
+analysis
 
 ```{r removing-cells}
-
 threshold <- 0.05
 
 cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 obs_data <- get_sc_obs(sc_object, filtered = FALSE)
 table(obs_data$to_keep)
 
 table(sc_object[["to_keep"]])
-
 ```
 
 ## Highly Variable Genes (HVG)
 
-It is most common to perform downstream analysis (PCA, Knn graph, clustering) on HVG as these usually are the most informative genes.
+It is most common to perform downstream analysis (PCA, Knn graph, clustering) on
+HVG as these usually are the most informative genes.
 
-Currently the only implemented method is the VST-based version (known as Seurat v3). The
-other methods (meanvarbin, dispersion) will be implemented in the future.
+Currently the only implemented method is the VST-based version (known as Seurat
+v3). The other methods (meanvarbin, dispersion) will be implemented in the
+future.
 
 See `params_sc_hvg()` for details. 
 
-This also has the option for the data to be chunked in which is useful for larger datasets where you may run into memory constraints.
+This also has the option for the data to be chunked in which is useful for
+larger datasets where you may run into memory constraints.
 
 
 ```{r HVG-analysis}
-
 hvg_params <- params_sc_hvg(
   method = "vst"
 )
@@ -334,6 +326,263 @@ sc_object <- find_hvg_sc(
   .verbose = TRUE
 )
 
-
 head(get_sc_var(sc_object))
+
+
+## You can then which genes are highly variable as follows
+get_sc_var(sc_object)[get_hvg(sc_object)]
+```
+
+
+## PCA
+
+PCA is one of the most common form of dimensionally reduction algorithms. it has
+been implemented in bixverse for either randomised SVD or not, the user can then
+select the number of PCS to calculate. PCs will only be calculated using counts
+from the HVGs.
+
+Note the PCS are not currently saved to to the duckdb and after calculations are
+currently stored in memory and will need to be recalculated on the object if
+session is closed.
+
+```{r PCA}
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 10L, # Number PC to calculate
+  randomised_svd = FALSE,
+  .verbose = TRUE
+)
+
+# get the PCA factors
+head(get_pca_factors(sc_object))
+
+# Get PCA loadings for each gene
+get_pca_loadings(sc_object)
+```
+
+```{r plot-pca}
+pca_plot_df <- cbind(sc_object[[]], get_pca_factors(sc_object))
+
+
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2, color = cell_grp)) +
+  geom_point() +
+  theme_bw()
+```
+
+
+## Clustering 
+
+
+### Nearest Neighbors Identification 
+
+Nearest neighbor identification is a foundational step in single-cell analysis
+that finds the k most similar cells for each cell based on their expression
+profiles. This creates a k-nearest neighbor (kNN) graph, which is then converted
+into a shared nearest neighbor (sNN) graph—a more robust representation where
+edges represent cells that share neighbors. Here to ease computation we use the
+PCA factors to generate the graph.
+
+To identify nearest neighbors in bixverse, use two complementary functions:
+
+- `params_sc_neighbours() `configures the parameters for neighbor identification.
+Specify `k` (how many neighbors to find) and choose your search algorithm: `annoy`
+for speed or `hnsw` for accuracy and memory efficiency. Set the distance metric
+with ann_dist (typically `cosine` or `euclidean`). You can also control the sNN
+graph generation with `full_snn` (whether to create edges between all cells or
+just neighbors), `pruning` (to remove weak connections), and `snn_similarity`
+(choose `rank` or `jaccard` to determine how neighbor weights are calculated).
+This function returns a parameter list ready for neighbor detection.
+
+
+- `find_neighbours()` applies these parameters to your single-cell object to
+generate the actual kNN and sNN graphs. Specify which embedding to use
+(`embd_to_use`, currently `pca`) and optionally limit the number of embedding
+dimensions with `no_embd_to_use`. Set a seed for reproducibility and use .verbose
+to track runtime information. The function adds the computed neighbor matrices
+to your object for use in downstream analyses.
+
+Like PCA the results for these are not stored in the duckdb rather in memory so
+will need to be saved or rerun each time.
+
+
+```{r KNN}
+neighbours_params <- params_sc_neighbours(knn_algorithm = "hnsw")
+
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = neighbours_params,
+  .verbose = TRUE
+)
+
+
+head(get_knn_mat(sc_object))
+
+head(get_snn_graph(sc_object))
+```
+
+
+### community detection
+
+Currently only Leiden clustering is implemented in the package these cluster are then added to the obs table of the `sc_object`
+
+```{r Leiden-clustering}
+sc_object <- find_clusters_sc(sc_object, name = "leiden_clusters")
+
+cbind(sc_object[[]], get_pca_factors(sc_object)) |>
+  dplyr::mutate(leiden_clusters = as.character(leiden_clusters)) |>
+  ggplot(aes(x = PC_1, y = PC_2, color = leiden_clusters)) +
+  geom_point() +
+  theme_bw()
+```
+
+
+## Differential gene expression
+
+Once the clustering is complete we can perform differential gene expression
+analysis between the 2 groups of cell lines or group verses all style analysis.
+
+Currently the wilcox method is used to assess DGE with a default `twosided` test
+run. 
+
+```{r DGE-analysis}
+cell_names_1 <- sc_object[[]][leiden_clusters == 1, cell_id]
+cell_names_2 <- sc_object[[]][leiden_clusters == 2, cell_id]
+
+dge_leiden_clusters <- find_markers_sc(
+  object = sc_object,
+  cells_1 = cell_names_1,
+  cells_2 = cell_names_2,
+  method = "wilcox",
+  alternative = "twosided",
+  .verbose = FALSE
+)
+
+head(dge_leiden_clusters)
+```
+
+Specify a column, and the function will calculate differential gene expression
+for each cluster against all other cells combined. It processes clusters
+sequentially: cluster one vs. all others, cluster two vs. all others, and so on.
+To manage computational efficiency, the "all others" group is automatically
+downsampled to a random 100,000 cells if it exceeds that threshold. 
+
+Currently this functions alternative hypothesis is set to "greater", i.e., genes
+upregulated in the group.
+
+
+```{r DGE-one-vs-all}
+dge_test_2 <- find_all_markers_sc(
+  object = sc_object,
+  column_of_interest = "leiden_clusters",
+  method = "wilcox",
+  .verbose = FALSE
+)
+```
+
+## AUcell 
+
+AUCell calculates how well a set of genes (or pathway) "ranks" in each cell
+compared to all other genes. It produces a score between 0 and 1 for each
+cell—higher scores mean the genes in your set are highly expressed in that cell
+relative to the background. 
+
+The function `aucell_sc` offers two scoring methods: use `auroc`
+for identifying cells expressing specific marker genes, or `wilcox` for
+measuring overall pathway activity. For large datasets, you can load all cells
+at once or stream them in chunks of 50,000 cells for memory efficiency.
+
+
+```{r auc-cell}
+auc_gene_sets <- list(
+  markers_cell_type_1 = sprintf("gene_%03d", 1:10),
+  markers_cell_type_2 = sprintf("gene_%03d", 11:20),
+  markers_cell_type_3 = sprintf("gene_%03d", 21:30)
+)
+
+auc_res_auroc <- aucell_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  auc_type = "auroc",
+  .verbose = FALSE
+)
+
+cbind(t(auc_res_auroc), get_pca_factors(sc_object)) |>
+  ggplot(aes(y = PC_1, x = PC_2, color = markers_cell_type_1)) +
+  geom_point() +
+  theme_bw()
+```
+
+## meta cell 
+
+Metacells are aggregated groups of similar cells that are merged together to
+create a higher-level representation of your data. This approach reduces noise,
+improves computational efficiency, and is particularly useful for
+correlation-based analyses like identifying co-regulated genes. Metacells are
+generated by grouping nearby cells in the neighborhood graph, creating more
+stable and interpretable results from single-cell data. 
+
+To generate metacells in bixverse package, use two complementary functions: `params_sc_metacells()` configures
+the parameters for metacell generation. Specify the maximum number of allowed
+shared neighbors (`max_shared`), your target number of metacells
+(`target_no_metacells`), and iteration limits (`max_iter`). You can also fine-tune
+the k-nearest neighbor search using k, knn_method (choose between `annoy` or
+`hnsw`), distance metric (`ann_dist`), and algorithm-specific parameters like
+n_trees and search_budget. This function returns a list of parameters ready for
+the metacell generation pipeline. `generate_metacells()` takes your single-cell
+object and the parameter list from `params_sc_metacells()` to generate the actual
+metacells. You can optionally regenerate the k-NN graph with regenerate_knn,
+specify which embedding to use (embd_to_use, currently "pca"), and control
+library size normalization with target_size. Set a seed for reproducibility.
+
+```{r meta-cell}
+sc_meta_cell_params <- params_sc_metacells(target_no_metacells = 10L)
+
+meta_cell_data_v1 <- get_meta_cells_sc(
+  object = sc_object,
+  sc_meta_cell_params = sc_meta_cell_params,
+  .verbose = FALSE
+)
+
+str(meta_cell_data_v1)
+```
+
+# Loading in existing object
+
+A series of functions have been written to load in a already pre-processed
+sc_object where the to_keep cells have already been defined.
+
+This is done by pointing  the directory where the `sc_duckdb.db`,
+`counts_cells.bin` and `counts_genes.bin` have been created.
+
+All information that was stored in the obs table leiden_clusters, gene
+proportions etc and any information in var table will be retained as it has been
+stored in the duckdb. However analysis that was created and storied in memory
+e.g knn and PCA will no longer exist and have to be rerun.
+
+```{r load-existing}
+sc_object_loaded <- single_cell_exp(dir_data = tempdir())
+
+sc_object_loaded <- load_existing(sc_object_loaded)
+
+dim(sc_object_loaded[])
+
+dim(sc_object[])
+
+dim(sc_object[[]])
+dim(sc_object_loaded[[]])
+```
+
+```{r PCA-knn}
+## PCA in original object exists
+head(get_pca_factors(sc_object))
+
+## PCA in loaded in object does not exist
+head(get_pca_factors(sc_object_loaded))
+
+
+## Same for knn
+head(get_knn_mat(sc_object))
+
+head(get_knn_mat(sc_object_loaded))
 ```
