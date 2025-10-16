@@ -49,15 +49,12 @@ get_obs_data.sc_proportion_res <- function(x, ...) {
 
 #' @export
 plot.scrublet_res <- function(
-    x,
-    log_scale_obs = FALSE,
-    log_scale_sim = FALSE,
-    break_number = 31L,
-    ...) {
+  x,
+  break_number = 31L,
+  ...
+) {
   # checks
   checkmate::assertClass(x, "scrublet_res")
-  checkmate::qassert(log_scale_obs, "B1")
-  checkmate::qassert(log_scale_sim, "B1")
   checkmate::qassert(break_number, "I1")
 
   # plotting
@@ -84,10 +81,6 @@ plot.scrublet_res <- function(
     ) +
     ggplot2::theme_bw()
 
-  if (log_scale_obs) {
-    obs_plot <- obs_plot + ggplot2::scale_y_log10()
-  }
-
   sim_plot <- ggplot2::ggplot(
     data.frame(score = x$doublet_scores_sim),
     ggplot2::aes(x = score)
@@ -110,10 +103,6 @@ plot.scrublet_res <- function(
       y = "Probability density"
     ) +
     ggplot2::theme_bw()
-
-  if (log_scale_sim) {
-    sim_plot <- sim_plot + ggplot2::scale_y_log10()
-  }
 
   patchwork::wrap_plots(obs_plot, sim_plot, ncol = 2)
 }
@@ -181,4 +170,23 @@ call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
   scrublet_res$overall_doublet_rate <- overall_doublet_rate
 
   scrublet_res
+}
+
+### obs data -------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.scrublet_res <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "scrublet_res")
+
+  # function body
+  obs_dt <- data.table::data.table(
+    doublet = x$predicted_doublets,
+    doublet_score = x$doublet_scores_obs
+  )
+  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
+
+  return(obs_dt)
 }

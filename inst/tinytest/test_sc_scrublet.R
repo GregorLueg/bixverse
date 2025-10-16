@@ -104,11 +104,10 @@ optimal_params <- params_scrublet(
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
   min_gene_var_pctl = 0.5,
-  target_size = 1e4,
   n_bins = 100L
 )
 
-scrublet_res = rs_sc_scrublet(
+scrublet_res <- rs_sc_scrublet(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
   cells_to_keep = get_cells_to_keep(sc_object),
@@ -178,7 +177,7 @@ expect_true(
 metrics <- metrics_helper(
   cm = table(
     new_obs$doublet,
-    scrublet_res$doublet_scores_obs >= 0.15
+    scrublet_res$doublet_scores_obs >= 0.175
   )
 )
 
@@ -207,11 +206,11 @@ params_full_norm <- params_scrublet(
   target_size = 1e4
 )
 
-scrublet_res.full_norm = rs_sc_scrublet(
+scrublet_res.full_norm <- rs_sc_scrublet(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
   cells_to_keep = get_cells_to_keep(sc_object),
-  scrublet_params = test_wide_scrublet_params,
+  scrublet_params = params_full_norm,
   seed = 42L,
   verbose = FALSE,
   streaming = FALSE,
@@ -220,7 +219,10 @@ scrublet_res.full_norm = rs_sc_scrublet(
 )
 
 metrics.full_norm <- metrics_helper(
-  cm = table(new_obs$doublet, scrublet_res.full_norm$doublet_scores_obs >= 0.15)
+  cm = table(
+    new_obs$doublet,
+    scrublet_res.full_norm$doublet_scores_obs >= 0.175
+  )
 )
 
 # should still behave VERY similar
@@ -281,7 +283,7 @@ expect_equivalent(
 )
 
 # update the thresholds
-obj_res.up <- call_doublets_manual(obj_res, threshold = 0.15, .verbose = FALSE)
+obj_res.up <- call_doublets_manual(obj_res, threshold = 0.175, .verbose = FALSE)
 
 metrics_obj <- metrics_helper(
   cm = table(new_obs$doublet, obj_res.up$predicted_doublets)
@@ -295,4 +297,19 @@ expect_true(
 expect_true(
   current = metrics_obj["f1"] >= 0.5,
   info = "rust scrublet: 'good' recall on synthetic data"
+)
+
+obs_data <- get_obs_data(obj_res.up)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data),
+  info = "getter on scrublet res working"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(obs_data),
+    must.include = c("doublet", "doublet_score", "cell_idx")
+  ),
+  info = "getter on scrublet res working - expected columns"
 )
