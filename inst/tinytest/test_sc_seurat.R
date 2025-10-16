@@ -171,7 +171,7 @@ expect_true(
   info = "sensible cell filtering based on the threshold"
 )
 
-sc_object <- set_cell_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 seurat_obj <- subset(seurat_obj, subset = gs_2 < threshold * 100)
 

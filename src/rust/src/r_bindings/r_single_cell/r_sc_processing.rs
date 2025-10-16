@@ -19,6 +19,8 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
 /// elements of the genes of interest.
+/// @param cell_indices Integer. The indices of the cells for which to calculate
+/// the proportions. (0-indexed!)
 /// @param streaming Boolean. Shall the data be worked on in chunks.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
@@ -30,10 +32,16 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 fn rs_sc_get_gene_set_perc(
     f_path_cell: &str,
     gene_set_idx: List,
+    cell_indices: Vec<i32>,
     streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
+
+    let cell_indices = cell_indices
+        .iter()
+        .map(|x| *x as usize)
+        .collect::<Vec<usize>>();
 
     for i in 0..gene_set_idx.len() {
         let element = gene_set_idx.elt(i).unwrap();
@@ -47,9 +55,9 @@ fn rs_sc_get_gene_set_perc(
     }
 
     let res = if streaming {
-        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, verbose)
+        get_gene_set_perc_streaming(f_path_cell, gene_set_indices, &cell_indices, verbose)
     } else {
-        get_gene_set_perc(f_path_cell, gene_set_indices, verbose)
+        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose)
     };
 
     let mut result_list = List::new(gene_set_idx.len());
