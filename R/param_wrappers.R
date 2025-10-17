@@ -619,7 +619,8 @@ params_sc_min_quality <- function(
 #' Defaults to `FALSE`.
 #' @param target_size Optional Numeric. The target size for library size
 #' normalisation. If not provided, it will default to the mean library size
-#' observed in the data.
+#' observed in the data. Big values are preferable here to increase the distance
+#' between singlets and doublets.
 #' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
 #' genes. For example, 0.85 means keep genes in top 15% of variability.
 #' @param hvg_method String. Method for highly variable gene selection. One of
@@ -661,7 +662,7 @@ params_scrublet <- function(
   log_transform = TRUE,
   mean_center = FALSE,
   normalise_variance = FALSE,
-  target_size = 1e4,
+  target_size = 1e6,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -752,7 +753,8 @@ params_scrublet <- function(
 #' @param normalise_variance Boolean. Shall the data be variance normalised.
 #' Defaults to `TRUE`.
 #' @param target_size Optional Numeric. The target size for library size
-#' normalisation.
+#' normalisation. Big values are preferable here to increase the distance
+#' between singlets and doublets.
 #' @param min_gene_var_pctl Numeric. Percentile threshold for highly variable
 #' genes. For example, 0.85 means keep genes in top 15% of variability.
 #' @param hvg_method String. Method for highly variable gene selection. One of
@@ -790,7 +792,7 @@ params_boost <- function(
   log_transform = FALSE,
   mean_center = TRUE,
   normalise_variance = TRUE,
-  target_size = NULL,
+  target_size = 1e6,
   min_gene_var_pctl = 0.85,
   hvg_method = c("vst", "mvb", "dispersion"),
   loess_span = 0.3,
@@ -807,7 +809,7 @@ params_boost <- function(
   knn_method = c("annoy", "hnsw"),
   dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
-  n_trees = 10L
+  n_trees = 100L
 ) {
   hvg_method <- match.arg(hvg_method)
   knn_method <- match.arg(knn_method)

@@ -610,17 +610,20 @@ impl BoostClassifier {
         });
 
         self.hvg_library_sizes = hvg_library_sizes;
+        self.n_cells_sim = (self.n_cells as f32 * self.params.boost_rate) as usize;
 
-        // Run iterations in parallel
-        if verbose {
-            println!("Running {} iterations...", self.params.n_iters);
-        }
         let start_iters = Instant::now();
 
         let iter_results: Vec<(Vec<f32>, Vec<f32>)> = (0..self.params.n_iters)
-            .into_par_iter()
             .map(|iter| {
-                self.one_iteration(target_size, &hvg_genes, seed + iter, verbose && iter == 0)
+                if verbose {
+                    println!(
+                        " == Running iteration {} of {} == ",
+                        iter + 1,
+                        self.params.n_iters
+                    );
+                }
+                self.one_iteration(target_size, &hvg_genes, seed + iter, verbose)
             })
             .collect();
 
@@ -723,9 +726,28 @@ impl BoostClassifier {
             .unwrap();
 
         // Cluster
+        let start_graph = Instant::now();
+
         let graph = knn_to_graph(&knn);
 
+        let end_graph = start_graph.elapsed();
+
+        if verbose {
+            println!("Transformed kNN graph. Done in {:.2?}", end_graph);
+        }
+
+        let start_cluster = Instant::now();
+
         let communities = louvain_clustering(&graph, self.params.resolution, seed);
+
+        let end_cluster = start_cluster.elapsed();
+
+        if verbose {
+            println!(
+                "Generated communities via Louvain clustering. Done in {:.2?}",
+                end_cluster
+            );
+        }
 
         // Split communities
         let orig_communities = communities[..self.n_cells].to_vec();

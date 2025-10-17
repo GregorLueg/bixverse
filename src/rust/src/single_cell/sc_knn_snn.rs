@@ -232,7 +232,6 @@ pub fn smooth_knn_dist(
             for _ in 0..64 {
                 let mut psum = 0.0_f32;
 
-                
                 for j in 1..n_neighbours {
                     let d = dist_i[j] - rho;
                     if d > 0.0_f32 {
@@ -363,52 +362,53 @@ pub fn query_annoy_index(
 ) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
     let n_samples = query_mat.nrows();
     let ann_dist = parse_ann_dist(dist_metric).unwrap();
-    let n_query = query_mat.nrows();
     let search_k = Some(k * search_budget);
-
     let counter = Arc::new(AtomicUsize::new(0));
 
-    let results: Vec<_> = (0..n_query)
-        .into_par_iter()
-        .map(|i| {
-            let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
+    if return_dist {
+        let results: Vec<(Vec<usize>, Vec<f32>)> = (0..n_samples)
+            .into_par_iter()
+            .map(|i| {
+                let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
+                let dists: Vec<f32> = neighbors
+                    .iter()
+                    .map(|&neighbor_idx| {
+                        compute_distance_knn(
+                            query_mat.row(i),
+                            query_mat.row(neighbor_idx),
+                            &ann_dist,
+                        )
+                    })
+                    .collect();
 
-            let dists = if return_dist {
-                let mut dists = Vec::with_capacity(k);
-                for &neighbor_idx in &neighbors {
-                    let dist = compute_distance_knn(
-                        query_mat.row(i),
-                        query_mat.row(neighbor_idx),
-                        &ann_dist,
-                    );
-                    dists.push(dist);
+                if verbose {
+                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                    if count % 100_000 == 0 {
+                        println!(" Processed {} / {} cells.", count, n_samples);
+                    }
                 }
-                Some(dists)
-            } else {
-                None
-            };
+                (neighbors, dists)
+            })
+            .collect();
 
-            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-            if verbose && count % 100_000 == 0 {
-                println!(
-                    " Processed {} / {} cells.",
-                    count.separate_with_underscores(),
-                    n_samples.separate_with_underscores()
-                );
-            }
-
-            (neighbors, dists)
-        })
-        .collect();
-
-    let indices = results.iter().map(|(i, _)| i.clone()).collect();
-    let distances = if return_dist {
-        Some(results.iter().map(|(_, d)| d.clone().unwrap()).collect())
+        let (indices, distances) = results.into_iter().unzip();
+        (indices, Some(distances))
     } else {
-        None
-    };
-
-    (indices, distances)
+        let indices = (0..n_samples)
+            .into_par_iter()
+            .map(|i| {
+                let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
+                if verbose {
+                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                    if count % 100_000 == 0 {
+                        println!(" Processed {} / {} cells.", count, n_samples);
+                    }
+                }
+                neighbors
+            })
+            .collect();
+        (indices, None)
+    }
 }
 
 /// Build HNSW index

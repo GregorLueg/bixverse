@@ -25,7 +25,7 @@ params_boost(
   knn_method = c("annoy", "hnsw"),
   dist_metric = c("euclidean", "cosine"),
   search_budget = 100L,
-  n_trees = 10L
+  n_trees = 100L
 )
 }
 \arguments{

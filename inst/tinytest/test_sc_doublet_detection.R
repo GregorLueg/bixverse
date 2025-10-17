@@ -104,7 +104,8 @@ optimal_params <- params_scrublet(
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
   min_gene_var_pctl = 0.0,
-  n_bins = 100L
+  n_bins = 100L,
+  target_size = 1e4
 )
 
 scrublet_res <- rs_sc_scrublet(
@@ -327,7 +328,8 @@ doublet_detection_res <- rs_sc_doublet_detection(
     min_gene_var_pctl = 0.0,
     voter_thresh = 0.25,
     n_iters = 25L,
-    resolution = 0.5
+    resolution = 0.5,
+    target_size = 1e4
   ),
   seed = 42L,
   verbose = FALSE,
