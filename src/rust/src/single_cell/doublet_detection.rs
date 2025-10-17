@@ -110,6 +110,7 @@ pub struct BoostParams {
     pub random_svd: bool,
     // clustering
     pub resolution: f32,
+    pub louvain_iters: usize,
     // iterations
     pub n_iters: usize,
     // doublet calling
@@ -206,6 +207,11 @@ impl BoostParams {
             .and_then(|v| v.as_real())
             .unwrap_or(1.0) as f32;
 
+        let louvain_iters = params_list
+            .get("louvain_iters")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(10) as usize;
+
         let n_iters = params_list
             .get("n_iters")
             .and_then(|v| v.as_integer())
@@ -265,6 +271,7 @@ impl BoostParams {
             no_pcs,
             random_svd,
             resolution,
+            louvain_iters,
             n_iters,
             p_thresh,
             voter_thresh,
@@ -728,7 +735,7 @@ impl BoostClassifier {
         // Cluster
         let start_graph = Instant::now();
 
-        let graph = knn_to_graph(&knn);
+        let graph = knn_to_sparse_graph(&knn);
 
         let end_graph = start_graph.elapsed();
 
@@ -738,7 +745,12 @@ impl BoostClassifier {
 
         let start_cluster = Instant::now();
 
-        let communities = louvain_clustering(&graph, self.params.resolution, seed);
+        let communities = louvain_sparse_graph(
+            &graph,
+            self.params.resolution,
+            self.params.louvain_iters,
+            seed,
+        );
 
         let end_cluster = start_cluster.elapsed();
 

@@ -369,18 +369,7 @@ pub fn query_annoy_index(
         let results: Vec<(Vec<usize>, Vec<f32>)> = (0..n_samples)
             .into_par_iter()
             .map(|i| {
-                let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
-                let dists: Vec<f32> = neighbors
-                    .iter()
-                    .map(|&neighbor_idx| {
-                        compute_distance_knn(
-                            query_mat.row(i),
-                            query_mat.row(neighbor_idx),
-                            &ann_dist,
-                        )
-                    })
-                    .collect();
-
+                let (neighbors, dists) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
                 if verbose {
                     let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
                     if count % 100_000 == 0 {
@@ -390,14 +379,13 @@ pub fn query_annoy_index(
                 (neighbors, dists)
             })
             .collect();
-
         let (indices, distances) = results.into_iter().unzip();
         (indices, Some(distances))
     } else {
-        let indices = (0..n_samples)
+        let indices: Vec<Vec<usize>> = (0..n_samples)
             .into_par_iter()
             .map(|i| {
-                let neighbors = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
+                let (neighbors, _) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
                 if verbose {
                     let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
                     if count % 100_000 == 0 {

@@ -1,11 +1,13 @@
 use faer::{Mat, MatRef};
+use half::f16;
 use petgraph::graph::{Graph, NodeIndex, UnGraph};
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 use crate::assert_symmetric_mat;
+use crate::core::data::sparse_structures::*;
+use crate::core::graph::graph_structures::SparseGraph;
 
 /// Enum for the approximate nearest neighbour search
 #[derive(Clone, Debug, Copy)]
@@ -363,21 +365,87 @@ impl KnnLabPropGraph {
 /// ### Returns
 ///
 /// Undirected pet graph, i.e., `UnGraph`
-pub fn knn_to_graph(knn: &[Vec<usize>]) -> UnGraph<(), f32> {
+#[allow(dead_code)]
+pub fn knn_to_pet_graph(knn: &[Vec<usize>]) -> UnGraph<(), f32> {
     let n_nodes = knn.len();
     let mut graph = Graph::new_undirected();
     let nodes: Vec<NodeIndex> = (0..n_nodes).map(|_| graph.add_node(())).collect();
 
-    let mut added_edges: FxHashSet<(usize, usize)> = FxHashSet::default();
-
+    // Collect and normalise edges
+    let mut edges: Vec<(usize, usize)> = Vec::new();
     for (i, neighbours) in knn.iter().enumerate() {
         for &j in neighbours {
             let edge = if i < j { (i, j) } else { (j, i) };
-            if added_edges.insert(edge) {
-                graph.add_edge(nodes[edge.0], nodes[edge.1], 1.0);
-            }
+            edges.push(edge);
         }
     }
 
+    // Sort and deduplicate
+    edges.sort_unstable();
+    edges.dedup();
+
+    // Add to graph
+    for (i, j) in edges {
+        graph.add_edge(nodes[i], nodes[j], 1.0);
+    }
+
     graph
+}
+
+/////////////////////////
+// kNN to sparse graph //
+/////////////////////////
+
+/// Convert kNN indices to undirected SparseGraph
+///
+/// ### Params
+///
+/// * `knn` - kNN indices. Excludes self.
+///
+/// ### Returns
+///
+/// Undirected sparse graph with symmetric CSR representation
+pub fn knn_to_sparse_graph(knn: &[Vec<usize>]) -> SparseGraph {
+    let n_nodes = knn.len();
+    let mut edges = Vec::new();
+
+    // Collect all edges in both directions
+    for (i, neighbours) in knn.iter().enumerate() {
+        for &j in neighbours {
+            edges.push((i, j));
+            edges.push((j, i)); // Symmetric
+        }
+    }
+
+    // Sort to group duplicates
+    edges.sort_unstable();
+
+    // Deduplicate and sum weights
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    if !edges.is_empty() {
+        let (mut curr_r, mut curr_c) = edges[0];
+        let mut weight = 1.0f32;
+
+        for &(r, c) in &edges[1..] {
+            if r == curr_r && c == curr_c {
+                weight += 1.0;
+            } else {
+                rows.push(curr_r);
+                cols.push(curr_c);
+                vals.push(f16::from_f32(weight));
+                (curr_r, curr_c) = (r, c);
+                weight = 1.0;
+            }
+        }
+        rows.push(curr_r);
+        cols.push(curr_c);
+        vals.push(f16::from_f32(weight));
+    }
+
+    let adjacency = coo_to_csr(&rows, &cols, &vals, (n_nodes, n_nodes));
+
+    SparseGraph::new(n_nodes, adjacency, false)
 }
