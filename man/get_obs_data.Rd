@@ -4,6 +4,7 @@
 \alias{get_obs_data}
 \alias{get_obs_data.sc_proportion_res}
 \alias{get_obs_data.scrublet_res}
+\alias{get_obs_data.boost_res}
 \title{Get the ready obs data from various sub method}
 \usage{
 get_obs_data(x, ...)
@@ -11,6 +12,8 @@ get_obs_data(x, ...)
 \method{get_obs_data}{sc_proportion_res}(x, ...)
 
 \method{get_obs_data}{scrublet_res}(x, ...)
+
+\method{get_obs_data}{boost_res}(x, ...)
 }
 \arguments{
 \item{x}{An object to set gene mapping for}

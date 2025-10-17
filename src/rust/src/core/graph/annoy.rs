@@ -2,12 +2,42 @@ use faer::{MatRef, RowRef};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
+// use std::collections::BinaryHeap;
 
 use crate::core::graph::knn::AnnDist;
 
 //////////////////
 // Annoy search //
 //////////////////
+
+// /// Structure for Node Priority calculations
+// #[derive(Copy, Clone)]
+// struct NodePriority {
+//     node_idx: usize,
+//     priority: f32, // distance to split plane
+// }
+
+// impl PartialEq for NodePriority {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.priority == other.priority
+//     }
+// }
+
+// impl Eq for NodePriority {}
+
+// impl PartialOrd for NodePriority {
+//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
+
+// impl Ord for NodePriority {
+//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+//         self.priority
+//             .partial_cmp(&other.priority)
+//             .unwrap_or(std::cmp::Ordering::Equal)
+//     }
+// }
 
 /// Tree node representation for binary space partitioning
 ///

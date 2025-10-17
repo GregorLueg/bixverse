@@ -33,6 +33,11 @@ to include in this analysis.}
 
 \item{streaming}{Boolean. Shall the data be streamed for the HVG
 calculations.}
+
+\item{return_combined_pca}{Boolean. Shall the generated PCA be returned.}
+
+\item{return_pairs}{Boolean. Shall the parents of the simulated cells
+be returned.}
 }
 \value{
 A list with

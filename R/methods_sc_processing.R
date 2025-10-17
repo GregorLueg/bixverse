@@ -713,6 +713,8 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
 ### doublet detection ----------------------------------------------------------
 
+#### scrublet ------------------------------------------------------------------
+
 #' Doublet detection with Scrublet
 #'
 #' @description This function implements the doublet detection from Scrublet,
@@ -725,45 +727,8 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 #' data is a doublet. For more details, please check the publication.
 #'
 #' @param object `single_cell_exp` class.
-#' @param target_size Numeric. The library target size for the simulated cells.
-#' Needs to be the same as the initial one (usually `1e5`).
-#' @param scrublet_params A list with the scrublet parameters, see
-#' [bixverse::params_scrublet()]. This list contains:
-#' \itemize{
-#'   \item min_gene_var_pctl - Numeric. Percentile threshold for highly variable
-#'   genes. For example, 0.85 means keep genes in top 15% of variability.
-#'   \item hvg_method - String. Method for highly variable gene selection. One
-#'   of c("vst", "mvb", "dispersion"). Defaults to "vst" (variance stabilising
-#'   transformation).
-#'   \item loess_span - Numeric. Span parameter for loess fitting in VST method.
-#'   Controls smoothness of the fitted curve.
-#'   \item clip_max - Optional numeric. Optional maximum value for clipping in
-#'   variance stabilisation.
-#'   \item sim_doublet_ratio - Numeric. Number of doublets to simulate relative
-#'   to the number of observed cells. For example, 2.0 simulates twice as many
-#'   doublets as there are cells. Defaults to `1.0`.
-#'   \item expected_doublet_rate - Numeric. Expected doublet rate for the
-#'   experiment, typically 0.05-0.10 depending on cell loading. Must be between
-#'   0 and 1.
-#'   \item stdev_doublet_rate - Numeric. Uncertainty in the expected doublet
-#'   rate.
-#'   \item no_pcs - Integer. Number of principal components to use for
-#'   embedding.
-#'   \item random_svd - Boolean. Whether to use randomised SVD (faster) vs
-#'   exact SVD.
-#'   \item k - Integer. Number of nearest neighbours for the kNN graph. If 0
-#'   (default), automatically calculated as `round(0.5 * sqrt(n_cells))`.
-#'   \item knn_method - String. Distance metric to use. One of
-#'   `c("cosine", "euclidean")`. Defaults to `"cosine"`.
-#'   \item search_budget - Integer. Search budget for Annoy algorithm (higher =
-#'   more accurate but slower).
-#'   \item n_trees - Integer. Number of trees for Annoy index generation.
-#'   \item n_bins - Integer. Number of bins for histogram-based automatic
-#'   threshold detection. Typically 50-100.
-#'   \item manual_threshold - Optional numeric. Optional manual doublet score
-#'   threshold. If NULL (default), threshold is automatically detected from
-#'   simulated doublet score distribution.
-#' }
+#' @param scrublet_params A list with the final scrublet parameters, see
+#' [bixverse::params_scrublet()] for full details.
 #' @param seed Integer. Random seed.
 #' @param streaming Boolean. Shall streaming be used during the HVG
 #' calculations. Slower, but less memory usage.
@@ -791,6 +756,12 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 #'   scores above the threshold.
 #'   \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
 #'   match the expected doublet rate.
+#'   \item pca - Optional PCA embeddings across the original cells and simulated
+#'   doublets.
+#'   \item pair_1 - Optional index of the parent cell 1 of the simulated
+#'   doublets.
+#'   \item pair_2 - Optional index of the parent cell 2 of the simulated
+#'   doublets.
 #' }
 #'
 #' @export
@@ -855,6 +826,86 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
   class(scrublet_res) <- "scrublet_res"
 
   return(scrublet_res)
+}
+
+#### boost ---------------------------------------------------------------------
+
+#' Doublet detection with boosted doublet classification
+#'
+#' @description This function implements the boosted doublet detection. It
+#' generates through several iterations simulated doublets, generate kNN graphs,
+#' runs Louvain clustering and assesses how often an observed cells clsuters
+#' together with the simulated doublets.
+#'
+#' @param object `single_cell_exp` class.
+#' @param boost_params A list with the final scrublet parameters, see
+#' [bixverse::params_boost()] for full details.
+#' @param seed Integer. Random seed.
+#' @param streaming Boolean. Shall streaming be used during the HVG
+#' calculations. Slower, but less memory usage.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A `boost_res` class that has with the following items:
+#' \itemize{
+#'   \item predicted_doublets - Boolean vector indicating which observed cells
+#'   predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'   \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'   a doublet for the observed cells.
+#'   \item voting_avg - Numerical vector with the average voting score.
+#' }
+#'
+#' @export
+doublet_detection_boost_sc <- S7::new_generic(
+  name = "doublet_detection_boost_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    boost_params = params_boost(),
+    seed = 42L,
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method doublet_detection_boost_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
+  object,
+  boost_params = params_boost(),
+  seed = 42L,
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  assertScBoost(boost_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  cells_to_keep <- get_cells_to_keep(object)
+
+  boost_res <- rs_sc_doublet_detection(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cells_to_keep = cells_to_keep,
+    boost_params = boost_params,
+    seed = seed,
+    verbose = .verbose,
+    streaming = streaming
+  )
+
+  attr(boost_res, "cell_indices") <- cells_to_keep
+  class(boost_res) <- "boost_res"
+
+  return(boost_res)
 }
 
 ### gene proportions -----------------------------------------------------------

@@ -17,43 +17,8 @@ scrublet_sc(
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
 
-\item{scrublet_params}{A list with the scrublet parameters, see
-\code{\link[=params_scrublet]{params_scrublet()}}. This list contains:
-\itemize{
-\item min_gene_var_pctl - Numeric. Percentile threshold for highly variable
-genes. For example, 0.85 means keep genes in top 15\% of variability.
-\item hvg_method - String. Method for highly variable gene selection. One
-of c("vst", "mvb", "dispersion"). Defaults to "vst" (variance stabilising
-transformation).
-\item loess_span - Numeric. Span parameter for loess fitting in VST method.
-Controls smoothness of the fitted curve.
-\item clip_max - Optional numeric. Optional maximum value for clipping in
-variance stabilisation.
-\item sim_doublet_ratio - Numeric. Number of doublets to simulate relative
-to the number of observed cells. For example, 2.0 simulates twice as many
-doublets as there are cells. Defaults to \code{1.0}.
-\item expected_doublet_rate - Numeric. Expected doublet rate for the
-experiment, typically 0.05-0.10 depending on cell loading. Must be between
-0 and 1.
-\item stdev_doublet_rate - Numeric. Uncertainty in the expected doublet
-rate.
-\item no_pcs - Integer. Number of principal components to use for
-embedding.
-\item random_svd - Boolean. Whether to use randomised SVD (faster) vs
-exact SVD.
-\item k - Integer. Number of nearest neighbours for the kNN graph. If 0
-(default), automatically calculated as \code{round(0.5 * sqrt(n_cells))}.
-\item knn_method - String. Distance metric to use. One of
-\code{c("cosine", "euclidean")}. Defaults to \code{"cosine"}.
-\item search_budget - Integer. Search budget for Annoy algorithm (higher =
-more accurate but slower).
-\item n_trees - Integer. Number of trees for Annoy index generation.
-\item n_bins - Integer. Number of bins for histogram-based automatic
-threshold detection. Typically 50-100.
-\item manual_threshold - Optional numeric. Optional manual doublet score
-threshold. If NULL (default), threshold is automatically detected from
-simulated doublet score distribution.
-}}
+\item{scrublet_params}{A list with the final scrublet parameters, see
+\code{\link[=params_scrublet]{params_scrublet()}} for full details.}
 
 \item{seed}{Integer. Random seed.}
 
@@ -66,9 +31,6 @@ simulated doublets be returned.}
 \item{return_pairs}{Boolean. Shall the pairs be returned.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{target_size}{Numeric. The library target size for the simulated cells.
-Needs to be the same as the initial one (usually \code{1e5}).}
 }
 \value{
 A \code{scrublet_res} class that has with the following items:
@@ -90,6 +52,12 @@ doublet.
 scores above the threshold.
 \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
 match the expected doublet rate.
+\item pca - Optional PCA embeddings across the original cells and simulated
+doublets.
+\item pair_1 - Optional index of the parent cell 1 of the simulated
+doublets.
+\item pair_2 - Optional index of the parent cell 2 of the simulated
+doublets.
 }
 }
 \description{

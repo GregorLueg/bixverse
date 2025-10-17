@@ -1004,7 +1004,7 @@ checkScScrublet <- function(x) {
           "The following element `%s` in Scrublet parameters is incorrect:",
           "min_gene_var_pctl, expected_doublet_rate, and stdev_doublet_rate",
           "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
-          "target_size must be a numeric ≥ 1"
+          "target_size must be a numeric >= 1"
         ),
         broken_elem
       )
@@ -1083,6 +1083,195 @@ checkScScrublet <- function(x) {
       sprintf(
         paste0(
           "The following element `%s` in the Scrublet parameters is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+### boost ----------------------------------------------------------------------
+
+#' Check Boost parameters
+#'
+#' @description Checkmate extension for checking the Boost parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScBoost <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "log_transform",
+      "mean_center",
+      "normalise_variance",
+      "target_size",
+      "min_gene_var_pctl",
+      "hvg_method",
+      "loess_span",
+      "clip_max",
+      "boost_rate",
+      "replace",
+      "no_pcs",
+      "random_svd",
+      "resolution",
+      "n_iters",
+      "p_thresh",
+      "voter_thresh",
+      "k",
+      "knn_method",
+      "dist_metric",
+      "search_budget",
+      "n_trees"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "no_pcs" = "I1[1,)",
+    "n_iters" = "I1[1,)",
+    "k" = "I1[0,)",
+    "search_budget" = "I1[1,)",
+    "n_trees" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Boost parameters is incorrect:",
+          "no_pcs, n_iters, search_budget and n_trees must be >= 1;",
+          "k must be >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Numeric rules
+  numeric_rules <- list(
+    "min_gene_var_pctl" = "N1[0,1]",
+    "loess_span" = "N1(0,)",
+    "boost_rate" = "N1[0,1]",
+    "resolution" = "N1(0,)",
+    "p_thresh" = "N1(0,)",
+    "voter_thresh" = "N1[0,1]"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Boost parameters is incorrect:",
+          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
+          "loess_span, resolution and p_thresh must be > 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Boolean rules
+  boolean_rules <- c(
+    "log_transform",
+    "mean_center",
+    "normalise_variance",
+    "replace",
+    "random_svd"
+  )
+
+  res <- purrr::map_lgl(boolean_rules, \(name) {
+    checkmate::qtest(x[[name]], "B1")
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- boolean_rules[which(!res)][1]
+    return(
+      sprintf(
+        "The element `%s` in Boost parameters must be a boolean (TRUE/FALSE).",
+        broken_elem
+      )
+    )
+  }
+
+  # Optional numeric rules (can be NULL)
+  optional_rules <- list(
+    "clip_max" = c("0", "N1(0,)"),
+    "target_size" = c("0", "N1(0,)")
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(optional_rules)) {
+      checkmate::qtest(x, optional_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Boost parameters is incorrect:",
+          "clip_max and target_size must be NULL or positive numeric values."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Choice rules
+  test_choice_rules <- list(
+    hvg_method = c("vst", "mvb", "dispersion"),
+    knn_method = c("annoy", "hnsw"),
+    dist_metric = c("euclidean", "cosine")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the Boost parameters is not one of",
           " the expected choices. Please double check the documentation."
         ),
         broken_elem
@@ -1787,6 +1976,22 @@ assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
 
+### boost ----------------------------------------------------------------------
+
+#' Assert Boost parameters
+#'
+#' @description Checkmate extension for asserting the Boost parameters.
+#'
+#' @inheritParams checkScBoost
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#'   to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#'   [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
+
 ### hvg ------------------------------------------------------------------------
 
 #' Assert HVG selection parameters
@@ -1879,3 +2084,5 @@ assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 #'
 #' @export
 testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
+
+tools::showNonASCIIfile("~/repos/shared/bixverse/R/checkmate_extensions.R")

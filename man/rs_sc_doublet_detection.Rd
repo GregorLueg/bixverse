@@ -22,15 +22,15 @@ rs_sc_doublet_detection(
 \item{cells_to_keep}{Integer vector. The indices (0-indexed!) of the cells
 to include in this analysis.}
 
+\item{boost_params}{List. Parameter list, see
+\code{\link[=params_boost]{params_boost()}}.}
+
 \item{seed}{Integer. Seed for reproducibility purposes.}
 
 \item{streaming}{Boolean. Shall the data be streamed for the HVG
 calculations.}
 
 \item{verbose}{Boolean. Controls verbosity}
-
-\item{scrublet_params}{List. Parameter list, see
-\code{\link[=params_boost]{params_boost()}}.}
 }
 \value{
 A list with

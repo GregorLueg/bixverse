@@ -1958,6 +1958,9 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' @param verbose Boolean. Controls verbosity
 #' @param streaming Boolean. Shall the data be streamed for the HVG
 #' calculations.
+#' @param return_combined_pca Boolean. Shall the generated PCA be returned.
+#' @param return_pairs Boolean. Shall the parents of the simulated cells
+#' be returned.
 #'
 #' @returns A list with
 #' \itemize{
@@ -2121,7 +2124,7 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #' @param f_path_cell String. Path to the `counts_cells.bin` file.
 #' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
 #' to include in this analysis.
-#' @param scrublet_params List. Parameter list, see
+#' @param boost_params List. Parameter list, see
 #' [bixverse::params_boost()].
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity

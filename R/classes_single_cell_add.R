@@ -190,3 +190,21 @@ get_obs_data.scrublet_res <- function(x, ...) {
 
   return(obs_dt)
 }
+
+## boost -----------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.boost_res <- function(x, ...) {
+  # checks
+  checkmate::assertClass(x, "boost_res")
+
+  # function body
+  obs_dt <- data.table::as.data.table(
+    unclass(x)
+  )
+  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
+
+  return(obs_dt)
+}

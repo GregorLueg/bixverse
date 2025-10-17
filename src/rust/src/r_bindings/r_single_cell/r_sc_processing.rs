@@ -25,6 +25,9 @@ use crate::utils::traits::*;
 /// @param verbose Boolean. Controls verbosity
 /// @param streaming Boolean. Shall the data be streamed for the HVG
 /// calculations.
+/// @param return_combined_pca Boolean. Shall the generated PCA be returned.
+/// @param return_pairs Boolean. Shall the parents of the simulated cells
+/// be returned.
 ///
 /// @returns A list with
 /// \itemize{
@@ -105,7 +108,7 @@ fn rs_sc_scrublet(
 /// @param f_path_cell String. Path to the `counts_cells.bin` file.
 /// @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
 /// to include in this analysis.
-/// @param scrublet_params List. Parameter list, see
+/// @param boost_params List. Parameter list, see
 /// [bixverse::params_boost()].
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Boolean. Controls verbosity
@@ -141,8 +144,8 @@ fn rs_sc_doublet_detection(
     let boost_res: BoostResult = boost_classifier.run_boost(streaming, seed, verbose);
 
     list!(
-        predicted_doublets = boost_res.predicted_doublets,
-        doublet_scores = boost_res.doublet_scores,
+        doublet = boost_res.predicted_doublets,
+        doublet_score = boost_res.doublet_scores,
         voting_avg = boost_res.voting_average
     )
 }

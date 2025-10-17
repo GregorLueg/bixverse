@@ -97,15 +97,12 @@ sc_object <- load_r_data(
 # see their page https://github.com/swolock/scrublet/blob/master/examples/demuxlet_example.ipynb
 
 optimal_params <- params_scrublet(
-  log_transform = TRUE,
-  mean_center = FALSE,
-  normalise_variance = FALSE,
-  no_pcs = 15L,
+  normalisation = list(target_size = 1e4),
+  pca = list(no_pcs = 15L),
+  hvg = list(min_gene_var_pctl = 0.0),
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
-  min_gene_var_pctl = 0.0,
-  n_bins = 100L,
-  target_size = 1e4
+  n_bins = 100L
 )
 
 scrublet_res <- rs_sc_scrublet(
@@ -197,14 +194,16 @@ expect_true(
 # log transform WITHOUT Z-scoring was seen to be optimal
 
 params_full_norm <- params_scrublet(
-  log_transform = TRUE,
-  mean_center = TRUE,
-  normalise_variance = TRUE,
-  no_pcs = 15L,
+  normalisation = list(
+    target_size = 1e4,
+    mean_center = TRUE,
+    normalise_variance = TRUE
+  ),
+  pca = list(no_pcs = 15L),
+  hvg = list(min_gene_var_pctl = 0.0),
   expected_doublet_rate = 0.2,
-  sim_doublet_ratio = 2.0,
-  min_gene_var_pctl = 0.5,
-  target_size = 1e4
+  sim_doublet_ratio = 1.0,
+  n_bins = 100L
 )
 
 scrublet_res.full_norm <- rs_sc_scrublet(
@@ -248,7 +247,7 @@ expect_true(
   info = "rust scrublet: parents NOT returned"
 )
 
-## object ----------------------------------------------------------------------
+## s7 method -------------------------------------------------------------------
 
 obj_res <- scrublet_sc(
   sc_object,
@@ -319,18 +318,20 @@ expect_true(
 
 ## rust logic ------------------------------------------------------------------
 
+boost_params <- params_boost(
+  hvg = list(min_gene_var_pctl = 0.0),
+  pca = list(no_pcs = 10L),
+  normalisation = list(target_size = 1e4),
+  resolution = 0.5,
+  voter_thresh = 0.25,
+  n_iters = 10L
+)
+
 doublet_detection_res <- rs_sc_doublet_detection(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
   cells_to_keep = get_cells_to_keep(sc_object),
-  boost_params = list(
-    no_pcs = 10L,
-    min_gene_var_pctl = 0.0,
-    voter_thresh = 0.25,
-    n_iters = 25L,
-    resolution = 0.5,
-    target_size = 1e4
-  ),
+  boost_params = boost_params,
   seed = 42L,
   verbose = FALSE,
   streaming = FALSE
@@ -338,7 +339,7 @@ doublet_detection_res <- rs_sc_doublet_detection(
 
 expect_true(
   current = checkmate::qtest(
-    doublet_detection_res$predicted_doublet,
+    doublet_detection_res$doublet,
     sprintf("B%s", nrow(new_obs))
   ),
   info = paste(
@@ -349,7 +350,7 @@ expect_true(
 
 expect_true(
   current = checkmate::qtest(
-    doublet_detection_res$doublet_scores,
+    doublet_detection_res$doublet_score,
     sprintf("N%s", nrow(new_obs))
   ),
   info = paste(
@@ -372,7 +373,7 @@ expect_true(
 metrics <- metrics_helper(
   cm = table(
     new_obs$doublet,
-    doublet_detection_res$predicted_doublet
+    doublet_detection_res$doublet
   )
 )
 
@@ -390,4 +391,38 @@ expect_true(
     "rust boost classified doublet detection:",
     "good f1 scores"
   )
+)
+
+## s7 method -------------------------------------------------------------------
+
+obj_res <- doublet_detection_boost_sc(
+  sc_object,
+  boost_params = boost_params,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(obj_res, "boost_res"),
+  info = "S7 boost - correct class returned"
+)
+
+expect_equivalent(
+  current = obj_res$doublet,
+  target = doublet_detection_res$doublet,
+  info = "S7 boost: no weird changes during generation (called doublets)"
+)
+
+obs_data <- get_obs_data(obj_res)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data),
+  info = "getter on scrublet res working"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(obs_data),
+    must.include = c("doublet", "doublet_score", "cell_idx")
+  ),
+  info = "getter on scrublet res working - expected columns"
 )
