@@ -1,14 +1,14 @@
-# _bixverse package_
+# bixverse package
 
 ![r_package](https://img.shields.io/badge/R_package-0.0.2.2-orange)
 
 </br>
 
-<img src="/misc/pics/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
+<img src="man/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo">
 
 </br>
 
-## _Description_
+## Description
 
 This package contains various bioinformatics and computational biology workflows
 that are being routinely used, ranging from gene set enrichment analyses, to
@@ -16,7 +16,7 @@ network-based approaches for module detection in bulk RNAseq. The package
 provides useful, bare bone versions of most bioinformatics functionalities and
 leverages Rust to make any computational bottlenecks go _brrrrrrr_ (i.e., fast).
 
-## _Release notes_
+## Release notes
 
 This is now officially the version **0.0.2.2** release. With this
 update the following has been updated/changed:
@@ -24,7 +24,7 @@ update the following has been updated/changed:
 - Mitch multi-contrast enrichment, see
   [Kaspi and Ziemann](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 
-## _Installation_
+## Installation
 
 You will need Rust on your system to have the package working. An installation
 guide is provided [here](https://www.rust-lang.org/tools/install). There is a
@@ -52,16 +52,16 @@ install.packages("rextendr")
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
 
-## _Docs_
+## Docs
 
 - [Roadmap](/info/roadmap.md)
 - [Change log](/info/change_log.md)
 - [Why Rust](/info/why_rust.md)
 - [Code Style](/info/code_style.md) (If you want to contribute).
 
-## _Aim_
+## Aim
 
-<img src="/misc/pics/but_why.png" width="418" height="218" alt="but why">
+<img src="man/figures/but_why.png" width="418" height="218" alt="but why">
 
 Good question, why this package? Basically, there are three reasons for this:
 

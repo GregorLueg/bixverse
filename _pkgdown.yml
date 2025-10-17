@@ -1,4 +1,20 @@
 url: ~
 template:
   bootstrap: 5
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials]
+    right: [search, github, lightswitch]
 
+articles:
+  - title: Articles
+    contents:
+      - rust_functions
+
+  - title: Tutorials
+    contents:
+      - Single_cell_analysis
+      - gse_methods
+      - pathway_activity
+      - genetic_diffusions
+      - cpca
