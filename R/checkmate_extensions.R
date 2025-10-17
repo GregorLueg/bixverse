@@ -2084,5 +2084,3 @@ assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 #'
 #' @export
 testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
-
-tools::showNonASCIIfile("~/repos/shared/bixverse/R/checkmate_extensions.R")

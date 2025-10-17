@@ -863,14 +863,7 @@ boost_classifier_res = rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
   boost_params = params_boost(
     voter_thresh = 0.5,
-    min_gene_var_pctl = 0.7,
-    log_transform = TRUE,
-    mean_center = FALSE,
-    normalise_variance = FALSE,
-    n_iters = 15L,
-    boost_rate = 0.25,
-    resolution = 1.5,
-    target_size = 1e6
+    resolution = 1.0
   ),
   seed = 1210103L,
   verbose = TRUE,
@@ -878,7 +871,7 @@ boost_classifier_res = rs_sc_doublet_detection(
 )
 
 obs <- sc_object_pmbc[[]]
-obs[, doublet := boost_classifier_res$predicted_doublets]
+obs[, doublet := boost_classifier_res$doublet]
 
 boost_classifier_result_combined <- merge(
   obs,
@@ -899,7 +892,7 @@ scrublet_params = params_scrublet(
   mean_center = FALSE,
   normalise_variance = FALSE,
   expected_doublet_rate = 0.05,
-  min_gene_var_pctl = 0.9,
+  min_gene_var_pctl = 0.7,
   dist_metric = "euclidean",
   target_size = 1e6,
   sim_doublet_ratio = 2.0
@@ -909,7 +902,7 @@ scrublet_res = rs_sc_scrublet(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object_pmbc),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object_pmbc),
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
-  scrublet_params = scrublet_params,
+  scrublet_params = params_scrublet(),
   seed = 1210103L,
   verbose = TRUE,
   streaming = FALSE,
