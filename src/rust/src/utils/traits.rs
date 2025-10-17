@@ -191,15 +191,53 @@ impl ToF32AndU16 for u16 {
     }
 }
 
+////////////////////
+// R vector stuff //
+////////////////////
+
+pub trait VecConvert<U> {
+    fn r_int_convert(self) -> Vec<U>;
+}
+
+impl VecConvert<i32> for Vec<usize> {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.into_iter().map(|x| x as i32).collect()
+    }
+}
+
+impl VecConvert<usize> for Vec<i32> {
+    fn r_int_convert(self) -> Vec<usize> {
+        self.into_iter().map(|x| x as usize).collect()
+    }
+}
+
+pub trait VecFloatConvert<U> {
+    fn r_float_convert(self) -> Vec<U>;
+}
+
+impl VecFloatConvert<f32> for Vec<f64> {
+    fn r_float_convert(self) -> Vec<f32> {
+        self.into_iter().map(|x| x as f32).collect()
+    }
+}
+
+impl VecFloatConvert<f64> for Vec<f32> {
+    fn r_float_convert(self) -> Vec<f64> {
+        self.into_iter().map(|x| x as f64).collect()
+    }
+}
+
 ////////////////
 // R and faer //
 ////////////////
 
 pub trait FaerRType: SimpleEntity + Copy + Clone + 'static {
-    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]>;
+    type RType: Copy + Clone;
+    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self::RType, [usize; 2]>;
 }
 
 impl FaerRType for f64 {
+    type RType = f64;
     fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]> {
         let nrow = x.nrows();
         let ncol = x.ncols();
@@ -208,6 +246,7 @@ impl FaerRType for f64 {
 }
 
 impl FaerRType for i32 {
+    type RType = i32;
     fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self, [usize; 2]> {
         let nrow = x.nrows();
         let ncol = x.ncols();
@@ -215,10 +254,11 @@ impl FaerRType for i32 {
     }
 }
 
-// impl FaerRType for f32 {
-//     fn to_r_matrix(x: faer::MatRef<f32>) -> extendr_api::RArray<f32, [usize; 2]> {
-//         let nrow = x.nrows();
-//         let ncol = x.ncols();
-//         RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)])
-//     }
-// }
+impl FaerRType for f32 {
+    type RType = f64;
+    fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<f64, [usize; 2]> {
+        let nrow = x.nrows();
+        let ncol = x.ncols();
+        RArray::new_matrix(nrow, ncol, |row, column| x[(row, column)] as f64)
+    }
+}

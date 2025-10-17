@@ -15,16 +15,6 @@ no_pcs <- 10L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-write_h5ad_sc(
-  f_path = f_path_csr,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  var = single_cell_test_data$var,
-  .verbose = FALSE
-)
-
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
 )
@@ -48,7 +38,7 @@ expect_true(
 
 counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
 
-sc_qc_param = params_sc_min_quality(
+sc_qc_param <- params_sc_min_quality(
   min_unique_genes = min_genes_exp,
   min_lib_size = min_lib_size,
   min_cells = min_cells_exp,
@@ -59,12 +49,20 @@ sc_qc_param = params_sc_min_quality(
 
 sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_h5ad(
-  object = sc_object,
-  h5_path = path.expand(f_path_csr),
-  sc_qc_param = sc_qc_param,
-  .verbose = FALSE
-)
+sc_object <- # keep all cells for the sake of this
+  sc_object <- load_r_data(
+    object = sc_object,
+    counts = single_cell_test_data$counts,
+    obs = single_cell_test_data$obs,
+    var = single_cell_test_data$var,
+    sc_qc_param = params_sc_min_quality(
+      min_unique_genes = min_genes_exp,
+      min_lib_size = min_lib_size,
+      min_cells = min_cells_exp
+    ),
+    streaming = FALSE,
+    .verbose = FALSE
+  )
 
 # tests ------------------------------------------------------------------------
 
@@ -82,7 +80,6 @@ expect_true(
 
 ## function warnings -----------------------------------------------------------
 
-# throws no warning anymore after the update
 # expect_warning(
 #   current = find_hvg_sc(sc_object),
 #   info = "warning that no cells to keep were specified"
@@ -413,7 +410,8 @@ expect_true(
 #### scaling within the rust function ------------------------------------------
 
 # test if the scaling results in the same data
-c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
+zeallot::`%<-%`(
+  c(pca_factors, pca_loadings, pca_eigenvals, scaled),
   rs_sc_pca(
     f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
     no_pcs = no_pcs,
@@ -424,6 +422,7 @@ c(pca_factors, pca_loadings, pca_eigenvals, scaled) %<-%
     return_scaled = TRUE,
     verbose = FALSE
   )
+)
 
 expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 
@@ -450,6 +449,7 @@ expect_true(
 
 sc_object <- find_clusters_sc(sc_object)
 
+cell_grps <- unlist(sc_object[["cell_grp"]])
 leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
 
 cell_grps <- unlist(sc_object[["cell_grp"]])

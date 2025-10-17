@@ -123,7 +123,7 @@ pub fn column_pairwise_l2_norm(mat: &MatRef<f64>) -> Mat<f64> {
 
     let gram = mat.transpose() * mat;
     let mut col_norms_square = vec![0_f64; ncols];
-    #[allow(clippy::needless_range_loop)]
+    
     for i in 0..ncols {
         col_norms_square[i] = *gram.get(i, i);
     }

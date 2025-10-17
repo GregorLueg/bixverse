@@ -711,6 +711,203 @@ S7::method(load_existing, single_cell_exp) <- function(object) {
 
 ## qc --------------------------------------------------------------------------
 
+### doublet detection ----------------------------------------------------------
+
+#### scrublet ------------------------------------------------------------------
+
+#' Doublet detection with Scrublet
+#'
+#' @description This function implements the doublet detection from Scrublet,
+#' see Wolock, et al. Briefly, arteficial doublets are being generated from
+#' the data via random combination of initial cells. Highly variable genes (HVG)
+#' are being identified and the observed cells are being projected on a PCA
+#' space. Subsequently, the simulated doublets are being projected on the same
+#' PCA space given the same HVGs; kNN graphs are being generated and a kNN
+#' classifier is used to assign a probability that a given cell in the original
+#' data is a doublet. For more details, please check the publication.
+#'
+#' @param object `single_cell_exp` class.
+#' @param scrublet_params A list with the final scrublet parameters, see
+#' [bixverse::params_scrublet()] for full details.
+#' @param seed Integer. Random seed.
+#' @param streaming Boolean. Shall streaming be used during the HVG
+#' calculations. Slower, but less memory usage.
+#' @param return_combined_pca Boolean. Shall the PCA of the observed cells and
+#' simulated doublets be returned.
+#' @param return_pairs Boolean. Shall the pairs be returned.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A `scrublet_res` class that has with the following items:
+#' \itemize{
+#'   \item predicted_doublets - Boolean vector indicating which observed cells
+#'   predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'   \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'   a doublet for the observed cells.
+#'   \item doublet_scores_sim - Numerical vector with the likelihood of being
+#'   a doublet for the simulated cells.
+#'   \item doublet_errors_obs - Numerical vector with the standard errors of
+#'   the scores for the observed cells.
+#'   \item z_scores - Z-scores for the observed cells. Represents:
+#'   `score - threshold / error`.
+#'   \item threshold - Used threshold.
+#'   \item detected_doublet_rate - Fraction of cells that are called as
+#'   doublet.
+#'   \item detectable_doublet_fraction - Fraction of simulated doublets with
+#'   scores above the threshold.
+#'   \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
+#'   match the expected doublet rate.
+#'   \item pca - Optional PCA embeddings across the original cells and simulated
+#'   doublets.
+#'   \item pair_1 - Optional index of the parent cell 1 of the simulated
+#'   doublets.
+#'   \item pair_2 - Optional index of the parent cell 2 of the simulated
+#'   doublets.
+#' }
+#'
+#' @export
+#'
+#' @references Wollock, et al., Cell Syst, 2020
+scrublet_sc <- S7::new_generic(
+  name = "scrublet_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    scrublet_params = params_scrublet(),
+    seed = 42L,
+    streaming = FALSE,
+    return_combined_pca = FALSE,
+    return_pairs = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method scrublet_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(scrublet_sc, single_cell_exp) <- function(
+  object,
+  scrublet_params = params_scrublet(),
+  seed = 42L,
+  streaming = FALSE,
+  return_combined_pca = FALSE,
+  return_pairs = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  assertScScrublet(scrublet_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(return_combined_pca, "B1")
+  checkmate::qassert(return_pairs, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  cells_to_keep <- get_cells_to_keep(object)
+
+  scrublet_res <- rs_sc_scrublet(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cells_to_keep = cells_to_keep,
+    scrublet_params = scrublet_params,
+    seed = seed,
+    verbose = .verbose,
+    streaming = streaming,
+    return_combined_pca = return_combined_pca,
+    return_pairs = return_pairs
+  )
+
+  attr(scrublet_res, "cell_indices") <- cells_to_keep
+  class(scrublet_res) <- "scrublet_res"
+
+  return(scrublet_res)
+}
+
+#### boost ---------------------------------------------------------------------
+
+#' Doublet detection with boosted doublet classification
+#'
+#' @description This function implements the boosted doublet detection. It
+#' generates through several iterations simulated doublets, generate kNN graphs,
+#' runs Louvain clustering and assesses how often an observed cells clsuters
+#' together with the simulated doublets.
+#'
+#' @param object `single_cell_exp` class.
+#' @param boost_params A list with the final scrublet parameters, see
+#' [bixverse::params_boost()] for full details.
+#' @param seed Integer. Random seed.
+#' @param streaming Boolean. Shall streaming be used during the HVG
+#' calculations. Slower, but less memory usage.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A `boost_res` class that has with the following items:
+#' \itemize{
+#'   \item predicted_doublets - Boolean vector indicating which observed cells
+#'   predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'   \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'   a doublet for the observed cells.
+#'   \item voting_avg - Numerical vector with the average voting score.
+#' }
+#'
+#' @export
+doublet_detection_boost_sc <- S7::new_generic(
+  name = "doublet_detection_boost_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    boost_params = params_boost(),
+    seed = 42L,
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method doublet_detection_boost_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
+  object,
+  boost_params = params_boost(),
+  seed = 42L,
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  assertScBoost(boost_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  cells_to_keep <- get_cells_to_keep(object)
+
+  boost_res <- rs_sc_doublet_detection(
+    f_path_gene = get_rust_count_gene_f_path(object),
+    f_path_cell = get_rust_count_cell_f_path(object),
+    cells_to_keep = cells_to_keep,
+    boost_params = boost_params,
+    seed = seed,
+    verbose = .verbose,
+    streaming = streaming
+  )
+
+  attr(boost_res, "cell_indices") <- cells_to_keep
+  class(boost_res) <- "boost_res"
+
+  return(boost_res)
+}
+
 ### gene proportions -----------------------------------------------------------
 
 #' Calculate the proportions of reads for specific gene sets
@@ -951,7 +1148,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
     return(object)
   }
 
-  c(pca_factors, pca_loadings, singular_values, scaled) %<-%
+  zeallot::`%<-%`(
+    c(pca_factors, pca_loadings, singular_values, scaled),
     rs_sc_pca(
       f_path_gene = get_rust_count_gene_f_path(object),
       no_pcs = no_pcs,
@@ -962,6 +1160,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
       return_scaled = FALSE,
       verbose = .verbose
     )
+  )
 
   object <- set_pca_factors(object, pca_factors)
   object <- set_pca_loadings(object, pca_loadings)

@@ -178,7 +178,7 @@ impl PageRankGraph {
         let mut in_edges: Vec<Vec<(usize, f64)>> = vec![Vec::new(); node_count];
 
         // Single pass through edges and clippy being dumb
-        #[allow(clippy::needless_range_loop)]
+
         for i in 0..node_count {
             let node_id = graph.from_index(i);
             for edge in graph.edges(node_id) {
