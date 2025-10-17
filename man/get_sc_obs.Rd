@@ -14,7 +14,8 @@ to return.}
 
 \item{cols}{Optional string vector. The columns from the obs table to return.}
 
-\item{filtered}{Boolean. Whether to return all cells or filtered to to_keep cells.}
+\item{filtered}{Boolean. Whether to return all cells or filtered to to_keep
+cells.}
 }
 \value{
 The obs table

@@ -482,6 +482,10 @@ params_snf <- function(
 
 ## single cell -----------------------------------------------------------------
 
+### general --------------------------------------------------------------------
+
+# TODO - too many kNN parameters - refactor them out
+
 ### synthetic data -------------------------------------------------------------
 
 #' Default parameters for generation of synthetic data

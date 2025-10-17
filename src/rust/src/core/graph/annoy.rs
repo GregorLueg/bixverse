@@ -2,12 +2,42 @@ use faer::{MatRef, RowRef};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
+// use std::collections::BinaryHeap;
 
 use crate::core::graph::knn::AnnDist;
 
 //////////////////
 // Annoy search //
 //////////////////
+
+// /// Structure for Node Priority calculations
+// #[derive(Copy, Clone)]
+// struct NodePriority {
+//     node_idx: usize,
+//     priority: f32, // distance to split plane
+// }
+
+// impl PartialEq for NodePriority {
+//     fn eq(&self, other: &Self) -> bool {
+//         self.priority == other.priority
+//     }
+// }
+
+// impl Eq for NodePriority {}
+
+// impl PartialOrd for NodePriority {
+//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
+
+// impl Ord for NodePriority {
+//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+//         self.priority
+//             .partial_cmp(&other.priority)
+//             .unwrap_or(std::cmp::Ordering::Equal)
+//     }
+// }
 
 /// Tree node representation for binary space partitioning
 ///
@@ -263,50 +293,46 @@ impl AnnoyIndex {
     ) -> Vec<usize> {
         let search_k = search_k.unwrap_or(k * self.n_trees);
         let mut candidates = Vec::with_capacity(search_k * 2);
-
-        // query each tree with portion of search budget
         let budget_per_tree = (search_k / self.n_trees).max(k);
 
         for tree in &self.trees {
             self.query_tree_enhanced(tree, query_vec, &mut candidates, budget_per_tree);
         }
 
-        // remove duplicates and calculate distances
         candidates.sort_unstable();
         candidates.dedup();
 
         let mut scored = Vec::with_capacity(candidates.len());
+
         match dist_metric {
             AnnDist::Euclidean => {
                 for idx in candidates {
                     let vec_start = idx * self.dim;
                     let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
 
-                    let mut dist = 0.0f32;
-                    for (a, b) in vec_slice.iter().zip(query_vec.iter()) {
-                        let diff = a - b;
-                        dist += diff * diff;
-                    }
+                    let dist: f32 = vec_slice
+                        .iter()
+                        .zip(query_vec)
+                        .map(|(a, b)| {
+                            let diff = a - b;
+                            diff * diff
+                        })
+                        .sum();
+
                     scored.push((idx, dist));
                 }
             }
             AnnDist::Cosine => {
-                let mut norm_query = 0.0f32;
-                for &v in query_vec {
-                    norm_query += v * v;
-                }
-                let norm_query = norm_query.sqrt();
+                let norm_query: f32 = query_vec.iter().map(|v| v * v).sum::<f32>().sqrt();
 
                 for idx in candidates {
                     let vec_start = idx * self.dim;
                     let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
 
-                    let mut dot = 0.0f32;
-                    let mut norm_vec = 0.0f32;
-                    for i in 0..self.dim {
-                        dot += vec_slice[i] * query_vec[i];
-                        norm_vec += vec_slice[i] * vec_slice[i];
-                    }
+                    let (dot, norm_vec): (f32, f32) = vec_slice
+                        .iter()
+                        .zip(query_vec)
+                        .fold((0.0, 0.0), |(d, n), (v, q)| (d + v * q, n + v * v));
 
                     let dist = 1.0 - (dot / (norm_query * norm_vec.sqrt()));
                     scored.push((idx, dist));
@@ -314,9 +340,11 @@ impl AnnoyIndex {
             }
         }
 
-        // return k closest neighbors
+        let k = k.min(scored.len());
+        scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
+        scored.truncate(k);
         scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-        scored.into_iter().take(k).map(|(idx, _)| idx).collect()
+        scored.into_iter().map(|(idx, _)| idx).collect()
     }
 
     /// Queries the index for k nearest neighbors with enhanced search

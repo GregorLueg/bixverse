@@ -557,7 +557,9 @@ pub fn r_matrix_to_vec_bool(x: &RMatrix<Rbool>) -> Vec<Vec<bool>> {
 /// ###
 ///
 /// The R matrix based on the faer matrix.
-pub fn faer_to_r_matrix<T: FaerRType>(x: faer::MatRef<T>) -> extendr_api::RArray<T, [usize; 2]> {
+pub fn faer_to_r_matrix<T: FaerRType>(
+    x: faer::MatRef<T>,
+) -> extendr_api::RArray<T::RType, [usize; 2]> {
     T::to_r_matrix(x)
 }
 

@@ -252,9 +252,9 @@ tictoc::tic()
 object = load_mtx(
   object = object,
   sc_mtx_io_param = params_sc_mtx_io(
-    path_mtx = path.expand("~/Downloads/ex053/DGE.mtx"),
-    path_obs = path.expand("~/Downloads/ex053/cell_metadata.csv"),
-    path_var = path.expand("~/Downloads/ex053/all_genes.csv"),
+    path_mtx = path.expand("~/Downloads/mosaic_poc/count_matrix.mtx"),
+    path_obs = path.expand("~/Downloads/mosaic_poc/cell_metadata.csv"),
+    path_var = path.expand("~/Downloads/mosaic_poc/all_genes.csv"),
     cells_as_rows = TRUE,
     has_hdr = TRUE
   ),
@@ -265,6 +265,12 @@ object = load_mtx(
   )
 )
 tictoc::toc()
+
+rust_scrublet <- scrublet_sc(object = object, target_size = 1e4)
+
+rust_scrublet$doublet_scores_obs
+
+rust_scrublet$doublet_scores_sim
 
 # show size of the object
 pryr::object_size(object)
@@ -818,3 +824,105 @@ write_h5ad_sc(
   single_cell_test_data$var,
   .verbose = FALSE
 )
+
+# test doublet detection -------------------------------------------------------
+
+metrics_helper <- function(cm) {
+  TP <- cm[2, 2]
+  FP <- cm[1, 2]
+  FN <- cm[2, 1]
+  precision <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  f1 <- 2 * (precision * recall) / (precision + recall)
+  c(precision = precision, recall = recall, f1 = f1)
+}
+
+demuxlet_result <- fread("~/Downloads/demuxlet_PBMCs/demuxlet_calls.tsv")
+
+sc_object_pmbc <- single_cell_exp(
+  dir_data = tempdir()
+)
+
+mtx_params <- params_sc_mtx_io(
+  path_mtx = path.expand("~/Downloads/demuxlet_PBMCs/output.mtx"),
+  path_obs = path.expand("~/Downloads/demuxlet_PBMCs/GSM2560248_barcodes.tsv"),
+  path_var = path.expand("~/Downloads/demuxlet_PBMCs/GSM2560248_genes.tsv"),
+  cells_as_rows = TRUE,
+  has_hdr = FALSE
+)
+
+sc_object_pmbc <- load_mtx(
+  sc_object_pmbc,
+  sc_mtx_io_param = mtx_params,
+  sc_qc_param = params_sc_min_quality()
+)
+
+boost_classifier_res = rs_sc_doublet_detection(
+  f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object_pmbc),
+  f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object_pmbc),
+  cells_to_keep = get_cells_to_keep(sc_object_pmbc),
+  boost_params = params_boost(
+    voter_thresh = 0.5,
+    resolution = 1.0
+  ),
+  seed = 1210103L,
+  verbose = TRUE,
+  streaming = FALSE
+)
+
+obs <- sc_object_pmbc[[]]
+obs[, doublet := boost_classifier_res$doublet]
+
+boost_classifier_result_combined <- merge(
+  obs,
+  demuxlet_result,
+  by.x = "cell_id",
+  by.y = "Barcode"
+)[Call != "AMB"][, doublet_demuxlet := Call == "DBL"]
+
+metrics_helper(table(
+  list(
+    predicted = boost_classifier_result_combined$doublet,
+    actual = boost_classifier_result_combined$doublet_demuxlet
+  )
+))
+
+scrublet_params = params_scrublet(
+  log_transform = TRUE,
+  mean_center = FALSE,
+  normalise_variance = FALSE,
+  expected_doublet_rate = 0.05,
+  min_gene_var_pctl = 0.7,
+  dist_metric = "euclidean",
+  target_size = 1e6,
+  sim_doublet_ratio = 2.0
+)
+
+scrublet_res = rs_sc_scrublet(
+  f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object_pmbc),
+  f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object_pmbc),
+  cells_to_keep = get_cells_to_keep(sc_object_pmbc),
+  scrublet_params = params_scrublet(),
+  seed = 1210103L,
+  verbose = TRUE,
+  streaming = FALSE,
+  return_combined_pca = TRUE,
+  return_pairs = FALSE
+)
+
+obs_scrublet <- sc_object_pmbc[[]]
+obs_scrublet[, doublet := scrublet_res$predicted_doublets]
+
+scrublet_result_combined <- merge(
+  obs_scrublet,
+  demuxlet_result,
+  by.x = "cell_id",
+  by.y = "Barcode"
+)[Call != "AMB"][, doublet_demuxlet := Call == "DBL"]
+
+metrics_helper(table(
+  list(
+    predicted = scrublet_result_combined$doublet,
+    actual = scrublet_result_combined$doublet_demuxlet
+  )
+))

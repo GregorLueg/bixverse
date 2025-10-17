@@ -791,7 +791,8 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 #' @param indices Optional integer vector. The integer positions of the cells
 #' to return.
 #' @param cols Optional string vector. The columns from the obs table to return.
-#' @param filtered Boolean. Whether to return all cells or filtered to to_keep cells.
+#' @param filtered Boolean. Whether to return all cells or filtered to to_keep
+#' cells.
 #'
 #' @return The obs table
 #'
@@ -1290,9 +1291,10 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
   res <- get_cells_to_keep(
     x = S7::prop(x, "sc_map")
   )
-
+  # special case that this has not been set. Return all cell indices then
   if (length(res) == 0) {
-    res = seq_len(S7::prop(x, "dims")[1]) - 1
+    no_cells <- S7::prop(x, "dims")[1]
+    res <- seq_len(no_cells) - 1 # 0 index for Rust
   }
 
   return(as.integer(res))
