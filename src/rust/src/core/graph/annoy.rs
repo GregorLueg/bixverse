@@ -253,6 +253,7 @@ impl AnnoyIndex {
     /// ### Returns
     ///
     /// Tuple of `(nearest neighbour indices, distances)`
+    #[inline]
     pub fn query(
         &self,
         query_vec: &[f32],
@@ -308,9 +309,16 @@ impl AnnoyIndex {
             }
         }
 
+        // let k = k.min(scored.len());
+        // scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
+        // scored.truncate(k);
+        // scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
         let k = k.min(scored.len());
-        scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
-        scored.truncate(k);
+        if k < scored.len() {
+            scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
+            scored.truncate(k);
+        }
         scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
         let (indices, distances): (Vec<_>, Vec<_>) = scored.into_iter().unzip();
@@ -331,6 +339,7 @@ impl AnnoyIndex {
     /// ### Returns
     ///
     /// Vector of k nearest neighbor indices, sorted by distance
+    #[inline]
     pub fn query_row(
         &self,
         query_row: RowRef<f32>,
