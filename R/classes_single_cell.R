@@ -957,7 +957,7 @@ get_sc_counts <- S7::new_generic(
     return_format = c("cell", "gene"),
     cell_indices = NULL,
     gene_indices = NULL,
-    use_cells_to_keep = FALSE,
+    use_cells_to_keep = TRUE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -973,7 +973,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   return_format = c("cell", "gene"),
   cell_indices = NULL,
   gene_indices = NULL,
-  use_cells_to_keep = FALSE,
+  use_cells_to_keep = TRUE,
   .verbose = TRUE
 ) {
   assay <- match.arg(assay)
@@ -1042,7 +1042,7 @@ S7::method(`[`, single_cell_exp) <- function(
   ...,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
-  use_cells_to_keep = FALSE,
+  use_cells_to_keep = TRUE,
   drop = TRUE
 ) {
   if (missing(i)) {
