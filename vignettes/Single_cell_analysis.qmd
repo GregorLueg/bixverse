@@ -17,16 +17,25 @@ This vignette shows how to use the `bixverse` package to perform single cell ana
 ## Problem statement
 
 The size of single cell datasets is growing rapidly, however the computational
-tools used to to analyze them are not keeping up. The current tools solution ot
+tools used to to analyse them are not keeping up. The current tools solution ot
 bigger datasets is just use a larger memory machine, however this is not always
 possible especially if analysis is required to be run locally on a laptop.
 
-The aim of this package is to be able to run a 1 million cell dataset on a
-standard laptop. 
+The aim of this package is to make it possible to analyse single-cell datasets
+containing millions of cells on a standard laptop. This is achieved through an
+out-of-memory design where large data objects—such as count matrices and cell or
+feature metadata—are stored on disk rather than held entirely in memory.
+Metadata tables are managed through DuckDB, allowing for fast and efficient
+access to subsets of the data when needed. While it may seem like overkill to
+use a duckdb to store the obs and var tables for 100,000 cells these tables can
+quickly become very large with millions of cells and become unwieldy to hold in
+memory on a standard laptop.
 
-To make this possible data will be stored on disk and will only be loaded into
-memory for required computations. This takes advantage of rapid streaming from
-duckdb and the super fast computational power of rust.
+Computationally intensive tasks are handled by Rust back-end utilities that
+stream data from disk, perform the required operations, and return results to R.
+This approach combines the ease of use of R with the speed and efficiency of
+compiled Rust code, enabling high-performance single-cell analysis with minimal
+memory requirements.
 
 ```{r}
 #| label: setup
@@ -100,9 +109,12 @@ Here we are setting the path to store the duckdb and files to `tempdir` but in
 reality you want to keep these accessible such that you can always access the
 data.
 
-Another core of the bixverse is the `sc_qc_param` this is a set of parameters
-that will be used to filter out poor quality cells from the start as these are
-not required in the analysis.
+When generating the `sc_object` an `sc_qc_param` will need to be set, this
+defines the parameters used to filter out low-quality cells at the outset of the
+analysis. These cells are excluded during the creation of the on-disk data,
+thereby reducing computational load. Since poor-quality cells are not needed for
+downstream analysis, omitting them also minimizes both storage and memory
+requirements.
 
 Currently these parameters are:
 
@@ -134,8 +146,8 @@ stored in a number of ways we have tried to account for these when developing th
 
 However when an `sc_object` is created from whatever the source a number of things happen
 
-1) 1st pass over the data to assess which genes to include based on threshold
-2) 2nd pass over the data to assess which cells to include based on threshold
+1) First pass: Identify genes that are expressed in a sufficient number of cells based on the specified threshold set in `sc_qc_param`
+2) Second pass: Using the selected genes from the first pass, determine which cells meet the inclusion threshold
 3) CSR and CSC orientations of the data are saved in .bin files for rapid indexing of the data (more on this later)
 4) Data is log normalised based on the `target_size` parameter
 
@@ -229,8 +241,8 @@ head(get_sc_var(sc_object))
 
 This is where things get interesting and were the power of saving the mtx as
 both a Compressed sparse Row (CSR) and compressed sparse column (CSC) format becomes apparent. 
-For gene wise operations (highly variable genes) we want to be able to rapidly index through the columns (genes) so we would opt for selecting the CSC notation of the matrix.
-For cell wise operations (PCA) we want to be able to rapidly index through the rows (cells) so we would opt for selecting the CSR notation of the matrix.
+For gene wise operations (highly variable genes,PCA) we want to be able to rapidly index through the columns (genes) so we would opt for selecting the CSC notation of the matrix.
+For cell wise operations (DGEs, AUCell) we want to be able to rapidly index through the rows (cells) so we would opt for selecting the CSR notation of the matrix.
 
 Most of the algorithms will automatically select the correct orientation so you
 don't need to worry about it but below is a demonstration of the time difference
@@ -270,7 +282,11 @@ matrix <- sc_object[, , return_format = "cell", assay = "norm"]
 
 ## Gene proportions
 
-Usual QC procedure involves checking the proportions of mitochondrial and ribosomal genes in you sample bixverse can do this as follows
+Usual QC procedure involves checking the proportions of mitochondrial and
+ribosomal genes in you sample bixverse can do this as follows
+
+This operation also be chunked by using by setting `streaming = TRUE`, this is
+useful when working with very large datasets to avoid running into memory constraints.
 
 ```{r}
 #| label: gene-props
@@ -283,6 +299,7 @@ gs_of_interest <- list(
 sc_object <- gene_set_proportions_sc(
   sc_object,
   gs_of_interest,
+  streaming = FALSE, # can be chunked when working on large datasets to avoid running into memory constraints
   .verbose = TRUE
 )
 
@@ -355,10 +372,16 @@ head(get_sc_var(sc_object)[get_hvg(sc_object)],5)
 
 ## PCA
 
-PCA is one of the most common form of dimensionally reduction algorithms. it has
-been implemented in bixverse for either randomised SVD or not, the user can then
-select the number of PCS to calculate. PCs will only be calculated using counts
-from the HVGs.
+PCA is one of the most common form of dimensionally reduction algorithms. 
+
+`bixverse` offers currently offers two implementations of the PCA. Traditional PCA or the
+randomised PCA which is a faster approximation, for details see [here](https://research.facebook.com/publications/an-implementation-of-a-randomized-algorithm-for-principal-component-analysis/). In reality
+the first principal components with most of the signal are basically identical
+between the two methods and it is in the latter principal components were the
+uncertainty of the randomised version increases. Longer term, there is also the
+plan to implement SVD version that work purely on sparse data without scaling
+(densifying the data) for VERY large data sets. PCs will only be calculated using counts
+from the HVGs as such the HVG calculation will need to be run prior to PCA.
 
 Note the PCS are not currently saved to to the duckdb and after calculations are
 currently stored in memory and will need to be recalculated on the object if

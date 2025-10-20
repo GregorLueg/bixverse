@@ -597,16 +597,15 @@ against the Rust version implemented in `bixverse`:
 ```{r}
 #| label: bixverse jaccard similarity function
 
-#### This function has been changed and needs to be updated to work with the new version of the function
-# tictoc::tic()
-# rust_res <- rs_set_similarity_list(
-#     s_1_list = random_sets_1,
-#     s_2_list = random_sets_2,
-#   overlap_coefficient = FALSE
-# )
-# tictoc::toc()
+tictoc::tic()
+rust_res <- rs_set_similarity_list2(
+    s_1_list = random_sets_1,
+    s_2_list = random_sets_2,
+  overlap_coefficient = FALSE
+)
+tictoc::toc()
 
-# all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
+all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 ```
 
 Yep, that is MUCH faster... These are some of the functions that are exposed

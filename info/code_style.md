@@ -34,7 +34,7 @@ any code base and we would like to not spend too much energy on unnecessary
 abstractions over making key functionalities blazingly fast and
 memory-efficient. Please, just think about this meme in doubt:
 
-<img src="man/figures/stop_abstracting.png" width="350" height="504" alt="stop abstracting">
+<img src="/man/figures/stop_abstracting.png" width="350" height="504" alt="stop abstracting">
 
 Additionally, the idea is to be quite defensive in terms of coding style and use
 assertions (more on that later) where possible to validate function inputs,
