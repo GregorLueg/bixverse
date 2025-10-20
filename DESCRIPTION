@@ -20,6 +20,12 @@ Authors@R:
         family = "Skelton", 
         email = "Ajskelton@proton.me", 
         role = c("ctb")
+      ),
+      person(
+        given = "Grant", 
+        family = "Neilson", 
+        email = "grant.neilson5@gmail.com", 
+        role = c("ctb")
       )
     )
 Description: 
