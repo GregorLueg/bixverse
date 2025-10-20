@@ -1,43 +1,12 @@
+use crate::core::graph::knn::AnnDist;
 use faer::{MatRef, RowRef};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
-// use std::collections::BinaryHeap;
-
-use crate::core::graph::knn::AnnDist;
 
 //////////////////
 // Annoy search //
 //////////////////
-
-// /// Structure for Node Priority calculations
-// #[derive(Copy, Clone)]
-// struct NodePriority {
-//     node_idx: usize,
-//     priority: f32, // distance to split plane
-// }
-
-// impl PartialEq for NodePriority {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.priority == other.priority
-//     }
-// }
-
-// impl Eq for NodePriority {}
-
-// impl PartialOrd for NodePriority {
-//     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
-
-// impl Ord for NodePriority {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.priority
-//             .partial_cmp(&other.priority)
-//             .unwrap_or(std::cmp::Ordering::Equal)
-//     }
-// }
 
 /// Tree node representation for binary space partitioning
 ///
@@ -283,14 +252,15 @@ impl AnnoyIndex {
     ///
     /// ### Returns
     ///
-    /// Vector of k nearest neighbor indices, sorted by distance
+    /// Tuple of `(nearest neighbour indices, distances)`
+    #[inline]
     pub fn query(
         &self,
         query_vec: &[f32],
         dist_metric: &AnnDist,
         k: usize,
         search_k: Option<usize>,
-    ) -> Vec<usize> {
+    ) -> (Vec<usize>, Vec<f32>) {
         let search_k = search_k.unwrap_or(k * self.n_trees);
         let mut candidates = Vec::with_capacity(search_k * 2);
         let budget_per_tree = (search_k / self.n_trees).max(k);
@@ -308,17 +278,14 @@ impl AnnoyIndex {
             AnnDist::Euclidean => {
                 for idx in candidates {
                     let vec_start = idx * self.dim;
-                    let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
-
-                    let dist: f32 = vec_slice
-                        .iter()
-                        .zip(query_vec)
-                        .map(|(a, b)| {
-                            let diff = a - b;
-                            diff * diff
+                    let dist: f32 = unsafe {
+                        let vec_ptr = self.vectors_flat.as_ptr().add(vec_start);
+                        let query_ptr = query_vec.as_ptr();
+                        (0..self.dim).fold(0.0f32, |acc, i| {
+                            let diff = *vec_ptr.add(i) - *query_ptr.add(i);
+                            acc + diff * diff
                         })
-                        .sum();
-
+                    };
                     scored.push((idx, dist));
                 }
             }
@@ -327,24 +294,35 @@ impl AnnoyIndex {
 
                 for idx in candidates {
                     let vec_start = idx * self.dim;
-                    let vec_slice = &self.vectors_flat[vec_start..vec_start + self.dim];
-
-                    let (dot, norm_vec): (f32, f32) = vec_slice
-                        .iter()
-                        .zip(query_vec)
-                        .fold((0.0, 0.0), |(d, n), (v, q)| (d + v * q, n + v * v));
-
+                    let (dot, norm_vec): (f32, f32) = unsafe {
+                        let vec_ptr = self.vectors_flat.as_ptr().add(vec_start);
+                        let query_ptr = query_vec.as_ptr();
+                        (0..self.dim).fold((0.0f32, 0.0f32), |(d, n), i| {
+                            let v = *vec_ptr.add(i);
+                            let q = *query_ptr.add(i);
+                            (d + v * q, n + v * v)
+                        })
+                    };
                     let dist = 1.0 - (dot / (norm_query * norm_vec.sqrt()));
                     scored.push((idx, dist));
                 }
             }
         }
 
+        // let k = k.min(scored.len());
+        // scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
+        // scored.truncate(k);
+        // scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
         let k = k.min(scored.len());
-        scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
-        scored.truncate(k);
+        if k < scored.len() {
+            scored.select_nth_unstable_by(k - 1, |a, b| a.1.partial_cmp(&b.1).unwrap());
+            scored.truncate(k);
+        }
         scored.sort_unstable_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-        scored.into_iter().map(|(idx, _)| idx).collect()
+
+        let (indices, distances): (Vec<_>, Vec<_>) = scored.into_iter().unzip();
+        (indices, distances)
     }
 
     /// Queries the index for k nearest neighbors with enhanced search
@@ -361,13 +339,14 @@ impl AnnoyIndex {
     /// ### Returns
     ///
     /// Vector of k nearest neighbor indices, sorted by distance
+    #[inline]
     pub fn query_row(
         &self,
         query_row: RowRef<f32>,
         dist_metric: &AnnDist,
         k: usize,
         search_k: Option<usize>,
-    ) -> Vec<usize> {
+    ) -> (Vec<usize>, Vec<f32>) {
         // check if row is contiguous; if yes, generate slice directly from it
         // via unsafe
         if query_row.col_stride() == 1 {

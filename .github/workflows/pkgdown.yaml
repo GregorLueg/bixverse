@@ -2,11 +2,11 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master, feat/skunk_works]
+    branches: [ main ]
   pull_request:
-    branches: [main, master, feat/skunk_works]
+    branches: [ main ]
   release:
-    types: [published]
+    types: [ published ]
   workflow_dispatch:
 
 name: pkgdown.yaml
@@ -41,7 +41,7 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
-      - name: Deploy to GitHub pages 🚀
+      - name: Deploy to GitHub pages
         if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:

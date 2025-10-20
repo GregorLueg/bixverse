@@ -561,7 +561,7 @@ bixverse_sc[[]]
 
 cells_to_keep <- bixverse_sc[[]][mt_perc <= 0.10, cell_id]
 
-bixverse_sc <- set_cells_to_keep(bixverse_sc, get_cell_names(bixverse_sc))
+bixverse_sc <- set_cells_to_keep(bixverse_sc, cells_to_keep)
 
 bixverse_sc <- find_hvg_sc(object = bixverse_sc, streaming = TRUE)
 
@@ -579,21 +579,12 @@ rextendr::document()
 
 pryr::object_size(bixverse_sc)
 
-bixverse_sc@sc_map$cells_to_keep_idx
-
-tictoc::tic()
-test_count <- bixverse_sc[2857392L, , return_format = "cell", assay = "raw"]
-tictoc::toc()
-
-get_rust_count_cell_f_path(bixverse_sc)
-
-rextendr::document()
-
 dge_test <- rs_calculate_dge_mann_whitney(
   f_path = get_rust_count_cell_f_path(bixverse_sc),
-  cell_indices_1 = 1:10000L,
-  cell_indices_2 = 10001:20000L,
+  cell_indices_1 = 1:100000L,
+  cell_indices_2 = 100001:200000L,
   min_prop = 0.05,
+  alternative = "twosided",
   TRUE
 )
 
@@ -839,6 +830,8 @@ metrics_helper <- function(cm) {
 
 demuxlet_result <- fread("~/Downloads/demuxlet_PBMCs/demuxlet_calls.tsv")
 
+rextendr::document()
+
 sc_object_pmbc <- single_cell_exp(
   dir_data = tempdir()
 )
@@ -869,6 +862,28 @@ boost_classifier_res = rs_sc_doublet_detection(
   verbose = TRUE,
   streaming = FALSE
 )
+
+#  == Running iteration 24 of 25 ==
+# Loaded in data : 1.70ms
+# Finished scaling : 55.65ms
+# Finished PCA calculations : 301.85ms
+# Total run time PCA detection: 359.51ms
+# Using 75 neighbours in the kNN generation.
+# Generated Annoy index: 85.67ms
+# Identified approximate nearest neighbours via Annoy: 354.17ms.
+# Transformed kNN graph. Done in 42.21ms
+# Generated communities via Louvain clustering. Done in 748.18ms
+
+#  == Running iteration 24 of 25 ==
+# Loaded in data : 1.84ms
+# Finished scaling : 55.29ms
+# Finished PCA calculations : 324.75ms
+# Total run time PCA detection: 382.22ms
+# Using 75 neighbours in the kNN generation.
+# Generated Annoy index: 88.77ms
+# Identified approximate nearest neighbours via Annoy: 366.83ms.
+# Transformed kNN graph. Done in 42.37ms
+# Generated communities via Louvain clustering. Done in 773.07ms
 
 obs <- sc_object_pmbc[[]]
 obs[, doublet := boost_classifier_res$doublet]
