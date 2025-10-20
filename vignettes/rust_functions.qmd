@@ -598,9 +598,9 @@ against the Rust version implemented in `bixverse`:
 #| label: bixverse jaccard similarity function
 
 tictoc::tic()
-rust_res <- rs_set_similarity_list(
-  s_1_list = random_sets_1,
-  s_2_list = random_sets_2,
+rust_res <- rs_set_similarity_list2(
+    s_1_list = random_sets_1,
+    s_2_list = random_sets_2,
   overlap_coefficient = FALSE
 )
 tictoc::toc()

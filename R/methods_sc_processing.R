@@ -1018,8 +1018,8 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #' `FALSE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
-#' @return It will add the columns based on the names in the `gene_set_list` to
-#' the obs table.
+#' @return It will add the mean, var, var_exp, var_std of each gene to the
+#' the var table.
 #'
 #' @export
 find_hvg_sc <- S7::new_generic(

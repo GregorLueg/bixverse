@@ -17,6 +17,8 @@ methods in `bixverse`.
 
 ```{r}
 #| label: setup
+if (!requireNamespace("fgsea", quietly = TRUE)) BiocManager::install("fgsea")
+if (!requireNamespace("msigdbr", quietly = TRUE)) install.packages("msigdbr")
 library(bixverse)
 library(data.table)
 library(magrittr)
