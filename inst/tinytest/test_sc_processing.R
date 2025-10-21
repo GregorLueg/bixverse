@@ -186,8 +186,6 @@ expect_true(
 
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
-get_sc_obs(sc_object)
-
 expect_true(
   current = all(
     unlist(sc_object[["cell_id"]]) == cells_to_keep
@@ -225,6 +223,73 @@ expect_equal(
   target = counts_filtered,
   info = "counts after setting cells to keep and NOT using the parameter"
 )
+
+## check addition of new data --------------------------------------------------
+
+new_data <- rep("random_new_data", length(cells_to_keep))
+
+new_data_list <- list(
+  "other_random_data" = rep("A", length(cells_to_keep)),
+  "even_different_random_data" = rep(1, length(cells_to_keep))
+)
+
+names(new_data_list)
+
+sc_object[["random_new_data"]] <- new_data
+
+sc_object[[names(new_data_list)]] <- new_data_list
+
+sc_object[[c("new_name_a", "new_name_b")]] <- new_data_list
+
+expect_true(
+  current = unique(unlist(sc_object[[c("random_new_data")]])) ==
+    "random_new_data",
+  info = "obs table addition worked - single value"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("other_random_data")]])) == "A",
+  info = "obs table addition worked - from list string"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("even_different_random_data")]])) == 1,
+  info = "obs table addition worked - from list numeric"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("new_name_a")]])) == "A",
+  info = "obs table addition worked - from list string - renamed"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("new_name_b")]])) == 1,
+  info = "obs table addition worked - from list string - renamed"
+)
+
+# error handling
+
+new_data_bad <- c("A")
+
+new_data_bad_v2 <- list(
+  "x" = c(1, 2, 3),
+  "y" = letters
+)
+
+expect_error(
+  current = {
+    sc_object[["random_new_data"]] <- new_data_bad
+  },
+  info = "addition of wrong length throws the right error"
+)
+
+expect_error(
+  current = {
+    sc_object[[names(new_data_bad_v2)]] <- new_data_bad_v2
+  },
+  info = "addition of list with random lengths throws an error"
+)
+
 
 ### test that the original data is still in there ------------------------------
 

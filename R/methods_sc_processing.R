@@ -981,13 +981,6 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 
   duckdb_con$join_data_obs(get_obs_data(rs_results))
 
-  if (length(rs_results) == 1) {
-    # need to deal with the case of only one gene set here...
-    object[[names(rs_results)]] <- rs_results[[1]]
-  } else {
-    object[[names(rs_results)]] <- rs_results
-  }
-
   return(object)
 }
 

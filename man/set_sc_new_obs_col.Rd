@@ -12,7 +12,7 @@ set_sc_new_obs_col(object, col_name, new_data)
 \item{col_name}{String. The name of the column to add.}
 
 \item{new_data}{Atomic vector. The data to add to the column. Needs to be
-of same length as nrow obs table.}
+of same length as \code{\link[=get_cells_to_keep]{get_cells_to_keep()}} and have the same order.}
 }
 \value{
 The class with updated obs table in the DuckDB

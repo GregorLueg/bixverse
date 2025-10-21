@@ -1502,7 +1502,7 @@ S7::method(get_snn_graph, single_cell_exp) <- function(
 #' @param object `bixverse::single_cell_exp` class.
 #' @param col_name String. The name of the column to add.
 #' @param new_data Atomic vector. The data to add to the column. Needs to be
-#' of same length as nrow obs table.
+#' of same length as [bixverse::get_cells_to_keep()] and have the same order.
 #'
 #' @return The class with updated obs table in the DuckDB
 #'
@@ -1527,16 +1527,65 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
   col_name,
   new_data
 ) {
+  cells_to_keep <- (get_cells_to_keep(object) + 1)
+
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(col_name, "S1")
-  checkmate::qassert(new_data, "a")
+  checkmate::qassert(new_data, sprintf("a%i", length(cells_to_keep)))
 
   duckdb_con <- get_sc_duckdb(object)
 
   new_data <- data.table::data.table(new_data)
   data.table::setnames(new_data, "new_data", col_name)
+  new_data[, cell_idx := cells_to_keep]
 
-  duckdb_con$add_data_obs(new_data = new_data)
+  duckdb_con$join_data_obs(new_data)
+
+  return(object)
+}
+
+#' Add multiple new columns to the obs table
+#'
+#' @param object `bixverse::single_cell_exp` class.
+#' @param new_data Named list. The names will be the column names and the
+#' elements will be added to the obs table. Needs to be of same length as
+#' [bixverse::get_cells_to_keep()] and have the same order!
+#'
+#' @return The class with updated obs table in the DuckDB
+#'
+#' @export
+set_sc_new_obs_col_multiple <- S7::new_generic(
+  name = "set_sc_new_obs_col_multiple",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    new_data
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method set_sc_new_obs_col_multiple single_cell_exp
+#'
+#' @export
+S7::method(set_sc_new_obs_col_multiple, single_cell_exp) <- function(
+  object,
+  new_data
+) {
+  cells_to_keep <- (get_cells_to_keep(object) + 1)
+
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertList(new_data, names = "named", types = "atomic")
+  checkmate::assertTRUE(all(
+    purrr::map_dbl(new_data, length) == length(cells_to_keep)
+  ))
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  new_data <- data.table::as.data.table(new_data)
+  new_data[, cell_idx := (get_cells_to_keep(object) + 1)]
+
+  duckdb_con$join_data_obs(new_data)
 
   return(object)
 }
@@ -1557,15 +1606,8 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
   if (length(i) == 1) {
     x <- set_sc_new_obs_col(object = x, col_name = i, new_data = value)
   } else {
-    for (j in seq_along(i)) {
-      col_name_j <- names(value)[j]
-      new_data_j <- value[[j]]
-      x <- set_sc_new_obs_col(
-        object = x,
-        col_name = col_name_j,
-        new_data = new_data_j
-      )
-    }
+    names(value) <- i
+    x <- set_sc_new_obs_col_multiple(object = x, new_data = value)
   }
 
   return(x)
