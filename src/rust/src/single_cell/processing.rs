@@ -9,6 +9,7 @@ use thousands::Separable;
 use crate::core::base::loess::*;
 use crate::core::base::pca_svd::{randomised_svd_f32, RandomSvdResults};
 use crate::core::data::sparse_io::*;
+use crate::utils::traits::*;
 
 ////////////////
 // Structures //
@@ -517,10 +518,10 @@ pub fn get_hvg_vst(
 
     // transform to f64 for R
     HvgRes {
-        mean: means.iter().map(|x| *x as f64).collect(),
-        var: vars.iter().map(|x| *x as f64).collect(),
+        mean: means.r_float_convert(),
+        var: vars.r_float_convert(),
         var_exp: loess_res.fitted_vals,
-        var_std: var_standardised.iter().map(|x| *x as f64).collect(),
+        var_std: var_standardised.r_float_convert(),
     }
 }
 
@@ -707,10 +708,10 @@ pub fn get_hvg_vst_streaming(
 
     // transform to f64 for R
     HvgRes {
-        mean: means.iter().map(|x| *x as f64).collect(),
-        var: vars.iter().map(|x| *x as f64).collect(),
+        mean: means.r_float_convert(),
+        var: vars.r_float_convert(),
         var_exp: loess_res.fitted_vals,
-        var_std: var_standardised.iter().map(|x| *x as f64).collect(),
+        var_std: var_standardised.r_float_convert(),
     }
 }
 
@@ -764,6 +765,372 @@ pub fn get_hvg_mvb_streaming() -> HvgRes {
         var_exp: Vec::new(),
         var_std: Vec::new(),
     }
+}
+
+/////////////////////
+// HVG batch aware //
+/////////////////////
+
+/// Batch-aware HVG selection using VST method
+///
+/// Calculates HVG statistics separately for each batch, returning per-batch results.
+///
+/// ### Params
+///
+/// * `f_path` - Path to the gene-based binary file
+/// * `cell_indices` - Slice with the cell indices to keep
+/// * `batch_labels` - Batch assignment for each cell (same length as cell_indices)
+/// * `loess_span` - Span parameter for the loess function
+/// * `clip_max` - Optional clip max parameter
+/// * `verbose` - If verbose, prints timing information
+///
+/// ### Returns
+///
+/// `Vec<HvgRes>` - One HvgRes per batch
+pub fn get_hvg_vst_batch_aware(
+    f_path: &str,
+    cell_indices: &[usize],
+    batch_labels: &[usize],
+    loess_span: f64,
+    clip_max: Option<f32>,
+    verbose: bool,
+) -> Vec<HvgRes> {
+    let start_total = Instant::now();
+
+    // batch cell maps
+    let start_setup = Instant::now();
+
+    let n_batches = *batch_labels.iter().max().unwrap() + 1;
+    let mut batch_cell_maps: Vec<FxHashMap<u32, u32>> = vec![FxHashMap::default(); n_batches];
+    let mut batch_sizes = vec![0usize; n_batches];
+
+    for (&old_idx, &batch) in cell_indices.iter().zip(batch_labels.iter()) {
+        batch_cell_maps[batch].insert(old_idx as u32, batch_sizes[batch] as u32);
+        batch_sizes[batch] += 1;
+    }
+
+    let end_setup = start_setup.elapsed();
+
+    if verbose {
+        println!("Setup batch maps: {:.2?}", end_setup);
+        println!("Processing {} batches", n_batches);
+    }
+
+    // load data
+    let start_read = Instant::now();
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let mut gene_chunks: Vec<CscGeneChunk> = reader.get_all_genes();
+    let end_read = start_read.elapsed();
+
+    if verbose {
+        println!("Loaded data: {:.2?}", end_read);
+    }
+
+    // Calculate the gene statistics
+    let start_pass_1 = Instant::now();
+
+    let mut batch_means: Vec<Vec<f32>> = vec![Vec::new(); n_batches];
+    let mut batch_vars: Vec<Vec<f32>> = vec![Vec::new(); n_batches];
+
+    for batch_idx in 0..n_batches {
+        let results: Vec<(f32, f32)> = gene_chunks
+            .par_iter_mut()
+            .map(|chunk| {
+                calculate_mean_var_filtered(
+                    chunk,
+                    &batch_cell_maps[batch_idx],
+                    batch_sizes[batch_idx],
+                )
+            })
+            .collect();
+
+        let (means, vars): (Vec<f32>, Vec<f32>) = results.into_iter().unzip();
+        batch_means[batch_idx] = means;
+        batch_vars[batch_idx] = vars;
+    }
+
+    let end_pass_1 = start_pass_1.elapsed();
+
+    if verbose {
+        println!("Calculated gene statistics per batch: {:.2?}", end_pass_1);
+    }
+
+    // fit loess per batch
+    let start_loess = Instant::now();
+
+    let mut batch_loess_results = Vec::with_capacity(n_batches);
+    let mut batch_clip_max = Vec::with_capacity(n_batches);
+
+    for batch_idx in 0..n_batches {
+        let clip = clip_max.unwrap_or((batch_sizes[batch_idx] as f32).sqrt());
+        batch_clip_max.push(clip);
+
+        let means_log10: Vec<f32> = batch_means[batch_idx].iter().map(|x| x.log10()).collect();
+        let vars_log10: Vec<f32> = batch_vars[batch_idx].iter().map(|x| x.log10()).collect();
+
+        let loess = LoessRegression::new(loess_span, 2);
+        let loess_res = loess.fit(&means_log10, &vars_log10);
+        batch_loess_results.push(loess_res);
+    }
+
+    let end_loess = start_loess.elapsed();
+
+    if verbose {
+        println!("Fitted loess per batch: {:.2?}", end_loess);
+    }
+
+    // standardise variance
+    let start_pass_2 = Instant::now();
+
+    let mut batch_std_vars: Vec<Vec<f32>> = vec![Vec::new(); n_batches];
+
+    for batch_idx in 0..n_batches {
+        let var_standardised: Vec<f32> = gene_chunks
+            .par_iter()
+            .enumerate()
+            .map(|(gene_idx, chunk)| {
+                let expected_var =
+                    10_f64.powf(batch_loess_results[batch_idx].fitted_vals[gene_idx]) as f32;
+                calculate_std_variance_filtered(
+                    chunk,
+                    &batch_cell_maps[batch_idx],
+                    batch_means[batch_idx][gene_idx],
+                    expected_var,
+                    batch_clip_max[batch_idx],
+                    batch_sizes[batch_idx],
+                )
+            })
+            .collect();
+
+        batch_std_vars[batch_idx] = var_standardised;
+    }
+
+    let end_pass_2 = start_pass_2.elapsed();
+
+    if verbose {
+        println!(
+            "Calculated standardised variance per batch: {:.2?}",
+            end_pass_2
+        );
+    }
+
+    let total = start_total.elapsed();
+
+    if verbose {
+        println!("Total runtime batch-aware HVG: {:.2?}", total);
+    }
+
+    batch_means
+        .into_iter()
+        .zip(batch_vars)
+        .zip(batch_loess_results)
+        .zip(batch_std_vars)
+        .map(|(((means, vars), loess_res), std_vars)| HvgRes {
+            mean: means.r_float_convert(),
+            var: vars.r_float_convert(),
+            var_exp: loess_res.fitted_vals,
+            var_std: std_vars.r_float_convert(),
+        })
+        .collect()
+}
+
+/// Batch-aware HVG selection using VST method with streaming
+///
+/// Two-pass approach processing genes in batches to minimise memory usage.
+/// Calculates HVG statistics separately for each batch.
+///
+/// ### Params
+///
+/// * `f_path` - Path to the gene-based binary file
+/// * `cell_indices` - Slice with the cell indices to keep
+/// * `batch_labels` - Batch assignment for each cell (same length as cell_indices)
+/// * `loess_span` - Span parameter for the loess function
+/// * `clip_max` - Optional clip max parameter
+/// * `verbose` - If verbose, prints timing information
+///
+/// ### Returns
+///
+/// `Vec<HvgRes>` - One HvgRes per batch
+pub fn get_hvg_vst_batch_aware_streaming(
+    f_path: &str,
+    cell_indices: &[usize],
+    batch_labels: &[usize],
+    loess_span: f64,
+    clip_max: Option<f32>,
+    verbose: bool,
+) -> Vec<HvgRes> {
+    let start_total = Instant::now();
+
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let header = reader.get_header();
+    let no_genes = header.total_genes;
+
+    // Build batch cell maps
+    let start_setup = Instant::now();
+
+    let n_batches = *batch_labels.iter().max().unwrap() + 1;
+    let mut batch_cell_maps: Vec<FxHashMap<u32, u32>> = vec![FxHashMap::default(); n_batches];
+    let mut batch_sizes = vec![0usize; n_batches];
+
+    for (&old_idx, &batch) in cell_indices.iter().zip(batch_labels.iter()) {
+        batch_cell_maps[batch].insert(old_idx as u32, batch_sizes[batch] as u32);
+        batch_sizes[batch] += 1;
+    }
+
+    let end_setup = start_setup.elapsed();
+
+    if verbose {
+        println!("Setup batch maps: {:.2?}", end_setup);
+        println!("Processing {} batches", n_batches);
+    }
+
+    // Pass 1: Calculate mean and variance per batch
+    if verbose {
+        println!(
+            "Pass 1/2: Calculating mean and variance for {} genes...",
+            no_genes.separate_with_underscores()
+        );
+    }
+
+    let start_pass1 = Instant::now();
+    const GENE_BATCH_SIZE: usize = 1000;
+    let num_batches = no_genes.div_ceil(GENE_BATCH_SIZE);
+
+    let mut batch_means: Vec<Vec<f32>> = vec![Vec::with_capacity(no_genes); n_batches];
+    let mut batch_vars: Vec<Vec<f32>> = vec![Vec::with_capacity(no_genes); n_batches];
+
+    for chunk_idx in 0..num_batches {
+        if verbose && chunk_idx % 5 == 0 {
+            let progress = (chunk_idx + 1) as f32 / num_batches as f32 * 100.0;
+            println!("  Progress: {:.1}%", progress);
+        }
+
+        let start_gene = chunk_idx * GENE_BATCH_SIZE;
+        let end_gene = ((chunk_idx + 1) * GENE_BATCH_SIZE).min(no_genes);
+        let gene_indices: Vec<usize> = (start_gene..end_gene).collect();
+
+        let mut genes = reader.read_gene_parallel(&gene_indices);
+
+        // Calculate mean/var for all batches on this gene chunk
+        for batch_idx in 0..n_batches {
+            let results: Vec<(f32, f32)> = genes
+                .par_iter_mut()
+                .map(|gene| {
+                    calculate_mean_var_filtered(
+                        gene,
+                        &batch_cell_maps[batch_idx],
+                        batch_sizes[batch_idx],
+                    )
+                })
+                .collect();
+
+            for (mean, var) in results {
+                batch_means[batch_idx].push(mean);
+                batch_vars[batch_idx].push(var);
+            }
+        }
+    }
+
+    let end_pass1 = start_pass1.elapsed();
+
+    if verbose {
+        println!("  Calculated gene statistics per batch: {:.2?}", end_pass1);
+    }
+
+    // Fit loess per batch
+    let start_loess = Instant::now();
+
+    let mut batch_loess_results = Vec::with_capacity(n_batches);
+    let mut batch_clip_max = Vec::with_capacity(n_batches);
+
+    for batch_idx in 0..n_batches {
+        let clip = clip_max.unwrap_or((batch_sizes[batch_idx] as f32).sqrt());
+        batch_clip_max.push(clip);
+
+        let means_log10: Vec<f32> = batch_means[batch_idx].iter().map(|x| x.log10()).collect();
+        let vars_log10: Vec<f32> = batch_vars[batch_idx].iter().map(|x| x.log10()).collect();
+
+        let loess = LoessRegression::new(loess_span, 2);
+        let loess_res = loess.fit(&means_log10, &vars_log10);
+        batch_loess_results.push(loess_res);
+    }
+
+    let end_loess = start_loess.elapsed();
+
+    if verbose {
+        println!("  Fitted loess per batch: {:.2?}", end_loess);
+        println!("Pass 2/2: Calculating standardised variance...");
+    }
+
+    // Pass 2: Calculate standardised variance per batch
+    let start_pass2 = Instant::now();
+
+    let mut batch_std_vars: Vec<Vec<f32>> = vec![Vec::with_capacity(no_genes); n_batches];
+
+    for chunk_idx in 0..num_batches {
+        if verbose && chunk_idx % 5 == 0 {
+            let progress = (chunk_idx + 1) as f32 / num_batches as f32 * 100.0;
+            println!("  Progress: {:.1}%", progress);
+        }
+
+        let start_gene = chunk_idx * GENE_BATCH_SIZE;
+        let end_gene = ((chunk_idx + 1) * GENE_BATCH_SIZE).min(no_genes);
+        let gene_indices: Vec<usize> = (start_gene..end_gene).collect();
+
+        let mut genes = reader.read_gene_parallel(&gene_indices);
+
+        // Calculate std_var for all batches on this gene chunk
+        for batch_idx in 0..n_batches {
+            let std_vars: Vec<f32> = genes
+                .par_iter_mut()
+                .enumerate()
+                .map(|(local_idx, gene)| {
+                    let gene_idx = start_gene + local_idx;
+                    let expected_var =
+                        10_f64.powf(batch_loess_results[batch_idx].fitted_vals[gene_idx]) as f32;
+                    calculate_std_variance_filtered(
+                        gene,
+                        &batch_cell_maps[batch_idx],
+                        batch_means[batch_idx][gene_idx],
+                        expected_var,
+                        batch_clip_max[batch_idx],
+                        batch_sizes[batch_idx],
+                    )
+                })
+                .collect();
+
+            batch_std_vars[batch_idx].extend(std_vars);
+        }
+    }
+
+    let end_pass2 = start_pass2.elapsed();
+
+    if verbose {
+        println!(
+            "  Calculated standardised variance per batch: {:.2?}",
+            end_pass2
+        );
+    }
+
+    let total = start_total.elapsed();
+
+    if verbose {
+        println!("Total runtime batch-aware HVG: {:.2?}", total);
+    }
+
+    // Build results per batch
+    batch_means
+        .into_iter()
+        .zip(batch_vars)
+        .zip(batch_loess_results)
+        .zip(batch_std_vars)
+        .map(|(((means, vars), loess_res), std_vars)| HvgRes {
+            mean: means.r_float_convert(),
+            var: vars.r_float_convert(),
+            var_exp: loess_res.fitted_vals,
+            var_std: std_vars.r_float_convert(),
+        })
+        .collect()
 }
 
 /////////

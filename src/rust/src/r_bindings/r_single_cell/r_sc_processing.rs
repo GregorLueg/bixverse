@@ -182,10 +182,7 @@ fn rs_sc_get_gene_set_perc(
 ) -> extendr_api::Result<List> {
     let mut gene_set_indices = Vec::with_capacity(gene_set_idx.len());
 
-    let cell_indices = cell_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cell_indices = cell_indices.r_int_convert();
 
     for i in 0..gene_set_idx.len() {
         let element = gene_set_idx.elt(i).unwrap();
@@ -260,10 +257,8 @@ fn rs_sc_hvg(
     streaming: bool,
     verbose: bool,
 ) -> List {
-    let cell_set = cell_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cell_set = cell_indices.r_int_convert();
+
     let hvg_type = get_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
@@ -289,6 +284,116 @@ fn rs_sc_hvg(
         var = hvg_res.var,
         var_exp = hvg_res.var_exp,
         var_std = hvg_res.var_std
+    )
+}
+
+/// Calculate HVG per batch
+///
+/// @description
+/// Batch-aware highly variable gene detection. Calculates HVG statistics
+/// separately for each batch, allowing for downstream selection strategies
+/// such as union of top genes per batch.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param hvg_method String. Which HVG detection method to use. Currently
+/// only `"vst"` is implemented for batch-aware mode.
+/// @param cell_indices Integer positions (0-indexed!) that defines the cells
+/// to keep.
+/// @param batch_labels Integer vector (0-indexed!) defining batch membership
+/// for each cell. Must be same length as `cell_indices`.
+/// @param loess_span Numeric. The span parameter for the loess function.
+/// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
+/// batch if not provided.
+/// @param streaming Boolean. Shall the genes be streamed in to reduce memory
+/// pressure.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return A list with HVG statistics concatenated across all batches:
+/// \itemize{
+/// \item mean - The average expression of each gene in each batch.
+/// \item var - The variance of each gene in each batch.
+/// \item var_exp - The expected variance of each gene in each batch.
+/// \item var_std - The standardised variance of each gene in each batch.
+/// \item batch - Batch index for each gene (length = n_genes * n_batches).
+/// \item gene_idx - Gene index for each entry (0-indexed, length = n_genes * n_batches).
+/// }
+///
+/// @export
+#[allow(clippy::too_many_arguments)]
+#[extendr]
+fn rs_sc_hvg_batch_aware(
+    f_path_gene: &str,
+    hvg_method: &str,
+    cell_indices: Vec<i32>,
+    batch_labels: Vec<i32>,
+    loess_span: f64,
+    clip_max: Option<f32>,
+    streaming: bool,
+    verbose: bool,
+) -> List {
+    let cell_set = cell_indices.r_int_convert();
+    let batch_set = batch_labels.r_int_convert();
+
+    let hvg_type = get_hvg_method(hvg_method)
+        .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
+        .unwrap();
+
+    let hvg_results: Vec<HvgRes> = if streaming {
+        match hvg_type {
+            HvgMethod::Vst => get_hvg_vst_batch_aware_streaming(
+                f_path_gene,
+                &cell_set,
+                &batch_set,
+                loess_span,
+                clip_max,
+                verbose,
+            ),
+            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
+            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+        }
+    } else {
+        match hvg_type {
+            HvgMethod::Vst => get_hvg_vst_batch_aware(
+                f_path_gene,
+                &cell_set,
+                &batch_set,
+                loess_span,
+                clip_max,
+                verbose,
+            ),
+            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
+            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+        }
+    };
+
+    // Flatten results for easy R manipulation
+    let n_genes = hvg_results[0].mean.len();
+    let n_batches = hvg_results.len();
+    let total_len = n_genes * n_batches;
+
+    let mut mean_flat = Vec::with_capacity(total_len);
+    let mut var_flat = Vec::with_capacity(total_len);
+    let mut var_exp_flat = Vec::with_capacity(total_len);
+    let mut var_std_flat = Vec::with_capacity(total_len);
+    let mut batch_idx = Vec::with_capacity(total_len);
+    let mut gene_idx = Vec::with_capacity(total_len);
+
+    for (batch, hvg_res) in hvg_results.into_iter().enumerate() {
+        mean_flat.extend(hvg_res.mean);
+        var_flat.extend(hvg_res.var);
+        var_exp_flat.extend(hvg_res.var_exp);
+        var_std_flat.extend(hvg_res.var_std);
+        batch_idx.extend(vec![batch as i32; n_genes]);
+        gene_idx.extend(0..n_genes as i32);
+    }
+
+    list!(
+        mean = mean_flat,
+        var = var_flat,
+        var_exp = var_exp_flat,
+        var_std = var_std_flat,
+        batch = batch_idx,
+        gene_idx = gene_idx
     )
 }
 
@@ -506,6 +611,7 @@ extendr_module! {
     fn rs_sc_scrublet;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
+    fn rs_sc_hvg_batch_aware;
     fn rs_sc_pca;
     fn rs_sc_knn;
     fn rs_sc_snn;
