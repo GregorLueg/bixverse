@@ -130,6 +130,17 @@ set_pca_singular_vals <- function(x, singular_vals) {
   UseMethod("set_pca_singular_vals")
 }
 
+#' Add additional embeddings to the class
+#'
+#' @param x An object to add the singular values for.
+#' @param embd Numerical matrix representing the additional embedding.
+#' @param name String. Name of the embedding.
+#'
+#' @export
+set_add_embedding <- function(x, embd, name) {
+  UseMethod("set_add_embedding")
+}
+
 #' Set/add KNN
 #'
 #' @param x An object to add the KNN data to
@@ -277,6 +288,20 @@ set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
   checkmate::qassert(singular_vals, "N+")
 
   x[["pca_singular_vals"]] <- singular_vals
+
+  return(x)
+}
+
+#' @rdname set_add_embedding
+#'
+#' @export
+set_add_embedding.sc_cache <- function(x, embd, name) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(name, "S1")
+
+  x[["other_embeddings"]][[name]] <- embd
 
   return(x)
 }

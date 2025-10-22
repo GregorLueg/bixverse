@@ -140,7 +140,7 @@ find_hvg_batch_aware_sc <- S7::new_generic(
   fun = function(
     object,
     batch_column,
-    no_hvg = 2000L,
+    hvg_no = 2000L,
     gene_comb_method = c("union", "average", "intersection"),
     hvg_params = params_sc_hvg(),
     streaming = FALSE,
@@ -156,7 +156,7 @@ find_hvg_batch_aware_sc <- S7::new_generic(
 S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
   object,
   batch_column,
-  no_hvg = 2000L,
+  hvg_no = 2000L,
   gene_comb_method = c("union", "average", "intersection"),
   hvg_params = params_sc_hvg(),
   streaming = FALSE,

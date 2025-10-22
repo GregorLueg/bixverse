@@ -704,6 +704,8 @@ params_sc_neighbours <- function(
 
 ### batch corrections ----------------------------------------------------------
 
+#### BBKNN ---------------------------------------------------------------------
+
 #' Wrapper function for the BBKNN parameters
 #'
 #' @param neighbours_within_batch Integer. Number of neighbours to consider
@@ -761,6 +763,73 @@ params_sc_bbknn <- function(
     annoy_n_trees = annoy_n_trees,
     search_budget = search_budget,
     trim = trim
+  )
+}
+
+#### fastMNN -------------------------------------------------------------------
+
+#' Wrapper function for the fastMNN parameters
+#'
+#' @param k Integer. Number of mutual nearest neighbours to identify.
+#' Defaults to `20L`.
+#' @param sigma Numeric. Bandwidth of the Gaussian smoothing kernel
+#' (as proportion of space radius). Defaults to `0.1`.
+#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
+#' `"annoy"`.
+#' @param dist_metric String. One of `c("cosine", "euclidean")`. Defaults to
+#' `"cosine"`.
+#' @param annoy_n_trees Integer. Number of trees for Annoy index. Defaults to
+#' `100L`.
+#' @param annoy_search_budget Integer. Search budget per tree for Annoy.
+#' Defaults to `100L`.
+#' @param cos_norm Logical. Apply cosine normalisation before computing
+#' distances. Defaults to `TRUE`.
+#' @param var_adj Logical. Apply variance adjustment to avoid kissing effects.
+#' Defaults to `TRUE`.
+#' @param no_pcs Integer. Number of PCs to use for MNN calculations.
+#' Defaults to `30L`.
+#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
+#'
+#' @returns A list with the fastMNN parameters.
+#'
+#' @export
+params_sc_fastmnn <- function(
+  k = 20L,
+  sigma = 0.1,
+  knn_method = c("annoy", "hnsw"),
+  dist_metric = c("cosine", "euclidean"),
+  annoy_n_trees = 100L,
+  annoy_search_budget = 100L,
+  cos_norm = TRUE,
+  var_adj = TRUE,
+  no_pcs = 30L,
+  random_svd = TRUE
+) {
+  knn_method <- match.arg(knn_method)
+  dist_metric <- match.arg(dist_metric)
+
+  checkmate::qassert(k, "I1")
+  checkmate::qassert(sigma, "N1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::assertChoice(dist_metric, c("cosine", "euclidean"))
+  checkmate::qassert(annoy_n_trees, "I1")
+  checkmate::qassert(annoy_search_budget, "I1")
+  checkmate::qassert(cos_norm, "L1")
+  checkmate::qassert(var_adj, "L1")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(random_svd, "L1")
+
+  list(
+    k = k,
+    sigma = sigma,
+    knn_method = knn_method,
+    dist_metric = dist_metric,
+    annoy_n_trees = annoy_n_trees,
+    annoy_search_budget = annoy_search_budget,
+    cos_norm = cos_norm,
+    var_adj = var_adj,
+    no_pcs = no_pcs,
+    random_svd = random_svd
   )
 }
 

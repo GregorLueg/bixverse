@@ -7,7 +7,7 @@
 find_hvg_batch_aware_sc(
   object,
   batch_column,
-  no_hvg = 2000L,
+  hvg_no = 2000L,
   gene_comb_method = c("union", "average", "intersection"),
   hvg_params = params_sc_hvg(),
   streaming = FALSE,
@@ -19,6 +19,9 @@ find_hvg_batch_aware_sc(
 
 \item{batch_column}{String. The column name of the batch column in the obs
 table.}
+
+\item{hvg_no}{Integer. Number of highly variable genes to include. Defaults
+to \code{2000L}.}
 
 \item{gene_comb_method}{String. One of
 \code{c("union", "average", "intersection")}. The method to combine the HVG across
@@ -40,9 +43,6 @@ data sets where you wish to avoid loading in the whole data. Defaults to
 \code{FALSE}.}
 
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
-
-\item{hvg_no}{Integer. Number of highly variable genes to include. Defaults
-to \code{2000L}.}
 }
 \value{
 This function will return a list with:
