@@ -408,7 +408,7 @@ fn rs_sc_knn(
 
     let start_knn = Instant::now();
 
-    let knn_method = get_knn_method(&algorithm_type)
+    let knn_method = parse_knn_method(&algorithm_type)
         .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
 
     let knn = match knn_method {

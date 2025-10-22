@@ -52,6 +52,34 @@ pub fn get_test_alternative(s: &str) -> Option<TestAlternative> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum OutlierDirection {
+    /// Check if outlier is below the threshold
+    Below,
+    /// Check if outlier is above the threshold
+    Above,
+    /// Check if outlier is below OR above the thresholds
+    Both,
+}
+
+/// Helper function to get the outlier detection method
+///
+/// ### Params
+///
+/// * `s` - String, type of test to run.
+///
+/// ### Returns
+///
+/// Option of the `OutlierDirection`
+pub fn get_outlier_type(s: &str) -> Option<OutlierDirection> {
+    match s.to_lowercase().as_str() {
+        "below" => Some(OutlierDirection::Below),
+        "above" => Some(OutlierDirection::Above),
+        "twosided" => Some(OutlierDirection::Both),
+        _ => None,
+    }
+}
+
 ///////////////
 // Functions //
 ///////////////
@@ -263,7 +291,52 @@ pub fn mad(x: &[f64]) -> Option<f64> {
     median(&deviations)
 }
 
+/// MAD outlier detection
+///
+/// ### Params
+///
+/// * `x` - Slice of values to check for outliers.
+/// * `threshold` - Number of MADs to accept as not being an outlier.
+/// * `direction` - Direction to check for outliers (below, above, or both).
+///
+/// ### Returns
+///
+/// A tuple with a vector of booleans indicating whether each value in the input
+/// is an outlier and the value of applied margin.
+pub fn mad_outlier(x: &[f64], threshold: f64, direction: OutlierDirection) -> (Vec<bool>, f64) {
+    let median_val = match median(x) {
+        Some(m) => m,
+        None => return (vec![], 0_f64),
+    };
+
+    let mad_val = match mad(x) {
+        Some(m) => m,
+        None => return (vec![], 0_f64),
+    };
+
+    let margin = threshold * mad_val;
+
+    let res = x
+        .iter()
+        .map(|&v| match direction {
+            OutlierDirection::Below => v < median_val - margin,
+            OutlierDirection::Above => v > median_val + margin,
+            OutlierDirection::Both => (v - median_val).abs() > margin,
+        })
+        .collect::<Vec<bool>>();
+
+    (res, margin)
+}
+
 /// Implementation of the trigamma function (second derivative of ln(gamma(x)))
+///
+/// ### Params
+///
+/// * `x` - The value for which to calculate the trigamma function.
+///
+/// ### Returns
+///
+/// The trigamma value for the given input.
 pub fn trigamma(x: f64) -> f64 {
     let mut x = x;
     let mut result = 0.0;
@@ -290,7 +363,18 @@ pub fn trigamma(x: f64) -> f64 {
     result
 }
 
-/// Calculates the critical value
+/// Calculate the critical value using bootstrap resampling
+///
+/// ### Params
+///
+/// * `values` - Slice of values to resample from.
+/// * `sample_size` - Number of samples to draw in the bootstrap sample.
+/// * `alpha` - The significance level for the critical value.
+/// * `seed` - Random seed for reproducibility.
+///
+/// ### Returns
+///
+/// The critical value at the specified alpha level.
 pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: usize) -> f64 {
     let mut rng = StdRng::seed_from_u64(seed as u64);
     let mut random_sample: Vec<f64> = (0..sample_size)

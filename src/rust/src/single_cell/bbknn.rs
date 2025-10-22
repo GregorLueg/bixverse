@@ -452,7 +452,7 @@ fn trim_graph(
     let mut thresholds = vec![0.0f32; n];
 
     // compute thresholds
-    
+
     for i in 0..n {
         let row_start = connectivities.indptr[i];
         let row_end = connectivities.indptr[i + 1];
@@ -469,7 +469,6 @@ fn trim_graph(
 
     // Apply trimming twice (row then column)
     for _ in 0..2 {
-        
         for i in 0..n {
             let row_start = connectivities.indptr[i];
             let row_end = connectivities.indptr[i + 1];
@@ -517,7 +516,7 @@ pub fn bbknn(
     verbose: bool,
 ) -> (CompressedSparseData<f32>, CompressedSparseData<f32>) {
     // parse it and worst case, I default to Annoy
-    let knn_method = get_knn_method(&bbknn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+    let knn_method = parse_knn_method(&bbknn_params.knn_method).unwrap_or(KnnSearch::Annoy);
 
     if verbose {
         println!("BBKNN: generating the batch balanced kNN values.")

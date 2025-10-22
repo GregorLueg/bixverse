@@ -222,7 +222,7 @@ fn rs_get_metacells(
             }
 
             let embd = r_matrix_to_faer_fp32(&embd);
-            let knn_method = get_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
+            let knn_method = parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
                 format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
             })?;
 

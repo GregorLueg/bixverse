@@ -148,6 +148,36 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
     hypergeom_pval(q, m, n, k)
 }
 
+/// Calculate MAD outlier detection in Rust.
+///
+/// @param x Numerical vector to test.
+/// @param threshold Numeric. Number of MADs in either direction that is
+/// acceptable.
+/// @param direction String. One of `c("below", "above", "twosided")`. Shall
+/// the outlier direction be done for values below the threshold, above the
+/// threshold or in both directions.
+///
+/// @return A list with the following items:
+/// \itemize{
+///  \item outlier - Boolean vector if element is an outlier
+///  \item threshold - Applied final threshold
+/// }
+///
+/// @details
+/// Should you provide too short vectors, the function will return an empty
+/// boolean and a threshold of 0.
+///
+/// @export
+#[extendr]
+fn rs_mad_outlier(x: &[f64], threshold: f64, direction: &str) -> extendr_api::Result<List> {
+    let direction = get_outlier_type(direction)
+        .ok_or_else(|| format!("Invalid direction type: {}", direction))?;
+
+    let (outliers, threshold) = mad_outlier(x, threshold, direction);
+
+    Ok(list!(outlier = outliers, threshold = threshold))
+}
+
 extendr_module! {
     mod r_stats;
     fn rs_fast_auc;
@@ -155,4 +185,5 @@ extendr_module! {
     fn rs_hedges_g;
     fn rs_fdr_adjustment;
     fn rs_phyper;
+    fn rs_mad_outlier;
 }
