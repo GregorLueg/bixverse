@@ -471,7 +471,7 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::qassert(batch_column, "S1")
-  checkmate::qassert(batch_hvg_genes, "I1")
+  checkmate::qassert(batch_hvg_genes, "I+")
   assertScFastmnn(fastmnn_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -490,4 +490,8 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
     verbose = TRUE,
     seed = 42L
   )
+
+  object <- set_embedding(x = object, embd = mnn_embd, name = "mnn")
+
+  return(object)
 }

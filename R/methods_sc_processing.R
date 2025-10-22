@@ -1176,8 +1176,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' be used to generate an sNN igraph for clustering methods.
 #'
 #' @param object `single_cell_exp` class.
-#' @param embd_to_use String. The embedding to use. Atm, the only option is
-#' `"pca"`.
+#' @param embd_to_use String. The embedding to use. Whichever you chose, it
+#' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
@@ -1238,26 +1238,14 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
 ) {
   # checks
   checkmate::assertClass(object, "bixverse::single_cell_exp")
-  checkmate::assertChoice(embd_to_use, c("pca"))
+  checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
   # get the embedding
-  embd <- switch(embd_to_use, pca = get_pca_factors(object))
-
-  # early return
-  if (is.null(embd)) {
-    warning(
-      paste(
-        "The desired embedding was not found. Please check what you are doing",
-        "Returning class as is"
-      )
-    )
-
-    return(object)
-  }
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
 
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))

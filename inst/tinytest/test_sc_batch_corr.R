@@ -492,13 +492,24 @@ hvg_batch <- find_hvg_batch_aware_sc(
 
 object[[]]
 
-object = sc_object.strong_batch_effect
+devtools::load_all()
+
+object = fast_mnn_sc(
+  object = sc_object.strong_batch_effect,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg_batch$hvg_genes,
+  fastmnn_params = params_sc_fastmnn(k = 3L, no_pcs = 10L)
+)
+
+get_available_embeddings(object)
+
+devtools::load_all()
+
+get_embedding(object, embd_name = "x")
+
 mnn_params = params_sc_fastmnn(k = 3L, no_pcs = 10L)
 batch_column = "batch_index"
 
-batch_indices <- unlist(object[[batch_column]])
-batch_factor <- factor(batch_indices)
-batch_indices <- as.integer(batch_factor) - 1L
 
 mnn_embd <- rs_mnn(
   f_path = get_rust_count_gene_f_path(object),
@@ -526,3 +537,5 @@ test <- rs_kbet(knn_mat, batch_indices)
 sum(test <= 0.05) / nrow(knn_mat)
 
 rextendr::document()
+
+c(NULL, "x")
