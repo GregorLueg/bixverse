@@ -440,6 +440,28 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 
+#' Calculate MAD outlier detection in Rust.
+#'
+#' @param x Numerical vector to test.
+#' @param threshold Numeric. Number of MADs in either direction that is
+#' acceptable.
+#' @param direction String. One of `c("below", "above", "twosided")`. Shall
+#' the outlier direction be done for values below the threshold, above the
+#' threshold or in both directions.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'  \item outlier - Boolean vector if element is an outlier
+#'  \item threshold - Applied final threshold
+#' }
+#'
+#' @details
+#' Should you provide too short vectors, the function will return an empty
+#' boolean and a threshold of 0.
+#'
+#' @export
+rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, x, threshold, direction)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.
@@ -1946,6 +1968,9 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #' @export
 rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
 
+#' @export
+rs_mnn <- function(f_path, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed)
+
 #' Scrublet Rust interface
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
@@ -2042,6 +2067,40 @@ rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, str
 #'
 #' @export
 rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose)
+
+#' Calculate HVG per batch
+#'
+#' @description
+#' Batch-aware highly variable gene detection. Calculates HVG statistics
+#' separately for each batch, allowing for downstream selection strategies
+#' such as union of top genes per batch.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param hvg_method String. Which HVG detection method to use. Currently
+#' only `"vst"` is implemented for batch-aware mode.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param batch_labels Integer vector (0-indexed!) defining batch membership
+#' for each cell. Must be same length as `cell_indices`.
+#' @param loess_span Numeric. The span parameter for the loess function.
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
+#' batch if not provided.
+#' @param streaming Boolean. Shall the genes be streamed in to reduce memory
+#' pressure.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with HVG statistics concatenated across all batches:
+#' \itemize{
+#' \item mean - The average expression of each gene in each batch.
+#' \item var - The variance of each gene in each batch.
+#' \item var_exp - The expected variance of each gene in each batch.
+#' \item var_std - The standardised variance of each gene in each batch.
+#' \item batch - Batch index for each gene (length = n_genes * n_batches).
+#' \item gene_idx - Gene index for each entry (0-indexed, length = n_genes * n_batches).
+#' }
+#'
+#' @export
+rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose)
 
 #' Calculates PCA for single cell
 #'

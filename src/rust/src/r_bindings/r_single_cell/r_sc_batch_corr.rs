@@ -2,7 +2,10 @@ use extendr_api::*;
 use faer::Mat;
 
 use crate::single_cell::bbknn::*;
+use crate::single_cell::fastmnn::*;
+use crate::single_cell::metrics::kbet;
 use crate::utils::r_rust_interface::*;
+use crate::utils::traits::VecConvert;
 
 /// Calculate kBET type scores
 ///
@@ -36,7 +39,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
         .collect();
 
     // Convert batch_vector to Vec<usize>
-    let batches: Vec<usize> = batch_vector.iter().map(|&x| x as usize).collect();
+    let batches: Vec<usize> = batch_vector.r_int_convert();
 
     kbet(&knn_matrix, &batches)
 }
@@ -119,9 +122,40 @@ fn rs_bbknn_filtering(
     faer_to_r_matrix(mat.as_ref())
 }
 
+/// @export
+#[extendr]
+fn rs_mnn(
+    f_path: &str,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    batch_indices: Vec<i32>,
+    mnn_params: List,
+    verbose: bool,
+    seed: usize,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let batch_indices = batch_indices.r_int_convert();
+
+    let mnn_params = FastMnnParams::from_r_list(mnn_params);
+
+    let corrected_embd = fast_mnn_main(
+        f_path,
+        &cell_indices,
+        &gene_indices,
+        &batch_indices,
+        &mnn_params,
+        verbose,
+        seed,
+    );
+
+    faer_to_r_matrix(corrected_embd.as_ref())
+}
+
 extendr_module! {
     mod r_sc_batch_corr;
     fn rs_kbet;
     fn rs_bbknn;
     fn rs_bbknn_filtering;
+    fn rs_mnn;
 }

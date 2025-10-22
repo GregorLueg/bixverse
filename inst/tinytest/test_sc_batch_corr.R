@@ -5,7 +5,7 @@
 # thresholds
 min_lib_size <- 300L
 min_genes_exp <- 45L
-min_cells_exp <- 750L
+min_cells_exp <- 450L
 # hvg
 hvg_to_keep <- 30L
 # pca
@@ -24,7 +24,7 @@ cell_markers <- list(
 # weak batch effect in the data
 single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 1500L,
+    n_cells = 900L,
     marker_genes = cell_markers,
     n_batches = 3L,
     batch_effect_strength = "weak"
@@ -457,4 +457,80 @@ expect_true(
 expect_true(
   current = checkmate::testClass(get_snn_graph(object), "igraph"),
   info = "snn graph generated"
+)
+
+## fastmnn ---------------------------------------------------------------------
+
+### weak effect ----------------------------------------------------------------
+
+sc_object.weak_batch_effect <- suppressWarnings(single_cell_exp(
+  dir_data = dir_data$weak
+))
+
+sc_object.weak_batch_effect <- load_r_data(
+  object = sc_object.weak_batch_effect,
+  counts = single_cell_test_data.weak_batch_effect$counts,
+  obs = single_cell_test_data.weak_batch_effect$obs,
+  var = single_cell_test_data.weak_batch_effect$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = min_genes_exp,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells_exp
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+### hvg batch aware ------------------------------------------------------------
+
+object = sc_object.strong_batch_effect
+batch_column = "batch_index"
+no_hvg = 30L
+gene_comb_method = c("union", "average", "intersection")
+hvg_params = params_sc_hvg()
+streaming = FALSE
+.verbose = TRUE
+
+gene_comb_method = "union"
+
+batch_indices <- unlist(object[[batch_column]])
+batch_indices <- as.integer(factor(batch_indices)) - 1L
+
+batch_hvgs <- with(
+  hvg_params,
+  rs_sc_hvg_batch_aware(
+    f_path_gene = get_rust_count_gene_f_path(sc_object.weak_batch_effect),
+    hvg_method = method,
+    cell_indices = get_cells_to_keep(sc_object.weak_batch_effect),
+    batch_labels = batch_index,
+    loess_span = loess_span,
+    clip_max = NULL,
+    streaming = streaming,
+    verbose = .verbose
+  )
+)
+
+batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
+
+hvg_genes <- switch(
+  gene_comb_method,
+  union = {
+    batch_hvgs_dt[, .SD[order(-var_std)][1:no_hvg], by = batch][, unique(
+      gene_idx
+    )]
+  },
+  average = {
+    avg_dt <- batch_hvgs_dt[, .(var_std_avg = mean(var_std)), by = gene_idx]
+    avg_dt[order(-var_std_avg)][1:no_hvg, gene_idx]
+  },
+  intersection = {
+    top_per_batch <- batch_hvgs_dt[,
+      .(gene_idx = .SD[order(-var_std)][1:no_hvg, gene_idx]),
+      by = batch
+    ]
+    top_per_batch[, .N, by = gene_idx][
+      N == uniqueN(batch_hvgs_dt$batch),
+      gene_idx
+    ]
+  }
 )

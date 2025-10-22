@@ -49,9 +49,6 @@ calculate_kbet_sc <- S7::new_generic(
 #' @method calculate_kbet_sc single_cell_exp
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(calculate_kbet_sc, single_cell_exp) <- function(
   object,
   batch_column,
@@ -91,6 +88,139 @@ S7::method(calculate_kbet_sc, single_cell_exp) <- function(
   )
 
   return(res)
+}
+
+## batch aware hvg -------------------------------------------------------------
+
+#' Identify HVGs (batch aware)
+#'
+#' @description
+#' This is a helper function to identify highly variable genes in a batch-aware
+#' manner. At the moment the implementation has only the VST-based version
+#' (known as Seurat v3). The other methods will be implemented in the future.
+#' This function will calculate the HVG per given experimental batch and you
+#' can choose the way to combine them. The choices are union (of Top x HVG per
+#' batch), based on the average variance per batch or only take genes that are
+#' amongst the Top X HVG in all batches.
+#'
+#' @param object `single_cell_exp` class.
+#' @param batch_column String. The column name of the batch column in the obs
+#' table.
+#' @param hvg_no Integer. Number of highly variable genes to include. Defaults
+#' to `2000L`.
+#' @param gene_comb_method String. One of
+#' `c("union", "average", "intersection")`. The method to combine the HVG across
+#' the different batches. Defaults to `"union"`.
+#' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
+#' \itemize{
+#'   \item method - Which method to use. One of
+#'   `c("vst", "meanvarbin", "dispersion")`
+#'   \item loess_span - The span for the loess function to standardise the
+#'   variance
+#'   \item num_bin - Integer. Not yet implemented.
+#'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
+#'   implemented yet.
+#' }
+#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Defaults to
+#' `FALSE`.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return This function will return a list with:
+#' \itemize{
+#'   \item hvg_indices - The indices of the batch-aware HVG.
+#'   \item batch_hvg_data - data.table with the detailed information of the
+#'   variance per batch.
+#' }
+#'
+#' @export
+find_hvg_batch_aware_sc <- S7::new_generic(
+  name = "find_hvg_batch_aware_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    no_hvg = 2000L,
+    gene_comb_method = c("union", "average", "intersection"),
+    hvg_params = params_sc_hvg(),
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_hvg_batch_aware_sc single_cell_exp
+#'
+#' @export
+S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
+  object,
+  batch_column,
+  no_hvg = 2000L,
+  gene_comb_method = c("union", "average", "intersection"),
+  hvg_params = params_sc_hvg(),
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  gene_comb_method <- match.arg(gene_comb_method)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(hvg_no, "I1")
+  checkmate::assertChoice(
+    gene_comb_method,
+    c("union", "average", "intersection")
+  )
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  batch_hvgs <- with(
+    hvg_params,
+    rs_sc_hvg_batch_aware(
+      f_path_gene = get_rust_count_gene_f_path(sc_object.weak_batch_effect),
+      hvg_method = method,
+      cell_indices = get_cells_to_keep(sc_object.weak_batch_effect),
+      batch_labels = batch_index,
+      loess_span = loess_span,
+      clip_max = NULL,
+      streaming = streaming,
+      verbose = .verbose
+    )
+  )
+
+  batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
+  batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
+
+  hvg_genes <- switch(
+    gene_comb_method,
+    union = {
+      batch_hvgs_dt[, .SD[order(-var_std)][1:no_hvg], by = batch][, unique(
+        gene_idx
+      )]
+    },
+    average = {
+      avg_dt <- batch_hvgs_dt[, .(var_std_avg = mean(var_std)), by = gene_idx]
+      avg_dt[order(-var_std_avg)][1:no_hvg, gene_idx]
+    },
+    intersection = {
+      top_per_batch <- batch_hvgs_dt[,
+        .(gene_idx = .SD[order(-var_std)][1:no_hvg, gene_idx]),
+        by = batch
+      ]
+      top_per_batch[, .N, by = gene_idx][
+        N == uniqueN(batch_hvgs_dt$batch),
+        gene_idx
+      ]
+    }
+  )
+
+  return(list(hvg_genes = hvg_genes, hvg_data = batch_hvgs_dt))
 }
 
 ## BBKNN -----------------------------------------------------------------------

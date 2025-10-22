@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
+use extendr_api::List;
 use faer::{Mat, MatRef};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
 
 ////////////
@@ -27,8 +29,8 @@ use crate::single_cell::sc_knn_snn::*;
 ///   knn_method="annoy")
 /// * `cos_norm` - Apply cosine normalisation before computing distances
 /// * `var_adj` - Apply variance adjustment to avoid kissing effects
-/// * `svd_dim` - Number of dimensions for biological subspace. If 0,
-///   biological variance correction is disabled.
+/// * `no_pcs` - Number of PCs to use for the MNN calculations
+/// * `random_svd` - Boolean. Shall randomised SVD be used.
 #[derive(Clone, Debug)]
 pub struct FastMnnParams {
     pub k: usize,
@@ -39,12 +41,121 @@ pub struct FastMnnParams {
     pub annoy_search_budget: usize,
     pub cos_norm: bool,
     pub var_adj: bool,
-    pub svd_dim: usize,
+    pub no_pcs: usize,
+    pub random_svd: bool,
+}
+
+impl FastMnnParams {
+    /// Generate the FastMnnParams from an R list
+    ///
+    /// Should values not be found within the List, the parameters will default
+    /// to sensible defaults.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The list with the fastMNN parameters.
+    ///
+    /// ### Return
+    ///
+    /// The `FastMnnParams` with all of the parameters.
+    pub fn from_r_list(r_list: List) -> Self {
+        let fastmnn_list = r_list.into_hashmap();
+
+        let k = fastmnn_list
+            .get("k")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(20) as usize;
+
+        let sigma = fastmnn_list
+            .get("sigma")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.1) as f32;
+
+        let knn_method = std::string::String::from(
+            fastmnn_list
+                .get("knn_method")
+                .and_then(|v| v.as_str())
+                .unwrap_or("annoy"),
+        );
+
+        let dist_metric = std::string::String::from(
+            fastmnn_list
+                .get("dist_metric")
+                .and_then(|v| v.as_str())
+                .unwrap_or("cosine"),
+        );
+
+        let annoy_n_trees = fastmnn_list
+            .get("annoy_n_trees")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let annoy_search_budget = fastmnn_list
+            .get("annoy_search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let cos_norm = fastmnn_list
+            .get("cos_norm")
+            .and_then(|v| v.as_logical())
+            .map(|rb| rb.is_true())
+            .unwrap_or(true);
+
+        let var_adj = fastmnn_list
+            .get("var_adj")
+            .and_then(|v| v.as_logical())
+            .map(|rb| rb.is_true())
+            .unwrap_or(true);
+
+        let no_pcs = fastmnn_list
+            .get("no_pcs")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(30) as usize;
+
+        let random_svd = fastmnn_list
+            .get("random_svd")
+            .and_then(|v| v.as_logical())
+            .map(|rb| rb.is_true())
+            .unwrap_or(true);
+
+        Self {
+            k,
+            sigma,
+            knn_method,
+            dist_metric,
+            annoy_n_trees,
+            annoy_search_budget,
+            cos_norm,
+            var_adj,
+            no_pcs,
+            random_svd,
+        }
+    }
 }
 
 /////////////
 // Helpers //
 /////////////
+
+/// Apply cosine normalisation (L2 normalisation) to each row
+///
+/// ### Params
+///
+/// * `mat` - The matrix on which to apply the Cosine normalisation per row
+///
+/// ### Returns
+///
+/// Per row L2-normalised data
+pub fn cosine_normalise(mat: &Mat<f32>) -> Mat<f32> {
+    Mat::from_fn(mat.nrows(), mat.ncols(), |row, col| {
+        let norm = mat.get(row, ..).norm_l2();
+        if norm > 1e-8 {
+            mat[(row, col)] / norm
+        } else {
+            0.0
+        }
+    })
+}
 
 /// Find mutual nearest neighbours from two KNN graphs
 ///
@@ -336,7 +447,26 @@ pub fn merge_two_batches(
     }
 
     let averaged = compute_correction_vecs(data_1, data_2, &mnn_1, &mnn_2);
-    let corrections = smooth_gaussian_kernel_mnn(&averaged.as_ref(), &mnn_2, data_2, sigma_square);
+    let mut corrections =
+        smooth_gaussian_kernel_mnn(&averaged.as_ref(), &mnn_2, data_2, sigma_square);
+
+    // In merge_two_batches, after computing corrections:
+    if params.var_adj {
+        let scaling = adjust_shift_variance(
+            data_1,
+            data_2,
+            &corrections.as_ref(),
+            sigma_square,
+            None, // or pass restricted indices
+            None,
+        );
+
+        for cell in 0..corrections.nrows() {
+            for gene in 0..corrections.ncols() {
+                corrections[(cell, gene)] *= scaling[cell].max(1.0);
+            }
+        }
+    }
 
     let mut corrected = data_2.to_owned();
     for cell in 0..data_2.nrows() {
@@ -346,6 +476,161 @@ pub fn merge_two_batches(
     }
 
     corrected
+}
+
+/// Compute squared distance from point to line defined by ref + t*grad
+fn sq_distance_to_line_buf(ref_point: &[f32], grad: &[f32], point: &[f32]) -> f32 {
+    let scale: f32 = ref_point
+        .iter()
+        .zip(grad.iter())
+        .zip(point.iter())
+        .map(|((r, g), p)| (r - p) * g)
+        .sum();
+
+    ref_point
+        .iter()
+        .zip(grad.iter())
+        .zip(point.iter())
+        .map(|((r, g), p)| {
+            let diff = r - p;
+            let perp = diff - scale * g;
+            perp * perp
+        })
+        .sum()
+}
+
+/// Adjust shift variance to avoid kissing effects
+///
+/// ### Params
+///
+/// * `data1` - Reference batch (cells x genes)
+/// * `data2` - Target batch (cells x genes)
+/// * `corrections` - Correction vectors (cells x genes)
+/// * `sigma2` - Bandwidth squared
+/// * `restrict1` - Optional subset of cells from batch1 (None = all)
+/// * `restrict2` - Optional subset of cells from batch2 (None = all)
+///
+/// ### Returns
+///
+/// Scaling factors for each cell in batch2
+pub fn adjust_shift_variance(
+    data1: &MatRef<f32>,
+    data2: &MatRef<f32>,
+    corrections: &MatRef<f32>,
+    sigma2: f32,
+    restrict1: Option<&[usize]>,
+    restrict2: Option<&[usize]>,
+) -> Vec<f32> {
+    let ngenes = data1.ncols();
+    let ncells2 = data2.nrows();
+
+    assert_eq!(data1.ncols(), ngenes);
+    assert_eq!(data2.ncols(), ngenes);
+    assert_eq!(corrections.nrows(), ncells2);
+    assert_eq!(corrections.ncols(), ngenes);
+
+    let restrict1_indices: Vec<usize> = restrict1
+        .map(|r| r.to_vec())
+        .unwrap_or_else(|| (0..data1.nrows()).collect());
+    let restrict2_indices: Vec<usize> = restrict2
+        .map(|r| r.to_vec())
+        .unwrap_or_else(|| (0..ncells2).collect());
+
+    let inv_sigma2 = 1.0 / sigma2;
+    let mut output = vec![1.0f32; ncells2];
+
+    // Pre-allocate working buffers - reused across iterations
+    let mut grad = vec![0.0f32; ngenes];
+    let mut curcell = vec![0.0f32; ngenes];
+    let mut othercell = vec![0.0f32; ngenes];
+    let mut distance1: Vec<(f32, f32)> = vec![(0.0, 0.0); restrict1_indices.len()];
+
+    for cell in 0..ncells2 {
+        // Copy correction vector
+        for g in 0..ngenes {
+            grad[g] = corrections[(cell, g)];
+        }
+
+        let l2norm: f32 = grad.iter().map(|&x| x * x).sum::<f32>().sqrt();
+
+        if l2norm < 1e-8 {
+            continue;
+        }
+
+        let inv_l2norm = 1.0 / l2norm;
+        for g in grad.iter_mut() {
+            *g *= inv_l2norm;
+        }
+
+        // Copy current cell
+        for g in 0..ngenes {
+            curcell[g] = data2[(cell, g)];
+        }
+
+        let curproj: f32 = grad.iter().zip(curcell.iter()).map(|(g, c)| g * c).sum();
+
+        // Batch2 cumulative probability
+        let mut prob2 = f32::NEG_INFINITY;
+        let mut totalprob2 = f32::NEG_INFINITY;
+
+        for &same_idx in &restrict2_indices {
+            let (log_prob, should_add) = if same_idx == cell {
+                (0.0, true)
+            } else {
+                for g in 0..ngenes {
+                    othercell[g] = data2[(same_idx, g)];
+                }
+                let samedist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
+                let sameproj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
+                (-samedist * inv_sigma2, sameproj <= curproj)
+            };
+
+            totalprob2 = logspace_add(totalprob2, log_prob);
+            if should_add {
+                prob2 = logspace_add(prob2, log_prob);
+            }
+        }
+
+        prob2 -= totalprob2;
+
+        // Batch1 distances
+        for (idx, &other_idx) in restrict1_indices.iter().enumerate() {
+            for g in 0..ngenes {
+                othercell[g] = data1[(other_idx, g)];
+            }
+
+            let proj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
+            let dist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
+            distance1[idx] = (proj, -dist * inv_sigma2);
+        }
+
+        if distance1.is_empty() {
+            continue;
+        }
+
+        distance1.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+        let totalprob1 = distance1
+            .iter()
+            .map(|(_, lw)| *lw)
+            .fold(f32::NEG_INFINITY, logspace_add);
+
+        let target = prob2 + totalprob1;
+        let mut cumulative = f32::NEG_INFINITY;
+        let mut ref_quan = distance1.last().unwrap().0;
+
+        for &(proj, log_weight) in &distance1 {
+            cumulative = logspace_add(cumulative, log_weight);
+            if cumulative >= target {
+                ref_quan = proj;
+                break;
+            }
+        }
+
+        output[cell] = (ref_quan - curproj) * inv_l2norm;
+    }
+
+    output
 }
 
 /// Fast MNN with cell order tracking
@@ -410,4 +695,94 @@ pub fn reorder_to_original(corrected_pca: &Mat<f32>, output_to_original: &[usize
     Mat::from_fn(n_cells, n_pcs, |row, col| {
         *corrected_pca.get(original_to_output[row], col)
     })
+}
+
+/// Split PCA matrix by batch indices
+///
+/// ### Params
+///
+/// * `pca_all` - Full PCA matrix (all cells x n_pcs)
+/// * `batch_indices` - Batch assignment for each cell
+///
+/// ### Returns
+///
+/// (matrices per batch, original cell indices per batch)
+pub fn split_pca_by_batch(
+    pca_all: &Mat<f32>,
+    batch_indices: &[usize],
+) -> (Vec<Mat<f32>>, Vec<Vec<usize>>) {
+    let n_features = pca_all.ncols();
+    let n_batches = batch_indices.iter().copied().max().unwrap_or(0) + 1;
+
+    let mut batch_cells: Vec<Vec<usize>> = vec![Vec::new(); n_batches];
+    for (cell_idx, &batch) in batch_indices.iter().enumerate() {
+        batch_cells[batch].push(cell_idx);
+    }
+
+    let batches: Vec<Mat<f32>> = batch_cells
+        .iter()
+        .map(|cells| {
+            Mat::from_fn(cells.len(), n_features, |row, col| {
+                pca_all[(cells[row], col)]
+            })
+        })
+        .collect();
+
+    (batches, batch_cells)
+}
+
+///////////////////
+// Main function //
+///////////////////
+
+/// Perform fastMNN batch correction on single cell data
+///
+/// Computes PCA on all cells, splits by batch, applies fastMNN correction,
+/// and returns the corrected PCA matrix in the original cell order.
+///
+/// ### Params
+///
+/// * `f_path` - Path to single cell data file
+/// * `cell_indices` - Indices of cells to include
+/// * `gene_indices` - Indices of genes to include
+/// * `batch_indices` - Batch assignment for each cell
+/// * `params` - FastMNN parameters
+/// * `verbose` - Controls verbosity of the function
+/// * `seed` - Random seed for reproducibility
+///
+/// ### Returns
+///
+/// Batch-corrected PCA matrix (cells x n_pcs) in original cell order
+pub fn fast_mnn_main(
+    f_path: &str,
+    cell_indices: &[usize],
+    gene_indices: &[usize],
+    batch_indices: &[usize],
+    params: &FastMnnParams,
+    verbose: bool,
+    seed: usize,
+) -> Mat<f32> {
+    // calculate the PCA across everything
+    let (pca_all, _, _, _) = pca_on_sc(
+        f_path,
+        cell_indices,
+        gene_indices,
+        params.no_pcs,
+        params.random_svd,
+        seed,
+        false,
+        verbose,
+    );
+
+    let (mut pca_batches, original_indices) = split_pca_by_batch(&pca_all, batch_indices);
+
+    if params.cos_norm {
+        for batch in pca_batches.iter_mut() {
+            *batch = cosine_normalise(batch);
+        }
+    }
+
+    let (corrected, index_map) = fast_mnn(pca_batches, original_indices, params, seed, verbose);
+
+    reorder_to_original(&corrected, &index_map)
 }
