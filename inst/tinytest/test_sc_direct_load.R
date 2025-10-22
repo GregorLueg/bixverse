@@ -13,16 +13,6 @@ min_cells_exp <- 500L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-write_h5ad_sc(
-  f_path = f_path_csr,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  single_cell_test_data$var,
-  .verbose = FALSE
-)
-
 ## generate the object ---------------------------------------------------------
 
 sc_qc_param = params_sc_min_quality(
@@ -32,11 +22,13 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_h5ad(
+sc_object <- load_r_data(
   object = sc_object,
-  h5_path = path.expand(f_path_csr),
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
   sc_qc_param = sc_qc_param,
   .verbose = FALSE
 )
@@ -120,4 +112,75 @@ expect_equivalent(
   current = dim(gene_counts),
   target = dim(cell_counts),
   info = "same dimensions for the counts"
+)
+
+## save file with memory cached data -------------------------------------------
+
+# add data to the object
+sc_object <- find_hvg_sc(sc_object, hvg_no = 30L, .verbose = FALSE)
+
+sc_object <- calculate_pca_sc(sc_object, no_pcs = 5L, .verbose = FALSE)
+
+hvg_genes_initial <- get_hvg(sc_object)
+pca_factors_initial <- get_pca_factors(sc_object)
+
+### saving to disk -------------------------------------------------------------
+
+save_sc_exp_to_disk(sc_object)
+
+save_sc_exp_to_disk(sc_object, type = "rds")
+
+expect_true(
+  current = "memory.rds" %in% list.files(path = tempdir()),
+  info = "RDS saving works"
+)
+
+expect_true(
+  current = "memory.qs2" %in% list.files(path = tempdir()),
+  info = "qs2 saving works"
+)
+
+### qs2 ------------------------------------------------------------------------
+
+rm(sc_object)
+
+sc_object <- single_cell_exp(dir_data = tempdir())
+
+expect_message(current = load_existing(sc_object), info = "message working")
+
+sc_object <- suppressMessages(load_existing(sc_object))
+
+expect_equal(
+  current = get_pca_factors(sc_object),
+  target = pca_factors_initial,
+  info = "PCA loaded in correctly - qs2"
+)
+
+expect_equal(
+  current = get_hvg(sc_object),
+  target = hvg_genes_initial,
+  info = "HVGs loaded in correctly - qs2"
+)
+
+### rds ------------------------------------------------------------------------
+
+rm(sc_object)
+
+sc_object <- single_cell_exp(dir_data = tempdir())
+
+# will force the function to load from rds
+removed <- file.remove(file.path(tempdir(), "memory.qs2"))
+
+sc_object <- suppressMessages(load_existing(sc_object))
+
+expect_equal(
+  current = get_pca_factors(sc_object),
+  target = pca_factors_initial,
+  info = "PCA loaded in correctly - qs2"
+)
+
+expect_equal(
+  current = get_hvg(sc_object),
+  target = hvg_genes_initial,
+  info = "HVGs loaded in correctly - qs2"
 )
