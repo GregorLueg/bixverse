@@ -1,5 +1,9 @@
 # s3 ---------------------------------------------------------------------------
 
+# the S3 classes serve as helpers to store key indices, cell names and
+# gene names. additionally, there is a version that stores the in-memory held
+# data for the class
+
 ## mapping class ---------------------------------------------------------------
 
 #' Helper function to construct relevant maps
@@ -690,6 +694,8 @@ get_snn_graph.sc_cache <- function(x) {
 
 # s7 ---------------------------------------------------------------------------
 
+# main S7 class for single cell experiments.
+
 ## single cell class -----------------------------------------------------------
 
 #' @title bixverse single cell class (nightly!)
@@ -986,7 +992,7 @@ S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
   }
 }
 
-### map getters ----------------------------------------------------------------
+### map getter -----------------------------------------------------------------
 
 #' Getter for the different maps in the object
 #'
@@ -1015,6 +1021,40 @@ S7::method(get_sc_map, single_cell_exp) <- function(
   checkmate::assertClass(object, "bixverse::single_cell_exp")
 
   res <- S7::prop(object, "sc_map")
+
+  return(res)
+}
+
+### sc cache getter ------------------------------------------------------------
+
+#' Getter the memory-stored data from the class
+#'
+#' @param object `single_cell_exp` class.
+#'
+#' @returns Returns the sc_cache class from the object with all the
+#' memory-stored data.
+#'
+#' @export
+get_sc_cache <- S7::new_generic(
+  name = "get_sc_cache",
+  dispatch_args = "object",
+  fun = function(
+    object
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_sc_cache single_cell_exp
+#'
+#' @export
+S7::method(get_sc_cache, single_cell_exp) <- function(
+  object
+) {
+  # checks
+  checkmate::assertClass(object, "bixverse::single_cell_exp")
+
+  res <- S7::prop(object, "sc_cache")
 
   return(res)
 }
