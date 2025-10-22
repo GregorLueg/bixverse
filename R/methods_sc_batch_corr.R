@@ -287,7 +287,7 @@ bbknn_sc <- S7::new_generic(
     no_neighbours_to_keep = 15L,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
-    sc_bbknn_params = params_sc_bbknn(),
+    bbknn_params = params_sc_bbknn(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -298,16 +298,13 @@ bbknn_sc <- S7::new_generic(
 #' @method bbknn_sc single_cell_exp
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(bbknn_sc, single_cell_exp) <- function(
   object,
   batch_column,
   no_neighbours_to_keep = 15L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  sc_bbknn_params = params_sc_bbknn(),
+  bbknn_params = params_sc_bbknn(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -316,7 +313,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   checkmate::qassert(batch_column, "S1")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  assertScBbknn(sc_bbknn_params)
+  assertScBbknn(bbknn_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -350,7 +347,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   }
 
   no_generated_neighbours <- length(levels(factor(batch_index))) *
-    sc_bbknn_params$neighbours_within_batch
+    bbknn_params$neighbours_within_batch
 
   if (no_neighbours_to_keep > no_generated_neighbours) {
     warning(paste(
@@ -368,7 +365,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   bbknn_res <- rs_bbknn(
     embd = embd,
     batch_labels = as.integer(batch_index),
-    bbknn_params = sc_bbknn_params,
+    bbknn_params = bbknn_params,
     seed = seed,
     verbose = .verbose
   )
@@ -415,4 +412,82 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   object <- set_snn_graph(object, snn_graph = snn_graph)
 
   return(object)
+}
+
+## fastMNN ---------------------------------------------------------------------
+
+#' Run fastMNN
+#'
+#' @description
+#' This function implements the fast mutual nearest neighbour (MNN) from
+#' Haghverdi, et al. This version works on the PCA embedding and generates
+#' an embedding only and not fully corrected count matrix. The function will
+#' iterate through the batches, identify the MNN and generate correction vectors
+#' and generate a corrected embedding which is added to the function.
+#'
+#' @param object `single_cell_exp` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param batch_hvg_genes Integer vector. These are the highly variable genes,
+#' identified by a batch-aware method. Please refer to
+#' [bixverse::find_hvg_batch_aware_sc()] for more details.
+#' @param fastmnn_params A list, please see [bixverse::params_sc_fastmnn()]. The
+#' list has the following parameters:
+#' Claude fill this out
+#' @param seed Integer. Random seed.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The object with the added fastMNN embeddings to the object.
+#'
+#' @export
+#'
+#' @references Haghverdi, et al., Nat Biotechnol, 2018
+fast_mnn_sc <- S7::new_generic(
+  name = "fast_mnn_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    batch_hvg_genes,
+    fastmnn_params = params_sc_fastmnn(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method fast_mnn_sc single_cell_exp
+#'
+#' @export
+S7::method(fast_mnn_sc, single_cell_exp) <- function(
+  object,
+  batch_column,
+  batch_hvg_genes,
+  fastmnn_params = params_sc_fastmnn(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(batch_hvg_genes, "I1")
+  assertScFastmnn(fastmnn_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  mnn_embd <- rs_mnn(
+    f_path = get_rust_count_gene_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = as.integer(batch_hvg_genes - 1L),
+    batch_indices = batch_indices,
+    mnn_params = fastmnn_params,
+    verbose = TRUE,
+    seed = 42L
+  )
 }

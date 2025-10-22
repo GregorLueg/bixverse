@@ -283,6 +283,16 @@ pub fn smooth_gaussian_kernel_mnn(
     let n_features = averaged.ncols();
     let inv_sigma_square = 1.0 / sigma_square;
 
+    // Validate indices
+    for &idx in mnn_indices {
+        assert!(
+            idx < n_cells,
+            "mnn_indices contains {} but data_2 only has {} rows",
+            idx,
+            n_cells
+        );
+    }
+
     let (output, log_total_prob) = (0..mnn_indices.len())
         .into_par_iter()
         .fold(
@@ -320,7 +330,7 @@ pub fn smooth_gaussian_kernel_mnn(
                     log_total_prob[other] = logspace_add(log_total_prob[other], log_weight);
 
                     for g in 0..n_features {
-                        output[other][g] += averaged.get(mnn_i, g) * weight;
+                        output[other][g] += averaged.get(mnn_cell_idx, g) * weight;
                     }
                 }
                 (output, log_total_prob)
@@ -475,7 +485,17 @@ pub fn merge_two_batches(
         }
     }
 
-    corrected
+    // CHANGE: Concatenate data_1 and corrected data_2
+    let n_cells_total = data_1.nrows() + corrected.nrows();
+    let n_features = data_1.ncols();
+
+    Mat::from_fn(n_cells_total, n_features, |row, col| {
+        if row < data_1.nrows() {
+            data_1[(row, col)]
+        } else {
+            corrected[(row - data_1.nrows(), col)]
+        }
+    })
 }
 
 /// Compute squared distance from point to line defined by ref + t*grad
@@ -682,17 +702,25 @@ pub fn fast_mnn(
 ///
 /// Reordered matrix matching original cell order
 pub fn reorder_to_original(corrected_pca: &Mat<f32>, output_to_original: &[usize]) -> Mat<f32> {
-    let n_cells = corrected_pca.nrows();
     let n_pcs = corrected_pca.ncols();
+    let n_output_cells = corrected_pca.nrows();
 
-    // Create inverse mapping: original_idx -> output_idx
-    let mut original_to_output = vec![0; n_cells];
+    let n_original_cells = output_to_original.iter().copied().max().unwrap_or(0) + 1;
+
+    assert_eq!(
+        n_output_cells,
+        output_to_original.len(),
+        "Mismatch: corrected_pca has {} rows but output_to_original has {} elements",
+        n_output_cells,
+        output_to_original.len()
+    );
+
+    let mut original_to_output = vec![0; n_original_cells];
     for (output_idx, &original_idx) in output_to_original.iter().enumerate() {
         original_to_output[original_idx] = output_idx;
     }
 
-    // Reorder rows
-    Mat::from_fn(n_cells, n_pcs, |row, col| {
+    Mat::from_fn(n_original_cells, n_pcs, |row, col| {
         *corrected_pca.get(original_to_output[row], col)
     })
 }

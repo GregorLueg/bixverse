@@ -484,8 +484,45 @@ sc_object.weak_batch_effect <- load_r_data(
 ### hvg batch aware ------------------------------------------------------------
 
 hvg_batch <- find_hvg_batch_aware_sc(
-  sc_object.weak_batch_effect,
+  sc_object.strong_batch_effect,
   hvg_no = 30L,
   batch_column = "batch_index",
   .verbose = FALSE
 )
+
+object[[]]
+
+object = sc_object.strong_batch_effect
+mnn_params = params_sc_fastmnn(k = 3L, no_pcs = 10L)
+batch_column = "batch_index"
+
+batch_indices <- unlist(object[[batch_column]])
+batch_factor <- factor(batch_indices)
+batch_indices <- as.integer(batch_factor) - 1L
+
+mnn_embd <- rs_mnn(
+  f_path = get_rust_count_gene_f_path(object),
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = as.integer(hvg_batch$hvg_genes - 1L),
+  batch_indices = batch_indices,
+  mnn_params = mnn_params,
+  verbose = TRUE,
+  seed = 42L
+)
+
+knn_mat <- rs_sc_knn(
+  mnn_embd,
+  no_neighbours = 5L,
+  n_trees = 100L,
+  search_budget = 100L,
+  algorithm_type = "annoy",
+  ann_dist = "cosine",
+  verbose = TRUE,
+  seed = 42L
+)
+
+test <- rs_kbet(knn_mat, batch_indices)
+
+sum(test <= 0.05) / nrow(knn_mat)
+
+rextendr::document()

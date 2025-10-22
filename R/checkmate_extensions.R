@@ -1770,9 +1770,9 @@ checkScFastmnn <- function(x) {
   }
 
   logical_rules <- list(
-    "cos_norm" = "L1",
-    "var_adj" = "L1",
-    "random_svd" = "L1"
+    "cos_norm" = "B1",
+    "var_adj" = "B1",
+    "random_svd" = "B1"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(logical_rules)) {

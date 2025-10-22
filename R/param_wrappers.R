@@ -814,10 +814,10 @@ params_sc_fastmnn <- function(
   checkmate::assertChoice(dist_metric, c("cosine", "euclidean"))
   checkmate::qassert(annoy_n_trees, "I1")
   checkmate::qassert(annoy_search_budget, "I1")
-  checkmate::qassert(cos_norm, "L1")
-  checkmate::qassert(var_adj, "L1")
+  checkmate::qassert(cos_norm, "B1")
+  checkmate::qassert(var_adj, "B1")
   checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "L1")
+  checkmate::qassert(random_svd, "B1")
 
   list(
     k = k,
