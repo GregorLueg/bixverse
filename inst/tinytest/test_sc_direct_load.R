@@ -176,7 +176,7 @@ sc_object <- suppressMessages(load_existing(sc_object))
 expect_equal(
   current = get_pca_factors(sc_object),
   target = pca_factors_initial,
-  info = "PCA loaded in correctly - qs2"
+  info = "PCA loaded in correctly - RDS"
 )
 
 expect_equal(
