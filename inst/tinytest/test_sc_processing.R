@@ -230,10 +230,8 @@ new_data <- rep("random_new_data", length(cells_to_keep))
 
 new_data_list <- list(
   "other_random_data" = rep("A", length(cells_to_keep)),
-  "even_different_random_data" = rep(1, length(cells_to_keep))
+  "even_different_random_data" = seq_len(length(cells_to_keep))
 )
-
-names(new_data_list)
 
 sc_object[["random_new_data"]] <- new_data
 
@@ -253,7 +251,10 @@ expect_true(
 )
 
 expect_true(
-  current = unique(unlist(sc_object[[c("even_different_random_data")]])) == 1,
+  current = all(
+    unlist(sc_object[[c("even_different_random_data")]]) ==
+      seq_len(length(cells_to_keep))
+  ),
   info = "obs table addition worked - from list numeric"
 )
 
@@ -263,7 +264,9 @@ expect_true(
 )
 
 expect_true(
-  current = unique(unlist(sc_object[[c("new_name_b")]])) == 1,
+  current = all(
+    unlist(sc_object[[c("new_name_b")]]) == seq_len(length(cells_to_keep))
+  ),
   info = "obs table addition worked - from list string - renamed"
 )
 
