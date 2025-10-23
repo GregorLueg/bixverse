@@ -1714,7 +1714,7 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
 
   new_data <- data.table::data.table(new_data)
   data.table::setnames(new_data, "new_data", col_name)
-  new_data[, cell_idx := cells_to_keep]
+  new_data[, cell_idx := sort(cells_to_keep)]
 
   duckdb_con$join_data_obs(new_data)
 
@@ -1760,7 +1760,7 @@ S7::method(set_sc_new_obs_col_multiple, single_cell_exp) <- function(
   duckdb_con <- get_sc_duckdb(object)
 
   new_data <- data.table::as.data.table(new_data)
-  new_data[, cell_idx := (get_cells_to_keep(object) + 1)]
+  new_data[, cell_idx := sort(cells_to_keep)]
 
   duckdb_con$join_data_obs(new_data)
 
