@@ -182,5 +182,5 @@ expect_equal(
 expect_equal(
   current = get_hvg(sc_object),
   target = hvg_genes_initial,
-  info = "HVGs loaded in correctly - qs2"
+  info = "HVGs loaded in correctly - RDS"
 )
