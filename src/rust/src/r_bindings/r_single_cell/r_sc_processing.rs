@@ -150,6 +150,55 @@ fn rs_sc_doublet_detection(
     )
 }
 
+//////////////////////
+// Cumulative genes //
+//////////////////////
+
+/// Calculates the cumulative proportion of the top X genes
+///
+/// @description
+/// This calculates the cumulative proportion of the top X genes, for example
+/// Top10, 50, 100. High values here indicate low complexity samples, i.e.,
+/// bad quality.
+///
+/// @param f_path_cell String. Path to the `counts_cells.bin` file.
+/// @param top_n_vals Integer. The different Top X to look for.
+/// @param cell_indices Integer. The indices of the cells for which to calculate
+/// the proportions. (0-indexed!)
+/// @param streaming Boolean. Shall the data be worked on in chunks.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return A list with the cumulative percentages of the Top X genes defined
+/// as in `top_n_vals`.
+///
+/// @export
+#[extendr]
+fn rs_sc_get_top_genes_perc(
+    f_path_cell: &str,
+    top_n_vals: &[i32],
+    cell_indices: &[i32],
+    streaming: bool,
+    verbose: bool,
+) -> List {
+    let cell_indices = cell_indices.r_int_convert();
+    let top_n_vals = top_n_vals.r_int_convert();
+
+    let res = if streaming {
+        get_top_genes_perc_streaming(f_path_cell, &top_n_vals, &cell_indices, verbose)
+    } else {
+        get_top_genes_perc(f_path_cell, &top_n_vals, &cell_indices, verbose)
+    };
+
+    let mut result_list = List::new(top_n_vals.len());
+
+    for i in 0..result_list.len() {
+        let res_i = &res[i];
+        result_list.set_elt(i, Robj::from(res_i)).unwrap();
+    }
+
+    result_list
+}
+
 //////////////////////////
 // Gene set proportions //
 //////////////////////////
@@ -609,11 +658,12 @@ fn rs_sc_snn(
 extendr_module! {
     mod r_sc_processing;
     fn rs_sc_scrublet;
+    fn rs_sc_doublet_detection;
+    fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
     fn rs_sc_hvg;
     fn rs_sc_hvg_batch_aware;
     fn rs_sc_pca;
     fn rs_sc_knn;
     fn rs_sc_snn;
-    fn rs_sc_doublet_detection;
 }

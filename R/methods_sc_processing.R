@@ -199,6 +199,81 @@ S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
 
 ## gene proportions ------------------------------------------------------------
 
+### top n genes ----------------------------------------------------------------
+
+#' Calculate the proportions of reads for the Top N genes
+#'
+#' @description
+#' This is a helper function that calculates proportions of reads to the Top N
+#' genes by expression in a given cell. High values here can indicate low
+#' complexity, quality cells. The values will be automatically added to the
+#' obs table.
+#'
+#' @param object `single_cell_exp` class.
+#' @param top_n_vals Integer. The Top N thresholds to test.
+#' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Default to
+#' `FALSE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return It will add the columns based on the names in the `gene_set_list` to
+#' the obs table.
+#'
+#' @export
+top_genes_perc_sc <- S7::new_generic(
+  name = "top_genes_perc_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    top_n_vals = c(25L, 50L, 100L),
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method top_genes_perc_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(top_genes_perc_sc, single_cell_exp) <- function(
+  object,
+  top_n_vals = c(25L, 50L, 100L),
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(top_n_vals, "I+")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function
+  rs_results <- rs_sc_get_top_genes_perc(
+    f_path_cell = get_rust_count_cell_f_path(object),
+    top_n_vals = top_n_vals,
+    cell_indices = get_cells_to_keep(object),
+    streaming = streaming,
+    verbose = .verbose
+  )
+
+  names(rs_results) <- sprintf("top_%i_genes_percentage", top_n_vals)
+
+  class(rs_results) <- "sc_proportion_res"
+  attr(rs_results, "cell_indices") <- get_cells_to_keep(object)
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  duckdb_con$join_data_obs(get_obs_data(rs_results))
+
+  return(object)
+}
+
+### gene set version -----------------------------------------------------------
+
 #' Calculate the proportions of reads for specific gene sets
 #'
 #' @description
@@ -232,6 +307,7 @@ gene_set_proportions_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
 
 #' @method gene_set_proportions_sc single_cell_exp
 #'

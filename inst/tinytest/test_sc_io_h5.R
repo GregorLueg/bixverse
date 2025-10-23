@@ -401,6 +401,11 @@ expect_equal(
   info = "var table from h5ad csr (from object) - correct genes kept"
 )
 
+expect_true(
+  current = checkmate::qtest(vars_object$no_cells_exp, "I+"),
+  info = "gene NNZ loaded via h5ad direct load"
+)
+
 ### test counts ----------------------------------------------------------------
 
 counts_csr_obj <- sc_object[,, return_format = "cell"]
@@ -503,6 +508,11 @@ expect_equal(
   current = vars_object$gene_id,
   target = vars_filtered$gene_id,
   info = "var table from h5ad csr (from object) - correct genes kept"
+)
+
+expect_true(
+  current = checkmate::qtest(vars_object$no_cells_exp, "I+"),
+  info = "gene NNZ loaded via h5ad streaming load"
 )
 
 ### test counts ----------------------------------------------------------------
