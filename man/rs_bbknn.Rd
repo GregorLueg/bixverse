@@ -24,5 +24,8 @@ A list of two lists representing the sparse matrix representation
 of the distances and the connectivities.
 }
 \description{
-This function implements the BBKNN algorithm from TO ADD
+This function implements the BBKNN algorithm from Polański, et al.
+}
+\references{
+Polański, et al., Bioinformatics, 2020
 }

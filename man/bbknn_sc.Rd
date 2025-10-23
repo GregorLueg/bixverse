@@ -32,11 +32,7 @@ might be a large number of generated neighbours. This will only keep the top
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{seed}{Integer. Random seed.}
-
-\item{.verbose}{Boolean. Controls the verbosity of the function.}
-
-\item{sc_bbknn_params}{A list, please see \code{\link[=params_sc_bbknn]{params_sc_bbknn()}}. The
+\item{bbknn_params}{A list, please see \code{\link[=params_sc_bbknn]{params_sc_bbknn()}}. The
 list has the following parameters:
 \itemize{
 \item neighbours_within_batch - Integer. Number of neighbours to consider
@@ -60,6 +56,10 @@ many top connectivities. May help with population independence and improve
 the tidiness of clustering. If \code{NULL}, it defaults to
 \code{10 * neighbours_within_batch}.
 }}
+
+\item{seed}{Integer. Random seed.}
+
+\item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 The object with added kNN matrix based on BBKNN and the graph based

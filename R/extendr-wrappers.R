@@ -1939,7 +1939,7 @@ rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_v
 #' BBKNN implementation in Rust
 #'
 #' @description
-#' This function implements the BBKNN algorithm from TO ADD
+#' This function implements the BBKNN algorithm from Polański, et al.
 #'
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' BBKNN parameters. Usually PCA. Rows represent cells.
@@ -1953,6 +1953,8 @@ rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_v
 #' of the distances and the connectivities.
 #'
 #' @export
+#'
+#' @references Polański, et al., Bioinformatics, 2020
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
 
 #' Reduce BBKNN matrix to Top X neighbours
@@ -1968,8 +1970,28 @@ rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap
 #' @export
 rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
 
+#' FastMNN batch correction in Rust
+#'
+#' @description
+#' This function implements the (fast) MNN algorithm from Haghverdi, et al.
+#' Instead of working on the full matrix, it uses under the hood PCA and
+#' generates an aligned embedding space.
+#'
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs.
+#' @param mnn_params List. Contains all of the fastMNN parameters.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The batch-corrected embedding space.
+#'
 #' @export
-rs_mnn <- function(f_path, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed)
+rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed)
 
 #' Scrublet Rust interface
 #'

@@ -34,7 +34,7 @@ single_cell_test_data.weak_batch_effect <- generate_single_cell_test_data(
 # medium batch effect in the data
 single_cell_test_data.medium_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 1500L,
+    n_cells = 900L,
     marker_genes = cell_markers,
     n_batches = 3L,
     batch_effect_strength = "medium"
@@ -44,7 +44,7 @@ single_cell_test_data.medium_batch_effect <- generate_single_cell_test_data(
 # strong batch effect in the data
 single_cell_test_data.strong_batch_effect <- generate_single_cell_test_data(
   syn_data_params = params_sc_synthetic_data(
-    n_cells = 1500L,
+    n_cells = 900L,
     marker_genes = cell_markers,
     n_batches = 3L,
     batch_effect_strength = "strong"
@@ -89,11 +89,6 @@ sc_object.weak_batch_effect <- load_r_data(
   .verbose = FALSE
 )
 
-sc_object.weak_batch_effect <- set_cells_to_keep(
-  sc_object.weak_batch_effect,
-  get_cell_names(sc_object.weak_batch_effect)
-)
-
 sc_object.weak_batch_effect <- find_hvg_sc(
   object = sc_object.weak_batch_effect,
   hvg_no = hvg_to_keep,
@@ -133,11 +128,6 @@ sc_object.medium_batch_effect <- load_r_data(
   .verbose = FALSE
 )
 
-sc_object.medium_batch_effect <- set_cells_to_keep(
-  sc_object.medium_batch_effect,
-  get_cell_names(sc_object.medium_batch_effect)
-)
-
 sc_object.medium_batch_effect <- find_hvg_sc(
   object = sc_object.medium_batch_effect,
   hvg_no = hvg_to_keep,
@@ -175,11 +165,6 @@ sc_object.strong_batch_effect <- load_r_data(
   ),
   streaming = FALSE,
   .verbose = FALSE
-)
-
-sc_object.strong_batch_effect <- set_cells_to_keep(
-  sc_object.strong_batch_effect,
-  get_cell_names(sc_object.strong_batch_effect)
 )
 
 sc_object.strong_batch_effect <- find_hvg_sc(
@@ -253,8 +238,20 @@ expect_true(
 
 ## bbknn -----------------------------------------------------------------------
 
-### helper function for assessment of batch correction
-
+# Assess batch correction impact using BBKNN
+#
+# Compares the neighbourhood composition before and after batch correction.
+# Calculates both kBET score and the proportion of same-type neighbours in
+# the k-nearest neighbour graph.
+#
+# @param object A single_cell_exp object with PCA factors, batch labels,
+#   and cell type annotations
+#
+# @return A list with:
+#   - kbet_original: original kBET score
+#   - kbet_correct: number of cells with kBET < 0.05 after correction
+#   - neighbours_original: count of same-type neighbours per cell (uncorrected)
+#   - neighbours_corrected: count of same-type neighbours per cell (corrected)
 assess_bbknn_impact <- function(object) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
@@ -270,7 +267,7 @@ assess_bbknn_impact <- function(object) {
 
   # get the original kbet score and see how many cells are neighbour
   # of same cell type as itself
-  original_kbet <- kbet_scores.weak_batch_effect <- calculate_kbet_sc(
+  original_kbet <- calculate_kbet_sc(
     object = object,
     batch_column = "batch_index"
   )
@@ -459,83 +456,238 @@ expect_true(
   info = "snn graph generated"
 )
 
-## fastmnn ---------------------------------------------------------------------
+## hvg batch aware -------------------------------------------------------------
 
-### weak effect ----------------------------------------------------------------
-
-sc_object.weak_batch_effect <- suppressWarnings(single_cell_exp(
-  dir_data = dir_data$weak
-))
-
-sc_object.weak_batch_effect <- load_r_data(
-  object = sc_object.weak_batch_effect,
-  counts = single_cell_test_data.weak_batch_effect$counts,
-  obs = single_cell_test_data.weak_batch_effect$obs,
-  var = single_cell_test_data.weak_batch_effect$var,
-  sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp
-  ),
-  streaming = FALSE,
-  .verbose = FALSE
-)
-
-### hvg batch aware ------------------------------------------------------------
-
-hvg_batch <- find_hvg_batch_aware_sc(
+hvg_batch_union <- find_hvg_batch_aware_sc(
   sc_object.strong_batch_effect,
   hvg_no = 30L,
   batch_column = "batch_index",
+  gene_comb_method = "union",
   .verbose = FALSE
 )
 
-object[[]]
-
-devtools::load_all()
-
-object = fast_mnn_sc(
-  object = sc_object.strong_batch_effect,
+hvg_batch_avg <- find_hvg_batch_aware_sc(
+  sc_object.strong_batch_effect,
+  hvg_no = 30L,
   batch_column = "batch_index",
-  batch_hvg_genes = hvg_batch$hvg_genes,
-  fastmnn_params = params_sc_fastmnn(k = 3L, no_pcs = 10L)
+  gene_comb_method = "average",
+  .verbose = FALSE
 )
 
-get_available_embeddings(object)
-
-devtools::load_all()
-
-get_embedding(object, embd_name = "x")
-
-mnn_params = params_sc_fastmnn(k = 3L, no_pcs = 10L)
-batch_column = "batch_index"
-
-
-mnn_embd <- rs_mnn(
-  f_path = get_rust_count_gene_f_path(object),
-  cell_indices = get_cells_to_keep(object),
-  gene_indices = as.integer(hvg_batch$hvg_genes - 1L),
-  batch_indices = batch_indices,
-  mnn_params = mnn_params,
-  verbose = TRUE,
-  seed = 42L
+hvg_batch_intersection <- find_hvg_batch_aware_sc(
+  sc_object.strong_batch_effect,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "intersection",
+  .verbose = FALSE
 )
 
-knn_mat <- rs_sc_knn(
-  mnn_embd,
-  no_neighbours = 5L,
-  n_trees = 100L,
-  search_budget = 100L,
-  algorithm_type = "annoy",
-  ann_dist = "cosine",
-  verbose = TRUE,
-  seed = 42L
+expect_true(
+  current = checkmate::qtest(hvg_batch_union$hvg_genes, "I+"),
+  info = "correct return type for HVG batch aware: gene indices - union"
 )
 
-test <- rs_kbet(knn_mat, batch_indices)
+expect_true(
+  current = checkmate::qtest(hvg_batch_avg$hvg_genes, "I+"),
+  info = "correct return type for HVG batch aware: gene indices - average"
+)
 
-sum(test <= 0.05) / nrow(knn_mat)
+expect_true(
+  current = checkmate::qtest(hvg_batch_intersection$hvg_genes, "I+"),
+  info = "correct return type for HVG batch aware: gene indices - intersection"
+)
 
-rextendr::document()
+expect_true(
+  current = checkmate::testDataTable(hvg_batch_union$hvg_data),
+  info = "correct return type for HVG batch aware: hvg data - union"
+)
 
-c(NULL, "x")
+expect_true(
+  current = checkmate::testDataTable(hvg_batch_avg$hvg_data),
+  info = "correct return type for HVG batch aware: hvg data - average"
+)
+
+expect_true(
+  current = checkmate::testDataTable(hvg_batch_intersection$hvg_data),
+  info = "correct return type for HVG batch aware: hvg data - intersection"
+)
+
+expect_true(
+  current = length(hvg_batch_union$hvg_genes) > length(hvg_batch_avg$hvg_genes),
+  info = "union returns more batch-aware HVGs"
+)
+
+expect_true(
+  current = length(hvg_batch_avg$hvg_genes) >
+    length(hvg_batch_intersection$hvg_genes),
+  info = "average returns more batch-aware HVGs"
+)
+
+expect_true(
+  current = length(hvg_batch_avg$hvg_genes) == 30L,
+  info = "average returns right number of genes"
+)
+
+## fastmnn ---------------------------------------------------------------------
+
+### helper function to assess fastMNN ------------------------------------------
+
+# Assess batch correction impact using fastMNN
+#
+# Compares the neighbourhood composition before and after batch correction.
+# Calculates both kBET score and the proportion of same-type neighbours in
+# the k-nearest neighbour graph.
+#
+# @param object A single_cell_exp object with PCA factors, batch labels,
+#   and cell type annotations
+#
+# @return A list with:
+#   - kbet_original: original kBET score
+#   - kbet_correct: number of cells with kBET < 0.05 after correction
+#   - neighbours_original: count of same-type neighbours per cell (uncorrected)
+#   - neighbours_corrected: count of same-type neighbours per cell (corrected)
+assess_fast_mnn_impact <- function(object) {
+  # remove any knns and regenerate
+  object = find_neighbours_sc(
+    object,
+    neighbours_params = params_sc_neighbours(k = 10L),
+    .verbose = FALSE
+  )
+
+  knn_original <- get_knn_mat(object)
+  cell_types <- unlist(object[["cell_grp"]])
+  batch_effects <- unlist(object[["batch_index"]])
+
+  correct_neighbours_uncor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_uncor[cell_idx] <- sum(
+      cell_types[knn_original[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  kbet_original <- rs_kbet(
+    knn_mat = knn_original,
+    batch_vector = as.integer(batch_effects)
+  )
+
+  kbet_score_original <- sum(kbet_original <= 0.05) / length(kbet_original)
+
+  batch_aware_hvg = find_hvg_batch_aware_sc(
+    object,
+    hvg_no = 30L,
+    batch_column = "batch_index",
+    gene_comb_method = "union",
+    .verbose = FALSE
+  )
+
+  object = fast_mnn_sc(
+    object = object,
+    batch_column = "batch_index",
+    batch_hvg_genes = batch_aware_hvg$hvg_genes,
+    fastmnn_params = params_sc_fastmnn(k = 5L, no_pcs = 10L),
+    .verbose = FALSE
+  )
+
+  object <- find_neighbours_sc(
+    object,
+    embd_to_use = "mnn",
+    neighbours_params = params_sc_neighbours(k = 10L),
+    .verbose = FALSE
+  )
+
+  knn_corrected <- get_knn_mat(object)
+
+  kbet_corrected <- rs_kbet(
+    knn_mat = knn_corrected,
+    batch_vector = as.integer(batch_effects)
+  )
+
+  kbet_score_corrected <- sum(kbet_corrected <= 0.05) / length(kbet_corrected)
+
+  correct_neighbours_cor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_cor[cell_idx] <- sum(
+      cell_types[knn_corrected[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  res <- list(
+    kbet_original = kbet_score_original,
+    kbet_correct = kbet_score_corrected,
+    neighbours_original = correct_neighbours_uncor,
+    neighbours_corrected = correct_neighbours_cor
+  )
+
+  return(res)
+}
+
+### weak batch effects ---------------------------------------------------------
+
+weak_batch_effect_res <- assess_fast_mnn_impact(
+  object = sc_object.weak_batch_effect
+)
+
+expect_true(
+  current = weak_batch_effect_res$kbet_original >
+    weak_batch_effect_res$kbet_correct,
+  info = paste("fast mnn - weak batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(weak_batch_effect_res$neighbours_corrected) >
+    (mean(weak_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "fast mnn - biological signal is not regressed out",
+    "(weak batch effect)"
+  )
+)
+
+### medium batch effects -------------------------------------------------------
+
+medium_batch_effect_res <- assess_fast_mnn_impact(
+  object = sc_object.medium_batch_effect
+)
+
+expect_true(
+  current = medium_batch_effect_res$kbet_original >
+    medium_batch_effect_res$kbet_correct,
+  info = paste("fast mnn - medium batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(medium_batch_effect_res$neighbours_corrected) >
+    (mean(medium_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "fast mnn - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
+)
+
+### strong batch effects -------------------------------------------------------
+
+strong_batch_effect_res <- assess_fast_mnn_impact(
+  object = sc_object.strong_batch_effect
+)
+
+expect_true(
+  current = strong_batch_effect_res$kbet_original >
+    strong_batch_effect_res$kbet_correct,
+  info = paste("fast mnn - strong batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(strong_batch_effect_res$neighbours_corrected) >
+    (mean(strong_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "fast mnn - biological signal is not regressed out",
+    "(strong batch effect)"
+  )
+)

@@ -1245,6 +1245,7 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
   checkmate::qassert(.verbose, "B1")
 
   # get the embedding
+  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
   if (!is.null(no_embd_to_use)) {

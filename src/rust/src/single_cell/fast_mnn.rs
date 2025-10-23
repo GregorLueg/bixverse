@@ -1,9 +1,8 @@
-#![allow(dead_code)]
-
 use extendr_api::List;
 use faer::{Mat, MatRef};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::time::Instant;
 
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
@@ -367,6 +366,156 @@ pub fn smooth_gaussian_kernel_mnn(
     result
 }
 
+/// Compute squared distance from point to line defined by ref + t*grad
+fn sq_distance_to_line_buf(ref_point: &[f32], grad: &[f32], point: &[f32]) -> f32 {
+    let scale: f32 = ref_point
+        .iter()
+        .zip(grad.iter())
+        .zip(point.iter())
+        .map(|((r, g), p)| (r - p) * g)
+        .sum();
+
+    ref_point
+        .iter()
+        .zip(grad.iter())
+        .zip(point.iter())
+        .map(|((r, g), p)| {
+            let diff = r - p;
+            let perp = diff - scale * g;
+            perp * perp
+        })
+        .sum()
+}
+
+/// Adjust shift variance to avoid kissing effects
+///
+/// ### Params
+///
+/// * `data_1` - Reference batch (cells x genes)
+/// * `data_2` - Target batch (cells x genes)
+/// * `corrections` - Correction vectors (cells x genes)
+/// * `sigma_square` - Bandwidth squared
+/// * `restrict_1` - Optional subset of cells from batch1 (None = all)
+/// * `restrict_2` - Optional subset of cells from batch2 (None = all)
+///
+/// ### Returns
+///
+/// Scaling factors for each cell in batch_2
+pub fn adjust_shift_variance(
+    data_1: &MatRef<f32>,
+    data_2: &MatRef<f32>,
+    corrections: &MatRef<f32>,
+    sigma_square: f32,
+    restrict_1: Option<&[usize]>,
+    restrict_2: Option<&[usize]>,
+) -> Vec<f32> {
+    let n_features = data_1.ncols();
+    let n_cells2 = data_2.nrows();
+
+    assert_eq!(data_1.ncols(), n_features);
+    assert_eq!(data_2.ncols(), n_features);
+    assert_eq!(corrections.nrows(), n_cells2);
+    assert_eq!(corrections.ncols(), n_features);
+
+    let restrict_1_indices: Vec<usize> = restrict_1
+        .map(|r| r.to_vec())
+        .unwrap_or_else(|| (0..data_1.nrows()).collect());
+    let restrict_2_indices: Vec<usize> = restrict_2
+        .map(|r| r.to_vec())
+        .unwrap_or_else(|| (0..n_cells2).collect());
+
+    let inv_sigma2 = 1.0 / sigma_square;
+    let mut output = vec![1.0f32; n_cells2];
+
+    let mut grad = vec![0.0f32; n_features];
+    let mut curcell = vec![0.0f32; n_features];
+    let mut othercell = vec![0.0f32; n_features];
+    let mut distance1: Vec<(f32, f32)> = vec![(0.0, 0.0); restrict_1_indices.len()];
+
+    for cell in 0..n_cells2 {
+        for g in 0..n_features {
+            grad[g] = corrections[(cell, g)];
+        }
+
+        let l2norm: f32 = grad.iter().map(|&x| x * x).sum::<f32>().sqrt();
+
+        if l2norm < 1e-8 {
+            continue;
+        }
+
+        let inv_l2norm = 1.0 / l2norm;
+        for g in grad.iter_mut() {
+            *g *= inv_l2norm;
+        }
+
+        for g in 0..n_features {
+            curcell[g] = data_2[(cell, g)];
+        }
+
+        let curproj: f32 = grad.iter().zip(curcell.iter()).map(|(g, c)| g * c).sum();
+
+        let mut prob2 = f32::NEG_INFINITY;
+        let mut totalprob2 = f32::NEG_INFINITY;
+
+        for &same_idx in &restrict_2_indices {
+            let (log_prob, should_add) = if same_idx == cell {
+                (0.0, true)
+            } else {
+                for g in 0..n_features {
+                    othercell[g] = data_2[(same_idx, g)];
+                }
+                let samedist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
+                let sameproj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
+                (-samedist * inv_sigma2, sameproj <= curproj)
+            };
+
+            totalprob2 = logspace_add(totalprob2, log_prob);
+            if should_add {
+                prob2 = logspace_add(prob2, log_prob);
+            }
+        }
+
+        prob2 -= totalprob2;
+
+        for (idx, &other_idx) in restrict_1_indices.iter().enumerate() {
+            for g in 0..n_features {
+                othercell[g] = data_1[(other_idx, g)];
+            }
+
+            let proj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
+            let dist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
+            distance1[idx] = (proj, -dist * inv_sigma2);
+        }
+
+        if distance1.is_empty() {
+            continue;
+        }
+
+        distance1.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+        let totalprob1 = distance1
+            .iter()
+            .map(|(_, lw)| *lw)
+            .fold(f32::NEG_INFINITY, logspace_add);
+
+        let target = prob2 + totalprob1;
+        let mut cumulative = f32::NEG_INFINITY;
+        let mut ref_quan = distance1.last().unwrap().0;
+
+        for &(proj, log_weight) in &distance1 {
+            cumulative = logspace_add(cumulative, log_weight);
+            if cumulative >= target {
+                ref_quan = proj;
+                break;
+            }
+        }
+
+        output[cell] = (ref_quan - curproj) * inv_l2norm;
+    }
+
+    output
+}
+
 /// Merge two batches
 ///
 /// ### Params
@@ -460,14 +609,13 @@ pub fn merge_two_batches(
     let mut corrections =
         smooth_gaussian_kernel_mnn(&averaged.as_ref(), &mnn_2, data_2, sigma_square);
 
-    // In merge_two_batches, after computing corrections:
     if params.var_adj {
         let scaling = adjust_shift_variance(
             data_1,
             data_2,
             &corrections.as_ref(),
             sigma_square,
-            None, // or pass restricted indices
+            None,
             None,
         );
 
@@ -485,7 +633,6 @@ pub fn merge_two_batches(
         }
     }
 
-    // CHANGE: Concatenate data_1 and corrected data_2
     let n_cells_total = data_1.nrows() + corrected.nrows();
     let n_features = data_1.ncols();
 
@@ -496,161 +643,6 @@ pub fn merge_two_batches(
             corrected[(row - data_1.nrows(), col)]
         }
     })
-}
-
-/// Compute squared distance from point to line defined by ref + t*grad
-fn sq_distance_to_line_buf(ref_point: &[f32], grad: &[f32], point: &[f32]) -> f32 {
-    let scale: f32 = ref_point
-        .iter()
-        .zip(grad.iter())
-        .zip(point.iter())
-        .map(|((r, g), p)| (r - p) * g)
-        .sum();
-
-    ref_point
-        .iter()
-        .zip(grad.iter())
-        .zip(point.iter())
-        .map(|((r, g), p)| {
-            let diff = r - p;
-            let perp = diff - scale * g;
-            perp * perp
-        })
-        .sum()
-}
-
-/// Adjust shift variance to avoid kissing effects
-///
-/// ### Params
-///
-/// * `data1` - Reference batch (cells x genes)
-/// * `data2` - Target batch (cells x genes)
-/// * `corrections` - Correction vectors (cells x genes)
-/// * `sigma2` - Bandwidth squared
-/// * `restrict1` - Optional subset of cells from batch1 (None = all)
-/// * `restrict2` - Optional subset of cells from batch2 (None = all)
-///
-/// ### Returns
-///
-/// Scaling factors for each cell in batch2
-pub fn adjust_shift_variance(
-    data1: &MatRef<f32>,
-    data2: &MatRef<f32>,
-    corrections: &MatRef<f32>,
-    sigma2: f32,
-    restrict1: Option<&[usize]>,
-    restrict2: Option<&[usize]>,
-) -> Vec<f32> {
-    let ngenes = data1.ncols();
-    let ncells2 = data2.nrows();
-
-    assert_eq!(data1.ncols(), ngenes);
-    assert_eq!(data2.ncols(), ngenes);
-    assert_eq!(corrections.nrows(), ncells2);
-    assert_eq!(corrections.ncols(), ngenes);
-
-    let restrict1_indices: Vec<usize> = restrict1
-        .map(|r| r.to_vec())
-        .unwrap_or_else(|| (0..data1.nrows()).collect());
-    let restrict2_indices: Vec<usize> = restrict2
-        .map(|r| r.to_vec())
-        .unwrap_or_else(|| (0..ncells2).collect());
-
-    let inv_sigma2 = 1.0 / sigma2;
-    let mut output = vec![1.0f32; ncells2];
-
-    // Pre-allocate working buffers - reused across iterations
-    let mut grad = vec![0.0f32; ngenes];
-    let mut curcell = vec![0.0f32; ngenes];
-    let mut othercell = vec![0.0f32; ngenes];
-    let mut distance1: Vec<(f32, f32)> = vec![(0.0, 0.0); restrict1_indices.len()];
-
-    for cell in 0..ncells2 {
-        // Copy correction vector
-        for g in 0..ngenes {
-            grad[g] = corrections[(cell, g)];
-        }
-
-        let l2norm: f32 = grad.iter().map(|&x| x * x).sum::<f32>().sqrt();
-
-        if l2norm < 1e-8 {
-            continue;
-        }
-
-        let inv_l2norm = 1.0 / l2norm;
-        for g in grad.iter_mut() {
-            *g *= inv_l2norm;
-        }
-
-        // Copy current cell
-        for g in 0..ngenes {
-            curcell[g] = data2[(cell, g)];
-        }
-
-        let curproj: f32 = grad.iter().zip(curcell.iter()).map(|(g, c)| g * c).sum();
-
-        // Batch2 cumulative probability
-        let mut prob2 = f32::NEG_INFINITY;
-        let mut totalprob2 = f32::NEG_INFINITY;
-
-        for &same_idx in &restrict2_indices {
-            let (log_prob, should_add) = if same_idx == cell {
-                (0.0, true)
-            } else {
-                for g in 0..ngenes {
-                    othercell[g] = data2[(same_idx, g)];
-                }
-                let samedist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
-                let sameproj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
-                (-samedist * inv_sigma2, sameproj <= curproj)
-            };
-
-            totalprob2 = logspace_add(totalprob2, log_prob);
-            if should_add {
-                prob2 = logspace_add(prob2, log_prob);
-            }
-        }
-
-        prob2 -= totalprob2;
-
-        // Batch1 distances
-        for (idx, &other_idx) in restrict1_indices.iter().enumerate() {
-            for g in 0..ngenes {
-                othercell[g] = data1[(other_idx, g)];
-            }
-
-            let proj: f32 = grad.iter().zip(othercell.iter()).map(|(g, c)| g * c).sum();
-            let dist = sq_distance_to_line_buf(&curcell, &grad, &othercell);
-            distance1[idx] = (proj, -dist * inv_sigma2);
-        }
-
-        if distance1.is_empty() {
-            continue;
-        }
-
-        distance1.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
-        let totalprob1 = distance1
-            .iter()
-            .map(|(_, lw)| *lw)
-            .fold(f32::NEG_INFINITY, logspace_add);
-
-        let target = prob2 + totalprob1;
-        let mut cumulative = f32::NEG_INFINITY;
-        let mut ref_quan = distance1.last().unwrap().0;
-
-        for &(proj, log_weight) in &distance1 {
-            cumulative = logspace_add(cumulative, log_weight);
-            if cumulative >= target {
-                ref_quan = proj;
-                break;
-            }
-        }
-
-        output[cell] = (ref_quan - curproj) * inv_l2norm;
-    }
-
-    output
 }
 
 /// Fast MNN with cell order tracking
@@ -678,13 +670,28 @@ pub fn fast_mnn(
 
     let mut merged = batches[0].to_owned();
     let mut index_map = original_indices[0].clone();
+    let total_batches = batches.len();
 
-    for (batch, batch_indices) in batches
+    for (batch_num, (batch, batch_indices)) in batches
         .into_iter()
         .zip(original_indices.into_iter())
         .skip(1)
+        .enumerate()
     {
+        let start = Instant::now();
         merged = merge_two_batches(&merged.as_ref(), &batch.as_ref(), params, seed, verbose);
+        let elapsed = start.elapsed();
+
+        if verbose {
+            let batches_merged = batch_num + 2;
+            println!(
+                "Merged {} of {} batches in {:.2}s",
+                batches_merged,
+                total_batches,
+                elapsed.as_secs_f64()
+            );
+        }
+
         index_map.extend(batch_indices);
     }
 
@@ -703,17 +710,8 @@ pub fn fast_mnn(
 /// Reordered matrix matching original cell order
 pub fn reorder_to_original(corrected_pca: &Mat<f32>, output_to_original: &[usize]) -> Mat<f32> {
     let n_pcs = corrected_pca.ncols();
-    let n_output_cells = corrected_pca.nrows();
 
     let n_original_cells = output_to_original.iter().copied().max().unwrap_or(0) + 1;
-
-    assert_eq!(
-        n_output_cells,
-        output_to_original.len(),
-        "Mismatch: corrected_pca has {} rows but output_to_original has {} elements",
-        n_output_cells,
-        output_to_original.len()
-    );
 
     let mut original_to_output = vec![0; n_original_cells];
     for (output_idx, &original_idx) in output_to_original.iter().enumerate() {
@@ -805,6 +803,9 @@ pub fn fast_mnn_main(
     let (mut pca_batches, original_indices) = split_pca_by_batch(&pca_all, batch_indices);
 
     if params.cos_norm {
+        if verbose {
+            println!("Applying cosine normalisation to the dimension reduction.")
+        }
         for batch in pca_batches.iter_mut() {
             *batch = cosine_normalise(batch);
         }
