@@ -45,7 +45,7 @@ rm(sc_object)
 
 sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_existing(sc_object)
+sc_object <- suppressMessages(load_existing(sc_object))
 
 ## getter checks ---------------------------------------------------------------
 
