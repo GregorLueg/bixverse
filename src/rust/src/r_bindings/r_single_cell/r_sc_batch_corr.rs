@@ -2,7 +2,10 @@ use extendr_api::*;
 use faer::Mat;
 
 use crate::single_cell::bbknn::*;
+use crate::single_cell::fast_mnn::*;
+use crate::single_cell::metrics::kbet;
 use crate::utils::r_rust_interface::*;
+use crate::utils::traits::VecConvert;
 
 /// Calculate kBET type scores
 ///
@@ -36,7 +39,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
         .collect();
 
     // Convert batch_vector to Vec<usize>
-    let batches: Vec<usize> = batch_vector.iter().map(|&x| x as usize).collect();
+    let batches: Vec<usize> = batch_vector.r_int_convert();
 
     kbet(&knn_matrix, &batches)
 }
@@ -44,7 +47,7 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
 /// BBKNN implementation in Rust
 ///
 /// @description
-/// This function implements the BBKNN algorithm from TO ADD
+/// This function implements the BBKNN algorithm from Polański, et al.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// BBKNN parameters. Usually PCA. Rows represent cells.
@@ -58,6 +61,8 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
 /// of the distances and the connectivities.
 ///
 /// @export
+///
+/// @references Polański, et al., Bioinformatics, 2020
 #[extendr]
 fn rs_bbknn(
     embd: RMatrix<f64>,
@@ -119,9 +124,60 @@ fn rs_bbknn_filtering(
     faer_to_r_matrix(mat.as_ref())
 }
 
+/// FastMNN batch correction in Rust
+///
+/// @description
+/// This function implements the (fast) MNN algorithm from Haghverdi, et al.
+/// Instead of working on the full matrix, it uses under the hood PCA and
+/// generates an aligned embedding space.
+///
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+/// these are batch-aware highly variable genes.
+/// @param batch_indices Integer vector. These represent to which batch a given
+/// cell belongs.
+/// @param mnn_params List. Contains all of the fastMNN parameters.
+/// @param seed Integer. Seed for reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return The batch-corrected embedding space.
+///
+/// @export
+#[extendr]
+fn rs_mnn(
+    f_path_gene: &str,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    batch_indices: Vec<i32>,
+    mnn_params: List,
+    verbose: bool,
+    seed: usize,
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let batch_indices = batch_indices.r_int_convert();
+
+    let mnn_params = FastMnnParams::from_r_list(mnn_params);
+
+    let corrected_embd = fast_mnn_main(
+        f_path_gene,
+        &cell_indices,
+        &gene_indices,
+        &batch_indices,
+        &mnn_params,
+        verbose,
+        seed,
+    );
+
+    faer_to_r_matrix(corrected_embd.as_ref())
+}
+
 extendr_module! {
     mod r_sc_batch_corr;
     fn rs_kbet;
     fn rs_bbknn;
     fn rs_bbknn_filtering;
+    fn rs_mnn;
 }

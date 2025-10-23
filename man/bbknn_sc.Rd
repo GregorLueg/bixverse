@@ -10,7 +10,7 @@ bbknn_sc(
   no_neighbours_to_keep = 15L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  sc_bbknn_params = params_sc_bbknn(),
+  bbknn_params = params_sc_bbknn(),
   seed = 42L,
   .verbose = TRUE
 )
@@ -32,7 +32,7 @@ might be a large number of generated neighbours. This will only keep the top
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}
 
-\item{sc_bbknn_params}{A list, please see \code{\link[=params_sc_bbknn]{params_sc_bbknn()}}. The
+\item{bbknn_params}{A list, please see \code{\link[=params_sc_bbknn]{params_sc_bbknn()}}. The
 list has the following parameters:
 \itemize{
 \item neighbours_within_batch - Integer. Number of neighbours to consider

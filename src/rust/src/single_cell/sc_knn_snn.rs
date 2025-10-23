@@ -122,7 +122,7 @@ pub fn compute_distance_knn(a: RowRef<f32>, b: RowRef<f32>, metric: &AnnDist) ->
 /// ### Returns
 ///
 /// Option of the HvgMethod (some not yet implemented)
-pub fn get_knn_method(s: &str) -> Option<KnnSearch> {
+pub fn parse_knn_method(s: &str) -> Option<KnnSearch> {
     match s.to_lowercase().as_str() {
         "annoy" => Some(KnnSearch::Annoy),
         "hnsw" => Some(KnnSearch::Hnsw),

@@ -49,9 +49,6 @@ calculate_kbet_sc <- S7::new_generic(
 #' @method calculate_kbet_sc single_cell_exp
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(calculate_kbet_sc, single_cell_exp) <- function(
   object,
   batch_column,
@@ -93,6 +90,139 @@ S7::method(calculate_kbet_sc, single_cell_exp) <- function(
   return(res)
 }
 
+## batch aware hvg -------------------------------------------------------------
+
+#' Identify HVGs (batch aware)
+#'
+#' @description
+#' This is a helper function to identify highly variable genes in a batch-aware
+#' manner. At the moment the implementation has only the VST-based version
+#' (known as Seurat v3). The other methods will be implemented in the future.
+#' This function will calculate the HVG per given experimental batch and you
+#' can choose the way to combine them. The choices are union (of Top x HVG per
+#' batch), based on the average variance per batch or only take genes that are
+#' amongst the Top X HVG in all batches.
+#'
+#' @param object `single_cell_exp` class.
+#' @param batch_column String. The column name of the batch column in the obs
+#' table.
+#' @param hvg_no Integer. Number of highly variable genes to include. Defaults
+#' to `2000L`.
+#' @param gene_comb_method String. One of
+#' `c("union", "average", "intersection")`. The method to combine the HVG across
+#' the different batches. Defaults to `"union"`.
+#' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
+#' \itemize{
+#'   \item method - Which method to use. One of
+#'   `c("vst", "meanvarbin", "dispersion")`
+#'   \item loess_span - The span for the loess function to standardise the
+#'   variance
+#'   \item num_bin - Integer. Not yet implemented.
+#'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
+#'   implemented yet.
+#' }
+#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
+#' data sets where you wish to avoid loading in the whole data. Defaults to
+#' `FALSE`.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return This function will return a list with:
+#' \itemize{
+#'   \item hvg_indices - The indices of the batch-aware HVG.
+#'   \item batch_hvg_data - data.table with the detailed information of the
+#'   variance per batch.
+#' }
+#'
+#' @export
+find_hvg_batch_aware_sc <- S7::new_generic(
+  name = "find_hvg_batch_aware_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    hvg_no = 2000L,
+    gene_comb_method = c("union", "average", "intersection"),
+    hvg_params = params_sc_hvg(),
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method find_hvg_batch_aware_sc single_cell_exp
+#'
+#' @export
+S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
+  object,
+  batch_column,
+  hvg_no = 2000L,
+  gene_comb_method = c("union", "average", "intersection"),
+  hvg_params = params_sc_hvg(),
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  gene_comb_method <- match.arg(gene_comb_method)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(hvg_no, "I1")
+  checkmate::assertChoice(
+    gene_comb_method,
+    c("union", "average", "intersection")
+  )
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  batch_hvgs <- with(
+    hvg_params,
+    rs_sc_hvg_batch_aware(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      hvg_method = method,
+      cell_indices = get_cells_to_keep(object),
+      batch_labels = batch_indices,
+      loess_span = loess_span,
+      clip_max = NULL,
+      streaming = streaming,
+      verbose = .verbose
+    )
+  )
+
+  batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
+  batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
+
+  hvg_genes <- switch(
+    gene_comb_method,
+    union = {
+      batch_hvgs_dt[, .SD[order(-var_std)][1:hvg_no], by = batch][, unique(
+        gene_idx
+      )]
+    },
+    average = {
+      avg_dt <- batch_hvgs_dt[, .(var_std_avg = mean(var_std)), by = gene_idx]
+      avg_dt[order(-var_std_avg)][1:hvg_no, gene_idx]
+    },
+    intersection = {
+      top_per_batch <- batch_hvgs_dt[,
+        .(gene_idx = .SD[order(-var_std)][1:hvg_no, gene_idx]),
+        by = batch
+      ]
+      top_per_batch[, .N, by = gene_idx][
+        N == uniqueN(batch_hvgs_dt$batch),
+        gene_idx
+      ]
+    }
+  )
+
+  return(list(hvg_genes = hvg_genes, hvg_data = batch_hvgs_dt))
+}
+
 ## BBKNN -----------------------------------------------------------------------
 
 #' Run BBKNN
@@ -115,7 +245,7 @@ S7::method(calculate_kbet_sc, single_cell_exp) <- function(
 #' `"pca"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
-#' @param sc_bbknn_params A list, please see [bixverse::params_sc_bbknn()]. The
+#' @param bbknn_params A list, please see [bixverse::params_sc_bbknn()]. The
 #' list has the following parameters:
 #' \itemize{
 #'   \item neighbours_within_batch - Integer. Number of neighbours to consider
@@ -157,7 +287,7 @@ bbknn_sc <- S7::new_generic(
     no_neighbours_to_keep = 15L,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
-    sc_bbknn_params = params_sc_bbknn(),
+    bbknn_params = params_sc_bbknn(),
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -168,16 +298,13 @@ bbknn_sc <- S7::new_generic(
 #' @method bbknn_sc single_cell_exp
 #'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
 S7::method(bbknn_sc, single_cell_exp) <- function(
   object,
   batch_column,
   no_neighbours_to_keep = 15L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
-  sc_bbknn_params = params_sc_bbknn(),
+  bbknn_params = params_sc_bbknn(),
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -186,7 +313,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   checkmate::qassert(batch_column, "S1")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
-  assertScBbknn(sc_bbknn_params)
+  assertScBbknn(bbknn_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -220,7 +347,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   }
 
   no_generated_neighbours <- length(levels(factor(batch_index))) *
-    sc_bbknn_params$neighbours_within_batch
+    bbknn_params$neighbours_within_batch
 
   if (no_neighbours_to_keep > no_generated_neighbours) {
     warning(paste(
@@ -238,7 +365,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   bbknn_res <- rs_bbknn(
     embd = embd,
     batch_labels = as.integer(batch_index),
-    bbknn_params = sc_bbknn_params,
+    bbknn_params = bbknn_params,
     seed = seed,
     verbose = .verbose
   )
@@ -283,6 +410,88 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   )
 
   object <- set_snn_graph(object, snn_graph = snn_graph)
+
+  return(object)
+}
+
+## fastMNN ---------------------------------------------------------------------
+
+#' Run fastMNN
+#'
+#' @description
+#' This function implements the fast mutual nearest neighbour (MNN) from
+#' Haghverdi, et al. This version works on the PCA embedding and generates
+#' an embedding only and not fully corrected count matrix. The function will
+#' iterate through the batches, identify the MNN and generate correction vectors
+#' and generate a corrected embedding which is added to the function.
+#'
+#' @param object `single_cell_exp` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param batch_hvg_genes Integer vector. These are the highly variable genes,
+#' identified by a batch-aware method. Please refer to
+#' [bixverse::find_hvg_batch_aware_sc()] for more details.
+#' @param fastmnn_params A list, please see [bixverse::params_sc_fastmnn()]. The
+#' list has the following parameters:
+#' Claude fill this out
+#' @param seed Integer. Random seed.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The object with the added fastMNN embeddings to the object.
+#'
+#' @export
+#'
+#' @references Haghverdi, et al., Nat Biotechnol, 2018
+fast_mnn_sc <- S7::new_generic(
+  name = "fast_mnn_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    batch_hvg_genes,
+    fastmnn_params = params_sc_fastmnn(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method fast_mnn_sc single_cell_exp
+#'
+#' @export
+S7::method(fast_mnn_sc, single_cell_exp) <- function(
+  object,
+  batch_column,
+  batch_hvg_genes,
+  fastmnn_params = params_sc_fastmnn(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(batch_hvg_genes, "I+")
+  assertScFastmnn(fastmnn_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  mnn_embd <- rs_mnn(
+    f_path = get_rust_count_gene_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = as.integer(batch_hvg_genes - 1L),
+    batch_indices = batch_indices,
+    mnn_params = fastmnn_params,
+    verbose = .verbose,
+    seed = 42L
+  )
+
+  object <- set_embedding(x = object, embd = mnn_embd, name = "mnn")
 
   return(object)
 }

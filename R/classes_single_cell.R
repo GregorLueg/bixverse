@@ -134,6 +134,17 @@ set_pca_singular_vals <- function(x, singular_vals) {
   UseMethod("set_pca_singular_vals")
 }
 
+#' Add additional embeddings to the class
+#'
+#' @param x An object to add the singular values for.
+#' @param embd Numerical matrix representing the additional embedding.
+#' @param name String. Name of the embedding.
+#'
+#' @export
+set_embedding <- function(x, embd, name) {
+  UseMethod("set_embedding")
+}
+
 #' Set/add KNN
 #'
 #' @param x An object to add the KNN data to
@@ -285,6 +296,20 @@ set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
   return(x)
 }
 
+#' @rdname set_embedding
+#'
+#' @export
+set_embedding.sc_cache <- function(x, embd, name) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(name, "S1")
+
+  x[["other_embeddings"]][[name]] <- embd
+
+  return(x)
+}
+
 #' @rdname set_knn
 #'
 #' @export
@@ -413,6 +438,15 @@ get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
 }
 
+#' Get the PCA loadings
+#'
+#' @param x An object to get PCA loadings from.
+#'
+#' @export
+get_pca_loadings <- function(x) {
+  UseMethod("get_pca_loadings")
+}
+
 #' Get the PCA singular values
 #'
 #' @param x An object to get PCA singular values from.
@@ -422,13 +456,31 @@ get_pca_singular_val <- function(x) {
   UseMethod("get_pca_singular_val")
 }
 
-#' Get the PCA loadings
+#' Get the embedding from the cache
 #'
-#' @param x An object to get PCA loadings from.
+#' @description
+#' General wrapper function that can be used to pull out any embedding stored
+#' in the `sc_cache`.
+#'
+#' @param x An object to get embedding from
+#' @param embd_name String. The name of the embedding to return. The function
+#' will throw an error if the embedding does not exist.
 #'
 #' @export
-get_pca_loadings <- function(x) {
-  UseMethod("get_pca_loadings")
+get_embedding <- function(x, embd_name) {
+  UseMethod("get_embedding")
+}
+
+#' Get the available embeddings from the cache
+#'
+#' @description
+#' Returns the available embedding names from the cache.
+#'
+#' @param x An object to get embedding from
+#'
+#' @export
+get_available_embeddings <- function(x) {
+  UseMethod("get_available_embeddings")
 }
 
 #' Get the KNN matrix
@@ -580,6 +632,44 @@ get_pca_singular_val.sc_cache <- function(x) {
   res <- x[["pca_singular_vals"]]
 
   return(res)
+}
+
+#' @rdname get_embedding
+#'
+#' @export
+get_embedding.sc_cache <- function(x, embd_name) {
+  possible_embedding_names <- c(names(x[["other_embeddings"]]), "pca")
+
+  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertChoice(embd_name, possible_embedding_names)
+
+  embd <- if (embd_name == "pca") {
+    get_pca_factors(x)
+  } else {
+    x[["other_embeddings"]][[embd_name]]
+  }
+
+  if (is.null(embd)) {
+    stop(paste(
+      "The sought embedding was not found.",
+      "Please verify which functions you have run."
+    ))
+  }
+
+  return(embd)
+}
+
+#' @rdname get_available_embeddings
+#'
+#' @export
+get_available_embeddings.sc_cache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_cache")
+
+  pca_available <- ifelse(!is.null(x[["pca_factors"]]), "pca", NULL)
+  other_embeddings <- names(x[["other_embeddings"]])
+
+  c(pca_available, other_embeddings)
 }
 
 #' @rdname get_knn_mat
@@ -1446,6 +1536,30 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
   return(res)
 }
 
+#' @name get_pca_loadings.single_cell_exp
+#'
+#' @title Get the PCA loadings from a `single_cell_exp`.
+#'
+#' @rdname get_pca_loadings
+#'
+#' @method get_pca_loadings single_cell_exp
+S7::method(get_pca_loadings, single_cell_exp) <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+
+  # forward to S3
+  res <- get_pca_loadings(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
+  rownames(res) <- get_gene_names(x)[get_hvg(x) + 1]
+
+  return(res)
+}
+
 #' @name get_pca_singular_val.single_cell_exp
 #'
 #' @title Get the PCA singular values from a `single_cell_exp`.
@@ -1467,26 +1581,49 @@ S7::method(get_pca_singular_val, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_pca_loadings.single_cell_exp
+#' @name get_embedding.single_cell_exp
 #'
-#' @title Get the PCA loadings from a `single_cell_exp`.
+#' @title Get the embeddings from a `single_cell_exp`.
 #'
-#' @rdname get_pca_loadings
+#' @rdname get_embedding
 #'
-#' @method get_pca_loadings single_cell_exp
-S7::method(get_pca_loadings, single_cell_exp) <- function(
+#' @method get_embedding single_cell_exp
+S7::method(get_embedding, single_cell_exp) <- function(
+  x,
+  embd_name
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(embd_name, "S1")
+
+  # forward to S3
+  res <- get_embedding(
+    x = S7::prop(x, "sc_cache"),
+    embd_name = embd_name
+  )
+
+  rownames(res) <- get_cell_names(x, filtered = TRUE)
+
+  return(res)
+}
+
+#' @name get_available_embeddings.single_cell_exp
+#'
+#' @title Get the embeddings from a `single_cell_exp`.
+#'
+#' @rdname get_available_embeddings
+#'
+#' @method get_available_embeddings single_cell_exp
+S7::method(get_available_embeddings, single_cell_exp) <- function(
   x
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
 
   # forward to S3
-  res <- get_pca_loadings(
+  res <- get_available_embeddings(
     x = S7::prop(x, "sc_cache")
   )
-
-  colnames(res) <- sprintf("PC_%i", 1:ncol(res))
-  rownames(res) <- get_gene_names(x)[get_hvg(x) + 1]
 
   return(res)
 }
@@ -1867,6 +2004,33 @@ S7::method(set_pca_singular_vals, single_cell_exp) <- function(
   S7::prop(x, "sc_cache") <- set_pca_singular_vals(
     x = S7::prop(x, "sc_cache"),
     singular_vals = singular_vals
+  )
+
+  return(x)
+}
+
+#' @name set_embedding.single_cell_exp
+#'
+#' @title Set additional embeddings to `single_cell_exp`.
+#'
+#' @rdname set_embedding
+#'
+#' @method set_embedding single_cell_exp
+S7::method(set_embedding, single_cell_exp) <- function(
+  x,
+  embd,
+  name
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertMatrix(embd, mode = "numeric")
+  checkmate::qassert(name, "S1")
+
+  # add the data using the S3 method
+  S7::prop(x, "sc_cache") <- set_embedding(
+    x = S7::prop(x, "sc_cache"),
+    embd = embd,
+    name = name
   )
 
   return(x)

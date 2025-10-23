@@ -16,8 +16,8 @@ find_neighbours_sc(
 \arguments{
 \item{object}{\code{single_cell_exp} class.}
 
-\item{embd_to_use}{String. The embedding to use. Atm, the only option is
-\code{"pca"}.}
+\item{embd_to_use}{String. The embedding to use. Whichever you chose, it
+needs to be part of the object.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used.}

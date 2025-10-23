@@ -1178,7 +1178,7 @@ impl Scrublet {
         seed: usize,
         verbose: bool,
     ) -> Result<Vec<Vec<usize>>, String> {
-        let knn_method = get_knn_method(&self.params.knn_method)
+        let knn_method = parse_knn_method(&self.params.knn_method)
             .ok_or_else(|| format!("Invalid KNN search method: {}", &self.params.knn_method))?;
 
         let k_adj = self.calculate_k_adj();
