@@ -43,29 +43,40 @@ pub struct Point(Vec<f32>, AnnDist);
 impl DistancePoint for Point {
     /// Distance function. This is Euclidean distance without squaring for
     /// speed gains. Does not change the rank order in KNN generation.
+    #[inline(always)]
     fn distance(&self, other: &Self) -> f32 {
-        match self.1 {
-            // No & needed, Copy does the work
-            AnnDist::Euclidean => {
-                let mut sum = 0.0f32;
-                for i in 0..self.0.len() {
-                    let diff = self.0[i] - other.0[i];
-                    sum += diff * diff;
-                }
-                sum
-            }
-            AnnDist::Cosine => {
-                let mut dot = 0.0f32;
-                let mut norm_a = 0.0f32;
-                let mut norm_b = 0.0f32;
+        debug_assert_eq!(self.0.len(), other.0.len());
 
-                for i in 0..self.0.len() {
-                    dot += self.0[i] * other.0[i];
-                    norm_a += self.0[i] * self.0[i];
-                    norm_b += other.0[i] * other.0[i];
-                }
+        // moaaaar unsafe and raw pointers...
+        unsafe {
+            let len = self.0.len();
+            let ptr_a = self.0.as_ptr();
+            let ptr_b = other.0.as_ptr();
 
-                1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+            match self.1 {
+                AnnDist::Euclidean => {
+                    let mut sum = 0.0f32;
+                    for i in 0..len {
+                        let diff = *ptr_a.add(i) - *ptr_b.add(i);
+                        sum += diff * diff;
+                    }
+                    sum
+                }
+                AnnDist::Cosine => {
+                    let mut dot = 0.0f32;
+                    let mut norm_a = 0.0f32;
+                    let mut norm_b = 0.0f32;
+
+                    for i in 0..len {
+                        let a = *ptr_a.add(i);
+                        let b = *ptr_b.add(i);
+                        dot += a * b;
+                        norm_a += a * a;
+                        norm_b += b * b;
+                    }
+
+                    1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+                }
             }
         }
     }
@@ -87,28 +98,66 @@ impl DistancePoint for Point {
 /// ### Returns
 ///
 /// The distance between the two cells based on the embedding.
+#[inline(always)]
 pub fn compute_distance_knn(a: RowRef<f32>, b: RowRef<f32>, metric: &AnnDist) -> f32 {
-    match metric {
-        AnnDist::Euclidean => {
-            let mut sum = 0.0f32;
-            for i in 0..a.ncols() {
-                let diff = a[i] - b[i];
-                sum += diff * diff;
+    let ncols = a.ncols();
+
+    // fast, unsafe path for contiguous memory
+    if a.col_stride() == 1 && b.col_stride() == 1 {
+        unsafe {
+            let a_ptr = a.as_ptr();
+            let b_ptr = b.as_ptr();
+
+            match metric {
+                AnnDist::Euclidean => {
+                    let mut sum = 0.0f32;
+                    for i in 0..ncols {
+                        let diff = *a_ptr.add(i) - *b_ptr.add(i);
+                        sum += diff * diff;
+                    }
+                    sum.sqrt()
+                }
+                AnnDist::Cosine => {
+                    let mut dot = 0.0f32;
+                    let mut norm_a = 0.0f32;
+                    let mut norm_b = 0.0f32;
+
+                    for i in 0..ncols {
+                        let av = *a_ptr.add(i);
+                        let bv = *b_ptr.add(i);
+                        dot += av * bv;
+                        norm_a += av * av;
+                        norm_b += bv * bv;
+                    }
+
+                    1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+                }
             }
-            sum.sqrt()
         }
-        AnnDist::Cosine => {
-            let mut dot = 0.0f32;
-            let mut norm_a = 0.0f32;
-            let mut norm_b = 0.0f32;
-
-            for i in 0..a.ncols() {
-                dot += a[i] * b[i];
-                norm_a += a[i] * a[i];
-                norm_b += b[i] * b[i];
+    } else {
+        // fallback
+        match metric {
+            AnnDist::Euclidean => {
+                let mut sum = 0.0f32;
+                for i in 0..ncols {
+                    let diff = a[i] - b[i];
+                    sum += diff * diff;
+                }
+                sum.sqrt()
             }
+            AnnDist::Cosine => {
+                let mut dot = 0.0f32;
+                let mut norm_a = 0.0f32;
+                let mut norm_b = 0.0f32;
 
-            1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+                for i in 0..ncols {
+                    dot += a[i] * b[i];
+                    norm_a += a[i] * a[i];
+                    norm_b += b[i] * b[i];
+                }
+
+                1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
+            }
         }
     }
 }
@@ -449,42 +498,34 @@ pub fn query_hnsw_index(
 ) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
     let n_samples = query_mat.nrows();
     let ann_dist = parse_ann_dist(dist_metric).unwrap();
-    let n_query = query_mat.nrows();
     let counter = Arc::new(AtomicUsize::new(0));
 
-    let results: Vec<_> = (0..n_query)
+    let results: Vec<_> = (0..n_samples)
         .into_par_iter()
         .map(|i| {
             let point = Point(query_mat.row(i).iter().cloned().collect(), ann_dist);
             let mut search = Search::default();
-            let neighbors: Vec<usize> = index
-                .search(&point, &mut search)
-                .take(k)
-                .map(|item| *item.value)
-                .collect();
+
+            // Capture both indices and distances in one pass
+            let search_results: Vec<_> = index.search(&point, &mut search).take(k).collect();
+
+            let neighbors: Vec<usize> = search_results.iter().map(|item| *item.value).collect();
 
             let dists = if return_dist {
-                let mut dists = Vec::with_capacity(k);
-                for &neighbor_idx in &neighbors {
-                    let dist = compute_distance_knn(
-                        query_mat.row(i),
-                        query_mat.row(neighbor_idx),
-                        &ann_dist,
-                    );
-                    dists.push(dist);
-                }
-                Some(dists)
+                Some(search_results.iter().map(|item| item.distance).collect())
             } else {
                 None
             };
 
-            let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-            if verbose && count % 100_000 == 0 {
-                println!(
-                    " Processed {} / {} cells.",
-                    count.separate_with_underscores(),
-                    n_samples.separate_with_underscores()
-                );
+            if verbose {
+                let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
+                if count % 100_000 == 0 {
+                    println!(
+                        " Processed {} / {} cells.",
+                        count.separate_with_underscores(),
+                        n_samples.separate_with_underscores()
+                    );
+                }
             }
 
             (neighbors, dists)
