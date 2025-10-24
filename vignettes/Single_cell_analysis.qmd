@@ -228,6 +228,48 @@ sc_object[[]]
 get_sc_obs(sc_object)
 ```
 
+**Add data to obs** 
+
+Sometimes it is desirable to add data to the obs table for further analysis this can be acheived using `set_sc_new_obs_col()` or `set_sc_new_obs_col_multiple()`
+
+Note the new data must be of same length as `bixverse::get_cells_to_keep()` and have the same order. 
+
+```{r}
+#| label: add-data-to-obs
+
+## new data to add single column
+new_data <- rep("random_new_data", length(cells_to_keep))
+
+## Using function or using
+sc_object <- set_sc_new_obs_col(
+  sc_object, 
+  col_name = "random_new_data",
+  new_data = new_data
+  )
+
+# or using [[]]
+sc_object[["random_new_data2"]] <- new_data
+
+head(sc_object[[]])
+
+## Multiple columns can also be added must be a list of vector
+new_data_list <- list(
+  "other_random_data" = rep("A", length(cells_to_keep)),
+  "even_different_random_data" = seq_len(length(cells_to_keep))
+)
+
+## either like this
+sc_object <- set_sc_new_obs_col_multiple(sc_object, new_data_list)
+
+# or this 
+# sc_object[[names(new_data_list)]] <- new_data_list
+
+# or this
+sc_object[[c("new_name_a", "new_name_b")]] <- new_data_list
+
+```
+
+
 ### Var table (gene info)
 
 ```{r}
@@ -385,7 +427,9 @@ from the HVGs as such the HVG calculation will need to be run prior to PCA.
 
 Note the PCS are not currently saved to to the duckdb and after calculations are
 currently stored in memory and will need to be recalculated on the object if
-session is closed.
+session is closed. Alternatively if you wish to save PCA results this can be done using `save_sc_exp_to_disk()` these will then be loaded back in when the `load_existing()` function is called. More info in @sec-loading-existing.
+
+
 
 ```{r}
 #| label: pca-analysis
@@ -598,7 +642,7 @@ meta_cell_data_v1 <- get_meta_cells_sc(
 str(meta_cell_data_v1)
 ```
 
-# Loading in existing object
+# Loading in existing object {#sec-loading-existing}
 
 A series of functions have been written to load in a already pre-processed
 sc_object where the to_keep cells have already been defined.
