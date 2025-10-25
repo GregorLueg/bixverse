@@ -1,3 +1,4 @@
+use extendr_api::List;
 use faer::{MatRef, RowRef};
 use instant_distance::{Builder, HnswMap, Point as DistancePoint, Search};
 use rayon::prelude::*;
@@ -10,6 +11,7 @@ use thousands::Separable;
 use crate::core::data::sparse_structures::*;
 use crate::core::graph::annoy::AnnoyIndex;
 use crate::core::graph::knn::{parse_ann_dist, AnnDist};
+use crate::core::graph::nn_descent::NNDescent;
 
 ///////////
 // Enums //
@@ -30,6 +32,124 @@ pub enum KnnSearch {
     Annoy,
     /// Hierarchical Navigable Small World
     Hnsw,
+    /// NNDescent
+    NNDescent,
+}
+
+////////////
+// Params //
+////////////
+
+/// KnnParams
+///
+/// ### Fields
+///
+/// **General**
+///
+/// * `knn_method` - Which of the kNN methods to use. One of `"annoy"`, `"hnsw"`
+///   or `"nndescent"`.
+/// * `ann_dist` - Approximate nearest neighbour distance measure. One of
+///   `"euclidean"` or `"cosine"`.
+/// * `k` - Number of neighbours to search
+///
+/// **Annoy**
+///
+/// * `n_tree` - Number of trees for the generation of the index
+/// * `search_budget` - Search budget during querying
+///
+/// **NN Descent**
+///
+/// * `max_iter` - Maximum iterations for the algorithm
+/// * `rho` - Sampling rate for the algorithm
+/// * `delta` - Early termination criterium
+pub struct KnnParams {
+    // general params
+    pub knn_method: String,
+    pub ann_dist: String,
+    pub k: usize,
+    // annoy params
+    pub n_tree: usize,
+    pub search_budget: usize,
+    // nn descent params
+    pub max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
+}
+
+impl KnnParams {
+    /// Generate KnnParams from an R list
+    ///
+    /// Should values not be found within the List, the parameters will default
+    /// to sensible defaults based on heuristics.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The list with the Boost parameters.
+    ///
+    /// ### Returns
+    ///
+    /// The `KnnParams` with all parameters set.
+    pub fn from_r_list(r_list: List) -> Self {
+        let params_list = r_list.into_hashmap();
+
+        // general
+        let knn_method = std::string::String::from(
+            params_list
+                .get("knn_method")
+                .and_then(|v| v.as_str())
+                .unwrap_or("annoy"),
+        );
+
+        let ann_dist = std::string::String::from(
+            params_list
+                .get("ann_dist")
+                .and_then(|v| v.as_str())
+                .unwrap_or("cosine"),
+        );
+
+        let k = params_list
+            .get("k")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        // annoy
+        let n_tree = params_list
+            .get("n_tree")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let search_budget = params_list
+            .get("search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        // nn descent
+        let max_iter = params_list
+            .get("max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        let rho = params_list
+            .get("rho")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0) as f32;
+
+        let delta = params_list
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
+
+        Self {
+            knn_method,
+            ann_dist,
+            k,
+            n_tree,
+            search_budget,
+            max_iter,
+            rho,
+            delta,
+        }
+    }
 }
 
 ////////////////
@@ -506,7 +626,7 @@ pub fn query_hnsw_index(
             let point = Point(query_mat.row(i).iter().cloned().collect(), ann_dist);
             let mut search = Search::default();
 
-            // Capture both indices and distances in one pass
+            // capture both indices and distances in one pass
             let search_results: Vec<_> = index.search(&point, &mut search).take(k).collect();
 
             let neighbors: Vec<usize> = search_results.iter().map(|item| *item.value).collect();
@@ -670,6 +790,28 @@ pub fn generate_knn_annoy(
 
     res
 }
+
+pub fn generate_knn_nndescent(
+    mat: MatRef<f32>,
+    dist_metric: &str,
+    k: usize,
+    max_iter: usize,
+    delta: f32,
+    rho: f32,
+    seed: usize,
+    verbose: bool,
+) -> Vec<Vec<usize>> {
+    let graph = NNDescent::build(mat, k, dist_metric, max_iter, delta, rho, seed, verbose);
+
+    graph
+        .into_iter()
+        .map(|neighbors| neighbors.into_iter().map(|(pid, _)| pid).collect())
+        .collect()
+}
+
+///////////////////
+// sNN functions //
+///////////////////
 
 /// Generate an sNN graph based on the kNN graph (full)
 ///

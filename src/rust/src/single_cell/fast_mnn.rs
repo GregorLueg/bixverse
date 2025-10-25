@@ -590,6 +590,9 @@ pub fn merge_two_batches(
 
             (knn_1_to_2, knn_2_to_1)
         }
+        KnnSearch::NNDescent => {
+            panic!("NNDescent is not supported for batch-balanced kNN")
+        }
     };
 
     let (mnn_1, mnn_2) = find_mutual_nns(&knn_1_to_2, &knn_2_to_1);

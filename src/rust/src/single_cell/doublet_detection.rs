@@ -90,6 +90,9 @@ type BoostPcaRes = (Mat<f32>, Mat<f32>, Vec<f32>, Vec<f32>);
 /// * `search_budget` - Search budget for Annoy (higher = more accurate but
 ///   slower).
 /// * `n_trees` - Number of trees for Annoy index generation.
+/// * `nn_max_iter` - Maximum iterations for the NNDescent kNN search
+/// * `rho` - Sampling rate for NNDescent.
+/// * `delta` - Early termination criterium for NNDescent
 #[derive(Clone, Debug)]
 pub struct BoostParams {
     // general params
@@ -122,6 +125,9 @@ pub struct BoostParams {
     pub dist_metric: String,
     pub search_budget: usize,
     pub n_trees: usize,
+    pub nn_max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
 }
 
 impl BoostParams {
@@ -140,6 +146,7 @@ impl BoostParams {
     pub fn from_r_list(r_list: List) -> Self {
         let params_list = r_list.into_hashmap();
 
+        // norm parameters
         let log_transform = params_list
             .get("log_transform")
             .and_then(|v| v.as_bool())
@@ -160,6 +167,7 @@ impl BoostParams {
             .and_then(|v| v.as_real())
             .map(|x| x as f32);
 
+        // hvg
         let min_gene_var_pctl = params_list
             .get("min_gene_var_pctl")
             .and_then(|v| v.as_real())
@@ -182,6 +190,7 @@ impl BoostParams {
             .and_then(|v| v.as_real())
             .map(|x| x as f32);
 
+        // doublet detection params
         let boost_rate = params_list
             .get("boost_rate")
             .and_then(|v| v.as_real())
@@ -191,16 +200,6 @@ impl BoostParams {
             .get("replace")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
-
-        let no_pcs = params_list
-            .get("no_pcs")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(30) as usize;
-
-        let random_svd = params_list
-            .get("random_svd")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
 
         let resolution = params_list
             .get("resolution")
@@ -216,6 +215,17 @@ impl BoostParams {
             .get("n_iters")
             .and_then(|v| v.as_integer())
             .unwrap_or(10) as usize;
+
+        // pca
+        let no_pcs = params_list
+            .get("no_pcs")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(30) as usize;
+
+        let random_svd = params_list
+            .get("random_svd")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
 
         let p_thresh = params_list
             .get("p_thresh")
@@ -257,6 +267,21 @@ impl BoostParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(10) as usize;
 
+        let nn_max_iter = params_list
+            .get("nn_max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        let rho = params_list
+            .get("rho")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0) as f32;
+
+        let delta = params_list
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
+
         Self {
             log_transform,
             mean_center,
@@ -280,6 +305,9 @@ impl BoostParams {
             dist_metric,
             search_budget,
             n_trees,
+            nn_max_iter,
+            rho,
+            delta,
         }
     }
 }
@@ -373,6 +401,9 @@ fn pca_boost(
             n_trees: 0,
             n_bins: 0,
             manual_threshold: None,
+            nn_max_iter: 0,
+            rho: 0.0,
+            delta: 0.0,
         },
         seed,
         verbose,
@@ -1012,6 +1043,16 @@ impl BoostClassifier {
                 k_adj,
                 self.params.n_trees,
                 self.params.search_budget,
+                seed,
+                verbose,
+            ),
+            KnnSearch::NNDescent => generate_knn_nndescent(
+                embd.as_ref(),
+                &self.params.dist_metric,
+                k_adj,
+                self.params.nn_max_iter,
+                self.params.delta,
+                self.params.rho,
                 seed,
                 verbose,
             ),

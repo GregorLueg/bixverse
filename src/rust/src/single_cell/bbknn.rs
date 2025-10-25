@@ -214,6 +214,9 @@ fn get_batch_balanced_knn(
                     verbose,
                 )
             }
+            KnnSearch::NNDescent => {
+                panic!("NNDescent is not supported for BBKNN")
+            }
         };
 
         let col_start = batch_idx * bbknn_params.neighbours_within_batch;

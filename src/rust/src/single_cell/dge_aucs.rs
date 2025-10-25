@@ -55,23 +55,48 @@ pub struct DgeMannWhitneyRes {
 ///
 /// ### Fields
 ///
+/// ** Meta cell params**
+///
 /// * `max_shared` - Maximum number of shared cells for the meta cell
 ///   aggregation
 /// * `target_no_metacells` - Number of target meta cells.
 /// * `max_iter` - Maximum iterations for the algorithm.
+///
+/// ** General kNN params**
+///
 /// * `k` - Number of neighbours for the kNN algorithm.
 /// * `knn_method` - Which method to use for the generation of the kNN graph.
-///   One of `"hnsw"` or `"annoy"`
+///   One of `"hnsw"`, `"annoy"` or `"nndescent"`
+/// * `ann_dist` - The distance metric for the approximate nearest neighbour
+///   search. One of `"cosine"` or `"euclidean"`.
+///
+/// **Annoy**
+///
+/// * `n_tree` - Number of trees for the generation of the index
+/// * `search_budget` - Search budget during querying
+///
+/// **NN Descent**
+///
+/// * `max_iter` - Maximum iterations for the algorithm
+/// * `rho` - Sampling rate for the algorithm
+/// * `delta` - Early termination criterium
 #[derive(Clone, Debug)]
 pub struct MetaCellParams {
+    // meta cell params
     pub max_shared: usize,
     pub target_no_metacells: usize,
     pub max_iter: usize,
+    // general knn params
     pub k: usize,
     pub knn_method: String,
     pub ann_dist: String,
-    pub n_trees: usize,
+    // annoy params
+    pub n_tree: usize,
     pub search_budget: usize,
+    // nn descent params
+    pub nn_max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
 }
 
 impl MetaCellParams {
@@ -87,6 +112,7 @@ impl MetaCellParams {
     pub fn from_r_list(r_list: List) -> Self {
         let meta_cell_params = r_list.into_hashmap();
 
+        // meta cell
         let max_shared = meta_cell_params
             .get("max_shared")
             .and_then(|v| v.as_integer())
@@ -99,6 +125,8 @@ impl MetaCellParams {
             .get("max_iter")
             .and_then(|v| v.as_integer())
             .unwrap_or(5000) as usize;
+
+        // generall knn
         let k = meta_cell_params
             .get("k")
             .and_then(|v| v.as_integer())
@@ -113,14 +141,33 @@ impl MetaCellParams {
             .and_then(|v| v.as_str())
             .unwrap_or("cosine")
             .to_string();
-        let n_trees = meta_cell_params
-            .get("n_trees")
+
+        // annoy
+        let n_tree = meta_cell_params
+            .get("n_tree")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
+
         let search_budget = meta_cell_params
             .get("search_budget")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
+
+        // nn descent
+        let nn_max_iter = meta_cell_params
+            .get("nn_max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        let rho = meta_cell_params
+            .get("rho")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0) as f32;
+
+        let delta = meta_cell_params
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
 
         Self {
             max_shared,
@@ -129,8 +176,11 @@ impl MetaCellParams {
             k,
             knn_method,
             ann_dist,
-            n_trees,
+            n_tree,
             search_budget,
+            nn_max_iter,
+            rho,
+            delta,
         }
     }
 }

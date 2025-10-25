@@ -179,11 +179,7 @@ impl NNDescent {
 
             let new_graph: Vec<Vec<Neighbour>> = (0..self.n)
                 .into_par_iter()
-                .map(|i| {
-                    let improved =
-                        self.update_neighbours(i, &graph[i], &candidates[i], k, &updates);
-                    improved
-                })
+                .map(|i| self.update_neighbours(i, &graph[i], &candidates[i], k, &updates))
                 .collect();
 
             graph = new_graph;
