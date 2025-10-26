@@ -127,7 +127,7 @@ impl KnnParams {
         let max_iter = params_list
             .get("max_iter")
             .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
+            .unwrap_or(25) as usize;
 
         let rho = params_list
             .get("rho")

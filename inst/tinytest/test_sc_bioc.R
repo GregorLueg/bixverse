@@ -204,7 +204,7 @@ expect_true(
       dim(bioc_knn_cosine)[2])) >=
     0.95,
   info = paste(
-    "kNN overlap with BiocNeighbors >= 0.9",
+    "kNN overlap with BiocNeighbors >= 0.95",
     "- NNDescent algorithm (cosine)"
   )
 )

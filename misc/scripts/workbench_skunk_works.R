@@ -856,12 +856,17 @@ boost_classifier_res = rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
   boost_params = params_boost(
     voter_thresh = 0.5,
-    resolution = 1.0
+    resolution = 1.0,
+    knn = list(knn_method = "nndescent")
   ),
   seed = 1210103L,
   verbose = TRUE,
   streaming = FALSE
 )
+
+# Total runtime: 28.42s
+# Total runtime: 109.15s
+# Total runtime: 66.48s
 
 #  == Running iteration 24 of 25 ==
 # Loaded in data : 1.70ms
@@ -901,6 +906,12 @@ metrics_helper(table(
     actual = boost_classifier_result_combined$doublet_demuxlet
   )
 ))
+
+# precision    recall        f1
+# 0.7241822 0.6152589 0.6652917
+
+# precision    recall        f1
+# 0.7299551 0.5945664 0.6553412
 
 scrublet_params = params_scrublet(
   log_transform = TRUE,

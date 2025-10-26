@@ -1065,7 +1065,7 @@ checkScScrublet <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
@@ -1254,7 +1254,7 @@ checkScBoost <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
