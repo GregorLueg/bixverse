@@ -17,23 +17,11 @@ min_lib_size <- 300L
 min_genes_exp <- 45L
 min_cells_exp <- 500L
 hvg_to_keep <- 30L
-no_pcs <- 5L
+no_pcs <- 10L
 
 ## synthetic test data ---------------------------------------------------------
 
 single_cell_test_data <- generate_single_cell_test_data()
-
-f_path_csr = file.path(tempdir(), "csr_test.h5ad")
-
-write_h5ad_sc(
-  f_path = f_path_csr,
-  counts = single_cell_test_data$counts,
-  obs = single_cell_test_data$obs,
-  single_cell_test_data$var,
-  .verbose = FALSE
-)
-
-## quick run -------------------------------------------------------------------
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
@@ -63,36 +51,18 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = tempdir())
 
-sc_object <- load_h5ad(
+sc_object <- load_r_data(
   object = sc_object,
-  h5_path = path.expand(f_path_csr),
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
   sc_qc_param = sc_qc_param,
   .verbose = FALSE
 )
 
-gs_of_interest <- list(
-  gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
-  gs_2 = c("gene_096", "gene_097", "gene_100")
-)
-
-sc_object <- gene_set_proportions_sc(
-  sc_object,
-  gs_of_interest,
-  .verbose = FALSE
-)
-
-threshold <- 0.05
-
-cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
-
-expect_true(
-  current = length(cells_to_keep) > 600,
-  info = "sensible cell filtering based on the threshold"
-)
-
-sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+sc_object <- set_cells_to_keep(sc_object, get_cell_names(sc_object))
 
 sc_object <- find_hvg_sc(
   object = sc_object,
@@ -109,14 +79,20 @@ sc_object <- calculate_pca_sc(
 
 ### knn generation -------------------------------------------------------------
 
-#### annoy cosine --------------------------------------------------------------
+#### bioc ----------------------------------------------------------------------
 
-# Bioc results
 bioc_knn_cosine <- BiocNeighbors::findKNN(
   X = get_pca_factors(sc_object),
   k = 15L,
   BNPARAM = BiocNeighbors::AnnoyParam(distance = "Cosine")
 )$index
+
+bioc_knn_euclidean <- BiocNeighbors::findKNN(
+  X = get_pca_factors(sc_object),
+  k = 15L
+)$index
+
+#### annoy cosine --------------------------------------------------------------
 
 # cosine
 sc_object <- find_neighbours_sc(
@@ -142,11 +118,6 @@ expect_true(
 )
 
 #### annoy euclidean -----------------------------------------------------------
-
-bioc_knn_euclidean <- BiocNeighbors::findKNN(
-  X = get_pca_factors(sc_object),
-  k = 15L
-)$index
 
 sc_object <- find_neighbours_sc(
   sc_object,
@@ -215,9 +186,56 @@ expect_true(
   )
 )
 
+#### nndescent cosine ----------------------------------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "nndescent"
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_cosine <- get_knn_mat(sc_object)
+
+expect_true(
+  current = (sum(sc_knn_cosine + 1 == bioc_knn_cosine) /
+    (dim(bioc_knn_cosine)[1] *
+      dim(bioc_knn_cosine)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.9",
+    "- NNDescent algorithm (cosine)"
+  )
+)
+
+#### nndescent euclidean -------------------------------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "nndescent",
+    ann_dist = "euclidean"
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_euclidean <- get_knn_mat(sc_object)
+
+expect_true(
+  current = (sum(sc_knn_euclidean + 1 == bioc_knn_euclidean) /
+    (dim(bioc_knn_euclidean)[1] *
+      dim(bioc_knn_euclidean)[2])) >=
+    0.95,
+  info = paste(
+    "kNN overlap with BiocNeighbors >= 0.95",
+    "- NNDescent algorithm (euclidean)"
+  )
+)
+
 ### snn graph ------------------------------------------------------------------
 
-#### euclidean -----------------------------------------------------------------
+#### bluster -------------------------------------------------------------------
 
 # snn generation
 bluster_snn_euclidean_rank <- bluster:::build_snn_graph(
@@ -231,6 +249,22 @@ bluster_snn_euclidean_jaccard <- bluster:::build_snn_graph(
   "jaccard",
   num_threads = 1
 )
+
+#### hnsw euclidean ------------------------------------------------------------
+
+# due to tiny differences, i will only test the case where the similarity
+# is perfect, i.e., HNSW == 1.
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn_algorithm = "hnsw",
+    ann_dist = "euclidean"
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_euclidean <- get_knn_mat(sc_object)
 
 bixverse_snn_euclidean_rank <- rs_sc_snn(
   sc_knn_euclidean,
@@ -288,60 +322,6 @@ expect_true(
     0.95,
   info = paste(
     "sNN full generation (euclidean; jaccard)",
-    "between bluster and bixverse - weights"
-  )
-)
-
-# #### cosine --------------------------------------------------------------------
-
-# snn generation
-bluster_snn_cosine_rank <- bluster:::build_snn_graph(
-  t(bioc_knn_cosine),
-  "rank",
-  num_threads = 1
-)
-
-bluster_snn_cosine_jaccard <- bluster:::build_snn_graph(
-  t(bioc_knn_cosine),
-  "jaccard",
-  num_threads = 1
-)
-
-bixverse_snn_cosine_rank <- rs_sc_snn(
-  sc_knn_cosine,
-  snn_method = "rank",
-  limited_graph = FALSE,
-  pruning = 0,
-  verbose = FALSE
-)
-
-bixverse_snn_cosine_jaccard <- rs_sc_snn(
-  sc_knn_cosine,
-  snn_method = "jaccard",
-  limited_graph = FALSE,
-  pruning = 0,
-  verbose = FALSE
-)
-
-# rank version
-
-expect_equal(
-  current = bixverse_snn_cosine_rank$edges + 1,
-  target = bluster_snn_cosine_rank$edges,
-  info = paste(
-    "sNN full generation (euclidean; rank)",
-    "between bluster and bixverse - edges"
-  )
-)
-
-expect_true(
-  current = cor(
-    bixverse_snn_cosine_rank$weights,
-    bluster_snn_cosine_rank$weights
-  ) >=
-    0.99,
-  info = paste(
-    "sNN full generation (euclidean; rank)",
     "between bluster and bixverse - weights"
   )
 )

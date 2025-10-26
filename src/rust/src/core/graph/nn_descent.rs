@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use faer::MatRef;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -159,27 +157,40 @@ impl NNDescent {
             println!("Initialising NN-Descent with {} cells - k={}", self.n, k);
         }
 
-        // initialise graph
         let mut graph = self.initialise_random(k, seed);
 
         for iter in 0..max_iter {
             let updates = AtomicUsize::new(0);
 
-            // adaptive sampling; reduce as iterations progress
             let current_rho = if iter < 2 {
                 rho
             } else {
-                (rho * 0.5_f32.powi((iter - 1) as i32)).max(0.2)
+                (rho - (iter - 1) as f32 * 0.1).max(0.2)
             };
 
-            let candidates: Vec<Vec<(usize, f32)>> = (0..self.n)
+            let all_candidates: Vec<Vec<(usize, f32)>> = (0..self.n)
                 .into_par_iter()
                 .map(|i| self.local_join(i, &graph, k, current_rho, seed + iter))
                 .collect();
 
+            let mut forward_candidates: Vec<Vec<(usize, f32)>> = vec![Vec::new(); self.n];
+            let mut reverse_candidates: Vec<Vec<(usize, f32)>> = vec![Vec::new(); self.n];
+
+            for (i, candidates) in all_candidates.into_iter().enumerate() {
+                forward_candidates[i].reserve(candidates.len());
+                for (j, dist) in candidates {
+                    forward_candidates[i].push((j, dist));
+                    reverse_candidates[j].push((i, dist));
+                }
+            }
+
             let new_graph: Vec<Vec<Neighbour>> = (0..self.n)
                 .into_par_iter()
-                .map(|i| self.update_neighbours(i, &graph[i], &candidates[i], k, &updates))
+                .map(|i| {
+                    let mut combined = forward_candidates[i].clone();
+                    combined.extend_from_slice(&reverse_candidates[i]);
+                    self.update_neighbours(i, &graph[i], &combined, k, &updates)
+                })
                 .collect();
 
             graph = new_graph;
@@ -205,11 +216,10 @@ impl NNDescent {
             }
         }
 
-        // Convert to output format
         graph
             .into_iter()
-            .map(|neighbors| {
-                neighbors
+            .map(|neighbours| {
+                neighbours
                     .into_iter()
                     .filter(|n| n.pid() < self.n)
                     .map(|n| (n.pid(), n.dist))
@@ -276,33 +286,51 @@ impl NNDescent {
         let mut candidates = FxHashSet::default();
         let mut rng = SmallRng::seed_from_u64((seed as u64).wrapping_mul((node + 1) as u64));
 
-        let new_neighbours: Vec<usize> = graph[node]
-            .iter()
-            .filter(|n| n.is_new())
-            .map(|n| n.pid())
-            .collect();
+        let mut new_neighbours = Vec::new();
+        let mut old_neighbours = Vec::new();
 
-        if new_neighbours.is_empty() {
-            return Vec::new();
+        for n in &graph[node] {
+            if n.is_new() {
+                new_neighbours.push(n.pid());
+            } else {
+                old_neighbours.push(n.pid());
+            }
         }
 
-        for &neighbour in &new_neighbours {
-            for nn in &graph[neighbour] {
-                if nn.is_new() {
-                    let pid = nn.pid();
-                    if pid != node {
-                        candidates.insert(pid);
-                    }
+        let n_old_sample =
+            ((old_neighbours.len() as f32 * rho).ceil() as usize).min(old_neighbours.len());
+        if old_neighbours.len() > n_old_sample {
+            for i in 0..n_old_sample {
+                let j = rng.random_range(i..old_neighbours.len());
+                old_neighbours.swap(i, j);
+            }
+            old_neighbours.truncate(n_old_sample);
+        }
+
+        // Consider ALL neighbours of new neighbours
+        for &new_nb in &new_neighbours {
+            for nn in &graph[new_nb] {
+                let pid = nn.pid();
+                if pid != node {
+                    candidates.insert(pid);
                 }
             }
         }
 
-        // sample based on rho
+        // Consider ALL neighbours of sampled old neighbours
+        for &old_nb in &old_neighbours {
+            for nn in &graph[old_nb] {
+                let pid = nn.pid();
+                if pid != node {
+                    candidates.insert(pid);
+                }
+            }
+        }
+
         let sample_size = ((candidates.len() as f32 * rho).ceil() as usize).min(k * 5);
         let mut candidate_vec: Vec<usize> = candidates.into_iter().collect();
 
         if candidate_vec.len() > sample_size {
-            // Fisher-Yates shuffle...
             for i in 0..sample_size {
                 let j = rng.random_range(i..candidate_vec.len());
                 candidate_vec.swap(i, j);

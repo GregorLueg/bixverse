@@ -95,7 +95,7 @@ impl KnnParams {
         // general
         let knn_method = std::string::String::from(
             params_list
-                .get("knn_method")
+                .get("knn_algorithm")
                 .and_then(|v| v.as_str())
                 .unwrap_or("annoy"),
         );
@@ -161,8 +161,15 @@ impl KnnParams {
 pub struct Point(Vec<f32>, AnnDist);
 
 impl DistancePoint for Point {
-    /// Distance function. This is Euclidean distance without squaring for
-    /// speed gains. Does not change the rank order in KNN generation.
+    /// Distance function.
+    ///
+    /// ### Params
+    ///
+    /// * `other` - The other point to compare to
+    ///
+    /// ### Returns
+    ///
+    /// The distance between self and the other point.
     #[inline(always)]
     fn distance(&self, other: &Self) -> f32 {
         debug_assert_eq!(self.0.len(), other.0.len());
@@ -295,6 +302,7 @@ pub fn parse_knn_method(s: &str) -> Option<KnnSearch> {
     match s.to_lowercase().as_str() {
         "annoy" => Some(KnnSearch::Annoy),
         "hnsw" => Some(KnnSearch::Hnsw),
+        "nndescent" => Some(KnnSearch::NNDescent),
         _ => None,
     }
 }
@@ -791,6 +799,7 @@ pub fn generate_knn_annoy(
     res
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn generate_knn_nndescent(
     mat: MatRef<f32>,
     dist_metric: &str,

@@ -6,10 +6,13 @@
 \usage{
 params_sc_neighbours(
   k = 15L,
+  knn_algorithm = c("annoy", "hnsw", "nndescent"),
+  ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L,
-  knn_algorithm = c("annoy", "hnsw"),
-  ann_dist = c("cosine", "euclidean"),
+  max_iter = 25L,
+  rho = 1,
+  delta = 0.001,
   full_snn = FALSE,
   pruning = 1/15,
   snn_similarity = c("rank", "jaccard")
@@ -18,16 +21,23 @@ params_sc_neighbours(
 \arguments{
 \item{k}{Integer. Number of neighbours to return.}
 
+\item{knn_algorithm}{String. One of \code{c("annoy", "hnsw", "nndescent")}.
+Defaults to \code{"annoy"}.}
+
+\item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
+metric to be used for the approximate neighbour search.}
+
 \item{n_trees}{Integer. Number of trees to use for the \code{annoy} algorithm.}
 
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
 
-\item{knn_algorithm}{String. One of \code{c("annoy", "hnsw")}. Defaults to
-\code{"annoy"}.}
+\item{max_iter}{Integer. Maximum iterations for the \code{nndescent} algorithm.}
 
-\item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
-metric to be used for the approximate neighbour search.}
+\item{rho}{Numeric. Sampling rate for the \code{nndescent} algorithm.}
+
+\item{delta}{Numeric. Early termination criterium for the \code{nndescent}
+algorithm.}
 
 \item{full_snn}{Boolean. Shall the full shared nearest neighbour graph
 be generated that generates edges between all cells instead of between

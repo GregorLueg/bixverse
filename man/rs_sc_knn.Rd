@@ -4,33 +4,14 @@
 \alias{rs_sc_knn}
 \title{Generates the kNN graph}
 \usage{
-rs_sc_knn(
-  embd,
-  no_neighbours,
-  n_trees,
-  search_budget,
-  algorithm_type,
-  ann_dist,
-  verbose,
-  seed
-)
+rs_sc_knn(embd, knn_params, verbose, seed)
 }
 \arguments{
 \item{embd}{Numerical matrix. The embedding matrix to use to generate the
 kNN graph.}
 
-\item{no_neighbours}{Integer. Number of neighbours to return}
-
-\item{n_trees}{Integer. Number of trees to use for the \code{"annoy"} algorithm.}
-
-\item{search_budget}{Integer. Search budget per tree for the \code{"annoy"}
-algorithm.}
-
-\item{algorithm_type}{String. Which of the two implemented algorithms to
-use. One of \code{c("annoy", "hnsw")}.}
-
-\item{ann_dist}{String. The distance metric to use the approximate nearest
-neighbour search. One of \code{c("cosine", "euclidean")}.}
+\item{knn_params}{List. The kNN parameters defined by
+\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
 
 \item{verbose}{Boolean. Controls verbosity of the function and returns
 how long certain operations took.}

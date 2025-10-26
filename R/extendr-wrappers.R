@@ -2159,14 +2159,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #'
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
-#' @param no_neighbours Integer. Number of neighbours to return
-#' @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
-#' @param search_budget Integer. Search budget per tree for the `"annoy"`
-#' algorithm.
-#' @param algorithm_type String. Which of the two implemented algorithms to
-#' use. One of `c("annoy", "hnsw")`.
-#' @param ann_dist String. The distance metric to use the approximate nearest
-#' neighbour search. One of `c("cosine", "euclidean")`.
+#' @param knn_params List. The kNN parameters defined by
+#' [bixverse::params_sc_neighbours()].
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.
@@ -2175,7 +2169,7 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' number of neighbours.
 #'
 #' @export
-rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed)
+rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'

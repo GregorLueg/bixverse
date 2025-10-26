@@ -933,15 +933,15 @@ checkScScrublet <- function(x) {
       "sim_doublet_ratio",
       "expected_doublet_rate",
       "stdev_doublet_rate",
+      "manual_threshold",
+      "n_bins",
       "no_pcs",
       "random_svd",
       "k",
       "knn_method",
       "dist_metric",
       "search_budget",
-      "n_trees",
-      "n_bins",
-      "manual_threshold"
+      "n_trees"
     )
   )
   if (!isTRUE(res)) {
@@ -1373,7 +1373,6 @@ checkScHvg <- function(x) {
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 checkScNeighbours <- function(x) {
-  # Checkmate extension
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
@@ -1384,6 +1383,9 @@ checkScNeighbours <- function(x) {
       "k",
       "n_trees",
       "search_budget",
+      "max_iter",
+      "rho",
+      "delta",
       "knn_algorithm",
       "full_snn",
       "pruning",
@@ -1397,7 +1399,10 @@ checkScNeighbours <- function(x) {
   rules <- list(
     "k" = "I1",
     "n_trees" = "I1",
-    "search_budget" = "I1",
+    "search_budget" = "N1",
+    "max_iter" = "I1",
+    "rho" = "N1",
+    "delta" = "N1",
     "full_snn" = "B1",
     "pruning" = "N1[0, 1]"
   )
@@ -1414,16 +1419,16 @@ checkScNeighbours <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees and search budged need to be integers.",
-          "full_snn needs to be boolean and pruning a number between 0 and 1."
+          "incorrect: k, n_trees, search_budget, and max_iter need to be integers.",
+          "rho and delta need to be numeric. full_snn needs to be boolean and",
+          "pruning a number between 0 and 1."
         ),
         broken_elem
       )
     )
   }
-  # test
   test_choice_rules <- list(
-    knn_algorithm = c("annoy", "hnsw"),
+    knn_algorithm = c("annoy", "hnsw", "nndescent"),
     snn_similarity = c("rank", "jaccard"),
     ann_dist = c("cosine", "euclidean")
   )
@@ -1439,14 +1444,13 @@ checkScNeighbours <- function(x) {
     return(
       sprintf(
         paste0(
-          "The following element `%s` in the KNN generation is not one of",
+          "The following element `%s` in the KNN generation is not one of ",
           "the expected choices. Please double check the documentation."
         ),
         broken_elem
       )
     )
   }
-
   return(TRUE)
 }
 

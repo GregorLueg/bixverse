@@ -481,14 +481,8 @@ fn rs_sc_pca(
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
-/// @param no_neighbours Integer. Number of neighbours to return
-/// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
-/// @param search_budget Integer. Search budget per tree for the `"annoy"`
-/// algorithm.
-/// @param algorithm_type String. Which of the two implemented algorithms to
-/// use. One of `c("annoy", "hnsw")`.
-/// @param ann_dist String. The distance metric to use the approximate nearest
-/// neighbour search. One of `c("cosine", "euclidean")`.
+/// @param knn_params List. The kNN parameters defined by
+/// [bixverse::params_sc_neighbours()].
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -498,7 +492,6 @@ fn rs_sc_pca(
 ///
 /// @export
 #[extendr]
-#[allow(clippy::too_many_arguments)]
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     knn_params: List,
@@ -533,7 +526,7 @@ fn rs_sc_knn(
         ),
         KnnSearch::NNDescent => generate_knn_nndescent(
             embd.as_ref(),
-            &knn_params.knn_method,
+            &knn_params.ann_dist,
             knn_params.k,
             knn_params.max_iter,
             knn_params.delta,
