@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, feat/skunk_works]
   pull_request:
-    branches: [main, feat/skunk_works]
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
