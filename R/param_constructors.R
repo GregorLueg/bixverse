@@ -9,21 +9,28 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"annoy"`.
+#'  neighbour search. Defaults to `"nndescent"`.
 #'  \item dist_metric - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"euclidean"`.
 #'  \item search_budget - Search budget per tree for Annoy. Defaults to `100L`.
 #'  \item n_trees - Number of trees to generate for Annoy. Defaults to `100L`.
+#'  \item nn_max_iter - Maximum iterations for NNDescent. Defaults to `15L`.
+#'  \item rho - Sampling rate for NNDescent. Defaults to `1.0`.
+#'  \item delta - Early termination criterium for NNDescent. Defaults to
+#'  `0.001`.
 #' }
 #'
 #' @export
 params_knn_defaults <- function() {
   list(
     k = 0L,
-    knn_method = "annoy",
+    knn_method = "nndescent",
     dist_metric = "euclidean",
     search_budget = 100L,
-    n_trees = 100L
+    n_trees = 100L,
+    nn_max_iter = 15L,
+    rho = 1.0,
+    delta = 0.001
   )
 }
 
@@ -95,6 +102,10 @@ params_pca_defaults <- function() {
 
 #' Wrapper function for Scrublet doublet detection parameters
 #'
+#' @description Constructor for the various Scrublet parameters. In this case,
+#' the default for the kNN graph generation was set to `"hnsw"` as this
+#' algorithm showed the best performance in different empirical benchmarks.
+#'
 #' @param sim_doublet_ratio Numeric. Number of doublets to simulate relative to
 #' the number of observed cells. For example, 2.0 simulates twice as many
 #' doublets as there are cells. Defaults to `1.5`.
@@ -120,7 +131,8 @@ params_pca_defaults <- function() {
 #' `random_svd`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`.
+#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`.
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
 #' any user-specified overrides.
@@ -135,7 +147,7 @@ params_scrublet <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list()
+  knn = list(knn_method = "hnsw")
 ) {
   # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
@@ -198,7 +210,8 @@ params_scrublet <- function(
 #' `random_svd`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`.
+#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`.
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.

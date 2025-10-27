@@ -856,18 +856,17 @@ boost_classifier_res = rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
   boost_params = params_boost(
     voter_thresh = 0.5,
-    resolution = 1.0,
-    knn = list(knn_method = "nndescent")
+    resolution = 1.0
   ),
   seed = 1210103L,
   verbose = TRUE,
   streaming = FALSE
 )
 
-# Total runtime: 28.42s <- Annoy
+# Total runtime: 33.11s <- Annoy
 # Total runtime: 63.98s <- HNSW
 # Total runtime: 109.15s
-# Total runtime: 66.48s <- NNDescent
+# Total runtime: 41.03s <- NNDescent
 
 #  == Running iteration 24 of 25 ==
 # Loaded in data : 1.70ms
@@ -915,21 +914,15 @@ metrics_helper(table(
 # 0.7299551 0.5945664 0.6553412
 
 scrublet_params = params_scrublet(
-  log_transform = TRUE,
-  mean_center = FALSE,
-  normalise_variance = FALSE,
-  expected_doublet_rate = 0.05,
-  min_gene_var_pctl = 0.7,
-  dist_metric = "euclidean",
-  target_size = 1e6,
-  sim_doublet_ratio = 2.0
+  knn = list(knn_method = "hnsw"),
+  sim_doublet_ratio = 1.5
 )
 
 scrublet_res = rs_sc_scrublet(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object_pmbc),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object_pmbc),
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
-  scrublet_params = params_scrublet(),
+  scrublet_params = scrublet_params,
   seed = 1210103L,
   verbose = TRUE,
   streaming = FALSE,
@@ -953,3 +946,13 @@ metrics_helper(table(
     actual = scrublet_result_combined$doublet_demuxlet
   )
 ))
+
+# ANNOY
+
+# 1.5
+# precision    recall        f1
+# 0.3636947 0.7590361 0.4917606
+
+# 2.0
+# precision    recall        f1
+# 0.7203335 0.6765060 0.6977322

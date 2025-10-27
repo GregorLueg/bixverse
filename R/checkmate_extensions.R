@@ -941,7 +941,10 @@ checkScScrublet <- function(x) {
       "knn_method",
       "dist_metric",
       "search_budget",
-      "n_trees"
+      "n_trees",
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -954,7 +957,8 @@ checkScScrublet <- function(x) {
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "n_bins" = "I1[10,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -972,7 +976,8 @@ checkScScrublet <- function(x) {
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
           "no_pcs must be >= 1; k must be >= 0;",
-          "search_budget and n_trees must be >= 1; n_bins must be >= 10."
+          "search_budget, n_trees and nn_max_iter must be >= 1;",
+          "n_bins must be >= 10."
         ),
         broken_elem
       )
@@ -985,7 +990,9 @@ checkScScrublet <- function(x) {
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
-    "stdev_doublet_rate" = "N1[0,1]"
+    "stdev_doublet_rate" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1002,8 +1009,9 @@ checkScScrublet <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
-          "min_gene_var_pctl, expected_doublet_rate, and stdev_doublet_rate",
-          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
+          "min_gene_var_pctl, expected_doublet_rate, stdev_doublet_rate",
+          "and delta must be in [0,1];",
+          "loess_span, rho sim_doublet_ratio must be > 0;",
           "target_size must be a numeric >= 1"
         ),
         broken_elem
@@ -1131,7 +1139,10 @@ checkScBoost <- function(x) {
       "knn_method",
       "dist_metric",
       "search_budget",
-      "n_trees"
+      "n_trees",
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -1144,7 +1155,8 @@ checkScBoost <- function(x) {
     "n_iters" = "I1[1,)",
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)"
+    "n_trees" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1161,7 +1173,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs, n_iters, search_budget and n_trees must be >= 1;",
+          "no_pcs, n_iters, search_budget, nn_max_iter & n_trees must be >= 1;",
           "k must be >= 0."
         ),
         broken_elem
@@ -1176,7 +1188,9 @@ checkScBoost <- function(x) {
     "boost_rate" = "N1[0,1]",
     "resolution" = "N1(0,)",
     "p_thresh" = "N1(0,)",
-    "voter_thresh" = "N1[0,1]"
+    "voter_thresh" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1193,8 +1207,8 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
-          "loess_span, resolution and p_thresh must be > 0."
+          "min_gene_var_pctl, boost_rate, delta and  voter_thresh must be in",
+          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0."
         ),
         broken_elem
       )

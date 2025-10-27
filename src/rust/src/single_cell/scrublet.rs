@@ -109,8 +109,9 @@ pub type FinalScrubletRes = (
 /// * `search_budget` - Search budget for Annoy (higher = more accurate but
 ///   slower).
 /// * `n_trees` - Number of trees for Annoy index generation.
-///
-
+/// * `nn_max_iter` - Maximum iterations for the NNDescent kNN search
+/// * `rho` - Sampling rate for NNDescent.
+/// * `delta` - Early termination criterium for NNDescent
 #[derive(Clone, Debug)]
 pub struct ScrubletParams {
     // general params
@@ -256,7 +257,7 @@ impl ScrubletParams {
             scrublet_list
                 .get("knn_method")
                 .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
+                .unwrap_or("hnsw"),
         );
 
         let dist_metric = std::string::String::from(

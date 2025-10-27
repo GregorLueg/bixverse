@@ -16,11 +16,6 @@ use crate::core::graph::knn::{parse_ann_dist, AnnDist};
 
 /// Packed neighbours structure for efficient memory layout
 ///
-/// ### Algorithm Context
-/// NN-Descent maintains a k-NN graph where each vertex stores its k nearest
-/// neighbours. We track whether each neighbour is "new" (recently added) or
-/// "old" (stable) to guide the local join operations.
-///
 /// ### Fields
 ///
 /// * `pid` - Neighbour's point ID
@@ -36,6 +31,13 @@ struct Neighbour {
 }
 
 impl Neighbour {
+    /// Generate a new Neighbour
+    ///
+    /// ### Params
+    ///
+    /// * `pid` - Current point ID
+    /// * `dist` - Distance
+    /// * `is_new` - Boolean indicating if the neighbour is new.
     #[inline(always)]
     fn new(pid: usize, dist: f32, is_new: bool) -> Self {
         Self {
@@ -45,11 +47,21 @@ impl Neighbour {
         }
     }
 
+    /// Getter for is True
+    ///
+    /// ### Returns
+    ///
+    /// Is this a new neighbour.
     #[inline(always)]
     fn is_new(&self) -> bool {
         self.is_new != 0
     }
 
+    /// Getter for point ID
+    ///
+    /// ### Returns
+    ///
+    /// The point identifier.
     #[inline(always)]
     fn pid(&self) -> usize {
         self.pid as usize
@@ -57,7 +69,8 @@ impl Neighbour {
 }
 
 /// Wrapper for f32 that implements Ord for use in BinaryHeap
-/// We use this to maintain max-heaps of distances
+///
+/// Faster than the sorts on full vectors and allows to keep data on heap
 #[derive(Clone, Copy, Debug)]
 struct OrderedFloat(f32);
 
@@ -77,7 +90,9 @@ impl PartialOrd for OrderedFloat {
 
 impl Ord for OrderedFloat {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap_or(std::cmp::Ordering::Equal)
+        self.0
+            .partial_cmp(&other.0)
+            .unwrap_or(std::cmp::Ordering::Equal)
     }
 }
 
@@ -85,9 +100,7 @@ impl Ord for OrderedFloat {
 // Thread-local buffers //
 //////////////////////////
 
-// OPTIMISATION: Use a max-heap instead of sorting
-// The heap maintains the k worst (largest) distances, allowing O(log k) insertions
-// instead of O(n log n) sorting where n can be >> k
+// Store thread local the Heap buffers
 thread_local! {
     static HEAP_BUFFER: RefCell<BinaryHeap<Reverse<(OrderedFloat, usize, bool)>>> =
         const { RefCell::new(BinaryHeap::new()) };
@@ -99,16 +112,25 @@ thread_local! {
 
 /// NN-Descent graph builder
 ///
+/// ### Fields
+///
+/// * `vectors_flat` - Flat structure of the initial data for better cache
+///   locality
+/// * `dim` - Initial feature dimensions
+/// * `n` - Number of samples
+/// * `metric` - Which distance metric to use. One of Euclidean or Cosine
+/// * `norms` - Normalised values for each data point. Will be pre-computed
+///   once if distance metric is Cosine.
+///
 /// ### Algorithm Overview
+///
 /// NN-Descent iteratively improves a k-NN graph through "local joins":
+///
 /// 1. For each vertex, examine neighbours of its neighbours
 /// 2. Compute distances between these candidates
 /// 3. Update the k-NN lists if improvements found
 /// 4. Mark updated neighbours as "new" to guide next iteration
-/// 5. Repeat until convergence (few updates remain)
-///
-/// The key insight: good neighbours tend to be neighbours of neighbours,
-/// so we can avoid computing all O(n²) distances.
+/// 5. Repeat until convergence
 pub struct NNDescent {
     vectors_flat: Vec<f32>,
     dim: usize,
@@ -149,13 +171,13 @@ impl NNDescent {
         let n = mat.nrows();
         let n_features = mat.ncols();
 
-        // Flatten matrix into contiguous memory for faster access
+        // flatten matrix into contiguous memory for faster access
         let mut vectors_flat = Vec::with_capacity(n * n_features);
         for i in 0..n {
             vectors_flat.extend(mat.row(i).iter().copied());
         }
 
-        // Pre-compute norms for cosine distance
+        // [re-compute norms for cosine distance
         let norms = if metric == AnnDist::Cosine {
             (0..n)
                 .map(|i| {
@@ -180,25 +202,40 @@ impl NNDescent {
             norms,
         };
 
-        // Initialise with Annoy for better-than-random starting point
-        let annoy_index = AnnoyIndex::new(mat, 25, seed);
+        // initialise with Annoy for better-than-random starting point
+        // 32 trees is what they use in the original paper
+        let annoy_index = AnnoyIndex::new(mat, 32, seed);
 
         builder.run(k, max_iter, &annoy_index, delta, rho, seed, verbose)
     }
 
     /// Run the underlying algorithm
     ///
+    /// ### Params
+    ///
+    /// * `k` - Number of neighbours to search for
+    /// * `max_iter` - Maximum number of iterations for the algorithm.
+    /// * `annoy_index` - Annoy index for the initial fast initialisation of
+    ///   the graph.
+    /// * `delta` - Tolerance parameter. Should the proportion of changes in a
+    ///   given iteration fall below that value, the algorithm stops.
+    /// * `rho` - Sampling rate. Will be adaptively reduced in each iteration.
+    /// * `seed` - Random seed for reproduction
+    /// * `verbose` - Controls verbosity of the function
+    ///
+    /// ### Returns
+    ///
+    /// A nested vector of the updated nearest neighbours with their distances.
+    ///
     /// ### Algorithm Details
     ///
     /// Each iteration consists of:
-    /// 1. **Candidate Generation**: For each vertex, find candidates via local_join
-    /// 2. **Bidirectional Distribution**: Candidates are both forward (i→j) and
-    ///    reverse (j→i), ensuring the graph remains undirected
-    /// 3. **Parallel Update**: Each vertex updates its k-NN list independently
-    /// 4. **Convergence Check**: Stop if update rate falls below delta
-    ///
-    /// The sampling rate `rho` controls how aggressively we explore old neighbours,
-    /// and decays over iterations (0.8^(iter-1)) to focus on promising regions.
+    /// 1. Candidate Generation: *For each vertex, find candidates via
+    ///    local_join*
+    /// 2. Bidirectional Distribution: *Candidates are both forward (i→j) and
+    ///    reverse (j→i), ensuring the graph remains undirected*
+    /// 3. Parallel Update: *Each vertex updates its k-NN list independently*
+    /// 4. Convergence Check: *Stop if update rate falls below delta*
     #[allow(clippy::too_many_arguments)]
     fn run(
         &self,
@@ -219,16 +256,13 @@ impl NNDescent {
         for iter in 0..max_iter {
             let updates = AtomicUsize::new(0);
 
-            // Adaptive sampling: start with full exploration (rho=1.0 on iter 0),
-            // then decay to focus on most promising candidates
             let current_rho = if iter == 0 {
                 1.0
             } else {
                 (rho * 0.8_f32.powi(iter as i32 - 1)).max(0.3)
             };
 
-            // PHASE 1: Parallel candidate collection
-            // Each vertex independently generates candidate neighbours
+            // phase 1: parallel candidate collection
             let all_candidates: Vec<(usize, Vec<(usize, f32)>)> = (0..self.n)
                 .into_par_iter()
                 .map(|i| {
@@ -237,14 +271,12 @@ impl NNDescent {
                 })
                 .collect();
 
-            // PHASE 2: Bidirectional candidate distribution
-            // In an undirected graph, if i→j is a candidate, then j→i should be too
+            // phase 2: bidirectional candidate distribution
             let mut forward_candidates: Vec<Vec<(usize, f32)>> =
                 vec![Vec::with_capacity(k * 5); self.n];
             let mut reverse_candidates: Vec<Vec<(usize, f32)>> =
                 vec![Vec::with_capacity(k * 5); self.n];
 
-            // Parallel distribution via chunked accumulation to reduce contention
             let chunk_size = all_candidates.len().div_ceil(rayon::current_num_threads());
             let reverse_chunks: Vec<Vec<Vec<(usize, f32)>>> = all_candidates
                 .par_chunks(chunk_size)
@@ -259,20 +291,17 @@ impl NNDescent {
                 })
                 .collect();
 
-            // Sequential forward distribution (no conflicts possible)
             for (i, candidates) in &all_candidates {
                 forward_candidates[*i].extend(candidates.iter().copied());
             }
 
-            // Merge reverse candidates from all chunks
             for local_reverse in reverse_chunks {
                 for (j, edges) in local_reverse.into_iter().enumerate() {
                     reverse_candidates[j].extend(edges);
                 }
             }
 
-            // PHASE 3: Parallel graph update
-            // Each vertex updates its k-NN list with the best candidates
+            // phase 3: parallel graph update
             let new_graph: Vec<Vec<Neighbour>> = (0..self.n)
                 .into_par_iter()
                 .map(|i| {
@@ -288,7 +317,7 @@ impl NNDescent {
 
             graph = new_graph;
 
-            // PHASE 4: Convergence check
+            // phase 4: convergence check
             let update_count = updates.load(Ordering::Relaxed);
             let update_rate = update_count as f32 / self.n as f32;
 
@@ -302,7 +331,7 @@ impl NNDescent {
                 );
             }
 
-            // Early termination if convergence achieved
+            // early termination if convergence achieved
             if update_rate < delta {
                 if verbose {
                     println!(
@@ -316,7 +345,6 @@ impl NNDescent {
             }
         }
 
-        // Convert to final output format (without the is_new flags)
         graph
             .into_iter()
             .map(|neighbours| neighbours.into_iter().map(|n| (n.pid(), n.dist)).collect())
@@ -341,7 +369,7 @@ impl NNDescent {
 
                 // Use Annoy to get initial k neighbors
                 // search_k controls quality - higher = better but slower
-                let search_k = (k * 3).min(k * 10);
+                let search_k = (k * 3).min(100);
                 let (indices, distances) =
                     annoy_index.query(query_vec, &self.metric, k, Some(search_k));
 
@@ -357,17 +385,6 @@ impl NNDescent {
 
     /// Local join: find candidates from neighbours of neighbours
     ///
-    /// ### OPTIMISATION: Early Distance Threshold Pruning
-    /// Unlike the previous version, we now track the worst (largest) distance
-    /// in the current k-NN list and only compute distances for candidates that
-    /// might improve it. This is crucial in pynndescent's performance.
-    ///
-    /// ### Algorithm
-    /// 1. Separate new vs old neighbours
-    /// 2. Sample old neighbours according to rho
-    /// 3. Explore neighbours-of-neighbours (NN's NN)
-    /// 4. **NEW**: Only compute distances if they might beat worst current distance
-    /// 5. Return promising candidates
     ///
     /// ### Params
     ///
@@ -380,6 +397,14 @@ impl NNDescent {
     /// ### Returns
     ///
     /// Vec of potential candidates as tuple `(index, dist)`.
+    ///
+    /// ### Algorithm Details
+    ///
+    /// 1. Separate new vs old neighbours
+    /// 2. Sample old neighbours according to rho
+    /// 3. Explore neighbours-of-neighbours (NN's NN)
+    /// 4. Only compute distances if they might beat worst current distance
+    /// 5. Return promising candidates
     fn local_join(
         &self,
         node: usize,
@@ -390,16 +415,11 @@ impl NNDescent {
     ) -> Vec<(usize, f32)> {
         let mut rng = SmallRng::seed_from_u64((seed as u64).wrapping_mul((node + 1) as u64));
 
-        // OPTIMISATION: Get the worst distance in current k-NN list
-        // This is the threshold we need to beat to make an improvement
         let worst_current_dist = graph[node].last().map(|n| n.dist).unwrap_or(f32::INFINITY);
 
         let mut new_neighbours = Vec::new();
         let mut old_neighbours = Vec::new();
 
-        // Separate new and old neighbours
-        // NN-Descent focuses computation on "new" neighbours as they're more
-        // likely to lead to improvements
         for n in &graph[node] {
             if n.is_new() {
                 new_neighbours.push(n.pid());
@@ -408,12 +428,9 @@ impl NNDescent {
             }
         }
 
-        // Sample old neighbours with probability rho
-        // This reduces work in later iterations when most neighbours are "old"
         let n_old_sample =
             ((old_neighbours.len() as f32 * rho).ceil() as usize).min(old_neighbours.len());
         if old_neighbours.len() > n_old_sample {
-            // Fisher-Yates shuffle for uniform sampling
             for i in 0..n_old_sample {
                 let j = rng.random_range(i..old_neighbours.len());
                 old_neighbours.swap(i, j);
@@ -421,14 +438,12 @@ impl NNDescent {
             old_neighbours.truncate(n_old_sample);
         }
 
-        // Limit candidates to avoid excessive computation
         let max_per_neighbour = k.min(10);
         let max_per_old = (k / 2).min(5);
         let max_candidates = k * 4;
 
         let mut candidate_ids = Vec::with_capacity(max_candidates);
 
-        // Explore new neighbours' neighbourhoods (more thoroughly)
         for &new_nb in &new_neighbours {
             let neighbour_list = &graph[new_nb];
             let take = max_per_neighbour.min(neighbour_list.len());
@@ -454,7 +469,6 @@ impl NNDescent {
             }
         }
 
-        // Explore sampled old neighbours' neighbourhoods (less thoroughly)
         for &old_nb in &old_neighbours {
             if candidate_ids.len() >= max_candidates {
                 break;
@@ -483,9 +497,6 @@ impl NNDescent {
             }
         }
 
-        // OPTIMISATION: Early distance pruning
-        // Only compute distances for candidates that might improve the k-NN list
-        // This is a key optimisation in pynndescent that was missing before
         match self.metric {
             AnnDist::Euclidean => candidate_ids
                 .into_iter()
@@ -514,27 +525,7 @@ impl NNDescent {
         }
     }
 
-    /// Update the neighbours with improvements using a max-heap
-    ///
-    /// ### OPTIMISATION: Heap-based Updates Instead of Sorting
-    ///
-    /// **Previous approach:**
-    /// - Merge all candidates into a vector
-    /// - Sort the entire vector: O(n log n) where n can be 5k+
-    /// - Deduplicate and truncate to k
-    ///
-    /// **New approach:**
-    /// - Maintain a max-heap of size k (worst distances at top)
-    /// - For each candidate: if better than worst, pop worst and push candidate: O(log k)
-    /// - Total: O(m log k) where m is number of candidates
-    ///
-    /// When k=30 and m=200, this changes from ~1,400 operations to ~1,600
-    /// BUT when candidates are pre-filtered (as they now are), m is much smaller,
-    /// and we avoid the deduplication scan entirely by checking on insertion.
-    ///
-    /// **Pynndescent's approach:**
-    /// Pynndescent uses `checked_flagged_heap_push` which maintains the heap
-    /// property throughout, never doing a full sort. This is what we now emulate.
+    /// Update the neighbours with the improvements
     ///
     /// ### Params
     ///
@@ -542,11 +533,11 @@ impl NNDescent {
     /// * `current` - Current best neighbours
     /// * `candidates` - Potential new neighbours
     /// * `k` - Number of neighbours to find
-    /// * `updates` - Borrowed AtomicUsize to track if an update happened
+    /// * `updates` - Borrewed AtomicUsize to check if an update happened
     ///
     /// ### Returns
     ///
-    /// Vec of updated `Neighbour`s.
+    /// Vec of updates `Neigbour`s.
     fn update_neighbours(
         &self,
         node: usize,
@@ -566,32 +557,31 @@ impl NNDescent {
             let mut heap = cell.borrow_mut();
             heap.clear();
 
-            // Build a max-heap from current neighbours (worst at top)
-            // We use Reverse to make BinaryHeap act as max-heap of distances
+            // build a max-heap from current neighbours (worst at top)
+            // use Reverse to make BinaryHeap act as max-heap of distances
             for n in current {
                 if n.pid() != node {
                     heap.push(Reverse((OrderedFloat(n.dist), n.pid(), false)));
                 }
             }
 
-            // Process each candidate
+            // process each candidate
             for &(pid, dist) in candidates {
                 if pid == node {
                     continue;
                 }
 
-                // Check if this candidate already exists in heap
-                // (In practice, with good candidate generation, duplicates are rare)
+                // check if this candidate already exists in heap
                 let already_exists = heap.iter().any(|&Reverse((_, p, _))| p == pid);
                 if already_exists {
                     continue;
                 }
 
-                // If heap is not full, just add it
+                // if heap is not full, just add it
                 if heap.len() < k {
                     heap.push(Reverse((OrderedFloat(dist), pid, true)));
                 } else {
-                    // Heap is full; check if this candidate beats the worst
+                    // heap is full -> check if this candidate beats the worst
                     if let Some(&Reverse((OrderedFloat(worst_dist), _, _))) = heap.peek() {
                         if dist < worst_dist {
                             heap.pop(); // Remove worst
@@ -601,14 +591,14 @@ impl NNDescent {
                 }
             }
 
-            // Convert heap to sorted vector (best distances first)
+            // convert heap to sorted vector (best distances first)
             let mut result: Vec<_> = heap
                 .drain()
                 .map(|Reverse((OrderedFloat(d), p, is_new))| (d, p, is_new))
                 .collect();
             result.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-            // Check if anything changed
+            // check if anything/what changed
             let changed = result.len() != current.len()
                 || result
                     .iter()
@@ -629,7 +619,8 @@ impl NNDescent {
 
     /// Fast distance calculation with unsafe pointer arithmetic (Euclidean)
     ///
-    /// ### Implementation Note
+    /// ### Implementation note
+    ///
     /// Manual loop unrolling (processing 4 elements at a time) helps the
     /// compiler generate better SIMD instructions. Modern CPUs can compute
     /// 4 float operations in parallel, so this can be ~4x faster than a
@@ -675,6 +666,7 @@ impl NNDescent {
     /// Fast distance calculation with unsafe pointer arithmetic (Cosine)
     ///
     /// ### Cosine Distance
+    ///
     /// cosine_dist(u, v) = 1 - (u·v) / (||u|| ||v||)
     /// We pre-compute norms during initialisation to avoid repeated sqrt calls.
     ///
@@ -712,35 +704,3 @@ impl NNDescent {
         1_f32 - (dot / (*self.norms.get_unchecked(i) * *self.norms.get_unchecked(j)))
     }
 }
-
-// /// Initialise a first set of neighbours with annoy
-//     ///
-//     /// ### Params
-//     ///
-//     /// * `k` - Number of neighbours to sample
-//     /// * `annoy_index` - The Annoy index.
-//     ///
-//     /// ### Return
-//     ///
-//     /// A nested Vec of `Neighbour` structures.
-//     fn initialise_with_annoy(&self, k: usize, annoy_index: &AnnoyIndex) -> Vec<Vec<Neighbour>> {
-//         (0..self.n)
-//             .into_par_iter()
-//             .map(|i| {
-//                 let query_vec = &self.vectors_flat[i * self.dim..(i + 1) * self.dim];
-
-//                 // Use Annoy to get initial k neighbors
-//                 // search_k controls quality - higher = better but slower
-//                 let search_k = (k * 3).min(k * 10);
-//                 let (indices, distances) =
-//                     annoy_index.query(query_vec, &self.metric, k, Some(search_k));
-
-//                 indices
-//                     .into_iter()
-//                     .zip(distances)
-//                     .filter(|(idx, _)| *idx != i) // exclude self
-//                     .map(|(idx, dist)| Neighbour::new(idx, dist, true))
-//                     .collect()
-//             })
-//             .collect()
-//     }

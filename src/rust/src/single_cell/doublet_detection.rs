@@ -247,7 +247,7 @@ impl BoostParams {
             params_list
                 .get("knn_method")
                 .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
+                .unwrap_or("nndescent"),
         );
 
         let dist_metric = std::string::String::from(
