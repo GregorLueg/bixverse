@@ -251,10 +251,63 @@
 <span><span class="co">#&gt; 928:      928 cell_0998 cell_type_2           1    49      487    TRUE</span></span>
 <span><span class="co">#&gt; 929:      929 cell_1000 cell_type_1           1    60      474    TRUE</span></span></code></pre></div>
 </div>
+<p><strong>Add data to obs</strong></p>
+<p>Sometimes it is desirable to add data to the obs table for further analysis this can be acheived using <code><a href="../reference/set_sc_new_obs_col.html">set_sc_new_obs_col()</a></code> or <code><a href="../reference/set_sc_new_obs_col_multiple.html">set_sc_new_obs_col_multiple()</a></code></p>
+<p>Note the new data must be of same length as <code><a href="../reference/get_cells_to_keep.html">bixverse::get_cells_to_keep()</a></code> and have the same order.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">n_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_cells_to_keep.html">get_cells_to_keep</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## new data to add single column</span></span>
+<span><span class="va">new_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"random_new_data"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">n_cells</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Using function or using</span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_sc_new_obs_col.html">set_sc_new_obs_col</a></span><span class="op">(</span></span>
+<span>  <span class="va">sc_object</span>,</span>
+<span>  col_name <span class="op">=</span> <span class="st">"random_new_data"</span>,</span>
+<span>  new_data <span class="op">=</span> <span class="va">new_data</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># or using [[]]</span></span>
+<span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"random_new_data2"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">new_data</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep</span></span>
+<span><span class="co">#&gt;       &lt;num&gt;    &lt;char&gt;      &lt;char&gt;       &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;lgcl&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 cell_0001 cell_type_1           1    52      371    TRUE</span></span>
+<span><span class="co">#&gt; 2:        2 cell_0003 cell_type_3           1    52      495    TRUE</span></span>
+<span><span class="co">#&gt; 3:        3 cell_0004 cell_type_1           1    48      551    TRUE</span></span>
+<span><span class="co">#&gt; 4:        4 cell_0005 cell_type_2           1    53      422    TRUE</span></span>
+<span><span class="co">#&gt; 5:        5 cell_0006 cell_type_3           1    57      394    TRUE</span></span>
+<span><span class="co">#&gt; 6:        6 cell_0007 cell_type_1           1    49      593    TRUE</span></span>
+<span><span class="co">#&gt;    random_new_data random_new_data2</span></span>
+<span><span class="co">#&gt;             &lt;char&gt;           &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: random_new_data  random_new_data</span></span>
+<span><span class="co">#&gt; 2: random_new_data  random_new_data</span></span>
+<span><span class="co">#&gt; 3: random_new_data  random_new_data</span></span>
+<span><span class="co">#&gt; 4: random_new_data  random_new_data</span></span>
+<span><span class="co">#&gt; 5: random_new_data  random_new_data</span></span>
+<span><span class="co">#&gt; 6: random_new_data  random_new_data</span></span>
+<span></span>
+<span><span class="co">## Multiple columns can also be added must be a list of vector</span></span>
+<span><span class="va">new_data_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"other_random_data"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">n_cells</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="st">"even_different_random_data"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">n_cells</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## either like this</span></span>
+<span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/set_sc_new_obs_col_multiple.html">set_sc_new_obs_col_multiple</a></span><span class="op">(</span><span class="va">sc_object</span>, <span class="va">new_data_list</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># or this</span></span>
+<span><span class="co"># sc_object[[names(new_data_list)]] &lt;- new_data_list</span></span>
+<span></span>
+<span><span class="co"># or this</span></span>
+<span><span class="va">sc_object</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"new_name_a"</span>, <span class="st">"new_name_b"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">new_data_list</span></span></code></pre></div>
+</div>
 </section><section class="level3"><h4 id="var-table-gene-info">Var table (gene info)<a class="anchor" aria-label="anchor" href="#var-table-gene-info"></a>
 </h4>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Returns gene info as a data.table</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_idx  gene_id ensembl_id</span></span>
@@ -271,7 +324,7 @@
 <p>This is where things get interesting and were the power of saving the mtx as both a Compressed sparse Row (CSR) and compressed sparse column (CSC) format becomes apparent. For gene wise operations (highly variable genes,PCA) we want to be able to rapidly index through the columns (genes) so we would opt for selecting the CSC notation of the matrix. For cell wise operations (DGEs, AUCell) we want to be able to rapidly index through the rows (cells) so we would opt for selecting the CSR notation of the matrix.</p>
 <p>Most of the algorithms will automatically select the correct orientation so you don’t need to worry about it but below is a demonstration of the time difference when retrieving a selection of cells from the db</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## We are selecting 20:30 cells in the matrix which is a cellwise opperation so the correct thing to do would be to return the cells</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_sc_counts.html">get_sc_counts</a></span><span class="op">(</span></span>
@@ -293,7 +346,7 @@
 <span>  return_format <span class="op">=</span> <span class="st">"gene"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.017 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.018 sec elapsed</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## matrices can also be accessed with sinle brackets</span></span>
@@ -305,7 +358,7 @@
 <p>Usual QC procedure involves checking the proportions of mitochondrial and ribosomal genes in you sample bixverse can do this as follows</p>
 <p>This operation also be chunked by using by setting <code>streaming = TRUE</code>, this is useful when working with very large datasets to avoid running into memory constraints.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gs_of_interest</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  gs_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_001"</span>, <span class="st">"gene_002"</span>, <span class="st">"gene_003"</span>, <span class="st">"gene_004"</span><span class="op">)</span>,</span>
 <span>  gs_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene_096"</span>, <span class="st">"gene_097"</span>, <span class="st">"gene_100"</span><span class="op">)</span></span>
@@ -328,21 +381,29 @@
 <span><span class="co">#&gt; 4:        4 cell_0005 cell_type_2           1    53      422    TRUE</span></span>
 <span><span class="co">#&gt; 5:        5 cell_0006 cell_type_3           1    57      394    TRUE</span></span>
 <span><span class="co">#&gt; 6:        6 cell_0007 cell_type_1           1    49      593    TRUE</span></span>
-<span><span class="co">#&gt;           gs_1        gs_2</span></span>
-<span><span class="co">#&gt;          &lt;num&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.156334236 0.008086253</span></span>
-<span><span class="co">#&gt; 2: 0.022222223 0.006060606</span></span>
-<span><span class="co">#&gt; 3: 0.181488201 0.000000000</span></span>
-<span><span class="co">#&gt; 4: 0.007109005 0.033175357</span></span>
-<span><span class="co">#&gt; 5: 0.017766498 0.015228426</span></span>
-<span><span class="co">#&gt; 6: 0.242833048 0.079258010</span></span></code></pre></div>
+<span><span class="co">#&gt;    random_new_data random_new_data2 other_random_data</span></span>
+<span><span class="co">#&gt;             &lt;char&gt;           &lt;char&gt;            &lt;char&gt;</span></span>
+<span><span class="co">#&gt; 1: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt; 2: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt; 3: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt; 4: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt; 5: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt; 6: random_new_data  random_new_data                 A</span></span>
+<span><span class="co">#&gt;    even_different_random_data new_name_a new_name_b        gs_1        gs_2</span></span>
+<span><span class="co">#&gt;                         &lt;int&gt;     &lt;char&gt;      &lt;int&gt;       &lt;num&gt;       &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                          1          A          1 0.156334236 0.008086253</span></span>
+<span><span class="co">#&gt; 2:                          2          A          2 0.022222223 0.006060606</span></span>
+<span><span class="co">#&gt; 3:                          3          A          3 0.181488201 0.000000000</span></span>
+<span><span class="co">#&gt; 4:                          4          A          4 0.007109005 0.033175357</span></span>
+<span><span class="co">#&gt; 5:                          5          A          5 0.017766498 0.015228426</span></span>
+<span><span class="co">#&gt; 6:                          6          A          6 0.242833048 0.079258010</span></span></code></pre></div>
 </div>
 <p>We can then set cells to keep based on proportions of reads mapping to genes, the filtered out cells will not actullay be removed from the duckdb rather just have their <code>to_keep</code> column in the obs table set to FALSE.</p>
 <p><code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> accepts both cell ids and cell indices as a vector of cells to keep.</p>
 <p>By default using the [[]] notation to load in the obs will only retain the <code>to_keep</code> cells. To access all cells the <code><a href="../reference/get_sc_obs.html">get_sc_obs()</a></code> needs to be used.</p>
 <p>Once this <code><a href="../reference/set_cells_to_keep.html">set_cells_to_keep()</a></code> function has been applied to the <code>sc_object</code> only cells marked TRUE in the <code>to_keep</code> column will be used in the downstream analysis</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">threshold</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
 <span></span>
 <span><span class="va">cells_to_keep</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">gs_2</span> <span class="op">&lt;</span> <span class="va">threshold</span>, <span class="va">cell_id</span><span class="op">]</span></span>
@@ -367,7 +428,7 @@
 <p>See <code><a href="../reference/params_sc_hvg.html">params_sc_hvg()</a></code> for details.</p>
 <p>This also has the option for the data to be chunked in which is useful for larger datasets where you may run into memory constraints.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hvg_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_hvg.html">params_sc_hvg</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="st">"vst"</span></span>
 <span><span class="op">)</span></span>
@@ -391,7 +452,7 @@
 <span></span>
 <span></span>
 <span><span class="co">## You can then which genes are highly variable as follows</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">]</span>,<span class="fl">5</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_idx  gene_id ensembl_id      mean       var  var_exp   var_std</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;     &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:        4 gene_004    ens_004  9.629032 312.50287 2.507178 0.9720214</span></span>
@@ -404,9 +465,9 @@
 </h3>
 <p>PCA is one of the most common form of dimensionally reduction algorithms.</p>
 <p><code>bixverse</code> offers currently offers two implementations of the PCA. Traditional PCA or the randomised PCA which is a faster approximation, for details see <a href="https://research.facebook.com/publications/an-implementation-of-a-randomized-algorithm-for-principal-component-analysis/" class="external-link">here</a>. In reality the first principal components with most of the signal are basically identical between the two methods and it is in the latter principal components were the uncertainty of the randomised version increases. Longer term, there is also the plan to implement SVD version that work purely on sparse data without scaling (densifying the data) for VERY large data sets. PCs will only be calculated using counts from the HVGs as such the HVG calculation will need to be run prior to PCA.</p>
-<p>Note the PCS are not currently saved to to the duckdb and after calculations are currently stored in memory and will need to be recalculated on the object if session is closed.</p>
+<p>Note the PCS are not currently saved to to the duckdb and after calculations are currently stored in memory and will need to be recalculated on the object if session is closed. Alternatively if you wish to save PCA results this can be done using <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code> these will then be loaded back in when the <code><a href="../reference/load_existing.html">load_existing()</a></code> function is called. More info in <a href="#sec-loading-existing" class="quarto-xref">Section 3</a>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pca_sc.html">calculate_pca_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  no_pcs <span class="op">=</span> <span class="fl">10L</span>, <span class="co"># Number PC to calculate</span></span>
@@ -415,7 +476,7 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># get the PCA factors</span></span>
-<span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5</span></span>
 <span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630</span></span>
 <span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982</span></span>
@@ -424,7 +485,7 @@
 <span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276</span></span>
 <span></span>
 <span><span class="co"># Get PCA loadings for each gene</span></span>
-<span><span class="fu"><a href="../reference/get_pca_loadings.html">get_pca_loadings</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="../reference/get_pca_loadings.html">get_pca_loadings</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2        PC_3         PC_4        PC_5</span></span>
 <span><span class="co">#&gt; gene_005  0.20317698 -0.3045997  0.05578877 -0.010422311  0.01976835</span></span>
 <span><span class="co">#&gt; gene_017  0.15731421  0.3486673 -0.03532208 -0.046772514  0.08763239</span></span>
@@ -433,7 +494,7 @@
 <span><span class="co">#&gt; gene_010  0.17827085 -0.3270922 -0.01653624  0.012350544  0.01573452</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pca_plot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span></span>
@@ -459,7 +520,7 @@
 </ul>
 <p>Like PCA the results for these are not stored in the duckdb rather in memory so will need to be saved or rerun each time.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">neighbours_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn_algorithm <span class="op">=</span> <span class="st">"hnsw"</span><span class="op">)</span></span>
 <span></span>
 <span></span>
@@ -473,7 +534,7 @@
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
 <span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5]</span></span>
 <span><span class="co">#&gt; [1,]  597  607  416   13  666</span></span>
 <span><span class="co">#&gt; [2,]  419    4  308  645   24</span></span>
@@ -481,7 +542,7 @@
 <span><span class="co">#&gt; [4,]  430  178  449  678  413</span></span>
 <span><span class="co">#&gt; [5,]   24    1  152  168  419</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_snn_graph.html">get_snn_graph</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_snn_graph.html">get_snn_graph</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt; 5 x 5 sparse Matrix of class "dgCMatrix"</span></span>
 <span><span class="co">#&gt;                               </span></span>
 <span><span class="co">#&gt; [1,] . .         . . .        </span></span>
@@ -494,7 +555,7 @@
 </h4>
 <p>Currently only Leiden clustering is implemented in the package these cluster are then added to the obs table of the <code>sc_object</code></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_clusters_sc.html">find_clusters_sc</a></span><span class="op">(</span><span class="va">sc_object</span>, name <span class="op">=</span> <span class="st">"leiden_clusters"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -514,7 +575,7 @@
 <p>Once the clustering is complete we can perform differential gene expression analysis between the 2 groups of cell lines or group verses all style analysis.</p>
 <p>Currently the wilcox method is used to assess DGE with a default <code>twosided</code> test run.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cell_names_1</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">leiden_clusters</span> <span class="op">==</span> <span class="fl">1</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span><span class="va">cell_names_2</span> <span class="op">&lt;-</span> <span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">leiden_clusters</span> <span class="op">==</span> <span class="fl">2</span>, <span class="va">cell_id</span><span class="op">]</span></span>
 <span></span>
@@ -540,7 +601,7 @@
 <p>Specify a column, and the function will calculate differential gene expression for each cluster against all other cells combined. It processes clusters sequentially: cluster one vs. all others, cluster two vs. all others, and so on. To manage computational efficiency, the “all others” group is automatically downsampled to a random 100,000 cells if it exceeds that threshold.</p>
 <p>Currently this functions alternative hypothesis is set to “greater”, i.e., genes upregulated in the group.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dge_test_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_all_markers_sc.html">find_all_markers_sc</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  column_of_interest <span class="op">=</span> <span class="st">"leiden_clusters"</span>,</span>
@@ -553,7 +614,7 @@
 <p>AUCell calculates how well a set of genes (or pathway) “ranks” in each cell compared to all other genes. It produces a score between 0 and 1 for each cell—higher scores mean the genes in your set are highly expressed in that cell relative to the background.</p>
 <p>The function <code>aucell_sc</code> offers two scoring methods: use <code>auroc</code> for identifying cells expressing specific marker genes, or <code>wilcox</code> for measuring overall pathway activity. For large datasets, you can load all cells at once or stream them in chunks of 50,000 cells for memory efficiency.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">auc_gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  markers_cell_type_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%03d"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>,</span>
 <span>  markers_cell_type_2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%03d"</span>, <span class="fl">11</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span>,</span>
@@ -583,7 +644,7 @@
 <p>Metacells are aggregated groups of similar cells that are merged together to create a higher-level representation of your data. This approach reduces noise, improves computational efficiency, and is particularly useful for correlation-based analyses like identifying co-regulated genes. Metacells are generated by grouping nearby cells in the neighborhood graph, creating more stable and interpretable results from single-cell data.</p>
 <p>To generate metacells in bixverse package, use two complementary functions: <code><a href="../reference/params_sc_metacells.html">params_sc_metacells()</a></code> configures the parameters for metacell generation. Specify the maximum number of allowed shared neighbors (<code>max_shared</code>), your target number of metacells (<code>target_no_metacells</code>), and iteration limits (<code>max_iter</code>). You can also fine-tune the k-nearest neighbor search using k, knn_method (choose between <code>annoy</code> or <code>hnsw</code>), distance metric (<code>ann_dist</code>), and algorithm-specific parameters like n_trees and search_budget. This function returns a list of parameters ready for the metacell generation pipeline. <code>generate_metacells()</code> takes your single-cell object and the parameter list from <code><a href="../reference/params_sc_metacells.html">params_sc_metacells()</a></code> to generate the actual metacells. You can optionally regenerate the k-NN graph with regenerate_knn, specify which embedding to use (embd_to_use, currently “pca”), and control library size normalization with target_size. Set a seed for reproducibility.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_meta_cell_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_metacells.html">params_sc_metacells</a></span><span class="op">(</span>target_no_metacells <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">meta_cell_data_v1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_meta_cells_sc.html">get_meta_cells_sc</a></span><span class="op">(</span></span>
@@ -613,16 +674,27 @@
 <span><span class="co">#&gt;   .. ..@ x       : num [1:810] 5.69 5.28 5.74 4.79 4.16 ...</span></span>
 <span><span class="co">#&gt;   .. ..@ factors : list()</span></span></code></pre></div>
 </div>
-</section></section><section class="section level2"><h2 id="loading-in-existing-object">Loading in existing object<a class="anchor" aria-label="anchor" href="#loading-in-existing-object"></a>
-</h2>
-<p>A series of functions have been written to load in a already pre-processed sc_object where the to_keep cells have already been defined.</p>
-<p>This is done by pointing the directory where the <code>sc_duckdb.db</code>, <code>counts_cells.bin</code> and <code>counts_genes.bin</code> have been created.</p>
-<p>All information that was stored in the obs table leiden_clusters, gene proportions etc and any information in var table will be retained as it has been stored in the duckdb. However analysis that was created and storied in memory e.g knn and PCA will no longer exist and have to be rerun.</p>
+</section><section class="level2"><h3 id="save-object">Save object<a class="anchor" aria-label="anchor" href="#save-object"></a>
+</h3>
+<p>As analysis progresses some parts are written to the duckdb and saved and others are not.Any updates to the <code>obs</code> table and to the <code>to_keep</code> column (number of cells) will be saved to the duckdb and will be present when the data is loaded back in using <code><a href="../reference/load_existing.html">load_existing()</a></code>.</p>
+<p>However, other aspects which are held in memory e.g HVG, PCA and AUcell will not be saved. To ensure these are saved and then loaded back in when <code><a href="../reference/load_existing.html">load_existing()</a></code> is used run <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code>.</p>
+<p>This will create an <code>memory.qs2</code> object in the same directory as the <code>counts_cells.bin</code>, <code>counts_genes.bin</code> and <code>sc_duckdb.db</code></p>
+<p>Objects can either be saved as a <code>rds</code> or <code>qs2</code> it is highly recommended the <code>qs2</code> format is used as the reading in is far more performant.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk</a></span><span class="op">(</span><span class="va">sc_object</span>, type <span class="op">=</span> <span class="st">"qs2"</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section></section><section class="section level2"><h2 id="sec-loading-existing">Loading in existing object<a class="anchor" aria-label="anchor" href="#sec-loading-existing"></a>
+</h2>
+<p>A series of functions have been written to load in a already pre-processed sc_object where the <code>to_keep</code> cells have already been defined.</p>
+<p>This is done by pointing the directory where the <code>sc_duckdb.db</code>, <code>counts_cells.bin</code> and <code>counts_genes.bin</code> have been created.</p>
+<p>All information that was stored in the obs table leiden_clusters, gene proportions etc and any information in var table will be retained as it has been stored in the duckdb. However analysis that was created and stored in memory e.g knn and PCA will no longer exist and have to be rerun (unless data has been saved with <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code>, recommended).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object_loaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/single_cell_exp.html">single_cell_exp</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object_loaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_existing.html">load_existing</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Found stored data from save_sc_exp_to_disk(). Loading that one into the object.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">[</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 682  81</span></span>
@@ -631,14 +703,14 @@
 <span><span class="co">#&gt; [1] 682  81</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 682  10</span></span>
+<span><span class="co">#&gt; [1] 682  16</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 682  10</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 682  16</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## PCA in original object exists</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5</span></span>
 <span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630</span></span>
 <span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982</span></span>
@@ -646,13 +718,26 @@
 <span><span class="co">#&gt; cell_0005  1.8453631  3.3306789 -0.3060451  0.8307743  2.15308475</span></span>
 <span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276</span></span>
 <span></span>
-<span><span class="co">## PCA in loaded in object does not exist</span></span>
+<span><span class="co">## PCA in loaded in object does exist as has been loaded back in from the qs2 file</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; NULL</span></span>
+<span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5        PC_6</span></span>
+<span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630  0.10833390</span></span>
+<span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982 -1.73168576</span></span>
+<span><span class="co">#&gt; cell_0004  2.5719275 -1.4721915  1.2367083  0.8602270 -2.01101637 -0.98504061</span></span>
+<span><span class="co">#&gt; cell_0005  1.8453631  3.3306789 -0.3060451  0.8307743  2.15308475 -0.88234264</span></span>
+<span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276 -1.61810422</span></span>
+<span><span class="co">#&gt; cell_0008  0.8654820  0.2562445 -1.4927127  1.1618458  1.81161833  0.09957793</span></span>
+<span><span class="co">#&gt;                 PC_7       PC_8        PC_9      PC_10</span></span>
+<span><span class="co">#&gt; cell_0001 -0.8307593 -0.9369759  0.11120906  0.1123955</span></span>
+<span><span class="co">#&gt; cell_0003  0.4090152  0.5485656 -0.03805275  0.6408936</span></span>
+<span><span class="co">#&gt; cell_0004 -2.1615980  0.6148190  0.08886870  0.5149482</span></span>
+<span><span class="co">#&gt; cell_0005  1.3377242  0.8726504  0.93318295  0.5300551</span></span>
+<span><span class="co">#&gt; cell_0006 -0.5391674  0.1609078 -0.24828078  1.1093334</span></span>
+<span><span class="co">#&gt; cell_0008 -0.1490478  1.2157899  1.11126518 -1.0982429</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## Same for knn</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5]</span></span>
 <span><span class="co">#&gt; [1,]  597  607  416   13  666</span></span>
 <span><span class="co">#&gt; [2,]  419    4  308  645   24</span></span>
@@ -661,7 +746,20 @@
 <span><span class="co">#&gt; [5,]   24    1  152  168  419</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]</span></span>
+<span><span class="co">#&gt; [1,]  597  607  416   13  666  300  177  453  654    96   507   127    99   605</span></span>
+<span><span class="co">#&gt; [2,]  419    4  308  645   24  665  168  558  390   104   536   217   452    64</span></span>
+<span><span class="co">#&gt; [3,]    8  630  311  632  489   83  383  381  183    40   119    32   253   671</span></span>
+<span><span class="co">#&gt; [4,]  430  178  449  678  413  644  315  626  189   483    14   620   382    61</span></span>
+<span><span class="co">#&gt; [5,]   24    1  152  168  419   94  514  221  308   190   602   277    15   231</span></span>
+<span><span class="co">#&gt; [6,]  189  318  633  236  453  666  461  290  550    25   564   266   191   661</span></span>
+<span><span class="co">#&gt;      [,15]</span></span>
+<span><span class="co">#&gt; [1,]   424</span></span>
+<span><span class="co">#&gt; [2,]   465</span></span>
+<span><span class="co">#&gt; [3,]   292</span></span>
+<span><span class="co">#&gt; [4,]   238</span></span>
+<span><span class="co">#&gt; [5,]    73</span></span>
+<span><span class="co">#&gt; [6,]   663</span></span></code></pre></div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {

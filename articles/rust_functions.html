@@ -116,9 +116,9 @@
 <span>  times <span class="op">=</span> <span class="fl">50L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr        min        lq       mean     median         uq       max neval</span></span>
-<span><span class="co">#&gt;     r 133.537564 134.45317 134.572529 134.547890 134.638339 138.64345    50</span></span>
-<span><span class="co">#&gt;  rust   4.668414   5.37341   6.279089   5.507945   6.763194  11.98862    50</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr        min         lq       mean   median         uq       max neval</span></span>
+<span><span class="co">#&gt;     r 134.634868 134.758669 135.084507 134.8264 134.932554 141.13699    50</span></span>
+<span><span class="co">#&gt;  rust   5.097654   5.770701   7.398785   7.2264   8.335532  13.78513    50</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="spearmans-correlations">Spearman’s correlations<a class="anchor" aria-label="anchor" href="#spearmans-correlations"></a>
 </h4>
@@ -142,9 +142,9 @@
 <span>  times <span class="op">=</span> <span class="fl">50L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr       min         lq       mean    median         uq      max neval</span></span>
-<span><span class="co">#&gt;     r 163.03967 164.350588 167.736330 166.63410 166.972071 237.8528    50</span></span>
-<span><span class="co">#&gt;  rust   6.61112   6.796346   7.564714   7.08781   7.554772  11.1708    50</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr        min         lq       mean     median         uq       max neval</span></span>
+<span><span class="co">#&gt;     r 164.193678 167.092343 170.589333 167.546110 168.415115 248.12421    50</span></span>
+<span><span class="co">#&gt;  rust   6.947348   7.146982   8.112042   7.475333   8.935543  12.35141    50</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="covariance">Covariance<a class="anchor" aria-label="anchor" href="#covariance"></a>
 </h4>
@@ -168,9 +168,9 @@
 <span>  times <span class="op">=</span> <span class="fl">50L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr        min        lq       mean     median         uq       max neval</span></span>
-<span><span class="co">#&gt;     r 133.605602 134.25695 134.613678 134.315992 134.523537 137.67229    50</span></span>
-<span><span class="co">#&gt;  rust   4.160426   4.31781   6.541554   4.943137   5.250951  77.37941    50</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr        min         lq       mean     median         uq       max neval</span></span>
+<span><span class="co">#&gt;     r 134.258655 134.426459 134.842915 134.501227 134.643004 141.68824    50</span></span>
+<span><span class="co">#&gt;  rust   4.402394   4.598671   5.420691   5.280134   5.452466  10.01446    50</span></span></code></pre></div>
 </div>
 <p>Let’s transform covariance to correlations</p>
 <div class="cell">
@@ -193,8 +193,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     r 2.119767 2.174379 2.717804 2.186946 2.464190 5.640318    50</span></span>
-<span><span class="co">#&gt;  rust 1.338048 1.403339 1.703437 1.447317 1.523223 4.157621    50</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 2.125301 2.176075 2.694017 2.204172 2.294126 5.379409    50</span></span>
+<span><span class="co">#&gt;  rust 1.360602 1.430352 1.708338 1.474816 1.564353 3.960078    50</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="correlations-between-two-matrices">Correlations between two matrices<a class="anchor" aria-label="anchor" href="#correlations-between-two-matrices"></a>
 </h4>
@@ -233,8 +233,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr        min         lq       mean     median         uq       max neval</span></span>
-<span><span class="co">#&gt;     r 193.340069 193.651239 193.796355 193.731775 193.839131 197.32676    50</span></span>
-<span><span class="co">#&gt;  rust   4.758763   5.313478   6.002747   5.431468   6.482029  12.42744    50</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 193.539971 193.844571 194.088575 193.973386 194.091882 197.83328    50</span></span>
+<span><span class="co">#&gt;  rust   4.719436   5.437198   7.642379   5.525948   6.184223  93.11418    50</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="distance-metrics">Distance metrics<a class="anchor" aria-label="anchor" href="#distance-metrics"></a>
 </h3>
@@ -276,9 +276,9 @@
 <span>  times <span class="op">=</span> <span class="fl">50L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr       min        lq     mean    median       uq      max neval</span></span>
-<span><span class="co">#&gt;     r 96.763183 96.897083 97.10970 96.994781 97.12068 99.30456    50</span></span>
-<span><span class="co">#&gt;  rust  4.513895  5.129093  5.84832  5.452021  6.40749 10.38952    50</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr       min        lq     mean    median        uq      max neval</span></span>
+<span><span class="co">#&gt;     r 97.184685 97.481370 97.76246 97.756749 98.059019 98.47686    50</span></span>
+<span><span class="co">#&gt;  rust  4.606726  5.186139  5.95400  5.538401  6.745231 10.31508    50</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="other-distance-metrics">Other distance metrics<a class="anchor" aria-label="anchor" href="#other-distance-metrics"></a>
 </h4>
@@ -320,8 +320,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     r 91.32262 91.41706 91.55722 91.47084 91.58719 93.23032    50</span></span>
-<span><span class="co">#&gt;  rust 16.81976 17.17098 17.53627 17.44512 17.59966 21.39957    50</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 91.54573 91.87916 92.27468 92.12441 92.51081 94.40020    50</span></span>
+<span><span class="co">#&gt;  rust 17.26621 17.53598 17.89902 17.77389 17.99186 20.81778    50</span></span></code></pre></div>
 </div>
 <p><strong>Canberra distance</strong></p>
 <p>Equivalence observed…</p>
@@ -360,8 +360,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;     r 136.08701 137.25740 137.50578 137.33546 137.40295 140.07301    50</span></span>
-<span><span class="co">#&gt;  rust  45.66175  45.96312  46.17575  46.17368  46.31445  47.52568    50</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 137.45866 137.77843 138.33512 138.17872 138.68345 140.76849    50</span></span>
+<span><span class="co">#&gt;  rust  45.89637  46.27672  46.45545  46.48094  46.60112  47.21057    50</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="mutual-information">Mutual information<a class="anchor" aria-label="anchor" href="#mutual-information"></a>
 </h3>
@@ -440,8 +440,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;  infotheo 84.054151 84.938271 85.572572 85.411324 86.063181 91.122305    50</span></span>
-<span><span class="co">#&gt;      rust  3.345254  3.394355  3.528291  3.541189  3.619757  3.832484    50</span></span></code></pre></div>
+<span><span class="co">#&gt;  infotheo 83.753655 84.135097 84.622680 84.344403 84.799979 89.517141    50</span></span>
+<span><span class="co">#&gt;      rust  3.353344  3.379694  3.557128  3.492369  3.719593  4.359214    50</span></span></code></pre></div>
 </div>
 <p>And with equal frequency per bin:</p>
 <div class="cell">
@@ -461,9 +461,9 @@
 <span>  times <span class="op">=</span> <span class="fl">50L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr        min         lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;  infotheo 101.774096 102.769114 103.712459 103.326123 103.819584 118.469339</span></span>
-<span><span class="co">#&gt;      rust   4.378172   4.437152   4.579021   4.600106   4.702708   4.799659</span></span>
+<span><span class="co">#&gt;      expr        min         lq       mean    median         uq        max</span></span>
+<span><span class="co">#&gt;  infotheo 100.874669 101.543869 101.965819 101.84284 102.133411 106.452549</span></span>
+<span><span class="co">#&gt;      rust   4.357551   4.412593   4.584111   4.58486   4.712072   5.327292</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;     50</span></span>
 <span><span class="co">#&gt;     50</span></span></code></pre></div>
@@ -495,14 +495,14 @@
 <span><span class="va">r_results</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">random_sets_1</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">random_sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span><span class="fu">jaccard_sim</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="op">}</span>, .progress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  ■■■■                              11% |  ETA: 23s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■                          23% |  ETA: 20s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■                       34% |  ETA: 17s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■                   46% |  ETA: 14s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■               58% |  ETA: 10s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■            70% |  ETA:  8s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■■        82% |  ETA:  4s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% |  ETA:  1s</span></span>
+<span><span class="co">#&gt;  ■■■                                8% |  ETA: 24s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■                           20% |  ETA: 21s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■                        31% |  ETA: 18s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■                    43% |  ETA: 15s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■                 55% |  ETA: 12s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■             67% |  ETA:  8s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■         79% |  ETA:  5s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      91% |  ETA:  2s</span></span>
 <span></span>
 <span><span class="va">similarity_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>, </span>
@@ -511,7 +511,7 @@
 <span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 25.204 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 25.478 sec elapsed</span></span></code></pre></div>
 </div>
 <p>Let’s try to parallelise this vi <a href="https://furrr.futureverse.org" class="external-link">furrr</a> and evaluate how much we can improve this.</p>
 <div class="cell">
@@ -532,7 +532,7 @@
 <span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 14.769 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 14.861 sec elapsed</span></span></code></pre></div>
 </div>
 <p>Parallelisation as expected accelerates the calculations substantially. What about <a href="https://mirai.r-lib.org/articles/mirai.html" class="external-link">mirai</a>? It should produce less overhead compared to future.</p>
 <div class="cell">
@@ -555,7 +555,7 @@
 <span></span>
 <span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 13.915 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 14.186 sec elapsed</span></span></code></pre></div>
 </div>
 <p>That’s already a bit better. Maybe we can optimise the Jaccard similarity function further and accelerate this even more.</p>
 <div class="cell">
@@ -581,7 +581,7 @@
 <span></span>
 <span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 7.9 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 7.939 sec elapsed</span></span></code></pre></div>
 </div>
 <p>This is already much better… Pending on your system you might be seeing a 4x increase in speed compared to the naive purrr version. However, let’s compare against the Rust version implemented in <code>bixverse</code>:</p>
 <div class="cell">
@@ -593,7 +593,7 @@
 <span>  overlap_coefficient <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.063 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.062 sec elapsed</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">similarity_matrix</span>, <span class="va">rust_res</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>

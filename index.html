@@ -65,6 +65,10 @@
 <p>This is now officially the version <strong>0.0.2.2</strong> release. With this update the following has been updated/changed:</p>
 <ul>
 <li>Mitch multi-contrast enrichment, see <a href="https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9" class="external-link">Kaspi and Ziemann</a>.</li>
+<li>Rehaul of the DGE structure interface. Large functions got split into smaller sub functions.</li>
+<li>Addition of eigengene calculations and module splitting for CoReMo modules.</li>
+<li>Similarity network fusion implemented, see <a href="https://www.nature.com/articles/nmeth.2810" class="external-link">Wang, et al.</a>.</li>
+<li>Spectral clustering and additionally graph-label propoagation for semi-supervised (label spreading algorithm) in Rust with interfaces to R.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -87,6 +91,12 @@
 <pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"https://github.com/GregorLueg/bixverse"</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="section level2">
+<h2 id="pkgdown-site">PKGdown site<a class="anchor" aria-label="anchor" href="#pkgdown-site"></a>
+</h2>
+<p>The package documentation can be found</p>
+<p><a href="https://gregorlueg.github.io/bixverse/" class="external-link">here</a>.</p>
+</div>
+<div class="section level2">
 <h2 id="docs">Docs<a class="anchor" aria-label="anchor" href="#docs"></a>
 </h2>
 <ul>
@@ -107,7 +117,7 @@
 <li>BioConductor is great, but you end up with quite large dependency graphs, lots of packages that have to be downloaded and quite a few algorithms can benefit from the speed that Rust offers. The idea of <code>bixverse</code> is to accelerate key functions used in CompBio and bioinformatics and reduce them to the barebone methods with simple interfaces.</li>
 <li>Having worked in biotech and pharma, one realises that a surprising amount of time is spent on rewriting and reimplementing published methods for internal usage. Better to make it fast/good once, and open it up to the public via open source.</li>
 </ol>
-<p><em>Last update to the read-me: 07.09.2025</em></p>
+<p><em>Last update to the read-me: 04.10.2025</em></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">

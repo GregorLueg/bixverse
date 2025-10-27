@@ -56,7 +56,7 @@ connections. For more details, please refer to Polański, et al.</p>
 <span>  no_neighbours_to_keep <span class="op">=</span> <span class="fl">15L</span>,</span>
 <span>  embd_to_use <span class="op">=</span> <span class="st">"pca"</span>,</span>
 <span>  no_embd_to_use <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  sc_bbknn_params <span class="op">=</span> <span class="fu"><a href="params_sc_bbknn.html">params_sc_bbknn</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  bbknn_params <span class="op">=</span> <span class="fu"><a href="params_sc_bbknn.html">params_sc_bbknn</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -92,7 +92,7 @@ might be a large number of generated neighbours. This will only keep the top
 use. If <code>NULL</code> all will be used.</p></dd>
 
 
-<dt id="arg-sc-bbknn-params">sc_bbknn_params<a class="anchor" aria-label="anchor" href="#arg-sc-bbknn-params"></a></dt>
+<dt id="arg-bbknn-params">bbknn_params<a class="anchor" aria-label="anchor" href="#arg-bbknn-params"></a></dt>
 <dd><p>A list, please see <code><a href="params_sc_bbknn.html">params_sc_bbknn()</a></code>. The
 list has the following parameters:</p><ul><li><p>neighbours_within_batch - Integer. Number of neighbours to consider
 per batch.</p></li>

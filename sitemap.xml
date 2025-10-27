@@ -29,6 +29,7 @@
 <url><loc>/reference/assertSNFParams.html</loc></url>
 <url><loc>/reference/assertScBbknn.html</loc></url>
 <url><loc>/reference/assertScBoost.html</loc></url>
+<url><loc>/reference/assertScFastmnn.html</loc></url>
 <url><loc>/reference/assertScHvg.html</loc></url>
 <url><loc>/reference/assertScMetacells.html</loc></url>
 <url><loc>/reference/assertScMinQC.html</loc></url>
@@ -89,6 +90,7 @@
 <url><loc>/reference/checkSNFParams.html</loc></url>
 <url><loc>/reference/checkScBbknn.html</loc></url>
 <url><loc>/reference/checkScBoost.html</loc></url>
+<url><loc>/reference/checkScFastmnn.html</loc></url>
 <url><loc>/reference/checkScHvg.html</loc></url>
 <url><loc>/reference/checkScMetacells.html</loc></url>
 <url><loc>/reference/checkScMinQC.html</loc></url>
@@ -127,12 +129,14 @@
 <url><loc>/reference/f1_score_confusion_mat.html</loc></url>
 <url><loc>/reference/fast_ica_rust.html</loc></url>
 <url><loc>/reference/fast_ica_rust_helper.html</loc></url>
+<url><loc>/reference/fast_mnn_sc.html</loc></url>
 <url><loc>/reference/fgsea_go_elim.html</loc></url>
 <url><loc>/reference/fgsea_simple_go_elim.html</loc></url>
 <url><loc>/reference/filter_similarities.html</loc></url>
 <url><loc>/reference/finalise_matrix.html</loc></url>
 <url><loc>/reference/find_all_markers_sc.html</loc></url>
 <url><loc>/reference/find_clusters_sc.html</loc></url>
+<url><loc>/reference/find_hvg_batch_aware_sc.html</loc></url>
 <url><loc>/reference/find_hvg_sc.html</loc></url>
 <url><loc>/reference/find_markers_sc.html</loc></url>
 <url><loc>/reference/find_neighbours_sc.html</loc></url>
@@ -147,6 +151,7 @@
 <url><loc>/reference/generate_personalisation_vec.html</loc></url>
 <url><loc>/reference/generate_rbh_graph.html</loc></url>
 <url><loc>/reference/generate_single_cell_test_data.html</loc></url>
+<url><loc>/reference/get_available_embeddings.html</loc></url>
 <url><loc>/reference/get_c_pca_factors.html</loc></url>
 <url><loc>/reference/get_c_pca_loadings.html</loc></url>
 <url><loc>/reference/get_cell_indices.html</loc></url>
@@ -163,6 +168,7 @@
 <url><loc>/reference/get_diffcor_graph.html</loc></url>
 <url><loc>/reference/get_diffusion_perms.html</loc></url>
 <url><loc>/reference/get_diffusion_vector.html</loc></url>
+<url><loc>/reference/get_embedding.html</loc></url>
 <url><loc>/reference/get_epsilon_res.html</loc></url>
 <url><loc>/reference/get_fpkm_counts.html</loc></url>
 <url><loc>/reference/get_gene_indices.html</loc></url>
@@ -193,6 +199,7 @@
 <url><loc>/reference/get_results.html</loc></url>
 <url><loc>/reference/get_rust_count_cell_f_path.html</loc></url>
 <url><loc>/reference/get_rust_count_gene_f_path.html</loc></url>
+<url><loc>/reference/get_sc_cache.html</loc></url>
 <url><loc>/reference/get_sc_counts.html</loc></url>
 <url><loc>/reference/get_sc_duckdb.html</loc></url>
 <url><loc>/reference/get_sc_map.html</loc></url>
@@ -248,6 +255,7 @@
 <url><loc>/reference/params_norm_doublet_detection_defaults.html</loc></url>
 <url><loc>/reference/params_pca_defaults.html</loc></url>
 <url><loc>/reference/params_sc_bbknn.html</loc></url>
+<url><loc>/reference/params_sc_fastmnn.html</loc></url>
 <url><loc>/reference/params_sc_hvg.html</loc></url>
 <url><loc>/reference/params_sc_metacells.html</loc></url>
 <url><loc>/reference/params_sc_min_quality.html</loc></url>
@@ -340,7 +348,9 @@
 <url><loc>/reference/rs_kbet.html</loc></url>
 <url><loc>/reference/rs_knn_label_propagation.html</loc></url>
 <url><loc>/reference/rs_knn_mat_to_edge_list.html</loc></url>
+<url><loc>/reference/rs_mad_outlier.html</loc></url>
 <url><loc>/reference/rs_mitch_calc.html</loc></url>
+<url><loc>/reference/rs_mnn.html</loc></url>
 <url><loc>/reference/rs_mutual_info.html</loc></url>
 <url><loc>/reference/rs_onto_semantic_sim.html</loc></url>
 <url><loc>/reference/rs_onto_semantic_sim_mat.html</loc></url>
@@ -364,6 +374,7 @@
 <url><loc>/reference/rs_sc_doublet_detection.html</loc></url>
 <url><loc>/reference/rs_sc_get_gene_set_perc.html</loc></url>
 <url><loc>/reference/rs_sc_hvg.html</loc></url>
+<url><loc>/reference/rs_sc_hvg_batch_aware.html</loc></url>
 <url><loc>/reference/rs_sc_knn.html</loc></url>
 <url><loc>/reference/rs_sc_pca.html</loc></url>
 <url><loc>/reference/rs_sc_scrublet.html</loc></url>
@@ -392,11 +403,13 @@
 <url><loc>/reference/rs_upper_triangle_to_sparse.html</loc></url>
 <url><loc>/reference/run_limma_voom.html</loc></url>
 <url><loc>/reference/run_snf.html</loc></url>
+<url><loc>/reference/save_sc_exp_to_disk.html</loc></url>
 <url><loc>/reference/scale_free_fit.html</loc></url>
 <url><loc>/reference/scrublet_sc.html</loc></url>
 <url><loc>/reference/select_user_option.html</loc></url>
 <url><loc>/reference/set_cell_mapping.html</loc></url>
 <url><loc>/reference/set_cells_to_keep.html</loc></url>
+<url><loc>/reference/set_embedding.html</loc></url>
 <url><loc>/reference/set_gene_mapping.html</loc></url>
 <url><loc>/reference/set_hvg.html</loc></url>
 <url><loc>/reference/set_knn.html</loc></url>
@@ -404,6 +417,7 @@
 <url><loc>/reference/set_pca_loadings.html</loc></url>
 <url><loc>/reference/set_pca_singular_vals.html</loc></url>
 <url><loc>/reference/set_sc_new_obs_col.html</loc></url>
+<url><loc>/reference/set_sc_new_obs_col_multiple.html</loc></url>
 <url><loc>/reference/set_sc_new_var_cols.html</loc></url>
 <url><loc>/reference/set_snn_graph.html</loc></url>
 <url><loc>/reference/simplify_hypergeom_res.html</loc></url>
