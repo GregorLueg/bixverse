@@ -237,8 +237,10 @@ Note the new data must be of same length as `bixverse::get_cells_to_keep()` and 
 ```{r}
 #| label: add-data-to-obs
 
+n_cells <- get_cells_to_keep(sc_object)
+
 ## new data to add single column
-new_data <- rep("random_new_data", length(cells_to_keep))
+new_data <- rep("random_new_data", length(n_cells))
 
 ## Using function or using
 sc_object <- set_sc_new_obs_col(
@@ -254,8 +256,8 @@ head(sc_object[[]])
 
 ## Multiple columns can also be added must be a list of vector
 new_data_list <- list(
-  "other_random_data" = rep("A", length(cells_to_keep)),
-  "even_different_random_data" = seq_len(length(cells_to_keep))
+  "other_random_data" = rep("A", length(n_cells)),
+  "even_different_random_data" = seq_len(length(n_cells))
 )
 
 ## either like this
@@ -628,6 +630,7 @@ metacells. You can optionally regenerate the k-NN graph with regenerate_knn,
 specify which embedding to use (embd_to_use, currently "pca"), and control
 library size normalization with target_size. Set a seed for reproducibility.
 
+
 ```{r}
 #| label: meta-cell
 
@@ -642,6 +645,23 @@ meta_cell_data_v1 <- get_meta_cells_sc(
 str(meta_cell_data_v1)
 ```
 
+## Save object
+
+As analysis progresses some parts are written to the duckdb and saved and others are not.Any uodates to the obs table and to the to_keep column (number of cells) will be saved to the duck db and will be present when the data is loaded back in. 
+
+However other aspects which are held in memory e.g HVG PCA and AUcell will not be saved to ensure these are saved and then loaded back in when the `sc_object` is loaded in use `save_sc_exp_to_disk()`.
+
+Objects can either be saved as a `rds` or `qs2` it is highly recommended the qs2 format is used as the reading in is far more performant.
+
+
+```{r}
+#| label: save-to-disk
+
+save_sc_exp_to_disk(sc_object, type = "qs2")
+
+```
+
+
 # Loading in existing object {#sec-loading-existing}
 
 A series of functions have been written to load in a already pre-processed
@@ -653,7 +673,7 @@ This is done by pointing  the directory where the `sc_duckdb.db`,
 All information that was stored in the obs table leiden_clusters, gene
 proportions etc and any information in var table will be retained as it has been
 stored in the duckdb. However analysis that was created and storied in memory
-e.g knn and PCA will no longer exist and have to be rerun.
+e.g knn and PCA will no longer exist and have to be rerun (unless data has been saved with `save_sc_exp_to_disk()`, recommended).
 
 ```{r}
 #| label: load-existing
@@ -676,7 +696,7 @@ dim(sc_object_loaded[[]])
 ## PCA in original object exists
 head(get_pca_factors(sc_object))[1:5,1:5]
 
-## PCA in loaded in object does not exist
+## PCA in loaded in object does exist as has been loaded back in from the qs2 file
 head(get_pca_factors(sc_object_loaded))
 
 
