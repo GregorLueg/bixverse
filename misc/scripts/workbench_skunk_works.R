@@ -830,7 +830,7 @@ metrics_helper <- function(cm) {
 
 demuxlet_result <- fread("~/Downloads/demuxlet_PBMCs/demuxlet_calls.tsv")
 
-rextendr::document()
+# rextendr::document()
 
 sc_object_pmbc <- single_cell_exp(
   dir_data = tempdir()
@@ -864,9 +864,10 @@ boost_classifier_res = rs_sc_doublet_detection(
   streaming = FALSE
 )
 
-# Total runtime: 28.42s
+# Total runtime: 28.42s <- Annoy
+# Total runtime: 63.98s <- HNSW
 # Total runtime: 109.15s
-# Total runtime: 66.48s
+# Total runtime: 66.48s <- NNDescent
 
 #  == Running iteration 24 of 25 ==
 # Loaded in data : 1.70ms
