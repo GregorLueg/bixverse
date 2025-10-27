@@ -244,10 +244,10 @@ new_data <- rep("random_new_data", length(n_cells))
 
 ## Using function or using
 sc_object <- set_sc_new_obs_col(
-  sc_object, 
+  sc_object,
   col_name = "random_new_data",
   new_data = new_data
-  )
+)
 
 # or using [[]]
 sc_object[["random_new_data2"]] <- new_data
@@ -263,12 +263,11 @@ new_data_list <- list(
 ## either like this
 sc_object <- set_sc_new_obs_col_multiple(sc_object, new_data_list)
 
-# or this 
+# or this
 # sc_object[[names(new_data_list)]] <- new_data_list
 
 # or this
 sc_object[[c("new_name_a", "new_name_b")]] <- new_data_list
-
 ```
 
 
@@ -410,7 +409,7 @@ head(get_sc_var(sc_object))
 
 
 ## You can then which genes are highly variable as follows
-head(get_sc_var(sc_object)[get_hvg(sc_object)],5)
+head(get_sc_var(sc_object)[get_hvg(sc_object)], 5)
 ```
 
 
@@ -443,10 +442,10 @@ sc_object <- calculate_pca_sc(
 )
 
 # get the PCA factors
-get_pca_factors(sc_object)[1:5,1:5]
+get_pca_factors(sc_object)[1:5, 1:5]
 
 # Get PCA loadings for each gene
-get_pca_loadings(sc_object)[1:5,1:5]
+get_pca_loadings(sc_object)[1:5, 1:5]
 ```
 
 ```{r}
@@ -507,9 +506,9 @@ sc_object <- find_neighbours_sc(
 )
 
 
-head(get_knn_mat(sc_object))[1:5,1:5]
+head(get_knn_mat(sc_object))[1:5, 1:5]
 
-head(get_snn_graph(sc_object))[1:5,1:5]
+head(get_snn_graph(sc_object))[1:5, 1:5]
 ```
 
 
@@ -647,32 +646,33 @@ str(meta_cell_data_v1)
 
 ## Save object
 
-As analysis progresses some parts are written to the duckdb and saved and others are not.Any uodates to the obs table and to the to_keep column (number of cells) will be saved to the duck db and will be present when the data is loaded back in. 
+As analysis progresses some parts are written to the duckdb and saved and others are not.Any updates to the `obs` table and to the `to_keep` column (number of cells) will be saved to the duckdb and will be present when the data is loaded back in using `load_existing()`.
 
-However other aspects which are held in memory e.g HVG PCA and AUcell will not be saved to ensure these are saved and then loaded back in when the `sc_object` is loaded in use `save_sc_exp_to_disk()`.
+However, other aspects which are held in memory e.g HVG, PCA and AUcell will not be saved. To ensure these are saved and then loaded back in when `load_existing()` is used run `save_sc_exp_to_disk()`.
 
-Objects can either be saved as a `rds` or `qs2` it is highly recommended the qs2 format is used as the reading in is far more performant.
+This will create an `memory.qs2` object in the same directory as the `counts_cells.bin`, `counts_genes.bin` and `sc_duckdb.db`
+
+Objects can either be saved as a `rds` or `qs2` it is highly recommended the `qs2` format is used as the reading in is far more performant.
 
 
 ```{r}
 #| label: save-to-disk
 
 save_sc_exp_to_disk(sc_object, type = "qs2")
-
 ```
 
 
 # Loading in existing object {#sec-loading-existing}
 
 A series of functions have been written to load in a already pre-processed
-sc_object where the to_keep cells have already been defined.
+sc_object where the `to_keep` cells have already been defined.
 
 This is done by pointing  the directory where the `sc_duckdb.db`,
 `counts_cells.bin` and `counts_genes.bin` have been created.
 
 All information that was stored in the obs table leiden_clusters, gene
 proportions etc and any information in var table will be retained as it has been
-stored in the duckdb. However analysis that was created and storied in memory
+stored in the duckdb. However analysis that was created and stored in memory
 e.g knn and PCA will no longer exist and have to be rerun (unless data has been saved with `save_sc_exp_to_disk()`, recommended).
 
 ```{r}
@@ -694,14 +694,14 @@ dim(sc_object_loaded[[]])
 #| label: pca-knn
 
 ## PCA in original object exists
-head(get_pca_factors(sc_object))[1:5,1:5]
+head(get_pca_factors(sc_object))[1:5, 1:5]
 
 ## PCA in loaded in object does exist as has been loaded back in from the qs2 file
 head(get_pca_factors(sc_object_loaded))
 
 
 ## Same for knn
-head(get_knn_mat(sc_object))[1:5,1:5]
+head(get_knn_mat(sc_object))[1:5, 1:5]
 
 head(get_knn_mat(sc_object_loaded))
 ```
