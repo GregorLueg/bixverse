@@ -9,9 +9,11 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"nndescent"`.
+#'  neighbour search. Defaults to `"annoy"`. The implementations are:
+#'  `c("annoy", "hnsw", "nndescent")`.
 #'  \item dist_metric - Which distance metric to use for the approximate nearest
-#'  neighbour search. Defaults to `"euclidean"`.
+#'  neighbour search. Defaults to `"euclidean"`. The implementations are
+#'  `c("euclidean", "cosine")`.
 #'  \item search_budget - Search budget per tree for Annoy. Defaults to `100L`.
 #'  \item n_trees - Number of trees to generate for Annoy. Defaults to `100L`.
 #'  \item nn_max_iter - Maximum iterations for NNDescent. Defaults to `15L`.
@@ -24,7 +26,7 @@
 params_knn_defaults <- function() {
   list(
     k = 0L,
-    knn_method = "nndescent",
+    knn_method = "annoy",
     dist_metric = "euclidean",
     search_budget = 100L,
     n_trees = 100L,

@@ -743,11 +743,11 @@ pub fn generate_knn_hnsw(
 /// * `no_neighbours` - Number of neighbours for the KNN graph.
 /// * `n_trees` - Number of trees to use for the search.
 /// * `search_budget` - Search budget per given query.
-/// * `seed` - Seed for the HNSW algorithm
+/// * `seed` - Seed for the Annoy algorithm
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the HNSW algorithm
+/// The k-nearest neighbours based on the Annoy algorithm
 pub fn generate_knn_annoy(
     mat: MatRef<f32>,
     dist_metric: &str,
@@ -799,18 +799,58 @@ pub fn generate_knn_annoy(
     res
 }
 
+/// Get the kNN graph based on NN-Descent
+///
+/// This function generates the kNN graph based via an approximate nearest
+/// neighbour search based on the NN-Descent. The algorithm will use a
+/// neighbours of neighbours logic to identify the approximate nearest
+/// neighbours.
+///
+/// ### Params
+///
+/// * `mat` - Matrix in which rows represent the samples and columns the
+///   respective embeddings for that sample
+/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `no_neighbours` - Number of neighbours for the KNN graph.
+/// * `max_iter` - Maximum iterations for the algorithm.
+/// * `delta` - Early stop criterium for the algorithm.
+/// * `rho` - Sampling rate for the old neighbours. Will adaptively decrease
+///   over time.
+/// * `seed` - Seed for the NN Descent algorithm
+/// * `verbose` - Controls verbosity of the algorithm
+///
+/// ### Returns
+///
+/// The k-nearest neighbours based on the NN Desccent algorithm
+///
+/// ### Implementation details
+///
+/// In case of contrived synthetic data the algorithm sometimes does not
+/// return enough neighbours. If that happens, the neighbours will be just
+/// padded.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_knn_nndescent(
     mat: MatRef<f32>,
     dist_metric: &str,
-    k: usize,
+    no_neighbours: usize,
     max_iter: usize,
     delta: f32,
     rho: f32,
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let graph = NNDescent::build(mat, k, dist_metric, max_iter, delta, rho, seed, verbose);
+    let graph = NNDescent::build(
+        mat,
+        no_neighbours,
+        dist_metric,
+        max_iter,
+        delta,
+        rho,
+        seed,
+        verbose,
+    );
+
     graph
         .into_iter()
         .enumerate()
@@ -819,10 +859,10 @@ pub fn generate_knn_nndescent(
 
             // pad if we don't have enough neighbours
             // need this to deal with the failing tests on weird synthetic data
-            if ids.len() < k {
-                let padding_needed = k - ids.len();
+            if ids.len() < no_neighbours {
+                let padding_needed = no_neighbours - ids.len();
                 if ids.is_empty() {
-                    ids.resize(k, i);
+                    ids.resize(no_neighbours, i);
                 } else {
                     for j in 0..padding_needed {
                         ids.push(ids[j % ids.len()]);

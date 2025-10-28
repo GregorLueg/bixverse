@@ -624,7 +624,6 @@ impl SingeCellCountData {
         let mut writer =
             CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
 
-        
         for i in 0..no_genes {
             // get the index position
             let start_i = sparse_data.indptr[i];
@@ -760,7 +759,7 @@ impl SingeCellCountData {
 
         if verbose {
             println!(
-                "Convertion data into gene-friendly format done: {:.2?}",
+                "Conversion of count data into gene-friendly format done: {:.2?}",
                 end_conversion
             );
         }

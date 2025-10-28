@@ -856,17 +856,18 @@ boost_classifier_res = rs_sc_doublet_detection(
   cells_to_keep = get_cells_to_keep(sc_object_pmbc),
   boost_params = params_boost(
     voter_thresh = 0.5,
-    resolution = 1.0
+    resolution = 1.0,
+    knn = list(knn_method = "nndescent")
   ),
   seed = 1210103L,
   verbose = TRUE,
   streaming = FALSE
 )
 
-# Total runtime: 33.11s <- Annoy
+# Total runtime: 26.84s <- Annoy
 # Total runtime: 63.98s <- HNSW
 # Total runtime: 109.15s
-# Total runtime: 41.03s <- NNDescent
+# Total runtime: 32.54s <- NNDescent
 
 #  == Running iteration 24 of 25 ==
 # Loaded in data : 1.70ms

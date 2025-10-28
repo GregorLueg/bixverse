@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
 
 use crate::core::graph::annoy::*;
 use crate::core::graph::knn::{parse_ann_dist, AnnDist};
@@ -100,10 +101,18 @@ impl Ord for OrderedFloat {
 // Thread-local buffers //
 //////////////////////////
 
-// Store thread local the Heap buffers
+// Store thread local all types of statics...
+
+// popping
+// PID
 thread_local! {
+    /// HEAP_BUFFER -> The Reference cell for the neighbours for fast sorting and
     static HEAP_BUFFER: RefCell<BinaryHeap<Reverse<(OrderedFloat, usize, bool)>>> =
         const { RefCell::new(BinaryHeap::new()) };
+    /// PID_SET -> Vector to deal with duplicatations
+    static PID_SET: RefCell<Vec<bool>> = const { RefCell::new(Vec::new()) };
+    static CANDIDATE_SET: RefCell<Vec<bool>> = const {RefCell::new(Vec::new())};
+    static SAMPLE_INDICES: RefCell<Vec<usize>> = const{RefCell::new(Vec::new())};
 }
 
 ////////////////////
@@ -177,7 +186,7 @@ impl NNDescent {
             vectors_flat.extend(mat.row(i).iter().copied());
         }
 
-        // [re-compute norms for cosine distance
+        // compute norms for cosine distance
         let norms = if metric == AnnDist::Cosine {
             (0..n)
                 .map(|i| {
@@ -203,8 +212,17 @@ impl NNDescent {
         };
 
         // initialise with Annoy for better-than-random starting point
-        // 32 trees is what they use in the original paper
+        // 32 trees is what they use in the original paper/repo
+
+        let start_initial_index = Instant::now();
+
         let annoy_index = AnnoyIndex::new(mat, 32, seed);
+
+        let end_initial_index = start_initial_index.elapsed();
+
+        if verbose {
+            println!("Generated initial Annoy index: {:.2?}", end_initial_index);
+        }
 
         builder.run(k, max_iter, &annoy_index, delta, rho, seed, verbose)
     }
@@ -251,13 +269,15 @@ impl NNDescent {
             println!("Initialising NN-Descent with {} cells - k={}", self.n, k);
         }
 
+        let start_total = Instant::now();
+
         let mut graph = self.initialise_with_annoy(k, annoy_index);
 
         for iter in 0..max_iter {
             let updates = AtomicUsize::new(0);
 
             let current_rho = if iter == 0 {
-                1.0
+                rho
             } else {
                 (rho * 0.8_f32.powi(iter as i32 - 1)).max(0.3)
             };
@@ -343,6 +363,12 @@ impl NNDescent {
                 }
                 break;
             }
+        }
+
+        let end_total = start_total.elapsed();
+
+        if verbose {
+            println!("Total run-time for NNDescent: {:.2?}", end_total);
         }
 
         graph
@@ -442,87 +468,129 @@ impl NNDescent {
         let max_per_old = (k / 2).min(5);
         let max_candidates = k * 4;
 
-        let mut candidate_ids = Vec::with_capacity(max_candidates);
+        CANDIDATE_SET.with(|set_cell| {
+            SAMPLE_INDICES.with(|indices_cell| {
+                let mut candidate_set = set_cell.borrow_mut();
+                let mut sample_indices = indices_cell.borrow_mut();
 
-        for &new_nb in &new_neighbours {
-            let neighbour_list = &graph[new_nb];
-            let take = max_per_neighbour.min(neighbour_list.len());
+                if candidate_set.len() < self.n {
+                    candidate_set.resize(self.n, false);
+                }
 
-            if neighbour_list.len() <= take {
-                for nn in neighbour_list {
-                    let pid = nn.pid();
-                    if pid != node && candidate_ids.len() < max_candidates {
-                        candidate_ids.push(pid);
+                let mut candidate_ids = Vec::with_capacity(max_candidates);
+
+                // Process new neighbours
+                for &new_nb in &new_neighbours {
+                    let neighbour_list = &graph[new_nb];
+                    let take = max_per_neighbour.min(neighbour_list.len());
+
+                    if neighbour_list.len() <= take {
+                        for nn in neighbour_list {
+                            let pid = nn.pid();
+                            if pid != node && !candidate_set[pid] {
+                                candidate_set[pid] = true;
+                                candidate_ids.push(pid);
+                                if candidate_ids.len() >= max_candidates {
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        sample_indices.clear();
+                        sample_indices.extend(0..neighbour_list.len());
+
+                        for i in 0..take {
+                            let j = rng.random_range(i..neighbour_list.len());
+                            sample_indices.swap(i, j);
+                        }
+
+                        for &idx in &sample_indices[..take] {
+                            if candidate_ids.len() >= max_candidates {
+                                break;
+                            }
+                            let pid = neighbour_list[idx].pid();
+                            if pid != node && !candidate_set[pid] {
+                                candidate_set[pid] = true;
+                                candidate_ids.push(pid);
+                            }
+                        }
                     }
                 }
-            } else {
-                for _ in 0..take {
+
+                // Process old neighbours
+                for &old_nb in &old_neighbours {
                     if candidate_ids.len() >= max_candidates {
                         break;
                     }
-                    let idx = rng.random_range(0..neighbour_list.len());
-                    let pid = neighbour_list[idx].pid();
-                    if pid != node {
-                        candidate_ids.push(pid);
-                    }
-                }
-            }
-        }
+                    let neighbour_list = &graph[old_nb];
+                    let take = max_per_old.min(neighbour_list.len());
 
-        for &old_nb in &old_neighbours {
-            if candidate_ids.len() >= max_candidates {
-                break;
-            }
-            let neighbour_list = &graph[old_nb];
-            let take = max_per_old.min(neighbour_list.len());
-
-            if neighbour_list.len() <= take {
-                for nn in neighbour_list {
-                    let pid = nn.pid();
-                    if pid != node && candidate_ids.len() < max_candidates {
-                        candidate_ids.push(pid);
-                    }
-                }
-            } else {
-                for _ in 0..take {
-                    if candidate_ids.len() >= max_candidates {
-                        break;
-                    }
-                    let idx = rng.random_range(0..neighbour_list.len());
-                    let pid = neighbour_list[idx].pid();
-                    if pid != node {
-                        candidate_ids.push(pid);
-                    }
-                }
-            }
-        }
-
-        match self.metric {
-            AnnDist::Euclidean => candidate_ids
-                .into_iter()
-                .filter_map(|c| {
-                    let dist = unsafe { self.euclidean_distance(node, c) };
-                    // Only include if better than worst current distance
-                    if dist < worst_current_dist {
-                        Some((c, dist))
+                    if neighbour_list.len() <= take {
+                        for nn in neighbour_list {
+                            let pid = nn.pid();
+                            if pid != node && !candidate_set[pid] {
+                                candidate_set[pid] = true;
+                                candidate_ids.push(pid);
+                                if candidate_ids.len() >= max_candidates {
+                                    break;
+                                }
+                            }
+                        }
                     } else {
-                        None
+                        sample_indices.clear();
+                        sample_indices.extend(0..neighbour_list.len());
+
+                        for i in 0..take {
+                            let j = rng.random_range(i..neighbour_list.len());
+                            sample_indices.swap(i, j);
+                        }
+
+                        for &idx in &sample_indices[..take] {
+                            if candidate_ids.len() >= max_candidates {
+                                break;
+                            }
+                            let pid = neighbour_list[idx].pid();
+                            if pid != node && !candidate_set[pid] {
+                                candidate_set[pid] = true;
+                                candidate_ids.push(pid);
+                            }
+                        }
                     }
-                })
-                .collect(),
-            AnnDist::Cosine => candidate_ids
-                .into_iter()
-                .filter_map(|c| {
-                    let dist = unsafe { self.cosine_distance(node, c) };
-                    // Only include if better than worst current distance
-                    if dist < worst_current_dist {
-                        Some((c, dist))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        }
+                }
+
+                let result = match self.metric {
+                    AnnDist::Euclidean => candidate_ids
+                        .iter()
+                        .filter_map(|&c| {
+                            let dist = unsafe { self.euclidean_distance(node, c) };
+                            if dist < worst_current_dist {
+                                Some((c, dist))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                    AnnDist::Cosine => candidate_ids
+                        .iter()
+                        .filter_map(|&c| {
+                            let dist = unsafe { self.cosine_distance(node, c) };
+                            if dist < worst_current_dist {
+                                Some((c, dist))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                };
+
+                // Clear candidate set
+                for &pid in &candidate_ids {
+                    candidate_set[pid] = false;
+                }
+
+                result
+            })
+        })
     }
 
     /// Update the neighbours with the improvements
@@ -553,67 +621,73 @@ impl NNDescent {
                 .collect();
         }
 
-        HEAP_BUFFER.with(|cell| {
-            let mut heap = cell.borrow_mut();
-            heap.clear();
+        HEAP_BUFFER.with(|heap_cell| {
+            PID_SET.with(|set_cell| {
+                let mut heap = heap_cell.borrow_mut();
+                let mut pid_set = set_cell.borrow_mut();
 
-            // build a max-heap from current neighbours (worst at top)
-            // use Reverse to make BinaryHeap act as max-heap of distances
-            for n in current {
-                if n.pid() != node {
-                    heap.push(Reverse((OrderedFloat(n.dist), n.pid(), false)));
-                }
-            }
+                heap.clear();
 
-            // process each candidate
-            for &(pid, dist) in candidates {
-                if pid == node {
-                    continue;
+                // ensure pid_set is large enough and clear it
+                if pid_set.len() < self.n {
+                    pid_set.resize(self.n, false);
                 }
 
-                // check if this candidate already exists in heap
-                let already_exists = heap.iter().any(|&Reverse((_, p, _))| p == pid);
-                if already_exists {
-                    continue;
+                // build max-heap and mark existing PIDs
+                for n in current {
+                    let pid = n.pid();
+                    if pid != node {
+                        heap.push(Reverse((OrderedFloat(n.dist), pid, false)));
+                        pid_set[pid] = true;
+                    }
                 }
 
-                // if heap is not full, just add it
-                if heap.len() < k {
-                    heap.push(Reverse((OrderedFloat(dist), pid, true)));
-                } else {
-                    // heap is full -> check if this candidate beats the worst
-                    if let Some(&Reverse((OrderedFloat(worst_dist), _, _))) = heap.peek() {
+                // process candidates
+                for &(pid, dist) in candidates {
+                    if pid == node || pid_set[pid] {
+                        continue;
+                    }
+
+                    if heap.len() < k {
+                        heap.push(Reverse((OrderedFloat(dist), pid, true)));
+                        pid_set[pid] = true;
+                    } else if let Some(&Reverse((OrderedFloat(worst_dist), _, _))) = heap.peek() {
                         if dist < worst_dist {
-                            heap.pop(); // Remove worst
+                            if let Some(Reverse((_, old_pid, _))) = heap.pop() {
+                                pid_set[old_pid] = false;
+                            }
                             heap.push(Reverse((OrderedFloat(dist), pid, true)));
+                            pid_set[pid] = true;
                         }
                     }
                 }
-            }
 
-            // convert heap to sorted vector (best distances first)
-            let mut result: Vec<_> = heap
-                .drain()
-                .map(|Reverse((OrderedFloat(d), p, is_new))| (d, p, is_new))
-                .collect();
-            result.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+                // convert heap to sorted vector
+                let mut result: Vec<_> = heap
+                    .drain()
+                    .map(|Reverse((OrderedFloat(d), p, is_new))| {
+                        pid_set[p] = false;
+                        (d, p, is_new)
+                    })
+                    .collect();
+                result.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-            // check if anything/what changed
-            let changed = result.len() != current.len()
-                || result
-                    .iter()
-                    .zip(current.iter())
-                    .any(|(a, b)| a.1 != b.pid() || (a.0 - b.dist).abs() > 1e-6);
+                // check for changes
+                let changed = result.len() != current.len()
+                    || result
+                        .iter()
+                        .zip(current.iter())
+                        .any(|(a, b)| a.1 != b.pid() || (a.0 - b.dist).abs() > 1e-6);
 
-            if changed {
-                updates.fetch_add(1, Ordering::Relaxed);
-            }
+                if changed {
+                    updates.fetch_add(1, Ordering::Relaxed);
+                }
 
-            // Mark as new only if the list actually changed
-            result
-                .into_iter()
-                .map(|(dist, pid, is_new)| Neighbour::new(pid, dist, is_new && changed))
-                .collect()
+                result
+                    .into_iter()
+                    .map(|(dist, pid, is_new)| Neighbour::new(pid, dist, is_new && changed))
+                    .collect()
+            })
         })
     }
 
