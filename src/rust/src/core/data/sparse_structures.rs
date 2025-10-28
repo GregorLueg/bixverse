@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
 use rustc_hash::FxHashMap;
