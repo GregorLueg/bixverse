@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
 use faer::MatRef;
+use rand::prelude::*;
+use rand::rngs::StdRng;
 use rustc_hash::FxHashSet;
 
 use crate::core::data::sparse_structures::*;
@@ -43,6 +45,8 @@ pub struct SEACellsParams {
     pub n_sea_cells: usize,
     pub max_fw_iters: usize,
     pub convergence_epsilon: f32,
+    pub max_iter: usize,
+    pub min_iter: usize,
 }
 
 //////////
@@ -57,6 +61,8 @@ pub struct SEACells<'a> {
     a: Option<CompressedSparseData<f32>>,
     b: Option<CompressedSparseData<f32>>,
     archetypes: Option<Vec<usize>>,
+    rss_history: Vec<f32>,
+    convergence_threshold: Option<f32>,
     params: &'a SEACellsParams,
 }
 
@@ -71,10 +77,13 @@ impl<'a> SEACells<'a> {
             a: None,
             b: None,
             archetypes: None,
+            convergence_threshold: None,
+            rss_history: Vec::new(),
             params,
         }
     }
 
+    /// Generate the kernel matrix
     pub fn construct_kernel_mat(
         &mut self,
         pca: MatRef<f32>,
@@ -154,6 +163,79 @@ impl<'a> SEACells<'a> {
         self.k_squared = Some(k_squared);
     }
 
+    /// Fit
+    pub fn fit(&mut self, seed: usize, verbose: bool) {
+        assert!(
+            self.kernel_mat.is_some(),
+            "Must construct kernel matrix first"
+        );
+
+        self.initialise_archetypes_greedy(verbose);
+        self.initialise_matrices(verbose, seed as u64);
+
+        let a = self.a.as_ref().unwrap();
+        let b = self.b.as_ref().unwrap();
+
+        let initial_rss = self.compute_rss(a, b);
+        self.rss_history.push(initial_rss);
+        self.convergence_threshold = Some(self.params.convergence_epsilon * initial_rss);
+
+        if verbose {
+            println!("Initial RSS: {:.6}", initial_rss);
+            println!(
+                "Convergence threshold: {:.6}",
+                self.convergence_threshold.unwrap()
+            );
+        }
+
+        let mut converged = false;
+        let mut n_iter = 0;
+
+        while (!converged && n_iter < self.params.max_iter) || n_iter < self.params.min_iter {
+            n_iter += 1;
+
+            if verbose && (n_iter == 1 || n_iter % 10 == 0) {
+                println!("Starting iteration {}...", n_iter);
+            }
+
+            // Update A and B
+            let b_current = self.b.clone().unwrap();
+            let a_current = self.a.clone().unwrap();
+
+            let a_new = self.update_a_mat(&b_current, &a_current);
+            let b_new = self.update_b_mat(&a_new, &b_current);
+
+            let rss = self.compute_rss(&a_new, &b_new);
+            self.rss_history.push(rss);
+
+            self.a = Some(a_new);
+            self.b = Some(b_new);
+
+            if verbose && (n_iter == 1 || n_iter % 10 == 0) {
+                println!("  RSS: {:.6}", rss);
+            }
+
+            // Check convergence
+            if n_iter > 1 {
+                let rss_diff = (self.rss_history[n_iter - 1] - self.rss_history[n_iter]).abs();
+                if rss_diff < self.convergence_threshold.unwrap() {
+                    if verbose {
+                        println!("Converged after {} iterations!", n_iter);
+                    }
+                    converged = true;
+                }
+            }
+        }
+
+        if !converged && verbose {
+            println!(
+                "Warning: Algorithm did not converge after {} iterations",
+                self.params.max_iter
+            );
+        }
+    }
+
+    /// Initialise the archetypes in a greedy fashion
     fn initialise_archetypes_greedy(&mut self, verbose: bool) {
         let k_mat = self.k_squared.as_ref().unwrap();
         let n = k_mat.shape.0;
@@ -265,6 +347,55 @@ impl<'a> SEACells<'a> {
         self.archetypes = Some(centers);
     }
 
+    /// Initialise A and B matrices
+    fn initialise_matrices(&mut self, verbose: bool, seed: u64) {
+        let archetypes = self.archetypes.as_ref().unwrap();
+        let k = archetypes.len();
+        let n = self.n_cells;
+
+        if verbose {
+            println!("Initialising A and B matrices...");
+        }
+
+        let mut b_rows = Vec::new();
+        let mut b_cols = Vec::new();
+        let mut b_vals = Vec::new();
+
+        for (col, &row) in archetypes.iter().enumerate() {
+            b_rows.push(row);
+            b_cols.push(col);
+            b_vals.push(1_f32);
+        }
+
+        let b = coo_to_csr(&b_rows, &b_cols, &b_vals, (n, k));
+
+        let archetypes_per_cell = (k as f32 * 0.25).ceil() as usize;
+        let mut rng = StdRng::seed_from_u64(seed);
+
+        let mut a_rows = Vec::new();
+        let mut a_cols = Vec::new();
+        let mut a_vals = Vec::new();
+
+        for cell in 0..n {
+            for _ in 0..archetypes_per_cell {
+                let archetype = rng.random_range(0..k);
+                a_rows.push(archetype);
+                a_cols.push(cell);
+                a_vals.push(rng.random::<f32>());
+            }
+        }
+
+        let mut a = coo_to_csr(&a_rows, &a_cols, &a_vals, (k, n));
+
+        normalise_csr_columns_l1(&mut a);
+
+        a = self.update_a_mat(&b, &a);
+
+        self.a = Some(a);
+        self.b = Some(b);
+    }
+
+    /// Update the A matrix using Frank-Wolfe
     fn update_a_mat(
         &self,
         b: &CompressedSparseData<f32>,
@@ -336,7 +467,8 @@ impl<'a> SEACells<'a> {
         a
     }
 
-    fn update_b(
+    /// Update the B matrix using Frank-Wolfe
+    fn update_b_mat(
         &self,
         a: &CompressedSparseData<f32>,
         b_prev: &CompressedSparseData<f32>,
@@ -408,7 +540,9 @@ impl<'a> SEACells<'a> {
         b
     }
 
-    /// Compute RSS: ||K - K @ B @ A||_F^2
+    /// Compute RSS
+    ///
+    /// Formula: ```||K - K @ B @ A||_F^2```
     fn compute_rss(&self, a: &CompressedSparseData<f32>, b: &CompressedSparseData<f32>) -> f32 {
         let k_mat = self.kernel_mat.as_ref().unwrap();
 
