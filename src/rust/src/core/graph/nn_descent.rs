@@ -101,17 +101,15 @@ impl Ord for OrderedFloat {
 // Thread-local buffers //
 //////////////////////////
 
-// Store thread local all types of statics...
-
-// popping
-// PID
 thread_local! {
-    /// HEAP_BUFFER -> The Reference cell for the neighbours for fast sorting and
+    /// HEAP_BUFFER -> Heap storage for `update_neighbours()`
     static HEAP_BUFFER: RefCell<BinaryHeap<Reverse<(OrderedFloat, usize, bool)>>> =
         const { RefCell::new(BinaryHeap::new()) };
-    /// PID_SET -> Vector to deal with duplicatations
+    /// PID_SET -> SETS for the point IDs for `update_neighbours()`
     static PID_SET: RefCell<Vec<bool>> = const { RefCell::new(Vec::new()) };
+    /// CANDIDATE_SET -> Candidate sets for `local_join()`
     static CANDIDATE_SET: RefCell<Vec<bool>> = const {RefCell::new(Vec::new())};
+    /// SAMPLE_INDICES -> Sample indices for `local_join()`
     static SAMPLE_INDICES: RefCell<Vec<usize>> = const{RefCell::new(Vec::new())};
 }
 
