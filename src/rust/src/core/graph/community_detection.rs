@@ -16,6 +16,7 @@ use crate::core::graph::graph_structures::*;
 ///
 /// * `graph` - Undirected pet graph
 /// * `resolution` - Resolution parameter for the Louvain clustering
+/// * `iter` - Numbers of iterations for the algorithm
 /// * `seed` - Seed for reproducibility purposes
 ///
 /// ### Returns
@@ -125,7 +126,20 @@ pub fn louvain_petgraph(
 // Louvain - SparseGraph //
 ///////////////////////////
 
-/// Louvain version for
+/// Louvain community detection
+///
+/// This version works on sparse graphs
+///
+/// ### Params
+///
+/// * `graph` - Undirected sparse graph
+/// * `resolution` - Resolution parameter for the Louvain clustering
+/// * `iter` - Numbers of iterations for the algorithm
+/// * `seed` - Seed for reproducibility purposes
+///
+/// ### Returns
+///
+/// Vector of communitiies
 pub fn louvain_sparse_graph(
     graph: &SparseGraph,
     resolution: f32,

@@ -13,7 +13,7 @@ params_scrublet(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list()
+  knn = list(knn_method = "hnsw")
 )
 }
 \arguments{
@@ -50,12 +50,15 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
-\code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}.}
+\code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
+\code{rho}, \code{delta}.}
 }
 \value{
 A named list with all Scrublet parameters, combining defaults with
 any user-specified overrides.
 }
 \description{
-Wrapper function for Scrublet doublet detection parameters
+Constructor for the various Scrublet parameters. In this case,
+the default for the kNN graph generation was set to \code{"hnsw"} as this
+algorithm showed the best performance in different empirical benchmarks.
 }
