@@ -549,18 +549,11 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
     ))
   }
 
-  knn_data <- with(
-    neighbours_params,
-    rs_sc_knn(
-      embd = embd,
-      no_neighbours = k,
-      seed = seed,
-      n_trees = n_trees,
-      search_budget = search_budget,
-      verbose = .verbose,
-      algorithm_type = knn_algorithm,
-      ann_dist = ann_dist
-    )
+  knn_data <- rs_sc_knn(
+    embd = embd,
+    knn_params = neighbours_params,
+    verbose = .verbose,
+    seed = seed
   )
 
   object <- set_knn(object, knn_data)

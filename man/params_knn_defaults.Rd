@@ -12,11 +12,17 @@ parameters:
 \itemize{
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to \code{"annoy"}.
+neighbour search. Defaults to \code{"annoy"}. The implementations are:
+\code{c("annoy", "hnsw", "nndescent")}.
 \item dist_metric - Which distance metric to use for the approximate nearest
-neighbour search. Defaults to \code{"euclidean"}.
+neighbour search. Defaults to \code{"euclidean"}. The implementations are
+\code{c("euclidean", "cosine")}.
 \item search_budget - Search budget per tree for Annoy. Defaults to \code{100L}.
 \item n_trees - Number of trees to generate for Annoy. Defaults to \code{100L}.
+\item nn_max_iter - Maximum iterations for NNDescent. Defaults to \code{15L}.
+\item rho - Sampling rate for NNDescent. Defaults to \code{1.0}.
+\item delta - Early termination criterium for NNDescent. Defaults to
+\code{0.001}.
 }
 }
 \description{

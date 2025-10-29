@@ -243,6 +243,16 @@ fn rs_get_metacells(
                     seed,
                     verbose,
                 ),
+                KnnSearch::NNDescent => generate_knn_nndescent(
+                    embd.as_ref(),
+                    &meta_cell_params.ann_dist,
+                    meta_cell_params.k,
+                    meta_cell_params.nn_max_iter,
+                    meta_cell_params.delta,
+                    meta_cell_params.rho,
+                    seed,
+                    verbose,
+                ),
             }
         }
         // case three - nothing has been provided

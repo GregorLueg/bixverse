@@ -476,19 +476,21 @@ fn rs_sc_pca(
 ///
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
-/// nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
-/// `"hnsw"`.
+/// nearest neighbours. You have several options to get the approximate nearest
+/// neighbours: 
+/// 
+/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+///   an index. Good compromise of index generation, querying speed.
+/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+///   hood. The index generation takes more long, but higher recall and ideal
+///   for very large datasets due to subdued memory pressure.
+/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+///   that is ideal for small, ephemeral kNN graphs.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
-/// @param no_neighbours Integer. Number of neighbours to return
-/// @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
-/// @param search_budget Integer. Search budget per tree for the `"annoy"`
-/// algorithm.
-/// @param algorithm_type String. Which of the two implemented algorithms to
-/// use. One of `c("annoy", "hnsw")`.
-/// @param ann_dist String. The distance metric to use the approximate nearest
-/// neighbour search. One of `c("cosine", "euclidean")`.
+/// @param knn_params List. The kNN parameters defined by
+/// [bixverse::params_sc_neighbours()].
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -498,34 +500,45 @@ fn rs_sc_pca(
 ///
 /// @export
 #[extendr]
-#[allow(clippy::too_many_arguments)]
 fn rs_sc_knn(
     embd: RMatrix<f64>,
-    no_neighbours: usize,
-    n_trees: usize,
-    search_budget: usize,
-    algorithm_type: String,
-    ann_dist: String,
+    knn_params: List,
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
+    let knn_params = KnnParams::from_r_list(knn_params);
+
     let start_knn = Instant::now();
 
-    let knn_method = parse_knn_method(&algorithm_type)
-        .ok_or_else(|| format!("Invalid KNN search method: {}", algorithm_type))?;
+    let knn_method = parse_knn_method(&knn_params.knn_method)
+        .ok_or_else(|| format!("Invalid KNN search method: {}", knn_params.knn_method))?;
 
     let knn = match knn_method {
-        KnnSearch::Hnsw => {
-            generate_knn_hnsw(embd.as_ref(), &ann_dist, no_neighbours, seed, verbose)
-        }
+        KnnSearch::Hnsw => generate_knn_hnsw(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            seed,
+            verbose,
+        ),
         KnnSearch::Annoy => generate_knn_annoy(
             embd.as_ref(),
-            &ann_dist,
-            no_neighbours,
-            n_trees,
-            search_budget,
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_tree,
+            knn_params.search_budget,
+            seed,
+            verbose,
+        ),
+        KnnSearch::NNDescent => generate_knn_nndescent(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.max_iter,
+            knn_params.delta,
+            knn_params.rho,
             seed,
             verbose,
         ),
@@ -537,7 +550,7 @@ fn rs_sc_knn(
         println!("KNN generation done : {:.2?}", end_knn);
     }
 
-    let index_mat = Mat::from_fn(embd.nrows(), no_neighbours, |i, j| knn[i][j] as i32);
+    let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn[i][j] as i32);
 
     Ok(faer_to_r_matrix(index_mat.as_ref()))
 }

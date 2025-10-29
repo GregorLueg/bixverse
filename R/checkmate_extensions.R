@@ -933,6 +933,8 @@ checkScScrublet <- function(x) {
       "sim_doublet_ratio",
       "expected_doublet_rate",
       "stdev_doublet_rate",
+      "manual_threshold",
+      "n_bins",
       "no_pcs",
       "random_svd",
       "k",
@@ -940,8 +942,9 @@ checkScScrublet <- function(x) {
       "dist_metric",
       "search_budget",
       "n_trees",
-      "n_bins",
-      "manual_threshold"
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -954,7 +957,8 @@ checkScScrublet <- function(x) {
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "n_bins" = "I1[10,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -972,7 +976,8 @@ checkScScrublet <- function(x) {
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
           "no_pcs must be >= 1; k must be >= 0;",
-          "search_budget and n_trees must be >= 1; n_bins must be >= 10."
+          "search_budget, n_trees and nn_max_iter must be >= 1;",
+          "n_bins must be >= 10."
         ),
         broken_elem
       )
@@ -985,7 +990,10 @@ checkScScrublet <- function(x) {
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
-    "stdev_doublet_rate" = "N1[0,1]"
+    "stdev_doublet_rate" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]",
+    "target_size" = "N1[0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1002,8 +1010,9 @@ checkScScrublet <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
-          "min_gene_var_pctl, expected_doublet_rate, and stdev_doublet_rate",
-          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
+          "min_gene_var_pctl, expected_doublet_rate, stdev_doublet_rate",
+          "and delta must be in [0,1];",
+          "loess_span, rho sim_doublet_ratio must be > 0;",
           "target_size must be a numeric >= 1"
         ),
         broken_elem
@@ -1036,8 +1045,7 @@ checkScScrublet <- function(x) {
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
     "clip_max" = c("0", "N1(0,)"),
-    "manual_threshold" = c("0", "N1[0,)"),
-    "target_size" = c("0", "N1[0,)")
+    "manual_threshold" = c("0", "N1[0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1065,7 +1073,7 @@ checkScScrublet <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
@@ -1131,7 +1139,10 @@ checkScBoost <- function(x) {
       "knn_method",
       "dist_metric",
       "search_budget",
-      "n_trees"
+      "n_trees",
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -1144,7 +1155,8 @@ checkScBoost <- function(x) {
     "n_iters" = "I1[1,)",
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)"
+    "n_trees" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1161,7 +1173,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs, n_iters, search_budget and n_trees must be >= 1;",
+          "no_pcs, n_iters, search_budget, nn_max_iter & n_trees must be >= 1;",
           "k must be >= 0."
         ),
         broken_elem
@@ -1176,7 +1188,10 @@ checkScBoost <- function(x) {
     "boost_rate" = "N1[0,1]",
     "resolution" = "N1(0,)",
     "p_thresh" = "N1(0,)",
-    "voter_thresh" = "N1[0,1]"
+    "voter_thresh" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]",
+    "target_size" = "N1(0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1193,8 +1208,9 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
-          "loess_span, resolution and p_thresh must be > 0."
+          "min_gene_var_pctl, boost_rate, delta and voter_thresh must be in",
+          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0;",
+          "target_size must be > 1"
         ),
         broken_elem
       )
@@ -1226,8 +1242,7 @@ checkScBoost <- function(x) {
 
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)"),
-    "target_size" = c("0", "N1(0,)")
+    "clip_max" = c("0", "N1(0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1254,7 +1269,7 @@ checkScBoost <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
@@ -1373,7 +1388,6 @@ checkScHvg <- function(x) {
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 checkScNeighbours <- function(x) {
-  # Checkmate extension
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
@@ -1384,6 +1398,9 @@ checkScNeighbours <- function(x) {
       "k",
       "n_trees",
       "search_budget",
+      "max_iter",
+      "rho",
+      "delta",
       "knn_algorithm",
       "full_snn",
       "pruning",
@@ -1398,6 +1415,9 @@ checkScNeighbours <- function(x) {
     "k" = "I1",
     "n_trees" = "I1",
     "search_budget" = "I1",
+    "max_iter" = "I1",
+    "rho" = "N1",
+    "delta" = "N1",
     "full_snn" = "B1",
     "pruning" = "N1[0, 1]"
   )
@@ -1414,16 +1434,16 @@ checkScNeighbours <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees and search budged need to be integers.",
-          "full_snn needs to be boolean and pruning a number between 0 and 1."
+          "incorrect: k, n_trees, search_budget, and max_iter need to be integers.",
+          "rho and delta need to be numeric. full_snn needs to be boolean and",
+          "pruning a number between 0 and 1."
         ),
         broken_elem
       )
     )
   }
-  # test
   test_choice_rules <- list(
-    knn_algorithm = c("annoy", "hnsw"),
+    knn_algorithm = c("annoy", "hnsw", "nndescent"),
     snn_similarity = c("rank", "jaccard"),
     ann_dist = c("cosine", "euclidean")
   )
@@ -1439,14 +1459,13 @@ checkScNeighbours <- function(x) {
     return(
       sprintf(
         paste0(
-          "The following element `%s` in the KNN generation is not one of",
+          "The following element `%s` in the KNN generation is not one of ",
           "the expected choices. Please double check the documentation."
         ),
         broken_elem
       )
     )
   }
-
   return(TRUE)
 }
 
