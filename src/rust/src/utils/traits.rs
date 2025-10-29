@@ -205,6 +205,18 @@ impl VecConvert<i32> for Vec<usize> {
     }
 }
 
+impl VecConvert<i32> for &[&usize] {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.iter().map(|&&x| x as i32).collect()
+    }
+}
+
+impl VecConvert<i32> for Vec<u32> {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.into_iter().map(|x| x as i32).collect()
+    }
+}
+
 impl VecConvert<usize> for Vec<i32> {
     fn r_int_convert(self) -> Vec<usize> {
         self.into_iter().map(|x| x as usize).collect()

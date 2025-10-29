@@ -1018,7 +1018,7 @@ where
 ///
 /// * `mat` - The mutable reference to the `CompressedSparseData` structure.
 /// * `threshold` - The threshold below which the values are set to zeros.
-fn prune_csr<T>(mat: &mut CompressedSparseData<T>, threshold: f32)
+pub fn prune_csr<T>(mat: &mut CompressedSparseData<T>, threshold: f32)
 where
     T: Clone
         + Default

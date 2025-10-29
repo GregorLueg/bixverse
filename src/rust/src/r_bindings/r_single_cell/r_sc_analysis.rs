@@ -6,6 +6,11 @@ use crate::core::data::sparse_structures::CompressedSparseData;
 use crate::single_cell::dge_aucs::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
+use crate::utils::traits::*;
+
+//////////
+// DGEs //
+//////////
 
 /// Calculate DGEs between cells based on Mann Whitney stats
 ///
@@ -87,6 +92,10 @@ fn rs_calculate_dge_mann_whitney(
     ))
 }
 
+////////////////////////
+// Pathway activities //
+////////////////////////
+
 /// Calculate AUCell in Rust
 ///
 /// @description
@@ -147,6 +156,10 @@ fn rs_aucell(
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
 }
 
+////////////////
+// Meta cells //
+////////////////
+
 /// Generate meta cells
 ///
 /// @description This function implements the approach from Morabito, et al.
@@ -175,6 +188,7 @@ fn rs_aucell(
 ///  \item norm_counts - The re-normalised counts.
 ///  \item nrow - The number of rows represented in the sparse format.
 ///  \item ncol - The number of columns represented in the sparse format.
+///  \item 
 /// }
 ///
 /// @export
@@ -267,7 +281,7 @@ fn rs_get_metacells(
         println!("Identifying meta cells.");
     }
 
-    let meta_cell_indices = identify_meta_cells(
+    let meta_cell_indices: Vec<&[usize]> = identify_meta_cells(
         &nn_map,
         meta_cell_params.max_shared,
         meta_cell_params.target_no_metacells,
@@ -287,27 +301,10 @@ fn rs_get_metacells(
         aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
 
     Ok(list!(
-        indptr = aggregated
-            .indptr
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        indices = aggregated
-            .indices
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        raw_counts = aggregated
-            .data
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        norm_counts = aggregated
-            .data_2
-            .unwrap()
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
+        indptr = aggregated.indptr.r_int_convert(),
+        indices = aggregated.indices.r_int_convert(),
+        raw_counts = aggregated.data.r_int_convert(),
+        norm_counts = aggregated.data_2.unwrap().r_float_convert(),
         nrow = aggregated.shape.0,
         ncol = aggregated.shape.1
     ))
