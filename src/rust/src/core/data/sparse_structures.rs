@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
 use rustc_hash::FxHashMap;
@@ -1010,6 +1008,87 @@ where
     }
 
     coo_to_csr(&rows, &cols, &vals, mat.shape)
+}
+
+/// Prune small values from sparse matrix in-place
+///
+/// Helper function that removes tiny values from the matrix
+///
+/// ### Params
+///
+/// * `mat` - The mutable reference to the `CompressedSparseData` structure.
+/// * `threshold` - The threshold below which the values are set to zeros.
+fn prune_csr<T>(mat: &mut CompressedSparseData<T>, threshold: f32)
+where
+    T: Clone
+        + Default
+        + Into<f32>
+        + Sync
+        + Add<Output = T>
+        + AddAssign
+        + PartialEq
+        + Copy
+        + Mul<Output = T>,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    let mut new_data = Vec::new();
+    let mut new_indices = Vec::new();
+    let mut new_indptr = vec![0];
+
+    for i in 0..mat.shape.0 {
+        let row_start = mat.indptr[i];
+        let row_end = mat.indptr[i + 1];
+
+        for idx in row_start..row_end {
+            if mat.data[idx].into().abs() > threshold {
+                new_data.push(mat.data[idx]);
+                new_indices.push(mat.indices[idx]);
+            }
+        }
+        new_indptr.push(new_data.len());
+    }
+
+    mat.data = new_data;
+    mat.indices = new_indices;
+    mat.indptr = new_indptr;
+}
+
+/// Sparse matrix-vector multiplication
+///
+/// Multiply a sparse CSR matrix with a vector
+///
+/// ### Params
+///
+/// * `mat` - The Compressed Sparse matrix in CSR format
+/// * `vec` - The Vector to multiply with
+///
+/// ### Params
+///
+/// The resulting vector
+pub fn csr_matvec<T>(mat: &CompressedSparseData<T>, vec: &[T]) -> Vec<T>
+where
+    T: Clone
+        + Default
+        + Into<f64>
+        + Sync
+        + Add<Output = T>
+        + AddAssign
+        + PartialEq
+        + Copy
+        + Mul<Output = T>,
+    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
+{
+    let mut result = vec![T::default(); mat.shape.0];
+    for i in 0..mat.shape.0 {
+        let row_start = mat.indptr[i];
+        let row_end = mat.indptr[i + 1];
+        let mut sum = T::default();
+        for idx in row_start..row_end {
+            sum += mat.data[idx] * vec[mat.indices[idx]];
+        }
+        result[i] = sum;
+    }
+    result
 }
 
 ///////////
