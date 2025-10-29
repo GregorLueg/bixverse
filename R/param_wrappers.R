@@ -871,7 +871,7 @@ params_sc_metacells <- function(
   target_no_metacells = 1000L,
   max_iter = 5000L,
   k = 25L,
-  knn_method = c("hnsw", "annoy"),
+  knn_method = c("annoy", "hnsw"),
   ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L

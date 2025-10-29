@@ -992,7 +992,8 @@ checkScScrublet <- function(x) {
     "expected_doublet_rate" = "N1[0,1]",
     "stdev_doublet_rate" = "N1[0,1]",
     "rho" = "N1(0,)",
-    "delta" = "N1[0,1]"
+    "delta" = "N1[0,1]",
+    "target_size" = "N1[0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1044,8 +1045,7 @@ checkScScrublet <- function(x) {
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
     "clip_max" = c("0", "N1(0,)"),
-    "manual_threshold" = c("0", "N1[0,)"),
-    "target_size" = c("0", "N1[0,)")
+    "manual_threshold" = c("0", "N1[0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1190,7 +1190,8 @@ checkScBoost <- function(x) {
     "p_thresh" = "N1(0,)",
     "voter_thresh" = "N1[0,1]",
     "rho" = "N1(0,)",
-    "delta" = "N1[0,1]"
+    "delta" = "N1[0,1]",
+    "target_size" = "N1(0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1207,8 +1208,9 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate, delta and  voter_thresh must be in",
-          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0."
+          "min_gene_var_pctl, boost_rate, delta and voter_thresh must be in",
+          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0;",
+          "target_size must be > 1"
         ),
         broken_elem
       )
@@ -1240,8 +1242,7 @@ checkScBoost <- function(x) {
 
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)"),
-    "target_size" = c("0", "N1(0,)")
+    "clip_max" = c("0", "N1(0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1413,7 +1414,7 @@ checkScNeighbours <- function(x) {
   rules <- list(
     "k" = "I1",
     "n_trees" = "I1",
-    "search_budget" = "N1",
+    "search_budget" = "I1",
     "max_iter" = "I1",
     "rho" = "N1",
     "delta" = "N1",

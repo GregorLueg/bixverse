@@ -91,7 +91,7 @@ pub struct MetaCellParams {
     pub knn_method: String,
     pub ann_dist: String,
     // annoy params
-    pub n_tree: usize,
+    pub n_trees: usize,
     pub search_budget: usize,
     // nn descent params
     pub nn_max_iter: usize,
@@ -134,7 +134,7 @@ impl MetaCellParams {
         let knn_method = meta_cell_params
             .get("knn_method")
             .and_then(|v| v.as_str())
-            .unwrap_or("hnsw")
+            .unwrap_or("annoy")
             .to_string();
         let ann_dist = meta_cell_params
             .get("ann_dist")
@@ -143,8 +143,8 @@ impl MetaCellParams {
             .to_string();
 
         // annoy
-        let n_tree = meta_cell_params
-            .get("n_tree")
+        let n_trees = meta_cell_params
+            .get("n_trees")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
@@ -176,7 +176,7 @@ impl MetaCellParams {
             k,
             knn_method,
             ann_dist,
-            n_tree,
+            n_trees,
             search_budget,
             nn_max_iter,
             rho,

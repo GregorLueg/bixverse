@@ -24,6 +24,15 @@ number of neighbours.
 }
 \description{
 This function is a wrapper over the Rust-based generation of the approximate
-nearest neighbours. You have two options to generate the kNNs. \code{"annoy"} or
-\code{"hnsw"}.
+nearest neighbours. You have several options to get the approximate nearest
+neighbours:
+\itemize{
+\item \code{"annoy"}: leverages binary trees to generate rapidly in a parallel manner
+an index. Good compromise of index generation, querying speed.
+\item \code{"hnsw"}: uses a hierarchical navigatable small worlds index under the
+hood. The index generation takes more long, but higher recall and ideal
+for very large datasets due to subdued memory pressure.
+\item \code{"nndescent"}: an index-free approximate nearest neighbour algorithm
+that is ideal for small, ephemeral kNN graphs.
+}
 }

@@ -238,7 +238,7 @@ fn rs_get_metacells(
                     embd.as_ref(),
                     &meta_cell_params.ann_dist,
                     meta_cell_params.k,
-                    meta_cell_params.n_tree,
+                    meta_cell_params.n_trees,
                     meta_cell_params.search_budget,
                     seed,
                     verbose,

@@ -476,8 +476,16 @@ fn rs_sc_pca(
 ///
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
-/// nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
-/// `"hnsw"`.
+/// nearest neighbours. You have several options to get the approximate nearest
+/// neighbours: 
+/// 
+/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+///   an index. Good compromise of index generation, querying speed.
+/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+///   hood. The index generation takes more long, but higher recall and ideal
+///   for very large datasets due to subdued memory pressure.
+/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+///   that is ideal for small, ephemeral kNN graphs.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
