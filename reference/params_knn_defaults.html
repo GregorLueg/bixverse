@@ -46,11 +46,17 @@
     <p>A list with default parameters for kNN searches. Following
 parameters:</p><ul><li><p>k - Number of neighbours. Defaults to <code>15L</code>.</p></li>
 <li><p>knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to <code>"annoy"</code>.</p></li>
+neighbour search. Defaults to <code>"annoy"</code>. The implementations are:
+<code>c("annoy", "hnsw", "nndescent")</code>.</p></li>
 <li><p>dist_metric - Which distance metric to use for the approximate nearest
-neighbour search. Defaults to <code>"euclidean"</code>.</p></li>
+neighbour search. Defaults to <code>"euclidean"</code>. The implementations are
+<code>c("euclidean", "cosine")</code>.</p></li>
 <li><p>search_budget - Search budget per tree for Annoy. Defaults to <code>100L</code>.</p></li>
 <li><p>n_trees - Number of trees to generate for Annoy. Defaults to <code>100L</code>.</p></li>
+<li><p>nn_max_iter - Maximum iterations for NNDescent. Defaults to <code>15L</code>.</p></li>
+<li><p>rho - Sampling rate for NNDescent. Defaults to <code>1.0</code>.</p></li>
+<li><p>delta - Early termination criterium for NNDescent. Defaults to
+<code>0.001</code>.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
