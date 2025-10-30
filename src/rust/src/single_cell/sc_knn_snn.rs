@@ -497,6 +497,10 @@ pub fn knn_to_sparse_dist(
 // KNN functions //
 ///////////////////
 
+///////////
+// Annoy //
+///////////
+
 /// Build an Annoy index
 ///
 /// ### Params
@@ -575,6 +579,10 @@ pub fn query_annoy_index(
         (indices, None)
     }
 }
+
+//////////
+// HNSW //
+//////////
 
 /// Build HNSW index
 ///
@@ -666,6 +674,102 @@ pub fn query_hnsw_index(
     } else {
         None
     };
+
+    (indices, distances)
+}
+
+///////////////
+// NNDescent //
+///////////////
+
+/// Get the kNN graph based on NN-Descent (with optional distance)
+///
+/// This function generates the kNN graph based via an approximate nearest
+/// neighbour search based on the NN-Descent. The algorithm will use a
+/// neighbours of neighbours logic to identify the approximate nearest
+/// neighbours.
+///
+/// ### Params
+///
+/// * `mat` - Matrix in which rows represent the samples and columns the
+///   respective embeddings for that sample
+/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `no_neighbours` - Number of neighbours for the KNN graph.
+/// * `max_iter` - Maximum iterations for the algorithm.
+/// * `delta` - Early stop criterium for the algorithm.
+/// * `rho` - Sampling rate for the old neighbours. Will adaptively decrease
+///   over time.
+/// * `seed` - Seed for the NN Descent algorithm
+/// * `verbose` - Controls verbosity of the algorithm
+/// * `return_distances` - Shall the distances be returned.
+///
+/// ### Returns
+///
+/// The k-nearest neighbours based on the NN Desccent algorithm
+///
+/// ### Implementation details
+///
+/// In case of contrived synthetic data the algorithm sometimes does not
+/// return enough neighbours. If that happens, the neighbours and distances will
+/// be just padded.
+#[allow(clippy::too_many_arguments)]
+pub fn generate_knn_nndescent_with_dist(
+    mat: MatRef<f32>,
+    dist_metric: &str,
+    no_neighbours: usize,
+    max_iter: usize,
+    delta: f32,
+    rho: f32,
+    seed: usize,
+    verbose: bool,
+    return_distances: bool,
+) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
+    let graph: Vec<Vec<(usize, f32)>> = NNDescent::build(
+        mat,
+        no_neighbours,
+        dist_metric,
+        max_iter,
+        delta,
+        rho,
+        seed,
+        verbose,
+    );
+
+    let mut indices = Vec::with_capacity(graph.len());
+    let mut distances = if return_distances {
+        Some(Vec::with_capacity(graph.len()))
+    } else {
+        None
+    };
+
+    for (i, neighbours) in graph.into_iter().enumerate() {
+        let mut ids: Vec<usize> = Vec::with_capacity(no_neighbours);
+        let mut dists: Vec<f32> = Vec::with_capacity(no_neighbours);
+
+        for (pid, dist) in neighbours {
+            ids.push(pid);
+            dists.push(dist);
+        }
+
+        if ids.len() < no_neighbours {
+            let padding_needed = no_neighbours - ids.len();
+            if ids.is_empty() {
+                ids.resize(no_neighbours, i);
+                dists.resize(no_neighbours, 0.0);
+            } else {
+                for j in 0..padding_needed {
+                    ids.push(ids[j % ids.len()]);
+                    dists.push(dists[j % dists.len()]);
+                }
+            }
+        }
+
+        indices.push(ids);
+        if let Some(ref mut d) = distances {
+            d.push(dists);
+        }
+    }
 
     (indices, distances)
 }
@@ -840,7 +944,7 @@ pub fn generate_knn_nndescent(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let graph = NNDescent::build(
+    let graph: Vec<Vec<(usize, f32)>> = NNDescent::build(
         mat,
         no_neighbours,
         dist_metric,

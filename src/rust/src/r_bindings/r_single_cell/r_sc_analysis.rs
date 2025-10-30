@@ -3,8 +3,10 @@ use faer::Mat;
 
 use crate::core::data::sparse_io::ParallelSparseReader;
 use crate::core::data::sparse_structures::CompressedSparseData;
+use crate::single_cell::cell_aggregations::*;
 use crate::single_cell::dge_aucs::*;
 use crate::single_cell::sc_knn_snn::*;
+use crate::single_cell::seacells::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 use crate::utils::traits::*;
 
@@ -163,7 +165,7 @@ fn rs_aucell(
 /// Generate meta cells
 ///
 /// @description This function implements the approach from Morabito, et al.
-/// to generate meta cells. You can provide a already pre-computed kNN matrix
+/// to generate meta cells. You can provide an already pre-computed kNN matrix
 /// or an embedding to regenerate the kNN matrix with specified parameters in
 /// the meta_cell_params. If `knn_mat` is provided, this one will be used. You
 /// need to at least provide `knn_mat` or `embd`!
@@ -176,23 +178,24 @@ fn rs_aucell(
 /// is used subsequently for aggregation of the meta cells.
 /// @param meta_cell_params A list containing the meta cell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
-/// the meta cells. Typicall `1e4`.
+/// the meta cells. Typically `1e4`.
 /// @param seed Integer. For reproducibility purposes.
 /// @param verbose Boolean. Controls verbosity of the function.
+/// @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
 ///
 /// @returns A list with the following elements:
 /// \itemize{
-///  \item indptr - Index pointers of the cells
-///  \item indices - The gene indices of that specific gene
-///  \item raw_counts - The aggregated raw counts.
-///  \item norm_counts - The re-normalised counts.
-///  \item nrow - The number of rows represented in the sparse format.
-///  \item ncol - The number of columns represented in the sparse format.
-///  \item 
+///  \item assignments - A list containing assignment information with elements:
+///    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+///    n_cells, n_unassigned
+///  \item aggregated - If return_aggregated is TRUE, a list with indptr,
+///    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
+///    otherwise.
 /// }
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_get_metacells(
     f_path: String,
     knn_mat: Option<RMatrix<i32>>,
@@ -201,6 +204,7 @@ fn rs_get_metacells(
     target_size: f64,
     seed: usize,
     verbose: bool,
+    return_aggregated: bool,
 ) -> extendr_api::Result<List> {
     let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params);
 
@@ -290,24 +294,181 @@ fn rs_get_metacells(
         verbose,
     );
 
+    let n_cells = nn_map.len();
+
+    let assignments = metacells_to_assignments(&meta_cell_indices, n_cells);
+
+    let assignment_list = assignments_to_r_list(&assignments, n_cells);
+
+    if return_aggregated {
+        if verbose {
+            println!("Aggregating meta cells.");
+        }
+
+        let reader = ParallelSparseReader::new(&f_path).unwrap();
+        let n_genes = reader.get_header().total_genes;
+
+        let aggregated: CompressedSparseData<u32, f32> =
+            aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+
+        Ok(list!(
+            assignments = assignment_list,
+            aggregated = list!(
+                indptr = aggregated.indptr.r_int_convert(),
+                indices = aggregated.indices.r_int_convert(),
+                raw_counts = aggregated.data.r_int_convert(),
+                norm_counts = aggregated.data_2.unwrap().r_float_convert(),
+                nrow = aggregated.shape.0,
+                ncol = aggregated.shape.1
+            )
+        ))
+    } else {
+        Ok(list!(assignments = assignment_list, aggregated = NULL))
+    }
+}
+
+/// Generate SEACells
+///
+/// @description This function implements the SEACells algorithm for generating
+/// meta cells from Persad et al. An embedding matrix must be provided which is
+/// used to construct the kNN graph and kernel matrix for the SEACells
+/// algorithm. This version is highly memory and speed-optimised and will
+/// truncate small values during matrix operations which can affect convergence.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
+/// used for the generation of the kNN graph and kernel matrix.
+/// @param seacells_params A list containing the SEACells parameters.
+/// @param target_size Numeric. Target library size for re-normalisation of
+/// the meta cells. Typically `1e4`.
+/// @param seed Integer. For reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity of the function.
+/// @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
+///
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item assignments - A list containing assignment information with elements:
+///    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+///    n_cells, n_unassigned
+///  \item aggregated - If return_aggregated is TRUE, a list with indptr,
+///    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
+///    otherwise.
+/// }
+///
+/// @export
+///
+/// @references Persad, et al., Nat. Biotechnol., 2023.
+#[extendr]
+fn rs_get_seacells(
+    f_path: String,
+    embd: RMatrix<f64>,
+    seacells_params: List,
+    target_size: f64,
+    seed: usize,
+    verbose: bool,
+    return_aggregated: bool,
+) -> extendr_api::Result<List> {
+    let seacells_params = SEACellsParams::from_r_list(seacells_params);
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let knn_method = parse_knn_method(&seacells_params.knn_method)
+        .ok_or_else(|| format!("Invalid KNN search method: {}", seacells_params.knn_method))
+        .unwrap();
+
     if verbose {
-        println!("Aggregating meta cells.");
+        println!(
+            "Building the kNN graph with {} and {} neighbours",
+            seacells_params.knn_method, seacells_params.k
+        );
     }
 
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
-    let n_genes = reader.get_header().total_genes;
+    let (knn_indices, knn_dist) = match knn_method {
+        KnnSearch::Annoy => {
+            let annoy_index = build_annoy_index(embd.as_ref(), seacells_params.n_trees, seed);
+            query_annoy_index(
+                embd.as_ref(),
+                &annoy_index,
+                &seacells_params.ann_dist,
+                seacells_params.k,
+                seacells_params.search_budget,
+                true,
+                verbose,
+            )
+        }
+        KnnSearch::Hnsw => {
+            let hnsw_index = build_hnsw_index(embd.as_ref(), &seacells_params.ann_dist, seed);
+            query_hnsw_index(
+                embd.as_ref(),
+                &hnsw_index,
+                &seacells_params.ann_dist,
+                seacells_params.k,
+                true,
+                verbose,
+            )
+        }
+        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
+            embd.as_ref(),
+            &seacells_params.ann_dist,
+            seacells_params.k,
+            seacells_params.nn_max_iter,
+            seacells_params.delta,
+            seacells_params.rho,
+            seed,
+            verbose,
+            true,
+        ),
+    };
 
-    let aggregated: CompressedSparseData<u32, f32> =
-        aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+    let mut seacell = SEACells::new(embd.nrows(), &seacells_params);
 
-    Ok(list!(
-        indptr = aggregated.indptr.r_int_convert(),
-        indices = aggregated.indices.r_int_convert(),
-        raw_counts = aggregated.data.r_int_convert(),
-        norm_counts = aggregated.data_2.unwrap().r_float_convert(),
-        nrow = aggregated.shape.0,
-        ncol = aggregated.shape.1
-    ))
+    println!("Number of neighbours: {}", knn_indices[0].len());
+
+    seacell.construct_kernel_mat(embd.as_ref(), &knn_indices, &knn_dist.unwrap(), verbose);
+
+    seacell.fit(seed, verbose);
+
+    let assignments = seacell.get_hard_assignments();
+    let k = seacells_params.n_sea_cells;
+
+    let rss = seacell.get_rss_history();
+
+    let assignments_opt: Vec<Option<usize>> = assignments.iter().map(|&x| Some(x)).collect();
+
+    let assignment_list = assignments_to_r_list(&assignments_opt, embd.nrows());
+
+    if return_aggregated {
+        if verbose {
+            println!("Aggregating meta cells.");
+        }
+
+        let meta_cell_indices = assignments_to_metacells(&assignments, k);
+        let meta_cell_indices: Vec<&[usize]> =
+            meta_cell_indices.iter().map(|v| v.as_slice()).collect();
+
+        let reader = ParallelSparseReader::new(&f_path).unwrap();
+        let n_genes = reader.get_header().total_genes;
+
+        let aggregated: CompressedSparseData<u32, f32> =
+            aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+
+        Ok(list!(
+            assignments = assignment_list,
+            aggregated = list!(
+                indptr = aggregated.indptr.r_int_convert(),
+                indices = aggregated.indices.r_int_convert(),
+                raw_counts = aggregated.data.r_int_convert(),
+                norm_counts = aggregated.data_2.unwrap().r_float_convert(),
+                nrow = aggregated.shape.0,
+                ncol = aggregated.shape.1
+            ),
+            rss = rss.r_float_convert()
+        ))
+    } else {
+        Ok(list!(
+            assignments = assignment_list,
+            aggregated = NULL,
+            rss = rss.r_float_convert()
+        ))
+    }
 }
 
 extendr_module! {
@@ -315,4 +476,5 @@ extendr_module! {
     fn rs_calculate_dge_mann_whitney;
     fn rs_aucell;
     fn rs_get_metacells;
+    fn rs_get_seacells;
 }

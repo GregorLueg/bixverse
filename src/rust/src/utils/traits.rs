@@ -239,6 +239,12 @@ impl VecFloatConvert<f64> for Vec<f32> {
     }
 }
 
+impl VecFloatConvert<f64> for &[f32] {
+    fn r_float_convert(self) -> Vec<f64> {
+        self.iter().map(|x| *x as f64).collect()
+    }
+}
+
 ////////////////
 // R and faer //
 ////////////////

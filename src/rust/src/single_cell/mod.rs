@@ -1,4 +1,5 @@
 pub mod bbknn;
+pub mod cell_aggregations;
 pub mod dge_aucs;
 pub mod doublet_detection;
 pub mod fast_mnn;
@@ -7,4 +8,4 @@ pub mod metrics;
 pub mod processing;
 pub mod sc_knn_snn;
 pub mod scrublet;
-pub mod seacell;
+pub mod seacells;

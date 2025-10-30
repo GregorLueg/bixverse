@@ -2285,7 +2285,7 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' Generate meta cells
 #'
 #' @description This function implements the approach from Morabito, et al.
-#' to generate meta cells. You can provide a already pre-computed kNN matrix
+#' to generate meta cells. You can provide an already pre-computed kNN matrix
 #' or an embedding to regenerate the kNN matrix with specified parameters in
 #' the meta_cell_params. If `knn_mat` is provided, this one will be used. You
 #' need to at least provide `knn_mat` or `embd`!
@@ -2298,22 +2298,56 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' is used subsequently for aggregation of the meta cells.
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
-#' the meta cells. Typicall `1e4`.
+#' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity of the function.
+#' @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item indptr - Index pointers of the cells
-#'  \item indices - The gene indices of that specific gene
-#'  \item raw_counts - The aggregated raw counts.
-#'  \item norm_counts - The re-normalised counts.
-#'  \item nrow - The number of rows represented in the sparse format.
-#'  \item ncol - The number of columns represented in the sparse format.
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - If return_aggregated is TRUE, a list with indptr,
+#'    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
+#'    otherwise.
 #' }
 #'
 #' @export
-rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose)
+rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose, return_aggregated) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose, return_aggregated)
+
+#' Generate SEACells
+#'
+#' @description This function implements the SEACells algorithm for generating
+#' meta cells from Persad et al. An embedding matrix must be provided which is
+#' used to construct the kNN graph and kernel matrix for the SEACells
+#' algorithm. This version is highly memory and speed-optimised and will
+#' truncate small values during matrix operations which can affect convergence.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
+#' used for the generation of the kNN graph and kernel matrix.
+#' @param seacells_params A list containing the SEACells parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - If return_aggregated is TRUE, a list with indptr,
+#'    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
+#'    otherwise.
+#' }
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat. Biotechnol., 2023.
+rs_get_seacells <- function(f_path, embd, seacells_params, target_size, seed, verbose, return_aggregated) .Call(wrap__rs_get_seacells, f_path, embd, seacells_params, target_size, seed, verbose, return_aggregated)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

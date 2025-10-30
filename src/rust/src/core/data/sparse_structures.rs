@@ -887,11 +887,9 @@ where
         sorted_cols.sort_by_key(|(col, _)| *col);
 
         for (&col, &val) in sorted_cols {
-            if val.into().abs() > 1e-15 {
-                rows.push(i);
-                cols.push(col);
-                vals.push(val);
-            }
+            rows.push(i);
+            cols.push(col);
+            vals.push(val);
         }
     }
 
@@ -1008,49 +1006,6 @@ where
     }
 
     coo_to_csr(&rows, &cols, &vals, mat.shape)
-}
-
-/// Prune small values from sparse matrix in-place
-///
-/// Helper function that removes tiny values from the matrix
-///
-/// ### Params
-///
-/// * `mat` - The mutable reference to the `CompressedSparseData` structure.
-/// * `threshold` - The threshold below which the values are set to zeros.
-pub fn prune_csr<T>(mat: &mut CompressedSparseData<T>, threshold: f32)
-where
-    T: Clone
-        + Default
-        + Into<f32>
-        + Sync
-        + Add<Output = T>
-        + AddAssign
-        + PartialEq
-        + Copy
-        + Mul<Output = T>,
-    <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
-{
-    let mut new_data = Vec::new();
-    let mut new_indices = Vec::new();
-    let mut new_indptr = vec![0];
-
-    for i in 0..mat.shape.0 {
-        let row_start = mat.indptr[i];
-        let row_end = mat.indptr[i + 1];
-
-        for idx in row_start..row_end {
-            if mat.data[idx].into().abs() > threshold {
-                new_data.push(mat.data[idx]);
-                new_indices.push(mat.indices[idx]);
-            }
-        }
-        new_indptr.push(new_data.len());
-    }
-
-    mat.data = new_data;
-    mat.indices = new_indices;
-    mat.indptr = new_indptr;
 }
 
 /// Sparse matrix-vector multiplication
