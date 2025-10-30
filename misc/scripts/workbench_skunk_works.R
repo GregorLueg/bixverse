@@ -55,6 +55,11 @@ seacell_data <- rs_get_seacells(
 )
 tictoc::toc()
 
-seacell_data$rss
+# results_pre_refactor_rss <- seacell_data$rss
 
-sort(table(seacell_data$assignments$assignments), decreasing = TRUE)
+# results_pre_refactor_table <- sort(
+#   table(seacell_data$assignments$assignments),
+#   decreasing = TRUE
+# )
+
+seacell_data$assignments$assignments[1:20]

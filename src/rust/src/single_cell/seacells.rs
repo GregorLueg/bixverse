@@ -3,6 +3,7 @@ use faer::MatRef;
 use rand::prelude::*;
 use rand::rngs::StdRng;
 use rustc_hash::FxHashSet;
+use std::time::Instant;
 
 use crate::core::data::sparse_structures::*;
 
@@ -389,8 +390,6 @@ impl<'a> SEACells<'a> {
 
         if verbose {
             println!("Computing adaptive bandwidth RBF kernel...");
-            println!("Number neighbours: {}", knn_indices[0].len());
-            println!("Number distances: {}", knn_distances[0].len());
         }
 
         let graph_construction = parse_seacell_graph(&self.params.graph_building)
@@ -399,19 +398,14 @@ impl<'a> SEACells<'a> {
         let median_idx = k / 2;
         let median_dist = knn_distances
             .iter()
-            .map(|d| d[median_idx])
+            .map(|d| d[median_idx].sqrt())
             .collect::<Vec<f32>>();
 
-        // Use HashSet for sparse graph
         let mut edges = FxHashSet::default();
         for (i, neighbours) in knn_indices.iter().enumerate() {
             for &j in neighbours {
                 edges.insert((i, j));
             }
-        }
-
-        if verbose {
-            println!("Initial edges from kNN: {}", edges.len());
         }
 
         match graph_construction {
@@ -421,31 +415,21 @@ impl<'a> SEACells<'a> {
                     .filter_map(|&(i, j)| (!edges.contains(&(j, i))).then_some((j, i)))
                     .collect();
                 edges.extend(to_add);
-
-                if verbose {
-                    println!("After union symmetrisation: {} edges", edges.len());
-                }
             }
             SeaCellGraphGen::Intersection => {
-                let original_count = edges.len();
                 let to_keep: FxHashSet<_> = edges
                     .iter()
                     .copied()
                     .filter(|&(i, j)| edges.contains(&(j, i)))
                     .collect();
                 edges = to_keep;
-
-                if verbose {
-                    println!(
-                        "After intersection symmetrisation: {} edges (removed {})",
-                        edges.len(),
-                        original_count - edges.len()
-                    );
-                }
             }
         }
 
-        // compute RBF...
+        for i in 0..n {
+            edges.insert((i, i));
+        }
+
         let mut rows: Vec<usize> = Vec::new();
         let mut cols: Vec<usize> = Vec::new();
         let mut vals: Vec<f32> = Vec::new();
@@ -469,7 +453,6 @@ impl<'a> SEACells<'a> {
         }
 
         let kernel = coo_to_csr(&rows, &cols, &vals, (n, n));
-
         let k_square = csr_matmul_csr(&kernel, &kernel.transpose_and_convert());
 
         if verbose {
@@ -523,13 +506,9 @@ impl<'a> SEACells<'a> {
         let mut n_iter = 0;
 
         while (!converged && n_iter < self.params.max_iter) || n_iter < self.params.min_iter {
+            let iter_start = Instant::now();
             n_iter += 1;
 
-            if verbose && (n_iter == 1 || n_iter % 10 == 0) {
-                println!("Starting iteration {}...", n_iter);
-            }
-
-            // Update A and B
             let b_current = self.b.clone().unwrap();
             let a_current = self.a.clone().unwrap();
 
@@ -542,11 +521,17 @@ impl<'a> SEACells<'a> {
             self.a = Some(a_new);
             self.b = Some(b_new);
 
-            if verbose && (n_iter == 1 || n_iter % 10 == 0) {
-                println!("  RSS: {:.6}", rss);
+            let iter_duration = iter_start.elapsed();
+
+            if verbose {
+                println!(
+                    "Iteration {}: RSS = {:.6}, Time = {:.2}s",
+                    n_iter,
+                    rss,
+                    iter_duration.as_secs_f32()
+                );
             }
 
-            // Check convergence
             if n_iter > 1 {
                 let rss_diff = (self.rss_history[n_iter - 1] - self.rss_history[n_iter]).abs();
                 if rss_diff < self.convergence_threshold.unwrap() {
@@ -640,7 +625,7 @@ impl<'a> SEACells<'a> {
         let mut g = vec![0_f32; n];
 
         for i in 0..n {
-            let mut e_i = vec![0.0f32; n];
+            let mut e_i = vec![0_f32; n];
             e_i[i] = 1.0;
 
             let k2_e_i = kernel_squared_matvec(kernel, &e_i);
@@ -670,7 +655,6 @@ impl<'a> SEACells<'a> {
 
             centers.push(best_idx);
 
-            // K_square[:, best_idx] using on-the-fly computation
             let mut e_p = vec![0.0f32; n];
             e_p[best_idx] = 1.0;
             let k2_col = kernel_squared_matvec(kernel, &e_p);
@@ -814,11 +798,8 @@ impl<'a> SEACells<'a> {
     ) -> CompressedSparseData<f32> {
         let k_square = self.k_square.as_ref().unwrap();
 
-        // Python: t2 = (self.K @ B).T
         let k_b = csr_matmul_csr(k_square, b);
         let t2 = k_b.transpose_and_convert();
-
-        // Python: t1 = t2 @ B
         let t1 = csr_matmul_csr(&t2, b);
 
         let mut a = a_prev.clone();
@@ -826,14 +807,12 @@ impl<'a> SEACells<'a> {
         let k = a.shape.0;
 
         for t in 0..self.params.max_fw_iters {
-            // Python: G = 2.0 * (t1 @ A - t2)
             let t1_a = csr_matmul_csr(&t1, &a);
             let g_mat = sparse_subtract_csr(&t1_a, &t2);
             let g_scaled = sparse_scalar_multiply_csr(&g_mat, 2.0);
 
             let g_dense = sparse_to_dense_csr(&g_scaled);
 
-            // Python: amins = np.argmin(G, axis=0)
             let mut e_rows = Vec::with_capacity(n);
             let mut e_cols = Vec::with_capacity(n);
             let mut e_vals = Vec::with_capacity(n);
@@ -857,7 +836,6 @@ impl<'a> SEACells<'a> {
 
             let e = coo_to_csr(&e_rows, &e_cols, &e_vals, (k, n));
 
-            // Python: A += 2.0 / (t + 2.0) * (e - A)
             let step_size = 2.0 / (t as f32 + 2.0);
             let e_minus_a = sparse_subtract_csr(&e, &a);
             let update = sparse_scalar_multiply_csr(&e_minus_a, step_size);
@@ -898,11 +876,8 @@ impl<'a> SEACells<'a> {
     ) -> CompressedSparseData<f32> {
         let k_square = self.k_square.as_ref().unwrap();
 
-        // Python: t1 = A @ A.T
         let a_t = a.transpose_and_convert();
         let t1 = csr_matmul_csr(a, &a_t);
-
-        // Python: t2 = K @ A.T
         let t2 = csr_matmul_csr(k_square, &a_t);
 
         let mut b = b_prev.clone();
@@ -910,7 +885,6 @@ impl<'a> SEACells<'a> {
         let k = b.shape.1;
 
         for t in 0..self.params.max_fw_iters {
-            // Python: G = 2.0 * (K @ B @ t1 - t2)
             let k_b = csr_matmul_csr(k_square, &b);
             let k_b_t1 = csr_matmul_csr(&k_b, &t1);
 
@@ -919,7 +893,6 @@ impl<'a> SEACells<'a> {
 
             let g_dense = sparse_to_dense_csr(&g_scaled);
 
-            // Python: amins = np.argmin(G, axis=0)
             let mut e_rows = Vec::with_capacity(k);
             let mut e_cols = Vec::with_capacity(k);
             let mut e_vals = Vec::with_capacity(k);
@@ -943,7 +916,6 @@ impl<'a> SEACells<'a> {
 
             let e = coo_to_csr(&e_rows, &e_cols, &e_vals, (n, k));
 
-            // Python: B += 2.0 / (t + 2.0) * (e - B)
             let step_size = 2.0 / (t as f32 + 2.0);
             let e_minus_b = sparse_subtract_csr(&e, &b);
             let update = sparse_scalar_multiply_csr(&e_minus_b, step_size);
@@ -970,11 +942,9 @@ impl<'a> SEACells<'a> {
     fn compute_rss(&self, a: &CompressedSparseData<f32>, b: &CompressedSparseData<f32>) -> f32 {
         let k_mat = self.kernel_mat.as_ref().unwrap();
 
-        // Python: reconstruction = (self.kernel_matrix @ B) @ A
         let k_b = csr_matmul_csr(k_mat, b);
         let reconstruction = csr_matmul_csr(&k_b, a);
 
-        // Python: norm(self.kernel_matrix - reconstruction)
         let diff = sparse_subtract_csr(k_mat, &reconstruction);
 
         frobenius_norm(&diff)
@@ -996,7 +966,6 @@ impl<'a> SEACells<'a> {
             let mut max_val = f32::NEG_INFINITY;
             let mut max_idx = 0;
 
-            // Find max value in column
             for archetype in 0..k {
                 let row_start = a.indptr[archetype];
                 let row_end = a.indptr[archetype + 1];

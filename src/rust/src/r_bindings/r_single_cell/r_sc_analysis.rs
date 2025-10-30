@@ -460,13 +460,13 @@ fn rs_get_seacells(
                 nrow = aggregated.shape.0,
                 ncol = aggregated.shape.1
             ),
-            rss = rss.r_float_convert()
+            rss = rss.to_vec()
         ))
     } else {
         Ok(list!(
             assignments = assignment_list,
             aggregated = NULL,
-            rss = rss.r_float_convert()
+            rss = rss.to_vec()
         ))
     }
 }

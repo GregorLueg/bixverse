@@ -563,32 +563,53 @@ where
     T: Clone + Default + Into<f64> + Sync + Add<Output = T> + AddAssign + PartialEq + Copy + Mul,
     <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
 {
-    let nnz = vals.len();
     let n_rows = shape.0;
 
-    // Count non-zeros per row
-    let mut row_counts = vec![0usize; n_rows];
-    for &row in rows {
-        row_counts[row] += 1;
+    // Sort by (row, col) and merge duplicates
+    let mut entries: Vec<(usize, usize, T)> = rows
+        .iter()
+        .zip(cols.iter())
+        .zip(vals.iter())
+        .map(|((&r, &c), &v)| (r, c, v))
+        .collect();
+
+    entries.sort_unstable_by_key(|&(r, c, _)| (r, c));
+
+    // merge duplicates; can happen during additions
+    let mut merged_entries = Vec::new();
+    if !entries.is_empty() {
+        let mut current = entries[0];
+
+        for &(r, c, v) in &entries[1..] {
+            if r == current.0 && c == current.1 {
+                current.2 += v;
+            } else {
+                if current.2 != T::default() {
+                    merged_entries.push(current);
+                }
+                current = (r, c, v);
+            }
+        }
+        if current.2 != T::default() {
+            merged_entries.push(current);
+        }
     }
 
-    // Build indptr
+    // build CSR from merged entries
+    let final_nnz = merged_entries.len();
+    let mut data = Vec::with_capacity(final_nnz);
+    let mut indices = Vec::with_capacity(final_nnz);
     let mut indptr = vec![0usize; n_rows + 1];
-    for i in 0..n_rows {
-        indptr[i + 1] = indptr[i] + row_counts[i];
+
+    for &(row, col, val) in &merged_entries {
+        data.push(val);
+        indices.push(col);
+        indptr[row + 1] += 1;
     }
 
-    // Fill data and indices
-    let mut data = vec![T::default(); nnz];
-    let mut indices = vec![0usize; nnz];
-    let mut row_positions = vec![0usize; n_rows];
-
-    for i in 0..nnz {
-        let row = rows[i];
-        let pos = indptr[row] + row_positions[row];
-        data[pos] = vals[i];
-        indices[pos] = cols[i];
-        row_positions[row] += 1;
+    // Convert counts to cumulative offsets
+    for i in 0..n_rows {
+        indptr[i + 1] += indptr[i];
     }
 
     CompressedSparseData::new_csr(&data, &indices, &indptr, None, shape)
@@ -614,6 +635,8 @@ where
 {
     assert_eq!(a.shape, b.shape);
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
+
+    const EPSILON: f32 = 1e-9;
 
     let n_rows = a.shape.0;
     let mut rows = Vec::new();
@@ -643,7 +666,7 @@ where
             } else {
                 // Same column
                 let val = a.data[a_idx] + b.data[b_idx];
-                if val != T::default() {
+                if val.into().abs() > EPSILON as f64 {
                     rows.push(i);
                     cols.push(a.indices[a_idx]);
                     vals.push(val);
@@ -715,6 +738,8 @@ where
     assert_eq!(a.shape, b.shape);
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
 
+    const EPSILON: f32 = 1e-9;
+
     let n_rows = a.shape.0;
     let mut rows = Vec::new();
     let mut cols = Vec::new();
@@ -742,7 +767,7 @@ where
                 b_idx += 1;
             } else {
                 let val = a.data[a_idx] - b.data[b_idx];
-                if val != T::default() {
+                if val.into().abs() > EPSILON as f64 {
                     rows.push(i);
                     cols.push(a.indices[a_idx]);
                     vals.push(val);
