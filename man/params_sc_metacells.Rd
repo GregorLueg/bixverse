@@ -9,35 +9,50 @@ params_sc_metacells(
   target_no_metacells = 1000L,
   max_iter = 5000L,
   k = 25L,
-  knn_method = c("annoy", "hnsw"),
+  knn_method = c("annoy", "hnsw", "nndescent"),
   ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
-  search_budget = 100L
+  search_budget = 100L,
+  nn_max_iter = 15L,
+  rho = 1,
+  delta = 0.001
 )
 }
 \arguments{
 \item{max_shared}{Integer. Maximum number of allowed shared neighbours for
-the meta cell to be considered.}
+the meta cell to be considered. Defaults to \code{15L}.}
 
-\item{target_no_metacells}{Integer. Target number of meta-cells to generate.}
+\item{target_no_metacells}{Integer. Target number of meta-cells to generate.
+Defaults to \code{1000L}.}
 
-\item{max_iter}{Integer. Maximum number of iterations for the algorithm.}
+\item{max_iter}{Integer. Maximum number of iterations for the algorithm.
+Defaults to \code{5000L}.}
 
-\item{k}{Integer. Number of neighbours to return.}
+\item{k}{Integer. Number of neighbours to return. Defaults to \code{25L}.}
 
-\item{knn_method}{String. One of \code{c("annoy", "hnsw")}. Defaults to
-\code{"annoy"}}
+\item{knn_method}{String. One of \code{c("annoy", "hnsw", "nndescent")}. Defaults
+to \code{"annoy"}.}
 
 \item{ann_dist}{String. One of \code{c("cosine", "euclidean")}. The distance
-metric to be used for the approximate neighbour search.}
+metric to be used for the approximate neighbour search. Defaults to
+\code{"cosine"}.}
 
-\item{n_trees}{Integer. Number of trees to use for the \code{annoy} algorithm.}
+\item{n_trees}{Integer. Number of trees to use for the \code{annoy} algorithm.
+Defaults to \code{100L}.}
 
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
-algorithm.}
+algorithm. Defaults to \code{100L}.}
+
+\item{nn_max_iter}{Integer. Maximum iterations for NN Descent. Defaults to
+\code{15L}.}
+
+\item{rho}{Numeric. Sampling rate for NN Descent. Defaults to \code{1.0}.}
+
+\item{delta}{Numeric. Early termination criterion for NN Descent. Defaults to
+\code{0.001}.}
 }
 \value{
-A list with the neighbour parameters.
+A list with the metacell parameters.
 }
 \description{
 Wrapper function for parameters for meta cell generation

@@ -8,6 +8,12 @@ if (!requireNamespace("Seurat", quietly = TRUE)) {
 # key differences are likely due to f16 vs f64 in terms of count storage
 # for norm counts
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## parameters ------------------------------------------------------------------
 
 # thresholds
@@ -35,7 +41,7 @@ seurat_obj <- suppressWarnings(Seurat::CreateSeuratObject(
   min.cells = min_cells_exp
 ))
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 sc_object <- load_seurat(
   object = sc_object,
@@ -288,3 +294,5 @@ expect_true(
   current = all(f1_scores >= 0.95),
   info = "seurat <> bixverse - broadly similar clusters identified"
 )
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

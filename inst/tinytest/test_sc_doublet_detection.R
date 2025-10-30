@@ -1,5 +1,11 @@
 # test data and params ---------------------------------------------------------
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## parameters ------------------------------------------------------------------
 
 n_doublets <- 200
@@ -69,7 +75,7 @@ new_obs <- data.table::rbindlist(list(
 ## generate the object ---------------------------------------------------------
 
 sc_object <- single_cell_exp(
-  dir_data = tempdir()
+  dir_data = test_temp_dir
 )
 
 # keep all cells for the sake of this
@@ -426,3 +432,5 @@ expect_true(
   ),
   info = "getter on scrublet res working - expected columns"
 )
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

@@ -65,7 +65,7 @@ pub fn parse_seacell_graph(s: &str) -> Option<SeaCellGraphGen> {
 /// * `knn_method` - Which method to use for the generation of the kNN graph.
 ///   One of `"hnsw"`, `"annoy"` or `"nndescent"`
 /// * `ann_dist` - The distance metric for the approximate nearest neighbour
-///   search. One of `"cosine"` or `"euclidean"`.
+///   search. For this method fixed to `"euclidean"`.
 ///
 /// **Annoy**
 ///
@@ -164,11 +164,6 @@ impl SEACellsParams {
             .and_then(|v| v.as_str())
             .unwrap_or("annoy")
             .to_string();
-        let ann_dist = seacells_list
-            .get("ann_dist")
-            .and_then(|v| v.as_str())
-            .unwrap_or("cosine")
-            .to_string();
 
         // annoy
         let n_trees = seacells_list
@@ -209,7 +204,7 @@ impl SEACellsParams {
             // knn
             k,
             knn_method,
-            ann_dist,
+            ann_dist: "euclidean".to_string(),
             n_trees,
             search_budget,
             nn_max_iter,
@@ -453,7 +448,7 @@ impl<'a> SEACells<'a> {
         }
 
         let kernel = coo_to_csr(&rows, &cols, &vals, (n, n));
-        let k_square = csr_matmul_csr(&kernel, &kernel.transpose_and_convert());
+        let k_square = csr_matmul_csr_optimised(&kernel, &kernel.transpose_and_convert());
 
         if verbose {
             println!("K_square has {} non-zeros", k_square.data.len());
@@ -535,10 +530,18 @@ impl<'a> SEACells<'a> {
             if n_iter > 1 {
                 let rss_diff = (self.rss_history[n_iter - 1] - self.rss_history[n_iter]).abs();
                 if rss_diff < self.convergence_threshold.unwrap() {
-                    if verbose {
-                        println!("Converged after {} iterations!", n_iter);
+                    if n_iter >= self.params.min_iter {
+                        if verbose {
+                            println!("Converged after {} iterations!", n_iter);
+                        }
+                        converged = true;
+                    } else if verbose && !converged {
+                        println!(
+                            "Convergence criteria met at iteration {} (continuing to min_iter)",
+                            n_iter
+                        );
+                        converged = true;
                     }
-                    converged = true;
                 }
             }
         }
@@ -798,16 +801,16 @@ impl<'a> SEACells<'a> {
     ) -> CompressedSparseData<f32> {
         let k_square = self.k_square.as_ref().unwrap();
 
-        let k_b = csr_matmul_csr(k_square, b);
+        let k_b = csr_matmul_csr_optimised(k_square, b);
         let t2 = k_b.transpose_and_convert();
-        let t1 = csr_matmul_csr(&t2, b);
+        let t1 = csr_matmul_csr_optimised(&t2, b);
 
         let mut a = a_prev.clone();
         let n = a.shape.1;
         let k = a.shape.0;
 
         for t in 0..self.params.max_fw_iters {
-            let t1_a = csr_matmul_csr(&t1, &a);
+            let t1_a = csr_matmul_csr_optimised(&t1, &a);
             let g_mat = sparse_subtract_csr(&t1_a, &t2);
             let g_scaled = sparse_scalar_multiply_csr(&g_mat, 2.0);
 
@@ -877,16 +880,16 @@ impl<'a> SEACells<'a> {
         let k_square = self.k_square.as_ref().unwrap();
 
         let a_t = a.transpose_and_convert();
-        let t1 = csr_matmul_csr(a, &a_t);
-        let t2 = csr_matmul_csr(k_square, &a_t);
+        let t1 = csr_matmul_csr_optimised(a, &a_t);
+        let t2 = csr_matmul_csr_optimised(k_square, &a_t);
 
         let mut b = b_prev.clone();
         let n = b.shape.0;
         let k = b.shape.1;
 
         for t in 0..self.params.max_fw_iters {
-            let k_b = csr_matmul_csr(k_square, &b);
-            let k_b_t1 = csr_matmul_csr(&k_b, &t1);
+            let k_b = csr_matmul_csr_optimised(k_square, &b);
+            let k_b_t1 = csr_matmul_csr_optimised(&k_b, &t1);
 
             let g_mat = sparse_subtract_csr(&k_b_t1, &t2);
             let g_scaled = sparse_scalar_multiply_csr(&g_mat, 2.0);
@@ -942,8 +945,8 @@ impl<'a> SEACells<'a> {
     fn compute_rss(&self, a: &CompressedSparseData<f32>, b: &CompressedSparseData<f32>) -> f32 {
         let k_mat = self.kernel_mat.as_ref().unwrap();
 
-        let k_b = csr_matmul_csr(k_mat, b);
-        let reconstruction = csr_matmul_csr(&k_b, a);
+        let k_b = csr_matmul_csr_optimised(k_mat, b);
+        let reconstruction = csr_matmul_csr_optimised(&k_b, a);
 
         let diff = sparse_subtract_csr(k_mat, &reconstruction);
 
@@ -994,5 +997,21 @@ impl<'a> SEACells<'a> {
     /// Vectors of the RSS
     pub fn get_rss_history(&self) -> &[f32] {
         &self.rss_history
+    }
+
+    /// Get the archetype cell indices
+    ///
+    /// ### Returns
+    ///
+    /// Vector of cell indices selected as archetypes
+    ///
+    /// ### Panics
+    ///
+    /// Panics if archetypes have not been initialised yet
+    pub fn get_archetypes(&self) -> Vec<usize> {
+        self.archetypes
+            .as_ref()
+            .expect("Archetypes not initialised yet")
+            .clone()
     }
 }

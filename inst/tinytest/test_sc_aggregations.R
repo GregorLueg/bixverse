@@ -1,5 +1,15 @@
 # sc aggregations --------------------------------------------------------------
 
+library(magrittr)
+
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+
 ## testing parameters ----------------------------------------------------------
 
 # thresholds
@@ -45,7 +55,7 @@ sc_qc_param <- params_sc_min_quality(
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 sc_object <- # keep all cells for the sake of this
   sc_object <- load_r_data(
@@ -81,90 +91,124 @@ sc_object <- find_neighbours_sc(
   .verbose = FALSE
 )
 
+## meta cells ------------------------------------------------------------------
 
-object = sc_object
-sc_meta_cell_params = params_sc_metacells(target_no_metacells = 50L, k = 5L)
-regenerate_knn = FALSE
-embd_to_use = "pca"
-no_embd_to_use = NULL
-target_size = 1e4
-seed = 42L
-return_aggregated = TRUE
-.verbose = TRUE
+cell_idx_to_type <- sc_object[[c("cell_idx", "cell_grp")]] %$%
+  setNames(cell_grp, cell_idx)
 
+### hdwgcna --------------------------------------------------------------------
 
-# if the kNN graph shall be regenerated, get the emedding here...
-if (regenerate_knn) {
-  embd <- switch(embd_to_use, pca = get_pca_factors(object))
-  # early return
-  if (is.null(embd)) {
-    warning(
-      paste(
-        "The desired embedding was not found. Please check the parameters.",
-        "Returning NULL."
-      )
-    )
-
-    return(NULL)
-  }
-
-  if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
-  }
-  knn_data <- NULL
-} else {
-  embd <- NULL
-  knn_data <- get_knn_mat(object)
-
-  if (is.null(knn_data)) {
-    warning(
-      paste(
-        "No kNN data could be found on the object. Set regenerate_knn to",
-        "TRUE or generate the kNN matrix via other means",
-        "Returning NULL."
-      )
-    )
-    return(NULL)
-  }
-}
-
-meta_cell_data <- rs_get_metacells(
-  f_path = get_rust_count_cell_f_path(object),
-  knn_mat = knn_data,
-  embd = embd,
-  meta_cell_params = sc_meta_cell_params,
-  target_size = target_size,
-  seed = seed,
-  verbose = .verbose,
-  return_aggregated = return_aggregated
+hdwgcna <- get_meta_cells_sc(
+  sc_object,
+  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 50L, k = 5L),
+  .verbose = FALSE
 )
 
-meta_cell_data$assignments
-
-table(meta_cell_data$assignments$assignments)
-
-meta_cell_data$assignments$metacells
-
-
-seacell_data <- rs_get_seacells(
-  f_path = get_rust_count_cell_f_path(object),
-  embd = get_pca_factors(object),
-  seacells_params = list(
-    n_sea_cells = 50L,
-    k = 5L,
-    ann_dist = "euclidean",
-    convergence_epsilon = 1e-3
+expect_true(
+  current = checkmate::testDataTable(
+    hdwgcna[[]],
+    nrows = 50
   ),
-  target_size = target_size,
-  seed = seed,
-  verbose = .verbose,
-  return_aggregated = return_aggregated
+  info = "hdwgcna meta cells obs correct - correct dimensions and type"
 )
 
+expect_true(
+  current = checkmate::testNames(
+    names(hdwgcna[[]]),
+    must.include = c(
+      "meta_cell_idx",
+      "meta_cell_id",
+      "no_originating_cells",
+      "original_cell_idx"
+    )
+  ),
+  info = "hdwgcna meta cells obs correct - correct columns"
+)
 
-seacell_data$assignments$assignments
+grouped_cell_types_max <- sapply(hdwgcna[[]]$original_cell_idx, function(idx) {
+  types <- cell_idx_to_type[as.character(idx)]
+  max(table(types)) / length(types)
+})
 
-seacell_data$assignments$metacells
+expect_true(
+  current = mean(grouped_cell_types_max) > 0.75,
+  info = "similar cell types are being pulled together"
+)
 
-table(seacell_data$assignments$assignments)
+expect_true(
+  current = checkmate::testDataTable(
+    get_sc_var(hdwgcna)
+  ),
+  info = "hdwgcna meta cells var correct"
+)
+
+expect_equal(
+  current = dim(hdwgcna[]),
+  target = c(50, 81),
+  info = "hdwgcna meta cells - correct return dimensions for the raw counts"
+)
+
+expect_true(
+  current = checkmate::testClass(hdwgcna[], "dgRMatrix"),
+  info = "hdwgcna meta cells - correct compressed sparse matrix type"
+)
+
+### seacells -------------------------------------------------------------------
+
+seacells <- get_seacells_sc(
+  sc_object,
+  seacell_params = params_sc_seacells(n_sea_cells = 50L, k = 5L, min_iter = 5L),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    seacells[[]],
+    nrows = 50
+  ),
+  info = "seacells obs correct - correct dimensions and type"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(seacells[[]]),
+    must.include = c(
+      "meta_cell_idx",
+      "meta_cell_id",
+      "no_originating_cells",
+      "original_cell_idx"
+    )
+  ),
+  info = "seacells obs correct - correct columns"
+)
+
+grouped_cell_types_max <- sapply(seacells[[]]$original_cell_idx, function(idx) {
+  types <- cell_idx_to_type[as.character(idx)]
+  max(table(types)) / length(types)
+})
+
+# much better than hdwgcna!
+expect_true(
+  current = mean(grouped_cell_types_max) > 0.85,
+  info = "similar cell types are being pulled together"
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    get_sc_var(seacells)
+  ),
+  info = "seacells meta cells var correct"
+)
+
+expect_equal(
+  current = dim(seacells[]),
+  target = c(50, 81),
+  info = "seacells - correct return dimensions for the raw counts"
+)
+
+expect_true(
+  current = checkmate::testClass(seacells[], "dgRMatrix"),
+  info = "seacells - correct compressed sparse matrix type"
+)
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

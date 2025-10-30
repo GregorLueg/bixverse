@@ -1,5 +1,11 @@
 # sc processing ----------------------------------------------------------------
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## testing parameters ----------------------------------------------------------
 
 # thresholds
@@ -47,7 +53,7 @@ sc_qc_param <- params_sc_min_quality(
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 sc_object <- # keep all cells for the sake of this
   sc_object <- load_r_data(
@@ -683,64 +689,4 @@ expect_true(
   )
 )
 
-## meta cell -------------------------------------------------------------------
-
-meta_cell_data_v1 <- get_meta_cells_sc(
-  object = sc_object,
-  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 10L),
-  .verbose = FALSE
-)
-
-expect_equivalent(
-  current = dim(meta_cell_data_v1$meta_raw_counts),
-  target = c(10, 81),
-  info = paste(
-    "meta cell aggregation - correct dimensions raw counts"
-  )
-)
-
-expect_equivalent(
-  current = dim(meta_cell_data_v1$meta_norm_counts),
-  target = c(10, 81),
-  info = paste(
-    "meta cell aggregation - correct dimensions norm counts"
-  )
-)
-
-expect_true(
-  current = checkmate::testClass(
-    meta_cell_data_v1$meta_raw_counts,
-    "dgRMatrix"
-  ),
-  info = paste("meta cell aggregation - expected return class")
-)
-
-expect_true(
-  current = checkmate::testClass(
-    meta_cell_data_v1$meta_norm_counts,
-    "dgRMatrix"
-  ),
-  info = paste("meta cell aggregation - expected return class")
-)
-
-meta_cell_data_v2 <- get_meta_cells_sc(
-  object = sc_object,
-  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 100L),
-  .verbose = FALSE
-)
-
-expect_equivalent(
-  current = dim(meta_cell_data_v2$meta_raw_counts),
-  target = c(100, 81),
-  info = paste(
-    "meta cell aggregation - correct dimensions raw counts (second version)"
-  )
-)
-
-expect_equivalent(
-  current = dim(meta_cell_data_v2$meta_norm_counts),
-  target = c(100, 81),
-  info = paste(
-    "meta cell aggregation - correct dimensions norm counts (second version)"
-  )
-)
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

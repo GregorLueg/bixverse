@@ -4,15 +4,7 @@
 \alias{rs_get_seacells}
 \title{Generate SEACells}
 \usage{
-rs_get_seacells(
-  f_path,
-  embd,
-  seacells_params,
-  target_size,
-  seed,
-  verbose,
-  return_aggregated
-)
+rs_get_seacells(f_path, embd, seacells_params, target_size, seed, verbose)
 }
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
@@ -28,8 +20,6 @@ the meta cells. Typically \code{1e4}.}
 \item{seed}{Integer. For reproducibility purposes.}
 
 \item{verbose}{Boolean. Controls verbosity of the function.}
-
-\item{return_aggregated}{Boolean. If TRUE, aggregates counts into meta cells.}
 }
 \value{
 A list with the following elements:
@@ -37,9 +27,10 @@ A list with the following elements:
 \item assignments - A list containing assignment information with elements:
 assignments (vector), metacells (list), unassigned (vector), n_metacells,
 n_cells, n_unassigned
-\item aggregated - If return_aggregated is TRUE, a list with indptr,
-indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
-otherwise.
+\item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+nrow, ncol in sparse format.
+\item rss - Vector of RSS values from each iteration.
+\item archetypes - Vector of cell indices selected as archetypes.
 }
 }
 \description{

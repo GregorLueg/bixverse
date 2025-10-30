@@ -1,5 +1,6 @@
 use faer::traits::ComplexField;
 use faer::{Mat, MatRef};
+use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 use std::cmp::PartialEq;
 use std::marker::Sync;
@@ -615,6 +616,59 @@ where
     CompressedSparseData::new_csr(&data, &indices, &indptr, None, shape)
 }
 
+/// Optimised COO to CSR - assumes input is already sorted by (row, col)
+///
+/// ### Params
+///
+/// * `rows` - Row indices (must be sorted by row first, then col)
+/// * `cols` - Col indices  
+/// * `vals` - Values
+/// * `shape` - Matrix dimensions
+/// * `is_sorted` - If true, skips sorting step
+///
+/// ### Returns
+///
+/// CSR matrix
+pub fn coo_to_csr_presorted<T>(
+    rows: &[usize],
+    cols: &[usize],
+    vals: &[T],
+    shape: (usize, usize),
+) -> CompressedSparseData<T>
+where
+    T: Clone + Default + Into<f64> + Sync + Add<Output = T> + AddAssign + PartialEq + Copy + Mul,
+{
+    let n_rows = shape.0;
+    let nnz = rows.len();
+
+    let mut data = Vec::with_capacity(nnz);
+    let mut indices = Vec::with_capacity(nnz);
+    let mut indptr = vec![0usize; n_rows + 1];
+
+    // unsafe to squeeze out performance...
+    unsafe {
+        data.set_len(nnz);
+        indices.set_len(nnz);
+
+        let data_ptr: *mut T = data.as_mut_ptr();
+        let indices_ptr: *mut usize = indices.as_mut_ptr();
+        let indptr_ptr: *mut usize = indptr.as_mut_ptr();
+
+        for i in 0..nnz {
+            *data_ptr.add(i) = *vals.get_unchecked(i);
+            *indices_ptr.add(i) = *cols.get_unchecked(i);
+            let row = *rows.get_unchecked(i);
+            *indptr_ptr.add(row + 1) += 1;
+        }
+
+        for i in 0..n_rows {
+            *indptr_ptr.add(i + 1) += *indptr_ptr.add(i);
+        }
+    }
+
+    CompressedSparseData::new_csr(&data, &indices, &indptr, None, shape)
+}
+
 /// Add two CSR matrices together
 ///
 /// ### Params
@@ -637,8 +691,8 @@ where
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
 
     const EPSILON: f32 = 1e-9;
-
     let n_rows = a.shape.0;
+
     let mut rows = Vec::new();
     let mut cols = Vec::new();
     let mut vals = Vec::new();
@@ -664,7 +718,6 @@ where
                 vals.push(b.data[b_idx]);
                 b_idx += 1;
             } else {
-                // Same column
                 let val = a.data[a_idx] + b.data[b_idx];
                 if val.into().abs() > EPSILON as f64 {
                     rows.push(i);
@@ -677,7 +730,8 @@ where
         }
     }
 
-    coo_to_csr(&rows, &cols, &vals, a.shape)
+    // output is already sorted by (row, col), build CSR directly
+    coo_to_csr_presorted(&rows, &cols, &vals, a.shape)
 }
 
 /// Scalar multiplication of CSR matrix
@@ -703,9 +757,10 @@ where
         + AddAssign
         + PartialEq
         + Copy
-        + Mul<Output = T>,
+        + Mul<Output = T>
+        + std::marker::Send,
 {
-    let data: Vec<T> = a.data.iter().map(|&v| v * scalar).collect();
+    let data: Vec<T> = a.data.par_iter().map(|&v| v * scalar).collect();
     CompressedSparseData::new_csr(&data, &a.indices, &a.indptr, None, a.shape)
 }
 
@@ -739,8 +794,8 @@ where
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
 
     const EPSILON: f32 = 1e-9;
-
     let n_rows = a.shape.0;
+
     let mut rows = Vec::new();
     let mut cols = Vec::new();
     let mut vals = Vec::new();
@@ -778,7 +833,8 @@ where
         }
     }
 
-    coo_to_csr(&rows, &cols, &vals, a.shape)
+    // already sorted
+    coo_to_csr_presorted(&rows, &cols, &vals, a.shape)
 }
 
 /// Element-wise sparse multiplication
@@ -857,6 +913,7 @@ where
 /// ### Returns
 ///
 /// Result of A @ B in CSR format
+#[allow(dead_code)]
 pub fn csr_matmul_csr<T>(
     a: &CompressedSparseData<T>,
     b: &CompressedSparseData<T>,
@@ -870,55 +927,60 @@ where
         + PartialEq
         + Copy
         + Mul<Output = T>
-        + AddAssign,
+        + AddAssign
+        + std::marker::Send,
     <T as std::ops::Add>::Output: std::cmp::PartialEq<T>,
 {
     assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
-    assert_eq!(
-        a.shape.1, b.shape.0,
-        "Dimension mismatch: {} vs {}",
-        a.shape.1, b.shape.0
-    );
+    assert_eq!(a.shape.1, b.shape.0, "Dimension mismatch");
 
     let nrows = a.shape.0;
     let ncols = b.shape.1;
 
-    let mut rows = Vec::new();
-    let mut cols = Vec::new();
-    let mut vals = Vec::new();
+    // Parallel computation of each row
+    let row_results: Vec<Vec<(usize, T)>> = (0..nrows)
+        .into_par_iter()
+        .map(|i| {
+            let mut row_vals = FxHashMap::default();
 
-    for i in 0..nrows {
-        let mut row_vals = FxHashMap::default();
+            let a_row_start = a.indptr[i];
+            let a_row_end = a.indptr[i + 1];
 
-        let a_row_start = a.indptr[i];
-        let a_row_end = a.indptr[i + 1];
+            for a_idx in a_row_start..a_row_end {
+                let k = a.indices[a_idx];
+                let a_val = a.data[a_idx];
 
-        for a_idx in a_row_start..a_row_end {
-            let k = a.indices[a_idx];
-            let a_val = a.data[a_idx];
+                let b_row_start = b.indptr[k];
+                let b_row_end = b.indptr[k + 1];
 
-            let b_row_start = b.indptr[k];
-            let b_row_end = b.indptr[k + 1];
-
-            for b_idx in b_row_start..b_row_end {
-                let j = b.indices[b_idx];
-                let b_val = b.data[b_idx];
-
-                *row_vals.entry(j).or_insert(T::default()) += a_val * b_val;
+                for b_idx in b_row_start..b_row_end {
+                    let j = b.indices[b_idx];
+                    let b_val = b.data[b_idx];
+                    *row_vals.entry(j).or_insert(T::default()) += a_val * b_val;
+                }
             }
-        }
 
-        let mut sorted_cols: Vec<_> = row_vals.iter().collect();
-        sorted_cols.sort_by_key(|(col, _)| *col);
+            // Sort columns within this row
+            let mut sorted_row: Vec<(usize, T)> = row_vals.into_iter().collect();
+            sorted_row.sort_unstable_by_key(|(col, _)| *col);
+            sorted_row
+        })
+        .collect();
 
-        for (&col, &val) in sorted_cols {
-            rows.push(i);
-            cols.push(col);
-            vals.push(val);
+    // Build CSR directly from row results
+    let mut data = Vec::new();
+    let mut indices = Vec::new();
+    let mut indptr = vec![0; nrows + 1];
+
+    for (i, row) in row_results.iter().enumerate() {
+        for &(col, val) in row {
+            data.push(val);
+            indices.push(col);
         }
+        indptr[i + 1] = data.len();
     }
 
-    coo_to_csr(&rows, &cols, &vals, (nrows, ncols))
+    CompressedSparseData::new_csr(&data, &indices, &indptr, None, (nrows, ncols))
 }
 
 /// Normalises the columns of a CSR matrix to a sum of 1 (L1 norm)
@@ -1069,6 +1131,175 @@ where
         result[i] = sum;
     }
     result
+}
+
+/////////////////////////
+// VERY optimised code //
+/////////////////////////
+
+/// Sparse accumulator for efficient sparse matrix multiplication
+///
+/// ### Fields
+///
+/// * `values` - Vector storing accumulated values for each index
+/// * `indices` - Vector of active (non-zero) indices
+/// * `flags` - Boolean flags indicating which indices are active
+struct SparseAccumulator<T>
+where
+    T: Copy + Default + AddAssign,
+{
+    values: Vec<T>,
+    indices: Vec<usize>,
+    flags: Vec<bool>,
+}
+
+impl<T> SparseAccumulator<T>
+where
+    T: Copy + Default + AddAssign,
+{
+    /// Create a new sparse accumulator
+    ///
+    /// ### Params
+    ///
+    /// * `size` - Maximum number of indices to accumulate
+    fn new(size: usize) -> Self {
+        Self {
+            values: vec![T::default(); size],
+            indices: Vec::with_capacity(size / 10),
+            flags: vec![false; size],
+        }
+    }
+
+    /// Add a value to the accumulator at the given index
+    ///
+    /// ### Params
+    ///
+    /// * `idx` - Index to accumulate at
+    /// * `val` - Value to add
+    ///
+    /// ### Safety
+    ///
+    /// `idx` must be less than the size specified during construction
+    #[inline]
+    unsafe fn add(&mut self, idx: usize, val: T) {
+        if !*self.flags.get_unchecked(idx) {
+            *self.flags.get_unchecked_mut(idx) = true;
+            self.indices.push(idx);
+            *self.values.get_unchecked_mut(idx) = val;
+        } else {
+            *self.values.get_unchecked_mut(idx) += val;
+        }
+    }
+
+    /// Extract accumulated values as sorted index-value pairs and reset the accumulator
+    ///
+    /// ### Returns
+    ///
+    /// Vector of (index, value) pairs sorted by index
+    #[inline]
+    fn extract_sorted(&mut self) -> Vec<(usize, T)> {
+        self.indices.sort_unstable();
+        let result: Vec<(usize, T)> = unsafe {
+            self.indices
+                .iter()
+                .map(|&i| (i, *self.values.get_unchecked(i)))
+                .collect()
+        };
+        // Reset for next use
+        unsafe {
+            for &idx in &self.indices {
+                *self.flags.get_unchecked_mut(idx) = false;
+                *self.values.get_unchecked_mut(idx) = T::default();
+            }
+        }
+        self.indices.clear();
+        result
+    }
+}
+
+/// Multiply two CSR matrices using sparse accumulators and parallel processing
+///
+/// ### Params
+///
+/// * `a` - Left CSR matrix
+/// * `b` - Right CSR matrix
+///
+/// ### Returns
+///
+/// Product matrix in CSR format
+pub fn csr_matmul_csr_optimised<T>(
+    a: &CompressedSparseData<T>,
+    b: &CompressedSparseData<T>,
+) -> CompressedSparseData<T>
+where
+    T: Clone
+        + Default
+        + Copy
+        + Sync
+        + Send
+        + Add<Output = T>
+        + Mul<Output = T>
+        + AddAssign
+        + PartialEq
+        + Into<f64>,
+{
+    assert!(a.cs_type.is_csr() && b.cs_type.is_csr());
+    assert_eq!(a.shape.1, b.shape.0, "Dimension mismatch");
+
+    let nrows = a.shape.0;
+    let ncols = b.shape.1;
+
+    let row_results: Vec<Vec<(usize, T)>> = (0..nrows)
+        .into_par_iter()
+        .map(|i| {
+            let mut acc = SparseAccumulator::new(ncols);
+
+            unsafe {
+                let a_indptr = a.indptr.as_ptr();
+                let a_indices = a.indices.as_ptr();
+                let a_data = a.data.as_ptr();
+                let b_indptr = b.indptr.as_ptr();
+                let b_indices = b.indices.as_ptr();
+                let b_data = b.data.as_ptr();
+
+                let a_start = *a_indptr.add(i);
+                let a_end = *a_indptr.add(i + 1);
+
+                for a_idx in a_start..a_end {
+                    let k = *a_indices.add(a_idx);
+                    let a_val = *a_data.add(a_idx);
+
+                    let b_start = *b_indptr.add(k);
+                    let b_end = *b_indptr.add(k + 1);
+
+                    for b_idx in b_start..b_end {
+                        let j = *b_indices.add(b_idx);
+                        let b_val = *b_data.add(b_idx);
+                        acc.add(j, a_val * b_val);
+                    }
+                }
+            }
+
+            acc.extract_sorted()
+        })
+        .collect();
+
+    // direct CSR construction
+    let total_nnz: usize = row_results.iter().map(|r| r.len()).sum();
+    let mut data = Vec::with_capacity(total_nnz);
+    let mut indices = Vec::with_capacity(total_nnz);
+    let mut indptr = Vec::with_capacity(nrows + 1);
+    indptr.push(0);
+
+    for row in row_results {
+        for (col, val) in row {
+            data.push(val);
+            indices.push(col);
+        }
+        indptr.push(data.len());
+    }
+
+    CompressedSparseData::new_csr(&data, &indices, &indptr, None, (nrows, ncols))
 }
 
 ///////////

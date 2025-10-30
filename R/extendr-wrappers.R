@@ -2282,7 +2282,7 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @export
 rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
-#' Generate meta cells
+#' Generate meta cells (hdWGCNA method)
 #'
 #' @description This function implements the approach from Morabito, et al.
 #' to generate meta cells. You can provide an already pre-computed kNN matrix
@@ -2301,20 +2301,18 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity of the function.
-#' @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
 #'  \item assignments - A list containing assignment information with elements:
 #'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
 #'    n_cells, n_unassigned
-#'  \item aggregated - If return_aggregated is TRUE, a list with indptr,
-#'    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
-#'    otherwise.
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
 #' }
 #'
 #' @export
-rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose, return_aggregated) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose, return_aggregated)
+rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose)
 
 #' Generate SEACells
 #'
@@ -2332,22 +2330,22 @@ rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_siz
 #' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity of the function.
-#' @param return_aggregated Boolean. If TRUE, aggregates counts into meta cells.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
 #'  \item assignments - A list containing assignment information with elements:
 #'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
 #'    n_cells, n_unassigned
-#'  \item aggregated - If return_aggregated is TRUE, a list with indptr,
-#'    indices, raw_counts, norm_counts, nrow, ncol in sparse format. NULL
-#'    otherwise.
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#'  \item rss - Vector of RSS values from each iteration.
+#'  \item archetypes - Vector of cell indices selected as archetypes.
 #' }
 #'
 #' @export
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023.
-rs_get_seacells <- function(f_path, embd, seacells_params, target_size, seed, verbose, return_aggregated) .Call(wrap__rs_get_seacells, f_path, embd, seacells_params, target_size, seed, verbose, return_aggregated)
+rs_get_seacells <- function(f_path, embd, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, seacells_params, target_size, seed, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

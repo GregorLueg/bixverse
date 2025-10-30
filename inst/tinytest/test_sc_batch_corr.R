@@ -1,5 +1,11 @@
 # sc batch correction ----------------------------------------------------------
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## testing parameters ----------------------------------------------------------
 
 # thresholds
@@ -64,7 +70,7 @@ sc_qc_param = params_sc_min_quality(
 
 dir_data <- list("weak" = NULL, "medium" = NULL, "strong" = NULL)
 dir_data <- purrr::imap(dir_data, \(elem, name) {
-  final_path <- file.path(tempdir(), name)
+  final_path <- file.path(test_temp_dir, name)
   dir.create(final_path, showWarnings = FALSE)
   final_path
 })
@@ -691,3 +697,5 @@ expect_true(
     "(strong batch effect)"
   )
 )
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

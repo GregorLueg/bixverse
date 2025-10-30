@@ -1,5 +1,11 @@
 # mtx io -----------------------------------------------------------------------
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## parameters ------------------------------------------------------------------
 
 # testing parameters
@@ -11,8 +17,8 @@ min_cells_exp <- 500L
 
 single_cell_test_data <- generate_single_cell_test_data()
 
-f_path_v1 <- file.path(tempdir(), "cells_csv")
-f_path_v2 <- file.path(tempdir(), "genes_tsv")
+f_path_v1 <- file.path(test_temp_dir, "cells_csv")
+f_path_v2 <- file.path(test_temp_dir, "genes_tsv")
 
 dir.create(f_path_v1, showWarnings = FALSE, recursive = TRUE)
 dir.create(f_path_v2, showWarnings = FALSE, recursive = TRUE)
@@ -113,7 +119,7 @@ expect_true(
 #### rust ----------------------------------------------------------------------
 
 # test the underlying rust directly
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
@@ -177,7 +183,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -282,7 +288,7 @@ expect_equal(
 
 ### rust = genes ; tsv format --------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
 
 #### rust ----------------------------------------------------------------------
 
@@ -348,7 +354,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
+sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -450,3 +456,5 @@ expect_equal(
   target = vars_filtered$gene_id,
   info = "correct gene names"
 )
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
