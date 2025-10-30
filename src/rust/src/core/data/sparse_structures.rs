@@ -1043,7 +1043,7 @@ where
         + std::iter::Sum,
 {
     mat.data
-        .iter()
+        .par_iter()
         .map(|&v| {
             let val: f32 = v.into();
             val * val

@@ -2,8 +2,10 @@ use extendr_api::List;
 use faer::MatRef;
 use rand::prelude::*;
 use rand::rngs::StdRng;
+use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::time::Instant;
+use thousands::Separable;
 
 use crate::core::data::sparse_structures::*;
 
@@ -218,26 +220,6 @@ impl SEACellsParams {
 // Helpers //
 /////////////
 
-/// Helper function to calculate the kernel matrix with a vector
-///
-/// This is WAY faster and memory-efficient than creating the full kernel
-/// matrix in memory...
-///
-/// ### Params
-///
-/// * `kernel` - The kernel matrix
-/// * `v` - The vector to multiply the matrix with
-///
-/// ### Returns
-///
-/// The final vector
-fn kernel_squared_matvec(kernel: &CompressedSparseData<f32>, v: &[f32]) -> Vec<f32> {
-    let kernel_t = kernel.transpose_and_convert();
-    let temp = csr_matvec(&kernel_t, v);
-
-    csr_matvec(kernel, &temp)
-}
-
 /// Convert SEACells hard assignments to metacell format
 ///
 /// Transforms flat assignment vector (cell -> SEACell) into grouped format
@@ -261,18 +243,16 @@ pub fn assignments_to_metacells(assignments: &[usize], k: usize) -> Vec<Vec<usiz
     metacells
 }
 
-/// Convert CSR sparse matrix to dense row-major vector
+/// Convert sparse to dense with scaling in one pass
 ///
 /// ### Params
 ///
-/// * `mat` - Sparse matrix in CSR format
-///
-/// ### Returns
-///
-/// Dense vector in row-major order (row_idx * ncols + col_idx)
-fn sparse_to_dense_csr(mat: &CompressedSparseData<f32>) -> Vec<f32> {
+/// * `mat` - The matrix to scale
+/// * `scale` - The scale value
+/// * `dense` - The slice to update
+fn sparse_to_dense_csr_scaled(mat: &CompressedSparseData<f32>, scale: f32, dense: &mut [f32]) {
     let (nrows, ncols) = mat.shape;
-    let mut dense = vec![0.0f32; nrows * ncols];
+    dense.fill(0.0);
 
     for row in 0..nrows {
         let row_start = mat.indptr[row];
@@ -280,11 +260,9 @@ fn sparse_to_dense_csr(mat: &CompressedSparseData<f32>) -> Vec<f32> {
 
         for idx in row_start..row_end {
             let col = mat.indices[idx];
-            dense[row * ncols + col] = mat.data[idx];
+            dense[row * ncols + col] = mat.data[idx] * scale;
         }
     }
-
-    dense
 }
 
 //////////
@@ -444,14 +422,20 @@ impl<'a> SEACells<'a> {
         }
 
         if verbose {
-            println!("Built kernel with {} non-zeros", vals.len());
+            println!(
+                "Built kernel with {} non-zeros",
+                vals.len().separate_with_underscores()
+            );
         }
 
         let kernel = coo_to_csr(&rows, &cols, &vals, (n, n));
         let k_square = csr_matmul_csr_optimised(&kernel, &kernel.transpose_and_convert());
 
         if verbose {
-            println!("K_square has {} non-zeros", k_square.data.len());
+            println!(
+                "K_square has {} non-zeros",
+                k_square.data.len().separate_with_underscores()
+            );
         }
 
         self.kernel_mat = Some(kernel);
@@ -568,13 +552,17 @@ impl<'a> SEACells<'a> {
             if verbose {
                 println!(
                     "Dataset large (n={}), using fast random init (threshold: {})",
-                    self.n_cells, self.params.greedy_threshold
+                    self.n_cells.separate_with_underscores(),
+                    self.params.greedy_threshold
                 );
             }
             self.initialise_archetypes_random(verbose, seed);
         } else {
             if verbose {
-                println!("Dataset small (n={}), using greedy CSSP", self.n_cells);
+                println!(
+                    "Dataset small (n = {}), using greedy CSSP",
+                    self.n_cells.separate_with_underscores()
+                );
             }
             self.initialise_archetypes_greedy(verbose);
         }
@@ -616,31 +604,41 @@ impl<'a> SEACells<'a> {
     ///
     /// * `verbose` - Print progress every 10 archetypes
     fn initialise_archetypes_greedy(&mut self, verbose: bool) {
-        let kernel = self.kernel_mat.as_ref().unwrap();
-        let n = kernel.shape.0;
+        let k_square = self.k_square.as_ref().unwrap();
+        let n = k_square.shape.0;
         let k = self.params.n_sea_cells;
 
         if verbose {
             println!("Initialising {} archetypes via greedy CSSP...", k);
         }
 
+        // Compute initial f and g in parallel
+        let results: Vec<(Vec<f32>, f32)> = (0..n)
+            .into_par_iter()
+            .map(|i| {
+                let mut e_i = vec![0_f32; n];
+                e_i[i] = 1.0;
+                let k2_e_i = csr_matvec(k_square, &e_i);
+                let g_val = k2_e_i[i];
+                (k2_e_i, g_val)
+            })
+            .collect();
+
         let mut f = vec![0_f32; n];
         let mut g = vec![0_f32; n];
-
-        for i in 0..n {
-            let mut e_i = vec![0_f32; n];
-            e_i[i] = 1.0;
-
-            let k2_e_i = kernel_squared_matvec(kernel, &e_i);
-
+        for (i, (k2_e_i, g_val)) in results.iter().enumerate() {
             for j in 0..n {
                 f[j] += k2_e_i[j] * k2_e_i[j];
             }
-            g[i] = k2_e_i[i];
+            g[i] = *g_val;
         }
 
         let mut omega: Vec<Vec<f32>> = vec![vec![0_f32; n]; k];
         let mut centers: Vec<usize> = Vec::with_capacity(k);
+
+        // Reuse allocations
+        let mut e_p = vec![0.0f32; n];
+        let mut omega_new = vec![0.0f32; n];
 
         for iter in 0..k {
             let mut best_idx = 0;
@@ -658,47 +656,38 @@ impl<'a> SEACells<'a> {
 
             centers.push(best_idx);
 
-            let mut e_p = vec![0.0f32; n];
+            e_p.fill(0.0);
             e_p[best_idx] = 1.0;
-            let k2_col = kernel_squared_matvec(kernel, &e_p);
+            let k2_col = csr_matvec(k_square, &e_p);
 
             let mut delta = k2_col.clone();
             for i in 0..n {
-                let mut omega_sum = 0.0f32;
-                for r in 0..iter {
-                    omega_sum += omega[r][best_idx] * omega[r][i];
-                }
+                let omega_sum: f32 = (0..iter).map(|r| omega[r][best_idx] * omega[r][i]).sum();
                 delta[i] -= omega_sum;
             }
 
             delta[best_idx] = delta[best_idx].max(0.0);
-
             let delta_p_sqrt = delta[best_idx].sqrt().max(1e-6);
-            let mut omega_new = vec![0.0f32; n];
+
             for i in 0..n {
                 omega_new[i] = delta[i] / delta_p_sqrt;
             }
 
             let omega_sq_norm: f32 = omega_new.iter().map(|&x| x * x).sum();
-
-            let k_omega_new = kernel_squared_matvec(kernel, &omega_new);
-
-            let dots: Vec<f32> = (0..iter)
-                .map(|r| omega[r].iter().zip(&omega_new).map(|(a, b)| a * b).sum())
-                .collect();
+            let k_omega_new = csr_matvec(k_square, &omega_new);
 
             for i in 0..n {
                 let omega_hadamard = omega_new[i] * omega_new[i];
                 let term1 = omega_sq_norm * omega_hadamard;
 
-                let pl: f32 = (0..iter).map(|r| dots[r] * omega[r][i]).sum();
+                let pl: f32 = (0..iter).map(|r| omega[r][best_idx] * omega[r][i]).sum();
                 let term2 = omega_new[i] * (k_omega_new[i] - pl);
 
                 f[i] += -2.0 * term2 + term1;
                 g[i] += omega_hadamard;
             }
 
-            omega[iter] = omega_new;
+            omega[iter].copy_from_slice(&omega_new);
 
             if verbose && (iter + 1) % 10 == 0 {
                 println!("  Selected {} / {} archetypes", iter + 1, k);
@@ -809,37 +798,47 @@ impl<'a> SEACells<'a> {
         let n = a.shape.1;
         let k = a.shape.0;
 
+        let mut g_dense = vec![0.0f32; k * n];
+        let mut e_data = Vec::with_capacity(n);
+
         for t in 0..self.params.max_fw_iters {
             let t1_a = csr_matmul_csr_optimised(&t1, &a);
             let g_mat = sparse_subtract_csr(&t1_a, &t2);
-            let g_scaled = sparse_scalar_multiply_csr(&g_mat, 2.0);
 
-            let g_dense = sparse_to_dense_csr(&g_scaled);
+            sparse_to_dense_csr_scaled(&g_mat, 2.0, &mut g_dense);
 
-            let mut e_rows = Vec::with_capacity(n);
-            let mut e_cols = Vec::with_capacity(n);
-            let mut e_vals = Vec::with_capacity(n);
+            e_data.clear();
+            let argmins: Vec<usize> = (0..n)
+                .into_par_iter()
+                .map(|col| {
+                    let mut min_val = g_dense[col];
+                    let mut min_idx = 0;
 
-            for col in 0..n {
-                let mut min_val = g_dense[col];
-                let mut min_idx = 0;
-
-                for row in 1..k {
-                    let val = g_dense[row * n + col];
-                    if val < min_val {
-                        min_val = val;
-                        min_idx = row;
+                    for row in 1..k {
+                        let val = g_dense[row * n + col];
+                        if val < min_val {
+                            min_val = val;
+                            min_idx = row;
+                        }
                     }
-                }
+                    min_idx
+                })
+                .collect();
 
-                e_rows.push(min_idx);
-                e_cols.push(col);
-                e_vals.push(1.0f32);
+            for (col, &row) in argmins.iter().enumerate() {
+                e_data.push((row, col, 1.0f32));
             }
+            e_data.sort_unstable_by_key(|&(r, c, _)| (r, c));
 
-            let e = coo_to_csr(&e_rows, &e_cols, &e_vals, (k, n));
+            let e_rows: Vec<usize> = e_data.iter().map(|&(r, _, _)| r).collect();
+            let e_cols: Vec<usize> = e_data.iter().map(|&(_, c, _)| c).collect();
+            let e_vals: Vec<f32> = e_data.iter().map(|&(_, _, v)| v).collect();
+
+            let e = coo_to_csr_presorted(&e_rows, &e_cols, &e_vals, (k, n));
 
             let step_size = 2.0 / (t as f32 + 2.0);
+
+            // Keep original operation sequence for numerical stability
             let e_minus_a = sparse_subtract_csr(&e, &a);
             let update = sparse_scalar_multiply_csr(&e_minus_a, step_size);
             a = sparse_add_csr(&a, &update);
@@ -887,39 +886,48 @@ impl<'a> SEACells<'a> {
         let n = b.shape.0;
         let k = b.shape.1;
 
+        let mut g_dense = vec![0.0f32; n * k];
+        let mut e_data = Vec::with_capacity(k);
+
         for t in 0..self.params.max_fw_iters {
             let k_b = csr_matmul_csr_optimised(k_square, &b);
             let k_b_t1 = csr_matmul_csr_optimised(&k_b, &t1);
-
             let g_mat = sparse_subtract_csr(&k_b_t1, &t2);
-            let g_scaled = sparse_scalar_multiply_csr(&g_mat, 2.0);
 
-            let g_dense = sparse_to_dense_csr(&g_scaled);
+            sparse_to_dense_csr_scaled(&g_mat, 2.0, &mut g_dense);
 
-            let mut e_rows = Vec::with_capacity(k);
-            let mut e_cols = Vec::with_capacity(k);
-            let mut e_vals = Vec::with_capacity(k);
+            e_data.clear();
+            let argmins: Vec<usize> = (0..k)
+                .into_par_iter()
+                .map(|col| {
+                    let mut min_val = g_dense[col];
+                    let mut min_idx = 0;
 
-            for col in 0..k {
-                let mut min_val = g_dense[col];
-                let mut min_idx = 0;
-
-                for row in 1..n {
-                    let val = g_dense[row * k + col];
-                    if val < min_val {
-                        min_val = val;
-                        min_idx = row;
+                    for row in 1..n {
+                        let val = g_dense[row * k + col];
+                        if val < min_val {
+                            min_val = val;
+                            min_idx = row;
+                        }
                     }
-                }
+                    min_idx
+                })
+                .collect();
 
-                e_rows.push(min_idx);
-                e_cols.push(col);
-                e_vals.push(1.0f32);
+            for (col, &row) in argmins.iter().enumerate() {
+                e_data.push((row, col, 1.0f32));
             }
+            e_data.sort_unstable_by_key(|&(r, c, _)| (r, c));
 
-            let e = coo_to_csr(&e_rows, &e_cols, &e_vals, (n, k));
+            let e_rows: Vec<usize> = e_data.iter().map(|&(r, _, _)| r).collect();
+            let e_cols: Vec<usize> = e_data.iter().map(|&(_, c, _)| c).collect();
+            let e_vals: Vec<f32> = e_data.iter().map(|&(_, _, v)| v).collect();
+
+            let e = coo_to_csr_presorted(&e_rows, &e_cols, &e_vals, (n, k));
 
             let step_size = 2.0 / (t as f32 + 2.0);
+
+            // Keep original operation sequence
             let e_minus_b = sparse_subtract_csr(&e, &b);
             let update = sparse_scalar_multiply_csr(&e_minus_b, step_size);
             b = sparse_add_csr(&b, &update);

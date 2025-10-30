@@ -65,7 +65,10 @@ meta_cells <- S7::new_class(
         format_str,
         1:meta_cell_data$assignments$n_metacells
       ),
-      no_originating_cells = meta_cell_data$assignments$n_metacells,
+      no_originating_cells = purrr::map_dbl(
+        meta_cell_data$assignments$metacells,
+        length
+      ),
       original_cell_idx = meta_cell_data$assignments$metacells
     )
 

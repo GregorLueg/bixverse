@@ -1,5 +1,6 @@
 use extendr_api::*;
 use faer::Mat;
+use std::time::Instant;
 
 use crate::core::data::sparse_io::ParallelSparseReader;
 use crate::core::data::sparse_structures::CompressedSparseData;
@@ -359,11 +360,15 @@ fn rs_get_seacells(
     seed: usize,
     verbose: bool,
 ) -> extendr_api::Result<List> {
+    let start_seacell = Instant::now();
+
     let seacells_params = SEACellsParams::from_r_list(seacells_params);
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_method = parse_knn_method(&seacells_params.knn_method)
         .ok_or_else(|| format!("Invalid KNN search method: {}", seacells_params.knn_method))
         .unwrap();
+
+    let start_knn = Instant::now();
 
     let (knn_indices, knn_dist) = match knn_method {
         KnnSearch::Annoy => {
@@ -402,6 +407,15 @@ fn rs_get_seacells(
         ),
     };
 
+    let end_knn = start_knn.elapsed();
+
+    if verbose {
+        println!(
+            "kNN generation done in : {:.2?} with {}",
+            end_knn, seacells_params.knn_method
+        );
+    }
+
     let mut seacell = SEACells::new(embd.nrows(), &seacells_params);
 
     seacell.construct_kernel_mat(embd.as_ref(), &knn_indices, &knn_dist.unwrap(), verbose);
@@ -430,6 +444,12 @@ fn rs_get_seacells(
 
     let aggregated: CompressedSparseData<u32, f32> =
         aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+
+    let end_seacell = start_seacell.elapsed();
+
+    if verbose {
+        println!("SEACells found in : {:.2?}", end_seacell);
+    }
 
     Ok(list!(
         assignments = assignment_list,
