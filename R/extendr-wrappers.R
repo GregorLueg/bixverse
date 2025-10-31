@@ -1528,6 +1528,9 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' @export
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
+#' @export
+rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean)
+
 #' Run hypergeometric enrichment over the gene ontology
 #'
 #' @description This function implements a Rust version of the gene ontology

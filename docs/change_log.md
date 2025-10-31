@@ -1,6 +1,6 @@
 # *bixverse* change log
 
-*Last update: 03.10.2025* </br>
+*Last update: 31.10.2025* </br>
 
 ### Version **0.0.2.3**
 
@@ -8,10 +8,14 @@
 
 - RCisTarget implementation into Rust.
 
+#### Breaking changes
+
+...
+
 #### Bug fixes
 
 - Scaling in `preprocess_bulk_coexp()` causes a transpose of the matrix. This
-was fixed now.
+is fixed now.
 
 ### Version **0.0.2.2**
 
