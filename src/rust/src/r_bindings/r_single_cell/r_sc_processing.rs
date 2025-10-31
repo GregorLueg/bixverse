@@ -2,10 +2,10 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use std::time::Instant;
 
-use crate::single_cell::doublet_detection::*;
+use crate::single_cell::methods::doublet_detection::*;
+use crate::single_cell::methods::scrublet::*;
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
-use crate::single_cell::scrublet::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 use crate::utils::traits::*;
 
@@ -477,8 +477,8 @@ fn rs_sc_pca(
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
 /// nearest neighbours. You have several options to get the approximate nearest
-/// neighbours: 
-/// 
+/// neighbours:
+///
 /// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
 ///   an index. Good compromise of index generation, querying speed.
 /// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the

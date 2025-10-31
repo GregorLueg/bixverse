@@ -6,8 +6,8 @@ use crate::core::data::sparse_io::ParallelSparseReader;
 use crate::core::data::sparse_structures::CompressedSparseData;
 use crate::single_cell::cell_aggregations::*;
 use crate::single_cell::dge_aucs::*;
+use crate::single_cell::methods::seacells::*;
 use crate::single_cell::sc_knn_snn::*;
-use crate::single_cell::seacells::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 use crate::utils::traits::*;
 
