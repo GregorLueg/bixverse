@@ -229,7 +229,12 @@ run_cistarget <- function(
 
   no_represented_genes <- purrr::map_dbl(gs_indices, length)
 
-  if (!all(c(low_conf_cats, high_conf_cats) %in% annot_red$annotationSource)) {
+  if (
+    !all(
+      c(cis_target_params$low_conf_cats, cis_target_params$high_conf_cats) %in%
+        annot_red$annotationSource
+    )
+  ) {
     warning("Not all of the high and low confidence categories were found")
   }
 
