@@ -23,6 +23,9 @@ update the following has been updated/changed:
 
 - (R/Py)CisTarget is implemented into Rust for speed.
 
+Also, watch the space... The **0.0.3.0** release is coming soon with a major
+update...
+
 ## *Installation*
 
 You will need Rust on your system to have the package working. An installation
@@ -75,4 +78,4 @@ of time is spent on rewriting and reimplementing published methods for internal
 usage. Better to make it fast/good once, and open it up to the public via open 
 source.
 
-*Last update to the read-me: 31.10.2025*
+*Last update to the read-me: 01.11.2025*

@@ -28,6 +28,36 @@ pub struct MotifEnrichment {
     pub enriched_gene_indices: Vec<usize>,
 }
 
+///////////
+// Enums //
+///////////
+
+/// Enum for the ICA types
+#[derive(Clone, Debug)]
+pub enum RccType {
+    /// Use the `ICisTarget` type for the RCC calculation
+    ICisTarget,
+    /// Use the `Approx` type for the RCC calculation
+    Approx,
+}
+
+/// Parse the RCC calculation type
+///
+/// ### Params
+///
+/// * `s` - The string to parse
+///
+/// ### Returns
+///
+/// Option of the `RccType`
+pub fn parse_rcc_type(s: &str) -> Option<RccType> {
+    match s.to_lowercase().as_str() {
+        "icistarget" => Some(RccType::ICisTarget),
+        "approx" => Some(RccType::Approx),
+        _ => None,
+    }
+}
+
 /////////////////////////
 // Helpers - AUC & NES //
 /////////////////////////
@@ -118,7 +148,10 @@ pub fn calculate_nes(auc_scores: &[f64]) -> Vec<f64> {
         return vec![0.0; auc_scores.len()];
     }
 
-    auc_scores.iter().map(|&auc| (auc - mean) / std).collect()
+    auc_scores
+        .par_iter()
+        .map(|&auc| (auc - mean) / std)
+        .collect()
 }
 
 /////////
@@ -519,7 +552,7 @@ pub fn process_gene_set(
     auc_threshold: i32,
     nes_threshold: f64,
     max_rank: i32,
-    method: &str,
+    method: &RccType,
     n_mean: usize,
 ) -> Vec<MotifEnrichment> {
     let auc_scores = calculate_aucs(matrix, gene_indices, auc_threshold);
@@ -527,12 +560,12 @@ pub fn process_gene_set(
     let nes_scores = calculate_nes(&auc_scores);
 
     let (rcc_m2sd, all_rccs) = match method {
-        "icistarget" => {
+        RccType::ICisTarget => {
             let all_rccs = calculate_all_rccs(matrix, gene_indices, max_rank);
             let rcc_m2sd = calculate_rcc_thresholds(&all_rccs, max_rank);
             (rcc_m2sd, Some(all_rccs))
         }
-        _ => {
+        RccType::Approx => {
             let rcc_m2sd = calculate_rcc_thresholds_aprox(matrix, gene_indices, max_rank, n_mean);
             (rcc_m2sd, None)
         }

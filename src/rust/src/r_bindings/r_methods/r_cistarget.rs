@@ -18,6 +18,8 @@ fn rs_cistarget(
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
 
+    let rcc_method = parse_rcc_type(&method).unwrap_or(RccType::Approx);
+
     for i in 0..gs_list.len() {
         let list_elem = gs_list.elt(i).unwrap();
         let elem = list_elem
@@ -38,7 +40,7 @@ fn rs_cistarget(
                 auc_threshold,
                 nes_threshold,
                 max_rank,
-                &method,
+                &rcc_method,
                 n_mean,
             )
         })
