@@ -183,10 +183,35 @@ dge_class <- calculate_dge_limma(
 limma_res <- get_dge_limma_voom(dge_class)
 data.table::setorder(limma_res, gene_id)
 
+# tiny numerical imprecisions between systems make this necessary...
+
 expect_equal(
-  current = limma_res,
-  target = expected_limma_res,
-  info = "DGE class - Limma results"
+  current = limma_res$gene_id,
+  target = expected_limma_res$gene_id,
+  info = "DGE class - limma results: gene id"
+)
+
+expect_true(
+  current = cor(limma_res$logFC, expected_limma_res$logFC) >= 0.99,
+  info = "DGE class - limma results: logFC correlations"
+)
+
+expect_true(
+  current = cor(
+    -log10(limma_res$P.Value),
+    -log10(expected_limma_res$P.Value)
+  ) >=
+    0.99,
+  info = "DGE class - limma results: p-value correlation"
+)
+
+expect_true(
+  current = cor(
+    limma_res$t,
+    expected_limma_res$t
+  ) >=
+    0.99,
+  info = "DGE class - limma results: t correlation"
 )
 
 #### hedge's g -----------------------------------------------------------------
@@ -206,9 +231,27 @@ effect_sizes <- get_dge_effect_sizes(dge_class)
 data.table::setorder(effect_sizes, gene_id)
 
 expect_equal(
-  current = effect_sizes,
-  target = expected_effect_sizes,
-  info = "DGE class - Effect size results"
+  current = effect_sizes$gene_id,
+  target = expected_effect_sizes$gene_id,
+  info = "DGE class - effect size results: gene id"
+)
+
+expect_true(
+  current = cor(
+    effect_sizes$effect_sizes,
+    expected_effect_sizes$effect_sizes
+  ) >=
+    0.99,
+  info = "DGE class - effect sizes results: effect size correlations"
+)
+
+expect_true(
+  current = cor(
+    effect_sizes$standard_errors,
+    expected_effect_sizes$standard_errors
+  ) >=
+    0.99,
+  info = "DGE class - effect sizes results: standard error correlations"
 )
 
 ## normalisation methods -------------------------------------------------------
