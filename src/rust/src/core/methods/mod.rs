@@ -1,5 +1,6 @@
 //! Various key methods used in computational biology
 
+pub mod cistarget;
 pub mod coremo;
 pub mod dgrdl;
 pub mod diffcor;

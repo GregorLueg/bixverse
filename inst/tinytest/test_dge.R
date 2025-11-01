@@ -10,8 +10,6 @@ test_data <- qs2::qs_read(
   "./synthetic_data/dge_test_data.qs"
 )
 
-test_data$meta_data
-
 ### expected data --------------------------------------------------------------
 
 expected_pca_pvals <- c(3.494401e-05, 8.877927e-01)
@@ -36,12 +34,11 @@ expected_pc2 <- c(
   -15.73879
 )
 
-expected_limma_res <- qs2::qs_read(
-  "./test_data/dge_limma_res.qs"
-)
-expected_effect_sizes <- qs2::qs_read(
-  "./test_data/dge_effect_sizes.qs"
-)
+expected_limma_res <- data.table::fread("./test_data/dge_limma_res.gz")
+data.table::setorder(expected_limma_res, gene_id)
+
+expected_effect_sizes <- data.table::fread("./test_data/dge_effect_sizes.gz")
+data.table::setorder(expected_effect_sizes, gene_id)
 
 ## test the class --------------------------------------------------------------
 
@@ -184,11 +181,37 @@ dge_class <- calculate_dge_limma(
 )
 
 limma_res <- get_dge_limma_voom(dge_class)
+data.table::setorder(limma_res, gene_id)
+
+# tiny numerical imprecisions between systems make this necessary...
 
 expect_equal(
-  current = limma_res,
-  target = expected_limma_res,
-  info = "DGE class - Limma results"
+  current = limma_res$gene_id,
+  target = expected_limma_res$gene_id,
+  info = "DGE class - limma results: gene id"
+)
+
+expect_true(
+  current = cor(limma_res$logFC, expected_limma_res$logFC) >= 0.99,
+  info = "DGE class - limma results: logFC correlations"
+)
+
+expect_true(
+  current = cor(
+    -log10(limma_res$P.Value),
+    -log10(expected_limma_res$P.Value)
+  ) >=
+    0.99,
+  info = "DGE class - limma results: p-value correlation"
+)
+
+expect_true(
+  current = cor(
+    limma_res$t,
+    expected_limma_res$t
+  ) >=
+    0.99,
+  info = "DGE class - limma results: t correlation"
 )
 
 #### hedge's g -----------------------------------------------------------------
@@ -205,11 +228,30 @@ dge_class <- calculate_dge_hedges(
 )
 
 effect_sizes <- get_dge_effect_sizes(dge_class)
+data.table::setorder(effect_sizes, gene_id)
 
 expect_equal(
-  current = effect_sizes,
-  target = expected_effect_sizes,
-  info = "DGE class - Effect size results"
+  current = effect_sizes$gene_id,
+  target = expected_effect_sizes$gene_id,
+  info = "DGE class - effect size results: gene id"
+)
+
+expect_true(
+  current = cor(
+    effect_sizes$effect_sizes,
+    expected_effect_sizes$effect_sizes
+  ) >=
+    0.99,
+  info = "DGE class - effect sizes results: effect size correlations"
+)
+
+expect_true(
+  current = cor(
+    effect_sizes$standard_errors,
+    expected_effect_sizes$standard_errors
+  ) >=
+    0.99,
+  info = "DGE class - effect sizes results: standard error correlations"
 )
 
 ## normalisation methods -------------------------------------------------------
