@@ -10,8 +10,6 @@ test_data <- qs2::qs_read(
   "./synthetic_data/dge_test_data.qs"
 )
 
-test_data$meta_data
-
 ### expected data --------------------------------------------------------------
 
 expected_pca_pvals <- c(3.494401e-05, 8.877927e-01)
@@ -36,12 +34,10 @@ expected_pc2 <- c(
   -15.73879
 )
 
-expected_limma_res <- qs2::qs_read(
-  "./test_data/dge_limma_res.qs"
-)
-expected_effect_sizes <- qs2::qs_read(
-  "./test_data/dge_effect_sizes.qs"
-)
+expected_limma_res <- data.table::fread("./test_data/dge_limma_res.gz")
+
+expected_effect_sizes <- data.table::fread("./test_data/dge_effect_sizes.gz")
+
 
 ## test the class --------------------------------------------------------------
 
