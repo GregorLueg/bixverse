@@ -479,3 +479,49 @@ params_snf <- function(
     normalise = normalise
   )
 }
+
+## cistarget -------------------------------------------------------------------
+
+#' Wrapper function to CisTarget parameters
+#'
+#' @param auc_threshold Numeric between 0 and 1. Proportion of genes to use
+#' for AUC threshold calculation. Default is 0.05 (5% of genes).
+#' @param nes_threshold Numeric. Normalised Enrichment Score threshold for
+#' significant motifs. Default is 3.0.
+#' @param rcc_method Character. Method for recovery curve calculation. Either
+#' "approx" (approximate, faster) or "icistarget" (exact, slower).
+#' @param high_conf_cats Character vector. Annotation categories considered
+#' high confidence. Default includes direct annotations and orthology-based
+#' inferences.
+#' @param low_conf_cats Character vector. Annotation categories considered
+#' lower confidence. Default includes motif similarity-based inferences.
+#'
+#' @return A validated list of RcisTarget parameters.
+#'
+#' @export
+params_cistarget <- function(
+  auc_threshold = 0.05,
+  nes_threshold = 3.0,
+  rcc_method = c("approx", "icistarget"),
+  high_conf_cats = c("directAnnotation", "inferredBy_Orthology"),
+  low_conf_cats = c(
+    "inferredBy_MotifSimilarity",
+    "inferredBy_MotifSimilarity_n_Orthology"
+  )
+) {
+  rcc_method <- match.arg(rcc_method)
+
+  checkmate::qassert(auc_threshold, "N1[0, 1]")
+  checkmate::qassert(nes_threshold, "N1")
+  checkmate::assertChoice(rcc_method, c("approx", "icistarget"))
+  checkmate::qassert(high_conf_cats, "S+")
+  checkmate::qassert(low_conf_cats, "S+")
+
+  return(list(
+    auc_threshold = auc_threshold,
+    nes_threshold = nes_threshold,
+    rcc_method = rcc_method,
+    high_conf_cats = high_conf_cats,
+    low_conf_cats = low_conf_cats
+  ))
+}
