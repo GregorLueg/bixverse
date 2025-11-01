@@ -35,9 +35,10 @@ expected_pc2 <- c(
 )
 
 expected_limma_res <- data.table::fread("./test_data/dge_limma_res.gz")
+data.table::setorder(expected_limma_res, gene_id)
 
 expected_effect_sizes <- data.table::fread("./test_data/dge_effect_sizes.gz")
-
+data.table::setorder(expected_effect_sizes, gene_id)
 
 ## test the class --------------------------------------------------------------
 
@@ -180,6 +181,7 @@ dge_class <- calculate_dge_limma(
 )
 
 limma_res <- get_dge_limma_voom(dge_class)
+data.table::setorder(limma_res, gene_id)
 
 expect_equal(
   current = limma_res,
@@ -201,6 +203,7 @@ dge_class <- calculate_dge_hedges(
 )
 
 effect_sizes <- get_dge_effect_sizes(dge_class)
+data.table::setorder(effect_sizes, gene_id)
 
 expect_equal(
   current = effect_sizes,
