@@ -15,6 +15,7 @@
 <url><loc>/reference/all_limma_contrasts.html</loc></url>
 <url><loc>/reference/anndata_parser.html</loc></url>
 <url><loc>/reference/assertCellsExist.html</loc></url>
+<url><loc>/reference/assertCistargetParams.html</loc></url>
 <url><loc>/reference/assertCoReMoParams.html</loc></url>
 <url><loc>/reference/assertCommunityParams.html</loc></url>
 <url><loc>/reference/assertCorGraphParams.html</loc></url>
@@ -76,6 +77,7 @@
 <url><loc>/reference/call_doublets_manual.html</loc></url>
 <url><loc>/reference/change_gene_identifier.html</loc></url>
 <url><loc>/reference/checkCellsExist.html</loc></url>
+<url><loc>/reference/checkCistargetParams.html</loc></url>
 <url><loc>/reference/checkCoReMoParams.html</loc></url>
 <url><loc>/reference/checkCommunityParams.html</loc></url>
 <url><loc>/reference/checkCorGraphParams.html</loc></url>
@@ -240,6 +242,7 @@
 <url><loc>/reference/ontology.html</loc></url>
 <url><loc>/reference/ot_harmonic_score.html</loc></url>
 <url><loc>/reference/params_boost.html</loc></url>
+<url><loc>/reference/params_cistarget.html</loc></url>
 <url><loc>/reference/params_community_detection.html</loc></url>
 <url><loc>/reference/params_cor_graph.html</loc></url>
 <url><loc>/reference/params_coremo.html</loc></url>
@@ -290,9 +293,12 @@
 <url><loc>/reference/print.bulk_coexp.html</loc></url>
 <url><loc>/reference/print.gene_ontology_data.html</loc></url>
 <url><loc>/reference/print.ontology.html</loc></url>
+<url><loc>/reference/process_cistarget_res.html</loc></url>
 <url><loc>/reference/process_go_data.html</loc></url>
 <url><loc>/reference/qc_bulk_dge.html</loc></url>
 <url><loc>/reference/rbh_graph.html</loc></url>
+<url><loc>/reference/read_motif_annotation_file.html</loc></url>
+<url><loc>/reference/read_motif_ranking.html</loc></url>
 <url><loc>/reference/remove_knn.html</loc></url>
 <url><loc>/reference/remove_samples.html</loc></url>
 <url><loc>/reference/remove_snn_graph.html</loc></url>
@@ -307,6 +313,7 @@
 <url><loc>/reference/rs_calc_gsea_stats.html</loc></url>
 <url><loc>/reference/rs_calc_multi_level.html</loc></url>
 <url><loc>/reference/rs_calculate_dge_mann_whitney.html</loc></url>
+<url><loc>/reference/rs_cistarget.html</loc></url>
 <url><loc>/reference/rs_cluster_stability.html</loc></url>
 <url><loc>/reference/rs_constrained_page_rank.html</loc></url>
 <url><loc>/reference/rs_constrained_page_rank_list.html</loc></url>
@@ -401,6 +408,7 @@
 <url><loc>/reference/rs_tom.html</loc></url>
 <url><loc>/reference/rs_upper_triangle_to_dense.html</loc></url>
 <url><loc>/reference/rs_upper_triangle_to_sparse.html</loc></url>
+<url><loc>/reference/run_cistarget.html</loc></url>
 <url><loc>/reference/run_limma_voom.html</loc></url>
 <url><loc>/reference/run_snf.html</loc></url>
 <url><loc>/reference/save_sc_exp_to_disk.html</loc></url>

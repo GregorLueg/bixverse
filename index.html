@@ -49,7 +49,7 @@
 <div class="page-header"><h1 id="bixverse-package">bixverse package<a class="anchor" aria-label="anchor" href="#bixverse-package"></a>
 </h1></div>
 <div class="float">
-<img src="https://img.shields.io/badge/R_package-0.0.2.2-orange" alt="r_package"><div class="figcaption">r_package</div>
+<img src="https://img.shields.io/badge/R_package-0.0.2.3-orange" alt="r_package"><div class="figcaption">r_package</div>
 </div>
 <p></p>
 <p><img src="reference/figures/bixverse_logo.png" width="128" height="128" alt="bixverse logo"></p>
@@ -62,14 +62,11 @@
 <div class="section level2">
 <h2 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
 </h2>
-<p>This is now officially the version <strong>0.0.2.2</strong> release. With this update the following has been updated/changed:</p>
+<p>This is now officially the version <strong>0.0.2.3</strong> release. With this update the following has been updated/changed:</p>
 <ul>
-<li>Mitch multi-contrast enrichment, see <a href="https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9" class="external-link">Kaspi and Ziemann</a>.</li>
-<li>Rehaul of the DGE structure interface. Large functions got split into smaller sub functions.</li>
-<li>Addition of eigengene calculations and module splitting for CoReMo modules.</li>
-<li>Similarity network fusion implemented, see <a href="https://www.nature.com/articles/nmeth.2810" class="external-link">Wang, et al.</a>.</li>
-<li>Spectral clustering and additionally graph-label propoagation for semi-supervised (label spreading algorithm) in Rust with interfaces to R.</li>
+<li>(R/Py)CisTarget is implemented into Rust for speed.</li>
 </ul>
+<p>Also, watch the space… The <strong>0.0.3.0</strong> release is coming soon with a major update…</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -112,12 +109,7 @@
 </h2>
 <p><img src="reference/figures/but_why.png" width="418" height="218" alt="but why"></p>
 <p>Good question, why this package? Basically, there are three reasons for this:</p>
-<ol style="list-style-type: decimal">
-<li>Rust makes everything in R so much faster, that we just wished to share the joy. Also, it’s a fun language write.</li>
-<li>BioConductor is great, but you end up with quite large dependency graphs, lots of packages that have to be downloaded and quite a few algorithms can benefit from the speed that Rust offers. The idea of <code>bixverse</code> is to accelerate key functions used in CompBio and bioinformatics and reduce them to the barebone methods with simple interfaces.</li>
-<li>Having worked in biotech and pharma, one realises that a surprising amount of time is spent on rewriting and reimplementing published methods for internal usage. Better to make it fast/good once, and open it up to the public via open source.</li>
-</ol>
-<p><em>Last update to the read-me: 04.10.2025</em></p>
+<p><em>Last update to the read-me: 01.11.2025</em></p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
