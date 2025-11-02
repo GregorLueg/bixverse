@@ -1,6 +1,6 @@
 # *bixverse* roadmap
 
-*Last update: 03.10.2025* </br>
+*Last update: 01.11.2025* </br>
 
 The idea is to over time implement more and more functionalities that are deemed
 useful and asked by the users of this package. We wish to avoid implementing
@@ -30,6 +30,7 @@ multi-level and simple method have been implemented in Rust.)
 - ~~Gene set variation analysis in [Rust](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7)~~
 - Add mouse gene ontology data for gene ontology elimination enrichment on top
 of mouse data.
+- ~~A CisTarget implementation for identification of upstream TFs.~~
 
 #### Biomedical ontologies
 

@@ -725,10 +725,75 @@ checkSNFParams <- function(x) {
   return(TRUE)
 }
 
+## cistarget -------------------------------------------------------------------
+
+#' Check CisTarget parameters
+#'
+#' @description Checkmate extension for checking CisTarget parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCistargetParams <- function(x) {
+  # Check it's a list
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check required names
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "auc_threshold",
+      "nes_threshold",
+      "rcc_method",
+      "high_conf_cats",
+      "low_conf_cats"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Validate types
+  rules <- list(
+    "auc_threshold" = "N1[0,1]",
+    "nes_threshold" = "N1",
+    "rcc_method" = "S1",
+    "high_conf_cats" = "S+",
+    "low_conf_cats" = "S+"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    checkmate::qtest(val, rules[[name]])
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in CisTarget params does not conform to",
+          "the expected format. auc_threshold must be numeric [0,1];",
+          "nes_threshold must be numeric; rcc_method must be a single string;",
+          "high_conf_cats and low_conf_cats must be character vectors."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  if (!checkmate::testChoice(x$rcc_method, c("approx", "icistarget"))) {
+    return("rcc_method must be either 'approx' or 'icistarget'")
+  }
+
+  return(TRUE)
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### synthetic data -------------------------------------------------------------
-
 #' Check synthetic data parameters
 #'
 #' @description Checkmate extension for checking the synthetic data
@@ -2037,6 +2102,22 @@ assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 
 ## SNF -------------------------------------------------------------------------
+
+#' Assert CisTarget parameters
+#'
+#' @description Checkmate extension for asserting the CisTarget parameters.
+#'
+#' @inheritParams checkCistargetParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
+
+## CisTarget -------------------------------------------------------------------
 
 #' Assert SNF parameter
 #'

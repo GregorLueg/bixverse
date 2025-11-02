@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.2-orange)
+![r_package](https://img.shields.io/badge/R_package-0.0.2.3-orange) 
 
 </br>
 
@@ -18,18 +18,13 @@ leverages Rust to make any computational bottlenecks go _brrrrrrr_ (i.e., fast).
 
 ## Release notes
 
-This is now officially the version **0.0.2.2** release. With this
+This is now officially the version **0.0.2.3** release. With this 
 update the following has been updated/changed:
 
-- Mitch multi-contrast enrichment, see
-  [Kaspi and Ziemann](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
-- Rehaul of the DGE structure interface. Large functions got split into smaller
-  sub functions.
-- Addition of eigengene calculations and module splitting for CoReMo modules.
-- Similarity network fusion implemented, see
-  [Wang, et al.](https://www.nature.com/articles/nmeth.2810).
-- Spectral clustering and additionally graph-label propoagation for
-  semi-supervised (label spreading algorithm) in Rust with interfaces to R.
+- (R/Py)CisTarget is implemented into Rust for speed.
+
+Also, watch the space... The **0.0.3.0** release is coming soon with a major
+update...
 
 ## Installation
 
@@ -78,16 +73,4 @@ The package documentation can be found
 
 Good question, why this package? Basically, there are three reasons for this:
 
-1. Rust makes everything in R so much faster, that we just wished to share the
-   joy. Also, it's a fun language write.
-2. BioConductor is great, but you end up with quite large dependency graphs,
-   lots of packages that have to be downloaded and quite a few algorithms can
-   benefit from the speed that Rust offers. The idea of `bixverse` is to accelerate
-   key functions used in CompBio and bioinformatics and reduce them to the
-   barebone methods with simple interfaces.
-3. Having worked in biotech and pharma, one realises that a surprising amount
-   of time is spent on rewriting and reimplementing published methods for internal
-   usage. Better to make it fast/good once, and open it up to the public via open
-   source.
-
-_Last update to the read-me: 04.10.2025_
+*Last update to the read-me: 01.11.2025*
