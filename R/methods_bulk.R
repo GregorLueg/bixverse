@@ -424,7 +424,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
       ifelse(scaling_type == "normal", "scale", "bixverse::robust_scale")
     matrix_processed <- rlang::eval_tidy(rlang::quo(apply(
       matrix_processed,
-      1,
+      2,
       !!!rlang::parse_exprs(fun)
     )))
   }

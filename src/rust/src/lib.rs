@@ -33,6 +33,7 @@ pub use r_bindings::r_graph::r_page_rank;
 pub use r_bindings::r_graph::r_snf;
 
 // methods
+pub use r_bindings::r_methods::r_cistarget;
 pub use r_bindings::r_methods::r_coremo;
 pub use r_bindings::r_methods::r_dgrdl;
 pub use r_bindings::r_methods::r_diffcor;
@@ -78,6 +79,7 @@ extendr_module! {
     use r_diffcor;
     use r_ica;
     use r_rbh;
+    use r_cistarget;
     // ontology
     use r_go_elim;
     use r_similiarity;
