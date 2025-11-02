@@ -982,6 +982,11 @@ params_sc_metacells <- function(
 #' @param greedy_threshold Integer. Maximum number of cells before defaulting to
 #' rapid random selection of archetypes. Defaults to `20000L`.
 #' @param graph_building String. Graph building method. Defaults to `"union"`.
+#' @param pruning Boolean. Shall tiny values be pruned during Franke-Wolfe
+#' updates. This will reduce memory pressure and can be a good option on
+#' large data sets. Defaults to `FALSE`.
+#' @param pruning_threshold Float. If `pruning = TRUE` values below which
+#' threshold shall be pruned.
 #' @param k Integer. Number of neighbours for the kNN algorithm. Defaults to
 #' `25L`.
 #' @param knn_method String. One of `c("annoy", "hnsw", "nndescent")`. Defaults
@@ -1006,6 +1011,8 @@ params_sc_seacells <- function(
   min_iter = 10L,
   greedy_threshold = 20000L,
   graph_building = "union",
+  pruning = FALSE,
+  pruning_threshold = 1e-7,
   k = 25L,
   knn_method = c("annoy", "hnsw", "nndescent"),
   n_trees = 100L,
@@ -1023,6 +1030,8 @@ params_sc_seacells <- function(
   checkmate::qassert(min_iter, "I1")
   checkmate::qassert(greedy_threshold, "I1")
   checkmate::qassert(graph_building, "S1")
+  checkmate::qassert(pruning, "B1")
+  checkmate::qassert(pruning_threshold, "N1")
   checkmate::qassert(k, "I1")
   checkmate::assertChoice(knn_method, c("annoy", "hnsw", "nndescent"))
   checkmate::qassert(n_trees, "I1")
@@ -1039,6 +1048,8 @@ params_sc_seacells <- function(
     min_iter = min_iter,
     greedy_threshold = greedy_threshold,
     graph_building = graph_building,
+    pruning = pruning,
+    pruning_threshold = pruning_threshold,
     k = k,
     knn_method = knn_method,
     n_trees = n_trees,

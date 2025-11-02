@@ -1706,6 +1706,8 @@ checkScSeacells <- function(x) {
       "min_iter",
       "greedy_threshold",
       "graph_building",
+      "pruning",
+      "pruning_threshold",
       "k",
       "knn_method",
       "n_trees",
@@ -1753,7 +1755,8 @@ checkScSeacells <- function(x) {
   numeric_rules <- list(
     "convergence_epsilon" = "N1",
     "rho" = "N1",
-    "delta" = "N1"
+    "delta" = "N1",
+    "pruning_threshold" = "N1"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1768,7 +1771,29 @@ checkScSeacells <- function(x) {
     return(sprintf(
       paste(
         "The following element `%s` in SEACells parameters is incorrect:",
-        "convergence_epsilon, rho, and delta need to be numeric."
+        "convergence_epsilon, rho, pruning_threshold and delta need to be",
+        "numeric."
+      ),
+      broken_elem
+    ))
+  }
+
+  boolean_rules <- list("pruning" = "B1")
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(boolean_rules)) {
+      checkmate::qtest(x, boolean_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is incorrect:",
+        "pruning needs to be a boolean."
       ),
       broken_elem
     ))
@@ -1783,6 +1808,7 @@ checkScSeacells <- function(x) {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(sprintf(

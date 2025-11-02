@@ -1044,6 +1044,7 @@ where
 {
     mat.data
         .par_iter()
+        .with_min_len(10000)
         .map(|&v| {
             let val: f32 = v.into();
             val * val

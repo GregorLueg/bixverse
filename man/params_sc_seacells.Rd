@@ -12,6 +12,8 @@ params_sc_seacells(
   min_iter = 10L,
   greedy_threshold = 20000L,
   graph_building = "union",
+  pruning = FALSE,
+  pruning_threshold = 1e-07,
   k = 25L,
   knn_method = c("annoy", "hnsw", "nndescent"),
   n_trees = 100L,
@@ -40,6 +42,13 @@ when RSS change < epsilon * RSS(0). Defaults to \code{1e-3}.}
 rapid random selection of archetypes. Defaults to \code{20000L}.}
 
 \item{graph_building}{String. Graph building method. Defaults to \code{"union"}.}
+
+\item{pruning}{Boolean. Shall tiny values be pruned during Franke-Wolfe
+updates. This will reduce memory pressure and can be a good option on
+large data sets. Defaults to \code{FALSE}.}
+
+\item{pruning_threshold}{Float. If \code{pruning = TRUE} values below which
+threshold shall be pruned.}
 
 \item{k}{Integer. Number of neighbours for the kNN algorithm. Defaults to
 \code{25L}.}

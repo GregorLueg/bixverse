@@ -2178,8 +2178,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' @description
 #' This function is a wrapper over the Rust-based generation of the approximate
 #' nearest neighbours. You have several options to get the approximate nearest
-#' neighbours: 
-#' 
+#' neighbours:
+#'
 #' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
 #'   an index. Good compromise of index generation, querying speed.
 #' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the

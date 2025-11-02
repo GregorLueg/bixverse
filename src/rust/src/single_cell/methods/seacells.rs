@@ -60,6 +60,10 @@ pub fn parse_seacell_graph(s: &str) -> Option<SeaCellGraphGen> {
 ///   maintain sparsity and reduce memory pressure.
 /// * `greedy_threshold` - Maximum number of cells, before defaulting to a more
 ///   rapid random selection of archetypes initially
+/// * `pruning` - Shall tiny values during the Franke Wolfe updates be pruned.
+///   This can affect numerical stability, but makes runs on large data sets
+///   feasible.
+/// * `pruning_threshold` - Values that should be pruned away.
 ///
 /// **General kNN params**
 ///
@@ -89,6 +93,8 @@ pub struct SEACellsParams {
     pub min_iter: usize,
     pub greedy_threshold: usize,
     pub graph_building: String,
+    pub pruning: bool,
+    pub pruning_threshold: f32,
     // general knn params
     pub k: usize,
     pub knn_method: String,
@@ -156,6 +162,16 @@ impl SEACellsParams {
             .unwrap_or("union")
             .to_string();
 
+        let pruning = seacells_list
+            .get("pruning")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        let pruning_threshold: f32 = seacells_list
+            .get("pruning_threshold")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1e-7) as f32;
+
         // generall knn
         let k = seacells_list
             .get("k")
@@ -203,6 +219,8 @@ impl SEACellsParams {
             min_iter,
             greedy_threshold,
             graph_building,
+            pruning,
+            pruning_threshold,
             // knn
             k,
             knn_method,
@@ -265,6 +283,62 @@ fn sparse_to_dense_csr_scaled(mat: &CompressedSparseData<f32>, scale: f32, dense
     }
 }
 
+/// Helper function to prune tiny values and renormalise with L1
+///
+/// ### Params
+///
+/// * `mat` - Mutable reference to the CompressedSparseData to be pruned
+/// * `threshold` - Pruning threshold
+///
+/// ### Returns
+///
+/// Pruned matrix.
+fn prune_and_renormalise(mat: &mut CompressedSparseData<f32>, threshold: f32) {
+    // Remove values below threshold
+    let mut new_data = Vec::new();
+    let mut new_indices = Vec::new();
+    let mut new_indptr = vec![0];
+
+    for row in 0..mat.shape.0 {
+        let start = mat.indptr[row];
+        let end = mat.indptr[row + 1];
+
+        for idx in start..end {
+            if mat.data[idx].abs() > threshold {
+                new_data.push(mat.data[idx]);
+                new_indices.push(mat.indices[idx]);
+            }
+        }
+        new_indptr.push(new_data.len());
+    }
+
+    mat.data = new_data;
+    mat.indices = new_indices;
+    mat.indptr = new_indptr;
+
+    // Renormalise columns to maintain sum-to-1 constraint
+    normalise_csr_columns_l1(mat);
+}
+
+fn matrix_trace(mat: &CompressedSparseData<f32>) -> f32 {
+    let n = mat.shape.0.min(mat.shape.1);
+    let mut trace = 0.0;
+
+    for i in 0..n {
+        let row_start = mat.indptr[i];
+        let row_end = mat.indptr[i + 1];
+
+        for idx in row_start..row_end {
+            if mat.indices[idx] == i {
+                trace += mat.data[idx];
+                break;
+            }
+        }
+    }
+
+    trace
+}
+
 //////////
 // Main //
 //////////
@@ -303,6 +377,7 @@ pub struct SEACells<'a> {
     archetypes: Option<Vec<usize>>,
     rss_history: Vec<f32>,
     convergence_threshold: Option<f32>,
+    k_frobenius_norm_sq: Option<f32>,
     params: &'a SEACellsParams,
 }
 
@@ -327,6 +402,7 @@ impl<'a> SEACells<'a> {
             b: None,
             archetypes: None,
             convergence_threshold: None,
+            k_frobenius_norm_sq: None,
             rss_history: Vec::new(),
             params,
         }
@@ -438,6 +514,14 @@ impl<'a> SEACells<'a> {
             );
         }
 
+        if self.n_cells > 20000 {
+            if verbose {
+                println!("Pre-computing kernel Frobenius norm due to large data set...");
+            }
+            let k_frob = frobenius_norm(&kernel);
+            self.k_frobenius_norm_sq = Some(k_frob * k_frob);
+        }
+
         self.kernel_mat = Some(kernel);
         self.k_square = Some(k_square);
     }
@@ -491,8 +575,8 @@ impl<'a> SEACells<'a> {
             let b_current = self.b.clone().unwrap();
             let a_current = self.a.clone().unwrap();
 
-            let a_new = self.update_a_mat(&b_current, &a_current);
-            let b_new = self.update_b_mat(&a_new, &b_current);
+            let a_new = self.update_a_mat(&b_current, &a_current, verbose);
+            let b_new = self.update_b_mat(&a_new, &b_current, verbose);
 
             let rss = self.compute_rss(&a_new, &b_new);
             self.rss_history.push(rss);
@@ -754,7 +838,7 @@ impl<'a> SEACells<'a> {
 
         normalise_csr_columns_l1(&mut a);
 
-        a = self.update_a_mat(&b, &a);
+        a = self.update_a_mat(&b, &a, verbose);
 
         self.a = Some(a);
         self.b = Some(b);
@@ -787,6 +871,7 @@ impl<'a> SEACells<'a> {
         &self,
         b: &CompressedSparseData<f32>,
         a_prev: &CompressedSparseData<f32>,
+        verbose: bool,
     ) -> CompressedSparseData<f32> {
         let k_square = self.k_square.as_ref().unwrap();
 
@@ -842,6 +927,18 @@ impl<'a> SEACells<'a> {
             let e_minus_a = sparse_subtract_csr(&e, &a);
             let update = sparse_scalar_multiply_csr(&e_minus_a, step_size);
             a = sparse_add_csr(&a, &update);
+
+            if self.params.pruning {
+                prune_and_renormalise(&mut a, self.params.pruning_threshold);
+            }
+
+            if verbose && (t + 1) % 10 == 0 {
+                println!(
+                    "  A matrix Frank-Wolfe iteration: {} / {}",
+                    t + 1,
+                    self.params.max_fw_iters
+                );
+            }
         }
 
         a
@@ -875,12 +972,16 @@ impl<'a> SEACells<'a> {
         &self,
         a: &CompressedSparseData<f32>,
         b_prev: &CompressedSparseData<f32>,
+        verbose: bool,
     ) -> CompressedSparseData<f32> {
         let k_square = self.k_square.as_ref().unwrap();
 
         let a_t = a.transpose_and_convert();
         let t1 = csr_matmul_csr_optimised(a, &a_t);
         let t2 = csr_matmul_csr_optimised(k_square, &a_t);
+
+        // Early stopping threshold
+        const FW_TOLERANCE: f32 = 1e-4;
 
         let mut b = b_prev.clone();
         let n = b.shape.0;
@@ -927,10 +1028,33 @@ impl<'a> SEACells<'a> {
 
             let step_size = 2.0 / (t as f32 + 2.0);
 
-            // Keep original operation sequence
             let e_minus_b = sparse_subtract_csr(&e, &b);
             let update = sparse_scalar_multiply_csr(&e_minus_b, step_size);
+
+            // for early stops
+            let update_norm: f32 = update.data.iter().map(|&x| x * x).sum::<f32>().sqrt();
+
             b = sparse_add_csr(&b, &update);
+
+            if self.params.pruning {
+                prune_and_renormalise(&mut b, self.params.pruning_threshold);
+            }
+
+            if verbose && (t + 1) % 10 == 0 {
+                println!(
+                    "  B matrix Frank-Wolfe iteration: {} / {}",
+                    t + 1,
+                    self.params.max_fw_iters
+                );
+            }
+
+            // Early stopping if update is negligible
+            if update_norm < FW_TOLERANCE && t >= 10 {
+                if verbose {
+                    println!("  B matrix FW converged early at iteration {}", t + 1);
+                }
+                break;
+            }
         }
 
         b
@@ -951,14 +1075,78 @@ impl<'a> SEACells<'a> {
     ///
     /// RSS value (lower is better fit)
     fn compute_rss(&self, a: &CompressedSparseData<f32>, b: &CompressedSparseData<f32>) -> f32 {
-        let k_mat = self.kernel_mat.as_ref().unwrap();
+        // Use simple method for small datasets, trace method for large ones
+        if self.n_cells <= 20000 {
+            self.compute_rss_simple(a, b)
+        } else {
+            self.compute_rss_trace(a, b)
+        }
+    }
 
+    /// Fast RSS computation for small datasets (materialises reconstruction)
+    ///
+    /// This version is quite fast and works well on small data sets.
+    ///
+    /// ### Params
+    ///
+    /// * `a` - The A matrix
+    /// * `b` - The B matrix
+    ///
+    /// ### Returns
+    ///
+    /// The residual sum of squares (RSS)
+    fn compute_rss_simple(
+        &self,
+        a: &CompressedSparseData<f32>,
+        b: &CompressedSparseData<f32>,
+    ) -> f32 {
+        let k_mat = self.kernel_mat.as_ref().unwrap();
         let k_b = csr_matmul_csr_optimised(k_mat, b);
         let reconstruction = csr_matmul_csr_optimised(&k_b, a);
-
         let diff = sparse_subtract_csr(k_mat, &reconstruction);
-
         frobenius_norm(&diff)
+    }
+
+    /// Memory-efficient RSS computation for large datasets (uses trace trick)
+    ///
+    /// This version is slower, but does not blow up memory.
+    ///
+    /// ### Params
+    ///
+    /// * `a` - The A matrix
+    /// * `b` - The B matrix
+    ///
+    /// ### Returns
+    ///
+    /// The residual sum of squares (RSS)
+    fn compute_rss_trace(
+        &self,
+        a: &CompressedSparseData<f32>,
+        b: &CompressedSparseData<f32>,
+    ) -> f32 {
+        let k_square = self.k_square.as_ref().unwrap();
+
+        // Term 1: ||K||_F^2 (cached)
+        let k_frob_sq = self.k_frobenius_norm_sq.unwrap();
+
+        // Term 2: -2 * trace(K_square @ B @ A)
+        // Reorder: trace(K_square @ B @ A) = trace(A @ K_square @ B)
+        let k2_b = csr_matmul_csr_optimised(k_square, b); // (n×n) @ (n×k) = (n×k)
+        let a_k2b = csr_matmul_csr_optimised(a, &k2_b); // (k×n) @ (n×k) = (k×k) -> SMALL!
+        let trace_term = matrix_trace(&a_k2b);
+
+        // Term 3: trace(A^T @ B^T @ K_square @ B @ A)
+        // Reorder: trace(A @ A^T @ B^T @ K_square @ B)
+        let a_t = a.transpose_and_convert(); // (n×k)
+        let a_at = csr_matmul_csr_optimised(a, &a_t); // (k×n) @ (n×k) = (k×k) -> SMALL!
+
+        let b_t = b.transpose_and_convert(); // (k×n)
+        let bt_k2b = csr_matmul_csr_optimised(&b_t, &k2_b); // (k×n) @ (n×k) = (k×k) -> SMALL!
+
+        let result = csr_matmul_csr_optimised(&a_at, &bt_k2b); // (k×k) @ (k×k) = (k×k) -> SMALL!
+        let reconstruction_frob_sq = matrix_trace(&result);
+
+        (k_frob_sq - 2.0 * trace_term + reconstruction_frob_sq).sqrt()
     }
 
     /// Get hard cell assignments (each cell assigned to one SEACell)
