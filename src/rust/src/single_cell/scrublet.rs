@@ -86,6 +86,14 @@ pub type FinalScrubletRes = (
 ///   (typically 0.05-0.10 depending on cell loading).
 /// * `stdev_doublet_rate` - Uncertainty in the expected doublet rate.
 ///
+/// **Doublet calling:**
+///
+/// * `n_bins` - Number of bins for histogram-based automatic threshold
+///   detection (typically 50-100).
+/// * `manual_threshold` - Optional manual doublet score threshold. If `None`,
+///   threshold is automatically detected from simulated doublet score
+///   distribution.
+///
 /// **PCA:**
 ///
 /// * `no_pcs` - Number of principal components to use for embedding.
@@ -101,14 +109,9 @@ pub type FinalScrubletRes = (
 /// * `search_budget` - Search budget for Annoy (higher = more accurate but
 ///   slower).
 /// * `n_trees` - Number of trees for Annoy index generation.
-///
-/// **Doublet calling:**
-///
-/// * `n_bins` - Number of bins for histogram-based automatic threshold
-///   detection (typically 50-100).
-/// * `manual_threshold` - Optional manual doublet score threshold. If `None`,
-///   threshold is automatically detected from simulated doublet score
-///   distribution.
+/// * `nn_max_iter` - Maximum iterations for the NNDescent kNN search
+/// * `rho` - Sampling rate for NNDescent.
+/// * `delta` - Early termination criterium for NNDescent
 #[derive(Clone, Debug)]
 pub struct ScrubletParams {
     // general params
@@ -121,22 +124,29 @@ pub struct ScrubletParams {
     pub hvg_method: String,
     pub loess_span: f64,
     pub clip_max: Option<f32>,
+
     // doublet generation
     pub sim_doublet_ratio: f32,
     pub expected_doublet_rate: f32,
     pub stdev_doublet_rate: f32,
+
+    // doublet calling
+    pub n_bins: usize,
+    pub manual_threshold: Option<f32>,
+
     // pca
     pub no_pcs: usize,
     pub random_svd: bool,
+
     // knn
     pub k: usize,
     pub knn_method: String,
     pub dist_metric: String,
     pub search_budget: usize,
     pub n_trees: usize,
-    // doublet calling
-    pub n_bins: usize,
-    pub manual_threshold: Option<f32>,
+    pub nn_max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
 }
 
 impl ScrubletParams {
@@ -215,6 +225,17 @@ impl ScrubletParams {
             .and_then(|v| v.as_real())
             .unwrap_or(0.02) as f32;
 
+        // Doublet calling parameters
+        let n_bins = scrublet_list
+            .get("n_bins")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(50) as usize;
+
+        let manual_threshold = scrublet_list
+            .get("manual_threshold")
+            .and_then(|v| v.as_real())
+            .map(|x| x as f32);
+
         // PCA parameters
         let no_pcs = scrublet_list
             .get("no_pcs")
@@ -236,7 +257,7 @@ impl ScrubletParams {
             scrublet_list
                 .get("knn_method")
                 .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
+                .unwrap_or("hnsw"),
         );
 
         let dist_metric = std::string::String::from(
@@ -254,40 +275,52 @@ impl ScrubletParams {
         let n_trees = scrublet_list
             .get("n_trees")
             .and_then(|v| v.as_integer())
-            .unwrap_or(10) as usize;
+            .unwrap_or(100) as usize;
 
-        // Doublet calling parameters
-        let n_bins = scrublet_list
-            .get("n_bins")
+        let nn_max_iter = scrublet_list
+            .get("nn_max_iter")
             .and_then(|v| v.as_integer())
-            .unwrap_or(50) as usize;
+            .unwrap_or(15) as usize;
 
-        let manual_threshold = scrublet_list
-            .get("manual_threshold")
+        let rho = scrublet_list
+            .get("rho")
             .and_then(|v| v.as_real())
-            .map(|x| x as f32);
+            .unwrap_or(1.0) as f32;
+
+        let delta = scrublet_list
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
 
         Self {
+            // norm
             log_transform,
-            mean_center,
             normalise_variance,
+            mean_center,
             target_size,
+            // hvg
             min_gene_var_pctl,
             hvg_method,
             loess_span,
             clip_max,
+            // doublet simulation/detection
             sim_doublet_ratio,
             expected_doublet_rate,
             stdev_doublet_rate,
+            n_bins,
+            manual_threshold,
+            // pca
             no_pcs,
             random_svd,
+            // knn
             k,
             knn_method,
             dist_metric,
             search_budget,
             n_trees,
-            n_bins,
-            manual_threshold,
+            nn_max_iter,
+            rho,
+            delta,
         }
     }
 }
@@ -1201,6 +1234,16 @@ impl Scrublet {
                 k_adj,
                 self.params.n_trees,
                 self.params.search_budget,
+                seed,
+                verbose,
+            ),
+            KnnSearch::NNDescent => generate_knn_nndescent(
+                embd.as_ref(),
+                &self.params.dist_metric,
+                k_adj,
+                self.params.nn_max_iter,
+                self.params.delta,
+                self.params.rho,
                 seed,
                 verbose,
             ),

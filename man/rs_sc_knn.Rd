@@ -4,33 +4,14 @@
 \alias{rs_sc_knn}
 \title{Generates the kNN graph}
 \usage{
-rs_sc_knn(
-  embd,
-  no_neighbours,
-  n_trees,
-  search_budget,
-  algorithm_type,
-  ann_dist,
-  verbose,
-  seed
-)
+rs_sc_knn(embd, knn_params, verbose, seed)
 }
 \arguments{
 \item{embd}{Numerical matrix. The embedding matrix to use to generate the
 kNN graph.}
 
-\item{no_neighbours}{Integer. Number of neighbours to return}
-
-\item{n_trees}{Integer. Number of trees to use for the \code{"annoy"} algorithm.}
-
-\item{search_budget}{Integer. Search budget per tree for the \code{"annoy"}
-algorithm.}
-
-\item{algorithm_type}{String. Which of the two implemented algorithms to
-use. One of \code{c("annoy", "hnsw")}.}
-
-\item{ann_dist}{String. The distance metric to use the approximate nearest
-neighbour search. One of \code{c("cosine", "euclidean")}.}
+\item{knn_params}{List. The kNN parameters defined by
+\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.}
 
 \item{verbose}{Boolean. Controls verbosity of the function and returns
 how long certain operations took.}
@@ -43,6 +24,15 @@ number of neighbours.
 }
 \description{
 This function is a wrapper over the Rust-based generation of the approximate
-nearest neighbours. You have two options to generate the kNNs. \code{"annoy"} or
-\code{"hnsw"}.
+nearest neighbours. You have several options to get the approximate nearest
+neighbours:
+\itemize{
+\item \code{"annoy"}: leverages binary trees to generate rapidly in a parallel manner
+an index. Good compromise of index generation, querying speed.
+\item \code{"hnsw"}: uses a hierarchical navigatable small worlds index under the
+hood. The index generation takes more long, but higher recall and ideal
+for very large datasets due to subdued memory pressure.
+\item \code{"nndescent"}: an index-free approximate nearest neighbour algorithm
+that is ideal for small, ephemeral kNN graphs.
+}
 }

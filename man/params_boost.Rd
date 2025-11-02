@@ -53,7 +53,8 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
-\code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}.}
+\code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
+\code{rho}, \code{delta}.}
 }
 \value{
 A named list with all Boost parameters, combining defaults with

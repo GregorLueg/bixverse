@@ -725,10 +725,75 @@ checkSNFParams <- function(x) {
   return(TRUE)
 }
 
+## cistarget -------------------------------------------------------------------
+
+#' Check CisTarget parameters
+#'
+#' @description Checkmate extension for checking CisTarget parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkCistargetParams <- function(x) {
+  # Check it's a list
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check required names
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "auc_threshold",
+      "nes_threshold",
+      "rcc_method",
+      "high_conf_cats",
+      "low_conf_cats"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Validate types
+  rules <- list(
+    "auc_threshold" = "N1[0,1]",
+    "nes_threshold" = "N1",
+    "rcc_method" = "S1",
+    "high_conf_cats" = "S+",
+    "low_conf_cats" = "S+"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    checkmate::qtest(val, rules[[name]])
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in CisTarget params does not conform to",
+          "the expected format. auc_threshold must be numeric [0,1];",
+          "nes_threshold must be numeric; rcc_method must be a single string;",
+          "high_conf_cats and low_conf_cats must be character vectors."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  if (!checkmate::testChoice(x$rcc_method, c("approx", "icistarget"))) {
+    return("rcc_method must be either 'approx' or 'icistarget'")
+  }
+
+  return(TRUE)
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### synthetic data -------------------------------------------------------------
-
 #' Check synthetic data parameters
 #'
 #' @description Checkmate extension for checking the synthetic data
@@ -933,6 +998,8 @@ checkScScrublet <- function(x) {
       "sim_doublet_ratio",
       "expected_doublet_rate",
       "stdev_doublet_rate",
+      "manual_threshold",
+      "n_bins",
       "no_pcs",
       "random_svd",
       "k",
@@ -940,8 +1007,9 @@ checkScScrublet <- function(x) {
       "dist_metric",
       "search_budget",
       "n_trees",
-      "n_bins",
-      "manual_threshold"
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -954,7 +1022,8 @@ checkScScrublet <- function(x) {
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "n_bins" = "I1[10,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -972,7 +1041,8 @@ checkScScrublet <- function(x) {
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
           "no_pcs must be >= 1; k must be >= 0;",
-          "search_budget and n_trees must be >= 1; n_bins must be >= 10."
+          "search_budget, n_trees and nn_max_iter must be >= 1;",
+          "n_bins must be >= 10."
         ),
         broken_elem
       )
@@ -985,7 +1055,10 @@ checkScScrublet <- function(x) {
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
-    "stdev_doublet_rate" = "N1[0,1]"
+    "stdev_doublet_rate" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]",
+    "target_size" = "N1[0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1002,8 +1075,9 @@ checkScScrublet <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
-          "min_gene_var_pctl, expected_doublet_rate, and stdev_doublet_rate",
-          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
+          "min_gene_var_pctl, expected_doublet_rate, stdev_doublet_rate",
+          "and delta must be in [0,1];",
+          "loess_span, rho sim_doublet_ratio must be > 0;",
           "target_size must be a numeric >= 1"
         ),
         broken_elem
@@ -1036,8 +1110,7 @@ checkScScrublet <- function(x) {
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
     "clip_max" = c("0", "N1(0,)"),
-    "manual_threshold" = c("0", "N1[0,)"),
-    "target_size" = c("0", "N1[0,)")
+    "manual_threshold" = c("0", "N1[0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1065,7 +1138,7 @@ checkScScrublet <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
@@ -1131,7 +1204,10 @@ checkScBoost <- function(x) {
       "knn_method",
       "dist_metric",
       "search_budget",
-      "n_trees"
+      "n_trees",
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
@@ -1144,7 +1220,8 @@ checkScBoost <- function(x) {
     "n_iters" = "I1[1,)",
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)"
+    "n_trees" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1161,7 +1238,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs, n_iters, search_budget and n_trees must be >= 1;",
+          "no_pcs, n_iters, search_budget, nn_max_iter & n_trees must be >= 1;",
           "k must be >= 0."
         ),
         broken_elem
@@ -1176,7 +1253,10 @@ checkScBoost <- function(x) {
     "boost_rate" = "N1[0,1]",
     "resolution" = "N1(0,)",
     "p_thresh" = "N1(0,)",
-    "voter_thresh" = "N1[0,1]"
+    "voter_thresh" = "N1[0,1]",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]",
+    "target_size" = "N1(0,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1193,8 +1273,9 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
-          "loess_span, resolution and p_thresh must be > 0."
+          "min_gene_var_pctl, boost_rate, delta and voter_thresh must be in",
+          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0;",
+          "target_size must be > 1"
         ),
         broken_elem
       )
@@ -1226,8 +1307,7 @@ checkScBoost <- function(x) {
 
   # Optional numeric rules (can be NULL)
   optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)"),
-    "target_size" = c("0", "N1(0,)")
+    "clip_max" = c("0", "N1(0,)")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1254,7 +1334,7 @@ checkScBoost <- function(x) {
   # Choice rules
   test_choice_rules <- list(
     hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     dist_metric = c("euclidean", "cosine")
   )
 
@@ -1373,7 +1453,6 @@ checkScHvg <- function(x) {
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
 checkScNeighbours <- function(x) {
-  # Checkmate extension
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
@@ -1384,6 +1463,9 @@ checkScNeighbours <- function(x) {
       "k",
       "n_trees",
       "search_budget",
+      "max_iter",
+      "rho",
+      "delta",
       "knn_algorithm",
       "full_snn",
       "pruning",
@@ -1398,6 +1480,9 @@ checkScNeighbours <- function(x) {
     "k" = "I1",
     "n_trees" = "I1",
     "search_budget" = "I1",
+    "max_iter" = "I1",
+    "rho" = "N1",
+    "delta" = "N1",
     "full_snn" = "B1",
     "pruning" = "N1[0, 1]"
   )
@@ -1414,16 +1499,16 @@ checkScNeighbours <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees and search budged need to be integers.",
-          "full_snn needs to be boolean and pruning a number between 0 and 1."
+          "incorrect: k, n_trees, search_budget, and max_iter need to be integers.",
+          "rho and delta need to be numeric. full_snn needs to be boolean and",
+          "pruning a number between 0 and 1."
         ),
         broken_elem
       )
     )
   }
-  # test
   test_choice_rules <- list(
-    knn_algorithm = c("annoy", "hnsw"),
+    knn_algorithm = c("annoy", "hnsw", "nndescent"),
     snn_similarity = c("rank", "jaccard"),
     ann_dist = c("cosine", "euclidean")
   )
@@ -1439,14 +1524,13 @@ checkScNeighbours <- function(x) {
     return(
       sprintf(
         paste0(
-          "The following element `%s` in the KNN generation is not one of",
+          "The following element `%s` in the KNN generation is not one of ",
           "the expected choices. Please double check the documentation."
         ),
         broken_elem
       )
     )
   }
-
   return(TRUE)
 }
 
@@ -2018,6 +2102,22 @@ assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 
 ## SNF -------------------------------------------------------------------------
+
+#' Assert CisTarget parameters
+#'
+#' @description Checkmate extension for asserting the CisTarget parameters.
+#'
+#' @inheritParams checkCistargetParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
+
+## CisTarget -------------------------------------------------------------------
 
 #' Assert SNF parameter
 #'

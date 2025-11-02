@@ -117,7 +117,6 @@ impl AnnoyIndex {
             trees,
             vectors_flat,
             dim,
-
             n_trees,
         }
     }

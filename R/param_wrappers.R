@@ -480,6 +480,52 @@ params_snf <- function(
   )
 }
 
+## cistarget -------------------------------------------------------------------
+
+#' Wrapper function to CisTarget parameters
+#'
+#' @param auc_threshold Numeric between 0 and 1. Proportion of genes to use
+#' for AUC threshold calculation. Default is 0.05 (5% of genes).
+#' @param nes_threshold Numeric. Normalised Enrichment Score threshold for
+#' significant motifs. Default is 3.0.
+#' @param rcc_method Character. Method for recovery curve calculation. Either
+#' "approx" (approximate, faster) or "icistarget" (exact, slower).
+#' @param high_conf_cats Character vector. Annotation categories considered
+#' high confidence. Default includes direct annotations and orthology-based
+#' inferences.
+#' @param low_conf_cats Character vector. Annotation categories considered
+#' lower confidence. Default includes motif similarity-based inferences.
+#'
+#' @return A validated list of RcisTarget parameters.
+#'
+#' @export
+params_cistarget <- function(
+  auc_threshold = 0.05,
+  nes_threshold = 3.0,
+  rcc_method = c("approx", "icistarget"),
+  high_conf_cats = c("directAnnotation", "inferredBy_Orthology"),
+  low_conf_cats = c(
+    "inferredBy_MotifSimilarity",
+    "inferredBy_MotifSimilarity_n_Orthology"
+  )
+) {
+  rcc_method <- match.arg(rcc_method)
+
+  checkmate::qassert(auc_threshold, "N1[0, 1]")
+  checkmate::qassert(nes_threshold, "N1")
+  checkmate::assertChoice(rcc_method, c("approx", "icistarget"))
+  checkmate::qassert(high_conf_cats, "S+")
+  checkmate::qassert(low_conf_cats, "S+")
+
+  return(list(
+    auc_threshold = auc_threshold,
+    nes_threshold = nes_threshold,
+    rcc_method = rcc_method,
+    high_conf_cats = high_conf_cats,
+    low_conf_cats = low_conf_cats
+  ))
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### general --------------------------------------------------------------------
@@ -643,13 +689,17 @@ params_sc_hvg <- function(
 #' Wrapper function for parameters for neighbour identification in single cell
 #'
 #' @param k Integer. Number of neighbours to return.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw", "nndescent")`.
+#' Defaults to `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search.
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
-#' @param knn_algorithm String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`.
-#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
-#' metric to be used for the approximate neighbour search.
+#' @param max_iter Integer. Maximum iterations for the `nndescent` algorithm.
+#' @param rho Numeric. Sampling rate for the `nndescent` algorithm.
+#' @param delta Numeric. Early termination criterium for the `nndescent`
+#' algorithm.
 #' @param full_snn Boolean. Shall the full shared nearest neighbour graph
 #' be generated that generates edges between all cells instead of between
 #' only neighbours.
@@ -668,10 +718,13 @@ params_sc_hvg <- function(
 #' @export
 params_sc_neighbours <- function(
   k = 15L,
+  knn_algorithm = c("annoy", "hnsw", "nndescent"),
+  ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L,
-  knn_algorithm = c("annoy", "hnsw"),
-  ann_dist = c("cosine", "euclidean"),
+  max_iter = 25L,
+  rho = 1.0,
+  delta = 0.001,
   full_snn = FALSE,
   pruning = 1 / 15,
   snn_similarity = c("rank", "jaccard")
@@ -682,20 +735,26 @@ params_sc_neighbours <- function(
 
   # check
   checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw", "nndescent"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
   checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "N1")
-  checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw"))
-  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
   checkmate::qassert(full_snn, "B1")
   checkmate::qassert(pruning, "N1[0, 1]")
   checkmate::assertChoice(snn_similarity, c("rank", "jaccard"))
 
   list(
     k = k,
-    n_trees = n_trees,
-    search_budget = search_budget,
     knn_algorithm = knn_algorithm,
     ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    max_iter = max_iter,
+    rho = rho,
+    delta = delta,
     full_snn = full_snn,
     pruning = pruning,
     snn_similarity = snn_similarity
@@ -858,7 +917,7 @@ params_sc_metacells <- function(
   target_no_metacells = 1000L,
   max_iter = 5000L,
   k = 25L,
-  knn_method = c("hnsw", "annoy"),
+  knn_method = c("annoy", "hnsw"),
   ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
   search_budget = 100L

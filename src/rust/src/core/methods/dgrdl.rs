@@ -529,6 +529,25 @@ impl Dgrdl {
         }
     }
 
+    /// Run a hyperparameter search over DGRDL
+    ///
+    /// Helper function to sweep over a set of hyperparameters and return
+    /// different objectives from the algorithm for subsequent visualisation.
+    ///
+    /// ### Params
+    ///
+    /// * `data` - Input data matrix of size n_samples × n_features
+    /// * `dict_sizes` - Slice of different dictionary sizes you wish to test
+    ///   for.
+    /// * `k_neighbours_iters` - Slice of different k neighbours to iterate
+    ///   over.
+    /// * `seeds` - Slice of random initialisations to test.
+    /// * `verbose` - Controls verbosity of the function
+    ///
+    /// ### Returns
+    ///
+    /// `DgrdlResults` containing the learned dictionary, coefficients, and
+    /// Laplacians
     pub fn grid_search(
         &mut self,
         data: &MatRef<f64>,
@@ -541,7 +560,7 @@ impl Dgrdl {
 
         let n_dict = dict_sizes.len();
         let n_k_neighbours = k_neighbours_iters.len();
-        let n_seeds = k_neighbours_iters.len();
+        let n_seeds = seeds.len();
 
         let total_permutations = n_dict * n_k_neighbours * n_seeds;
 

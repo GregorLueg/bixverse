@@ -368,3 +368,65 @@ expect_true(
   current = class(s7_res$sample_laplacian) == "dgCMatrix",
   info = "DGRDL class - sample laplacian class"
 )
+
+## check with scaling of the data ----------------------------------------------
+
+s7_obj <- preprocess_bulk_coexp(
+  s7_obj,
+  scaling = TRUE,
+  scaling_type = "normal",
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(s7_obj@raw_data),
+  target = dim(s7_obj@processed_data$processed_data),
+  info = "DGRDL class - no transpositions happening"
+)
+
+expect_equal(
+  current = dim(s7_obj@raw_data),
+  target = dim(s7_obj@processed_data$processed_data),
+  info = "DGRDL class - no transpositions happening"
+)
+
+expect_true(
+  current = all(abs(colMeans(s7_obj@processed_data$processed_data)) < 1e-8),
+  info = "DGRDL class - scaling is behaving"
+)
+
+s7_obj <- dgrdl_result(
+  object = s7_obj,
+  dgrdl_params = params_dgrdl(
+    sparsity = 3L,
+    dict_size = 8L,
+    alpha = 0.3,
+    beta = 0.5,
+    max_iter = 10L,
+    k_neighbours = 3L,
+    admm_iter = 5L,
+    rho = 1.0
+  ),
+  seed = 10101L,
+  .verbose = FALSE
+)
+
+s7_res <- get_results(s7_obj)
+
+expect_equal(
+  current = dim(s7_res$dictionary),
+  target = dim(expected_dictionary),
+  info = "DGRDL class - dictionary on scaled data has expected dimensions"
+)
+
+expect_equal(
+  current = sum(s7_res$loadings == 0),
+  target = sum(expected_coefficients == 0),
+  info = "DGRDL class - loadings have expected sparsity"
+)
+
+expect_equal(
+  current = dim(s7_res$loadings),
+  target = dim(expected_coefficients),
+  info = "DGRDL class - loadings have expected sparsity"
+)

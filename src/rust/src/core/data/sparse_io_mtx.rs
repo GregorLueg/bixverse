@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
+use thousands::Separable;
 
 use crate::core::data::sparse_io::*;
 use crate::single_cell::processing::*;
@@ -369,14 +370,14 @@ impl MtxReader {
         if verbose {
             println!("Second pass done: {:.2?}", second_scan_end);
             println!(
-                "Genes passing QC: {}/{}",
-                quality.genes_to_keep.len(),
-                self.header.total_genes
+                "Genes passing QC: {} / {}",
+                quality.genes_to_keep.len().separate_with_underscores(),
+                self.header.total_genes.separate_with_underscores()
             );
             println!(
-                "Cells passing QC: {}/{}",
-                quality.cells_to_keep.len(),
-                self.header.total_cells
+                "Cells passing QC: {} / {}",
+                quality.cells_to_keep.len().separate_with_underscores(),
+                self.header.total_cells.separate_with_underscores()
             );
         }
 

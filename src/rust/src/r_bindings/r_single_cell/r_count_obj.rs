@@ -756,7 +756,7 @@ impl SingeCellCountData {
 
         if verbose {
             println!(
-                "Convertion data into gene-friendly format done: {:.2?}",
+                "Conversion of count data into gene-friendly format done: {:.2?}",
                 end_conversion
             );
         }

@@ -3,8 +3,25 @@ template:
   bootstrap: 5
 navbar:
   structure:
-    left: [intro, reference, articles, tutorials]
-    right: [search, github, lightswitch]
+    left:
+      - intro
+      - reference
+      - articles
+      - tutorials
+      - news
+    right:
+      - search
+      - github
+      - lightswitch
+  components:
+    reference:
+      text: Reference
+      href: reference/index.html
+    search:
+      search: []
+    articles:
+      text: Articles
+      href: articles/index.html
 
 articles:
   - title: Articles

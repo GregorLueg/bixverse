@@ -1692,6 +1692,29 @@ rs_rbh_sets <- function(module_list, overlap_coefficient, min_similarity) .Call(
 #' @export
 rs_rbh_cor <- function(module_matrices, spearman, min_similarity) .Call(wrap__rs_rbh_cor, module_matrices, spearman, min_similarity)
 
+#' Run CisTarget motif enrichment analysis
+#'
+#' @description Core Rust function for motif enrichment analysis using recovery
+#' curves.
+#'
+#' @param rankings Integer matrix with motif rankings for genes (genes in rows,
+#' motifs in columns). Lower ranks indicate higher regulatory potential.
+#' @param gs_list List of integer vectors. Each element contains 1-based
+#' indices of genes in the gene set (matching row indices in rankings).
+#' @param auc_threshold Absolute number of top-ranked genes to use for AUC
+#' calculation (e.g., for 5% of 10000 genes, use 500).
+#' @param nes_threshold Normalised Enrichment Score threshold for filtering
+#' significant motifs
+#' @param max_rank Maximum rank to consider (typically nrow(rankings)).
+#' @param method Recovery curve calculation method: "approx" or "icistarget".
+#' @param n_mean Number of points for averaging in approximate method.
+#'
+#' @return List of lists, one per gene set, each containing motif_idx, nes, auc,
+#' rank_at_max, n_enriched, and leading_edge.
+#'
+#' @export
+rs_cistarget <- function(rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean) .Call(wrap__rs_cistarget, rankings, gs_list, auc_threshold, nes_threshold, max_rank, method, n_mean)
+
 #' Run hypergeometric enrichment over the gene ontology
 #'
 #' @description This function implements a Rust version of the gene ontology
@@ -2199,19 +2222,21 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #'
 #' @description
 #' This function is a wrapper over the Rust-based generation of the approximate
-#' nearest neighbours. You have two options to generate the kNNs. `"annoy"` or
-#' `"hnsw"`.
+#' nearest neighbours. You have several options to get the approximate nearest
+#' neighbours: 
+#' 
+#' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+#'   an index. Good compromise of index generation, querying speed.
+#' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+#'   hood. The index generation takes more long, but higher recall and ideal
+#'   for very large datasets due to subdued memory pressure.
+#' - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+#'   that is ideal for small, ephemeral kNN graphs.
 #'
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
-#' @param no_neighbours Integer. Number of neighbours to return
-#' @param n_trees Integer. Number of trees to use for the `"annoy"` algorithm.
-#' @param search_budget Integer. Search budget per tree for the `"annoy"`
-#' algorithm.
-#' @param algorithm_type String. Which of the two implemented algorithms to
-#' use. One of `c("annoy", "hnsw")`.
-#' @param ann_dist String. The distance metric to use the approximate nearest
-#' neighbour search. One of `c("cosine", "euclidean")`.
+#' @param knn_params List. The kNN parameters defined by
+#' [bixverse::params_sc_neighbours()].
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.
@@ -2220,7 +2245,7 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' number of neighbours.
 #'
 #' @export
-rs_sc_knn <- function(embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed) .Call(wrap__rs_sc_knn, embd, no_neighbours, n_trees, search_budget, algorithm_type, ann_dist, verbose, seed)
+rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'

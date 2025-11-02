@@ -10,7 +10,7 @@ use crate::core::data::sparse_structures::*;
 use crate::core::graph::graph_structures::SparseGraph;
 
 /// Enum for the approximate nearest neighbour search
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq)]
 pub enum AnnDist {
     /// Euclidean distance
     Euclidean,
