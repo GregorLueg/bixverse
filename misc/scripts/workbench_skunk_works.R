@@ -1,10 +1,19 @@
 # test seacell -----------------------------------------------------------------
 
+Sys.setenv(OPENBLAS_NUM_THREADS = "1")
+Sys.setenv(OMP_NUM_THREADS = "1")
+
 rextendr::document()
+
+Sys.getenv("R_BLAS")
+
+devtools::load_all()
+
+sessionInfo()
 
 data_dir <- path.expand("~/Desktop/seacell_test/")
 
-sc_object <- single_cell_exp(dir_data = data_dir)
+sc_object <- single_cell_exp(dir_data = tempdir())
 
 h5_path <- path.expand(
   "~/repos/other/SEACells/notebooks/data/cd34_multiome_rna.h5ad"
@@ -38,11 +47,26 @@ sea_cells <- get_seacells_sc(
     k = 15L,
     convergence_epsilon = 1e-5,
     max_fw_iters = 50L,
-    pruning = TRUE
+    pruning = FALSE
   )
 )
 
-sea_cells@obs_table$no_originating_cells
+install.packages("mclust")
+
+library(mclust)
+
+seacell_result <- fread("/Users/gregor/Desktop/seacell_results.csv")
+
+internal_results <- data.table(
+  cell_id = sc_object[["index"]],
+  assignment = sea_cells@original_assignment$assignments
+)[, cell_type := seacell_result$celltype]
+
+internal_results[assignment == 44]
+
+seacell_result[SEACell == "SEACell-81"]
+
+mclust::adjustedRandIndex(internal_results$assignment, seacell_result$SEACell)
 
 # > sea_cells@obs_table$no_originating_cells
 #  [1]  56  48  47  78  69  59 127  90  66 210  34  49  35  50  66  93  76  37  40  36 180  43  65  76  54 246  71  34  81  66  89  58  49  47  41  48  34

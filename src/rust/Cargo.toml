@@ -3,7 +3,7 @@ version = '0.3.0'
 name = 'bixverse'
 publish = false
 edition = '2021'
-rust-version = '1.85'
+rust-version = '1.88'
 
 [lib]
 crate-type = ['staticlib']
@@ -20,23 +20,27 @@ opt-level = 3
 debug = false
 
 [dependencies]
+arpack-ng = { version = "0.2.2", default-features = false, features = [
+    "ndarray",
+] }
 bincode = { version = "2.0.1", features = ["serde"] }
 anyhow = "1.0.99"
 extendr-api = "0.8.1"
-faer = { version = '0.22.6' }
+faer = { version = '0.23.2' }
 faer-entity = "0.20.1"
-half = { version = "2.3", features = ["serde"] }
+half = { version = "2.7.1", features = ["serde"] }
 hdf5 = { package = "hdf5-metno", version = "0.10.1", features = [
     "static",
     "zlib",
 ] }
-indexmap = "2.11.4"
+indexmap = "2.12.0"
 instant-distance = "0.6.1"
 memmap2 = "0.9"
+ndarray = "0.17.1"
 num-complex = '0.4.6'
 num-traits = "0.2"
 once_cell = "1.21.3"
-petgraph = { version = "0.8.2", features = ["rayon"] }
+petgraph = { version = "0.8.3", features = ["rayon"] }
 rand = { version = "0.9.0", features = ["std"] }
 rand_distr = "0.5.0"
 rayon = "1.11.0"

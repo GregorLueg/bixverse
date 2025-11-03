@@ -1020,6 +1020,51 @@ where
     }
 }
 
+/// Normalises the rows of a CSR matrix to a sum of 1 (L1 norm)
+///
+/// ### Params
+///
+/// * `csr` - Mutable reference to the CSR matrix (modified in-place)
+pub fn normalise_csr_rows_l1<T>(csr: &mut CompressedSparseData<T>)
+where
+    T: Clone
+        + Default
+        + Into<f64>
+        + Sync
+        + Add<Output = T>
+        + PartialEq
+        + Copy
+        + Mul<Output = T>
+        + AddAssign
+        + DivAssign,
+    // We also need the `Sum` trait for `iter().sum()`
+    T: std::iter::Sum<T>,
+{
+    assert!(csr.cs_type.is_csr(), "Matrix must be in CSR format");
+
+    let nrows = csr.shape.0;
+
+    for i in 0..nrows {
+        let start = csr.indptr[i];
+        let end = csr.indptr[i + 1];
+        let row_data_slice = &mut csr.data[start..end];
+
+        let row_sum: T = row_data_slice.iter().copied().sum();
+
+        if row_sum.into() > 1e-15 {
+            for val in row_data_slice.iter_mut() {
+                *val /= row_sum;
+            }
+        } else {
+            panic!(
+                "Row {} has sum {}, indicating isolated node",
+                i,
+                row_sum.into()
+            );
+        }
+    }
+}
+
 /// Compute Frobenius norm of sparse matrix
 ///
 /// ### Params
@@ -1250,42 +1295,61 @@ where
     let nrows = a.shape.0;
     let ncols = b.shape.1;
 
-    let row_results: Vec<Vec<(usize, T)>> = (0..nrows)
-        .into_par_iter()
-        .map(|i| {
-            let mut acc = SparseAccumulator::new(ncols);
+    const BLOCK_WIDTH: usize = 16_384;
+    let num_blocks = ncols.div_ceil(BLOCK_WIDTH);
 
-            unsafe {
-                let a_indptr = a.indptr.as_ptr();
-                let a_indices = a.indices.as_ptr();
-                let a_data = a.data.as_ptr();
-                let b_indptr = b.indptr.as_ptr();
-                let b_indices = b.indices.as_ptr();
-                let b_data = b.data.as_ptr();
+    let mut row_results: Vec<Vec<(usize, T)>> = vec![Vec::new(); nrows];
 
-                let a_start = *a_indptr.add(i);
-                let a_end = *a_indptr.add(i + 1);
+    for block_idx in 0..num_blocks {
+        let block_start = block_idx * BLOCK_WIDTH;
+        let block_end = (block_start + BLOCK_WIDTH).min(ncols);
+        let block_width = block_end - block_start;
 
-                for a_idx in a_start..a_end {
-                    let k = *a_indices.add(a_idx);
-                    let a_val = *a_data.add(a_idx);
+        let block_results: Vec<Vec<(usize, T)>> = (0..nrows)
+            .into_par_iter()
+            .map(|i| {
+                let mut acc = SparseAccumulator::new(block_width);
 
-                    let b_start = *b_indptr.add(k);
-                    let b_end = *b_indptr.add(k + 1);
+                unsafe {
+                    let a_indptr = a.indptr.as_ptr();
+                    let a_indices = a.indices.as_ptr();
+                    let a_data = a.data.as_ptr();
+                    let b_indptr = b.indptr.as_ptr();
+                    let b_indices = b.indices.as_ptr();
+                    let b_data = b.data.as_ptr();
 
-                    for b_idx in b_start..b_end {
-                        let j = *b_indices.add(b_idx);
-                        let b_val = *b_data.add(b_idx);
-                        acc.add(j, a_val * b_val);
+                    let a_start = *a_indptr.add(i);
+                    let a_end = *a_indptr.add(i + 1);
+
+                    for a_idx in a_start..a_end {
+                        let k = *a_indices.add(a_idx);
+                        let a_val = *a_data.add(a_idx);
+
+                        let b_start = *b_indptr.add(k);
+                        let b_end = *b_indptr.add(k + 1);
+
+                        for b_idx in b_start..b_end {
+                            let j = *b_indices.add(b_idx);
+                            if j >= block_start && j < block_end {
+                                let b_val = *b_data.add(b_idx);
+                                acc.add(j - block_start, a_val * b_val);
+                            }
+                        }
                     }
                 }
-            }
 
-            acc.extract_sorted()
-        })
-        .collect();
+                acc.extract_sorted()
+                    .into_iter()
+                    .map(|(col_local, val)| (block_start + col_local, val))
+                    .collect()
+            })
+            .collect();
 
-    // direct CSR construction
+        for (i, block_row) in block_results.into_iter().enumerate() {
+            row_results[i].extend(block_row);
+        }
+    }
+
     let total_nnz: usize = row_results.iter().map(|r| r.len()).sum();
     let mut data = Vec::with_capacity(total_nnz);
     let mut indices = Vec::with_capacity(total_nnz);

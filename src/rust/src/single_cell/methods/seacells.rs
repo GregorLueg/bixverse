@@ -7,6 +7,7 @@ use rustc_hash::FxHashSet;
 use std::time::Instant;
 use thousands::Separable;
 
+use crate::core::base::sparse_math::*;
 use crate::core::data::sparse_structures::*;
 
 ///////////
@@ -339,6 +340,193 @@ fn matrix_trace(mat: &CompressedSparseData<f32>) -> f32 {
     trace
 }
 
+/// Compute adaptive anisotropic diffusion kernel
+///
+/// Implementation from palantir package.  Uses knn/3-th nearest neighbor
+/// distance as adaptive bandwidth. For edge (i,j) with distance d:
+/// weight = exp(-d/σᵢ)
+///
+/// ### Params
+///
+/// * `knn_indices` - kNN indices for each cell
+/// * `knn_distances` - kNN distances for each cell  
+/// * `knn` - Number of nearest neighbours used
+///
+/// ### Returns
+///
+/// Symmetric kernel matrix
+fn compute_diffusion_kernel(
+    knn_indices: &[Vec<usize>],
+    knn_distances: &[Vec<f32>],
+    knn: usize,
+) -> CompressedSparseData<f32> {
+    let n = knn_indices.len();
+    let adaptive_k = (knn / 3).max(1);
+
+    let adaptive_std: Vec<f32> = knn_distances
+        .iter()
+        .map(|dists| {
+            let mut sorted = dists.clone();
+            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            sorted[adaptive_k - 1]
+        })
+        .collect();
+
+    let mut rows = Vec::new();
+    let mut cols = Vec::new();
+    let mut vals = Vec::new();
+
+    for (i, neighbours) in knn_indices.iter().enumerate() {
+        for (idx, &j) in neighbours.iter().enumerate() {
+            // need to square root here, as I am not doing this during kNN generation
+            let dist = knn_distances[i][idx].sqrt();
+            let weight = (-dist / adaptive_std[i]).exp();
+            rows.push(i);
+            cols.push(j);
+            vals.push(weight);
+        }
+    }
+
+    let w = coo_to_csr(&rows, &cols, &vals, (n, n));
+
+    // symmetrise: kernel = W + W^T
+    let w_t = w.transpose_and_convert();
+
+    sparse_add_csr(&w, &w_t)
+}
+
+/// Compute diffusion maps from kernel matrix
+///
+/// Normalises kernel to transition matrix and performs eigendecomposition.
+///
+/// ### Params
+///
+/// * `kernel` - Symmetric kernel matrix
+/// * `n_components` - Number of eigenvectors to compute
+///
+/// ### Returns
+///
+/// (eigenvalues, eigenvectors) where eigenvectors is (n × n_components)
+fn diffusion_map_from_kernel(
+    kernel: &mut CompressedSparseData<f32>,
+    n_components: usize,
+) -> (Vec<f32>, Vec<Vec<f32>>) {
+    // Row-normalize to get transition matrix: T[i,j] = kernel[i,j] / sum_k(kernel[i,k])
+    normalise_csr_rows_l1(kernel);
+
+    assert!(!kernel.data.iter().any(|v| v.is_nan() || v.is_infinite()), "NaN/Inf in kernel after normalisation");
+
+    compute_largest_eigenpairs_arpack(kernel, n_components)
+}
+
+/// Determine multiscale space by scaling eigenvectors
+///
+/// Scales eigenvectors by λᵢ/(1-λᵢ) for diffusion distance metric.
+///
+/// ### Params
+///
+/// * `eigenvalues` - Eigenvalues from diffusion maps
+/// * `eigenvectors` - Eigenvectors (n × n_components)
+/// * `n_eigs` - Optional number of eigenvectors to use (None = auto-detect via
+///   eigengap)
+///
+/// ### Returns
+///
+/// Scaled eigenvectors (n × n_eigs)
+fn determine_multiscale_space(
+    eigenvalues: &[f32],
+    eigenvectors: &[Vec<f32>],
+    n_eigs: Option<usize>,
+) -> Vec<Vec<f32>> {
+    let n = eigenvectors.len();
+
+    // auto-detect n_eigs using eigengap if not provided
+    let use_n_eigs = if let Some(n) = n_eigs {
+        n
+    } else {
+        let gaps: Vec<f32> = eigenvalues.windows(2).map(|w| w[0] - w[1]).collect();
+
+        let max_gap_idx = gaps
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .map(|(idx, _)| idx + 1)
+            .unwrap_or(3);
+
+        max_gap_idx.max(3).min(eigenvalues.len())
+    };
+
+    let use_indices: Vec<usize> = (1..use_n_eigs).collect();
+
+    let mut scaled = vec![vec![0.0f32; use_indices.len()]; n];
+
+    for (out_idx, &eig_idx) in use_indices.iter().enumerate() {
+        let lambda = eigenvalues[eig_idx];
+        let scale = lambda / (1.0 - lambda);
+
+        for i in 0..n {
+            scaled[i][out_idx] = eigenvectors[i][eig_idx] * scale;
+        }
+    }
+
+    scaled
+}
+
+/// Max-min waypoint sampling
+///
+/// For each dimension, iteratively selects points maximizing the minimum
+/// distance to already selected points.
+///
+/// ### Params
+///
+/// * `data` - Multiscale space (n × n_dims)
+/// * `num_waypoints` - Target number of waypoints
+/// * `seed` - Random seed for initial point selection
+///
+/// ### Returns
+///
+/// Indices of selected waypoints
+fn max_min_sampling(data: &[Vec<f32>], num_waypoints: usize, seed: u64) -> Vec<usize> {
+    let n = data.len();
+    let n_dims = data[0].len();
+    let no_iterations = (num_waypoints / n_dims).max(1);
+
+    let mut rng = StdRng::seed_from_u64(seed);
+    let mut waypoint_set = FxHashSet::default();
+
+    for dim in 0..n_dims {
+        let vec: Vec<f32> = data.iter().map(|row| row[dim]).collect();
+        let mut iter_set = vec![rng.random_range(0..n)];
+        let mut min_dists = vec![f32::MAX; n];
+
+        // initialize distances to first point
+        for i in 0..n {
+            min_dists[i] = (vec[i] - vec[iter_set[0]]).abs();
+        }
+
+        // iteratively select maximally distant points
+        for _ in 1..no_iterations {
+            let new_wp = min_dists
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+                .map(|(idx, _)| idx)
+                .unwrap();
+
+            iter_set.push(new_wp);
+
+            for i in 0..n {
+                let dist = (vec[i] - vec[new_wp]).abs();
+                min_dists[i] = min_dists[i].min(dist);
+            }
+        }
+
+        waypoint_set.extend(iter_set);
+    }
+
+    waypoint_set.into_iter().collect()
+}
+
 //////////
 // Main //
 //////////
@@ -546,8 +734,8 @@ impl<'a> SEACells<'a> {
             self.kernel_mat.is_some(),
             "Must construct kernel matrix first"
         );
+        assert!(self.archetypes.is_some(), "Must find archetypes first");
 
-        self.initialise_archetypes(verbose, seed as u64);
         self.initialise_matrices(verbose, seed as u64);
 
         let a = self.a.as_ref().unwrap();
@@ -624,14 +812,22 @@ impl<'a> SEACells<'a> {
 
     /// Initialise archetypes using adaptive strategy
     ///
-    /// Selects between greedy CSSP (accurate but slow) and random selection
-    /// (fast but less optimal) based on dataset size threshold.
+    /// For small datasets (< greedy_threshold): combines waypoint + greedy CSSP
+    /// For large datasets (>= greedy_threshold): uses fast random initialisation
     ///
     /// ### Params
     ///
+    /// * `knn_indices` - k-NN indices for each cell
+    /// * `knn_distances` - k-NN distances for each cell
     /// * `verbose` - Print which method is selected
-    /// * `seed` - Random seed for random initialisation
-    fn initialise_archetypes(&mut self, verbose: bool, seed: u64) {
+    /// * `seed` - Random seed for initialisation
+    pub fn initialise_archetypes(
+        &mut self,
+        knn_indices: &[Vec<usize>],
+        knn_distances: &[Vec<f32>],
+        verbose: bool,
+        seed: u64,
+    ) {
         if self.n_cells > self.params.greedy_threshold {
             if verbose {
                 println!(
@@ -642,13 +838,7 @@ impl<'a> SEACells<'a> {
             }
             self.initialise_archetypes_random(verbose, seed);
         } else {
-            if verbose {
-                println!(
-                    "Dataset small (n = {}), using greedy CSSP",
-                    self.n_cells.separate_with_underscores()
-                );
-            }
-            self.initialise_archetypes_greedy(verbose);
+            self.initialise_archetypes_combined(knn_indices, knn_distances, verbose, seed);
         }
     }
 
@@ -675,28 +865,121 @@ impl<'a> SEACells<'a> {
         self.archetypes = Some(archetypes);
     }
 
-    /// Greedy CSSP archetype initialisation
+    /// Combined waypoint + greedy initialisation (matches Python logic)
     ///
-    /// Uses Column Subset Selection Problem (CSSP) to select archetypes that
-    /// maximally cover the data manifold. Iteratively selects cells that best
-    /// explain remaining variance in K_square.
-    ///
-    /// Uses on-the-fly K_square computation to avoid materialising the full
-    /// matrix. Complexity: O(k × n) K_square column computations.
+    /// 1. Gets waypoint centres (may return < k cells)
+    /// 2. Tops up with greedy CSSP to reach k cells
+    /// 3. Deduplicates and takes first k unique cells
     ///
     /// ### Params
     ///
-    /// * `verbose` - Print progress every 10 archetypes
-    fn initialise_archetypes_greedy(&mut self, verbose: bool) {
-        let k_square = self.k_square.as_ref().unwrap();
-        let n = k_square.shape.0;
+    /// * `knn_indices` - k-NN indices for each cell
+    /// * `knn_distances` - k-NN distances for each cell
+    /// * `verbose` - Print selection counts
+    /// * `seed` - Random seed for waypoint sampling
+    fn initialise_archetypes_combined(
+        &mut self,
+        knn_indices: &[Vec<usize>],
+        knn_distances: &[Vec<f32>],
+        verbose: bool,
+        seed: u64,
+    ) {
         let k = self.params.n_sea_cells;
 
+        // get waypoint centres
         if verbose {
-            println!("Initialising {} archetypes via greedy CSSP...", k);
+            println!("Computing diffusion maps for waypoint initialisation...");
         }
 
-        // Compute initial f and g in parallel
+        let mut kernel = compute_diffusion_kernel(knn_indices, knn_distances, self.params.k);
+
+        if verbose {
+            println!("Is this here where the shit hits the fan?");
+        }
+
+        let min_val = kernel
+            .data
+            .iter()
+            .copied()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        let max_val = kernel
+            .data
+            .iter()
+            .copied()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        eprintln!(
+            "Kernel range: [{}, {}], nnz: {}",
+            min_val,
+            max_val,
+            kernel.data.len()
+        );
+
+        let (eigenvalues, eigenvectors) = diffusion_map_from_kernel(&mut kernel, self.params.k);
+
+        if verbose {
+            println!("Or here?");
+        }
+
+        let multiscale = determine_multiscale_space(&eigenvalues, &eigenvectors, Some(5));
+
+        if verbose {
+            println!("Or here? (2)");
+        }
+
+        let waypoint_ix = max_min_sampling(&multiscale, k, seed);
+
+        if verbose {
+            println!(
+                "Selecting {} cells from waypoint initialisation.",
+                waypoint_ix.len()
+            );
+        }
+
+        // calculate how many more needed from greedy
+        let from_greedy = k.saturating_sub(waypoint_ix.len());
+
+        // get greedy centres with +10 buffer (for deduplication)
+        if verbose {
+            println!("Initialising residual matrix using greedy column selection");
+        }
+        let greedy_ix = self.get_greedy_centres(from_greedy + 10);
+
+        if verbose {
+            println!(
+                "Selecting {} cells from greedy initialisation.",
+                from_greedy
+            );
+        }
+
+        // combine and deduplicate
+        let mut all_ix = waypoint_ix;
+        all_ix.extend(greedy_ix);
+
+        let mut seen = FxHashSet::default();
+        let unique_ix: Vec<usize> = all_ix
+            .into_iter()
+            .filter(|&x| seen.insert(x))
+            .take(k)
+            .collect();
+
+        self.archetypes = Some(unique_ix);
+    }
+
+    /// Get greedy centres (extracted from initialise_archetypes_greedy)
+    ///
+    /// ### Params
+    ///
+    /// * `n_centres` - Number of centres to select
+    ///
+    /// ### Returns
+    ///
+    /// Vector of selected cell indices
+    fn get_greedy_centres(&self, n_centres: usize) -> Vec<usize> {
+        let k_square = self.k_square.as_ref().unwrap();
+        let n = k_square.shape.0;
+
         let results: Vec<(Vec<f32>, f32)> = (0..n)
             .into_par_iter()
             .map(|i| {
@@ -717,14 +1000,13 @@ impl<'a> SEACells<'a> {
             g[i] = *g_val;
         }
 
-        let mut omega: Vec<Vec<f32>> = vec![vec![0_f32; n]; k];
-        let mut centers: Vec<usize> = Vec::with_capacity(k);
+        let mut omega: Vec<Vec<f32>> = vec![vec![0_f32; n]; n_centres];
+        let mut centres: Vec<usize> = Vec::with_capacity(n_centres);
 
-        // Reuse allocations
         let mut e_p = vec![0.0f32; n];
         let mut omega_new = vec![0.0f32; n];
 
-        for iter in 0..k {
+        for iter in 0..n_centres {
             let mut best_idx = 0;
             let mut best_score = f32::MIN;
 
@@ -738,7 +1020,7 @@ impl<'a> SEACells<'a> {
                 }
             }
 
-            centers.push(best_idx);
+            centres.push(best_idx);
 
             e_p.fill(0.0);
             e_p[best_idx] = 1.0;
@@ -772,13 +1054,9 @@ impl<'a> SEACells<'a> {
             }
 
             omega[iter].copy_from_slice(&omega_new);
-
-            if verbose && (iter + 1) % 10 == 0 {
-                println!("  Selected {} / {} archetypes", iter + 1, k);
-            }
         }
 
-        self.archetypes = Some(centers);
+        centres
     }
 
     /// Initialise A and B matrices
@@ -923,7 +1201,6 @@ impl<'a> SEACells<'a> {
 
             let step_size = 2.0 / (t as f32 + 2.0);
 
-            // Keep original operation sequence for numerical stability
             let e_minus_a = sparse_subtract_csr(&e, &a);
             let update = sparse_scalar_multiply_csr(&e_minus_a, step_size);
             a = sparse_add_csr(&a, &update);
@@ -1048,7 +1325,7 @@ impl<'a> SEACells<'a> {
                 );
             }
 
-            // Early stopping if update is negligible
+            // early stopping if update is negligible
             if update_norm < FW_TOLERANCE && t >= 10 {
                 if verbose {
                     println!("  B matrix FW converged early at iteration {}", t + 1);

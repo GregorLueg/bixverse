@@ -418,7 +418,10 @@ fn rs_get_seacells(
 
     let mut seacell = SEACells::new(embd.nrows(), &seacells_params);
 
-    seacell.construct_kernel_mat(embd.as_ref(), &knn_indices, &knn_dist.unwrap(), verbose);
+    let knn_dist = knn_dist.unwrap();
+
+    seacell.construct_kernel_mat(embd.as_ref(), &knn_indices, &knn_dist, verbose);
+    seacell.initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64);
 
     seacell.fit(seed, verbose);
 
