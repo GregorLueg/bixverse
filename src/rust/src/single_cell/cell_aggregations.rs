@@ -187,6 +187,60 @@ pub fn assignments_to_r_list(assignments: &[Option<usize>], n_cells: usize) -> L
     )
 }
 
+/// Remap subset assignments back to original index space
+///
+/// Takes metacell assignments computed on a subset of cells and maps them
+/// back to the full original index space. Cells not in the subset will have
+/// `None` assignments.
+///
+/// ### Params
+///
+/// * `subset_assignments` - Vector of metacell assignments in subset index space
+/// * `subset_to_orig` - Mapping from subset indices to original indices
+/// * `n_total` - Total number of cells in original space
+///
+/// ### Return
+///
+/// Vector of assignments in original index space with `None` for cells not
+/// in the subset
+pub fn remap_assignments_to_original(
+    subset_assignments: &[Option<usize>],
+    subset_to_orig: &[usize],
+    n_total: usize,
+) -> Vec<Option<usize>> {
+    let mut full_assignments = vec![None; n_total];
+    for (subset_idx, &metacell_id) in subset_assignments.iter().enumerate() {
+        if let Some(orig_idx) = subset_to_orig.get(subset_idx) {
+            full_assignments[*orig_idx] = metacell_id;
+        }
+    }
+    full_assignments
+}
+
+/// Remap metacell indices from subset space to original space
+///
+/// Takes metacell groups where cell indices are in subset space and transforms
+/// all indices back to original space. This is used when metacells are computed
+/// on a subset of cells but need to be aggregated from the full dataset.
+///
+/// ### Params
+///
+/// * `metacells` - Vector of metacell groups with cell indices in subset space
+/// * `subset_to_orig` - Mapping from subset indices to original indices
+///
+/// ### Return
+///
+/// Vector of metacell groups with cell indices in original space
+pub fn remap_metacells_to_original(
+    metacells: &[&[usize]],
+    subset_to_orig: &[usize],
+) -> Vec<Vec<usize>> {
+    metacells
+        .iter()
+        .map(|&cells| cells.iter().map(|&idx| subset_to_orig[idx]).collect())
+        .collect()
+}
+
 ////////////////////////
 // hdWGCNA meta cells //
 ////////////////////////

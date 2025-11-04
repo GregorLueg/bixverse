@@ -1,5 +1,6 @@
 use extendr_api::*;
 use faer::Mat;
+use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::core::data::sparse_io::ParallelSparseReader;
@@ -177,6 +178,11 @@ fn rs_aucell(
 /// @param embd Optional numerical matrix. The embedding matrix (for example
 /// PCA embedding) you wish to use for the generation of the kNN graph that
 /// is used subsequently for aggregation of the meta cells.
+/// @param cells_to_keep Optional indices of the cells to keep, i.e., the
+/// cells used for the generation of the embedding.
+/// @param cells_to_use Optional indices of cells to use for meta cell
+/// generation. Useful if you wish to generate meta cells in specific cell
+/// types.
 /// @param meta_cell_params A list containing the meta cell parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
@@ -194,10 +200,13 @@ fn rs_aucell(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_get_metacells(
     f_path: String,
     knn_mat: Option<RMatrix<i32>>,
     embd: Option<RMatrix<f64>>,
+    cells_to_keep: Option<Vec<i32>>,
+    cells_to_use: Option<Vec<i32>>,
     meta_cell_params: List,
     target_size: f64,
     seed: usize,
@@ -205,52 +214,78 @@ fn rs_get_metacells(
 ) -> extendr_api::Result<List> {
     let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params);
 
-    let knn_graph: Vec<Vec<usize>> = match (knn_mat, embd) {
-        // first case - knn_mat provided
-        (Some(knn_mat), _) => {
-            if verbose {
-                println!("Using provided kNN matrix");
-            }
-            let ncol = knn_mat.ncols();
-            let nrow = knn_mat.nrows();
-            let data = knn_mat.data();
+    // If subsetting, we need both the QC cells and the subset to use
+    if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
+        return Err(
+            "When using 'cells_to_use', both 'cells_to_keep' and 'embd' must be provided".into(),
+        );
+    }
 
-            (0..nrow)
-                .map(|j| {
-                    (0..ncol)
-                        .filter_map(|i| {
-                            let val = data[j + i * nrow];
-                            if val > 0 {
-                                Some((val - 1) as usize)
-                            } else {
-                                None
-                            }
-                        })
-                        .collect()
-                })
-                .collect()
-        }
-        // second case - knn needs to be re-calculated
-        (None, Some(embd)) => {
-            if verbose {
-                println!("Calculating the kNN matrix from the provided data.");
+    let (subset_to_orig, n_total_cells, knn_graph) = match cells_to_use {
+        Some(ref use_cells) => {
+            let cells_to_keep = cells_to_keep.unwrap();
+            let embd = embd.unwrap();
+
+            let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
+            let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
+
+            // Create mapping: original index -> PCA row index
+            let orig_to_pca: FxHashMap<usize, usize> = qc_cells
+                .iter()
+                .enumerate()
+                .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
+                .collect();
+
+            // Find which PCA rows correspond to cells_to_use
+            let mut pca_rows_to_use = Vec::new();
+            let mut subset_to_orig = Vec::new();
+
+            for &orig_idx in &use_cells {
+                if let Some(&pca_row) = orig_to_pca.get(&orig_idx) {
+                    pca_rows_to_use.push(pca_row);
+                    subset_to_orig.push(orig_idx);
+                }
             }
 
-            let embd = r_matrix_to_faer_fp32(&embd);
+            let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
+
+            if verbose {
+                println!(
+                    "Subsetting to {} cells (from {} QC-passing cells) and regenerating kNN graph",
+                    pca_rows_to_use.len(),
+                    qc_cells.len()
+                );
+            }
+
+            // Subset the embedding using PCA row indices
+            let ncol = embd.ncols();
+            let nrow = embd.nrows();
+            let data = embd.data();
+
+            let subset_data: Vec<f64> = pca_rows_to_use
+                .iter()
+                .flat_map(|&row| (0..ncol).map(move |col| data[row + col * nrow]))
+                .collect();
+
+            let embd_subset = Mat::from_fn(pca_rows_to_use.len(), ncol, |i, j| {
+                subset_data[i * ncol + j] as f32
+            });
+
+            // Generate kNN on subset
             let knn_method = parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
                 format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
             })?;
 
-            match knn_method {
+            let knn = match knn_method {
                 KnnSearch::Hnsw => generate_knn_hnsw(
-                    embd.as_ref(),
+                    embd_subset.as_ref(),
                     &meta_cell_params.ann_dist,
                     meta_cell_params.k,
                     seed,
                     verbose,
                 ),
                 KnnSearch::Annoy => generate_knn_annoy(
-                    embd.as_ref(),
+                    embd_subset.as_ref(),
                     &meta_cell_params.ann_dist,
                     meta_cell_params.k,
                     meta_cell_params.n_trees,
@@ -259,7 +294,7 @@ fn rs_get_metacells(
                     verbose,
                 ),
                 KnnSearch::NNDescent => generate_knn_nndescent(
-                    embd.as_ref(),
+                    embd_subset.as_ref(),
                     &meta_cell_params.ann_dist,
                     meta_cell_params.k,
                     meta_cell_params.nn_max_iter,
@@ -268,14 +303,92 @@ fn rs_get_metacells(
                     seed,
                     verbose,
                 ),
-            }
+            };
+
+            (subset_to_orig, n_total, knn)
         }
-        // case three - nothing has been provided
-        (None, None) => {
-            return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
+        None => {
+            // No subsetting - original logic
+            let n_total = match (&knn_mat, &embd) {
+                (Some(mat), _) => mat.nrows(),
+                (_, Some(em)) => em.nrows(),
+                _ => return Err("Must provide either 'knn_mat' or 'embd' parameter".into()),
+            };
+
+            let knn = match (knn_mat, embd) {
+                (Some(knn_mat), _) => {
+                    if verbose {
+                        println!("Using provided kNN matrix");
+                    }
+                    let ncol = knn_mat.ncols();
+                    let nrow = knn_mat.nrows();
+                    let data = knn_mat.data();
+
+                    (0..nrow)
+                        .map(|j| {
+                            (0..ncol)
+                                .filter_map(|i| {
+                                    let val = data[j + i * nrow];
+                                    if val > 0 {
+                                        Some((val - 1) as usize)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect()
+                        })
+                        .collect()
+                }
+                (None, Some(embd)) => {
+                    if verbose {
+                        println!("Calculating the kNN matrix from the provided data.");
+                    }
+
+                    let embd = r_matrix_to_faer_fp32(&embd);
+                    let knn_method =
+                        parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
+                            format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
+                        })?;
+
+                    match knn_method {
+                        KnnSearch::Hnsw => generate_knn_hnsw(
+                            embd.as_ref(),
+                            &meta_cell_params.ann_dist,
+                            meta_cell_params.k,
+                            seed,
+                            verbose,
+                        ),
+                        KnnSearch::Annoy => generate_knn_annoy(
+                            embd.as_ref(),
+                            &meta_cell_params.ann_dist,
+                            meta_cell_params.k,
+                            meta_cell_params.n_trees,
+                            meta_cell_params.search_budget,
+                            seed,
+                            verbose,
+                        ),
+                        KnnSearch::NNDescent => generate_knn_nndescent(
+                            embd.as_ref(),
+                            &meta_cell_params.ann_dist,
+                            meta_cell_params.k,
+                            meta_cell_params.nn_max_iter,
+                            meta_cell_params.delta,
+                            meta_cell_params.rho,
+                            seed,
+                            verbose,
+                        ),
+                    }
+                }
+                (None, None) => {
+                    return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
+                }
+            };
+
+            ((0..n_total).collect(), n_total, knn)
         }
     };
 
+    // Rest of the function remains the same...
     let nn_map = build_nn_map(&knn_graph);
 
     if verbose {
@@ -291,11 +404,18 @@ fn rs_get_metacells(
         verbose,
     );
 
-    let n_cells = nn_map.len();
+    let n_subset_cells = nn_map.len();
+    let assignments_subset = metacells_to_assignments(&meta_cell_indices, n_subset_cells);
 
-    let assignments = metacells_to_assignments(&meta_cell_indices, n_cells);
+    let is_subset = cells_to_use.is_some();
 
-    let assignment_list = assignments_to_r_list(&assignments, n_cells);
+    let assignments_full = if is_subset {
+        remap_assignments_to_original(&assignments_subset, &subset_to_orig, n_total_cells)
+    } else {
+        assignments_subset
+    };
+
+    let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
     if verbose {
         println!("Aggregating meta cells.");
@@ -304,8 +424,19 @@ fn rs_get_metacells(
     let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
+    let metacells_original: Vec<Vec<usize>> = if is_subset {
+        remap_metacells_to_original(&meta_cell_indices, &subset_to_orig)
+    } else {
+        meta_cell_indices
+            .iter()
+            .map(|&slice| slice.to_vec())
+            .collect()
+    };
+
+    let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
+
     let aggregated: CompressedSparseData<u32, f32> =
-        aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
 
     Ok(list!(
         assignments = assignment_list,
@@ -331,6 +462,11 @@ fn rs_get_metacells(
 /// @param f_path String. Path to the `counts_cells.bin` file.
 /// @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
 /// used for the generation of the kNN graph and kernel matrix.
+/// @param cells_to_keep Optional indices of the cells to keep, i.e., the
+/// cells used for the generation of the embedding.
+/// @param cells_to_use Optional indices of cells to use for meta cell
+/// generation. Useful if you wish to generate meta cells in specific cell
+/// types.
 /// @param seacells_params A list containing the SEACells parameters.
 /// @param target_size Numeric. Target library size for re-normalisation of
 /// the meta cells. Typically `1e4`.
@@ -352,9 +488,12 @@ fn rs_get_metacells(
 ///
 /// @references Persad, et al., Nat. Biotechnol., 2023.
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_get_seacells(
     f_path: String,
     embd: RMatrix<f64>,
+    cells_to_keep: Option<Vec<i32>>,
+    cells_to_use: Option<Vec<i32>>,
     seacells_params: List,
     target_size: f64,
     seed: usize,
@@ -363,7 +502,70 @@ fn rs_get_seacells(
     let start_seacell = Instant::now();
 
     let seacells_params = SEACellsParams::from_r_list(seacells_params);
-    let embd = r_matrix_to_faer_fp32(&embd);
+
+    let (subset_to_orig, n_total_cells, embd_mat) = match cells_to_use {
+        Some(ref use_cells) => {
+            if cells_to_keep.is_none() {
+                return Err("When using 'cells_to_use', 'cells_to_keep' must be provided".into());
+            }
+
+            let cells_to_keep = cells_to_keep.unwrap();
+            let qc_cells: Vec<usize> = cells_to_keep.iter().map(|&x| x as usize).collect();
+            let use_cells: Vec<usize> = use_cells.iter().map(|&x| x as usize).collect();
+
+            // Create mapping: original index -> PCA row index
+            let orig_to_pca: FxHashMap<usize, usize> = qc_cells
+                .iter()
+                .enumerate()
+                .map(|(pca_row, &orig_idx)| (orig_idx, pca_row))
+                .collect();
+
+            // Find which PCA rows correspond to cells_to_use
+            let mut pca_rows_to_use = Vec::new();
+            let mut subset_to_orig = Vec::new();
+
+            for &orig_idx in &use_cells {
+                if let Some(&pca_row) = orig_to_pca.get(&orig_idx) {
+                    pca_rows_to_use.push(pca_row);
+                    subset_to_orig.push(orig_idx);
+                }
+            }
+
+            let n_total = use_cells.iter().max().map(|&x| x + 1).unwrap_or(0);
+
+            if verbose {
+                println!(
+                    "Subsetting to {} cells (from {} QC-passing cells)",
+                    pca_rows_to_use.len(),
+                    qc_cells.len()
+                );
+            }
+
+            // Subset the embedding using PCA row indices
+            let ncol = embd.ncols();
+            let nrow = embd.nrows();
+            let data = embd.data();
+
+            let subset_data: Vec<f64> = pca_rows_to_use
+                .iter()
+                .flat_map(|&row| (0..ncol).map(move |col| data[row + col * nrow]))
+                .collect();
+
+            let embd_subset = Mat::from_fn(pca_rows_to_use.len(), ncol, |i, j| {
+                subset_data[i * ncol + j] as f32
+            });
+
+            (subset_to_orig, n_total, embd_subset)
+        }
+        None => {
+            let n = embd.nrows();
+            let embd_full = r_matrix_to_faer_fp32(&embd);
+            ((0..n).collect(), n, embd_full)
+        }
+    };
+
+    let is_subset = cells_to_use.is_some();
+
     let knn_method = parse_knn_method(&seacells_params.knn_method)
         .ok_or_else(|| format!("Invalid KNN search method: {}", seacells_params.knn_method))
         .unwrap();
@@ -372,9 +574,9 @@ fn rs_get_seacells(
 
     let (knn_indices, knn_dist) = match knn_method {
         KnnSearch::Annoy => {
-            let annoy_index = build_annoy_index(embd.as_ref(), seacells_params.n_trees, seed);
+            let annoy_index = build_annoy_index(embd_mat.as_ref(), seacells_params.n_trees, seed);
             query_annoy_index(
-                embd.as_ref(),
+                embd_mat.as_ref(),
                 &annoy_index,
                 &seacells_params.ann_dist,
                 seacells_params.k,
@@ -384,9 +586,9 @@ fn rs_get_seacells(
             )
         }
         KnnSearch::Hnsw => {
-            let hnsw_index = build_hnsw_index(embd.as_ref(), &seacells_params.ann_dist, seed);
+            let hnsw_index = build_hnsw_index(embd_mat.as_ref(), &seacells_params.ann_dist, seed);
             query_hnsw_index(
-                embd.as_ref(),
+                embd_mat.as_ref(),
                 &hnsw_index,
                 &seacells_params.ann_dist,
                 seacells_params.k,
@@ -395,7 +597,7 @@ fn rs_get_seacells(
             )
         }
         KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
-            embd.as_ref(),
+            embd_mat.as_ref(),
             &seacells_params.ann_dist,
             seacells_params.k,
             seacells_params.nn_max_iter,
@@ -416,37 +618,66 @@ fn rs_get_seacells(
         );
     }
 
-    let mut seacell = SEACells::new(embd.nrows(), &seacells_params);
+    let mut seacell = SEACells::new(embd_mat.nrows(), &seacells_params);
 
     let knn_dist = knn_dist.unwrap();
 
-    seacell.construct_kernel_mat(embd.as_ref(), &knn_indices, &knn_dist, verbose);
+    seacell.construct_kernel_mat(embd_mat.as_ref(), &knn_indices, &knn_dist, verbose);
     seacell.initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64);
 
     seacell.fit(seed, verbose);
 
-    let assignments = seacell.get_hard_assignments();
-    let archetypes = seacell.get_archetypes();
+    let assignments_subset = seacell.get_hard_assignments();
+    let archetypes_subset = seacell.get_archetypes();
     let k = seacells_params.n_sea_cells;
 
     let rss = seacell.get_rss_history();
 
-    let assignments_opt: Vec<Option<usize>> = assignments.iter().map(|&x| Some(x)).collect();
+    let assignments_subset_opt: Vec<Option<usize>> =
+        assignments_subset.iter().map(|&x| Some(x)).collect();
 
-    let assignment_list = assignments_to_r_list(&assignments_opt, embd.nrows());
+    let assignments_full = if is_subset {
+        remap_assignments_to_original(&assignments_subset_opt, &subset_to_orig, n_total_cells)
+    } else {
+        assignments_subset_opt
+    };
+
+    let archetypes_original: Vec<usize> = if is_subset {
+        archetypes_subset
+            .iter()
+            .map(|&idx| subset_to_orig[idx])
+            .collect()
+    } else {
+        archetypes_subset
+    };
+
+    let assignment_list = assignments_to_r_list(&assignments_full, n_total_cells);
 
     if verbose {
         println!("Aggregating meta cells.");
     }
 
-    let meta_cell_indices = assignments_to_metacells(&assignments, k);
-    let meta_cell_indices: Vec<&[usize]> = meta_cell_indices.iter().map(|v| v.as_slice()).collect();
+    let meta_cell_indices = assignments_to_metacells(&assignments_subset, k);
+
+    let metacells_original: Vec<Vec<usize>> = if is_subset {
+        remap_metacells_to_original(
+            &meta_cell_indices
+                .iter()
+                .map(|v| v.as_slice())
+                .collect::<Vec<_>>(),
+            &subset_to_orig,
+        )
+    } else {
+        meta_cell_indices
+    };
+
+    let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
     let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
     let aggregated: CompressedSparseData<u32, f32> =
-        aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
 
     let end_seacell = start_seacell.elapsed();
 
@@ -465,7 +696,7 @@ fn rs_get_seacells(
             ncol = aggregated.shape.1
         ),
         rss = rss.to_vec(),
-        archetypes = archetypes.r_int_convert()
+        archetypes = archetypes_original.r_int_convert()
     ))
 }
 

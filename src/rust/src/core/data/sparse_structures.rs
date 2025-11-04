@@ -1025,6 +1025,7 @@ where
 /// ### Params
 ///
 /// * `csr` - Mutable reference to the CSR matrix (modified in-place)
+#[allow(dead_code)]
 pub fn normalise_csr_rows_l1<T>(csr: &mut CompressedSparseData<T>)
 where
     T: Clone
@@ -1295,61 +1296,42 @@ where
     let nrows = a.shape.0;
     let ncols = b.shape.1;
 
-    const BLOCK_WIDTH: usize = 16_384;
-    let num_blocks = ncols.div_ceil(BLOCK_WIDTH);
+    let row_results: Vec<Vec<(usize, T)>> = (0..nrows)
+        .into_par_iter()
+        .map(|i| {
+            let mut acc = SparseAccumulator::new(ncols);
 
-    let mut row_results: Vec<Vec<(usize, T)>> = vec![Vec::new(); nrows];
+            unsafe {
+                let a_indptr = a.indptr.as_ptr();
+                let a_indices = a.indices.as_ptr();
+                let a_data = a.data.as_ptr();
+                let b_indptr = b.indptr.as_ptr();
+                let b_indices = b.indices.as_ptr();
+                let b_data = b.data.as_ptr();
 
-    for block_idx in 0..num_blocks {
-        let block_start = block_idx * BLOCK_WIDTH;
-        let block_end = (block_start + BLOCK_WIDTH).min(ncols);
-        let block_width = block_end - block_start;
+                let a_start = *a_indptr.add(i);
+                let a_end = *a_indptr.add(i + 1);
 
-        let block_results: Vec<Vec<(usize, T)>> = (0..nrows)
-            .into_par_iter()
-            .map(|i| {
-                let mut acc = SparseAccumulator::new(block_width);
+                for a_idx in a_start..a_end {
+                    let k = *a_indices.add(a_idx);
+                    let a_val = *a_data.add(a_idx);
 
-                unsafe {
-                    let a_indptr = a.indptr.as_ptr();
-                    let a_indices = a.indices.as_ptr();
-                    let a_data = a.data.as_ptr();
-                    let b_indptr = b.indptr.as_ptr();
-                    let b_indices = b.indices.as_ptr();
-                    let b_data = b.data.as_ptr();
+                    let b_start = *b_indptr.add(k);
+                    let b_end = *b_indptr.add(k + 1);
 
-                    let a_start = *a_indptr.add(i);
-                    let a_end = *a_indptr.add(i + 1);
-
-                    for a_idx in a_start..a_end {
-                        let k = *a_indices.add(a_idx);
-                        let a_val = *a_data.add(a_idx);
-
-                        let b_start = *b_indptr.add(k);
-                        let b_end = *b_indptr.add(k + 1);
-
-                        for b_idx in b_start..b_end {
-                            let j = *b_indices.add(b_idx);
-                            if j >= block_start && j < block_end {
-                                let b_val = *b_data.add(b_idx);
-                                acc.add(j - block_start, a_val * b_val);
-                            }
-                        }
+                    for b_idx in b_start..b_end {
+                        let j = *b_indices.add(b_idx);
+                        let b_val = *b_data.add(b_idx);
+                        acc.add(j, a_val * b_val);
                     }
                 }
+            }
 
-                acc.extract_sorted()
-                    .into_iter()
-                    .map(|(col_local, val)| (block_start + col_local, val))
-                    .collect()
-            })
-            .collect();
+            acc.extract_sorted()
+        })
+        .collect();
 
-        for (i, block_row) in block_results.into_iter().enumerate() {
-            row_results[i].extend(block_row);
-        }
-    }
-
+    // direct CSR construction
     let total_nnz: usize = row_results.iter().map(|r| r.len()).sum();
     let mut data = Vec::with_capacity(total_nnz);
     let mut indices = Vec::with_capacity(total_nnz);

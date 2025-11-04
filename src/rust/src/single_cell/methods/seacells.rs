@@ -410,13 +410,28 @@ fn compute_diffusion_kernel(
 fn diffusion_map_from_kernel(
     kernel: &mut CompressedSparseData<f32>,
     n_components: usize,
+    seed: u64,
 ) -> (Vec<f32>, Vec<Vec<f32>>) {
-    // Row-normalize to get transition matrix: T[i,j] = kernel[i,j] / sum_k(kernel[i,k])
-    normalise_csr_rows_l1(kernel);
+    // Compute row sums (degrees)
+    let row_sums: Vec<f32> = (0..kernel.shape.0)
+        .map(|i| {
+            (kernel.indptr[i]..kernel.indptr[i + 1])
+                .map(|idx| kernel.data[idx])
+                .sum()
+        })
+        .collect();
 
-    assert!(!kernel.data.iter().any(|v| v.is_nan() || v.is_infinite()), "NaN/Inf in kernel after normalisation");
+    // Symmetric normalisation: D^(-1/2) * K * D^(-1/2)
+    for i in 0..kernel.shape.0 {
+        let d_i_sqrt = row_sums[i].sqrt();
+        for idx in kernel.indptr[i]..kernel.indptr[i + 1] {
+            let j = kernel.indices[idx];
+            let d_j_sqrt = row_sums[j].sqrt();
+            kernel.data[idx] /= d_i_sqrt * d_j_sqrt;
+        }
+    }
 
-    compute_largest_eigenpairs_arpack(kernel, n_components)
+    compute_largest_eigenpairs_lanczos(kernel, n_components, seed)
 }
 
 /// Determine multiscale space by scaling eigenvectors
@@ -452,6 +467,10 @@ fn determine_multiscale_space(
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
             .map(|(idx, _)| idx + 1)
             .unwrap_or(3);
+
+        // DEBUG
+        println!("Gaps: {:?}", &gaps[..gaps.len().min(10)]);
+        println!("Max gap at index: {}", max_gap_idx);
 
         max_gap_idx.max(3).min(eigenvalues.len())
     };
@@ -893,40 +912,10 @@ impl<'a> SEACells<'a> {
 
         let mut kernel = compute_diffusion_kernel(knn_indices, knn_distances, self.params.k);
 
-        if verbose {
-            println!("Is this here where the shit hits the fan?");
-        }
+        let (eigenvalues, eigenvectors) =
+            diffusion_map_from_kernel(&mut kernel, self.params.k, seed);
 
-        let min_val = kernel
-            .data
-            .iter()
-            .copied()
-            .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
-        let max_val = kernel
-            .data
-            .iter()
-            .copied()
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
-        eprintln!(
-            "Kernel range: [{}, {}], nnz: {}",
-            min_val,
-            max_val,
-            kernel.data.len()
-        );
-
-        let (eigenvalues, eigenvectors) = diffusion_map_from_kernel(&mut kernel, self.params.k);
-
-        if verbose {
-            println!("Or here?");
-        }
-
-        let multiscale = determine_multiscale_space(&eigenvalues, &eigenvectors, Some(5));
-
-        if verbose {
-            println!("Or here? (2)");
-        }
+        let multiscale = determine_multiscale_space(&eigenvalues, &eigenvectors, Some(10));
 
         let waypoint_ix = max_min_sampling(&multiscale, k, seed);
 

@@ -46,6 +46,9 @@
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used. Only relevant if you set regenerate_knn to
 #' `TRUE`.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' generation of the meta-cells. If provided, this function will regenerate the
+#' kNN graph no matter what.
 #' @param target_size Numeric. The library target size to normalise the meta
 #' cells to.
 #' @param seed Integer. Seed for reproducibility.
@@ -67,6 +70,7 @@ get_meta_cells_sc <- S7::new_generic(
     regenerate_knn = FALSE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    cells_to_use = NULL,
     target_size = 1e5,
     seed = 42L,
     .verbose = TRUE
@@ -87,6 +91,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
   regenerate_knn = FALSE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  cells_to_use = NULL,
   target_size = 1e5,
   seed = 42L,
   .verbose = TRUE
@@ -97,6 +102,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(cells_to_use, c("S+", "0"))
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, "B1")
 
@@ -137,10 +143,40 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
     }
   }
 
+  if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+
+    embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+    # early return
+    if (is.null(embd)) {
+      warning(
+        paste(
+          "The desired embedding was not found. Please check the parameters.",
+          "Returning NULL."
+        )
+      )
+
+      return(NULL)
+    }
+
+    if (!is.null(no_embd_to_use)) {
+      to_take <- min(c(no_embd_to_use, ncol(embd)))
+      embd <- embd[, 1:to_take]
+    }
+    knn_data <- NULL
+  } else {}
+
   meta_cell_data <- rs_get_metacells(
     f_path = get_rust_count_cell_f_path(object),
     knn_mat = knn_data,
     embd = embd,
+    cells_to_use = cells_to_use,
+    cells_to_keep = get_cells_to_keep(object),
     meta_cell_params = sc_meta_cell_params,
     target_size = target_size,
     seed = seed,
@@ -200,6 +236,8 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used. Only relevant if you set regenerate_knn to
 #' `TRUE`.
+#' @param cells_to_use Optional string. Names of the cells to use for the
+#' generation of the SEACells.
 #' @param target_size Numeric. The library target size to normalise the meta
 #' cells to.
 #' @param seed Integer. Seed for reproducibility.
@@ -220,6 +258,7 @@ get_seacells_sc <- S7::new_generic(
     seacell_params = params_sc_seacells(),
     embd_to_use = "pca",
     no_embd_to_use = NULL,
+    cells_to_use = NULL,
     target_size = 1e5,
     seed = 42L,
     .verbose = TRUE
@@ -239,6 +278,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
   seacell_params = params_sc_seacells(),
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  cells_to_use = NULL,
   target_size = 1e5,
   seed = 42L,
   .verbose = TRUE
@@ -259,9 +299,19 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
     embd <- embd[, 1:to_take]
   }
 
+  if (!is.null(cells_to_use)) {
+    cells_to_use <- get_cell_indices(
+      object,
+      cell_ids = cells_to_use,
+      rust_index = TRUE
+    )
+  }
+
   seacell_data <- rs_get_seacells(
     f_path = get_rust_count_cell_f_path(object),
     embd = embd,
+    cells_to_use = cells_to_use,
+    cells_to_keep = get_cells_to_keep(object),
     seacells_params = seacell_params,
     target_size = target_size,
     seed = seed,

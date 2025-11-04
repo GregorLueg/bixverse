@@ -2319,6 +2319,11 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @param embd Optional numerical matrix. The embedding matrix (for example
 #' PCA embedding) you wish to use for the generation of the kNN graph that
 #' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types.
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -2335,7 +2340,7 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' }
 #'
 #' @export
-rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose)
+rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose)
 
 #' Generate SEACells
 #'
@@ -2348,6 +2353,11 @@ rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_siz
 #' @param f_path String. Path to the `counts_cells.bin` file.
 #' @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
 #' used for the generation of the kNN graph and kernel matrix.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types.
 #' @param seacells_params A list containing the SEACells parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
 #' the meta cells. Typically `1e4`.
@@ -2368,7 +2378,7 @@ rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_siz
 #' @export
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023.
-rs_get_seacells <- function(f_path, embd, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, seacells_params, target_size, seed, verbose)
+rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

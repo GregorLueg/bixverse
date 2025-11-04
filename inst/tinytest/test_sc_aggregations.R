@@ -93,15 +93,17 @@ sc_object <- find_neighbours_sc(
 
 ## meta cells ------------------------------------------------------------------
 
-cell_idx_to_type <- sc_object[[c("cell_idx", "cell_grp")]] %$%
-  setNames(cell_grp, cell_idx)
-
 ### hdwgcna --------------------------------------------------------------------
 
 hdwgcna <- get_meta_cells_sc(
   sc_object,
-  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 50L, k = 5L),
+  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 50L, k = 15L),
   .verbose = FALSE
+)
+
+hdwgcna <- calc_meta_cell_purity(
+  hdwgcna,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
 )
 
 expect_true(
@@ -125,13 +127,9 @@ expect_true(
   info = "hdwgcna meta cells obs correct - correct columns"
 )
 
-grouped_cell_types_max <- sapply(hdwgcna[[]]$original_cell_idx, function(idx) {
-  types <- cell_idx_to_type[as.character(idx)]
-  max(table(types)) / length(types)
-})
 
 expect_true(
-  current = mean(grouped_cell_types_max) > 0.75,
+  current = mean(hdwgcna[[]]$mc_purity) > 0.75,
   info = "similar cell types are being pulled together"
 )
 
@@ -153,11 +151,61 @@ expect_true(
   info = "hdwgcna meta cells - correct compressed sparse matrix type"
 )
 
+#### subsetted version ---------------------------------------------------------
+
+# to imitate a scenario in which someone would like to generate meta cells
+# in specific cell types; will remove cell_type_3
+cells_to_use <- sc_object[[]][cell_grp != "cell_type_3", cell_id]
+
+hdwgcna_small <- get_meta_cells_sc(
+  sc_object,
+  sc_meta_cell_params = params_sc_metacells(
+    target_no_metacells = 50L,
+    k = 15L,
+    max_shared = 10L
+  ),
+  cells_to_use = cells_to_use,
+  .verbose = FALSE
+)
+
+hdwgcna_small <- calc_meta_cell_purity(
+  hdwgcna_small,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
+)
+
+original_cell_type = unlist(sc_object[["cell_grp"]])
+
+right_cell_types <- purrr::map_lgl(
+  hdwgcna_small[[]]$original_cell_idx,
+  function(idx) {
+    types <- original_cell_type[idx]
+    any(types != "cell_type_3")
+  }
+)
+
+expect_true(
+  current = mean(hdwgcna_small[[]]$mc_purity) > 0.75,
+  info = paste(
+    "hgwgnca - similar cell types are being pulled together;",
+    "subsetted version"
+  )
+)
+
+expect_true(
+  current = all(right_cell_types),
+  info = "no unexpected cell types in subsetted version - hdwgcna"
+)
+
+
 ### seacells -------------------------------------------------------------------
 
 seacells <- get_seacells_sc(
   sc_object,
-  seacell_params = params_sc_seacells(n_sea_cells = 50L, k = 5L, min_iter = 5L),
+  seacell_params = params_sc_seacells(
+    n_sea_cells = 50L,
+    k = 10L,
+    min_iter = 5L
+  ),
   .verbose = FALSE
 )
 
@@ -182,14 +230,14 @@ expect_true(
   info = "seacells obs correct - correct columns"
 )
 
-grouped_cell_types_max <- sapply(seacells[[]]$original_cell_idx, function(idx) {
-  types <- cell_idx_to_type[as.character(idx)]
-  max(table(types)) / length(types)
-})
+seacells <- calc_meta_cell_purity(
+  seacells,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
+)
 
 # much better than hdwgcna!
 expect_true(
-  current = mean(grouped_cell_types_max) > 0.85,
+  current = mean(seacells[[]]$mc_purity) > 0.85,
   info = "similar cell types are being pulled together"
 )
 
@@ -209,6 +257,46 @@ expect_equal(
 expect_true(
   current = checkmate::testClass(seacells[], "dgRMatrix"),
   info = "seacells - correct compressed sparse matrix type"
+)
+
+#### smaller subset ------------------------------------------------------------
+
+seacells_small <- get_seacells_sc(
+  sc_object,
+  seacell_params = params_sc_seacells(
+    n_sea_cells = 50L,
+    k = 15L,
+    min_iter = 5L,
+    convergence_epsilon = 0.001
+  ),
+  cells_to_use = cells_to_use,
+  .verbose = FALSE
+)
+
+seacells_small <- calc_meta_cell_purity(
+  seacells_small,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
+)
+
+right_cell_types <- purrr::map_lgl(
+  seacells_small[[]]$original_cell_idx,
+  function(idx) {
+    types <- original_cell_type[idx]
+    any(types != "cell_type_3")
+  }
+)
+
+expect_true(
+  current = mean(seacells_small[[]]$mc_purity) > 0.75,
+  info = paste(
+    "hgwgnca - similar cell types are being pulled together;",
+    "subsetted version"
+  )
+)
+
+expect_true(
+  current = all(right_cell_types),
+  info = "no unexpected cell types in subsetted version - seacell"
 )
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
