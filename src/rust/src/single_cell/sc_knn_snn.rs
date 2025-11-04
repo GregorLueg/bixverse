@@ -553,7 +553,7 @@ pub fn query_annoy_index(
                 let (neighbors, dists) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
                 if verbose {
                     let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                    if count % 100_000 == 0 {
+                    if count.is_multiple_of(100_000) {
                         println!(" Processed {} / {} cells.", count, n_samples);
                     }
                 }
@@ -569,7 +569,7 @@ pub fn query_annoy_index(
                 let (neighbors, _) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
                 if verbose {
                     let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                    if count % 100_000 == 0 {
+                    if count.is_multiple_of(100_000) {
                         println!(" Processed {} / {} cells.", count, n_samples);
                     }
                 }
@@ -655,7 +655,7 @@ pub fn query_hnsw_index(
 
             if verbose {
                 let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                if count % 100_000 == 0 {
+                if count.is_multiple_of(100_000) {
                     println!(
                         " Processed {} / {} cells.",
                         count.separate_with_underscores(),

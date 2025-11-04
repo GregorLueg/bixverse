@@ -1,10 +1,17 @@
 # test seacell -----------------------------------------------------------------
 
+Sys.setenv(OPENBLAS_NUM_THREADS = "1")
+Sys.setenv(OMP_NUM_THREADS = "1")
+
 rextendr::document()
+
+devtools::load_all()
+
+sessionInfo()
 
 data_dir <- path.expand("~/Desktop/seacell_test/")
 
-sc_object <- single_cell_exp(dir_data = data_dir)
+sc_object <- single_cell_exp(dir_data = tempdir())
 
 h5_path <- path.expand(
   "~/repos/other/SEACells/notebooks/data/cd34_multiome_rna.h5ad"
@@ -20,7 +27,7 @@ sc_object <- load_h5ad(
 
 sc_object <- find_hvg_sc(
   object = sc_object,
-  hvg_no = 1500L,
+  hvg_no = 2000L,
   .verbose = FALSE
 )
 
@@ -42,6 +49,31 @@ sea_cells <- get_seacells_sc(
   )
 )
 
+seacell_result <- fread("/Users/gregor/Desktop/seacell_results.csv")
+
+class(object)
+
+plot(
+  x = seq_len(length(sea_cells@other_data$rss)),
+  y = sea_cells@other_data$rss
+)
+
+
+object = sea_cells
+original_cell_type = seacell_result$celltype
+
+sea_cells <- calc_meta_cell_purity(sea_cells, seacell_result$celltype)
+
+
+internal_results <- data.table(
+  cell_id = sc_object[["index"]],
+  assignment = sea_cells@original_assignment$assignments
+)[, cell_type := seacell_result$celltype]
+
+table(internal_results$assignment)
+
+mclust::adjustedRandIndex(internal_results$assignment, seacell_result$SEACell)
+
 sea_cells@obs_table$no_originating_cells
 
 # > sea_cells@obs_table$no_originating_cells
@@ -55,52 +87,3 @@ sea_cells@obs_table$no_originating_cells
 # [75] 127  80  69  52 128 202  19  30  82 161 169  18  56  62  42  75
 
 rss_vals_wo_pruning <- sea_cells@other_data$rss
-
-
-# test on other data -----------------------------------------------------------
-
-devtools::load_all()
-
-dir_data <- path.expand(
-  "~/Downloads/splitpipe/Mosaic_POC_Combined/all-sample/DGE_unfiltered/"
-)
-
-list.files(dir_data)
-
-sc_object <- single_cell_exp(dir_data = tempdir())
-
-sc_object <- load_mtx(
-  sc_object,
-  sc_mtx_io_param = params_sc_mtx_io(
-    path_mtx = file.path(dir_data, "count_matrix.mtx"),
-    path_obs = file.path(dir_data, "cell_metadata.csv"),
-    path_var = file.path(dir_data, "all_genes.csv"),
-    cells_as_rows = TRUE,
-    has_hdr = TRUE
-  ),
-  sc_qc_param = params_sc_min_quality()
-)
-
-sc_object <- find_hvg_sc(
-  object = sc_object,
-  hvg_no = 2000L,
-  .verbose = TRUE
-)
-
-sc_object <- calculate_pca_sc(
-  object = sc_object,
-  no_pcs = 30L,
-  randomised_svd = TRUE,
-  .verbose = TRUE
-)
-
-sea_cells <- get_seacells_sc(
-  sc_object,
-  seacell_params = params_sc_seacells(
-    n_sea_cells = 1500L,
-    k = 15L,
-    convergence_epsilon = 1e-5,
-    max_fw_iters = 50L,
-    pruning = TRUE
-  )
-)

@@ -386,7 +386,7 @@ pub fn parse_h5_csc_quality<P: AsRef<Path>>(
 
             if verbose {
                 let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
-                if completed % report_interval == 0 || completed == num_chunks {
+                if completed.is_multiple_of(report_interval) || completed == num_chunks {
                     let progress =
                         ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
                     println!(
@@ -856,7 +856,6 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
                                 let cell_data_start = indptr[cell_idx] as usize - data_start;
                                 let cell_data_end = indptr[cell_idx + 1] as usize - data_start;
 
-                                
                                 for local_idx in cell_data_start..cell_data_end {
                                     let gene_idx = chunk_indices[local_idx] as usize;
                                     if gene_idx < shape.1 {
@@ -871,7 +870,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
             if verbose {
                 let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
-                if completed % report_interval == 0 || completed == num_chunks {
+                if completed.is_multiple_of(report_interval) || completed == num_chunks {
                     let progress =
                         ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
                     println!(
@@ -975,7 +974,7 @@ pub fn parse_h5_csr_quality<P: AsRef<Path>>(
 
             if verbose {
                 let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
-                if completed % report_interval == 0 || completed == num_chunks {
+                if completed.is_multiple_of(report_interval) || completed == num_chunks {
                     let progress =
                         ((completed as f64 / num_chunks as f64 * 10.0).round() as usize) * 10;
                     println!(

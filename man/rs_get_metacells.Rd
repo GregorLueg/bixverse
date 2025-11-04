@@ -8,6 +8,8 @@ rs_get_metacells(
   f_path,
   knn_mat,
   embd,
+  cells_to_keep,
+  cells_to_use,
   meta_cell_params,
   target_size,
   seed,
@@ -23,6 +25,13 @@ for the generation of the meta cells. This function expects 0-indices!}
 \item{embd}{Optional numerical matrix. The embedding matrix (for example
 PCA embedding) you wish to use for the generation of the kNN graph that
 is used subsequently for aggregation of the meta cells.}
+
+\item{cells_to_keep}{Optional indices of the cells to keep, i.e., the
+cells used for the generation of the embedding.}
+
+\item{cells_to_use}{Optional indices of cells to use for meta cell
+generation. Useful if you wish to generate meta cells in specific cell
+types.}
 
 \item{meta_cell_params}{A list containing the meta cell parameters.}
 

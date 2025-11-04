@@ -231,7 +231,7 @@ impl MtxReader {
 
                 if verbose {
                     let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
-                    if completed % report_interval == 0 || completed == num_chunks {
+                    if completed.is_multiple_of(report_interval) || completed == num_chunks {
                         let progress = (completed as f64 / num_chunks as f64 * 100.0) as usize;
                         println!(
                             "  Processed {}% of chunks ({}/{})",
@@ -327,7 +327,7 @@ impl MtxReader {
 
                 if verbose {
                     let completed = completed_chunks.fetch_add(1, Ordering::Relaxed) + 1;
-                    if completed % report_interval == 0 || completed == num_chunks {
+                    if completed.is_multiple_of(report_interval) || completed == num_chunks {
                         let progress = (completed as f64 / num_chunks as f64 * 100.0) as usize;
                         println!(
                             "  Processed {}% of chunks ({}/{})",
@@ -465,7 +465,7 @@ impl MtxReader {
             cell_data[new_cell_idx].push((new_gene_idx, value));
 
             lines_read += 1;
-            if verbose && lines_read % report_interval == 0 {
+            if verbose && lines_read.is_multiple_of(report_interval) {
                 let progress =
                     (lines_read as f64 / self.header.total_entries as f64 * 100.0) as usize;
                 println!("  Processed {}% of entries", progress);

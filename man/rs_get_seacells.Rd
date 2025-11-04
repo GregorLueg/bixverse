@@ -4,13 +4,29 @@
 \alias{rs_get_seacells}
 \title{Generate SEACells}
 \usage{
-rs_get_seacells(f_path, embd, seacells_params, target_size, seed, verbose)
+rs_get_seacells(
+  f_path,
+  embd,
+  cells_to_keep,
+  cells_to_use,
+  seacells_params,
+  target_size,
+  seed,
+  verbose
+)
 }
 \arguments{
 \item{f_path}{String. Path to the \code{counts_cells.bin} file.}
 
 \item{embd}{Numerical matrix. The embedding matrix (for example PCA embedding)
 used for the generation of the kNN graph and kernel matrix.}
+
+\item{cells_to_keep}{Optional indices of the cells to keep, i.e., the
+cells used for the generation of the embedding.}
+
+\item{cells_to_use}{Optional indices of cells to use for meta cell
+generation. Useful if you wish to generate meta cells in specific cell
+types.}
 
 \item{seacells_params}{A list containing the SEACells parameters.}
 

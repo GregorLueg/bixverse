@@ -1020,6 +1020,52 @@ where
     }
 }
 
+/// Normalises the rows of a CSR matrix to a sum of 1 (L1 norm)
+///
+/// ### Params
+///
+/// * `csr` - Mutable reference to the CSR matrix (modified in-place)
+#[allow(dead_code)]
+pub fn normalise_csr_rows_l1<T>(csr: &mut CompressedSparseData<T>)
+where
+    T: Clone
+        + Default
+        + Into<f64>
+        + Sync
+        + Add<Output = T>
+        + PartialEq
+        + Copy
+        + Mul<Output = T>
+        + AddAssign
+        + DivAssign,
+    // We also need the `Sum` trait for `iter().sum()`
+    T: std::iter::Sum<T>,
+{
+    assert!(csr.cs_type.is_csr(), "Matrix must be in CSR format");
+
+    let nrows = csr.shape.0;
+
+    for i in 0..nrows {
+        let start = csr.indptr[i];
+        let end = csr.indptr[i + 1];
+        let row_data_slice = &mut csr.data[start..end];
+
+        let row_sum: T = row_data_slice.iter().copied().sum();
+
+        if row_sum.into() > 1e-15 {
+            for val in row_data_slice.iter_mut() {
+                *val /= row_sum;
+            }
+        } else {
+            panic!(
+                "Row {} has sum {}, indicating isolated node",
+                i,
+                row_sum.into()
+            );
+        }
+    }
+}
+
 /// Compute Frobenius norm of sparse matrix
 ///
 /// ### Params

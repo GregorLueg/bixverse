@@ -9,6 +9,7 @@ get_seacells_sc(
   seacell_params = params_sc_seacells(),
   embd_to_use = "pca",
   no_embd_to_use = NULL,
+  cells_to_use = NULL,
   target_size = 1e+05,
   seed = 42L,
   .verbose = TRUE
@@ -50,6 +51,9 @@ relevant if you use \code{"nndescent"}.
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
 use. If \code{NULL} all will be used. Only relevant if you set regenerate_knn to
 \code{TRUE}.}
+
+\item{cells_to_use}{Optional string. Names of the cells to use for the
+generation of the SEACells.}
 
 \item{target_size}{Numeric. The library target size to normalise the meta
 cells to.}
