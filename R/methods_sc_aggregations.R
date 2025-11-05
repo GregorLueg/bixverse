@@ -347,7 +347,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
 #'   number of single cells in the initial dataset to the number of metacells in
 #'   the final dataset)
 #'   \item linkage_dist - String. Which type of distance metric to use for the
-#'   linkage. Defaults to `"average"`.
+#'   linkage. Defaults to `"complete"`.
 #'   \item k - Number of neighbours for the kNN search. Only relevant if you
 #'   set regenerate_knn to `TRUE`.
 #'   \item knn_method - String. Which kNN algorithm to use. One of
