@@ -15,6 +15,8 @@
 #' @param meta_cell_data Named list. Output of meta-cell generation Rust
 #' functions. Will contain the aggregated raw and normalised counts, plus
 #' additional information on the origin of the meta cells.
+#' @param var_data data.table with the variable/feature informations.
+#' @param meta_cell_method String describing the origin of the metacell.
 #'
 #' @section Properties:
 #' \describe{
@@ -53,7 +55,7 @@ meta_cells <- S7::new_class(
       names(var_data),
       must.include = c("gene_idx", "gene_id")
     )
-    checkmate::qassert(meta_cell_method, "S+")
+    checkmate::qassert(meta_cell_method, "S1")
 
     # function body
     n_digits <- nchar(as.character(meta_cell_data$assignments$n_metacells))

@@ -8,7 +8,8 @@ use std::time::Instant;
 
 use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
-// use crate::utils::traits::*;
+use crate::core::graph::community_detection::*;
+use crate::core::graph::knn::*;
 
 /////////////
 // Helpers //
@@ -123,6 +124,26 @@ pub fn metacells_to_assignments(metacells: &[&[usize]], n_cells: usize) -> Vec<O
 
     assignments
 }
+
+// /// Transform the community memberships to metacells
+// ///
+// /// ### Params
+// ///
+// /// * `membership` - Community membership vector
+// /// * `k` - Number of member cells
+// ///
+// /// ### Returns
+// ///
+// /// The community to metacell assignements
+// pub fn communities_to_metacells(membership: &[usize], k: usize) -> Vec<Vec<usize>> {
+//     let mut metacells = vec![Vec::new(); k];
+//     for (cell_id, &metacell_id) in membership.iter().enumerate() {
+//         if metacell_id < k {
+//             metacells[metacell_id].push(cell_id);
+//         }
+//     }
+//     metacells
+// }
 
 /// Convert assignments to R-friendly list format with unassigned cell handling
 ///
@@ -460,6 +481,174 @@ pub fn identify_meta_cells(
         .iter()
         .map(|&center| nn_map[center].as_slice())
         .collect()
+}
+
+///////////////
+// SuperCell //
+///////////////
+
+/// Structure for the SuperCell parameters
+///
+/// ### Fields
+///
+/// **SuperCell params**
+///
+/// * `walk_length` - Walk length for the Walktrap algorithm
+/// * `graining_factor` - Graining level of data (proportion of number of single
+///   cells in the initial dataset to the number of metacells in the final
+///   dataset)
+/// * `linkage_dist` - Which type of distance metric to use for the linkage.
+///
+/// **General kNN params**
+///
+/// * `k` - Number of neighbours for the kNN algorithm
+/// * `knn_method` - Method for kNN graph generation. One of `"hnsw"`, `"annoy"`
+///   or `"nndescent"`
+/// * `ann_dist` - Distance metric for approximate nearest neighbour search.
+///   One of `"cosine"` or `"euclidean"`
+///
+/// **Annoy**
+///
+/// * `n_trees` - Number of trees for index generation
+/// * `search_budget` - Search budget during querying
+///
+/// **NN Descent**
+///
+/// * `nn_max_iter` - Maximum iterations for the algorithm
+/// * `rho` - Sampling rate for the algorithm
+/// * `delta` - Early termination criterion
+#[derive(Clone, Debug)]
+pub struct SuperCellParams {
+    // supercell params
+    pub walk_length: usize,
+    pub graining_factor: f64,
+    pub linkage_dist: String,
+    // general knn params
+    pub k: usize,
+    pub knn_method: String,
+    pub ann_dist: String,
+    // annoy params
+    pub n_trees: usize,
+    pub search_budget: usize,
+    // nn descent params
+    pub nn_max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
+}
+
+impl SuperCellParams {
+    /// Generate the SuperCellParams from an R list
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The R list with the parameters
+    ///
+    /// ### Return
+    ///
+    /// The `SuperCellParams` structure
+    pub fn from_r_list(r_list: List) -> Self {
+        let params = r_list.into_hashmap();
+
+        // supercell
+        let walk_length = params
+            .get("walk_length")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(3) as usize;
+
+        let graining_factor = params
+            .get("graining_factor")
+            .and_then(|v| v.as_real())
+            .unwrap_or(50.0);
+
+        let linkage_dist = params
+            .get("linkage_dist")
+            .and_then(|v| v.as_str())
+            .unwrap_or("average")
+            .to_string();
+
+        // general knn
+        let k = params.get("k").and_then(|v| v.as_integer()).unwrap_or(25) as usize;
+
+        let knn_method = params
+            .get("knn_method")
+            .and_then(|v| v.as_str())
+            .unwrap_or("annoy")
+            .to_string();
+
+        let ann_dist = params
+            .get("ann_dist")
+            .and_then(|v| v.as_str())
+            .unwrap_or("cosine")
+            .to_string();
+
+        // annoy
+        let n_trees = params
+            .get("n_trees")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let search_budget = params
+            .get("search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        // nn descent
+        let nn_max_iter = params
+            .get("nn_max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        let rho = params.get("rho").and_then(|v| v.as_real()).unwrap_or(1.0) as f32;
+
+        let delta = params
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
+
+        Self {
+            walk_length,
+            graining_factor,
+            linkage_dist,
+            k,
+            knn_method,
+            ann_dist,
+            n_trees,
+            search_budget,
+            nn_max_iter,
+            rho,
+            delta,
+        }
+    }
+}
+
+/// SuperCell algorithm
+///
+/// ### Params
+///
+/// * `knn_mat` - The kNN matrix
+/// * `walk_length` - Walk length for the Walktrap algorithm
+/// * `no_meta_cells` - Number of communities, i.e., metacells to identify
+/// * `linkage_dist` - The distance metric to use for the linkage.
+/// * `verbose` - Controls the verbosity of the function
+///
+/// ### Returns
+///
+/// Membership of included cells to MetaCells.
+pub fn supercell(
+    knn_mat: &[Vec<usize>],
+    walk_length: usize,
+    no_meta_cells: usize,
+    linkage_dist: &str,
+    verbose: bool,
+) -> Vec<usize> {
+    let knn_graph = knn_to_sparse_graph(knn_mat);
+    walktrap_sparse_graph(
+        &knn_graph,
+        walk_length,
+        no_meta_cells,
+        linkage_dist,
+        verbose,
+    )
 }
 
 ////////////////////

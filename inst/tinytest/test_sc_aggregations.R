@@ -238,7 +238,7 @@ seacells <- calc_meta_cell_purity(
 # much better than hdwgcna!
 expect_true(
   current = mean(seacells[[]]$mc_purity) > 0.85,
-  info = "similar cell types are being pulled together"
+  info = "seacell - similar cell types are being pulled together"
 )
 
 expect_true(
@@ -298,5 +298,110 @@ expect_true(
   current = all(right_cell_types),
   info = "no unexpected cell types in subsetted version - seacell"
 )
+
+### supercells -----------------------------------------------------------------
+
+graining_factor <- 20
+
+supercells <- get_supercells_sc(
+  sc_object,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = graining_factor,
+    k = 10L
+  ),
+  regenerate_knn = TRUE,
+  .verbose = FALSE
+)
+
+expected_meta_cells <- ceiling(sc_object@dims[1] / graining_factor)
+
+expect_true(
+  current = checkmate::testDataTable(
+    supercells[[]],
+    nrows = expected_meta_cells
+  ),
+  info = "supercells obs correct - correct dimensions and type"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(seacells[[]]),
+    must.include = c(
+      "meta_cell_idx",
+      "meta_cell_id",
+      "no_originating_cells",
+      "original_cell_idx"
+    )
+  ),
+  info = "supercells obs correct - correct columns"
+)
+
+supercells <- calc_meta_cell_purity(
+  supercells,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
+)
+
+expect_true(
+  current = mean(supercells[[]]$mc_purity) > 0.85,
+  info = "supercell - similar cell types are being pulled together"
+)
+
+expect_true(
+  current = checkmate::testDataTable(
+    get_sc_var(supercells)
+  ),
+  info = "supercell meta cells var correct"
+)
+
+expect_equal(
+  current = dim(supercells[]),
+  target = c(expected_meta_cells, 81),
+  info = "supercell - correct return dimensions for the raw counts"
+)
+
+expect_true(
+  current = checkmate::testClass(supercells[], "dgRMatrix"),
+  info = "supercell - correct compressed sparse matrix type"
+)
+
+#### smaller subset ------------------------------------------------------------
+
+supercell_small <- get_supercells_sc(
+  sc_object,
+  sc_supercell_params = params_sc_supercell(
+    graining_factor = graining_factor,
+    k = 10L
+  ),
+  cells_to_use = cells_to_use,
+  .verbose = FALSE
+)
+
+supercell_small <- calc_meta_cell_purity(
+  supercell_small,
+  original_cell_type = unlist(sc_object[["cell_grp"]])
+)
+
+right_cell_types <- purrr::map_lgl(
+  supercell_small[[]]$original_cell_idx,
+  function(idx) {
+    types <- original_cell_type[idx]
+    any(types != "cell_type_3")
+  }
+)
+
+expect_true(
+  current = mean(supercell_small[[]]$mc_purity) > 0.75,
+  info = paste(
+    "supercell - similar cell types are being pulled together;",
+    "subsetted version"
+  )
+)
+
+expect_true(
+  current = all(right_cell_types),
+  info = "no unexpected cell types in subsetted version - supercell"
+)
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

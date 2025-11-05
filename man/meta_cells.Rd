@@ -10,6 +10,10 @@ meta_cells(meta_cell_data, var_data, meta_cell_method)
 \item{meta_cell_data}{Named list. Output of meta-cell generation Rust
 functions. Will contain the aggregated raw and normalised counts, plus
 additional information on the origin of the meta cells.}
+
+\item{var_data}{data.table with the variable/feature informations.}
+
+\item{meta_cell_method}{String describing the origin of the metacell.}
 }
 \value{
 Returns the \code{meta_cells} class for further operations.
