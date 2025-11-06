@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use thousands::Separable;
@@ -13,7 +13,7 @@ use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
 use crate::utils::general::flatten_vector;
 use crate::utils::r_rust_interface::list_to_sparse_matrix;
-use crate::utils::traits::F16;
+use crate::utils::traits::*;
 
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
 // classes. This will have to be done manually in R... Documentation
@@ -210,14 +210,12 @@ fn parse_count_type(s: &str) -> Option<AssayType> {
 /// * `f_path_genes` - Path to the .bin file for the genes.
 /// * `n_cells` - No of cells represented in the data.
 /// * `n_genes` - No of genes represented in the data.
-/// * `cell_mask` - HashSet for which cells to keep.
 #[extendr]
 struct SingeCellCountData {
     pub f_path_cells: String,
     pub f_path_genes: String,
     pub n_cells: usize,
     pub n_genes: usize,
-    pub cell_mask: FxHashSet<u32>,
 }
 
 #[extendr]
@@ -234,7 +232,6 @@ impl SingeCellCountData {
             f_path_genes,
             n_cells: usize::default(),
             n_genes: usize::default(),
-            cell_mask: FxHashSet::default(),
         }
     }
 
@@ -507,7 +504,7 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `indices` - The cell indices which to return
+    /// * `indices` - The cell indices which to return (1-indexed.)
     /// * `assay` - Shall the raw or norm counts be returned
     ///
     /// ### Returns
@@ -933,7 +930,7 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `indices` - The gene indices which to return
+    /// * `indices` - The gene indices which to return (1-indexed.)
     /// * `assay` - Shall the raw or norm counts be returned
     ///
     /// ### Returns
@@ -982,17 +979,6 @@ impl SingeCellCountData {
         )
     }
 
-    /// Add cell indices
-    ///
-    /// ### Param
-    ///
-    /// * `cell_idx` - The cell indices to keep
-    pub fn add_cells_to_keep(&mut self, cell_idx: Vec<i32>) {
-        let cell_idx: Vec<u32> = cell_idx.into_iter().map(|x| x as u32).collect();
-        let cell_idx_set: FxHashSet<u32> = cell_idx.into_iter().collect();
-        self.cell_mask = cell_idx_set;
-    }
-
     /// Set cell numbers and genes
     ///
     /// ### Params
@@ -1004,6 +990,33 @@ impl SingeCellCountData {
         let header = reader.get_header();
         self.n_cells = header.total_cells;
         self.n_genes = header.total_genes;
+    }
+
+    /// Helper function to get the number of cells expressing a gene
+    ///
+    /// ### Params
+    ///
+    /// * `gene_indices` - Optional gene indices (1-indexed!). If None, returns
+    ///   all genes.
+    ///
+    /// ### Returns
+    ///
+    /// A vector of NNZ for the genes.
+    pub fn get_nnz_genes(&mut self, gene_indices: Option<&[i32]>) -> Vec<i32> {
+        let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
+
+        let nnz = match gene_indices {
+            Some(indices) => {
+                let gene_indices = indices
+                    .iter()
+                    .map(|&x| (x - 1) as usize)
+                    .collect::<Vec<usize>>();
+                reader.read_gene_nnz(&gene_indices)
+            }
+            None => reader.get_all_gene_nnz(),
+        };
+
+        nnz.r_int_convert()
     }
 }
 

@@ -113,6 +113,66 @@ expect_warning(
 
 ## gene set proportions --------------------------------------------------------
 
+### top proportion n genes -----------------------------------------------------
+
+top_n <- c(5L, 10L, 25L)
+
+proportions_in_r <- sapply(top_n, function(x) {
+  apply(as.matrix(counts_filtered), 1, function(row) {
+    sum(sort(as.matrix(row), decreasing = TRUE)[1:x])
+  }) /
+    rowSums(as.matrix(counts_filtered))
+})
+
+sc_object <- top_genes_perc_sc(sc_object, top_n_vals = top_n, .verbose = FALSE)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_5_genes_percentage"]]),
+  target = proportions_in_r[, 1],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_10_genes_percentage"]]),
+  target = proportions_in_r[, 2],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_25_genes_percentage"]]),
+  target = proportions_in_r[, 3],
+  tolerance = 1e-7,
+)
+
+#### streaming -----------------------------------------------------------------
+
+sc_object <- top_genes_perc_sc(
+  sc_object,
+  top_n_vals = top_n,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_5_genes_percentage"]]),
+  target = proportions_in_r[, 1],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_10_genes_percentage"]]),
+  target = proportions_in_r[, 2],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_25_genes_percentage"]]),
+  target = proportions_in_r[, 3],
+  tolerance = 1e-7,
+)
+
+### gene set -------------------------------------------------------------------
+
 gs_of_interest <- list(
   gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
   gs_2 = c("gene_096", "gene_097", "gene_100")
@@ -156,7 +216,7 @@ expect_true(
   info = "overwriting of obs data works"
 )
 
-### streaming ------------------------------------------------------------------
+#### streaming -----------------------------------------------------------------
 
 sc_object <- gene_set_proportions_sc(
   sc_object,

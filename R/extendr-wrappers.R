@@ -2062,6 +2062,51 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, mnn_p
 #' @export
 rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs)
 
+#' Detect Doublets via BoostClassifier (in Rust)
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+#' to include in this analysis.
+#' @param boost_params List. Parameter list, see
+#' [bixverse::params_boost()].
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity
+#' @param streaming Boolean. Shall the data be streamed for the HVG
+#' calculations.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'  a doublet for the observed cells.
+#'  \item voting_avg - Voting average across the different iterations.
+#' }
+#'
+#' @export
+rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
+
+#' Calculates the cumulative proportion of the top X genes
+#'
+#' @description
+#' This calculates the cumulative proportion of the top X genes, for example
+#' Top10, 50, 100. High values here indicate low complexity samples, i.e.,
+#' bad quality.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param top_n_vals Integer. The different Top X to look for.
+#' @param cell_indices Integer. The indices of the cells for which to calculate
+#' the proportions. (0-indexed!)
+#' @param streaming Boolean. Shall the data be worked on in chunks.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the cumulative percentages of the Top X genes defined
+#' as in `top_n_vals`.
+#'
+#' @export
+rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_top_genes_perc, f_path_cell, top_n_vals, cell_indices, streaming, verbose)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description
@@ -2223,31 +2268,6 @@ rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, em
 #'
 #' @export
 rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
-
-#' Detect Doublets via BoostClassifier (in Rust)
-#'
-#' @param f_path_gene String. Path to the `counts_genes.bin` file.
-#' @param f_path_cell String. Path to the `counts_cells.bin` file.
-#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
-#' to include in this analysis.
-#' @param boost_params List. Parameter list, see
-#' [bixverse::params_boost()].
-#' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity
-#' @param streaming Boolean. Shall the data be streamed for the HVG
-#' calculations.
-#'
-#' @returns A list with
-#' \itemize{
-#'  \item predicted_doublets - Boolean vector indicating which observed cells
-#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
-#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
-#'  a doublet for the observed cells.
-#'  \item voting_avg - Voting average across the different iterations.
-#' }
-#'
-#' @export
-rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
 
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
@@ -2444,9 +2464,9 @@ SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 
-SingeCellCountData$add_cells_to_keep <- function(cell_idx) invisible(.Call(wrap__SingeCellCountData__add_cells_to_keep, self, cell_idx))
-
 SingeCellCountData$set_from_file <- function() invisible(.Call(wrap__SingeCellCountData__set_from_file, self))
+
+SingeCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingeCellCountData__get_nnz_genes, self, gene_indices)
 
 #' @export
 `$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }

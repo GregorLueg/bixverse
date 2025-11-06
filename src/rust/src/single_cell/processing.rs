@@ -11,9 +11,9 @@ use crate::core::base::pca_svd::{randomised_svd_f32, RandomSvdResults};
 use crate::core::data::sparse_io::*;
 use crate::utils::traits::*;
 
-////////////////
-// Structures //
-////////////////
+//////////////////
+// Cell Quality //
+//////////////////
 
 /// Structure to store QC information on cells
 ///
@@ -111,21 +111,157 @@ impl MinCellQuality {
     }
 }
 
-/// Structure that stores HVG information
+///////////////////////////////////////////
+// QC metrics based on cumulative counts //
+///////////////////////////////////////////
+
+/// Calculates the cumulative proportion of the top X genes
 ///
-/// ### Fields
+/// Helper function to assess cell quality/complexity by measuring how much
+/// of the total counts are concentrated in the most highly expressed genes.
 ///
-/// * `mean` - Mean expression of the gene.
-/// * `var` - Detected variance of the gene.
-/// * `var_exp` - Expected variance of the gene.
-/// * `var_std` - Standardised variance of the gene.
-#[derive(Clone, Debug)]
-pub struct HvgRes {
-    pub mean: Vec<f64>,
-    pub var: Vec<f64>,
-    pub var_exp: Vec<f64>,
-    pub var_std: Vec<f64>,
+/// ### Params
+///
+/// * `f_path` - File path to the binarised format that contains the cell-based
+///   data
+/// * `top_n_values` - Slice of top N values to calculate (e.g., &[10, 50, 100])
+/// * `cell_indices` - Vector of cell positions to use.
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// A vector of vectors with the proportions. Outer vector corresponds to each
+/// top_n value, inner vector to each cell.
+pub fn get_top_genes_perc(
+    f_path: &str,
+    top_n_values: &[usize],
+    cell_indices: &[usize],
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_reading = Instant::now();
+
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+
+    let cell_chunks = reader.read_cells_parallel(cell_indices);
+
+    let end_read = start_reading.elapsed();
+
+    if verbose {
+        println!("Load in data: {:.2?}", end_read);
+    }
+
+    let start_calculations = Instant::now();
+
+    let mut results: Vec<Vec<f32>> = Vec::with_capacity(top_n_values.len());
+
+    for &top_n in top_n_values {
+        let proportions: Vec<f32> = cell_chunks
+            .par_iter()
+            .map(|chunk| {
+                let mut gene_counts: Vec<u16> = chunk.data_raw.clone();
+
+                if gene_counts.len() <= top_n {
+                    1.0
+                } else {
+                    gene_counts.select_nth_unstable_by(top_n, |a, b| b.cmp(a));
+                    let top_sum = gene_counts[..top_n].iter().map(|&x| x as f32).sum::<f32>();
+                    top_sum / chunk.library_size as f32
+                }
+            })
+            .collect();
+
+        results.push(proportions);
+    }
+
+    let end_calculations = start_calculations.elapsed();
+
+    if verbose {
+        println!(
+            "Finished the top genes proportion calculations: {:.2?}",
+            end_calculations
+        );
+    }
+
+    results
 }
+
+/// Calculates the cumulative proportion of the top X genes
+///
+/// Streaming version that reads cells in batches to avoid memory pressure.
+///
+/// ### Params
+///
+/// * `f_path` - File path to the binarised format that contains the cell-based
+///   data
+/// * `top_n_values` - Slice of top N values to calculate (e.g., &[10, 50, 100])
+/// * `cell_indices` - Vector of cell positions to use.
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// A vector of vectors with the proportions. Outer vector corresponds to each
+/// top_n value, inner vector to each cell.
+pub fn get_top_genes_perc_streaming(
+    f_path: &str,
+    top_n_values: &[usize],
+    cell_indices: &[usize],
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_total = Instant::now();
+
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+
+    let mut results: Vec<Vec<f32>> = vec![Vec::new(); top_n_values.len()];
+
+    const CELL_BATCH_SIZE: usize = 100000;
+
+    for batch_start in (0..cell_indices.len()).step_by(CELL_BATCH_SIZE) {
+        let batch_end = (batch_start + CELL_BATCH_SIZE).min(cell_indices.len());
+        let cell_batch = &cell_indices[batch_start..batch_end];
+
+        let cell_chunks = reader.read_cells_parallel(cell_batch);
+
+        for (top_idx, &top_n) in top_n_values.iter().enumerate() {
+            let proportions: Vec<f32> = cell_chunks
+                .par_iter()
+                .map(|chunk| {
+                    let mut gene_counts: Vec<u16> = chunk.data_raw.clone();
+
+                    if gene_counts.len() <= top_n {
+                        1.0
+                    } else {
+                        gene_counts.select_nth_unstable_by(top_n, |a, b| b.cmp(a));
+                        let top_sum = gene_counts[..top_n].iter().map(|&x| x as f32).sum::<f32>();
+                        top_sum / chunk.library_size as f32
+                    }
+                })
+                .collect();
+
+            results[top_idx].extend(proportions);
+        }
+
+        if verbose && batch_start % (CELL_BATCH_SIZE * 5) == 0 {
+            let progress = ((batch_start + 1) as f32 / cell_indices.len() as f32) * 100.0;
+            println!(
+                " Reading cells and calculating proportions: {:.1}%",
+                progress
+            );
+        }
+    }
+
+    let end_total = start_total.elapsed();
+
+    if verbose {
+        println!(
+            "Finished the top genes proportion calculations: {:.2?}",
+            end_total
+        );
+    }
+
+    results
+}
+
+
 
 ///////////////////////////////
 // QC metrics based on genes //
@@ -283,6 +419,22 @@ pub fn get_gene_set_perc_streaming(
 /////////
 // HVG //
 /////////
+
+/// Structure that stores HVG information
+///
+/// ### Fields
+///
+/// * `mean` - Mean expression of the gene.
+/// * `var` - Detected variance of the gene.
+/// * `var_exp` - Expected variance of the gene.
+/// * `var_std` - Standardised variance of the gene.
+#[derive(Clone, Debug)]
+pub struct HvgRes {
+    pub mean: Vec<f64>,
+    pub var: Vec<f64>,
+    pub var_exp: Vec<f64>,
+    pub var_std: Vec<f64>,
+}
 
 /// Enum for the different methods
 pub enum HvgMethod {
