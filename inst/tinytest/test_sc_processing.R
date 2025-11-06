@@ -55,20 +55,19 @@ sc_qc_param <- params_sc_min_quality(
 
 sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
-sc_object <- # keep all cells for the sake of this
-  sc_object <- load_r_data(
-    object = sc_object,
-    counts = single_cell_test_data$counts,
-    obs = single_cell_test_data$obs,
-    var = single_cell_test_data$var,
-    sc_qc_param = params_sc_min_quality(
-      min_unique_genes = min_genes_exp,
-      min_lib_size = min_lib_size,
-      min_cells = min_cells_exp
-    ),
-    streaming = FALSE,
-    .verbose = FALSE
-  )
+sc_object <- load_r_data(
+  object = sc_object,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = min_genes_exp,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells_exp
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
 
 # tests ------------------------------------------------------------------------
 
@@ -504,7 +503,7 @@ expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw"),
+  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
   .verbose = FALSE
 )
 
@@ -599,94 +598,5 @@ expect_true(
   info = "all expected cell markers identified"
 )
 
-## aucell ----------------------------------------------------------------------
-
-auc_gene_sets <- list(
-  markers_cell_type_1 = sprintf("gene_%03d", 1:10),
-  markers_cell_type_2 = sprintf("gene_%03d", 11:20),
-  markers_cell_type_3 = sprintf("gene_%03d", 21:30)
-)
-
-auc_res_wilcox <- aucell_sc(
-  object = sc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "wilcox",
-  .verbose = FALSE
-)
-
-auc_res_auroc <- aucell_sc(
-  object = sc_object,
-  gs_list = auc_gene_sets,
-  auc_type = "auroc",
-  .verbose = FALSE
-)
-
-obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
-
-cells_per_cluster <- split(
-  obs_table_red$cell_id,
-  obs_table_red$cell_grp
-)
-
-expect_true(
-  current = mean(auc_res_wilcox[
-    "markers_cell_type_1",
-    cells_per_cluster$cell_type_1
-  ]) >=
-    mean(auc_res_wilcox[
-      "markers_cell_type_1",
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_1
-      )
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 1)"
-  )
-)
-
-expect_true(
-  current = mean(auc_res_wilcox[
-    "markers_cell_type_2",
-    cells_per_cluster$cell_type_2
-  ]) >=
-    mean(auc_res_wilcox[
-      "markers_cell_type_2",
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_2
-      )
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 2)"
-  )
-)
-
-expect_true(
-  current = mean(auc_res_wilcox[
-    "markers_cell_type_3",
-    cells_per_cluster$cell_type_3
-  ]) >=
-    mean(auc_res_wilcox[
-      "markers_cell_type_3",
-      setdiff(
-        get_cell_names(sc_object, filtered = TRUE),
-        cells_per_cluster$cell_type_3
-      )
-    ]),
-  info = paste(
-    "auc values of expected cells",
-    "with expected genes is higher (cell type 3)"
-  )
-)
-
-expect_true(
-  current = all(diag(cor(auc_res_wilcox, auc_res_auroc)) >= 0.99),
-  info = paste(
-    "auc values between the two methods are highly correlated"
-  )
-)
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

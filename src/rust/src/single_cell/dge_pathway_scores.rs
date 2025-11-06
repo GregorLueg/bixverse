@@ -1,3 +1,4 @@
+use extendr_api::List;
 use rayon::prelude::*;
 use std::time::Instant;
 
@@ -5,18 +6,9 @@ use crate::core::base::stats::{calc_fdr, z_scores_to_pval};
 use crate::core::data::sparse_io::*;
 use crate::single_cell::fast_ranking::rank_csr_chunk_vec;
 
-///////////
-// Enums //
-///////////
-
-/// Enum describing the type of AUC to calculate
-#[derive(Clone, Debug)]
-enum AucType {
-    /// AUC based on the Mann-Whitney statistic
-    MannWhitney,
-    /// AUC based on the traditional AUC/AUROC calculation
-    ClassicalAuc,
-}
+/////////
+// DGE //
+/////////
 
 ////////////////
 // Structures //
@@ -110,92 +102,9 @@ fn mann_whitney_u_test(ranks1: &[f32], ranks2: &[f32]) -> f64 {
     (mean - u1) / variance.sqrt()
 }
 
-/// Parse the desired AUC type
-///
-/// ### Params
-///
-/// * `s` String specifying the desired AUC type.
-///
-/// ### Return
-///
-/// The Option of the `AucType`
-fn parse_auc_type(s: &str) -> Option<AucType> {
-    match s.to_lowercase().as_str() {
-        "auroc" => Some(AucType::ClassicalAuc),
-        "wilcox" => Some(AucType::MannWhitney),
-        _ => None,
-    }
-}
-
-/// Calculate AUC based on ranks and gene set indices (Mann-Whitney version)
-///
-/// This uses the Mann Whitney statistic under the hood and calculates how
-/// active the gene set is over a random gene set. Question asked:
-/// "Do genes in my set rank higher than genes not in my set?"
-///
-/// ### Params
-///
-/// * `ranks` - The within cell ranked data.
-/// * `gene_set` - Indices of the members of this gene set.
-///
-/// ### Returns
-///
-/// AUC for this gene set based on the Mann Whitney statistc.
-fn calculate_auc_per_cell_mw(ranks: &[f32], gene_set: &[usize]) -> f32 {
-    let n_genes = ranks.len();
-    let n_in_set = gene_set.len();
-    let n_not_in_set = n_genes - n_in_set;
-
-    // Sum of ranks for genes in the set
-    let rank_sum: f32 = gene_set.iter().map(|&idx| ranks[idx]).sum();
-
-    // U statistic
-    let u = rank_sum - (n_in_set * (n_in_set + 1)) as f32 / 2.0;
-
-    // Convert to AUC
-    u / (n_in_set * n_not_in_set) as f32
-}
-
-/// Calculate AUC based on ranks and gene set indices (classical AUC)
-///
-/// This function uses a more classical appraoch of the AUC calculations and
-/// is more top-heavy sensitive and can be for example used for marker gene
-/// detection. Question asked: "How enriched is my gene set at the top of the
-/// ranking?"
-///
-/// ### Params
-///
-/// * `ranks` - The within cell ranked data.
-/// * `gene_set` - Indices of the members of this gene set.
-///
-/// ### Returns
-///
-/// AUC for this gene set based on the Mann Whitney statistc.
-fn calculate_auc_for_cell_auroc(ranks: &[f32], gene_set: &[usize]) -> f32 {
-    let n_genes = ranks.len();
-    let mut gene_set_ranks: Vec<f32> = gene_set.iter().map(|&idx| ranks[idx]).collect();
-
-    gene_set_ranks.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-    // Calculate AUC: sum of (rank_position - expected_position)
-    let n_genes_in_set = gene_set_ranks.len() as f32;
-    let auc: f32 = gene_set_ranks
-        .iter()
-        .enumerate()
-        .map(|(i, &rank)| {
-            let expected_rank = (i + 1) as f32 * n_genes as f32 / n_genes_in_set;
-            rank - expected_rank
-        })
-        .sum();
-
-    // Normalize
-    let max_auc = n_genes_in_set * (n_genes as f32 - n_genes_in_set / 2.0);
-    auc / max_auc
-}
-
-////////////////////
-// Main functions //
-////////////////////
+//////////
+// Main //
+/////////
 
 /// Get differential expression based on Mann-Whitney
 ///
@@ -323,6 +232,114 @@ pub fn calculate_dge_grps_mann_whitney(
     })
 }
 
+////////////
+// AUCell //
+////////////
+
+///////////
+// Enums //
+///////////
+
+/// Enum describing the type of AUC to calculate
+#[derive(Clone, Debug)]
+enum AucType {
+    /// AUC based on the Mann-Whitney statistic
+    MannWhitney,
+    /// AUC based on the traditional AUC/AUROC calculation
+    ClassicalAuc,
+}
+
+/// Parse the desired AUC type
+///
+/// ### Params
+///
+/// * `s` String specifying the desired AUC type.
+///
+/// ### Return
+///
+/// The Option of the `AucType`
+fn parse_auc_type(s: &str) -> Option<AucType> {
+    match s.to_lowercase().as_str() {
+        "auroc" => Some(AucType::ClassicalAuc),
+        "wilcox" => Some(AucType::MannWhitney),
+        _ => None,
+    }
+}
+
+/////////////
+// Helpers //
+/////////////
+
+/// Calculate AUC based on ranks and gene set indices (Mann-Whitney version)
+///
+/// This uses the Mann Whitney statistic under the hood and calculates how
+/// active the gene set is over a random gene set. Question asked:
+/// "Do genes in my set rank higher than genes not in my set?"
+///
+/// ### Params
+///
+/// * `ranks` - The within cell ranked data.
+/// * `gene_set` - Indices of the members of this gene set.
+///
+/// ### Returns
+///
+/// AUC for this gene set based on the Mann Whitney statistc.
+fn calculate_auc_per_cell_mw(ranks: &[f32], gene_set: &[usize]) -> f32 {
+    let n_genes = ranks.len();
+    let n_in_set = gene_set.len();
+    let n_not_in_set = n_genes - n_in_set;
+
+    // Sum of ranks for genes in the set
+    let rank_sum: f32 = gene_set.iter().map(|&idx| ranks[idx]).sum();
+
+    // U statistic
+    let u = rank_sum - (n_in_set * (n_in_set + 1)) as f32 / 2.0;
+
+    // Convert to AUC
+    u / (n_in_set * n_not_in_set) as f32
+}
+
+/// Calculate AUC based on ranks and gene set indices (classical AUC)
+///
+/// This function uses a more classical appraoch of the AUC calculations and
+/// is more top-heavy sensitive and can be for example used for marker gene
+/// detection. Question asked: "How enriched is my gene set at the top of the
+/// ranking?"
+///
+/// ### Params
+///
+/// * `ranks` - The within cell ranked data.
+/// * `gene_set` - Indices of the members of this gene set.
+///
+/// ### Returns
+///
+/// AUC for this gene set based on the Mann Whitney statistc.
+fn calculate_auc_for_cell_auroc(ranks: &[f32], gene_set: &[usize]) -> f32 {
+    let n_genes = ranks.len();
+    let mut gene_set_ranks: Vec<f32> = gene_set.iter().map(|&idx| ranks[idx]).collect();
+
+    gene_set_ranks.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    // Calculate AUC: sum of (rank_position - expected_position)
+    let n_genes_in_set = gene_set_ranks.len() as f32;
+    let auc: f32 = gene_set_ranks
+        .iter()
+        .enumerate()
+        .map(|(i, &rank)| {
+            let expected_rank = (i + 1) as f32 * n_genes as f32 / n_genes_in_set;
+            rank - expected_rank
+        })
+        .sum();
+
+    // Normalize
+    let max_auc = n_genes_in_set * (n_genes as f32 - n_genes_in_set / 2.0);
+    auc / max_auc
+}
+
+//////////
+// Main //
+//////////
+
 /// Calculate AUCell
 ///
 /// Function to calculate AUC values for gene sets on a per gene set basis.
@@ -335,7 +352,9 @@ pub fn calculate_dge_grps_mann_whitney(
 ///
 /// * `f_path` -  File path to the cell-based binary file.
 /// * `gene_sets` - Slice of Vecs indicating the indices of the gene sets
+/// * `cells_to_keep` - Vector of indices with the cells to keep.
 /// * `auc_type` - String. One of `"auroc"` or `"wilcox`
+/// * `verbose` - Controls verbosity
 ///
 /// ### Returns
 ///
@@ -408,7 +427,9 @@ pub fn calculate_aucell(
 ///
 /// * `f_path` -  File path to the cell-based binary file.
 /// * `gene_sets` - Slice of Vecs indicating the indices of the gene sets
+/// * `cells_to_keep` - Vector of indices with the cells to keep.
 /// * `auc_type` - String. One of `"auroc"` or `"wilcox`
+/// * `verbose` - Boolean. Controls the verbosity
 ///
 /// ### Returns
 ///
@@ -462,4 +483,210 @@ pub fn calculate_aucell_streaming(
     }
 
     Ok(all_results)
+}
+
+////////////
+// VISION //
+////////////
+
+/// Structure to store the indices of the SignatureGenes
+///
+/// ### Fields
+///
+/// * `positive` - The gene indices of the positive genes
+/// * `negative` - The gene indices of the negative genes
+#[derive(Clone, Debug)]
+pub struct SignatureGenes {
+    pub positive: Vec<usize>,
+    pub negative: Vec<usize>,
+}
+
+impl SignatureGenes {
+    /// Generate a SignatureGenes from an R list
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - An R list that is expected to have `"pos"` and `"neg"` with
+    ///   0-index positions of the gene for this gene set.
+    pub fn from_r_list(r_list: List) -> Self {
+        let r_list = r_list.into_hashmap();
+
+        let positive: Vec<usize> = r_list
+            .get("pos")
+            .and_then(|v| v.as_integer_vector())
+            .unwrap_or_default()
+            .iter()
+            .map(|x| *x as usize)
+            .collect();
+
+        let negative: Vec<usize> = r_list
+            .get("neg")
+            .and_then(|v| v.as_integer_vector())
+            .unwrap_or_default()
+            .iter()
+            .map(|x| *x as usize)
+            .collect();
+
+        Self { positive, negative }
+    }
+}
+
+/// Calculate VISION signature scores for a single cell
+///
+/// ### Params
+///
+/// * `cell` - The CsrCellChunk
+/// * `signatures` - Slice of `SignatureGenes` to calculate the scores for
+/// * `total_genes` - Total number of represented genes
+///
+/// ### Returns
+///
+/// A Vec<f32> with a score for each of the `SignatureGenes` that were supplied
+pub fn calculate_vision_scores_for_cell(
+    cell: &CsrCellChunk,
+    signatures: &[SignatureGenes],
+    total_genes: usize,
+) -> Vec<f32> {
+    // helper
+    let get_expr = |gene_idx: usize| -> f32 {
+        match cell.indices.binary_search(&(gene_idx as u16)) {
+            Ok(pos) => cell.data_norm[pos].to_f32(),
+            Err(_) => 0.0,
+        }
+    };
+
+    // general cell statistics
+    let sum: f32 = cell.data_norm.iter().map(|x| x.to_f32()).sum();
+    let sum_sq: f32 = cell
+        .data_norm
+        .iter()
+        .map(|x| {
+            let v = x.to_f32();
+            v * v
+        })
+        .sum();
+
+    let mu_j = sum / total_genes as f32;
+    let sigma_sq_j = (sum_sq / total_genes as f32) - (mu_j * mu_j);
+
+    // score the signatures
+    signatures
+        .iter()
+        .map(|sig| {
+            let sum_pos: f32 = sig.positive.iter().map(|&idx| get_expr(idx)).sum();
+            let sum_neg: f32 = sig.negative.iter().map(|&idx| get_expr(idx)).sum();
+
+            let n = sig.positive.len() as f32;
+            let m = sig.negative.len() as f32;
+            let total = n + m;
+
+            let s_j = (sum_pos - sum_neg) / total;
+            let e_rj = ((n - m) / total) * mu_j;
+            let var_rj = sigma_sq_j / total;
+
+            if var_rj > 0.0 {
+                (s_j - e_rj) / var_rj.sqrt()
+            } else {
+                0.0
+            }
+        })
+        .collect()
+}
+
+/// Calculate VISION signature scores across a set of cells
+///
+/// ### Params
+///
+/// * `f_path` -  File path to the cell-based binary file.
+/// * `signatures` - Slice of `SignatureGenes` to calculate the scores for
+/// * `cells_to_keep` - Vector of indices with the cells to keep.
+/// * `verbose` - Controls verbosity of the function
+///
+/// ### Returns
+///
+/// A Vec<Vec<f32>> with cells x scores per gene set (pair)
+pub fn calculate_vision(
+    f_path: &str,
+    gene_signs: &[SignatureGenes],
+    cells_to_keep: &[usize],
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    let start_read = Instant::now();
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let no_genes = reader.get_header().total_genes;
+    let cell_chunks: Vec<CsrCellChunk> = reader.read_cells_parallel(cells_to_keep);
+    let end_read = start_read.elapsed();
+
+    if verbose {
+        println!("Loaded in data: {:.2?}", end_read);
+    }
+
+    let start_signatures = Instant::now();
+    let signature_scores: Vec<Vec<f32>> = cell_chunks
+        .par_iter()
+        .map(|chunk| calculate_vision_scores_for_cell(chunk, gene_signs, no_genes))
+        .collect();
+    let end_signatures = start_signatures.elapsed();
+
+    if verbose {
+        println!("Calculated VISION scores: {:.2?}", end_signatures);
+    }
+
+    signature_scores // cells x signatures
+}
+
+/// Calculate VISION signature scores across a set of cells (streaming)
+///
+/// The streaming version of the function.
+///
+/// ### Params
+///
+/// * `f_path` -  File path to the cell-based binary file.
+/// * `signatures` - Slice of `SignatureGenes` to calculate the scores for
+/// * `cells_to_keep` - Vector of indices with the cells to keep.
+/// * `verbose` - Controls verbosity of the function
+///
+/// ### Returns
+///
+/// A Vec<Vec<f32>> with cells x scores per gene set (pair)
+pub fn calculate_vision_streaming(
+    f_path: &str,
+    gene_signs: &[SignatureGenes],
+    cells_to_keep: &[usize],
+    verbose: bool,
+) -> Vec<Vec<f32>> {
+    const CHUNK_SIZE: usize = 50000;
+
+    let total_chunks = cells_to_keep.len().div_ceil(CHUNK_SIZE);
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let no_genes = reader.get_header().total_genes;
+
+    let mut all_results: Vec<Vec<f32>> = Vec::with_capacity(cells_to_keep.len());
+
+    for (chunk_idx, cell_indices_chunk) in cells_to_keep.chunks(CHUNK_SIZE).enumerate() {
+        let start_chunk = Instant::now();
+
+        let cell_chunks = reader.read_cells_parallel(cell_indices_chunk);
+
+        let chunk_scores: Vec<Vec<f32>> = cell_chunks
+            .par_iter()
+            .map(|chunk| calculate_vision_scores_for_cell(chunk, gene_signs, no_genes))
+            .collect();
+
+        all_results.extend(chunk_scores);
+
+        if verbose {
+            let elapsed = start_chunk.elapsed();
+            let pct_complete = ((chunk_idx + 1) as f32 / total_chunks as f32) * 100.0;
+            println!(
+                "Processing chunk {} out of {} (took {:.2?}, completed {:.1}%)",
+                chunk_idx + 1,
+                total_chunks,
+                elapsed,
+                pct_complete
+            );
+        }
+    }
+
+    all_results
 }

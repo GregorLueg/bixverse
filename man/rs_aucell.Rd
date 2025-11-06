@@ -22,7 +22,8 @@ which statistic you wish to calculate.}
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A matrix of gene set AUCs x cells.
+A matrix of cells x gene sets with the values representing the
+AUC.
 }
 \description{
 The function will take in a list of gene set indices (0-indexed!) and

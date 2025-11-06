@@ -176,8 +176,8 @@ fn rs_mnn(
 
 extendr_module! {
     mod r_sc_batch_corr;
-    fn rs_kbet;
     fn rs_bbknn;
     fn rs_bbknn_filtering;
     fn rs_mnn;
+    fn rs_kbet;
 }

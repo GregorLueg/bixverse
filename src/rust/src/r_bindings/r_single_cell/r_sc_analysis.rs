@@ -1,8 +1,12 @@
 use extendr_api::*;
 use faer::Mat;
 
-use crate::single_cell::dge_aucs::*;
-use crate::utils::r_rust_interface::faer_to_r_matrix;
+use crate::core::base::stats::calc_fdr;
+use crate::single_cell::dge_pathway_scores::*;
+use crate::single_cell::methods::vision_hotspot::*;
+use crate::single_cell::sc_knn_snn::*;
+use crate::utils::r_rust_interface::*;
+use crate::utils::traits::*;
 
 //////////
 // DGEs //
@@ -111,7 +115,8 @@ fn rs_calculate_dge_mann_whitney(
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A matrix of gene set AUCs x cells.
+/// @return A matrix of cells x gene sets with the values representing the
+/// AUC.
 ///
 /// @export
 #[extendr]
@@ -125,10 +130,7 @@ fn rs_aucell(
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
 
-    let cells_to_keep = cells_to_keep
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cells_to_keep = cells_to_keep.r_int_convert();
 
     for i in 0..gs_list.len() {
         let r_obj = gs_list.elt(i).unwrap();
@@ -147,13 +149,137 @@ fn rs_aucell(
         calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
     };
 
-    let auc_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
-
+    let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
+}
+
+/// Calculate VISION pathway scores in Rust
+///
+/// @description
+/// The function will take in a list of gene sets that contains lists of `"pos"`
+/// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+/// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+/// and negative gene indices of that specific gene set.
+/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param streaming Boolean. Shall the data be streamed.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return A matrix of gene set AUCs x cells.
+///
+/// @export
+#[extendr]
+fn rs_vision(
+    f_path: String,
+    gs_list: List,
+    cells_to_keep: Vec<i32>,
+    streaming: bool,
+    verbose: bool,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let mut gene_signatures: Vec<SignatureGenes> = Vec::with_capacity(gs_list.len());
+
+    for i in 0..gs_list.len() {
+        let r_obj = gs_list.elt(i)?;
+        let gs_list_i = r_obj.as_list().ok_or_else(|| {
+            extendr_api::Error::from(
+                "The lists in the gs_list could not be converted. Please check!",
+            )
+        })?;
+        gene_signatures.push(SignatureGenes::from_r_list(gs_list_i));
+    }
+
+    let res = if streaming {
+        calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+    } else {
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+    };
+
+    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
+
+    Ok(faer_to_r_matrix(vision_mat.as_ref()))
+}
+
+/// @export
+#[extendr]
+fn rs_gs_autocorrelations(
+    pathway_scores: RMatrix<f64>,
+    embd: RMatrix<f64>,
+    knn_params: List,
+    nperm: usize,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let pathway_scores = r_matrix_to_faer(&pathway_scores);
+    let knn_params = KnnParams::from_r_list(knn_params);
+
+    let knn_method: KnnSearch =
+        parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+
+    if verbose {
+        println!("Generating kNN graph...")
+    }
+
+    let (knn_indices, knn_dist) = match knn_method {
+        KnnSearch::Annoy => {
+            let knn_index = build_annoy_index(embd.as_ref(), knn_params.n_tree, seed);
+            query_annoy_index(
+                embd.as_ref(),
+                &knn_index,
+                "euclidean",
+                knn_params.k,
+                knn_params.search_budget,
+                true,
+                verbose,
+            )
+        }
+        KnnSearch::Hnsw => {
+            let hnsw_index = build_hnsw_index(embd.as_ref(), "euclidean", seed);
+            query_hnsw_index(
+                embd.as_ref(),
+                &hnsw_index,
+                "euclidean",
+                knn_params.k,
+                true,
+                verbose,
+            )
+        }
+        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
+            embd.as_ref(),
+            "euclidean",
+            knn_params.k,
+            knn_params.max_iter,
+            knn_params.delta,
+            knn_params.rho,
+            seed,
+            verbose,
+            true,
+        ),
+    };
+
+    let auto_cor_res = calc_local_autocorrelation(
+        pathway_scores,
+        knn_indices,
+        knn_dist.unwrap(),
+        nperm,
+        seed,
+        verbose,
+    );
+
+    let gaery_c = auto_cor_res.0;
+    let p_val = auto_cor_res.1;
+    let fdr = calc_fdr(&p_val);
+
+    list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr)
 }
 
 extendr_module! {
     mod r_sc_analysis;
-    fn rs_calculate_dge_mann_whitney;
     fn rs_aucell;
+    fn rs_calculate_dge_mann_whitney;
+    fn rs_gs_autocorrelations;
+    fn rs_vision;
 }

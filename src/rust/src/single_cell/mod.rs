@@ -3,7 +3,7 @@
 //! around the generation of kNN graphs, sparse matrix methods, etc.
 
 pub mod cell_aggregations;
-pub mod dge_aucs;
+pub mod dge_pathway_scores;
 pub mod fast_ranking;
 pub mod methods;
 pub mod metrics;
