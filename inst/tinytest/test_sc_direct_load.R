@@ -42,6 +42,13 @@ sc_object <- load_r_data(
 # do a filtering on the obs column
 sc_object <- set_cells_to_keep(sc_object, unlist(sc_object[["cell_id"]][1:500]))
 
+# check if the NNZ per gene was added
+
+expect_true(
+  current = checkmate::qtest(get_sc_var(sc_object)[["no_cells_exp"]], "I+"),
+  info = "gene NNZ added by R direct load"
+)
+
 # remove it...
 rm(sc_object)
 

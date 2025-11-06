@@ -457,7 +457,7 @@ single_cell_duckdb_base <- R6::R6Class(
     add_data_var = function(new_data) {
       # checks
       checkmate::assertDataTable(new_data)
-      private$check_obs_exists()
+      private$check_var_exists()
       checkmate::assertTRUE(nrow(new_data) == private$check_var_row())
 
       con <- private$connect_db()

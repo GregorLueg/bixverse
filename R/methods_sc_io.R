@@ -99,6 +99,9 @@ S7::method(load_seurat, single_cell_exp) <- function(
     )
   }
 
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
   duckdb_con <- get_sc_duckdb(object)
 
   duckdb_con$populate_obs_from_data.table(
@@ -114,6 +117,7 @@ S7::method(load_seurat, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -224,6 +228,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
     )
   }
 
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
   duckdb_con <- get_sc_duckdb(object)
 
   duckdb_con$populate_obs_from_data.table(
@@ -239,6 +246,7 @@ S7::method(load_r_data, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -346,6 +354,9 @@ S7::method(load_h5ad, single_cell_exp) <- function(
     )
   }
 
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
   if (.verbose) {
@@ -366,6 +377,7 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -469,6 +481,9 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
     verbose = .verbose
   )
 
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
   # duck db part
   duckdb_con <- get_sc_duckdb(object)
   if (.verbose) {
@@ -489,6 +504,7 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
@@ -600,6 +616,9 @@ S7::method(load_mtx, single_cell_exp) <- function(
     )
   }
 
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
   # duckDB part
   duckdb_con <- get_sc_duckdb(object)
 
@@ -628,6 +647,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
   duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
   cell_map <- duckdb_con$get_obs_index_map()
   gene_map <- duckdb_con$get_var_index_map()
