@@ -1143,4 +1143,45 @@ impl ParallelSparseReader {
             })
             .collect()
     }
+
+    /// Read the NNZ for specific genes
+    ///
+    /// ### Params
+    ///
+    /// * `indices` - Gene indices
+    ///
+    /// ### Returns
+    ///
+    /// Vector of number of NNZ genes.
+    pub fn read_gene_nnz(&self, indices: &[usize]) -> Vec<usize> {
+        assert!(!self.header.cell_based, "File not gene-based");
+
+        indices
+            .par_iter()
+            .map(|&original_index| {
+                let chunk_index = *self.header.index_map.get(&original_index).unwrap();
+                let chunk_offset =
+                    (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
+
+                // Skip size bytes (8 bytes), then read header (36 bytes)
+                let header = &self.mmap[chunk_offset + 8..chunk_offset + 44];
+
+                // NNZ is at bytes 16-23 of the header
+                u64::from_le_bytes([
+                    header[16], header[17], header[18], header[19], header[20], header[21],
+                    header[22], header[23],
+                ]) as usize
+            })
+            .collect()
+    }
+
+    /// Return NNZ for all genes
+    ///
+    /// ### Returns
+    ///
+    /// Vector of NNZ values for all genes
+    pub fn get_all_gene_nnz(&self) -> Vec<usize> {
+        let iter: Vec<usize> = (0..self.header.total_genes).collect();
+        self.read_gene_nnz(&iter)
+    }
 }

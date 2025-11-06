@@ -211,6 +211,18 @@ impl VecConvert<usize> for Vec<i32> {
     }
 }
 
+impl VecConvert<i32> for &[usize] {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.iter().map(|&x| x as i32).collect()
+    }
+}
+
+impl VecConvert<usize> for &[i32] {
+    fn r_int_convert(self) -> Vec<usize> {
+        self.iter().map(|&x| x as usize).collect()
+    }
+}
+
 pub trait VecFloatConvert<U> {
     fn r_float_convert(self) -> Vec<U>;
 }
@@ -224,6 +236,18 @@ impl VecFloatConvert<f32> for Vec<f64> {
 impl VecFloatConvert<f64> for Vec<f32> {
     fn r_float_convert(self) -> Vec<f64> {
         self.into_iter().map(|x| x as f64).collect()
+    }
+}
+
+impl VecFloatConvert<f32> for &[f64] {
+    fn r_float_convert(self) -> Vec<f32> {
+        self.iter().map(|&x| x as f32).collect()
+    }
+}
+
+impl VecFloatConvert<f64> for &[f32] {
+    fn r_float_convert(self) -> Vec<f64> {
+        self.iter().map(|&x| x as f64).collect()
     }
 }
 
