@@ -310,14 +310,14 @@
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Returns gene info as a data.table</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id</span></span>
-<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 gene_001    ens_001</span></span>
-<span><span class="co">#&gt; 2:        2 gene_002    ens_002</span></span>
-<span><span class="co">#&gt; 3:        3 gene_003    ens_003</span></span>
-<span><span class="co">#&gt; 4:        4 gene_004    ens_004</span></span>
-<span><span class="co">#&gt; 5:        5 gene_005    ens_005</span></span>
-<span><span class="co">#&gt; 6:        6 gene_006    ens_006</span></span></code></pre></div>
+<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id no_cells_exp</span></span>
+<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;        &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 gene_001    ens_001          758</span></span>
+<span><span class="co">#&gt; 2:        2 gene_002    ens_002          742</span></span>
+<span><span class="co">#&gt; 3:        3 gene_003    ens_003          772</span></span>
+<span><span class="co">#&gt; 4:        4 gene_004    ens_004          724</span></span>
+<span><span class="co">#&gt; 5:        5 gene_005    ens_005          533</span></span>
+<span><span class="co">#&gt; 6:        6 gene_006    ens_006          724</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h4 id="accessing-count-data">Accessing Count data<a class="anchor" aria-label="anchor" href="#accessing-count-data"></a>
 </h4>
@@ -441,25 +441,40 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id      mean      var  var_exp   var_std</span></span>
-<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;     &lt;num&gt;    &lt;num&gt;    &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 gene_001    ens_001 11.747801 511.5848 2.652159 1.1396177</span></span>
-<span><span class="co">#&gt; 2:        2 gene_002    ens_002 11.024927 388.6639 2.604914 0.9652928</span></span>
-<span><span class="co">#&gt; 3:        3 gene_003    ens_003 13.149560 541.0187 2.724832 1.0194833</span></span>
-<span><span class="co">#&gt; 4:        4 gene_004    ens_004  9.629032 312.5029 2.507178 0.9720214</span></span>
-<span><span class="co">#&gt; 5:        5 gene_005    ens_005  4.703812 153.0825 1.926829 1.8117409</span></span>
-<span><span class="co">#&gt; 6:        6 gene_006    ens_006 10.136364 351.4315 2.546862 0.9976512</span></span>
+<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id no_cells_exp      mean      var  var_exp</span></span>
+<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;        &lt;int&gt;     &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        1 gene_001    ens_001          758 11.747801 511.5848 2.652159</span></span>
+<span><span class="co">#&gt; 2:        2 gene_002    ens_002          742 11.024927 388.6639 2.604914</span></span>
+<span><span class="co">#&gt; 3:        3 gene_003    ens_003          772 13.149560 541.0187 2.724832</span></span>
+<span><span class="co">#&gt; 4:        4 gene_004    ens_004          724  9.629032 312.5029 2.507178</span></span>
+<span><span class="co">#&gt; 5:        5 gene_005    ens_005          533  4.703812 153.0825 1.926829</span></span>
+<span><span class="co">#&gt; 6:        6 gene_006    ens_006          724 10.136364 351.4315 2.546862</span></span>
+<span><span class="co">#&gt;      var_std</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 1.1396177</span></span>
+<span><span class="co">#&gt; 2: 0.9652928</span></span>
+<span><span class="co">#&gt; 3: 1.0194833</span></span>
+<span><span class="co">#&gt; 4: 0.9720214</span></span>
+<span><span class="co">#&gt; 5: 1.8117409</span></span>
+<span><span class="co">#&gt; 6: 0.9976512</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## You can then which genes are highly variable as follows</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id      mean       var  var_exp   var_std</span></span>
-<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        4 gene_004    ens_004  9.629032 312.50287 2.507178 0.9720214</span></span>
-<span><span class="co">#&gt; 2:       16 gene_016    ens_016  7.756598 226.22502 2.403411 0.8935734</span></span>
-<span><span class="co">#&gt; 3:       39 gene_043    ens_043  3.527859  33.90901 1.522625 1.0178647</span></span>
-<span><span class="co">#&gt; 4:       18 gene_018    ens_018 10.665689 364.52734 2.581662 0.9551431</span></span>
-<span><span class="co">#&gt; 5:        9 gene_009    ens_009  7.294722 246.94691 2.360737 1.0761360</span></span></code></pre></div>
+<span><span class="co">#&gt;    gene_idx  gene_id ensembl_id no_cells_exp      mean       var  var_exp</span></span>
+<span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;        &lt;int&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        4 gene_004    ens_004          724  9.629032 312.50287 2.507178</span></span>
+<span><span class="co">#&gt; 2:       16 gene_016    ens_016          655  7.756598 226.22502 2.403411</span></span>
+<span><span class="co">#&gt; 3:       39 gene_043    ens_043          549  3.527859  33.90901 1.522625</span></span>
+<span><span class="co">#&gt; 4:       18 gene_018    ens_018          750 10.665689 364.52734 2.581662</span></span>
+<span><span class="co">#&gt; 5:        9 gene_009    ens_009          590  7.294722 246.94691 2.360737</span></span>
+<span><span class="co">#&gt;      var_std</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.9720214</span></span>
+<span><span class="co">#&gt; 2: 0.8935734</span></span>
+<span><span class="co">#&gt; 3: 1.0178647</span></span>
+<span><span class="co">#&gt; 4: 0.9551431</span></span>
+<span><span class="co">#&gt; 5: 1.0761360</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="pca">PCA<a class="anchor" aria-label="anchor" href="#pca"></a>
 </h3>

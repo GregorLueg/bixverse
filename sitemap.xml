@@ -380,6 +380,7 @@
 <url><loc>/reference/rs_rbh_sets.html</loc></url>
 <url><loc>/reference/rs_sc_doublet_detection.html</loc></url>
 <url><loc>/reference/rs_sc_get_gene_set_perc.html</loc></url>
+<url><loc>/reference/rs_sc_get_top_genes_perc.html</loc></url>
 <url><loc>/reference/rs_sc_hvg.html</loc></url>
 <url><loc>/reference/rs_sc_hvg_batch_aware.html</loc></url>
 <url><loc>/reference/rs_sc_knn.html</loc></url>
@@ -445,6 +446,7 @@
 <url><loc>/reference/synthetic_signal_matrix.html</loc></url>
 <url><loc>/reference/tied_diffusion.html</loc></url>
 <url><loc>/reference/to_snake_case.html</loc></url>
+<url><loc>/reference/top_genes_perc_sc.html</loc></url>
 <url><loc>/reference/tree_cut_iter.html</loc></url>
 <url><loc>/reference/update_metadata_values.html</loc></url>
 <url><loc>/reference/upper_triangle_diffcor_mat.html</loc></url>
