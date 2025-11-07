@@ -2269,31 +2269,6 @@ rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, em
 #' @export
 rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
 
-#' Detect Doublets via BoostClassifier (in Rust)
-#'
-#' @param f_path_gene String. Path to the `counts_genes.bin` file.
-#' @param f_path_cell String. Path to the `counts_cells.bin` file.
-#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
-#' to include in this analysis.
-#' @param boost_params List. Parameter list, see
-#' [bixverse::params_boost()].
-#' @param seed Integer. Seed for reproducibility purposes.
-#' @param verbose Boolean. Controls verbosity
-#' @param streaming Boolean. Shall the data be streamed for the HVG
-#' calculations.
-#'
-#' @returns A list with
-#' \itemize{
-#'  \item predicted_doublets - Boolean vector indicating which observed cells
-#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
-#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
-#'  a doublet for the observed cells.
-#'  \item voting_avg - Voting average across the different iterations.
-#' }
-#'
-#' @export
-rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
-
 #' Calculate AUCell in Rust
 #'
 #' @description
@@ -2351,8 +2326,42 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @export
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
+#' Calculate VISION pathway scores in Rust with auto-correlation
+#'
+#' @description
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#' Additionally, it will take a random gene list and calculate an
+#' auto-correlation score based on Gaery's C to identify pathways that show
+#' significant patterns on the kNN graph generate on the provided embedding.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param random_gs_list Double-nested list. The outer list represents the
+#' clusters of clusters and the inner list represents the permutations within
+#' that cluster.
+#' @param vision_params List. Contains various parameters to use in terms
+#' of the kNN generation.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param cluster_membership Integer. Vector that indicates to which of the
+#' permuted gene set clusters the given gene set belongs.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
+#'   FDR.
+#'   \item vision_mat - A matrix of cells x vision scores per gene set.
+#' }
+#'
 #' @export
-rs_gs_autocorrelations <- function(pathway_scores, embd, knn_params, nperm, seed, verbose) .Call(wrap__rs_gs_autocorrelations, pathway_scores, embd, knn_params, nperm, seed, verbose)
+rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
 
 #' Calculate VISION pathway scores in Rust
 #'
@@ -2368,7 +2377,7 @@ rs_gs_autocorrelations <- function(pathway_scores, embd, knn_params, nperm, seed
 #' @param streaming Boolean. Shall the data be streamed.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A matrix of gene set AUCs x cells.
+#' @return A matrix of cells x vision scores per gene set.
 #'
 #' @export
 rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(wrap__rs_vision, f_path, gs_list, cells_to_keep, streaming, verbose)

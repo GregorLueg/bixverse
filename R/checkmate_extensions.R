@@ -2191,6 +2191,112 @@ checkScFastmnn <- function(x) {
   TRUE
 }
 
+### VISION ---------------------------------------------------------------------
+
+#' Check VISION parameters
+#'
+#' @description Checkmate extension for checking the VISION parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScVision <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "knn_algorithm",
+      "n_trees",
+      "search_budget",
+      "max_iter",
+      "rho",
+      "delta",
+      "n_perm",
+      "n_cluster"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  integer_rules <- list(
+    "k" = "I1",
+    "n_trees" = "I1",
+    "max_iter" = "I1",
+    "n_perm" = "I1",
+    "n_cluster" = "I1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in VISION parameters is incorrect:",
+          "k, n_trees, max_iter, n_perm, and n_cluster need to be integers."
+        ),
+        broken_elem
+      )
+    )
+  }
+  numeric_rules <- list(
+    "search_budget" = "N1",
+    "rho" = "N1",
+    "delta" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in VISION parameters is incorrect:",
+          "search_budget, rho, and delta need to be numeric."
+        ),
+        broken_elem
+      )
+    )
+  }
+  test_choice_rules <- list(
+    knn_algorithm = c("annoy", "hnsw", "nndescent")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the VISION parameters is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## other -----------------------------------------------------------------------
@@ -2639,11 +2745,27 @@ assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
 
+### VISION ---------------------------------------------------------------------
+
+#' Assert VISION parameters
+#'
+#' @description Checkmate extension for asserting the VISION parameters.
+#'
+#' @inheritParams checkScVision
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScVision <- checkmate::makeAssertionFunction(checkScVision)
+
 # tests ------------------------------------------------------------------------
 
 ## SNF -------------------------------------------------------------------------
 
-#' @rdname checkSNFParams
+#'@rdname checkSNFParams
 #'
 #' @export
 testSNFParams <- checkmate::makeTestFunction(checkSNFParams)

@@ -19,7 +19,7 @@ and negative gene indices of that specific gene set.}
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A matrix of gene set AUCs x cells.
+A matrix of cells x vision scores per gene set.
 }
 \description{
 The function will take in a list of gene sets that contains lists of \code{"pos"}

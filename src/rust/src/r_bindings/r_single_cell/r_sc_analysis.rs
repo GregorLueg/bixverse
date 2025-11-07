@@ -8,6 +8,14 @@ use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::*;
 use crate::utils::traits::*;
 
+extendr_module! {
+    mod r_sc_analysis;
+    fn rs_aucell;
+    fn rs_calculate_dge_mann_whitney;
+    fn rs_vision_with_autocorrelation;
+    fn rs_vision;
+}
+
 //////////
 // DGEs //
 //////////
@@ -167,7 +175,7 @@ fn rs_aucell(
 /// @param streaming Boolean. Shall the data be streamed.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A matrix of gene set AUCs x cells.
+/// @return A matrix of cells x vision scores per gene set.
 ///
 /// @export
 #[extendr]
@@ -179,17 +187,7 @@ fn rs_vision(
     verbose: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
-    let mut gene_signatures: Vec<SignatureGenes> = Vec::with_capacity(gs_list.len());
-
-    for i in 0..gs_list.len() {
-        let r_obj = gs_list.elt(i)?;
-        let gs_list_i = r_obj.as_list().ok_or_else(|| {
-            extendr_api::Error::from(
-                "The lists in the gs_list could not be converted. Please check!",
-            )
-        })?;
-        gene_signatures.push(SignatureGenes::from_r_list(gs_list_i));
-    }
+    let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
     let res = if streaming {
         calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
@@ -202,19 +200,100 @@ fn rs_vision(
     Ok(faer_to_r_matrix(vision_mat.as_ref()))
 }
 
+/// Calculate VISION pathway scores in Rust with auto-correlation
+///
+/// @description
+/// The function will take in a list of gene sets that contains lists of `"pos"`
+/// and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+/// but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+/// Additionally, it will take a random gene list and calculate an
+/// auto-correlation score based on Gaery's C to identify pathways that show
+/// significant patterns on the kNN graph generate on the provided embedding.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// kNN graph.
+/// @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+/// and negative gene indices of that specific gene set.
+/// @param random_gs_list Double-nested list. The outer list represents the
+/// clusters of clusters and the inner list represents the permutations within
+/// that cluster.
+/// @param vision_params List. Contains various parameters to use in terms
+/// of the kNN generation.
+/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param cluster_membership Integer. Vector that indicates to which of the
+/// permuted gene set clusters the given gene set belongs.
+/// @param streaming Boolean. Shall the data be streamed.
+/// @param verbose Boolean. Controls verbosity of the function.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @return A list with the following items:
+/// \itemize{
+///   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
+///   FDR.
+///   \item vision_mat - A matrix of cells x vision scores per gene set.
+/// }
+///
 /// @export
 #[extendr]
-fn rs_gs_autocorrelations(
-    pathway_scores: RMatrix<f64>,
+#[allow(clippy::too_many_arguments)]
+fn rs_vision_with_autocorrelation(
+    f_path: String,
     embd: RMatrix<f64>,
-    knn_params: List,
-    nperm: usize,
-    seed: usize,
+    gs_list: List,
+    random_gs_list: List,
+    vision_params: List,
+    cells_to_keep: Vec<i32>,
+    cluster_membership: Vec<i32>,
+    streaming: bool,
     verbose: bool,
-) -> List {
+    seed: usize,
+) -> extendr_api::Result<List> {
+    if verbose {
+        println!("Calculating the VISION scores of the actual gene sets.")
+    }
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let gene_signatures = r_list_to_sig_genes(gs_list).unwrap();
+
+    let res = if streaming {
+        calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+    } else {
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+    };
+
+    if verbose {
+        println!("Calculating the VISION scores of the permuted gene sets.")
+    }
+
+    let mut random_scores_by_cluster: Vec<Vec<Vec<f32>>> = Vec::with_capacity(random_gs_list.len());
+
+    for cluster_idx in 0..random_gs_list.len() {
+        let cluster_sigs = random_gs_list
+            .elt(cluster_idx)?
+            .as_list()
+            .ok_or("Cluster element not a list")?;
+
+        let cluster_signatures = r_list_to_sig_genes(cluster_sigs).unwrap();
+
+        let cluster_random_scores = if streaming {
+            calculate_vision_streaming(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+        } else {
+            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+        };
+
+        random_scores_by_cluster.push(cluster_random_scores);
+
+        if verbose {
+            println!(
+                "Completed random signatures for cluster {} / {}",
+                cluster_idx + 1,
+                random_gs_list.len()
+            );
+        }
+    }
+
     let embd = r_matrix_to_faer_fp32(&embd);
-    let pathway_scores = r_matrix_to_faer(&pathway_scores);
-    let knn_params = KnnParams::from_r_list(knn_params);
+    let knn_params = KnnParams::from_r_list(vision_params);
 
     let knn_method: KnnSearch =
         parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
@@ -260,12 +339,14 @@ fn rs_gs_autocorrelations(
         ),
     };
 
-    let auto_cor_res = calc_local_autocorrelation(
-        pathway_scores,
+    let cluster_membership = cluster_membership.r_int_convert_shift();
+
+    let auto_cor_res = calc_autocorr_with_clusters(
+        &res,
+        &random_scores_by_cluster,
+        &cluster_membership,
         knn_indices,
         knn_dist.unwrap(),
-        nperm,
-        seed,
         verbose,
     );
 
@@ -273,13 +354,10 @@ fn rs_gs_autocorrelations(
     let p_val = auto_cor_res.1;
     let fdr = calc_fdr(&p_val);
 
-    list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr)
-}
+    let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
 
-extendr_module! {
-    mod r_sc_analysis;
-    fn rs_aucell;
-    fn rs_calculate_dge_mann_whitney;
-    fn rs_gs_autocorrelations;
-    fn rs_vision;
+    Ok(list!(
+        autocor_res = list!(auto_cor = gaery_c, p_val = p_val, fdr = fdr),
+        vision_mat = faer_to_r_matrix(vision_mat.as_ref())
+    ))
 }

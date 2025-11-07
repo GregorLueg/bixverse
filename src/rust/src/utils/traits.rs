@@ -202,11 +202,15 @@ impl ToF32AndU16 for u16 {
 /// Converts vectors between integer types for R compatibility.
 pub trait VecConvert<U> {
     fn r_int_convert(self) -> Vec<U>;
+    fn r_int_convert_shift(self) -> Vec<U>;
 }
 
 impl VecConvert<i32> for Vec<usize> {
     fn r_int_convert(self) -> Vec<i32> {
         self.into_iter().map(|x| x as i32).collect()
+    }
+    fn r_int_convert_shift(self) -> Vec<i32> {
+        self.into_iter().map(|x| (x as i32) + 1).collect()
     }
 }
 
@@ -214,11 +218,17 @@ impl VecConvert<i32> for &[&usize] {
     fn r_int_convert(self) -> Vec<i32> {
         self.iter().map(|&&x| x as i32).collect()
     }
+    fn r_int_convert_shift(self) -> Vec<i32> {
+        self.iter().map(|&&x| (x as i32) + 1).collect()
+    }
 }
 
 impl VecConvert<i32> for Vec<u32> {
     fn r_int_convert(self) -> Vec<i32> {
         self.into_iter().map(|x| x as i32).collect()
+    }
+    fn r_int_convert_shift(self) -> Vec<i32> {
+        self.into_iter().map(|x| (x as i32) + 1).collect()
     }
 }
 
@@ -226,17 +236,26 @@ impl VecConvert<usize> for Vec<i32> {
     fn r_int_convert(self) -> Vec<usize> {
         self.into_iter().map(|x| x as usize).collect()
     }
+    fn r_int_convert_shift(self) -> Vec<usize> {
+        self.into_iter().map(|x| (x - 1) as usize).collect()
+    }
 }
 
 impl VecConvert<i32> for &[usize] {
     fn r_int_convert(self) -> Vec<i32> {
         self.iter().map(|&x| x as i32).collect()
     }
+    fn r_int_convert_shift(self) -> Vec<i32> {
+        self.iter().map(|&x| (x as i32) + 1).collect()
+    }
 }
 
 impl VecConvert<usize> for &[i32] {
     fn r_int_convert(self) -> Vec<usize> {
         self.iter().map(|&x| x as usize).collect()
+    }
+    fn r_int_convert_shift(self) -> Vec<usize> {
+        self.iter().map(|&x| (x - 1) as usize).collect()
     }
 }
 

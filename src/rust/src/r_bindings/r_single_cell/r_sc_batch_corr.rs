@@ -7,6 +7,14 @@ use crate::single_cell::metrics::kbet;
 use crate::utils::r_rust_interface::*;
 use crate::utils::traits::VecConvert;
 
+extendr_module! {
+    mod r_sc_batch_corr;
+    fn rs_bbknn;
+    fn rs_bbknn_filtering;
+    fn rs_mnn;
+    fn rs_kbet;
+}
+
 /// Calculate kBET type scores
 ///
 /// @description
@@ -172,12 +180,4 @@ fn rs_mnn(
     );
 
     faer_to_r_matrix(corrected_embd.as_ref())
-}
-
-extendr_module! {
-    mod r_sc_batch_corr;
-    fn rs_bbknn;
-    fn rs_bbknn_filtering;
-    fn rs_mnn;
-    fn rs_kbet;
 }

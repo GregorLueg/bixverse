@@ -9,6 +9,19 @@ use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
 use crate::utils::traits::*;
 
+extendr_module! {
+    mod r_sc_processing;
+    fn rs_sc_scrublet;
+    fn rs_sc_doublet_detection;
+    fn rs_sc_get_top_genes_perc;
+    fn rs_sc_get_gene_set_perc;
+    fn rs_sc_hvg;
+    fn rs_sc_hvg_batch_aware;
+    fn rs_sc_pca;
+    fn rs_sc_knn;
+    fn rs_sc_snn;
+}
+
 ///////////////////////
 // Doublet detection //
 ///////////////////////
@@ -666,17 +679,4 @@ fn rs_sc_snn(
         edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
         weights = snn_data.1
     ))
-}
-
-extendr_module! {
-    mod r_sc_processing;
-    fn rs_sc_scrublet;
-    fn rs_sc_doublet_detection;
-    fn rs_sc_get_top_genes_perc;
-    fn rs_sc_get_gene_set_perc;
-    fn rs_sc_hvg;
-    fn rs_sc_hvg_batch_aware;
-    fn rs_sc_pca;
-    fn rs_sc_knn;
-    fn rs_sc_snn;
 }

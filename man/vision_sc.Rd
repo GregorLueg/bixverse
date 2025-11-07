@@ -20,7 +20,8 @@ larger data sets.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-data.table with the DGE results from the test.
+Matrix of cells x signatures with the VISION pathway scores as
+values.
 }
 \description{
 Calculates an VISION-type scores for pathways based on DeTomaso, et al.

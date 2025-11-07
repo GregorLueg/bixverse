@@ -514,14 +514,13 @@ evaluate how much we can improve this.
 #| label: set similarity in R (furrr)
 #| eval: !expr requireNamespace(c("future", "tictoc", "furrr"), quietly = TRUE)
 
+future::plan(strategy = future::multisession(workers = parallel::detectCores()))
+
 tictoc::tic()
-future::plan(strategy = future::multisession())
 
 r_results <- furrr::future_map(random_sets_1, \(x) {
   purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
 }, .progress = TRUE)
-
-future::plan(strategy = future::sequential())
 
 similarity_matrix <- matrix(
   data = unlist(r_results), 
@@ -530,6 +529,8 @@ similarity_matrix <- matrix(
   byrow = TRUE
 )
 tictoc::toc()
+
+future::plan(strategy = future::sequential())
 ```
 
 Parallelisation as expected accelerates the calculations substantially. 
@@ -540,8 +541,9 @@ produce less overhead compared to future.
 #| label: set similarity in R (mirai)
 #| eval: !expr requireNamespace(c("tictoc", "mirai"), quietly = TRUE)
 
+mirai::daemons(parallel::detectCores())
+
 tictoc::tic()
-mirai::daemons(4)
 
 r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
   purrr::map_dbl(sets_2, \(y) {
@@ -556,8 +558,9 @@ similarity_matrix <- matrix(
   byrow = TRUE
 )
 
-mirai::daemons(0)
 tictoc::toc()
+
+mirai::daemons(0)
 ```
 
 That's already a bit better. Maybe we can optimise the Jaccard similarity 

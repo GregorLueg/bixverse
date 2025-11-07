@@ -11,6 +11,13 @@ use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::r_matrix_to_faer_fp32;
 use crate::utils::traits::*;
 
+extendr_module! {
+    mod r_sc_metacells;
+    fn rs_get_metacells;
+    fn rs_get_seacells;
+    fn rs_supercell;
+}
+
 ////////////////
 // Meta cells //
 ////////////////
@@ -835,11 +842,4 @@ fn rs_supercell(
             ncol = aggregated.shape.1
         )
     ))
-}
-
-extendr_module! {
-    mod r_sc_metacells;
-    fn rs_get_metacells;
-    fn rs_get_seacells;
-    fn rs_supercell;
 }

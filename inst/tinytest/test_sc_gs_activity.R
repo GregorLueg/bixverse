@@ -109,6 +109,34 @@ cells_per_cluster <- split(
 )
 
 expect_true(
+  current = checkmate::testMatrix(
+    auc_res_wilcox,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "aucell results wilcox statistic what you'd expect"
+  )
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    auc_res_auroc,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "aucell results auroc statistic what you'd expect"
+  )
+)
+
+expect_true(
   current = mean(auc_res_wilcox[
     cells_per_cluster$cell_type_1,
     "markers_cell_type_1"
@@ -206,6 +234,20 @@ vision_res <- vision_sc(
 )
 
 expect_true(
+  current = checkmate::testMatrix(
+    vision_res,
+    mode = "numeric",
+    ncols = length(vision_gs),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "vision (matrix) outputs what you'd expect"
+  )
+)
+
+expect_true(
   current = sign(mean(vision_res[, 1])) == -1,
   info = "vision - delta gene set v1 has negative avg scores"
 )
@@ -220,57 +262,54 @@ expect_true(
   info = "vision - gene set withou delta has positive signs"
 )
 
-rs_gs_autocorrelations(
-  pathway_scores = vision_res,
-  embd = get_pca_factors(sc_object),
-  knn_params = params_sc_neighbours(),
-  nperm = 100,
-  42L,
-  TRUE
-)
-
-
 # auto-correlation workbench ---------------------------------------------------
 
-object = sc_object
-gs_list = vision_gs
-n_permutations = 1000L
-n_comp = 5L
-streaming = FALSE
-.verbose = TRUE
+vision_res_auto <- vision_w_autocor_sc(
+  object = sc_object,
+  gs_list = vision_gs,
+  embd_to_use = "pca",
+  vision_params = params_sc_vision(n_perm = 100L),
+  .verbose = FALSE
+)
 
+expect_equivalent(
+  current = vision_res_auto$vision_matrix,
+  target = vision_res,
+  info = "vision w autocor - matrix is still sensible"
+)
 
-sig_data_signed <- purrr::map(gs_list, \(gs) {
-  all_genes <- c(gs$pos, gs$neg)
-  signs <- c(rep(1, length(gs$pos)), rep(-1, length(gs$neg)))
-  signs
-})
+expect_true(
+  current = checkmate::testDataTable(
+    vision_res_auto$auto_cor_dt,
+    nrows = length(vision_gs)
+  ),
+  info = "vision w autocor - autocor data.table is correct"
+)
 
-expr_genes <- get_gene_names(object)
+expect_equivalent(
+  current = vision_res_auto$auto_cor_dt$p_val < 0.05,
+  target = c(rep(TRUE, 3), rep(FALSE, 3)),
+  info = "vision w autocor - correct gene sets are significant"
+)
 
-sig_sizes <- purrr::map_dbl(sig_data_signed, length)
-sig_sizes_log <- log10(sig_sizes)
+vision_res_auto_v2 <- vision_w_autocor_sc(
+  object = sc_object,
+  gs_list = vision_gs[1:4],
+  embd_to_use = "pca",
+  vision_params = params_sc_vision(n_perm = 100L),
+  .verbose = FALSE
+)
 
-sig_balance <- purrr::map_dbl(sig_data_signed, \(sig) {
-  sum(sig == 1) / length(sig)
-})
-# sig_balance[sig_balance < 0.5] <- 1 - sig_balance[sig_balance < 0.5]
-
-sig_vars <- cbind(sig_sizes, sig_balance)
-
-if (nrow(sig_vars) <= n_comp) {
-  n_components <- nrow(sig_vars)
-  centers <- sig_vars
-  clusters <- as.factor(seq_len(nrow(sig_vars)))
-  names(clusters) <- rownames(sig_vars)
-} else {
-  if (nrow(unique(sig_vars)) <= n_components) {
-    n_components <- nrow(unique(sig_vars))
-  }
-
-  km <- kmeans(sig_vars, n_components - 1)
-  centers <- km$centers
-
-  levels <- as.character(seq(n_components))
-  clusters <- factor(km$cluster, levels = levels)
-}
+expect_true(
+  current = checkmate::testMatrix(
+    vision_res_auto_v2$vision_matrix,
+    mode = "numeric",
+    ncols = 4, # reduced
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "vision (matrix) outputs with 4 gene sets what you'd expect"
+  )
+)

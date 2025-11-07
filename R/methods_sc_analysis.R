@@ -365,6 +365,138 @@ S7::method(aucell_sc, single_cell_exp) <- function(
 
 ## VISION ----------------------------------------------------------------------
 
+### helper ---------------------------------------------------------------------
+
+#' Generate random gene sets for VISION p-value calculations
+#'
+#' @description
+#' This function will generate random gene sets given the provided gs_list.
+#' Under the hood, it uses the same approach as in DeTomaso, et al. and does
+#' not generate a random signature per given signature, but `n_comp`
+#' representative ones based on size and balance (positive and negative genes)
+#' via k-means clustering. The original gene sets are than matched to the
+#' closest cluster. The authors observed that this sufficed to estimate
+#' significance, see DeTomaso, et al.
+#'
+#' @param gs_list Named nested list for which to calculate the local
+#' auto-correlations. The elements have the gene identifiers of the respective
+#' gene sets and have the option to have a `"pos"` and `"neg"` gene sets. The
+#' names need to be part of the variables of the `single_cell_exp` class.
+#' @param expr_genes Character vector. Represents the genes expressed in the
+#' experiment.
+#' @param n_perm Integer. Number of random permutations to generate.
+#' @param n_comp Integer. Number of k-means cluster to identify.
+#' @param random_seed Integer. For reproducibility purposes.
+#' @param no_cores Optional integer. Number of sessions to use for the
+#' [mirai::mirai_map()] approach during generation of the random gene sets.
+#' If not provided, will default to half of the available cores with a maximum
+#' of `8L`.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'   \item random_signatures - Nested list representing the random permutations.
+#'   \item clusters - Association of original gene set to random permutation
+#'   set.
+#' }
+generate_null_perm_gs <- function(
+  gs_list,
+  expr_genes,
+  n_perm = 500L,
+  n_comp = 5L,
+  random_seed = 42L,
+  no_cores = NULL
+) {
+  # checks
+  checkmate::assertList(gs_list, types = "list", names = "named")
+  checkmate::qassert(expr_genes, "S+")
+  checkmate::qassert(n_perm, "I1")
+  checkmate::qassert(n_comp, "I1")
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(no_cores, c("0", "I1"))
+
+  if (is.null(no_cores)) {
+    no_cores <- get_cores()
+  }
+
+  # function
+  sig_data_signed <- purrr::map(gs_list, \(gs) {
+    all_genes <- c(gs$pos, gs$neg)
+    signs <- c(rep(1, length(gs$pos)), rep(-1, length(gs$neg)))
+    signs
+  })
+
+  sig_sizes <- purrr::map_dbl(sig_data_signed, length)
+  sig_sizes <- log10(sig_sizes)
+
+  sig_balance <- purrr::map_dbl(sig_data_signed, \(sig) {
+    sum(sig == 1) / length(sig)
+  })
+
+  sig_vars <- cbind(sig_sizes, sig_balance)
+
+  if (nrow(sig_vars) <= n_comp) {
+    n_comp <- nrow(sig_vars)
+    centers <- sig_vars
+    clusters <- as.factor(seq_len(nrow(sig_vars)))
+    names(clusters) <- rownames(sig_vars)
+  } else {
+    if (nrow(unique(sig_vars)) <= n_comp) {
+      n_comp <- nrow(unique(sig_vars))
+    }
+
+    km <- kmeans(sig_vars, n_comp)
+    centers <- km$centers
+
+    levels <- as.character(seq(n_comp))
+    clusters <- factor(km$cluster, levels = levels)
+  }
+
+  centers[, "sig_sizes"] <- round(10**centers[, "sig_sizes"])
+
+  mirai::daemons(no_cores)
+
+  random_sigs <- mirai::mirai_map(
+    seq_len(nrow(centers)),
+    .f = function(i, n_perm, centers, random_seed, gene_names) {
+      size <- centers[i, "sig_sizes"]
+      balance <- centers[i, "sig_balance"]
+      n_pos_genes <- ceiling(balance * size)
+      n_neg_genes <- size - n_pos_genes
+
+      lapply(seq_len(n_perm), function(iter) {
+        set.seed(random_seed + (i - 1) * 1e6 + iter)
+        genes <- sample(gene_names, size)
+
+        if (n_pos_genes == size) {
+          list(pos = genes)
+        } else if (n_neg_genes == size) {
+          list(neg = genes)
+        } else {
+          list(
+            pos = genes[1:n_pos_genes],
+            neg = genes[(n_pos_genes + 1):size]
+          )
+        }
+      })
+    },
+    .args = list(
+      n_perm = n_perm,
+      centers = centers,
+      random_seed = random_seed,
+      gene_names = expr_genes
+    )
+  )[]
+
+  mirai::daemons(0)
+
+  res <- list(
+    random_signatures = random_sigs,
+    clusters = clusters
+  )
+
+  return(res)
+}
+
 ### calculate the scores -------------------------------------------------------
 
 #' Calculate VISION scores
@@ -437,207 +569,145 @@ S7::method(vision_sc, single_cell_exp) <- function(
   return(vision_res)
 }
 
-### background distribution ----------------------------------------------------
+### VISION with auto-correlation -----------------------------------------------
 
-#### helper --------------------------------------------------------------------
-
-#' Generate random signatures for a null distribution by permuting the data
-#'
-#' @importFrom stats runif
-#' @param eData the data to use for the permutations
-#' @param sigData list of signature objects
-#' random signature sizes
-#' @param num the number of signatures to generate
-#' @return A list with two items:
-#'
-#'   randomSigs: a list of lists of Signature objects.  Each sub-list represents
-#'     permutation signatures generated for a specific size/balance
-#'
-#'   sigAssignments: named factor vector assigning signatures to random background
-#'     groups
-generatePermutationNull <- function(eData, sigData, num) {
-  exp_genes <- rownames(eData)
-
-  sigSize <- vapply(
-    sigData,
-    function(s) {
-      return(length(s@sigDict))
-    },
-    1
-  )
-
-  sigSize <- log10(sigSize)
-  sigBalance <- vapply(
-    sigData,
-    function(s) {
-      positive <- sum(s@sigDict >= 0)
-      balance <- positive / length(s@sigDict)
-      return(balance)
-    },
-    1
-  )
-
-  sigBalance[sigBalance < 0.5] <- 1 - sigBalance[sigBalance < 0.5]
-
-  sigVars <- cbind(sigSize, sigBalance)
-
-  n_components <- 5 # TODO: choose number of components better
-
-  if (nrow(sigVars) <= n_components) {
-    n_components <- nrow(sigVars)
-    centers <- sigVars
-    clusters <- as.factor(seq_len(nrow(sigVars)))
-    names(clusters) <- rownames(sigVars)
-  } else {
-    if (nrow(unique(sigVars)) <= n_components) {
-      n_components <- nrow(unique(sigVars))
-    }
-
-    km <- kmeans(sigVars, n_components)
-    centers <- km$centers
-
-    levels <- as.character(seq(n_components))
-    clusters <- factor(km$cluster, levels = levels)
-  }
-
-  # Re-order the centers
-  row_i <- order(centers[, "sigSize"], centers[, "sigBalance"])
-
-  centers <- centers[row_i, , drop = FALSE]
-  levels(clusters) <- as.character(order(row_i))
-  rownames(centers) <- as.character(seq_len(n_components))
-
-  # undo the log scaling
-  centers[, "sigSize"] <- round(10**centers[, "sigSize"])
-
-  message(
-    "Creating ",
-    nrow(centers),
-    " background signature groups with the following parameters:"
-  )
-  print(centers) # How do I do this with 'message'??
-  message("  signatures per group: ", num)
-
-  randomSigs <- list()
-  randomSigAssignments <- character()
-
-  for (cluster_i in rownames(centers)) {
-    size <- centers[cluster_i, "sigSize"]
-    balance <- centers[cluster_i, "sigBalance"]
-
-    for (j in 1:num) {
-      newSigGenes <- sample(exp_genes, min(size, length(exp_genes)))
-
-      upGenes <- floor(balance * size)
-      remainder <- (balance * size) %% 1
-      if (runif(1, 0, 1) < remainder) {
-        upGenes <- upGenes + 1
-      }
-      newSigSigns <- c(rep(1, upGenes), rep(-1, size - upGenes))
-
-      names(newSigSigns) <- newSigGenes
-      newSig <- Signature(
-        newSigSigns,
-        paste0("RANDOM_BG_", cluster_i, "_", j),
-        "x"
-      )
-      randomSigs[[newSig@name]] <- newSig
-      randomSigAssignments[[newSig@name]] <- cluster_i
-    }
-  }
-
-  randomSigAssignments <- as.factor(randomSigAssignments)
-
-  return(
-    list(
-      randomSigs = randomSigs,
-      sigAssignments = clusters,
-      randomSigAssignments = randomSigAssignments
-    )
-  )
-}
-
-#### main ----------------------------------------------------------------------
-
-#' Generate null distribution for VISION scores
+#' Calculate VISION scores (with auto-correlation scores)
 #'
 #' @description
-#' For the calculation of auto-correlation p-values, one needs a background
-#' score distribution. This one can be generate with this function. This is
-#' based on the VISION method from DeTomaso, et al.
+#' Calculates an VISION-type scores for pathways based on DeTomaso, et al.
+#' Compared to other score types, you can also calculate delta-type scores
+#' between positive and negative gene indices, think epithelial vs mesenchymal
+#' gene signature, etc. Additionally, this function also calculates the auto-
+#' correlation values, answering the question if a given signature shows non-
+#' random enrichment on the kNN graph. The kNN graph (and distance measures)
+#' will be generated on-the-fly based on the embedding you wish to use.
 #'
 #' @param object `single_cell_exp` class.
-#' @param gs_list Named nested list. Same as used for `vision_sc`.
-#' @param n_permutations Integer. Number of random signatures per group.
-#' @param streaming Boolean. Shall the cell data be streamed in.
-#' @param .verbose Boolean. Controls verbosity.
+#' @param gs_list Named nested list. The elements have the gene identifiers of
+#' the respective gene sets and have the option to have a `"pos"` and `"neg"`
+#' gene sets. The names need to be part of the variables of the
+#' `single_cell_exp` class.
+#' @param vision_params List with vision parameters, see
+#' [bixverse::params_sc_vision()] with the following elements:
+#' ...
+#' @param embd_to_use String. The embedding to use. Whichever you chose, it
+#' needs to be part of the object.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param random_seed Integer. The random seed.
+#' @param streaming Boolean. Shall the cell data be streamed in. Useful for
+#' larger data sets.
+#' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return List with three elements:
-#' \itemize{
-#'   \item random_scores - Matrix of random signature scores (cells x
-#'   random_sigs)
-#'   \item sig_assignments - Factor vector mapping real signatures to background
-#'   groups
-#'   \item random_sig_assignments - Factor vector mapping random sigs to
-#'   background groups
-#' }
+#' @return Matrix of cells x signatures with the VISION pathway scores as
+#' values.
 #'
 #' @references DeTomaso, et al., Nat. Commun., 2019
 #'
 #' @export
-vision_null_distr_sc <- S7::new_generic(
-  name = "vision_null_distr_sc",
-  dispatch_args = "object"
+vision_w_autocor_sc <- S7::new_generic(
+  name = "vision_w_autocor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    embd_to_use,
+    no_embd_to_use = NULL,
+    vision_params = params_sc_vision(),
+    streaming = FALSE,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
 )
 
-S7::method(vision_null_distr_sc, single_cell_exp) <- function(
+#' @method vision_w_autocor_sc single_cell_exp
+#'
+#' @export
+S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
   object,
   gs_list,
-  n_permutations = 100,
+  embd_to_use,
+  no_embd_to_use = NULL,
+  vision_params = params_sc_vision(),
   streaming = FALSE,
+  random_seed = 42L,
   .verbose = TRUE
 ) {
-  expr_genes <- get_gene_names(object)
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  assertScVision(vision_params)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
 
-  sig_data <- purrr::map(gs_list, \(gs) {
-    all_genes <- c(gs$pos, gs$neg)
-    signs <- c(rep(1, length(gs$pos)), rep(-1, length(gs$neg)))
-    names(signs) <- expr_genes[all_genes + 1]
-    signs
+  # get the embedding
+  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  vision_gs_clean <- purrr::map(gs_list, \(ls) {
+    lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
   })
 
-  # Generate random signatures using existing function
-  null_data <- generatePermutationNull(
-    eData = expr_genes,
-    sigData = sig_data,
-    num = n_permutations
-  )
+  if (.verbose) {
+    message(sprintf(
+      "Generating %i random gene set clusters with a total of %s permutations.",
+      vision_params$n_cluster,
+      vision_params$n_perm
+    ))
+  }
 
-  # Convert random signatures back to index format
-  random_gs_list <- purrr::map(null_data$randomSigs, \(sig) {
-    pos_genes <- names(sig@sigDict)[sig@sigDict > 0]
-    neg_genes <- names(sig@sigDict)[sig@sigDict < 0]
-    list(
-      pos = match(pos_genes, expr_genes) - 1, # Convert to 0-indexed
-      neg = match(neg_genes, expr_genes) - 1
+  c(random_gs, cluster_membership) %<-%
+    with(
+      vision_params,
+      generate_null_perm_gs(
+        gs_list = gs_list,
+        expr_genes = get_gene_names(object),
+        n_perm = n_perm,
+        n_comp = n_cluster,
+        random_seed = random_seed
+      )
+    )
+
+  random_gs_clean <- purrr::map(random_gs, \(rs) {
+    lapply(
+      rs,
+      FUN = function(ls) {
+        lapply(ls, FUN = get_gene_indices, x = object, rust_index = TRUE)
+      }
     )
   })
 
-  # Calculate VISION scores for random signatures
-  random_scores <- rs_vision(
+  vision_res <- rs_vision_with_autocorrelation(
     f_path = get_rust_count_cell_f_path(object),
-    gs_list = random_gs_list,
+    embd = embd,
+    gs_list = vision_gs_clean,
+    random_gs_list = random_gs_clean,
+    vision_params = vision_params,
     cells_to_keep = get_cells_to_keep(object),
+    cluster_membership = as.integer(cluster_membership),
     streaming = streaming,
-    verbose = .verbose
+    verbose = .verbose,
+    seed = random_seed
   )
 
-  colnames(random_scores) <- names(random_gs_list)
-  rownames(random_scores) <- get_cell_names(object, filtered = TRUE)
+  auto_cor_dt <- data.table::as.data.table(vision_res$autocor_res)[,
+    gene_set_name := names(vision_gs_clean)
+  ][, c("gene_set_name", "auto_cor", "p_val", "fdr"), with = FALSE]
 
-  list(
-    random_scores = random_scores,
-    sig_assignments = null_data$sigAssignments,
-    random_sig_assignments = null_data$randomSigAssignments
-  )
+  vision_matrix <- vision_res$vision_mat
+
+  colnames(vision_matrix) <- names(gs_list)
+  rownames(vision_matrix) <- get_cell_names(object, filtered = TRUE)
+
+  result <- list(vision_matrix = vision_matrix, auto_cor_dt = auto_cor_dt)
+
+  return(result)
 }

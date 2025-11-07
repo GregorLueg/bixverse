@@ -761,6 +761,65 @@ params_sc_neighbours <- function(
   )
 }
 
+### vision ---------------------------------------------------------------------
+
+#' Wrapper function for parameters for VISION with auto-correlation
+#'
+#' @param k Integer. Number of neighbours to return.
+#' @param knn_algorithm String. One of `c("annoy", "hnsw", "nndescent")`.
+#' Defaults to `"annoy"`.
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#' @param max_iter Integer. Maximum iterations for the `nndescent` algorithm.
+#' @param rho Numeric. Sampling rate for the `nndescent` algorithm.
+#' @param delta Numeric. Early termination criterium for the `nndescent`
+#' algorithm.
+#' @param n_perm Integer. Number of random gene sets to generate per cluster.
+#' @param n_cluster Integer. Number of clusters for the random gene set
+#' clustering generation.
+#'
+#' @returns A list with the VISION parameters when you wish to use the
+#' auto-correlation version.
+#'
+#' @export
+params_sc_vision <- function(
+  k = 15L,
+  knn_algorithm = c("annoy", "hnsw", "nndescent"),
+  n_trees = 100L,
+  search_budget = 100L,
+  max_iter = 25L,
+  rho = 1.0,
+  delta = 0.001,
+  n_perm = 500L,
+  n_cluster = 5L
+) {
+  knn_algorithm <- match.arg(knn_algorithm)
+
+  # checks
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_algorithm, c("annoy", "hnsw", "nndescent"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "N1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
+  checkmate::qassert(n_perm, "I1")
+  checkmate::qassert(n_cluster, "I1")
+
+  list(
+    k = k,
+    knn_algorithm = knn_algorithm,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    max_iter = max_iter,
+    rho = rho,
+    delta = delta,
+    n_perm = n_perm,
+    n_cluster = n_cluster
+  )
+}
+
 ### batch corrections ----------------------------------------------------------
 
 #### BBKNN ---------------------------------------------------------------------
