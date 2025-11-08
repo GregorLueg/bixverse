@@ -321,7 +321,7 @@ fn rs_sc_hvg(
 ) -> List {
     let cell_set = cell_indices.r_int_convert();
 
-    let hvg_type = get_hvg_method(hvg_method)
+    let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
@@ -396,7 +396,7 @@ fn rs_sc_hvg_batch_aware(
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
 
-    let hvg_type = get_hvg_method(hvg_method)
+    let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 

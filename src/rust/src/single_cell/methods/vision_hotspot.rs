@@ -1,7 +1,10 @@
+#![allow(dead_code)]
+
 use extendr_api::{Conversions, List};
 use rayon::prelude::*;
 use std::time::Instant;
 
+use crate::core::base::stats::z_scores_to_pval;
 use crate::core::base::utils::rank_vector;
 use crate::core::data::sparse_io::*;
 
@@ -412,4 +415,303 @@ pub fn calc_autocorr_with_clusters(
     }
 
     (pathway_consistency, p_vals)
+}
+
+/////////////
+// Hotspot //
+/////////////
+
+/////////////
+// Helpers //
+/////////////
+
+#[derive(Debug, Clone)]
+pub enum GexModel {
+    /// Use depth-adjusted negative binomial model
+    DephAdjustNegBinom,
+    /// Uses Bernoulli distribution to model prediction probability
+    Bernoulli,
+    /// Use depth-adjusted normal model
+    Normal,
+}
+
+/// Parse the model to use gene expression
+///
+/// ### Params
+///
+/// * `s` - Type of model to use the model
+///
+/// ### Returns
+///
+/// Option of the GexModel to use (some not yet implemented)
+pub fn parse_model(s: &str) -> Option<GexModel> {
+    match s.to_lowercase().as_str() {
+        "danp" => Some(GexModel::DephAdjustNegBinom),
+        "bernoulli" => Some(GexModel::Bernoulli),
+        "normal" => Some(GexModel::Normal),
+        _ => None,
+    }
+}
+
+/// Structure for the gene results
+///
+/// ### Fields
+///
+/// To be written
+#[derive(Debug, Clone)]
+pub struct HotSpotGeneRes {
+    pub gene_idx: usize,
+    pub c: f32,
+    pub z: f32,
+}
+
+/// Compute momentum weights
+///
+/// ### Params
+///
+/// ### Return
+fn compute_moments_weights(
+    mu: &[f32],
+    x2: &[f32],
+    neighbors: &[Vec<usize>],
+    weights: &[Vec<f32>],
+) -> (f32, f32) {
+    let n = neighbors.len();
+
+    let mu_sq: Vec<f32> = mu.iter().map(|&m| m * m).collect();
+
+    let mut eg = 0_f32;
+    let mut t1 = vec![0_f32; n];
+    let mut t2 = vec![0_f32; n];
+
+    for i in 0..n {
+        let mu_i = mu[i];
+        let mu_i_sq = mu_sq[i];
+
+        for (k, &j) in neighbors[i].iter().enumerate() {
+            let wij = weights[i][k];
+            let mu_j = mu[j];
+
+            eg += wij * mu_i * mu_j;
+
+            t1[i] += wij * mu_j;
+            let wij_sq = wij * wij;
+            t2[i] += wij_sq * mu[j] * mu_j;
+            t1[j] += wij * mu_i;
+            t2[j] += wij_sq * mu_i_sq;
+        }
+    }
+
+    let mut eg2 = 0_f32;
+
+    for i in 0..n {
+        eg2 += (x2[i] - mu_sq[i]) * (t1[i] * t1[i] - t2[i]);
+    }
+
+    for i in 0..n {
+        let x2_i = x2[i];
+        let mu_sq_i = mu_sq[i];
+
+        for (k, &j) in neighbors[i].iter().enumerate() {
+            let wij = weights[i][k];
+            eg2 += wij * wij * (x2_i * x2[j] - mu_sq_i * mu_sq[j]);
+        }
+    }
+
+    eg2 += eg * eg;
+
+    (eg, eg2)
+}
+
+fn local_cov_weights(vals: &[f32], neighbors: &[Vec<usize>], weights: &[Vec<f32>]) -> f32 {
+    let mut out = 0.0;
+
+    for i in 0..vals.len() {
+        let xi = vals[i];
+        if xi == 0.0 {
+            continue;
+        }
+
+        for (k, &j) in neighbors[i].iter().enumerate() {
+            let xj = vals[j];
+            let wij = weights[i][k];
+
+            if xj != 0.0 && wij != 0.0 {
+                out += xi * xj * wij;
+            }
+        }
+    }
+
+    out
+}
+
+fn compute_local_cov_max(node_degrees: &[f32], vals: &[f32]) -> f32 {
+    let mut tot = 0.0;
+    for i in 0..node_degrees.len() {
+        tot += node_degrees[i] * vals[i] * vals[i];
+    }
+    tot / 2.0
+}
+
+fn center_values(vals: &mut [f32], mu: &[f32], var: &[f32]) {
+    for i in 0..vals.len() {
+        vals[i] = (vals[i] - mu[i]) / var[i].sqrt();
+    }
+}
+
+fn danb_model(
+    gene: &CscGeneChunk,
+    umi_counts: &[f32],
+    n_cells: usize,
+) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
+    let n = n_cells as f32;
+    let total: f32 = umi_counts.iter().sum();
+
+    let tj: f32 = gene.data_raw.iter().map(|&x| x as f32).sum();
+
+    let mu = umi_counts
+        .iter()
+        .map(|&ti| tj * ti / total)
+        .collect::<Vec<f32>>();
+
+    let mut sum_sq = 0_f32;
+    for (&idx, &val) in gene.indices.iter().zip(&gene.data_raw) {
+        let diff = val as f32 - mu[idx as usize];
+        sum_sq += diff * diff;
+    }
+
+    for i in 0..n_cells {
+        if !gene.indices.contains(&(i as u32)) {
+            sum_sq += mu[i] * mu[i];
+        }
+    }
+    let vv = sum_sq * (n / (n - 1.0));
+
+    let tis_sq_sum: f32 = umi_counts.iter().map(|&ti| ti.powi(2)).sum();
+    let mut size = ((tj * tj) / total) * (tis_sq_sum / total) / ((n - 1.0) * vv - tj);
+
+    let min_size = 1e-10;
+    if size < 0.0 {
+        size = 1e9;
+    }
+    if size < min_size && size >= 0.0 {
+        size = min_size;
+    }
+
+    let var: Vec<f32> = mu.iter().map(|&m| m * (1.0 + m / size)).collect();
+    let x2: Vec<f32> = var.iter().zip(&mu).map(|(&v, &m)| v + m * m).collect();
+
+    (mu, var, x2)
+}
+
+//////////
+// Main //
+//////////
+
+#[derive(Clone, Debug)]
+pub struct Hotspot<'a> {
+    f_path_gene: String,
+    f_path_cell: String,
+    neighbors: &'a [Vec<usize>],
+    weights: &'a [Vec<f32>],
+    cells_to_keep: &'a [usize],
+    node_degrees: Vec<f32>,
+    umi_counts: Option<Vec<f32>>,
+    wtot2: f32,
+    n_cells: usize,
+}
+
+impl<'a> Hotspot<'a> {
+    /// To be written
+    pub fn new(
+        f_path_gene: String,
+        f_path_cell: String,
+        cells_to_keep: &'a [usize],
+        neighbors: &'a [Vec<usize>],
+        weights: &'a [Vec<f32>],
+    ) -> Self {
+        let n_cells = neighbors.len();
+        let node_degrees = weights
+            .par_iter()
+            .map(|w| w.iter().sum::<f32>())
+            .collect::<Vec<f32>>();
+
+        let wtot2: f32 = weights.iter().flatten().map(|&w| w * w).sum();
+
+        Self {
+            f_path_gene,
+            f_path_cell,
+            neighbors,
+            weights,
+            cells_to_keep,
+            node_degrees,
+            umi_counts: None,
+            wtot2,
+            n_cells,
+        }
+    }
+
+    /// Compute a single gene
+    ///
+    /// ### Params
+    ///
+    /// ### Returns
+    pub fn compute_single_gene(
+        &self,
+        gene: &CscGeneChunk,
+        gex_model: &GexModel,
+        centered: bool,
+    ) -> HotSpotGeneRes {
+        assert!(
+            self.umi_counts.is_some(),
+            "The internal UMI counts need to be populated"
+        );
+
+        let (mu, var, x2) = match gex_model {
+            GexModel::DephAdjustNegBinom => {
+                danb_model(gene, self.umi_counts.as_ref().unwrap(), self.n_cells)
+            }
+            GexModel::Bernoulli => panic!("Bernoulli model not implemented yet for HotSpot"),
+            GexModel::Normal => panic!("Normal model not implemented yet for HotSpot"),
+        };
+
+        let mut vals = vec![0_f32; self.n_cells];
+        for (&idx, &val) in gene.indices.iter().zip(&gene.data_raw) {
+            vals[idx as usize] = val as f32;
+        }
+
+        if centered {
+            center_values(&mut vals, &mu, &var);
+        }
+
+        let g = local_cov_weights(&vals, self.neighbors, self.weights);
+
+        let (eg, eg2) = if centered {
+            (0.0, self.wtot2)
+        } else {
+            compute_moments_weights(&mu, &x2, self.neighbors, self.weights)
+        };
+
+        let std_g = (eg2 - eg * eg).sqrt();
+        let z = (g - eg) / std_g;
+
+        let g_max = compute_local_cov_max(&self.node_degrees, &vals);
+        let c = (g - eg) / g_max;
+
+        HotSpotGeneRes {
+            gene_idx: gene.original_index,
+            c,
+            z,
+        }
+    }
+
+    /// Helper function to get the UMI counts per cell
+    ///
+    /// Add the umi counts for the cells to keep
+    fn populate_umi_counts(&mut self) {
+        let reader = ParallelSparseReader::new(&self.f_path_cell).unwrap();
+        let lib_sizes = reader.read_cell_library_sizes(self.cells_to_keep);
+        let umi_counts = lib_sizes.iter().map(|x| *x as f32).collect::<Vec<f32>>();
+        self.umi_counts = Some(umi_counts);
+    }
 }

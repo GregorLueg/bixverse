@@ -261,8 +261,6 @@ pub fn get_top_genes_perc_streaming(
     results
 }
 
-
-
 ///////////////////////////////
 // QC metrics based on genes //
 ///////////////////////////////
@@ -455,7 +453,7 @@ pub enum HvgMethod {
 /// ### Returns
 ///
 /// Option of the HvgMethod (some not yet implemented)
-pub fn get_hvg_method(s: &str) -> Option<HvgMethod> {
+pub fn parse_hvg_method(s: &str) -> Option<HvgMethod> {
     match s.to_lowercase().as_str() {
         "vst" => Some(HvgMethod::Vst),
         "meanvarbin" => Some(HvgMethod::MeanVarBin),

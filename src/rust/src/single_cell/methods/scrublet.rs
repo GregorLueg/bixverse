@@ -1015,7 +1015,7 @@ impl Scrublet {
     ///
     /// Vector of indices of the HVG.
     fn get_hvg(&self, streaming: bool, verbose: bool) -> Vec<usize> {
-        let hvg_type = get_hvg_method(&self.params.hvg_method)
+        let hvg_type = parse_hvg_method(&self.params.hvg_method)
             .ok_or_else(|| format!("Invalid HVG method: {}", &self.params.hvg_method))
             .unwrap();
 
