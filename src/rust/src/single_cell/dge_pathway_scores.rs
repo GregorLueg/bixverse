@@ -349,7 +349,7 @@ fn calculate_auc_for_cell_auroc(ranks: &[f32], gene_set: &[usize]) -> f32 {
 ///
 /// ### Params
 ///
-/// * `f_path` -  File path to the cell-based binary file.
+/// * `f_path` - File path to the cell-based binary file.
 /// * `gene_sets` - Slice of Vecs indicating the indices of the gene sets
 /// * `cells_to_keep` - Vector of indices with the cells to keep.
 /// * `auc_type` - String. One of `"auroc"` or `"wilcox`

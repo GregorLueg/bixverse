@@ -1,4 +1,5 @@
 use faer::{linalg::solvers::DenseSolveCore, Mat};
+use num_traits::Float;
 use rand::prelude::*;
 use rayon::prelude::*;
 use statrs::distribution::FisherSnedecor;
@@ -71,7 +72,7 @@ pub enum OutlierDirection {
 /// ### Returns
 ///
 /// Option of the `OutlierDirection`
-pub fn get_outlier_type(s: &str) -> Option<OutlierDirection> {
+pub fn parse_outlier_type(s: &str) -> Option<OutlierDirection> {
     match s.to_lowercase().as_str() {
         "below" => Some(OutlierDirection::Below),
         "above" => Some(OutlierDirection::Above),
@@ -676,4 +677,34 @@ pub fn summary_aov(res: &ManovaResult) -> Vec<AnovaSummary> {
     }
 
     aov_res
+}
+
+///////////
+// Other //
+///////////
+
+/// Logit function
+///
+/// ### Params
+///
+/// * `p` - Probability value (must be in (0, 1))
+///
+/// ### Returns
+///
+/// Log-odds: ln(p / (1-p))
+pub fn logit<F: Float>(p: F) -> F {
+    (p / (F::one() - p)).ln()
+}
+
+/// Inverse logit (sigmoid) function
+///
+/// ### Params
+///
+/// * `q` - Log-odds value
+///
+/// ### Returns
+///
+/// Probability: exp(q) / (1 + exp(q))
+pub fn inv_logit<F: Float>(q: F) -> F {
+    q.exp() / (F::one() + q.exp())
 }
