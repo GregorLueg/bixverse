@@ -45,7 +45,8 @@ A list with HVG statistics concatenated across all batches:
 \item var_exp - The expected variance of each gene in each batch.
 \item var_std - The standardised variance of each gene in each batch.
 \item batch - Batch index for each gene (length = n_genes * n_batches).
-\item gene_idx - Gene index for each entry (0-indexed, length = n_genes * n_batches).
+\item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+n_batches).
 }
 }
 \description{

@@ -563,7 +563,6 @@ expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
 
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
   .verbose = FALSE
 )
 
@@ -657,6 +656,5 @@ expect_true(
   ),
   info = "all expected cell markers identified"
 )
-
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

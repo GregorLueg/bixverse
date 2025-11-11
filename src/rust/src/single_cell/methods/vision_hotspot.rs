@@ -1,4 +1,3 @@
-use anyhow::Result;
 use extendr_api::{Conversions, List};
 use faer::{Mat, RowRef};
 use indexmap::IndexSet;
@@ -424,6 +423,146 @@ pub fn calc_autocorr_with_clusters(
 // Hotspot //
 /////////////
 
+////////////
+// Params //
+////////////
+
+/// HotSpot parameters
+///
+/// ### Fields
+///
+/// **General**
+///
+/// * `knn_method` - Which of the kNN methods to use. One of `"annoy"`, `"hnsw"`
+///   or `"nndescent"`.
+/// * `ann_dist` - Approximate nearest neighbour distance measure. One of
+///   `"euclidean"` or `"cosine"`.
+/// * `k` - Number of neighbours to search
+///
+/// **Annoy**
+///
+/// * `n_tree` - Number of trees for the generation of the index
+/// * `search_budget` - Search budget during querying
+///
+/// **NN Descent**
+///
+/// * `max_iter` - Maximum iterations for the algorithm
+/// * `rho` - Sampling rate for the algorithm
+/// * `delta` - Early termination criterium
+///
+/// **HotSpot**
+///
+/// * `model` - The model to use for modelling the GEX. Choice of
+///   `"danb"`, `"bernoulli"` or `"normal"`.
+/// * `normalise` - Shall the data be normalised.
+pub struct HotSpotParams {
+    // general params
+    pub knn_method: String,
+    pub ann_dist: String,
+    pub k: usize,
+    // annoy params
+    pub n_tree: usize,
+    pub search_budget: usize,
+    // nn descent params
+    pub max_iter: usize,
+    pub rho: f32,
+    pub delta: f32,
+    // hotspot parameters
+    pub model: String,
+    pub normalise: bool,
+}
+
+impl HotSpotParams {
+    /// Generate HotSpotParams from an R list
+    ///
+    /// Should values not be found within the List, the parameters will default
+    /// to sensible defaults based on heuristics.
+    ///
+    /// ### Params
+    ///
+    /// * `r_list` - The list with the Boost parameters.
+    ///
+    /// ### Returns
+    ///
+    /// The `HotSpotParams` with all parameters set.
+    pub fn from_r_list(r_list: List) -> Self {
+        let params_list = r_list.into_hashmap();
+
+        // general
+        let knn_method = std::string::String::from(
+            params_list
+                .get("knn_algorithm")
+                .and_then(|v| v.as_str())
+                .unwrap_or("annoy"),
+        );
+
+        let ann_dist = std::string::String::from(
+            params_list
+                .get("ann_dist")
+                .and_then(|v| v.as_str())
+                .unwrap_or("cosine"),
+        );
+
+        let k = params_list
+            .get("k")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(15) as usize;
+
+        // annoy
+        let n_tree = params_list
+            .get("n_tree")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let search_budget = params_list
+            .get("search_budget")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        // nn descent
+        let max_iter = params_list
+            .get("nn_max_iter")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(25) as usize;
+
+        let rho = params_list
+            .get("rho")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1.0) as f32;
+
+        let delta = params_list
+            .get("delta")
+            .and_then(|v| v.as_real())
+            .unwrap_or(0.001) as f32;
+
+        // hotspot
+        let model = std::string::String::from(
+            params_list
+                .get("model")
+                .and_then(|v| v.as_str())
+                .unwrap_or("normal"),
+        );
+
+        let normalise = params_list
+            .get("pruning")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+
+        Self {
+            knn_method,
+            ann_dist,
+            k,
+            n_tree,
+            search_budget,
+            max_iter,
+            rho,
+            delta,
+            model,
+            normalise,
+        }
+    }
+}
+
 /////////////
 // Helpers //
 /////////////
@@ -449,7 +588,7 @@ pub enum GexModel {
 /// Option of the GexModel to use (some not yet implemented)
 pub fn parse_gex_model(s: &str) -> Option<GexModel> {
     match s.to_lowercase().as_str() {
-        "danp" => Some(GexModel::DephAdjustNegBinom),
+        "danb" => Some(GexModel::DephAdjustNegBinom),
         "bernoulli" => Some(GexModel::Bernoulli),
         "normal" => Some(GexModel::Normal),
         _ => None,
@@ -512,7 +651,6 @@ fn compute_moments_weights(
     weights: &[Vec<f32>],
 ) -> (f32, f32) {
     let n = neighbours.len();
-
     let mu_sq: Vec<f32> = mu.iter().map(|&m| m * m).collect();
 
     let mut eg = 0_f32;
@@ -521,7 +659,6 @@ fn compute_moments_weights(
 
     for i in 0..n {
         let mu_i = mu[i];
-        let mu_i_sq = mu_sq[i];
 
         for (k, &j) in neighbours[i].iter().enumerate() {
             let wij = weights[i][k];
@@ -531,9 +668,8 @@ fn compute_moments_weights(
 
             t1[i] += wij * mu_j;
             let wij_sq = wij * wij;
-            t2[i] += wij_sq * mu[j] * mu_j;
-            t1[j] += wij * mu_i;
-            t2[j] += wij_sq * mu_i_sq;
+            t2[i] += wij_sq * mu_j * mu_j;
+            // Remove the t1[j] and t2[j] updates
         }
     }
 
@@ -1825,7 +1961,9 @@ impl<'a> Hotspot<'a> {
         let g = local_cov_weights(&vals, self.neighbours, self.weights);
 
         let (eg, eg2) = if centered {
-            (0.0, self.wtot2)
+            let mu_centered = vec![0.0_f32; self.n_cells];
+            let x2_centered = vec![1.0_f32; self.n_cells];
+            compute_moments_weights(&mu_centered, &x2_centered, self.neighbours, self.weights)
         } else {
             compute_moments_weights(&mu, &x2, self.neighbours, self.weights)
         };
@@ -1835,6 +1973,43 @@ impl<'a> Hotspot<'a> {
 
         let g_max = compute_local_cov_max(&self.node_degrees, &vals);
         let c = (g - eg) / g_max;
+
+        // DEBUG: Print for first gene only
+        if gene_chunk.original_index == 0 {
+            println!("Gene 0 debug:");
+            println!("  g = {}", g);
+            println!("  eg = {}", eg);
+            println!("  eg2 = {}", eg2);
+            println!("  wtot2 = {}", self.wtot2); // <-- Add this
+            println!("  n_cells = {}", self.n_cells);
+            println!(
+                "  avg edges per cell = {}",
+                self.wtot2 / self.n_cells as f32
+            );
+
+            // Check if graph is symmetric
+            let mut symmetric_edges = 0;
+            let mut total_edges = 0;
+            for i in 0..self.neighbours.len().min(10) {
+                for &j in &self.neighbours[i] {
+                    total_edges += 1;
+                    if self.neighbours[j].contains(&i) {
+                        symmetric_edges += 1;
+                    }
+                }
+            }
+            println!(
+                "  Symmetry check (first 10 nodes): {}/{} edges are bidirectional",
+                symmetric_edges, total_edges
+            );
+            
+            println!("  std_g = {}", std_g);
+            println!("  g_max = {}", g_max);
+            println!("  (g-eg) = {}", g - eg);
+            println!("  c = {}", c);
+            println!("  z = {}", z);
+            println!("  std_g / g_max = {}", std_g / g_max);
+        }
 
         (gene_chunk.original_index, c, z)
     }

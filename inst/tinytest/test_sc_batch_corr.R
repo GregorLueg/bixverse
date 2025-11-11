@@ -110,7 +110,7 @@ sc_object.weak_batch_effect <- calculate_pca_sc(
 
 sc_object.weak_batch_effect <- find_neighbours_sc(
   sc_object.weak_batch_effect,
-  neighbours_params = params_sc_neighbours(k = 10L),
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
   .verbose = FALSE
 )
 
@@ -149,7 +149,7 @@ sc_object.medium_batch_effect <- calculate_pca_sc(
 
 sc_object.medium_batch_effect <- find_neighbours_sc(
   sc_object.medium_batch_effect,
-  neighbours_params = params_sc_neighbours(k = 10L),
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
   .verbose = FALSE
 )
 
@@ -188,7 +188,7 @@ sc_object.strong_batch_effect <- calculate_pca_sc(
 
 sc_object.strong_batch_effect <- find_neighbours_sc(
   sc_object.strong_batch_effect,
-  neighbours_params = params_sc_neighbours(k = 10L),
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
   .verbose = FALSE
 )
 
@@ -556,7 +556,7 @@ assess_fast_mnn_impact <- function(object) {
   # remove any knns and regenerate
   object = find_neighbours_sc(
     object,
-    neighbours_params = params_sc_neighbours(k = 10L),
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
   )
 
@@ -601,7 +601,7 @@ assess_fast_mnn_impact <- function(object) {
   object <- find_neighbours_sc(
     object,
     embd_to_use = "mnn",
-    neighbours_params = params_sc_neighbours(k = 10L),
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
     .verbose = FALSE
   )
 

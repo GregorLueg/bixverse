@@ -19,6 +19,7 @@ extendr_module! {
     fn rs_sc_hvg_batch_aware;
     fn rs_sc_pca;
     fn rs_sc_knn;
+    fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
 }
 
@@ -372,12 +373,13 @@ fn rs_sc_hvg(
 ///
 /// @return A list with HVG statistics concatenated across all batches:
 /// \itemize{
-/// \item mean - The average expression of each gene in each batch.
-/// \item var - The variance of each gene in each batch.
-/// \item var_exp - The expected variance of each gene in each batch.
-/// \item var_std - The standardised variance of each gene in each batch.
-/// \item batch - Batch index for each gene (length = n_genes * n_batches).
-/// \item gene_idx - Gene index for each entry (0-indexed, length = n_genes * n_batches).
+///   \item mean - The average expression of each gene in each batch.
+///   \item var - The variance of each gene in each batch.
+///   \item var_exp - The expected variance of each gene in each batch.
+///   \item var_std - The standardised variance of each gene in each batch.
+///   \item batch - Batch index for each gene (length = n_genes * n_batches).
+///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+///   n_batches).
 /// }
 ///
 /// @export
@@ -615,6 +617,60 @@ fn rs_sc_knn(
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn[i][j] as i32);
 
     Ok(faer_to_r_matrix(index_mat.as_ref()))
+}
+
+/// Generates the kNN graph with additional distances
+///
+/// @description
+/// This function is a wrapper over the Rust-based generation of the approximate
+/// nearest neighbours. You have several options to get the approximate nearest
+/// neighbours:
+///
+/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+///   an index. Good compromise of index generation, querying speed.
+/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+///   hood. The index generation takes more long, but higher recall and ideal
+///   for very large datasets due to subdued memory pressure.
+/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+///   that is ideal for small, ephemeral kNN graphs.
+///
+/// @param embd Numerical matrix. The embedding matrix to use to generate the
+/// kNN graph.
+/// @param knn_params List. The kNN parameters defined by
+/// [bixverse::params_sc_neighbours()].
+/// @param verbose Boolean. Controls verbosity of the function and returns
+/// how long certain operations took.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return A list with:
+/// \itemize{
+///  \item indices - An integer matrix representing the indices of the
+///  approximate nearest neighbours.
+///  \item dist - An numerical matrix representing the distances to the nearest
+///  neighbours.
+///  \item dist_metric - String representing the used distance metric.
+/// }
+///
+/// @export
+#[extendr]
+fn rs_sc_knn_w_dist(embd: RMatrix<f64>, knn_params: List, verbose: bool, seed: usize) -> List {
+    let embd = r_matrix_to_faer_fp32(&embd);
+
+    let knn_params = KnnParams::from_r_list(knn_params);
+
+    let (knn_indices, knn_dist) =
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+
+    let knn_dist = knn_dist.unwrap();
+
+    let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_indices[i][j] as i32);
+    let dist_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_dist[i][j] as f64);
+
+    list!(
+        indices = faer_to_r_matrix(index_mat.as_ref()),
+        dist = faer_to_r_matrix(dist_mat.as_ref()),
+        dist_metric = knn_params.ann_dist
+    )
 }
 
 /// Generates the sNN graph for igraph

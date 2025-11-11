@@ -262,7 +262,7 @@ expect_true(
   info = "vision - gene set withou delta has positive signs"
 )
 
-# auto-correlation workbench ---------------------------------------------------
+### vision with auto-correlation -----------------------------------------------
 
 vision_res_auto <- vision_w_autocor_sc(
   object = sc_object,
@@ -312,4 +312,31 @@ expect_true(
   info = paste(
     "vision (matrix) outputs with 4 gene sets what you'd expect"
   )
+)
+
+## hotspots --------------------------------------------------------------------
+
+object = sc_object
+hotspot_params = params_sc_hotspot(
+  model = "danb",
+  knn = list(ann_dist = "cosine"),
+  normalise = FALSE
+)
+
+rextendr::document()
+
+hotspot_auto_cor <- rs_hotspot_autocor(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  f_path_cells = get_rust_count_cell_f_path(object),
+  embd = get_pca_factors(object),
+  hotspot_params = hotspot_params,
+  cells_to_keep = get_cells_to_keep(object),
+  genes_to_use = get_gene_indices(
+    object,
+    gene_ids = get_gene_names(object),
+    rust_index = TRUE
+  ),
+  streaming = FALSE,
+  verbose = TRUE,
+  seed = 42L
 )

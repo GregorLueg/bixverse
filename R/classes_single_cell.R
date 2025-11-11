@@ -483,15 +483,6 @@ get_available_embeddings <- function(x) {
   UseMethod("get_available_embeddings")
 }
 
-#' Get the KNN matrix
-#'
-#' @param x An object to get the kNN matrix from.
-#'
-#' @export
-get_knn_mat <- function(x) {
-  UseMethod("get_knn_mat")
-}
-
 #' Get the sNN graph
 #'
 #' @param x An object to get the sNN graph from.

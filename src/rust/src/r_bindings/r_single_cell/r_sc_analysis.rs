@@ -12,8 +12,9 @@ extendr_module! {
     mod r_sc_analysis;
     fn rs_aucell;
     fn rs_calculate_dge_mann_whitney;
-    fn rs_vision_with_autocorrelation;
+    fn rs_hotspot_autocor;
     fn rs_vision;
+    fn rs_vision_with_autocorrelation;
 }
 
 //////////
@@ -295,49 +296,8 @@ fn rs_vision_with_autocorrelation(
     let embd = r_matrix_to_faer_fp32(&embd);
     let knn_params = KnnParams::from_r_list(vision_params);
 
-    let knn_method: KnnSearch =
-        parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
-
-    if verbose {
-        println!("Generating kNN graph...")
-    }
-
-    let (knn_indices, knn_dist) = match knn_method {
-        KnnSearch::Annoy => {
-            let knn_index = build_annoy_index(embd.as_ref(), knn_params.n_tree, seed);
-            query_annoy_index(
-                embd.as_ref(),
-                &knn_index,
-                "euclidean",
-                knn_params.k,
-                knn_params.search_budget,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::Hnsw => {
-            let hnsw_index = build_hnsw_index(embd.as_ref(), "euclidean", seed);
-            query_hnsw_index(
-                embd.as_ref(),
-                &hnsw_index,
-                "euclidean",
-                knn_params.k,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
-            embd.as_ref(),
-            "euclidean",
-            knn_params.k,
-            knn_params.max_iter,
-            knn_params.delta,
-            knn_params.rho,
-            seed,
-            verbose,
-            true,
-        ),
-    };
+    let (knn_indices, knn_dist) =
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
 
@@ -362,6 +322,7 @@ fn rs_vision_with_autocorrelation(
     ))
 }
 
+/// @export
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_autocor(
@@ -371,60 +332,23 @@ fn rs_hotspot_autocor(
     hotspot_params: List,
     cells_to_keep: Vec<i32>,
     genes_to_use: Vec<i32>,
-    model: String,
     streaming: bool,
     verbose: bool,
-    normalise: bool,
     seed: usize,
 ) -> extendr_api::Result<List> {
     let embd = r_matrix_to_faer_fp32(&embd);
-    let knn_params = KnnParams::from_r_list(hotspot_params);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let genes_to_use = genes_to_use.r_int_convert();
 
-    let knn_method: KnnSearch =
-        parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
+    let knn_params = KnnParams::from_hotspot_params(&hotspot_params);
 
     if verbose {
         println!("Generating kNN graph...")
     }
 
-    let (knn_indices, knn_dist) = match knn_method {
-        KnnSearch::Annoy => {
-            let knn_index = build_annoy_index(embd.as_ref(), knn_params.n_tree, seed);
-            query_annoy_index(
-                embd.as_ref(),
-                &knn_index,
-                "euclidean",
-                knn_params.k,
-                knn_params.search_budget,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::Hnsw => {
-            let hnsw_index = build_hnsw_index(embd.as_ref(), "euclidean", seed);
-            query_hnsw_index(
-                embd.as_ref(),
-                &hnsw_index,
-                "euclidean",
-                knn_params.k,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
-            embd.as_ref(),
-            "euclidean",
-            knn_params.k,
-            knn_params.max_iter,
-            knn_params.delta,
-            knn_params.rho,
-            seed,
-            verbose,
-            true,
-        ),
-    };
+    let (knn_indices, knn_dist) =
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
 
     let mut hotspot = Hotspot::new(
         f_path_genes,
@@ -435,11 +359,20 @@ fn rs_hotspot_autocor(
     );
 
     let res: HotSpotGeneRes = if streaming {
-        hotspot.compute_all_genes(&genes_to_use, &model, normalise, verbose)
+        hotspot.compute_all_genes(
+            &genes_to_use,
+            &hotspot_params.model,
+            hotspot_params.normalise,
+            verbose,
+        )
     } else {
-        hotspot.compute_all_genes_streaming(&genes_to_use, &model, normalise, verbose)
-    }
-    .unwrap();
+        hotspot.compute_all_genes_streaming(
+            &genes_to_use,
+            &hotspot_params.model,
+            hotspot_params.normalise,
+            verbose,
+        )
+    }?;
 
     Ok(list!(
         gene_idx = res.gene_idx,

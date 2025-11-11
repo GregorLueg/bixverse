@@ -431,7 +431,7 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   checkmate::qassert(target_size, "N1")
   checkmate::qassert(.verbose, "B1")
 
-  # if the kNN graph shall be regenerated, get the emedding here...
+  # if the kNN graph shall be regenerated, get the embedding here...
   if (regenerate_knn) {
     embd <- get_embedding(x = object, embd_name = embd_to_use)
 

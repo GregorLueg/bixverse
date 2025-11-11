@@ -2181,12 +2181,13 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #'
 #' @return A list with HVG statistics concatenated across all batches:
 #' \itemize{
-#' \item mean - The average expression of each gene in each batch.
-#' \item var - The variance of each gene in each batch.
-#' \item var_exp - The expected variance of each gene in each batch.
-#' \item var_std - The standardised variance of each gene in each batch.
-#' \item batch - Batch index for each gene (length = n_genes * n_batches).
-#' \item gene_idx - Gene index for each entry (0-indexed, length = n_genes * n_batches).
+#'   \item mean - The average expression of each gene in each batch.
+#'   \item var - The variance of each gene in each batch.
+#'   \item var_exp - The expected variance of each gene in each batch.
+#'   \item var_std - The standardised variance of each gene in each batch.
+#'   \item batch - Batch index for each gene (length = n_genes * n_batches).
+#'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+#'   n_batches).
 #' }
 #'
 #' @export
@@ -2246,6 +2247,41 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #'
 #' @export
 rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, verbose, seed)
+
+#' Generates the kNN graph with additional distances
+#'
+#' @description
+#' This function is a wrapper over the Rust-based generation of the approximate
+#' nearest neighbours. You have several options to get the approximate nearest
+#' neighbours:
+#'
+#' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+#'   an index. Good compromise of index generation, querying speed.
+#' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+#'   hood. The index generation takes more long, but higher recall and ideal
+#'   for very large datasets due to subdued memory pressure.
+#' - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+#'   that is ideal for small, ephemeral kNN graphs.
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param knn_params List. The kNN parameters defined by
+#' [bixverse::params_sc_neighbours()].
+#' @param verbose Boolean. Controls verbosity of the function and returns
+#' how long certain operations took.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return A list with:
+#' \itemize{
+#'  \item indices - An integer matrix representing the indices of the
+#'  approximate nearest neighbours.
+#'  \item dist - An numerical matrix representing the distances to the nearest
+#'  neighbours.
+#'  \item dist_metric - String representing the used distance metric.
+#' }
+#'
+#' @export
+rs_sc_knn_w_dist <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'
@@ -2326,6 +2362,28 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @export
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
+#' @export
+rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_autocor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+
+#' Calculate VISION pathway scores in Rust
+#'
+#' @description
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of cells x vision scores per gene set.
+#'
+#' @export
+rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(wrap__rs_vision, f_path, gs_list, cells_to_keep, streaming, verbose)
+
 #' Calculate VISION pathway scores in Rust with auto-correlation
 #'
 #' @description
@@ -2362,25 +2420,6 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #'
 #' @export
 rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
-
-#' Calculate VISION pathway scores in Rust
-#'
-#' @description
-#' The function will take in a list of gene sets that contains lists of `"pos"`
-#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
-#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
-#'
-#' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
-#' and negative gene indices of that specific gene set.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
-#' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
-#'
-#' @return A matrix of cells x vision scores per gene set.
-#'
-#' @export
-rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(wrap__rs_vision, f_path, gs_list, cells_to_keep, streaming, verbose)
 
 #' Generate meta cells (hdWGCNA method)
 #'

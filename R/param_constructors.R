@@ -11,7 +11,7 @@
 #'  \item knn_method - Which of method to use for the approximate nearest
 #'  neighbour search. Defaults to `"annoy"`. The implementations are:
 #'  `c("annoy", "hnsw", "nndescent")`.
-#'  \item dist_metric - Which distance metric to use for the approximate nearest
+#'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("euclidean", "cosine")`.
 #'  \item search_budget - Search budget per tree for Annoy. Defaults to `100L`.
@@ -25,9 +25,9 @@
 #' @export
 params_knn_defaults <- function() {
   list(
-    k = 0L,
+    k = 15L,
     knn_method = "annoy",
-    dist_metric = "euclidean",
+    ann_dist = "euclidean",
     search_budget = 100L,
     n_trees = 100L,
     nn_max_iter = 15L,
@@ -100,7 +100,9 @@ params_pca_defaults <- function() {
 
 # constructors -----------------------------------------------------------------
 
-## scrublet --------------------------------------------------------------------
+## doublet detections ----------------------------------------------------------
+
+### scrublet -------------------------------------------------------------------
 
 #' Wrapper function for Scrublet doublet detection parameters
 #'
@@ -149,7 +151,7 @@ params_scrublet <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(knn_method = "hnsw")
+  knn = list(k = 0L, knn_method = "hnsw")
 ) {
   # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
@@ -182,7 +184,7 @@ params_scrublet <- function(
   params
 }
 
-## boost -----------------------------------------------------------------------
+### boost ----------------------------------------------------------------------
 
 #' Wrapper function for Boost parameters
 #'
@@ -231,7 +233,7 @@ params_boost <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list()
+  knn = list(k = 0L)
 ) {
   # checks
   checkmate::qassert(boost_rate, "N1[0,1]")
@@ -264,4 +266,383 @@ params_boost <- function(
   assertScBoost(params)
 
   params
+}
+
+## neighbours ------------------------------------------------------------------
+
+#' Wrapper function for parameters for neighbour identification in single cell
+#'
+#' @param full_snn Boolean. Shall the full shared nearest neighbour graph
+#' be generated that generates edges between all cells instead of between
+#' only neighbours.
+#' @param pruning Numeric. Weights below this threshold will be set to 0 in
+#' the generation of the sNN graph.
+#' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
+#' similarity calculates the Jaccard between the neighbours, whereas the rank
+#' method calculates edge weights based on the ranking of shared neighbours.
+#' For the rank method, the weight is determined by finding the shared
+#' neighbour with the lowest combined rank across both cells, where
+#' lower-ranked (closer) shared neighbours result in higher edge weights
+#' Both methods produce weights normalised to the range `[0, 1]`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: This function uses `k = 15L`, `ann_dist = "cosine"`,
+#' and `nn_max_iter = 25L` as defaults.
+#'
+#' @returns A list with the neighbour parameters.
+#'
+#' @export
+params_sc_neighbours <- function(
+  full_snn = FALSE,
+  pruning = 1 / 15,
+  snn_similarity = c("rank", "jaccard"),
+  knn = list()
+) {
+  snn_similarity <- match.arg(snn_similarity)
+
+  checkmate::qassert(full_snn, "B1")
+  checkmate::qassert(pruning, "N1[0, 1]")
+  checkmate::assertChoice(snn_similarity, c("rank", "jaccard"))
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(
+      list(k = 15L, ann_dist = "cosine"),
+      knn,
+      keep.null = TRUE
+    ),
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "N1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  c(
+    list(
+      full_snn = full_snn,
+      pruning = pruning,
+      snn_similarity = snn_similarity
+    ),
+    knn_params
+  )
+}
+
+## vision ----------------------------------------------------------------------
+
+#' Wrapper function for parameters for VISION with auto-correlation
+#'
+#' @param n_perm Integer. Number of random gene sets to generate per cluster.
+#' @param n_cluster Integer. Number of clusters for the random gene set
+#' clustering generation.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: This function uses `k = 15L` and `nn_max_iter = 25L`
+#' as defaults.
+#'
+#' @returns A list with the VISION parameters when you wish to use the
+#' auto-correlation version.
+#'
+#' @export
+params_sc_vision <- function(
+  n_perm = 500L,
+  n_cluster = 5L,
+  knn = list()
+) {
+  checkmate::qassert(n_perm, "I1")
+  checkmate::qassert(n_cluster, "I1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = 15L, nn_max_iter = 15L), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "N1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  c(
+    list(
+      n_perm = n_perm,
+      n_cluster = n_cluster
+    ),
+    knn_params
+  )
+}
+
+## hotspot ---------------------------------------------------------------------
+
+#' Wrapper function for parameters for HotSpot
+#'
+#' @param model String. Model to use for modelling the GEX. One of
+#' `c("danb", "bernoulli", "normal")`. Defaults to `"normal"`.
+#' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: Parameters are mapped to Rust structure names
+#' (`n_trees` becomes `n_tree`, `nn_max_iter` becomes `max_iter`).
+#'
+#' @returns A list with the HotSpot parameters.
+#'
+#' @export
+params_sc_hotspot <- function(
+  model = c("normal", "danb", "bernoulli"),
+  normalise = TRUE,
+  knn = list()
+) {
+  model <- match.arg(model)
+  checkmate::qassert(normalise, "B1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "I1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  list(
+    knn_method = knn_params$knn_method,
+    ann_dist = knn_params$ann_dist,
+    k = knn_params$k,
+    n_tree = knn_params$n_trees,
+    search_budget = knn_params$search_budget,
+    max_iter = knn_params$nn_max_iter,
+    rho = knn_params$rho,
+    delta = knn_params$delta,
+    model = model,
+    normalise = normalise
+  )
+}
+
+## metacells -------------------------------------------------------------------
+
+### meta cell (hdWGCNA) --------------------------------------------------------
+
+#' Wrapper function for parameters for meta cell generation
+#'
+#' @param max_shared Integer. Maximum number of allowed shared neighbours for
+#' the meta cell to be considered. Defaults to `15L`.
+#' @param target_no_metacells Integer. Target number of meta-cells to generate.
+#' Defaults to `1000L`.
+#' @param max_iter Integer. Maximum number of iterations for the algorithm.
+#' Defaults to `5000L`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: This function uses `k = 25L` and `ann_dist = "cosine"`
+#' as defaults.
+#'
+#' @returns A list with the metacell parameters.
+#'
+#' @export
+params_sc_metacells <- function(
+  max_shared = 15L,
+  target_no_metacells = 1000L,
+  max_iter = 5000L,
+  knn = list()
+) {
+  checkmate::qassert(max_shared, "I1")
+  checkmate::qassert(target_no_metacells, "I1")
+  checkmate::qassert(max_iter, "I1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = 25L, ann_dist = "cosine"), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "I1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  c(
+    list(
+      max_shared = max_shared,
+      target_no_metacells = target_no_metacells,
+      max_iter = max_iter
+    ),
+    knn_params
+  )
+}
+
+### sea cells ------------------------------------------------------------------
+
+#' Wrapper function for the SEACells parameters
+#'
+#' @param n_sea_cells Integer. Number of SEA cells to detect.
+#' @param max_fw_iters Integer. Maximum iterations for the Franke-Wolfe
+#' algorithm. Defaults to `50L`.
+#' @param convergence_epsilon Numeric. Convergence threshold. Algorithm stops
+#' when RSS change < epsilon * RSS(0). Defaults to `1e-3`.
+#' @param max_iter Integer. Maximum iterations to run SEACells for. Defaults to
+#' `100L`.
+#' @param min_iter Integer. Minimum iterations to run SEACells for. Defaults to
+#' `10L`.
+#' @param greedy_threshold Integer. Maximum number of cells before defaulting to
+#' rapid random selection of archetypes. Defaults to `20000L`.
+#' @param graph_building String. Graph building method. Defaults to `"union"`.
+#' @param pruning Boolean. Shall tiny values be pruned during Franke-Wolfe
+#' updates. This will reduce memory pressure and can be a good option on
+#' large data sets. Defaults to `FALSE`.
+#' @param pruning_threshold Float. If `pruning = TRUE` values below which
+#' threshold shall be pruned.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: This function uses `k = 25L` as default.
+#'
+#' @returns A list with the SEACells parameters.
+#'
+#' @export
+params_sc_seacells <- function(
+  n_sea_cells,
+  max_fw_iters = 50L,
+  convergence_epsilon = 1e-3,
+  max_iter = 100L,
+  min_iter = 10L,
+  greedy_threshold = 20000L,
+  graph_building = "union",
+  pruning = FALSE,
+  pruning_threshold = 1e-7,
+  knn = list()
+) {
+  checkmate::qassert(n_sea_cells, "I1")
+  checkmate::qassert(max_fw_iters, "I1")
+  checkmate::qassert(convergence_epsilon, "N1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(min_iter, "I1")
+  checkmate::qassert(greedy_threshold, "I1")
+  checkmate::qassert(graph_building, "S1")
+  checkmate::qassert(pruning, "B1")
+  checkmate::qassert(pruning_threshold, "N1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = 25L), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "I1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  c(
+    list(
+      n_sea_cells = n_sea_cells,
+      max_fw_iters = max_fw_iters,
+      convergence_epsilon = convergence_epsilon,
+      max_iter = max_iter,
+      min_iter = min_iter,
+      greedy_threshold = greedy_threshold,
+      graph_building = graph_building,
+      pruning = pruning,
+      pruning_threshold = pruning_threshold
+    ),
+    knn_params
+  )
+}
+
+### supercell ------------------------------------------------------------------
+
+#' Wrapper function for parameters for SuperCell generation
+#'
+#' @param walk_length Integer. Walk length for the Walktrap algorithm. Defaults
+#' to `3L`.
+#' @param graining_factor Numeric. Graining level of data (proportion of number
+#' of single cells in the initial dataset to the number of metacells in the
+#' final dataset). Defaults to `20.0`. (One meta cell per 20 cells.)
+#' @param linkage_dist String. Which type of distance metric to use for the
+#' linkage. Defaults to `"average"`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: This function uses `k = 5L` and `ann_dist = "cosine"`
+#' as defaults.
+#'
+#' @returns A list with the SuperCell parameters.
+#'
+#' @export
+params_sc_supercell <- function(
+  walk_length = 3L,
+  graining_factor = 20.0,
+  linkage_dist = c("complete", "average"),
+  knn = list()
+) {
+  linkage_dist <- match.arg(linkage_dist)
+
+  checkmate::qassert(walk_length, "I1")
+  checkmate::qassert(graining_factor, "N1")
+  checkmate::assertChoice(linkage_dist, c("complete", "average"))
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = 5L, ann_dist = "cosine"), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw", "nndescent")
+  )
+  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "I1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  c(
+    list(
+      walk_length = walk_length,
+      graining_factor = graining_factor,
+      linkage_dist = linkage_dist
+    ),
+    knn_params
+  )
 }

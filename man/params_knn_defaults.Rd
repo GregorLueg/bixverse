@@ -14,7 +14,7 @@ parameters:
 \item knn_method - Which of method to use for the approximate nearest
 neighbour search. Defaults to \code{"annoy"}. The implementations are:
 \code{c("annoy", "hnsw", "nndescent")}.
-\item dist_metric - Which distance metric to use for the approximate nearest
+\item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("euclidean", "cosine")}.
 \item search_budget - Search budget per tree for Annoy. Defaults to \code{100L}.

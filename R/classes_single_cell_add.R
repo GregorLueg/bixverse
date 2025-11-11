@@ -208,3 +208,70 @@ get_obs_data.boost_res <- function(x, ...) {
 
   return(obs_dt)
 }
+
+## kNN with distances ----------------------------------------------------------
+
+#' Helper function to generate kNN data with distances
+#'
+#' @description
+#' Wrapper class that stores kNN data for subsequent usage in various other
+#' functions, methods and helpers.
+#'
+#' @param knn_data Named list with the following items:
+#' \itemize{
+#'   \item indices - Integer matrix containing the indices of the nearest
+#'   neighbours (0-indexed).
+#'   \item dist - Numerical matrix containing the distances to the nearest
+#'   neighbours.
+#'   \item dist_metric - String. Distance metric used.
+#' }
+#' @param used_cells Character vector. The cells used to generate the kNN graph
+#' with the distances.
+#'
+#' @return Generates the `sc_knn` class.
+#'
+#' @export
+new_sc_knn <- function(knn_data, used_cells) {
+  # checks
+  checkmate::assertList(knn_data)
+  checkmate::assertNames(
+    names(knn_data),
+    must.include = c("indices", "dist", "dist_metric")
+  )
+  checkmate::qassert(used_cells, "S+")
+
+  sc_knn <- list(
+    indices = knn_data$indices,
+    dist = knn_data$dist,
+    dist_metric = knn_data$dist_metric,
+    used_cells = used_cells
+  )
+
+  class(sc_knn) <- "sc_knn"
+
+  return(sc_knn)
+}
+
+### methods --------------------------------------------------------------------
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_knn_mat
+#'
+#' @export
+get_knn_mat.sc_knn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_knn")
+
+  return(x[["indices"]])
+}
+
+#' @rdname get_knn_dist
+#'
+#' @export
+get_knn_dist.sc_knn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_knn")
+
+  return(x[["dist"]])
+}

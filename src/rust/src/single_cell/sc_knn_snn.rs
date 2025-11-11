@@ -12,6 +12,9 @@ use crate::core::data::sparse_structures::*;
 use crate::core::graph::annoy::AnnoyIndex;
 use crate::core::graph::knn::{parse_ann_dist, AnnDist};
 use crate::core::graph::nn_descent::NNDescent;
+use crate::single_cell::cell_aggregations::{MetaCellParams, SuperCellParams};
+use crate::single_cell::methods::seacells::SEACellsParams;
+use crate::single_cell::methods::vision_hotspot::HotSpotParams;
 
 ///////////
 // Enums //
@@ -95,7 +98,7 @@ impl KnnParams {
         // general
         let knn_method = std::string::String::from(
             params_list
-                .get("knn_algorithm")
+                .get("knn_method")
                 .and_then(|v| v.as_str())
                 .unwrap_or("annoy"),
         );
@@ -125,7 +128,7 @@ impl KnnParams {
 
         // nn descent
         let max_iter = params_list
-            .get("max_iter")
+            .get("nn_max_iter")
             .and_then(|v| v.as_integer())
             .unwrap_or(25) as usize;
 
@@ -148,6 +151,94 @@ impl KnnParams {
             max_iter,
             rho,
             delta,
+        }
+    }
+
+    /// Extract the kNN params from the SEACells params
+    ///
+    /// ### Params
+    ///
+    /// * `seacell_params` - Structure holding the `SEACellsParams`.
+    ///
+    /// ### Returns
+    ///
+    /// The `KnnParams` with all parameters set.
+    pub fn from_sea_cells_params(seacell_params: &SEACellsParams) -> Self {
+        Self {
+            knn_method: seacell_params.knn_method.clone(),
+            ann_dist: seacell_params.ann_dist.clone(),
+            k: seacell_params.k,
+            n_tree: seacell_params.n_trees,
+            search_budget: seacell_params.search_budget,
+            max_iter: seacell_params.nn_max_iter,
+            rho: seacell_params.rho,
+            delta: seacell_params.delta,
+        }
+    }
+
+    /// Extract the kNN params from the MetaCell parameters.
+    ///
+    /// ### Params
+    ///
+    /// * `metacell_params` - Structure holding the `MetaCellParams`.
+    ///
+    /// ### Returns
+    ///
+    /// The `KnnParams` with all parameters set.
+    pub fn from_metacell_params(metacell_params: &MetaCellParams) -> Self {
+        Self {
+            knn_method: metacell_params.knn_method.clone(),
+            ann_dist: metacell_params.ann_dist.clone(),
+            k: metacell_params.k,
+            n_tree: metacell_params.n_trees,
+            search_budget: metacell_params.search_budget,
+            max_iter: metacell_params.nn_max_iter,
+            rho: metacell_params.rho,
+            delta: metacell_params.delta,
+        }
+    }
+
+    /// Extract the kNN params from the SuperCells parameters.
+    ///
+    /// ### Params
+    ///
+    /// * `supercell_params` - Structure holding the `SuperCellParams`.
+    ///
+    /// ### Returns
+    ///
+    /// The `KnnParams` with all parameters set.
+    pub fn from_supercell_params(supercell_params: &SuperCellParams) -> Self {
+        Self {
+            knn_method: supercell_params.knn_method.clone(),
+            ann_dist: supercell_params.ann_dist.clone(),
+            k: supercell_params.k,
+            n_tree: supercell_params.n_trees,
+            search_budget: supercell_params.search_budget,
+            max_iter: supercell_params.nn_max_iter,
+            rho: supercell_params.rho,
+            delta: supercell_params.delta,
+        }
+    }
+
+    /// Extract the kNN params from the HotSpot parameters.
+    ///
+    /// ### Params
+    ///
+    /// * `hotspot_params` - Structure holding the `HotSpotParams`.
+    ///
+    /// ### Returns
+    ///
+    /// The `KnnParams` with all parameters set.
+    pub fn from_hotspot_params(hotspot_params: &HotSpotParams) -> Self {
+        Self {
+            knn_method: hotspot_params.knn_method.clone(),
+            ann_dist: hotspot_params.ann_dist.clone(),
+            k: hotspot_params.k,
+            n_tree: hotspot_params.n_tree,
+            search_budget: hotspot_params.search_budget,
+            max_iter: hotspot_params.max_iter,
+            rho: hotspot_params.rho,
+            delta: hotspot_params.delta,
         }
     }
 }
@@ -977,6 +1068,125 @@ pub fn generate_knn_nndescent(
             ids
         })
         .collect()
+}
+
+/// Generate the kNN indices and distances
+///
+/// Helper function to generate kNN indices and distances in one go
+///
+/// ### Params
+///
+/// * `embd` - The embedding matrix to use to approximate neighbours and
+///   calculate distances. Cells x features.
+/// * `knn_params` - The parameters for the approximate nearest neighbour
+///   search.
+/// * `return_dist` - Return the distances.
+/// * `seed` - Seed for reproducibility
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// Tuple of `(indices of nearest neighbours, distances to these neighbours)`
+pub fn generate_knn_with_dist(
+    embd: MatRef<f32>,
+    knn_params: &KnnParams,
+    return_dist: bool,
+    seed: usize,
+    verbose: bool,
+) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
+    // default to Annoy if nothing else...
+    let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+
+    match knn_method {
+        KnnSearch::Annoy => {
+            let index_start = Instant::now();
+            let annoy_index = build_annoy_index(embd, knn_params.n_tree, seed);
+            let end_index = index_start.elapsed();
+
+            if verbose {
+                println!("Generated Annoy index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
+            let (mut indices, distances) = query_annoy_index(
+                embd,
+                &annoy_index,
+                &knn_params.ann_dist,
+                knn_params.k + 1, // Query k+1 to include self!
+                knn_params.search_budget,
+                return_dist,
+                verbose,
+            );
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried Annoy index: {:.2?}", query_end);
+            }
+
+            // remove first element (self) from each vector
+            for idx_vec in indices.iter_mut() {
+                idx_vec.remove(0);
+            }
+
+            let distances = distances.map(|mut dists| {
+                for dist_vec in dists.iter_mut() {
+                    dist_vec.remove(0);
+                }
+                dists
+            });
+
+            (indices, distances)
+        }
+        KnnSearch::Hnsw => {
+            let index_start = Instant::now();
+            let hnsw_index = build_hnsw_index(embd, &knn_params.ann_dist, seed);
+            let end_index = index_start.elapsed();
+
+            if verbose {
+                println!("Generated HNSW index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
+            let (mut indices, distances) = query_hnsw_index(
+                embd,
+                &hnsw_index,
+                &knn_params.ann_dist,
+                knn_params.k + 1, // Query k+1 to include self!
+                return_dist,
+                verbose,
+            );
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried HNSW index: {:.2?}", query_end);
+            }
+
+            // Remove first element (self) from each vector
+            for idx_vec in indices.iter_mut() {
+                idx_vec.remove(0);
+            }
+
+            let distances = distances.map(|mut dists| {
+                for dist_vec in dists.iter_mut() {
+                    dist_vec.remove(0);
+                }
+                dists
+            });
+
+            (indices, distances)
+        }
+        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
+            embd,
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.max_iter,
+            knn_params.delta,
+            knn_params.rho,
+            seed,
+            verbose,
+            return_dist,
+        ),
+    }
 }
 
 ///////////////////

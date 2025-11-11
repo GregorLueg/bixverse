@@ -1,6 +1,7 @@
 # shared generics --------------------------------------------------------------
 
-# generics that are shared across various S7 classes
+# generics that are shared across various S3/S7 classes. the more specific
+# generics are found within the given classes_xx.R files.
 
 ## plotting --------------------------------------------------------------------
 
@@ -137,3 +138,23 @@ get_sc_counts <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
+
+### knn ------------------------------------------------------------------------
+
+#' Get the KNN matrix
+#'
+#' @param x An object to get the kNN matrix from.
+#'
+#' @export
+get_knn_mat <- function(x) {
+  UseMethod("get_knn_mat")
+}
+
+#' Get the KNN distance measures
+#'
+#' @param x An object to get the kNN distances from.
+#'
+#' @export
+get_knn_dist <- function(x) {
+  UseMethod("get_knn_dist")
+}
