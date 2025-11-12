@@ -4,11 +4,14 @@
 ^LICENSE\.md$
 ^Meta$
 ^\.Rproj\.user$
+^\.github$
 ^\.pre-commit-config\.yaml$
+^_pkgdown\.yml$
 ^bixverse\.Rproj$
 ^doc$
 ^docs$
 ^misc$
+^pkgdown$
 ^src/Makevars$
 ^src/Makevars\.win$
 ^src/\.cargo$
@@ -17,6 +20,3 @@
 ^target$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
-^_pkgdown\.yml$
-^pkgdown$
-^\.github$

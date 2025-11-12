@@ -1845,6 +1845,111 @@ checkScSeacells <- function(x) {
   TRUE
 }
 
+### supercells -----------------------------------------------------------------
+
+#' Check SuperCell parameters
+#'
+#' @description Checkmate extension for checking the SuperCell parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScSupercell <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "walk_length",
+      "graining_factor",
+      "linkage_dist",
+      "k",
+      "knn_method",
+      "ann_dist",
+      "n_trees",
+      "search_budget",
+      "nn_max_iter",
+      "rho",
+      "delta"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  integer_rules <- list(
+    "walk_length" = "I1",
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1",
+    "nn_max_iter" = "I1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is incorrect:",
+        "walk_length, k, n_trees, search_budget, and nn_max_iter need to be",
+        "integers."
+      ),
+      broken_elem
+    ))
+  }
+  numeric_rules <- list(
+    "graining_factor" = "N1",
+    "rho" = "N1",
+    "delta" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is incorrect:",
+        "graining_factor, rho, and delta need to be numeric."
+      ),
+      broken_elem
+    ))
+  }
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw", "nndescent"),
+    ann_dist = c("cosine", "euclidean"),
+    linkage_dist = c("complete", "average")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is not one of the",
+        "expected choices. Please check the documentation."
+      ),
+      broken_elem
+    ))
+  }
+  TRUE
+}
+
 ### bbknn ----------------------------------------------------------------------
 
 #' Check BBKNN parameters
@@ -2485,6 +2590,22 @@ assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
+
+### supercells -----------------------------------------------------------------
+
+#' Assert SuperCell parameters
+#'
+#' @description Checkmate extension for asserting the SuperCell parameters.
+#'
+#' @inheritParams checkScSupercell
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 
 ### bbknn ----------------------------------------------------------------------
 

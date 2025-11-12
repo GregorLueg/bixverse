@@ -1059,3 +1059,79 @@ params_sc_seacells <- function(
     delta = delta
   )
 }
+
+#### supercell -----------------------------------------------------------------
+
+#' Wrapper function for parameters for SuperCell generation
+#'
+#' @param walk_length Integer. Walk length for the Walktrap algorithm. Defaults
+#' to `3L`.
+#' @param graining_factor Numeric. Graining level of data (proportion of number
+#' of single cells in the initial dataset to the number of metacells in the
+#' final dataset). Defaults to `20.0`. (One meta cell per 20 cells.)
+#' @param linkage_dist String. Which type of distance metric to use for the
+#' linkage. Defaults to `"average"`.
+#' @param k Integer. Number of neighbours to return. Defaults to `5L`.
+#' @param knn_method String. One of `c("annoy", "hnsw", "nndescent")`. Defaults
+#' to `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search. Defaults to
+#' `"cosine"`.
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' Defaults to `100L`.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm. Defaults to `100L`.
+#' @param nn_max_iter Integer. Maximum iterations for NN Descent. Defaults to
+#' `15L`.
+#' @param rho Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
+#' @param delta Numeric. Early termination criterion for NN Descent. Defaults to
+#' `0.001`.
+#'
+#' @returns A list with the SuperCell parameters.
+#'
+#' @export
+params_sc_supercell <- function(
+  walk_length = 3L,
+  graining_factor = 20.0,
+  linkage_dist = c("complete", "average"),
+  k = 5L,
+  knn_method = c("annoy", "hnsw", "nndescent"),
+  ann_dist = c("cosine", "euclidean"),
+  n_trees = 100L,
+  search_budget = 100L,
+  nn_max_iter = 15L,
+  rho = 1.0,
+  delta = 0.001
+) {
+  # checks
+  linkage_dist <- match.arg(linkage_dist)
+  knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
+
+  checkmate::qassert(walk_length, "I1")
+  checkmate::qassert(graining_factor, "N1")
+  checkmate::assertChoice(linkage_dist, c("complete", "average"))
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw", "nndescent"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(nn_max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
+
+  # returns
+  list(
+    walk_length = walk_length,
+    graining_factor = graining_factor,
+    linkage_dist = linkage_dist,
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    nn_max_iter = nn_max_iter,
+    rho = rho,
+    delta = delta
+  )
+}

@@ -9,36 +9,7 @@ use thousands::Separable;
 
 use crate::core::base::sparse_math::*;
 use crate::core::data::sparse_structures::*;
-
-///////////
-// Enums //
-///////////
-
-/// SNN similarity method
-#[derive(Clone, Copy)]
-pub enum SeaCellGraphGen {
-    /// Only intersecting nearest neigbhbours will be considered
-    Intersection,
-    /// The union of nearest neighbours will be considered
-    Union,
-}
-
-/// Helper function to parse the SEACell graph generation
-///
-/// ### Params
-///
-/// * `s` - Type of graph to build
-///
-/// ### Returns
-///
-/// Option of the SeaCellGraphGen
-pub fn parse_seacell_graph(s: &str) -> Option<SeaCellGraphGen> {
-    match s.to_lowercase().as_str() {
-        "intersection" => Some(SeaCellGraphGen::Intersection),
-        "union" => Some(SeaCellGraphGen::Union),
-        _ => None,
-    }
-}
+use crate::core::graph::knn::*;
 
 ////////////
 // Params //
@@ -648,8 +619,8 @@ impl<'a> SEACells<'a> {
             println!("Computing adaptive bandwidth RBF kernel...");
         }
 
-        let graph_construction = parse_seacell_graph(&self.params.graph_building)
-            .unwrap_or(SeaCellGraphGen::Intersection);
+        let graph_construction = parse_knn_symmetrisation(&self.params.graph_building)
+            .unwrap_or(KnnSymmetrisation::Intersection);
 
         let median_idx = k / 2;
         let median_dist = knn_distances
@@ -665,14 +636,14 @@ impl<'a> SEACells<'a> {
         }
 
         match graph_construction {
-            SeaCellGraphGen::Union => {
+            KnnSymmetrisation::Union => {
                 let to_add: Vec<_> = edges
                     .iter()
                     .filter_map(|&(i, j)| (!edges.contains(&(j, i))).then_some((j, i)))
                     .collect();
                 edges.extend(to_add);
             }
-            SeaCellGraphGen::Intersection => {
+            KnnSymmetrisation::Intersection => {
                 let to_keep: FxHashSet<_> = edges
                     .iter()
                     .copied()

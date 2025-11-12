@@ -4,11 +4,11 @@ f_path_csr = file.path(tempdir(), "csr_test.h5ad")
 
 
 write_h5ad_sc(
-    f_path = f_path_csr,
-    counts = single_cell_test_data$counts,
-    obs = single_cell_test_data$obs,
-    single_cell_test_data$var,
-    .verbose = FALSE
+  f_path = f_path_csr,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  single_cell_test_data$var,
+  .verbose = FALSE
 )
 
 # thresholds
@@ -20,19 +20,19 @@ no_pcs <- 5L
 
 
 sc_qc_param = params_sc_min_quality(
-    min_unique_genes = min_genes_exp,
-    min_lib_size = min_lib_size,
-    min_cells = min_cells_exp,
-    target_size = 1000
+  min_unique_genes = min_genes_exp,
+  min_lib_size = min_lib_size,
+  min_cells = min_cells_exp,
+  target_size = 1000
 )
 
 sc_object <- suppressWarnings(single_cell_exp(dir_data = tempdir()))
 
 sc_object <- load_h5ad(
-    object = sc_object,
-    h5_path = path.expand(f_path_csr),
-    sc_qc_param = sc_qc_param,
-    .verbose = FALSE
+  object = sc_object,
+  h5_path = path.expand(f_path_csr),
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
 )
 
 
