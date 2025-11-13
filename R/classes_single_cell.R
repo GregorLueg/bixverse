@@ -698,7 +698,7 @@ get_snn_graph.sc_cache <- function(x) {
 
 ## single cell class -----------------------------------------------------------
 
-#' @title bixverse single cell class (nightly!)
+#' @title bixverse single cell class
 #'
 #' @description
 #' This is the `bixverse`-based single cell class. Under the hood it uses a
@@ -881,31 +881,6 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 
 #### duckdb getters ------------------------------------------------------------
 
-#' Getter the obs table
-#'
-#' @param object `single_cell_exp` class.
-#' @param indices Optional integer vector. The integer positions of the cells
-#' to return.
-#' @param cols Optional string vector. The columns from the obs table to return.
-#' @param filtered Boolean. Whether to return all cells or filtered to to_keep
-#' cells.
-#'
-#' @return The obs table
-#'
-#' @export
-get_sc_obs <- S7::new_generic(
-  name = "get_sc_obs",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    indices = NULL,
-    cols = NULL,
-    filtered = FALSE
-  ) {
-    S7::S7_dispatch()
-  }
-)
-
 #' @method get_sc_obs single_cell_exp
 #'
 #' @export
@@ -931,28 +906,6 @@ S7::method(get_sc_obs, single_cell_exp) <- function(
 
   return(obs_table)
 }
-
-#' Getter the var table
-#'
-#' @param object `single_cell_exp` class.
-#' @param indices Optional integer vector. The integer positions of the genes
-#' to return.
-#' @param cols Optional string vector. The columns from the var table to return.
-#'
-#' @return The vars table
-#'
-#' @export
-get_sc_var <- S7::new_generic(
-  name = "get_sc_var",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    indices = NULL,
-    cols = NULL
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method get_sc_var single_cell_exp
 #'
@@ -1060,39 +1013,6 @@ S7::method(get_sc_cache, single_cell_exp) <- function(
 }
 
 #### count getters -------------------------------------------------------------
-
-#' Getter the counts
-#'
-#' @param object `single_cell_exp` class.
-#' @param assay String. Which slot to return. One of `c("raw", "norm")`.
-#' Defaults to `"raw"`.
-#' @param return_format String. One of `c("cell", "gene")`. Return data in
-#' cell-centric compressed format (CSR) or gene-centric compressed format (CSC).
-#' Defaults to `"cell"`.
-#' @param cell_indices Optional cell indices.
-#' @param gene_indices Optional gene indices.
-#' @param use_cells_to_keep Boolean. Shall cells to keep be found in the class,
-#' shall the counts be reduced to these.
-#' @param .verbose Boolean. Controls verbosity of the function.
-#'
-#' @return The counts table
-#'
-#' @export
-get_sc_counts <- S7::new_generic(
-  name = "get_sc_counts",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    assay = c("raw", "norm"),
-    return_format = c("cell", "gene"),
-    cell_indices = NULL,
-    gene_indices = NULL,
-    use_cells_to_keep = TRUE,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method get_sc_counts single_cell_exp
 #'

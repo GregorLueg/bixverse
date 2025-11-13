@@ -1,8 +1,8 @@
 use extendr_api::*;
 use faer::Mat;
 
-use crate::single_cell::bbknn::*;
-use crate::single_cell::fast_mnn::*;
+use crate::single_cell::methods::bbknn::*;
+use crate::single_cell::methods::fast_mnn::*;
 use crate::single_cell::metrics::kbet;
 use crate::utils::r_rust_interface::*;
 use crate::utils::traits::VecConvert;

@@ -99,10 +99,14 @@ read_motif_annotation_file <- function(annot_file) {
   # fcase is cool!
   motif_annotations[,
     annotationSource := data.table::fcase(
-      inferred_orthology & inferred_motif_sim , "inferredBy_MotifSimilarity_n_Orthology" ,
-      inferred_motif_sim                      , "inferredBy_MotifSimilarity"             ,
-      inferred_orthology                      , "inferredBy_Orthology"                   ,
-      direct_annotation                       , "directAnnotation"                       ,
+      inferred_orthology & inferred_motif_sim,
+      "inferredBy_MotifSimilarity_n_Orthology",
+      inferred_motif_sim,
+      "inferredBy_MotifSimilarity",
+      inferred_orthology,
+      "inferredBy_Orthology",
+      direct_annotation,
+      "directAnnotation",
       default = ""
     )
   ]

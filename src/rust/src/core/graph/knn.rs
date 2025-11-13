@@ -36,6 +36,32 @@ pub fn parse_ann_dist(s: &str) -> Option<AnnDist> {
     }
 }
 
+/// kNN symmetrisation method
+#[derive(Clone, Copy)]
+pub enum KnnSymmetrisation {
+    /// Only intersecting nearest neigbhbours will be considered
+    Intersection,
+    /// The union of nearest neighbours will be considered
+    Union,
+}
+
+/// Helper function to parse the SEACell graph generation
+///
+/// ### Params
+///
+/// * `s` - Type of graph to build
+///
+/// ### Returns
+///
+/// Option of the SeaCellGraphGen
+pub fn parse_knn_symmetrisation(s: &str) -> Option<KnnSymmetrisation> {
+    match s.to_lowercase().as_str() {
+        "intersection" => Some(KnnSymmetrisation::Intersection),
+        "union" => Some(KnnSymmetrisation::Union),
+        _ => None,
+    }
+}
+
 ///////////////////////
 // KNN and Laplacian //
 ///////////////////////

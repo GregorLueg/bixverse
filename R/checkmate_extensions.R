@@ -1591,48 +1591,72 @@ checkScMetacells <- function(x) {
       "max_iter",
       "k",
       "knn_method",
+      "ann_dist",
       "n_trees",
       "search_budget",
-      "ann_dist"
+      "nn_max_iter",
+      "rho",
+      "delta"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  rules <- list(
+  integer_rules <- list(
     "max_shared" = "I1",
     "target_no_metacells" = "I1",
     "max_iter" = "I1",
     "k" = "I1",
     "n_trees" = "I1",
-    "search_budget" = "I1"
+    "search_budget" = "I1",
+    "nn_max_iter" = "I1"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
     } else {
       TRUE
     }
   })
-
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in metacell generation is incorrect:",
-          "max_shared, target_no_metacells, max_iter, k, n_trees and",
-          "search_budget need to be integers."
-        ),
-        broken_elem
-      )
-    )
+    return(sprintf(
+      paste(
+        "The following element `%s` in metacell generation is incorrect:",
+        "max_shared, target_no_metacells, max_iter, k, n_trees, search_budget,",
+        "and nn_max_iter need to be integers."
+      ),
+      broken_elem
+    ))
+  }
+
+  numeric_rules <- list(
+    "rho" = "N1",
+    "delta" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in metacell generation is incorrect:",
+        "rho and delta need to be numeric."
+      ),
+      broken_elem
+    ))
   }
 
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw", "nndescent"),
     ann_dist = c("cosine", "euclidean")
   )
 
@@ -1643,21 +1667,287 @@ checkScMetacells <- function(x) {
       TRUE
     }
   })
-
   if (!isTRUE(all(test_choice_res))) {
     broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the metacell generation is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+    return(sprintf(
+      paste(
+        "The following element `%s` in the metacell generation is not one of",
+        "the expected choices. Please check the documentation."
+      ),
+      broken_elem
+    ))
   }
 
-  return(TRUE)
+  TRUE
+}
+
+### seacells -------------------------------------------------------------------
+
+#' Check SEACells parameters
+#'
+#' @description Checkmate extension for checking the SEACells parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScSeacells <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "n_sea_cells",
+      "max_fw_iters",
+      "convergence_epsilon",
+      "max_iter",
+      "min_iter",
+      "greedy_threshold",
+      "graph_building",
+      "pruning",
+      "pruning_threshold",
+      "k",
+      "knn_method",
+      "n_trees",
+      "search_budget",
+      "nn_max_iter",
+      "rho",
+      "delta"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  integer_rules <- list(
+    "n_sea_cells" = "I1",
+    "max_fw_iters" = "I1",
+    "max_iter" = "I1",
+    "min_iter" = "I1",
+    "greedy_threshold" = "I1",
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1",
+    "nn_max_iter" = "I1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is incorrect:",
+        "n_sea_cells, max_fw_iters, max_iter, min_iter, greedy_threshold,",
+        "k, n_trees, search_budget, and nn_max_iter need to be integers."
+      ),
+      broken_elem
+    ))
+  }
+
+  numeric_rules <- list(
+    "convergence_epsilon" = "N1",
+    "rho" = "N1",
+    "delta" = "N1",
+    "pruning_threshold" = "N1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is incorrect:",
+        "convergence_epsilon, rho, pruning_threshold and delta need to be",
+        "numeric."
+      ),
+      broken_elem
+    ))
+  }
+
+  boolean_rules <- list("pruning" = "B1")
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(boolean_rules)) {
+      checkmate::qtest(x, boolean_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is incorrect:",
+        "pruning needs to be a boolean."
+      ),
+      broken_elem
+    ))
+  }
+
+  string_rules <- list("graph_building" = "S1")
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(string_rules)) {
+      checkmate::qtest(x, string_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is incorrect:",
+        "graph_building needs to be a string."
+      ),
+      broken_elem
+    ))
+  }
+
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw", "nndescent")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SEACells parameters is not one of the",
+        "expected choices. Please check the documentation."
+      ),
+      broken_elem
+    ))
+  }
+
+  TRUE
+}
+
+### supercells -----------------------------------------------------------------
+
+#' Check SuperCell parameters
+#'
+#' @description Checkmate extension for checking the SuperCell parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScSupercell <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "walk_length",
+      "graining_factor",
+      "linkage_dist",
+      "k",
+      "knn_method",
+      "ann_dist",
+      "n_trees",
+      "search_budget",
+      "nn_max_iter",
+      "rho",
+      "delta"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  integer_rules <- list(
+    "walk_length" = "I1",
+    "k" = "I1",
+    "n_trees" = "I1",
+    "search_budget" = "I1",
+    "nn_max_iter" = "I1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is incorrect:",
+        "walk_length, k, n_trees, search_budget, and nn_max_iter need to be",
+        "integers."
+      ),
+      broken_elem
+    ))
+  }
+  numeric_rules <- list(
+    "graining_factor" = "N1",
+    "rho" = "N1",
+    "delta" = "N1"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is incorrect:",
+        "graining_factor, rho, and delta need to be numeric."
+      ),
+      broken_elem
+    ))
+  }
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw", "nndescent"),
+    ann_dist = c("cosine", "euclidean"),
+    linkage_dist = c("complete", "average")
+  )
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in SuperCell parameters is not one of the",
+        "expected choices. Please check the documentation."
+      ),
+      broken_elem
+    ))
+  }
+  TRUE
 }
 
 ### bbknn ----------------------------------------------------------------------
@@ -1713,8 +2003,8 @@ checkScBbknn <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in BBKNN parameters is incorrect:",
-          "neighbours_within_batch, annoy_n_trees, and search_budget need to be integers;",
-          "trim needs to be NULL or an integer."
+          "neighbours_within_batch, annoy_n_trees, and search_budget need to",
+          "be integers; trim needs to be NULL or an integer."
         ),
         broken_elem
       )
@@ -2284,6 +2574,38 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+
+### seacells -------------------------------------------------------------------
+
+#' Assert SEACells parameters
+#'
+#' @description Checkmate extension for asserting the SEACells parameters.
+#'
+#' @inheritParams checkScSeacells
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
+
+### supercells -----------------------------------------------------------------
+
+#' Assert SuperCell parameters
+#'
+#' @description Checkmate extension for asserting the SuperCell parameters.
+#'
+#' @inheritParams checkScSupercell
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 
 ### bbknn ----------------------------------------------------------------------
 

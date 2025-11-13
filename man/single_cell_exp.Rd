@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{single_cell_exp}
 \alias{single_cell_exp}
-\title{bixverse single cell class (nightly!)}
+\title{bixverse single cell class}
 \usage{
 single_cell_exp(dir_data)
 }

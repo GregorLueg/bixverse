@@ -1,11 +1,12 @@
 use extendr_api::*;
 use faer::Mat;
 
-use crate::core::data::sparse_io::ParallelSparseReader;
-use crate::core::data::sparse_structures::CompressedSparseData;
 use crate::single_cell::dge_aucs::*;
-use crate::single_cell::sc_knn_snn::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
+use crate::utils::r_rust_interface::faer_to_r_matrix;
+
+//////////
+// DGEs //
+//////////
 
 /// Calculate DGEs between cells based on Mann Whitney stats
 ///
@@ -87,6 +88,10 @@ fn rs_calculate_dge_mann_whitney(
     ))
 }
 
+////////////////////////
+// Pathway activities //
+////////////////////////
+
 /// Calculate AUCell in Rust
 ///
 /// @description
@@ -147,175 +152,8 @@ fn rs_aucell(
     Ok(faer_to_r_matrix(auc_mat.as_ref()))
 }
 
-/// Generate meta cells
-///
-/// @description This function implements the approach from Morabito, et al.
-/// to generate meta cells. You can provide a already pre-computed kNN matrix
-/// or an embedding to regenerate the kNN matrix with specified parameters in
-/// the meta_cell_params. If `knn_mat` is provided, this one will be used. You
-/// need to at least provide `knn_mat` or `embd`!
-///
-/// @param f_path String. Path to the `counts_cells.bin` file.
-/// @param knn_mat Optional integer matrix. The kNN matrix you wish to use
-/// for the generation of the meta cells. This function expects 0-indices!
-/// @param embd Optional numerical matrix. The embedding matrix (for example
-/// PCA embedding) you wish to use for the generation of the kNN graph that
-/// is used subsequently for aggregation of the meta cells.
-/// @param meta_cell_params A list containing the meta cell parameters.
-/// @param target_size Numeric. Target library size for re-normalisation of
-/// the meta cells. Typicall `1e4`.
-/// @param seed Integer. For reproducibility purposes.
-/// @param verbose Boolean. Controls verbosity of the function.
-///
-/// @returns A list with the following elements:
-/// \itemize{
-///  \item indptr - Index pointers of the cells
-///  \item indices - The gene indices of that specific gene
-///  \item raw_counts - The aggregated raw counts.
-///  \item norm_counts - The re-normalised counts.
-///  \item nrow - The number of rows represented in the sparse format.
-///  \item ncol - The number of columns represented in the sparse format.
-/// }
-///
-/// @export
-#[extendr]
-fn rs_get_metacells(
-    f_path: String,
-    knn_mat: Option<RMatrix<i32>>,
-    embd: Option<RMatrix<f64>>,
-    meta_cell_params: List,
-    target_size: f64,
-    seed: usize,
-    verbose: bool,
-) -> extendr_api::Result<List> {
-    let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params);
-
-    let knn_graph: Vec<Vec<usize>> = match (knn_mat, embd) {
-        // first case - knn_mat provided
-        (Some(knn_mat), _) => {
-            if verbose {
-                println!("Using provided kNN matrix");
-            }
-            let ncol = knn_mat.ncols();
-            let nrow = knn_mat.nrows();
-            let data = knn_mat.data();
-
-            (0..nrow)
-                .map(|j| {
-                    (0..ncol)
-                        .filter_map(|i| {
-                            let val = data[j + i * nrow];
-                            if val > 0 {
-                                Some((val - 1) as usize)
-                            } else {
-                                None
-                            }
-                        })
-                        .collect()
-                })
-                .collect()
-        }
-        // second case - knn needs to be re-calculated
-        (None, Some(embd)) => {
-            if verbose {
-                println!("Calculating the kNN matrix from the provided data.");
-            }
-
-            let embd = r_matrix_to_faer_fp32(&embd);
-            let knn_method = parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
-                format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
-            })?;
-
-            match knn_method {
-                KnnSearch::Hnsw => generate_knn_hnsw(
-                    embd.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::Annoy => generate_knn_annoy(
-                    embd.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    meta_cell_params.n_trees,
-                    meta_cell_params.search_budget,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::NNDescent => generate_knn_nndescent(
-                    embd.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    meta_cell_params.nn_max_iter,
-                    meta_cell_params.delta,
-                    meta_cell_params.rho,
-                    seed,
-                    verbose,
-                ),
-            }
-        }
-        // case three - nothing has been provided
-        (None, None) => {
-            return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
-        }
-    };
-
-    let nn_map = build_nn_map(&knn_graph);
-
-    if verbose {
-        println!("Identifying meta cells.");
-    }
-
-    let meta_cell_indices = identify_meta_cells(
-        &nn_map,
-        meta_cell_params.max_shared,
-        meta_cell_params.target_no_metacells,
-        meta_cell_params.max_iter,
-        seed,
-        verbose,
-    );
-
-    if verbose {
-        println!("Aggregating meta cells.");
-    }
-
-    let reader = ParallelSparseReader::new(&f_path).unwrap();
-    let n_genes = reader.get_header().total_genes;
-
-    let aggregated: CompressedSparseData<u32, f32> =
-        aggregate_meta_cells(&reader, &meta_cell_indices, target_size as f32, n_genes);
-
-    Ok(list!(
-        indptr = aggregated
-            .indptr
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        indices = aggregated
-            .indices
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        raw_counts = aggregated
-            .data
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        norm_counts = aggregated
-            .data_2
-            .unwrap()
-            .iter()
-            .map(|x| *x as f64)
-            .collect::<Vec<f64>>(),
-        nrow = aggregated.shape.0,
-        ncol = aggregated.shape.1
-    ))
-}
-
 extendr_module! {
     mod r_sc_analysis;
     fn rs_calculate_dge_mann_whitney;
     fn rs_aucell;
-    fn rs_get_metacells;
 }

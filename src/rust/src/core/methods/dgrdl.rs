@@ -434,7 +434,8 @@ impl Dgrdl {
     ///
     /// ### Returns
     ///
-    /// `DgrdlResults` containing the learned dictionary, coefficients, and Laplacians
+    /// `DgrdlResults` containing the learned dictionary, coefficients, and
+    /// Laplacians
     pub fn fit_with_params(
         &mut self,
         data: &MatRef<f64>,

@@ -1,5 +1,11 @@
 # generate synthetic data ------------------------------------------------------
 
+test_temp_dir <- file.path(
+  tempdir(),
+  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+)
+dir.create(test_temp_dir, recursive = TRUE)
+
 ## params ----------------------------------------------------------------------
 
 # thresholds
@@ -22,7 +28,7 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,
@@ -50,7 +56,7 @@ rm(sc_object)
 
 ## load from disk --------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 sc_object <- suppressMessages(load_existing(sc_object))
 
@@ -138,12 +144,12 @@ save_sc_exp_to_disk(sc_object)
 save_sc_exp_to_disk(sc_object, type = "rds")
 
 expect_true(
-  current = "memory.rds" %in% list.files(path = tempdir()),
+  current = "memory.rds" %in% list.files(path = test_temp_dir),
   info = "RDS saving works"
 )
 
 expect_true(
-  current = "memory.qs2" %in% list.files(path = tempdir()),
+  current = "memory.qs2" %in% list.files(path = test_temp_dir),
   info = "qs2 saving works"
 )
 
@@ -151,7 +157,7 @@ expect_true(
 
 rm(sc_object)
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 expect_message(current = load_existing(sc_object), info = "message working")
 
@@ -173,10 +179,10 @@ expect_equal(
 
 rm(sc_object)
 
-sc_object <- single_cell_exp(dir_data = tempdir())
+sc_object <- single_cell_exp(dir_data = test_temp_dir)
 
 # will force the function to load from rds
-removed <- file.remove(file.path(tempdir(), "memory.qs2"))
+removed <- file.remove(file.path(test_temp_dir, "memory.qs2"))
 
 sc_object <- suppressMessages(load_existing(sc_object))
 
@@ -191,3 +197,5 @@ expect_equal(
   target = hvg_genes_initial,
   info = "HVGs loaded in correctly - RDS"
 )
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

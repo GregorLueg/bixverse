@@ -257,7 +257,7 @@ where
     let mut data = x.to_vec();
     let len = data.len();
 
-    if len % 2 == 0 {
+    if len.is_multiple_of(2) {
         let (_, median1, right) =
             data.select_nth_unstable_by(len / 2 - 1, |a, b| a.partial_cmp(b).unwrap());
         let median2 = right

@@ -10,6 +10,9 @@ use std::iter::Sum;
 // F16 //
 /////////
 
+/// A serialisable wrapper for IEEE 754 half-precision floats.
+///
+/// Stores the raw bits as u16 for compatibility with bincode and serde.
 #[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Copy, Default)]
 pub struct F16(u16);
 
@@ -150,6 +153,7 @@ impl F16 {
 // f32 and u16 stuff //
 ///////////////////////
 
+/// Trait for types that can be converted to f32 and u16.
 pub trait ToF32AndU16: Copy {
     fn to_f32(self) -> f32;
     fn to_u16(self) -> u16;
@@ -195,11 +199,24 @@ impl ToF32AndU16 for u16 {
 // R vector stuff //
 ////////////////////
 
+/// Converts vectors between integer types for R compatibility.
 pub trait VecConvert<U> {
     fn r_int_convert(self) -> Vec<U>;
 }
 
 impl VecConvert<i32> for Vec<usize> {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.into_iter().map(|x| x as i32).collect()
+    }
+}
+
+impl VecConvert<i32> for &[&usize] {
+    fn r_int_convert(self) -> Vec<i32> {
+        self.iter().map(|&&x| x as i32).collect()
+    }
+}
+
+impl VecConvert<i32> for Vec<u32> {
     fn r_int_convert(self) -> Vec<i32> {
         self.into_iter().map(|x| x as i32).collect()
     }
@@ -223,6 +240,7 @@ impl VecConvert<usize> for &[i32] {
     }
 }
 
+/// Converts vectors between floating-point types for R compatibility.
 pub trait VecFloatConvert<U> {
     fn r_float_convert(self) -> Vec<U>;
 }
@@ -239,15 +257,15 @@ impl VecFloatConvert<f64> for Vec<f32> {
     }
 }
 
-impl VecFloatConvert<f32> for &[f64] {
-    fn r_float_convert(self) -> Vec<f32> {
-        self.iter().map(|&x| x as f32).collect()
+impl VecFloatConvert<f64> for &[f32] {
+    fn r_float_convert(self) -> Vec<f64> {
+        self.iter().map(|x| *x as f64).collect()
     }
 }
 
-impl VecFloatConvert<f64> for &[f32] {
-    fn r_float_convert(self) -> Vec<f64> {
-        self.iter().map(|&x| x as f64).collect()
+impl VecFloatConvert<f32> for &[f64] {
+    fn r_float_convert(self) -> Vec<f32> {
+        self.iter().map(|&x| x as f32).collect()
     }
 }
 
@@ -255,6 +273,9 @@ impl VecFloatConvert<f64> for &[f32] {
 // R and faer //
 ////////////////
 
+/// Bridge between faer matrix types and R matrix types.
+///
+/// Defines how to convert faer matrices to R-compatible arrays.
 pub trait FaerRType: SimpleEntity + Copy + Clone + 'static {
     type RType: Copy + Clone;
     fn to_r_matrix(x: faer::MatRef<Self>) -> extendr_api::RArray<Self::RType, [usize; 2]>;

@@ -9,9 +9,9 @@ use crate::core::base::stats::hypergeom_pval;
 use crate::core::data::sparse_io::*;
 use crate::core::graph::community_detection::*;
 use crate::core::graph::knn::*;
+use crate::single_cell::methods::scrublet::*;
 use crate::single_cell::processing::*;
 use crate::single_cell::sc_knn_snn::*;
-use crate::single_cell::scrublet::*;
 
 ///////////
 // Types //

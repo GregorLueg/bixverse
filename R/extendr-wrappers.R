@@ -2223,8 +2223,8 @@ rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indice
 #' @description
 #' This function is a wrapper over the Rust-based generation of the approximate
 #' nearest neighbours. You have several options to get the approximate nearest
-#' neighbours: 
-#' 
+#' neighbours:
+#'
 #' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
 #'   an index. Good compromise of index generation, querying speed.
 #' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
@@ -2325,10 +2325,10 @@ rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2
 #' @export
 rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
-#' Generate meta cells
+#' Generate meta cells (hdWGCNA method)
 #'
 #' @description This function implements the approach from Morabito, et al.
-#' to generate meta cells. You can provide a already pre-computed kNN matrix
+#' to generate meta cells. You can provide an already pre-computed kNN matrix
 #' or an embedding to regenerate the kNN matrix with specified parameters in
 #' the meta_cell_params. If `knn_mat` is provided, this one will be used. You
 #' need to at least provide `knn_mat` or `embd`!
@@ -2339,24 +2339,104 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @param embd Optional numerical matrix. The embedding matrix (for example
 #' PCA embedding) you wish to use for the generation of the kNN graph that
 #' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types. If this is provided, the kNN graph will be regenerated.
 #' @param meta_cell_params A list containing the meta cell parameters.
 #' @param target_size Numeric. Target library size for re-normalisation of
-#' the meta cells. Typicall `1e4`.
+#' the meta cells. Typically `1e4`.
 #' @param seed Integer. For reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A list with the following elements:
 #' \itemize{
-#'  \item indptr - Index pointers of the cells
-#'  \item indices - The gene indices of that specific gene
-#'  \item raw_counts - The aggregated raw counts.
-#'  \item norm_counts - The re-normalised counts.
-#'  \item nrow - The number of rows represented in the sparse format.
-#'  \item ncol - The number of columns represented in the sparse format.
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
 #' }
 #'
 #' @export
-rs_get_metacells <- function(f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, meta_cell_params, target_size, seed, verbose)
+rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose)
+
+#' Generate SEACells
+#'
+#' @description This function implements the SEACells algorithm for generating
+#' meta cells from Persad et al. An embedding matrix must be provided which is
+#' used to construct the kNN graph and kernel matrix for the SEACells
+#' algorithm. This version is highly memory and speed-optimised and will
+#' truncate small values during matrix operations which can affect convergence.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
+#' used for the generation of the kNN graph and kernel matrix.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types.
+#' @param seacells_params A list containing the SEACells parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#'  \item rss - Vector of RSS values from each iteration.
+#'  \item archetypes - Vector of cell indices selected as archetypes.
+#' }
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat. Biotechnol., 2023.
+rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
+
+#' Generate SuperCells.
+#'
+#'
+#' @description This function implements the approach from Bilous, et al.
+#' to generate meta cells or called here SuperCells. You can provide an
+#' already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
+#' with specified parameters in the meta_cell_params. If `knn_mat` is provided,
+#' this one will be used. You need to at least provide `knn_mat` or `embd`!
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
+#' for the generation of the meta cells. This function expects 0-indices!
+#' @param embd Optional numerical matrix. The embedding matrix (for example
+#' PCA embedding) you wish to use for the generation of the kNN graph that
+#' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types. If this is provided, the kNN graph will be regenerated.
+#' @param supercell_params A list containing the SuperCell parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#' }
+#'
+#' @export
+rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

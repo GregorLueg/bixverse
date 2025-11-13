@@ -892,24 +892,35 @@ params_sc_fastmnn <- function(
   )
 }
 
-### analysis -------------------------------------------------------------------
+### meta cells -----------------------------------------------------------------
+
+#### meta cell (hdWGCNA) -------------------------------------------------------
 
 #' Wrapper function for parameters for meta cell generation
 #'
 #' @param max_shared Integer. Maximum number of allowed shared neighbours for
-#' the meta cell to be considered.
+#' the meta cell to be considered. Defaults to `15L`.
 #' @param target_no_metacells Integer. Target number of meta-cells to generate.
+#' Defaults to `1000L`.
 #' @param max_iter Integer. Maximum number of iterations for the algorithm.
-#' @param k Integer. Number of neighbours to return.
-#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`
+#' Defaults to `5000L`.
+#' @param k Integer. Number of neighbours to return. Defaults to `25L`.
+#' @param knn_method String. One of `c("annoy", "hnsw", "nndescent")`. Defaults
+#' to `"annoy"`.
 #' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
-#' metric to be used for the approximate neighbour search.
+#' metric to be used for the approximate neighbour search. Defaults to
+#' `"cosine"`.
 #' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' Defaults to `100L`.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
-#' algorithm.
+#' algorithm. Defaults to `100L`.
+#' @param nn_max_iter Integer. Maximum iterations for NN Descent. Defaults to
+#' `15L`.
+#' @param rho Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
+#' @param delta Numeric. Early termination criterion for NN Descent. Defaults to
+#' `0.001`.
 #'
-#' @returns A list with the neighbour parameters.
+#' @returns A list with the metacell parameters.
 #'
 #' @export
 params_sc_metacells <- function(
@@ -917,22 +928,28 @@ params_sc_metacells <- function(
   target_no_metacells = 1000L,
   max_iter = 5000L,
   k = 25L,
-  knn_method = c("annoy", "hnsw"),
+  knn_method = c("annoy", "hnsw", "nndescent"),
   ann_dist = c("cosine", "euclidean"),
   n_trees = 100L,
-  search_budget = 100L
+  search_budget = 100L,
+  nn_max_iter = 15L,
+  rho = 1.0,
+  delta = 0.001
 ) {
   knn_method <- match.arg(knn_method)
   ann_dist <- match.arg(ann_dist)
 
-  # checks
   checkmate::qassert(max_shared, "I1")
   checkmate::qassert(target_no_metacells, "I1")
   checkmate::qassert(max_iter, "I1")
   checkmate::qassert(k, "I1")
-  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw", "nndescent"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
   checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(nn_max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
 
   list(
     max_shared = max_shared,
@@ -942,6 +959,179 @@ params_sc_metacells <- function(
     knn_method = knn_method,
     ann_dist = ann_dist,
     n_trees = n_trees,
-    search_budget = search_budget
+    search_budget = search_budget,
+    nn_max_iter = nn_max_iter,
+    rho = rho,
+    delta = delta
+  )
+}
+
+#### sea cells -----------------------------------------------------------------
+
+#' Wrapper function for the SEACells parameters
+#'
+#' @param n_sea_cells Integer. Number of SEA cells to detect.
+#' @param max_fw_iters Integer. Maximum iterations for the Franke-Wolfe
+#' algorithm. Defaults to `50L`.
+#' @param convergence_epsilon Numeric. Convergence threshold. Algorithm stops
+#' when RSS change < epsilon * RSS(0). Defaults to `1e-3`.
+#' @param max_iter Integer. Maximum iterations to run SEACells for. Defaults to
+#' `100L`.
+#' @param min_iter Integer. Minimum iterations to run SEACells for. Defaults to
+#' `10L`.
+#' @param greedy_threshold Integer. Maximum number of cells before defaulting to
+#' rapid random selection of archetypes. Defaults to `20000L`.
+#' @param graph_building String. Graph building method. Defaults to `"union"`.
+#' @param pruning Boolean. Shall tiny values be pruned during Franke-Wolfe
+#' updates. This will reduce memory pressure and can be a good option on
+#' large data sets. Defaults to `FALSE`.
+#' @param pruning_threshold Float. If `pruning = TRUE` values below which
+#' threshold shall be pruned.
+#' @param k Integer. Number of neighbours for the kNN algorithm. Defaults to
+#' `25L`.
+#' @param knn_method String. One of `c("annoy", "hnsw", "nndescent")`. Defaults
+#' to `"annoy"`.
+#' @param n_trees Integer. Number of trees for Annoy index. Defaults to `100L`.
+#' @param search_budget Integer. Search budget during querying. Defaults to
+#' `100L`.
+#' @param nn_max_iter Integer. Maximum iterations for NN Descent. Defaults to
+#' `15L`.
+#' @param rho Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
+#' @param delta Numeric. Early termination criterion for NN Descent. Defaults to
+#' `0.001`.
+#'
+#' @returns A list with the SEACells parameters.
+#'
+#' @export
+params_sc_seacells <- function(
+  n_sea_cells,
+  max_fw_iters = 50L,
+  convergence_epsilon = 1e-3,
+  max_iter = 100L,
+  min_iter = 10L,
+  greedy_threshold = 20000L,
+  graph_building = "union",
+  pruning = FALSE,
+  pruning_threshold = 1e-7,
+  k = 25L,
+  knn_method = c("annoy", "hnsw", "nndescent"),
+  n_trees = 100L,
+  search_budget = 100L,
+  nn_max_iter = 15L,
+  rho = 1.0,
+  delta = 0.001
+) {
+  # checks
+  knn_method <- match.arg(knn_method)
+  checkmate::qassert(n_sea_cells, "I1")
+  checkmate::qassert(max_fw_iters, "I1")
+  checkmate::qassert(convergence_epsilon, "N1")
+  checkmate::qassert(max_iter, "I1")
+  checkmate::qassert(min_iter, "I1")
+  checkmate::qassert(greedy_threshold, "I1")
+  checkmate::qassert(graph_building, "S1")
+  checkmate::qassert(pruning, "B1")
+  checkmate::qassert(pruning_threshold, "N1")
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw", "nndescent"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(nn_max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
+
+  list(
+    n_sea_cells = n_sea_cells,
+    max_fw_iters = max_fw_iters,
+    convergence_epsilon = convergence_epsilon,
+    max_iter = max_iter,
+    min_iter = min_iter,
+    greedy_threshold = greedy_threshold,
+    graph_building = graph_building,
+    pruning = pruning,
+    pruning_threshold = pruning_threshold,
+    k = k,
+    knn_method = knn_method,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    nn_max_iter = nn_max_iter,
+    rho = rho,
+    delta = delta
+  )
+}
+
+#### supercell -----------------------------------------------------------------
+
+#' Wrapper function for parameters for SuperCell generation
+#'
+#' @param walk_length Integer. Walk length for the Walktrap algorithm. Defaults
+#' to `3L`.
+#' @param graining_factor Numeric. Graining level of data (proportion of number
+#' of single cells in the initial dataset to the number of metacells in the
+#' final dataset). Defaults to `20.0`. (One meta cell per 20 cells.)
+#' @param linkage_dist String. Which type of distance metric to use for the
+#' linkage. Defaults to `"average"`.
+#' @param k Integer. Number of neighbours to return. Defaults to `5L`.
+#' @param knn_method String. One of `c("annoy", "hnsw", "nndescent")`. Defaults
+#' to `"annoy"`.
+#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
+#' metric to be used for the approximate neighbour search. Defaults to
+#' `"cosine"`.
+#' @param n_trees Integer. Number of trees to use for the `annoy` algorithm.
+#' Defaults to `100L`.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm. Defaults to `100L`.
+#' @param nn_max_iter Integer. Maximum iterations for NN Descent. Defaults to
+#' `15L`.
+#' @param rho Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
+#' @param delta Numeric. Early termination criterion for NN Descent. Defaults to
+#' `0.001`.
+#'
+#' @returns A list with the SuperCell parameters.
+#'
+#' @export
+params_sc_supercell <- function(
+  walk_length = 3L,
+  graining_factor = 20.0,
+  linkage_dist = c("complete", "average"),
+  k = 5L,
+  knn_method = c("annoy", "hnsw", "nndescent"),
+  ann_dist = c("cosine", "euclidean"),
+  n_trees = 100L,
+  search_budget = 100L,
+  nn_max_iter = 15L,
+  rho = 1.0,
+  delta = 0.001
+) {
+  # checks
+  linkage_dist <- match.arg(linkage_dist)
+  knn_method <- match.arg(knn_method)
+  ann_dist <- match.arg(ann_dist)
+
+  checkmate::qassert(walk_length, "I1")
+  checkmate::qassert(graining_factor, "N1")
+  checkmate::assertChoice(linkage_dist, c("complete", "average"))
+  checkmate::qassert(k, "I1")
+  checkmate::assertChoice(knn_method, c("annoy", "hnsw", "nndescent"))
+  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
+  checkmate::qassert(nn_max_iter, "I1")
+  checkmate::qassert(rho, "N1")
+  checkmate::qassert(delta, "N1")
+
+  # returns
+  list(
+    walk_length = walk_length,
+    graining_factor = graining_factor,
+    linkage_dist = linkage_dist,
+    k = k,
+    knn_method = knn_method,
+    ann_dist = ann_dist,
+    n_trees = n_trees,
+    search_budget = search_budget,
+    nn_max_iter = nn_max_iter,
+    rho = rho,
+    delta = delta
   )
 }
