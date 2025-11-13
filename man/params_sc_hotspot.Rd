@@ -7,7 +7,7 @@
 params_sc_hotspot(
   model = c("normal", "danb", "bernoulli"),
   normalise = TRUE,
-  knn = list()
+  knn = list(ann_dist = "cosine")
 )
 }
 \arguments{

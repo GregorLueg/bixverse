@@ -589,7 +589,30 @@ S7::method(vision_sc, single_cell_exp) <- function(
 #' `single_cell_exp` class.
 #' @param vision_params List with vision parameters, see
 #' [bixverse::params_sc_vision()] with the following elements:
-#' ...
+#' \itemize{
+#'   \item n_perm - Integer. Number of random permutations
+#'   \item n_cluster - Integer. Number of random clusters to generate to
+#'   associate each set with.
+#'   \item k - Number of neighbours for the kNN search. Only relevant if you
+#'   set regenerate_knn to `TRUE`.
+#'   \item knn_method - String. Which kNN algorithm to use. One of
+#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
+#'   you set regenerate_knn to `TRUE`.
+#'   \item ann_dist - String. Distance metric for the approximate neighbour
+#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
+#'   relevant if you set regenerate_knn to `TRUE`.
+#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
+#'   Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item search_budget - Integer. Search budget per tree for the annoy
+#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use
+#'   `"nndescent"`.
+#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
+#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#' }
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -711,3 +734,7 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 
   return(result)
 }
+
+## HotSpot ---------------------------------------------------------------------
+
+### gene autocorretations ------------------------------------------------------

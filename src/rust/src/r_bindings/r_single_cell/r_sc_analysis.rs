@@ -13,6 +13,7 @@ extendr_module! {
     fn rs_aucell;
     fn rs_calculate_dge_mann_whitney;
     fn rs_hotspot_autocor;
+    fn rs_hotspot_gene_cor;
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
 }
@@ -350,23 +351,25 @@ fn rs_hotspot_autocor(
     let (knn_indices, knn_dist) =
         generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
 
+    let mut knn_dist = knn_dist.unwrap();
+
     let mut hotspot = Hotspot::new(
         f_path_genes,
         f_path_cells,
         &cells_to_keep,
         &knn_indices,
-        knn_dist.as_ref().unwrap(),
+        &mut knn_dist,
     );
 
     let res: HotSpotGeneRes = if streaming {
-        hotspot.compute_all_genes(
+        hotspot.compute_all_genes_streaming(
             &genes_to_use,
             &hotspot_params.model,
             hotspot_params.normalise,
             verbose,
         )
     } else {
-        hotspot.compute_all_genes_streaming(
+        hotspot.compute_all_genes(
             &genes_to_use,
             &hotspot_params.model,
             hotspot_params.normalise,
@@ -380,5 +383,56 @@ fn rs_hotspot_autocor(
         z_score = res.z,
         pval = res.pval,
         fdr = res.fdr
+    ))
+}
+
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_hotspot_gene_cor(
+    f_path_genes: String,
+    f_path_cells: String,
+    embd: RMatrix<f64>,
+    hotspot_params: List,
+    cells_to_keep: Vec<i32>,
+    genes_to_use: Vec<i32>,
+    streaming: bool,
+    verbose: bool,
+    seed: usize,
+) -> extendr_api::Result<List> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let genes_to_use = genes_to_use.r_int_convert();
+
+    let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
+    let knn_params = KnnParams::from_hotspot_params(&hotspot_params);
+
+    if verbose {
+        println!("Generating kNN graph...")
+    }
+
+    let (knn_indices, knn_dist) =
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+
+    let mut knn_dist = knn_dist.unwrap();
+
+    let mut hotspot = Hotspot::new(
+        f_path_genes,
+        f_path_cells,
+        &cells_to_keep,
+        &knn_indices,
+        &mut knn_dist,
+    );
+
+    let res: HotSpotPairRes = if streaming {
+        hotspot.compute_gene_cor_streaming(&genes_to_use, &hotspot_params.model, verbose)
+    } else {
+        hotspot.compute_gene_cor(&genes_to_use, &hotspot_params.model, verbose)
+    }
+    .unwrap();
+
+    Ok(list!(
+        cor = faer_to_r_matrix(res.cor.as_ref()),
+        z = faer_to_r_matrix(res.z_scores.as_ref())
     ))
 }

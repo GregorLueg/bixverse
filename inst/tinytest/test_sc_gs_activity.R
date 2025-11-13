@@ -272,6 +272,8 @@ vision_res_auto <- vision_w_autocor_sc(
   .verbose = FALSE
 )
 
+vision_res_auto$auto_cor_dt
+
 expect_equivalent(
   current = vision_res_auto$vision_matrix,
   target = vision_res,
@@ -318,12 +320,10 @@ expect_true(
 
 object = sc_object
 hotspot_params = params_sc_hotspot(
-  model = "danb",
+  model = "normal",
   knn = list(ann_dist = "cosine"),
-  normalise = FALSE
+  normalise = TRUE
 )
-
-rextendr::document()
 
 hotspot_auto_cor <- rs_hotspot_autocor(
   f_path_genes = get_rust_count_gene_f_path(object),
@@ -336,7 +336,23 @@ hotspot_auto_cor <- rs_hotspot_autocor(
     gene_ids = get_gene_names(object),
     rust_index = TRUE
   ),
-  streaming = FALSE,
+  streaming = TRUE,
+  verbose = TRUE,
+  seed = 42L
+)
+
+hist(hotspot_auto_cor$z_score, breaks = 25)
+
+rextendr::document()
+
+hotspot_gene_cor <- rs_hotspot_gene_cor(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  f_path_cells = get_rust_count_cell_f_path(object),
+  embd = get_pca_factors(object),
+  hotspot_params = hotspot_params,
+  cells_to_keep = get_cells_to_keep(object),
+  genes_to_use = as.integer(hotspot_auto_cor$gene_idx),
+  streaming = TRUE,
   verbose = TRUE,
   seed = 42L
 )

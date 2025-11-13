@@ -407,7 +407,7 @@ params_sc_vision <- function(
 params_sc_hotspot <- function(
   model = c("normal", "danb", "bernoulli"),
   normalise = TRUE,
-  knn = list()
+  knn = list(ann_dist = "cosine")
 ) {
   model <- match.arg(model)
   checkmate::qassert(normalise, "B1")
