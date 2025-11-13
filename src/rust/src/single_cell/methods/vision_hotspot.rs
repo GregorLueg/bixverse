@@ -1,5 +1,5 @@
 use extendr_api::{Conversions, List};
-use faer::{Mat, RowRef};
+use faer::{Mat, MatRef, RowRef};
 use indexmap::IndexSet;
 use rayon::prelude::*;
 use std::time::Instant;
@@ -11,6 +11,7 @@ use crate::core::base::linear_algebra::linear_regression;
 use crate::core::base::stats::{calc_fdr, inv_logit, logit, z_scores_to_pval};
 use crate::core::base::utils::rank_vector;
 use crate::core::data::sparse_io::*;
+use crate::utils::general::faer_mat_to_upper_triangle;
 
 ////////////
 // VISION //
@@ -2017,4 +2018,106 @@ impl<'a> Hotspot<'a> {
         let umi_counts = lib_sizes.iter().map(|x| *x as f32).collect::<Vec<f32>>();
         self.umi_counts = Some(umi_counts);
     }
+}
+
+/// Cluster the HotSpot Z matrix
+///
+/// ### Params
+///
+/// * `z_mat` - Reference to the Z-score matrix.
+/// * `fdr_threshold` - Below which FDR to not cluster the genes anymore.
+/// * `min_cluster_genes` - Minimum number of genes per cluster
+///
+/// ### Returns
+///
+/// The gene to cluster assignment. `NA`s indicate now assignment.
+pub fn hotspot_gene_clusters(
+    z_mat: MatRef<f64>,
+    fdr_threshold: f64,
+    min_cluster_genes: usize,
+) -> Vec<f64> {
+    let z_upper_triangle = faer_mat_to_upper_triangle(z_mat, 1);
+    let pvals = z_scores_to_pval(&z_upper_triangle, "twosided").unwrap();
+    let fdrs = calc_fdr(&pvals);
+    let n = z_mat.nrows();
+
+    let z_threshold = z_upper_triangle
+        .iter()
+        .zip(fdrs.iter())
+        .filter(|(_, &fdr)| fdr < fdr_threshold)
+        .map(|(&z, _)| z.abs())
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap_or(f64::INFINITY);
+
+    let mut z = z_mat.to_owned();
+
+    let mut active: Vec<usize> = (0..n).collect();
+    let mut clusters: Vec<Vec<usize>> = (0..n).map(|i| vec![i]).collect();
+    let mut sizes: Vec<usize> = vec![1; n];
+
+    // Labels: None if unlabelled, Some(label_id) if labelled
+    let mut labels: Vec<Option<usize>> = vec![None; n];
+    let mut next_label = 0usize;
+
+    let mut gene_to_cluster: Vec<usize> = (0..n).collect();
+
+    while active.len() > 1 {
+        let mut max_z = f64::NEG_INFINITY;
+        let mut max_i = 0;
+        let mut max_j = 0;
+
+        for (ai, &i) in active.iter().enumerate() {
+            for &j in active.iter().skip(ai + 1) {
+                if z[(i, j)] > max_z {
+                    max_z = z[(i, j)];
+                    max_i = i;
+                    max_j = j;
+                }
+            }
+        }
+
+        if max_z < z_threshold {
+            break;
+        }
+
+        let new_size = sizes[max_i] + sizes[max_j];
+        let both_labelled = labels[max_i].is_some() && labels[max_j].is_some();
+
+        for &k in &active {
+            if k != max_i && k != max_j {
+                let new_z = (z[(max_i, k)] * sizes[max_i] as f64
+                    + z[(max_j, k)] * sizes[max_j] as f64)
+                    / new_size as f64;
+                z[(max_i, k)] = new_z;
+                z[(k, max_i)] = new_z;
+            }
+        }
+
+        let j_genes = clusters[max_j].drain(..).collect::<Vec<_>>();
+        clusters[max_i].extend(j_genes);
+        sizes[max_i] = new_size;
+
+        for &gene in &clusters[max_i] {
+            gene_to_cluster[gene] = max_i;
+        }
+
+        if new_size >= min_cluster_genes && !both_labelled {
+            labels[max_i] = Some(next_label);
+            next_label += 1;
+        } else if both_labelled {
+            labels[max_i] = None;
+        }
+
+        active.retain(|&x| x != max_j);
+    }
+
+    let mut gene_labels = vec![f64::NAN; n];
+    for gene in 0..n {
+        let cluster = gene_to_cluster[gene];
+        if let Some(label) = labels[cluster] {
+            gene_labels[gene] = label as f64;
+        }
+    }
+
+    gene_labels
 }

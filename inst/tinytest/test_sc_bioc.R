@@ -389,6 +389,8 @@ annoy_knn_data <- generate_knn_sc(
   .verbose = FALSE
 )
 
+str(annoy_knn_data)
+
 expect_true(
   current = checkmate::testClass(annoy_knn_data, "sc_knn"),
   info = "sc_knn - expected class returned"

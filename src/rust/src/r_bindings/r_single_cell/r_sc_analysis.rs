@@ -13,6 +13,7 @@ extendr_module! {
     fn rs_aucell;
     fn rs_calculate_dge_mann_whitney;
     fn rs_hotspot_autocor;
+    fn rs_hotspot_cluster_genes;
     fn rs_hotspot_gene_cor;
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
@@ -251,6 +252,11 @@ fn rs_vision_with_autocorrelation(
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<List> {
+    assert!(
+        embd.nrows() == cells_to_keep.len(),
+        "The embedding matrix need to have the same nrow as the the cells to use"
+    );
+
     if verbose {
         println!("Calculating the VISION scores of the actual gene sets.")
     }
@@ -323,7 +329,41 @@ fn rs_vision_with_autocorrelation(
     ))
 }
 
+/// Calculate gene spatial auto-correlations
+///
+/// @description
+/// This function implements the HotSpot auto-correlation functionality and
+/// will return to what extent a given gene shows auto-correlation in the
+/// generated kNN-graph from the embeddings. For details see DeTomaso, et al.
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param f_path_cells Path to the `counts_cells.bin` file.
+/// @param embd Numerical matrix. The embedding matrix from which to generate
+/// the kNN graph.
+/// @param hotspot_params List. The HotSpot parameter list.
+/// @param cells_to_keep Integer vector. 0-index vector indicating which cells
+/// to include in the analysis. Ensure that this is of same order/length
+/// as the embedding matrix.
+/// @param genes_to_use Integer vector. 0-index vector indicating which genes
+/// to include.
+/// @param streaming Boolean. Shall the data be streamed in chunks. Useful
+/// for large data sets.
+/// @param verbose Boolean. Controls verbosity of the function.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @returns A list with the following elements.
+/// \itemize{
+///   \item gene_idx - 0-based integer indicating the gene index.
+///   \item gaerys_c - Gaery's C calculation for the autocorrelation
+///   coefficient.
+///   \item z_score - Z-score of the auto-correlation.
+///   \item pval - P-value derived from the Z-score.
+///   \item fdr - False discovery rate based on the p-value.
+/// }
+///
 /// @export
+///
+/// @references DeTomaso, et al., Cell Systems, 2021
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_autocor(
@@ -337,12 +377,17 @@ fn rs_hotspot_autocor(
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<List> {
-    let embd = r_matrix_to_faer_fp32(&embd);
-    let cells_to_keep = cells_to_keep.r_int_convert();
-    let genes_to_use = genes_to_use.r_int_convert();
+    assert!(
+        embd.nrows() == cells_to_keep.len(),
+        "The embedding matrix need to have the same nrow as the the cells to use."
+    );
 
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
     let knn_params = KnnParams::from_hotspot_params(&hotspot_params);
+
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let cells_to_keep = cells_to_keep.r_int_convert();
+    let genes_to_use = genes_to_use.r_int_convert();
 
     if verbose {
         println!("Generating kNN graph...")
@@ -386,7 +431,38 @@ fn rs_hotspot_autocor(
     ))
 }
 
+/// Calculate gene<>gene spatial correlations
+///
+/// @description
+/// This function implements the HotSpot gene <> gene local correlation
+/// functionality from HotSpot, see DeTomaso, et al.
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param f_path_cells Path to the `counts_cells.bin` file.
+/// @param embd Numerical matrix. The embedding matrix from which to generate
+/// the kNN graph.
+/// @param hotspot_params List. The HotSpot parameter list.
+/// @param cells_to_keep Integer vector. 0-index vector indicating which cells
+/// to include in the analysis. Ensure that this is of same order/length
+/// as the embedding matrix.
+/// @param genes_to_use Integer vector. 0-index vector indicating which genes
+/// to include.
+/// @param streaming Boolean. Shall the data be streamed in chunks. Useful
+/// for large data sets.
+/// @param verbose Boolean. Controls verbosity of the function.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @returns A list with the following elements.
+/// \itemize{
+///   \item cor - A matrix of the N x N genes_to_use length with the auto-
+///   correlation coefficients.
+///   \item z - A matrix of N x N genes_to_use length with the Z-scores of the
+///   local correlations between two genes.
+/// }
+///
 /// @export
+///
+/// @references DeTomaso, et al., Cell Systems, 2021
 #[extendr]
 #[allow(clippy::too_many_arguments)]
 fn rs_hotspot_gene_cor(
@@ -435,4 +511,25 @@ fn rs_hotspot_gene_cor(
         cor = faer_to_r_matrix(res.cor.as_ref()),
         z = faer_to_r_matrix(res.z_scores.as_ref())
     ))
+}
+
+/// Cluster the genes by Z-score together
+///
+/// @param z_matrix Numerical matrix representing the Z-scores.
+/// @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
+/// @param min_size Integer. Minimum cluster size.
+///
+/// @returns An assignment vector. NA indicates that the gene did not pass the
+/// thresholds and has not been assigned.
+///
+/// @export
+#[extendr]
+fn rs_hotspot_cluster_genes(
+    z_matrix: RMatrix<f64>,
+    fdr_threshold: f64,
+    min_size: usize,
+) -> Vec<f64> {
+    let z_matrix = r_matrix_to_faer(&z_matrix);
+
+    hotspot_gene_clusters(z_matrix, fdr_threshold, min_size)
 }

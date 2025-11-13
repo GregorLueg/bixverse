@@ -363,7 +363,7 @@ S7::method(aucell_sc, single_cell_exp) <- function(
   return(auc_res)
 }
 
-## VISION ----------------------------------------------------------------------
+## vision ----------------------------------------------------------------------
 
 ### helper ---------------------------------------------------------------------
 
@@ -569,7 +569,7 @@ S7::method(vision_sc, single_cell_exp) <- function(
   return(vision_res)
 }
 
-### VISION with auto-correlation -----------------------------------------------
+### vision with auto-correlation -----------------------------------------------
 
 #' Calculate VISION scores (with auto-correlation scores)
 #'
@@ -735,6 +735,289 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
   return(result)
 }
 
-## HotSpot ---------------------------------------------------------------------
+## hotspot ---------------------------------------------------------------------
 
-### gene autocorretations ------------------------------------------------------
+### gene auto-correlations -----------------------------------------------------
+
+#' Calculate the local auto-correlation of a gene
+#'
+#' @description
+#' This method implements the HotSpot approach (see DeTomaso, et al.) to
+#' calculate the auto-correlation of a given gene in the kNN graph based on
+#' the chosen embedding. This can be used to identify genes that have strong
+#' local correlations and vary across the kNN graph.
+#'
+#' @param object `single_cell_exp` class.
+#' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param hotspot_params List with vision parameters, see
+#' [bixverse::param_sc_hotspot()] with the following elements:
+#' \itemize{
+#'   \item model - String. Which of the available models to use for the
+#'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
+#'   \item normalise - Boolean. Shall the data be normalised.
+#'   \item k - Number of neighbours for the kNN search. Only relevant if you
+#'   set regenerate_knn to `TRUE`.
+#'   \item knn_method - String. Which kNN algorithm to use. One of
+#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
+#'   you set regenerate_knn to `TRUE`.
+#'   \item ann_dist - String. Distance metric for the approximate neighbour
+#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
+#'   relevant if you set regenerate_knn to `TRUE`.
+#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
+#'   Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item search_budget - Integer. Search budget per tree for the annoy
+#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use
+#'   `"nndescent"`.
+#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
+#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#' }
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param cells_to_take Optional string vector. If you want to only use
+#' selected cells. If `NULL` will default to all cells_to_keep in the class.
+#' @param genes_to_take Optional string vector. If you wish to limit the
+#' search to a subset of genes. If `NULL` will default to all genes in the
+#' class.
+#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
+#' data sets.
+#' @param random_seed Integer. Used for reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A data.table with the auto-correlations on a per gene basis and
+#' various statistics.
+#'
+#' @export
+hotspot_autocor_sc <- S7::new_generic(
+  name = "hotspot_autocor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    hotspot_params = params_sc_hotspot(),
+    no_embd_to_use = NULL,
+    cells_to_take = NULL,
+    genes_to_take = NULL,
+    streaming = FALSE,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method hotspot_autocor_sc single_cell_exp
+#'
+#' @export
+S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
+  object,
+  embd_to_use = "pca",
+  hotspot_params = params_sc_hotspot(),
+  no_embd_to_use = NULL,
+  cells_to_take = NULL,
+  genes_to_take = NULL,
+  streaming = FALSE,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(embd_to_use, "S1")
+  assertScHotspot(hotspot_params)
+  checkmate::qassert(no_embd_to_use, c("0", "I1"))
+  checkmate::qassert(cells_to_take, c("S+", "0"))
+  checkmate::qassert(genes_to_take, c("S+", "0"))
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the embedding
+  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  if (is.null(cells_to_take)) {
+    cells_to_take <- get_cell_names(object, filtered = TRUE)
+  }
+
+  if (is.null(genes_to_take)) {
+    genes_to_take <- get_gene_names(object)
+  }
+
+  hotspot_auto_cor <- rs_hotspot_autocor(
+    f_path_genes = get_rust_count_gene_f_path(object),
+    f_path_cells = get_rust_count_cell_f_path(object),
+    embd = embd[cells_to_take, ],
+    hotspot_params = hotspot_params,
+    cells_to_keep = get_cell_indices(
+      object,
+      cell_ids = cells_to_take,
+      rust_index = TRUE
+    ),
+    genes_to_use = get_gene_indices(
+      object,
+      gene_ids = genes_to_take,
+      rust_index = TRUE
+    ),
+    streaming = streaming,
+    verbose = .verbose,
+    seed = random_seed
+  )
+
+  hotspot_auto_cor_dt <- data.table::as.data.table(hotspot_auto_cor)[,
+    gene_id := get_gene_names_from_idx(
+      object,
+      gene_idx = as.integer(hotspot_auto_cor$gene_idx),
+      rust_based = TRUE
+    )
+  ][, c("gene_id", "gaerys_c", "z_score", "pval", "fdr")]
+
+  return(hotspot_auto_cor_dt)
+}
+
+### gene <> gene local correlations --------------------------------------------
+
+#' Calculate the local pairwise gene-gene correlation
+#'
+#' @description
+#' This method implements the HotSpot approach (see DeTomaso, et al.) to
+#' calculate the local gene-gene correlations and their Z-scores.
+#'
+#' @param object `single_cell_exp` class.
+#' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
+#' @param hotspot_params List with vision parameters, see
+#' [bixverse::param_sc_hotspot()] with the following elements:
+#' \itemize{
+#'   \item model - String. Which of the available models to use for the
+#'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
+#'   \item normalise - Boolean. Shall the data be normalised.
+#'   \item k - Number of neighbours for the kNN search. Only relevant if you
+#'   set regenerate_knn to `TRUE`.
+#'   \item knn_method - String. Which kNN algorithm to use. One of
+#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
+#'   you set regenerate_knn to `TRUE`.
+#'   \item ann_dist - String. Distance metric for the approximate neighbour
+#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
+#'   relevant if you set regenerate_knn to `TRUE`.
+#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
+#'   Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item search_budget - Integer. Search budget per tree for the annoy
+#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
+#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use
+#'   `"nndescent"`.
+#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
+#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
+#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#' }
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param cells_to_take Optional string vector. If you want to only use
+#' selected cells. If `NULL` will default to all cells_to_keep in the class.
+#' @param genes_to_take Optional string vector. If you wish to limit the
+#' search to a subset of genes. If `NULL` will default to all genes in the
+#' class.
+#' @param streaming Boolean. Shall the data be streamed in. Useful for larger
+#' data sets.
+#' @param random_seed Integer. Used for reproducibility.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A `sc_hotspot` class that can be used for subsequent analysis.
+#'
+#' @export
+hotspot_gene_cor_sc <- S7::new_generic(
+  name = "hotspot_gene_cor_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    hotspot_params = params_sc_hotspot(),
+    no_embd_to_use = NULL,
+    cells_to_take = NULL,
+    genes_to_take = NULL,
+    streaming = FALSE,
+    random_seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method hotspot_gene_cor_sc single_cell_exp
+#'
+#' @export
+S7::method(hotspot_gene_cor_sc, single_cell_exp) <- function(
+  object,
+  embd_to_use = "pca",
+  hotspot_params = params_sc_hotspot(),
+  no_embd_to_use = NULL,
+  cells_to_take = NULL,
+  genes_to_take = NULL,
+  streaming = FALSE,
+  random_seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(embd_to_use, "S1")
+  assertScHotspot(hotspot_params)
+  checkmate::qassert(no_embd_to_use, c("0", "I1"))
+  checkmate::qassert(cells_to_take, c("S+", "0"))
+  checkmate::qassert(genes_to_take, c("S+", "0"))
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(random_seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the embedding
+  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  if (!is.null(no_embd_to_use)) {
+    to_take <- min(c(no_embd_to_use, ncol(embd)))
+    embd <- embd[, 1:to_take]
+  }
+
+  if (is.null(cells_to_take)) {
+    cells_to_take <- get_cell_names(object, filtered = TRUE)
+  }
+
+  if (is.null(genes_to_take)) {
+    genes_to_take <- get_gene_names(object)
+  }
+
+  hotspot_gene_cor <- rs_hotspot_gene_cor(
+    f_path_genes = get_rust_count_gene_f_path(object),
+    f_path_cells = get_rust_count_cell_f_path(object),
+    embd = embd[cells_to_take, ],
+    hotspot_params = hotspot_params,
+    cells_to_keep = get_cell_indices(
+      object,
+      cell_ids = cells_to_take,
+      rust_index = TRUE
+    ),
+    genes_to_use = get_gene_indices(
+      object,
+      gene_ids = genes_to_take,
+      rust_index = TRUE
+    ),
+    streaming = streaming,
+    verbose = .verbose,
+    seed = random_seed
+  )
+
+  hotspot_obj <- new_sc_hotspot_res(
+    hotspot_res = hotspot_gene_cor,
+    used_genes = genes_to_take,
+    used_cells = cells_to_take
+  )
+
+  return(hotspot_obj)
+}

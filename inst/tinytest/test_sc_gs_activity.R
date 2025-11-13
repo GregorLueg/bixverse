@@ -272,8 +272,6 @@ vision_res_auto <- vision_w_autocor_sc(
   .verbose = FALSE
 )
 
-vision_res_auto$auto_cor_dt
-
 expect_equivalent(
   current = vision_res_auto$vision_matrix,
   target = vision_res,
@@ -318,41 +316,68 @@ expect_true(
 
 ## hotspots --------------------------------------------------------------------
 
-object = sc_object
-hotspot_params = params_sc_hotspot(
-  model = "normal",
-  knn = list(ann_dist = "cosine"),
-  normalise = TRUE
+### auto-correlations ----------------------------------------------------------
+
+hotspot_autocor_danb_res <- hotspot_autocor_sc(
+  object = sc_object,
+  .verbose = FALSE
 )
 
-hotspot_auto_cor <- rs_hotspot_autocor(
-  f_path_genes = get_rust_count_gene_f_path(object),
-  f_path_cells = get_rust_count_cell_f_path(object),
-  embd = get_pca_factors(object),
-  hotspot_params = hotspot_params,
-  cells_to_keep = get_cells_to_keep(object),
-  genes_to_use = get_gene_indices(
-    object,
-    gene_ids = get_gene_names(object),
-    rust_index = TRUE
-  ),
+expect_true(
+  current = all(hotspot_autocor_danb_res$fdr[1:30] <= 0.05),
+  info = "hotspot - local correlations significant were expected - DANB"
+)
+
+expect_true(
+  current = mean(hotspot_autocor_danb_res$gaerys_c[1:30]) >=
+    mean(hotspot_autocor_danb_res$gaerys_c[31:nrow(hotspot_autocor_danb_res)]),
+  info = "hotspot - average Gaery's C higher in expected genes - DANB"
+)
+
+hotspot_autocor_normal_res <- hotspot_autocor_sc(
+  object = sc_object,
+  hotspot_params = params_sc_hotspot(model = "normal"),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(hotspot_autocor_normal_res$fdr[1:30] <= 0.05),
+  info = "hotspot - local correlations significant were expected - normal"
+)
+
+expect_true(
+  current = mean(hotspot_autocor_normal_res$gaerys_c[1:30]) >=
+    mean(hotspot_autocor_normal_res$gaerys_c[
+      31:nrow(hotspot_autocor_normal_res)
+    ]),
+  info = "hotspot - average Gaery's C higher in expected genes - normal"
+)
+
+#### streaming -----------------------------------------------------------------
+
+hotspot_autocor_danb_res_streaming <- hotspot_autocor_sc(
+  object = sc_object,
   streaming = TRUE,
-  verbose = TRUE,
-  seed = 42L
+  .verbose = FALSE
 )
 
-hist(hotspot_auto_cor$z_score, breaks = 25)
-
-rextendr::document()
-
-hotspot_gene_cor <- rs_hotspot_gene_cor(
-  f_path_genes = get_rust_count_gene_f_path(object),
-  f_path_cells = get_rust_count_cell_f_path(object),
-  embd = get_pca_factors(object),
-  hotspot_params = hotspot_params,
-  cells_to_keep = get_cells_to_keep(object),
-  genes_to_use = as.integer(hotspot_auto_cor$gene_idx),
-  streaming = TRUE,
-  verbose = TRUE,
-  seed = 42L
+expect_equal(
+  current = hotspot_autocor_danb_res_streaming,
+  target = hotspot_autocor_danb_res,
+  info = "hotspot - streaming engine behaves for auto-correlations"
 )
+
+#### cell subset ---------------------------------------------------------------
+
+get_gene_names(sc_object)[1:50]
+
+genes_to_use <- hotspot_autocor_res[fdr <= 0.05, gene_id]
+
+hotspot_obj <- hotspot_gene_cor_sc(
+  object = sc_object,
+  genes_to_take = genes_to_use
+)
+
+hotspot_obj <- set_hotspot_membership(hotspot_obj)
+
+get_hotspot_membership(hotspot_obj)

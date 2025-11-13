@@ -5,14 +5,14 @@
 \title{Wrapper function for parameters for HotSpot}
 \usage{
 params_sc_hotspot(
-  model = c("normal", "danb", "bernoulli"),
+  model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
   knn = list(ann_dist = "cosine")
 )
 }
 \arguments{
 \item{model}{String. Model to use for modelling the GEX. One of
-\code{c("danb", "bernoulli", "normal")}. Defaults to \code{"normal"}.}
+\code{c("danb", "bernoulli", "normal")}. Defaults to \code{"danb"}.}
 
 \item{normalise}{Boolean. Shall the data be normalised. Defaults to \code{TRUE}.}
 

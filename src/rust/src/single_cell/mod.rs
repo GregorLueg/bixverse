@@ -8,4 +8,5 @@ pub mod fast_ranking;
 pub mod methods;
 pub mod metrics;
 pub mod processing;
+pub mod r_class_extractors;
 pub mod sc_knn_snn;

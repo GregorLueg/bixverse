@@ -2362,10 +2362,87 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #' @export
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
 
+#' Calculate gene spatial auto-correlations
+#'
+#' @description
+#' This function implements the HotSpot auto-correlation functionality and
+#' will return to what extent a given gene shows auto-correlation in the
+#' generated kNN-graph from the embeddings. For details see DeTomaso, et al.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param f_path_cells Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param hotspot_params List. The HotSpot parameter list.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which cells
+#' to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param streaming Boolean. Shall the data be streamed in chunks. Useful
+#' for large data sets.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item gene_idx - 0-based integer indicating the gene index.
+#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
+#'   coefficient.
+#'   \item z_score - Z-score of the auto-correlation.
+#'   \item pval - P-value derived from the Z-score.
+#'   \item fdr - False discovery rate based on the p-value.
+#' }
+#'
 #' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_autocor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
+#' Cluster the genes by Z-score together
+#'
+#' @param z_matrix Numerical matrix representing the Z-scores.
+#' @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
+#' @param min_size Integer. Minimum cluster size.
+#'
+#' @returns An assignment vector. NA indicates that the gene did not pass the
+#' thresholds and has not been assigned.
+#'
 #' @export
+rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wrap__rs_hotspot_cluster_genes, z_matrix, fdr_threshold, min_size)
+
+#' Calculate gene<>gene spatial correlations
+#'
+#' @description
+#' This function implements the HotSpot gene <> gene local correlation
+#' functionality from HotSpot, see DeTomaso, et al.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param f_path_cells Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param hotspot_params List. The HotSpot parameter list.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which cells
+#' to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param streaming Boolean. Shall the data be streamed in chunks. Useful
+#' for large data sets.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item cor - A matrix of the N x N genes_to_use length with the auto-
+#'   correlation coefficients.
+#'   \item z - A matrix of N x N genes_to_use length with the Z-scores of the
+#'   local correlations between two genes.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
 #' Calculate VISION pathway scores in Rust

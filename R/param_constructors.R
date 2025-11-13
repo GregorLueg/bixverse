@@ -393,7 +393,7 @@ params_sc_vision <- function(
 #' Wrapper function for parameters for HotSpot
 #'
 #' @param model String. Model to use for modelling the GEX. One of
-#' `c("danb", "bernoulli", "normal")`. Defaults to `"normal"`.
+#' `c("danb", "bernoulli", "normal")`. Defaults to `"danb"`.
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
@@ -405,7 +405,7 @@ params_sc_vision <- function(
 #'
 #' @export
 params_sc_hotspot <- function(
-  model = c("normal", "danb", "bernoulli"),
+  model = c("danb", "normal", "bernoulli"),
   normalise = TRUE,
   knn = list(ann_dist = "cosine")
 ) {

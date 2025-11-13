@@ -275,3 +275,154 @@ get_knn_dist.sc_knn <- function(x) {
 
   return(x[["dist"]])
 }
+
+## hotspot gene <> gene results ------------------------------------------------
+
+#' Helper function to generate HotSpot data
+#'
+#' @description
+#' Wrapper class that stores the HotSpot
+#'
+#' @param hotspot_res Named list with the following items:
+#' \itemize{
+#'   \item z - Pairwise gene-gene matrix with the Z-scores.
+#'   \item cor - Pairwise gene-gene matrix with the local correlation
+#'   coefficients.
+#' }
+#' @param used_genes Character vector. The used genes to generate the matrices.
+#' @param used_cells Character vector. The used cells to generate the matrices.
+#'
+#' @return Generates the `sc_hotspot` class.
+#'
+#' @export
+#'
+#' @importFrom magrittr `%>%`
+new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
+  # checks
+  checkmate::assertList(hotspot_res, types = "matrix")
+  checkmate::qassert(used_genes, "S+")
+  checkmate::qassert(used_cells, "S+")
+
+  # class generation
+  sc_hotspot <- list(
+    z = {
+      hotspot_res$z %>% `rownames<-`(used_genes) %>% `colnames<-`(used_genes)
+    },
+    cor = {
+      hotspot_res$cor %>% `rownames<-`(used_genes) %>% `colnames<-`(used_genes)
+    },
+    params = list(used_cells = used_cells),
+    module_memership = NULL
+  )
+
+  class(sc_hotspot) <- "sc_hotspot"
+
+  return(sc_hotspot)
+}
+
+### methods --------------------------------------------------------------------
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_params
+#'
+#' @export
+get_params.sc_hotspot <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "sc_hotspot"
+  )
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+
+  return(to_ret)
+}
+
+#' @method get_params sc_hotspot
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.sc_hotspot(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#### setters -------------------------------------------------------------------
+
+#' Identify hotspot gene clusters
+#'
+#' @param x An object to generate the hotspot gene clusters for.
+#' @param fdr_threshold Numeric. The maximum FDR for a given gene-gene local
+#' correlation to be included.
+#' @param min_size Integer. Minimum cluster size.
+#'
+#' @export
+set_hotspot_membership <- function(x, fdr_threshold = 0.05, min_size = 10L) {
+  UseMethod("set_hotspot_membership")
+}
+
+#' @rdname set_hotspot_membership
+#'
+#' @export
+set_hotspot_membership.sc_hotspot <- function(
+  x,
+  fdr_threshold = 0.05,
+  min_size = 10L
+) {
+  # checks
+  checkmate::assertClass(x, "sc_hotspot")
+  checkmate::qassert(fdr_threshold, "N1[0, 1]")
+  checkmate::qassert(min_size, "I1")
+
+  gene_membership <- data.table::data.table(
+    gene_id = rownames(x$z),
+    cluster_member = rs_hotspot_cluster_genes(
+      x$z,
+      fdr_threshold = 0.05,
+      10L
+    )
+  )
+
+  x[["module_memership"]] <- gene_membership
+
+  x
+}
+
+#### getters -------------------------------------------------------------------
+
+#' Get the hotspot gene membership table
+#'
+#' @param x The object from which to retrieve the hotspot gene membership
+#'
+#' @export
+get_hotspot_membership <- function(x) {
+  UseMethod("get_hotspot_membership")
+}
+
+#' @rdname get_hotspot_membership
+#'
+#' @export
+get_hotspot_membership.sc_hotspot <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "sc_hotspot")
+
+  x[["module_memership"]]
+}
