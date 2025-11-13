@@ -334,7 +334,7 @@
 <span>  return_format <span class="op">=</span> <span class="st">"cell"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.004 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.005 sec elapsed</span></span>
 <span></span>
 <span><span class="co">## Now we are to select the incorrect orientation</span></span>
 <span><span class="co">## This dataset is too small to see a difference however try it on your own larger and it will shock you</span></span>
@@ -669,25 +669,54 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">meta_cell_data_v1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; List of 2</span></span>
-<span><span class="co">#&gt;  $ meta_raw_counts :Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
-<span><span class="co">#&gt;   .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ Dim     : int [1:2] 10 81</span></span>
-<span><span class="co">#&gt;   .. ..@ Dimnames:List of 2</span></span>
-<span><span class="co">#&gt;   .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
-<span><span class="co">#&gt;   .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
-<span><span class="co">#&gt;   .. ..@ x       : num [1:810] 251 167 263 102 54 159 190 319 162 80 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ factors : list()</span></span>
-<span><span class="co">#&gt;  $ meta_norm_counts:Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
-<span><span class="co">#&gt;   .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ Dim     : int [1:2] 10 81</span></span>
-<span><span class="co">#&gt;   .. ..@ Dimnames:List of 2</span></span>
-<span><span class="co">#&gt;   .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
-<span><span class="co">#&gt;   .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
-<span><span class="co">#&gt;   .. ..@ x       : num [1:810] 5.69 5.28 5.74 4.79 4.16 ...</span></span>
-<span><span class="co">#&gt;   .. ..@ factors : list()</span></span></code></pre></div>
+<span><span class="co">#&gt; &lt;bixverse::meta_cells&gt;</span></span>
+<span><span class="co">#&gt;  @ obs_table          :Classes 'data.table' and 'data.frame':    10 obs. of  4 variables:</span></span>
+<span><span class="co">#&gt;  .. $ meta_cell_idx       : int  1 2 3 4 5 6 7 8 9 10</span></span>
+<span><span class="co">#&gt;  .. $ meta_cell_id        : chr  "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
+<span><span class="co">#&gt;  .. $ no_originating_cells: num  16 14 15 12 15 12 16 14 14 16</span></span>
+<span><span class="co">#&gt;  .. $ original_cell_idx   :List of 10</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  91 102 116 148 166 226 280 370 438 528 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  15 34 36 85 129 170 270 288 310 350 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  6 10 20 106 109 171 248 313 316 486 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  172 196 283 323 341 372 382 457 647 663 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  214 231 274 402 406 497 508 533 537 560 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  97 142 169 251 329 337 432 435 451 483 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  53 55 93 154 230 307 371 413 445 477 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  66 67 86 88 90 133 188 247 276 295 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  68 108 241 271 305 320 442 467 513 547 ...</span></span>
+<span><span class="co">#&gt;  ..  ..$ : int  24 207 222 292 296 355 399 439 464 476 ...</span></span>
+<span><span class="co">#&gt;  .. - attr(*, ".internal.selfref")=&lt;externalptr&gt; </span></span>
+<span><span class="co">#&gt;  @ var_table          :Classes 'data.table' and 'data.frame':    81 obs. of  2 variables:</span></span>
+<span><span class="co">#&gt;  .. $ gene_idx: num  1 2 3 4 5 6 7 8 9 10 ...</span></span>
+<span><span class="co">#&gt;  .. $ gene_id : chr  "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
+<span><span class="co">#&gt;  .. - attr(*, ".internal.selfref")=&lt;externalptr&gt; </span></span>
+<span><span class="co">#&gt;  @ data               :List of 2</span></span>
+<span><span class="co">#&gt;  .. $ raw :Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ Dim     : int [1:2] 10 81</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ Dimnames:List of 2</span></span>
+<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
+<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ x       : num [1:810] 251 167 263 102 54 159 190 319 162 80 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ factors : list()</span></span>
+<span><span class="co">#&gt;  .. $ norm:Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ Dim     : int [1:2] 10 81</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ Dimnames:List of 2</span></span>
+<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
+<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ x       : num [1:810] 7.99 7.58 8.04 7.09 6.45 ...</span></span>
+<span><span class="co">#&gt;  ..  .. ..@ factors : list()</span></span>
+<span><span class="co">#&gt;  @ original_assignment:List of 4</span></span>
+<span><span class="co">#&gt;  .. $ assignments : int [1:682] -1 -1 -1 -1 -1 3 -1 -1 -1 3 ...</span></span>
+<span><span class="co">#&gt;  .. $ n_cells     : num 682</span></span>
+<span><span class="co">#&gt;  .. $ n_metacells : num 10</span></span>
+<span><span class="co">#&gt;  .. $ n_unassigned: num 538</span></span>
+<span><span class="co">#&gt;  @ dims               : int [1:2] 10 81</span></span>
+<span><span class="co">#&gt;  @ other_data         : list()</span></span>
+<span><span class="co">#&gt;  @ meta_cell_method   : chr "meta_cells_hdwgcna"</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="save-object">Save object<a class="anchor" aria-label="anchor" href="#save-object"></a>
 </h3>
@@ -869,7 +898,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

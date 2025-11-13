@@ -1,0 +1,38 @@
+# Assess stability of ICA components
+
+Assesses the stability of a component given some random iterations (in
+terms of random initialisations and potentially additional
+cross-validation). It will calculate the (absolute) Pearson's
+correlation between the different generated independent components and
+run hierarchical clustering on top of these and assess the cluster
+stability. If desired, it can also return the centrotype of each
+cluster.
+
+## Usage
+
+``` r
+community_stability(no_comp, s, return_centrotype)
+```
+
+## Arguments
+
+- no_comp:
+
+  Integer. Number of components that were set for this run.
+
+- s:
+
+  Numeric matrix. Combined S matrices from the ICA runs. Assumes rows =
+  features and column individual independent components.
+
+- return_centrotype:
+
+  Boolean. Shall the centrotype be returned for this run.
+
+## Value
+
+A list containing:
+
+- stability_scores - The stability scores for the given runs.
+
+- centrotype - The centrotype component of each cluster.

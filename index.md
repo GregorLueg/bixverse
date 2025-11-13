@@ -1,0 +1,80 @@
+# bixverse package
+
+![r_package](https://img.shields.io/badge/R_package-0.0.2.3-orange)
+
+r_package
+
+![bixverse logo](reference/figures/bixverse_logo.png)
+
+## Description
+
+This package contains various bioinformatics and computational biology
+workflows that are being routinely used, ranging from gene set
+enrichment analyses, to network-based approaches for module detection in
+bulk RNAseq. The package provides useful, bare bone versions of most
+bioinformatics functionalities and leverages Rust to make any
+computational bottlenecks go *brrrrrrr* (i.e., fast).
+
+## Release notes
+
+This is now officially the version **0.0.2.3** release. With this update
+the following has been updated/changed:
+
+- (R/Py)CisTarget is implemented into Rust for speed.
+
+Also, watch the space… The **0.0.3.0** release is coming soon with a
+major update…
+
+## Installation
+
+You will need Rust on your system to have the package working. An
+installation guide is provided
+[here](https://www.rust-lang.org/tools/install). There is a bunch of
+further help written
+[here](https://extendr.github.io/rextendr/index.html) by the rextendr
+guys in terms of Rust set up. (bixverse uses rextendr to interface with
+Rust.)
+
+Steps for installation:
+
+1.  In the terminal, install
+    [Rust](https://www.rust-lang.org/tools/install)
+
+&nbsp;
+
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+2.  In R, install
+    [rextendr](https://extendr.github.io/rextendr/index.html):
+
+&nbsp;
+
+    install.packages("rextendr")
+
+3.  Finally install bixverse:
+
+&nbsp;
+
+    devtools::install_github("https://github.com/GregorLueg/bixverse")
+
+## PKGdown site
+
+The package documentation can be found
+
+[here](https://gregorlueg.github.io/bixverse/).
+
+## Docs
+
+- [Roadmap](/info/roadmap.md)
+- [Change log](/info/change_log.md)
+- [Why Rust](/info/why_rust.md)
+- [Code Style](/info/code_style.md) (If you want to contribute).
+
+## Aim
+
+![but why](reference/figures/but_why.png)
+
+Good question, why this package? Basically, there are three reasons for
+this:
+
+*Last update to the read-me: 01.11.2025*

@@ -1,0 +1,73 @@
+# Generates a simple synthetic, pseudo gene expression matrix
+
+This is a function to create a synthetic, pseudo gene expression matrix
+with a pre-defined number of total genes, groups and number of genes
+differentially expressed in the groups. The function will create in a
+standard setting a 1000 x 90 matrix, and add optionally a small group
+into the mixture that is slightly more difficult to detect
+
+## Usage
+
+``` r
+synthetic_signal_matrix(
+  no_grps = 3,
+  per_group = 30,
+  total_genes = 1000L,
+  no_genes_up = 100L,
+  add_small_group = TRUE,
+  size_small_grp = 5L,
+  seed = 10101L
+)
+```
+
+## Arguments
+
+- no_grps:
+
+  Integer. Number of initial larger groups. Default: 3L.
+
+- per_group:
+
+  Integer. Number of samples per larger groups. Default: 30L.
+
+- total_genes:
+
+  Integer. Number of total genes in the matrix. Default: 1000L.
+
+- no_genes_up:
+
+  Integer. Number of genes per group that are differentially expressed.
+  Default: 100L.
+
+- add_small_group:
+
+  Boolean. Add a smaller group that overlaps with group 1? Default:
+  TRUE.
+
+- size_small_grp:
+
+  Integer. Size of the smaller group.
+
+- seed:
+
+  Integer. Initial random seed for generation of the synthetic data.
+  Default: 10101L.
+
+## Value
+
+A `synthetic_matrix_simple` class containing:
+
+- mat - The random matrix
+
+- diff - List of differentially expressed genes per group
+
+- group - Look-up vector for sample to group mapping
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+synthetic_GEX <- create_synthetic_signal_matrix()
+synthetic_signal_mat <- synthetic_GEX$mat
+} # }
+```

@@ -37,6 +37,8 @@
 <url><loc>/reference/assertScMtxIO.html</loc></url>
 <url><loc>/reference/assertScNeighbours.html</loc></url>
 <url><loc>/reference/assertScScrublet.html</loc></url>
+<url><loc>/reference/assertScSeacells.html</loc></url>
+<url><loc>/reference/assertScSupercell.html</loc></url>
 <url><loc>/reference/assertScSyntheticData.html</loc></url>
 <url><loc>/reference/assertSingleSampleGSEAparams.html</loc></url>
 <url><loc>/reference/aucell_sc.html</loc></url>
@@ -51,6 +53,7 @@
 <url><loc>/reference/calc_fgsea_simple.html</loc></url>
 <url><loc>/reference/calc_gsea_traditional.html</loc></url>
 <url><loc>/reference/calc_gsva.html</loc></url>
+<url><loc>/reference/calc_meta_cell_purity.html</loc></url>
 <url><loc>/reference/calc_mitch.html</loc></url>
 <url><loc>/reference/calc_ssgsea.html</loc></url>
 <url><loc>/reference/calculate_all_dges.html</loc></url>
@@ -99,6 +102,8 @@
 <url><loc>/reference/checkScMtxIO.html</loc></url>
 <url><loc>/reference/checkScNeighbours.html</loc></url>
 <url><loc>/reference/checkScScrublet.html</loc></url>
+<url><loc>/reference/checkScSeacells.html</loc></url>
+<url><loc>/reference/checkScSupercell.html</loc></url>
 <url><loc>/reference/checkScSyntheticData.html</loc></url>
 <url><loc>/reference/checkSingleSampleGSEAparams.html</loc></url>
 <url><loc>/reference/check_dim.html</loc></url>
@@ -208,12 +213,14 @@
 <url><loc>/reference/get_sc_obs.html</loc></url>
 <url><loc>/reference/get_sc_rust_ptr.html</loc></url>
 <url><loc>/reference/get_sc_var.html</loc></url>
+<url><loc>/reference/get_seacells_sc.html</loc></url>
 <url><loc>/reference/get_seurat_counts_to_list.html</loc></url>
 <url><loc>/reference/get_sim_matrix.html</loc></url>
 <url><loc>/reference/get_snf_adjcacency_mat.html</loc></url>
 <url><loc>/reference/get_snf_final_mat.html</loc></url>
 <url><loc>/reference/get_snf_params.html</loc></url>
 <url><loc>/reference/get_snn_graph.html</loc></url>
+<url><loc>/reference/get_supercells_sc.html</loc></url>
 <url><loc>/reference/get_tpm_counts.html</loc></url>
 <url><loc>/reference/gse_go_elim_method.html</loc></url>
 <url><loc>/reference/gse_go_elim_method_list.html</loc></url>
@@ -232,6 +239,7 @@
 <url><loc>/reference/load_mtx.html</loc></url>
 <url><loc>/reference/load_r_data.html</loc></url>
 <url><loc>/reference/load_seurat.html</loc></url>
+<url><loc>/reference/meta_cells.html</loc></url>
 <url><loc>/reference/multilevel_error.html</loc></url>
 <url><loc>/reference/network_diffusions.html</loc></url>
 <url><loc>/reference/new_sc_cache.html</loc></url>
@@ -264,6 +272,8 @@
 <url><loc>/reference/params_sc_min_quality.html</loc></url>
 <url><loc>/reference/params_sc_mtx_io.html</loc></url>
 <url><loc>/reference/params_sc_neighbours.html</loc></url>
+<url><loc>/reference/params_sc_seacells.html</loc></url>
+<url><loc>/reference/params_sc_supercell.html</loc></url>
 <url><loc>/reference/params_sc_synthetic_data.html</loc></url>
 <url><loc>/reference/params_scrublet.html</loc></url>
 <url><loc>/reference/params_snf.html</loc></url>
@@ -341,6 +351,7 @@
 <url><loc>/reference/rs_geom_elim_fgsea_simple.html</loc></url>
 <url><loc>/reference/rs_get_gs_indices.html</loc></url>
 <url><loc>/reference/rs_get_metacells.html</loc></url>
+<url><loc>/reference/rs_get_seacells.html</loc></url>
 <url><loc>/reference/rs_gower_dist.html</loc></url>
 <url><loc>/reference/rs_gse_geom_elim.html</loc></url>
 <url><loc>/reference/rs_gse_geom_elim_list.html</loc></url>
@@ -402,6 +413,7 @@
 <url><loc>/reference/rs_spectral_clustering_sim.html</loc></url>
 <url><loc>/reference/rs_split_cor_signs.html</loc></url>
 <url><loc>/reference/rs_ssgsea.html</loc></url>
+<url><loc>/reference/rs_supercell.html</loc></url>
 <url><loc>/reference/rs_synthetic_sc_data_csc.html</loc></url>
 <url><loc>/reference/rs_synthetic_sc_data_csr.html</loc></url>
 <url><loc>/reference/rs_synthetic_sc_data_with_cell_types.html</loc></url>

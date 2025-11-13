@@ -43,10 +43,13 @@
 <span>  target_no_metacells <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">5000L</span>,</span>
 <span>  k <span class="op">=</span> <span class="fl">25L</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span><span class="op">)</span>,</span>
+<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span>, <span class="st">"nndescent"</span><span class="op">)</span>,</span>
 <span>  ann_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cosine"</span>, <span class="st">"euclidean"</span><span class="op">)</span>,</span>
 <span>  n_trees <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  search_budget <span class="op">=</span> <span class="fl">100L</span></span>
+<span>  search_budget <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  nn_max_iter <span class="op">=</span> <span class="fl">15L</span>,</span>
+<span>  rho <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  delta <span class="op">=</span> <span class="fl">0.001</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -56,43 +59,61 @@
 
 <dl><dt id="arg-max-shared">max_shared<a class="anchor" aria-label="anchor" href="#arg-max-shared"></a></dt>
 <dd><p>Integer. Maximum number of allowed shared neighbours for
-the meta cell to be considered.</p></dd>
+the meta cell to be considered. Defaults to <code>15L</code>.</p></dd>
 
 
 <dt id="arg-target-no-metacells">target_no_metacells<a class="anchor" aria-label="anchor" href="#arg-target-no-metacells"></a></dt>
-<dd><p>Integer. Target number of meta-cells to generate.</p></dd>
+<dd><p>Integer. Target number of meta-cells to generate.
+Defaults to <code>1000L</code>.</p></dd>
 
 
 <dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
-<dd><p>Integer. Maximum number of iterations for the algorithm.</p></dd>
+<dd><p>Integer. Maximum number of iterations for the algorithm.
+Defaults to <code>5000L</code>.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Integer. Number of neighbours to return.</p></dd>
+<dd><p>Integer. Number of neighbours to return. Defaults to <code>25L</code>.</p></dd>
 
 
 <dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
-<dd><p>String. One of <code>c("annoy", "hnsw")</code>. Defaults to
-<code>"annoy"</code></p></dd>
+<dd><p>String. One of <code>c("annoy", "hnsw", "nndescent")</code>. Defaults
+to <code>"annoy"</code>.</p></dd>
 
 
 <dt id="arg-ann-dist">ann_dist<a class="anchor" aria-label="anchor" href="#arg-ann-dist"></a></dt>
 <dd><p>String. One of <code>c("cosine", "euclidean")</code>. The distance
-metric to be used for the approximate neighbour search.</p></dd>
+metric to be used for the approximate neighbour search. Defaults to
+<code>"cosine"</code>.</p></dd>
 
 
 <dt id="arg-n-trees">n_trees<a class="anchor" aria-label="anchor" href="#arg-n-trees"></a></dt>
-<dd><p>Integer. Number of trees to use for the <code>annoy</code> algorithm.</p></dd>
+<dd><p>Integer. Number of trees to use for the <code>annoy</code> algorithm.
+Defaults to <code>100L</code>.</p></dd>
 
 
 <dt id="arg-search-budget">search_budget<a class="anchor" aria-label="anchor" href="#arg-search-budget"></a></dt>
 <dd><p>Integer. Search budget per tree for the <code>annoy</code>
-algorithm.</p></dd>
+algorithm. Defaults to <code>100L</code>.</p></dd>
+
+
+<dt id="arg-nn-max-iter">nn_max_iter<a class="anchor" aria-label="anchor" href="#arg-nn-max-iter"></a></dt>
+<dd><p>Integer. Maximum iterations for NN Descent. Defaults to
+<code>15L</code>.</p></dd>
+
+
+<dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
+<dd><p>Numeric. Sampling rate for NN Descent. Defaults to <code>1.0</code>.</p></dd>
+
+
+<dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
+<dd><p>Numeric. Early termination criterion for NN Descent. Defaults to
+<code>0.001</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with the neighbour parameters.</p>
+    <p>A list with the metacell parameters.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -104,7 +125,7 @@ algorithm.</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

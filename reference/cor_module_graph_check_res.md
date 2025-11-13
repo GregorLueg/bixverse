@@ -1,0 +1,90 @@
+# Iterate through Leiden resolutions for graph-based community detection.
+
+This function will identify gene modules based on affinity graphs from
+the single correlation or differential correlation methods. Briefly, in
+the case of single correlation, the graph is generated based on the
+absolute correlation coefficients that are subjected to a Gaussian
+affinity kernel. This reduces spurious correlations and leaves a
+sparsely connected graph. In the case of differential correlations, the
+graph is generated based on significant differential correlations if one
+of the two correlations reached the defined minimum thresholds.  
+Subsequently, Leiden community detection is applied on the respective
+graph through a range of resolutions that the user can define. The
+function then returns meta information about the resolutions (which can
+also be plotted) to identify the best suitable resolution parameter to
+identify co-expression modules.
+
+## Usage
+
+``` r
+cor_module_graph_check_res(
+  object,
+  resolution_params = params_graph_resolution(),
+  graph_params = params_cor_graph(),
+  random_seed = 123L,
+  min_genes = 10L,
+  parallel = TRUE,
+  max_workers = NULL,
+  .verbose = TRUE
+)
+```
+
+## Arguments
+
+- object:
+
+  The class, see [`bulk_coexp()`](bulk_coexp.md).
+
+- resolution_params:
+
+  List. Parameters for the resolution search, see
+  [`params_graph_resolution()`](params_graph_resolution.md). Contains:
+
+  - min_res - Float. Minimum resolution to test.
+
+  - max_res - Float. Maximum resolution to test.
+
+  - number_res - Integer. Number of resolutions to test between the
+    `max_res` and `min_res.`
+
+- graph_params:
+
+  List. Parameters for the generation of the (differential) correlation
+  graph, see [`params_cor_graph()`](params_cor_graph.md). Contains:
+
+  - Epsilon - Defines the epsilon parameter for the radial basis
+    function. Defaults to 1, but should be ideally optimised.
+
+  - min_cor - Float. Minimum absolute correlation that needs to be
+    observed in either data set. Only relevant for differential
+    correlation-based graphs.
+
+  - fdr_threshold - Float. Maximum FDR for the differential correlation
+    p-value.
+
+  - verbose - Boolean. Controls verbosity of the graph generation.
+
+- random_seed:
+
+  Integer. Random seed.
+
+- min_genes:
+
+  Integer. Minimum number of genes that should be in a community.
+
+- parallel:
+
+  Boolean. Parallelise the Leiden clustering.
+
+- max_workers:
+
+  Optional Integer. Number of cores to use if parallel is set to `TRUE`.
+  If set to `NULL` it will automatically detect the number of cores.
+
+- .verbose:
+
+  Controls the verbosity of the function.
+
+## Value
+
+The class with added data to the properties.
