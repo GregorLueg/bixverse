@@ -41,7 +41,8 @@ bixverse_base_class <- S7::new_class(
 #' Get the parameters that were used.
 #'
 #' @description Extracts parameters from the `bixverse_base_class` class (or
-#' child classes) and has options to return (pretty) JSONs.
+#' child classes) and has options to return (pretty) JSONs. This generic
+#' also gets inherited by other classes and can be used to extract parameters.
 #'
 #' @param object A class within bixverse that inherits from
 #' [bixverse::bixverse_base_class()].
@@ -60,6 +61,7 @@ get_params <- S7::new_generic(
 )
 
 #' @method get_params bixverse_base_class
+#'
 #' @export
 S7::method(get_params, bixverse_base_class) <-
   function(object, to_json = FALSE, pretty_json = FALSE) {

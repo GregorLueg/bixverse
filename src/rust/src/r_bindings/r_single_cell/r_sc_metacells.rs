@@ -11,6 +11,13 @@ use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::r_matrix_to_faer_fp32;
 use crate::utils::traits::*;
 
+extendr_module! {
+    mod r_sc_metacells;
+    fn rs_get_metacells;
+    fn rs_get_seacells;
+    fn rs_supercell;
+}
+
 ////////////////
 // Meta cells //
 ////////////////
@@ -122,39 +129,10 @@ fn rs_get_metacells(
                 subset_data[i * ncol + j] as f32
             });
 
-            // Generate kNN on subset
-            let knn_method = parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
-                format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
-            })?;
+            let knn_params = KnnParams::from_metacell_params(&meta_cell_params);
 
-            let knn = match knn_method {
-                KnnSearch::Hnsw => generate_knn_hnsw(
-                    embd_subset.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::Annoy => generate_knn_annoy(
-                    embd_subset.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    meta_cell_params.n_trees,
-                    meta_cell_params.search_budget,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::NNDescent => generate_knn_nndescent(
-                    embd_subset.as_ref(),
-                    &meta_cell_params.ann_dist,
-                    meta_cell_params.k,
-                    meta_cell_params.nn_max_iter,
-                    meta_cell_params.delta,
-                    meta_cell_params.rho,
-                    seed,
-                    verbose,
-                ),
-            };
+            let (knn, _) =
+                generate_knn_with_dist(embd_subset.as_ref(), &knn_params, false, seed, verbose);
 
             (subset_to_orig, n_total, knn)
         }
@@ -165,7 +143,6 @@ fn rs_get_metacells(
                 (_, Some(em)) => em.nrows(),
                 _ => return Err("Must provide either 'knn_mat' or 'embd' parameter".into()),
             };
-
             let knn = match (knn_mat, embd) {
                 (Some(knn_mat), _) => {
                     if verbose {
@@ -195,40 +172,14 @@ fn rs_get_metacells(
                         println!("Calculating the kNN matrix from the provided data.");
                     }
 
-                    let embd = r_matrix_to_faer_fp32(&embd);
-                    let knn_method =
-                        parse_knn_method(&meta_cell_params.knn_method).ok_or_else(|| {
-                            format!("Invalid KNN search method: {}", meta_cell_params.knn_method)
-                        })?;
+                    let knn_params = KnnParams::from_metacell_params(&meta_cell_params);
 
-                    match knn_method {
-                        KnnSearch::Hnsw => generate_knn_hnsw(
-                            embd.as_ref(),
-                            &meta_cell_params.ann_dist,
-                            meta_cell_params.k,
-                            seed,
-                            verbose,
-                        ),
-                        KnnSearch::Annoy => generate_knn_annoy(
-                            embd.as_ref(),
-                            &meta_cell_params.ann_dist,
-                            meta_cell_params.k,
-                            meta_cell_params.n_trees,
-                            meta_cell_params.search_budget,
-                            seed,
-                            verbose,
-                        ),
-                        KnnSearch::NNDescent => generate_knn_nndescent(
-                            embd.as_ref(),
-                            &meta_cell_params.ann_dist,
-                            meta_cell_params.k,
-                            meta_cell_params.nn_max_iter,
-                            meta_cell_params.delta,
-                            meta_cell_params.rho,
-                            seed,
-                            verbose,
-                        ),
-                    }
+                    let embd = r_matrix_to_faer_fp32(&embd);
+
+                    let (knn, _) =
+                        generate_knn_with_dist(embd.as_ref(), &knn_params, false, seed, verbose);
+
+                    knn
                 }
                 (None, None) => {
                     return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
@@ -417,48 +368,12 @@ fn rs_get_seacells(
 
     let is_subset = cells_to_use.is_some();
 
-    let knn_method = parse_knn_method(&seacells_params.knn_method)
-        .ok_or_else(|| format!("Invalid KNN search method: {}", seacells_params.knn_method))
-        .unwrap();
+    let knn_params = KnnParams::from_sea_cells_params(&seacells_params);
 
     let start_knn = Instant::now();
 
-    let (knn_indices, knn_dist) = match knn_method {
-        KnnSearch::Annoy => {
-            let annoy_index = build_annoy_index(embd_mat.as_ref(), seacells_params.n_trees, seed);
-            query_annoy_index(
-                embd_mat.as_ref(),
-                &annoy_index,
-                &seacells_params.ann_dist,
-                seacells_params.k,
-                seacells_params.search_budget,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::Hnsw => {
-            let hnsw_index = build_hnsw_index(embd_mat.as_ref(), &seacells_params.ann_dist, seed);
-            query_hnsw_index(
-                embd_mat.as_ref(),
-                &hnsw_index,
-                &seacells_params.ann_dist,
-                seacells_params.k,
-                true,
-                verbose,
-            )
-        }
-        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
-            embd_mat.as_ref(),
-            &seacells_params.ann_dist,
-            seacells_params.k,
-            seacells_params.nn_max_iter,
-            seacells_params.delta,
-            seacells_params.rho,
-            seed,
-            verbose,
-            true,
-        ),
-    };
+    let (knn_indices, knn_dist) =
+        generate_knn_with_dist(embd_mat.as_ref(), &knn_params, true, seed, verbose);
 
     let end_knn = start_knn.elapsed();
 
@@ -654,39 +569,10 @@ fn rs_supercell(
                 subset_data[i * ncol + j] as f32
             });
 
-            let knn_method_parsed =
-                parse_knn_method(&supercell_params.knn_method).ok_or_else(|| {
-                    format!("Invalid KNN search method: {}", supercell_params.knn_method)
-                })?;
+            let knn_params = KnnParams::from_supercell_params(&supercell_params);
 
-            let knn = match knn_method_parsed {
-                KnnSearch::Hnsw => generate_knn_hnsw(
-                    embd_subset.as_ref(),
-                    &supercell_params.ann_dist,
-                    supercell_params.k,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::Annoy => generate_knn_annoy(
-                    embd_subset.as_ref(),
-                    &supercell_params.ann_dist,
-                    supercell_params.k,
-                    supercell_params.n_trees,
-                    supercell_params.search_budget,
-                    seed,
-                    verbose,
-                ),
-                KnnSearch::NNDescent => generate_knn_nndescent(
-                    embd_subset.as_ref(),
-                    &supercell_params.ann_dist,
-                    supercell_params.k,
-                    supercell_params.nn_max_iter,
-                    supercell_params.delta,
-                    supercell_params.rho,
-                    seed,
-                    verbose,
-                ),
-            };
+            let (knn, _) =
+                generate_knn_with_dist(embd_subset.as_ref(), &knn_params, false, seed, verbose);
 
             (subset_to_orig, n_total, knn)
         }
@@ -728,39 +614,12 @@ fn rs_supercell(
 
                     let embd = r_matrix_to_faer_fp32(&embd);
 
-                    let knn_method_parsed = parse_knn_method(&supercell_params.knn_method)
-                        .ok_or_else(|| {
-                            format!("Invalid KNN search method: {}", supercell_params.knn_method)
-                        })?;
+                    let knn_params = KnnParams::from_supercell_params(&supercell_params);
 
-                    match knn_method_parsed {
-                        KnnSearch::Hnsw => generate_knn_hnsw(
-                            embd.as_ref(),
-                            &supercell_params.ann_dist,
-                            supercell_params.k,
-                            seed,
-                            verbose,
-                        ),
-                        KnnSearch::Annoy => generate_knn_annoy(
-                            embd.as_ref(),
-                            &supercell_params.ann_dist,
-                            supercell_params.k,
-                            supercell_params.n_trees,
-                            supercell_params.search_budget,
-                            seed,
-                            verbose,
-                        ),
-                        KnnSearch::NNDescent => generate_knn_nndescent(
-                            embd.as_ref(),
-                            &supercell_params.ann_dist,
-                            supercell_params.k,
-                            supercell_params.nn_max_iter,
-                            supercell_params.delta,
-                            supercell_params.rho,
-                            seed,
-                            verbose,
-                        ),
-                    }
+                    let (knn, _) =
+                        generate_knn_with_dist(embd.as_ref(), &knn_params, false, seed, verbose);
+
+                    knn
                 }
                 (None, None) => {
                     return Err("Must provide either 'knn_mat' or 'embd' parameter".into());
@@ -835,11 +694,4 @@ fn rs_supercell(
             ncol = aggregated.shape.1
         )
     ))
-}
-
-extendr_module! {
-    mod r_sc_metacells;
-    fn rs_get_metacells;
-    fn rs_get_seacells;
-    fn rs_supercell;
 }

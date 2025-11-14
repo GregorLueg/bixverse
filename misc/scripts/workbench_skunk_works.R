@@ -14,14 +14,12 @@ data_dir <- path.expand("~/Desktop/seacell_test/")
 sc_object <- single_cell_exp(dir_data = tempdir())
 
 h5_path <- path.expand(
-  "~/repos/other/SEACells/notebooks/data/cd34_multiome_rna.h5ad"
+  "~/repos/other/Hotspot/notebooks/5k_h5ad.h5ad"
 )
 
 sc_object <- load_h5ad(
   sc_object,
-  h5_path = path.expand(
-    "~/repos/other/SEACells/notebooks/data/cd34_multiome_rna.h5ad"
-  ),
+  h5_path = h5_path,
   streaming = FALSE
 )
 
@@ -33,21 +31,92 @@ sc_object <- find_hvg_sc(
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 50L,
+  no_pcs = 30L,
   randomised_svd = TRUE,
   .verbose = FALSE
 )
 
-sea_cells <- get_seacells_sc(
-  sc_object,
-  seacell_params = params_sc_seacells(
-    n_sea_cells = 90L,
-    k = 15L,
-    convergence_epsilon = 1e-5,
-    max_fw_iters = 50L,
-    pruning = TRUE
-  )
+# sea_cells <- get_seacells_sc(
+#   sc_object,
+#   seacell_params = params_sc_seacells(
+#     n_sea_cells = 90L,
+#     knn = list(k = 15L),
+#     convergence_epsilon = 1e-5,
+#     max_fw_iters = 50L,
+#     pruning = TRUE
+#   )
+# )
+
+object = sc_object
+
+hotspot_params = params_sc_hotspot(
+  model = "danb",
+  knn = list(ann_dist = "cosine", k = 30L),
+  normalise = TRUE
 )
+
+tictoc::tic()
+hotspot_auto_cor <- rs_hotspot_autocor(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  f_path_cells = get_rust_count_cell_f_path(object),
+  embd = get_pca_factors(object),
+  hotspot_params = hotspot_params,
+  cells_to_keep = get_cells_to_keep(object),
+  genes_to_use = get_gene_indices(
+    object,
+    gene_ids = get_gene_names(object),
+    rust_index = TRUE
+  ),
+  streaming = FALSE,
+  verbose = TRUE,
+  seed = 42L
+)
+tictoc::toc()
+
+hotspot_auto_cor_dt <- as.data.table(hotspot_auto_cor)[,
+  gene_name := get_gene_names(object)
+]
+
+setorder(hotspot_auto_cor_dt, -z_score)
+
+hotspot_python <- fread(
+  "~/repos/other/Hotspot/notebooks/hotspot_python_results.csv"
+)
+
+combined = merge(
+  hotspot_python[, c("Gene", "C", "Z")],
+  hotspot_auto_cor_dt[, c("gaerys_c", "gene_name", "z_score")],
+  by.x = "Gene",
+  by.y = "gene_name"
+)
+
+plot(combined$C, combined$gaerys_c)
+
+plot(combined$Z, combined$z_score)
+
+tictoc::tic()
+hotspot_gene_cor <- rs_hotspot_gene_cor(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  f_path_cells = get_rust_count_cell_f_path(object),
+  embd = get_pca_factors(object),
+  hotspot_params = hotspot_params,
+  cells_to_keep = get_cells_to_keep(object),
+  genes_to_use = as.integer(hotspot_auto_cor_dt$gene_idx[1:2500]),
+  streaming = TRUE,
+  verbose = TRUE,
+  seed = 42L
+)
+tictoc::toc()
+
+heatmap(hotspot_gene_cor$z)
+
+hotspot_gene_cor$z[1:10, 1:10]
+
+hist(hotspot_auto_cor$gaerys_c)
+
+hist(hotspot_auto_cor$z_score)
+
+table(hotspot_auto_cor$fdr <= 0.05)
 
 seacell_result <- fread("/Users/gregor/Desktop/seacell_results.csv")
 
@@ -62,6 +131,7 @@ plot(
 object = sea_cells
 original_cell_type = seacell_result$celltype
 
+
 sea_cells <- calc_meta_cell_purity(sea_cells, seacell_result$celltype)
 
 
@@ -69,6 +139,7 @@ internal_results <- data.table(
   cell_id = sc_object[["index"]],
   assignment = sea_cells@original_assignment$assignments
 )[, cell_type := seacell_result$celltype]
+
 
 table(internal_results$assignment)
 

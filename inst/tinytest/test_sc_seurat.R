@@ -278,7 +278,6 @@ seurat_obj <- Seurat::FindClusters(seurat_obj, resolution = 1, verbose = FALSE)
 #bixverse part
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
   .verbose = FALSE
 )
 

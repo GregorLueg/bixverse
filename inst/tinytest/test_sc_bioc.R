@@ -104,8 +104,7 @@ bioc_knn_euclidean <- BiocNeighbors::findKNN(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "annoy",
-    k = 15L
+    knn = list(k = 15L, knn_method = "annoy")
   ),
   .verbose = FALSE
 )
@@ -115,8 +114,7 @@ sc_knn_cosine <- get_knn_mat(sc_object)
 # annoy is a bit more random compared to the implementations in BiocNeighbors
 expect_true(
   current = (sum(sc_knn_cosine + 1 == bioc_knn_cosine) /
-    (dim(bioc_knn_cosine)[1] *
-      dim(bioc_knn_cosine)[2])) >=
+    (prod(dim(bioc_knn_cosine)))) >=
     0.95,
   info = paste(
     "kNN overlap with BiocNeighbors >= 0.95",
@@ -129,9 +127,7 @@ expect_true(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "annoy",
-    ann_dist = "euclidean",
-    k = 15L
+    knn = list(knn_method = "annoy", ann_dist = "euclidean", k = 15L)
   ),
   .verbose = FALSE
 )
@@ -140,8 +136,7 @@ sc_knn_euclidean <- get_knn_mat(sc_object)
 
 expect_true(
   current = (sum(sc_knn_euclidean + 1 == bioc_knn_euclidean) /
-    (dim(bioc_knn_euclidean)[1] *
-      dim(bioc_knn_euclidean)[2])) >=
+    (prod(dim(bioc_knn_euclidean)))) >=
     0.95,
   info = paste(
     "kNN overlap with BiocNeighbors >= 0.95",
@@ -153,7 +148,9 @@ expect_true(
 
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "hnsw", k = 15L),
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "hnsw", k = 15L)
+  ),
   .verbose = FALSE
 )
 
@@ -161,8 +158,7 @@ sc_knn_cosine <- get_knn_mat(sc_object)
 
 expect_true(
   current = (sum(sc_knn_cosine + 1 == bioc_knn_cosine) /
-    (dim(bioc_knn_cosine)[1] *
-      dim(bioc_knn_cosine)[2])) >=
+    (prod(dim(bioc_knn_cosine)))) >=
     0.95,
   info = paste(
     "kNN overlap with BiocNeighbors >= 0.95",
@@ -175,9 +171,11 @@ expect_true(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "hnsw",
-    ann_dist = "euclidean",
-    k = 15L
+    knn = list(
+      knn_algorithm = "hnsw",
+      ann_dist = "euclidean",
+      k = 15L
+    )
   ),
   .verbose = FALSE
 )
@@ -186,8 +184,7 @@ sc_knn_euclidean <- get_knn_mat(sc_object)
 
 expect_true(
   current = (sum(sc_knn_euclidean + 1 == bioc_knn_euclidean) /
-    (dim(bioc_knn_euclidean)[1] *
-      dim(bioc_knn_euclidean)[2])) >=
+    (prod(dim(bioc_knn_euclidean)))) >=
     0.95,
   info = paste(
     "kNN overlap with BiocNeighbors >= 0.9",
@@ -204,8 +201,10 @@ expect_true(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "nndescent",
-    k = 15L
+    knn = list(
+      knn_method = "nndescent",
+      k = 15L
+    )
   ),
   .verbose = FALSE
 )
@@ -242,9 +241,11 @@ expect_true(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "nndescent",
-    ann_dist = "euclidean",
-    k = 15L
+    knn = list(
+      knn_algorithm = "nndescent",
+      ann_dist = "euclidean",
+      k = 15L
+    )
   ),
   .verbose = FALSE
 )
@@ -301,8 +302,10 @@ bluster_snn_euclidean_jaccard <- bluster:::build_snn_graph(
 sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
-    knn_algorithm = "hnsw",
-    ann_dist = "euclidean"
+    knn = list(
+      knn_method = "hnsw",
+      ann_dist = "euclidean"
+    )
   ),
   .verbose = FALSE
 )
@@ -369,4 +372,149 @@ expect_true(
   )
 )
 
-on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+## generate knn with distances -------------------------------------------------
+
+cells_to_keep <- sc_object[[]][cell_grp != "cell_type_1", cell_id]
+
+### class and getters ----------------------------------------------------------
+
+annoy_knn_data <- generate_knn_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "annoy",
+      ann_dist = "euclidean"
+    )
+  ),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(annoy_knn_data, "sc_knn"),
+  info = "sc_knn - expected class returned"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    get_knn_mat(annoy_knn_data),
+    mode = "integer"
+  ),
+  info = "sc_knn - indices of expected type"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    get_knn_dist(annoy_knn_data),
+    mode = "numeric"
+  ),
+  info = "sc_knn - distances of expected type"
+)
+
+annoy_knn_data_red <- generate_knn_sc(
+  sc_object,
+  cells_to_use = cells_to_keep,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "annoy",
+      ann_dist = "euclidean"
+    )
+  ),
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = annoy_knn_data_red$used_cells,
+  target = cells_to_keep,
+  info = "sc_knn - reduced version behaves"
+)
+
+### annoy ----------------------------------------------------------------------
+
+annoy_knn_data_cosine <- generate_knn_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "annoy",
+      ann_dist = "cosine"
+    )
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_annoy_euclidean_val <- sum(
+  (get_knn_mat(annoy_knn_data) + 1) == bioc_knn_euclidean
+) /
+  prod(dim(bioc_knn_euclidean))
+
+sc_knn_annoy_cosine_val <- sum(
+  (get_knn_mat(annoy_knn_data_cosine) + 1) == bioc_knn_cosine
+) /
+  prod(dim(bioc_knn_euclidean))
+
+expect_true(
+  current = sc_knn_annoy_euclidean_val >= 0.95,
+  info = "sc_knn class - expected overlap annoy euclidean"
+)
+
+expect_true(
+  current = sc_knn_annoy_cosine_val >= 0.95,
+  info = "sc_knn class - expected overlap annoy cosine"
+)
+
+### hnsw -----------------------------------------------------------------------
+
+hnsw_knn_data <- generate_knn_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "hnsw",
+      ann_dist = "euclidean"
+    )
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_hnsw_euclidean_val <- sum(
+  (get_knn_mat(hnsw_knn_data) + 1) == bioc_knn_euclidean
+) /
+  prod(dim(bioc_knn_euclidean))
+
+expect_true(
+  current = sc_knn_hnsw_euclidean_val >= 0.95,
+  info = "sc_knn class - expected overlap hnsw euclidean"
+)
+
+### nndescent ------------------------------------------------------------------
+
+nndescent_knn_data <- generate_knn_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "nndescent",
+      ann_dist = "euclidean"
+    )
+  ),
+  .verbose = FALSE
+)
+
+sc_knn_nndescent_euclidean_val <- sum(
+  (get_knn_mat(nndescent_knn_data) + 1) == bioc_knn_euclidean
+) /
+  prod(dim(bioc_knn_euclidean))
+
+sc_nndescent_top5_overlap <- (sum(
+  (get_knn_mat(nndescent_knn_data) + 1)[, 1:5] == bioc_knn_euclidean[, 1:5]
+) /
+  (dim(bioc_knn_euclidean)[1] * 5))
+
+# worse overlap here... as expected
+expect_true(
+  current = sc_knn_nndescent_euclidean_val >= 0.75,
+  info = "sc_knn class - expected overlap nndescent euclidean"
+)
+
+# better overlap when checking top neighbours
+expect_true(
+  current = sc_nndescent_top5_overlap >= 0.95,
+  info = "sc_knn class - expected overlap nndescent euclidean - top5 neighbours"
+)

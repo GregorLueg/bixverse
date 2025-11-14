@@ -87,7 +87,7 @@ sc_object <- calculate_pca_sc(
 
 sc_object <- find_neighbours_sc(
   sc_object,
-  neighbours_params = params_sc_neighbours(knn_algorithm = "annoy"),
+  neighbours_params = params_sc_neighbours(knn = list(k = 15L)),
   .verbose = FALSE
 )
 
@@ -97,7 +97,9 @@ sc_object <- find_neighbours_sc(
 
 hdwgcna <- get_meta_cells_sc(
   sc_object,
-  sc_meta_cell_params = params_sc_metacells(target_no_metacells = 50L, k = 15L),
+  sc_meta_cell_params = params_sc_metacells(
+    target_no_metacells = 50L
+  ),
   .verbose = FALSE
 )
 
@@ -161,8 +163,8 @@ hdwgcna_small <- get_meta_cells_sc(
   sc_object,
   sc_meta_cell_params = params_sc_metacells(
     target_no_metacells = 50L,
-    k = 15L,
-    max_shared = 10L
+    max_shared = 10L,
+    knn = list(k = 10L)
   ),
   cells_to_use = cells_to_use,
   .verbose = FALSE
@@ -203,8 +205,8 @@ seacells <- get_seacells_sc(
   sc_object,
   seacell_params = params_sc_seacells(
     n_sea_cells = 50L,
-    k = 10L,
-    min_iter = 5L
+    min_iter = 5L,
+    knn = list(k = 10L)
   ),
   .verbose = FALSE
 )
@@ -265,9 +267,9 @@ seacells_small <- get_seacells_sc(
   sc_object,
   seacell_params = params_sc_seacells(
     n_sea_cells = 50L,
-    k = 15L,
     min_iter = 5L,
-    convergence_epsilon = 0.001
+    convergence_epsilon = 0.001,
+    knn = list(k = 10L)
   ),
   cells_to_use = cells_to_use,
   .verbose = FALSE
@@ -307,7 +309,7 @@ supercells <- get_supercells_sc(
   sc_object,
   sc_supercell_params = params_sc_supercell(
     graining_factor = graining_factor,
-    k = 10L
+    knn = list(k = 10L)
   ),
   regenerate_knn = TRUE,
   .verbose = FALSE
@@ -370,7 +372,7 @@ supercell_small <- get_supercells_sc(
   sc_object,
   sc_supercell_params = params_sc_supercell(
     graining_factor = graining_factor,
-    k = 10L
+    knn = list(k = 10L)
   ),
   cells_to_use = cells_to_use,
   .verbose = FALSE

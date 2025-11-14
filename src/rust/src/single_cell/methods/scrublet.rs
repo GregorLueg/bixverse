@@ -670,13 +670,13 @@ fn scale_gene_with_stats(
     normalise_variance: bool,
     n_cells: usize,
 ) -> (Vec<f32>, f32, f32) {
-    let mut normalized = vec![0.0f32; n_cells];
+    let mut normalised = vec![0.0f32; n_cells];
 
     for (i, &pos) in chunk.indices.iter().enumerate() {
         let raw_count = chunk.data_raw[i] as f32;
         let lib_size = hvg_library_sizes[pos as usize] as f32;
 
-        normalized[pos as usize] = if log_transform {
+        normalised[pos as usize] = if log_transform {
             ((raw_count / lib_size) * target_size).ln_1p()
         } else {
             (raw_count / lib_size) * target_size
@@ -684,21 +684,21 @@ fn scale_gene_with_stats(
     }
 
     let mean = if mean_center || normalise_variance {
-        normalized.iter().sum::<f32>() / n_cells as f32
+        normalised.iter().sum::<f32>() / n_cells as f32
     } else {
         0.0
     };
     let std = if normalise_variance {
-        let variance = normalized.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / n_cells as f32;
+        let variance = normalised.iter().map(|&x| (x - mean).powi(2)).sum::<f32>() / n_cells as f32;
         variance.sqrt().max(1e-10)
     } else {
         1.0
     };
     let result = match (mean_center, normalise_variance) {
-        (true, true) => normalized.iter().map(|&x| (x - mean) / std).collect(),
-        (true, false) => normalized.iter().map(|&x| x - mean).collect(),
-        (false, true) => normalized.iter().map(|&x| x / std).collect(),
-        (false, false) => normalized,
+        (true, true) => normalised.iter().map(|&x| (x - mean) / std).collect(),
+        (true, false) => normalised.iter().map(|&x| x - mean).collect(),
+        (false, true) => normalised.iter().map(|&x| x / std).collect(),
+        (false, false) => normalised,
     };
 
     (result, mean, std)
@@ -1015,7 +1015,7 @@ impl Scrublet {
     ///
     /// Vector of indices of the HVG.
     fn get_hvg(&self, streaming: bool, verbose: bool) -> Vec<usize> {
-        let hvg_type = get_hvg_method(&self.params.hvg_method)
+        let hvg_type = parse_hvg_method(&self.params.hvg_method)
             .ok_or_else(|| format!("Invalid HVG method: {}", &self.params.hvg_method))
             .unwrap();
 

@@ -27,7 +27,7 @@ A list with the following items:
 number of single cells in the initial dataset to the number of metacells in
 the final dataset)
 \item linkage_dist - String. Which type of distance metric to use for the
-linkage. Defaults to \code{"average"}.
+linkage. Defaults to \code{"complete"}.
 \item k - Number of neighbours for the kNN search. Only relevant if you
 set regenerate_knn to \code{TRUE}.
 \item knn_method - String. Which kNN algorithm to use. One of

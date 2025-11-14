@@ -532,13 +532,16 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' Find the neighbours for single cell.
 #'
 #' @description
-#' This function will generate the kNNs based on a given embedding (atm,
-#' only option is PCA). Two different algorithms are implemented with different
-#' speed and accuracy to approximate the nearest neighbours. `"annoy"` is more
-#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm,
-#' whereas `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
-#' search that is slower, but more precise. Subsequently, the kNN data will
-#' be used to generate an sNN igraph for clustering methods.
+#' This function will generate the kNNs based on a given embedding. Three
+#' different algorithms are implemented with different speed and accuracy to
+#' approximate the nearest neighbours. `"annoy"` is more
+#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm;
+#' `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
+#' search that is slower, but more precise. Lastly, there is the option of
+#' `"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm. This
+#' version skips the index generation and can be faster on smaller data sets.
+#' Subsequently, the kNN data will be used to generate an sNN igraph for
+#' clustering methods.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -549,16 +552,21 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' A list with the following items:
 #' \itemize{
 #'   \item k - Integer. Number of neighbours to identify.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw", "nndescent")`.
+#'   `"hnsw"` takes longer, is more precise and more memory friendly. `"annoy"`
+#'   is faster, less precise and will take more memory. `"nndescent"` skips
+#'   index generation and can be faster on small datasets.
 #'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
 #'   The higher, the longer the algorithm takes, but the more precise the
 #'   approximated nearest neighbours.
 #'   \item search_budget - Integer. Search budget per tree for the `annoy`
 #'   algorithm. The higher, the longer the algorithm takes, but the more precise
 #'   the approximated nearest neighbours.
-#'   \item knn_algorithm - String. One of `c("annoy", "hnsw")`. `"hnsw"` takes
-#'   longer, is more precise and more memory friendly. `"annoy"` is faster, less
-#'   precise and will take more memory.
 #'   \item ann_dist - String. One of `c("cosine", "euclidean")`.
+#'   \item max_iter - Integer. Maximum iterations for the `"nndescent"` method.
+#'   \item rho - Numeric. Sampling rate for the `"nndescent"` method.
+#'   \item delta - Numeric. Early termination criterium for the `"nndescent"`
+#'   method.
 #'   \item full_snn - Boolean. Shall the sNN graph be generated across all
 #'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
 #'   \item pruning - Value below which the weight in the sNN graph is set to 0.
@@ -602,7 +610,7 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
@@ -734,4 +742,132 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
   duckdb_con$join_data_obs(new_data = new_data)
 
   return(object)
+}
+
+### knn with distances ---------------------------------------------------------
+
+#' Generate the KNN data with distances
+#'
+#' @description
+#' This function will generate the kNNs based on a given embedding. Three
+#' different algorithms are implemented with different speed and accuracy to
+#' approximate the nearest neighbours. `"annoy"` is more
+#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm;
+#' `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
+#' search that is slower, but more precise. Lastly, there is the option of
+#' `"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm. This
+#' version skips the index generation and can be faster on smaller data sets.
+#' This version of the function returns an `sc_knn` object that can be
+#' used in other functions.
+#'
+#' @param object `single_cell_exp` class.
+#' @param embd_to_use String. The embedding to use. Whichever you chose, it
+#' needs to be part of the object.
+#' @param cells_to_use String. Optional cell names to include in the generation
+#' of the kNN graph. If `NULL` all (filtered) cells in the object will be used.
+#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
+#' use. If `NULL` all will be used.
+#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
+#' A list with the following items:
+#' \itemize{
+#'   \item k - Integer. Number of neighbours to identify.
+#'   \item knn_algorithm - String. One of `c("annoy", "hnsw", "nndescent")`.
+#'   `"hnsw"` takes longer, is more precise and more memory friendly. `"annoy"`
+#'   is faster, less precise and will take more memory. `"nndescent"` skips
+#'   index generation and can be faster on small datasets.
+#'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
+#'   The higher, the longer the algorithm takes, but the more precise the
+#'   approximated nearest neighbours.
+#'   \item search_budget - Integer. Search budget per tree for the `annoy`
+#'   algorithm. The higher, the longer the algorithm takes, but the more precise
+#'   the approximated nearest neighbours.
+#'   \item ann_dist - String. One of `c("cosine", "euclidean")`.
+#'   \item max_iter - Integer. Maximum iterations for the `"nndescent"` method.
+#'   \item rho - Numeric. Sampling rate for the `"nndescent"` method.
+#'   \item delta - Numeric. Early termination criterium for the `"nndescent"`
+#'   method.
+#'   \item full_snn - Boolean. Shall the sNN graph be generated across all
+#'   cells (standard in the `bluster` package.) Defaults to `FALSE`. Not
+#'   relevant for this function.
+#'   \item pruning - Value below which the weight in the sNN graph is set to 0.
+#'   Not relevant for this function.
+#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
+#'   the weight form the SNN graph is calculated. For details, please see
+#'   [bixverse::params_sc_neighbours()]. Not relevant for this function.
+#' }
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity and returns run times.
+#'
+#' @return Initialised `sc_knn` with the kNN data.
+#'
+#' @export
+generate_knn_sc <- S7::new_generic(
+  name = "generate_knn_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    embd_to_use = "pca",
+    cells_to_use = NULL,
+    no_embd_to_use = NULL,
+    neighbours_params = params_sc_neighbours(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method generate_knn_sc single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(generate_knn_sc, single_cell_exp) <- function(
+  object,
+  embd_to_use = "pca",
+  cells_to_use = NULL,
+  no_embd_to_use = NULL,
+  neighbours_params = params_sc_neighbours(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(embd_to_use, "S1")
+  checkmate::qassert(no_embd_to_use, c("I1", "0"))
+  checkmate::qassert(cells_to_use, c("S+", "0"))
+  assertScNeighbours(neighbours_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # function body
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
+
+  # early return
+  if (is.null(embd)) {
+    warning(
+      paste(
+        "The desired embedding was not found. Please check the parameters.",
+        "Returning NULL."
+      )
+    )
+
+    return(NULL)
+  }
+
+  if (!is.null(cells_to_use)) {
+    embd <- embd[which(rownames(embd) %in% cells_to_use), ]
+  }
+
+  knn_data <- rs_sc_knn_w_dist(
+    embd = embd,
+    knn_params = neighbours_params,
+    verbose = .verbose,
+    seed = seed
+  )
+
+  knn_obj <- new_sc_knn(knn_data = knn_data, used_cells = row.names(embd))
+
+  knn_obj
 }

@@ -31,6 +31,10 @@ RSS change < epsilon * RSS(0).
 \item greedy_threshold - Maximum number of cells before defaulting to rapid
 random selection of archetypes.
 \item graph_building - Graph building method.
+\item pruning - Boolean. Shall small values be pruned during the Franke-
+Wolfe iterations.
+\item pruning_threshold - The threshold below which pruning shall be
+applied during Franke-Wolfe iterations.
 \item k - Number of neighbours for the kNN algorithm.
 \item knn_method - String. Which kNN algorithm to use. One of
 \code{c("annoy", "hnsw", "nndescent")}. Defaults to \code{"annoy"}.

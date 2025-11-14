@@ -26,16 +26,21 @@ use. If \code{NULL} all will be used.}
 A list with the following items:
 \itemize{
 \item k - Integer. Number of neighbours to identify.
+\item knn_algorithm - String. One of \code{c("annoy", "hnsw", "nndescent")}.
+\code{"hnsw"} takes longer, is more precise and more memory friendly. \code{"annoy"}
+is faster, less precise and will take more memory. \code{"nndescent"} skips
+index generation and can be faster on small datasets.
 \item n_trees -  Integer. Number of trees to use for the \code{annoy} algorithm.
 The higher, the longer the algorithm takes, but the more precise the
 approximated nearest neighbours.
 \item search_budget - Integer. Search budget per tree for the \code{annoy}
 algorithm. The higher, the longer the algorithm takes, but the more precise
 the approximated nearest neighbours.
-\item knn_algorithm - String. One of \code{c("annoy", "hnsw")}. \code{"hnsw"} takes
-longer, is more precise and more memory friendly. \code{"annoy"} is faster, less
-precise and will take more memory.
 \item ann_dist - String. One of \code{c("cosine", "euclidean")}.
+\item max_iter - Integer. Maximum iterations for the \code{"nndescent"} method.
+\item rho - Numeric. Sampling rate for the \code{"nndescent"} method.
+\item delta - Numeric. Early termination criterium for the \code{"nndescent"}
+method.
 \item full_snn - Boolean. Shall the sNN graph be generated across all
 cells (standard in the \code{bluster} package.) Defaults to \code{FALSE}.
 \item pruning - Value below which the weight in the sNN graph is set to 0.
@@ -52,11 +57,14 @@ the weight form the SNN graph is calculated. For details, please see
 The object with added KNN matrix.
 }
 \description{
-This function will generate the kNNs based on a given embedding (atm,
-only option is PCA). Two different algorithms are implemented with different
-speed and accuracy to approximate the nearest neighbours. \code{"annoy"} is more
-rapid and based on the \verb{Approximate Nearest Neigbours Oh Yeah} algorithm,
-whereas \code{"hnsw"} implements a \verb{Hierarchical Navigatable Small Worlds} vector
-search that is slower, but more precise. Subsequently, the kNN data will
-be used to generate an sNN igraph for clustering methods.
+This function will generate the kNNs based on a given embedding. Three
+different algorithms are implemented with different speed and accuracy to
+approximate the nearest neighbours. \code{"annoy"} is more
+rapid and based on the \verb{Approximate Nearest Neigbours Oh Yeah} algorithm;
+\code{"hnsw"} implements a \verb{Hierarchical Navigatable Small Worlds} vector
+search that is slower, but more precise. Lastly, there is the option of
+\code{"nndescent"}, a Rust-based implementation of the PyNNDescent algorithm. This
+version skips the index generation and can be faster on smaller data sets.
+Subsequently, the kNN data will be used to generate an sNN igraph for
+clustering methods.
 }

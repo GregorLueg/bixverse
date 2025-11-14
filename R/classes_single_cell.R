@@ -427,6 +427,19 @@ get_hvg <- function(x) {
   UseMethod("get_hvg")
 }
 
+#' Get the gene names based on the gene idx
+#'
+#' @param x An object to get the gene names from.
+#' @param gene_idx Integer. The original gene indices for which to return
+#' the gene names.
+#' @param rust_based Boolean. Is it Rust-based, i.e., 0-index or R-based, i.e.,
+#' 1-indexed.
+#'
+#' @export
+get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
+  UseMethod("get_gene_names_from_idx")
+}
+
 #### sc_cache ------------------------------------------------------------------
 
 #' Get the PCA factors
@@ -483,15 +496,6 @@ get_available_embeddings <- function(x) {
   UseMethod("get_available_embeddings")
 }
 
-#' Get the KNN matrix
-#'
-#' @param x An object to get the kNN matrix from.
-#'
-#' @export
-get_knn_mat <- function(x) {
-  UseMethod("get_knn_mat")
-}
-
 #' Get the sNN graph
 #'
 #' @param x An object to get the sNN graph from.
@@ -530,6 +534,12 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
     indices <- indices - 1
   }
 
+  if (length(indices) == 0) {
+    stop(
+      "The gene indices have length 0. Please double check provided parameters!"
+    )
+  }
+
   return(as.integer(indices))
 }
 
@@ -546,6 +556,12 @@ get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
   indices <- which(names(cell_map) %in% cell_ids)
   if (rust_index) {
     indices <- indices - 1
+  }
+
+  if (length(indices) == 0) {
+    stop(
+      "The cell indices have length 0. Please double check provided parameters!"
+    )
   }
 
   return(as.integer(indices))
@@ -594,6 +610,28 @@ get_hvg.sc_mapper <- function(x) {
   }
 
   return(hvg_indices)
+}
+
+#' @rdname get_gene_names_from_idx
+#'
+#' @export
+get_gene_names_from_idx.sc_mapper <- function(x, gene_idx, rust_based = TRUE) {
+  # checks
+  checkmate::assertClass(x, "sc_mapper")
+  checkmate::qassert(gene_idx, "I+")
+  checkmate::qassert(rust_based, "B1")
+
+  # body
+  gene_map <- x[["gene_mapping"]]
+
+  gene_map_rev <- names(gene_map)
+  names(gene_map_rev) <- if (rust_based) {
+    as.integer(gene_map - 1)
+  } else {
+    as.integer(gene_map)
+  }
+
+  return(gene_map_rev[as.character(gene_idx)])
 }
 
 #### sc_cache ------------------------------------------------------------------
@@ -793,7 +831,7 @@ get_sc_duckdb <- S7::new_generic(
 #' @export
 S7::method(get_sc_duckdb, single_cell_exp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   return(S7::prop(object, "db_connection"))
 }
@@ -820,7 +858,7 @@ get_sc_rust_ptr <- S7::new_generic(
 #' @export
 S7::method(get_sc_rust_ptr, single_cell_exp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   return(S7::prop(object, "count_connection"))
 }
@@ -845,7 +883,7 @@ get_rust_count_gene_f_path <- S7::new_generic(
 #' @export
 S7::method(get_rust_count_gene_f_path, single_cell_exp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
 
@@ -872,7 +910,7 @@ get_rust_count_cell_f_path <- S7::new_generic(
 #' @export
 S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
 
@@ -891,7 +929,7 @@ S7::method(get_sc_obs, single_cell_exp) <- function(
   filtered = FALSE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
   duckdb_con <- get_sc_duckdb(object)
@@ -916,7 +954,7 @@ S7::method(get_sc_var, single_cell_exp) <- function(
   cols = NULL
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::qassert(indices, c("0", "I+"))
 
   duckdb_con <- get_sc_duckdb(object)
@@ -971,7 +1009,7 @@ S7::method(get_sc_map, single_cell_exp) <- function(
   object
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   res <- S7::prop(object, "sc_map")
 
@@ -1005,7 +1043,7 @@ S7::method(get_sc_cache, single_cell_exp) <- function(
   object
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
 
   res <- S7::prop(object, "sc_cache")
 
@@ -1030,7 +1068,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   return_format <- match.arg(return_format)
 
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::assertChoice(assay, c("raw", "norm"))
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
@@ -1426,6 +1464,33 @@ S7::method(get_hvg, single_cell_exp) <- function(
   return(res)
 }
 
+#' @name get_gene_names_from_idx.single_cell_exp
+#'
+#' @title Get the highly variable gene indices from a `single_cell_exp`.
+#'
+#' @rdname get_gene_names_from_idx
+#'
+#' @method get_gene_names_from_idx single_cell_exp
+S7::method(get_gene_names_from_idx, single_cell_exp) <- function(
+  x,
+  gene_idx,
+  rust_based = TRUE
+) {
+  # checks
+  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::qassert(gene_idx, "I+")
+  checkmate::qassert(rust_based, "B1")
+
+  # forward to S3
+  res <- get_gene_names_from_idx(
+    x = S7::prop(x, "sc_map"),
+    gene_idx = gene_idx,
+    rust_based = rust_based
+  )
+
+  return(res)
+}
+
 #### sc_cache ------------------------------------------------------------------
 
 #' @name get_pca_factors.single_cell_exp
@@ -1626,7 +1691,7 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
 ) {
   cells_to_keep <- (get_cells_to_keep(object) + 1)
 
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::qassert(col_name, "S1")
   checkmate::qassert(new_data, sprintf("a%i", length(cells_to_keep)))
 
@@ -1671,7 +1736,7 @@ S7::method(set_sc_new_obs_col_multiple, single_cell_exp) <- function(
 ) {
   cells_to_keep <- (get_cells_to_keep(object) + 1)
 
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::assertList(new_data, names = "named", types = "atomic")
   checkmate::assertTRUE(all(
     purrr::map_dbl(new_data, length) == length(cells_to_keep)
@@ -1737,7 +1802,7 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
   object,
   data_list
 ) {
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   checkmate::assertList(data_list, types = "atomic", names = "named")
 
   new_data <- data.table::as.data.table(data_list)

@@ -170,7 +170,7 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// @export
 #[extendr]
 fn rs_mad_outlier(x: &[f64], threshold: f64, direction: &str) -> extendr_api::Result<List> {
-    let direction = get_outlier_type(direction)
+    let direction = parse_outlier_type(direction)
         .ok_or_else(|| format!("Invalid direction type: {}", direction))?;
 
     let (outliers, threshold) = mad_outlier(x, threshold, direction);
