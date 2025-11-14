@@ -7,55 +7,14 @@ cell
 
 ``` r
 params_sc_neighbours(
-  k = 15L,
-  knn_algorithm = c("annoy", "hnsw", "nndescent"),
-  ann_dist = c("cosine", "euclidean"),
-  n_trees = 100L,
-  search_budget = 100L,
-  max_iter = 25L,
-  rho = 1,
-  delta = 0.001,
   full_snn = FALSE,
   pruning = 1/15,
-  snn_similarity = c("rank", "jaccard")
+  snn_similarity = c("rank", "jaccard"),
+  knn = list()
 )
 ```
 
 ## Arguments
-
-- k:
-
-  Integer. Number of neighbours to return.
-
-- knn_algorithm:
-
-  String. One of `c("annoy", "hnsw", "nndescent")`. Defaults to
-  `"annoy"`.
-
-- ann_dist:
-
-  String. One of `c("cosine", "euclidean")`. The distance metric to be
-  used for the approximate neighbour search.
-
-- n_trees:
-
-  Integer. Number of trees to use for the `annoy` algorithm.
-
-- search_budget:
-
-  Integer. Search budget per tree for the `annoy` algorithm.
-
-- max_iter:
-
-  Integer. Maximum iterations for the `nndescent` algorithm.
-
-- rho:
-
-  Numeric. Sampling rate for the `nndescent` algorithm.
-
-- delta:
-
-  Numeric. Early termination criterium for the `nndescent` algorithm.
 
 - full_snn:
 
@@ -75,8 +34,16 @@ params_sc_neighbours(
   calculates edge weights based on the ranking of shared neighbours. For
   the rank method, the weight is determined by finding the shared
   neighbour with the lowest combined rank across both cells, where
-  lower-ranked (closer) shared neighbors result in higher edge weights
+  lower-ranked (closer) shared neighbours result in higher edge weights
   Both methods produce weights normalised to the range `[0, 1]`.
+
+- knn:
+
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](params_knn_defaults.md) for available
+  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
+  `nn_max_iter`, `rho`, `delta`. Note: This function uses `k = 15L`,
+  `ann_dist = "cosine"`, and `nn_max_iter = 25L` as defaults.
 
 ## Value
 

@@ -38,7 +38,7 @@ get_supercells_sc(
     metacells in the final dataset)
 
   - linkage_dist - String. Which type of distance metric to use for the
-    linkage. Defaults to `"average"`.
+    linkage. Defaults to `"complete"`.
 
   - k - Number of neighbours for the kNN search. Only relevant if you
     set regenerate_knn to `TRUE`.

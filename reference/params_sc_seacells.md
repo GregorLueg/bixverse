@@ -15,13 +15,7 @@ params_sc_seacells(
   graph_building = "union",
   pruning = FALSE,
   pruning_threshold = 1e-07,
-  k = 25L,
-  knn_method = c("annoy", "hnsw", "nndescent"),
-  n_trees = 100L,
-  search_budget = 100L,
-  nn_max_iter = 15L,
-  rho = 1,
-  delta = 0.001
+  knn = list()
 )
 ```
 
@@ -69,36 +63,13 @@ params_sc_seacells(
   Float. If `pruning = TRUE` values below which threshold shall be
   pruned.
 
-- k:
+- knn:
 
-  Integer. Number of neighbours for the kNN algorithm. Defaults to
-  `25L`.
-
-- knn_method:
-
-  String. One of `c("annoy", "hnsw", "nndescent")`. Defaults to
-  `"annoy"`.
-
-- n_trees:
-
-  Integer. Number of trees for Annoy index. Defaults to `100L`.
-
-- search_budget:
-
-  Integer. Search budget during querying. Defaults to `100L`.
-
-- nn_max_iter:
-
-  Integer. Maximum iterations for NN Descent. Defaults to `15L`.
-
-- rho:
-
-  Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
-
-- delta:
-
-  Numeric. Early termination criterion for NN Descent. Defaults to
-  `0.001`.
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](params_knn_defaults.md) for available
+  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
+  `nn_max_iter`, `rho`, `delta`. Note: This function uses `k = 25L` as
+  default.
 
 ## Value
 

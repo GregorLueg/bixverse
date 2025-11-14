@@ -39,17 +39,10 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_neighbours</span><span class="op">(</span></span>
-<span>  k <span class="op">=</span> <span class="fl">15L</span>,</span>
-<span>  knn_algorithm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span>, <span class="st">"nndescent"</span><span class="op">)</span>,</span>
-<span>  ann_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cosine"</span>, <span class="st">"euclidean"</span><span class="op">)</span>,</span>
-<span>  n_trees <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  search_budget <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  max_iter <span class="op">=</span> <span class="fl">25L</span>,</span>
-<span>  rho <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  delta <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  full_snn <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pruning <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">15</span>,</span>
-<span>  snn_similarity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rank"</span>, <span class="st">"jaccard"</span><span class="op">)</span></span>
+<span>  snn_similarity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rank"</span>, <span class="st">"jaccard"</span><span class="op">)</span>,</span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -57,43 +50,7 @@
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Integer. Number of neighbours to return.</p></dd>
-
-
-<dt id="arg-knn-algorithm">knn_algorithm<a class="anchor" aria-label="anchor" href="#arg-knn-algorithm"></a></dt>
-<dd><p>String. One of <code>c("annoy", "hnsw", "nndescent")</code>.
-Defaults to <code>"annoy"</code>.</p></dd>
-
-
-<dt id="arg-ann-dist">ann_dist<a class="anchor" aria-label="anchor" href="#arg-ann-dist"></a></dt>
-<dd><p>String. One of <code>c("cosine", "euclidean")</code>. The distance
-metric to be used for the approximate neighbour search.</p></dd>
-
-
-<dt id="arg-n-trees">n_trees<a class="anchor" aria-label="anchor" href="#arg-n-trees"></a></dt>
-<dd><p>Integer. Number of trees to use for the <code>annoy</code> algorithm.</p></dd>
-
-
-<dt id="arg-search-budget">search_budget<a class="anchor" aria-label="anchor" href="#arg-search-budget"></a></dt>
-<dd><p>Integer. Search budget per tree for the <code>annoy</code>
-algorithm.</p></dd>
-
-
-<dt id="arg-max-iter">max_iter<a class="anchor" aria-label="anchor" href="#arg-max-iter"></a></dt>
-<dd><p>Integer. Maximum iterations for the <code>nndescent</code> algorithm.</p></dd>
-
-
-<dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
-<dd><p>Numeric. Sampling rate for the <code>nndescent</code> algorithm.</p></dd>
-
-
-<dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
-<dd><p>Numeric. Early termination criterium for the <code>nndescent</code>
-algorithm.</p></dd>
-
-
-<dt id="arg-full-snn">full_snn<a class="anchor" aria-label="anchor" href="#arg-full-snn"></a></dt>
+<dl><dt id="arg-full-snn">full_snn<a class="anchor" aria-label="anchor" href="#arg-full-snn"></a></dt>
 <dd><p>Boolean. Shall the full shared nearest neighbour graph
 be generated that generates edges between all cells instead of between
 only neighbours.</p></dd>
@@ -110,8 +67,16 @@ similarity calculates the Jaccard between the neighbours, whereas the rank
 method calculates edge weights based on the ranking of shared neighbours.
 For the rank method, the weight is determined by finding the shared
 neighbour with the lowest combined rank across both cells, where
-lower-ranked (closer) shared neighbors result in higher edge weights
+lower-ranked (closer) shared neighbours result in higher edge weights
 Both methods produce weights normalised to the range <code>[0, 1]</code>.</p></dd>
+
+
+<dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
+<dd><p>List. Optional overrides for kNN parameters. See
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
+<code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>nn_max_iter</code>,
+<code>rho</code>, <code>delta</code>. Note: This function uses <code>k = 15L</code>, <code>ann_dist = "cosine"</code>,
+and <code>nn_max_iter = 25L</code> as defaults.</p></dd>
 
 </dl></div>
     <div class="section level2">

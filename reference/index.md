@@ -54,6 +54,8 @@
 
 - [`assertScFastmnn()`](assertScFastmnn.md) : Assert fastMNN parameters
 
+- [`assertScHotspot()`](assertScHotspot.md) : Assert HotSpot parameters
+
 - [`assertScHvg()`](assertScHvg.md) : Assert HVG selection parameters
 
 - [`assertScMetacells()`](assertScMetacells.md) : Assert metacell
@@ -78,6 +80,8 @@
 
 - [`assertScSyntheticData()`](assertScSyntheticData.md) : Assert
   synthetic data parameters
+
+- [`assertScVision()`](assertScVision.md) : Assert VISION parameters
 
 - [`assertSingleSampleGSEAparams()`](assertSingleSampleGSEAparams.md) :
   Assert ssGSEA parameter
@@ -230,6 +234,8 @@
 
 - [`checkScFastmnn()`](checkScFastmnn.md) : Check fastMNN parameters
 
+- [`checkScHotspot()`](checkScHotspot.md) : Check HotSpot parameters
+
 - [`checkScHvg()`](checkScHvg.md) : Check HVG selection parameters
 
 - [`checkScMetacells()`](checkScMetacells.md) : Check metacell
@@ -251,6 +257,8 @@
 
 - [`checkScSyntheticData()`](checkScSyntheticData.md) : Check synthetic
   data parameters
+
+- [`checkScVision()`](checkScVision.md) : Check VISION parameters
 
 - [`checkSingleSampleGSEAparams()`](checkSingleSampleGSEAparams.md) :
   Check ssGSEA parameters
@@ -393,6 +401,12 @@
 - [`generate_gene_module_data()`](generate_gene_module_data.md) :
   Generates synthetic gene module data.
 
+- [`generate_knn_sc()`](generate_knn_sc.md) : Generate the KNN data with
+  distances
+
+- [`generate_null_perm_gs()`](generate_null_perm_gs.md) : Generate
+  random gene sets for VISION p-value calculations
+
 - [`generate_perm_diffusion_vecs()`](generate_perm_diffusion_vecs.md) :
   Generates random permutation vectors
 
@@ -471,6 +485,9 @@
 
 - [`get_gene_names()`](get_gene_names.md) : Get the gene names
 
+- [`get_gene_names_from_idx()`](get_gene_names_from_idx.md) : Get the
+  gene names based on the gene idx
+
 - [`get_go_data_human()`](get_go_data_human.md) : Wrapper function to
   load and process the gene ontology data.
 
@@ -483,6 +500,9 @@
 - [`get_h5ad_dimensions()`](get_h5ad_dimensions.md) : Helper function to
   get the dimensions and compressed sparse format
 
+- [`get_hotspot_membership()`](get_hotspot_membership.md) : Get the
+  hotspot gene membership table
+
 - [`get_hvg()`](get_hvg.md) : Get the HVG
 
 - [`get_ica_stability_res()`](get_ica_stability_res.md) : Get the ICA
@@ -490,6 +510,8 @@
 
 - [`get_inflection_point()`](get_inflection_point.md) : Identify the
   inflection point for elbow-like data
+
+- [`get_knn_dist()`](get_knn_dist.md) : Get the KNN distance measures
 
 - [`get_knn_mat()`](get_knn_mat.md) : Get the KNN matrix
 
@@ -510,7 +532,9 @@
 
 - [`get_outputs()`](get_outputs.md) : Return the outputs
 
-- [`get_params()`](get_params.md) : Get the parameters that were used.
+- [`get_params()`](get_params.md)
+  [`get_params.sc_hotspot()`](get_params.md) : Get the parameters that
+  were used.
 
 - [`get_pca_factors()`](get_pca_factors.md) : Get the PCA factors
 
@@ -591,6 +615,12 @@
 
 - [`hedges_g_dge()`](hedges_g_dge.md) : Calculate the effect size
 
+- [`hotspot_autocor_sc()`](hotspot_autocor_sc.md) : Calculate the local
+  auto-correlation of a gene
+
+- [`hotspot_gene_cor_sc()`](hotspot_gene_cor_sc.md) : Calculate the
+  local pairwise gene-gene correlation
+
 - [`ica_evaluate_comp()`](ica_evaluate_comp.md) : Iterate over different
   ncomp parameters for ICA
 
@@ -636,6 +666,12 @@
 
 - [`new_sc_cache()`](new_sc_cache.md) : Helper function to hold relevant
   cached data
+
+- [`new_sc_hotspot_res()`](new_sc_hotspot_res.md) : Helper function to
+  generate HotSpot data
+
+- [`new_sc_knn()`](new_sc_knn.md) : Helper function to generate kNN data
+  with distances
 
 - [`new_sc_mapper()`](new_sc_mapper.md) : Helper function to construct
   relevant maps
@@ -710,6 +746,9 @@
 - [`params_sc_fastmnn()`](params_sc_fastmnn.md) : Wrapper function for
   the fastMNN parameters
 
+- [`params_sc_hotspot()`](params_sc_hotspot.md) : Wrapper function for
+  parameters for HotSpot
+
 - [`params_sc_hvg()`](params_sc_hvg.md) : Wrapper function for HVG
   detection parameters.
 
@@ -733,6 +772,9 @@
 
 - [`params_sc_synthetic_data()`](params_sc_synthetic_data.md) : Default
   parameters for generation of synthetic data
+
+- [`params_sc_vision()`](params_sc_vision.md) : Wrapper function for
+  parameters for VISION with auto-correlation
 
 - [`params_scrublet()`](params_scrublet.md) : Wrapper function for
   Scrublet doublet detection parameters
@@ -969,6 +1011,15 @@
 
 - [`rs_hedges_g()`](rs_hedges_g.md) : Calculate the Hedge's G effect
 
+- [`rs_hotspot_autocor()`](rs_hotspot_autocor.md) : Calculate gene
+  spatial auto-correlations
+
+- [`rs_hotspot_cluster_genes()`](rs_hotspot_cluster_genes.md) : Cluster
+  the genes by Z-score together
+
+- [`rs_hotspot_gene_cor()`](rs_hotspot_gene_cor.md) : Calculate
+  gene\<\>gene spatial correlations
+
 - [`rs_hypergeom_test()`](rs_hypergeom_test.md) : Run a single
   hypergeometric test.
 
@@ -1073,6 +1124,9 @@
 
 - [`rs_sc_knn()`](rs_sc_knn.md) : Generates the kNN graph
 
+- [`rs_sc_knn_w_dist()`](rs_sc_knn_w_dist.md) : Generates the kNN graph
+  with additional distances
+
 - [`rs_sc_pca()`](rs_sc_pca.md) : Calculates PCA for single cell
 
 - [`rs_sc_scrublet()`](rs_sc_scrublet.md) : Scrublet Rust interface
@@ -1143,6 +1197,12 @@
 - [`rs_upper_triangle_to_sparse()`](rs_upper_triangle_to_sparse.md) :
   Generate sparse data from an upper triangle
 
+- [`rs_vision()`](rs_vision.md) : Calculate VISION pathway scores in
+  Rust
+
+- [`rs_vision_with_autocorrelation()`](rs_vision_with_autocorrelation.md)
+  : Calculate VISION pathway scores in Rust with auto-correlation
+
 - [`run_cistarget()`](run_cistarget.md) : Main function to run CisTarget
 
 - [`run_limma_voom()`](run_limma_voom.md) : Wrapper for a Limma Voom
@@ -1172,6 +1232,9 @@
 
 - [`set_gene_mapping()`](set_gene_mapping.md) : Set gene mapping for
   sc_mapper object
+
+- [`set_hotspot_membership()`](set_hotspot_membership.md) : Identify
+  hotspot gene clusters
 
 - [`set_hvg()`](set_hvg.md) : Set the HVG genes
 
@@ -1262,6 +1325,11 @@
 
 - [`upper_triangular_sym_mat`](upper_triangular_sym_mat.md) : Class for
   symmetric correlation matrices
+
+- [`vision_sc()`](vision_sc.md) : Calculate VISION scores
+
+- [`vision_w_autocor_sc()`](vision_w_autocor_sc.md) : Calculate VISION
+  scores (with auto-correlation scores)
 
 - [`write_cellranger_output()`](write_cellranger_output.md) : Helper
   function to write data to a cell ranger like output

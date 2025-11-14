@@ -16,7 +16,7 @@ params_scrublet(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(knn_method = "hnsw")
+  knn = list(k = 0L, knn_method = "hnsw")
 )
 ```
 

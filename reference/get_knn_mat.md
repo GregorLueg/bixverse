@@ -11,6 +11,9 @@ get_knn_mat(x)
 
 # S3 method for class 'sc_cache'
 get_knn_mat(x)
+
+# S3 method for class 'sc_knn'
+get_knn_mat(x)
 ```
 
 ## Arguments

@@ -42,14 +42,7 @@
 <span>  max_shared <span class="op">=</span> <span class="fl">15L</span>,</span>
 <span>  target_no_metacells <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">5000L</span>,</span>
-<span>  k <span class="op">=</span> <span class="fl">25L</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span>, <span class="st">"nndescent"</span><span class="op">)</span>,</span>
-<span>  ann_dist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cosine"</span>, <span class="st">"euclidean"</span><span class="op">)</span>,</span>
-<span>  n_trees <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  search_budget <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  nn_max_iter <span class="op">=</span> <span class="fl">15L</span>,</span>
-<span>  rho <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  delta <span class="op">=</span> <span class="fl">0.001</span></span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -72,43 +65,12 @@ Defaults to <code>1000L</code>.</p></dd>
 Defaults to <code>5000L</code>.</p></dd>
 
 
-<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Integer. Number of neighbours to return. Defaults to <code>25L</code>.</p></dd>
-
-
-<dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
-<dd><p>String. One of <code>c("annoy", "hnsw", "nndescent")</code>. Defaults
-to <code>"annoy"</code>.</p></dd>
-
-
-<dt id="arg-ann-dist">ann_dist<a class="anchor" aria-label="anchor" href="#arg-ann-dist"></a></dt>
-<dd><p>String. One of <code>c("cosine", "euclidean")</code>. The distance
-metric to be used for the approximate neighbour search. Defaults to
-<code>"cosine"</code>.</p></dd>
-
-
-<dt id="arg-n-trees">n_trees<a class="anchor" aria-label="anchor" href="#arg-n-trees"></a></dt>
-<dd><p>Integer. Number of trees to use for the <code>annoy</code> algorithm.
-Defaults to <code>100L</code>.</p></dd>
-
-
-<dt id="arg-search-budget">search_budget<a class="anchor" aria-label="anchor" href="#arg-search-budget"></a></dt>
-<dd><p>Integer. Search budget per tree for the <code>annoy</code>
-algorithm. Defaults to <code>100L</code>.</p></dd>
-
-
-<dt id="arg-nn-max-iter">nn_max_iter<a class="anchor" aria-label="anchor" href="#arg-nn-max-iter"></a></dt>
-<dd><p>Integer. Maximum iterations for NN Descent. Defaults to
-<code>15L</code>.</p></dd>
-
-
-<dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
-<dd><p>Numeric. Sampling rate for NN Descent. Defaults to <code>1.0</code>.</p></dd>
-
-
-<dt id="arg-delta">delta<a class="anchor" aria-label="anchor" href="#arg-delta"></a></dt>
-<dd><p>Numeric. Early termination criterion for NN Descent. Defaults to
-<code>0.001</code>.</p></dd>
+<dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
+<dd><p>List. Optional overrides for kNN parameters. See
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
+<code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>nn_max_iter</code>,
+<code>rho</code>, <code>delta</code>. Note: This function uses <code>k = 25L</code> and <code>ann_dist = "cosine"</code>
+as defaults.</p></dd>
 
 </dl></div>
     <div class="section level2">

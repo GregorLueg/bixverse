@@ -43,4 +43,4 @@ rs_aucell(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
 ## Value
 
-A matrix of gene set AUCs x cells.
+A matrix of cells x gene sets with the values representing the AUC.

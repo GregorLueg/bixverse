@@ -31,6 +31,7 @@
 <url><loc>/reference/assertScBbknn.html</loc></url>
 <url><loc>/reference/assertScBoost.html</loc></url>
 <url><loc>/reference/assertScFastmnn.html</loc></url>
+<url><loc>/reference/assertScHotspot.html</loc></url>
 <url><loc>/reference/assertScHvg.html</loc></url>
 <url><loc>/reference/assertScMetacells.html</loc></url>
 <url><loc>/reference/assertScMinQC.html</loc></url>
@@ -40,6 +41,7 @@
 <url><loc>/reference/assertScSeacells.html</loc></url>
 <url><loc>/reference/assertScSupercell.html</loc></url>
 <url><loc>/reference/assertScSyntheticData.html</loc></url>
+<url><loc>/reference/assertScVision.html</loc></url>
 <url><loc>/reference/assertSingleSampleGSEAparams.html</loc></url>
 <url><loc>/reference/aucell_sc.html</loc></url>
 <url><loc>/reference/batch_correction_bulk_dge.html</loc></url>
@@ -96,6 +98,7 @@
 <url><loc>/reference/checkScBbknn.html</loc></url>
 <url><loc>/reference/checkScBoost.html</loc></url>
 <url><loc>/reference/checkScFastmnn.html</loc></url>
+<url><loc>/reference/checkScHotspot.html</loc></url>
 <url><loc>/reference/checkScHvg.html</loc></url>
 <url><loc>/reference/checkScMetacells.html</loc></url>
 <url><loc>/reference/checkScMinQC.html</loc></url>
@@ -105,6 +108,7 @@
 <url><loc>/reference/checkScSeacells.html</loc></url>
 <url><loc>/reference/checkScSupercell.html</loc></url>
 <url><loc>/reference/checkScSyntheticData.html</loc></url>
+<url><loc>/reference/checkScVision.html</loc></url>
 <url><loc>/reference/checkSingleSampleGSEAparams.html</loc></url>
 <url><loc>/reference/check_dim.html</loc></url>
 <url><loc>/reference/check_pca_grp_differences.html</loc></url>
@@ -154,6 +158,8 @@
 <url><loc>/reference/gene_ontology_data.html</loc></url>
 <url><loc>/reference/gene_set_proportions_sc.html</loc></url>
 <url><loc>/reference/generate_gene_module_data.html</loc></url>
+<url><loc>/reference/generate_knn_sc.html</loc></url>
+<url><loc>/reference/generate_null_perm_gs.html</loc></url>
 <url><loc>/reference/generate_perm_diffusion_vecs.html</loc></url>
 <url><loc>/reference/generate_personalisation_vec.html</loc></url>
 <url><loc>/reference/generate_rbh_graph.html</loc></url>
@@ -183,13 +189,16 @@
 <url><loc>/reference/get_gene_lengths.html</loc></url>
 <url><loc>/reference/get_gene_lengths.matrix.html</loc></url>
 <url><loc>/reference/get_gene_names.html</loc></url>
+<url><loc>/reference/get_gene_names_from_idx.html</loc></url>
 <url><loc>/reference/get_go_data_human.html</loc></url>
 <url><loc>/reference/get_go_levels.html</loc></url>
 <url><loc>/reference/get_grid_search_res.html</loc></url>
 <url><loc>/reference/get_h5ad_dimensions.html</loc></url>
+<url><loc>/reference/get_hotspot_membership.html</loc></url>
 <url><loc>/reference/get_hvg.html</loc></url>
 <url><loc>/reference/get_ica_stability_res.html</loc></url>
 <url><loc>/reference/get_inflection_point.html</loc></url>
+<url><loc>/reference/get_knn_dist.html</loc></url>
 <url><loc>/reference/get_knn_mat.html</loc></url>
 <url><loc>/reference/get_meta_cell_matrices.html</loc></url>
 <url><loc>/reference/get_meta_cells_sc.html</loc></url>
@@ -227,6 +236,8 @@
 <url><loc>/reference/gse_hypergeometric.html</loc></url>
 <url><loc>/reference/gse_hypergeometric_list.html</loc></url>
 <url><loc>/reference/hedges_g_dge.html</loc></url>
+<url><loc>/reference/hotspot_autocor_sc.html</loc></url>
+<url><loc>/reference/hotspot_gene_cor_sc.html</loc></url>
 <url><loc>/reference/ica_evaluate_comp.html</loc></url>
 <url><loc>/reference/ica_optimal_ncomp.html</loc></url>
 <url><loc>/reference/ica_processing.html</loc></url>
@@ -243,6 +254,8 @@
 <url><loc>/reference/multilevel_error.html</loc></url>
 <url><loc>/reference/network_diffusions.html</loc></url>
 <url><loc>/reference/new_sc_cache.html</loc></url>
+<url><loc>/reference/new_sc_hotspot_res.html</loc></url>
+<url><loc>/reference/new_sc_knn.html</loc></url>
 <url><loc>/reference/new_sc_mapper.html</loc></url>
 <url><loc>/reference/nightly_feature.html</loc></url>
 <url><loc>/reference/normalise_bulk_dge.html</loc></url>
@@ -267,6 +280,7 @@
 <url><loc>/reference/params_pca_defaults.html</loc></url>
 <url><loc>/reference/params_sc_bbknn.html</loc></url>
 <url><loc>/reference/params_sc_fastmnn.html</loc></url>
+<url><loc>/reference/params_sc_hotspot.html</loc></url>
 <url><loc>/reference/params_sc_hvg.html</loc></url>
 <url><loc>/reference/params_sc_metacells.html</loc></url>
 <url><loc>/reference/params_sc_min_quality.html</loc></url>
@@ -275,6 +289,7 @@
 <url><loc>/reference/params_sc_seacells.html</loc></url>
 <url><loc>/reference/params_sc_supercell.html</loc></url>
 <url><loc>/reference/params_sc_synthetic_data.html</loc></url>
+<url><loc>/reference/params_sc_vision.html</loc></url>
 <url><loc>/reference/params_scrublet.html</loc></url>
 <url><loc>/reference/params_snf.html</loc></url>
 <url><loc>/reference/params_ssgsea.html</loc></url>
@@ -359,6 +374,9 @@
 <url><loc>/reference/rs_h5ad_data.html</loc></url>
 <url><loc>/reference/rs_hamming_dist.html</loc></url>
 <url><loc>/reference/rs_hedges_g.html</loc></url>
+<url><loc>/reference/rs_hotspot_autocor.html</loc></url>
+<url><loc>/reference/rs_hotspot_cluster_genes.html</loc></url>
+<url><loc>/reference/rs_hotspot_gene_cor.html</loc></url>
 <url><loc>/reference/rs_hypergeom_test.html</loc></url>
 <url><loc>/reference/rs_hypergeom_test_list.html</loc></url>
 <url><loc>/reference/rs_ica_iters.html</loc></url>
@@ -395,6 +413,7 @@
 <url><loc>/reference/rs_sc_hvg.html</loc></url>
 <url><loc>/reference/rs_sc_hvg_batch_aware.html</loc></url>
 <url><loc>/reference/rs_sc_knn.html</loc></url>
+<url><loc>/reference/rs_sc_knn_w_dist.html</loc></url>
 <url><loc>/reference/rs_sc_pca.html</loc></url>
 <url><loc>/reference/rs_sc_scrublet.html</loc></url>
 <url><loc>/reference/rs_sc_snn.html</loc></url>
@@ -421,6 +440,8 @@
 <url><loc>/reference/rs_tom.html</loc></url>
 <url><loc>/reference/rs_upper_triangle_to_dense.html</loc></url>
 <url><loc>/reference/rs_upper_triangle_to_sparse.html</loc></url>
+<url><loc>/reference/rs_vision.html</loc></url>
+<url><loc>/reference/rs_vision_with_autocorrelation.html</loc></url>
 <url><loc>/reference/run_cistarget.html</loc></url>
 <url><loc>/reference/run_limma_voom.html</loc></url>
 <url><loc>/reference/run_snf.html</loc></url>
@@ -432,6 +453,7 @@
 <url><loc>/reference/set_cells_to_keep.html</loc></url>
 <url><loc>/reference/set_embedding.html</loc></url>
 <url><loc>/reference/set_gene_mapping.html</loc></url>
+<url><loc>/reference/set_hotspot_membership.html</loc></url>
 <url><loc>/reference/set_hvg.html</loc></url>
 <url><loc>/reference/set_knn.html</loc></url>
 <url><loc>/reference/set_pca_factors.html</loc></url>
@@ -464,6 +486,8 @@
 <url><loc>/reference/upper_triangle_diffcor_mat.html</loc></url>
 <url><loc>/reference/upper_triangle_to_sparse.html</loc></url>
 <url><loc>/reference/upper_triangular_sym_mat.html</loc></url>
+<url><loc>/reference/vision_sc.html</loc></url>
+<url><loc>/reference/vision_w_autocor_sc.html</loc></url>
 <url><loc>/reference/write_cellranger_output.html</loc></url>
 <url><loc>/reference/write_h5ad_sc.html</loc></url>
 </urlset>

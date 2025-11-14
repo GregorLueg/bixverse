@@ -9,14 +9,7 @@ params_sc_supercell(
   walk_length = 3L,
   graining_factor = 20,
   linkage_dist = c("complete", "average"),
-  k = 5L,
-  knn_method = c("annoy", "hnsw", "nndescent"),
-  ann_dist = c("cosine", "euclidean"),
-  n_trees = 100L,
-  search_budget = 100L,
-  nn_max_iter = 15L,
-  rho = 1,
-  delta = 0.001
+  knn = list()
 )
 ```
 
@@ -37,42 +30,13 @@ params_sc_supercell(
   String. Which type of distance metric to use for the linkage. Defaults
   to `"average"`.
 
-- k:
+- knn:
 
-  Integer. Number of neighbours to return. Defaults to `5L`.
-
-- knn_method:
-
-  String. One of `c("annoy", "hnsw", "nndescent")`. Defaults to
-  `"annoy"`.
-
-- ann_dist:
-
-  String. One of `c("cosine", "euclidean")`. The distance metric to be
-  used for the approximate neighbour search. Defaults to `"cosine"`.
-
-- n_trees:
-
-  Integer. Number of trees to use for the `annoy` algorithm. Defaults to
-  `100L`.
-
-- search_budget:
-
-  Integer. Search budget per tree for the `annoy` algorithm. Defaults to
-  `100L`.
-
-- nn_max_iter:
-
-  Integer. Maximum iterations for NN Descent. Defaults to `15L`.
-
-- rho:
-
-  Numeric. Sampling rate for NN Descent. Defaults to `1.0`.
-
-- delta:
-
-  Numeric. Early termination criterion for NN Descent. Defaults to
-  `0.001`.
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](params_knn_defaults.md) for available
+  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
+  `nn_max_iter`, `rho`, `delta`. Note: This function uses `k = 5L` and
+  `ann_dist = "cosine"` as defaults.
 
 ## Value
 

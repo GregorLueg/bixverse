@@ -48,6 +48,12 @@ get_seacells_sc(
 
   - graph_building - Graph building method.
 
+  - pruning - Boolean. Shall small values be pruned during the Franke-
+    Wolfe iterations.
+
+  - pruning_threshold - The threshold below which pruning shall be
+    applied during Franke-Wolfe iterations.
+
   - k - Number of neighbours for the kNN algorithm.
 
   - knn_method - String. Which kNN algorithm to use. One of

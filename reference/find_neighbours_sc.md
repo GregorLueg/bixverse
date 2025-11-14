@@ -1,13 +1,15 @@
 # Find the neighbours for single cell.
 
-This function will generate the kNNs based on a given embedding (atm,
-only option is PCA). Two different algorithms are implemented with
-different speed and accuracy to approximate the nearest neighbours.
-`"annoy"` is more rapid and based on the
-`Approximate Nearest Neigbours Oh Yeah` algorithm, whereas `"hnsw"`
+This function will generate the kNNs based on a given embedding. Three
+different algorithms are implemented with different speed and accuracy
+to approximate the nearest neighbours. `"annoy"` is more rapid and based
+on the `Approximate Nearest Neigbours Oh Yeah` algorithm; `"hnsw"`
 implements a `Hierarchical Navigatable Small Worlds` vector search that
-is slower, but more precise. Subsequently, the kNN data will be used to
-generate an sNN igraph for clustering methods.
+is slower, but more precise. Lastly, there is the option of
+`"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm.
+This version skips the index generation and can be faster on smaller
+data sets. Subsequently, the kNN data will be used to generate an sNN
+igraph for clustering methods.
 
 ## Usage
 
@@ -45,6 +47,12 @@ find_neighbours_sc(
 
   - k - Integer. Number of neighbours to identify.
 
+  - knn_algorithm - String. One of `c("annoy", "hnsw", "nndescent")`.
+    `"hnsw"` takes longer, is more precise and more memory friendly.
+    `"annoy"` is faster, less precise and will take more memory.
+    `"nndescent"` skips index generation and can be faster on small
+    datasets.
+
   - n_trees - Integer. Number of trees to use for the `annoy` algorithm.
     The higher, the longer the algorithm takes, but the more precise the
     approximated nearest neighbours.
@@ -53,11 +61,14 @@ find_neighbours_sc(
     algorithm. The higher, the longer the algorithm takes, but the more
     precise the approximated nearest neighbours.
 
-  - knn_algorithm - String. One of `c("annoy", "hnsw")`. `"hnsw"` takes
-    longer, is more precise and more memory friendly. `"annoy"` is
-    faster, less precise and will take more memory.
-
   - ann_dist - String. One of `c("cosine", "euclidean")`.
+
+  - max_iter - Integer. Maximum iterations for the `"nndescent"` method.
+
+  - rho - Numeric. Sampling rate for the `"nndescent"` method.
+
+  - delta - Numeric. Early termination criterium for the `"nndescent"`
+    method.
 
   - full_snn - Boolean. Shall the sNN graph be generated across all
     cells (standard in the `bluster` package.) Defaults to `FALSE`.

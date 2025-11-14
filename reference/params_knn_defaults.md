@@ -18,7 +18,7 @@ A list with default parameters for kNN searches. Following parameters:
   neighbour search. Defaults to `"annoy"`. The implementations are:
   `c("annoy", "hnsw", "nndescent")`.
 
-- dist_metric - Which distance metric to use for the approximate nearest
+- ann_dist - Which distance metric to use for the approximate nearest
   neighbour search. Defaults to `"euclidean"`. The implementations are
   `c("euclidean", "cosine")`.
 

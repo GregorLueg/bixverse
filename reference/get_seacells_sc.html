@@ -79,6 +79,10 @@ RSS change &lt; epsilon * RSS(0).</p></li>
 <li><p>greedy_threshold - Maximum number of cells before defaulting to rapid
 random selection of archetypes.</p></li>
 <li><p>graph_building - Graph building method.</p></li>
+<li><p>pruning - Boolean. Shall small values be pruned during the Franke-
+Wolfe iterations.</p></li>
+<li><p>pruning_threshold - The threshold below which pruning shall be
+applied during Franke-Wolfe iterations.</p></li>
 <li><p>k - Number of neighbours for the kNN algorithm.</p></li>
 <li><p>knn_method - String. Which kNN algorithm to use. One of
 <code>c("annoy", "hnsw", "nndescent")</code>. Defaults to <code>"annoy"</code>.</p></li>

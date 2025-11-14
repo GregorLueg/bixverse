@@ -15,7 +15,7 @@ params_boost(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list()
+  knn = list(k = 0L)
 )
 ```
 

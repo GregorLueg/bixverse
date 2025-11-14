@@ -1,0 +1,81 @@
+# Calculate VISION pathway scores in Rust with auto-correlation
+
+The function will take in a list of gene sets that contains lists of
+`"pos"` and `"neg"` gene indices (0-indexed). You don't have to provide
+the `"neg"`, but it can be useful to classify the delta of two stats
+(EMT, Th1; Th2) etc. Additionally, it will take a random gene list and
+calculate an auto-correlation score based on Gaery's C to identify
+pathways that show significant patterns on the kNN graph generate on the
+provided embedding.
+
+## Usage
+
+``` r
+rs_vision_with_autocorrelation(
+  f_path,
+  embd,
+  gs_list,
+  random_gs_list,
+  vision_params,
+  cells_to_keep,
+  cluster_membership,
+  streaming,
+  verbose,
+  seed
+)
+```
+
+## Arguments
+
+- f_path:
+
+  String. Path to the `counts_cells.bin` file.
+
+- embd:
+
+  Numerical matrix. The embedding matrix to use to generate the kNN
+  graph.
+
+- gs_list:
+
+  Nested list. Each sublist contains the (0-indexed!) positive and
+  negative gene indices of that specific gene set.
+
+- random_gs_list:
+
+  Double-nested list. The outer list represents the clusters of clusters
+  and the inner list represents the permutations within that cluster.
+
+- vision_params:
+
+  List. Contains various parameters to use in terms of the kNN
+  generation.
+
+- cells_to_keep:
+
+  Integer. Vector of indices of the cells to keep.
+
+- cluster_membership:
+
+  Integer. Vector that indicates to which of the permuted gene set
+  clusters the given gene set belongs.
+
+- streaming:
+
+  Boolean. Shall the data be streamed.
+
+- verbose:
+
+  Boolean. Controls verbosity of the function.
+
+- seed:
+
+  Integer. Random seed for reproducibility.
+
+## Value
+
+A list with the following items:
+
+- autocor_res - Auto-correlation results, i.e., 1 - C, p-value and FDR.
+
+- vision_mat - A matrix of cells x vision scores per gene set.

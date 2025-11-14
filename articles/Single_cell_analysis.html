@@ -346,7 +346,7 @@
 <span>  return_format <span class="op">=</span> <span class="st">"gene"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.019 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.02 sec elapsed</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## matrices can also be accessed with sinle brackets</span></span>
@@ -530,24 +530,22 @@
 <p>Nearest neighbor identification is a foundational step in single-cell analysis that finds the k most similar cells for each cell based on their expression profiles. This creates a k-nearest neighbor (kNN) graph, which is then converted into a shared nearest neighbor (sNN) graph—a more robust representation where edges represent cells that share neighbors. Here to ease computation we use the PCA factors to generate the graph.</p>
 <p>To identify nearest neighbors in bixverse, use two complementary functions:</p>
 <ul>
-<li><p><code><a href="../reference/params_sc_neighbours.html">params_sc_neighbours()</a></code>configures the parameters for neighbor identification. Specify <code>k</code> (how many neighbors to find) and choose your search algorithm: <code>annoy</code> for speed or <code>hnsw</code> for accuracy and memory efficiency. Set the distance metric with ann_dist (typically <code>cosine</code> or <code>euclidean</code>). You can also control the sNN graph generation with <code>full_snn</code> (whether to create edges between all cells or just neighbors), <code>pruning</code> (to remove weak connections), and <code>snn_similarity</code> (choose <code>rank</code> or <code>jaccard</code> to determine how neighbor weights are calculated). This function returns a parameter list ready for neighbor detection.</p></li>
-<li><p><code>find_neighbours()</code> applies these parameters to your single-cell object to generate the actual kNN and sNN graphs. Specify which embedding to use (<code>embd_to_use</code>, currently <code>pca</code>) and optionally limit the number of embedding dimensions with <code>no_embd_to_use</code>. Set a seed for reproducibility and use .verbose to track runtime information. The function adds the computed neighbor matrices to your object for use in downstream analyses.</p></li>
+<li><p><code><a href="../reference/params_sc_neighbours.html">params_sc_neighbours()</a></code>configures the parameters for neighbor identification. Specify the knn parameters via <code>knn = list(&lt;PARAMS&gt;)</code>. For details on kNN parameters, refer to <code><a href="../reference/params_knn_defaults.html">params_knn_defaults()</a></code>. Key parameters are <code>k</code> (how many neighbors to find) and choice of the approximate nearest neighbour search algorithm: <code>annoy</code>for general speed, <code>hnsw</code> for accuracy and memory efficiency and <code>nndescent</code> as an alternative for small data sets without index building. Set the distance metric with ann_dist (typically <code>cosine</code> or <code>euclidean</code>). You can also control the sNN graph generation with <code>full_snn</code> (whether to create edges between all cells or just neighbors), <code>pruning</code> (to remove weak connections), and <code>snn_similarity</code> (choose <code>rank</code> or <code>jaccard</code> to determine how neighbor weights are calculated). This function returns a parameter list ready for neighbor detection.</p></li>
+<li><p><code>find_neighbours()</code> applies these parameters to your single-cell object to generate the actual kNN and sNN graphs. Specify which embedding to use (<code>embd_to_use</code>, currently <code>pca</code>) and optionally limit the number of embedding dimensions with <code>no_embd_to_use</code>. Set a seed for reproducibility and use <code>.verbose</code> to track runtime information. The function adds the computed neighbor matrices to your object for use in downstream analyses.</p></li>
 </ul>
 <p>Like PCA the results for these are not stored in the duckdb rather in memory so will need to be saved or rerun each time.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">neighbours_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn_algorithm <span class="op">=</span> <span class="st">"hnsw"</span><span class="op">)</span></span>
-<span></span>
+<code class="sourceCode R"><span><span class="va">neighbours_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_neighbours.html">params_sc_neighbours</a></span><span class="op">(</span>knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>knn_method <span class="op">=</span> <span class="st">"hnsw"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_neighbours_sc.html">find_neighbours_sc</a></span><span class="op">(</span></span>
 <span>  <span class="va">sc_object</span>,</span>
 <span>  neighbours_params <span class="op">=</span> <span class="va">neighbours_params</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Generating kNN data with hnsw method.</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Generating sNN graph (full: FALSE).</span></span>
 <span><span class="co">#&gt; Transforming sNN data to igraph.</span></span>
-<span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_knn_mat.html">get_knn_mat</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      [,1] [,2] [,3] [,4] [,5]</span></span>
@@ -566,7 +564,7 @@
 <span><span class="co">#&gt; [4,] . .         . . .        </span></span>
 <span><span class="co">#&gt; [5,] . 0.9333333 . . .</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h4 id="community-detection">community detection<a class="anchor" aria-label="anchor" href="#community-detection"></a>
+</section><section class="level3"><h4 id="community-detection">Community detection<a class="anchor" aria-label="anchor" href="#community-detection"></a>
 </h4>
 <p>Currently only Leiden clustering is implemented in the package these cluster are then added to the obs table of the <code>sc_object</code></p>
 <div class="cell">
@@ -643,7 +641,7 @@
 <span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">auc_res_auroc</span><span class="op">)</span>, <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">auc_res_auroc</span>, <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">PC_1</span>, x <span class="op">=</span> <span class="va">PC_2</span>, color <span class="op">=</span> <span class="va">markers_cell_type_1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -654,78 +652,14 @@
 </div>
 </div>
 </div>
-</section><section class="level2"><h3 id="meta-cell">meta cell<a class="anchor" aria-label="anchor" href="#meta-cell"></a>
-</h3>
-<p>Metacells are aggregated groups of similar cells that are merged together to create a higher-level representation of your data. This approach reduces noise, improves computational efficiency, and is particularly useful for correlation-based analyses like identifying co-regulated genes. Metacells are generated by grouping nearby cells in the neighborhood graph, creating more stable and interpretable results from single-cell data.</p>
-<p>To generate metacells in bixverse package, use two complementary functions: <code><a href="../reference/params_sc_metacells.html">params_sc_metacells()</a></code> configures the parameters for metacell generation. Specify the maximum number of allowed shared neighbors (<code>max_shared</code>), your target number of metacells (<code>target_no_metacells</code>), and iteration limits (<code>max_iter</code>). You can also fine-tune the k-nearest neighbor search using k, knn_method (choose between <code>annoy</code> or <code>hnsw</code>), distance metric (<code>ann_dist</code>), and algorithm-specific parameters like n_trees and search_budget. This function returns a list of parameters ready for the metacell generation pipeline. <code>generate_metacells()</code> takes your single-cell object and the parameter list from <code><a href="../reference/params_sc_metacells.html">params_sc_metacells()</a></code> to generate the actual metacells. You can optionally regenerate the k-NN graph with regenerate_knn, specify which embedding to use (embd_to_use, currently “pca”), and control library size normalization with target_size. Set a seed for reproducibility.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sc_meta_cell_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_metacells.html">params_sc_metacells</a></span><span class="op">(</span>target_no_metacells <span class="op">=</span> <span class="fl">10L</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">meta_cell_data_v1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_meta_cells_sc.html">get_meta_cells_sc</a></span><span class="op">(</span></span>
-<span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
-<span>  sc_meta_cell_params <span class="op">=</span> <span class="va">sc_meta_cell_params</span>,</span>
-<span>  .verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">meta_cell_data_v1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;bixverse::meta_cells&gt;</span></span>
-<span><span class="co">#&gt;  @ obs_table          :Classes 'data.table' and 'data.frame':    10 obs. of  4 variables:</span></span>
-<span><span class="co">#&gt;  .. $ meta_cell_idx       : int  1 2 3 4 5 6 7 8 9 10</span></span>
-<span><span class="co">#&gt;  .. $ meta_cell_id        : chr  "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
-<span><span class="co">#&gt;  .. $ no_originating_cells: num  16 14 15 12 15 12 16 14 14 16</span></span>
-<span><span class="co">#&gt;  .. $ original_cell_idx   :List of 10</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  91 102 116 148 166 226 280 370 438 528 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  15 34 36 85 129 170 270 288 310 350 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  6 10 20 106 109 171 248 313 316 486 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  172 196 283 323 341 372 382 457 647 663 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  214 231 274 402 406 497 508 533 537 560 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  97 142 169 251 329 337 432 435 451 483 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  53 55 93 154 230 307 371 413 445 477 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  66 67 86 88 90 133 188 247 276 295 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  68 108 241 271 305 320 442 467 513 547 ...</span></span>
-<span><span class="co">#&gt;  ..  ..$ : int  24 207 222 292 296 355 399 439 464 476 ...</span></span>
-<span><span class="co">#&gt;  .. - attr(*, ".internal.selfref")=&lt;externalptr&gt; </span></span>
-<span><span class="co">#&gt;  @ var_table          :Classes 'data.table' and 'data.frame':    81 obs. of  2 variables:</span></span>
-<span><span class="co">#&gt;  .. $ gene_idx: num  1 2 3 4 5 6 7 8 9 10 ...</span></span>
-<span><span class="co">#&gt;  .. $ gene_id : chr  "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
-<span><span class="co">#&gt;  .. - attr(*, ".internal.selfref")=&lt;externalptr&gt; </span></span>
-<span><span class="co">#&gt;  @ data               :List of 2</span></span>
-<span><span class="co">#&gt;  .. $ raw :Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ Dim     : int [1:2] 10 81</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ Dimnames:List of 2</span></span>
-<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
-<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ x       : num [1:810] 251 167 263 102 54 159 190 319 162 80 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ factors : list()</span></span>
-<span><span class="co">#&gt;  .. $ norm:Formal class 'dgRMatrix' [package "Matrix"] with 6 slots</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ p       : int [1:11] 0 81 162 243 324 405 486 567 648 729 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ j       : int [1:810] 0 1 2 3 4 5 6 7 8 9 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ Dim     : int [1:2] 10 81</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ Dimnames:List of 2</span></span>
-<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:10] "meta_cell_01" "meta_cell_02" "meta_cell_03" "meta_cell_04" ...</span></span>
-<span><span class="co">#&gt;  ..  .. .. ..$ : chr [1:81] "gene_001" "gene_002" "gene_003" "gene_004" ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ x       : num [1:810] 7.99 7.58 8.04 7.09 6.45 ...</span></span>
-<span><span class="co">#&gt;  ..  .. ..@ factors : list()</span></span>
-<span><span class="co">#&gt;  @ original_assignment:List of 4</span></span>
-<span><span class="co">#&gt;  .. $ assignments : int [1:682] -1 -1 -1 -1 -1 3 -1 -1 -1 3 ...</span></span>
-<span><span class="co">#&gt;  .. $ n_cells     : num 682</span></span>
-<span><span class="co">#&gt;  .. $ n_metacells : num 10</span></span>
-<span><span class="co">#&gt;  .. $ n_unassigned: num 538</span></span>
-<span><span class="co">#&gt;  @ dims               : int [1:2] 10 81</span></span>
-<span><span class="co">#&gt;  @ other_data         : list()</span></span>
-<span><span class="co">#&gt;  @ meta_cell_method   : chr "meta_cells_hdwgcna"</span></span></code></pre></div>
-</div>
 </section><section class="level2"><h3 id="save-object">Save object<a class="anchor" aria-label="anchor" href="#save-object"></a>
 </h3>
-<p>As analysis progresses some parts are written to the duckdb and saved and others are not.Any updates to the <code>obs</code> table and to the <code>to_keep</code> column (number of cells) will be saved to the duckdb and will be present when the data is loaded back in using <code><a href="../reference/load_existing.html">load_existing()</a></code>.</p>
+<p>As analysis progresses some parts are written to the duckdb and saved and others are not. Any updates to the <code>obs</code> table and to the <code>to_keep</code> column (number of cells) will be saved to the duckdb and will be present when the data is loaded back in using <code><a href="../reference/load_existing.html">load_existing()</a></code>.</p>
 <p>However, other aspects which are held in memory e.g HVG, PCA and AUcell will not be saved. To ensure these are saved and then loaded back in when <code><a href="../reference/load_existing.html">load_existing()</a></code> is used run <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code>.</p>
 <p>This will create an <code>memory.qs2</code> object in the same directory as the <code>counts_cells.bin</code>, <code>counts_genes.bin</code> and <code>sc_duckdb.db</code></p>
 <p>Objects can either be saved as a <code>rds</code> or <code>qs2</code> it is highly recommended the <code>qs2</code> format is used as the reading in is far more performant.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk</a></span><span class="op">(</span><span class="va">sc_object</span>, type <span class="op">=</span> <span class="st">"qs2"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </section></section><section class="section level2"><h2 id="sec-loading-existing">Loading in existing object<a class="anchor" aria-label="anchor" href="#sec-loading-existing"></a>
@@ -734,7 +668,7 @@
 <p>This is done by pointing the directory where the <code>sc_duckdb.db</code>, <code>counts_cells.bin</code> and <code>counts_genes.bin</code> have been created.</p>
 <p>All information that was stored in the obs table leiden_clusters, gene proportions etc and any information in var table will be retained as it has been stored in the duckdb. However analysis that was created and stored in memory e.g knn and PCA will no longer exist and have to be rerun (unless data has been saved with <code><a href="../reference/save_sc_exp_to_disk.html">save_sc_exp_to_disk()</a></code>, recommended).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object_loaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/single_cell_exp.html">single_cell_exp</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object_loaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_existing.html">load_existing</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span></span>
@@ -752,7 +686,7 @@
 <span><span class="co">#&gt; [1] 682  16</span></span></code></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## PCA in original object exists</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5</span></span>
