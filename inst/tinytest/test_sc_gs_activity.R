@@ -324,6 +324,11 @@ hotspot_autocor_danb_res <- hotspot_autocor_sc(
 )
 
 expect_true(
+  current = checkmate::testDataTable(hotspot_autocor_danb_res, nrows = 81L),
+  info = "hotspot - local correlation expected outputs"
+)
+
+expect_true(
   current = all(hotspot_autocor_danb_res$fdr[1:30] <= 0.05),
   info = "hotspot - local correlations significant were expected - DANB"
 )
@@ -367,17 +372,107 @@ expect_equal(
   info = "hotspot - streaming engine behaves for auto-correlations"
 )
 
-#### cell subset ---------------------------------------------------------------
+#### gene subset ---------------------------------------------------------------
 
-get_gene_names(sc_object)[1:50]
-
-genes_to_use <- hotspot_autocor_res[fdr <= 0.05, gene_id]
-
-hotspot_obj <- hotspot_gene_cor_sc(
+hotspot_autocor_danb_res_small <- hotspot_autocor_sc(
   object = sc_object,
-  genes_to_take = genes_to_use
+  genes_to_take = get_gene_names(sc_object)[1:50],
+  .verbose = FALSE
 )
 
-hotspot_obj <- set_hotspot_membership(hotspot_obj)
+expect_true(
+  current = checkmate::testDataTable(
+    hotspot_autocor_danb_res_small,
+    nrows = 50L
+  ),
+  info = "hotspot - local correlation expected outputs - reduced genes"
+)
 
-get_hotspot_membership(hotspot_obj)
+#### cell subset ---------------------------------------------------------------
+
+cells_to_take <- sc_object[[]][cell_grp != "cell_type_1", cell_id]
+
+hotspot_autocor_danb_res_cell_subset <- hotspot_autocor_sc(
+  object = sc_object,
+  cells_to_take = cells_to_take,
+  .verbose = FALSE
+)
+
+# the first 10 genes should have much lower spatial correlation and Z-scores
+
+expect_true(
+  current = mean(hotspot_autocor_danb_res$gaerys_c[1:10]) >
+    mean(hotspot_autocor_danb_res_cell_subset$gaerys_c[1:10]),
+  info = "hotspot - local corr: sample removal as expected impact on gaery's c"
+)
+
+expect_true(
+  current = mean(hotspot_autocor_danb_res$z_score[1:10]) >
+    mean(hotspot_autocor_danb_res_cell_subset$z_score[1:10]),
+  info = "hotspot - local corr: sample removal as expected impact on z scores"
+)
+
+### gene-gene correlations -----------------------------------------------------
+
+hotspot_gene_gene_cor <- hotspot_gene_cor_sc(
+  object = sc_object,
+  genes_to_take = hotspot_autocor_danb_res[fdr <= 0.05, gene_id],
+  .verbose = FALSE
+)
+
+hotspot_gene_gene_cor_streaming <- hotspot_gene_cor_sc(
+  object = sc_object,
+  genes_to_take = hotspot_autocor_danb_res[fdr <= 0.05, gene_id],
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = hotspot_gene_gene_cor$z,
+  target = hotspot_gene_gene_cor_streaming$z,
+  # tiny differences due to the batch-wise calculations here
+  tolerance = 1e-5,
+  info = paste(
+    "hotspot - gene-gene corr:",
+    "streaming and in-memory z matrix equivalence"
+  )
+)
+
+expect_equal(
+  current = hotspot_gene_gene_cor$cor,
+  target = hotspot_gene_gene_cor_streaming$cor,
+  # tiny differences due to the batch-wise calculations here
+  tolerance = 1e-5,
+  info = paste(
+    "hotspot - gene-gene corr:",
+    "streaming and in-memory cor matrix equivalence"
+  )
+)
+
+hotspot_gene_gene_cor <- set_hotspot_membership(hotspot_gene_gene_cor)
+
+hotspot_gene_gene_cor_streaming <- set_hotspot_membership(
+  hotspot_gene_gene_cor_streaming
+)
+
+expect_equivalent(
+  current = get_hotspot_membership(hotspot_gene_gene_cor)$cluster_member,
+  target = get_hotspot_membership(
+    hotspot_gene_gene_cor_streaming
+  )$cluster_member,
+  info = paste(
+    "hotspot - gene-gene corr:",
+    "streaming and in-memory cluster membership equivalence"
+  )
+)
+
+expect_true(
+  current = sum(
+    !is.na(hotspot_gene_gene_cor$module_memership$cluster_member)
+  ) ==
+    30L,
+  info = paste(
+    "hotspot - gene-gene corr:",
+    "expected cluster membership"
+  )
+)

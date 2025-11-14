@@ -389,8 +389,6 @@ annoy_knn_data <- generate_knn_sc(
   .verbose = FALSE
 )
 
-str(annoy_knn_data)
-
 expect_true(
   current = checkmate::testClass(annoy_knn_data, "sc_knn"),
   info = "sc_knn - expected class returned"
@@ -515,7 +513,7 @@ expect_true(
   info = "sc_knn class - expected overlap nndescent euclidean"
 )
 
-# worse overlap here... as expected
+# better overlap when checking top neighbours
 expect_true(
   current = sc_nndescent_top5_overlap >= 0.95,
   info = "sc_knn class - expected overlap nndescent euclidean - top5 neighbours"

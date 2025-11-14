@@ -22,7 +22,7 @@ hotspot_gene_cor_sc(
 \item{embd_to_use}{String. The embedding to use. Defaults to \code{"pca"}.}
 
 \item{hotspot_params}{List with vision parameters, see
-\code{\link[=param_sc_hotspot]{param_sc_hotspot()}} with the following elements:
+\code{\link[=params_sc_hotspot]{params_sc_hotspot()}} with the following elements:
 \itemize{
 \item model - String. Which of the available models to use for the
 gene expression. Choices are one of \code{c("danb", "normal", "bernoulli")}.

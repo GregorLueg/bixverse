@@ -534,6 +534,12 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
     indices <- indices - 1
   }
 
+  if (length(indices) == 0) {
+    stop(
+      "The gene indices have length 0. Please double check provided parameters!"
+    )
+  }
+
   return(as.integer(indices))
 }
 
@@ -550,6 +556,12 @@ get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
   indices <- which(names(cell_map) %in% cell_ids)
   if (rust_index) {
     indices <- indices - 1
+  }
+
+  if (length(indices) == 0) {
+    stop(
+      "The cell indices have length 0. Please double check provided parameters!"
+    )
   }
 
   return(as.integer(indices))

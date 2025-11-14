@@ -750,7 +750,7 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
 #' @param hotspot_params List with vision parameters, see
-#' [bixverse::param_sc_hotspot()] with the following elements:
+#' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
 #'   \item model - String. Which of the available models to use for the
 #'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
@@ -851,6 +851,15 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
     genes_to_take <- get_gene_names(object)
   }
 
+  if (length(intersect(rownames(embd), cells_to_take)) == 0) {
+    stop(
+      paste(
+        "There is no intersection in the provided cell names and embedding",
+        "space. Please double check your parameters!"
+      )
+    )
+  }
+
   hotspot_auto_cor <- rs_hotspot_autocor(
     f_path_genes = get_rust_count_gene_f_path(object),
     f_path_cells = get_rust_count_cell_f_path(object),
@@ -893,7 +902,7 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
 #' @param hotspot_params List with vision parameters, see
-#' [bixverse::param_sc_hotspot()] with the following elements:
+#' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
 #'   \item model - String. Which of the available models to use for the
 #'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
@@ -991,6 +1000,15 @@ S7::method(hotspot_gene_cor_sc, single_cell_exp) <- function(
 
   if (is.null(genes_to_take)) {
     genes_to_take <- get_gene_names(object)
+  }
+
+  if (length(intersect(rownames(embd), cells_to_take)) == 0) {
+    stop(
+      paste(
+        "There is no intersection in the provided cell names and embedding",
+        "space. Please double check your parameters!"
+      )
+    )
   }
 
   hotspot_gene_cor <- rs_hotspot_gene_cor(

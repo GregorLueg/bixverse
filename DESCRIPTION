@@ -49,6 +49,7 @@ Imports:
     fastcluster,
     ggplot2,
     igraph,
+    jsonlite,
     limma,
     magrittr,
     MASS,
