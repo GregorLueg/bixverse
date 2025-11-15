@@ -1,8 +1,10 @@
 use extendr_api::*;
 use faer::Mat;
+use rand::prelude::*;
 
 use crate::core::base::stats::calc_fdr;
 use crate::single_cell::dge_pathway_scores::*;
+use crate::single_cell::methods::milor::*;
 use crate::single_cell::methods::vision_hotspot::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::*;
@@ -15,6 +17,7 @@ extendr_module! {
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
     fn rs_hotspot_gene_cor;
+    fn rs_make_milor_nhoods;
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
 }
@@ -329,6 +332,10 @@ fn rs_vision_with_autocorrelation(
     ))
 }
 
+///////////////////////
+// Gene module stuff //
+///////////////////////
+
 /// Calculate gene spatial auto-correlations
 ///
 /// @description
@@ -383,7 +390,6 @@ fn rs_hotspot_autocor(
     );
 
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
-    let knn_params = KnnParams::from_hotspot_params(&hotspot_params);
 
     let embd = r_matrix_to_faer_fp32(&embd);
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -393,8 +399,13 @@ fn rs_hotspot_autocor(
         println!("Generating kNN graph...")
     }
 
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+    let (knn_indices, knn_dist) = generate_knn_with_dist(
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        true,
+        seed,
+        verbose,
+    );
 
     let mut knn_dist = knn_dist.unwrap();
 
@@ -481,14 +492,18 @@ fn rs_hotspot_gene_cor(
     let genes_to_use = genes_to_use.r_int_convert();
 
     let hotspot_params = HotSpotParams::from_r_list(hotspot_params);
-    let knn_params = KnnParams::from_hotspot_params(&hotspot_params);
 
     if verbose {
         println!("Generating kNN graph...")
     }
 
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+    let (knn_indices, knn_dist) = generate_knn_with_dist(
+        embd.as_ref(),
+        &hotspot_params.knn_params,
+        true,
+        seed,
+        verbose,
+    );
 
     let mut knn_dist = knn_dist.unwrap();
 
@@ -532,4 +547,109 @@ fn rs_hotspot_cluster_genes(
     let z_matrix = r_matrix_to_faer(&z_matrix);
 
     hotspot_gene_clusters(z_matrix, fdr_threshold, min_size)
+}
+
+////////////////////////////
+// Differential abundance //
+////////////////////////////
+
+/// @export
+#[extendr]
+fn rs_make_milor_nhoods(
+    embd: RMatrix<f64>,
+    knn_indices: RMatrix<i32>,
+    milor_params: List,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let milor_params = MiloRParams::from_r_list(milor_params);
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let k_original = knn_indices.ncols();
+    let n_cells = embd.nrows();
+    let knn_data = knn_indices.data();
+
+    let knn_indices: Vec<Vec<usize>> = (0..n_cells)
+        .map(|i| {
+            (0..k_original)
+                .map(|j| knn_data[i + j * n_cells] as usize)
+                .collect()
+        })
+        .collect();
+
+    let refinement_strategy = parse_refinement_strategy(&milor_params.refinement_strategy)
+        .unwrap_or(RefinementStrategy::Approximate);
+
+    let knn_idx = if matches!(refinement_strategy, RefinementStrategy::IndexBased) {
+        let index_type =
+            parse_index_type(&milor_params.index_type).unwrap_or(KnnIndexType::AnnoyIndex);
+
+        Some(KnnIndex::new(
+            embd.as_ref(),
+            index_type,
+            &milor_params.knn_params,
+            seed,
+        ))
+    } else {
+        None
+    };
+
+    // Random sampling
+    let n_cells = embd.nrows();
+    let n_sample = ((n_cells as f64) * milor_params.prop).floor() as usize;
+    let mut rng = StdRng::seed_from_u64(seed as u64);
+
+    let mut random_indices: Vec<usize> = (0..n_cells).collect();
+    random_indices.shuffle(&mut rng);
+    random_indices.truncate(n_sample);
+
+    if verbose {
+        println!("Sampled {} vertices from {} cells", n_sample, n_cells);
+    }
+
+    // Refinement
+    let indices_refined = refine_sampling_with_strategy(
+        embd.as_ref(),
+        &knn_indices,
+        &random_indices,
+        milor_params.k_refine,
+        &milor_params.knn_params,
+        &refinement_strategy,
+        knn_idx.as_ref(),
+        verbose,
+    );
+
+    // Deduplicate
+    let mut unique_indices = indices_refined;
+    unique_indices.sort_unstable();
+    unique_indices.dedup();
+
+    let len_unique_indices = unique_indices.len();
+
+    if verbose {
+        println!(
+            "Refined to {} unique neighbourhood indices",
+            unique_indices.len()
+        );
+    }
+
+    // Build neighbourhood matrix
+    let nhoods_triplets = build_nhood_matrix(&knn_indices, &unique_indices);
+
+    // Compute kth distances (FIX: remove extra sqrt)
+    let kth_distances = compute_kth_distances_from_matrix(
+        embd.as_ref(),
+        &knn_indices,
+        &unique_indices,
+        knn_indices[0].len() - 1,
+    );
+
+    list!(
+        index_cell = unique_indices.r_int_convert_shift(),
+        nhoods_i = nhoods_triplets.0,
+        nhoods_j = nhoods_triplets.1,
+        nhoods_x = nhoods_triplets.2,
+        nrows = n_cells as i32,
+        ncols = len_unique_indices,
+        kth_distances = kth_distances
+    )
 }

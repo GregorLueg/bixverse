@@ -194,7 +194,6 @@ pub fn generate_bulk_rnaseq(
                     let signal_mean = module_signal.iter().sum::<f64>() * inv_num_samples;
                     let scale_factor = mean_exp[i] / signal_mean;
 
-                    
                     for j in 0..num_samples {
                         let scaled_signal = module_signal[j] * scale_factor;
 
@@ -283,7 +282,6 @@ pub fn simulate_dropouts_logistic(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -366,7 +364,6 @@ pub fn simulate_dropouts_power_decay(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -455,7 +452,6 @@ pub fn create_sparse_csc_data(
     let mut data = Vec::with_capacity(estimated_total);
     indptr.push(0);
 
-    
     for gene_idx in 0..ncol {
         // Sort cells for this gene
         gene_data[gene_idx].sort_unstable_by_key(|(cell_idx, _)| *cell_idx);
@@ -560,7 +556,7 @@ pub fn create_sparse_csr_data(
 /// ### Returns
 ///
 /// Option of the BatchEffectStrength
-pub fn get_batch_strength(s: &str) -> Option<BatchEffectStrength> {
+pub fn parse_batch_effect_strength(s: &str) -> Option<BatchEffectStrength> {
     match s.to_lowercase().as_str() {
         "weak" => Some(BatchEffectStrength::Weak),
         "medium" => Some(BatchEffectStrength::Medium),
@@ -577,6 +573,33 @@ pub enum BatchEffectStrength {
     Medium,
     /// Strong batch effecst
     Strong,
+}
+
+/// Helper function to get the Batch effect strength
+///
+/// ### Params
+///
+/// * `s` - Type of KNN algorithm to use
+///
+/// ### Returns
+///
+/// Option of the BatchEffectStrength
+pub fn parse_sample_bias(s: &str) -> Option<BatchEffectStrength> {
+    match s.to_lowercase().as_str() {
+        "weak" => Some(BatchEffectStrength::Weak),
+        "medium" => Some(BatchEffectStrength::Medium),
+        "strong" => Some(BatchEffectStrength::Strong),
+        _ => None,
+    }
+}
+#[derive(Clone, Copy, Debug)]
+pub enum SampleBias {
+    /// Even distribution of cell types across samples
+    Even,
+    /// Slightly uneven distribution
+    SlightlyUneven,
+    /// Very uneven distribution with strong bias
+    VeryUneven,
 }
 
 /// Structure to keep the CellTypeConfig
@@ -640,7 +663,7 @@ pub fn create_celltype_sparse_csr_data(
     seed: usize,
 ) -> (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) {
     let batch_strength =
-        get_batch_strength(batch_effect_strength).unwrap_or(BatchEffectStrength::Strong);
+        parse_batch_effect_strength(batch_effect_strength).unwrap_or(BatchEffectStrength::Strong);
 
     let mut indptr = Vec::with_capacity(nrow + 1);
     let mut indices = Vec::with_capacity(nrow * 100);
@@ -665,7 +688,6 @@ pub fn create_celltype_sparse_csr_data(
 
     let mut batch_effect = vec![vec![1.0; ncol]; n_batches];
 
-    
     for batch_idx in 1..n_batches {
         for gene_idx in 0..ncol {
             let u: f64 = gene_rng.random();
@@ -776,6 +798,20 @@ pub fn create_celltype_sparse_csr_data(
     (csr, cell_type_labels, batch_labels)
 }
 
+/// Helper function to sample from a Gamma distribution
+///
+/// Uses the Marsaglia and Tsang method for shape >= 1, with Ahrens-Dieter
+/// method for shape < 1.
+///
+/// ### Params
+///
+/// * `rng` - Random number generator
+/// * `shape` - Shape parameter (k or α)
+/// * `scale` - Scale parameter (θ)
+///
+/// ### Returns
+///
+/// A sample from Gamma(shape, scale)
 fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {
     if shape < 1.0 {
         let u = rng.random::<f64>();
@@ -798,6 +834,19 @@ fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {
     }
 }
 
+/// Helper function to sample from a Poisson distribution
+///
+/// Uses Knuth's algorithm for lambda < 30 and transformed rejection method for
+/// lambda >= 30.
+///
+/// ### Params
+///
+/// * `rng` - Random number generator
+/// * `lambda` - Rate parameter
+///
+/// ### Returns
+///
+/// A sample from Poisson(λ)
 fn poisson_sample<R: Rng>(rng: &mut R, lambda: f64) -> u32 {
     if lambda < 30.0 {
         let l = (-lambda).exp();

@@ -2445,6 +2445,9 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
+#' @export
+rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
+
 #' Calculate VISION pathway scores in Rust
 #'
 #' @description
