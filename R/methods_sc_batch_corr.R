@@ -433,7 +433,28 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #' [bixverse::find_hvg_batch_aware_sc()] for more details.
 #' @param fastmnn_params A list, please see [bixverse::params_sc_fastmnn()]. The
 #' list has the following parameters:
-#' Claude fill this out
+#' \itemize{
+#'   \item k - Integer. Number of mutual nearest neighbours to identify.
+#'   Defaults to `20L`.
+#'   \item sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
+#'   proportion of space radius). Defaults to `0.1`.
+#'   \item knn_method - String. One of `c("annoy", "hnsw")`. The method to use
+#'   for the approximate nearest neighbour search. Defaults to `"annoy"`.
+#'   \item dist_metric - String. One of `c("cosine", "euclidean")`. The
+#'   distance metric to be used for the approximate neighbour search. Defaults
+#'   to `"cosine"`.
+#'   \item annoy_n_trees - Integer. Number of trees for Annoy index. Defaults
+#'   to `100L`.
+#'   \item annoy_search_budget - Integer. Search budget per tree for Annoy.
+#'   Defaults to `100L`.
+#'   \item cos_norm - Logical. Apply cosine normalisation before computing
+#'   distances. Defaults to `TRUE`.
+#'   \item var_adj - Logical. Apply variance adjustment to avoid kissing
+#'   effects. Defaults to `TRUE`.
+#'   \item no_pcs - Integer. Number of PCs to use for MNN calculations.
+#'   Defaults to `30L`.
+#'   \item random_svd - Logical. Use randomised SVD. Defaults to `TRUE`.
+#' }
 #' @param seed Integer. Random seed.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'

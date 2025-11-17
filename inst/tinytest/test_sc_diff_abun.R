@@ -4,7 +4,6 @@ library(scuttle)
 library(scran)
 library(scater)
 
-
 ## test parameters -------------------------------------------------------------
 
 # thresholds
@@ -12,11 +11,18 @@ min_lib_size <- 300L
 min_genes_exp <- 45L
 min_cells_exp <- 500L
 hvg_to_keep <- 50L
-no_pcs <- 10L
+no_pcs <- 20L
 
 ## synthetic test data ---------------------------------------------------------
 
-single_cell_test_data <- generate_single_cell_test_data()
+?params_sc_synthetic_data
+
+single_cell_test_data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(
+    n_samples = 6L,
+    sample_bias = "even"
+  )
+)
 
 genes_pass <- which(
   Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
@@ -29,17 +35,7 @@ cells_pass <- which(
       min_genes_exp)
 )
 
-# expect_true(
-#   current = length(genes_pass) > 80 & length(genes_pass) != 100,
-#   info = "sc processing - sensible amount of genes pass"
-# )
-
-# expect_true(
-#   current = length(cells_pass) > 800 & length(cells_pass) != 1000,
-#   info = "sc processing - sensible amount of cells pass"
-# )
-
-### bixverse -------------------------------------------------------------------
+## object gen ------------------------------------------------------------------
 
 sc_object <- single_cell_exp(dir_data = tempdir())
 
@@ -64,7 +60,6 @@ sc_object <- find_hvg_sc(
   .verbose = FALSE
 )
 
-
 sc_object <- calculate_pca_sc(
   sc_object,
   no_pcs = no_pcs,
@@ -72,47 +67,76 @@ sc_object <- calculate_pca_sc(
   randomised_svd = TRUE
 )
 
-### SCE ------------------------------------------------------------------------
+sc_object <- find_neighbours_sc(sc_object)
 
-sce <- SingleCellExperiment::SingleCellExperiment(
-  assays = list(counts = Matrix::t(single_cell_test_data$counts)),
-  colData = single_cell_test_data$obs,
-  rowData = single_cell_test_data$var
+miloR_obj <- get_miloR_abundances_sc(
+  object = sc_object,
+  sample_id_col = "sample_id"
 )
 
-n_cells_expressing <- rowSums(counts(sce) > 0)
+str(miloR_obj)
 
-genes_to_keep <- n_cells_expressing >= min_cells_exp
+design_df <- data.frame(
+  grps = c(rep("ctr", 3), rep("trt", 3))
+)
+rownames(design_df) <- sprintf("sample_%i", 1:6)
 
-sce <- sce[genes_to_keep, ]
+x = miloR_obj
+design = as.formula(~grps)
+design_df
+norm_method = c("TMM", "RLE", "logMS")
+min_mean = 0
+robust = TRUE
+fdr_weighting = c("k-distance", "graph-overlap", "none")
 
-lib_sizes <- colSums(counts(sce))
-n_features <- colSums(counts(sce) > 0)
 
-cells_to_keep <- lib_sizes >= min_lib_size & n_features >= min_genes_exp
+norm_method = norm_method[1]
+fdr_weighting = fdr_weighting[1]
 
-sce <- sce[, cells_to_keep]
+mm <- stats::model.matrix(design, data = design_df)
 
-lib_sizes <- colSums(counts(sce))
+if (ncol(x$sample_counts) != nrow(mm)) {
+  stop(
+    "Design matrix (",
+    nrow(mm),
+    ") and sample counts (",
+    ncol(x$sample_counts),
+    ") dimensions don't match"
+  )
+}
 
-size_factors <- lib_sizes / 10000
-sizeFactors(sce) <- size_factors
-sce <- logNormCounts(sce)
+if (any(colnames(x$sample_counts) != rownames(mm))) {
+  if (!all(colnames(x$sample_counts) %in% rownames(mm))) {
+    stop("Sample names in counts and design matrix don't match")
+  }
+  warning("Reordering design matrix to match sample counts")
+  mm <- mm[colnames(x$sample_counts), ]
+}
 
-gene_var <- modelGeneVar(sce)
-hvgs <- getTopHVGs(gene_var, n = hvg_to_keep)
+keep_nh <- if (min_mean > 0) {
+  rowMeans(x$sample_counts) >= min_mean
+} else {
+  rep(TRUE, nrow(x$sample_counts))
+}
 
-sce <- runPCA(
-  sce,
-  subset_row = hvgs,
-  ncomponents = no_pcs,
-  scale = TRUE
+dge <- edgeR::DGEList(
+  counts = x$sample_counts[keep_nh, , drop = FALSE],
+  lib.size = colSums(x$sample_counts)
 )
 
-plot(
-  sce@assays@data$logcounts[, 3],
-  as.numeric(sc_object[3L, , assay = "norm"])
+if (norm_method %in% c("TMM", "RLE")) {
+  dge <- edgeR::calcNormFactors(dge, method = norm_method)
+}
+
+
+dge <- edgeR::estimateDisp(dge, mm)
+fit <- edgeR::glmQLFit(dge, mm, robust = robust, legacy = TRUE)
+
+
+n_coef <- ncol(mm)
+res <- edgeR::topTags(
+  edgeR::glmQLFTest(fit, coef = n_coef),
+  sort.by = "none",
+  n = Inf
 )
-
-
-cor(get_pca_factors(sc_object), reducedDim(sce, "PCA"))
+res <- as.data.frame(res)

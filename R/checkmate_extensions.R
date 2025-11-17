@@ -794,6 +794,7 @@ checkCistargetParams <- function(x) {
 ## single cell -----------------------------------------------------------------
 
 ### synthetic data -------------------------------------------------------------
+
 #' Check synthetic data parameters
 #'
 #' @description Checkmate extension for checking the synthetic data
@@ -815,7 +816,9 @@ checkScSyntheticData <- function(x) {
       "n_genes",
       "marker_genes",
       "n_batches",
-      "batch_effect_strength"
+      "batch_effect_strength",
+      "n_samples",
+      "sample_bias"
     )
   )
   if (!isTRUE(res)) {
@@ -825,7 +828,8 @@ checkScSyntheticData <- function(x) {
   rules <- list(
     "n_cells" = "I1",
     "n_genes" = "I1",
-    "n_batches" = "I1"
+    "n_batches" = "I1",
+    "n_samples" = c("0", "I1")
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -842,7 +846,8 @@ checkScSyntheticData <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in synthetic data is incorrect:",
-          "n_cells, n_genes and n_batches need to be integers."
+          "n_cells, n_genes and n_batches need to be integers. n_samples an",
+          "integer or NULL."
         ),
         broken_elem
       )
@@ -862,6 +867,18 @@ checkScSyntheticData <- function(x) {
     x[["batch_effect_strength"]],
     c("strong", "medium", "weak")
   )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- if (!is.null(x[["sample_bias"]])) {
+    checkmate::checkChoice(
+      x[["sample_bias"]],
+      c("even", "slightly_uneven", "very_uneven")
+    )
+  } else {
+    TRUE
+  }
   if (!isTRUE(res)) {
     return(res)
   }
@@ -2440,6 +2457,133 @@ checkScHotspot <- function(x) {
   return(TRUE)
 }
 
+### miloR ----------------------------------------------------------------------
+
+#' Check MiloR parameters
+#'
+#' @description Checkmate extension for checking the MiloR parameters.
+#'
+#' @param x The list to check/assert
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScMiloR <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "prop",
+      "k_refine",
+      "refinement_strategy",
+      "index_type",
+      "k",
+      "knn_method",
+      "ann_dist",
+      "search_budget",
+      "n_trees",
+      "nn_max_iter",
+      "rho",
+      "delta"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "k_refine" = "I1[1,)",
+    "k" = "I1[0,)",
+    "search_budget" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in MiloR parameters is incorrect:",
+          "k_refine, search_budget, n_trees and nn_max_iter must be >= 1;",
+          "k must be >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Numeric rules
+  numeric_rules <- list(
+    "prop" = "N1(0,1)",
+    "rho" = "N1(0,)",
+    "delta" = "N1[0,1]"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in MiloR parameters is incorrect:",
+          "prop must be in (0,1); rho must be > 0; delta must be in [0,1]."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Choice rules
+  test_choice_rules <- list(
+    refinement_strategy = c("approximate", "bruteforce", "index"),
+    index_type = c("annoy", "hnsw"),
+    knn_method = c("annoy", "hnsw"),
+    ann_dist = c("euclidean", "cosine")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(x, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste0(
+          "The following element `%s` in the MiloR parameters is not one of",
+          " the expected choices. Please double check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 # asserts ----------------------------------------------------------------------
 
 ## other -----------------------------------------------------------------------
@@ -2919,6 +3063,22 @@ assertScVision <- checkmate::makeAssertionFunction(checkScVision)
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
+
+### miloR ----------------------------------------------------------------------
+
+#' Assert MiloR parameters
+#'
+#' @description Checkmate extension for asserting the MiloR parameters.
+#'
+#' @inheritParams checkScMiloR
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMiloR <- checkmate::makeAssertionFunction(checkScMiloR)
 
 # tests ------------------------------------------------------------------------
 

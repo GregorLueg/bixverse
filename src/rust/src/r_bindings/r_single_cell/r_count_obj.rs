@@ -270,8 +270,6 @@ impl SingeCellCountData {
     pub fn r_data_to_file(&mut self, r_data: List, qc_params: List, verbose: bool) -> List {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        println!("What are you like: {:?}", qc_params);
-
         let compressed_data: CompressedSparseData<u32> = list_to_sparse_matrix(r_data);
 
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =

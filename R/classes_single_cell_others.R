@@ -426,3 +426,178 @@ get_hotspot_membership.sc_hotspot <- function(
 
   x[["module_memership"]]
 }
+
+## miloR -----------------------------------------------------------------------
+
+#' Generate a new miloR result
+#'
+#' @description
+#' This is a helper class that wraps the miloR results together. The general
+#' idea of the approach is to use the kNN graph generated in the single cell
+#' data, generate representative neighbourhoods and calculate differential
+#' abundances within these neighbourhoods. For further details on the method,
+#' please refer to Dann, et al.
+#'
+#' @param nhoods Sparse dgCMatrix with cells x neighbourhoods.
+#' @param sample_counts Integer matrix. Represents neighbourhoods x cells from
+#' sample of interest.
+#' @param spatial_dist Numeric. The spatial distance between the neighbourhoods
+#' to calculate the spatial FDR.
+#' @param params Named list. The parameters that were used to generate these
+#' results.
+#'
+#' @returns An `sc_miloR` class that contains the provided data and has
+#' subsequent methods to calculate differential abundance statistics.
+#'
+#' @references Dann, et al., Nat Biotechnol, 2022
+new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
+  # checks
+  checkmate::checkClass(nhoods, "dgCMatrix")
+  checkmate::checkMatrix(
+    sample_counts,
+    row.names = "named",
+    col.names = "named",
+    mode = "integer"
+  )
+  checkmate::qassert(spatial_dist, "N+")
+  checkmate::assertList(params, names = "named")
+
+  # function body
+  sc_milor <- list(
+    nhoods = nhoods,
+    sample_counts = sample_counts,
+    spatial_dist = spatial_dist,
+    nhoods_info = NULL,
+    params = params
+  )
+
+  class(sc_milor) <- "sc_miloR"
+
+  return(sc_milor)
+}
+
+### neighbour hood tests -------------------------------------------------------
+
+#### helpers -------------------------------------------------------------------
+
+#' Spatial FDR correction for neighbourhoods
+#'
+#' @param nhoods Sparse matrix of cells x neighbourhoods
+#' @param pvalues Vector of p-values
+#' @param weighting Weighting scheme
+#' @param kth.distances Vector of k-th nearest neighbour distances
+#'
+#' @return Vector of spatially-corrected FDR values
+#'
+#' @noRd
+spatial_fdr_correction <- function(
+  nhoods,
+  pvalues,
+  weighting = c("k-distance", "graph-overlap"),
+  kth.distances = NULL
+) {
+  weighting <- match.arg(weighting)
+
+  # checks
+  checkmate::checkClass(nhoods, "dgCMatrix")
+  checkmate::qassert(pvalues, "n+")
+  checkmate::assertChoice(weighting, c("k-distance", "graph-overlap"))
+  checkmate::qassert(kth.distances, c("0", "N+"))
+
+  # handle NAs
+  haspval <- !is.na(pvalues)
+  if (!all(haspval)) {
+    pvalues <- pvalues[haspval]
+  }
+
+  # weights
+  if (weighting == "k-distance") {
+    if (is.null(kth.distances)) {
+      stop("k-distance weighting requires kth.distances")
+    }
+    t.connect <- kth.distances[haspval]
+  } else if (weighting == "graph-overlap") {
+    intersect_mat <- Matrix::crossprod(nhoods)
+    diag(intersect_mat) <- 0
+    t.connect <- Matrix::rowSums(intersect_mat)
+  }
+
+  w <- 1 / t.connect
+  w[is.infinite(w)] <- 1
+
+  o <- order(pvalues)
+  pvalues <- pvalues[o]
+  w <- w[o]
+
+  adjp <- numeric(length(o))
+  adjp[o] <- rev(cummin(rev(sum(w) * pvalues / cumsum(w))))
+  adjp <- pmin(adjp, 1)
+
+  # put NA's back
+  if (!all(haspval)) {
+    refp <- rep(NA_real_, length(haspval))
+    refp[haspval] <- adjp
+    adjp <- refp
+  }
+
+  adjp
+}
+
+#### main function -------------------------------------------------------------
+
+#' Test neighbourhoods for differential abundance
+#'
+#' @param x sc_miloR x
+#' @param design Formula for the experimental design
+#' @param design_df data.frame. Contains the metadata to be used for the
+#' generation of the model matrix.
+#' @param norm_method String. Normalisation method to use. One of
+#' `c("TMM", "RLE", "logMS")`
+#' @param min_mean Numeric. Minimum mean count threshold for filtering
+#' neighbourhoods.
+#' @param robust Use robust dispersion estimation
+#' @param fdr_weighting String. Spatial FDR weighting scheme. One of
+#' `c("k-distance", "graph-overlap", "none")`.
+#'
+#' @return data.table with test results per neighbourhood
+#'
+#' @export
+test_nhoods <- function(
+  x,
+  design,
+  design_df,
+  norm_method = c("TMM", "RLE", "logMS"),
+  min_mean = 0,
+  robust = TRUE,
+  fdr_weighting = c("k-distance", "graph-overlap", "none")
+) {
+  UseMethod("test_nhoods")
+}
+
+#' @rdname test_nhoods
+#'
+#' @export
+test_nhoods.sc_hotspot <- function(
+  x,
+  design,
+  design_df,
+  norm_method = c("TMM", "RLE", "logMS"),
+  min_mean = 0,
+  robust = TRUE,
+  fdr_weighting = c("k-distance", "graph-overlap", "none")
+) {
+  norm_method <- match.arg(norm_method)
+  fdr_weighting <- match.arg(fdr_weighting)
+
+  # checks
+  checkmate::assertClass(object, "sc_miloR")
+  checkmate::assertFormula(design)
+  checkmate::assertDataFrame(design_df, row.names = "named")
+  checkmate::qassert(min_mean, "N1")
+  checkmate::qassert(robust, "B1")
+  checkmate::assertChoice(norm_method, c("TMM", "RLE", "logMS"))
+  checkmate::assertChoice(
+    fdr_weighting,
+    c("k-distance", "graph-overlap", "none")
+  )
+}

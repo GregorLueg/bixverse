@@ -25,7 +25,28 @@ identified by a batch-aware method. Please refer to
 
 \item{fastmnn_params}{A list, please see \code{\link[=params_sc_fastmnn]{params_sc_fastmnn()}}. The
 list has the following parameters:
-Claude fill this out}
+\itemize{
+\item k - Integer. Number of mutual nearest neighbours to identify.
+Defaults to \code{20L}.
+\item sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
+proportion of space radius). Defaults to \code{0.1}.
+\item knn_method - String. One of \code{c("annoy", "hnsw")}. The method to use
+for the approximate nearest neighbour search. Defaults to \code{"annoy"}.
+\item dist_metric - String. One of \code{c("cosine", "euclidean")}. The
+distance metric to be used for the approximate neighbour search. Defaults
+to \code{"cosine"}.
+\item annoy_n_trees - Integer. Number of trees for Annoy index. Defaults
+to \code{100L}.
+\item annoy_search_budget - Integer. Search budget per tree for Annoy.
+Defaults to \code{100L}.
+\item cos_norm - Logical. Apply cosine normalisation before computing
+distances. Defaults to \code{TRUE}.
+\item var_adj - Logical. Apply variance adjustment to avoid kissing
+effects. Defaults to \code{TRUE}.
+\item no_pcs - Integer. Number of PCs to use for MNN calculations.
+Defaults to \code{30L}.
+\item random_svd - Logical. Use randomised SVD. Defaults to \code{TRUE}.
+}}
 
 \item{seed}{Integer. Random seed.}
 

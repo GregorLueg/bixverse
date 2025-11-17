@@ -115,7 +115,7 @@ impl KnnParams {
 
         // annoy
         let n_tree = params_list
-            .get("n_tree")
+            .get("n_trees")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 

@@ -444,6 +444,74 @@ params_sc_hotspot <- function(
   )
 }
 
+## miloR -----------------------------------------------------------------------
+
+#' Wrapper function for parameters for MiloR
+#'
+#' @param prop Numeric. Proportion of cells to sample as neighbourhood indices.
+#' Defaults to `0.2`. Must be in (0,1).
+#' @param k_refine Integer. Number of neighbours to use for refinement.
+#' Defaults to `20L`.
+#' @param refinement_strategy String. Strategy for refining sampled indices.
+#' One of `c("approximate", "bruteforce", "index")`. Defaults to
+#' `"index"`.
+#' @param index_type String. Type of kNN index to use. One of
+#' `c("annoy", "hnsw")`. Defaults to `"annoy"`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
+#' `rho`, `delta`. Note: `knn_method` cannot be `"nndescent"` for MiloR as
+#' it doesn't generate an index!
+#'
+#' @returns A list with the MiloR parameters.
+#'
+#' @export
+params_sc_miloR <- function(
+  prop = 0.2,
+  k_refine = 20L,
+  refinement_strategy = c("index", "approximate", "bruteforce"),
+  index_type = c("annoy", "hnsw"),
+  knn = list()
+) {
+  refinement_strategy <- match.arg(refinement_strategy)
+  index_type <- match.arg(index_type)
+  checkmate::qassert(prop, "N1(0,1)")
+  checkmate::qassert(k_refine, "I1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  checkmate::qassert(knn_params$k, "I1")
+  checkmate::assertChoice(
+    knn_params$knn_method,
+    c("annoy", "hnsw")
+  )
+  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
+  checkmate::qassert(knn_params$n_trees, "I1")
+  checkmate::qassert(knn_params$search_budget, "I1")
+  checkmate::qassert(knn_params$nn_max_iter, "I1")
+  checkmate::qassert(knn_params$rho, "N1")
+  checkmate::qassert(knn_params$delta, "N1")
+
+  list(
+    prop = prop,
+    k_refine = k_refine,
+    refinement_strategy = refinement_strategy,
+    index_type = index_type,
+    knn_method = knn_params$knn_method,
+    ann_dist = knn_params$ann_dist,
+    k = knn_params$k,
+    n_trees = knn_params$n_trees,
+    search_budget = knn_params$search_budget,
+    nn_max_iter = knn_params$nn_max_iter,
+    rho = knn_params$rho,
+    delta = knn_params$delta
+  )
+}
+
 ## metacells -------------------------------------------------------------------
 
 ### meta cell (hdWGCNA) --------------------------------------------------------

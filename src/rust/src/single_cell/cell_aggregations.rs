@@ -126,26 +126,6 @@ pub fn metacells_to_assignments(metacells: &[&[usize]], n_cells: usize) -> Vec<O
     assignments
 }
 
-// /// Transform the community memberships to metacells
-// ///
-// /// ### Params
-// ///
-// /// * `membership` - Community membership vector
-// /// * `k` - Number of member cells
-// ///
-// /// ### Returns
-// ///
-// /// The community to metacell assignements
-// pub fn communities_to_metacells(membership: &[usize], k: usize) -> Vec<Vec<usize>> {
-//     let mut metacells = vec![Vec::new(); k];
-//     for (cell_id, &metacell_id) in membership.iter().enumerate() {
-//         if metacell_id < k {
-//             metacells[metacell_id].push(cell_id);
-//         }
-//     }
-//     metacells
-// }
-
 /// Convert assignments to R-friendly list format with unassigned cell handling
 ///
 /// Returns -1 for unassigned cells (R convention for missing/unassigned).

@@ -553,6 +553,33 @@ fn rs_hotspot_cluster_genes(
 // Differential abundance //
 ////////////////////////////
 
+/// Generate the neighbourhoods akin to the miloR approach
+///
+/// @description Rust version of the 
+/// 
+/// @param embd Numeric matrix. Represents the matrix used to generate the kNN
+/// graph and will be used to refine the neighbourhoods.
+/// @param knn_indices Integer matrix. Each row represents a given cell and
+/// the columns the neighbours. (0-indexed!)
+/// @param milor_params Named list. Contains the parameters for running the
+/// miloR approach.
+/// @param seed Integer. Seed for reproducibility.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @returns A list with the following elements:
+/// \itemize{
+///  \item index_cell - Integer. 0-indexed positions of the cells defining the
+///  neighbourhood.
+///  \item nhoods_i - Integer. 0-indexed positions of the cells in the
+///  neighbourhood.
+///  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
+///  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
+///  defaults to `1.0`.
+///  \item nrows - Integer. Number of cells in the matrix
+///  \item ncols - Integer. Number of refined neighbourhoods.
+///  \item kth_distances - The k-th distances for spatial FDR calculations.
+/// }
+///
 /// @export
 #[extendr]
 fn rs_make_milor_nhoods(
@@ -593,7 +620,7 @@ fn rs_make_milor_nhoods(
         None
     };
 
-    // Random sampling
+    // random sampling
     let n_cells = embd.nrows();
     let n_sample = ((n_cells as f64) * milor_params.prop).floor() as usize;
     let mut rng = StdRng::seed_from_u64(seed as u64);
@@ -606,7 +633,7 @@ fn rs_make_milor_nhoods(
         println!("Sampled {} vertices from {} cells", n_sample, n_cells);
     }
 
-    // Refinement
+    // refinement
     let indices_refined = refine_sampling_with_strategy(
         embd.as_ref(),
         &knn_indices,
@@ -618,7 +645,7 @@ fn rs_make_milor_nhoods(
         verbose,
     );
 
-    // Deduplicate
+    // deduplicate
     let mut unique_indices = indices_refined;
     unique_indices.sort_unstable();
     unique_indices.dedup();
@@ -632,10 +659,10 @@ fn rs_make_milor_nhoods(
         );
     }
 
-    // Build neighbourhood matrix
+    // build neighbourhood matrix
     let nhoods_triplets = build_nhood_matrix(&knn_indices, &unique_indices);
 
-    // Compute kth distances (FIX: remove extra sqrt)
+    // compute k-th distance
     let kth_distances = compute_kth_distances_from_matrix(
         embd.as_ref(),
         &knn_indices,
@@ -644,7 +671,7 @@ fn rs_make_milor_nhoods(
     );
 
     list!(
-        index_cell = unique_indices.r_int_convert_shift(),
+        index_cell = unique_indices.r_int_convert(),
         nhoods_i = nhoods_triplets.0,
         nhoods_j = nhoods_triplets.1,
         nhoods_x = nhoods_triplets.2,

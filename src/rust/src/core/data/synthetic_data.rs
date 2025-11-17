@@ -547,24 +547,6 @@ pub fn create_sparse_csr_data(
 // Specific sparse data ///
 ///////////////////////////
 
-/// Helper function to get the Batch effect strength
-///
-/// ### Params
-///
-/// * `s` - Type of KNN algorithm to use
-///
-/// ### Returns
-///
-/// Option of the BatchEffectStrength
-pub fn parse_batch_effect_strength(s: &str) -> Option<BatchEffectStrength> {
-    match s.to_lowercase().as_str() {
-        "weak" => Some(BatchEffectStrength::Weak),
-        "medium" => Some(BatchEffectStrength::Medium),
-        "strong" => Some(BatchEffectStrength::Strong),
-        _ => None,
-    }
-}
-
 #[derive(Clone, Copy, Debug)]
 pub enum BatchEffectStrength {
     /// Weak batch effects
@@ -584,7 +566,7 @@ pub enum BatchEffectStrength {
 /// ### Returns
 ///
 /// Option of the BatchEffectStrength
-pub fn parse_sample_bias(s: &str) -> Option<BatchEffectStrength> {
+pub fn parse_batch_effect_strength(s: &str) -> Option<BatchEffectStrength> {
     match s.to_lowercase().as_str() {
         "weak" => Some(BatchEffectStrength::Weak),
         "medium" => Some(BatchEffectStrength::Medium),
@@ -592,6 +574,7 @@ pub fn parse_sample_bias(s: &str) -> Option<BatchEffectStrength> {
         _ => None,
     }
 }
+
 #[derive(Clone, Copy, Debug)]
 pub enum SampleBias {
     /// Even distribution of cell types across samples
@@ -600,6 +583,24 @@ pub enum SampleBias {
     SlightlyUneven,
     /// Very uneven distribution with strong bias
     VeryUneven,
+}
+
+/// Helper function to get the Batch effect strength
+///
+/// ### Params
+///
+/// * `s` - Type of sample bias to use
+///
+/// ### Returns
+///
+/// Option of the SampleBias
+pub fn parse_sample_bias(s: &str) -> Option<SampleBias> {
+    match s.to_lowercase().as_str() {
+        "even" => Some(SampleBias::Even),
+        "slightly_uneven" => Some(SampleBias::SlightlyUneven),
+        "very_uneven" => Some(SampleBias::VeryUneven),
+        _ => None,
+    }
 }
 
 /// Structure to keep the CellTypeConfig
@@ -796,6 +797,98 @@ pub fn create_celltype_sparse_csr_data(
     };
 
     (csr, cell_type_labels, batch_labels)
+}
+
+/// Generate sample labels with configurable cell type bias
+///
+/// ### Params
+///
+/// * `cell_type_labels` - Vector of cell type assignments
+/// * `n_samples` - Number of samples to generate
+/// * `bias` - Level of bias in cell type distribution across samples
+/// * `seed` - Integer for reproducibility
+///
+/// ### Returns
+///
+/// Vector of sample labels with biased cell type distributions
+pub fn generate_sample_labels(
+    cell_type_labels: &[usize],
+    n_samples: usize,
+    bias: &SampleBias,
+    seed: usize,
+) -> Vec<usize> {
+    let mut rng = StdRng::seed_from_u64(seed as u64);
+    let n_cells = cell_type_labels.len();
+    let n_cell_types = cell_type_labels.iter().max().map(|&x| x + 1).unwrap_or(0);
+
+    let mut sample_labels: Vec<usize> = Vec::with_capacity(n_cells);
+
+    for &cell_type in cell_type_labels {
+        let sample = match bias {
+            SampleBias::Even => {
+                // uniform random assignment
+                (rng.random::<f64>() * n_samples as f64).floor() as usize
+            }
+            SampleBias::SlightlyUneven => {
+                // mild preference for certain samples based on cell type
+                let mut weights = vec![1.0; n_samples];
+                for s in 0..n_samples {
+                    let s_norm = s as f64 / (n_samples.max(1) - 1) as f64;
+                    let ct_norm = cell_type as f64 / (n_cell_types.max(1) - 1) as f64;
+                    let diff = (s_norm - ct_norm).abs();
+                    weights[s] = (-diff).exp();
+                }
+
+                let sum: f64 = weights.iter().sum();
+                for w in &mut weights {
+                    *w /= sum;
+                }
+
+                let u: f64 = rng.random();
+                let mut cumulative = 0.0;
+                let mut sample = 0;
+                for (s, &weight) in weights.iter().enumerate() {
+                    cumulative += weight;
+                    if u <= cumulative {
+                        sample = s;
+                        break;
+                    }
+                }
+                sample
+            }
+            SampleBias::VeryUneven => {
+                // strong preference for certain samples based on cell type
+                let mut weights = vec![0.1; n_samples];
+                for s in 0..n_samples {
+                    let s_norm = s as f64 / (n_samples.max(1) - 1) as f64;
+                    let ct_norm = cell_type as f64 / (n_cell_types.max(1) - 1) as f64;
+                    let diff = (s_norm - ct_norm).abs();
+                    weights[s] = (-4.0 * diff).exp();
+                }
+
+                let sum: f64 = weights.iter().sum();
+                for w in &mut weights {
+                    *w /= sum;
+                }
+
+                let u: f64 = rng.random();
+                let mut cumulative = 0.0;
+                let mut sample = 0;
+                for (s, &weight) in weights.iter().enumerate() {
+                    cumulative += weight;
+                    if u <= cumulative {
+                        sample = s;
+                        break;
+                    }
+                }
+                sample
+            }
+        };
+
+        sample_labels.push(sample.min(n_samples - 1));
+    }
+
+    sample_labels
 }
 
 /// Helper function to sample from a Gamma distribution

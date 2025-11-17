@@ -530,19 +530,22 @@ params_cistarget <- function(
 
 ### general --------------------------------------------------------------------
 
-# TODO - too many kNN parameters - refactor them out
-
 ### synthetic data -------------------------------------------------------------
 
 #' Default parameters for generation of synthetic data
 #'
 #' @param n_cells Integer. Number of cells.
 #' @param n_genes Integer. Number of genes.
+#' @param n_batches Integer. Number of batches.
 #' @param marker_genes List. A nested list that indicates which gene indices
 #' are markers for which cell.
-#' @param n_batches Integer. Number of batches.
 #' @param batch_effect_strength String. One of
 #' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
+#' @param n_samples Optional integer. Shall sample membership be added to the
+#' synthetic data. If you want sample information you need to provide
+#' `n_samples` and `sample_bias`.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
 #'
 #' @return A list with the parameters.
 #'
@@ -550,6 +553,7 @@ params_cistarget <- function(
 params_sc_synthetic_data <- function(
   n_cells = 1000L,
   n_genes = 100L,
+  n_batches = 1L,
   marker_genes = list(
     cell_type_1 = list(
       marker_genes = 0:9L
@@ -561,8 +565,9 @@ params_sc_synthetic_data <- function(
       marker_genes = 20:29L
     )
   ),
-  n_batches = 1L,
-  batch_effect_strength = c("strong", "medium", "weak")
+  batch_effect_strength = c("strong", "medium", "weak"),
+  n_samples = NULL,
+  sample_bias = NULL
 ) {
   batch_effect_strength <- match.arg(batch_effect_strength)
 
@@ -572,13 +577,23 @@ params_sc_synthetic_data <- function(
   checkmate::assertList(marker_genes, types = "list", names = "named")
   checkmate::qassert(n_batches, "I1")
   checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+  checkmate::qassert(n_samples, c("I1", "0"))
+  checkmate::assert(
+    checkmate::testNull(sample_bias),
+    checkmate::testChoice(
+      sample_bias,
+      c("even", "slightly_uneven", "very_uneven")
+    )
+  )
 
   list(
     n_cells = n_cells,
     n_genes = n_genes,
     marker_genes = marker_genes,
     n_batches = n_batches,
-    batch_effect_strength = batch_effect_strength
+    batch_effect_strength = batch_effect_strength,
+    n_samples = n_samples,
+    sample_bias = sample_bias
   )
 }
 
