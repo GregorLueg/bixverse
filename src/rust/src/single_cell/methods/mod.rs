@@ -5,7 +5,7 @@
 pub mod bbknn;
 pub mod doublet_detection;
 pub mod fast_mnn;
-pub mod milor;
+pub mod milo_r;
 pub mod scrublet;
 pub mod seacells;
 pub mod vision_hotspot;

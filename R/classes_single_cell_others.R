@@ -1,5 +1,9 @@
 # additional single cell classes and methods -----------------------------------
 
+# this file contains additional, smaller s3 classes relevant for single cell
+# analyses. general generics are found on the top of the file, otherwise you
+# have per class the class generation and specific methods, getters, setters.
+
 ## general generics ------------------------------------------------------------
 
 #' Get the ready obs data from various sub method
@@ -320,9 +324,22 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
   return(sc_hotspot)
 }
 
-### methods --------------------------------------------------------------------
+### functions ------------------------------------------------------------------
 
 #### getters -------------------------------------------------------------------
+
+#' @method get_params sc_hotspot
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.sc_hotspot(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
 
 #' @rdname get_params
 #'
@@ -351,19 +368,29 @@ get_params.sc_hotspot <- function(
   return(to_ret)
 }
 
-#' @method get_params sc_hotspot
+#' Get the hotspot gene membership table
+#'
+#' @param x The object from which to retrieve the hotspot gene membership
 #'
 #' @export
-S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
-  function(object, to_json = FALSE, pretty_json = FALSE) {
-    get_params.sc_hotspot(
-      object = object,
-      to_json = to_json,
-      pretty_json = pretty_json
-    )
-  }
+get_hotspot_membership <- function(x) {
+  UseMethod("get_hotspot_membership")
+}
 
-#### setters -------------------------------------------------------------------
+
+#' @rdname get_hotspot_membership
+#'
+#' @export
+get_hotspot_membership.sc_hotspot <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "sc_hotspot")
+
+  x[["module_memership"]]
+}
+
+#### methods -------------------------------------------------------------------
 
 #' Identify hotspot gene clusters
 #'
@@ -402,29 +429,6 @@ set_hotspot_membership.sc_hotspot <- function(
   x[["module_memership"]] <- gene_membership
 
   x
-}
-
-#### getters -------------------------------------------------------------------
-
-#' Get the hotspot gene membership table
-#'
-#' @param x The object from which to retrieve the hotspot gene membership
-#'
-#' @export
-get_hotspot_membership <- function(x) {
-  UseMethod("get_hotspot_membership")
-}
-
-#' @rdname get_hotspot_membership
-#'
-#' @export
-get_hotspot_membership.sc_hotspot <- function(
-  x
-) {
-  # checks
-  checkmate::assertClass(x, "sc_hotspot")
-
-  x[["module_memership"]]
 }
 
 ## miloR -----------------------------------------------------------------------
@@ -468,6 +472,7 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
     sample_counts = sample_counts,
     spatial_dist = spatial_dist,
     nhoods_info = NULL,
+    model = NULL,
     params = params
   )
 
@@ -476,16 +481,148 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
   return(sc_milor)
 }
 
-### neighbour hood tests -------------------------------------------------------
+### getters --------------------------------------------------------------------
+
+#' @method get_params sc_miloR
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("sc_miloR")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.sc_miloR(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.sc_miloR <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "sc_miloR"
+  )
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+
+  return(to_ret)
+}
+
+#' Get the differential abundance results
+#'
+#' @param x An object from which to get the differential abundance results
+#' from.
+#'
+#' @returns The differential abundance results stored in the object if found.
+#'
+#' @export
+get_differential_abundance_res <- function(x) {
+  UseMethod("get_differential_abundance_res")
+}
+
+#' @rdname get_differential_abundance_res
+#'
+#' @export
+get_differential_abundance_res.sc_miloR <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "sc_miloR")
+
+  res <- x[["nhoods_info"]]
+
+  if (is.null(res)) {
+    warning(paste(
+      "No differential abundance results found in x.",
+      "Did you run test_nhoods()?",
+      "Returning NULL."
+    ))
+  }
+
+  res
+}
+
+#' Get the fitted model
+#'
+#' @param x An object from which to get the differential abundance results
+#' from.
+#'
+#' @returns The model object, please refer to [edgeR::glmQLFTest()].
+#'
+#' @export
+get_model_fit <- function(x) {
+  UseMethod("get_model_fit")
+}
+
+#' @rdname get_model_fit
+#'
+#' @export
+get_model_fit.sc_miloR <- function(
+  x
+) {
+  # checks
+  checkmate::assertClass(x, "sc_miloR")
+
+  res <- x[["model"]]
+
+  if (is.null(res)) {
+    warning(paste(
+      "No DGEGLM results found in x.",
+      "Did you run test_nhoods()?",
+      "Returning NULL."
+    ))
+  }
+
+  res
+}
+
+#' Get the index cells
+#'
+#' @param x An object from which get the index cells.
+#'
+#' @returns The indices of the cells in the neighbourhood.
+#'
+#' @export
+get_index_cells <- function(x) {
+  UseMethod("get_index_cells")
+}
+
+#' @rdname get_index_cells
+#'
+#' @export
+get_index_cells.sc_miloR <- function(x) {
+  # checks
+  checkmate::assertClass(x, "sc_miloR")
+
+  x[["params"]]$index_cell
+}
+
+### methods --------------------------------------------------------------------
 
 #### helpers -------------------------------------------------------------------
 
 #' Spatial FDR correction for neighbourhoods
 #'
 #' @param nhoods Sparse matrix of cells x neighbourhoods
-#' @param pvalues Vector of p-values
-#' @param weighting Weighting scheme
-#' @param kth.distances Vector of k-th nearest neighbour distances
+#' @param pvalues Numeric vector. The p-values.
+#' @param weighting String. Weighting scheme, one of
+#' `c("k-distance", "graph-overlap")`
+#' @param kth_distances Numeric vector. The k-th nearest neighbour distances.
+#' Must be supplied if `weighting == "k-distance"`.
 #'
 #' @return Vector of spatially-corrected FDR values
 #'
@@ -494,7 +631,7 @@ spatial_fdr_correction <- function(
   nhoods,
   pvalues,
   weighting = c("k-distance", "graph-overlap"),
-  kth.distances = NULL
+  kth_distances = NULL
 ) {
   weighting <- match.arg(weighting)
 
@@ -502,7 +639,7 @@ spatial_fdr_correction <- function(
   checkmate::checkClass(nhoods, "dgCMatrix")
   checkmate::qassert(pvalues, "n+")
   checkmate::assertChoice(weighting, c("k-distance", "graph-overlap"))
-  checkmate::qassert(kth.distances, c("0", "N+"))
+  checkmate::qassert(kth_distances, c("0", "N+"))
 
   # handle NAs
   haspval <- !is.na(pvalues)
@@ -512,10 +649,10 @@ spatial_fdr_correction <- function(
 
   # weights
   if (weighting == "k-distance") {
-    if (is.null(kth.distances)) {
+    if (is.null(kth_distances)) {
       stop("k-distance weighting requires kth.distances")
     }
-    t.connect <- kth.distances[haspval]
+    t.connect <- kth_distances[haspval]
   } else if (weighting == "graph-overlap") {
     intersect_mat <- Matrix::crossprod(nhoods)
     diag(intersect_mat) <- 0
@@ -543,29 +680,50 @@ spatial_fdr_correction <- function(
   adjp
 }
 
-#### main function -------------------------------------------------------------
+#### neighbourhood testing -----------------------------------------------------
 
 #' Test neighbourhoods for differential abundance
 #'
-#' @param x sc_miloR x
+#' @description
+#' Performs differential abundance testing on single-cell neighbourhoods using
+#' edgeR's quasi-likelihood negative binomial framework. The function fits a
+#' generalised linear model to neighbourhood cell counts, tests for differential
+#' abundance between conditions, and applies spatial FDR correction to account
+#' for overlapping neighbourhoods. This implementation follows the approach
+#' described in Dann et al., using graph-based neighbourhoods to identify
+#' regions of significant compositional changes in single-cell data.
+#'
+#' @param x `sc_miloR` object for which to run the differential abundance
+#' analysis.
 #' @param design Formula for the experimental design
 #' @param design_df data.frame. Contains the metadata to be used for the
 #' generation of the model matrix.
+#' @param coef Optional string/integer. For more complex experimental designs,
+#' you can specify which coefficient to test. If NULL, tests the last
+#' coefficient in the design matrix (typically the main effect of interest).
 #' @param norm_method String. Normalisation method to use. One of
-#' `c("TMM", "RLE", "logMS")`
+#' `c("TMM", "RLE", "logMS")`. Defaults to TMM (trimmed mean of M-values).
 #' @param min_mean Numeric. Minimum mean count threshold for filtering
-#' neighbourhoods.
-#' @param robust Use robust dispersion estimation
+#' neighbourhoods. Neighbourhoods with mean counts below this value are excluded.
+#' Defaults to 0 (no filtering).
+#' @param robust Logical. If TRUE, uses robust estimation of the quasi-likelihood
+#' dispersion. Recommended for datasets with potential outliers. Defaults to TRUE.
 #' @param fdr_weighting String. Spatial FDR weighting scheme. One of
-#' `c("k-distance", "graph-overlap", "none")`.
+#' `c("k-distance", "graph-overlap", "none")`. k-distance uses the distance to
+#' the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
+#' Defaults to k-distance.
 #'
-#' @return data.table with test results per neighbourhood
+#' @return The `sc_miloR` object with added model and results from the
+#' differential abundance analysis.
+#'
+#' @references Dann et al., 2022, Nat Biotechnol
 #'
 #' @export
 test_nhoods <- function(
   x,
   design,
   design_df,
+  coef = NULL,
   norm_method = c("TMM", "RLE", "logMS"),
   min_mean = 0,
   robust = TRUE,
@@ -577,10 +735,11 @@ test_nhoods <- function(
 #' @rdname test_nhoods
 #'
 #' @export
-test_nhoods.sc_hotspot <- function(
+test_nhoods.sc_miloR <- function(
   x,
   design,
   design_df,
+  coef = NULL,
   norm_method = c("TMM", "RLE", "logMS"),
   min_mean = 0,
   robust = TRUE,
@@ -590,9 +749,10 @@ test_nhoods.sc_hotspot <- function(
   fdr_weighting <- match.arg(fdr_weighting)
 
   # checks
-  checkmate::assertClass(object, "sc_miloR")
+  checkmate::assertClass(x, "sc_miloR")
   checkmate::assertFormula(design)
   checkmate::assertDataFrame(design_df, row.names = "named")
+  checkmate::qassert(coef, c("0", "S1", "X1"))
   checkmate::qassert(min_mean, "N1")
   checkmate::qassert(robust, "B1")
   checkmate::assertChoice(norm_method, c("TMM", "RLE", "logMS"))
@@ -600,4 +760,171 @@ test_nhoods.sc_hotspot <- function(
     fdr_weighting,
     c("k-distance", "graph-overlap", "none")
   )
+
+  mm <- stats::model.matrix(design, data = design_df)
+
+  if (ncol(x$sample_counts) != nrow(mm)) {
+    stop(
+      "Design matrix (",
+      nrow(mm),
+      ") and sample counts (",
+      ncol(x$sample_counts),
+      ") dimensions don't match"
+    )
+  }
+
+  if (any(colnames(x$sample_counts) != rownames(mm))) {
+    if (!all(colnames(x$sample_counts) %in% rownames(mm))) {
+      stop("Sample names in counts and design matrix don't match")
+    }
+    warning("Reordering design matrix to match sample counts")
+    mm <- mm[colnames(x$sample_counts), ]
+  }
+
+  keep_nh <- if (min_mean > 0) {
+    rowMeans(x$sample_counts) >= min_mean
+  } else {
+    rep(TRUE, nrow(x$sample_counts))
+  }
+
+  dge <- edgeR::DGEList(
+    counts = x$sample_counts[keep_nh, , drop = FALSE],
+    lib.size = colSums(x$sample_counts)
+  )
+
+  if (norm_method %in% c("TMM", "RLE")) {
+    dge <- edgeR::calcNormFactors(dge, method = norm_method)
+  }
+
+  dge <- edgeR::estimateDisp(dge, mm)
+  fit <- edgeR::glmQLFit(dge, mm, robust = robust, legacy = TRUE)
+
+  if (is.null(coef)) {
+    coef <- ncol(mm)
+  }
+
+  res <- edgeR::topTags(
+    edgeR::glmQLFTest(fit, coef = coef),
+    sort.by = "none",
+    n = Inf
+  ) %>%
+    as.data.frame()
+
+  res$Nhood <- which(keep_nh)
+
+  if (fdr_weighting != "none") {
+    spatial_fdr <- spatial_fdr_correction(
+      nhoods = x$nhoods[, keep_nh, drop = FALSE],
+      pvalues = res$PValue,
+      weighting = fdr_weighting,
+      kth_distances = x$spatial_dist[keep_nh]
+    )
+    res$SpatialFDR <- spatial_fdr
+  } else {
+    res$SpatialFDR <- NA_real_
+  }
+
+  res <- data.table::setDT(res)
+  data.table::setcolorder(
+    res,
+    c("Nhood", "logFC", "logCPM", "F", "PValue", "FDR", "SpatialFDR")
+  )
+
+  x[["nhoods_info"]] <- res
+  x[["model"]] <- fit
+
+  return(x)
+}
+
+#### neighbourhood annotations -------------------------------------------------
+
+#' Add neighbourhood info on majority cell type
+#'
+#' @description
+#' This function adds cell type composition information to the `nhoods_info`
+#' slot within the `sc_miloR` object. For each neighbourhood, it calculates
+#' the proportion of the majority cell type and identifies which cell type
+#' is most abundant. This is useful for annotating differential abundance
+#' results with the cellular composition of each neighbourhood.
+#'
+#' @param x `sc_miloR` object on which to tag on additional neighbourhood
+#' information.
+#' @param cell_info Character vector. Represents the cell type annotations
+#' you wish to add to the different neighbourhoods. Must be the same length
+#' as the number of cells (rows) in the nhoods matrix.
+#'
+#' @return Modified `sc_miloR` object with updated `nhoods_info` containing
+#' `majority_celltype` and `majority_prop` columns.
+#'
+#' @export
+add_nhoods_info <- function(
+  x,
+  cell_info
+) {
+  UseMethod("add_nhoods_info")
+}
+
+#' @rdname add_nhoods_info
+#'
+#' @export
+add_nhoods_info.sc_miloR <- function(x, cell_info) {
+  # checks
+  checkmate::assertClass(x, "sc_miloR")
+  checkmate::qassert(cell_info, "S+")
+
+  # early return
+  if (is.null(x[["nhoods_info"]])) {
+    warning(paste(
+      "No neighbourhood information found.",
+      "Did you run test_nhoods() on the object?",
+      "Returning object as is."
+    ))
+    return(x)
+  }
+
+  # check dimensions
+  if (length(cell_info) != nrow(x$nhoods)) {
+    stop(
+      "Length of cell_info (",
+      length(cell_info),
+      ") doesn't match number of cells in nhoods (",
+      nrow(x$nhoods),
+      ")"
+    )
+  }
+
+  nhood_indices <- Matrix::which(x$nhoods != 0, arr.ind = TRUE)
+
+  celltype_counts <- table(
+    celltype = cell_info[nhood_indices[, 1]],
+    nhood = nhood_indices[, 2]
+  ) %>%
+    t() %>%
+    unclass() %>%
+    as.matrix()
+
+  # calculate majority cell type and proportion for each neighbourhood
+  nhood_info <- data.table::data.table(
+    Nhood = as.integer(rownames(celltype_counts))
+  )
+
+  nhood_info[, `:=`(
+    majority_celltype = colnames(celltype_counts)[apply(
+      celltype_counts,
+      1,
+      which.max
+    )],
+    majority_prop = apply(celltype_counts, 1, max) / rowSums(celltype_counts)
+  )]
+
+  x[["nhoods_info"]] <- x[["nhoods_info"]][
+    nhood_info,
+    on = "Nhood",
+    `:=`(
+      majority_celltype = i.majority_celltype,
+      majority_prop = i.majority_prop
+    )
+  ]
+
+  x
 }

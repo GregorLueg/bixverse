@@ -383,7 +383,7 @@ S7::method(get_miloR_abundances_sc, single_cell_exp) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  samples <- unlist(sc_object[[sample_id_col]], use.names = FALSE)
+  samples <- unlist(object[[sample_id_col]], use.names = FALSE)
 
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
@@ -442,6 +442,7 @@ S7::method(get_miloR_abundances_sc, single_cell_exp) <- function(
   params <- miloR_params
   params[["used_emb"]] <- embd_to_use
   params[["no_embd_to_use"]] <- no_embd_to_use
+  params[["index_cell"]] <- milor_res$index_cell
 
   miloR_obj <- new_sc_miloR_res(
     nhoods = nhoods,

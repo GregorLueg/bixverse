@@ -2,23 +2,25 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{test_nhoods}
 \alias{test_nhoods}
-\alias{test_nhoods.sc_hotspot}
+\alias{test_nhoods.sc_miloR}
 \title{Test neighbourhoods for differential abundance}
 \usage{
 test_nhoods(
   x,
   design,
   design_df,
+  coef = NULL,
   norm_method = c("TMM", "RLE", "logMS"),
   min_mean = 0,
   robust = TRUE,
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 
-\method{test_nhoods}{sc_hotspot}(
+\method{test_nhoods}{sc_miloR}(
   x,
   design,
   design_df,
+  coef = NULL,
   norm_method = c("TMM", "RLE", "logMS"),
   min_mean = 0,
   robust = TRUE,
@@ -26,27 +28,46 @@ test_nhoods(
 )
 }
 \arguments{
-\item{x}{sc_miloR x}
+\item{x}{\code{sc_miloR} object for which to run the differential abundance
+analysis.}
 
 \item{design}{Formula for the experimental design}
 
 \item{design_df}{data.frame. Contains the metadata to be used for the
 generation of the model matrix.}
 
+\item{coef}{Optional string/integer. For more complex experimental designs,
+you can specify which coefficient to test. If NULL, tests the last
+coefficient in the design matrix (typically the main effect of interest).}
+
 \item{norm_method}{String. Normalisation method to use. One of
-\code{c("TMM", "RLE", "logMS")}}
+\code{c("TMM", "RLE", "logMS")}. Defaults to TMM (trimmed mean of M-values).}
 
 \item{min_mean}{Numeric. Minimum mean count threshold for filtering
-neighbourhoods.}
+neighbourhoods. Neighbourhoods with mean counts below this value are excluded.
+Defaults to 0 (no filtering).}
 
-\item{robust}{Use robust dispersion estimation}
+\item{robust}{Logical. If TRUE, uses robust estimation of the quasi-likelihood
+dispersion. Recommended for datasets with potential outliers. Defaults to TRUE.}
 
 \item{fdr_weighting}{String. Spatial FDR weighting scheme. One of
-\code{c("k-distance", "graph-overlap", "none")}.}
+\code{c("k-distance", "graph-overlap", "none")}. k-distance uses the distance to
+the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
+Defaults to k-distance.}
 }
 \value{
-data.table with test results per neighbourhood
+The \code{sc_miloR} object with added model and results from the
+differential abundance analysis.
 }
 \description{
-Test neighbourhoods for differential abundance
+Performs differential abundance testing on single-cell neighbourhoods using
+edgeR's quasi-likelihood negative binomial framework. The function fits a
+generalised linear model to neighbourhood cell counts, tests for differential
+abundance between conditions, and applies spatial FDR correction to account
+for overlapping neighbourhoods. This implementation follows the approach
+described in Dann et al., using graph-based neighbourhoods to identify
+regions of significant compositional changes in single-cell data.
+}
+\references{
+Dann et al., 2022, Nat Biotechnol
 }

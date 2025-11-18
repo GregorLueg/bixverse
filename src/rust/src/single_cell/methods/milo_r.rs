@@ -284,7 +284,7 @@ fn find_nearest_in_subset(
     let median_row = MatRef::from_row_major_slice(median_point, 1, embd.ncols()).row(0);
 
     candidates
-        .iter()
+        .par_iter()
         .map(|&idx| {
             let dist = compute_distance_knn(median_row, embd.row(idx), metric);
             (idx, dist)
@@ -309,6 +309,7 @@ fn find_nearest_bruteforce(embd: MatRef<f32>, median_point: &[f32], metric: &Ann
     let median_row = MatRef::from_row_major_slice(median_point, 1, embd.ncols()).row(0);
 
     (0..embd.nrows())
+        .into_par_iter()
         .map(|idx| {
             let dist = compute_distance_knn(median_row, embd.row(idx), metric);
             (idx, dist)

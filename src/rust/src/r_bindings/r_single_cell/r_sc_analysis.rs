@@ -4,7 +4,7 @@ use rand::prelude::*;
 
 use crate::core::base::stats::calc_fdr;
 use crate::single_cell::dge_pathway_scores::*;
-use crate::single_cell::methods::milor::*;
+use crate::single_cell::methods::milo_r::*;
 use crate::single_cell::methods::vision_hotspot::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::*;

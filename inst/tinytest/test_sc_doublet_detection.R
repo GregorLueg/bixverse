@@ -25,7 +25,7 @@ metrics_helper <- function(cm) {
 
 ## initial data ----------------------------------------------------------------
 
-syn_data <- generate_single_cell_test_data()
+syn_data <- generate_single_cell_test_data(seed = 123L)
 
 # Get cell indices by cell type
 ct1_idx <- which(syn_data$obs$cell_grp == "cell_type_1")
