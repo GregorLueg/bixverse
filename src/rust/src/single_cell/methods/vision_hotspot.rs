@@ -4,8 +4,6 @@ use indexmap::IndexSet;
 use rayon::prelude::*;
 use std::time::Instant;
 
-use std::collections::HashSet;
-
 use crate::assert_same_len;
 use crate::core::base::linear_algebra::linear_regression;
 use crate::core::base::stats::{calc_fdr, inv_logit, logit, z_scores_to_pval};
@@ -1015,36 +1013,30 @@ fn danb_model(
 ) -> (Vec<f32>, Vec<f32>, Vec<f32>) {
     let n = n_cells as f32;
     let total: f32 = umi_counts.iter().sum();
-
     let tj: f32 = gene.data_raw.iter().map(|&x| x as f32).sum();
 
-    let mu = umi_counts
-        .iter()
-        .map(|&ti| tj * ti / total)
-        .collect::<Vec<f32>>();
+    let mu: Vec<f32> = umi_counts.iter().map(|&ti| tj * ti / total).collect();
+
+    // Build dense array for O(1) lookups
+    let mut data_dense = vec![0.0f32; n_cells];
+    for (&idx, &val) in gene.indices.iter().zip(&gene.data_raw) {
+        data_dense[idx as usize] = val as f32;
+    }
 
     let mut sum_sq = 0_f32;
-    for (&idx, &val) in gene.indices.iter().zip(&gene.data_raw) {
-        let diff = val as f32 - mu[idx as usize];
+    for i in 0..n_cells {
+        let diff = data_dense[i] - mu[i];
         sum_sq += diff * diff;
     }
 
-    for i in 0..n_cells {
-        if !gene.indices.contains(&(i as u32)) {
-            sum_sq += mu[i] * mu[i];
-        }
-    }
     let vv = sum_sq / (n - 1.0);
-
     let tis_sq_sum: f32 = umi_counts.iter().map(|&ti| ti.powi(2)).sum();
     let mut size = ((tj * tj) / total) * (tis_sq_sum / total) / ((n - 1.0) * vv - tj);
 
-    let min_size = 1e-10;
     if size < 0.0 {
         size = 1e9;
-    }
-    if size < min_size && size >= 0.0 {
-        size = min_size;
+    } else if size < 1e-10 {
+        size = 1e-10;
     }
 
     let var: Vec<f32> = mu.iter().map(|&m| m * (1.0 + m / size)).collect();
@@ -1391,9 +1383,11 @@ impl<'a> Hotspot<'a> {
         let mut z_scores: Vec<f64> = Vec::with_capacity(res.len());
 
         for (idx, c, z) in res {
-            gene_indices.push(idx);
-            gaery_c.push(c as f64);
-            z_scores.push(z as f64);
+            if !z.is_nan() {
+                gene_indices.push(idx);
+                gaery_c.push(c as f64);
+                z_scores.push(z as f64);
+            }
         }
 
         let end_calculations = start_calculation.elapsed();
@@ -1437,6 +1431,8 @@ impl<'a> Hotspot<'a> {
         verbose: bool,
     ) -> Result<HotSpotGeneRes, String> {
         const GENE_BATCH_SIZE: usize = 1000;
+
+        let start_all = Instant::now();
 
         let no_genes = gene_indices.len();
         let no_batches = no_genes.div_ceil(GENE_BATCH_SIZE);
@@ -1487,9 +1483,11 @@ impl<'a> Hotspot<'a> {
             let mut batch_z_scores: Vec<f64> = Vec::with_capacity(batch_res.len());
 
             for (idx, c, z) in batch_res {
-                batch_gene_indices.push(idx);
-                batch_gaery_c.push(c as f64);
-                batch_z_scores.push(z as f64);
+                if z.is_finite() {
+                    batch_gene_indices.push(idx);
+                    batch_gaery_c.push(c as f64);
+                    batch_z_scores.push(z as f64);
+                }
             }
 
             let end_calc = start_calc.elapsed();
@@ -1513,6 +1511,12 @@ impl<'a> Hotspot<'a> {
 
         let p_vals = z_scores_to_pval(&z_scores, "twosided")?;
         let fdrs = calc_fdr(&p_vals);
+
+        let end_total = start_all.elapsed();
+
+        if verbose {
+            println!("Finished the full run in : {:.2?}.", end_total);
+        }
 
         Ok(HotSpotGeneRes {
             gene_idx: gene_indices,
@@ -1717,10 +1721,12 @@ impl<'a> Hotspot<'a> {
         let mut z_mat = Mat::zeros(n_genes, n_genes);
 
         for (i, j, lc, z) in results {
-            lc_mat[(i, j)] = lc;
-            lc_mat[(j, i)] = lc;
-            z_mat[(i, j)] = z;
-            z_mat[(j, i)] = z;
+            if z.is_finite() {
+                lc_mat[(i, j)] = lc;
+                lc_mat[(j, i)] = lc;
+                z_mat[(i, j)] = z;
+                z_mat[(j, i)] = z;
+            }
         }
 
         let lc_maxs = compute_local_cov_pairs_max(&self.node_degrees, &counts_mat);
@@ -1777,8 +1783,6 @@ impl<'a> Hotspot<'a> {
 
         let mut lc_mat = Mat::zeros(n_genes, n_genes);
         let mut z_mat = Mat::zeros(n_genes, n_genes);
-
-        let mut seen_pairs = HashSet::new();
 
         if verbose {
             println!("Processing {} genes in {} batches", n_genes, n_batches);
@@ -1915,8 +1919,8 @@ impl<'a> Hotspot<'a> {
                     .collect();
 
                 for (i, j, lc, z, lc_max) in results {
-                    if !seen_pairs.insert((i, j)) {
-                        println!("DUPLICATE: ({}, {})", i, j);
+                    if !z.is_finite() {
+                        continue;
                     }
                     let normalised_lc = if lc_max > 0.0 { lc / lc_max } else { 0.0 };
 

@@ -75,3 +75,10 @@ calculate the auto-correlation of a given gene in the kNN graph based on
 the chosen embedding. This can be used to identify genes that have strong
 local correlations and vary across the kNN graph.
 }
+\details{
+Should a gene not be found in sufficient cells, the gene will be
+automatically filtered out from the results. This can occur for example
+if you have filtered out the cells that contain a given gene. The underlying
+genes are still available, but the cells that might contain them are not
+included.
+}

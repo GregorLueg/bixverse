@@ -504,6 +504,13 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 #' @returns A data.table with the auto-correlations on a per gene basis and
 #' various statistics.
 #'
+#' @details
+#' Should a gene not be found in sufficient cells, the gene will be
+#' automatically filtered out from the results. This can occur for example
+#' if you have filtered out the cells that contain a given gene. The underlying
+#' genes are still available, but the cells that might contain them are not
+#' included.
+#'
 #' @export
 hotspot_autocor_sc <- S7::new_generic(
   name = "hotspot_autocor_sc",
@@ -654,6 +661,12 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns A `sc_hotspot` class that can be used for subsequent analysis.
+#'
+#' @details
+#' Should a gene not be found in sufficient cells, the pairs with this gene
+#' will be set to 0. Please ensure prior to running the function that you
+#' are only calculating gene-gene auto-correlations that occur in sufficient
+#' cells.
 #'
 #' @export
 hotspot_gene_cor_sc <- S7::new_generic(
