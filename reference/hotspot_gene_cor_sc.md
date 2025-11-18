@@ -96,3 +96,10 @@ hotspot_gene_cor_sc(
 ## Value
 
 A `sc_hotspot` class that can be used for subsequent analysis.
+
+## Details
+
+Should a gene not be found in sufficient cells, the pairs with this gene
+will be set to 0. Please ensure prior to running the function that you
+are only calculating gene-gene auto-correlations that occur in
+sufficient cells.

@@ -99,3 +99,11 @@ hotspot_autocor_sc(
 
 A data.table with the auto-correlations on a per gene basis and various
 statistics.
+
+## Details
+
+Should a gene not be found in sufficient cells, the gene will be
+automatically filtered out from the results. This can occur for example
+if you have filtered out the cells that contain a given gene. The
+underlying genes are still available, but the cells that might contain
+them are not included.
