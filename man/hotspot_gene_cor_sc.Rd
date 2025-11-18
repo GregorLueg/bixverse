@@ -72,3 +72,9 @@ A \code{sc_hotspot} class that can be used for subsequent analysis.
 This method implements the HotSpot approach (see DeTomaso, et al.) to
 calculate the local gene-gene correlations and their Z-scores.
 }
+\details{
+Should a gene not be found in sufficient cells, the pairs with this gene
+will be set to 0. Please ensure prior to running the function that you
+are only calculating gene-gene auto-correlations that occur in sufficient
+cells.
+}
