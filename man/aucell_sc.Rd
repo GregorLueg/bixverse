@@ -27,13 +27,16 @@ larger data sets.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-data.table with the DGE results from the test.
+AUCell results in form of a matrix that is cells x gene sets.
 }
 \description{
-Calculates an AUC-type score akin to AUCell across the gene sets. You have
-the options to calculate the AUC. Two options here: calculate this
-with proper AUROC calculations (useful for marker gene expression, use the
-\code{"auroc"} version) or based on the Mann-Whitney statistic (useful for pathway
-activity measurs, use the \code{"wilcox"}). Data can be streamed in chunks of 50k
-cells per or loaded in in one go.
+Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
+et al. You have the options to calculate the AUC. Two options here: calculate
+this with proper AUROC calculations (useful for marker gene expression, use
+the \code{"auroc"} version) or based on the Mann-Whitney statistic (useful for
+pathway activity measurs, use the \code{"wilcox"}). Data can be streamed in chunks
+of 50k cells per or loaded in in one go.
+}
+\references{
+Aibar, et al., Nat Methods, 2017
 }

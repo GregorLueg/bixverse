@@ -286,17 +286,107 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
   return(dge_dt_final)
 }
 
+## module scoring --------------------------------------------------------------
+
+#' Calculate module activity scores
+#'
+#' @description
+#' Implements the approach from Tirosh et al into bixverse, i.e., the
+#' AddModuleScore functionality from Seurat. For each module (gene set),
+#' computes the average expression of genes in the set minus the average
+#' expression of randomly selected control genes from the same expression bins.
+#' Genes are binned based on their average expression across cells to ensure
+#' controls are expression-matched.
+#'
+#' @param object `single_cell_exp` class.
+#' @param gs_list Named list. The elements have the gene identifiers of the
+#' respective gene sets.
+#' @param n_bins Integer. Number of bins to use. Defaults to `24L`.
+#' @param n_ctrl Integer. Number of control genes to use per gene for each gene
+#' set. Defaults to `100L`.
+#' @param seed Integer. The random seed.
+#' @param streaming Boolean. Shall the cell and gene data be streamed in.
+#' Useful for larger data sets.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns description
+#'
+#' @references
+#' Tirosh et al, Science (2016)
+#'
+#' @export
+module_scores_sc <- S7::new_generic(
+  name = "aucell_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    gs_list,
+    n_bins = 24L,
+    n_ctrl = 100L,
+    seed = 42L,
+    streaming = FALSE,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method module_scores_sc single_cell_exp
+#'
+#' @export
+S7::method(module_scores_sc, single_cell_exp) <- function(
+  object,
+  gs_list,
+  n_bins = 24L,
+  n_ctrl = 100L,
+  seed = 42L,
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::checkTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertList(gs_list, types = "character", names = "named")
+  checkmate::qassert(n_bins, "I1")
+  checkmate::qassert(n_ctrl, "I1")
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # get the gene indices
+  gs_list <- purrr::map(gs_list, \(e) {
+    get_gene_indices(x = object, gene_ids = e, rust_index = TRUE)
+  })
+
+  # let's get rusty...
+  module_res <- rs_module_scoring(
+    f_path_cells = get_rust_count_cell_f_path(object),
+    f_path_genes = get_rust_count_gene_f_path(object),
+    gs_list = gs_list,
+    cells_to_keep = get_cells_to_keep(object),
+    nbin = n_bins,
+    ctrl = n_ctrl,
+    seed = seed,
+    streaming = streaming,
+    verbose = .verbose
+  )
+
+  colnames(module_res) <- names(gs_list)
+  rownames(module_res) <- get_cell_names(object, filtered = TRUE)
+
+  module_res
+}
+
 ## aucell ----------------------------------------------------------------------
 
 #' Calculate AUC scores (akin to AUCell)
 #'
 #' @description
-#' Calculates an AUC-type score akin to AUCell across the gene sets. You have
-#' the options to calculate the AUC. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression, use the
-#' `"auroc"` version) or based on the Mann-Whitney statistic (useful for pathway
-#' activity measurs, use the `"wilcox"`). Data can be streamed in chunks of 50k
-#' cells per or loaded in in one go.
+#' Calculates an AUC-type score akin to AUCell across the gene sets, see Aibar
+#' et al. You have the options to calculate the AUC. Two options here: calculate
+#' this with proper AUROC calculations (useful for marker gene expression, use
+#' the `"auroc"` version) or based on the Mann-Whitney statistic (useful for
+#' pathway activity measurs, use the `"wilcox"`). Data can be streamed in chunks
+#' of 50k cells per or loaded in in one go.
 #'
 #' @param object `single_cell_exp` class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
@@ -307,9 +397,11 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' larger data sets.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return data.table with the DGE results from the test.
+#' @return AUCell results in form of a matrix that is cells x gene sets.
 #'
 #' @export
+#'
+#' @references Aibar, et al., Nat Methods, 2017
 aucell_sc <- S7::new_generic(
   name = "aucell_sc",
   dispatch_args = "object",

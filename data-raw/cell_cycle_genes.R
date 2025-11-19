@@ -1,17 +1,17 @@
-# cell cycle scoring -----------------------------------------------------------
+# process cell cycle genes from seurat -----------------------------------------
+
+## libraries -------------------------------------------------------------------
 
 library(Seurat)
+library(biomaRt)
+
+## data ------------------------------------------------------------------------
 
 s.genes <- cc.genes$s.genes
 g2m.genes <- cc.genes$g2m.genes
 
+## get ensembl identifiers -----------------------------------------------------
 
-BiocManager::install("biomaRt")
-
-
-library(biomaRt)
-
-# Connect to Ensembl
 mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
 ensembl_set1 <- getBM(
@@ -36,6 +36,4 @@ ensembl_set2[, set := "G2/M phase"]
 
 cell_cycle_genes <- rbindlist(list(ensembl_set1, ensembl_set2))
 
-usethis::use_data(my_pkg_data)
-
-usethis::use_data_raw("seurat_cell_cycle")
+usethis::use_data(cell_cycle_genes, overwrite = TRUE)

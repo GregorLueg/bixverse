@@ -20,3 +20,4 @@
 ^target$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
+^data-raw$

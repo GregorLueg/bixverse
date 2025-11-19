@@ -197,6 +197,111 @@ expect_true(
   )
 )
 
+## module scores ---------------------------------------------------------------
+
+module_scores <- module_scores_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  .verbose = FALSE
+)
+
+module_scores_streaming <- module_scores_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  .verbose = FALSE,
+  streaming = TRUE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    module_scores,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "module scores what you'd expect"
+  )
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    module_scores_streaming,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "module scores what you'd expect (streaming version)"
+  )
+)
+
+expect_equivalent(
+  current = module_scores,
+  target = module_scores_streaming,
+  info = paste(
+    "the two versions are equivalent"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_1,
+    "markers_cell_type_1"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_1
+      ),
+      "markers_cell_type_1"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 1)"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_2,
+    "markers_cell_type_2"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_2
+      ),
+      "markers_cell_type_2"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 2)"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_3,
+    "markers_cell_type_3"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_3
+      ),
+      "markers_cell_type_3"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 3)"
+  )
+)
+
 ## vision pathway score --------------------------------------------------------
 
 set.seed(42L)

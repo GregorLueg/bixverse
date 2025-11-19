@@ -109,7 +109,7 @@ fn rs_calculate_dge_mann_whitney(
 // Pathway activities //
 ////////////////////////
 
-/// Calculate module activity scores
+/// Calculate module activity scores in Rust
 ///
 /// @description
 /// Calculates module activity scores following Seurat's `AddModuleScore`.
@@ -177,11 +177,11 @@ fn rs_module_scoring(
         verbose,
     )?;
 
-    let nrows = module_scores.len();
-    let ncols = module_scores[0].len();
+    let nrows = module_scores[0].len(); // cells
+    let ncols = module_scores.len(); // gene sets
 
     Ok(RMatrix::new_matrix(nrows, ncols, |r, c| {
-        module_scores[r][c] as f64
+        module_scores[c][r] as f64
     }))
 }
 
