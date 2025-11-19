@@ -8,6 +8,7 @@
 ^\.pre-commit-config\.yaml$
 ^_pkgdown\.yml$
 ^bixverse\.Rproj$
+^data-raw$
 ^doc$
 ^docs$
 ^misc$
@@ -20,4 +21,3 @@
 ^target$
 ^vignettes/*_files$
 ^vignettes/\.quarto$
-^data-raw$
