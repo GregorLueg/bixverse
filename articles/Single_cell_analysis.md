@@ -358,7 +358,7 @@ matrix <- get_sc_counts(
   return_format = "gene"
 )
 tictoc::toc()
-#> 0.017 sec elapsed
+#> 0.018 sec elapsed
 
 
 ## matrices can also be accessed with sinle brackets
