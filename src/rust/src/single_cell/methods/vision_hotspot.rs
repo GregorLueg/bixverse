@@ -110,7 +110,7 @@ fn calculate_vision_scores_for_cell(
         }
     };
 
-    // general cell statistics
+    // Cell-level statistics (ALL genes including zeros)
     let sum: f32 = cell.data_norm.iter().map(|x| x.to_f32()).sum();
     let sum_sq: f32 = cell
         .data_norm
@@ -121,29 +121,27 @@ fn calculate_vision_scores_for_cell(
         })
         .sum();
 
-    let mu_j = sum / total_genes as f32;
-    let sigma_sq_j = (sum_sq / total_genes as f32) - (mu_j * mu_j);
+    let mu_cell = sum / total_genes as f32;
+    let var_cell = (sum_sq / total_genes as f32) - (mu_cell * mu_cell);
+    let sigma_cell = var_cell.sqrt();
 
-    // score the signatures
+    // Score signatures
     signatures
         .iter()
         .map(|sig| {
             let sum_pos: f32 = sig.positive.iter().map(|&idx| get_expr(idx)).sum();
             let sum_neg: f32 = sig.negative.iter().map(|&idx| get_expr(idx)).sum();
 
-            let n = sig.positive.len() as f32;
-            let m = sig.negative.len() as f32;
-            let total = n + m;
+            let signature_size = (sig.positive.len() + sig.negative.len()) as f32;
 
-            let s_j = (sum_pos - sum_neg) / total;
-            let e_rj = ((n - m) / total) * mu_j;
-            let var_rj = sigma_sq_j / total;
-
-            if var_rj > 0.0 {
-                (s_j - e_rj) / var_rj.sqrt()
-            } else {
-                0.0
+            if signature_size == 0.0 || sigma_cell == 0.0 {
+                return 0.0;
             }
+
+            let mean_sig = (sum_pos - sum_neg) / signature_size;
+
+            // R "znorm_columns" formula
+            (mean_sig - mu_cell) / sigma_cell
         })
         .collect()
 }
