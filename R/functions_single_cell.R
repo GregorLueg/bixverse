@@ -13,7 +13,8 @@ get_used_cells <- function(x) {
   if (is.null(res)) {
     warning(paste(
       "No information on the used cells for this object were found.",
-      "Please ensure that you regenerate the data."
+      "Please ensure that you regenerate the data. Likely it was done with",
+      "older version of the package."
     ))
   }
 

@@ -70,9 +70,24 @@ A \code{sc_hotspot} class that can be used for subsequent analysis.
 }
 \description{
 This method implements the HotSpot approach (see DeTomaso, et al.) to
-calculate the local gene-gene correlations and their Z-scores.
+calculate the local gene-gene correlations and their Z-scores. Ideally, you
+want to identify first informative genes with significant local correlation
+via \code{\link[=hotspot_autocor_sc]{hotspot_autocor_sc()}}. This function calculates pairwise
+between the chosen genes are evaluated using the cell-cell
+similarity map, enabling detection of co-expression even when genes are
+sparsely expressed in the same manifold regions but rarely in the same cells.
+For each gene pair, a local correlation statistic is computed and compared
+against a null model where one gene's expression is fixed whilst the other is
+assumed independent; Z-scores are calculated bidirectionally and the most
+conservative retained.
 }
 \details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}} if \code{cells_to_take = NULL}. The kNN graph for
+this function will be regenerated during the function call as the distances
+are not normally stored. Future implementations might be designed to use a
+provided kNN graph with distances.
+
 Should a gene not be found in sufficient cells, the pairs with this gene
 will be set to 0. Please ensure prior to running the function that you
 are only calculating gene-gene auto-correlations that occur in sufficient

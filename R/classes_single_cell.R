@@ -411,7 +411,7 @@ set_snn_graph.sc_cache <- function(x, snn_graph, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertClass(snn_graph, "igraph")
-  checkmate::qassert(cells_used, "I1")
+  checkmate::qassert(cells_used, c("I+", "0"))
 
   if (is.null(cells_used)) {
     warning(

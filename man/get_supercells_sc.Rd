@@ -76,7 +76,16 @@ aggregation method.
 \description{
 This function implements the meta cell aggregation from Bilous, et al.
 The core idea is to use the walktrap community detection on the kNN graph.
-For details, please refer to the paper.
+Briefly, either the provided kNN graph in the object will be used or you
+can regenerate that one (see parameters). The walk trap algorithm, a
+community detection algorithm that uses short random walks, is applied to
+the kNN graph and the number of cuts (i.e., final resulting communities) is
+defined by the \code{graining_factor}.
+}
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}, if cells_to_use is set to \code{NULL}. This is
+the default behaviour of the function.
 }
 \references{
 Bilous, et al. BMC Bioinform., 2022

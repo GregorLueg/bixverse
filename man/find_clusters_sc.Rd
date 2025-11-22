@@ -20,3 +20,8 @@ The object with added clustering in the obs table.
 This function will apply Leiden clustering on the sNN graph with the
 given resolution and add a column to the obs table.
 }
+\details{
+The function will be executed on the cells that were used during the
+generation of the sNN graph. Please refer to
+\code{\link[=find_neighbours_sc]{find_neighbours_sc()}} for details.
+}

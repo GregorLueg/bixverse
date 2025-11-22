@@ -36,6 +36,13 @@ cell it indicates poor mixing for that cell specifically.
 Large number of positive tests indicate bad mixing overall. For more details,
 please see Büttner et al.
 }
+\details{
+Internally, the kBET scores will be calculated against the kNN graph that is
+stored in the object. Should you be interested in calculating the kBET with
+a different set of cells, you will have to define these via
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}} and rerun the kNN graph generation, see
+\code{\link[=find_neighbours_sc]{find_neighbours_sc()}}.
+}
 \references{
 Büttner, et al., Nat. Methods, 2019
 }

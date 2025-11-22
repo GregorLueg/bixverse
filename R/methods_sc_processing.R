@@ -557,17 +557,17 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 
   object <- set_pca_factors(
     x = object,
-    pca_factors = pca_factor,
+    pca_factor = pca_factors,
     cells_used = get_cells_to_keep(object)
   )
   object <- set_pca_loadings(
     x = object,
-    pca_loadings = pca_loadings,
+    pca_loading = pca_loadings,
     cells_used = get_cells_to_keep(object)
   )
   object <- set_pca_singular_vals(
     x = object,
-    singular_values = singular_values[1:no_pcs],
+    singular_vals = singular_values[1:no_pcs],
     cells_used = get_cells_to_keep(object)
   )
 

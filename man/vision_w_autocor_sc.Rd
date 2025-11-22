@@ -76,6 +76,14 @@ correlation values, answering the question if a given signature shows non-
 random enrichment on the kNN graph. The kNN graph (and distance measures)
 will be generated on-the-fly based on the embedding you wish to use.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you wish to apply it to a different set
+of cells, you will have to change that parameter. The kNN graph for this
+function will be regenerated during the function call as the distances are
+not normally stored. Future implementations might be designed to use a
+provided kNN graph with distances.
+}
 \references{
 DeTomaso, et al., Nat. Commun., 2019
 }

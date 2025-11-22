@@ -41,6 +41,12 @@ an embedding only and not fully corrected count matrix. The function will
 iterate through the batches, identify the MNN and generate correction vectors
 and generate a corrected embedding which is added to the function.
 }
+\details{
+Internally, the fastMNN algorithm will be run against the cells that are
+defined by \code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. The PCA and the kNN graphs will
+be recalculated as specific normalisations and other calculations are needed
+(especially the indices of the approximation methods).
+}
 \references{
 Haghverdi, et al., Nat Biotechnol, 2018
 }

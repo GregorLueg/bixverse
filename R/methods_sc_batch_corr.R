@@ -13,6 +13,13 @@
 #' Large number of positive tests indicate bad mixing overall. For more details,
 #' please see Büttner et al.
 #'
+#' @details
+#' Internally, the kBET scores will be calculated against the kNN graph that is
+#' stored in the object. Should you be interested in calculating the kBET with
+#' a different set of cells, you will have to define these via
+#' [bixverse::set_cells_to_keep()] and rerun the kNN graph generation, see
+#' [bixverse::find_neighbours_sc()].
+#'
 #' @param object `single_cell_exp` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
@@ -102,6 +109,12 @@ S7::method(calculate_kbet_sc, single_cell_exp) <- function(
 #' can choose the way to combine them. The choices are union (of Top x HVG per
 #' batch), based on the average variance per batch or only take genes that are
 #' amongst the Top X HVG in all batches.
+#'
+#' @details
+#' Internally, the batch-aware HVG will be calculated within the cells that are
+#' defined by [bixverse::set_cells_to_keep()]. If you have not set this
+#' parameter, the function will use all cells that passed initial thresholding
+#' during generation of the object.
 #'
 #' @param object `single_cell_exp` class.
 #' @param batch_column String. The column name of the batch column in the obs
@@ -234,6 +247,14 @@ S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
 #' Subsequently, it leverages UMAP connectivity calculations to reduce spurious
 #' connections. For more details, please refer to Polański, et al.
 #'
+#' @details
+#' Internally, the BBKNN will be run with the cells that are defined by the
+#' embedding and the indices of the embedding will be used to define the indices
+#' of the k-nearest neighbours. The batch index will be derived by the cells
+#' that were set by [bixverse::set_cells_to_keep()]. You need to ensure that
+#' this is consistent between embedding and the cells used to generate the batch
+#' index.
+#'
 #' @param object `single_cell_exp` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
@@ -362,6 +383,12 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
     message("Running BBKNN algorithm.")
   }
 
+  cell_indices <- get_used_cells(embd)
+
+  if (is.null(cell_indices)) {
+    cell_indices <- get_cells_to_keep(object)
+  }
+
   bbknn_res <- rs_bbknn(
     embd = embd,
     batch_labels = as.integer(batch_index),
@@ -382,13 +409,13 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 
   storage.mode(knn_mat) <- "integer"
 
-  object <- set_knn(object, knn_mat = knn_mat)
+  object <- set_knn(x = object, knn_mat = knn_mat, cells_used = cell_indices)
 
   if (.verbose) {
     message(paste(
       "Generating graph based on BBKNN connectivities.",
-      "Weights will be based on the connectivities and not shared nearest neighour",
-      "calculations."
+      "Weights will be based on the connectivities and not shared nearest",
+      "neighour calculations."
     ))
   }
 
@@ -409,7 +436,11 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
     weighted = TRUE
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_graph)
+  object <- set_snn_graph(
+    x = object,
+    snn_graph = snn_graph,
+    cells_used = cell_indices
+  )
 
   return(object)
 }
@@ -424,6 +455,12 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #' an embedding only and not fully corrected count matrix. The function will
 #' iterate through the batches, identify the MNN and generate correction vectors
 #' and generate a corrected embedding which is added to the function.
+#'
+#' @details
+#' Internally, the fastMNN algorithm will be run against the cells that are
+#' defined by [bixverse::set_cells_to_keep()]. The PCA and the kNN graphs will
+#' be recalculated as specific normalisations and other calculations are needed
+#' (especially the indices of the approximation methods).
 #'
 #' @param object `single_cell_exp` class.
 #' @param batch_column String. The column with the batch information in the
@@ -491,7 +528,12 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
     seed = 42L
   )
 
-  object <- set_embedding(x = object, embd = mnn_embd, name = "mnn")
+  object <- set_embedding(
+    x = object,
+    embd = mnn_embd,
+    name = "mnn",
+    cells_used = get_cells_to_keep(object)
+  )
 
   return(object)
 }

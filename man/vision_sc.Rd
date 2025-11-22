@@ -29,6 +29,11 @@ Compared to other score types, you can also calculate delta-type scores
 between positive and negative gene indices, think epithelial vs mesenchymal
 gene signature, etc.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you wish to apply it to a different set
+of cells, you will have to change that parameter.
+}
 \references{
 DeTomaso, et al., Nat. Commun., 2019
 }

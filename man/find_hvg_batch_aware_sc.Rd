@@ -61,3 +61,9 @@ can choose the way to combine them. The choices are union (of Top x HVG per
 batch), based on the average variance per batch or only take genes that are
 amongst the Top X HVG in all batches.
 }
+\details{
+Internally, the batch-aware HVG will be calculated within the cells that are
+defined by \code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this
+parameter, the function will use all cells that passed initial thresholding
+during generation of the object.
+}

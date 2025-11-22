@@ -10,6 +10,21 @@
 #' This function implements the meta cell aggregation from Morabito, et al.
 #' The generation of metacells is a useful approach for subsequent application
 #' of for example correlation-based methods to identify co-regulated genes.
+#' Meta cells are generated using a bootstrapped aggregation approach to reduce
+#' sparsity in single-cell expression data. Cells are randomly sampled and
+#' aggregated with their k-nearest neighbours identified in
+#' dimensionally-reduced space. To minimise redundancy, a cell is only selected
+#' if the overlap between its neighbours and previously selected cells'
+#' neighbours does not exceed the maximum allowed threshold (`max_shared`). The
+#' algorithm terminates when either the target number of meta cells
+#' (`target_no_metacells`) is reached or no more eligible cells remain. The
+#' resulting meta cell expression matrix exhibits substantially reduced sparsity
+#' compared to the original single-cell matrix.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()], if cells_to_use is set to `NULL`. This is
+#' the default behaviour of the function.
 #'
 #' @param object `single_cell_exp` class.
 #' @param sc_meta_cell_params List. Output of [bixverse::params_sc_metacells()].
@@ -200,9 +215,20 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This function implements the meta cell aggregation from Persad et al., and
-#' returns the resuling SEACells. Compared to other algorithms, a kernel
-#' archetype analysis is used to identify the metacells. For details, please
-#' refer to the publication.
+#' returns the resuling SEACells. The meta cells are generated using archetypal
+#' analysis applied to a cell similarity  kernel. A k-nearest neighbour graph is
+#' constructed in dimensionally-reduced space, from which an affinity matrix is
+#' derived using an adaptive Gaussian kernel to account for varying cell
+#' densities. Archetypal analysis decomposes this kernel matrix into archetypes
+#' representing cell states and a membership matrix reconstructing single cells
+#' as linear combinations of archetypes. This partitions cells such that the
+#' similarity matrix exhibits tight block structure, with each partition
+#' defining a meta cell.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()], if cells_to_use is set to `NULL`. This is
+#' the default behaviour of the function.
 #'
 #' @param object `single_cell_exp` class.
 #' @param seacell_params List. Output of [bixverse::params_sc_seacells()].
@@ -340,7 +366,16 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
 #' @description
 #' This function implements the meta cell aggregation from Bilous, et al.
 #' The core idea is to use the walktrap community detection on the kNN graph.
-#' For details, please refer to the paper.
+#' Briefly, either the provided kNN graph in the object will be used or you
+#' can regenerate that one (see parameters). The walk trap algorithm, a
+#' community detection algorithm that uses short random walks, is applied to
+#' the kNN graph and the number of cuts (i.e., final resulting communities) is
+#' defined by the `graining_factor`.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()], if cells_to_use is set to `NULL`. This is
+#' the default behaviour of the function.
 #'
 #' @param object `single_cell_exp` class.
 #' @param sc_supercell_params List. Output of [bixverse::params_sc_supercell()].

@@ -72,9 +72,20 @@ aggregation method.
 }
 \description{
 This function implements the meta cell aggregation from Persad et al., and
-returns the resuling SEACells. Compared to other algorithms, a kernel
-archetype analysis is used to identify the metacells. For details, please
-refer to the publication.
+returns the resuling SEACells. The meta cells are generated using archetypal
+analysis applied to a cell similarity  kernel. A k-nearest neighbour graph is
+constructed in dimensionally-reduced space, from which an affinity matrix is
+derived using an adaptive Gaussian kernel to account for varying cell
+densities. Archetypal analysis decomposes this kernel matrix into archetypes
+representing cell states and a membership matrix reconstructing single cells
+as linear combinations of archetypes. This partitions cells such that the
+similarity matrix exhibits tight block structure, with each partition
+defining a meta cell.
+}
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}, if cells_to_use is set to \code{NULL}. This is
+the default behaviour of the function.
 }
 \references{
 Morabito, et al. Cell Rep Methods, 2023

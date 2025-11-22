@@ -37,3 +37,8 @@ with proper AUROC calculations (useful for marker gene expression, use the
 activity measurs, use the \code{"wilcox"}). Data can be streamed in chunks of 50k
 cells per or loaded in in one go.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you wish to apply it to a different set
+of cells, you will have to change that parameter.
+}

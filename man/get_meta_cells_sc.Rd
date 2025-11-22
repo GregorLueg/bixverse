@@ -76,6 +76,21 @@ aggregation method.
 This function implements the meta cell aggregation from Morabito, et al.
 The generation of metacells is a useful approach for subsequent application
 of for example correlation-based methods to identify co-regulated genes.
+Meta cells are generated using a bootstrapped aggregation approach to reduce
+sparsity in single-cell expression data. Cells are randomly sampled and
+aggregated with their k-nearest neighbours identified in
+dimensionally-reduced space. To minimise redundancy, a cell is only selected
+if the overlap between its neighbours and previously selected cells'
+neighbours does not exceed the maximum allowed threshold (\code{max_shared}). The
+algorithm terminates when either the target number of meta cells
+(\code{target_no_metacells}) is reached or no more eligible cells remain. The
+resulting meta cell expression matrix exhibits substantially reduced sparsity
+compared to the original single-cell matrix.
+}
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}, if cells_to_use is set to \code{NULL}. This is
+the default behaviour of the function.
 }
 \references{
 Morabito, et al. Cell Rep Methods, 2023

@@ -60,7 +60,7 @@ the weight form the SNN graph is calculated. For details, please see
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
 \value{
-Initialised \code{sc_knn} with the kNN data.
+Initialised \code{sc_knn} with the kNN data and the distances added.
 }
 \description{
 This function will generate the kNNs based on a given embedding. Three
@@ -73,4 +73,8 @@ search that is slower, but more precise. Lastly, there is the option of
 version skips the index generation and can be faster on smaller data sets.
 This version of the function returns an \code{sc_knn} object that can be
 used in other functions.
+}
+\details{
+This class does not have yet other methods, but these will be aded in the
+future.
 }

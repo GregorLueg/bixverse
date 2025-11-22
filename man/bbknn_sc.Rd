@@ -72,6 +72,14 @@ batch basis and identifies the neighbours of cells for each individual index.
 Subsequently, it leverages UMAP connectivity calculations to reduce spurious
 connections. For more details, please refer to Polański, et al.
 }
+\details{
+Internally, the BBKNN will be run with the cells that are defined by the
+embedding and the indices of the embedding will be used to define the indices
+of the k-nearest neighbours. The batch index will be derived by the cells
+that were set by \code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. You need to ensure that
+this is consistent between embedding and the cells used to generate the batch
+index.
+}
 \references{
 Polański, et al., Bioinformatics, 2020
 }

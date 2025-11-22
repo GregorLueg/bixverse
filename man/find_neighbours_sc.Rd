@@ -71,9 +71,10 @@ Subsequently, the kNN data will be used to generate an sNN igraph for
 clustering methods.
 }
 \details{
-The function will be executed on the cells that are defined by
-\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
-cells in the object will be initially used. The information which cells
-were used for the calculation of the kNN matrix and sNN graph will be
-additionally stored.
+The function will be executed on the cells that were used during the
+generation of the respective embedding. The function can only store on kNN
+graph at a given time. If for example you initially generate the kNN graph
+on the PCA, the graph will be based on this. Should you subsequently run
+a batch-correction method that generates an embedding, the kNN graph will
+still be based on the PCA. You would have to rerun this function.
 }

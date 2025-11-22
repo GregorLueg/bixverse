@@ -298,6 +298,11 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' activity measurs, use the `"wilcox"`). Data can be streamed in chunks of 50k
 #' cells per or loaded in in one go.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you wish to apply it to a different set
+#' of cells, you will have to change that parameter.
+#'
 #' @param object `single_cell_exp` class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
 #' respective gene sets.
@@ -507,6 +512,11 @@ generate_null_perm_gs <- function(
 #' between positive and negative gene indices, think epithelial vs mesenchymal
 #' gene signature, etc.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you wish to apply it to a different set
+#' of cells, you will have to change that parameter.
+#'
 #' @param object `single_cell_exp` class.
 #' @param gs_list Named nested list. The elements have the gene identifiers of
 #' the respective gene sets and have the option to have a `"pos"` and `"neg"`
@@ -581,6 +591,14 @@ S7::method(vision_sc, single_cell_exp) <- function(
 #' correlation values, answering the question if a given signature shows non-
 #' random enrichment on the kNN graph. The kNN graph (and distance measures)
 #' will be generated on-the-fly based on the embedding you wish to use.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you wish to apply it to a different set
+#' of cells, you will have to change that parameter. The kNN graph for this
+#' function will be regenerated during the function call as the distances are
+#' not normally stored. Future implementations might be designed to use a
+#' provided kNN graph with distances.
 #'
 #' @param object `single_cell_exp` class.
 #' @param gs_list Named nested list. The elements have the gene identifiers of
@@ -745,7 +763,22 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 #' This method implements the HotSpot approach (see DeTomaso, et al.) to
 #' calculate the auto-correlation of a given gene in the kNN graph based on
 #' the chosen embedding. This can be used to identify genes that have strong
-#' local correlations and vary across the kNN graph.
+#' local correlations and vary across the kNN graph. Informative genes are
+#' selected using a local autocorrelation statistic that identifies genes
+#' exhibiting non-random spatial patterns on the cell manifold, i.e., the kNN
+#' graph. For each gene, an autocorrelation score H is computed as the sum of
+#' weighted products of expression values across neighbouring cells. A null
+#' model (the choice here is `c("danb", "normal", "bernoulli")`) accounting for
+#' per-cell library size differences is used to standardise the statistic and
+#' compute Z-scores, which are compared against the normal distribution for
+#' significance testing.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()] if `cells_to_take = NULL`. The kNN graph for
+#' this function will be regenerated during the function call as the distances
+#' are not normally stored. Future implementations might be designed to use a
+#' provided kNN graph with distances.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
@@ -904,7 +937,23 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This method implements the HotSpot approach (see DeTomaso, et al.) to
-#' calculate the local gene-gene correlations and their Z-scores.
+#' calculate the local gene-gene correlations and their Z-scores. Ideally, you
+#' want to identify first informative genes with significant local correlation
+#' via [bixverse::hotspot_autocor_sc()]. This function calculates pairwise
+#' between the chosen genes are evaluated using the cell-cell
+#' similarity map, enabling detection of co-expression even when genes are
+#' sparsely expressed in the same manifold regions but rarely in the same cells.
+#' For each gene pair, a local correlation statistic is computed and compared
+#' against a null model where one gene's expression is fixed whilst the other is
+#' assumed independent; Z-scores are calculated bidirectionally and the most
+#' conservative retained.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()] if `cells_to_take = NULL`. The kNN graph for
+#' this function will be regenerated during the function call as the distances
+#' are not normally stored. Future implementations might be designed to use a
+#' provided kNN graph with distances.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.

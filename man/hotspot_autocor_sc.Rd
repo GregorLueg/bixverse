@@ -73,9 +73,23 @@ various statistics.
 This method implements the HotSpot approach (see DeTomaso, et al.) to
 calculate the auto-correlation of a given gene in the kNN graph based on
 the chosen embedding. This can be used to identify genes that have strong
-local correlations and vary across the kNN graph.
+local correlations and vary across the kNN graph. Informative genes are
+selected using a local autocorrelation statistic that identifies genes
+exhibiting non-random spatial patterns on the cell manifold, i.e., the kNN
+graph. For each gene, an autocorrelation score H is computed as the sum of
+weighted products of expression values across neighbouring cells. A null
+model (the choice here is \code{c("danb", "normal", "bernoulli")}) accounting for
+per-cell library size differences is used to standardise the statistic and
+compute Z-scores, which are compared against the normal distribution for
+significance testing.
 }
 \details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}} if \code{cells_to_take = NULL}. The kNN graph for
+this function will be regenerated during the function call as the distances
+are not normally stored. Future implementations might be designed to use a
+provided kNN graph with distances.
+
 Should a gene not be found in sufficient cells, the gene will be
 automatically filtered out from the results. This can occur for example
 if you have filtered out the cells that contain a given gene. The underlying
