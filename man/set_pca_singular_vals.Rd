@@ -6,14 +6,19 @@
 \alias{set_pca_singular_vals.single_cell_exp}
 \title{Set/add PCA singular values}
 \usage{
-set_pca_singular_vals(x, singular_vals)
+set_pca_singular_vals(x, singular_vals, cells_used)
 
-\method{set_pca_singular_vals}{sc_cache}(x, singular_vals)
+\method{set_pca_singular_vals}{sc_cache}(x, singular_vals, cells_used)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}
 
 \item{singular_vals}{Numerical vector. The singular values.}
+
+\item{cells_used}{Integer vector. The cells used for the PCA analysis.}
+}
+\value{
+The object with the added PCA singular values.
 }
 \description{
 Set/add PCA singular values

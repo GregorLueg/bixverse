@@ -70,6 +70,12 @@ PCA space given the same HVGs; kNN graphs are being generated and a kNN
 classifier is used to assign a probability that a given cell in the original
 data is a doublet. For more details, please check the publication.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. This is the recommend way of
+using this function.
+}
 \references{
 Wollock, et al., Cell Syst, 2020
 }

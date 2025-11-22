@@ -6,14 +6,19 @@
 \alias{set_pca_loadings.single_cell_exp}
 \title{Set/add PCA loadings}
 \usage{
-set_pca_loadings(x, pca_loading)
+set_pca_loadings(x, pca_loading, cells_used)
 
-\method{set_pca_loadings}{sc_cache}(x, pca_loading)
+\method{set_pca_loadings}{sc_cache}(x, pca_loading, cells_used)
 }
 \arguments{
 \item{x}{An object to add the PCA loadings for.}
 
 \item{pca_loading}{Numerical matrix. The Matrix with the PCA loadings.}
+
+\item{cells_used}{Integer vector. The cells used for the PCA analysis.}
+}
+\value{
+The object with the added PCA loading matrix.
 }
 \description{
 Set/add PCA loadings

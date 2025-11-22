@@ -4,19 +4,25 @@
 \alias{set_snn_graph}
 \alias{set_snn_graph.sc_cache}
 \alias{set_snn_graph.single_cell_exp}
-\title{Set/add KNN}
+\title{Set/add the sNN graph}
 \usage{
-set_snn_graph(x, snn_graph)
+set_snn_graph(x, snn_graph, cells_used)
 
-\method{set_snn_graph}{sc_cache}(x, snn_graph)
+\method{set_snn_graph}{sc_cache}(x, snn_graph, cells_used)
 }
 \arguments{
-\item{x}{An object to add the KNN data to}
+\item{x}{An object to add the sNN graph to.}
 
 \item{snn_graph}{Igraph. The sNN graph for subsequent clustering.}
+
+\item{cells_used}{Integer vector. The cells used for the sNN graph
+generation.}
+}
+\value{
+The object with the added sNN graph.
 }
 \description{
-Set/add KNN
+Set/add the sNN graph
 
 Set the sNN graph for a \code{single_cell_exp} class.
 }

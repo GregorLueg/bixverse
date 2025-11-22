@@ -20,7 +20,9 @@ find_neighbours_sc(
 needs to be part of the object.}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
-use. If \code{NULL} all will be used.}
+use. If \code{NULL} all will be used. If the number here is higher than the
+found number of features in the embedding matrix, it defaults to the maximum
+number of features.}
 
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
 A list with the following items:
@@ -67,4 +69,11 @@ search that is slower, but more precise. Lastly, there is the option of
 version skips the index generation and can be faster on smaller data sets.
 Subsequently, the kNN data will be used to generate an sNN igraph for
 clustering methods.
+}
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. The information which cells
+were used for the calculation of the kNN matrix and sNN graph will be
+additionally stored.
 }

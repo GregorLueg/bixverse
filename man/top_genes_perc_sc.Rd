@@ -32,3 +32,9 @@ genes by expression in a given cell. High values here can indicate low
 complexity, quality cells. The values will be automatically added to the
 obs table.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. The calculations will be only
+added to cells that are set to \code{to_keep=TRUE}.
+}

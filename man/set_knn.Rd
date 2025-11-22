@@ -4,19 +4,25 @@
 \alias{set_knn}
 \alias{set_knn.sc_cache}
 \alias{set_knn.single_cell_exp}
-\title{Set/add KNN}
+\title{Set/add kNN}
 \usage{
-set_knn(x, knn_mat)
+set_knn(x, knn_mat, cells_used)
 
-\method{set_knn}{sc_cache}(x, knn_mat)
+\method{set_knn}{sc_cache}(x, knn_mat, cells_used)
 }
 \arguments{
-\item{x}{An object to add the KNN data to}
+\item{x}{An object to add the kNN data to}
 
-\item{knn_mat}{Numerical matrix. The matrix with the KNN data}
+\item{knn_mat}{Numerical matrix. The matrix with the kNN data}
+
+\item{cells_used}{Integer vector. The cells used for the kNN graph
+generation.}
+}
+\value{
+The object with the added kNN graph.
 }
 \description{
-Set/add KNN
+Set/add kNN
 
 Set the KNN matrix for a \code{single_cell_exp} class.
 }

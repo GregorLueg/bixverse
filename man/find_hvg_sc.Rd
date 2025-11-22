@@ -44,3 +44,8 @@ This is a helper function to identify highly variable genes. At the moment
 the implementation has only the VST-based version (known as Seurat v3). The
 other methods will be implemented in the future.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used.
+}

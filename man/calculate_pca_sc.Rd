@@ -33,3 +33,9 @@ to the object cache in memory.
 This function will run PCA (option of full SVD and randomised SVD for now)
 on the detected highly variable genes.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. The information which cells
+were used for the calculation of the PCAs will be additionally stored.
+}

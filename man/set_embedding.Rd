@@ -6,9 +6,9 @@
 \alias{set_embedding.single_cell_exp}
 \title{Add additional embeddings to the class}
 \usage{
-set_embedding(x, embd, name)
+set_embedding(x, embd, name, cells_used)
 
-\method{set_embedding}{sc_cache}(x, embd, name)
+\method{set_embedding}{sc_cache}(x, embd, name, cells_used)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}
@@ -16,6 +16,12 @@ set_embedding(x, embd, name)
 \item{embd}{Numerical matrix representing the additional embedding.}
 
 \item{name}{String. Name of the embedding.}
+
+\item{cells_used}{Integer vector. The cells used for the generation of this
+embedding.}
+}
+\value{
+The object with the added embedding.
 }
 \description{
 Add additional embeddings to the class

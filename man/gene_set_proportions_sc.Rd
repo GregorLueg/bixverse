@@ -32,5 +32,11 @@ the obs table.
 This is a helper function that calculates proportions of reads belonging to
 given gene sets. This can be used for example for the calculation of
 percentage mitochondrial reads per cell. These will be automatically added
-to the obs table
+to the obs table.
+}
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. The calculations will be only
+added to cells that are set to \code{to_keep=TRUE}.
 }

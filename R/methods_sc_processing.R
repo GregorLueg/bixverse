@@ -15,6 +15,12 @@
 #' classifier is used to assign a probability that a given cell in the original
 #' data is a doublet. For more details, please check the publication.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used. This is the recommend way of
+#' using this function.
+#'
 #' @param object `single_cell_exp` class.
 #' @param scrublet_params A list with the final scrublet parameters, see
 #' [bixverse::params_scrublet()] for full details.
@@ -126,6 +132,12 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
 #' runs Louvain clustering and assesses how often an observed cells clsuters
 #' together with the simulated doublets.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used. This is the recommend way of
+#' using this function.
+#'
 #' @param object `single_cell_exp` class.
 #' @param boost_params A list with the final scrublet parameters, see
 #' [bixverse::params_boost()] for full details.
@@ -209,6 +221,12 @@ S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
 #' complexity, quality cells. The values will be automatically added to the
 #' obs table.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used. The calculations will be only
+#' added to cells that are set to `to_keep=TRUE`.
+#'
 #' @param object `single_cell_exp` class.
 #' @param top_n_vals Integer. The Top N thresholds to test.
 #' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
@@ -280,7 +298,13 @@ S7::method(top_genes_perc_sc, single_cell_exp) <- function(
 #' This is a helper function that calculates proportions of reads belonging to
 #' given gene sets. This can be used for example for the calculation of
 #' percentage mitochondrial reads per cell. These will be automatically added
-#' to the obs table
+#' to the obs table.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used. The calculations will be only
+#' added to cells that are set to `to_keep=TRUE`.
 #'
 #' @param object `single_cell_exp` class.
 #' @param gene_set_list A named list with each element containing the gene
@@ -357,6 +381,11 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #' This is a helper function to identify highly variable genes. At the moment
 #' the implementation has only the VST-based version (known as Seurat v3). The
 #' other methods will be implemented in the future.
+#'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used.
 #'
 #' @param object `single_cell_exp` class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
@@ -453,6 +482,12 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #' This function will run PCA (option of full SVD and randomised SVD for now)
 #' on the detected highly variable genes.
 #'
+#' @details
+#' The function will be executed on the cells that are defined by
+#' [bixverse::set_cells_to_keep()]. If you have not set this parameter, all
+#' cells in the object will be initially used. The information which cells
+#' were used for the calculation of the PCAs will be additionally stored.
+#'
 #' @param object `single_cell_exp` class.
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
@@ -520,9 +555,21 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
     )
   )
 
-  object <- set_pca_factors(object, pca_factors)
-  object <- set_pca_loadings(object, pca_loadings)
-  object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
+  object <- set_pca_factors(
+    x = object,
+    pca_factors = pca_factor,
+    cells_used = get_cells_to_keep(object)
+  )
+  object <- set_pca_loadings(
+    x = object,
+    pca_loadings = pca_loadings,
+    cells_used = get_cells_to_keep(object)
+  )
+  object <- set_pca_singular_vals(
+    x = object,
+    singular_values = singular_values[1:no_pcs],
+    cells_used = get_cells_to_keep(object)
+  )
 
   return(object)
 }
@@ -543,11 +590,21 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' Subsequently, the kNN data will be used to generate an sNN igraph for
 #' clustering methods.
 #'
+#' @details
+#' The function will be executed on the cells that were used during the
+#' generation of the respective embedding. The function can only store on kNN
+#' graph at a given time. If for example you initially generate the kNN graph
+#' on the PCA, the graph will be based on this. Should you subsequently run
+#' a batch-correction method that generates an embedding, the kNN graph will
+#' still be based on the PCA. You would have to rerun this function.
+#'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
-#' use. If `NULL` all will be used.
+#' use. If `NULL` all will be used. If the number here is higher than the
+#' found number of features in the embedding matrix, it defaults to the maximum
+#' number of features.
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
@@ -640,7 +697,11 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
     seed = seed
   )
 
-  object <- set_knn(object, knn_data)
+  object <- set_knn(
+    x = object,
+    knn_mat = knn_data,
+    cells_used = get_used_cells(embd)
+  )
 
   if (.verbose) {
     message(sprintf(
@@ -667,7 +728,11 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
   snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
   igraph::E(snn_g)$weight <- snn_graph_rs$weights
 
-  object <- set_snn_graph(object, snn_graph = snn_g)
+  object <- set_snn_graph(
+    x = object,
+    snn_graph = snn_g,
+    cells_used = get_used_cells(embd)
+  )
 
   return(object)
 }
@@ -679,6 +744,11 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
 #' @description
 #' This function will apply Leiden clustering on the sNN graph with the
 #' given resolution and add a column to the obs table.
+#'
+#' @details
+#' The function will be executed on the cells that were used during the
+#' generation of the sNN graph. Please refer to
+#' [bixverse::find_neighbours_sc()] for details.
 #'
 #' @param object `single_cell_exp` class.
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
@@ -733,8 +803,14 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 
   duckdb_con <- get_sc_duckdb(object)
 
+  # get the cell idx
+  cell_idx <- get_used_cells(snn_graph)
+  if (is.null(cell_idx)) {
+    cell_idx <- get_cells_to_keep(object)
+  }
+
   new_data <- data.table::data.table(
-    cell_idx = get_cells_to_keep(object) + 1, # needs to be 1-indexed
+    cell_idx = cell_idx + 1, # needs to be 1-indexed
     new_data = leiden_clusters$membership
   )
   data.table::setnames(new_data, "new_data", name)
@@ -759,6 +835,10 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 #' version skips the index generation and can be faster on smaller data sets.
 #' This version of the function returns an `sc_knn` object that can be
 #' used in other functions.
+#'
+#' @details
+#' This class does not have yet other methods, but these will be aded in the
+#' future.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -798,7 +878,7 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
-#' @return Initialised `sc_knn` with the kNN data.
+#' @return Initialised `sc_knn` with the kNN data and the distances added.
 #'
 #' @export
 generate_knn_sc <- S7::new_generic(

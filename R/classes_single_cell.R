@@ -108,9 +108,12 @@ set_hvg <- function(x, hvg) {
 #'
 #' @param x An object to add the PCA factors for.
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
+#' @param cells_used Integer vector. The cells used for the PCA analysis.
+#'
+#' @returns The object with the added PCA factor matrix.
 #'
 #' @export
-set_pca_factors <- function(x, pca_factor) {
+set_pca_factors <- function(x, pca_factor, cells_used) {
   UseMethod("set_pca_factors")
 }
 
@@ -118,9 +121,12 @@ set_pca_factors <- function(x, pca_factor) {
 #'
 #' @param x An object to add the PCA loadings for.
 #' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
+#' @param cells_used Integer vector. The cells used for the PCA analysis.
+#'
+#' @returns The object with the added PCA loading matrix.
 #'
 #' @export
-set_pca_loadings <- function(x, pca_loading) {
+set_pca_loadings <- function(x, pca_loading, cells_used) {
   UseMethod("set_pca_loadings")
 }
 
@@ -128,9 +134,12 @@ set_pca_loadings <- function(x, pca_loading) {
 #'
 #' @param x An object to add the singular values for.
 #' @param singular_vals Numerical vector. The singular values.
+#' @param cells_used Integer vector. The cells used for the PCA analysis.
+#'
+#' @returns The object with the added PCA singular values.
 #'
 #' @export
-set_pca_singular_vals <- function(x, singular_vals) {
+set_pca_singular_vals <- function(x, singular_vals, cells_used) {
   UseMethod("set_pca_singular_vals")
 }
 
@@ -139,29 +148,41 @@ set_pca_singular_vals <- function(x, singular_vals) {
 #' @param x An object to add the singular values for.
 #' @param embd Numerical matrix representing the additional embedding.
 #' @param name String. Name of the embedding.
+#' @param cells_used Integer vector. The cells used for the generation of this
+#' embedding.
+#'
+#' @returns The object with the added embedding.
 #'
 #' @export
-set_embedding <- function(x, embd, name) {
+set_embedding <- function(x, embd, name, cells_used) {
   UseMethod("set_embedding")
 }
 
-#' Set/add KNN
+#' Set/add kNN
 #'
-#' @param x An object to add the KNN data to
-#' @param knn_mat Numerical matrix. The matrix with the KNN data
+#' @param x An object to add the kNN data to
+#' @param knn_mat Numerical matrix. The matrix with the kNN data
+#' @param cells_used Integer vector. The cells used for the kNN graph
+#' generation.
+#'
+#' @returns The object with the added kNN graph.
 #'
 #' @export
-set_knn <- function(x, knn_mat) {
+set_knn <- function(x, knn_mat, cells_used) {
   UseMethod("set_knn")
 }
 
-#' Set/add KNN
+#' Set/add the sNN graph
 #'
-#' @param x An object to add the KNN data to
+#' @param x An object to add the sNN graph to.
 #' @param snn_graph Igraph. The sNN graph for subsequent clustering.
+#' @param cells_used Integer vector. The cells used for the sNN graph
+#' generation.
+#'
+#' @returns The object with the added sNN graph.
 #'
 #' @export
-set_snn_graph <- function(x, snn_graph) {
+set_snn_graph <- function(x, snn_graph, cells_used) {
   UseMethod("set_snn_graph")
 }
 
@@ -260,10 +281,22 @@ set_hvg.sc_mapper <- function(x, hvg) {
 #' @rdname set_pca_factors
 #'
 #' @export
-set_pca_factors.sc_cache <- function(x, pca_factor) {
+set_pca_factors.sc_cache <- function(x, pca_factor, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the PCA.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(pca_factor, "cells_used") <- cells_used
 
   x[["pca_factors"]] <- pca_factor
 
@@ -273,10 +306,22 @@ set_pca_factors.sc_cache <- function(x, pca_factor) {
 #' @rdname set_pca_loadings
 #'
 #' @export
-set_pca_loadings.sc_cache <- function(x, pca_loading) {
+set_pca_loadings.sc_cache <- function(x, pca_loading, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(pca_loading, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the PCA.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(pca_loading, "cells_used") <- cells_used
 
   x[["pca_loadings"]] <- pca_loading
 
@@ -286,10 +331,22 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
 #' @rdname set_pca_singular_vals
 #'
 #' @export
-set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
+set_pca_singular_vals.sc_cache <- function(x, singular_vals, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::qassert(singular_vals, "N+")
+  checkmate::qassert(cells_used, c("0", "I+"))
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the PCA.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(singular_vals, "cells_used") <- cells_used
 
   x[["pca_singular_vals"]] <- singular_vals
 
@@ -299,11 +356,23 @@ set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
 #' @rdname set_embedding
 #'
 #' @export
-set_embedding.sc_cache <- function(x, embd, name) {
+set_embedding.sc_cache <- function(x, embd, name, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
+  checkmate::qassert(cells_used, c("0", "I+"))
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the embedding.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(embd, "cells_used") <- cells_used
 
   x[["other_embeddings"]][[name]] <- embd
 
@@ -313,10 +382,22 @@ set_embedding.sc_cache <- function(x, embd, name) {
 #' @rdname set_knn
 #'
 #' @export
-set_knn.sc_cache <- function(x, knn_mat) {
+set_knn.sc_cache <- function(x, knn_mat, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the kNN.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(knn_mat, "cells_used") <- cells_used
 
   x[["knn_matrix"]] <- knn_mat
 
@@ -326,10 +407,22 @@ set_knn.sc_cache <- function(x, knn_mat) {
 #' @rdname set_snn_graph
 #'
 #' @export
-set_snn_graph.sc_cache <- function(x, snn_graph) {
+set_snn_graph.sc_cache <- function(x, snn_graph, cells_used) {
   # checks
   checkmate::assertClass(x, "sc_cache")
   checkmate::assertClass(snn_graph, "igraph")
+  checkmate::qassert(cells_used, "I1")
+
+  if (is.null(cells_used)) {
+    warning(
+      paste(
+        "No cells used provided for the generation of the sNN.",
+        "Please update the package."
+      )
+    )
+  }
+
+  attr(snn_graph, "cells_used") <- cells_used
 
   x[["snn_graph"]] <- snn_graph
 
@@ -1931,16 +2024,19 @@ S7::method(set_hvg, single_cell_exp) <- function(
 #' @method set_pca_factors single_cell_exp
 S7::method(set_pca_factors, single_cell_exp) <- function(
   x,
-  pca_factor
+  pca_factor,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_pca_factors(
     x = S7::prop(x, "sc_cache"),
-    pca_factor = pca_factor
+    pca_factor = pca_factor,
+    cells_used = cells_used
   )
 
   return(x)
@@ -1955,16 +2051,19 @@ S7::method(set_pca_factors, single_cell_exp) <- function(
 #' @method set_pca_loadings single_cell_exp
 S7::method(set_pca_loadings, single_cell_exp) <- function(
   x,
-  pca_loading
+  pca_loading,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(pca_loading, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_pca_loadings(
     x = S7::prop(x, "sc_cache"),
-    pca_loading = pca_loading
+    pca_loading = pca_loading,
+    cells_used = cells_used
   )
 
   return(x)
@@ -1979,16 +2078,19 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
 #' @method set_pca_singular_vals single_cell_exp
 S7::method(set_pca_singular_vals, single_cell_exp) <- function(
   x,
-  singular_vals
+  singular_vals,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::qassert(singular_vals, "N+")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_pca_singular_vals(
     x = S7::prop(x, "sc_cache"),
-    singular_vals = singular_vals
+    singular_vals = singular_vals,
+    cells_used = cells_used
   )
 
   return(x)
@@ -2004,18 +2106,21 @@ S7::method(set_pca_singular_vals, single_cell_exp) <- function(
 S7::method(set_embedding, single_cell_exp) <- function(
   x,
   embd,
-  name
+  name,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_embedding(
     x = S7::prop(x, "sc_cache"),
     embd = embd,
-    name = name
+    name = name,
+    cells_used = cells_used
   )
 
   return(x)
@@ -2030,16 +2135,19 @@ S7::method(set_embedding, single_cell_exp) <- function(
 #' @method set_knn single_cell_exp
 S7::method(set_knn, single_cell_exp) <- function(
   x,
-  knn_mat
+  knn_mat,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_knn(
     x = S7::prop(x, "sc_cache"),
-    knn_mat = knn_mat
+    knn_mat = knn_mat,
+    cells_used = cells_used
   )
 
   return(x)
@@ -2055,16 +2163,19 @@ S7::method(set_knn, single_cell_exp) <- function(
 #' @method set_snn_graph single_cell_exp
 S7::method(set_snn_graph, single_cell_exp) <- function(
   x,
-  snn_graph
+  snn_graph,
+  cells_used
 ) {
   # checks
   checkmate::assertClass(x, "bixverse::single_cell_exp")
   checkmate::assertClass(snn_graph, "igraph")
+  checkmate::qassert(cells_used, c("0", "I+"))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_snn_graph(
     x = S7::prop(x, "sc_cache"),
-    snn_graph = snn_graph
+    snn_graph = snn_graph,
+    cells_used = cells_used
   )
 
   return(x)

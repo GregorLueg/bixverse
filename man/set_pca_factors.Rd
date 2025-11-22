@@ -6,14 +6,19 @@
 \alias{set_pca_factors.single_cell_exp}
 \title{Set/add PCA factors}
 \usage{
-set_pca_factors(x, pca_factor)
+set_pca_factors(x, pca_factor, cells_used)
 
-\method{set_pca_factors}{sc_cache}(x, pca_factor)
+\method{set_pca_factors}{sc_cache}(x, pca_factor, cells_used)
 }
 \arguments{
 \item{x}{An object to add the PCA factors for.}
 
 \item{pca_factor}{Numerical matrix. The matrix with the PCA factors.}
+
+\item{cells_used}{Integer vector. The cells used for the PCA analysis.}
+}
+\value{
+The object with the added PCA factor matrix.
 }
 \description{
 Set/add PCA factors

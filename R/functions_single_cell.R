@@ -1,5 +1,25 @@
 # helpers ----------------------------------------------------------------------
 
+## get the cells used from a given object --------------------------------------
+
+#' Extract the cells used of a given object
+#'
+#' @param x The object from which to extract the used cells.
+#'
+#' @returns If found, the cell indices of the used cells.
+get_used_cells <- function(x) {
+  res <- attr(x, "cells_used")
+
+  if (is.null(res)) {
+    warning(paste(
+      "No information on the used cells for this object were found.",
+      "Please ensure that you regenerate the data."
+    ))
+  }
+
+  return(res)
+}
+
 ## cell ranger outputs ---------------------------------------------------------
 
 #' Helper to generate cell ranger input parameters

@@ -41,3 +41,9 @@ generates through several iterations simulated doublets, generate kNN graphs,
 runs Louvain clustering and assesses how often an observed cells clsuters
 together with the simulated doublets.
 }
+\details{
+The function will be executed on the cells that are defined by
+\code{\link[=set_cells_to_keep]{set_cells_to_keep()}}. If you have not set this parameter, all
+cells in the object will be initially used. This is the recommend way of
+using this function.
+}
