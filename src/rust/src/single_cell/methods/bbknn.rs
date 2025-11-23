@@ -1,3 +1,4 @@
+use ann_search_rs::*;
 use extendr_api::List;
 use faer::MatRef;
 
@@ -38,9 +39,14 @@ pub struct BbknnParams {
     pub dist_metric: String,
     pub set_op_mix_ratio: f32,
     pub local_connectivity: f32,
+    pub trim: Option<usize>,
+    // annoy params
     pub annoy_n_trees: usize,
     pub search_budget: usize,
-    pub trim: Option<usize>,
+    // hnsw params
+    pub m: usize,
+    pub ef_construction: usize,
+    pub ef_search: usize,
 }
 
 impl BbknnParams {
@@ -88,6 +94,28 @@ impl BbknnParams {
             .and_then(|v| v.as_real())
             .unwrap_or(1.0) as f32;
 
+        let trim = bbknn_list
+            .get("trim")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(10 * neighbours_within_batch as i32) as usize;
+
+        // hnsw
+        let m = bbknn_list
+            .get("m")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(32) as usize;
+
+        let ef_construction = bbknn_list
+            .get("ef_construction")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+
+        let ef_search = bbknn_list
+            .get("ef_search")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+
+        // annoy
         let annoy_n_trees = bbknn_list
             .get("annoy_n_trees")
             .and_then(|v| v.as_integer())
@@ -98,11 +126,6 @@ impl BbknnParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
-        let trim = bbknn_list
-            .get("trim")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(10 * neighbours_within_batch as i32) as usize;
-
         Self {
             neighbours_within_batch,
             knn_method,
@@ -112,6 +135,9 @@ impl BbknnParams {
             annoy_n_trees,
             search_budget,
             trim: Some(trim),
+            m,
+            ef_construction,
+            ef_search,
         }
     }
 }
@@ -204,13 +230,20 @@ fn get_batch_balanced_knn(
             }
             KnnSearch::Hnsw => {
                 // hnsw path with updated functions
-                let index = build_hnsw_index(sub_matrix.as_ref(), &bbknn_params.dist_metric, seed);
+                let index = build_hnsw_index(
+                    sub_matrix.as_ref(),
+                    bbknn_params.m,
+                    bbknn_params.ef_construction,
+                    &bbknn_params.dist_metric,
+                    seed,
+                    verbose,
+                );
                 query_hnsw_index(
                     mat,
                     &index,
-                    &bbknn_params.dist_metric,
-                    bbknn_params.neighbours_within_batch + 1,
-                    false,
+                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.ef_search,
+                    true,
                     verbose,
                 )
             }

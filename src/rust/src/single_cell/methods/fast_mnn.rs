@@ -1,3 +1,4 @@
+use ann_search_rs::{build_annoy_index, build_hnsw_index, query_annoy_index, query_hnsw_index};
 use extendr_api::List;
 use faer::{Mat, MatRef};
 use rayon::prelude::*;
@@ -15,9 +16,13 @@ use crate::single_cell::sc_knn_snn::*;
 ///
 /// ### Fields
 ///
-/// * `k` - Number of mutual nearest neighbours to identify
 /// * `sigma` - Bandwidth of the Gaussian smoothing kernel (as proportion of
 ///   space radius after optional cosine normalisation)
+/// * `cos_norm` - Apply cosine normalisation before computing distances
+/// * `var_adj` - Apply variance adjustment to avoid kissing effects
+/// * `no_pcs` - Number of PCs to use for the MNN calculations
+/// * `random_svd` - Boolean. Shall randomised SVD be used.
+/// * `k` - Number of mutual nearest neighbours to identify
 /// * `knn_method` - Approximate nearest neighbour search method. One of
 ///   `"annoy"` or `"hnsw"`.
 /// * `dist_metric` - Distance metric to use. One of `"cosine"` or
@@ -26,22 +31,21 @@ use crate::single_cell::sc_knn_snn::*;
 ///   knn_method="annoy")
 /// * `annoy_search_budget` - Search budget per tree for Annoy (only used if
 ///   knn_method="annoy")
-/// * `cos_norm` - Apply cosine normalisation before computing distances
-/// * `var_adj` - Apply variance adjustment to avoid kissing effects
-/// * `no_pcs` - Number of PCs to use for the MNN calculations
-/// * `random_svd` - Boolean. Shall randomised SVD be used.
 #[derive(Clone, Debug)]
 pub struct FastMnnParams {
-    pub k: usize,
     pub sigma: f32,
-    pub knn_method: String,
-    pub dist_metric: String,
-    pub annoy_n_trees: usize,
-    pub annoy_search_budget: usize,
     pub cos_norm: bool,
     pub var_adj: bool,
     pub no_pcs: usize,
     pub random_svd: bool,
+    pub k: usize,
+    pub knn_method: String,
+    pub annoy_n_trees: usize,
+    pub annoy_search_budget: usize,
+    pub dist_metric: String,
+    pub m: usize,
+    pub ef_construction: usize,
+    pub ef_search: usize,
 }
 
 impl FastMnnParams {
@@ -117,6 +121,22 @@ impl FastMnnParams {
             .map(|rb| rb.is_true())
             .unwrap_or(true);
 
+        // hnsw
+        let m = fastmnn_list
+            .get("m")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(32) as usize;
+
+        let ef_construction = fastmnn_list
+            .get("ef_construction")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+
+        let ef_search = fastmnn_list
+            .get("ef_search")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(200) as usize;
+
         Self {
             k,
             sigma,
@@ -128,6 +148,9 @@ impl FastMnnParams {
             var_adj,
             no_pcs,
             random_svd,
+            m,
+            ef_construction,
+            ef_search,
         }
     }
 }
@@ -543,22 +566,36 @@ pub fn merge_two_batches(
 
     let (knn_1_to_2, knn_2_to_1) = match knn_method {
         KnnSearch::Hnsw => {
-            let index_2 = build_hnsw_index(*data_2, &params.dist_metric, seed);
+            let index_2 = build_hnsw_index(
+                *data_2,
+                params.m,
+                params.ef_construction,
+                &params.dist_metric,
+                seed,
+                verbose,
+            );
             let (knn_1_to_2, _) = query_hnsw_index(
                 *data_1,
                 &index_2,
-                &params.dist_metric,
                 params.k,
+                params.ef_search,
                 false,
                 verbose,
             );
 
-            let index_1 = build_hnsw_index(*data_1, &params.dist_metric, seed);
+            let index_1 = build_hnsw_index(
+                *data_1,
+                params.m,
+                params.ef_construction,
+                &params.dist_metric,
+                seed,
+                verbose,
+            );
             let (knn_2_to_1, _) = query_hnsw_index(
                 *data_2,
                 &index_1,
-                &params.dist_metric,
                 params.k,
+                params.ef_search,
                 false,
                 verbose,
             );

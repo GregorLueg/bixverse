@@ -1,17 +1,13 @@
+use ann_search_rs::nndescent::NNDescent;
+use ann_search_rs::{build_annoy_index, build_hnsw_index, query_annoy_index, query_hnsw_index};
 use extendr_api::List;
 use faer::{MatRef, RowRef};
-use instant_distance::{Builder, HnswMap, Point as DistancePoint, Search};
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
 use std::time::Instant;
-use thousands::Separable;
 
 use crate::core::data::sparse_structures::*;
-use crate::core::graph::annoy::AnnoyIndex;
-use crate::core::graph::knn::{parse_ann_dist, AnnDist};
-use crate::core::graph::nn_descent::NNDescent;
+use crate::core::graph::knn::AnnDist;
 
 ///////////
 // Enums //
@@ -75,6 +71,10 @@ pub struct KnnParams {
     pub max_iter: usize,
     pub rho: f32,
     pub delta: f32,
+    // hnsw
+    pub m: usize,
+    pub ef_construction: usize,
+    pub ef_search: usize,
 }
 
 impl KnnParams {
@@ -140,6 +140,22 @@ impl KnnParams {
             .and_then(|v| v.as_real())
             .unwrap_or(0.001) as f32;
 
+        // hnsw
+        let m = params_list
+            .get("m")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(32) as usize;
+
+        let ef_construction = params_list
+            .get("ef_construction")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
+        let ef_search = params_list
+            .get("ef_search")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(100) as usize;
+
         Self {
             knn_method,
             ann_dist,
@@ -149,63 +165,30 @@ impl KnnParams {
             max_iter,
             rho,
             delta,
+            m,
+            ef_construction,
+            ef_search,
         }
     }
-}
 
-////////////////
-// Structures //
-////////////////
-
-/// Point structure for the HNSW index
-#[derive(Clone, Debug)]
-pub struct Point(pub Vec<f32>, pub AnnDist);
-
-impl DistancePoint for Point {
-    /// Distance function.
-    ///
-    /// ### Params
-    ///
-    /// * `other` - The other point to compare to
+    /// Generate a version of this with sensible base parameters
     ///
     /// ### Returns
     ///
-    /// The distance between self and the other point.
-    #[inline(always)]
-    fn distance(&self, other: &Self) -> f32 {
-        debug_assert_eq!(self.0.len(), other.0.len());
-
-        // moaaaar unsafe and raw pointers...
-        unsafe {
-            let len = self.0.len();
-            let ptr_a = self.0.as_ptr();
-            let ptr_b = other.0.as_ptr();
-
-            match self.1 {
-                AnnDist::Euclidean => {
-                    let mut sum = 0.0f32;
-                    for i in 0..len {
-                        let diff = *ptr_a.add(i) - *ptr_b.add(i);
-                        sum += diff * diff;
-                    }
-                    sum
-                }
-                AnnDist::Cosine => {
-                    let mut dot = 0.0f32;
-                    let mut norm_a = 0.0f32;
-                    let mut norm_b = 0.0f32;
-
-                    for i in 0..len {
-                        let a = *ptr_a.add(i);
-                        let b = *ptr_b.add(i);
-                        dot += a * b;
-                        norm_a += a * a;
-                        norm_b += b * b;
-                    }
-
-                    1.0 - (dot / (norm_a.sqrt() * norm_b.sqrt()))
-                }
-            }
+    /// Self.
+    pub fn new() -> Self {
+        Self {
+            knn_method: "annoy".to_string(),
+            ann_dist: "cosine".to_string(),
+            k: 15,
+            n_tree: 100,
+            search_budget: 100,
+            max_iter: 25,
+            rho: 1.0,
+            delta: 0.001,
+            m: 32,
+            ef_construction: 100,
+            ef_search: 100,
         }
     }
 }
@@ -498,187 +481,6 @@ pub fn knn_to_sparse_dist(
 // KNN functions //
 ///////////////////
 
-///////////
-// Annoy //
-///////////
-
-/// Build an Annoy index
-///
-/// ### Params
-///
-/// * `mat` - The data matrix. Rows represent the samples, columns represent
-///   the embedding dimensions
-/// * `n_trees` - Number of trees to use to build the index
-/// * `usize` - Random seed for reproducibility
-///
-/// ### Return
-///
-/// The `AnnoyIndex`.
-pub fn build_annoy_index(mat: MatRef<f32>, n_trees: usize, seed: usize) -> AnnoyIndex {
-    AnnoyIndex::new(mat, n_trees, seed)
-}
-
-/// Helper function to query a given Annoy index
-///
-/// ### Params
-///
-/// * `query_mat` - The query matrix containing the samples x features
-/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
-///   `"cosine"`.
-/// * `k` - Number of neighbours to return
-/// * `search_budget` - Search budget per tree
-/// * `return_dist` - Shall the distances between the different points be
-///   returned
-///
-/// ### Returns
-///
-/// A tuple of `(knn_indices, optional distances)`
-pub fn query_annoy_index(
-    query_mat: MatRef<f32>,
-    index: &AnnoyIndex,
-    dist_metric: &str,
-    k: usize,
-    search_budget: usize,
-    return_dist: bool,
-    verbose: bool,
-) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
-    let n_samples = query_mat.nrows();
-    let ann_dist = parse_ann_dist(dist_metric).unwrap();
-    let search_k = Some(k * search_budget);
-    let counter = Arc::new(AtomicUsize::new(0));
-
-    if return_dist {
-        let results: Vec<(Vec<usize>, Vec<f32>)> = (0..n_samples)
-            .into_par_iter()
-            .map(|i| {
-                let (neighbors, dists) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
-                if verbose {
-                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                    if count.is_multiple_of(100_000) {
-                        println!(" Processed {} / {} cells.", count, n_samples);
-                    }
-                }
-                (neighbors, dists)
-            })
-            .collect();
-        let (indices, distances) = results.into_iter().unzip();
-        (indices, Some(distances))
-    } else {
-        let indices: Vec<Vec<usize>> = (0..n_samples)
-            .into_par_iter()
-            .map(|i| {
-                let (neighbors, _) = index.query_row(query_mat.row(i), &ann_dist, k, search_k);
-                if verbose {
-                    let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                    if count.is_multiple_of(100_000) {
-                        println!(" Processed {} / {} cells.", count, n_samples);
-                    }
-                }
-                neighbors
-            })
-            .collect();
-        (indices, None)
-    }
-}
-
-//////////
-// HNSW //
-//////////
-
-/// Build HNSW index
-///
-/// ### Params
-///
-/// * `mat` - The data matrix. Rows represent the samples, columns represent
-///   the embedding dimensions
-/// * `dist_metric` - Which distance metric to use. One of `"euclidean"` or
-///   `"cosine"`
-/// * `usize` - Random seed for reproducibility
-///
-/// ### Return
-///
-/// The
-pub fn build_hnsw_index(mat: MatRef<f32>, dist_metric: &str, seed: usize) -> HnswMap<Point, usize> {
-    let ann_dist = parse_ann_dist(dist_metric).unwrap();
-    let n_samples = mat.nrows();
-    let points: Vec<Point> = (0..n_samples)
-        .into_par_iter()
-        .map(|i| Point(mat.row(i).iter().cloned().collect(), ann_dist))
-        .collect();
-
-    Builder::default()
-        .seed(seed as u64)
-        .build(points, (0..n_samples).collect::<Vec<_>>())
-}
-
-/// Query HNSW index
-///
-/// ### Params
-///
-/// * `query_mat` - The query matrix containing the samples x features
-/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
-///   `"cosine"`.
-/// * `k` - Number of neighbours to return
-/// * `return_dist` - Shall the distances between the different points be
-///   returned
-///
-/// ### Returns
-///
-/// A tuple of `(knn_indices, optional distances)`
-pub fn query_hnsw_index(
-    query_mat: MatRef<f32>,
-    index: &HnswMap<Point, usize>,
-    dist_metric: &str,
-    k: usize,
-    return_dist: bool,
-    verbose: bool,
-) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
-    let n_samples = query_mat.nrows();
-    let ann_dist = parse_ann_dist(dist_metric).unwrap();
-    let counter = Arc::new(AtomicUsize::new(0));
-
-    let results: Vec<_> = (0..n_samples)
-        .into_par_iter()
-        .map(|i| {
-            let point = Point(query_mat.row(i).iter().cloned().collect(), ann_dist);
-            let mut search = Search::default();
-
-            // capture both indices and distances in one pass
-            let search_results: Vec<_> = index.search(&point, &mut search).take(k).collect();
-
-            let neighbors: Vec<usize> = search_results.iter().map(|item| *item.value).collect();
-
-            let dists = if return_dist {
-                Some(search_results.iter().map(|item| item.distance).collect())
-            } else {
-                None
-            };
-
-            if verbose {
-                let count = counter.fetch_add(1, Ordering::Relaxed) + 1;
-                if count.is_multiple_of(100_000) {
-                    println!(
-                        " Processed {} / {} cells.",
-                        count.separate_with_underscores(),
-                        n_samples.separate_with_underscores()
-                    );
-                }
-            }
-
-            (neighbors, dists)
-        })
-        .collect();
-
-    let indices = results.iter().map(|(i, _)| i.clone()).collect();
-    let distances = if return_dist {
-        Some(results.iter().map(|(_, d)| d.clone().unwrap()).collect())
-    } else {
-        None
-    };
-
-    (indices, distances)
-}
-
 ///////////////
 // NNDescent //
 ///////////////
@@ -789,21 +591,30 @@ pub fn generate_knn_nndescent_with_dist(
 /// * `mat` - Matrix in which rows represent the samples and columns the
 ///   respective embeddings for that sample
 /// * `no_neighbours` - Number of neighbours for the KNN graph
+/// * `m` - Number of connections per layer (M parameter)
+/// * `ef_const` - Size of dynamic candidate list during construction
+/// * `ef_search` - Size of candidate list during search (higher = better
+///   recall, slower)
 /// * `seed` - Seed for the HNSW algorithm
+/// * `verbose` - Controls verbosity
 ///
 /// ### Returns
 ///
 /// The k-nearest neighbours based on the HNSW algorithm
+#[allow(clippy::too_many_arguments)]
 pub fn generate_knn_hnsw(
     mat: MatRef<f32>,
     dist_metric: &str,
     no_neighbours: usize,
+    m: usize,
+    ef_const: usize,
+    ef_search: usize,
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
     let start_index = Instant::now();
 
-    let index = build_hnsw_index(mat, dist_metric, seed);
+    let index = build_hnsw_index(mat, m, ef_const, dist_metric, seed, verbose);
 
     let end_index = start_index.elapsed();
     if verbose {
@@ -812,8 +623,7 @@ pub fn generate_knn_hnsw(
 
     let start_search = Instant::now();
 
-    let (indices, _) =
-        query_hnsw_index(mat, &index, dist_metric, no_neighbours + 1, false, verbose);
+    let (indices, _) = query_hnsw_index(mat, &index, no_neighbours + 1, ef_search, false, true);
 
     let res: Vec<Vec<usize>> = indices
         .into_iter()
@@ -947,7 +757,7 @@ pub fn generate_knn_nndescent(
 ) -> Vec<Vec<usize>> {
     let graph: Vec<Vec<(usize, f32)>> = NNDescent::build(
         mat,
-        no_neighbours,
+        no_neighbours + 1,
         dist_metric,
         max_iter,
         delta,
@@ -974,6 +784,8 @@ pub fn generate_knn_nndescent(
                     }
                 }
             }
+
+            ids.remove(0);
 
             ids
         })
@@ -1049,7 +861,14 @@ pub fn generate_knn_with_dist(
         }
         KnnSearch::Hnsw => {
             let index_start = Instant::now();
-            let hnsw_index = build_hnsw_index(embd, &knn_params.ann_dist, seed);
+            let hnsw_index = build_hnsw_index(
+                embd,
+                knn_params.m,
+                knn_params.ef_construction,
+                &knn_params.ann_dist,
+                seed,
+                verbose,
+            );
             let end_index = index_start.elapsed();
 
             if verbose {
@@ -1060,8 +879,8 @@ pub fn generate_knn_with_dist(
             let (mut indices, distances) = query_hnsw_index(
                 embd,
                 &hnsw_index,
-                &knn_params.ann_dist,
                 knn_params.k + 1, // Query k+1 to include self!
+                knn_params.ef_search,
                 return_dist,
                 verbose,
             );
@@ -1085,17 +904,33 @@ pub fn generate_knn_with_dist(
 
             (indices, distances)
         }
-        KnnSearch::NNDescent => generate_knn_nndescent_with_dist(
-            embd,
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.max_iter,
-            knn_params.delta,
-            knn_params.rho,
-            seed,
-            verbose,
-            return_dist,
-        ),
+        KnnSearch::NNDescent => {
+            let (mut indices, distances) = generate_knn_nndescent_with_dist(
+                embd,
+                &knn_params.ann_dist,
+                knn_params.k + 1, // Query k+1 to include self!
+                knn_params.max_iter,
+                knn_params.delta,
+                knn_params.rho,
+                seed,
+                verbose,
+                return_dist,
+            );
+
+            // Remove first element (self) from each vector
+            for idx_vec in indices.iter_mut() {
+                idx_vec.remove(0);
+            }
+
+            let distances = distances.map(|mut dists| {
+                for dist_vec in dists.iter_mut() {
+                    dist_vec.remove(0);
+                }
+                dists
+            });
+
+            (indices, distances)
+        }
     }
 }
 

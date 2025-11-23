@@ -194,9 +194,8 @@ expect_true(
 
 #### nndescent cosine ----------------------------------------------------------
 
-# NNDescent overlaps way worse than the others due to the underlying
-# synthetic data... On the full data it should still reach 0.75 and on TopX
-# neighbours better...
+# the new implementation of nndescent via the ann_dist_rs crate behaves now
+# MUCH better...
 
 sc_object <- find_neighbours_sc(
   sc_object,
@@ -221,9 +220,9 @@ nn_descent_top5_overlap <- (sum(
   (dim(bioc_knn_cosine)[1] * 5))
 
 expect_true(
-  current = nn_descent_full_overlap >= 0.75,
+  current = nn_descent_full_overlap >= 0.95,
   info = paste(
-    "kNN overlap with BiocNeighbors >= 0.75",
+    "kNN overlap with BiocNeighbors >= 0.95",
     "- NNDescent algorithm (cosine)"
   )
 )
@@ -262,9 +261,9 @@ nn_descent_top5_overlap <- (sum(
   (dim(bioc_knn_euclidean)[1] * 5))
 
 expect_true(
-  current = nn_descent_full_overlap >= 0.75,
+  current = nn_descent_full_overlap >= 0.95,
   info = paste(
-    "kNN overlap with BiocNeighbors >= 0.75",
+    "kNN overlap with BiocNeighbors >= 0.95",
     "- NNDescent algorithm (euclidean)"
   )
 )
@@ -272,7 +271,7 @@ expect_true(
 expect_true(
   current = nn_descent_top5_overlap >= 0.95,
   info = paste(
-    "kNN overlap with BiocNeighbors >= 0.75",
+    "kNN overlap with BiocNeighbors >= 0.95",
     "- NNDescent algorithm (euclidean) Top 5 neighbours"
   )
 )

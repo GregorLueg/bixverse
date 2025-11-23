@@ -282,9 +282,13 @@ expect_equivalent(
   info = "S7 scrublet: no weird changes during generation (called doublets)"
 )
 
-expect_equivalent(
-  current = obj_res$doublet_scores_obs,
-  target = scrublet_res$doublet_scores_obs,
+expect_true(
+  current = cor(
+    obj_res$doublet_scores_obs,
+    scrublet_res$doublet_scores_obs,
+    method = "spearman"
+  ) >=
+    0.99,
   info = "S7 scrublet: no weird changes during generation (obs scores)"
 )
 

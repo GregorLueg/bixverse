@@ -120,14 +120,7 @@ pub struct BoostParams {
     pub p_thresh: f32,
     pub voter_thresh: f32,
     // knn
-    pub k: usize,
-    pub knn_method: String,
-    pub dist_metric: String,
-    pub search_budget: usize,
-    pub n_trees: usize,
-    pub nn_max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
+    pub knn_params: KnnParams,
 }
 
 impl BoostParams {
@@ -144,6 +137,8 @@ impl BoostParams {
     ///
     /// The `BoostParams` with all parameters set.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let params_list = r_list.into_hashmap();
 
         // norm parameters
@@ -237,51 +232,6 @@ impl BoostParams {
             .and_then(|v| v.as_real())
             .unwrap_or(0.9) as f32;
 
-        // kNN parameters
-        let k = params_list
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(0) as usize; // 0 = auto-calculate as round(0.5 * sqrt(n_cells))
-
-        let knn_method = std::string::String::from(
-            params_list
-                .get("knn_method")
-                .and_then(|v| v.as_str())
-                .unwrap_or("nndescent"),
-        );
-
-        let dist_metric = std::string::String::from(
-            params_list
-                .get("dist_metric")
-                .and_then(|v| v.as_str())
-                .unwrap_or("euclidean"),
-        );
-
-        let search_budget = params_list
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let n_trees = params_list
-            .get("n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(10) as usize;
-
-        let nn_max_iter = params_list
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        let rho = params_list
-            .get("rho")
-            .and_then(|v| v.as_real())
-            .unwrap_or(1.0) as f32;
-
-        let delta = params_list
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
-
         Self {
             log_transform,
             mean_center,
@@ -300,14 +250,7 @@ impl BoostParams {
             n_iters,
             p_thresh,
             voter_thresh,
-            k,
-            knn_method,
-            dist_metric,
-            search_budget,
-            n_trees,
-            nn_max_iter,
-            rho,
-            delta,
+            knn_params,
         }
     }
 }
@@ -394,16 +337,9 @@ fn pca_boost(
             stdev_doublet_rate: 0.0,
             no_pcs: params.no_pcs,
             random_svd: params.random_svd,
-            k: 0,
-            knn_method: String::new(),
-            dist_metric: String::new(),
-            search_budget: 0,
-            n_trees: 0,
             n_bins: 0,
             manual_threshold: None,
-            nn_max_iter: 0,
-            rho: 0.0,
-            delta: 0.0,
+            knn_params: KnnParams::new(),
         },
         seed,
         verbose,
@@ -1020,8 +956,12 @@ impl BoostClassifier {
         seed: usize,
         verbose: bool,
     ) -> Result<Vec<Vec<usize>>, String> {
-        let knn_method = parse_knn_method(&self.params.knn_method)
-            .ok_or_else(|| format!("Invalid KNN search method: {}", &self.params.knn_method))?;
+        let knn_method = parse_knn_method(&self.params.knn_params.knn_method).ok_or_else(|| {
+            format!(
+                "Invalid KNN search method: {}",
+                &self.params.knn_params.knn_method
+            )
+        })?;
 
         let k_adj = self.calculate_k_adj();
 
@@ -1032,27 +972,30 @@ impl BoostClassifier {
         let knn = match knn_method {
             KnnSearch::Hnsw => generate_knn_hnsw(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
+                self.params.knn_params.m,
+                self.params.knn_params.ef_construction,
+                self.params.knn_params.ef_search,
                 seed,
                 verbose,
             ),
             KnnSearch::Annoy => generate_knn_annoy(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
-                self.params.n_trees,
-                self.params.search_budget,
+                self.params.knn_params.n_tree,
+                self.params.knn_params.search_budget,
                 seed,
                 verbose,
             ),
             KnnSearch::NNDescent => generate_knn_nndescent(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
-                self.params.nn_max_iter,
-                self.params.delta,
-                self.params.rho,
+                self.params.knn_params.max_iter,
+                self.params.knn_params.delta,
+                self.params.knn_params.rho,
                 seed,
                 verbose,
             ),
@@ -1064,10 +1007,10 @@ impl BoostClassifier {
     /// Calculates the adjusted k based on number actual cells and simulated
     /// cells
     fn calculate_k_adj(&self) -> usize {
-        let k = if self.params.k == 0 {
+        let k = if self.params.knn_params.k == 0 {
             ((self.n_cells as f32).sqrt() * 0.5).round() as usize
         } else {
-            self.params.k
+            self.params.knn_params.k
         };
 
         let r = self.n_cells_sim as f32 / self.n_cells as f32;

@@ -101,17 +101,7 @@ pub type FinalScrubletRes = (
 ///
 /// **kNN Graph:**
 ///
-/// * `k` - Number of nearest neighbours for the kNN graph.
-/// * `knn_method` - Method for approximate nearest neighbor search.
-///   One of `"annoy"` or `"hnsw"`.
-/// * `dist_metric` - Distance metric to use. One of `"euclidean"` or
-///   `"cosine"`.
-/// * `search_budget` - Search budget for Annoy (higher = more accurate but
-///   slower).
-/// * `n_trees` - Number of trees for Annoy index generation.
-/// * `nn_max_iter` - Maximum iterations for the NNDescent kNN search
-/// * `rho` - Sampling rate for NNDescent.
-/// * `delta` - Early termination criterium for NNDescent
+/// * `knn_params` - All the parameters related to the kNN graph generation
 #[derive(Clone, Debug)]
 pub struct ScrubletParams {
     // general params
@@ -139,14 +129,7 @@ pub struct ScrubletParams {
     pub random_svd: bool,
 
     // knn
-    pub k: usize,
-    pub knn_method: String,
-    pub dist_metric: String,
-    pub search_budget: usize,
-    pub n_trees: usize,
-    pub nn_max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
+    pub knn_params: KnnParams,
 }
 
 impl ScrubletParams {
@@ -163,6 +146,8 @@ impl ScrubletParams {
     ///
     /// The `ScrubletParams` with all parameters set.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let scrublet_list = r_list.into_hashmap();
 
         // General params
@@ -247,51 +232,6 @@ impl ScrubletParams {
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
 
-        // kNN parameters
-        let k = scrublet_list
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(0) as usize; // 0 = auto-calculate as round(0.5 * sqrt(n_cells))
-
-        let knn_method = std::string::String::from(
-            scrublet_list
-                .get("knn_method")
-                .and_then(|v| v.as_str())
-                .unwrap_or("hnsw"),
-        );
-
-        let dist_metric = std::string::String::from(
-            scrublet_list
-                .get("dist_metric")
-                .and_then(|v| v.as_str())
-                .unwrap_or("euclidean"),
-        );
-
-        let search_budget = scrublet_list
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let n_trees = scrublet_list
-            .get("n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let nn_max_iter = scrublet_list
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        let rho = scrublet_list
-            .get("rho")
-            .and_then(|v| v.as_real())
-            .unwrap_or(1.0) as f32;
-
-        let delta = scrublet_list
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
-
         Self {
             // norm
             log_transform,
@@ -313,14 +253,7 @@ impl ScrubletParams {
             no_pcs,
             random_svd,
             // knn
-            k,
-            knn_method,
-            dist_metric,
-            search_budget,
-            n_trees,
-            nn_max_iter,
-            rho,
-            delta,
+            knn_params,
         }
     }
 }
@@ -1211,8 +1144,12 @@ impl Scrublet {
         seed: usize,
         verbose: bool,
     ) -> Result<Vec<Vec<usize>>, String> {
-        let knn_method = parse_knn_method(&self.params.knn_method)
-            .ok_or_else(|| format!("Invalid KNN search method: {}", &self.params.knn_method))?;
+        let knn_method = parse_knn_method(&self.params.knn_params.knn_method).ok_or_else(|| {
+            format!(
+                "Invalid KNN search method: {}",
+                &self.params.knn_params.knn_method
+            )
+        })?;
 
         let k_adj = self.calculate_k_adj();
 
@@ -1223,27 +1160,30 @@ impl Scrublet {
         let knn = match knn_method {
             KnnSearch::Hnsw => generate_knn_hnsw(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
+                self.params.knn_params.m,
+                self.params.knn_params.ef_construction,
+                self.params.knn_params.ef_search,
                 seed,
                 verbose,
             ),
             KnnSearch::Annoy => generate_knn_annoy(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
-                self.params.n_trees,
-                self.params.search_budget,
+                self.params.knn_params.n_tree,
+                self.params.knn_params.search_budget,
                 seed,
                 verbose,
             ),
             KnnSearch::NNDescent => generate_knn_nndescent(
                 embd.as_ref(),
-                &self.params.dist_metric,
+                &self.params.knn_params.ann_dist,
                 k_adj,
-                self.params.nn_max_iter,
-                self.params.delta,
-                self.params.rho,
+                self.params.knn_params.max_iter,
+                self.params.knn_params.delta,
+                self.params.knn_params.rho,
                 seed,
                 verbose,
             ),
@@ -1392,10 +1332,10 @@ impl Scrublet {
     /// Calculates the adjusted k based on number actual cells and simulated
     /// cells
     fn calculate_k_adj(&self) -> usize {
-        let k = if self.params.k == 0 {
+        let k = if self.params.knn_params.k == 0 {
             ((self.n_cells as f32).sqrt() * 0.5).round() as usize
         } else {
-            self.params.k
+            self.params.knn_params.k
         };
 
         let r = self.n_cells_sim as f32 / self.n_cells as f32;

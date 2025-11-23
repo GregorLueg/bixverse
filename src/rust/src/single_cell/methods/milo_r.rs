@@ -1,10 +1,10 @@
+use ann_search_rs::annoy::AnnoyIndex;
+use ann_search_rs::hnsw::HnswIndex;
 use extendr_api::List;
 use faer::MatRef;
-use instant_distance::{HnswMap, Search};
 use rayon::prelude::*;
 
 use crate::core::base::stats::median;
-use crate::core::graph::annoy::*;
 use crate::core::graph::knn::*;
 use crate::single_cell::sc_knn_snn::*;
 
@@ -97,9 +97,9 @@ impl MiloRParams {
 /// * `Hnsw` - Hierarchical navigable small world graph index
 pub enum KnnIndex {
     /// The Annoy index
-    Annoy(AnnoyIndex),
+    Annoy(AnnoyIndex<f32>),
     /// The HNSW index
-    Hnsw(HnswMap<Point, usize>),
+    Hnsw(HnswIndex<f32>),
 }
 
 impl KnnIndex {
@@ -120,14 +120,20 @@ impl KnnIndex {
         index_type: KnnIndexType,
         knn_params: &KnnParams,
         seed: usize,
+        verbose: bool,
     ) -> Self {
         match index_type {
             KnnIndexType::AnnoyIndex => {
                 KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, seed))
             }
-            KnnIndexType::HnswIndex => {
-                KnnIndex::Hnsw(build_hnsw_index(embd, &knn_params.ann_dist, seed))
-            }
+            KnnIndexType::HnswIndex => KnnIndex::Hnsw(HnswIndex::build(
+                embd,
+                knn_params.m,
+                knn_params.ef_construction,
+                &knn_params.ann_dist,
+                seed,
+                verbose,
+            )),
         }
     }
 
@@ -150,22 +156,13 @@ impl KnnIndex {
     ) -> (Vec<usize>, Vec<f32>) {
         match self {
             KnnIndex::Annoy(index) => {
-                let metric = parse_ann_dist(&knn_params.ann_dist).unwrap_or(AnnDist::Euclidean);
+                use ann_search_rs::utils::{parse_ann_dist, Dist};
 
-                index.query(query_point, &metric, k, Some(knn_params.search_budget))
+                let ann_dist = parse_ann_dist(&knn_params.ann_dist).unwrap_or(Dist::Cosine);
+
+                index.query(query_point, &ann_dist, k, Some(knn_params.search_budget))
             }
-            KnnIndex::Hnsw(index) => {
-                let metric = parse_ann_dist(&knn_params.ann_dist).unwrap_or(AnnDist::Euclidean);
-                let point = Point(query_point.to_vec(), metric);
-                let mut search = Search::default();
-
-                let results: Vec<_> = index.search(&point, &mut search).take(k).collect();
-
-                let indices = results.iter().map(|item| *item.value).collect();
-                let distances = results.iter().map(|item| item.distance).collect();
-
-                (indices, distances)
-            }
+            KnnIndex::Hnsw(index) => index.query(query_point, k, knn_params.ef_search),
         }
     }
 }
