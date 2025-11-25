@@ -7,4 +7,5 @@ pub mod doublet_detection;
 pub mod fast_mnn;
 pub mod scrublet;
 pub mod seacells;
+pub mod umap;
 pub mod vision_hotspot;

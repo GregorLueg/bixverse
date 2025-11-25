@@ -10,26 +10,81 @@ sc_object <- single_cell_exp(
 
 sc_object <- load_existing(sc_object)
 
-dim(get_knn_mat(sc_object))
+sc_object <- set_cells_to_keep(
+  x = sc_object,
+  cells_to_keep = sc_object[[]][
+    high_quality_cells == TRUE,
+    cell_id
+  ]
+)
 
-dim(get_pca_factors(sc_object))
+hvg_params <- params_sc_hvg(
+  method = "vst"
+)
 
-hotspot_autocor_danb_res <- hotspot_autocor_sc(
-  hotspot_params = params_sc_hotspot(),
+sc_object <- find_hvg_sc(
   object = sc_object,
-  embd_to_use = "pca",
-  streaming = TRUE,
+  hvg_params = hvg_params,
+  hvg_no = 2000L,
   .verbose = TRUE
 )
 
-get_sc_var(sc_object)
-
-weird_genes <- get_gene_indices(
-  sc_object,
-  gene_ids = hotspot_autocor_danb_res$gene_id[is.na(
-    hotspot_autocor_danb_res$pval
-  )],
-  rust_index = FALSE
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  randomised_svd = TRUE,
+  .verbose = TRUE
 )
 
-Matrix::colSums(sc_object[, weird_genes, return_format = "gene"])
+
+tictoc::tic()
+umap_uwot <- uwot::umap2(
+  get_pca_factors(sc_object),
+  metric = "cosine",
+  n_epochs = 500L,
+  verbose = TRUE
+)
+tictoc::toc()
+
+?uwot::umap2
+
+umap_uwot_dt <- as.data.table(umap_uwot) %>%
+  `colnames<-`(c("umap1", "umap2")) %>%
+  .[,
+    cell_line := unlist(sc_object[["propagation_results"]], use.names = FALSE)
+  ]
+
+ggplot(data = umap_uwot_dt, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = cell_line), size = 0.25)
+
+rextendr::document()
+rextendr::clean()
+
+tictoc::tic()
+umap_bixverse <- rs_umap(
+  embd = get_pca_factors(sc_object),
+  n_dim = 2L,
+  ann_type = "annoy",
+  optim = "sgd",
+  k = 15L,
+  42L,
+  TRUE
+)
+tictoc::toc()
+
+umap_uwot_bixverse <- as.data.table(umap_bixverse) %>%
+  `colnames<-`(c("umap1", "umap2")) %>%
+  .[,
+    `:=`(
+      cell_line = unlist(sc_object[["propagation_results"]], use.names = FALSE),
+      condition = unlist(sc_object[["sample_combined"]], use.names = FALSE)
+    )
+  ]
+
+ggplot(data = umap_uwot_bixverse, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = cell_line), size = 0.25)
+
+ggplot(data = umap_uwot_bixverse, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = condition), size = 0.25)
+
+rextendr::document()

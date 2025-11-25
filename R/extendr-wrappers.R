@@ -2614,6 +2614,9 @@ rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_
 #' @export
 rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
 
+#' @export
+rs_umap <- function(embd, n_dim, ann_type, optim, k, seed, verbose) .Call(wrap__rs_umap, embd, n_dim, ann_type, optim, k, seed, verbose)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)

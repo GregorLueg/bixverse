@@ -4,5 +4,6 @@
 pub mod r_count_obj;
 pub mod r_sc_analysis;
 pub mod r_sc_batch_corr;
+pub mod r_sc_embd;
 pub mod r_sc_metacells;
 pub mod r_sc_processing;

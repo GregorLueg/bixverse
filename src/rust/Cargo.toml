@@ -32,6 +32,7 @@ hdf5 = { package = "hdf5-metno", version = "0.10.1", features = [
 ] }
 indexmap = "2.12.0"
 instant-distance = "0.6.1"
+manifolds-rs = { git = "https://github.com/GregorLueg/manifolds-rs", branch = "fix-optimisers" }
 memmap2 = "0.9.9"
 ndarray = "0.17.1"
 num-complex = '0.4.6'
