@@ -20,6 +20,7 @@ cell_cycle_genes
 }
 \description{
 (Human) cell cycle genes for scoring in single cell, please see
-\code{\link[=module_scores_sc]{module_scores_sc()}} and Tirosh et al, Science (2016).
+\code{\link[=module_scores_sc]{module_scores_sc()}} and Tirosh et al, Science (2016). These
+genes are based on the updated version in Seurat.
 }
 \keyword{datasets}

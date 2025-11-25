@@ -4,11 +4,13 @@
 
 library(Seurat)
 library(biomaRt)
+library(magrittr)
+library(data.table)
 
 ## data ------------------------------------------------------------------------
 
-s.genes <- cc.genes$s.genes
-g2m.genes <- cc.genes$g2m.genes
+s.genes <- cc.genes.updated.2019$s.genes
+g2m.genes <- cc.genes.updated.2019$g2m.genes
 
 ## get ensembl identifiers -----------------------------------------------------
 

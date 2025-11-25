@@ -87,6 +87,8 @@ auc_gene_sets <- list(
   markers_cell_type_3 = sprintf("gene_%03d", 21:30)
 )
 
+bad_list <- list(markers = sample(letters, 10))
+
 auc_res_wilcox <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
@@ -106,6 +108,16 @@ obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 cells_per_cluster <- split(
   obs_table_red$cell_id,
   obs_table_red$cell_grp
+)
+
+expect_error(
+  current = aucell_sc(
+    object = sc_object,
+    gs_list = bad_list,
+    auc_type = "auroc",
+    .verbose = FALSE
+  ),
+  info = paste("aucell: error when provided a list where nothing matches.")
 )
 
 expect_true(
@@ -197,6 +209,7 @@ expect_true(
   )
 )
 
+
 ## module scores ---------------------------------------------------------------
 
 module_scores <- module_scores_sc(
@@ -210,6 +223,17 @@ module_scores_streaming <- module_scores_sc(
   gs_list = auc_gene_sets,
   .verbose = FALSE,
   streaming = TRUE
+)
+
+expect_error(
+  current = module_scores_sc(
+    object = sc_object,
+    gs_list = bad_list,
+    .verbose = FALSE
+  ),
+  info = paste(
+    "module-scores: error when provided a list where nothing matches."
+  )
 )
 
 expect_true(
