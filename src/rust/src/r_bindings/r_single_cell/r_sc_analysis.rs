@@ -3,6 +3,7 @@ use faer::Mat;
 
 use crate::core::base::stats::calc_fdr;
 use crate::single_cell::dge_pathway_scores::*;
+use crate::single_cell::methods::module_scoring::*;
 use crate::single_cell::methods::vision_hotspot::*;
 use crate::single_cell::sc_knn_snn::*;
 use crate::utils::r_rust_interface::*;
@@ -15,6 +16,7 @@ extendr_module! {
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
     fn rs_hotspot_gene_cor;
+    fn rs_module_scoring;
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
 }
@@ -107,6 +109,82 @@ fn rs_calculate_dge_mann_whitney(
 // Pathway activities //
 ////////////////////////
 
+/// Calculate module activity scores in Rust
+///
+/// @description
+/// Calculates module activity scores following Seurat's `AddModuleScore`.
+/// For each module (gene set), computes the average expression of genes in the
+/// set minus the average expression of randomly selected control genes from the
+/// same expression bins. Genes are binned based on their average expression
+/// across cells to ensure controls are expression-matched.
+///
+/// @param f_path_cells String. Path to the cell-based binary file.
+/// @param f_path_genes String. Path to the gene-based binary file.
+/// @param gs_list List. List of integer vectors, where each vector contains
+/// gene indices (0-based) for a module/gene set.
+/// @param cells_to_keep Integer. Vector of indices of the cells to keep.
+/// @param nbin Integer. Number of bins for gene stratification.
+/// @param ctrl Integer. Number of control genes to sample per gene in each
+/// module.
+/// @param seed Integer. Random seed for reproducible control gene sampling.
+/// @param streaming Logical. If TRUE, processes cells and genes are read in in
+/// chunks to reduce memory usage.
+/// @param verbose Logical. Controls verbosity of the function.
+///
+/// @return Matrix of module scores (modules x cells). Each row corresponds to a
+/// module from gs_list, each column to a cell from cells_to_keep.
+///
+/// @references
+/// Tirosh et al, Science (2016)
+///
+/// @export
+#[extendr]
+#[allow(clippy::too_many_arguments)]
+fn rs_module_scoring(
+    f_path_cells: String,
+    f_path_genes: String,
+    gs_list: List,
+    cells_to_keep: Vec<i32>,
+    nbin: usize,
+    ctrl: usize,
+    seed: usize,
+    streaming: bool,
+    verbose: bool,
+) -> extendr_api::Result<RMatrix<f64>> {
+    let cells_to_keep = cells_to_keep.r_int_convert();
+
+    let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
+    for i in 0..gs_list.len() {
+        let r_obj = gs_list.elt(i).unwrap();
+        let int = r_obj
+            .as_integer_vector()
+            .unwrap()
+            .iter()
+            .map(|x| *x as usize)
+            .collect::<Vec<usize>>();
+        gs_indices.push(int);
+    }
+
+    let module_scores = calculate_module_scores_main(
+        &f_path_genes,
+        &f_path_cells,
+        &gs_indices,
+        &cells_to_keep,
+        nbin,
+        ctrl,
+        streaming,
+        seed,
+        verbose,
+    )?;
+
+    let nrows = module_scores[0].len(); // cells
+    let ncols = module_scores.len(); // gene sets
+
+    Ok(RMatrix::new_matrix(nrows, ncols, |r, c| {
+        module_scores[c][r] as f64
+    }))
+}
+
 /// Calculate AUCell in Rust
 ///
 /// @description
@@ -139,10 +217,9 @@ fn rs_aucell(
     streaming: bool,
     verbose: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
-    let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
-
     let cells_to_keep = cells_to_keep.r_int_convert();
 
+    let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
     for i in 0..gs_list.len() {
         let r_obj = gs_list.elt(i).unwrap();
         let int = r_obj

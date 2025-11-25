@@ -8,6 +8,7 @@
 ^\.pre-commit-config\.yaml$
 ^_pkgdown\.yml$
 ^bixverse\.Rproj$
+^data-raw$
 ^doc$
 ^docs$
 ^misc$

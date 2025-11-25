@@ -628,6 +628,28 @@ impl CscGeneChunk {
         self.indices = new_row_indices;
         self.nnz = nnz;
     }
+
+    /// Calculate the average gene expression given a set of cells
+    ///
+    /// ### Params
+    ///
+    /// * `cells_to_keep` - IndexSet with cell index positions to keep.
+    ///
+    /// ### Returns
+    ///
+    /// Tuple of `(gene_index, average expression)`.
+    pub fn calculate_avg_exp(&self, cells_to_keep: &IndexSet<u32>) -> (usize, f32) {
+        let sum: f32 = self
+            .indices
+            .iter()
+            .zip(self.data_norm.iter())
+            .filter(|(cell_idx, _)| cells_to_keep.contains(*cell_idx))
+            .map(|(_, val)| val.to_f32())
+            .sum();
+        let avg = sum / cells_to_keep.len() as f32;
+
+        (self.original_index, avg)
+    }
 }
 
 /// SparseDataHeader
