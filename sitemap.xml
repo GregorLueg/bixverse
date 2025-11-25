@@ -80,6 +80,7 @@
 <url><loc>/reference/calculate_wang_sim_mat.html</loc></url>
 <url><loc>/reference/calculate_wang_sim_onto.html</loc></url>
 <url><loc>/reference/call_doublets_manual.html</loc></url>
+<url><loc>/reference/cell_cycle_genes.html</loc></url>
 <url><loc>/reference/change_gene_identifier.html</loc></url>
 <url><loc>/reference/checkCellsExist.html</loc></url>
 <url><loc>/reference/checkCistargetParams.html</loc></url>
@@ -251,6 +252,7 @@
 <url><loc>/reference/load_r_data.html</loc></url>
 <url><loc>/reference/load_seurat.html</loc></url>
 <url><loc>/reference/meta_cells.html</loc></url>
+<url><loc>/reference/module_scores_sc.html</loc></url>
 <url><loc>/reference/multilevel_error.html</loc></url>
 <url><loc>/reference/network_diffusions.html</loc></url>
 <url><loc>/reference/new_sc_cache.html</loc></url>
@@ -387,6 +389,7 @@
 <url><loc>/reference/rs_mad_outlier.html</loc></url>
 <url><loc>/reference/rs_mitch_calc.html</loc></url>
 <url><loc>/reference/rs_mnn.html</loc></url>
+<url><loc>/reference/rs_module_scoring.html</loc></url>
 <url><loc>/reference/rs_mutual_info.html</loc></url>
 <url><loc>/reference/rs_onto_semantic_sim.html</loc></url>
 <url><loc>/reference/rs_onto_semantic_sim_mat.html</loc></url>

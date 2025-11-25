@@ -188,6 +188,8 @@
 - [`call_doublets_manual()`](call_doublets_manual.md) : Helper function
   to manually readjust Scrublet thresholds
 
+- [`cell_cycle_genes`](cell_cycle_genes.md) : Cell cycle genes
+
 - [`change_gene_identifier()`](change_gene_identifier.md) : Change the
   primary gene identifier of bulk_dge
 
@@ -658,6 +660,9 @@
 
 - [`meta_cells()`](meta_cells.md) : bixverse meta cell class
 
+- [`module_scores_sc()`](module_scores_sc.md) : Calculate module
+  activity scores
+
 - [`multilevel_error()`](multilevel_error.md) : Helper function to
   calculate the multi-level error
 
@@ -1047,6 +1052,9 @@
   leveraging Rust under the hood
 
 - [`rs_mnn()`](rs_mnn.md) : FastMNN batch correction in Rust
+
+- [`rs_module_scoring()`](rs_module_scoring.md) : Calculate module
+  activity scores in Rust
 
 - [`rs_mutual_info()`](rs_mutual_info.md) : Calculates the mutual
   information matrix
