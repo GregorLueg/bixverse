@@ -134,25 +134,17 @@ fn sample_control_genes(
     ctrl: usize,
     rng: &mut impl Rng,
 ) -> Vec<usize> {
-    let mut controls = Vec::new();
+    let mut controls = IndexSet::new();
 
     for &gene_idx in gene_set {
         if let Some(&bin_id) = gene_bins.gene_to_bin.get(&gene_idx) {
             let bin_genes = &gene_bins.bins[bin_id];
-
-            // Sample ctrl genes from this bin (with replacement as per Seurat)
-            let sampled: Vec<usize> = bin_genes
-                .choose_multiple(rng, ctrl.min(bin_genes.len()))
-                .copied()
-                .collect();
-            controls.extend(sampled);
+            let sampled = bin_genes.choose_multiple(rng, ctrl.min(bin_genes.len()));
+            controls.extend(sampled.copied());
         }
     }
 
-    // Return unique controls
-    controls.sort_unstable();
-    controls.dedup();
-    controls
+    controls.into_iter().collect()
 }
 
 /// Calculate module scores for a single cell
@@ -171,22 +163,27 @@ fn calculate_cell_module_score(
     gene_set: &[usize],
     control_set: &[usize],
 ) -> f32 {
-    let find_expr = |gene_idx: usize| -> f32 {
-        cell.indices
-            .binary_search(&(gene_idx as u16))
-            .ok()
-            .map(|pos| cell.data_norm[pos].to_f32())
-            .unwrap_or(0.0)
-    };
+    let mut expr_map: FxHashMap<usize, f32> =
+        FxHashMap::with_capacity_and_hasher(cell.indices.len(), Default::default());
 
-    let gene_sum: f32 = gene_set.iter().map(|&idx| find_expr(idx)).sum();
+    for (&idx, &val) in cell.indices.iter().zip(cell.data_norm.iter()) {
+        expr_map.insert(idx as usize, val.to_f32());
+    }
+
+    let gene_sum: f32 = gene_set
+        .iter()
+        .map(|&idx| *expr_map.get(&idx).unwrap_or(&0.0))
+        .sum();
     let gene_mean = if gene_set.is_empty() {
         0.0
     } else {
         gene_sum / gene_set.len() as f32
     };
 
-    let ctrl_sum: f32 = control_set.iter().map(|&idx| find_expr(idx)).sum();
+    let ctrl_sum: f32 = control_set
+        .iter()
+        .map(|&idx| *expr_map.get(&idx).unwrap_or(&0.0))
+        .sum();
     let ctrl_mean = if control_set.is_empty() {
         0.0
     } else {

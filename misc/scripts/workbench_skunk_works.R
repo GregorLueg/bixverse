@@ -1,41 +1,29 @@
 # cell cycle scoring -----------------------------------------------------------
 
-library(Seurat)
+## speed improvement -----------------------------------------------------------
 
-s.genes <- cc.genes$s.genes
-g2m.genes <- cc.genes$g2m.genes
+dir_data <- path.expand("~/Downloads/single_cell_data/")
 
+sc_object <- single_cell_exp(
+  dir_data = dir_data
+)
 
-BiocManager::install("biomaRt")
+sc_object <- load_existing(sc_object)
 
+data(cell_cycle_genes)
 
-library(biomaRt)
+cell_cycle_genes_ls <- split(
+  cell_cycle_genes$ensembl_gene_id,
+  cell_cycle_genes$set
+)
 
-# Connect to Ensembl
-mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+devtools::check(vignettes = FALSE)
 
-ensembl_set1 <- getBM(
-  attributes = c("hgnc_symbol", "ensembl_gene_id"),
-  filters = "hgnc_symbol",
-  values = s.genes,
-  mart = mart
-) %>%
-  as.data.table()
-
-ensembl_set1[, set := "S phase"]
-
-ensembl_set2 <- getBM(
-  attributes = c("hgnc_symbol", "ensembl_gene_id"),
-  filters = "hgnc_symbol",
-  values = g2m.genes,
-  mart = mart
-) %>%
-  as.data.table()
-
-ensembl_set2[, set := "G2/M phase"]
-
-cell_cycle_genes <- rbindlist(list(ensembl_set1, ensembl_set2))
-
-usethis::use_data(my_pkg_data)
-
-usethis::use_data_raw("seurat_cell_cycle")
+tictoc::tic()
+module_scores <- module_scores_sc(
+  object = sc_object,
+  gs_list = cell_cycle_genes_ls,
+  streaming = TRUE,
+  .verbose = TRUE
+)
+tictoc::toc()
