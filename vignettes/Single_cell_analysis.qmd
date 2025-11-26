@@ -189,27 +189,20 @@ from mtx files it can either be cells as rows or cells as columns, and the obs
 and var tables can either be loaded as `.tsv` or `.csv` 
 
 ```{r}
-#| label: load-mtx
+#| label: load-PBMC-data
+#| echo: true
+
+pbmc3k_path <- download_pbmc3k()
+
 sc_object <- single_cell_exp(dir_data = tempdir())
 
-
 params_cells_rows_csv <- params_sc_mtx_io(
-  path_mtx = file.path(f_path_v1, "mat.mtx"),
-  path_obs = file.path(f_path_v1, "barcodes.csv"),
-  path_var = file.path(f_path_v1, "features.csv"),
-  cells_as_rows = TRUE,
-  has_hdr = TRUE
+  path_mtx = file.path(pbmc3k_path, "matrix.mtx"),
+  path_obs = file.path(pbmc3k_path, "barcodes.tsv"),
+  path_var = file.path(pbmc3k_path, "genes.tsv"),
+  cells_as_rows = FALSE,
+  has_hdr = FALSE
 )
-
-## Data can also be loaded in this way, not run here shown purely as an example
-
-# params_genes_rows_tsv <- params_sc_mtx_io(
-#   path_mtx = file.path(f_path_v2, "mat.mtx"),
-#   path_obs = file.path(f_path_v2, "barcodes.tsv"),
-#   path_var = file.path(f_path_v2, "features.tsv"),
-#   cells_as_rows = FALSE,
-#   has_hdr = TRUE
-# )
 
 sc_object <- load_mtx(
   object = sc_object,
