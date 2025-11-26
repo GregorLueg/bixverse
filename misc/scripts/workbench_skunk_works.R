@@ -36,9 +36,9 @@ sc_object <- calculate_pca_sc(
   .verbose = TRUE
 )
 
-
 tictoc::tic()
-umap_uwot <- uwot::umap2(
+umap_uwot <- uwot::umap(
+  n_neighbors = 15,
   get_pca_factors(sc_object),
   metric = "cosine",
   n_epochs = 500L,
@@ -57,22 +57,22 @@ umap_uwot_dt <- as.data.table(umap_uwot) %>%
 ggplot(data = umap_uwot_dt, mapping = aes(x = umap1, y = umap2)) +
   geom_point(mapping = aes(col = cell_line), size = 0.25)
 
-rextendr::document()
-rextendr::clean()
+# rextendr::document()
+# rextendr::clean()
 
 tictoc::tic()
-umap_bixverse <- rs_umap(
+umap_bixverse_sdg <- rs_umap(
   embd = get_pca_factors(sc_object),
   n_dim = 2L,
   ann_type = "annoy",
   optim = "sgd",
-  k = 15L,
+  k = 10L,
   42L,
   TRUE
 )
 tictoc::toc()
 
-umap_uwot_bixverse <- as.data.table(umap_bixverse) %>%
+umap_uwot_bixverse_sgd <- as.data.table(umap_bixverse_sdg) %>%
   `colnames<-`(c("umap1", "umap2")) %>%
   .[,
     `:=`(
@@ -81,10 +81,36 @@ umap_uwot_bixverse <- as.data.table(umap_bixverse) %>%
     )
   ]
 
-ggplot(data = umap_uwot_bixverse, mapping = aes(x = umap1, y = umap2)) +
+ggplot(data = umap_uwot_bixverse_sgd, mapping = aes(x = umap1, y = umap2)) +
   geom_point(mapping = aes(col = cell_line), size = 0.25)
 
-ggplot(data = umap_uwot_bixverse, mapping = aes(x = umap1, y = umap2)) +
+ggplot(data = umap_uwot_bixverse_sgd, mapping = aes(x = umap1, y = umap2)) +
   geom_point(mapping = aes(col = condition), size = 0.25)
 
-rextendr::document()
+
+tictoc::tic()
+umap_bixverse_adam <- rs_umap(
+  embd = get_pca_factors(sc_object),
+  n_dim = 2L,
+  ann_type = "annoy",
+  optim = "adam",
+  k = 15L,
+  42L,
+  TRUE
+)
+tictoc::toc()
+
+umap_uwot_bixverse_adam <- as.data.table(umap_bixverse_adam) %>%
+  `colnames<-`(c("umap1", "umap2")) %>%
+  .[,
+    `:=`(
+      cell_line = unlist(sc_object[["propagation_results"]], use.names = FALSE),
+      condition = unlist(sc_object[["sample_combined"]], use.names = FALSE)
+    )
+  ]
+
+ggplot(data = umap_uwot_bixverse_adam, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = cell_line), size = 0.25)
+
+ggplot(data = umap_uwot_bixverse_adam, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = condition), size = 0.25)
