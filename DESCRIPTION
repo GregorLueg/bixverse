@@ -92,3 +92,4 @@ SystemRequirements:
 VignetteBuilder: quarto
 Depends: 
     R (>= 4.2)
+LazyData: true
