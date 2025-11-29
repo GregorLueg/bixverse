@@ -346,7 +346,7 @@ matrix <- get_sc_counts(
   return_format = "cell"
 )
 tictoc::toc()
-#> 0.004 sec elapsed
+#> 0.005 sec elapsed
 
 ## Now we are to select the incorrect orientation
 ## This dataset is too small to see a difference however try it on your own larger and it will shock you
@@ -358,7 +358,7 @@ matrix <- get_sc_counts(
   return_format = "gene"
 )
 tictoc::toc()
-#> 0.02 sec elapsed
+#> 0.018 sec elapsed
 
 
 ## matrices can also be accessed with sinle brackets
