@@ -41,10 +41,12 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_synthetic_data</span><span class="op">(</span></span>
 <span>  n_cells <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  n_genes <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  n_batches <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  marker_genes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cell_type_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>marker_genes <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9L</span><span class="op">)</span>, cell_type_2 <span class="op">=</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>marker_genes <span class="op">=</span> <span class="fl">10</span><span class="op">:</span><span class="fl">19L</span><span class="op">)</span>, cell_type_3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>marker_genes <span class="op">=</span> <span class="fl">20</span><span class="op">:</span><span class="fl">29L</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  n_batches <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  batch_effect_strength <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strong"</span>, <span class="st">"medium"</span>, <span class="st">"weak"</span><span class="op">)</span></span>
+<span>  batch_effect_strength <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strong"</span>, <span class="st">"medium"</span>, <span class="st">"weak"</span><span class="op">)</span>,</span>
+<span>  n_samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sample_bias <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -60,18 +62,29 @@
 <dd><p>Integer. Number of genes.</p></dd>
 
 
+<dt id="arg-n-batches">n_batches<a class="anchor" aria-label="anchor" href="#arg-n-batches"></a></dt>
+<dd><p>Integer. Number of batches.</p></dd>
+
+
 <dt id="arg-marker-genes">marker_genes<a class="anchor" aria-label="anchor" href="#arg-marker-genes"></a></dt>
 <dd><p>List. A nested list that indicates which gene indices
 are markers for which cell.</p></dd>
 
 
-<dt id="arg-n-batches">n_batches<a class="anchor" aria-label="anchor" href="#arg-n-batches"></a></dt>
-<dd><p>Integer. Number of batches.</p></dd>
-
-
 <dt id="arg-batch-effect-strength">batch_effect_strength<a class="anchor" aria-label="anchor" href="#arg-batch-effect-strength"></a></dt>
 <dd><p>String. One of
 <code>c("strong", "medium", "weak")</code>. The strength of the batch effect to add.</p></dd>
+
+
+<dt id="arg-n-samples">n_samples<a class="anchor" aria-label="anchor" href="#arg-n-samples"></a></dt>
+<dd><p>Optional integer. Shall sample membership be added to the
+synthetic data. If you want sample information you need to provide
+<code>n_samples</code> and <code>sample_bias</code>.</p></dd>
+
+
+<dt id="arg-sample-bias">sample_bias<a class="anchor" aria-label="anchor" href="#arg-sample-bias"></a></dt>
+<dd><p>Optional string. One of
+<code>c("even", "slightly_uneven", "very_uneven")</code></p></dd>
 
 </dl></div>
     <div class="section level2">

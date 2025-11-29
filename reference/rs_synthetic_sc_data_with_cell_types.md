@@ -9,8 +9,10 @@ rs_synthetic_sc_data_with_cell_types(
   n_cells,
   n_genes,
   n_batches,
+  n_samples,
   cell_configs,
   batch_effect_strength,
+  sample_bias,
   seed
 )
 ```
@@ -29,6 +31,11 @@ rs_synthetic_sc_data_with_cell_types(
 
   Integer. Number of the batches to generated.
 
+- n_samples:
+
+  Optional integer. Shall the cells be distributed over `n_samples`
+  samples.
+
 - cell_configs:
 
   A nested list that indicates which gene indices are markers for which
@@ -38,6 +45,10 @@ rs_synthetic_sc_data_with_cell_types(
 
   String. One of `c("strong", "medium", "low")`. Defines the strength of
   the added batch effect.
+
+- sample_bias:
+
+  Optional string. One of `c("even", "slightly_uneven", "very_uneven")`
 
 - seed:
 
@@ -60,3 +71,5 @@ A list with the following items.
 - cell_type_indices - Vector indicating which cell type this is.
 
 - batch_indices - Vector indicating the batch.
+
+- sample_indices - Optional sample indices if asked for.

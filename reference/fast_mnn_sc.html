@@ -81,8 +81,27 @@ identified by a batch-aware method. Please refer to
 
 <dt id="arg-fastmnn-params">fastmnn_params<a class="anchor" aria-label="anchor" href="#arg-fastmnn-params"></a></dt>
 <dd><p>A list, please see <code><a href="params_sc_fastmnn.html">params_sc_fastmnn()</a></code>. The
-list has the following parameters:
-Claude fill this out</p></dd>
+list has the following parameters:</p><ul><li><p>k - Integer. Number of mutual nearest neighbours to identify.
+Defaults to <code>20L</code>.</p></li>
+<li><p>sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
+proportion of space radius). Defaults to <code>0.1</code>.</p></li>
+<li><p>knn_method - String. One of <code>c("annoy", "hnsw")</code>. The method to use
+for the approximate nearest neighbour search. Defaults to <code>"annoy"</code>.</p></li>
+<li><p>dist_metric - String. One of <code>c("cosine", "euclidean")</code>. The
+distance metric to be used for the approximate neighbour search. Defaults
+to <code>"cosine"</code>.</p></li>
+<li><p>annoy_n_trees - Integer. Number of trees for Annoy index. Defaults
+to <code>100L</code>.</p></li>
+<li><p>annoy_search_budget - Integer. Search budget per tree for Annoy.
+Defaults to <code>100L</code>.</p></li>
+<li><p>cos_norm - Logical. Apply cosine normalisation before computing
+distances. Defaults to <code>TRUE</code>.</p></li>
+<li><p>var_adj - Logical. Apply variance adjustment to avoid kissing
+effects. Defaults to <code>TRUE</code>.</p></li>
+<li><p>no_pcs - Integer. Number of PCs to use for MNN calculations.
+Defaults to <code>30L</code>.</p></li>
+<li><p>random_svd - Logical. Use randomised SVD. Defaults to <code>TRUE</code>.</p></li>
+</ul></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

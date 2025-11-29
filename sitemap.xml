@@ -11,6 +11,7 @@
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/reference/add_new_metadata.html</loc></url>
+<url><loc>/reference/add_nhoods_info.html</loc></url>
 <url><loc>/reference/add_snf_data_modality.html</loc></url>
 <url><loc>/reference/all_limma_contrasts.html</loc></url>
 <url><loc>/reference/anndata_parser.html</loc></url>
@@ -34,6 +35,7 @@
 <url><loc>/reference/assertScHotspot.html</loc></url>
 <url><loc>/reference/assertScHvg.html</loc></url>
 <url><loc>/reference/assertScMetacells.html</loc></url>
+<url><loc>/reference/assertScMiloR.html</loc></url>
 <url><loc>/reference/assertScMinQC.html</loc></url>
 <url><loc>/reference/assertScMtxIO.html</loc></url>
 <url><loc>/reference/assertScNeighbours.html</loc></url>
@@ -102,6 +104,7 @@
 <url><loc>/reference/checkScHotspot.html</loc></url>
 <url><loc>/reference/checkScHvg.html</loc></url>
 <url><loc>/reference/checkScMetacells.html</loc></url>
+<url><loc>/reference/checkScMiloR.html</loc></url>
 <url><loc>/reference/checkScMinQC.html</loc></url>
 <url><loc>/reference/checkScMtxIO.html</loc></url>
 <url><loc>/reference/checkScNeighbours.html</loc></url>
@@ -180,6 +183,7 @@
 <url><loc>/reference/get_dge_list.html</loc></url>
 <url><loc>/reference/get_dge_qc_plot.html</loc></url>
 <url><loc>/reference/get_diffcor_graph.html</loc></url>
+<url><loc>/reference/get_differential_abundance_res.html</loc></url>
 <url><loc>/reference/get_diffusion_perms.html</loc></url>
 <url><loc>/reference/get_diffusion_vector.html</loc></url>
 <url><loc>/reference/get_embedding.html</loc></url>
@@ -198,12 +202,15 @@
 <url><loc>/reference/get_hotspot_membership.html</loc></url>
 <url><loc>/reference/get_hvg.html</loc></url>
 <url><loc>/reference/get_ica_stability_res.html</loc></url>
+<url><loc>/reference/get_index_cells.html</loc></url>
 <url><loc>/reference/get_inflection_point.html</loc></url>
 <url><loc>/reference/get_knn_dist.html</loc></url>
 <url><loc>/reference/get_knn_mat.html</loc></url>
 <url><loc>/reference/get_meta_cell_matrices.html</loc></url>
 <url><loc>/reference/get_meta_cells_sc.html</loc></url>
 <url><loc>/reference/get_metadata.html</loc></url>
+<url><loc>/reference/get_miloR_abundances_sc.html</loc></url>
+<url><loc>/reference/get_model_fit.html</loc></url>
 <url><loc>/reference/get_obs_data.html</loc></url>
 <url><loc>/reference/get_ontology_ancestry.html</loc></url>
 <url><loc>/reference/get_outputs.html</loc></url>
@@ -259,6 +266,7 @@
 <url><loc>/reference/new_sc_hotspot_res.html</loc></url>
 <url><loc>/reference/new_sc_knn.html</loc></url>
 <url><loc>/reference/new_sc_mapper.html</loc></url>
+<url><loc>/reference/new_sc_miloR_res.html</loc></url>
 <url><loc>/reference/nightly_feature.html</loc></url>
 <url><loc>/reference/normalise_bulk_dge.html</loc></url>
 <url><loc>/reference/one_hot_encode.html</loc></url>
@@ -285,6 +293,7 @@
 <url><loc>/reference/params_sc_hotspot.html</loc></url>
 <url><loc>/reference/params_sc_hvg.html</loc></url>
 <url><loc>/reference/params_sc_metacells.html</loc></url>
+<url><loc>/reference/params_sc_miloR.html</loc></url>
 <url><loc>/reference/params_sc_min_quality.html</loc></url>
 <url><loc>/reference/params_sc_mtx_io.html</loc></url>
 <url><loc>/reference/params_sc_neighbours.html</loc></url>
@@ -387,6 +396,7 @@
 <url><loc>/reference/rs_knn_label_propagation.html</loc></url>
 <url><loc>/reference/rs_knn_mat_to_edge_list.html</loc></url>
 <url><loc>/reference/rs_mad_outlier.html</loc></url>
+<url><loc>/reference/rs_make_milor_nhoods.html</loc></url>
 <url><loc>/reference/rs_mitch_calc.html</loc></url>
 <url><loc>/reference/rs_mnn.html</loc></url>
 <url><loc>/reference/rs_module_scoring.html</loc></url>
@@ -410,6 +420,7 @@
 <url><loc>/reference/rs_rbf_iterate_epsilons.html</loc></url>
 <url><loc>/reference/rs_rbh_cor.html</loc></url>
 <url><loc>/reference/rs_rbh_sets.html</loc></url>
+<url><loc>/reference/rs_sample_ids_for_cell_types.html</loc></url>
 <url><loc>/reference/rs_sc_doublet_detection.html</loc></url>
 <url><loc>/reference/rs_sc_get_gene_set_perc.html</loc></url>
 <url><loc>/reference/rs_sc_get_top_genes_perc.html</loc></url>
@@ -481,6 +492,7 @@
 <url><loc>/reference/synthetic_bulk_cor_matrix.html</loc></url>
 <url><loc>/reference/synthetic_c_pca_data.html</loc></url>
 <url><loc>/reference/synthetic_signal_matrix.html</loc></url>
+<url><loc>/reference/test_nhoods.html</loc></url>
 <url><loc>/reference/tied_diffusion.html</loc></url>
 <url><loc>/reference/to_snake_case.html</loc></url>
 <url><loc>/reference/top_genes_perc_sc.html</loc></url>

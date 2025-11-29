@@ -85,6 +85,9 @@ this:
 
 - [`add_new_metadata()`](add_new_metadata.md) : Replace the meta data
 
+- [`add_nhoods_info()`](add_nhoods_info.md) : Add neighbourhood info on
+  majority cell type
+
 - [`add_snf_data_modality()`](add_snf_data_modality.md) : Add a data
   modality for SNF generation
 
@@ -141,6 +144,8 @@ this:
 
 - [`assertScMetacells()`](assertScMetacells.md) : Assert metacell
   generation parameters
+
+- [`assertScMiloR()`](assertScMiloR.md) : Assert MiloR parameters
 
 - [`assertScMinQC()`](assertScMinQC.md) : Assert SC minimum QC
   parameters
@@ -323,6 +328,8 @@ this:
 
 - [`checkScMetacells()`](checkScMetacells.md) : Check metacell
   generation parameters
+
+- [`checkScMiloR()`](checkScMiloR.md) : Check MiloR parameters
 
 - [`checkScMinQC()`](checkScMinQC.md) : Check SC minimum QC parameters
 
@@ -541,6 +548,9 @@ this:
 - [`get_diffcor_graph()`](get_diffcor_graph.md) : Get differential
   correlation-based graph
 
+- [`get_differential_abundance_res()`](get_differential_abundance_res.md)
+  : Get the differential abundance results
+
 - [`get_diffusion_perms()`](get_diffusion_perms.md) : Get the diffusion
   permutations
 
@@ -591,6 +601,8 @@ this:
 - [`get_ica_stability_res()`](get_ica_stability_res.md) : Get the ICA
   component data (stability, convergence, nMI)
 
+- [`get_index_cells()`](get_index_cells.md) : Get the index cells
+
 - [`get_inflection_point()`](get_inflection_point.md) : Identify the
   inflection point for elbow-like data
 
@@ -607,6 +619,11 @@ this:
 
 - [`get_metadata()`](get_metadata.md) : Return the metadata
 
+- [`get_miloR_abundances_sc()`](get_miloR_abundances_sc.md) : Generate
+  an miloR abundance object for differential abundance testing
+
+- [`get_model_fit()`](get_model_fit.md) : Get the fitted model
+
 - [`get_obs_data()`](get_obs_data.md) : Get the ready obs data from
   various sub method
 
@@ -616,7 +633,8 @@ this:
 - [`get_outputs()`](get_outputs.md) : Return the outputs
 
 - [`get_params()`](get_params.md)
-  [`get_params.sc_hotspot()`](get_params.md) : Get the parameters that
+  [`get_params.sc_hotspot()`](get_params.md)
+  [`get_params.sc_miloR()`](get_params.md) : Get the parameters that
   were used.
 
 - [`get_pca_factors()`](get_pca_factors.md) : Get the PCA factors
@@ -762,6 +780,9 @@ this:
 - [`new_sc_mapper()`](new_sc_mapper.md) : Helper function to construct
   relevant maps
 
+- [`new_sc_miloR_res()`](new_sc_miloR_res.md) : Generate a new miloR
+  result
+
 - [`nightly_feature()`](nightly_feature.md) : Helper functions to mark
   something unstable/nightly
 
@@ -840,6 +861,9 @@ this:
 
 - [`params_sc_metacells()`](params_sc_metacells.md) : Wrapper function
   for parameters for meta cell generation
+
+- [`params_sc_miloR()`](params_sc_miloR.md) : Wrapper function for
+  parameters for MiloR
 
 - [`params_sc_min_quality()`](params_sc_min_quality.md) : Wrapper
   function to generate QC metric params for single cell
@@ -1129,6 +1153,9 @@ this:
 - [`rs_mad_outlier()`](rs_mad_outlier.md) : Calculate MAD outlier
   detection in Rust.
 
+- [`rs_make_milor_nhoods()`](rs_make_milor_nhoods.md) : Generate the
+  neighbourhoods akin to the miloR approach
+
 - [`rs_mitch_calc()`](rs_mitch_calc.md) : Calculate mitch enrichment
   leveraging Rust under the hood
 
@@ -1195,6 +1222,9 @@ this:
 
 - [`rs_rbh_sets()`](rs_rbh_sets.md) : Generate reciprocal best hits
   based on set similarities
+
+- [`rs_sample_ids_for_cell_types()`](rs_sample_ids_for_cell_types.md) :
+  Helper function to generate sample identifiers based on cells
 
 - [`rs_sc_doublet_detection()`](rs_sc_doublet_detection.md) : Detect
   Doublets via BoostClassifier (in Rust)
@@ -1390,6 +1420,9 @@ this:
 
 - [`synthetic_signal_matrix()`](synthetic_signal_matrix.md) : Generates
   a simple synthetic, pseudo gene expression matrix
+
+- [`test_nhoods()`](test_nhoods.md) : Test neighbourhoods for
+  differential abundance
 
 - [`tied_diffusion()`](tied_diffusion.md) : Diffuse seed genes in a tied
   manner over a network

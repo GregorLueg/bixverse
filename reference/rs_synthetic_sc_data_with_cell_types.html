@@ -42,8 +42,10 @@
 <span>  <span class="va">n_cells</span>,</span>
 <span>  <span class="va">n_genes</span>,</span>
 <span>  <span class="va">n_batches</span>,</span>
+<span>  <span class="va">n_samples</span>,</span>
 <span>  <span class="va">cell_configs</span>,</span>
 <span>  <span class="va">batch_effect_strength</span>,</span>
+<span>  <span class="va">sample_bias</span>,</span>
 <span>  <span class="va">seed</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -64,6 +66,11 @@
 <dd><p>Integer. Number of the batches to generated.</p></dd>
 
 
+<dt id="arg-n-samples">n_samples<a class="anchor" aria-label="anchor" href="#arg-n-samples"></a></dt>
+<dd><p>Optional integer. Shall the cells be distributed over
+<code>n_samples</code> samples.</p></dd>
+
+
 <dt id="arg-cell-configs">cell_configs<a class="anchor" aria-label="anchor" href="#arg-cell-configs"></a></dt>
 <dd><p>A nested list that indicates which gene indices
 are markers for which cell.</p></dd>
@@ -72,6 +79,11 @@ are markers for which cell.</p></dd>
 <dt id="arg-batch-effect-strength">batch_effect_strength<a class="anchor" aria-label="anchor" href="#arg-batch-effect-strength"></a></dt>
 <dd><p>String. One of <code>c("strong", "medium", "low")</code>.
 Defines the strength of the added batch effect.</p></dd>
+
+
+<dt id="arg-sample-bias">sample_bias<a class="anchor" aria-label="anchor" href="#arg-sample-bias"></a></dt>
+<dd><p>Optional string. One of
+<code>c("even", "slightly_uneven", "very_uneven")</code></p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -87,6 +99,7 @@ Defines the strength of the added batch effect.</p></dd>
 <li><p>ncol - Number of columns</p></li>
 <li><p>cell_type_indices - Vector indicating which cell type this is.</p></li>
 <li><p>batch_indices - Vector indicating the batch.</p></li>
+<li><p>sample_indices - Optional sample indices if asked for.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
