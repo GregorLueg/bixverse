@@ -1,35 +1,41 @@
-# fix hotspot ------------------------------------------------------------------
+# cell cycle scoring -----------------------------------------------------------
 
-devtools::load_all()
+library(Seurat)
 
-dir_data <- path.expand("~/Downloads/single_cell_data/")
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
 
-sc_object <- single_cell_exp(
-  dir_data = dir_data
-)
 
-sc_object <- load_existing(sc_object)
+BiocManager::install("biomaRt")
 
-dim(get_knn_mat(sc_object))
 
-dim(get_pca_factors(sc_object))
+library(biomaRt)
 
-hotspot_autocor_danb_res <- hotspot_autocor_sc(
-  hotspot_params = params_sc_hotspot(),
-  object = sc_object,
-  embd_to_use = "pca",
-  streaming = TRUE,
-  .verbose = TRUE
-)
+# Connect to Ensembl
+mart <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
-get_sc_var(sc_object)
+ensembl_set1 <- getBM(
+  attributes = c("hgnc_symbol", "ensembl_gene_id"),
+  filters = "hgnc_symbol",
+  values = s.genes,
+  mart = mart
+) %>%
+  as.data.table()
 
-weird_genes <- get_gene_indices(
-  sc_object,
-  gene_ids = hotspot_autocor_danb_res$gene_id[is.na(
-    hotspot_autocor_danb_res$pval
-  )],
-  rust_index = FALSE
-)
+ensembl_set1[, set := "S phase"]
 
-Matrix::colSums(sc_object[, weird_genes, return_format = "gene"])
+ensembl_set2 <- getBM(
+  attributes = c("hgnc_symbol", "ensembl_gene_id"),
+  filters = "hgnc_symbol",
+  values = g2m.genes,
+  mart = mart
+) %>%
+  as.data.table()
+
+ensembl_set2[, set := "G2/M phase"]
+
+cell_cycle_genes <- rbindlist(list(ensembl_set1, ensembl_set2))
+
+usethis::use_data(my_pkg_data)
+
+usethis::use_data_raw("seurat_cell_cycle")

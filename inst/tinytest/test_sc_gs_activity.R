@@ -78,6 +78,8 @@ auc_gene_sets <- list(
   markers_cell_type_3 = sprintf("gene_%03d", 21:30)
 )
 
+bad_list <- list(markers = sample(letters, 10))
+
 auc_res_wilcox <- aucell_sc(
   object = sc_object,
   gs_list = auc_gene_sets,
@@ -97,6 +99,16 @@ obs_table_red <- sc_object[[c("cell_id", "cell_grp")]]
 cells_per_cluster <- split(
   obs_table_red$cell_id,
   obs_table_red$cell_grp
+)
+
+expect_error(
+  current = aucell_sc(
+    object = sc_object,
+    gs_list = bad_list,
+    auc_type = "auroc",
+    .verbose = FALSE
+  ),
+  info = paste("aucell: error when provided a list where nothing matches.")
 )
 
 expect_true(
@@ -185,6 +197,123 @@ expect_true(
   current = all(diag(cor(auc_res_wilcox, auc_res_auroc)) >= 0.99),
   info = paste(
     "auc values between the two methods are highly correlated"
+  )
+)
+
+
+## module scores ---------------------------------------------------------------
+
+module_scores <- module_scores_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  .verbose = FALSE
+)
+
+module_scores_streaming <- module_scores_sc(
+  object = sc_object,
+  gs_list = auc_gene_sets,
+  .verbose = FALSE,
+  streaming = TRUE
+)
+
+expect_error(
+  current = module_scores_sc(
+    object = sc_object,
+    gs_list = bad_list,
+    .verbose = FALSE
+  ),
+  info = paste(
+    "module-scores: error when provided a list where nothing matches."
+  )
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    module_scores,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "module scores what you'd expect"
+  )
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    module_scores_streaming,
+    mode = "numeric",
+    ncols = length(auc_gene_sets),
+    nrows = length(get_cells_to_keep(sc_object)),
+    col.names = "named",
+    row.names = "named"
+  ),
+  info = paste(
+    "module scores what you'd expect (streaming version)"
+  )
+)
+
+expect_equivalent(
+  current = module_scores,
+  target = module_scores_streaming,
+  info = paste(
+    "the two versions are equivalent"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_1,
+    "markers_cell_type_1"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_1
+      ),
+      "markers_cell_type_1"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 1)"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_2,
+    "markers_cell_type_2"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_2
+      ),
+      "markers_cell_type_2"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 2)"
+  )
+)
+
+expect_true(
+  current = mean(module_scores[
+    cells_per_cluster$cell_type_3,
+    "markers_cell_type_3"
+  ]) >=
+    mean(module_scores[
+      setdiff(
+        get_cell_names(sc_object, filtered = TRUE),
+        cells_per_cluster$cell_type_3
+      ),
+      "markers_cell_type_3"
+    ]),
+  info = paste(
+    "modules score values of expected cells",
+    "with expected genes is higher (cell type 3)"
   )
 )
 
