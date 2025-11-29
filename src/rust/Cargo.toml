@@ -20,7 +20,7 @@ opt-level = 3
 debug = false
 
 [dependencies]
-ann-search-rs = "0.1.2"
+ann-search-rs = { git = "https://github.com/GregorLueg/ann-search-rs", branch = "feat-doc-updates" }
 anyhow = "1.0.99"
 bincode = { version = "2.0.1", features = ["serde"] }
 extendr-api = "0.8.1"

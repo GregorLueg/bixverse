@@ -607,8 +607,8 @@ pub fn merge_two_batches(
             let (knn_1_to_2, _) = query_annoy_index(
                 *data_1,
                 &index_2,
-                &params.dist_metric,
                 params.k,
+                &params.dist_metric,
                 params.annoy_search_budget,
                 false,
                 verbose,
@@ -618,8 +618,8 @@ pub fn merge_two_batches(
             let (knn_2_to_1, _) = query_annoy_index(
                 *data_2,
                 &index_1,
-                &params.dist_metric,
                 params.k,
+                &params.dist_metric,
                 params.annoy_search_budget,
                 false,
                 verbose,

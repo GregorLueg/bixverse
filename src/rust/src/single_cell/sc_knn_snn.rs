@@ -535,6 +535,7 @@ pub fn generate_knn_nndescent_with_dist(
         max_iter,
         delta,
         rho,
+        None,
         seed,
         verbose,
     );
@@ -686,8 +687,8 @@ pub fn generate_knn_annoy(
     let (indices, _) = query_annoy_index(
         mat,
         &index,
-        dist_metric,
         no_neighbours + 1,
+        dist_metric,
         search_budget,
         false,
         verbose,
@@ -762,6 +763,7 @@ pub fn generate_knn_nndescent(
         max_iter,
         delta,
         rho,
+        None,
         seed,
         verbose,
     );
@@ -833,8 +835,8 @@ pub fn generate_knn_with_dist(
             let (mut indices, distances) = query_annoy_index(
                 embd,
                 &annoy_index,
-                &knn_params.ann_dist,
                 knn_params.k + 1, // Query k+1 to include self!
+                &knn_params.ann_dist,
                 knn_params.search_budget,
                 return_dist,
                 verbose,

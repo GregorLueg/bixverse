@@ -221,8 +221,8 @@ fn get_batch_balanced_knn(
                 query_annoy_index(
                     mat,
                     &index,
-                    &bbknn_params.dist_metric,
                     bbknn_params.neighbours_within_batch + 1,
+                    &bbknn_params.dist_metric,
                     bbknn_params.search_budget,
                     false,
                     verbose,
