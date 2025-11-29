@@ -5,6 +5,7 @@
 pub mod bbknn;
 pub mod doublet_detection;
 pub mod fast_mnn;
+pub mod milo_r;
 pub mod module_scoring;
 pub mod scrublet;
 pub mod seacells;

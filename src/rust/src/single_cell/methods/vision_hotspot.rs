@@ -9,6 +9,7 @@ use crate::core::base::linear_algebra::linear_regression;
 use crate::core::base::stats::{calc_fdr, inv_logit, logit, z_scores_to_pval};
 use crate::core::base::utils::rank_vector;
 use crate::core::data::sparse_io::*;
+use crate::single_cell::sc_knn_snn::KnnParams;
 use crate::utils::general::faer_mat_to_upper_triangle;
 
 ////////////
@@ -455,20 +456,11 @@ pub fn calc_autocorr_with_clusters(
 ///   `"danb"`, `"bernoulli"` or `"normal"`.
 /// * `normalise` - Shall the data be normalised.
 pub struct HotSpotParams {
-    // general params
-    pub knn_method: String,
-    pub ann_dist: String,
-    pub k: usize,
-    // annoy params
-    pub n_tree: usize,
-    pub search_budget: usize,
-    // nn descent params
-    pub max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
     // hotspot parameters
     pub model: String,
     pub normalise: bool,
+    // knn params
+    pub knn_params: KnnParams,
 }
 
 impl HotSpotParams {
@@ -485,54 +477,9 @@ impl HotSpotParams {
     ///
     /// The `HotSpotParams` with all parameters set.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let params_list = r_list.into_hashmap();
-
-        // general
-        let knn_method = std::string::String::from(
-            params_list
-                .get("knn_algorithm")
-                .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
-        );
-
-        let ann_dist = std::string::String::from(
-            params_list
-                .get("ann_dist")
-                .and_then(|v| v.as_str())
-                .unwrap_or("cosine"),
-        );
-
-        let k = params_list
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        // annoy
-        let n_tree = params_list
-            .get("n_tree")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let search_budget = params_list
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        // nn descent
-        let max_iter = params_list
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(25) as usize;
-
-        let rho = params_list
-            .get("rho")
-            .and_then(|v| v.as_real())
-            .unwrap_or(1.0) as f32;
-
-        let delta = params_list
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
 
         // hotspot
         let model = std::string::String::from(
@@ -548,16 +495,9 @@ impl HotSpotParams {
             .unwrap_or(true);
 
         Self {
-            knn_method,
-            ann_dist,
-            k,
-            n_tree,
-            search_budget,
-            max_iter,
-            rho,
-            delta,
             model,
             normalise,
+            knn_params,
         }
     }
 }

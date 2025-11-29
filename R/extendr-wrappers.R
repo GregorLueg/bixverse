@@ -651,10 +651,14 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @param n_cells Integer. Number of cells to generate.
 #' @param n_genes Integer. Number of genes to generate.
 #' @param n_batches Integer. Number of the batches to generated.
+#' @param n_samples Optional integer. Shall the cells be distributed over
+#' `n_samples` samples.
 #' @param cell_configs A nested list that indicates which gene indices
 #' are markers for which cell.
 #' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
 #' Defines the strength of the added batch effect.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @return A list with the following items.
@@ -666,10 +670,28 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #'   \item ncol - Number of columns
 #'   \item cell_type_indices - Vector indicating which cell type this is.
 #'   \item batch_indices - Vector indicating the batch.
+#'   \item sample_indices - Optional sample indices if asked for.
 #' }
 #'
 #' @export
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed)
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed)
+
+#' Helper function to generate sample identifiers based on cells
+#'
+#' @description
+#' Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
+#' over different sample to cell type patterns
+#'
+#' @param cell_type_indices Integer vector. Each integer represents a cell
+#' type.
+#' @param n_samples Integer. Number of different sample ids to generate.
+#' @param sample_bias String. One of
+#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
+#' to sample id associations.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns An integer vector representing the samples.
+rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bias, seed) .Call(wrap__rs_sample_ids_for_cell_types, cell_type_indices, n_samples, sample_bias, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -2444,6 +2466,36 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #'
 #' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+
+#' Generate the neighbourhoods akin to the miloR approach
+#'
+#' @description Rust version of the 
+#' 
+#' @param embd Numeric matrix. Represents the matrix used to generate the kNN
+#' graph and will be used to refine the neighbourhoods.
+#' @param knn_indices Integer matrix. Each row represents a given cell and
+#' the columns the neighbours. (0-indexed!)
+#' @param milor_params Named list. Contains the parameters for running the
+#' miloR approach.
+#' @param seed Integer. Seed for reproducibility.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item index_cell - Integer. 0-indexed positions of the cells defining the
+#'  neighbourhood.
+#'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
+#'  neighbourhood.
+#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
+#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
+#'  defaults to `1.0`.
+#'  \item nrows - Integer. Number of cells in the matrix
+#'  \item ncols - Integer. Number of refined neighbourhoods.
+#'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#' }
+#'
+#' @export
+rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
 
 #' Calculate module activity scores in Rust
 #'

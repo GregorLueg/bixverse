@@ -10,6 +10,7 @@ use crate::core::data::sparse_io::*;
 use crate::core::data::sparse_structures::*;
 use crate::core::graph::community_detection::*;
 use crate::core::graph::knn::*;
+use crate::single_cell::sc_knn_snn::KnnParams;
 
 /////////////
 // Helpers //
@@ -124,26 +125,6 @@ pub fn metacells_to_assignments(metacells: &[&[usize]], n_cells: usize) -> Vec<O
 
     assignments
 }
-
-// /// Transform the community memberships to metacells
-// ///
-// /// ### Params
-// ///
-// /// * `membership` - Community membership vector
-// /// * `k` - Number of member cells
-// ///
-// /// ### Returns
-// ///
-// /// The community to metacell assignements
-// pub fn communities_to_metacells(membership: &[usize], k: usize) -> Vec<Vec<usize>> {
-//     let mut metacells = vec![Vec::new(); k];
-//     for (cell_id, &metacell_id) in membership.iter().enumerate() {
-//         if metacell_id < k {
-//             metacells[metacell_id].push(cell_id);
-//         }
-//     }
-//     metacells
-// }
 
 /// Convert assignments to R-friendly list format with unassigned cell handling
 ///
@@ -302,16 +283,7 @@ pub struct MetaCellParams {
     pub target_no_metacells: usize,
     pub max_iter: usize,
     // general knn params
-    pub k: usize,
-    pub knn_method: String,
-    pub ann_dist: String,
-    // annoy params
-    pub n_trees: usize,
-    pub search_budget: usize,
-    // nn descent params
-    pub nn_max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
+    pub knn_params: KnnParams,
 }
 
 impl MetaCellParams {
@@ -325,6 +297,7 @@ impl MetaCellParams {
     ///
     /// The `MetaCellParams` structure.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
         let meta_cell_params = r_list.into_hashmap();
 
         // meta cell
@@ -341,61 +314,11 @@ impl MetaCellParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(5000) as usize;
 
-        // generall knn
-        let k = meta_cell_params
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(25) as usize;
-        let knn_method = meta_cell_params
-            .get("knn_method")
-            .and_then(|v| v.as_str())
-            .unwrap_or("annoy")
-            .to_string();
-        let ann_dist = meta_cell_params
-            .get("ann_dist")
-            .and_then(|v| v.as_str())
-            .unwrap_or("cosine")
-            .to_string();
-
-        // annoy
-        let n_trees = meta_cell_params
-            .get("n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let search_budget = meta_cell_params
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        // nn descent
-        let nn_max_iter = meta_cell_params
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        let rho = meta_cell_params
-            .get("rho")
-            .and_then(|v| v.as_real())
-            .unwrap_or(1.0) as f32;
-
-        let delta = meta_cell_params
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
-
         Self {
             max_shared,
             target_no_metacells,
             max_iter,
-            k,
-            knn_method,
-            ann_dist,
-            n_trees,
-            search_budget,
-            nn_max_iter,
-            rho,
-            delta,
+            knn_params,
         }
     }
 }
@@ -501,39 +424,15 @@ pub fn identify_meta_cells(
 ///
 /// **General kNN params**
 ///
-/// * `k` - Number of neighbours for the kNN algorithm
-/// * `knn_method` - Method for kNN graph generation. One of `"hnsw"`, `"annoy"`
-///   or `"nndescent"`
-/// * `ann_dist` - Distance metric for approximate nearest neighbour search.
-///   One of `"cosine"` or `"euclidean"`
-///
-/// **Annoy**
-///
-/// * `n_trees` - Number of trees for index generation
-/// * `search_budget` - Search budget during querying
-///
-/// **NN Descent**
-///
-/// * `nn_max_iter` - Maximum iterations for the algorithm
-/// * `rho` - Sampling rate for the algorithm
-/// * `delta` - Early termination criterion
+/// * `knn_params` - All of the kNN parameters
 #[derive(Clone, Debug)]
 pub struct SuperCellParams {
     // supercell params
     pub walk_length: usize,
     pub graining_factor: f64,
     pub linkage_dist: String,
-    // general knn params
-    pub k: usize,
-    pub knn_method: String,
-    pub ann_dist: String,
-    // annoy params
-    pub n_trees: usize,
-    pub search_budget: usize,
-    // nn descent params
-    pub nn_max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
+    // knn
+    pub knn_params: KnnParams,
 }
 
 impl SuperCellParams {
@@ -547,6 +446,8 @@ impl SuperCellParams {
     ///
     /// The `SuperCellParams` structure
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let params = r_list.into_hashmap();
 
         // supercell
@@ -566,57 +467,11 @@ impl SuperCellParams {
             .unwrap_or("average")
             .to_string();
 
-        // general knn
-        let k = params.get("k").and_then(|v| v.as_integer()).unwrap_or(25) as usize;
-
-        let knn_method = params
-            .get("knn_method")
-            .and_then(|v| v.as_str())
-            .unwrap_or("annoy")
-            .to_string();
-
-        let ann_dist = params
-            .get("ann_dist")
-            .and_then(|v| v.as_str())
-            .unwrap_or("cosine")
-            .to_string();
-
-        // annoy
-        let n_trees = params
-            .get("n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let search_budget = params
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        // nn descent
-        let nn_max_iter = params
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        let rho = params.get("rho").and_then(|v| v.as_real()).unwrap_or(1.0) as f32;
-
-        let delta = params
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
-
         Self {
             walk_length,
             graining_factor,
             linkage_dist,
-            k,
-            knn_method,
-            ann_dist,
-            n_trees,
-            search_budget,
-            nn_max_iter,
-            rho,
-            delta,
+            knn_params,
         }
     }
 }

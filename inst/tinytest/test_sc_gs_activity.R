@@ -42,15 +42,6 @@ expect_true(
   info = "sc processing - sensible amount of cells pass"
 )
 
-counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
-
-sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = min_genes_exp,
-  min_lib_size = min_lib_size,
-  min_cells = min_cells_exp,
-  target_size = 1000
-)
-
 ## underlying class ------------------------------------------------------------
 
 sc_object <- single_cell_exp(dir_data = test_temp_dir)

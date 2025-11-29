@@ -12,9 +12,6 @@ use crate::core::data::sparse_structures::*;
 use crate::core::graph::annoy::AnnoyIndex;
 use crate::core::graph::knn::{parse_ann_dist, AnnDist};
 use crate::core::graph::nn_descent::NNDescent;
-use crate::single_cell::cell_aggregations::{MetaCellParams, SuperCellParams};
-use crate::single_cell::methods::seacells::SEACellsParams;
-use crate::single_cell::methods::vision_hotspot::HotSpotParams;
 
 ///////////
 // Enums //
@@ -65,6 +62,7 @@ pub enum KnnSearch {
 /// * `max_iter` - Maximum iterations for the algorithm
 /// * `rho` - Sampling rate for the algorithm
 /// * `delta` - Early termination criterium
+#[derive(Clone, Debug)]
 pub struct KnnParams {
     // general params
     pub knn_method: String,
@@ -87,7 +85,7 @@ impl KnnParams {
     ///
     /// ### Params
     ///
-    /// * `r_list` - The list with the Boost parameters.
+    /// * `r_list` - The list with the kNN parameters.
     ///
     /// ### Returns
     ///
@@ -117,7 +115,7 @@ impl KnnParams {
 
         // annoy
         let n_tree = params_list
-            .get("n_tree")
+            .get("n_trees")
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
@@ -153,94 +151,6 @@ impl KnnParams {
             delta,
         }
     }
-
-    /// Extract the kNN params from the SEACells params
-    ///
-    /// ### Params
-    ///
-    /// * `seacell_params` - Structure holding the `SEACellsParams`.
-    ///
-    /// ### Returns
-    ///
-    /// The `KnnParams` with all parameters set.
-    pub fn from_sea_cells_params(seacell_params: &SEACellsParams) -> Self {
-        Self {
-            knn_method: seacell_params.knn_method.clone(),
-            ann_dist: seacell_params.ann_dist.clone(),
-            k: seacell_params.k,
-            n_tree: seacell_params.n_trees,
-            search_budget: seacell_params.search_budget,
-            max_iter: seacell_params.nn_max_iter,
-            rho: seacell_params.rho,
-            delta: seacell_params.delta,
-        }
-    }
-
-    /// Extract the kNN params from the MetaCell parameters.
-    ///
-    /// ### Params
-    ///
-    /// * `metacell_params` - Structure holding the `MetaCellParams`.
-    ///
-    /// ### Returns
-    ///
-    /// The `KnnParams` with all parameters set.
-    pub fn from_metacell_params(metacell_params: &MetaCellParams) -> Self {
-        Self {
-            knn_method: metacell_params.knn_method.clone(),
-            ann_dist: metacell_params.ann_dist.clone(),
-            k: metacell_params.k,
-            n_tree: metacell_params.n_trees,
-            search_budget: metacell_params.search_budget,
-            max_iter: metacell_params.nn_max_iter,
-            rho: metacell_params.rho,
-            delta: metacell_params.delta,
-        }
-    }
-
-    /// Extract the kNN params from the SuperCells parameters.
-    ///
-    /// ### Params
-    ///
-    /// * `supercell_params` - Structure holding the `SuperCellParams`.
-    ///
-    /// ### Returns
-    ///
-    /// The `KnnParams` with all parameters set.
-    pub fn from_supercell_params(supercell_params: &SuperCellParams) -> Self {
-        Self {
-            knn_method: supercell_params.knn_method.clone(),
-            ann_dist: supercell_params.ann_dist.clone(),
-            k: supercell_params.k,
-            n_tree: supercell_params.n_trees,
-            search_budget: supercell_params.search_budget,
-            max_iter: supercell_params.nn_max_iter,
-            rho: supercell_params.rho,
-            delta: supercell_params.delta,
-        }
-    }
-
-    /// Extract the kNN params from the HotSpot parameters.
-    ///
-    /// ### Params
-    ///
-    /// * `hotspot_params` - Structure holding the `HotSpotParams`.
-    ///
-    /// ### Returns
-    ///
-    /// The `KnnParams` with all parameters set.
-    pub fn from_hotspot_params(hotspot_params: &HotSpotParams) -> Self {
-        Self {
-            knn_method: hotspot_params.knn_method.clone(),
-            ann_dist: hotspot_params.ann_dist.clone(),
-            k: hotspot_params.k,
-            n_tree: hotspot_params.n_tree,
-            search_budget: hotspot_params.search_budget,
-            max_iter: hotspot_params.max_iter,
-            rho: hotspot_params.rho,
-            delta: hotspot_params.delta,
-        }
-    }
 }
 
 ////////////////
@@ -249,7 +159,7 @@ impl KnnParams {
 
 /// Point structure for the HNSW index
 #[derive(Clone, Debug)]
-pub struct Point(Vec<f32>, AnnDist);
+pub struct Point(pub Vec<f32>, pub AnnDist);
 
 impl DistancePoint for Point {
     /// Distance function.

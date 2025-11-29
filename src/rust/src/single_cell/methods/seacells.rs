@@ -10,6 +10,7 @@ use thousands::Separable;
 use crate::core::base::sparse_math::*;
 use crate::core::data::sparse_structures::*;
 use crate::core::graph::knn::*;
+use crate::single_cell::sc_knn_snn::KnnParams;
 
 ////////////
 // Params //
@@ -68,16 +69,7 @@ pub struct SEACellsParams {
     pub pruning: bool,
     pub pruning_threshold: f32,
     // general knn params
-    pub k: usize,
-    pub knn_method: String,
-    pub ann_dist: String,
-    // annoy params
-    pub n_trees: usize,
-    pub search_budget: usize,
-    // nn descent params
-    pub nn_max_iter: usize,
-    pub rho: f32,
-    pub delta: f32,
+    pub knn_params: KnnParams,
 }
 
 impl SEACellsParams {
@@ -94,6 +86,8 @@ impl SEACellsParams {
     ///
     /// The `SEACellsParams` with all parameters set.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let seacells_list = r_list.into_hashmap();
 
         let n_sea_cells = seacells_list
@@ -144,44 +138,6 @@ impl SEACellsParams {
             .and_then(|v| v.as_real())
             .unwrap_or(1e-7) as f32;
 
-        // generall knn
-        let k = seacells_list
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(25) as usize;
-        let knn_method = seacells_list
-            .get("knn_method")
-            .and_then(|v| v.as_str())
-            .unwrap_or("annoy")
-            .to_string();
-
-        // annoy
-        let n_trees = seacells_list
-            .get("n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let search_budget = seacells_list
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        // nn descent
-        let nn_max_iter = seacells_list
-            .get("nn_max_iter")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(15) as usize;
-
-        let rho = seacells_list
-            .get("rho")
-            .and_then(|v| v.as_real())
-            .unwrap_or(1.0) as f32;
-
-        let delta = seacells_list
-            .get("delta")
-            .and_then(|v| v.as_real())
-            .unwrap_or(0.001) as f32;
-
         Self {
             // seacell
             n_sea_cells,
@@ -194,14 +150,7 @@ impl SEACellsParams {
             pruning,
             pruning_threshold,
             // knn
-            k,
-            knn_method,
-            ann_dist: "euclidean".to_string(),
-            n_trees,
-            search_budget,
-            nn_max_iter,
-            rho,
-            delta,
+            knn_params,
         }
     }
 }
@@ -881,10 +830,11 @@ impl<'a> SEACells<'a> {
             println!("Computing diffusion maps for waypoint initialisation...");
         }
 
-        let mut kernel = compute_diffusion_kernel(knn_indices, knn_distances, self.params.k);
+        let mut kernel =
+            compute_diffusion_kernel(knn_indices, knn_distances, self.params.knn_params.k);
 
         let (eigenvalues, eigenvectors) =
-            diffusion_map_from_kernel(&mut kernel, self.params.k, seed);
+            diffusion_map_from_kernel(&mut kernel, self.params.knn_params.k, seed);
 
         let multiscale = determine_multiscale_space(&eigenvalues, &eigenvectors, Some(10));
 

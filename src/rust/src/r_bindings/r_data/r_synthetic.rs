@@ -3,6 +3,17 @@ use extendr_api::prelude::*;
 use crate::core::data::sparse_structures::*;
 use crate::core::data::synthetic_data::*;
 use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
+use crate::utils::traits::*;
+
+extendr_module! {
+    mod r_synthetic;
+    fn rs_synthetic_sc_data_csc;
+    fn rs_synthetic_sc_data_csr;
+    fn rs_synthetic_sc_data_with_cell_types;
+    fn rs_sample_ids_for_cell_types;
+    fn rs_generate_bulk_rnaseq;
+    fn rs_simulate_dropouts;
+}
 
 /// Generate synthetic single cell data (Seurat type)
 ///
@@ -241,10 +252,14 @@ fn rs_simulate_dropouts(
 /// @param n_cells Integer. Number of cells to generate.
 /// @param n_genes Integer. Number of genes to generate.
 /// @param n_batches Integer. Number of the batches to generated.
+/// @param n_samples Optional integer. Shall the cells be distributed over
+/// `n_samples` samples.
 /// @param cell_configs A nested list that indicates which gene indices
 /// are markers for which cell.
 /// @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
 /// Defines the strength of the added batch effect.
+/// @param sample_bias Optional string. One of
+/// `c("even", "slightly_uneven", "very_uneven")`
 /// @param seed Integer. Random seed for reproducibility.
 ///
 /// @return A list with the following items.
@@ -256,16 +271,20 @@ fn rs_simulate_dropouts(
 ///   \item ncol - Number of columns
 ///   \item cell_type_indices - Vector indicating which cell type this is.
 ///   \item batch_indices - Vector indicating the batch.
+///   \item sample_indices - Optional sample indices if asked for.
 /// }
 ///
 /// @export
+#[allow(clippy::too_many_arguments)]
 #[extendr]
 fn rs_synthetic_sc_data_with_cell_types(
     n_cells: usize,
     n_genes: usize,
     n_batches: usize,
+    n_samples: Option<usize>,
     cell_configs: List,
     batch_effect_strength: String,
+    sample_bias: Option<String>,
     seed: usize,
 ) -> extendr_api::Result<List> {
     let mut cell_configs_vec = Vec::with_capacity(cell_configs.len());
@@ -278,39 +297,71 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data = create_celltype_sparse_csr_data(
-        n_cells,
-        n_genes,
-        cell_configs_vec,
-        n_batches,
-        &batch_effect_strength,
-        seed,
-    );
+    let synthetic_data: (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) =
+        create_celltype_sparse_csr_data(
+            n_cells,
+            n_genes,
+            cell_configs_vec,
+            n_batches,
+            &batch_effect_strength,
+            seed,
+        );
 
-    Ok(list!(
-        data = synthetic_data.0.data,
-        indptr = synthetic_data.0.indptr,
-        indices = synthetic_data.0.indices,
-        nrow = synthetic_data.0.shape.0,
-        ncol = synthetic_data.0.shape.1,
-        cell_type_indices = synthetic_data
-            .1
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>(),
-        batch_indices = synthetic_data
-            .2
-            .iter()
-            .map(|x| *x as i32)
-            .collect::<Vec<i32>>()
-    ))
+    match (n_samples, sample_bias) {
+        (Some(n_samp), Some(bias_str)) => {
+            let bias = parse_sample_bias(&bias_str)
+                .ok_or_else(|| extendr_api::Error::Other("Invalid sample_bias value".into()))?;
+            let sample_labels = generate_sample_labels(&synthetic_data.1, n_samp, &bias, seed);
+            Ok(list!(
+                data = synthetic_data.0.data,
+                indptr = synthetic_data.0.indptr,
+                indices = synthetic_data.0.indices,
+                nrow = synthetic_data.0.shape.0,
+                ncol = synthetic_data.0.shape.1,
+                cell_type_indices = synthetic_data.1.r_int_convert(),
+                batch_indices = synthetic_data.2.r_int_convert(),
+                sample_indices = sample_labels.r_int_convert()
+            ))
+        }
+        _ => Ok(list!(
+            data = synthetic_data.0.data,
+            indptr = synthetic_data.0.indptr,
+            indices = synthetic_data.0.indices,
+            nrow = synthetic_data.0.shape.0,
+            ncol = synthetic_data.0.shape.1,
+            cell_type_indices = synthetic_data.1.r_int_convert(),
+            batch_indices = synthetic_data.2.r_int_convert(),
+            sample_indices = NULL
+        )),
+    }
 }
 
-extendr_module! {
-    mod r_synthetic;
-    fn rs_synthetic_sc_data_csc;
-    fn rs_synthetic_sc_data_csr;
-    fn rs_synthetic_sc_data_with_cell_types;
-    fn rs_generate_bulk_rnaseq;
-    fn rs_simulate_dropouts;
+/// Helper function to generate sample identifiers based on cells
+///
+/// @description
+/// Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
+/// over different sample to cell type patterns
+///
+/// @param cell_type_indices Integer vector. Each integer represents a cell
+/// type.
+/// @param n_samples Integer. Number of different sample ids to generate.
+/// @param sample_bias String. One of
+/// `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
+/// to sample id associations.
+/// @param seed Integer. Random seed for reproducibility.
+///
+/// @returns An integer vector representing the samples.
+#[extendr]
+fn rs_sample_ids_for_cell_types(
+    cell_type_indices: &[i32],
+    n_samples: usize,
+    sample_bias: String,
+    seed: usize,
+) -> extendr_api::Result<Vec<i32>> {
+    let cell_type_indices = cell_type_indices.r_int_convert();
+    let bias = parse_sample_bias(&sample_bias)
+        .ok_or_else(|| extendr_api::Error::Other("Invalid sample_bias value".into()))?;
+    let sample_labels = generate_sample_labels(&cell_type_indices, n_samples, &bias, seed);
+
+    Ok(sample_labels.r_int_convert())
 }

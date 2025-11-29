@@ -194,7 +194,6 @@ pub fn generate_bulk_rnaseq(
                     let signal_mean = module_signal.iter().sum::<f64>() * inv_num_samples;
                     let scale_factor = mean_exp[i] / signal_mean;
 
-                    
                     for j in 0..num_samples {
                         let scaled_signal = module_signal[j] * scale_factor;
 
@@ -283,7 +282,6 @@ pub fn simulate_dropouts_logistic(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -366,7 +364,6 @@ pub fn simulate_dropouts_power_decay(
 
             let random_vals: Vec<f64> = (0..n_samples).map(|_| local_rng.random::<f64>()).collect();
 
-            
             for j in 0..n_samples {
                 let exp_val = *original_counts.get(i, j);
 
@@ -455,7 +452,6 @@ pub fn create_sparse_csc_data(
     let mut data = Vec::with_capacity(estimated_total);
     indptr.push(0);
 
-    
     for gene_idx in 0..ncol {
         // Sort cells for this gene
         gene_data[gene_idx].sort_unstable_by_key(|(cell_idx, _)| *cell_idx);
@@ -551,6 +547,16 @@ pub fn create_sparse_csr_data(
 // Specific sparse data ///
 ///////////////////////////
 
+#[derive(Clone, Copy, Debug)]
+pub enum BatchEffectStrength {
+    /// Weak batch effects
+    Weak,
+    /// Medium batch effects
+    Medium,
+    /// Strong batch effecst
+    Strong,
+}
+
 /// Helper function to get the Batch effect strength
 ///
 /// ### Params
@@ -560,7 +566,7 @@ pub fn create_sparse_csr_data(
 /// ### Returns
 ///
 /// Option of the BatchEffectStrength
-pub fn get_batch_strength(s: &str) -> Option<BatchEffectStrength> {
+pub fn parse_batch_effect_strength(s: &str) -> Option<BatchEffectStrength> {
     match s.to_lowercase().as_str() {
         "weak" => Some(BatchEffectStrength::Weak),
         "medium" => Some(BatchEffectStrength::Medium),
@@ -570,13 +576,31 @@ pub fn get_batch_strength(s: &str) -> Option<BatchEffectStrength> {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum BatchEffectStrength {
-    /// Weak batch effects
-    Weak,
-    /// Medium batch effects
-    Medium,
-    /// Strong batch effecst
-    Strong,
+pub enum SampleBias {
+    /// Even distribution of cell types across samples
+    Even,
+    /// Slightly uneven distribution
+    SlightlyUneven,
+    /// Very uneven distribution with strong bias
+    VeryUneven,
+}
+
+/// Helper function to get the Batch effect strength
+///
+/// ### Params
+///
+/// * `s` - Type of sample bias to use
+///
+/// ### Returns
+///
+/// Option of the SampleBias
+pub fn parse_sample_bias(s: &str) -> Option<SampleBias> {
+    match s.to_lowercase().as_str() {
+        "even" => Some(SampleBias::Even),
+        "slightly_uneven" => Some(SampleBias::SlightlyUneven),
+        "very_uneven" => Some(SampleBias::VeryUneven),
+        _ => None,
+    }
 }
 
 /// Structure to keep the CellTypeConfig
@@ -640,7 +664,7 @@ pub fn create_celltype_sparse_csr_data(
     seed: usize,
 ) -> (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) {
     let batch_strength =
-        get_batch_strength(batch_effect_strength).unwrap_or(BatchEffectStrength::Strong);
+        parse_batch_effect_strength(batch_effect_strength).unwrap_or(BatchEffectStrength::Strong);
 
     let mut indptr = Vec::with_capacity(nrow + 1);
     let mut indices = Vec::with_capacity(nrow * 100);
@@ -665,7 +689,6 @@ pub fn create_celltype_sparse_csr_data(
 
     let mut batch_effect = vec![vec![1.0; ncol]; n_batches];
 
-    
     for batch_idx in 1..n_batches {
         for gene_idx in 0..ncol {
             let u: f64 = gene_rng.random();
@@ -776,6 +799,112 @@ pub fn create_celltype_sparse_csr_data(
     (csr, cell_type_labels, batch_labels)
 }
 
+/// Generate sample labels with configurable cell type bias
+///
+/// ### Params
+///
+/// * `cell_type_labels` - Vector of cell type assignments
+/// * `n_samples` - Number of samples to generate
+/// * `bias` - Level of bias in cell type distribution across samples
+/// * `seed` - Integer for reproducibility
+///
+/// ### Returns
+///
+/// Vector of sample labels with biased cell type distributions
+pub fn generate_sample_labels(
+    cell_type_labels: &[usize],
+    n_samples: usize,
+    bias: &SampleBias,
+    seed: usize,
+) -> Vec<usize> {
+    let mut rng = StdRng::seed_from_u64(seed as u64);
+    let n_cells = cell_type_labels.len();
+    let n_cell_types = cell_type_labels.iter().max().map(|&x| x + 1).unwrap_or(0);
+
+    let mut sample_labels: Vec<usize> = Vec::with_capacity(n_cells);
+
+    for &cell_type in cell_type_labels {
+        let sample = match bias {
+            SampleBias::Even => {
+                // uniform random assignment
+                (rng.random::<f64>() * n_samples as f64).floor() as usize
+            }
+            SampleBias::SlightlyUneven => {
+                // mild preference for certain samples based on cell type
+                let mut weights = vec![1.0; n_samples];
+                for s in 0..n_samples {
+                    let s_norm = s as f64 / (n_samples.max(1) - 1) as f64;
+                    let ct_norm = cell_type as f64 / (n_cell_types.max(1) - 1) as f64;
+                    let diff = (s_norm - ct_norm).abs();
+                    weights[s] = (-diff).exp();
+                }
+
+                let sum: f64 = weights.iter().sum();
+                for w in &mut weights {
+                    *w /= sum;
+                }
+
+                let u: f64 = rng.random();
+                let mut cumulative = 0.0;
+                let mut sample = 0;
+                for (s, &weight) in weights.iter().enumerate() {
+                    cumulative += weight;
+                    if u <= cumulative {
+                        sample = s;
+                        break;
+                    }
+                }
+                sample
+            }
+            SampleBias::VeryUneven => {
+                // strong preference for certain samples based on cell type
+                let mut weights = vec![0.1; n_samples];
+                for s in 0..n_samples {
+                    let s_norm = s as f64 / (n_samples.max(1) - 1) as f64;
+                    let ct_norm = cell_type as f64 / (n_cell_types.max(1) - 1) as f64;
+                    let diff = (s_norm - ct_norm).abs();
+                    weights[s] = (-4.0 * diff).exp();
+                }
+
+                let sum: f64 = weights.iter().sum();
+                for w in &mut weights {
+                    *w /= sum;
+                }
+
+                let u: f64 = rng.random();
+                let mut cumulative = 0.0;
+                let mut sample = 0;
+                for (s, &weight) in weights.iter().enumerate() {
+                    cumulative += weight;
+                    if u <= cumulative {
+                        sample = s;
+                        break;
+                    }
+                }
+                sample
+            }
+        };
+
+        sample_labels.push(sample.min(n_samples - 1));
+    }
+
+    sample_labels
+}
+
+/// Helper function to sample from a Gamma distribution
+///
+/// Uses the Marsaglia and Tsang method for shape >= 1, with Ahrens-Dieter
+/// method for shape < 1.
+///
+/// ### Params
+///
+/// * `rng` - Random number generator
+/// * `shape` - Shape parameter (k or α)
+/// * `scale` - Scale parameter (θ)
+///
+/// ### Returns
+///
+/// A sample from Gamma(shape, scale)
 fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {
     if shape < 1.0 {
         let u = rng.random::<f64>();
@@ -798,6 +927,19 @@ fn gamma_sample<R: Rng>(rng: &mut R, shape: f64, scale: f64) -> f64 {
     }
 }
 
+/// Helper function to sample from a Poisson distribution
+///
+/// Uses Knuth's algorithm for lambda < 30 and transformed rejection method for
+/// lambda >= 30.
+///
+/// ### Params
+///
+/// * `rng` - Random number generator
+/// * `lambda` - Rate parameter
+///
+/// ### Returns
+///
+/// A sample from Poisson(λ)
 fn poisson_sample<R: Rng>(rng: &mut R, lambda: f64) -> u32 {
     if lambda < 30.0 {
         let l = (-lambda).exp();
