@@ -63,10 +63,13 @@ ggplot(data = umap_uwot_dt, mapping = aes(x = umap1, y = umap2)) +
 tictoc::tic()
 umap_bixverse_sdg <- rs_umap(
   embd = get_pca_factors(sc_object),
+  min_dist = 0.5,
+  spread = 1.0,
   n_dim = 2L,
   ann_type = "annoy",
   optim = "sgd",
-  k = 10L,
+  init = "spectral",
+  k = 15L,
   42L,
   TRUE
 )
@@ -87,13 +90,17 @@ ggplot(data = umap_uwot_bixverse_sgd, mapping = aes(x = umap1, y = umap2)) +
 ggplot(data = umap_uwot_bixverse_sgd, mapping = aes(x = umap1, y = umap2)) +
   geom_point(mapping = aes(col = condition), size = 0.25)
 
+rextendr::document()
 
 tictoc::tic()
 umap_bixverse_adam <- rs_umap(
   embd = get_pca_factors(sc_object),
+  min_dist = 0.5,
+  spread = 1,
   n_dim = 2L,
   ann_type = "annoy",
   optim = "adam",
+  init = "pca",
   k = 15L,
   42L,
   TRUE
@@ -113,4 +120,41 @@ ggplot(data = umap_uwot_bixverse_adam, mapping = aes(x = umap1, y = umap2)) +
   geom_point(mapping = aes(col = cell_line), size = 0.25)
 
 ggplot(data = umap_uwot_bixverse_adam, mapping = aes(x = umap1, y = umap2)) +
+  geom_point(mapping = aes(col = condition), size = 0.25)
+
+
+tictoc::tic()
+umap_bixverse_adam_par <- rs_umap(
+  embd = get_pca_factors(sc_object),
+  min_dist = 0.5,
+  spread = 1,
+  n_dim = 2L,
+  ann_type = "annoy",
+  optim = "adam_parallel",
+  init = "spectral",
+  k = 15L,
+  42L,
+  TRUE
+)
+tictoc::toc()
+
+umap_uwot_bixverse_adam_par <- as.data.table(umap_bixverse_adam_par) %>%
+  `colnames<-`(c("umap1", "umap2")) %>%
+  .[,
+    `:=`(
+      cell_line = unlist(sc_object[["propagation_results"]], use.names = FALSE),
+      condition = unlist(sc_object[["sample_combined"]], use.names = FALSE)
+    )
+  ]
+
+ggplot(
+  data = umap_uwot_bixverse_adam_par,
+  mapping = aes(x = umap1, y = umap2)
+) +
+  geom_point(mapping = aes(col = cell_line), size = 0.25)
+
+ggplot(
+  data = umap_uwot_bixverse_adam_par,
+  mapping = aes(x = umap1, y = umap2)
+) +
   geom_point(mapping = aes(col = condition), size = 0.25)

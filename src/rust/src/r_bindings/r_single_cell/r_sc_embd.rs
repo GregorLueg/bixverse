@@ -10,18 +10,33 @@ extendr_module! {
 
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_umap(
     embd: RMatrix<f64>,
     n_dim: usize,
+    min_dist: f64,
+    spread: f64,
     ann_type: String,
     optim: String,
+    init: String,
     k: usize,
     seed: usize,
     verbose: bool,
 ) -> RMatrix<f64> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
-    let res = bx_umap(embd.as_ref(), k, n_dim, ann_type, optim, seed, verbose);
+    let res = bxv_umap(
+        embd.as_ref(),
+        k,
+        min_dist as f32,
+        spread as f32,
+        n_dim,
+        ann_type,
+        optim,
+        init,
+        seed,
+        verbose,
+    );
 
     faer_to_r_matrix(res.as_ref())
 }
