@@ -19,8 +19,7 @@ params_sc_hotspot(
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
-\code{rho}, \code{delta}. Note: Parameters are mapped to Rust structure names
-(\code{n_trees} becomes \code{n_tree}, \code{nn_max_iter} becomes \code{max_iter}).}
+\code{rho}, \code{delta}, \code{m}, \code{ef_construction} and \code{ef_search}.}
 }
 \value{
 A list with the HotSpot parameters.

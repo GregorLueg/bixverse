@@ -13,14 +13,17 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.1.5"
-source = "git+https://github.com/GregorLueg/ann-search-rs?branch=feat-doc-updates#c862295dd180812339ce5ee0fd9f82c545030069"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8d68bed9d712cd916a2a16a02b2ee944c78a2e8decbb6e6b892cb48b2ac4647"
 dependencies = [
  "approx",
  "faer",
+ "fixedbitset",
  "num-traits",
  "parking_lot",
  "rand 0.9.2",
+ "rand_distr 0.5.1",
  "rayon",
  "rustc-hash",
  "thousands",

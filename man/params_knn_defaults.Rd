@@ -23,6 +23,9 @@ neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \item rho - Sampling rate for NNDescent. Defaults to \code{1.0}.
 \item delta - Early termination criterium for NNDescent. Defaults to
 \code{0.001}.
+\item m - Number of connections between layers for HNSW
+\item ef_construction - Size of dynamic candidate list during construction
+\item ef_search - Size of candidate list (higher = better recall, slower)
 }
 }
 \description{

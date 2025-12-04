@@ -20,33 +20,23 @@ const MIN_K_DIST_SCALE: f32 = 1e-3;
 /// ### Fields
 ///
 /// * `neighbours_within_batch` - How many neighbours per batch to identify
-/// * `knn_methd` - Which of the two approximate nearest neighbour searches
-///   to use. Can be "annoy" or "hnsw".
-/// * `dist_metrc` - Which distance type to use. One of `"cosine"` or
-///   `"euclidean"`.
 /// * `set_op_mix_ratio` - Mixing ratio between union (1.0) and intersection
 ///   (0.0).
 /// * `local_connectivity` - UMAP connectivity computation parameter, how many
 ///   nearest neighbours of each cell are assumed to be fully connected.
-/// * `annoy_n_trees` - Number of trees to use for the Annoy index generation
 /// * `trim` - Trim the neighbours of each cell to these many top
 ///   connectivities. May help with population independence and improve the
 ///   tidiness of clustering.
+/// * `knn_params` - The KnnParams that contains all the hyperparameter for the
+///   various KnnIndices that are implemented.
 #[derive(Clone, Debug)]
 pub struct BbknnParams {
     pub neighbours_within_batch: usize,
-    pub knn_method: String,
-    pub dist_metric: String,
     pub set_op_mix_ratio: f32,
     pub local_connectivity: f32,
     pub trim: Option<usize>,
-    // annoy params
-    pub annoy_n_trees: usize,
-    pub search_budget: usize,
-    // hnsw params
-    pub m: usize,
-    pub ef_construction: usize,
-    pub ef_search: usize,
+    // knn parameters
+    pub knn_params: KnnParams,
 }
 
 impl BbknnParams {
@@ -63,26 +53,14 @@ impl BbknnParams {
     ///
     /// The `BbknnParams` with all of the parameters.
     pub fn from_r_list(r_list: List) -> Self {
+        let knn_params = KnnParams::from_r_list(r_list.clone());
+
         let bbknn_list = r_list.into_hashmap();
 
         let neighbours_within_batch = bbknn_list
             .get("neighbours_within_batch")
             .and_then(|v| v.as_integer())
             .unwrap_or(3) as usize;
-
-        let knn_method = std::string::String::from(
-            bbknn_list
-                .get("knn_method")
-                .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
-        );
-
-        let dist_metric = std::string::String::from(
-            bbknn_list
-                .get("dist_metric")
-                .and_then(|v| v.as_str())
-                .unwrap_or("cosine"),
-        );
 
         let set_op_mix_ratio = bbknn_list
             .get("set_op_mix_ratio")
@@ -99,45 +77,12 @@ impl BbknnParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(10 * neighbours_within_batch as i32) as usize;
 
-        // hnsw
-        let m = bbknn_list
-            .get("m")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(32) as usize;
-
-        let ef_construction = bbknn_list
-            .get("ef_construction")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(200) as usize;
-
-        let ef_search = bbknn_list
-            .get("ef_search")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(200) as usize;
-
-        // annoy
-        let annoy_n_trees = bbknn_list
-            .get("annoy_n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let search_budget = bbknn_list
-            .get("search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
         Self {
             neighbours_within_batch,
-            knn_method,
-            dist_metric,
             set_op_mix_ratio,
             local_connectivity,
-            annoy_n_trees,
-            search_budget,
             trim: Some(trim),
-            m,
-            ef_construction,
-            ef_search,
+            knn_params,
         }
     }
 }
@@ -184,7 +129,8 @@ fn get_batch_balanced_knn(
         batches
     };
 
-    let dist_metric: AnnDist = parse_ann_dist(&bbknn_params.dist_metric).unwrap_or(AnnDist::Cosine);
+    let dist_metric: AnnDist =
+        parse_ann_dist(&bbknn_params.knn_params.ann_dist).unwrap_or(AnnDist::Cosine);
 
     let n_batches = unique_batches.len();
 
@@ -216,14 +162,17 @@ fn get_batch_balanced_knn(
         let (neighbor_indices, _) = match knn_method {
             KnnSearch::Annoy => {
                 // annoy path with updated functions
-                let index =
-                    build_annoy_index(sub_matrix.as_ref(), bbknn_params.annoy_n_trees, seed);
+                let index = build_annoy_index(
+                    sub_matrix.as_ref(),
+                    bbknn_params.knn_params.ann_dist.clone(),
+                    bbknn_params.knn_params.n_tree,
+                    seed,
+                );
                 query_annoy_index(
                     mat,
                     &index,
                     bbknn_params.neighbours_within_batch + 1,
-                    &bbknn_params.dist_metric,
-                    bbknn_params.search_budget,
+                    bbknn_params.knn_params.search_budget,
                     false,
                     verbose,
                 )
@@ -232,9 +181,9 @@ fn get_batch_balanced_knn(
                 // hnsw path with updated functions
                 let index = build_hnsw_index(
                     sub_matrix.as_ref(),
-                    bbknn_params.m,
-                    bbknn_params.ef_construction,
-                    &bbknn_params.dist_metric,
+                    bbknn_params.knn_params.m,
+                    bbknn_params.knn_params.ef_construction,
+                    &bbknn_params.knn_params.ann_dist,
                     seed,
                     verbose,
                 );
@@ -242,13 +191,63 @@ fn get_batch_balanced_knn(
                     mat,
                     &index,
                     bbknn_params.neighbours_within_batch,
-                    bbknn_params.ef_search,
+                    bbknn_params.knn_params.ef_search,
                     true,
                     verbose,
                 )
             }
             KnnSearch::NNDescent => {
-                panic!("NNDescent is not supported for BBKNN")
+                let index = build_nndescent_index(
+                    sub_matrix.as_ref(),
+                    &bbknn_params.knn_params.ann_dist,
+                    bbknn_params.knn_params.delta,
+                    bbknn_params.knn_params.diversify_prob,
+                    None, // default to 30 here as the algorithm does
+                    None,
+                    None,
+                    None,
+                    seed,
+                    verbose,
+                );
+
+                query_nndescent_index(
+                    mat,
+                    &index,
+                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.knn_params.ef_budget,
+                    false,
+                    verbose,
+                )
+            }
+            &KnnSearch::Exhaustive => {
+                let index =
+                    build_exhaustive_index(sub_matrix.as_ref(), &bbknn_params.knn_params.ann_dist);
+
+                query_exhaustive_index(
+                    mat,
+                    &index,
+                    bbknn_params.neighbours_within_batch,
+                    false,
+                    verbose,
+                )
+            }
+            &KnnSearch::Lsh => {
+                let index = build_lsh_index(
+                    sub_matrix.as_ref(),
+                    &bbknn_params.knn_params.ann_dist,
+                    bbknn_params.knn_params.n_tables,
+                    bbknn_params.knn_params.n_bits,
+                    seed,
+                );
+
+                query_lsh_index(
+                    mat,
+                    &index,
+                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.knn_params.max_candidates,
+                    false,
+                    verbose,
+                )
             }
         };
 
@@ -499,7 +498,8 @@ pub fn bbknn(
     verbose: bool,
 ) -> (CompressedSparseData<f32>, CompressedSparseData<f32>) {
     // parse it and worst case, I default to Annoy
-    let knn_method = parse_knn_method(&bbknn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+    let knn_method =
+        parse_knn_method(&bbknn_params.knn_params.knn_method).unwrap_or(KnnSearch::Hnsw);
 
     if verbose {
         println!("BBKNN: generating the batch balanced kNN values.")

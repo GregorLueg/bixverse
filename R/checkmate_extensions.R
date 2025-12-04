@@ -1026,7 +1026,10 @@ checkScScrublet <- function(x) {
       "n_trees",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
@@ -1040,7 +1043,10 @@ checkScScrublet <- function(x) {
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
     "n_bins" = "I1[10,)",
-    "nn_max_iter" = "I1[1,)"
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1059,6 +1065,7 @@ checkScScrublet <- function(x) {
           "The following element `%s` in Scrublet parameters is incorrect:",
           "no_pcs must be >= 1; k must be >= 0;",
           "search_budget, n_trees and nn_max_iter must be >= 1;",
+          "m, ef_construction, and ef_search must be integers >= 1;",
           "n_bins must be >= 10."
         ),
         broken_elem
@@ -1224,7 +1231,10 @@ checkScBoost <- function(x) {
       "n_trees",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
@@ -1238,7 +1248,10 @@ checkScBoost <- function(x) {
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
-    "nn_max_iter" = "I1[1,)"
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1256,6 +1269,7 @@ checkScBoost <- function(x) {
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
           "no_pcs, n_iters, search_budget, nn_max_iter & n_trees must be >= 1;",
+          "m, ef_construction, and ef_search must be integers >= 1;",
           "k must be >= 0."
         ),
         broken_elem
@@ -1484,6 +1498,9 @@ checkScNeighbours <- function(x) {
       "rho",
       "delta",
       "knn_method",
+      "m",
+      "ef_construction",
+      "ef_search",
       "full_snn",
       "pruning",
       "snn_similarity",
@@ -1495,9 +1512,12 @@ checkScNeighbours <- function(x) {
   }
   rules <- list(
     "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)",
     "rho" = "N1",
     "delta" = "N1",
     "full_snn" = "B1",
@@ -1515,8 +1535,8 @@ checkScNeighbours <- function(x) {
     return(
       sprintf(
         paste(
-          "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees, search_budget, and nn_max_iter need to be integers.",
+          "The following element `%s` in sc KNN generation is incorrect:",
+          "k, n_trees, search_budget, m, ef_construction, ef_search need to be integers",
           "rho and delta need to be numeric. full_snn needs to be boolean and",
           "pruning a number between 0 and 1."
         ),
@@ -1613,7 +1633,10 @@ checkScMetacells <- function(x) {
       "search_budget",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
@@ -1621,13 +1644,16 @@ checkScMetacells <- function(x) {
   }
 
   integer_rules <- list(
-    "max_shared" = "I1",
-    "target_no_metacells" = "I1",
-    "max_iter" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "max_shared" = "I1[1,)",
+    "target_no_metacells" = "I1[1,)",
+    "max_iter" = "I1[1,)",
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1643,7 +1669,7 @@ checkScMetacells <- function(x) {
       paste(
         "The following element `%s` in metacell generation is incorrect:",
         "max_shared, target_no_metacells, max_iter, k, n_trees, search_budget,",
-        "and nn_max_iter need to be integers."
+        "nn_max_iter, m, ef_construction and ef_search need to be integers."
       ),
       broken_elem
     ))
@@ -1731,7 +1757,10 @@ checkScSeacells <- function(x) {
       "search_budget",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
@@ -1739,15 +1768,18 @@ checkScSeacells <- function(x) {
   }
 
   integer_rules <- list(
-    "n_sea_cells" = "I1",
-    "max_fw_iters" = "I1",
-    "max_iter" = "I1",
-    "min_iter" = "I1",
-    "greedy_threshold" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "n_sea_cells" = "I1[1,)",
+    "max_fw_iters" = "I1[1,)",
+    "max_iter" = "I1[1,)",
+    "min_iter" = "I1[1,)",
+    "greedy_threshold" = "I1[1,)",
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1763,7 +1795,8 @@ checkScSeacells <- function(x) {
       paste(
         "The following element `%s` in SEACells parameters is incorrect:",
         "n_sea_cells, max_fw_iters, max_iter, min_iter, greedy_threshold,",
-        "k, n_trees, search_budget, and nn_max_iter need to be integers."
+        "k, n_trees, search_budget, and nn_max_iter, m, ef_constructions",
+        "and ef_search need to be integers."
       ),
       broken_elem
     ))
@@ -1889,18 +1922,24 @@ checkScSupercell <- function(x) {
       "search_budget",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
   integer_rules <- list(
-    "walk_length" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "walk_length" = "I1[1,)",
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(integer_rules)) {
@@ -1914,8 +1953,8 @@ checkScSupercell <- function(x) {
     return(sprintf(
       paste(
         "The following element `%s` in SuperCell parameters is incorrect:",
-        "walk_length, k, n_trees, search_budget, and nn_max_iter need to be",
-        "integers."
+        "walk_length, k, n_trees, search_budget, nn_max_iter, m",
+        "ef_construction, ef_search need to be integers."
       ),
       broken_elem
     ))
@@ -1990,8 +2029,11 @@ checkScBbknn <- function(x) {
       "ann_dist",
       "set_op_mix_ratio",
       "local_connectivity",
-      "annoy_n_trees",
+      "n_trees",
       "search_budget",
+      "m",
+      "ef_construction",
+      "ef_search",
       "trim"
     )
   )
@@ -2001,9 +2043,12 @@ checkScBbknn <- function(x) {
 
   integer_rules <- list(
     "neighbours_within_batch" = "I1",
-    "annoy_n_trees" = "I1",
+    "n_trees" = "I1",
     "search_budget" = "I1",
-    "trim" = c("0", "I1")
+    "trim" = c("0", "I1"),
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2020,8 +2065,9 @@ checkScBbknn <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in BBKNN parameters is incorrect:",
-          "neighbours_within_batch, annoy_n_trees, and search_budget need to",
-          "be integers; trim needs to be NULL or an integer."
+          "neighbours_within_batch, n_trees, search_budget, m, ",
+          "ef_construction and ef_search need to be integers;",
+          "trim needs to be NULL or an integer."
         ),
         broken_elem
       )
@@ -2105,8 +2151,11 @@ checkScFastmnn <- function(x) {
       "sigma",
       "knn_method",
       "dist_metric",
-      "annoy_n_trees",
-      "annoy_search_budget",
+      "n_trees",
+      "search_budget",
+      "m",
+      "ef_construction",
+      "ef_search",
       "cos_norm",
       "var_adj",
       "no_pcs",
@@ -2118,11 +2167,15 @@ checkScFastmnn <- function(x) {
   }
 
   integer_rules <- list(
-    "k" = "I1",
-    "annoy_n_trees" = "I1",
-    "annoy_search_budget" = "I1",
-    "no_pcs" = "I1"
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "no_pcs" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
+
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(integer_rules)) {
       checkmate::qtest(x, integer_rules[[name]])
@@ -2135,7 +2188,8 @@ checkScFastmnn <- function(x) {
     return(sprintf(
       paste(
         "The following element `%s` in fastMNN parameters is incorrect: k,",
-        "annoy_n_trees, annoy_search_budget, and no_pcs need to be integers."
+        "n_trees, search_budget, m, ef_construction, ef_search and no_pcs",
+        "need to be integers."
       ),
       broken_elem
     ))
@@ -2232,19 +2286,28 @@ checkScVision <- function(x) {
       "nn_max_iter",
       "rho",
       "delta",
+      "m",
+      "ef_construction",
+      "ef_search",
       "n_perm",
-      "n_cluster"
+      "n_cluster",
+      "m",
+      "ef_construction",
+      "ef_search"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
   integer_rules <- list(
-    "k" = "I1",
-    "n_trees" = "I1",
-    "nn_max_iter" = "I1",
-    "n_perm" = "I1",
-    "n_cluster" = "I1"
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "nn_max_iter" = "I1[1,)",
+    "n_perm" = "I1[1,)",
+    "n_cluster" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(integer_rules)) {
@@ -2259,7 +2322,8 @@ checkScVision <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in VISION parameters is incorrect:",
-          "k, n_trees, nn_max_iter, n_perm, and n_cluster need to be integers."
+          "k, n_trees, nn_max_iter, n_perm, m, ef_construction, ef_search",
+          "and n_cluster need to be integers."
         ),
         broken_elem
       )
@@ -2335,11 +2399,14 @@ checkScHotspot <- function(x) {
       "knn_method",
       "ann_dist",
       "k",
-      "n_tree",
+      "n_trees",
       "search_budget",
       "max_iter",
       "rho",
       "delta",
+      "m",
+      "ef_construction",
+      "ef_search",
       "model",
       "normalise"
     )
@@ -2349,10 +2416,13 @@ checkScHotspot <- function(x) {
   }
 
   integer_rules <- list(
-    "k" = "I1",
-    "n_tree" = "I1",
-    "search_budget" = "I1",
-    "max_iter" = "I1"
+    "k" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = "I1[1,)",
+    "max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2369,7 +2439,8 @@ checkScHotspot <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in HotSpot parameters is incorrect:",
-          "k, n_tree, search_budget, and max_iter need to be integers."
+          "k, n_trees, search_budget, m, ef_construction, ef_search, and",
+          "max_iter need to be integers."
         ),
         broken_elem
       )
@@ -2486,7 +2557,10 @@ checkScMiloR <- function(x) {
       "n_trees",
       "nn_max_iter",
       "rho",
-      "delta"
+      "delta",
+      "m",
+      "ef_construction",
+      "ef_search",
     )
   )
   if (!isTRUE(res)) {
@@ -2499,7 +2573,10 @@ checkScMiloR <- function(x) {
     "k" = "I1[0,)",
     "search_budget" = "I1[1,)",
     "n_trees" = "I1[1,)",
-    "nn_max_iter" = "I1[1,)"
+    "nn_max_iter" = "I1[1,)",
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2516,7 +2593,8 @@ checkScMiloR <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in MiloR parameters is incorrect:",
-          "k_refine, search_budget, n_trees and nn_max_iter must be >= 1;",
+          "k_refine, search_budget, n_trees, nn_max_iter, m, ef_construction and",
+          "ef_search kmust be >= 1;",
           "k must be >= 0."
         ),
         broken_elem

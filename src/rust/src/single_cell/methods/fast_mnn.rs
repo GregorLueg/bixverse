@@ -1,4 +1,4 @@
-use ann_search_rs::{build_annoy_index, build_hnsw_index, query_annoy_index, query_hnsw_index};
+use ann_search_rs::*;
 use extendr_api::List;
 use faer::{Mat, MatRef};
 use rayon::prelude::*;
@@ -38,14 +38,8 @@ pub struct FastMnnParams {
     pub var_adj: bool,
     pub no_pcs: usize,
     pub random_svd: bool,
-    pub k: usize,
-    pub knn_method: String,
-    pub annoy_n_trees: usize,
-    pub annoy_search_budget: usize,
-    pub dist_metric: String,
-    pub m: usize,
-    pub ef_construction: usize,
-    pub ef_search: usize,
+    // knn parameters
+    pub knn_params: KnnParams,
 }
 
 impl FastMnnParams {
@@ -62,41 +56,14 @@ impl FastMnnParams {
     ///
     /// The `FastMnnParams` with all of the parameters.
     pub fn from_r_list(r_list: List) -> Self {
-        let fastmnn_list = r_list.into_hashmap();
+        let knn_params = KnnParams::from_r_list(r_list.clone());
 
-        let k = fastmnn_list
-            .get("k")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(20) as usize;
+        let fastmnn_list = r_list.into_hashmap();
 
         let sigma = fastmnn_list
             .get("sigma")
             .and_then(|v| v.as_real())
             .unwrap_or(0.1) as f32;
-
-        let knn_method = std::string::String::from(
-            fastmnn_list
-                .get("knn_method")
-                .and_then(|v| v.as_str())
-                .unwrap_or("annoy"),
-        );
-
-        let dist_metric = std::string::String::from(
-            fastmnn_list
-                .get("dist_metric")
-                .and_then(|v| v.as_str())
-                .unwrap_or("cosine"),
-        );
-
-        let annoy_n_trees = fastmnn_list
-            .get("annoy_n_trees")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
-
-        let annoy_search_budget = fastmnn_list
-            .get("annoy_search_budget")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
 
         let cos_norm = fastmnn_list
             .get("cos_norm")
@@ -121,36 +88,13 @@ impl FastMnnParams {
             .map(|rb| rb.is_true())
             .unwrap_or(true);
 
-        // hnsw
-        let m = fastmnn_list
-            .get("m")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(32) as usize;
-
-        let ef_construction = fastmnn_list
-            .get("ef_construction")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(200) as usize;
-
-        let ef_search = fastmnn_list
-            .get("ef_search")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(200) as usize;
-
         Self {
-            k,
             sigma,
-            knn_method,
-            dist_metric,
-            annoy_n_trees,
-            annoy_search_budget,
-            cos_norm,
             var_adj,
             no_pcs,
             random_svd,
-            m,
-            ef_construction,
-            ef_search,
+            cos_norm,
+            knn_params,
         }
     }
 }
@@ -562,40 +506,41 @@ pub fn merge_two_batches(
 ) -> Mat<f32> {
     let sigma_square = params.sigma * params.sigma;
 
-    let knn_method: KnnSearch = parse_knn_method(&params.knn_method).unwrap_or(KnnSearch::Annoy);
+    let knn_method: KnnSearch =
+        parse_knn_method(&params.knn_params.knn_method).unwrap_or(KnnSearch::Hnsw);
 
     let (knn_1_to_2, knn_2_to_1) = match knn_method {
         KnnSearch::Hnsw => {
             let index_2 = build_hnsw_index(
                 *data_2,
-                params.m,
-                params.ef_construction,
-                &params.dist_metric,
+                params.knn_params.m,
+                params.knn_params.ef_construction,
+                &params.knn_params.ann_dist,
                 seed,
                 verbose,
             );
             let (knn_1_to_2, _) = query_hnsw_index(
                 *data_1,
                 &index_2,
-                params.k,
-                params.ef_search,
+                params.knn_params.k,
+                params.knn_params.ef_search,
                 false,
                 verbose,
             );
 
             let index_1 = build_hnsw_index(
                 *data_1,
-                params.m,
-                params.ef_construction,
-                &params.dist_metric,
+                params.knn_params.m,
+                params.knn_params.ef_construction,
+                &params.knn_params.ann_dist,
                 seed,
                 verbose,
             );
             let (knn_2_to_1, _) = query_hnsw_index(
                 *data_2,
                 &index_1,
-                params.k,
-                params.ef_search,
+                params.knn_params.k,
+                params.knn_params.ef_search,
                 false,
                 verbose,
             );
@@ -603,24 +548,32 @@ pub fn merge_two_batches(
             (knn_1_to_2, knn_2_to_1)
         }
         KnnSearch::Annoy => {
-            let index_2 = build_annoy_index(*data_2, params.annoy_n_trees, seed);
+            let index_2 = build_annoy_index(
+                *data_2,
+                params.knn_params.ann_dist.clone(),
+                params.knn_params.n_tree,
+                seed,
+            );
             let (knn_1_to_2, _) = query_annoy_index(
                 *data_1,
                 &index_2,
-                params.k,
-                &params.dist_metric,
-                params.annoy_search_budget,
+                params.knn_params.k,
+                params.knn_params.search_budget,
                 false,
                 verbose,
             );
 
-            let index_1 = build_annoy_index(*data_1, params.annoy_n_trees, seed);
+            let index_1 = build_annoy_index(
+                *data_1,
+                params.knn_params.ann_dist.clone(),
+                params.knn_params.n_tree,
+                seed,
+            );
             let (knn_2_to_1, _) = query_annoy_index(
                 *data_2,
                 &index_1,
-                params.k,
-                &params.dist_metric,
-                params.annoy_search_budget,
+                params.knn_params.k,
+                params.knn_params.search_budget,
                 false,
                 verbose,
             );
@@ -628,7 +581,101 @@ pub fn merge_two_batches(
             (knn_1_to_2, knn_2_to_1)
         }
         KnnSearch::NNDescent => {
-            panic!("NNDescent is not supported for batch-balanced kNN")
+            let index_2 = build_nndescent_index(
+                *data_2,
+                &params.knn_params.ann_dist,
+                params.knn_params.delta,
+                params.knn_params.diversify_prob,
+                None,
+                None,
+                None,
+                None,
+                seed,
+                verbose,
+            );
+
+            let (knn_1_to_2, _) = query_nndescent_index(
+                *data_1,
+                &index_2,
+                params.knn_params.k,
+                params.knn_params.ef_budget,
+                false,
+                verbose,
+            );
+
+            let index_1 = build_nndescent_index(
+                *data_1,
+                &params.knn_params.ann_dist,
+                params.knn_params.delta,
+                params.knn_params.diversify_prob,
+                None,
+                None,
+                None,
+                None,
+                seed,
+                verbose,
+            );
+
+            let (knn_2_to_1, _) = query_nndescent_index(
+                *data_2,
+                &index_1,
+                params.knn_params.k,
+                params.knn_params.ef_budget,
+                false,
+                verbose,
+            );
+
+            (knn_1_to_2, knn_2_to_1)
+        }
+        KnnSearch::Lsh => {
+            let index_2 = build_lsh_index(
+                *data_2,
+                &params.knn_params.ann_dist,
+                params.knn_params.n_tables,
+                params.knn_params.n_bits,
+                seed,
+            );
+
+            let (knn_1_to_2, _) = query_lsh_index(
+                *data_1,
+                &index_2,
+                params.knn_params.k,
+                params.knn_params.max_candidates,
+                false,
+                verbose,
+            );
+
+            let index_1 = build_lsh_index(
+                *data_1,
+                &params.knn_params.ann_dist,
+                params.knn_params.n_tables,
+                params.knn_params.n_bits,
+                seed,
+            );
+
+            let (knn_2_to_1, _) = query_lsh_index(
+                *data_2,
+                &index_1,
+                params.knn_params.k,
+                params.knn_params.max_candidates,
+                false,
+                verbose,
+            );
+
+            (knn_1_to_2, knn_2_to_1)
+        }
+        KnnSearch::Exhaustive => {
+            let index_2 = build_exhaustive_index(*data_2, &params.knn_params.ann_dist);
+
+            let (knn_1_to_2, _) =
+                query_exhaustive_index(*data_1, &index_2, params.knn_params.k, false, verbose);
+
+            let index_1 = build_exhaustive_index(*data_1, &params.knn_params.ann_dist);
+
+            let (knn_2_to_1, _) =
+                query_exhaustive_index(*data_2, &index_1, params.knn_params.k, false, verbose);
+
+            (knn_1_to_2, knn_2_to_1)
         }
     };
 

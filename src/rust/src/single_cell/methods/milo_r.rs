@@ -124,7 +124,10 @@ impl KnnIndex {
     ) -> Self {
         match index_type {
             KnnIndexType::AnnoyIndex => {
-                KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, seed))
+                let dist =
+                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+
+                KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, dist, seed))
             }
             KnnIndexType::HnswIndex => KnnIndex::Hnsw(HnswIndex::build(
                 embd,
@@ -155,13 +158,7 @@ impl KnnIndex {
         k: usize,
     ) -> (Vec<usize>, Vec<f32>) {
         match self {
-            KnnIndex::Annoy(index) => {
-                use ann_search_rs::utils::{parse_ann_dist, Dist};
-
-                let ann_dist = parse_ann_dist(&knn_params.ann_dist).unwrap_or(Dist::Cosine);
-
-                index.query(query_point, &ann_dist, k, Some(knn_params.search_budget))
-            }
+            KnnIndex::Annoy(index) => index.query(query_point, k, knn_params.search_budget),
             KnnIndex::Hnsw(index) => index.query(query_point, k, knn_params.ef_search),
         }
     }

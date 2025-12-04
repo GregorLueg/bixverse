@@ -20,19 +20,29 @@
 #'  \item rho - Sampling rate for NNDescent. Defaults to `1.0`.
 #'  \item delta - Early termination criterium for NNDescent. Defaults to
 #'  `0.001`.
+#'  \item m - Number of connections between layers for HNSW
+#'  \item ef_construction - Size of dynamic candidate list during construction
+#'  \item ef_search - Size of candidate list (higher = better recall, slower)
 #' }
 #'
 #' @export
 params_knn_defaults <- function() {
   list(
+    # General
     k = 15L,
     knn_method = "annoy",
     ann_dist = "euclidean",
+    # Annoy
     search_budget = 100L,
     n_trees = 100L,
+    # NNDescent
     nn_max_iter = 15L,
     rho = 1.0,
-    delta = 0.001
+    delta = 0.001,
+    # HNSW
+    m = 32L,
+    ef_construction = 100L,
+    ef_search = 100L
   )
 }
 
@@ -136,7 +146,9 @@ params_pca_defaults <- function() {
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`.
+#' `rho`, `delta`, `m`, `ef_construction`, `ef_search`. Note: this function
+#' defaults to `k = 0L` (automatic neighbour detection) and
+#' `knn_method = "hnsw"`.
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
 #' any user-specified overrides.
@@ -212,10 +224,10 @@ params_scrublet <- function(
 #' @param pca List. Optional overrides for PCA parameters. See
 #' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
 #' `random_svd`.
-#' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`.
+#' `rho`, `delta`, `m`, `ef_construction`, `ef_search`. Note: this function
+#' defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.
@@ -287,8 +299,7 @@ params_boost <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: This function uses `k = 15L`, `ann_dist = "cosine"`,
-#' and `nn_max_iter = 25L` as defaults.
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -347,8 +358,7 @@ params_sc_neighbours <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: This function uses `k = 15L` and `nn_max_iter = 25L`
-#' as defaults.
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -398,8 +408,7 @@ params_sc_vision <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: Parameters are mapped to Rust structure names
-#' (`n_trees` becomes `n_tree`, `nn_max_iter` becomes `max_iter`).
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -460,8 +469,8 @@ params_sc_hotspot <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: `knn_method` cannot be `"nndescent"` for MiloR as
-#' it doesn't generate an index!
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`. Note: `knn_method`
+#' cannot be `"nndescent"` for MiloR as it doesn't generate an index!
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -527,8 +536,7 @@ params_sc_miloR <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: This function uses `k = 25L` and `ann_dist = "cosine"`
-#' as defaults.
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -595,7 +603,7 @@ params_sc_metacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: This function uses `k = 25L` as default.
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -669,8 +677,7 @@ params_sc_seacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`. Note: This function uses `k = 5L` and `ann_dist = "cosine"`
-#' as defaults.
+#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'

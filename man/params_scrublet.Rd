@@ -51,7 +51,9 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
-\code{rho}, \code{delta}.}
+\code{rho}, \code{delta}, \code{m}, \code{ef_construction}, \code{ef_search}. Note: this function
+defaults to \code{k = 0L} (automatic neighbour detection) and
+\code{knn_method = "hnsw"}.}
 }
 \value{
 A named list with all Scrublet parameters, combining defaults with

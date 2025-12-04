@@ -603,9 +603,22 @@ fn rs_sc_knn(
             embd.as_ref(),
             &knn_params.ann_dist,
             knn_params.k,
-            knn_params.max_iter,
+            knn_params.diversify_prob,
+            knn_params.ef_budget,
             knn_params.delta,
-            knn_params.rho,
+            seed,
+            verbose,
+        ),
+        KnnSearch::Exhaustive => {
+            generate_knn_exhaustive(embd.as_ref(), &knn_params.ann_dist, knn_params.k, verbose)
+        }
+        KnnSearch::Lsh => generate_knn_lsh(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_bits,
+            knn_params.n_tables,
+            knn_params.max_candidates,
             seed,
             verbose,
         ),

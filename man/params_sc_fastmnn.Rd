@@ -9,8 +9,11 @@ params_sc_fastmnn(
   sigma = 0.1,
   knn_method = c("annoy", "hnsw"),
   dist_metric = c("cosine", "euclidean"),
-  annoy_n_trees = 100L,
-  annoy_search_budget = 100L,
+  n_trees = 100L,
+  search_budget = 100L,
+  m = 32L,
+  ef_construction = 100L,
+  ef_search = 100L,
   cos_norm = TRUE,
   var_adj = TRUE,
   no_pcs = 30L,
@@ -30,11 +33,20 @@ Defaults to \code{20L}.}
 \item{dist_metric}{String. One of \code{c("cosine", "euclidean")}. Defaults to
 \code{"cosine"}.}
 
-\item{annoy_n_trees}{Integer. Number of trees for Annoy index. Defaults to
-\code{100L}.}
+\item{n_trees}{Integer. Number of trees to use in the generation of
+the Annoy index. Relevant whe \code{knn_method = "annoy"}.}
 
-\item{annoy_search_budget}{Integer. Search budget per tree for Annoy.
-Defaults to \code{100L}.}
+\item{search_budget}{Integer. Search budget per tree for the \code{annoy}
+algorithm.}
+
+\item{m}{Integer. Number of connections between layers for HNSW. Relevant
+when \code{knn_method = "hnsw"}.}
+
+\item{ef_construction}{Integer. Size of dynamic candidate list during
+construction. Relevant when \code{knn_method = "hnsw"}.}
+
+\item{ef_search}{Integer. Size of candidate list (higher = better recall,
+slower). Relevant when \code{knn_method = "hnsw"}.}
 
 \item{cos_norm}{Logical. Apply cosine normalisation before computing
 distances. Defaults to \code{TRUE}.}

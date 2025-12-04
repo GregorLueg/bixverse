@@ -49,12 +49,11 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 
 \item{pca}{List. Optional overrides for PCA parameters. See
 \code{\link[=params_pca_defaults]{params_pca_defaults()}} for available parameters: \code{no_pcs},
-\code{random_svd}.}
-
-\item{knn}{List. Optional overrides for kNN parameters. See
+\code{random_svd}.
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{dist_metric}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
-\code{rho}, \code{delta}.}
+\code{rho}, \code{delta}, \code{m}, \code{ef_construction}, \code{ef_search}. Note: this function
+defaults to \code{k = 0L} (automatic neighbour detection).}
 }
 \value{
 A named list with all Boost parameters, combining defaults with

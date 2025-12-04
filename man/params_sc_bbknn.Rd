@@ -2,7 +2,10 @@
 % Please edit documentation in R/param_wrappers.R
 \name{params_sc_bbknn}
 \alias{params_sc_bbknn}
-\title{Wrapper function for the BBKNN parameters}
+\title{\item m - Number of connections between layers for HNSW
+\item ef_construction - Size of dynamic candidate list during construction
+\item ef_search - Size of candidate list (higher = better recall, slower)
+Wrapper function for the BBKNN parameters}
 \usage{
 params_sc_bbknn(
   neighbours_within_batch = 5L,
@@ -10,8 +13,11 @@ params_sc_bbknn(
   ann_dist = c("cosine", "euclidean"),
   set_op_mix_ratio = 1,
   local_connectivity = 1,
-  annoy_n_trees = 100L,
+  n_trees = 100L,
   search_budget = 100L,
+  m = 32L,
+  ef_construction = 100L,
+  ef_search = 100L,
   trim = NULL
 )
 }
@@ -31,11 +37,20 @@ intersection (0.0).}
 \item{local_connectivity}{Numeric. UMAP connectivity computation parameter,
 how many nearest neighbours of each cell are assumed to be fully connected.}
 
-\item{annoy_n_trees}{Integer. Number of trees to use in the generation of
-the Annoy index.}
+\item{n_trees}{Integer. Number of trees to use in the generation of
+the Annoy index. Relevant whe \code{knn_method = "annoy"}.}
 
 \item{search_budget}{Integer. Search budget per tree for the \code{annoy}
 algorithm.}
+
+\item{m}{Integer. Number of connections between layers for HNSW. Relevant
+when \code{knn_method = "hnsw"}.}
+
+\item{ef_construction}{Integer. Size of dynamic candidate list during
+construction. Relevant when \code{knn_method = "hnsw"}.}
+
+\item{ef_search}{Integer. Size of candidate list (higher = better recall,
+slower). Relevant when \code{knn_method = "hnsw"}.}
 
 \item{trim}{Optional integer. Trim the neighbours of each cell to these many
 top connectivities. May help with population independence and improve the
@@ -46,5 +61,8 @@ tidiness of clustering. If \code{NULL}, it defaults to
 A list with the BBKNN parameters.
 }
 \description{
+\item m - Number of connections between layers for HNSW
+\item ef_construction - Size of dynamic candidate list during construction
+\item ef_search - Size of candidate list (higher = better recall, slower)
 Wrapper function for the BBKNN parameters
 }

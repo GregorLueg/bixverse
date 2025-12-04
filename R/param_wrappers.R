@@ -705,6 +705,10 @@ params_sc_hvg <- function(
 
 #### BBKNN ---------------------------------------------------------------------
 
+#'  \item m - Number of connections between layers for HNSW
+#'  \item ef_construction - Size of dynamic candidate list during construction
+#'  \item ef_search - Size of candidate list (higher = better recall, slower)
+
 #' Wrapper function for the BBKNN parameters
 #'
 #' @param neighbours_within_batch Integer. Number of neighbours to consider
@@ -717,10 +721,16 @@ params_sc_hvg <- function(
 #' intersection (0.0).
 #' @param local_connectivity Numeric. UMAP connectivity computation parameter,
 #' how many nearest neighbours of each cell are assumed to be fully connected.
-#' @param annoy_n_trees Integer. Number of trees to use in the generation of
-#' the Annoy index.
+#' @param n_trees Integer. Number of trees to use in the generation of
+#' the Annoy index. Relevant whe `knn_method = "annoy"`.
 #' @param search_budget Integer. Search budget per tree for the `annoy`
 #' algorithm.
+#' @param m Integer. Number of connections between layers for HNSW. Relevant
+#' when `knn_method = "hnsw"`.
+#' @param ef_construction Integer. Size of dynamic candidate list during
+#' construction. Relevant when `knn_method = "hnsw"`.
+#' @param ef_search Integer. Size of candidate list (higher = better recall,
+#' slower). Relevant when `knn_method = "hnsw"`.
 #' @param trim Optional integer. Trim the neighbours of each cell to these many
 #' top connectivities. May help with population independence and improve the
 #' tidiness of clustering. If `NULL`, it defaults to
@@ -735,8 +745,11 @@ params_sc_bbknn <- function(
   ann_dist = c("cosine", "euclidean"),
   set_op_mix_ratio = 1.0,
   local_connectivity = 1.0,
-  annoy_n_trees = 100L,
+  n_trees = 100L,
   search_budget = 100L,
+  m = 32L,
+  ef_construction = 100L,
+  ef_search = 100L,
   trim = NULL
 ) {
   knn_method <- match.arg(knn_method)
@@ -748,7 +761,7 @@ params_sc_bbknn <- function(
   checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
   checkmate::qassert(set_op_mix_ratio, "N1[0, 1]")
   checkmate::qassert(local_connectivity, "N1")
-  checkmate::qassert(annoy_n_trees, "I1")
+  checkmate::qassert(n_trees, "I1")
   checkmate::qassert(search_budget, "I1")
   checkmate::qassert(trim, c("0", "I1"))
 
@@ -759,8 +772,11 @@ params_sc_bbknn <- function(
     ann_dist = ann_dist,
     set_op_mix_ratio = set_op_mix_ratio,
     local_connectivity = local_connectivity,
-    annoy_n_trees = annoy_n_trees,
+    n_trees = n_trees,
     search_budget = search_budget,
+    m = m,
+    ef_construction = ef_construction,
+    ef_search = ef_search,
     trim = trim
   )
 }
@@ -777,10 +793,16 @@ params_sc_bbknn <- function(
 #' `"annoy"`.
 #' @param dist_metric String. One of `c("cosine", "euclidean")`. Defaults to
 #' `"cosine"`.
-#' @param annoy_n_trees Integer. Number of trees for Annoy index. Defaults to
-#' `100L`.
-#' @param annoy_search_budget Integer. Search budget per tree for Annoy.
-#' Defaults to `100L`.
+#' @param n_trees Integer. Number of trees to use in the generation of
+#' the Annoy index. Relevant whe `knn_method = "annoy"`.
+#' @param search_budget Integer. Search budget per tree for the `annoy`
+#' algorithm.
+#' @param m Integer. Number of connections between layers for HNSW. Relevant
+#' when `knn_method = "hnsw"`.
+#' @param ef_construction Integer. Size of dynamic candidate list during
+#' construction. Relevant when `knn_method = "hnsw"`.
+#' @param ef_search Integer. Size of candidate list (higher = better recall,
+#' slower). Relevant when `knn_method = "hnsw"`.
 #' @param cos_norm Logical. Apply cosine normalisation before computing
 #' distances. Defaults to `TRUE`.
 #' @param var_adj Logical. Apply variance adjustment to avoid kissing effects.
@@ -797,8 +819,11 @@ params_sc_fastmnn <- function(
   sigma = 0.1,
   knn_method = c("annoy", "hnsw"),
   dist_metric = c("cosine", "euclidean"),
-  annoy_n_trees = 100L,
-  annoy_search_budget = 100L,
+  n_trees = 100L,
+  search_budget = 100L,
+  m = 32L,
+  ef_construction = 100L,
+  ef_search = 100L,
   cos_norm = TRUE,
   var_adj = TRUE,
   no_pcs = 30L,
@@ -811,8 +836,8 @@ params_sc_fastmnn <- function(
   checkmate::qassert(sigma, "N1")
   checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
   checkmate::assertChoice(dist_metric, c("cosine", "euclidean"))
-  checkmate::qassert(annoy_n_trees, "I1")
-  checkmate::qassert(annoy_search_budget, "I1")
+  checkmate::qassert(n_trees, "I1")
+  checkmate::qassert(search_budget, "I1")
   checkmate::qassert(cos_norm, "B1")
   checkmate::qassert(var_adj, "B1")
   checkmate::qassert(no_pcs, "I1")
@@ -823,8 +848,11 @@ params_sc_fastmnn <- function(
     sigma = sigma,
     knn_method = knn_method,
     dist_metric = dist_metric,
-    annoy_n_trees = annoy_n_trees,
-    annoy_search_budget = annoy_search_budget,
+    n_trees = annoy_n_trees,
+    search_budget = search_budget,
+    m = m,
+    ef_construction = ef_construction,
+    ef_search = ef_search,
     cos_norm = cos_norm,
     var_adj = var_adj,
     no_pcs = no_pcs,
