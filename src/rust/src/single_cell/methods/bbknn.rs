@@ -159,7 +159,7 @@ fn get_batch_balanced_knn(
         let sub_matrix = MatSliceView::new(mat, &batch_cell_indices, &col_indices);
         let sub_matrix = sub_matrix.to_owned();
 
-        let (neighbor_indices, _) = match knn_method {
+        let (neighbour_indices, _) = match knn_method {
             KnnSearch::Annoy => {
                 // annoy path with updated functions
                 let index = build_annoy_index(
@@ -190,7 +190,7 @@ fn get_batch_balanced_knn(
                 query_hnsw_index(
                     mat,
                     &index,
-                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.neighbours_within_batch + 1,
                     bbknn_params.knn_params.ef_search,
                     true,
                     verbose,
@@ -213,7 +213,7 @@ fn get_batch_balanced_knn(
                 query_nndescent_index(
                     mat,
                     &index,
-                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.neighbours_within_batch + 1,
                     bbknn_params.knn_params.ef_budget,
                     false,
                     verbose,
@@ -226,7 +226,7 @@ fn get_batch_balanced_knn(
                 query_exhaustive_index(
                     mat,
                     &index,
-                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.neighbours_within_batch + 1,
                     false,
                     verbose,
                 )
@@ -243,7 +243,7 @@ fn get_batch_balanced_knn(
                 query_lsh_index(
                     mat,
                     &index,
-                    bbknn_params.neighbours_within_batch,
+                    bbknn_params.neighbours_within_batch + 1,
                     bbknn_params.knn_params.max_candidates,
                     false,
                     verbose,
@@ -258,7 +258,7 @@ fn get_batch_balanced_knn(
             let mut k_idx = 0;
 
             while added < bbknn_params.neighbours_within_batch {
-                let local_idx = neighbor_indices[cell_idx][k_idx];
+                let local_idx = neighbour_indices[cell_idx][k_idx];
                 let global_idx = batch_cell_indices[local_idx];
 
                 if global_idx != cell_idx {

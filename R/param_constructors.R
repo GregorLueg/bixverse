@@ -4,45 +4,67 @@
 
 #' Helper function to generate kNN defaults
 #'
+#' @description
+#' This function generates various sensible default parameters for all of the
+#' different approximate nearest neighbours that are available within this
+#' package.
+#'
 #' @returns A list with default parameters for kNN searches. Following
 #' parameters:
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"annoy"`. The implementations are:
-#'  `c("annoy", "hnsw", "nndescent")`.
+#'  neighbour search. Defaults to `"hnsw"`. The implementations are:
+#'  `c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("euclidean", "cosine")`.
-#'  \item search_budget - Search budget per tree for Annoy. Defaults to `100L`.
-#'  \item n_trees - Number of trees to generate for Annoy. Defaults to `100L`.
-#'  \item nn_max_iter - Maximum iterations for NNDescent. Defaults to `15L`.
-#'  \item rho - Sampling rate for NNDescent. Defaults to `1.0`.
-#'  \item delta - Early termination criterium for NNDescent. Defaults to
-#'  `0.001`.
-#'  \item m - Number of connections between layers for HNSW
-#'  \item ef_construction - Size of dynamic candidate list during construction
-#'  \item ef_search - Size of candidate list (higher = better recall, slower)
+#'  \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
+#'  to `50L`.
+#'  \item search_budget - Annoy param: optional search budget per tree for
+#'  Annoy. If not provided, it will default to `n_tree * k * 20L`.
+#'  \item diversify_prob - NNDescent param: diversification probability for the
+#'  NNDescent index. This will diversify the index at the end and identify
+#'  potentiall better edges. Defaults to `0.0`.
+#'  \item delta - NNDescent param: early termination criterium for NNDescent.
+#'  Defaults to `0.001`.
+#'  \item ef_budget - NNDescent param: optional query budget parameter. Can
+#'  accelerate querying, but at the cost of Recall.
+#'  \item m - HNSW param: number of connections between layers for HNSW.
+#'  Defaults to `16L`.
+#'  \item ef_construction - HNSW param: size of dynamic candidate list during
+#'  construction. Defaults to `200L`.
+#'  \item ef_search - HNSW param: size of candidate list (higher = better
+#'  recall, slower). Defaults to `100L`.
+#'  \item n_bits - LSH param: number of bits to use. Lower values yield better
+#'  Recall at the cost.
+#'  \item n_tables - LSH param: number of hashmaps to use. Defaults to `50L`.
+#'  \item max_candidates - LSH param: optional search budget for querying. If
+#'  provided, can speed up queries, at the cost of Recall.
 #' }
 #'
 #' @export
 params_knn_defaults <- function() {
   list(
-    # General
+    # General parameters
     k = 15L,
-    knn_method = "annoy",
+    knn_method = "hnsw",
     ann_dist = "euclidean",
     # Annoy
-    search_budget = 100L,
-    n_trees = 100L,
+    n_trees = 50L,
+    search_budget = NULL,
     # NNDescent
-    nn_max_iter = 15L,
-    rho = 1.0,
     delta = 0.001,
+    diversify_prob = 0.0,
+    ef_budget = NULL,
     # HNSW
-    m = 32L,
-    ef_construction = 100L,
-    ef_search = 100L
+    m = 16L,
+    ef_construction = 200L,
+    ef_search = 100L,
+    # LSH
+    n_bits = 8L,
+    n_tables = 50L,
+    max_candidates = NULL
   )
 }
 
@@ -145,10 +167,10 @@ params_pca_defaults <- function() {
 #' `random_svd`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction`, `ef_search`. Note: this function
-#' defaults to `k = 0L` (automatic neighbour detection) and
-#' `knn_method = "hnsw"`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`. Note: this function defaults to
+#' `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
 #' any user-specified overrides.
@@ -224,9 +246,11 @@ params_scrublet <- function(
 #' @param pca List. Optional overrides for PCA parameters. See
 #' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
 #' `random_svd`.
+#' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `dist_metric`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction`, `ef_search`. Note: this function
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`. Note: this function
 #' defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
@@ -298,8 +322,9 @@ params_boost <- function(
 #' Both methods produce weights normalised to the range `[0, 1]`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -326,18 +351,6 @@ params_sc_neighbours <- function(
     keep.null = TRUE
   )
 
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "N1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
-
   c(
     list(
       full_snn = full_snn,
@@ -357,8 +370,9 @@ params_sc_neighbours <- function(
 #' clustering generation.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -378,17 +392,6 @@ params_sc_vision <- function(
     keep.null = TRUE
   )
 
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "N1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
-
   c(
     list(
       n_perm = n_perm,
@@ -407,8 +410,9 @@ params_sc_vision <- function(
 #' @param normalise Boolean. Shall the data be normalised. Defaults to `TRUE`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -426,18 +430,6 @@ params_sc_hotspot <- function(
     knn,
     keep.null = TRUE
   )
-
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "I1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
 
   list(
     knn_method = knn_params$knn_method,
@@ -468,8 +460,9 @@ params_sc_hotspot <- function(
 #' `c("annoy", "hnsw")`. Defaults to `"annoy"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`. Note: `knn_method`
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`. Note: `knn_method`
 #' cannot be `"nndescent"` for MiloR as it doesn't generate an index!
 #'
 #' @returns A list with the MiloR parameters.
@@ -492,18 +485,6 @@ params_sc_miloR <- function(
     knn,
     keep.null = TRUE
   )
-
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw")
-  )
-  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "I1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
 
   list(
     prop = prop,
@@ -535,8 +516,9 @@ params_sc_miloR <- function(
 #' Defaults to `5000L`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -556,18 +538,6 @@ params_sc_metacells <- function(
     modifyList(list(k = 25L, ann_dist = "cosine"), knn, keep.null = TRUE),
     keep.null = TRUE
   )
-
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "I1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
 
   c(
     list(
@@ -602,8 +572,9 @@ params_sc_metacells <- function(
 #' threshold shall be pruned.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -636,17 +607,6 @@ params_sc_seacells <- function(
     keep.null = TRUE
   )
 
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "I1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
-
   c(
     list(
       n_sea_cells = n_sea_cells,
@@ -676,8 +636,9 @@ params_sc_seacells <- function(
 #' linkage. Defaults to `"average"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
-#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `nn_max_iter`,
-#' `rho`, `delta`, `m`, `ef_construction` and `ef_search`.
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'
@@ -700,23 +661,120 @@ params_sc_supercell <- function(
     keep.null = TRUE
   )
 
-  checkmate::qassert(knn_params$k, "I1")
-  checkmate::assertChoice(
-    knn_params$knn_method,
-    c("annoy", "hnsw", "nndescent")
-  )
-  checkmate::assertChoice(knn_params$ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(knn_params$n_trees, "I1")
-  checkmate::qassert(knn_params$search_budget, "I1")
-  checkmate::qassert(knn_params$nn_max_iter, "I1")
-  checkmate::qassert(knn_params$rho, "N1")
-  checkmate::qassert(knn_params$delta, "N1")
-
   c(
     list(
       walk_length = walk_length,
       graining_factor = graining_factor,
       linkage_dist = linkage_dist
+    ),
+    knn_params
+  )
+}
+
+## batch correction methods ----------------------------------------------------
+
+### BBKNN ----------------------------------------------------------------------
+
+#' Wrapper function for the BBKNN parameters
+#'
+#' @param neighbours_within_batch Integer. Number of neighbours to consider
+#' per batch. Defaults to `5L`.
+#' @param set_op_mix_ratio Numeric. Mixing ratio between union (1.0) and
+#' intersection (0.0). Defaults to `1.0`.
+#' @param local_connectivity Numeric. UMAP connectivity computation parameter,
+#' how many nearest neighbours of each cell are assumed to be fully connected.
+#' Defaults to `1.0`.
+#' @param trim Optional integer. Trim the neighbours of each cell to these many
+#' top connectivities. May help with population independence and improve the
+#' tidiness of clustering. If `NULL`, it defaults to
+#' `10 * neighbours_within_batch`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
+#'
+#' @returns A list with the BBKNN parameters.
+#'
+#' @export
+params_sc_bbknn <- function(
+  neighbours_within_batch = 5L,
+  set_op_mix_ratio = 1.0,
+  local_connectivity = 1.0,
+  trim = NULL,
+  knn = list()
+) {
+  checkmate::qassert(neighbours_within_batch, "I1")
+  checkmate::qassert(set_op_mix_ratio, "N1[0,1]")
+  checkmate::qassert(local_connectivity, "N1")
+  checkmate::qassert(trim, c("0", "I1"))
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = neighbours_within_batch * 2L), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      neighbours_within_batch = neighbours_within_batch,
+      set_op_mix_ratio = set_op_mix_ratio,
+      local_connectivity = local_connectivity,
+      trim = trim
+    ),
+    knn_params
+  )
+}
+
+### fastMNN --------------------------------------------------------------------
+
+#' Wrapper function for the fastMNN parameters
+#'
+#' @param sigma Numeric. Bandwidth of the Gaussian smoothing kernel
+#' (as proportion of space radius). Defaults to `0.1`.
+#' @param cos_norm Logical. Apply cosine normalisation before computing
+#' distances. Defaults to `TRUE`.
+#' @param var_adj Logical. Apply variance adjustment to avoid kissing effects.
+#' Defaults to `TRUE`.
+#' @param no_pcs Integer. Number of PCs to use for MNN calculations.
+#' Defaults to `30L`.
+#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
+#' `n_bits`, `n_tables` and `max_candidates`.
+#'
+#' @returns A list with the fastMNN parameters.
+#'
+#' @export
+params_sc_fastmnn <- function(
+  sigma = 0.1,
+  cos_norm = TRUE,
+  var_adj = TRUE,
+  no_pcs = 30L,
+  random_svd = TRUE,
+  knn = list(k = 20L)
+) {
+  checkmate::qassert(sigma, "N1")
+  checkmate::qassert(cos_norm, "B1")
+  checkmate::qassert(var_adj, "B1")
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(random_svd, "B1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    modifyList(list(k = 20L, ann_dist = "cosine"), knn, keep.null = TRUE),
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      sigma = sigma,
+      cos_norm = cos_norm,
+      var_adj = var_adj,
+      no_pcs = no_pcs,
+      random_svd = random_svd
     ),
     knn_params
   )

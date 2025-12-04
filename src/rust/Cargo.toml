@@ -20,7 +20,7 @@ opt-level = 3
 debug = false
 
 [dependencies]
-ann-search-rs = "0.1.6"
+ann-search-rs = "0.1.7"
 anyhow = "1.0.99"
 bincode = { version = "2.0.1", features = ["serde"] }
 extendr-api = "0.8.1"

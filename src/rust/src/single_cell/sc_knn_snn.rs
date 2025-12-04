@@ -143,7 +143,7 @@ impl KnnParams {
         let diversify_prob = params_list
             .get("diversify_prob")
             .and_then(|v| v.as_real())
-            .unwrap_or(0.5) as f32;
+            .unwrap_or(0.0) as f32;
 
         let delta = params_list
             .get("delta")
@@ -159,12 +159,12 @@ impl KnnParams {
         let m = params_list
             .get("m")
             .and_then(|v| v.as_integer())
-            .unwrap_or(32) as usize;
+            .unwrap_or(16) as usize;
 
         let ef_construction = params_list
             .get("ef_construction")
             .and_then(|v| v.as_integer())
-            .unwrap_or(100) as usize;
+            .unwrap_or(200) as usize;
 
         let ef_search = params_list
             .get("ef_search")
@@ -220,8 +220,8 @@ impl KnnParams {
             diversify_prob: 0.5,
             delta: 0.001,
             ef_budget: None,
-            m: 32,
-            ef_construction: 100,
+            m: 16,
+            ef_construction: 200,
             ef_search: 100,
             n_bits: 8,
             n_tables: 50,
@@ -543,7 +543,8 @@ pub fn knn_to_sparse_dist(
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the HNSW algorithm
+/// The k-nearest neighbours based on the HNSW algorithm. Function does not
+/// return self.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_knn_hnsw(
     mat: MatRef<f32>,
@@ -606,7 +607,8 @@ pub fn generate_knn_hnsw(
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the Annoy algorithm
+/// The k-nearest neighbours based on the Annoy algorithm. Function does not
+/// return self.
 pub fn generate_knn_annoy(
     mat: MatRef<f32>,
     dist_metric: &str,
@@ -680,7 +682,8 @@ pub fn generate_knn_annoy(
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the NNDescent algorithm
+/// The k-nearest neighbours based on the NNDescent algorithm. Function does not
+/// return self.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_knn_nndescent(
     mat: MatRef<f32>,
@@ -692,6 +695,8 @@ pub fn generate_knn_nndescent(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
+    let start_index = Instant::now();
+
     let nndescent_idx = build_nndescent_index(
         mat,
         dist_metric,
@@ -705,16 +710,40 @@ pub fn generate_knn_nndescent(
         verbose,
     );
 
+    let end_index = start_index.elapsed();
+    if verbose {
+        println!("Generated NNDescent index: {:.2?}", end_index);
+    }
+
+    let start_search = Instant::now();
     let (indices, _) = query_nndescent_index(
         mat,
         &nndescent_idx,
-        no_neighbours,
+        no_neighbours + 1,
         ef_budget,
         false,
         verbose,
     );
 
-    indices
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
+
+    let end_search = start_search.elapsed();
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via NNDescent: {:.2?}.",
+            end_search
+        );
+    }
+
+    res
 }
 
 /// Get the kNN graph based on an exhaustive search
@@ -730,19 +759,45 @@ pub fn generate_knn_nndescent(
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the exhaustive search
+/// The k-nearest neighbours based on the exhaustive linear search. Function
+/// does not return self.
 pub fn generate_knn_exhaustive(
     mat: MatRef<f32>,
     dist_metric: &str,
     no_neighbours: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
+    let start_index = Instant::now();
     let exhaustive_index = build_exhaustive_index(mat, dist_metric);
 
-    let (indices, _) =
-        query_exhaustive_index(mat, &exhaustive_index, no_neighbours, false, verbose);
+    let end_index = start_index.elapsed();
+    if verbose {
+        println!("Generated exhaustive index: {:.2?}", end_index);
+    }
 
-    indices
+    let start_search = Instant::now();
+    let (indices, _) =
+        query_exhaustive_index(mat, &exhaustive_index, no_neighbours + 1, false, verbose);
+
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
+
+    let end_search = start_search.elapsed();
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via exhaustive linear search: {:.2?}.",
+            end_search
+        );
+    }
+
+    res
 }
 
 /// Get the kNN graph via locality sensitive hashing
@@ -764,7 +819,8 @@ pub fn generate_knn_exhaustive(
 ///
 /// ### Returns
 ///
-/// The k-nearest neighbours based on the LSH algorithm
+/// The k-nearest neighbours based on the LSH algorithm. Function
+/// does not return self.
 #[allow(clippy::too_many_arguments)]
 pub fn generate_knn_lsh(
     mat: MatRef<f32>,
@@ -776,18 +832,42 @@ pub fn generate_knn_lsh(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
+    let start_index = Instant::now();
     let lsh_index = build_lsh_index(mat, dist_metric, n_tables, n_bits, seed);
+    let end_index = start_index.elapsed();
+    if verbose {
+        println!("Generated LSH index: {:.2?}", end_index);
+    }
 
+    let start_search = Instant::now();
     let (indices, _) = query_lsh_index(
         mat,
         &lsh_index,
-        no_neighbours,
+        no_neighbours + 1,
         max_candidates,
         false,
         verbose,
     );
 
-    indices
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
+
+    let end_search = start_search.elapsed();
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via LSH index: {:.2?}.",
+            end_search
+        );
+    }
+
+    res
 }
 
 ///////////////////

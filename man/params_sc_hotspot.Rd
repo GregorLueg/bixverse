@@ -18,8 +18,9 @@ params_sc_hotspot(
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
-\code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{nn_max_iter},
-\code{rho}, \code{delta}, \code{m}, \code{ef_construction} and \code{ef_search}.}
+\code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search},
+\code{n_bits}, \code{n_tables} and \code{max_candidates}.}
 }
 \value{
 A list with the HotSpot parameters.
