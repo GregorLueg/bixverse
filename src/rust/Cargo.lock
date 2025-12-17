@@ -13,9 +13,8 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db93ba04e4d688009bfffde94fa50b57df61efa6e4c57c1befb0ea638728d941"
+version = "0.1.8"
+source = "git+https://github.com/GregorLueg/ann-search-rs.git?branch=feat-nndescent-memory#8fca5f7a7c9b80c41674240d74fee35fc321a290"
 dependencies = [
  "approx",
  "faer",

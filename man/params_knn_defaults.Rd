@@ -18,7 +18,7 @@ neighbour search. Defaults to \code{"hnsw"}. The implementations are:
 neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("euclidean", "cosine")}.
 \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
-to \code{50L}.
+to \code{75L}.
 \item search_budget - Annoy param: optional search budget per tree for
 Annoy. If not provided, it will default to \code{n_tree * k * 20L}.
 \item diversify_prob - NNDescent param: diversification probability for the

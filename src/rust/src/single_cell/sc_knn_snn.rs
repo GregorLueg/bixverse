@@ -1,3 +1,4 @@
+use ann_search_rs::utils::KnnValidation;
 use ann_search_rs::*;
 use extendr_api::List;
 use faer::{MatRef, RowRef};
@@ -132,7 +133,7 @@ impl KnnParams {
         let n_tree = params_list
             .get("n_trees")
             .and_then(|v| v.as_integer())
-            .unwrap_or(50) as usize;
+            .unwrap_or(75) as usize;
 
         let search_budget = params_list
             .get("search_budget")
@@ -580,11 +581,18 @@ pub fn generate_knn_hnsw(
         .collect();
 
     let end_search = start_search.elapsed();
+
+    let index_val = index.validate_index(no_neighbours, seed, None);
+
     if verbose {
         println!(
             "Identified approximate nearest neighbours via HNSW: {:.2?}.",
             end_search
         );
+        println!(
+            "Recall of approximate nearest neighbours search in random subset: {:.2}",
+            index_val
+        )
     }
 
     res
@@ -649,11 +657,18 @@ pub fn generate_knn_annoy(
         .collect();
 
     let end_search = start_search.elapsed();
+
+    let index_val = index.validate_index(no_neighbours, seed, None);
+
     if verbose {
         println!(
             "Identified approximate nearest neighbours via Annoy: {:.2?}.",
             end_search
         );
+        println!(
+            "Recall of approximate nearest neighbours search in random subset: {:.2}",
+            index_val
+        )
     }
 
     res
@@ -736,11 +751,18 @@ pub fn generate_knn_nndescent(
         .collect();
 
     let end_search = start_search.elapsed();
+
+    let index_val = nndescent_idx.validate_index(no_neighbours, seed, None);
+
     if verbose {
         println!(
             "Identified approximate nearest neighbours via NNDescent: {:.2?}.",
             end_search
         );
+        println!(
+            "Recall of approximate nearest neighbours search in random subset: {:.2}",
+            index_val
+        )
     }
 
     res
@@ -860,11 +882,18 @@ pub fn generate_knn_lsh(
         .collect();
 
     let end_search = start_search.elapsed();
+
+    let index_val = lsh_index.validate_index(no_neighbours, seed, None);
+
     if verbose {
         println!(
             "Identified approximate nearest neighbours via LSH index: {:.2?}.",
             end_search
         );
+        println!(
+            "Recall of approximate nearest neighbours search in random subset: {:.2}",
+            index_val
+        )
     }
 
     res
@@ -927,6 +956,15 @@ pub fn generate_knn_with_dist(
                 println!("Queried Annoy index: {:.2?}", query_end);
             }
 
+            let index_validation = annoy_index.validate_index(knn_params.k + 1, seed, None);
+
+            if verbose {
+                println!(
+                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
+                    index_validation
+                );
+            }
+
             // remove first element (self) from each vector
             for idx_vec in indices.iter_mut() {
                 idx_vec.remove(0);
@@ -972,6 +1010,15 @@ pub fn generate_knn_with_dist(
                 println!("Queried HNSW index: {:.2?}", query_end);
             }
 
+            let index_validation = hnsw_index.validate_index(knn_params.k + 1, seed, None);
+
+            if verbose {
+                println!(
+                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
+                    index_validation
+                );
+            }
+
             // Remove first element (self) from each vector
             for idx_vec in indices.iter_mut() {
                 idx_vec.remove(0);
@@ -987,6 +1034,7 @@ pub fn generate_knn_with_dist(
             (indices, distances)
         }
         KnnSearch::NNDescent => {
+            let index_start = Instant::now();
             let nndescent_idx = build_nndescent_index(
                 embd,
                 &knn_params.ann_dist,
@@ -1000,6 +1048,13 @@ pub fn generate_knn_with_dist(
                 verbose,
             );
 
+            let end_index = index_start.elapsed();
+
+            if verbose {
+                println!("Generated NNDescent index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
             let (mut indices, distances) = query_nndescent_index(
                 embd,
                 &nndescent_idx,
@@ -1008,6 +1063,20 @@ pub fn generate_knn_with_dist(
                 true,
                 verbose,
             );
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried NNDescent index: {:.2?}", query_end);
+            }
+
+            let index_validation = nndescent_idx.validate_index(knn_params.k + 1, seed, None);
+
+            if verbose {
+                println!(
+                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
+                    index_validation
+                );
+            }
 
             // Remove first element (self) from each vector
             for idx_vec in indices.iter_mut() {
@@ -1024,10 +1093,22 @@ pub fn generate_knn_with_dist(
             (indices, distances)
         }
         KnnSearch::Exhaustive => {
+            let index_start = Instant::now();
             let exhaustive_index = build_exhaustive_index(embd, &knn_params.knn_method);
+            let end_index = index_start.elapsed();
 
+            if verbose {
+                println!("Generated Exhaustive index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
             let (mut indices, distances) =
                 query_exhaustive_index(embd, &exhaustive_index, knn_params.k + 1, true, verbose);
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried Exhaustive index: {:.2?}", query_end);
+            }
 
             // Remove first element (self) from each vector
             for idx_vec in indices.iter_mut() {
@@ -1044,6 +1125,7 @@ pub fn generate_knn_with_dist(
             (indices, distances)
         }
         KnnSearch::Lsh => {
+            let index_start = Instant::now();
             let lsh_index = build_lsh_index(
                 embd,
                 &knn_params.ann_dist,
@@ -1051,7 +1133,13 @@ pub fn generate_knn_with_dist(
                 knn_params.n_bits,
                 seed,
             );
+            let end_index = index_start.elapsed();
 
+            if verbose {
+                println!("Generated LSH index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
             let (mut indices, distances) = query_lsh_index(
                 embd,
                 &lsh_index,
@@ -1060,6 +1148,20 @@ pub fn generate_knn_with_dist(
                 true,
                 verbose,
             );
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried LSH index: {:.2?}", query_end);
+            }
+
+            let index_validation = lsh_index.validate_index(knn_params.k + 1, seed, None);
+
+            if verbose {
+                println!(
+                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
+                    index_validation
+                );
+            }
 
             // Remove first element (self) from each vector
             for idx_vec in indices.iter_mut() {

@@ -20,7 +20,7 @@
 #'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("euclidean", "cosine")`.
 #'  \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
-#'  to `50L`.
+#'  to `75L`.
 #'  \item search_budget - Annoy param: optional search budget per tree for
 #'  Annoy. If not provided, it will default to `n_tree * k * 20L`.
 #'  \item diversify_prob - NNDescent param: diversification probability for the
@@ -51,7 +51,7 @@ params_knn_defaults <- function() {
     knn_method = "hnsw",
     ann_dist = "euclidean",
     # Annoy
-    n_trees = 50L,
+    n_trees = 75L,
     search_budget = NULL,
     # NNDescent
     delta = 0.001,
