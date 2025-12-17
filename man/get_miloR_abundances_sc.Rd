@@ -27,7 +27,7 @@ Defaults to \code{"pca"}.}
 \item{no_embd_to_use}{Optional integer. If you only want to use a subset of
 the embedding.}
 
-\item{miloR_params}{A list, please see \code{\link[=params_sc_milor]{params_sc_milor()}}. The
+\item{miloR_params}{A list, please see \code{\link[=params_sc_miloR]{params_sc_miloR()}}. The
 list has the following parameters:
 \itemize{
 \item prop - Numeric. Proportion of cells to sample as neighbourhood

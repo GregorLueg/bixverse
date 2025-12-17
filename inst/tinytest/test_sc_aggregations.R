@@ -91,6 +91,118 @@ sc_object <- find_neighbours_sc(
   .verbose = FALSE
 )
 
+## pseudo bulking --------------------------------------------------------------
+
+pseudobulk_list <- sc_object[[c("cell_grp", "cell_id")]] %$%
+  split(cell_id, cell_grp)
+
+pseudobulk_list_weird <- pseudobulk_list
+pseudobulk_list_weird[[3]] <- c(pseudobulk_list_weird[[3]], "x")
+
+### warnings / errors ----------------------------------------------------------
+
+expect_error(
+  current = suppressWarnings(get_pseudobulked_sc(
+    object = sc_object,
+    cell_list = list("a" = "a", "b" = "b"),
+    return_format = "sparse",
+    assay = "norm"
+  )),
+  info = "expect an error if there are zero matching cell indices"
+)
+
+expect_warning(
+  current = get_pseudobulked_sc(
+    object = sc_object,
+    cell_list = pseudobulk_list_weird,
+    return_format = "sparse",
+    assay = "norm"
+  ),
+  info = "expect a warning if some identifiers cannot be matched"
+)
+
+### pseudo-bulks ---------------------------------------------------------------
+
+matrix_raw <- get_pseudobulked_sc(
+  object = sc_object,
+  cell_list = pseudobulk_list
+)
+
+matrix_norm <- get_pseudobulked_sc(
+  object = sc_object,
+  cell_list = pseudobulk_list,
+  assay = "norm"
+)
+
+sparse_matrix_raw <- get_pseudobulked_sc(
+  object = sc_object,
+  cell_list = pseudobulk_list,
+  return_format = "sparse"
+)
+
+sparse_matrix_norm <- get_pseudobulked_sc(
+  object = sc_object,
+  cell_list = pseudobulk_list,
+  return_format = "sparse",
+  assay = "norm"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    matrix_raw,
+    mode = "numeric",
+    nrows = 3,
+    ncols = 81,
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "pseudo-bulking - correct matrix returned: raw and dense"
+)
+
+expect_true(
+  current = all(round(matrix_raw) == matrix_raw),
+  info = "pseudo-bulking: raw counts ARE raw counts"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    matrix_raw,
+    mode = "numeric",
+    nrows = 3,
+    ncols = 81,
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "pseudo-bulking - correct matrix returned: raw and norm"
+)
+
+expect_true(
+  current = checkmate::testClass(sparse_matrix_raw, "dgRMatrix"),
+  info = "pseudo-bulking - sparse matrices returned - correct class (1)"
+)
+
+expect_true(
+  current = checkmate::testClass(sparse_matrix_norm, "dgRMatrix"),
+  info = "pseudo-bulking - sparse matrices returned - correct class (2)"
+)
+
+expect_equal(
+  current = dim(sparse_matrix_raw),
+  target = c(3, 81),
+  info = "pseudo-bulking - sparse matrices returned - correct dim (1)"
+)
+
+expect_equal(
+  current = dim(sparse_matrix_norm),
+  target = c(3, 81),
+  info = "pseudo-bulking - sparse matrices returned - correct dim (2)"
+)
+
+expect_true(
+  current = all(round(sparse_matrix_raw) == sparse_matrix_raw),
+  info = "pseudo-bulking: raw counts ARE raw counts (sparse)"
+)
+
 ## meta cells ------------------------------------------------------------------
 
 ### hdwgcna --------------------------------------------------------------------
@@ -289,7 +401,7 @@ right_cell_types <- purrr::map_lgl(
 )
 
 expect_true(
-  current = mean(seacells_small[[]]$mc_purity) > 0.75,
+  current = mean(seacells_small[[]]$mc_purity) > 0.9,
   info = paste(
     "hgwgnca - similar cell types are being pulled together;",
     "subsetted version"
