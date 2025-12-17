@@ -310,7 +310,7 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' Defaults to `"pca"`.
 #' @param no_embd_to_use Optional integer. If you only want to use a subset of
 #' the embedding.
-#' @param miloR_params A list, please see [bixverse::params_sc_milor()]. The
+#' @param miloR_params A list, please see [bixverse::params_sc_miloR()]. The
 #' list has the following parameters:
 #' \itemize{
 #'   \item prop - Numeric. Proportion of cells to sample as neighbourhood

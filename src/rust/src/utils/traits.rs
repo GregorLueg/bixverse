@@ -143,9 +143,14 @@ impl F16 {
         F16(u16::from_le_bytes(bytes))
     }
 
-    /// Create an F16
+    /// From F16 to f32
     pub fn to_f32(self) -> f32 {
         f16::from_bits(self.0).to_f32()
+    }
+
+    /// From F16 fo f64
+    pub fn to_f64(self) -> f64 {
+        f16::from_bits(self.0).to_f32() as f64
     }
 }
 
