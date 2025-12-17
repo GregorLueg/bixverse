@@ -2659,6 +2659,49 @@ rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use,
 #' @references Persad, et al., Nat. Biotechnol., 2023.
 rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
 
+#' Pseudo-bulk a set of cells (dense)
+#'
+#' @description This function will return a dense matrix of
+#' `length(cell_indices_ls) x number of genes`. The function has the option
+#' to return the sum of the sum of the raw counts or the average of the
+#' normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A dense matrix with the pseudo-bulked data.
+#'
+#' @export
+rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_dense, f_path, cell_indices_ls, assay, verbose)
+
+#' Pseudo-bulk a set of cells (sparse)
+#'
+#' @description This function will return a sparse matrix of
+#' `length(cell_indices_ls) x number of genes` (in list form in CSR).
+#' The function has the option to return the sum of the sum of the raw counts
+#' or the average of the normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A list with the following elements (easy to convert into CSR in R)
+#' \itemize{
+#'   \item indptr - The index pointers (representing cells)
+#'   \item indices - The indices (representing genes)
+#'   \item data - The pseudo-bulked data
+#'   \item nrow - Number of rows (i.e., pseudo-bulked samples)
+#'   \item ncol - Number of columns
+#' }
+#'
+#' @export
+rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_sparse, f_path, cell_indices_ls, assay, verbose)
+
 #' Generate SuperCells.
 #'
 #'

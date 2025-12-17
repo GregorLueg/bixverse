@@ -8,13 +8,15 @@ use crate::core::data::sparse_structures::*;
 use crate::single_cell::cell_aggregations::*;
 use crate::single_cell::methods::seacells::*;
 use crate::single_cell::sc_knn_snn::*;
-use crate::utils::r_rust_interface::r_matrix_to_faer_fp32;
+use crate::utils::r_rust_interface::*;
 use crate::utils::traits::*;
 
 extendr_module! {
     mod r_sc_metacells;
     fn rs_get_metacells;
     fn rs_get_seacells;
+    fn rs_pseudobulk_cells_dense;
+    fn rs_pseudobulk_cells_sparse;
     fn rs_supercell;
 }
 
@@ -699,5 +701,99 @@ fn rs_supercell(
             nrow = aggregated.shape.0,
             ncol = aggregated.shape.1
         )
+    ))
+}
+
+////////////////////
+// Pseudo bulking //
+////////////////////
+
+/// Pseudo-bulk a set of cells (dense)
+///
+/// @description This function will return a dense matrix of
+/// `length(cell_indices_ls) x number of genes`. The function has the option
+/// to return the sum of the sum of the raw counts or the average of the
+/// normalised counts.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param cell_indices_ls List. Must contains 0-indexed positions of the
+/// cells to aggregate per element.
+/// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+/// @param verbose Controls verbosity of the function
+///
+/// @returns A dense matrix with the pseudo-bulked data.
+///
+/// @export
+#[extendr]
+fn rs_pseudobulk_cells_dense(
+    f_path: String,
+    cell_indices_ls: List,
+    assay: String,
+    verbose: bool,
+) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+    let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
+
+    let mut cell_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_ls.len());
+
+    for i in 0..cell_indices_ls.len() {
+        let element = cell_indices_ls.elt(i)?;
+        let vec_i = element.as_integer_vector().unwrap().r_int_convert();
+        cell_indices.push(vec_i);
+    }
+
+    let data = get_pseudo_bulked_counts_dense(&f_path, &cell_indices, bulk_type, verbose);
+
+    Ok(faer_to_r_matrix(data.as_ref()))
+}
+
+/// Pseudo-bulk a set of cells (sparse)
+///
+/// @description This function will return a sparse matrix of
+/// `length(cell_indices_ls) x number of genes` (in list form in CSR).
+/// The function has the option to return the sum of the sum of the raw counts
+/// or the average of the normalised counts.
+///
+/// @param f_path String. Path to the `counts_cells.bin` file.
+/// @param cell_indices_ls List. Must contains 0-indexed positions of the
+/// cells to aggregate per element.
+/// @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+/// @param verbose Controls verbosity of the function
+///
+/// @returns A list with the following elements (easy to convert into CSR in R)
+/// \itemize{
+///   \item indptr - The index pointers (representing cells)
+///   \item indices - The indices (representing genes)
+///   \item data - The pseudo-bulked data
+///   \item nrow - Number of rows (i.e., pseudo-bulked samples)
+///   \item ncol - Number of columns
+/// }
+///
+/// @export
+#[extendr]
+fn rs_pseudobulk_cells_sparse(
+    f_path: String,
+    cell_indices_ls: List,
+    assay: String,
+    verbose: bool,
+) -> extendr_api::Result<List> {
+    let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
+
+    let mut cell_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_ls.len());
+
+    for i in 0..cell_indices_ls.len() {
+        let element = cell_indices_ls.elt(i).unwrap();
+        let vec_i = element.as_integer_vector().unwrap().r_int_convert();
+        cell_indices.push(vec_i);
+    }
+
+    let data: CompressedSparseData<f64> =
+        get_pseudo_bulked_counts_sparse(&f_path, &cell_indices, bulk_type, verbose);
+
+    Ok(list!(
+        indptr = data.indptr,
+        indices = data.indices,
+        data = data.data,
+        nrow = data.shape.0,
+        ncol = data.shape.1
     ))
 }

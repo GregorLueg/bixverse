@@ -510,38 +510,80 @@ pub fn supercell(
 // Pseudo-bulking //
 ////////////////////
 
-/// Pseudo-bulk data across cells based on cell indices
+/// Enum for Pseudo-bulking
+#[derive(Debug, Clone, Default)]
+pub enum PseudoBulk {
+    #[default]
+    /// Shall raw counts be pseudo-bulked
+    Raw,
+    /// Shall normalised counts be pseudo-bulked
+    Norm,
+}
+
+/// Helper function to parse pseudo-bulk type
+///
+/// ### Params
+///
+/// * `s` - Type of pseudo-bulk to perform
+///
+/// ### Returns
+///
+/// Option of the PseudoBulk enum
+pub fn parse_pseudo_bulk(s: &str) -> Option<PseudoBulk> {
+    match s.to_lowercase().as_str() {
+        "raw" => Some(PseudoBulk::Raw),
+        "norm" | "normalised" | "normalized" => Some(PseudoBulk::Norm),
+        _ => None,
+    }
+}
+
+/// Pseudo-bulk data across cells based on cell indices (dense output)
 ///
 /// ### Params
 ///
 /// * `f_path` - File path to the cell-based binary file.
 /// * `cell_indices` - Slice of indices to pseudo-bulk.
+/// * `bulk_type` - Whether to pseudo-bulk raw (sum) or normalised (average)
+///   counts.
 /// * `verbose` - Controls verbosity of the function.
 ///
-/// ### Return
+/// ### Returns
 ///
-/// Matrix of samples x genes pseudo-bulked.
-#[allow(dead_code)]
-pub fn get_pseudo_bulked_counts(
+/// Dense matrix of samples x genes pseudo-bulked.
+pub fn get_pseudo_bulked_counts_dense(
     f_path: &str,
     cell_indices: &[Vec<usize>],
+    bulk_type: PseudoBulk,
     verbose: bool,
 ) -> Mat<f64> {
     let reader = ParallelSparseReader::new(f_path).unwrap();
-
     let n_genes = reader.get_header().total_genes;
     let n_groups = cell_indices.len();
-
-    // Initialize matrix: groups (rows) × genes (columns)
     let mut result = Mat::zeros(n_groups, n_genes);
 
     for (group_idx, indices) in cell_indices.iter().enumerate() {
         let start_group = Instant::now();
         let chunks = reader.read_cells_parallel(indices);
+        let n_cells = indices.len() as f64;
 
         for chunk in chunks {
-            for (value, &gene_idx) in chunk.data_raw.iter().zip(chunk.indices.iter()) {
-                result[(group_idx, gene_idx as usize)] += *value as f64;
+            match bulk_type {
+                PseudoBulk::Raw => {
+                    for (value, &gene_idx) in chunk.data_raw.iter().zip(chunk.indices.iter()) {
+                        result[(group_idx, gene_idx as usize)] += *value as f64;
+                    }
+                }
+                PseudoBulk::Norm => {
+                    for (value, &gene_idx) in chunk.data_norm.iter().zip(chunk.indices.iter()) {
+                        result[(group_idx, gene_idx as usize)] += value.to_f64();
+                    }
+                }
+            }
+        }
+
+        if matches!(bulk_type, PseudoBulk::Norm) {
+            for gene_idx in 0..n_genes {
+                result[(group_idx, gene_idx)] /= n_cells;
             }
         }
 
@@ -559,4 +601,94 @@ pub fn get_pseudo_bulked_counts(
     }
 
     result
+}
+
+/// Pseudo-bulk data across cells based on cell indices (sparse CSR output)
+///
+/// ### Params
+///
+/// * `f_path` - File path to the cell-based binary file.
+/// * `cell_indices` - Slice of indices to pseudo-bulk.
+/// * `bulk_type` - Whether to pseudo-bulk raw (sum) or normalised (average)
+///   counts.
+/// * `verbose` - Controls verbosity of the function.
+///
+/// ### Returns
+///
+/// Sparse CSR matrix of samples x genes pseudo-bulked.
+pub fn get_pseudo_bulked_counts_sparse(
+    f_path: &str,
+    cell_indices: &[Vec<usize>],
+    bulk_type: PseudoBulk,
+    verbose: bool,
+) -> CompressedSparseData<f64> {
+    let reader = ParallelSparseReader::new(f_path).unwrap();
+    let n_genes = reader.get_header().total_genes;
+    let n_groups = cell_indices.len();
+    let mut row_data: Vec<FxHashMap<usize, f64>> = vec![FxHashMap::default(); n_groups];
+
+    for (group_idx, indices) in cell_indices.iter().enumerate() {
+        let start_group = Instant::now();
+        let chunks = reader.read_cells_parallel(indices);
+        let n_cells = indices.len() as f64;
+
+        for chunk in chunks {
+            match bulk_type {
+                PseudoBulk::Raw => {
+                    for (value, &gene_idx) in chunk.data_raw.iter().zip(chunk.indices.iter()) {
+                        *row_data[group_idx].entry(gene_idx as usize).or_insert(0.0) +=
+                            *value as f64;
+                    }
+                }
+                PseudoBulk::Norm => {
+                    for (value, &gene_idx) in chunk.data_norm.iter().zip(chunk.indices.iter()) {
+                        *row_data[group_idx].entry(gene_idx as usize).or_insert(0.0) +=
+                            value.to_f64();
+                    }
+                }
+            }
+        }
+
+        if matches!(bulk_type, PseudoBulk::Norm) {
+            for value in row_data[group_idx].values_mut() {
+                *value /= n_cells;
+            }
+        }
+
+        if verbose && (group_idx + 1) % 10 == 0 {
+            let elapsed = start_group.elapsed();
+            let pct_complete = ((group_idx + 1) as f32 / n_groups as f32) * 100.0;
+            println!(
+                "Processed group {} out of {} (took {:.2?}, completed {:.1}%)",
+                group_idx + 1,
+                n_groups,
+                elapsed,
+                pct_complete
+            );
+        }
+    }
+
+    let mut data = Vec::new();
+    let mut indices = Vec::new();
+    let mut indptr = vec![0];
+
+    for row_map in row_data {
+        let mut sorted_entries: Vec<_> = row_map.into_iter().collect();
+        sorted_entries.sort_by_key(|(idx, _)| *idx);
+
+        for (idx, value) in sorted_entries {
+            data.push(value);
+            indices.push(idx);
+        }
+        indptr.push(data.len());
+    }
+
+    CompressedSparseData {
+        data,
+        indices,
+        indptr,
+        cs_type: CompressedSparseFormat::Csr,
+        data_2: None,
+        shape: (n_groups, n_genes),
+    }
 }

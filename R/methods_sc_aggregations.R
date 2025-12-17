@@ -97,7 +97,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScMetacells(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -288,7 +288,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScSeacells(seacell_params)
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -426,7 +426,7 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScSupercell(sc_supercell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -521,4 +521,116 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   )
 
   return(meta_cell_obj)
+}
+
+## pseudo bulk -----------------------------------------------------------------
+
+#' Generate pseudo-bulked matrices
+#'
+#' @description
+#' This is a wrapper function to generate pseudo-bulked counts from a list of
+#' cell identifiers. You have the option to return sparse or dense matrices and
+#' if you wish to sum raw counts or calculate the mean of the normalised counts.
+#'
+#' @param object `single_cell_exp` class.
+#' @param cell_list Named list.
+#' @param return_format String. One of `c("dense", "sparse")`.
+#' @param assay String. One of `c("raw", "norm")`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return Pending on your setting in return_format a dense matrix or sparse
+#' CSR matrix with aggregated cells x genes.
+#'
+#' @importFrom magrittr `%$%`
+#'
+#' @export
+get_pseudobulked_sc <- S7::new_generic(
+  name = "get_supercells_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_list,
+    return_format = c("dense", "sparse"),
+    assay = c("raw", "norm"),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_pseudobulked_sc single_cell_exp
+#'
+#' @export
+S7::method(get_pseudobulked_sc, single_cell_exp) <- function(
+  object,
+  cell_list,
+  return_format = c("dense", "sparse"),
+  assay = c("raw", "norm"),
+  .verbose = TRUE
+) {
+  # params
+  return_format <- match.arg(return_format)
+  assay <- match.arg(assay)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertList(cell_list, types = "character", names = "named")
+  checkmate::assertChoice(return_format, c("dense", "sparse"))
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::qassert(.verbose, "B1")
+
+  # get the cell indices
+  cell_list <- purrr::map(
+    cell_list,
+    get_cell_indices,
+    x = object,
+    rust_index = TRUE
+  )
+
+  if (any(purrr::map_dbl(cell_list, length) == 0)) {
+    stop(
+      paste(
+        "Some of the elements in your cell_list could not",
+        "be matched to any cell index.",
+        "Please check your inputs!"
+      )
+    )
+  }
+
+  res <- switch(
+    return_format,
+    "dense" = {
+      data <- rs_pseudobulk_cells_dense(
+        f_path = get_rust_count_cell_f_path(object),
+        cell_indices_ls = cell_list,
+        assay = assay,
+        verbose = .verbose
+      )
+      rownames(data) <- names(cell_list)
+      colnames(data) <- get_gene_names(object)
+
+      data
+    },
+    "sparse" = {
+      data <- rs_pseudobulk_cells_sparse(
+        f_path = get_rust_count_cell_f_path(object),
+        cell_indices_ls = cell_list,
+        assay = assay,
+        verbose = .verbose
+      )
+      data <- new(
+        "dgRMatrix",
+        p = as.integer(data$indptr),
+        j = as.integer(data$indices),
+        x = as.numeric(data$data),
+        Dim = as.integer(c(data$nrow, data$ncol))
+      )
+      rownames(data) <- names(cell_list)
+      colnames(data) <- get_gene_names(object)
+
+      data
+    }
+  )
+
+  res
 }
