@@ -552,7 +552,8 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' A list with the following items:
 #' \itemize{
 #'   \item k - Integer. Number of neighbours to identify.
-#'   \item knn_algorithm - String. One of `c("annoy", "hnsw", "nndescent")`.
+#'   \item knn_algorithm - String. One of
+#'   `c("annoy", "hnsw", "nndescent", "exhaustive", "lsh")`.
 #'   `"hnsw"` takes longer, is more precise and more memory friendly. `"annoy"`
 #'   is faster, less precise and will take more memory. `"nndescent"` skips
 #'   index generation and can be faster on small datasets.
