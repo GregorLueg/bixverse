@@ -563,6 +563,9 @@
 - [`get_pca_singular_val()`](get_pca_singular_val.md) : Get the PCA
   singular values
 
+- [`get_pseudobulked_sc()`](get_pseudobulked_sc.md) : Generate
+  pseudo-bulked matrices
+
 - [`get_rbh_res()`](get_rbh_res.md) : Get the RBH results
 
 - [`get_resolution_res()`](get_resolution_res.md) : Return the
@@ -1120,6 +1123,12 @@
 
 - [`rs_prepare_whitening()`](rs_prepare_whitening.md) : Prepare the data
   for whitening
+
+- [`rs_pseudobulk_cells_dense()`](rs_pseudobulk_cells_dense.md) :
+  Pseudo-bulk a set of cells (dense)
+
+- [`rs_pseudobulk_cells_sparse()`](rs_pseudobulk_cells_sparse.md) :
+  Pseudo-bulk a set of cells (sparse)
 
 - [`rs_random_svd()`](rs_random_svd.md) : Run randomised SVD over a
   matrix

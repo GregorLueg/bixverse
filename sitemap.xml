@@ -218,6 +218,7 @@
 <url><loc>/reference/get_pca_factors.html</loc></url>
 <url><loc>/reference/get_pca_loadings.html</loc></url>
 <url><loc>/reference/get_pca_singular_val.html</loc></url>
+<url><loc>/reference/get_pseudobulked_sc.html</loc></url>
 <url><loc>/reference/get_rbh_res.html</loc></url>
 <url><loc>/reference/get_resolution_res.html</loc></url>
 <url><loc>/reference/get_results.html</loc></url>
@@ -413,6 +414,8 @@
 <url><loc>/reference/rs_prcomp.html</loc></url>
 <url><loc>/reference/rs_prepare_gsva_gs.html</loc></url>
 <url><loc>/reference/rs_prepare_whitening.html</loc></url>
+<url><loc>/reference/rs_pseudobulk_cells_dense.html</loc></url>
+<url><loc>/reference/rs_pseudobulk_cells_sparse.html</loc></url>
 <url><loc>/reference/rs_random_svd.html</loc></url>
 <url><loc>/reference/rs_range_norm.html</loc></url>
 <url><loc>/reference/rs_rbf_function.html</loc></url>

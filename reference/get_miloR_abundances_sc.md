@@ -47,8 +47,8 @@ get_miloR_abundances_sc(
 
 - miloR_params:
 
-  A list, please see `params_sc_milor()`. The list has the following
-  parameters:
+  A list, please see [`params_sc_miloR()`](params_sc_miloR.md). The list
+  has the following parameters:
 
   - prop - Numeric. Proportion of cells to sample as neighbourhood
     indices. Must be in (0,1). Defaults to `0.2`.
