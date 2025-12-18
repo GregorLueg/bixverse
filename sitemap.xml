@@ -97,6 +97,7 @@
 <url><loc>/reference/checkIcaIterParams.html</loc></url>
 <url><loc>/reference/checkIcaNcomps.html</loc></url>
 <url><loc>/reference/checkIcaParams.html</loc></url>
+<url><loc>/reference/checkKnnParams.html</loc></url>
 <url><loc>/reference/checkSNFParams.html</loc></url>
 <url><loc>/reference/checkScBbknn.html</loc></url>
 <url><loc>/reference/checkScBoost.html</loc></url>

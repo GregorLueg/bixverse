@@ -1,7 +1,7 @@
 # Run BBKNN
 
 This function implements the batch-balanced k-nearest neighbour
-algorithm from Polański, et al. Briefly, the algorithm generate a KNN
+algorithm from Polański, et al. Briefly, the algorithm generates a KNN
 index on a per batch basis and identifies the neighbours of cells for
 each individual index. Subsequently, it leverages UMAP connectivity
 calculations to reduce spurious connections. For more details, please
@@ -57,13 +57,6 @@ bbknn_sc(
   - neighbours_within_batch - Integer. Number of neighbours to consider
     per batch.
 
-  - knn_method - String. One of `c("annoy", "hnsw")`. Defaults to
-    `"annoy"`.
-
-  - ann_dist - String. One of `c("cosine", "euclidean")`. The distance
-    metric to be used for the approximate neighbour search. Defaults to
-    `"cosine"`.
-
   - set_op_mix_ratio - Numeric. Mixing ratio between union (1.0) and
     intersection (0.0).
 
@@ -71,16 +64,14 @@ bbknn_sc(
     parameter, how many nearest neighbours of each cell are assumed to
     be fully connected.
 
-  - annoy_n_trees - Integer. Number of trees to use in the generation of
-    the Annoy index.
-
-  - search_budget - Integer. Search budget per tree for the `annoy`
-    algorithm.
-
   - trim - Optional integer. Trim the neighbours of each cell to these
     many top connectivities. May help with population independence and
     improve the tidiness of clustering. If `NULL`, it defaults to
     `10 * neighbours_within_batch`.
+
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults.
 
 - seed:
 

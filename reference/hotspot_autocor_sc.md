@@ -33,7 +33,7 @@ hotspot_autocor_sc(
 
 - hotspot_params:
 
-  List with vision parameters, see
+  List with hotspot parameters, see
   [`params_sc_hotspot()`](params_sc_hotspot.md) with the following
   elements:
 
@@ -42,31 +42,9 @@ hotspot_autocor_sc(
 
   - normalise - Boolean. Shall the data be normalised.
 
-  - k - Number of neighbours for the kNN search. Only relevant if you
-    set regenerate_knn to `TRUE`.
-
-  - knn_method - String. Which kNN algorithm to use. One of
-    `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only
-    relevant if you set regenerate_knn to `TRUE`.
-
-  - ann_dist - String. Distance metric for the approximate neighbour
-    search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`.
-    Only relevant if you set regenerate_knn to `TRUE`.
-
-  - n_trees - Integer. Number of trees to use for the annoy algorithm.
-    Only relevant if you set regenerate_knn to `TRUE`.
-
-  - search_budget - Integer. Search budget per tree for the annoy
-    algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-
-  - nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-    relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
-
-  - rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-    set regenerate_knn to `TRUE` and use `"nndescent"`.
-
-  - delta - Numeric. Early termination criterion for NN Descent. Only
-    relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults.
 
 - no_embd_to_use:
 

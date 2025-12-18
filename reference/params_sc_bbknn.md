@@ -7,13 +7,10 @@ Wrapper function for the BBKNN parameters
 ``` r
 params_sc_bbknn(
   neighbours_within_batch = 5L,
-  knn_method = c("annoy", "hnsw"),
-  ann_dist = c("cosine", "euclidean"),
   set_op_mix_ratio = 1,
   local_connectivity = 1,
-  annoy_n_trees = 100L,
-  search_budget = 100L,
-  trim = NULL
+  trim = NULL,
+  knn = list()
 )
 ```
 
@@ -21,33 +18,18 @@ params_sc_bbknn(
 
 - neighbours_within_batch:
 
-  Integer. Number of neighbours to consider per batch.
-
-- knn_method:
-
-  String. One of `c("annoy", "hnsw")`. Defaults to `"annoy"`.
-
-- ann_dist:
-
-  String. One of `c("cosine", "euclidean")`. The distance metric to be
-  used for the approximate neighbour search.
+  Integer. Number of neighbours to consider per batch. Defaults to `5L`.
 
 - set_op_mix_ratio:
 
   Numeric. Mixing ratio between union (1.0) and intersection (0.0).
+  Defaults to `1.0`.
 
 - local_connectivity:
 
   Numeric. UMAP connectivity computation parameter, how many nearest
-  neighbours of each cell are assumed to be fully connected.
-
-- annoy_n_trees:
-
-  Integer. Number of trees to use in the generation of the Annoy index.
-
-- search_budget:
-
-  Integer. Search budget per tree for the `annoy` algorithm.
+  neighbours of each cell are assumed to be fully connected. Defaults to
+  `1.0`.
 
 - trim:
 
@@ -55,6 +37,14 @@ params_sc_bbknn(
   connectivities. May help with population independence and improve the
   tidiness of clustering. If `NULL`, it defaults to
   `10 * neighbours_within_batch`.
+
+- knn:
+
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](params_knn_defaults.md) for available
+  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+  `ef_search`, `n_bits`, `n_tables` and `max_candidates`.
 
 ## Value
 

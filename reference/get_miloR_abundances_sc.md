@@ -5,7 +5,7 @@ of the kNN graph. The general idea of the approach is to use the kNN
 graph generated from the single cell data, generate representative
 neighbourhoods and calculate differential abundances within these
 neighbourhoods. For further details on the method, please refer to Dann,
-et al. This function will take an `single_cell_exp` class, run the
+et al. This function will take a `single_cell_exp` class, run the
 neighbourhood detection, count the occurrences of a sample and return a
 `sc_miloR` class for subsequent differential abundance testing and
 further annotations.
@@ -51,41 +51,21 @@ get_miloR_abundances_sc(
   has the following parameters:
 
   - prop - Numeric. Proportion of cells to sample as neighbourhood
-    indices. Must be in (0,1). Defaults to `0.2`.
+    indices. Must be in (0,1).
 
   - k_refine - Integer. Number of neighbours to use for refinement.
-    Defaults to `20L`.
 
   - refinement_strategy - String. Strategy for refining sampled indices.
-    One of `c("approximate", "bruteforce", "index")`. Defaults to
-    `"index"`.
+    One of `c("approximate", "bruteforce", "index")`.
 
   - index_type - String. Type of kNN index to use. One of
-    `c("annoy", "hnsw")`. Defaults to `"annoy"`.
+    `c("annoy", "hnsw")`.
 
-  - k - Integer. Number of neighbours to consider. Defaults to `15L`.
-
-  - knn_method - String. One of `c("annoy", "hnsw")`. The method to use
-    for the approximate nearest neighbour search. Defaults to `"annoy"`.
-    Note: `"nndescent"` is not supported for MiloR!
-
-  - ann_dist - String. One of `c("cosine", "euclidean")`. The distance
-    metric to be used for the approximate neighbour search. Defaults to
-    `"euclidean"`.
-
-  - search_budget - Integer. Search budget per tree for Annoy. Defaults
-    to `100L`.
-
-  - n_trees - Integer. Number of trees to generate for Annoy. Defaults
-    to `100L`.
-
-  - nn_max_iter - Integer. Maximum iterations for NNDescent. Defaults to
-    `15L`.
-
-  - rho - Numeric. Sampling rate for NNDescent. Defaults to `1.0`.
-
-  - delta - Numeric. Early termination criterion for NNDescent. Defaults
-    to `0.001`.
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults. Note: `knn_method` cannot be
+    `"exhaustive"` for MiloR as it basically boils down to
+    `"bruteforce"`.
 
 - seed:
 

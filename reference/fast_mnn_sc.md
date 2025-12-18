@@ -2,7 +2,7 @@
 
 This function implements the fast mutual nearest neighbour (MNN) from
 Haghverdi, et al. This version works on the PCA embedding and generates
-an embedding only and not fully corrected count matrix. The function
+an embedding only and not a fully corrected count matrix. The function
 will iterate through the batches, identify the MNN and generate
 correction vectors and generate a corrected embedding which is added to
 the function.
@@ -43,35 +43,22 @@ fast_mnn_sc(
   A list, please see [`params_sc_fastmnn()`](params_sc_fastmnn.md). The
   list has the following parameters:
 
-  - k - Integer. Number of mutual nearest neighbours to identify.
-    Defaults to `20L`.
-
   - sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
-    proportion of space radius). Defaults to `0.1`.
-
-  - knn_method - String. One of `c("annoy", "hnsw")`. The method to use
-    for the approximate nearest neighbour search. Defaults to `"annoy"`.
-
-  - dist_metric - String. One of `c("cosine", "euclidean")`. The
-    distance metric to be used for the approximate neighbour search.
-    Defaults to `"cosine"`.
-
-  - annoy_n_trees - Integer. Number of trees for Annoy index. Defaults
-    to `100L`.
-
-  - annoy_search_budget - Integer. Search budget per tree for Annoy.
-    Defaults to `100L`.
+    proportion of space radius).
 
   - cos_norm - Logical. Apply cosine normalisation before computing
-    distances. Defaults to `TRUE`.
+    distances.
 
   - var_adj - Logical. Apply variance adjustment to avoid kissing
-    effects. Defaults to `TRUE`.
+    effects.
 
   - no_pcs - Integer. Number of PCs to use for MNN calculations.
-    Defaults to `30L`.
 
-  - random_svd - Logical. Use randomised SVD. Defaults to `TRUE`.
+  - random_svd - Logical. Use randomised SVD.
+
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults.
 
 - seed:
 

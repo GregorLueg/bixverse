@@ -72,25 +72,8 @@ the meta cell to be considered.</p></li>
 <li><p>target_no_metacells - Number of target meta cells you wish to reach.</p></li>
 <li><p>max_iter - Maximum number of iterations you want to use for the
 algorithm.</p></li>
-<li><p>k - Number of neighbours for the kNN search. Only relevant if you
-set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>knn_method - String. Which kNN algorithm to use. One of
-<code>c("annoy", "hnsw", "nndescent")</code>. Defaults to <code>"annoy"</code>. Only relevant if
-you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>ann_dist - String. Distance metric for the approximate neighbour
-search. One of <code>c("cosine", "euclidean")</code>. Defaults to <code>"cosine"</code>. Only
-relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>n_trees - Integer. Number of trees to use for the annoy algorithm.
-Only relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>search_budget - Integer. Search budget per tree for the annoy
-algorithm. Only relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-relevant if you set regenerate_knn to <code>TRUE</code> and use
-<code>"nndescent"</code>.</p></li>
-<li><p>rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-set regenerate_knn to <code>TRUE</code> and use <code>"nndescent"</code>.</p></li>
-<li><p>delta - Numeric. Early termination criterion for NN Descent. Only
-relevant if you set regenerate_knn to <code>TRUE</code> and use <code>"nndescent"</code>.</p></li>
+<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
+for available parameters and their defaults.</p></li>
 </ul></dd>
 
 

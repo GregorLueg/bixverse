@@ -4,14 +4,14 @@ of the kNN graph. The general idea of the approach is to use the kNN graph
 generated from the single cell data, generate representative neighbourhoods
 and calculate differential abundances within these neighbourhoods. For
 further details on the method, please refer to Dann, et al. This function
-will take an single_cell_exp class, run the neighbourhood detection,
+will take a single_cell_exp class, run the neighbourhood detection,
 count the occurrences of a sample and return a sc_miloR class for
 subsequent differential abundance testing and further annotations."><meta property="og:description" content="This function implements the miloR differential abundance testing on top
 of the kNN graph. The general idea of the approach is to use the kNN graph
 generated from the single cell data, generate representative neighbourhoods
 and calculate differential abundances within these neighbourhoods. For
 further details on the method, please refer to Dann, et al. This function
-will take an single_cell_exp class, run the neighbourhood detection,
+will take a single_cell_exp class, run the neighbourhood detection,
 count the occurrences of a sample and return a sc_miloR class for
 subsequent differential abundance testing and further annotations."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -52,7 +52,7 @@ of the kNN graph. The general idea of the approach is to use the kNN graph
 generated from the single cell data, generate representative neighbourhoods
 and calculate differential abundances within these neighbourhoods. For
 further details on the method, please refer to Dann, et al. This function
-will take an <code>single_cell_exp</code> class, run the neighbourhood detection,
+will take a <code>single_cell_exp</code> class, run the neighbourhood detection,
 count the occurrences of a sample and return a <code>sc_miloR</code> class for
 subsequent differential abundance testing and further annotations.</p>
     </div>
@@ -97,30 +97,15 @@ the embedding.</p></dd>
 <dt id="arg-milor-params">miloR_params<a class="anchor" aria-label="anchor" href="#arg-milor-params"></a></dt>
 <dd><p>A list, please see <code><a href="params_sc_miloR.html">params_sc_miloR()</a></code>. The
 list has the following parameters:</p><ul><li><p>prop - Numeric. Proportion of cells to sample as neighbourhood
-indices. Must be in (0,1). Defaults to <code>0.2</code>.</p></li>
-<li><p>k_refine - Integer. Number of neighbours to use for refinement.
-Defaults to <code>20L</code>.</p></li>
+indices. Must be in (0,1).</p></li>
+<li><p>k_refine - Integer. Number of neighbours to use for refinement.</p></li>
 <li><p>refinement_strategy - String. Strategy for refining sampled indices.
-One of <code>c("approximate", "bruteforce", "index")</code>. Defaults to
-<code>"index"</code>.</p></li>
+One of <code>c("approximate", "bruteforce", "index")</code>.</p></li>
 <li><p>index_type - String. Type of kNN index to use. One of
-<code>c("annoy", "hnsw")</code>. Defaults to <code>"annoy"</code>.</p></li>
-<li><p>k - Integer. Number of neighbours to consider. Defaults to <code>15L</code>.</p></li>
-<li><p>knn_method - String. One of <code>c("annoy", "hnsw")</code>. The method to use
-for the approximate nearest neighbour search. Defaults to <code>"annoy"</code>. Note:
-<code>"nndescent"</code> is not supported for MiloR!</p></li>
-<li><p>ann_dist - String. One of <code>c("cosine", "euclidean")</code>. The distance
-metric to be used for the approximate neighbour search. Defaults to
-<code>"euclidean"</code>.</p></li>
-<li><p>search_budget - Integer. Search budget per tree for Annoy. Defaults
-to <code>100L</code>.</p></li>
-<li><p>n_trees - Integer. Number of trees to generate for Annoy. Defaults
-to <code>100L</code>.</p></li>
-<li><p>nn_max_iter - Integer. Maximum iterations for NNDescent. Defaults to
-<code>15L</code>.</p></li>
-<li><p>rho - Numeric. Sampling rate for NNDescent. Defaults to <code>1.0</code>.</p></li>
-<li><p>delta - Numeric. Early termination criterion for NNDescent. Defaults
-to <code>0.001</code>.</p></li>
+<code>c("annoy", "hnsw")</code>.</p></li>
+<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
+for available parameters and their defaults. Note: <code>knn_method</code> cannot be
+<code>"exhaustive"</code> for MiloR as it basically boils down to <code>"bruteforce"</code>.</p></li>
 </ul></dd>
 
 

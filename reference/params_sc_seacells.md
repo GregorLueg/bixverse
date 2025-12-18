@@ -68,8 +68,8 @@ params_sc_seacells(
   List. Optional overrides for kNN parameters. See
   [`params_knn_defaults()`](params_knn_defaults.md) for available
   parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `nn_max_iter`, `rho`, `delta`. Note: This function uses `k = 25L` as
-  default.
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+  `ef_search`, `n_bits`, `n_tables` and `max_candidates`.
 
 ## Value
 

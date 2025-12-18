@@ -1,6 +1,8 @@
 # Helper function to generate kNN defaults
 
-Helper function to generate kNN defaults
+This function generates various sensible default parameters for all of
+the different approximate nearest neighbours that are available within
+this package.
 
 ## Usage
 
@@ -15,20 +17,42 @@ A list with default parameters for kNN searches. Following parameters:
 - k - Number of neighbours. Defaults to `15L`.
 
 - knn_method - Which of method to use for the approximate nearest
-  neighbour search. Defaults to `"annoy"`. The implementations are:
-  `c("annoy", "hnsw", "nndescent")`.
+  neighbour search. Defaults to `"hnsw"`. The implementations are:
+  `c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")`.
 
 - ann_dist - Which distance metric to use for the approximate nearest
   neighbour search. Defaults to `"euclidean"`. The implementations are
   `c("euclidean", "cosine")`.
 
-- search_budget - Search budget per tree for Annoy. Defaults to `100L`.
+- n_trees - Annoy param: number of trees to generate for Annoy. Defaults
+  to `75L`.
 
-- n_trees - Number of trees to generate for Annoy. Defaults to `100L`.
+- search_budget - Annoy param: optional search budget per tree for
+  Annoy. If not provided, it will default to `n_tree * k * 20L`.
 
-- nn_max_iter - Maximum iterations for NNDescent. Defaults to `15L`.
+- diversify_prob - NNDescent param: diversification probability for the
+  NNDescent index. This will diversify the index at the end and identify
+  potentiall better edges. Defaults to `0.0`.
 
-- rho - Sampling rate for NNDescent. Defaults to `1.0`.
+- delta - NNDescent param: early termination criterium for NNDescent.
+  Defaults to `0.001`.
 
-- delta - Early termination criterium for NNDescent. Defaults to
-  `0.001`.
+- ef_budget - NNDescent param: optional query budget parameter. Can
+  accelerate querying, but at the cost of Recall.
+
+- m - HNSW param: number of connections between layers for HNSW.
+  Defaults to `16L`.
+
+- ef_construction - HNSW param: size of dynamic candidate list during
+  construction. Defaults to `200L`.
+
+- ef_search - HNSW param: size of candidate list (higher = better
+  recall, slower). Defaults to `100L`.
+
+- n_bits - LSH param: number of bits to use. Lower values yield better
+  Recall at the cost.
+
+- n_tables - LSH param: number of hashmaps to use. Defaults to `50L`.
+
+- max_candidates - LSH param: optional search budget for querying. If
+  provided, can speed up queries, at the cost of Recall.

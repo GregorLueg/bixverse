@@ -67,29 +67,12 @@ calculate the local gene-gene correlations and their Z-scores.</p>
 
 
 <dt id="arg-hotspot-params">hotspot_params<a class="anchor" aria-label="anchor" href="#arg-hotspot-params"></a></dt>
-<dd><p>List with vision parameters, see
+<dd><p>List with hotspot parameters, see
 <code><a href="params_sc_hotspot.html">params_sc_hotspot()</a></code> with the following elements:</p><ul><li><p>model - String. Which of the available models to use for the
 gene expression. Choices are one of <code>c("danb", "normal", "bernoulli")</code>.</p></li>
 <li><p>normalise - Boolean. Shall the data be normalised.</p></li>
-<li><p>k - Number of neighbours for the kNN search. Only relevant if you
-set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>knn_method - String. Which kNN algorithm to use. One of
-<code>c("annoy", "hnsw", "nndescent")</code>. Defaults to <code>"annoy"</code>. Only relevant if
-you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>ann_dist - String. Distance metric for the approximate neighbour
-search. One of <code>c("cosine", "euclidean")</code>. Defaults to <code>"cosine"</code>. Only
-relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>n_trees - Integer. Number of trees to use for the annoy algorithm.
-Only relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>search_budget - Integer. Search budget per tree for the annoy
-algorithm. Only relevant if you set regenerate_knn to <code>TRUE</code>.</p></li>
-<li><p>nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-relevant if you set regenerate_knn to <code>TRUE</code> and use
-<code>"nndescent"</code>.</p></li>
-<li><p>rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-set regenerate_knn to <code>TRUE</code> and use <code>"nndescent"</code>.</p></li>
-<li><p>delta - Numeric. Early termination criterion for NN Descent. Only
-relevant if you set regenerate_knn to <code>TRUE</code> and use <code>"nndescent"</code>.</p></li>
+<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
+for available parameters and their defaults.</p></li>
 </ul></dd>
 
 

@@ -39,16 +39,12 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">params_sc_fastmnn</span><span class="op">(</span></span>
-<span>  k <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  sigma <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  knn_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span><span class="op">)</span>,</span>
-<span>  dist_metric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cosine"</span>, <span class="st">"euclidean"</span><span class="op">)</span>,</span>
-<span>  annoy_n_trees <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  annoy_search_budget <span class="op">=</span> <span class="fl">100L</span>,</span>
 <span>  cos_norm <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  var_adj <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  no_pcs <span class="op">=</span> <span class="fl">30L</span>,</span>
-<span>  random_svd <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  random_svd <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">20L</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -56,34 +52,9 @@
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Integer. Number of mutual nearest neighbours to identify.
-Defaults to <code>20L</code>.</p></dd>
-
-
-<dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
+<dl><dt id="arg-sigma">sigma<a class="anchor" aria-label="anchor" href="#arg-sigma"></a></dt>
 <dd><p>Numeric. Bandwidth of the Gaussian smoothing kernel
 (as proportion of space radius). Defaults to <code>0.1</code>.</p></dd>
-
-
-<dt id="arg-knn-method">knn_method<a class="anchor" aria-label="anchor" href="#arg-knn-method"></a></dt>
-<dd><p>String. One of <code>c("annoy", "hnsw")</code>. Defaults to
-<code>"annoy"</code>.</p></dd>
-
-
-<dt id="arg-dist-metric">dist_metric<a class="anchor" aria-label="anchor" href="#arg-dist-metric"></a></dt>
-<dd><p>String. One of <code>c("cosine", "euclidean")</code>. Defaults to
-<code>"cosine"</code>.</p></dd>
-
-
-<dt id="arg-annoy-n-trees">annoy_n_trees<a class="anchor" aria-label="anchor" href="#arg-annoy-n-trees"></a></dt>
-<dd><p>Integer. Number of trees for Annoy index. Defaults to
-<code>100L</code>.</p></dd>
-
-
-<dt id="arg-annoy-search-budget">annoy_search_budget<a class="anchor" aria-label="anchor" href="#arg-annoy-search-budget"></a></dt>
-<dd><p>Integer. Search budget per tree for Annoy.
-Defaults to <code>100L</code>.</p></dd>
 
 
 <dt id="arg-cos-norm">cos_norm<a class="anchor" aria-label="anchor" href="#arg-cos-norm"></a></dt>
@@ -103,6 +74,14 @@ Defaults to <code>30L</code>.</p></dd>
 
 <dt id="arg-random-svd">random_svd<a class="anchor" aria-label="anchor" href="#arg-random-svd"></a></dt>
 <dd><p>Logical. Use randomised SVD. Defaults to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
+<dd><p>List. Optional overrides for kNN parameters. See
+<code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
+<code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>,
+<code>n_bits</code>, <code>n_tables</code> and <code>max_candidates</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

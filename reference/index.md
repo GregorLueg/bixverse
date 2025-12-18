@@ -232,6 +232,8 @@
 
 - [`checkIcaParams()`](checkIcaParams.md) : Check ICA parameters
 
+- [`checkKnnParams()`](checkKnnParams.md) : Check kNN parameters
+
 - [`checkSNFParams()`](checkSNFParams.md)
   [`testSNFParams()`](checkSNFParams.md) : Check SNF parameters
 

@@ -6,46 +6,21 @@ Wrapper function for the fastMNN parameters
 
 ``` r
 params_sc_fastmnn(
-  k = 20L,
   sigma = 0.1,
-  knn_method = c("annoy", "hnsw"),
-  dist_metric = c("cosine", "euclidean"),
-  annoy_n_trees = 100L,
-  annoy_search_budget = 100L,
   cos_norm = TRUE,
   var_adj = TRUE,
   no_pcs = 30L,
-  random_svd = TRUE
+  random_svd = TRUE,
+  knn = list(k = 20L)
 )
 ```
 
 ## Arguments
 
-- k:
-
-  Integer. Number of mutual nearest neighbours to identify. Defaults to
-  `20L`.
-
 - sigma:
 
   Numeric. Bandwidth of the Gaussian smoothing kernel (as proportion of
   space radius). Defaults to `0.1`.
-
-- knn_method:
-
-  String. One of `c("annoy", "hnsw")`. Defaults to `"annoy"`.
-
-- dist_metric:
-
-  String. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`.
-
-- annoy_n_trees:
-
-  Integer. Number of trees for Annoy index. Defaults to `100L`.
-
-- annoy_search_budget:
-
-  Integer. Search budget per tree for Annoy. Defaults to `100L`.
 
 - cos_norm:
 
@@ -64,6 +39,14 @@ params_sc_fastmnn(
 - random_svd:
 
   Logical. Use randomised SVD. Defaults to `TRUE`.
+
+- knn:
+
+  List. Optional overrides for kNN parameters. See
+  [`params_knn_defaults()`](params_knn_defaults.md) for available
+  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+  `ef_search`, `n_bits`, `n_tables` and `max_candidates`.
 
 ## Value
 

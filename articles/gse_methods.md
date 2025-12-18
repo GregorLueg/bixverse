@@ -160,7 +160,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.551 sec elapsed
+#> 0.539 sec elapsed
 ```
 
 ### Gene ontology aware enrichment tests (for sets)
@@ -298,7 +298,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.48 sec elapsed
+#> 1.469 sec elapsed
 ```
 
 ### Alternative: simplifying results
@@ -507,8 +507,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.253884 2.325383 2.545615 2.377012 2.825819 3.025734    10
-#>   rust 2.440998 2.448811 2.463464 2.459283 2.464181 2.525335    10
+#>  fgsea 2.237023 2.299117 2.525806 2.359520 2.802783 3.003409    10
+#>   rust 2.417253 2.444270 2.449635 2.451466 2.463566 2.465111    10
 ```
 
 ### GSEA gene ontology aware

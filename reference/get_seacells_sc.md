@@ -1,7 +1,7 @@
 # Generate meta cells based on SEACells and return a `meta_cells` object
 
 This function implements the meta cell aggregation from Persad et al.,
-and returns the resuling SEACells. Compared to other algorithms, a
+and returns the resulting SEACells. Compared to other algorithms, a
 kernel archetype analysis is used to identify the metacells. For
 details, please refer to the publication.
 
@@ -54,24 +54,9 @@ get_seacells_sc(
   - pruning_threshold - The threshold below which pruning shall be
     applied during Franke-Wolfe iterations.
 
-  - k - Number of neighbours for the kNN algorithm.
-
-  - knn_method - String. Which kNN algorithm to use. One of
-    `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`.
-
-  - n_trees - Integer. Number of trees to use for the annoy algorithm.
-
-  - search_budget - Integer. Search budget during querying for the annoy
-    algorithm.
-
-  - nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-    relevant if you use `"nndescent"`.
-
-  - rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-    use `"nndescent"`.
-
-  - delta - Numeric. Early termination criterion for NN Descent. Only
-    relevant if you use `"nndescent"`.
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults.
 
 - embd_to_use:
 
@@ -107,4 +92,4 @@ cell aggregation method.
 
 ## References
 
-Morabito, et al. Cell Rep Methods, 2023
+Persad, et al. Nat Biotechnol, 2023
