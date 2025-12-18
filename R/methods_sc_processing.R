@@ -532,16 +532,18 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' Find the neighbours for single cell.
 #'
 #' @description
-#' This function will generate the kNNs based on a given embedding. Three
+#' This function will generate the kNNs based on a given embedding. Five
 #' different algorithms are implemented with different speed and accuracy to
-#' approximate the nearest neighbours. `"annoy"` is more
-#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm;
-#' `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
-#' search that is slower, but more precise. Lastly, there is the option of
-#' `"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm. This
-#' version skips the index generation and can be faster on smaller data sets.
-#' Subsequently, the kNN data will be used to generate an sNN igraph for
-#' clustering methods.
+#' approximate the nearest neighbours. `"hnsw"` implements a Hierarchical
+#' Navigatable Small Worlds vector search that has slower index generation but
+#' high precision. `"annoy"` is based on the Approximate Nearest Neighbours Oh
+#' Yeah algorithm and is more rapid in terms of index generation, but querying
+#' on large data sets can be slow. `"nndescent"` is a Rust-based implementation
+#' of the PyNNDescent algorithm and is a good all-rounder and performs well
+#' on very large data sets. `"lsh"` uses locality-sensitive hashing for
+#' approximate search and is the fastest at the cost of precision.
+#' `"exhaustive"` performs exact nearest neighbour search. Subsequently,
+#' the kNN data will be used to generate an sNN igraph for clustering methods.
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -551,29 +553,16 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
 #' A list with the following items:
 #' \itemize{
-#'   \item k - Integer. Number of neighbours to identify.
-#'   \item knn_algorithm - String. One of
-#'   `c("annoy", "hnsw", "nndescent", "exhaustive", "lsh")`.
-#'   `"hnsw"` takes longer, is more precise and more memory friendly. `"annoy"`
-#'   is faster, less precise and will take more memory. `"nndescent"` skips
-#'   index generation and can be faster on small datasets.
-#'   \item n_trees -  Integer. Number of trees to use for the `annoy` algorithm.
-#'   The higher, the longer the algorithm takes, but the more precise the
-#'   approximated nearest neighbours.
-#'   \item search_budget - Integer. Search budget per tree for the `annoy`
-#'   algorithm. The higher, the longer the algorithm takes, but the more precise
-#'   the approximated nearest neighbours.
-#'   \item ann_dist - String. One of `c("cosine", "euclidean")`.
-#'   \item max_iter - Integer. Maximum iterations for the `"nndescent"` method.
-#'   \item rho - Numeric. Sampling rate for the `"nndescent"` method.
-#'   \item delta - Numeric. Early termination criterium for the `"nndescent"`
-#'   method.
-#'   \item full_snn - Boolean. Shall the sNN graph be generated across all
-#'   cells (standard in the `bluster` package.) Defaults to `FALSE`.
-#'   \item pruning - Value below which the weight in the sNN graph is set to 0.
+#'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
+#'   be generated that generates edges between all cells instead of between
+#'   only neighbours.
+#'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
+#'   the generation of the sNN graph.
 #'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight form the SNN graph is calculated. For details, please see
+#'   the weight from the SNN graph is calculated. For details, please see
 #'   [bixverse::params_sc_neighbours()].
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity and returns run times.

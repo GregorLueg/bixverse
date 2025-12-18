@@ -14,8 +14,7 @@ dependencies = [
 [[package]]
 name = "ann-search-rs"
 version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cefea7753f8cf521d7c644e5a91b31e79ce4fd7a97948ab1c71c45b6749c962f"
+source = "git+https://github.com/GregorLueg/ann-search-rs.git?branch=feat-faster-annoy#8e26766a807a16906cfe9a87fac87c404cbcaeed"
 dependencies = [
  "approx",
  "faer",

@@ -463,7 +463,7 @@ params_sc_hotspot <- function(
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
 #' `n_bits`, `n_tables` and `max_candidates`. Note: `knn_method`
-#' cannot be `"nndescent"` for MiloR as it doesn't generate an index!
+#' cannot be `"exhaustive"` for MiloR as it doesn't generate an index!
 #'
 #' @returns A list with the MiloR parameters.
 #'

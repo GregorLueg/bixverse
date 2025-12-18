@@ -31,30 +31,15 @@ the embedding.}
 list has the following parameters:
 \itemize{
 \item prop - Numeric. Proportion of cells to sample as neighbourhood
-indices. Must be in (0,1). Defaults to \code{0.2}.
+indices. Must be in (0,1).
 \item k_refine - Integer. Number of neighbours to use for refinement.
-Defaults to \code{20L}.
 \item refinement_strategy - String. Strategy for refining sampled indices.
-One of \code{c("approximate", "bruteforce", "index")}. Defaults to
-\code{"index"}.
+One of \code{c("approximate", "bruteforce", "index")}.
 \item index_type - String. Type of kNN index to use. One of
-\code{c("annoy", "hnsw")}. Defaults to \code{"annoy"}.
-\item k - Integer. Number of neighbours to consider. Defaults to \code{15L}.
-\item knn_method - String. One of \code{c("annoy", "hnsw")}. The method to use
-for the approximate nearest neighbour search. Defaults to \code{"annoy"}. Note:
-\code{"nndescent"} is not supported for MiloR!
-\item ann_dist - String. One of \code{c("cosine", "euclidean")}. The distance
-metric to be used for the approximate neighbour search. Defaults to
-\code{"euclidean"}.
-\item search_budget - Integer. Search budget per tree for Annoy. Defaults
-to \code{100L}.
-\item n_trees - Integer. Number of trees to generate for Annoy. Defaults
-to \code{100L}.
-\item nn_max_iter - Integer. Maximum iterations for NNDescent. Defaults to
-\code{15L}.
-\item rho - Numeric. Sampling rate for NNDescent. Defaults to \code{1.0}.
-\item delta - Numeric. Early termination criterion for NNDescent. Defaults
-to \code{0.001}.
+\code{c("annoy", "hnsw")}.
+\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults. Note: \code{knn_method} cannot be
+\code{"exhaustive"} for MiloR as it basically boils down to \code{"bruteforce"}.
 }}
 
 \item{seed}{Integer. Seed for reproducibility}
@@ -67,7 +52,7 @@ of the kNN graph. The general idea of the approach is to use the kNN graph
 generated from the single cell data, generate representative neighbourhoods
 and calculate differential abundances within these neighbourhoods. For
 further details on the method, please refer to Dann, et al. This function
-will take an \code{single_cell_exp} class, run the neighbourhood detection,
+will take a \code{single_cell_exp} class, run the neighbourhood detection,
 count the occurrences of a sample and return a \code{sc_miloR} class for
 subsequent differential abundance testing and further annotations.
 }

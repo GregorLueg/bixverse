@@ -20,25 +20,8 @@
 #'   \item target_no_metacells - Number of target meta cells you wish to reach.
 #'   \item max_iter - Maximum number of iterations you want to use for the
 #'   algorithm.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Only relevant if you set
@@ -200,7 +183,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This function implements the meta cell aggregation from Persad et al., and
-#' returns the resuling SEACells. Compared to other algorithms, a kernel
+#' returns the resulting SEACells. Compared to other algorithms, a kernel
 #' archetype analysis is used to identify the metacells. For details, please
 #' refer to the publication.
 #'
@@ -222,18 +205,8 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #'   Wolfe iterations.
 #'   \item pruning_threshold - The threshold below which pruning shall be
 #'   applied during Franke-Wolfe iterations.
-#'   \item k - Number of neighbours for the kNN algorithm.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   \item search_budget - Integer. Search budget during querying for the annoy
-#'   algorithm.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you use `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param embd_to_use String. The embedding to use. Atm, the only option is
 #' `"pca"`. Only relevant if you set regenerate_knn to `TRUE`.
@@ -253,7 +226,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #' @export
 #'
 #' @references
-#' Morabito, et al. Cell Rep Methods, 2023
+#' Persad, et al. Nat Biotechnol, 2023
 get_seacells_sc <- S7::new_generic(
   name = "get_seacells_sc",
   dispatch_args = "object",
@@ -352,25 +325,8 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
 #'   the final dataset)
 #'   \item linkage_dist - String. Which type of distance metric to use for the
 #'   linkage. Defaults to `"complete"`.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Only relevant if you set

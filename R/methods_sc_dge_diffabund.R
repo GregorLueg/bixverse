@@ -298,7 +298,7 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' generated from the single cell data, generate representative neighbourhoods
 #' and calculate differential abundances within these neighbourhoods. For
 #' further details on the method, please refer to Dann, et al. This function
-#' will take an `single_cell_exp` class, run the neighbourhood detection,
+#' will take a `single_cell_exp` class, run the neighbourhood detection,
 #' count the occurrences of a sample and return a `sc_miloR` class for
 #' subsequent differential abundance testing and further annotations.
 #'
@@ -314,30 +314,15 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' list has the following parameters:
 #' \itemize{
 #'   \item prop - Numeric. Proportion of cells to sample as neighbourhood
-#'   indices. Must be in (0,1). Defaults to `0.2`.
+#'   indices. Must be in (0,1).
 #'   \item k_refine - Integer. Number of neighbours to use for refinement.
-#'   Defaults to `20L`.
 #'   \item refinement_strategy - String. Strategy for refining sampled indices.
-#'   One of `c("approximate", "bruteforce", "index")`. Defaults to
-#'   `"index"`.
+#'   One of `c("approximate", "bruteforce", "index")`.
 #'   \item index_type - String. Type of kNN index to use. One of
-#'   `c("annoy", "hnsw")`. Defaults to `"annoy"`.
-#'   \item k - Integer. Number of neighbours to consider. Defaults to `15L`.
-#'   \item knn_method - String. One of `c("annoy", "hnsw")`. The method to use
-#'   for the approximate nearest neighbour search. Defaults to `"annoy"`. Note:
-#'   `"nndescent"` is not supported for MiloR!
-#'   \item ann_dist - String. One of `c("cosine", "euclidean")`. The distance
-#'   metric to be used for the approximate neighbour search. Defaults to
-#'   `"euclidean"`.
-#'   \item search_budget - Integer. Search budget per tree for Annoy. Defaults
-#'   to `100L`.
-#'   \item n_trees - Integer. Number of trees to generate for Annoy. Defaults
-#'   to `100L`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NNDescent. Defaults to
-#'   `15L`.
-#'   \item rho - Numeric. Sampling rate for NNDescent. Defaults to `1.0`.
-#'   \item delta - Numeric. Early termination criterion for NNDescent. Defaults
-#'   to `0.001`.
+#'   `c("annoy", "hnsw")`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults. Note: `knn_method` cannot be
+#'   `"exhaustive"` for MiloR as it basically boils down to `"bruteforce"`.
 #' }
 #' @param seed Integer. Seed for reproducibility
 #' @param .verbose Boolean. Controls verbosity of the method.

@@ -86,7 +86,7 @@ sce <- find_neighbours_sc(
 # Annoy #
 #########
 
-# Generated Annoy index: 17.44s
+# Generated Annoy index: 17.27s
 #  Processed 100_000 / 2_857_393 samples.
 #  Processed 200_000 / 2_857_393 samples.
 #  Processed 300_000 / 2_857_393 samples.
@@ -115,11 +115,11 @@ sce <- find_neighbours_sc(
 #  Processed 2_600_000 / 2_857_393 samples.
 #  Processed 2_700_000 / 2_857_393 samples.
 #  Processed 2_800_000 / 2_857_393 samples.
-# Identified approximate nearest neighbours via Annoy: 388.48s.
+# Identified approximate nearest neighbours via Annoy: 170.32s.
 # Recall of approximate nearest neighbours search in random subset: 1.00
-# KNN generation done : 420.38s
+# KNN generation done : 201.40s
 # Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 17.30s
+# Transformed kNN into an sNN graph: 16.82s
 # Transforming sNN data to igraph.
 
 #############

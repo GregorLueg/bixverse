@@ -21,31 +21,14 @@ hotspot_autocor_sc(
 
 \item{embd_to_use}{String. The embedding to use. Defaults to \code{"pca"}.}
 
-\item{hotspot_params}{List with vision parameters, see
+\item{hotspot_params}{List with hotspot parameters, see
 \code{\link[=params_sc_hotspot]{params_sc_hotspot()}} with the following elements:
 \itemize{
 \item model - String. Which of the available models to use for the
 gene expression. Choices are one of \code{c("danb", "normal", "bernoulli")}.
 \item normalise - Boolean. Shall the data be normalised.
-\item k - Number of neighbours for the kNN search. Only relevant if you
-set regenerate_knn to \code{TRUE}.
-\item knn_method - String. Which kNN algorithm to use. One of
-\code{c("annoy", "hnsw", "nndescent")}. Defaults to \code{"annoy"}. Only relevant if
-you set regenerate_knn to \code{TRUE}.
-\item ann_dist - String. Distance metric for the approximate neighbour
-search. One of \code{c("cosine", "euclidean")}. Defaults to \code{"cosine"}. Only
-relevant if you set regenerate_knn to \code{TRUE}.
-\item n_trees - Integer. Number of trees to use for the annoy algorithm.
-Only relevant if you set regenerate_knn to \code{TRUE}.
-\item search_budget - Integer. Search budget per tree for the annoy
-algorithm. Only relevant if you set regenerate_knn to \code{TRUE}.
-\item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-relevant if you set regenerate_knn to \code{TRUE} and use
-\code{"nndescent"}.
-\item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-set regenerate_knn to \code{TRUE} and use \code{"nndescent"}.
-\item delta - Numeric. Early termination criterion for NN Descent. Only
-relevant if you set regenerate_knn to \code{TRUE} and use \code{"nndescent"}.
+\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults.
 }}
 
 \item{no_embd_to_use}{Optional integer. Number of embedding dimensions to
