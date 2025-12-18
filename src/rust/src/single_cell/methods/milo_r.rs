@@ -1,10 +1,12 @@
+use ann_search_rs::annoy::AnnoyIndex;
+use ann_search_rs::hnsw::HnswIndex;
+use ann_search_rs::lsh::LSHIndex;
+use ann_search_rs::nndescent::NNDescent;
 use extendr_api::List;
 use faer::MatRef;
-use instant_distance::{HnswMap, Search};
 use rayon::prelude::*;
 
 use crate::core::base::stats::median;
-use crate::core::graph::annoy::*;
 use crate::core::graph::knn::*;
 use crate::single_cell::sc_knn_snn::*;
 
@@ -97,9 +99,13 @@ impl MiloRParams {
 /// * `Hnsw` - Hierarchical navigable small world graph index
 pub enum KnnIndex {
     /// The Annoy index
-    Annoy(AnnoyIndex),
+    Annoy(AnnoyIndex<f32>),
     /// The HNSW index
-    Hnsw(HnswMap<Point, usize>),
+    Hnsw(HnswIndex<f32>),
+    /// LSH
+    Lsh(LSHIndex<f32>),
+    /// NNDescent
+    NNDescent(NNDescent<f32>),
 }
 
 impl KnnIndex {
@@ -120,13 +126,51 @@ impl KnnIndex {
         index_type: KnnIndexType,
         knn_params: &KnnParams,
         seed: usize,
+        verbose: bool,
     ) -> Self {
         match index_type {
             KnnIndexType::AnnoyIndex => {
-                KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, seed))
+                let dist =
+                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+
+                KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, dist, seed))
             }
-            KnnIndexType::HnswIndex => {
-                KnnIndex::Hnsw(build_hnsw_index(embd, &knn_params.ann_dist, seed))
+            KnnIndexType::HnswIndex => KnnIndex::Hnsw(HnswIndex::build(
+                embd,
+                knn_params.m,
+                knn_params.ef_construction,
+                &knn_params.ann_dist,
+                seed,
+                verbose,
+            )),
+            KnnIndexType::LshIndex => {
+                let dist =
+                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+
+                KnnIndex::Lsh(LSHIndex::new(
+                    embd,
+                    dist,
+                    knn_params.n_tables,
+                    knn_params.n_bits,
+                    seed,
+                ))
+            }
+            KnnIndexType::NNDescentIndex => {
+                let dist =
+                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+
+                KnnIndex::NNDescent(NNDescent::new(
+                    embd,
+                    dist,
+                    None,
+                    knn_params.max_candidates,
+                    None,
+                    None,
+                    knn_params.delta,
+                    knn_params.diversify_prob,
+                    seed,
+                    verbose,
+                ))
             }
         }
     }
@@ -149,23 +193,13 @@ impl KnnIndex {
         k: usize,
     ) -> (Vec<usize>, Vec<f32>) {
         match self {
-            KnnIndex::Annoy(index) => {
-                let metric = parse_ann_dist(&knn_params.ann_dist).unwrap_or(AnnDist::Euclidean);
-
-                index.query(query_point, &metric, k, Some(knn_params.search_budget))
+            KnnIndex::Annoy(index) => index.query(query_point, k, knn_params.search_budget),
+            KnnIndex::Hnsw(index) => index.query(query_point, k, knn_params.ef_search),
+            KnnIndex::Lsh(index) => {
+                let (indices, dist, _) = index.query(query_point, k, None);
+                (indices, dist)
             }
-            KnnIndex::Hnsw(index) => {
-                let metric = parse_ann_dist(&knn_params.ann_dist).unwrap_or(AnnDist::Euclidean);
-                let point = Point(query_point.to_vec(), metric);
-                let mut search = Search::default();
-
-                let results: Vec<_> = index.search(&point, &mut search).take(k).collect();
-
-                let indices = results.iter().map(|item| *item.value).collect();
-                let distances = results.iter().map(|item| item.distance).collect();
-
-                (indices, distances)
-            }
+            KnnIndex::NNDescent(index) => index.query(query_point, k, None),
         }
     }
 }
@@ -176,11 +210,16 @@ impl KnnIndex {
 ///
 /// * `AnnoyIndex` - Use Annoy index
 /// * `HnswIndex` - Use HNSW index
+#[allow(clippy::enum_variant_names)]
 pub enum KnnIndexType {
     /// Annoy
     AnnoyIndex,
     /// HNSW
     HnswIndex,
+    /// LSH
+    LshIndex,
+    /// NNDescent
+    NNDescentIndex,
 }
 
 //////////////
@@ -232,6 +271,8 @@ pub fn parse_index_type(s: &str) -> Option<KnnIndexType> {
     match s.to_lowercase().as_str() {
         "annoy" => Some(KnnIndexType::AnnoyIndex),
         "hnsw" => Some(KnnIndexType::HnswIndex),
+        "lsh" => Some(KnnIndexType::LshIndex),
+        "nndescent" => Some(KnnIndexType::NNDescentIndex),
         _ => None,
     }
 }

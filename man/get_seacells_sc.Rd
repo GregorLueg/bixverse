@@ -35,18 +35,8 @@ random selection of archetypes.
 Wolfe iterations.
 \item pruning_threshold - The threshold below which pruning shall be
 applied during Franke-Wolfe iterations.
-\item k - Number of neighbours for the kNN algorithm.
-\item knn_method - String. Which kNN algorithm to use. One of
-\code{c("annoy", "hnsw", "nndescent")}. Defaults to \code{"annoy"}.
-\item n_trees - Integer. Number of trees to use for the annoy algorithm.
-\item search_budget - Integer. Search budget during querying for the annoy
-algorithm.
-\item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-relevant if you use \code{"nndescent"}.
-\item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-use \code{"nndescent"}.
-\item delta - Numeric. Early termination criterion for NN Descent. Only
-relevant if you use \code{"nndescent"}.
+\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults.
 }}
 
 \item{embd_to_use}{String. The embedding to use. Atm, the only option is
@@ -72,10 +62,10 @@ aggregation method.
 }
 \description{
 This function implements the meta cell aggregation from Persad et al., and
-returns the resuling SEACells. Compared to other algorithms, a kernel
+returns the resulting SEACells. Compared to other algorithms, a kernel
 archetype analysis is used to identify the metacells. For details, please
 refer to the publication.
 }
 \references{
-Morabito, et al. Cell Rep Methods, 2023
+Persad, et al. Nat Biotechnol, 2023
 }

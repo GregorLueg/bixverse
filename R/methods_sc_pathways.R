@@ -380,7 +380,7 @@ S7::method(vision_sc, single_cell_exp) <- function(
 #' Calculate VISION scores (with auto-correlation scores)
 #'
 #' @description
-#' Calculates an VISION-type scores for pathways based on DeTomaso, et al.
+#' Calculates VISION-type scores for pathways based on DeTomaso, et al.
 #' Compared to other score types, you can also calculate delta-type scores
 #' between positive and negative gene indices, think epithelial vs mesenchymal
 #' gene signature, etc. Additionally, this function also calculates the auto-
@@ -399,25 +399,8 @@ S7::method(vision_sc, single_cell_exp) <- function(
 #'   \item n_perm - Integer. Number of random permutations
 #'   \item n_cluster - Integer. Number of random clusters to generate to
 #'   associate each set with.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
@@ -555,31 +538,14 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
-#' @param hotspot_params List with vision parameters, see
+#' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
 #'   \item model - String. Which of the available models to use for the
 #'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
 #'   \item normalise - Boolean. Shall the data be normalised.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.
@@ -714,31 +680,14 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
 #'
 #' @param object `single_cell_exp` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
-#' @param hotspot_params List with vision parameters, see
+#' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
 #' \itemize{
 #'   \item model - String. Which of the available models to use for the
 #'   gene expression. Choices are one of `c("danb", "normal", "bernoulli")`.
 #'   \item normalise - Boolean. Shall the data be normalised.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
 #' use. If `NULL` all will be used.

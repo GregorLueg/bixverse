@@ -1,3 +1,23 @@
+# globals ----------------------------------------------------------------------
+
+# Global to reduce repetition
+KNN_PARAM_NAMES <- c(
+  "k",
+  "knn_method",
+  "ann_dist",
+  "n_trees",
+  "search_budget",
+  "delta",
+  "diversify_prob",
+  "ef_budget",
+  "m",
+  "ef_construction",
+  "ef_search",
+  "n_bits",
+  "n_tables",
+  "max_candidates"
+)
+
 # checks -----------------------------------------------------------------------
 
 ## others ----------------------------------------------------------------------
@@ -793,6 +813,116 @@ checkCistargetParams <- function(x) {
 
 ## single cell -----------------------------------------------------------------
 
+### general --------------------------------------------------------------------
+
+#' Check kNN parameters
+#'
+#' @description Checkmate extension for checking kNN parameters.
+#'
+#' @param x The list to check/assert
+#' @param required_params Character vector of required kNN parameter names
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkKnnParams <- function(x, required_params = NULL) {
+  # If required_params not specified, check all that are present
+  if (!is.null(required_params)) {
+    res <- checkmate::checkNames(names(x), must.include = required_params)
+    if (!isTRUE(res)) {
+      return(res)
+    }
+  }
+
+  # integer rules
+  integer_rules <- list(
+    "k" = "I1[0,)",
+    "n_trees" = "I1[1,)",
+    "search_budget" = c("0", "I1[1,)"),
+    "m" = "I1[1,)",
+    "ef_construction" = "I1[1,)",
+    "ef_search" = "I1[1,)",
+    "ef_budget" = c("0", "I1[1,)"),
+    "n_bits" = "I1[1,)",
+    "n_tables" = "I1[1,)",
+    "max_candidates" = c("0", "I1[1,)")
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(val, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following kNN parameter `%s` is incorrect:",
+          "k must be >= 0; n_trees, m, ef_construction, ef_search, n_bits,",
+          "n_tables must be >= 1; search_budget, ef_budget, max_candidates",
+          "must be NULL or >= 1."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # numeric rules
+  numeric_rules <- list(
+    "delta" = "N1[0,1]",
+    "diversify_prob" = "N1[0,1]"
+  )
+
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(val, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        "The kNN parameter `%s` must be in [0,1].",
+        broken_elem
+      )
+    )
+  }
+
+  # choice rules
+  test_choice_rules <- list(
+    knn_method = c("annoy", "hnsw", "nndescent", "lsh", "exhaustive"),
+    ann_dist = c("euclidean", "cosine")
+  )
+
+  test_choice_res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(test_choice_rules)) {
+      checkmate::testChoice(val, test_choice_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(test_choice_res))) {
+    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
+    return(
+      sprintf(
+        paste(
+          "The kNN parameter `%s` is not one of the expected choices.",
+          "Please check the documentation."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
 ### synthetic data -------------------------------------------------------------
 
 #' Check synthetic data parameters
@@ -1018,29 +1148,24 @@ checkScScrublet <- function(x) {
       "manual_threshold",
       "n_bins",
       "no_pcs",
-      "random_svd",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "search_budget",
-      "n_trees",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "random_svd"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Integer rules
+  # Check kNN parameters
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules (non-kNN)
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "k" = "I1[0,)",
-    "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)",
-    "n_bins" = "I1[10,)",
-    "nn_max_iter" = "I1[1,)"
+    "n_bins" = "I1[10,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1057,24 +1182,20 @@ checkScScrublet <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
-          "no_pcs must be >= 1; k must be >= 0;",
-          "search_budget, n_trees and nn_max_iter must be >= 1;",
-          "n_bins must be >= 10."
+          "no_pcs must be >= 1; n_bins must be >= 10."
         ),
         broken_elem
       )
     )
   }
 
-  # Numeric rules
+  # Numeric rules (non-kNN)
   numeric_rules <- list(
     "min_gene_var_pctl" = "N1[0,1]",
     "loess_span" = "N1(0,)",
     "sim_doublet_ratio" = "N1(0,)",
     "expected_doublet_rate" = "N1[0,1]",
     "stdev_doublet_rate" = "N1[0,1]",
-    "rho" = "N1(0,)",
-    "delta" = "N1[0,1]",
     "target_size" = "N1[0,)"
   )
 
@@ -1092,9 +1213,8 @@ checkScScrublet <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Scrublet parameters is incorrect:",
-          "min_gene_var_pctl, expected_doublet_rate, stdev_doublet_rate",
-          "and delta must be in [0,1];",
-          "loess_span, rho sim_doublet_ratio must be > 0;",
+          "min_gene_var_pctl, expected_doublet_rate and stdev_doublet_rate",
+          "must be in [0,1]; loess_span and sim_doublet_ratio must be > 0;",
           "target_size must be a numeric >= 1"
         ),
         broken_elem
@@ -1153,31 +1273,9 @@ checkScScrublet <- function(x) {
   }
 
   # Choice rules
-  test_choice_rules <- list(
-    hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    ann_dist = c("euclidean", "cosine")
-  )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the Scrublet parameters is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: vst, mvb, dispersion.")
   }
 
   return(TRUE)
@@ -1216,17 +1314,16 @@ checkScBoost <- function(x) {
       "resolution",
       "n_iters",
       "p_thresh",
-      "voter_thresh",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "search_budget",
-      "n_trees",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "voter_thresh"
     )
   )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # kNN
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
   if (!isTRUE(res)) {
     return(res)
   }
@@ -1234,11 +1331,7 @@ checkScBoost <- function(x) {
   # Integer rules
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "n_iters" = "I1[1,)",
-    "k" = "I1[0,)",
-    "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)",
-    "nn_max_iter" = "I1[1,)"
+    "n_iters" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1255,8 +1348,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs, n_iters, search_budget, nn_max_iter & n_trees must be >= 1;",
-          "k must be >= 0."
+          "no_pcs and n_iters must be >= 1."
         ),
         broken_elem
       )
@@ -1271,8 +1363,6 @@ checkScBoost <- function(x) {
     "resolution" = "N1(0,)",
     "p_thresh" = "N1(0,)",
     "voter_thresh" = "N1[0,1]",
-    "rho" = "N1(0,)",
-    "delta" = "N1[0,1]",
     "target_size" = "N1(0,)"
   )
 
@@ -1290,9 +1380,9 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "min_gene_var_pctl, boost_rate, delta and voter_thresh must be in",
-          "[0,1]; loess_span, resolution, rho and p_thresh must be > 0;",
-          "target_size must be > 1"
+          "min_gene_var_pctl, boost_rate and voter_thresh must be in [0,1];",
+          "loess_span, resolution and p_thresh must be > 0;",
+          "target_size must be > 1."
         ),
         broken_elem
       )
@@ -1341,7 +1431,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "clip_max and target_size must be NULL or positive numeric values."
+          "clip_max must be NULL or a positive numeric value."
         ),
         broken_elem
       )
@@ -1349,31 +1439,9 @@ checkScBoost <- function(x) {
   }
 
   # Choice rules
-  test_choice_rules <- list(
-    hvg_method = c("vst", "mvb", "dispersion"),
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    ann_dist = c("euclidean", "cosine")
-  )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the Boost parameters is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: vst, mvb, dispersion.")
   }
 
   return(TRUE)
@@ -1477,13 +1545,6 @@ checkScNeighbours <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
-      "k",
-      "n_trees",
-      "search_budget",
-      "nn_max_iter",
-      "rho",
-      "delta",
-      "knn_method",
       "full_snn",
       "pruning",
       "snn_similarity",
@@ -1493,61 +1554,45 @@ checkScNeighbours <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
+  # KNN params
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check non-kNN parameters
   rules <- list(
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1",
-    "rho" = "N1",
-    "delta" = "N1",
     "full_snn" = "B1",
     "pruning" = "N1[0, 1]"
   )
-  res <- purrr::imap_lgl(x, \(x, name) {
+
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(rules)) {
-      checkmate::qtest(x, rules[[name]])
+      checkmate::qtest(val, rules[[name]])
     } else {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
         paste(
-          "The following element `%s` in single cell KNN generation is",
-          "incorrect: k, n_trees, search_budget, and nn_max_iter need to be integers.",
-          "rho and delta need to be numeric. full_snn needs to be boolean and",
-          "pruning a number between 0 and 1."
+          "The following parameter `%s` is incorrect:",
+          "full_snn must be boolean, pruning must be in [0,1]."
         ),
         broken_elem
       )
     )
   }
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    snn_similarity = c("rank", "jaccard"),
-    ann_dist = c("cosine", "euclidean")
-  )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the KNN generation is not one of ",
-          "the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+
+  res <- checkmate::testChoice(x[["snn_similarity"]], c("rank", "jaccard"))
+  if (!isTRUE(res)) {
+    return("snn_similarity must be either 'rank' or 'jaccard'.")
   }
+
   return(TRUE)
 }
 
@@ -1605,97 +1650,49 @@ checkScMetacells <- function(x) {
     must.include = c(
       "max_shared",
       "target_no_metacells",
-      "max_iter",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "n_trees",
-      "search_budget",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "max_iter"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # integers
   integer_rules <- list(
-    "max_shared" = "I1",
-    "target_no_metacells" = "I1",
-    "max_iter" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "max_shared" = "I1[1,)",
+    "target_no_metacells" = "I1[1,)",
+    "max_iter" = "I1[1,)"
   )
 
-  res <- purrr::imap_lgl(x, \(x, name) {
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
+      checkmate::qtest(val, integer_rules[[name]])
     } else {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in metacell generation is incorrect:",
-        "max_shared, target_no_metacells, max_iter, k, n_trees, search_budget,",
-        "and nn_max_iter need to be integers."
-      ),
-      broken_elem
-    ))
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in metacell generation is incorrect:",
+          "max_shared, target_no_metacells and max_iter need to be integers >= 1."
+        ),
+        broken_elem
+      )
+    )
   }
 
-  numeric_rules <- list(
-    "rho" = "N1",
-    "delta" = "N1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in metacell generation is incorrect:",
-        "rho and delta need to be numeric."
-      ),
-      broken_elem
-    ))
-  }
-
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    ann_dist = c("cosine", "euclidean")
-  )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in the metacell generation is not one of",
-        "the expected choices. Please check the documentation."
-      ),
-      broken_elem
-    ))
-  }
-
-  TRUE
+  return(TRUE)
 }
 
 ### seacells -------------------------------------------------------------------
@@ -1724,82 +1721,60 @@ checkScSeacells <- function(x) {
       "greedy_threshold",
       "graph_building",
       "pruning",
-      "pruning_threshold",
-      "k",
-      "knn_method",
-      "n_trees",
-      "search_budget",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "pruning_threshold"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check non-kNN integer parameters
   integer_rules <- list(
-    "n_sea_cells" = "I1",
-    "max_fw_iters" = "I1",
-    "max_iter" = "I1",
-    "min_iter" = "I1",
-    "greedy_threshold" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "n_sea_cells" = "I1[1,)",
+    "max_fw_iters" = "I1[1,)",
+    "max_iter" = "I1[1,)",
+    "min_iter" = "I1[1,)",
+    "greedy_threshold" = "I1[1,)"
   )
 
-  res <- purrr::imap_lgl(x, \(x, name) {
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
+      checkmate::qtest(val, integer_rules[[name]])
     } else {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SEACells parameters is incorrect:",
-        "n_sea_cells, max_fw_iters, max_iter, min_iter, greedy_threshold,",
-        "k, n_trees, search_budget, and nn_max_iter need to be integers."
-      ),
-      broken_elem
-    ))
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in SEACells parameters is incorrect:",
+          "n_sea_cells, max_fw_iters, max_iter, min_iter and greedy_threshold",
+          "need to be integers >= 1."
+        ),
+        broken_elem
+      )
+    )
   }
 
+  # Check numeric parameters
   numeric_rules <- list(
     "convergence_epsilon" = "N1",
-    "rho" = "N1",
-    "delta" = "N1",
     "pruning_threshold" = "N1"
   )
 
-  res <- purrr::imap_lgl(x, \(x, name) {
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SEACells parameters is incorrect:",
-        "convergence_epsilon, rho, pruning_threshold and delta need to be",
-        "numeric."
-      ),
-      broken_elem
-    ))
-  }
-
-  boolean_rules <- list("pruning" = "B1")
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(boolean_rules)) {
-      checkmate::qtest(x, boolean_rules[[name]])
+      checkmate::qtest(val, numeric_rules[[name]])
     } else {
       TRUE
     }
@@ -1807,56 +1782,27 @@ checkScSeacells <- function(x) {
 
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SEACells parameters is incorrect:",
-        "pruning needs to be a boolean."
-      ),
-      broken_elem
-    ))
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in SEACells parameters is incorrect:",
+          "convergence_epsilon and pruning_threshold need to be numeric."
+        ),
+        broken_elem
+      )
+    )
   }
 
-  string_rules <- list("graph_building" = "S1")
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(string_rules)) {
-      checkmate::qtest(x, string_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SEACells parameters is incorrect:",
-        "graph_building needs to be a string."
-      ),
-      broken_elem
-    ))
+  # Check boolean parameters
+  res <- checkmate::qtest(x[["pruning"]], "B1")
+  if (!isTRUE(res)) {
+    return("pruning needs to be a boolean.")
   }
 
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent")
-  )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SEACells parameters is not one of the",
-        "expected choices. Please check the documentation."
-      ),
-      broken_elem
-    ))
+  # Check string parameters
+  res <- checkmate::qtest(x[["graph_building"]], "S1")
+  if (!isTRUE(res)) {
+    return("graph_building needs to be a string.")
   }
 
   TRUE
@@ -1881,90 +1827,50 @@ checkScSupercell <- function(x) {
     must.include = c(
       "walk_length",
       "graining_factor",
-      "linkage_dist",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "n_trees",
-      "search_budget",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "linkage_dist"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
+
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check non-kNN integer parameters
   integer_rules <- list(
-    "walk_length" = "I1",
-    "k" = "I1",
-    "n_trees" = "I1",
-    "search_budget" = "I1",
-    "nn_max_iter" = "I1"
+    "walk_length" = "I1[1,)"
   )
-  res <- purrr::imap_lgl(x, \(x, name) {
+
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
+      checkmate::qtest(val, integer_rules[[name]])
     } else {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SuperCell parameters is incorrect:",
-        "walk_length, k, n_trees, search_budget, and nn_max_iter need to be",
-        "integers."
-      ),
-      broken_elem
-    ))
+    return("walk_length needs to be an integer >= 1.")
   }
-  numeric_rules <- list(
-    "graining_factor" = "N1",
-    "rho" = "N1",
-    "delta" = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SuperCell parameters is incorrect:",
-        "graining_factor, rho, and delta need to be numeric."
-      ),
-      broken_elem
-    ))
+
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["graining_factor"]], "N1")
+  if (!isTRUE(res)) {
+    return("graining_factor needs to be numeric.")
   }
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    ann_dist = c("cosine", "euclidean"),
-    linkage_dist = c("complete", "average")
-  )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in SuperCell parameters is not one of the",
-        "expected choices. Please check the documentation."
-      ),
-      broken_elem
-    ))
+
+  # Check choice parameters
+  res <- checkmate::testChoice(x[["linkage_dist"]], c("complete", "average"))
+  if (!isTRUE(res)) {
+    return("linkage_dist must be either 'complete' or 'average'.")
   }
-  TRUE
+
+  return(TRUE)
 }
 
 ### bbknn ----------------------------------------------------------------------
@@ -1986,12 +1892,8 @@ checkScBbknn <- function(x) {
     names(x),
     must.include = c(
       "neighbours_within_batch",
-      "knn_method",
-      "ann_dist",
       "set_op_mix_ratio",
       "local_connectivity",
-      "annoy_n_trees",
-      "search_budget",
       "trim"
     )
   )
@@ -1999,85 +1901,33 @@ checkScBbknn <- function(x) {
     return(res)
   }
 
-  integer_rules <- list(
-    "neighbours_within_batch" = "I1",
-    "annoy_n_trees" = "I1",
-    "search_budget" = "I1",
-    "trim" = c("0", "I1")
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in BBKNN parameters is incorrect:",
-          "neighbours_within_batch, annoy_n_trees, and search_budget need to",
-          "be integers; trim needs to be NULL or an integer."
-        ),
-        broken_elem
-      )
-    )
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  numeric_rules <- list(
-    "set_op_mix_ratio" = "N1[0, 1]",
-    "local_connectivity" = "N1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in BBKNN parameters is incorrect:",
-          "set_op_mix_ratio and local_connectivity need to be numeric."
-        ),
-        broken_elem
-      )
-    )
+  # Check integer parameters
+  res <- checkmate::qtest(x[["neighbours_within_batch"]], "I1[1,)")
+  if (!isTRUE(res)) {
+    return("neighbours_within_batch needs to be an integer >= 1.")
   }
 
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw"),
-    ann_dist = c("cosine", "euclidean")
-  )
+  res <- checkmate::qtest(x[["trim"]], c("0", "I1[1,)"))
+  if (!isTRUE(res)) {
+    return("trim needs to be NULL or an integer >= 1.")
+  }
 
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["set_op_mix_ratio"]], "N1[0,1]")
+  if (!isTRUE(res)) {
+    return("set_op_mix_ratio needs to be numeric between 0 and 1.")
+  }
 
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the BBKNN parameters is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
+  res <- checkmate::qtest(x[["local_connectivity"]], "N1")
+  if (!isTRUE(res)) {
+    return("local_connectivity needs to be numeric.")
   }
 
   return(TRUE)
@@ -2101,12 +1951,7 @@ checkScFastmnn <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
-      "k",
       "sigma",
-      "knn_method",
-      "dist_metric",
-      "annoy_n_trees",
-      "annoy_search_budget",
       "cos_norm",
       "var_adj",
       "no_pcs",
@@ -2117,95 +1962,39 @@ checkScFastmnn <- function(x) {
     return(res)
   }
 
-  integer_rules <- list(
-    "k" = "I1",
-    "annoy_n_trees" = "I1",
-    "annoy_search_budget" = "I1",
-    "no_pcs" = "I1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check integer parameters
+  res <- checkmate::qtest(x[["no_pcs"]], "I1[1,)")
+  if (!isTRUE(res)) {
+    return("no_pcs needs to be an integer >= 1.")
+  }
+
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["sigma"]], "N1")
+  if (!isTRUE(res)) {
+    return("sigma needs to be numeric.")
+  }
+
+  # Check logical parameters
+  logical_params <- c("cos_norm", "var_adj", "random_svd")
+  res <- purrr::map_lgl(logical_params, \(param) {
+    checkmate::qtest(x[[param]], "B1")
   })
   if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
+    broken_param <- logical_params[which(!res)][1]
     return(sprintf(
-      paste(
-        "The following element `%s` in fastMNN parameters is incorrect: k,",
-        "annoy_n_trees, annoy_search_budget, and no_pcs need to be integers."
-      ),
-      broken_elem
+      "%s needs to be logical.",
+      broken_param
     ))
   }
 
-  numeric_rules <- list("sigma" = "N1")
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in fastMNN parameters is incorrect:",
-        "sigma needs to be numeric."
-      ),
-      broken_elem
-    ))
-  }
-
-  logical_rules <- list(
-    "cos_norm" = "B1",
-    "var_adj" = "B1",
-    "random_svd" = "B1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(logical_rules)) {
-      checkmate::qtest(x, logical_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in fastMNN parameters is incorrect:",
-        "cos_norm, var_adj, and random_svd need to be logical."
-      ),
-      broken_elem
-    ))
-  }
-
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw"),
-    dist_metric = c("cosine", "euclidean")
-  )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(sprintf(
-      paste(
-        "The following element `%s` in fastMNN parameters is not one of the",
-        "expected choices. Please check the documentation."
-      ),
-      broken_elem
-    ))
-  }
-
-  TRUE
+  return(TRUE)
 }
 
 ### VISION ---------------------------------------------------------------------
@@ -2225,13 +2014,6 @@ checkScVision <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
-      "k",
-      "knn_method",
-      "n_trees",
-      "search_budget",
-      "nn_max_iter",
-      "rho",
-      "delta",
       "n_perm",
       "n_cluster"
     )
@@ -2239,78 +2021,41 @@ checkScVision <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
+
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Check non-kNN integer parameters
   integer_rules <- list(
-    "k" = "I1",
-    "n_trees" = "I1",
-    "nn_max_iter" = "I1",
-    "n_perm" = "I1",
-    "n_cluster" = "I1"
+    "n_perm" = "I1[1,)",
+    "n_cluster" = "I1[1,)"
   )
-  res <- purrr::imap_lgl(x, \(x, name) {
+
+  res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
+      checkmate::qtest(val, integer_rules[[name]])
     } else {
       TRUE
     }
   })
+
   if (!isTRUE(all(res))) {
     broken_elem <- names(res)[which(!res)][1]
     return(
       sprintf(
         paste(
           "The following element `%s` in VISION parameters is incorrect:",
-          "k, n_trees, nn_max_iter, n_perm, and n_cluster need to be integers."
+          "n_perm and n_cluster need to be integers >= 1."
         ),
         broken_elem
       )
     )
   }
-  numeric_rules <- list(
-    "search_budget" = "N1",
-    "rho" = "N1",
-    "delta" = "N1"
-  )
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in VISION parameters is incorrect:",
-          "search_budget, rho, and delta need to be numeric."
-        ),
-        broken_elem
-      )
-    )
-  }
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent")
-  )
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the VISION parameters is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
-  }
+
   return(TRUE)
 }
 
@@ -2332,14 +2077,6 @@ checkScHotspot <- function(x) {
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
-      "knn_method",
-      "ann_dist",
-      "k",
-      "n_tree",
-      "search_budget",
-      "max_iter",
-      "rho",
-      "delta",
       "model",
       "normalise"
     )
@@ -2348,110 +2085,23 @@ checkScHotspot <- function(x) {
     return(res)
   }
 
-  integer_rules <- list(
-    "k" = "I1",
-    "n_tree" = "I1",
-    "search_budget" = "I1",
-    "max_iter" = "I1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in HotSpot parameters is incorrect:",
-          "k, n_tree, search_budget, and max_iter need to be integers."
-        ),
-        broken_elem
-      )
-    )
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  numeric_rules <- list(
-    "rho" = "N1",
-    "delta" = "N1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in HotSpot parameters is incorrect:",
-          "rho and delta need to be numeric."
-        ),
-        broken_elem
-      )
-    )
+  # Check choice parameters
+  res <- checkmate::testChoice(x[["model"]], c("danb", "bernoulli", "normal"))
+  if (!isTRUE(res)) {
+    return("model must be one of: danb, bernoulli, normal.")
   }
 
-  test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent"),
-    ann_dist = c("cosine", "euclidean"),
-    model = c("danb", "bernoulli", "normal")
-  )
-
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(test_choice_res))) {
-    broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
-    return(
-      sprintf(
-        paste0(
-          "The following element `%s` in the HotSpot parameters is not one of",
-          " the expected choices. Please double check the documentation."
-        ),
-        broken_elem
-      )
-    )
-  }
-
-  test_boolean_rules <- list(
-    "normalise" = "B1"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(test_boolean_rules)) {
-      checkmate::qtest(x, test_boolean_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in HotSpot parameters is incorrect:",
-          "normalise needs to be a boolean."
-        ),
-        broken_elem
-      )
-    )
+  # Check boolean parameters
+  res <- checkmate::qtest(x[["normalise"]], "B1")
+  if (!isTRUE(res)) {
+    return("normalise needs to be a boolean.")
   }
 
   return(TRUE)
@@ -2478,91 +2128,41 @@ checkScMiloR <- function(x) {
       "prop",
       "k_refine",
       "refinement_strategy",
-      "index_type",
-      "k",
-      "knn_method",
-      "ann_dist",
-      "search_budget",
-      "n_trees",
-      "nn_max_iter",
-      "rho",
-      "delta"
+      "index_type"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
 
-  # Integer rules
-  integer_rules <- list(
-    "k_refine" = "I1[1,)",
-    "k" = "I1[0,)",
-    "search_budget" = "I1[1,)",
-    "n_trees" = "I1[1,)",
-    "nn_max_iter" = "I1[1,)"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(integer_rules)) {
-      checkmate::qtest(x, integer_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in MiloR parameters is incorrect:",
-          "k_refine, search_budget, n_trees and nn_max_iter must be >= 1;",
-          "k must be >= 0."
-        ),
-        broken_elem
-      )
-    )
+  # knn
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
   }
 
-  # Numeric rules
-  numeric_rules <- list(
-    "prop" = "N1(0,1)",
-    "rho" = "N1(0,)",
-    "delta" = "N1[0,1]"
-  )
-
-  res <- purrr::imap_lgl(x, \(x, name) {
-    if (name %in% names(numeric_rules)) {
-      checkmate::qtest(x, numeric_rules[[name]])
-    } else {
-      TRUE
-    }
-  })
-
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
-    return(
-      sprintf(
-        paste(
-          "The following element `%s` in MiloR parameters is incorrect:",
-          "prop must be in (0,1); rho must be > 0; delta must be in [0,1]."
-        ),
-        broken_elem
-      )
-    )
+  # Check non-kNN integer parameters
+  res <- checkmate::qtest(x[["k_refine"]], "I1[1,)")
+  if (!isTRUE(res)) {
+    return("k_refine must be an integer >= 1.")
   }
 
-  # Choice rules
+  # Check numeric parameters
+  res <- checkmate::qtest(x[["prop"]], "N1(0,1)")
+  if (!isTRUE(res)) {
+    return("prop must be in (0,1).")
+  }
+
+  # Check choice parameters
   test_choice_rules <- list(
     refinement_strategy = c("approximate", "bruteforce", "index"),
-    index_type = c("annoy", "hnsw"),
-    knn_method = c("annoy", "hnsw"),
-    ann_dist = c("euclidean", "cosine")
+    index_type = c("annoy", "hnsw")
   )
 
-  test_choice_res <- purrr::imap_lgl(x, \(x, name) {
+  test_choice_res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(test_choice_rules)) {
-      checkmate::testChoice(x, test_choice_rules[[name]])
+      checkmate::testChoice(val, test_choice_rules[[name]])
     } else {
       TRUE
     }
@@ -2572,9 +2172,9 @@ checkScMiloR <- function(x) {
     broken_elem <- names(test_choice_res)[which(!test_choice_res)][1]
     return(
       sprintf(
-        paste0(
-          "The following element `%s` in the MiloR parameters is not one of",
-          " the expected choices. Please double check the documentation."
+        paste(
+          "The following element `%s` in MiloR parameters is not one of the",
+          "expected choices. Please check the documentation."
         ),
         broken_elem
       )

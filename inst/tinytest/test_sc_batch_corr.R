@@ -594,7 +594,7 @@ assess_fast_mnn_impact <- function(object) {
     object = object,
     batch_column = "batch_index",
     batch_hvg_genes = batch_aware_hvg$hvg_genes,
-    fastmnn_params = params_sc_fastmnn(k = 5L, no_pcs = 10L),
+    fastmnn_params = params_sc_fastmnn(no_pcs = 10L, knn = list(k = 5L)),
     .verbose = FALSE
   )
 
