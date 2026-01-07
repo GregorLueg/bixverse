@@ -526,6 +526,18 @@ impl ManovaResult {
         let lambda = self.wilks_lambda();
         let p = self.n_vars as f64;
         let q = self.df_between as f64;
+
+        // special case for n_vars == 2
+        if self.n_vars == 2 {
+            let df1 = 2.0 * q;
+            let df2 = 2.0 * (self.df_within as f64 - 1.0);
+            let f_stat = ((1.0 - lambda.sqrt()) / lambda.sqrt()) * (df2 / df1);
+
+            let f_dist = FisherSnedecor::new(df1, df2).unwrap();
+            let p_value = 1.0 - f_dist.cdf(f_stat);
+            return (f_stat, p_value);
+        }
+
         let n = (self.df_within + self.df_between + 1) as f64;
 
         let t = ((p * p + q * q - 5.0).max(0.0)).sqrt();
