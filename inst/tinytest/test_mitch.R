@@ -47,16 +47,46 @@ expect_equal(
 x_coords <- sample(nrow(contrast_data), size = 4, replace = TRUE)
 y_coords <- sample(ncol(contrast_data), size = 4, replace = TRUE)
 
+bad_contrast_data <- contrast_data
+
 for (i in seq_along(x_coords)) {
-  contrast_data[x_coords[i], y_coords[i]] <- NA
+  bad_contrast_data[x_coords[i], y_coords[i]] <- NA
 }
 
 expect_error(
   current = calc_mitch(
-    contrast_mat = contrast_data,
+    contrast_mat = bad_contrast_data,
     gene_set_list = gene_sets
   ),
   info = paste("mitch - throw error with NAs")
+)
+
+### special case - 2 contrasts -------------------------------------------------
+
+contrast_data_2 <- contrast_data[, 1:2]
+
+res_2 <- calc_mitch(
+  contrast_mat = contrast_data_2,
+  gene_set_list = gene_sets
+)
+
+expect_equal(
+  current = res_2$pathway_names,
+  target = c("pathway_C", "pathway_D", "pathway_B"),
+  info = "mitch - expected pathway names (only two contrasts)"
+)
+
+expect_equal(
+  current = res_2$pathway_sizes,
+  target = c(6, 7, 5),
+  info = "mitch - expected pathway sizes (only two contrasts)"
+)
+
+expect_equal(
+  current = res_2$manova_pval,
+  target = c(0.03262419, 0.37960291, 0.75588214),
+  eps = 1e-7,
+  info = "mitch - expected manova pvals (only two contrasts)"
 )
 
 ## direct comparison mitch -----------------------------------------------------
