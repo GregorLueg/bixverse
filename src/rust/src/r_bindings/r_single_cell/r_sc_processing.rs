@@ -576,8 +576,7 @@ fn rs_sc_knn(
 
     let start_knn = Instant::now();
 
-    let knn_method = parse_knn_method(&knn_params.knn_method)
-        .ok_or_else(|| format!("Invalid KNN search method: {}", knn_params.knn_method))?;
+    let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or_default();
 
     let knn = match knn_method {
         KnnSearch::Hnsw => generate_knn_hnsw(
@@ -619,6 +618,15 @@ fn rs_sc_knn(
             knn_params.n_bits,
             knn_params.n_tables,
             knn_params.max_candidates,
+            seed,
+            verbose,
+        ),
+        KnnSearch::Ivf => generate_knn_ivf(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_centroids,
+            knn_params.n_probes,
             seed,
             verbose,
         ),

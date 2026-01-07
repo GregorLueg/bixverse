@@ -249,6 +249,25 @@ fn get_batch_balanced_knn(
                     verbose,
                 )
             }
+            KnnSearch::Ivf => {
+                let index = build_ivf_index(
+                    sub_matrix.as_ref(),
+                    bbknn_params.knn_params.n_centroids,
+                    None,
+                    &bbknn_params.knn_params.ann_dist,
+                    seed,
+                    verbose,
+                );
+
+                query_ivf_index(
+                    mat,
+                    &index,
+                    bbknn_params.neighbours_within_batch + 1,
+                    bbknn_params.knn_params.n_probes,
+                    false,
+                    verbose,
+                )
+            }
         };
 
         let col_start = batch_idx * bbknn_params.neighbours_within_batch;
@@ -498,8 +517,7 @@ pub fn bbknn(
     verbose: bool,
 ) -> (CompressedSparseData<f32>, CompressedSparseData<f32>) {
     // parse it and worst case, I default to Annoy
-    let knn_method =
-        parse_knn_method(&bbknn_params.knn_params.knn_method).unwrap_or(KnnSearch::Hnsw);
+    let knn_method = parse_knn_method(&bbknn_params.knn_params.knn_method).unwrap_or_default();
 
     if verbose {
         println!("BBKNN: generating the batch balanced kNN values.")

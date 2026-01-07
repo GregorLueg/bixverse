@@ -1,15 +1,18 @@
 use bincode::{config, decode_from_slice, serde::encode_to_vec, Decode, Encode};
 use half::f16;
 use indexmap::IndexSet;
+use lz4_flex::{compress_prepend_size, decompress_size_prepended};
 use memmap2::MmapOptions;
 use rayon::iter::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::{BufWriter, Seek, SeekFrom, Write};
-use std::marker::Sync;
-use std::path::Path;
-use std::sync::Arc;
+use std::{
+    fs::File,
+    io::{BufWriter, Seek, SeekFrom, Write},
+    marker::Sync,
+    path::Path,
+    sync::Arc,
+};
 
 use crate::core::data::sparse_structures::*;
 use crate::single_cell::processing::*;
@@ -821,21 +824,21 @@ impl CellGeneSparseWriter {
         let current_pos = self.writer.stream_position()?;
         let chunk_offset = current_pos - self.chunks_start_pos;
         self.header.chunk_offsets.push(chunk_offset);
-
         self.header
             .index_map
             .insert(cell_chunk.original_index, self.header.no_chunks);
 
-        // Calculate size first (for the size prefix)
-        let size = 32 + // header size
-               (cell_chunk.data_raw.len() * 2) +
-               (cell_chunk.data_norm.len() * 2) +
-               (cell_chunk.indices.len() * 2);
+        // serialise to buffer
+        let mut buffer = Vec::new();
+        cell_chunk.write_to_bytes(&mut buffer)?;
 
-        self.writer.write_all(&(size as u64).to_le_bytes())?;
+        // compress
+        let compressed = compress_prepend_size(&buffer);
 
-        // Use our custom serialization
-        cell_chunk.write_to_bytes(&mut self.writer)?;
+        // write compressed size and data
+        self.writer
+            .write_all(&(compressed.len() as u64).to_le_bytes())?;
+        self.writer.write_all(&compressed)?;
 
         self.header.no_chunks += 1;
         Ok(())
@@ -861,16 +864,17 @@ impl CellGeneSparseWriter {
             .index_map
             .insert(gene_chunk.original_index, self.header.no_chunks);
 
-        // Calculate size first (for the size prefix)
-        let size = 36 + // header size
-        (gene_chunk.data_raw.len() * 2) +
-        (gene_chunk.data_norm.len() * 2) +
-        (gene_chunk.indices.len() * 4);
+        // serialize to buffer
+        let mut buffer = Vec::new();
+        gene_chunk.write_to_bytes(&mut buffer)?;
 
-        self.writer.write_all(&(size as u64).to_le_bytes())?;
+        // compress
+        let compressed = compress_prepend_size(&buffer);
 
-        // Use our custom serialization
-        gene_chunk.write_to_bytes(&mut self.writer)?;
+        // write compressed size and data
+        self.writer
+            .write_all(&(compressed.len() as u64).to_le_bytes())?;
+        self.writer.write_all(&compressed)?;
 
         self.header.no_chunks += 1;
         self.chunks_since_flush += 1;
@@ -1026,16 +1030,18 @@ impl ParallelSparseReader {
                 let chunk_offset =
                     (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
 
-                // Read size
-                let size = u64::from_le_bytes(
+                // read compressed size
+                let compressed_size = u64::from_le_bytes(
                     self.mmap[chunk_offset..chunk_offset + 8]
                         .try_into()
                         .unwrap(),
                 ) as usize;
 
-                // Parse chunk
-                let buffer = &self.mmap[chunk_offset + 8..chunk_offset + 8 + size];
-                CsrCellChunk::read_from_buffer(buffer).unwrap()
+                // decompress
+                let compressed = &self.mmap[chunk_offset + 8..chunk_offset + 8 + compressed_size];
+                let decompressed = decompress_size_prepended(compressed).unwrap();
+
+                CsrCellChunk::read_from_buffer(&decompressed).unwrap()
             })
             .collect()
     }
@@ -1078,16 +1084,18 @@ impl ParallelSparseReader {
                 let chunk_offset =
                     (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
 
-                // Read size
-                let size = u64::from_le_bytes(
+                // read compressed size
+                let compressed_size = u64::from_le_bytes(
                     self.mmap[chunk_offset..chunk_offset + 8]
                         .try_into()
                         .unwrap(),
                 ) as usize;
 
-                // Parse chunk
-                let buffer = &self.mmap[chunk_offset + 8..chunk_offset + 8 + size];
-                CscGeneChunk::read_from_buffer(buffer).unwrap()
+                // decompress
+                let compressed = &self.mmap[chunk_offset + 8..chunk_offset + 8 + compressed_size];
+                let decompressed = decompress_size_prepended(compressed).unwrap();
+
+                CscGeneChunk::read_from_buffer(&decompressed).unwrap()
             })
             .collect()
     }
@@ -1154,13 +1162,25 @@ impl ParallelSparseReader {
                 let chunk_offset =
                     (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
 
-                // Skip size bytes (8 bytes), then read header (32 bytes)
-                let header = &self.mmap[chunk_offset + 8..chunk_offset + 40];
+                let compressed_size = u64::from_le_bytes(
+                    self.mmap[chunk_offset..chunk_offset + 8]
+                        .try_into()
+                        .unwrap(),
+                ) as usize;
 
-                // Library size is at bytes 12-19 of the header
+                let compressed = &self.mmap[chunk_offset + 8..chunk_offset + 8 + compressed_size];
+                let decompressed = decompress_size_prepended(compressed).unwrap();
+
+                // library size is at bytes 12-19 of the header
                 u64::from_le_bytes([
-                    header[12], header[13], header[14], header[15], header[16], header[17],
-                    header[18], header[19],
+                    decompressed[12],
+                    decompressed[13],
+                    decompressed[14],
+                    decompressed[15],
+                    decompressed[16],
+                    decompressed[17],
+                    decompressed[18],
+                    decompressed[19],
                 ]) as usize
             })
             .collect()
@@ -1185,13 +1205,25 @@ impl ParallelSparseReader {
                 let chunk_offset =
                     (self.chunks_start + self.header.chunk_offsets[chunk_index]) as usize;
 
-                // Skip size bytes (8 bytes), then read header (36 bytes)
-                let header = &self.mmap[chunk_offset + 8..chunk_offset + 44];
+                let compressed_size = u64::from_le_bytes(
+                    self.mmap[chunk_offset..chunk_offset + 8]
+                        .try_into()
+                        .unwrap(),
+                ) as usize;
+
+                let compressed = &self.mmap[chunk_offset + 8..chunk_offset + 8 + compressed_size];
+                let decompressed = decompress_size_prepended(compressed).unwrap();
 
                 // NNZ is at bytes 16-23 of the header
                 u64::from_le_bytes([
-                    header[16], header[17], header[18], header[19], header[20], header[21],
-                    header[22], header[23],
+                    decompressed[16],
+                    decompressed[17],
+                    decompressed[18],
+                    decompressed[19],
+                    decompressed[20],
+                    decompressed[21],
+                    decompressed[22],
+                    decompressed[23],
                 ]) as usize
             })
             .collect()

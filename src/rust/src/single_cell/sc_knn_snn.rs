@@ -23,8 +23,10 @@ pub enum SnnSimilarityMethod {
 }
 
 /// Enum for the different methods
+#[derive(Default)]
 pub enum KnnSearch {
     /// Annoy-based
+    #[default]
     Annoy,
     /// Hierarchical Navigable Small World
     Hnsw,
@@ -34,6 +36,8 @@ pub enum KnnSearch {
     Exhaustive,
     /// LSH
     Lsh,
+    /// Inverted file index
+    Ivf,
 }
 
 ////////////
@@ -50,26 +54,31 @@ pub enum KnnSearch {
 ///   or `"nndescent"`.
 /// * `ann_dist` - Approximate nearest neighbour distance measure. One of
 ///   `"euclidean"` or `"cosine"`.
-/// * `k` - Number of neighbours to search
+/// * `k` - Number of neighbours to search.
 ///
 /// **Annoy**
 ///
-/// * `n_tree` - Number of trees for the generation of the index
+/// * `n_tree` - Number of trees for the generation of the index.
 /// * `search_budget` - Optional search budget. If not provided, will default
 ///   to `k * n_trees * 20`. Good ranges for the multipler are 2 to 20.
 ///
 /// **NN Descent**
 ///
-/// * `delta` - Early termination criterium
+/// * `delta` - Early termination criterium.
 /// * `diversify_prob` - Diversifying probability at the end of the index
 ///   generation.
 /// * `ef_budget` - Optional query budget.
 ///
 /// **LSH**
 ///
-/// * `bits` - Number of bits to use
-/// * `n_tables` - Number of hash tables to use
+/// * `bits` - Number of bits to use.
+/// * `n_tables` - Number of hash tables to use.
 /// * `max_candidates` - Optional query budget.
+///
+/// **IVF**
+///
+/// * `n_centroids` - Number of centroids to use.
+/// * `n_probes` - Number of centroids to probe.
 #[derive(Clone, Debug)]
 pub struct KnnParams {
     // general params
@@ -91,6 +100,9 @@ pub struct KnnParams {
     pub n_bits: usize,
     pub n_tables: usize,
     pub max_candidates: Option<usize>,
+    // ivf
+    pub n_centroids: Option<usize>,
+    pub n_probes: Option<usize>,
 }
 
 impl KnnParams {
@@ -114,7 +126,7 @@ impl KnnParams {
             params_list
                 .get("knn_method")
                 .and_then(|v| v.as_str())
-                .unwrap_or("hnsw"),
+                .unwrap_or("annoy"),
         );
 
         let ann_dist = std::string::String::from(
@@ -188,6 +200,17 @@ impl KnnParams {
             .and_then(|v| v.as_integer())
             .map(|v| v as usize);
 
+        // ivf
+        let n_centroids = params_list
+            .get("n_centroids")
+            .and_then(|v| v.as_integer())
+            .map(|v| v as usize);
+
+        let n_probes = params_list
+            .get("n_probes")
+            .and_then(|v| v.as_integer())
+            .map(|v| v as usize);
+
         Self {
             knn_method,
             ann_dist,
@@ -203,6 +226,8 @@ impl KnnParams {
             n_bits,
             n_tables,
             max_candidates,
+            n_centroids,
+            n_probes,
         }
     }
 
@@ -213,7 +238,7 @@ impl KnnParams {
     /// Self.
     pub fn new() -> Self {
         Self {
-            knn_method: "hnsw".to_string(),
+            knn_method: "annoy".to_string(),
             ann_dist: "cosine".to_string(),
             k: 15,
             n_tree: 50,
@@ -227,6 +252,8 @@ impl KnnParams {
             n_bits: 8,
             n_tables: 50,
             max_candidates: None,
+            n_centroids: None,
+            n_probes: None,
         }
     }
 }
@@ -327,6 +354,7 @@ pub fn parse_knn_method(s: &str) -> Option<KnnSearch> {
         "nndescent" => Some(KnnSearch::NNDescent),
         "exhaustive" => Some(KnnSearch::Exhaustive),
         "lsh" => Some(KnnSearch::Lsh),
+        "ivf" => Some(KnnSearch::Ivf),
         _ => None,
     }
 }
@@ -899,6 +927,77 @@ pub fn generate_knn_lsh(
     res
 }
 
+/// Get the kNN graph via an inverted file index
+///
+/// ### Params
+///
+/// * `mat` - Matrix in which rows represent the samples and columns the
+///   respective embeddings for that sample
+/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
+///   `"cosine"`.
+/// * `no_neighbours` - Number of neighbours for the KNN graph.
+/// * `n_bits` - Number of bits to use. The lower (ca. 8), the better the recall
+///   at cost of query speed.
+/// * `n_tables` - Number of hash tables to use.
+/// * `max_candidates` - Optional query parameter, to limit number of searches.
+///   Makes the algorithm faster at cost of Recall.
+/// * `seed` - Random seed for reproducibility.
+/// * `verbose` - Controls verbosity of the function
+///
+/// ### Returns
+///
+/// The k-nearest neighbours based on the LSH algorithm. Function
+/// does not return self.
+#[allow(clippy::too_many_arguments)]
+pub fn generate_knn_ivf(
+    mat: MatRef<f32>,
+    dist_metric: &str,
+    no_neighbours: usize,
+    n_centroids: Option<usize>,
+    n_probes: Option<usize>,
+    seed: usize,
+    verbose: bool,
+) -> Vec<Vec<usize>> {
+    let start_index = Instant::now();
+
+    let ivf_index = build_ivf_index(mat, n_centroids, None, dist_metric, seed, verbose);
+    let end_index = start_index.elapsed();
+    if verbose {
+        println!("Generated IVF index: {:.2?}", end_index);
+    }
+
+    let start_search = Instant::now();
+    let (indices, _) =
+        query_ivf_index(mat, &ivf_index, no_neighbours + 1, n_probes, false, verbose);
+
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
+
+    let end_search = start_search.elapsed();
+
+    let index_val = ivf_index.validate_index(no_neighbours, seed, None);
+
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via IVF index: {:.2?}.",
+            end_search
+        );
+        println!(
+            "Recall of approximate nearest neighbours search in random subset: {:.2}",
+            index_val
+        )
+    }
+
+    res
+}
+
 ///////////////////
 // With distance //
 ///////////////////
@@ -928,7 +1027,7 @@ pub fn generate_knn_with_dist(
     verbose: bool,
 ) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
     // default to Annoy if nothing else...
-    let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or(KnnSearch::Annoy);
+    let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or_default();
 
     match knn_method {
         KnnSearch::Annoy => {
@@ -1155,6 +1254,60 @@ pub fn generate_knn_with_dist(
             }
 
             let index_validation = lsh_index.validate_index(knn_params.k + 1, seed, None);
+
+            if verbose {
+                println!(
+                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
+                    index_validation
+                );
+            }
+
+            // Remove first element (self) from each vector
+            for idx_vec in indices.iter_mut() {
+                idx_vec.remove(0);
+            }
+
+            let distances = distances.map(|mut dists| {
+                for dist_vec in dists.iter_mut() {
+                    dist_vec.remove(0);
+                }
+                dists
+            });
+
+            (indices, distances)
+        }
+        KnnSearch::Ivf => {
+            let index_start = Instant::now();
+            let ivf_index = build_ivf_index(
+                embd,
+                knn_params.n_centroids,
+                None,
+                &knn_params.ann_dist,
+                seed,
+                verbose,
+            );
+            let end_index = index_start.elapsed();
+
+            if verbose {
+                println!("Generated IVF index: {:.2?}", end_index);
+            }
+
+            let query_start = Instant::now();
+            let (mut indices, distances) = query_ivf_index(
+                embd,
+                &ivf_index,
+                knn_params.k + 1,
+                knn_params.n_probes,
+                true,
+                verbose,
+            );
+            let query_end = query_start.elapsed();
+
+            if verbose {
+                println!("Queried IVF index: {:.2?}", query_end);
+            }
+
+            let index_validation = ivf_index.validate_index(knn_params.k + 1, seed, None);
 
             if verbose {
                 println!(

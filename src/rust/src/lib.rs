@@ -48,6 +48,7 @@ pub use r_bindings::r_ontology::r_similiarity;
 pub use r_bindings::r_single_cell::r_count_obj;
 pub use r_bindings::r_single_cell::r_sc_analysis;
 pub use r_bindings::r_single_cell::r_sc_batch_corr;
+pub use r_bindings::r_single_cell::r_sc_big_data;
 pub use r_bindings::r_single_cell::r_sc_metacells;
 pub use r_bindings::r_single_cell::r_sc_processing;
 
@@ -87,6 +88,7 @@ extendr_module! {
     // single cell
     use r_count_obj;
     use r_sc_batch_corr;
+    use r_sc_big_data;
     use r_sc_processing;
     use r_sc_analysis;
     use r_sc_metacells;

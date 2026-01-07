@@ -12,8 +12,8 @@ parameters:
 \itemize{
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to \code{"hnsw"}. The implementations are:
-\code{c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")}.
+neighbour search. Defaults to \code{"annoy"}. The implementations are:
+\code{c("hnsw", "annoy", "nndescent", "lsh", "exhaustive", "ivf")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("euclidean", "cosine")}.
@@ -39,6 +39,10 @@ Recall at the cost.
 \item n_tables - LSH param: number of hashmaps to use. Defaults to \code{50L}.
 \item max_candidates - LSH param: optional search budget for querying. If
 provided, can speed up queries, at the cost of Recall.
+\item n_centroids - IVF param: optional number of Voroni cells. Defaults to
+\code{NULL}. In this case, \code{sqrt(n)} will be used.
+\item n_probes - IVF param: optional number of cells to probe. Defaults to
+\code{sqrt(n_centroids)} if \code{NULL}.
 }
 }
 \description{

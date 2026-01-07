@@ -7,6 +7,25 @@ use crate::core::base::cors_similarity::*;
 use crate::utils::general::{string_vec_to_set, upper_triangle_indices};
 use crate::utils::r_rust_interface::*;
 
+extendr_module! {
+  mod r_cors_similarity;
+  fn rs_covariance;
+  fn rs_cor;
+  fn rs_cos;
+  fn rs_cor2;
+  fn rs_cov2cor;
+  fn rs_dist;
+  fn rs_mutual_info;
+  fn rs_pointwise_mutual_info;
+  fn rs_cor_upper_triangle;
+  fn rs_set_similarity;
+  fn rs_set_similarity_list;
+  fn rs_set_similarity_list2;
+  fn rs_jaccard_row_integers;
+  fn rs_hamming_dist;
+  fn rs_gower_dist;
+}
+
 /// Calculate the column-wise co-variance.
 ///
 /// @description Calculates the co-variance of the columns.
@@ -348,6 +367,40 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
     Ok(list!(from = name_i, to = name_j, sim = sim))
 }
 
+/// Calculate rapidbly Jaccard similarities between rows
+///
+/// @description Helper function to quickly calculate the Jaccard similarity
+/// between the rows across the two matrices.
+///
+/// @param data_1 Integer matrix. The first matrix to compare.
+/// @param data_2 Integer matrix. The second matrix to compare.
+///
+/// @returns The average Jaccard similarity.
+///
+/// @export
+#[extendr]
+fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
+    assert!(
+        data_1.nrows() == data_2.nrows(),
+        "The two matrices need the same amount of rows."
+    );
+
+    let data_1 = r_matrix_to_faer(&data_1);
+    let data_2 = r_matrix_to_faer(&data_2);
+    let n = data_1.nrows();
+
+    let total_jaccard: f64 = (0..n)
+        .into_par_iter()
+        .map(|i| {
+            let row_1 = data_1.row(i).iter().cloned().collect::<Vec<_>>();
+            let row_2 = data_2.row(i).iter().cloned().collect::<Vec<_>>();
+            jaccard_sorted(&row_1, &row_2)
+        })
+        .sum();
+
+    total_jaccard / n as f64
+}
+
 /// Calculates the Hamming distance between categorical columns
 ///
 /// @param x Integer matrix. The integers represent the factor data.
@@ -388,22 +441,4 @@ fn rs_gower_dist(
     let gower_dist = column_pairwise_gower(&data, &is_cat, None)?;
 
     Ok(faer_to_r_matrix(gower_dist.as_ref()))
-}
-
-extendr_module! {
-  mod r_cors_similarity;
-  fn rs_covariance;
-  fn rs_cor;
-  fn rs_cos;
-  fn rs_cor2;
-  fn rs_cov2cor;
-  fn rs_dist;
-  fn rs_mutual_info;
-  fn rs_pointwise_mutual_info;
-  fn rs_cor_upper_triangle;
-  fn rs_set_similarity;
-  fn rs_set_similarity_list;
-  fn rs_set_similarity_list2;
-  fn rs_hamming_dist;
-  fn rs_gower_dist;
 }

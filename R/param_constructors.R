@@ -14,8 +14,8 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"hnsw"`. The implementations are:
-#'  `c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")`.
+#'  neighbour search. Defaults to `"annoy"`. The implementations are:
+#'  `c("hnsw", "annoy", "nndescent", "lsh", "exhaustive", "ivf")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"euclidean"`. The implementations are
 #'  `c("euclidean", "cosine")`.
@@ -41,6 +41,10 @@
 #'  \item n_tables - LSH param: number of hashmaps to use. Defaults to `50L`.
 #'  \item max_candidates - LSH param: optional search budget for querying. If
 #'  provided, can speed up queries, at the cost of Recall.
+#'  \item n_centroids - IVF param: optional number of Voroni cells. Defaults to
+#'  `NULL`. In this case, `sqrt(n)` will be used.
+#'  \item n_probes - IVF param: optional number of cells to probe. Defaults to
+#'  `sqrt(n_centroids)` if `NULL`.
 #' }
 #'
 #' @export
@@ -48,7 +52,7 @@ params_knn_defaults <- function() {
   list(
     # General parameters
     k = 15L,
-    knn_method = "hnsw",
+    knn_method = "annoy",
     ann_dist = "euclidean",
     # Annoy
     n_trees = 75L,
@@ -64,7 +68,10 @@ params_knn_defaults <- function() {
     # LSH
     n_bits = 8L,
     n_tables = 50L,
-    max_candidates = NULL
+    max_candidates = NULL,
+    # IVF
+    n_centroids = NULL,
+    n_probes = NULL
   )
 }
 
@@ -169,8 +176,8 @@ params_pca_defaults <- function() {
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`. Note: this function defaults to
-#' `k = 0L` (automatic neighbour detection).
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
+#' Note: this function defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
 #' any user-specified overrides.
@@ -250,8 +257,8 @@ params_scrublet <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`. Note: this function
-#' defaults to `k = 0L` (automatic neighbour detection).
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
+#' Note: this function defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.
@@ -324,7 +331,7 @@ params_boost <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -372,7 +379,7 @@ params_sc_neighbours <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -412,7 +419,7 @@ params_sc_vision <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -462,8 +469,9 @@ params_sc_hotspot <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`. Note: `knn_method`
-#' cannot be `"exhaustive"` for MiloR as it doesn't generate an index!
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
+#' Note: `knn_method` cannot be `"exhaustive"` for MiloR as it doesn't generate
+#' an index!
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -518,7 +526,7 @@ params_sc_miloR <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -574,7 +582,7 @@ params_sc_metacells <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -638,7 +646,7 @@ params_sc_seacells <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'
@@ -692,7 +700,7 @@ params_sc_supercell <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the BBKNN parameters.
 #'
@@ -743,7 +751,7 @@ params_sc_bbknn <- function(
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
 #' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`,
-#' `n_bits`, `n_tables` and `max_candidates`.
+#' `n_bits`, `n_tables`, `max_candidates`, `n_centroids` and `n_probes`.
 #'
 #' @returns A list with the fastMNN parameters.
 #'

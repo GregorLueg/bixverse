@@ -48,7 +48,7 @@ threshold shall be pruned.}
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
 \code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search},
-\code{n_bits}, \code{n_tables} and \code{max_candidates}.}
+\code{n_bits}, \code{n_tables}, \code{max_candidates}, \code{n_centroids} and \code{n_probes}.}
 }
 \value{
 A list with the SEACells parameters.

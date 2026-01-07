@@ -123,7 +123,7 @@ pub fn column_pairwise_l2_norm(mat: &MatRef<f64>) -> Mat<f64> {
 
     let gram = mat.transpose() * mat;
     let mut col_norms_square = vec![0_f64; ncols];
-    
+
     for i in 0..ncols {
         col_norms_square[i] = *gram.get(i, i);
     }
@@ -794,4 +794,46 @@ where
         s_1.union(s_2).count() as u64
     };
     i as f64 / u as f64
+}
+
+/// Calculate the Jaccard similarity between indices
+///
+/// Jaccard similarity between two integer slices via sorting
+///
+/// ### Params
+///
+/// * `a` - Slice of vector a
+/// * `b` - Slice of vector b
+///
+/// ### Returns
+///
+/// The Jaccard similarity
+pub fn jaccard_sorted(a: &[i32], b: &[i32]) -> f64 {
+    let mut sorted_a = a.to_vec();
+    let mut sorted_b = b.to_vec();
+    sorted_a.sort_unstable();
+    sorted_b.sort_unstable();
+
+    // Remove duplicates
+    sorted_a.dedup();
+    sorted_b.dedup();
+
+    let mut intersection = 0;
+    let mut i = 0;
+    let mut j = 0;
+
+    while i < sorted_a.len() && j < sorted_b.len() {
+        match sorted_a[i].cmp(&sorted_b[j]) {
+            std::cmp::Ordering::Equal => {
+                intersection += 1;
+                i += 1;
+                j += 1;
+            }
+            std::cmp::Ordering::Less => i += 1,
+            std::cmp::Ordering::Greater => j += 1,
+        }
+    }
+
+    let union = sorted_a.len() + sorted_b.len() - intersection;
+    intersection as f64 / union as f64
 }

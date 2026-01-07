@@ -506,8 +506,7 @@ pub fn merge_two_batches(
 ) -> Mat<f32> {
     let sigma_square = params.sigma * params.sigma;
 
-    let knn_method: KnnSearch =
-        parse_knn_method(&params.knn_params.knn_method).unwrap_or(KnnSearch::Hnsw);
+    let knn_method: KnnSearch = parse_knn_method(&params.knn_params.knn_method).unwrap_or_default();
 
     let (knn_1_to_2, knn_2_to_1) = match knn_method {
         KnnSearch::Hnsw => {
@@ -674,6 +673,45 @@ pub fn merge_two_batches(
 
             let (knn_2_to_1, _) =
                 query_exhaustive_index(*data_2, &index_1, params.knn_params.k, false, verbose);
+
+            (knn_1_to_2, knn_2_to_1)
+        }
+        KnnSearch::Ivf => {
+            let index_2 = build_ivf_index(
+                *data_2,
+                params.knn_params.n_centroids,
+                None,
+                &params.knn_params.ann_dist,
+                seed,
+                verbose,
+            );
+
+            let (knn_1_to_2, _) = query_ivf_index(
+                *data_1,
+                &index_2,
+                params.knn_params.k,
+                params.knn_params.n_probes,
+                false,
+                verbose,
+            );
+
+            let index_1 = build_ivf_index(
+                *data_1,
+                params.knn_params.n_centroids,
+                None,
+                &params.knn_params.ann_dist,
+                seed,
+                verbose,
+            );
+
+            let (knn_2_to_1, _) = query_ivf_index(
+                *data_2,
+                &index_1,
+                params.knn_params.k,
+                params.knn_params.n_probes,
+                false,
+                verbose,
+            );
 
             (knn_1_to_2, knn_2_to_1)
         }

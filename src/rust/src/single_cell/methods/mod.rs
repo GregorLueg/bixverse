@@ -3,6 +3,7 @@
 //! or doublet detection methods.
 
 pub mod bbknn;
+pub mod big_data;
 pub mod doublet_detection;
 pub mod fast_mnn;
 pub mod milo_r;

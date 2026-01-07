@@ -130,8 +130,8 @@ impl KnnIndex {
     ) -> Self {
         match index_type {
             KnnIndexType::AnnoyIndex => {
-                let dist =
-                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+                let dist = ann_search_rs::utils::dist::parse_ann_dist(&knn_params.ann_dist)
+                    .unwrap_or_default();
 
                 KnnIndex::Annoy(AnnoyIndex::new(embd, knn_params.n_tree, dist, seed))
             }
@@ -144,8 +144,8 @@ impl KnnIndex {
                 verbose,
             )),
             KnnIndexType::LshIndex => {
-                let dist =
-                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+                let dist = ann_search_rs::utils::dist::parse_ann_dist(&knn_params.ann_dist)
+                    .unwrap_or_default();
 
                 KnnIndex::Lsh(LSHIndex::new(
                     embd,
@@ -156,8 +156,8 @@ impl KnnIndex {
                 ))
             }
             KnnIndexType::NNDescentIndex => {
-                let dist =
-                    ann_search_rs::utils::parse_ann_dist(&knn_params.ann_dist).unwrap_or_default();
+                let dist = ann_search_rs::utils::dist::parse_ann_dist(&knn_params.ann_dist)
+                    .unwrap_or_default();
 
                 KnnIndex::NNDescent(NNDescent::new(
                     embd,

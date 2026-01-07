@@ -194,6 +194,19 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculate rapidbly Jaccard similarities between rows
+#'
+#' @description Helper function to quickly calculate the Jaccard similarity
+#' between the rows across the two matrices.
+#'
+#' @param data_1 Integer matrix. The first matrix to compare.
+#' @param data_2 Integer matrix. The second matrix to compare.
+#'
+#' @returns The average Jaccard similarity.
+#'
+#' @export
+rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_integers, data_1, data_2)
+
 #' Calculates the Hamming distance between categorical columns
 #'
 #' @param x Integer matrix. The integers represent the factor data.
@@ -2037,6 +2050,9 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, mnn_p
 #'
 #' @export
 rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+
+#' @export
+rs_sc_knn_big_data <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn_big_data, embd, knn_params, verbose, seed)
 
 #' Scrublet Rust interface
 #'
