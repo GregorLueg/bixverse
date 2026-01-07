@@ -200,7 +200,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.539 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.658 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gene-ontology-aware-enrichment-tests-for-sets">Gene ontology aware enrichment tests (for sets)<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-tests-for-sets"></a>
 </h3>
@@ -316,7 +316,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.469 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.564 sec elapsed</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="alternative-simplifying-results">Alternative: simplifying results<a class="anchor" aria-label="anchor" href="#alternative-simplifying-results"></a>
 </h3>
@@ -430,14 +430,14 @@
 <span><span class="co">#&gt; 4: 0.7826888 0.8799951 0.05312981  0.2516324  0.7287088    17</span></span>
 <span><span class="co">#&gt; 5: 0.3580060 0.5579562 0.08197788  0.2469065  1.0498921   106</span></span>
 <span><span class="co">#&gt; 6: 0.4198895 0.6197865 0.08407456  0.3607407  1.0446784    17</span></span>
-<span><span class="co">#&gt;                                 leadingEdge</span></span>
-<span><span class="co">#&gt;                                      &lt;list&gt;</span></span>
-<span><span class="co">#&gt; 1:                        15270,12189,71846</span></span>
-<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,...</span></span>
-<span><span class="co">#&gt; 3: 76199,19014,26896,229003,17977,17978,...</span></span>
-<span><span class="co">#&gt; 4:                              20893,59027</span></span>
-<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...</span></span>
-<span><span class="co">#&gt; 6:                              60406,20018</span></span></code></pre></div>
+<span><span class="co">#&gt;                                     leadingEdge</span></span>
+<span><span class="co">#&gt;                                          &lt;list&gt;</span></span>
+<span><span class="co">#&gt; 1:                            15270,12189,71846</span></span>
+<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,...[10]</span></span>
+<span><span class="co">#&gt; 3: 76199,19014,26896,229003,17977,17978,...[12]</span></span>
+<span><span class="co">#&gt; 4:                                  20893,59027</span></span>
+<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[12]</span></span>
+<span><span class="co">#&gt; 6:                                  60406,20018</span></span></code></pre></div>
 </div>
 <p>And this is how you run it via <code>bixverse</code>.</p>
 <div class="cell">
@@ -465,14 +465,14 @@
 <span><span class="co">#&gt; 4:                                                                  508751_Circadian_Clock</span></span>
 <span><span class="co">#&gt; 5:                                               5334727_Mus_musculus_biological_processes</span></span>
 <span><span class="co">#&gt; 6:                                        573389_NoRC_negatively_regulates_rRNA_expression</span></span>
-<span><span class="co">#&gt;                                leading_edge    log2err       fdr</span></span>
-<span><span class="co">#&gt;                                      &lt;list&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:                  15270,12189,71846,19357 0.06407038 0.7359532</span></span>
-<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,... 0.05029481 0.8557113</span></span>
-<span><span class="co">#&gt; 3: 76199,19014,26896,229003,17977,17978,... 0.19991523 0.2900703</span></span>
-<span><span class="co">#&gt; 4:                        20893,59027,19883 0.04959020 0.9063587</span></span>
-<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,... 0.07707367 0.5816288</span></span>
-<span><span class="co">#&gt; 6:                 60406,20018,245688,20017 0.08175156 0.6207015</span></span></code></pre></div>
+<span><span class="co">#&gt;                                    leading_edge    log2err       fdr</span></span>
+<span><span class="co">#&gt;                                          &lt;list&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                      15270,12189,71846,19357 0.06407038 0.7359532</span></span>
+<span><span class="co">#&gt; 2:  17918,19341,20336,22628,22627,20619,...[15] 0.05029481 0.8557113</span></span>
+<span><span class="co">#&gt; 3: 76199,19014,26896,229003,17977,17978,...[12] 0.19991523 0.2900703</span></span>
+<span><span class="co">#&gt; 4:                            20893,59027,19883 0.04959020 0.9063587</span></span>
+<span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[13] 0.07707367 0.5816288</span></span>
+<span><span class="co">#&gt; 6:                     60406,20018,245688,20017 0.08175156 0.6207015</span></span></code></pre></div>
 </div>
 <p>We can appreciate the (more or less) same p-values estimated by both methods.</p>
 <div class="cell">
@@ -510,8 +510,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.237023 2.299117 2.525806 2.359520 2.802783 3.003409    10</span></span>
-<span><span class="co">#&gt;   rust 2.417253 2.444270 2.449635 2.451466 2.463566 2.465111    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.316707 2.337821 2.611730 2.515765 2.918557 3.036625    10</span></span>
+<span><span class="co">#&gt;   rust 2.465979 2.470676 2.486004 2.478393 2.495422 2.544073    10</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gsea-gene-ontology-aware">GSEA gene ontology aware<a class="anchor" aria-label="anchor" href="#gsea-gene-ontology-aware"></a>
 </h3>
@@ -541,14 +541,14 @@
 <span><span class="co">#&gt; 4: GO:0006066 -0.6718553 -2.026201    18 2.712234e-04              0</span></span>
 <span><span class="co">#&gt; 5: GO:0071392 -0.5217830 -1.904151    36 3.788231e-04              0</span></span>
 <span><span class="co">#&gt; 6: GO:0002090 -0.8302363 -1.868975     7 6.827804e-04              3</span></span>
-<span><span class="co">#&gt;                                                                                           leading_edge</span></span>
-<span><span class="co">#&gt;                                                                                                 &lt;list&gt;</span></span>
-<span><span class="co">#&gt; 1:                                                     ENSG00000110844,ENSG00000180370,ENSG00000160685</span></span>
-<span><span class="co">#&gt; 2: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...</span></span>
-<span><span class="co">#&gt; 3:                                                                                     ENSG00000170613</span></span>
-<span><span class="co">#&gt; 4: ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...</span></span>
-<span><span class="co">#&gt; 5: ENSG00000118193,ENSG00000134531,ENSG00000166897,ENSG00000162980,ENSG00000170348,ENSG00000103018,...</span></span>
-<span><span class="co">#&gt; 6:                                     ENSG00000061938,ENSG00000169507,ENSG00000289721,ENSG00000083814</span></span>
+<span><span class="co">#&gt;                                                                                               leading_edge</span></span>
+<span><span class="co">#&gt;                                                                                                     &lt;list&gt;</span></span>
+<span><span class="co">#&gt; 1:                                                         ENSG00000110844,ENSG00000180370,ENSG00000160685</span></span>
+<span><span class="co">#&gt; 2: ENSG00000131263,ENSG00000229674,ENSG00000172987,ENSG00000108878,ENSG00000050165,ENSG00000143061,...[19]</span></span>
+<span><span class="co">#&gt; 3:                                                                                         ENSG00000170613</span></span>
+<span><span class="co">#&gt; 4:  ENSG00000287395,ENSG00000139354,ENSG00000211659,ENSG00000160345,ENSG00000007237,ENSG00000139679,...[7]</span></span>
+<span><span class="co">#&gt; 5: ENSG00000118193,ENSG00000134531,ENSG00000166897,ENSG00000162980,ENSG00000170348,ENSG00000103018,...[17]</span></span>
+<span><span class="co">#&gt; 6:                                         ENSG00000061938,ENSG00000169507,ENSG00000289721,ENSG00000083814</span></span>
 <span><span class="co">#&gt;      log2err       fdr                                 go_name</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;                                  &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1: 0.5384341 0.4815124  Cul4B-RING E3 ubiquitin ligase complex</span></span>
