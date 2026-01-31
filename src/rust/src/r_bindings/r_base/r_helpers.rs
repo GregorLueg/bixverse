@@ -2,9 +2,8 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use rayon::prelude::*;
 
+use bixverse_rs::core::math::stats::calculate_critval;
 use bixverse_rs::prelude::*;
-
-use crate::core::base::stats::calculate_critval;
 
 /// Calculate the OT harmonic sum
 ///

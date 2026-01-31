@@ -1,3 +1,4 @@
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -5,7 +6,6 @@ use rayon::prelude::*;
 use crate::core::base::stats::*;
 use crate::core::base::utils::{col_means, col_sds};
 use crate::utils::general::split_vector_randomly;
-use crate::utils::r_rust_interface::*;
 
 /// Fast AUC calculation
 ///

@@ -1,6 +1,6 @@
 use extendr_api::*;
 
-use crate::core::base::loess::*;
+use bixverse_rs::core::base::loess::*;
 
 /// Rust implementation of a Loess function
 ///
@@ -21,7 +21,7 @@ use crate::core::base::loess::*;
 #[extendr]
 fn rs_2d_loess(x: &[f64], y: &[f64], span: f64, degree: usize) -> List {
     let loess = LoessRegression::new(span, degree);
-    let loess_res: LoessRes = loess.fit(x, y);
+    let loess_res: LoessRes<f64> = loess.fit(x, y);
 
     list!(
         predicted = loess_res.fitted_vals,

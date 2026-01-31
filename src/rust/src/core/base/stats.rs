@@ -1,6 +1,5 @@
 use faer::{linalg::solvers::DenseSolveCore, Mat};
 use num_traits::Float;
-use rand::prelude::*;
 use rayon::prelude::*;
 use statrs::distribution::FisherSnedecor;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
@@ -362,31 +361,6 @@ pub fn trigamma(x: f64) -> f64 {
     result += -1.0 / (30.0 * xxx * x) + 1.0 / (42.0 * xxx * xx * x) - 1.0 / (30.0 * xxx * xxx * x);
 
     result
-}
-
-/// Calculate the critical value using bootstrap resampling
-///
-/// ### Params
-///
-/// * `values` - Slice of values to resample from.
-/// * `sample_size` - Number of samples to draw in the bootstrap sample.
-/// * `alpha` - The significance level for the critical value.
-/// * `seed` - Random seed for reproducibility.
-///
-/// ### Returns
-///
-/// The critical value at the specified alpha level.
-pub fn calculate_critval(values: &[f64], sample_size: usize, alpha: &f64, seed: usize) -> f64 {
-    let mut rng = StdRng::seed_from_u64(seed as u64);
-    let mut random_sample: Vec<f64> = (0..sample_size)
-        .map(|_| {
-            let index = rng.random_range(0..values.len());
-            values[index]
-        })
-        .collect();
-    random_sample.sort_by(|a, b| b.partial_cmp(a).unwrap());
-    let index = (alpha * random_sample.len() as f64).ceil() as usize;
-    random_sample[index + 1]
 }
 
 //////////////////

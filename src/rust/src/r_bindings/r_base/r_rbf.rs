@@ -1,8 +1,8 @@
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 use faer::Mat;
 
-use crate::core::base::rbf::*;
-use crate::utils::r_rust_interface::*;
+use bixverse_rs::core::math::rbf::*;
 
 /// Apply a Radial Basis Function
 ///
@@ -85,8 +85,9 @@ fn rs_rbf_function_mat(
 /// distance matrix.
 /// @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
 /// diagonal not incldued).
-/// @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
-/// implemented RBF function.
+/// @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
+/// for the currently implemented RBF function. Weird strings will default
+/// to Gaussian.
 ///
 /// @return A matrix with rows being the epsilons tested, and columns
 /// representing the summed affinity to other features.
@@ -99,10 +100,10 @@ fn rs_rbf_iterate_epsilons(
     original_dim: usize,
     shift: usize,
     rbf_type: &str,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
-    let band_width_data = rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type)?;
+) -> extendr_api::RArray<f64, [usize; 2]> {
+    let band_width_data = rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type);
 
-    Ok(faer_to_r_matrix(band_width_data.as_ref()))
+    faer_to_r_matrix(band_width_data.as_ref())
 }
 
 extendr_module! {
