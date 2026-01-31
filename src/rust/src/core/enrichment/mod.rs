@@ -2,6 +2,5 @@
 //! biology
 
 pub mod gsea;
-pub mod gsva;
 pub mod mitch;
 pub mod oea;

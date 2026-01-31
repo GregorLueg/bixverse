@@ -1,9 +1,8 @@
+use bixverse_rs::enrichment::enrichment_r_wrapper::get_gsva_gs_indices;
+use bixverse_rs::enrichment::gsva::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
 use rustc_hash::FxHashMap;
-
-use crate::core::enrichment::gsva::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Prepare a pathway list for GSVA
 ///
