@@ -53,23 +53,6 @@ where
     ranks
 }
 
-/// Calculates the columns means of a matrix
-///
-/// ### Params
-///
-/// * `mat` - The matrix for which to calculate the column-wise means
-///
-/// ### Returns
-///
-/// Vector of the column means.
-pub fn col_means(mat: MatRef<f64>) -> Vec<f64> {
-    let n_rows = mat.nrows();
-    let ones = Mat::from_fn(n_rows, 1, |_, _| 1.0);
-    let means = (ones.transpose() * mat) / n_rows as f64;
-
-    means.row(0).iter().cloned().collect()
-}
-
 /// Calculates the column sums of a matrix
 ///
 /// ### Params

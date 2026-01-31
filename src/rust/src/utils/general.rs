@@ -1,7 +1,5 @@
-use rustc_hash::FxHashSet;
 use std::cmp::PartialOrd;
 use std::fmt::Debug;
-use std::hash::Hash;
 use std::ops::AddAssign;
 
 use faer::{concat, Mat, MatRef};

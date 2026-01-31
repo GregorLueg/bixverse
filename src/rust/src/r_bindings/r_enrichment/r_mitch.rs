@@ -1,10 +1,10 @@
+use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_mitch_pathways;
+use bixverse_rs::enrichment::mitch::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
-
-use crate::core::base::stats::calc_fdr;
-use crate::core::enrichment::mitch::*;
-use crate::utils::general::flatten_vector;
-use crate::utils::r_rust_interface::*;
 
 /// Calculate mitch enrichment leveraging Rust under the hood
 ///
@@ -45,7 +45,7 @@ fn rs_mitch_calc(
     let (pathway_names, pathway_indices) =
         prepare_mitch_pathways(&row_names, pathway_list, min_size)?;
 
-    let mitch_res: Vec<MitchResult<'_>> = pathway_names
+    let mitch_res: Vec<MitchResult<f64>> = pathway_names
         .par_iter()
         .zip(pathway_indices.par_iter())
         .map(|(p_name, p_idx)| process_mitch_pathway(ranked_data.as_ref(), p_name, p_idx))
