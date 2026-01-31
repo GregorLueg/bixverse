@@ -1,9 +1,8 @@
+use bixverse_rs::core::base::cors_similarity::*;
+use bixverse_rs::core::math::rbf::rbf_gaussian_mat;
+use bixverse_rs::graph::graph_clustering::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::base::cors_similarity::*;
-use crate::core::base::rbf::rbf_gaussian_mat;
-use crate::core::graph::graph_clustering::*;
-use crate::utils::r_rust_interface::*;
 
 /// Rust implementation of spectral clustering
 ///

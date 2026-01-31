@@ -1,6 +1,5 @@
+use bixverse_rs::graph::graph_label_propagations::KnnLabPropGraph;
 use extendr_api::prelude::*;
-
-use crate::core::graph::knn::KnnLabPropGraph;
 
 /// kNN label propagation
 ///

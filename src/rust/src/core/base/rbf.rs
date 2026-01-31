@@ -1,4 +1,3 @@
-use faer::{Mat, MatRef};
 use rayon::iter::*;
 
 ///////////
@@ -59,32 +58,6 @@ pub fn rbf_gaussian(dist: &[f64], epsilon: &f64) -> Vec<f64> {
     dist.par_iter()
         .map(|x| f64::exp(-((x * *epsilon).powi(2))))
         .collect()
-}
-
-/// Gaussian Radial Basis function for matrices.
-///
-/// Applies a Gaussian Radial Basis function on a matrix of distances with the
-/// following formula:
-///
-/// ```
-/// φ(r) = e^(-(εr)²)
-/// ```
-///
-/// ### Params
-///
-/// * `dist` - Matrix of distances
-/// * `epsilon` - Shape parameter controlling function width
-///
-/// ### Returns
-///
-/// The affinity matrix
-pub fn rbf_gaussian_mat(dist: MatRef<f64>, epsilon: &f64) -> Mat<f64> {
-    let ncol = dist.ncols();
-    let nrow = dist.nrows();
-    Mat::from_fn(nrow, ncol, |i, j| {
-        let x = dist.get(i, j);
-        f64::exp(-((x * epsilon).powi(2)))
-    })
 }
 
 /// Bump Radial Basis function

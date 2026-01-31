@@ -178,7 +178,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#546e3c992ec09052fc7b9a9711b4acceced27737"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#f44840700896f6e6122600e61eb0ec37d25d0ccb"
 dependencies = [
  "ann-search-rs",
  "extendr-api",
