@@ -1,9 +1,8 @@
+use bixverse_rs::core::math::matrix_helpers::scale_matrix_col;
+use bixverse_rs::core::math::pca_svd::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::utils::matrix_utils::nested_vector_to_faer_mat;
 use extendr_api::prelude::*;
-
-use crate::core::base::pca_svd::*;
-use crate::core::base::utils::scale_matrix_col;
-use crate::utils::general::nested_vector_to_faer_mat;
-use crate::utils::r_rust_interface::*;
 
 /// Rust implementation of prcomp
 ///

@@ -2,8 +2,6 @@ use faer::{Mat, MatRef};
 use rand::prelude::*;
 use rand_distr::Normal;
 
-use crate::assert_symmetric_mat;
-
 ////////////////
 // Structures //
 ////////////////
@@ -25,47 +23,6 @@ pub struct RandomSvdResults<T> {
 ///////////////
 // Functions //
 ///////////////
-
-/// Get the eigenvalues and vectors from a covar or cor matrix
-///
-/// Function will panic if the matrix is not symmetric
-///
-/// ### Params
-///
-/// * `matrix` - The correlation or co-variance matrix
-/// * `top_n` - How many of the top eigen vectors and values to return.
-///
-/// ### Returns
-///
-/// A vector of tuples corresponding to the top eigen pairs.
-pub fn get_top_eigenvalues(matrix: &Mat<f64>, top_n: usize) -> Vec<(f64, Vec<f64>)> {
-    // Ensure the matrix is square
-    assert_symmetric_mat!(matrix);
-
-    let eigendecomp = matrix.eigen().unwrap();
-
-    let s = eigendecomp.S();
-    let u = eigendecomp.U();
-
-    // Extract the real part of the eigenvalues and vectors
-    let mut eigenpairs = s
-        .column_vector()
-        .iter()
-        .zip(u.col_iter())
-        .map(|(l, v)| {
-            let l_real = l.re;
-            let v_real = v.iter().map(|v_i| v_i.re).collect::<Vec<f64>>();
-            (l_real, v_real)
-        })
-        .collect::<Vec<(f64, Vec<f64>)>>();
-
-    // Sort and return Top N
-    eigenpairs.sort_by(|a, b| b.0.total_cmp(&a.0));
-
-    let res: Vec<(f64, Vec<f64>)> = eigenpairs.into_iter().take(top_n).collect();
-
-    res
-}
 
 /// Randomised SVD
 ///
