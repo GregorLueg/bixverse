@@ -253,41 +253,6 @@ pub fn mad(x: &[f64]) -> Option<f64> {
     median(&deviations)
 }
 
-/// Implementation of the trigamma function (second derivative of ln(gamma(x)))
-///
-/// ### Params
-///
-/// * `x` - The value for which to calculate the trigamma function.
-///
-/// ### Returns
-///
-/// The trigamma value for the given input.
-pub fn trigamma(x: f64) -> f64 {
-    let mut x = x;
-    let mut result = 0.0;
-
-    // For small x, use recurrence to get to a larger value
-    if x <= 5.0 {
-        // Each step through this loop applies the recurrence relation
-        // trigamma(x) = trigamma(x+1) + 1/x^2
-        while x < 5.0 {
-            result += 1.0 / (x * x);
-            x += 1.0;
-        }
-    }
-
-    // For large x, use the asymptotic series
-    // Main term: 1/x + 1/(2*x^2) + ...
-    let xx = x * x;
-    result += 1.0 / x + 1.0 / (2.0 * xx) + 1.0 / (6.0 * xx * x);
-
-    // Add Bernoulli number terms for better precision
-    let xxx = xx * x;
-    result += -1.0 / (30.0 * xxx * x) + 1.0 / (42.0 * xxx * xx * x) - 1.0 / (30.0 * xxx * xxx * x);
-
-    result
-}
-
 ////////////
 // MANOVA //
 ////////////

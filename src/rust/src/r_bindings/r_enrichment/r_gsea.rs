@@ -1,10 +1,8 @@
+use bixverse_rs::enrichment::gsea::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-
-use crate::core::enrichment::gsea::*;
-use crate::utils::r_rust_interface::r_named_vec_data;
 
 //////////////////////
 // Helper functions //
@@ -108,7 +106,7 @@ fn rs_calc_gsea_stats(
     return_leading_edge: bool,
     return_all_extremes: bool,
 ) -> List {
-    let res: GseaStats = calc_gsea_stats(
+    let res: GseaStats<f64> = calc_gsea_stats(
         stats,
         gs_idx,
         gsea_param,
@@ -156,10 +154,10 @@ fn rs_calc_gsea_stat_traditional_batch(
 ) -> extendr_api::Result<List> {
     let pathway_sizes: Vec<usize> = pathway_sizes.iter().map(|x| *x as usize).collect();
 
-    let batch_res: GseaBatchResults =
+    let batch_res: GseaBatchResults<f64> =
         calc_gsea_stat_traditional_batch(stats, pathway_scores, &pathway_sizes, iters, seed);
 
-    let gsea_res: GseaResults<'_> =
+    let gsea_res: GseaResults<f64> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
     Ok(list!(
@@ -215,7 +213,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
     // Convert indices from R - keep as 1-based for algorithm
     let pathway_sizes: Vec<usize> = pathway_sizes.iter().map(|x| *x as usize).collect();
 
-    let batch_res: GseaBatchResults = calc_gsea_stat_cumulative_batch(
+    let batch_res: GseaBatchResults<f64> = calc_gsea_stat_cumulative_batch(
         stats,
         pathway_scores,
         &pathway_sizes,
@@ -224,7 +222,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
         seed,
     );
 
-    let gsea_res: GseaResults<'_> =
+    let gsea_res: GseaResults<f64> =
         calculate_nes_es_pval(pathway_scores, &pathway_sizes, &batch_res);
 
     let res = if return_add_stats {
@@ -333,7 +331,8 @@ fn rs_simple_and_multi_err(n_more_extreme: &[i32], nperm: usize, sample_size: us
     // Conversion needed
     let n_more_extreme: Vec<usize> = n_more_extreme.iter().map(|x| *x as usize).collect();
 
-    let res: MultiLevelErrRes = calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
+    let res: MultiLevelErrRes<f64> =
+        calc_simple_and_multi_error(&n_more_extreme, nperm, sample_size);
 
     list!(simple_err = res.0, multi_err = res.1)
 }

@@ -106,26 +106,6 @@ pub fn standard_deviation(x: &[f64]) -> f64 {
     variance.sqrt()
 }
 
-/// Get unique elements from a slice of any hashable, equatable numeric type.
-///
-/// ### Params
-///
-/// * `vec` - The slice of numerical values.
-///
-/// ### Returns
-///
-/// The unique elements of `vec` as a Vec.
-pub fn unique<T>(vec: &[T]) -> Vec<T>
-where
-    T: Copy + Eq + Hash + Debug,
-{
-    let mut set = FxHashSet::default();
-    vec.iter()
-        .filter(|&&item| set.insert(item))
-        .cloned()
-        .collect()
-}
-
 /// Calculate the cumulative sum over a vector
 ///
 /// ### Params
