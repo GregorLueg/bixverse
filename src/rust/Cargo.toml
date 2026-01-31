@@ -24,10 +24,9 @@ debug = false
 # ] }
 
 [dependencies]
-ann-search-rs = { version = "0.2.2", features = ["gpu"] }
+ann-search-rs = { version = "0.2.2" }
 anyhow = "1.0.99"
 bincode = { version = "2.0.1", features = ["serde"] }
-cubecl = { version = "0.8.1", features = ["wgpu"] }
 extendr-api = "0.8.1"
 faer = { version = '0.23.2' }
 faer-entity = "0.20.1"

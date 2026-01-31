@@ -425,7 +425,7 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
 /// variables as numerical values.
 /// @param is_cat Boolean. Which of the columns represent categorical values.
 ///
-/// @return The Gower distance matrix.
+/// @return The Gower distance matrix between the rows
 ///
 /// @export
 #[extendr]
@@ -437,7 +437,7 @@ fn rs_gower_dist(x: RMatrix<f64>, is_cat: Vec<Rbool>) -> RArray<f64, [usize; 2]>
         .map(|r_obj| r_obj.to_bool())
         .collect::<Vec<bool>>();
 
-    let gower_dist = column_pairwise_gower(&data, &is_cat, None);
+    let gower_dist = row_pairwise_gower(&data, &is_cat, None);
 
     faer_to_r_matrix(gower_dist.as_ref())
 }

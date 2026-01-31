@@ -1,12 +1,10 @@
+use bixverse_rs::enrichment::oae::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
-
 use rayon::prelude::*;
 use rustc_hash::FxBuildHasher;
 use rustc_hash::FxHashSet;
-
-use crate::core::enrichment::oea::*;
-use crate::utils::general::flatten_vector;
-use crate::utils::r_rust_interface::r_list_to_hash_vec;
 
 /// Run a single hypergeometric test.
 ///
@@ -52,7 +50,7 @@ fn rs_hypergeom_test(
         target_genes_set.insert(s);
     }
 
-    let res: HypergeomResult = hypergeom_helper(&target_genes_set, &gene_sets, &gene_universe);
+    let res: HypergeomResult<f64> = hypergeom_helper(&target_genes_set, &gene_sets, &gene_universe);
     let (filtered_res, to_keep) = filter_gse_results(res, min_overlap, fdr_threshold);
 
     Ok(list!(
@@ -108,11 +106,11 @@ fn rs_hypergeom_test_list(
     let gene_sets = r_list_to_hash_vec(gene_sets)?;
     let target_genes_list = r_list_to_hash_vec(target_genes_list)?;
 
-    let (hypergeom_results, indices_vectors): (Vec<HypergeomResult>, Vec<Vec<usize>>) =
+    let (hypergeom_results, indices_vectors): (Vec<HypergeomResult<f64>>, Vec<Vec<usize>>) =
         target_genes_list
             .par_iter()
             .map(|x_i| {
-                let res_i: HypergeomResult = hypergeom_helper(x_i, &gene_sets, &gene_universe);
+                let res_i: HypergeomResult<f64> = hypergeom_helper(x_i, &gene_sets, &gene_universe);
                 filter_gse_results(res_i, min_overlap, fdr_threshold)
             })
             .unzip();
