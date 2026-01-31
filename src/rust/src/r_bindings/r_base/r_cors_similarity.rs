@@ -3,9 +3,10 @@ use faer::Mat;
 use rayon::iter::*;
 use rustc_hash::FxHashSet;
 
-use crate::core::base::cors_similarity::*;
-use crate::utils::general::{string_vec_to_set, upper_triangle_indices};
-use crate::utils::r_rust_interface::*;
+use bixverse_rs::core::base::cors_similarity::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::utils::matrix_utils::upper_triangle_indices;
+use bixverse_rs::utils::*;
 
 extendr_module! {
   mod r_cors_similarity;
@@ -40,7 +41,7 @@ extendr_module! {
 #[extendr]
 fn rs_covariance(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
-    let covar = column_cov(&mat);
+    let covar = column_pairwise_cov(&mat);
 
     faer_to_r_matrix(covar.as_ref())
 }
@@ -62,7 +63,7 @@ fn rs_covariance(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
-    let cor = column_cor(&mat, spearman);
+    let cor = column_pairwise_cor(&mat, spearman);
 
     faer_to_r_matrix(cor.as_ref())
 }
@@ -80,7 +81,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2
 fn rs_cos(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
-    let cos = column_cos(&mat);
+    let cos = column_pairwise_cos(&mat);
 
     faer_to_r_matrix(cos.as_ref())
 }
@@ -107,7 +108,7 @@ fn rs_cor2(
     let x = r_matrix_to_faer(&x);
     let y = r_matrix_to_faer(&y);
 
-    let cor = cor(&x, &y, spearman);
+    let cor = cor_two_matrices(&x, &y, spearman);
 
     faer_to_r_matrix(cor.as_ref())
 }
@@ -140,7 +141,8 @@ fn rs_cov2cor(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 /// @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 /// the function will default to `sqrt(nrows(x))`.
 /// @param strategy String. Binning strategy One of
-/// `c("equal_width", "equal_freq")`.
+/// `c("equal_width", "equal_freq")`. If weird string is provided, it will
+/// default to `"equal_width"`.
 /// @param normalise Boolean. Shall the normalised mutual information be
 /// calculated via joint entropy.
 ///
@@ -153,12 +155,12 @@ fn rs_mutual_info(
     n_bins: Option<usize>,
     strategy: String,
     normalise: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
-    let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy)?;
+    let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy);
 
-    Ok(faer_to_r_matrix(mi_mat.as_ref()))
+    faer_to_r_matrix(mi_mat.as_ref())
 }
 
 /// Calculates the point wise mutual information
@@ -182,7 +184,7 @@ fn rs_pointwise_mutual_info(
 ) -> extendr_api::RArray<f64, [usize; 2]> {
     let data = r_matrix_to_vec_bool(&x);
 
-    let npmi_mat = calc_pmi(&data, normalise);
+    let npmi_mat = calc_pmi::<f64>(&data, normalise);
 
     faer_to_r_matrix(npmi_mat.as_ref())
 }
@@ -242,7 +244,7 @@ fn rs_dist(
 fn rs_cor_upper_triangle(x: RMatrix<f64>, spearman: bool, shift: usize) -> Vec<f64> {
     // Calculate the correlations
     let mat = r_matrix_to_faer(&x);
-    let cor = column_cor(&mat, spearman);
+    let cor = column_pairwise_cor(&mat, spearman);
     let upper_triangle_indices = upper_triangle_indices(mat.ncols(), shift);
     let mut cor_flat = Vec::new();
     for (&r, &c) in upper_triangle_indices
@@ -350,7 +352,7 @@ fn rs_set_similarity_list(list: List, overlap_coefficient: bool) -> extendr_api:
 
     let mut name_i = Vec::new();
     let mut name_j = Vec::new();
-    let mut sim = Vec::new();
+    let mut sim: Vec<f64> = Vec::new();
 
     for i in 0..names.len() {
         for j in (i + 1)..names.len() {
@@ -394,7 +396,7 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
         .map(|i| {
             let row_1 = data_1.row(i).iter().cloned().collect::<Vec<_>>();
             let row_2 = data_2.row(i).iter().cloned().collect::<Vec<_>>();
-            jaccard_sorted(&row_1, &row_2)
+            jaccard_sorted::<f64>(&row_1, &row_2)
         })
         .sum();
 
@@ -412,7 +414,7 @@ fn rs_jaccard_row_integers(data_1: RMatrix<i32>, data_2: RMatrix<i32>) -> f64 {
 fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
     let data = r_matrix_to_faer(&x);
 
-    let hamming_dist = column_pairwise_hamming_cat(&data);
+    let hamming_dist = column_pairwise_hamming_cat::<f64>(&data);
 
     faer_to_r_matrix(hamming_dist.as_ref())
 }
@@ -427,10 +429,7 @@ fn rs_hamming_dist(x: RMatrix<i32>) -> RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_gower_dist(
-    x: RMatrix<f64>,
-    is_cat: Vec<Rbool>,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+fn rs_gower_dist(x: RMatrix<f64>, is_cat: Vec<Rbool>) -> RArray<f64, [usize; 2]> {
     let data = r_matrix_to_faer(&x);
 
     let is_cat = is_cat
@@ -438,7 +437,7 @@ fn rs_gower_dist(
         .map(|r_obj| r_obj.to_bool())
         .collect::<Vec<bool>>();
 
-    let gower_dist = column_pairwise_gower(&data, &is_cat, None)?;
+    let gower_dist = column_pairwise_gower(&data, &is_cat, None);
 
-    Ok(faer_to_r_matrix(gower_dist.as_ref()))
+    faer_to_r_matrix(gower_dist.as_ref())
 }

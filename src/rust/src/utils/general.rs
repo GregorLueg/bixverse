@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashSet;
 use std::cmp::PartialOrd;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -105,23 +105,6 @@ pub fn standard_deviation(x: &[f64]) -> f64 {
     let mean: f64 = x.iter().sum::<f64>() / n;
     let variance = x.iter().map(|&val| (val - mean).powi(2)).sum::<f64>() / (n - 1.0);
     variance.sqrt()
-}
-
-/// String slice to FxHashSet
-///
-/// ### Params
-///
-/// * `x` - The string slice.
-///
-/// ### Returns
-///
-/// A HashSet with borrowed String values
-pub fn string_vec_to_set(x: &[String]) -> FxHashSet<&String> {
-    let mut set = FxHashSet::with_capacity_and_hasher(x.len(), FxBuildHasher);
-    for s in x {
-        set.insert(s);
-    }
-    set
 }
 
 /// Get unique elements from a slice of any hashable, equatable numeric type.
