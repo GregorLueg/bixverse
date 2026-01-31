@@ -1,8 +1,6 @@
+use bixverse_rs::methods::dgrdl::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::data::sparse_structures::*;
-use crate::core::methods::dgrdl::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, sparse_matrix_to_list};
 
 /// Generate a sparse dictionary with DGRDL
 ///
@@ -46,20 +44,26 @@ use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer, sparse_
 fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbose: bool) -> List {
     let x = r_matrix_to_faer(&x);
 
-    let dgrdl_params = DgrdlParams::from_r_list(dgrdl_params);
+    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params);
 
     let mut dgrdl_object = Dgrdl::new(dgrdl_params);
 
-    let res: DgrdlResults = dgrdl_object.fit(&x, seed, verbose);
+    let res: DgrdlResults<f64> = dgrdl_object.fit(&x, seed, verbose);
 
-    let feature_laplacian = SparseColumnMatrix::from_dense_matrix(res.feature_laplacian.as_ref());
-    let sample_laplacian = SparseColumnMatrix::from_dense_matrix(res.sample_laplacian.as_ref());
+    let feature_laplacian = CompressedSparseData::from_dense_matrix(
+        res.feature_laplacian.as_ref(),
+        CompressedSparseFormat::Csc,
+    );
+    let sample_laplacian = CompressedSparseData::from_dense_matrix(
+        res.sample_laplacian.as_ref(),
+        CompressedSparseFormat::Csc,
+    );
 
     list!(
         dictionary = faer_to_r_matrix(res.dictionary.as_ref()),
         coefficients = faer_to_r_matrix(res.coefficients.as_ref()),
-        feature_laplacian = sparse_matrix_to_list(feature_laplacian),
-        sample_laplacian = sparse_matrix_to_list(sample_laplacian),
+        feature_laplacian = sparse_data_to_list(feature_laplacian),
+        sample_laplacian = sparse_data_to_list(sample_laplacian),
     )
 }
 
@@ -124,10 +128,10 @@ fn rs_sparse_dict_dgrdl_grid_search(
     let dict_sizes: Vec<usize> = dict_sizes.iter().map(|x| *x as usize).collect();
     let k_neighbours_vec: Vec<usize> = k_neighbours_vec.iter().map(|x| *x as usize).collect();
 
-    let dgrdl_params = DgrdlParams::from_r_list(dgrdl_params);
+    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params);
     let mut dgrdl_object = Dgrdl::new(dgrdl_params);
 
-    let grid_search_res: Vec<DgrdlObjectives> =
+    let grid_search_res: Vec<DgrdlObjectives<f64>> =
         dgrdl_object.grid_search(&x, &dict_sizes, &k_neighbours_vec, &seeds, verbose);
 
     let mut approximation_err: Vec<f64> = Vec::with_capacity(grid_search_res.len());

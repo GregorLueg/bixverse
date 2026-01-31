@@ -1,7 +1,7 @@
+use bixverse_rs::methods::cis_target::*;
+use bixverse_rs::methods::methods_r_wrapper::motif_enrichments_to_r_list;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::methods::cistarget::*;
-use crate::utils::r_rust_interface::*;
 
 /// Run CisTarget motif enrichment analysis
 ///
@@ -51,7 +51,7 @@ fn rs_cistarget(
         gs_indices.push(elem);
     }
 
-    let results: Vec<Vec<MotifEnrichment>> = gs_indices
+    let results: Vec<Vec<MotifEnrichment<f64>>> = gs_indices
         .iter()
         .map(|gs_idx| {
             process_gene_set(

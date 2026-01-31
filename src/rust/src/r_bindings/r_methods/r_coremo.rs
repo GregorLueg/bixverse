@@ -1,18 +1,14 @@
+use bixverse_rs::core::base::cors_similarity::*;
+use bixverse_rs::core::math::rbf::*;
+use bixverse_rs::core::math::vector_helpers::*;
+use bixverse_rs::methods::coremo::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
 use faer::Mat;
 use rand::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-
-use crate::assert_symmetric_mat;
-use crate::core::base::cors_similarity::column_cor;
-use crate::core::base::cors_similarity::{calc_tom, parse_tom_types};
-use crate::core::base::rbf::*;
-use crate::core::base::stats::{mad, median};
-use crate::core::methods::coremo::*;
-use crate::utils::general::{mat_rm_row, upper_triangle_indices};
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Calculates the TOM over an affinity matrix
 ///
@@ -35,8 +31,6 @@ fn rs_tom(
     signed: bool,
 ) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
     let x = r_matrix_to_faer(&x);
-
-    assert_symmetric_mat!(x);
 
     let tom_version = parse_tom_types(tom_type).ok_or_else(|| {
         extendr_api::Error::Other(format!("Invalid TOM version type: {}", tom_type))
@@ -189,7 +183,7 @@ fn rs_coremo_stability(
         .map(|index| {
             let index = *index as usize - 1;
             let data_red = mat_rm_row(data, index);
-            let cor_red = column_cor(&data_red.as_ref(), spearman);
+            let cor_red = column_pairwise_cor(&data_red.as_ref(), spearman);
             // Flatten the data and apply the rbf function
             let indices = upper_triangle_indices(cor_red.ncols(), 1);
             let mut dist_flat = Vec::new();

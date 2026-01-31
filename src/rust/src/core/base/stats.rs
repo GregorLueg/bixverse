@@ -231,26 +231,6 @@ where
     }
 }
 
-/// Calculate the MAD
-///
-/// ### Params
-///
-/// * `x` - Slice for which to calculate the MAD for
-///
-/// ### Results
-///
-/// The MAD of the slice.
-pub fn mad(x: &[f64]) -> Option<f64> {
-    if x.is_empty() {
-        return None;
-    }
-
-    let median_val = median(x)?; // Early return if median is None
-    let deviations: Vec<f64> = x.iter().map(|&x| (x - median_val).abs()).collect();
-
-    median(&deviations)
-}
-
 ///////////
 // Other //
 ///////////

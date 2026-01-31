@@ -6,7 +6,6 @@ pub mod info;
 pub mod linear_algebra;
 pub mod loess;
 pub mod pca_svd;
-pub mod rbf;
 pub mod sparse_math;
 pub mod stats;
 pub mod utils;

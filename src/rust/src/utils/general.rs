@@ -2,7 +2,7 @@ use std::cmp::PartialOrd;
 use std::fmt::Debug;
 use std::ops::AddAssign;
 
-use faer::{concat, Mat, MatRef};
+use faer::{Mat, MatRef};
 use faer_entity::Entity;
 
 //////////////////
@@ -86,22 +86,6 @@ pub fn array_max_min<T: PartialOrd + Copy>(arr: &[T]) -> (T, T) {
     }
 
     (min_val, max_val)
-}
-
-/// Standard deviation
-///
-/// ### Params
-///
-/// * `x` Slice of `f64`
-///
-/// ### Returns
-///
-/// The standard deviation
-pub fn standard_deviation(x: &[f64]) -> f64 {
-    let n = x.len() as f64;
-    let mean: f64 = x.iter().sum::<f64>() / n;
-    let variance = x.iter().map(|&val| (val - mean).powi(2)).sum::<f64>() / (n - 1.0);
-    variance.sqrt()
 }
 
 /// Calculate the cumulative sum over a vector
@@ -211,34 +195,6 @@ impl<'a, 'r, 'c, E: Entity> MatSliceView<'a, 'r, 'c, E> {
         Mat::from_fn(self.nrows(), self.ncols(), |i, j| {
             *self.data.get(self.row_indices[i], self.col_indices[j])
         })
-    }
-}
-
-/// Transform a nested vector into a faer matrix
-///
-/// ### Params
-///
-/// * `nested_vec` - The nested vector
-/// * `col_wise` - If set to `True` it will column bind (outer vector represents)
-///   the columns. If set to `False` it will row bind (outer vector represents
-///   the rows).
-///
-/// ### Returns
-///
-/// The row or column bound matrix.
-pub fn nested_vector_to_faer_mat(nested_vec: Vec<Vec<f64>>, col_wise: bool) -> Mat<f64> {
-    let (nrow, ncol) = if col_wise {
-        (nested_vec[0].len(), nested_vec.len())
-    } else {
-        (nested_vec.len(), nested_vec[0].len())
-    };
-
-    let data = flatten_vector(nested_vec);
-
-    if col_wise {
-        Mat::from_fn(nrow, ncol, |i, j| data[i + j * nrow])
-    } else {
-        Mat::from_fn(nrow, ncol, |i, j| data[j + i * ncol])
     }
 }
 
@@ -359,37 +315,6 @@ pub fn faer_mat_to_upper_triangle(x: MatRef<f64>, shift: usize) -> Vec<f64> {
     }
 
     vals
-}
-
-/// Slice out a single row and return the remaining matrix
-///
-/// ### Params
-///
-/// * `x` - The matrix from which to remove a single row
-/// * `idx_to_remove` - The index of the row to remove.
-///
-/// ### Returns
-///
-/// The matrix minus the specified row.
-pub fn mat_rm_row(x: MatRef<f64>, idx_to_remove: usize) -> Mat<f64> {
-    assert!(
-        idx_to_remove <= x.nrows(),
-        "The specified index is larger than the matrix"
-    );
-
-    let total_rows = x.nrows();
-
-    let res = if idx_to_remove == 0 {
-        x.subrows(1, total_rows - 1).to_owned()
-    } else if idx_to_remove == total_rows - 1 {
-        x.subrows(0, total_rows - 1).to_owned()
-    } else {
-        let upper = x.subrows(0, idx_to_remove);
-        let lower = x.subrows(idx_to_remove + 1, total_rows - idx_to_remove - 1);
-        concat![[upper], [lower]]
-    };
-
-    res
 }
 
 /// Rowbind a vector of faer Matrices

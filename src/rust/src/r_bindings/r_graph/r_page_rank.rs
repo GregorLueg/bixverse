@@ -1,13 +1,15 @@
+use bixverse_rs::graph::graph_structures::{
+    graph_from_strings, graph_from_strings_with_attributes,
+};
+use bixverse_rs::graph::page_rank::*;
+use bixverse_rs::methods::graph_diffusions::tied_diffusion_parallel;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
 use petgraph::Graph;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::sync::Arc;
-
-use crate::core::graph::pagerank::*;
-use crate::utils::general::nested_vector_to_faer_mat;
-use crate::utils::r_rust_interface::faer_to_r_matrix;
 
 /// Rust version of calcaluting the personalised page rank
 ///
@@ -136,20 +138,6 @@ fn rs_tied_diffusion_parallel(
         diffusion_scores_1.len() == diffusion_scores_2.len(),
         "The two sets of random diffusion scores need to be the same length"
     );
-
-    let graph_1 = graph_from_strings(&node_names, &from, &to, weights, undirected);
-
-    // For tied diffusion in the directed case, the directionality is reversed
-    let graph_2 = if !undirected {
-        graph_from_strings(&node_names, &to, &from, weights, undirected)
-    } else {
-        graph_from_strings(&node_names, &from, &to, weights, undirected)
-    };
-
-    // Pre-process graph once
-    let pagerank_graph_1 = Arc::new(PageRankGraph::from_petgraph(graph_1));
-    let pagerank_graph_2 = Arc::new(PageRankGraph::from_petgraph(graph_2));
-
     let mut personalise_vecs_1 = Vec::with_capacity(diffusion_scores_1.len());
     let mut personalise_vecs_2 = Vec::with_capacity(diffusion_scores_1.len());
 
@@ -158,42 +146,16 @@ fn rs_tied_diffusion_parallel(
         personalise_vecs_2.push(diffusion_scores_2.elt(i)?.as_real_vector().unwrap());
     }
 
-    let summarisation_type: TiedSumType = parse_tied_sum(&summarisation_fun).unwrap();
-
-    let tied_res: Vec<Vec<f64>> = personalise_vecs_1
-        .into_par_iter()
-        .zip(personalise_vecs_2.into_par_iter())
-        .map_init(
-            || (PageRankWorkingMemory::new(), PageRankWorkingMemory::new()),
-            |(working_mem1, working_mem2), (diff1, diff2)| {
-                let pr1 = personalised_page_rank_optimised(
-                    &pagerank_graph_1,
-                    0.85,
-                    &diff1,
-                    1000,
-                    1e-7,
-                    working_mem1,
-                );
-                let pr2 = personalised_page_rank_optimised(
-                    &pagerank_graph_2,
-                    0.85,
-                    &diff2,
-                    1000,
-                    1e-7,
-                    working_mem2,
-                );
-
-                pr1.iter()
-                    .zip(pr2.iter())
-                    .map(|(v1, v2)| match summarisation_type {
-                        TiedSumType::Max => v1.max(*v2),
-                        TiedSumType::Min => v1.min(*v2),
-                        TiedSumType::Avg => (v1 + v2) * 0.5, // multiplication is faster
-                    })
-                    .collect()
-            },
-        )
-        .collect();
+    let tied_res = tied_diffusion_parallel(
+        node_names,
+        from,
+        to,
+        weights,
+        summarisation_fun,
+        &personalise_vecs_1,
+        &personalise_vecs_2,
+        undirected,
+    );
 
     let matrix_result = nested_vector_to_faer_mat(tied_res, false);
 
@@ -238,7 +200,7 @@ fn rs_constrained_page_rank(
     sink_nodes: Option<Vec<String>>,
     sink_edges: Option<Vec<String>>,
 ) -> Vec<f64> {
-    let graph: Graph<NodeData, EdgeData> = graph_from_strings_with_attributes(
+    let graph: Graph<NodeData, EdgeData<f64>> = graph_from_strings_with_attributes(
         &node_names,
         &node_types,
         &from,
@@ -313,7 +275,7 @@ fn rs_constrained_page_rank_list(
         personalisation_vectors.push(num_data);
     }
 
-    let graph: Graph<NodeData, EdgeData> = graph_from_strings_with_attributes(
+    let graph: Graph<NodeData, EdgeData<f64>> = graph_from_strings_with_attributes(
         &node_names,
         &node_types,
         &from,
