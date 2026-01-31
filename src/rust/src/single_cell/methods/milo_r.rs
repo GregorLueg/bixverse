@@ -1,6 +1,5 @@
 use ann_search_rs::annoy::AnnoyIndex;
 use ann_search_rs::hnsw::HnswIndex;
-use ann_search_rs::lsh::LSHIndex;
 use ann_search_rs::nndescent::NNDescent;
 use extendr_api::List;
 use faer::MatRef;
@@ -102,8 +101,6 @@ pub enum KnnIndex {
     Annoy(AnnoyIndex<f32>),
     /// The HNSW index
     Hnsw(HnswIndex<f32>),
-    /// LSH
-    Lsh(LSHIndex<f32>),
     /// NNDescent
     NNDescent(NNDescent<f32>),
 }
@@ -143,18 +140,6 @@ impl KnnIndex {
                 seed,
                 verbose,
             )),
-            KnnIndexType::LshIndex => {
-                let dist = ann_search_rs::utils::dist::parse_ann_dist(&knn_params.ann_dist)
-                    .unwrap_or_default();
-
-                KnnIndex::Lsh(LSHIndex::new(
-                    embd,
-                    dist,
-                    knn_params.n_tables,
-                    knn_params.n_bits,
-                    seed,
-                ))
-            }
             KnnIndexType::NNDescentIndex => {
                 let dist = ann_search_rs::utils::dist::parse_ann_dist(&knn_params.ann_dist)
                     .unwrap_or_default();
@@ -163,7 +148,7 @@ impl KnnIndex {
                     embd,
                     dist,
                     None,
-                    knn_params.max_candidates,
+                    None,
                     None,
                     None,
                     knn_params.delta,
@@ -195,10 +180,6 @@ impl KnnIndex {
         match self {
             KnnIndex::Annoy(index) => index.query(query_point, k, knn_params.search_budget),
             KnnIndex::Hnsw(index) => index.query(query_point, k, knn_params.ef_search),
-            KnnIndex::Lsh(index) => {
-                let (indices, dist, _) = index.query(query_point, k, None);
-                (indices, dist)
-            }
             KnnIndex::NNDescent(index) => index.query(query_point, k, None),
         }
     }
@@ -216,8 +197,6 @@ pub enum KnnIndexType {
     AnnoyIndex,
     /// HNSW
     HnswIndex,
-    /// LSH
-    LshIndex,
     /// NNDescent
     NNDescentIndex,
 }
@@ -271,7 +250,6 @@ pub fn parse_index_type(s: &str) -> Option<KnnIndexType> {
     match s.to_lowercase().as_str() {
         "annoy" => Some(KnnIndexType::AnnoyIndex),
         "hnsw" => Some(KnnIndexType::HnswIndex),
-        "lsh" => Some(KnnIndexType::LshIndex),
         "nndescent" => Some(KnnIndexType::NNDescentIndex),
         _ => None,
     }

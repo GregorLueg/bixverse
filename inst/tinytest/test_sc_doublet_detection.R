@@ -106,7 +106,6 @@ optimal_params <- params_scrublet(
   normalisation = list(target_size = 1e4),
   pca = list(no_pcs = 15L),
   hvg = list(min_gene_var_pctl = 0.0),
-  knn = list(knn_method = "lsh"),
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
   n_bins = 100L
@@ -208,7 +207,6 @@ params_full_norm <- params_scrublet(
   ),
   pca = list(no_pcs = 15L),
   hvg = list(min_gene_var_pctl = 0.0),
-  knn = list(knn_method = "lsh"),
   expected_doublet_rate = 0.2,
   sim_doublet_ratio = 1.0,
   n_bins = 100L
@@ -333,7 +331,6 @@ expect_true(
 boost_params <- params_boost(
   hvg = list(min_gene_var_pctl = 0.0),
   pca = list(no_pcs = 10L),
-  knn = list(knn_method = "lsh"),
   normalisation = list(target_size = 1e4),
   resolution = 0.5,
   voter_thresh = 0.25,

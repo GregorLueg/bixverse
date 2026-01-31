@@ -626,43 +626,6 @@ pub fn merge_two_batches(
 
             (knn_1_to_2, knn_2_to_1)
         }
-        KnnSearch::Lsh => {
-            let index_2 = build_lsh_index(
-                *data_2,
-                &params.knn_params.ann_dist,
-                params.knn_params.n_tables,
-                params.knn_params.n_bits,
-                seed,
-            );
-
-            let (knn_1_to_2, _) = query_lsh_index(
-                *data_1,
-                &index_2,
-                params.knn_params.k,
-                params.knn_params.max_candidates,
-                false,
-                verbose,
-            );
-
-            let index_1 = build_lsh_index(
-                *data_1,
-                &params.knn_params.ann_dist,
-                params.knn_params.n_tables,
-                params.knn_params.n_bits,
-                seed,
-            );
-
-            let (knn_2_to_1, _) = query_lsh_index(
-                *data_2,
-                &index_1,
-                params.knn_params.k,
-                params.knn_params.max_candidates,
-                false,
-                verbose,
-            );
-
-            (knn_1_to_2, knn_2_to_1)
-        }
         KnnSearch::Exhaustive => {
             let index_2 = build_exhaustive_index(*data_2, &params.knn_params.ann_dist);
 
@@ -673,45 +636,6 @@ pub fn merge_two_batches(
 
             let (knn_2_to_1, _) =
                 query_exhaustive_index(*data_2, &index_1, params.knn_params.k, false, verbose);
-
-            (knn_1_to_2, knn_2_to_1)
-        }
-        KnnSearch::Ivf => {
-            let index_2 = build_ivf_index(
-                *data_2,
-                params.knn_params.n_centroids,
-                None,
-                &params.knn_params.ann_dist,
-                seed,
-                verbose,
-            );
-
-            let (knn_1_to_2, _) = query_ivf_index(
-                *data_1,
-                &index_2,
-                params.knn_params.k,
-                params.knn_params.n_probes,
-                false,
-                verbose,
-            );
-
-            let index_1 = build_ivf_index(
-                *data_1,
-                params.knn_params.n_centroids,
-                None,
-                &params.knn_params.ann_dist,
-                seed,
-                verbose,
-            );
-
-            let (knn_2_to_1, _) = query_ivf_index(
-                *data_2,
-                &index_1,
-                params.knn_params.k,
-                params.knn_params.n_probes,
-                false,
-                verbose,
-            );
 
             (knn_1_to_2, knn_2_to_1)
         }

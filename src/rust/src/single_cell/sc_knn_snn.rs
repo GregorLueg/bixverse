@@ -34,10 +34,6 @@ pub enum KnnSearch {
     NNDescent,
     /// Exhaustive
     Exhaustive,
-    /// LSH
-    Lsh,
-    /// Inverted file index
-    Ivf,
 }
 
 ////////////
@@ -96,13 +92,6 @@ pub struct KnnParams {
     pub m: usize,
     pub ef_construction: usize,
     pub ef_search: usize,
-    // lsh
-    pub n_bits: usize,
-    pub n_tables: usize,
-    pub max_candidates: Option<usize>,
-    // ivf
-    pub n_centroids: Option<usize>,
-    pub n_probes: Option<usize>,
 }
 
 impl KnnParams {
@@ -145,7 +134,7 @@ impl KnnParams {
         let n_tree = params_list
             .get("n_trees")
             .and_then(|v| v.as_integer())
-            .unwrap_or(75) as usize;
+            .unwrap_or(50) as usize;
 
         let search_budget = params_list
             .get("search_budget")
@@ -184,33 +173,6 @@ impl KnnParams {
             .and_then(|v| v.as_integer())
             .unwrap_or(100) as usize;
 
-        // lsh
-        let n_bits = params_list
-            .get("n_bits")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(8) as usize;
-
-        let n_tables = params_list
-            .get("n_tables")
-            .and_then(|v| v.as_integer())
-            .unwrap_or(50) as usize;
-
-        let max_candidates = params_list
-            .get("max_candidates")
-            .and_then(|v| v.as_integer())
-            .map(|v| v as usize);
-
-        // ivf
-        let n_centroids = params_list
-            .get("n_centroids")
-            .and_then(|v| v.as_integer())
-            .map(|v| v as usize);
-
-        let n_probes = params_list
-            .get("n_probes")
-            .and_then(|v| v.as_integer())
-            .map(|v| v as usize);
-
         Self {
             knn_method,
             ann_dist,
@@ -223,11 +185,6 @@ impl KnnParams {
             m,
             ef_construction,
             ef_search,
-            n_bits,
-            n_tables,
-            max_candidates,
-            n_centroids,
-            n_probes,
         }
     }
 
@@ -249,11 +206,6 @@ impl KnnParams {
             m: 16,
             ef_construction: 200,
             ef_search: 100,
-            n_bits: 8,
-            n_tables: 50,
-            max_candidates: None,
-            n_centroids: None,
-            n_probes: None,
         }
     }
 }
@@ -353,8 +305,6 @@ pub fn parse_knn_method(s: &str) -> Option<KnnSearch> {
         "hnsw" => Some(KnnSearch::Hnsw),
         "nndescent" => Some(KnnSearch::NNDescent),
         "exhaustive" => Some(KnnSearch::Exhaustive),
-        "lsh" => Some(KnnSearch::Lsh),
-        "ivf" => Some(KnnSearch::Ivf),
         _ => None,
     }
 }
@@ -553,6 +503,58 @@ pub fn knn_to_sparse_dist(
 // Main functions //
 ////////////////////
 
+/// Helper function to abstract out common patterns
+///
+/// ### Params
+///
+/// * `no_neighbours` - Number of neighbours
+/// * `seed` - Seed for reproducibility
+/// * `verbose` - Controls verbosity of the function
+/// * `build_index` - Build index function
+/// * `query_index` - Query index self
+/// * `validate_index` - Self validation of the data
+/// * `index_name` - Name of the index
+///
+/// ### Returns
+///
+/// The kNN graph
+fn build_and_query_knn<I>(
+    no_neighbours: usize,
+    verbose: bool,
+    build_index: impl FnOnce() -> I,
+    query_index: impl FnOnce(&I) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>),
+    index_name: &str,
+) -> (Vec<Vec<usize>>, I) {
+    let start = Instant::now();
+    let index = build_index();
+    if verbose {
+        println!("Generated {} index: {:.2?}", index_name, start.elapsed());
+    }
+
+    let start = Instant::now();
+    let (indices, _) = query_index(&index);
+
+    let res: Vec<Vec<usize>> = indices
+        .into_iter()
+        .enumerate()
+        .map(|(i, mut neighbors)| {
+            neighbors.retain(|&x| x != i);
+            neighbors.truncate(no_neighbours);
+            neighbors
+        })
+        .collect();
+
+    if verbose {
+        println!(
+            "Identified approximate nearest neighbours via {}: {:.2?}",
+            index_name,
+            start.elapsed()
+        );
+    }
+
+    (res, index)
+}
+
 /// Get the kNN graph based on HNSW
 ///
 /// This function generates the kNN graph via an approximate nearest neighbour
@@ -585,42 +587,20 @@ pub fn generate_knn_hnsw(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-
-    let index = build_hnsw_index(mat, m, ef_const, dist_metric, seed, verbose);
-
-    let end_index = start_index.elapsed();
-    if verbose {
-        println!("Generated HNSW index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-
-    let (indices, _) = query_hnsw_index(mat, &index, no_neighbours + 1, ef_search, false, true);
-
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-
-    let index_val = index.validate_index(no_neighbours, seed, None);
+    let (res, index) = build_and_query_knn(
+        no_neighbours,
+        verbose,
+        || build_hnsw_index(mat, m, ef_const, dist_metric, seed, verbose),
+        |idx| query_hnsw_self(idx, no_neighbours + 1, ef_search, false, true),
+        "HNSW",
+    );
 
     if verbose {
-        println!(
-            "Identified approximate nearest neighbours via HNSW: {:.2?}.",
-            end_search
-        );
+        let recall = index.validate_index(no_neighbours, seed, None);
         println!(
             "Recall of approximate nearest neighbours search in random subset: {:.2}",
-            index_val
-        )
+            recall
+        );
     }
 
     res
@@ -654,49 +634,20 @@ pub fn generate_knn_annoy(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-
-    let index = build_annoy_index(mat, dist_metric.to_string(), n_trees, seed);
-
-    let end_index = start_index.elapsed();
-    if verbose {
-        println!("Generated Annoy index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-
-    let (indices, _) = query_annoy_index(
-        mat,
-        &index,
-        no_neighbours + 1,
-        search_budget,
-        false,
+    let (res, index) = build_and_query_knn(
+        no_neighbours,
         verbose,
+        || build_annoy_index(mat, dist_metric.to_string(), n_trees, seed),
+        |idx| query_annoy_self(idx, no_neighbours + 1, search_budget, false, verbose),
+        "Annoy",
     );
 
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-
-    let index_val = index.validate_index(no_neighbours, seed, None);
-
     if verbose {
-        println!(
-            "Identified approximate nearest neighbours via Annoy: {:.2?}.",
-            end_search
-        );
+        let recall = index.validate_index(no_neighbours, seed, None);
         println!(
             "Recall of approximate nearest neighbours search in random subset: {:.2}",
-            index_val
-        )
+            recall
+        );
     }
 
     res
@@ -738,59 +689,33 @@ pub fn generate_knn_nndescent(
     seed: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-
-    let nndescent_idx = build_nndescent_index(
-        mat,
-        dist_metric,
-        delta,
-        diversify_prob,
-        None, // will default to the 30 that is usually used in NNDescent
-        None,
-        None,
-        None,
-        seed,
+    let (res, index) = build_and_query_knn(
+        no_neighbours,
         verbose,
+        || {
+            build_nndescent_index(
+                mat,
+                dist_metric,
+                delta,
+                diversify_prob,
+                None,
+                None,
+                None,
+                None,
+                seed,
+                verbose,
+            )
+        },
+        |idx| query_nndescent_self(idx, no_neighbours + 1, ef_budget, false, verbose),
+        "NNDescent",
     );
 
-    let end_index = start_index.elapsed();
     if verbose {
-        println!("Generated NNDescent index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-    let (indices, _) = query_nndescent_index(
-        mat,
-        &nndescent_idx,
-        no_neighbours + 1,
-        ef_budget,
-        false,
-        verbose,
-    );
-
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-
-    let index_val = nndescent_idx.validate_index(no_neighbours, seed, None);
-
-    if verbose {
-        println!(
-            "Identified approximate nearest neighbours via NNDescent: {:.2?}.",
-            end_search
-        );
+        let recall = index.validate_index(no_neighbours, seed, None);
         println!(
             "Recall of approximate nearest neighbours search in random subset: {:.2}",
-            index_val
-        )
+            recall
+        );
     }
 
     res
@@ -817,184 +742,13 @@ pub fn generate_knn_exhaustive(
     no_neighbours: usize,
     verbose: bool,
 ) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-    let exhaustive_index = build_exhaustive_index(mat, dist_metric);
-
-    let end_index = start_index.elapsed();
-    if verbose {
-        println!("Generated exhaustive index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-    let (indices, _) =
-        query_exhaustive_index(mat, &exhaustive_index, no_neighbours + 1, false, verbose);
-
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-    if verbose {
-        println!(
-            "Identified approximate nearest neighbours via exhaustive linear search: {:.2?}.",
-            end_search
-        );
-    }
-
-    res
-}
-
-/// Get the kNN graph via locality sensitive hashing
-///
-/// ### Params
-///
-/// * `mat` - Matrix in which rows represent the samples and columns the
-///   respective embeddings for that sample
-/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
-///   `"cosine"`.
-/// * `no_neighbours` - Number of neighbours for the KNN graph.
-/// * `n_bits` - Number of bits to use. The lower (ca. 8), the better the recall
-///   at cost of query speed.
-/// * `n_tables` - Number of hash tables to use.
-/// * `max_candidates` - Optional query parameter, to limit number of searches.
-///   Makes the algorithm faster at cost of Recall.
-/// * `seed` - Random seed for reproducibility.
-/// * `verbose` - Controls verbosity of the function
-///
-/// ### Returns
-///
-/// The k-nearest neighbours based on the LSH algorithm. Function
-/// does not return self.
-#[allow(clippy::too_many_arguments)]
-pub fn generate_knn_lsh(
-    mat: MatRef<f32>,
-    dist_metric: &str,
-    no_neighbours: usize,
-    n_bits: usize,
-    n_tables: usize,
-    max_candidates: Option<usize>,
-    seed: usize,
-    verbose: bool,
-) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-    let lsh_index = build_lsh_index(mat, dist_metric, n_tables, n_bits, seed);
-    let end_index = start_index.elapsed();
-    if verbose {
-        println!("Generated LSH index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-    let (indices, _) = query_lsh_index(
-        mat,
-        &lsh_index,
-        no_neighbours + 1,
-        max_candidates,
-        false,
+    let (res, _) = build_and_query_knn(
+        no_neighbours,
         verbose,
+        || build_exhaustive_index(mat, dist_metric),
+        |idx| query_exhaustive_self(idx, no_neighbours + 1, false, verbose),
+        "exhaustive linear search",
     );
-
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-
-    let index_val = lsh_index.validate_index(no_neighbours, seed, None);
-
-    if verbose {
-        println!(
-            "Identified approximate nearest neighbours via LSH index: {:.2?}.",
-            end_search
-        );
-        println!(
-            "Recall of approximate nearest neighbours search in random subset: {:.2}",
-            index_val
-        )
-    }
-
-    res
-}
-
-/// Get the kNN graph via an inverted file index
-///
-/// ### Params
-///
-/// * `mat` - Matrix in which rows represent the samples and columns the
-///   respective embeddings for that sample
-/// * `dist_metric` - The distance metric to use. One of `"euclidean"` or
-///   `"cosine"`.
-/// * `no_neighbours` - Number of neighbours for the KNN graph.
-/// * `n_bits` - Number of bits to use. The lower (ca. 8), the better the recall
-///   at cost of query speed.
-/// * `n_tables` - Number of hash tables to use.
-/// * `max_candidates` - Optional query parameter, to limit number of searches.
-///   Makes the algorithm faster at cost of Recall.
-/// * `seed` - Random seed for reproducibility.
-/// * `verbose` - Controls verbosity of the function
-///
-/// ### Returns
-///
-/// The k-nearest neighbours based on the LSH algorithm. Function
-/// does not return self.
-#[allow(clippy::too_many_arguments)]
-pub fn generate_knn_ivf(
-    mat: MatRef<f32>,
-    dist_metric: &str,
-    no_neighbours: usize,
-    n_centroids: Option<usize>,
-    n_probes: Option<usize>,
-    seed: usize,
-    verbose: bool,
-) -> Vec<Vec<usize>> {
-    let start_index = Instant::now();
-
-    let ivf_index = build_ivf_index(mat, n_centroids, None, dist_metric, seed, verbose);
-    let end_index = start_index.elapsed();
-    if verbose {
-        println!("Generated IVF index: {:.2?}", end_index);
-    }
-
-    let start_search = Instant::now();
-    let (indices, _) =
-        query_ivf_index(mat, &ivf_index, no_neighbours + 1, n_probes, false, verbose);
-
-    let res: Vec<Vec<usize>> = indices
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut neighbors)| {
-            neighbors.retain(|&x| x != i);
-            neighbors.truncate(no_neighbours);
-            neighbors
-        })
-        .collect();
-
-    let end_search = start_search.elapsed();
-
-    let index_val = ivf_index.validate_index(no_neighbours, seed, None);
-
-    if verbose {
-        println!(
-            "Identified approximate nearest neighbours via IVF index: {:.2?}.",
-            end_search
-        );
-        println!(
-            "Recall of approximate nearest neighbours search in random subset: {:.2}",
-            index_val
-        )
-    }
-
     res
 }
 
@@ -1026,311 +780,135 @@ pub fn generate_knn_with_dist(
     seed: usize,
     verbose: bool,
 ) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
-    // default to Annoy if nothing else...
+    // first helper function to remove self
+    fn remove_self(
+        mut indices: Vec<Vec<usize>>,
+        distances: Option<Vec<Vec<f32>>>,
+    ) -> (Vec<Vec<usize>>, Option<Vec<Vec<f32>>>) {
+        for idx_vec in indices.iter_mut() {
+            idx_vec.remove(0);
+        }
+        let distances = distances.map(|mut dists| {
+            for dist_vec in dists.iter_mut() {
+                dist_vec.remove(0);
+            }
+            dists
+        });
+        (indices, distances)
+    }
+
+    // second helper function to time everything
+    fn timed<T>(name: &str, verbose: bool, f: impl FnOnce() -> T) -> T {
+        let start = Instant::now();
+        let result = f();
+        if verbose {
+            println!("{}: {:.2?}", name, start.elapsed());
+        }
+        result
+    }
+
     let knn_method = parse_knn_method(&knn_params.knn_method).unwrap_or_default();
+    let k_plus_one = knn_params.k + 1;
 
-    match knn_method {
+    let (indices, distances) = match knn_method {
         KnnSearch::Annoy => {
-            let index_start = Instant::now();
-            let annoy_index =
-                build_annoy_index(embd, knn_params.ann_dist.clone(), knn_params.n_tree, seed);
-            let end_index = index_start.elapsed();
-
+            let index = timed("Generated Annoy index", verbose, || {
+                build_annoy_index(embd, knn_params.ann_dist.clone(), knn_params.n_tree, seed)
+            });
+            let (indices, distances) = timed("Queried Annoy index", verbose, || {
+                query_annoy_index(
+                    embd,
+                    &index,
+                    k_plus_one,
+                    knn_params.search_budget,
+                    return_dist,
+                    verbose,
+                )
+            });
             if verbose {
-                println!("Generated Annoy index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) = query_annoy_index(
-                embd,
-                &annoy_index,
-                knn_params.k + 1, // Query k+1 to include self!
-                knn_params.search_budget,
-                return_dist,
-                verbose,
-            );
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried Annoy index: {:.2?}", query_end);
-            }
-
-            let index_validation = annoy_index.validate_index(knn_params.k + 1, seed, None);
-
-            if verbose {
+                let recall = index.validate_index(k_plus_one, seed, None);
                 println!(
                     "Recall of approximate nearest neighbours search in random subset: {:.2}",
-                    index_validation
+                    recall
                 );
             }
-
-            // remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
-            });
-
             (indices, distances)
         }
         KnnSearch::Hnsw => {
-            let index_start = Instant::now();
-            let hnsw_index = build_hnsw_index(
-                embd,
-                knn_params.m,
-                knn_params.ef_construction,
-                &knn_params.ann_dist,
-                seed,
-                verbose,
-            );
-            let end_index = index_start.elapsed();
-
+            let index = timed("Generated HNSW index", verbose, || {
+                build_hnsw_index(
+                    embd,
+                    knn_params.m,
+                    knn_params.ef_construction,
+                    &knn_params.ann_dist,
+                    seed,
+                    verbose,
+                )
+            });
+            let (indices, distances) = timed("Queried HNSW index", verbose, || {
+                query_hnsw_index(
+                    embd,
+                    &index,
+                    k_plus_one,
+                    knn_params.ef_search,
+                    return_dist,
+                    verbose,
+                )
+            });
             if verbose {
-                println!("Generated HNSW index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) = query_hnsw_index(
-                embd,
-                &hnsw_index,
-                knn_params.k + 1, // Query k+1 to include self!
-                knn_params.ef_search,
-                return_dist,
-                verbose,
-            );
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried HNSW index: {:.2?}", query_end);
-            }
-
-            let index_validation = hnsw_index.validate_index(knn_params.k + 1, seed, None);
-
-            if verbose {
+                let recall = index.validate_index(k_plus_one, seed, None);
                 println!(
                     "Recall of approximate nearest neighbours search in random subset: {:.2}",
-                    index_validation
+                    recall
                 );
             }
-
-            // Remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
-            });
-
             (indices, distances)
         }
         KnnSearch::NNDescent => {
-            let index_start = Instant::now();
-            let nndescent_idx = build_nndescent_index(
-                embd,
-                &knn_params.ann_dist,
-                knn_params.delta,
-                knn_params.diversify_prob,
-                None, // will default to the 30 that is usually used in NNDescent
-                None,
-                None,
-                None,
-                seed,
-                verbose,
-            );
-
-            let end_index = index_start.elapsed();
-
+            let index = timed("Generated NNDescent index", verbose, || {
+                build_nndescent_index(
+                    embd,
+                    &knn_params.ann_dist,
+                    knn_params.delta,
+                    knn_params.diversify_prob,
+                    None,
+                    None,
+                    None,
+                    None,
+                    seed,
+                    verbose,
+                )
+            });
+            let (indices, distances) = timed("Queried NNDescent index", verbose, || {
+                query_nndescent_index(
+                    embd,
+                    &index,
+                    k_plus_one,
+                    knn_params.ef_budget,
+                    true,
+                    verbose,
+                )
+            });
             if verbose {
-                println!("Generated NNDescent index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) = query_nndescent_index(
-                embd,
-                &nndescent_idx,
-                knn_params.k + 1,
-                knn_params.ef_budget,
-                true,
-                verbose,
-            );
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried NNDescent index: {:.2?}", query_end);
-            }
-
-            let index_validation = nndescent_idx.validate_index(knn_params.k + 1, seed, None);
-
-            if verbose {
+                let recall = index.validate_index(k_plus_one, seed, None);
                 println!(
                     "Recall of approximate nearest neighbours search in random subset: {:.2}",
-                    index_validation
+                    recall
                 );
             }
-
-            // Remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
-            });
-
             (indices, distances)
         }
         KnnSearch::Exhaustive => {
-            let index_start = Instant::now();
-            let exhaustive_index = build_exhaustive_index(embd, &knn_params.knn_method);
-            let end_index = index_start.elapsed();
-
-            if verbose {
-                println!("Generated Exhaustive index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) =
-                query_exhaustive_index(embd, &exhaustive_index, knn_params.k + 1, true, verbose);
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried Exhaustive index: {:.2?}", query_end);
-            }
-
-            // Remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
+            let index = timed("Generated Exhaustive index", verbose, || {
+                build_exhaustive_index(embd, &knn_params.knn_method)
             });
-
-            (indices, distances)
+            timed("Queried Exhaustive index", verbose, || {
+                query_exhaustive_index(embd, &index, k_plus_one, true, verbose)
+            })
         }
-        KnnSearch::Lsh => {
-            let index_start = Instant::now();
-            let lsh_index = build_lsh_index(
-                embd,
-                &knn_params.ann_dist,
-                knn_params.n_tables,
-                knn_params.n_bits,
-                seed,
-            );
-            let end_index = index_start.elapsed();
+    };
 
-            if verbose {
-                println!("Generated LSH index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) = query_lsh_index(
-                embd,
-                &lsh_index,
-                knn_params.k + 1,
-                knn_params.max_candidates,
-                true,
-                verbose,
-            );
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried LSH index: {:.2?}", query_end);
-            }
-
-            let index_validation = lsh_index.validate_index(knn_params.k + 1, seed, None);
-
-            if verbose {
-                println!(
-                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
-                    index_validation
-                );
-            }
-
-            // Remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
-            });
-
-            (indices, distances)
-        }
-        KnnSearch::Ivf => {
-            let index_start = Instant::now();
-            let ivf_index = build_ivf_index(
-                embd,
-                knn_params.n_centroids,
-                None,
-                &knn_params.ann_dist,
-                seed,
-                verbose,
-            );
-            let end_index = index_start.elapsed();
-
-            if verbose {
-                println!("Generated IVF index: {:.2?}", end_index);
-            }
-
-            let query_start = Instant::now();
-            let (mut indices, distances) = query_ivf_index(
-                embd,
-                &ivf_index,
-                knn_params.k + 1,
-                knn_params.n_probes,
-                true,
-                verbose,
-            );
-            let query_end = query_start.elapsed();
-
-            if verbose {
-                println!("Queried IVF index: {:.2?}", query_end);
-            }
-
-            let index_validation = ivf_index.validate_index(knn_params.k + 1, seed, None);
-
-            if verbose {
-                println!(
-                    "Recall of approximate nearest neighbours search in random subset: {:.2}",
-                    index_validation
-                );
-            }
-
-            // Remove first element (self) from each vector
-            for idx_vec in indices.iter_mut() {
-                idx_vec.remove(0);
-            }
-
-            let distances = distances.map(|mut dists| {
-                for dist_vec in dists.iter_mut() {
-                    dist_vec.remove(0);
-                }
-                dists
-            });
-
-            (indices, distances)
-        }
-    }
+    remove_self(indices, distances)
 }
 
 ///////////////////

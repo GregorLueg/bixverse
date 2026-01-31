@@ -13,12 +13,12 @@ parameters:
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
 neighbour search. Defaults to \code{"annoy"}. The implementations are:
-\code{c("hnsw", "annoy", "nndescent", "lsh", "exhaustive", "ivf")}.
+\code{c("hnsw", "annoy", "nndescent", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("euclidean", "cosine")}.
 \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
-to \code{75L}.
+to \code{50L}.
 \item search_budget - Annoy param: optional search budget per tree for
 Annoy. If not provided, it will default to \code{n_tree * k * 20L}.
 \item diversify_prob - NNDescent param: diversification probability for the
@@ -34,15 +34,6 @@ Defaults to \code{16L}.
 construction. Defaults to \code{200L}.
 \item ef_search - HNSW param: size of candidate list (higher = better
 recall, slower). Defaults to \code{100L}.
-\item n_bits - LSH param: number of bits to use. Lower values yield better
-Recall at the cost.
-\item n_tables - LSH param: number of hashmaps to use. Defaults to \code{50L}.
-\item max_candidates - LSH param: optional search budget for querying. If
-provided, can speed up queries, at the cost of Recall.
-\item n_centroids - IVF param: optional number of Voroni cells. Defaults to
-\code{NULL}. In this case, \code{sqrt(n)} will be used.
-\item n_probes - IVF param: optional number of cells to probe. Defaults to
-\code{sqrt(n_centroids)} if \code{NULL}.
 }
 }
 \description{

@@ -1000,25 +1000,6 @@ impl BoostClassifier {
                 k_adj,
                 verbose,
             ),
-            KnnSearch::Lsh => generate_knn_lsh(
-                embd.as_ref(),
-                &self.params.knn_params.ann_dist,
-                k_adj,
-                self.params.knn_params.n_bits,
-                self.params.knn_params.n_tables,
-                self.params.knn_params.max_candidates,
-                seed,
-                verbose,
-            ),
-            KnnSearch::Ivf => generate_knn_ivf(
-                embd.as_ref(),
-                &self.params.knn_params.ann_dist,
-                k_adj,
-                self.params.knn_params.n_centroids,
-                self.params.knn_params.n_probes,
-                seed,
-                verbose,
-            ),
         };
 
         Ok(knn)

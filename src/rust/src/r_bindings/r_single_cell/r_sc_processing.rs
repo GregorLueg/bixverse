@@ -611,25 +611,6 @@ fn rs_sc_knn(
         KnnSearch::Exhaustive => {
             generate_knn_exhaustive(embd.as_ref(), &knn_params.ann_dist, knn_params.k, verbose)
         }
-        KnnSearch::Lsh => generate_knn_lsh(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.n_bits,
-            knn_params.n_tables,
-            knn_params.max_candidates,
-            seed,
-            verbose,
-        ),
-        KnnSearch::Ivf => generate_knn_ivf(
-            embd.as_ref(),
-            &knn_params.ann_dist,
-            knn_params.k,
-            knn_params.n_centroids,
-            knn_params.n_probes,
-            seed,
-            verbose,
-        ),
     };
 
     let end_knn = start_knn.elapsed();

@@ -19,71 +19,13 @@ sce <- find_hvg_sc(sce, streaming = TRUE)
 
 sce <- calculate_pca_sc(sce, no_pcs = 32L)
 
-# sce <- find_neighbours_sc(
-#   object = sce,
-#   no_embd_to_use = 15L,
-#   neighbours_params = params_sc_neighbours(
-#     knn = list(knn_method = "hnsw")
-#   )
-# )
-
-neighbours_hnsw <- rs_sc_knn(
-  embd = get_pca_factors(sce)[1:500000, ],
-  knn_params = list(knn_method = "hnsw", ann_dist = "cosine"),
-  verbose = TRUE,
-  seed = 42L
+sce <- find_neighbours_sc(
+  object = sce,
+  no_embd_to_use = 15L,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "ivf", n_centroids = 1000L, n_probes = 15L)
+  )
 )
-
-neighbours_hnsw[1:5, ]
-
-# neighbours_nndescent <- rs_sc_knn(
-#   embd = get_pca_factors(sce),
-#   knn_params = list(
-#     knn_method = "nndescent",
-#     ann_dist = "cosine"
-#   ),
-#   verbose = TRUE,
-#   seed = 42L
-# )
-
-# neighbours_nndescent[1:5, ]
-
-# neighbours_annoy <- rs_sc_knn(
-#   embd = get_pca_factors(sce),
-#   knn_params = list(
-#     knn_method = "annoy",
-#     ann_dist = "cosine"
-#   ),
-#   verbose = TRUE,
-#   seed = 42L
-# )
-
-# neighbours_ivf <- rs_sc_knn(
-#   embd = get_pca_factors(sce)[1:500000, ],
-#   knn_params = list(
-#     knn_method = "ivf",
-#     ann_dist = "cosine"
-#   ),
-#   verbose = TRUE,
-#   seed = 42L
-# )
-
-# rextendr::document()
-
-# rs_jaccard_row_integers(neighbours_hnsw, neighbours_ivf)
-
-# KNN generation done : 107.44s
-
-neighbours_fast <- rs_sc_knn_big_data(
-  embd = get_pca_factors(sce)[1:500000, ],
-  knn_params = list(ann_dist = "cosine", n_query = 500000L),
-  verbose = TRUE,
-  seed = 42L
-)
-
-neighbours_fast[1:5, ]
-
-rs_jaccard_row_integers(neighbours_hnsw, neighbours_fast)
 
 ########
 # HNSW #
@@ -91,22 +33,29 @@ rs_jaccard_row_integers(neighbours_hnsw, neighbours_fast)
 
 # Building HNSW index with 2_857_393 nodes, M = 16
 # Max layer: 6, Entry point: 299562
+#   Layer 0: 2_857_393 nodes
+#   Layer 1: 178_644 nodes
+#   Layer 2: 11_036 nodes
+#   Layer 3: 666 nodes
+#   Layer 4: 33 nodes
+#   Layer 5: 5 nodes
+#   Layer 6: 1 nodes
 # Building layer 6 with 1 nodes
-#   Layer 6 built in 2.64ms
+#   Layer 6 built in 2.13ms
 # Building layer 5 with 5 nodes
-#   Layer 5 built in 4.50ms
+#   Layer 5 built in 3.73ms
 # Building layer 4 with 33 nodes
-#   Layer 4 built in 4.15ms
+#   Layer 4 built in 4.66ms
 # Building layer 3 with 666 nodes
-#   Layer 3 built in 5.79ms
+#   Layer 3 built in 10.28ms
 # Building layer 2 with 11_036 nodes
-#   Layer 2 built in 144.29ms
+#   Layer 2 built in 143.95ms
 # Building layer 1 with 178_644 nodes
-#   Layer 1 built in 4.19s
+#   Layer 1 built in 4.58s
 # Building layer 0 with 2_857_393 nodes
-#   Layer 0 built in 92.34s
-# Total HNSW build time: 97.01s
-# Generated HNSW index: 97.01s
+#   Layer 0 built in 92.02s
+# Total HNSW build time: 97.06s
+# Generated HNSW index: 97.08s
 #   Processed 100_000 / 2_857_393 samples.
 #   Processed 200_000 / 2_857_393 samples.
 #   Processed 300_000 / 2_857_393 samples.
@@ -135,51 +84,51 @@ rs_jaccard_row_integers(neighbours_hnsw, neighbours_fast)
 #   Processed 2_600_000 / 2_857_393 samples.
 #   Processed 2_700_000 / 2_857_393 samples.
 #   Processed 2_800_000 / 2_857_393 samples.
-# Identified approximate nearest neighbours via HNSW: 71.57s.
+# Identified approximate nearest neighbours via HNSW: 52.29s
 # Recall of approximate nearest neighbours search in random subset: 1.00
-# KNN generation done : 182.21s
+# KNN generation done : 165.77s
 # Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 16.53s
+# Transformed kNN into an sNN graph: 15.17s
 # Transforming sNN data to igraph.
 
 #########
 # Annoy #
 #########
 
-# Generated Annoy index: 17.27s
-#  Processed 100_000 / 2_857_393 samples.
-#  Processed 200_000 / 2_857_393 samples.
-#  Processed 300_000 / 2_857_393 samples.
-#  Processed 400_000 / 2_857_393 samples.
-#  Processed 500_000 / 2_857_393 samples.
-#  Processed 600_000 / 2_857_393 samples.
-#  Processed 700_000 / 2_857_393 samples.
-#  Processed 800_000 / 2_857_393 samples.
-#  Processed 900_000 / 2_857_393 samples.
-#  Processed 1_000_000 / 2_857_393 samples.
-#  Processed 1_100_000 / 2_857_393 samples.
-#  Processed 1_200_000 / 2_857_393 samples.
-#  Processed 1_300_000 / 2_857_393 samples.
-#  Processed 1_400_000 / 2_857_393 samples.
-#  Processed 1_500_000 / 2_857_393 samples.
-#  Processed 1_600_000 / 2_857_393 samples.
-#  Processed 1_700_000 / 2_857_393 samples.
-#  Processed 1_800_000 / 2_857_393 samples.
-#  Processed 1_900_000 / 2_857_393 samples.
-#  Processed 2_000_000 / 2_857_393 samples.
-#  Processed 2_100_000 / 2_857_393 samples.
-#  Processed 2_200_000 / 2_857_393 samples.
-#  Processed 2_300_000 / 2_857_393 samples.
-#  Processed 2_400_000 / 2_857_393 samples.
-#  Processed 2_500_000 / 2_857_393 samples.
-#  Processed 2_600_000 / 2_857_393 samples.
-#  Processed 2_700_000 / 2_857_393 samples.
-#  Processed 2_800_000 / 2_857_393 samples.
-# Identified approximate nearest neighbours via Annoy: 170.32s.
+# Generated Annoy index: 11.66s
+#   Processed 100_000 / 2_857_393 samples.
+#   Processed 200_000 / 2_857_393 samples.
+#   Processed 300_000 / 2_857_393 samples.
+#   Processed 400_000 / 2_857_393 samples.
+#   Processed 500_000 / 2_857_393 samples.
+#   Processed 600_000 / 2_857_393 samples.
+#   Processed 700_000 / 2_857_393 samples.
+#   Processed 800_000 / 2_857_393 samples.
+#   Processed 900_000 / 2_857_393 samples.
+#   Processed 1_000_000 / 2_857_393 samples.
+#   Processed 1_100_000 / 2_857_393 samples.
+#   Processed 1_200_000 / 2_857_393 samples.
+#   Processed 1_300_000 / 2_857_393 samples.
+#   Processed 1_400_000 / 2_857_393 samples.
+#   Processed 1_500_000 / 2_857_393 samples.
+#   Processed 1_600_000 / 2_857_393 samples.
+#   Processed 1_700_000 / 2_857_393 samples.
+#   Processed 1_800_000 / 2_857_393 samples.
+#   Processed 1_900_000 / 2_857_393 samples.
+#   Processed 2_000_000 / 2_857_393 samples.
+#   Processed 2_100_000 / 2_857_393 samples.
+#   Processed 2_200_000 / 2_857_393 samples.
+#   Processed 2_300_000 / 2_857_393 samples.
+#   Processed 2_400_000 / 2_857_393 samples.
+#   Processed 2_500_000 / 2_857_393 samples.
+#   Processed 2_600_000 / 2_857_393 samples.
+#   Processed 2_700_000 / 2_857_393 samples.
+#   Processed 2_800_000 / 2_857_393 samples.
+# Identified approximate nearest neighbours via Annoy: 121.47s
 # Recall of approximate nearest neighbours search in random subset: 1.00
-# KNN generation done : 201.40s
+# KNN generation done : 149.60s
 # Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 16.82s
+# Transformed kNN into an sNN graph: 15.56s
 # Transforming sNN data to igraph.
 
 #############
@@ -244,11 +193,8 @@ rs_jaccard_row_integers(neighbours_hnsw, neighbours_fast)
 # IVF #
 #######
 
-# Too slow for these size...
-# These were the params
-# neighbours_params = params_sc_neighbours(
-#     knn = list(knn_method = "hnsw", n_centroids = 250L)
-#   )
+# with n_centroids = 1000L
+# and n_probe = 15L
 
 #  Sampling 250k vectors for training
 #   Initialising centroids via fast random selection

@@ -231,43 +231,6 @@ fn get_batch_balanced_knn(
                     verbose,
                 )
             }
-            &KnnSearch::Lsh => {
-                let index = build_lsh_index(
-                    sub_matrix.as_ref(),
-                    &bbknn_params.knn_params.ann_dist,
-                    bbknn_params.knn_params.n_tables,
-                    bbknn_params.knn_params.n_bits,
-                    seed,
-                );
-
-                query_lsh_index(
-                    mat,
-                    &index,
-                    bbknn_params.neighbours_within_batch + 1,
-                    bbknn_params.knn_params.max_candidates,
-                    false,
-                    verbose,
-                )
-            }
-            KnnSearch::Ivf => {
-                let index = build_ivf_index(
-                    sub_matrix.as_ref(),
-                    bbknn_params.knn_params.n_centroids,
-                    None,
-                    &bbknn_params.knn_params.ann_dist,
-                    seed,
-                    verbose,
-                );
-
-                query_ivf_index(
-                    mat,
-                    &index,
-                    bbknn_params.neighbours_within_batch + 1,
-                    bbknn_params.knn_params.n_probes,
-                    false,
-                    verbose,
-                )
-            }
         };
 
         let col_start = batch_idx * bbknn_params.neighbours_within_batch;
