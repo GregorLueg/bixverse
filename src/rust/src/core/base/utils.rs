@@ -87,40 +87,6 @@ pub fn col_sums(mat: MatRef<f64>) -> Vec<f64> {
     col_sums.row(0).iter().cloned().collect()
 }
 
-/// Calculate the column standard deviations
-///
-/// ### Params
-///
-/// * `mat` - The matrix for which to calculate the column-wise standard deviations
-///
-/// ### Returns
-///
-/// Vector of the column standard deviations.
-pub fn col_sds(mat: MatRef<f64>) -> Vec<f64> {
-    let n = mat.nrows() as f64;
-    let n_cols = mat.ncols();
-
-    // Calculate means and SDs in one pass
-    let (_, m2): (Vec<f64>, Vec<f64>) = (0..n_cols)
-        .map(|j| {
-            let mut mean = 0.0;
-            let mut m2 = 0.0;
-            let mut count = 0.0;
-
-            for i in 0..mat.nrows() {
-                count += 1.0;
-                let delta = mat[(i, j)] - mean;
-                mean += delta / count;
-                let delta2 = mat[(i, j)] - mean;
-                m2 += delta * delta2;
-            }
-            (mean, (m2 / (n - 1.0)).sqrt())
-        })
-        .unzip();
-
-    m2
-}
-
 /// Scale a matrix
 ///
 /// ### Params

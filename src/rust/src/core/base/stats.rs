@@ -6,19 +6,9 @@ use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 use statrs::function::gamma::ln_gamma;
 use std::ops::{Add, Div};
 
-use crate::assert_same_len;
-
 ///////////
 // Types //
 ///////////
-
-/// A type alias representing effect size results
-///
-/// ### Fields
-///
-/// * `0` - The calculated effect sizes
-/// * `1` - The corresponding standard errors
-pub type EffectSizeRes = (Vec<f64>, Vec<f64>);
 
 /////////////////////
 // Enums | Helpers //
@@ -48,34 +38,6 @@ pub fn get_test_alternative(s: &str) -> Option<TestAlternative> {
         "greater" => Some(TestAlternative::Greater),
         "less" => Some(TestAlternative::Less),
         "twosided" => Some(TestAlternative::TwoSided),
-        _ => None,
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum OutlierDirection {
-    /// Check if outlier is below the threshold
-    Below,
-    /// Check if outlier is above the threshold
-    Above,
-    /// Check if outlier is below OR above the thresholds
-    Both,
-}
-
-/// Helper function to get the outlier detection method
-///
-/// ### Params
-///
-/// * `s` - String, type of test to run.
-///
-/// ### Returns
-///
-/// Option of the `OutlierDirection`
-pub fn parse_outlier_type(s: &str) -> Option<OutlierDirection> {
-    match s.to_lowercase().as_str() {
-        "below" => Some(OutlierDirection::Below),
-        "above" => Some(OutlierDirection::Above),
-        "twosided" => Some(OutlierDirection::Both),
         _ => None,
     }
 }
@@ -291,43 +253,6 @@ pub fn mad(x: &[f64]) -> Option<f64> {
     median(&deviations)
 }
 
-/// MAD outlier detection
-///
-/// ### Params
-///
-/// * `x` - Slice of values to check for outliers.
-/// * `threshold` - Number of MADs to accept as not being an outlier.
-/// * `direction` - Direction to check for outliers (below, above, or both).
-///
-/// ### Returns
-///
-/// A tuple with a vector of booleans indicating whether each value in the input
-/// is an outlier and the value of applied margin.
-pub fn mad_outlier(x: &[f64], threshold: f64, direction: OutlierDirection) -> (Vec<bool>, f64) {
-    let median_val = match median(x) {
-        Some(m) => m,
-        None => return (vec![], 0_f64),
-    };
-
-    let mad_val = match mad(x) {
-        Some(m) => m,
-        None => return (vec![], 0_f64),
-    };
-
-    let margin = threshold * mad_val;
-
-    let res = x
-        .iter()
-        .map(|&v| match direction {
-            OutlierDirection::Below => v < median_val - margin,
-            OutlierDirection::Above => v > median_val + margin,
-            OutlierDirection::Both => (v - median_val).abs() > margin,
-        })
-        .collect::<Vec<bool>>();
-
-    (res, margin)
-}
-
 /// Implementation of the trigamma function (second derivative of ln(gamma(x)))
 ///
 /// ### Params
@@ -361,75 +286,6 @@ pub fn trigamma(x: f64) -> f64 {
     result += -1.0 / (30.0 * xxx * x) + 1.0 / (42.0 * xxx * xx * x) - 1.0 / (30.0 * xxx * xxx * x);
 
     result
-}
-
-//////////////////
-// Effect sizes //
-//////////////////
-
-/// Calculate the Hedge's g effect size and its standard error
-///
-/// ### Params
-///
-/// * `mean_a` - The mean values of group a.
-/// * `mean_b` - The mean values of group b.
-/// * `std_a` - The standard deviations of group a.
-/// * `std_b` - The standard deviations of group b.
-/// * `n_a` - Number of samples in a.
-/// * `n_b` - Number of samples in b.
-/// * `small_sample_correction` - Apply a small sample correction? Recommended
-///   when `n_a` + `n_b` ≤ 35.
-///
-/// ### Returns
-///
-/// A tuple with the effect sizes being the first element, and the standard
-/// errors the second element.
-pub fn hedge_g_effect(
-    mean_a: &[f64],
-    mean_b: &[f64],
-    std_a: &[f64],
-    std_b: &[f64],
-    n_a: usize,
-    n_b: usize,
-    small_sample_correction: bool,
-) -> EffectSizeRes {
-    assert_same_len!(mean_a, mean_b, std_a, std_b);
-
-    let total_n = (n_a + n_b) as f64;
-    let res: Vec<(f64, f64)> = mean_a
-        .par_iter()
-        .zip(mean_b.par_iter())
-        .zip(std_a.par_iter())
-        .zip(std_b.par_iter())
-        .map(|(((mean_a, mean_b), std_a), std_b)| {
-            let pooled_sd = (((n_a - 1) as f64 * std_a.powi(2) + (n_b - 1) as f64 * std_b.powi(2))
-                / ((n_a + n_b - 2) as f64))
-                .sqrt();
-            let effect_size = (mean_a - mean_b) / pooled_sd;
-            // Small sample correction if needed
-            let effect_size = if small_sample_correction {
-                let correction_factor =
-                    ((total_n - 3.0) / (total_n - 2.25)) * ((total_n - 2.0) / total_n).sqrt();
-                correction_factor * effect_size
-            } else {
-                effect_size
-            };
-            let standard_error = ((total_n / (n_a as f64 * n_b as f64))
-                + (effect_size.powi(2) / (2.0 * total_n)))
-                .sqrt();
-            (effect_size, standard_error)
-        })
-        .collect();
-
-    let mut effect_sizes: Vec<f64> = Vec::with_capacity(res.len());
-    let mut standard_errors: Vec<f64> = Vec::with_capacity(res.len());
-
-    for (effect_size, standard_error) in res {
-        effect_sizes.push(effect_size);
-        standard_errors.push(standard_error);
-    }
-
-    (effect_sizes, standard_errors)
 }
 
 ////////////

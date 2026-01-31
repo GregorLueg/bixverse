@@ -1,4 +1,3 @@
-use rand::prelude::*;
 use rustc_hash::FxHashSet;
 use std::cmp::PartialOrd;
 use std::fmt::Debug;
@@ -147,29 +146,6 @@ where
             sum
         })
         .collect()
-}
-
-/// Split a vector randomly into two chunks
-///
-/// Splits a vector randomly into two of [..x] and the other [x..]
-///
-/// ### Params
-///
-/// * `vec` - Slice of the vector you want to split
-/// * `x` - Length of the first vector; the rest will be put into the second vector
-/// * `seed` - Seed for reproducibility
-///
-/// ### Returns
-///
-/// A tuple of the pieces of the vector
-pub fn split_vector_randomly(vec: &[f64], x: usize, seed: u64) -> (Vec<f64>, Vec<f64>) {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut shuffled = vec.to_vec();
-    shuffled.shuffle(&mut rng);
-
-    let (first_set, second_set) = shuffled.split_at(x);
-
-    (first_set.to_vec(), second_set.to_vec())
 }
 
 //////////////////

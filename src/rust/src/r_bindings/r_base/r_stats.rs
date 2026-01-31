@@ -1,11 +1,10 @@
+use bixverse_rs::core::math::matrix_helpers::{col_means, col_sds};
+use bixverse_rs::core::math::stats::*;
 use bixverse_rs::prelude::*;
+use bixverse_rs::utils::vec_utils::split_vector_randomly;
 use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
-
-use crate::core::base::stats::*;
-use crate::core::base::utils::{col_means, col_sds};
-use crate::utils::general::split_vector_randomly;
 
 /// Fast AUC calculation
 ///
@@ -105,7 +104,7 @@ fn rs_hedges_g(mat_a: RMatrix<f64>, mat_b: RMatrix<f64>, small_sample_correction
     let std_a = col_sds(mat_a);
     let std_b = col_sds(mat_b);
 
-    let (es, se): EffectSizeRes = hedge_g_effect(
+    let (es, se): EffectSizeRes<f64> = hedge_g_effect(
         &mean_a,
         &mean_b,
         &std_a,
@@ -155,7 +154,7 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// acceptable.
 /// @param direction String. One of `c("below", "above", "twosided")`. Shall
 /// the outlier direction be done for values below the threshold, above the
-/// threshold or in both directions.
+/// threshold or in both directions. Weird strings default to twosided tests.
 ///
 /// @return A list with the following items:
 /// \itemize{
@@ -170,8 +169,7 @@ fn rs_phyper(q: usize, m: usize, n: usize, k: usize) -> f64 {
 /// @export
 #[extendr]
 fn rs_mad_outlier(x: &[f64], threshold: f64, direction: &str) -> extendr_api::Result<List> {
-    let direction = parse_outlier_type(direction)
-        .ok_or_else(|| format!("Invalid direction type: {}", direction))?;
+    let direction = parse_outlier_type(direction).unwrap_or_default();
 
     let (outliers, threshold) = mad_outlier(x, threshold, direction);
 
