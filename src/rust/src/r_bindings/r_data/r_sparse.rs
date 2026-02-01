@@ -1,7 +1,6 @@
+use bixverse_rs::core::math::sparse::count_zeroes;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::data::sparse_structures::*;
-use crate::utils::r_rust_interface::{r_matrix_to_faer, sparse_matrix_to_list};
 
 /// Generate sparse data from an upper triangle
 ///
@@ -22,11 +21,17 @@ use crate::utils::r_rust_interface::{r_matrix_to_faer, sparse_matrix_to_list};
 ///
 /// @export
 #[extendr]
-fn rs_upper_triangle_to_sparse(value: &[f64], shift: usize, n: usize) -> List {
+fn rs_upper_triangle_to_sparse(
+    value: &[f64],
+    shift: usize,
+    n: usize,
+    cs_type: &str,
+) -> extendr_api::Result<List> {
     let include_diagonal = shift != 1;
-    let sparse = SparseColumnMatrix::from_upper_triangle_sym(value, n, include_diagonal);
-
-    sparse_matrix_to_list(sparse)
+    let cs_type = parse_compressed_sparse_format(cs_type)
+        .ok_or_else(|| extendr_api::Error::Other("Invalid cs_type".into()))?;
+    let sparse = CompressedSparseData::from_upper_triangle_sym(value, n, include_diagonal, cs_type);
+    Ok(sparse_data_to_list(sparse))
 }
 
 /// Helper to get zero stats from a given matrix

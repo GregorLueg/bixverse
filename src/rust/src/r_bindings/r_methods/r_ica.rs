@@ -1,7 +1,6 @@
+use bixverse_rs::methods::ica::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::methods::ica::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
 
 /// Prepare the data for whitening
 ///
@@ -60,7 +59,8 @@ fn rs_prepare_whitening(
 /// @param whiten Numerical matrix. The whitened matrix.
 /// @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 /// be equal to nrows of whiten.
-/// @param ica_type String. One of 'logcosh' or 'exp'.
+/// @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
+/// provided, it will default to `"logcosh"`.
 /// @param ica_params A list containing:
 ///  \itemize{
 ///   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -86,15 +86,14 @@ fn rs_fast_ica(
     w_init: RMatrix<f64>,
     ica_type: &str,
     ica_params: List,
-) -> extendr_api::Result<List> {
+) -> List {
     // assert!(!whiten.nrows() == w_init.ncols(), "The dimensions of the provided matrices don't work");
-    let ica_params = IcaParams::from_r_list(ica_params);
+    let ica_params = IcaParams::<f64>::from_r_list(ica_params);
 
     let x = r_matrix_to_faer(&whiten);
     let w_init = r_matrix_to_faer(&w_init);
 
-    let ica_type =
-        parse_ica_type(ica_type).ok_or_else(|| format!("Invalid ICA type: {}", ica_type))?;
+    let ica_type = parse_ica_type(ica_type).unwrap_or_default();
 
     let a = match ica_type {
         IcaType::Exp => fast_ica_exp(
@@ -114,10 +113,10 @@ fn rs_fast_ica(
         ),
     };
 
-    Ok(list!(
+    list!(
         mixing = faer_to_r_matrix(a.0.as_ref()),
         converged = a.1 < ica_params.tol
-    ))
+    )
 }
 
 /// Run ICA over a given no_comp with random initilisations of w_init
@@ -176,7 +175,7 @@ fn rs_ica_iters(
     let x_processed = r_matrix_to_faer(&x1);
     let k = r_matrix_to_faer(&k);
 
-    let ica_params = IcaParams::from_r_list(ica_params);
+    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params);
 
     let (s_combined, converged) = stabilised_ica_iters(
         x_processed,
@@ -238,7 +237,7 @@ fn rs_ica_iters_cv(
     ica_params: List,
 ) -> List {
     let x = r_matrix_to_faer(&x);
-    let ica_params = IcaParams::from_r_list(ica_params);
+    let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params);
 
     let (s_combined, converged) = stabilised_ica_cv(
         x,

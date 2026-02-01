@@ -547,46 +547,6 @@ pub fn r_matrix_to_faer_fp32(x: &RMatrix<f64>) -> Mat<f32> {
 /// * `col_ptr` - The column pointers
 /// * `ncol` - Number of columns
 /// * `nrow` - Number of rows
-pub fn sparse_matrix_to_list<T>(sparse: SparseColumnMatrix<T>) -> List
-where
-    T: Into<Robj>,
-{
-    let data: Vec<f64> = sparse
-        .data
-        .into_iter()
-        .map(|x| {
-            let robj: Robj = x.into();
-            robj.as_real().unwrap()
-        })
-        .collect();
-    let row_indices: Vec<usize> = sparse.row_indices;
-    let col_ptr: Vec<usize> = sparse.col_ptrs;
-    let nrow = sparse.nrow;
-    let ncol = sparse.ncol;
-
-    list![
-        data = data,
-        row_indices = row_indices,
-        col_ptr = col_ptr,
-        ncol = ncol,
-        nrow = nrow
-    ]
-}
-
-/// Transform a SparseColumnMatrix to an R list
-///
-/// ### Params
-///
-/// * `sparse` - SparseColumnMatrix structure
-///
-/// ### Returns
-///
-/// R list with the following slots:
-/// * `data` - The values
-/// * `row_indices` - The row indices
-/// * `col_ptr` - The column pointers
-/// * `ncol` - Number of columns
-/// * `nrow` - Number of rows
 pub fn sparse_data_to_list<T>(sparse: CompressedSparseData<T>) -> List
 where
     T: Into<Robj> + Clone + Default + Into<f64> + Sync + Add + PartialEq + Mul,

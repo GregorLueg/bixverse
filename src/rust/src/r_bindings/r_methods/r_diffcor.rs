@@ -1,8 +1,7 @@
+use bixverse_rs::core::base::cors_similarity::column_pairwise_cor;
+use bixverse_rs::methods::diffcor::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
-
-use crate::core::base::cors_similarity::column_cor;
-use crate::core::methods::diffcor::*;
-use crate::utils::r_rust_interface::*;
 
 /// Calculate the column wise differential correlation between two sets of data.
 ///
@@ -47,10 +46,11 @@ fn rs_differential_cor(
     let mat_a = r_matrix_to_faer(&x_a);
     let mat_b = r_matrix_to_faer(&x_b);
 
-    let cor_a = column_cor(&mat_a, spearman);
-    let cor_b = column_cor(&mat_b, spearman);
+    let cor_a = column_pairwise_cor(&mat_a, spearman);
+    let cor_b = column_pairwise_cor(&mat_b, spearman);
 
-    let diff_cor = calculate_diff_correlation(&cor_a, &cor_b, n_sample_a, n_sample_b, spearman)?;
+    let diff_cor =
+        calculate_diff_correlation::<f64>(&cor_a, &cor_b, n_sample_a, n_sample_b, spearman);
 
     Ok(list!(
         r_a = diff_cor.r_a,

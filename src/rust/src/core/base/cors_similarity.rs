@@ -6,37 +6,6 @@ use std::hash::Hash;
 use crate::assert_nrows;
 use crate::core::base::utils::*;
 
-///////////////////////
-// Column matrix ops //
-///////////////////////
-
-/// Calculate the correlation matrix
-///
-/// ### Params
-///
-/// * `mat` - The matrix for which to calculate the correlation matrix. Assumes
-///   that features are columns.
-/// * `spearman` - Shall Spearman correlation be used.
-///
-/// ### Returns
-///
-/// The resulting correlation matrix.
-pub fn column_cor(mat: &MatRef<f64>, spearman: bool) -> Mat<f64> {
-    let mat = if spearman {
-        rank_matrix_col(mat)
-    } else {
-        mat.to_owned()
-    };
-
-    let scaled = scale_matrix_col(&mat.as_ref(), true);
-
-    let nrow = scaled.nrows() as f64;
-
-    let cor = scaled.transpose() * &scaled / (nrow - 1_f64);
-
-    cor
-}
-
 /// Calculates the correlation between two matrices
 ///
 /// The two matrices need to have the same number of rows, otherwise the function

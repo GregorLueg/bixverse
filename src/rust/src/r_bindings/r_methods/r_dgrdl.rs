@@ -52,11 +52,11 @@ fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbos
 
     let feature_laplacian = CompressedSparseData::from_dense_matrix(
         res.feature_laplacian.as_ref(),
-        CompressedSparseFormat::Csc,
+        CompressedSparseFormat::Csr,
     );
     let sample_laplacian = CompressedSparseData::from_dense_matrix(
         res.sample_laplacian.as_ref(),
-        CompressedSparseFormat::Csc,
+        CompressedSparseFormat::Csr,
     );
 
     list!(

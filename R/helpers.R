@@ -227,21 +227,29 @@ get_go_levels <- function(edge_dt) {
 #' @returns The sparse matrix.
 #'
 #' @export
-upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
+upper_triangle_to_sparse <- function(
+  upper_triangle_vals,
+  shift,
+  n,
+  type = c("csc", "csr")
+) {
+  type <- match.arg(type)
+
   # checks
   checkmate::qassert(upper_triangle_vals, "N+")
   checkmate::qassert(shift, "I1")
   checkmate::qassert(n, "I1")
+  checkmate::assertChoice(type, c("csc", "csr"))
 
   # functions
-  data <- rs_upper_triangle_to_sparse(upper_triangle_vals, as.integer(shift), n)
-
-  matrix = Matrix::sparseMatrix(
-    i = data$row_indices + 1,
-    p = data$col_ptr,
-    x = unlist(data$data),
-    dims = c(n, n)
+  data <- rs_upper_triangle_to_sparse(
+    value = upper_triangle_vals,
+    shift = as.integer(shift),
+    n = n,
+    cs_type = type
   )
+
+  matrix <- sparse_list_to_mat(data)
 
   return(matrix)
 }
@@ -255,18 +263,22 @@ upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
 #' @export
 sparse_list_to_mat <- function(ls) {
   # checks
-  checkmate::assertList(ls, types = "numeric", names = "named")
+  checkmate::assertList(ls, names = "named")
   checkmate::assertNames(
     names(ls),
-    must.include = c("data", "row_indices", "col_ptr", "ncol", "nrow")
+    must.include = c("data", "indices", "indptr", "ncol", "nrow", "cs_type")
   )
+  checkmate::assertChoice(ls$cs_type, c("csc", "csr"))
 
   # body
+  repr <- if (ls$cs_type == "csc") "C" else "R"
+
   sparse_mat <- Matrix::sparseMatrix(
-    i = ls$row_indices + 1,
-    p = ls$col_ptr,
+    i = ls$indices + 1,
+    p = ls$indptr,
     x = ls$data,
-    dims = c(ls$nrow, ls$ncol)
+    dims = c(ls$nrow, ls$ncol),
+    repr = repr
   )
 
   return(sparse_mat)
