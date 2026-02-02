@@ -6,10 +6,10 @@ use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 
 extendr_module! {
     mod r_synthetic;
-    // fn rs_synthetic_sc_data_csc;
-    // fn rs_synthetic_sc_data_csr;
-    // fn rs_synthetic_sc_data_with_cell_types;
-    // fn rs_sample_ids_for_cell_types;
+    fn rs_synthetic_sc_data_csc;
+    fn rs_synthetic_sc_data_csr;
+    fn rs_synthetic_sc_data_with_cell_types;
+    fn rs_sample_ids_for_cell_types;
     fn rs_generate_bulk_rnaseq;
     fn rs_simulate_dropouts;
 }
