@@ -14,9 +14,6 @@ use crate::utils::traits::FaerRType;
 /// Type alias for a double nested HashMap
 pub type NestedHashMap = FxHashMap<String, FxHashMap<String, FxHashSet<String>>>;
 
-/// Type alias for double nested BtreeMap
-pub type NestedBtreeMap = BTreeMap<String, BTreeMap<String, FxHashSet<String>>>;
-
 ////////////
 // Errors //
 ////////////
@@ -132,63 +129,6 @@ pub fn r_nested_list_to_nested_hashmap(r_nested_list: List) -> extendr_api::Resu
         let inner_hashmap = r_list_to_hashmap_set(inner_list)?;
         result.insert(n.to_string(), inner_hashmap);
     }
-    Ok(result)
-}
-
-/// Transform a Robj List into a BTreeMap with the values as HashSet
-///
-/// Use where ordering of the values matters as the HashMaps have non-deterministic
-/// ordering
-///
-/// ### Params
-///
-/// * `r_list` - R list that has names and contains string vectors.
-///
-/// ### Returns
-///
-/// A BTreeMap with as keys the names of the list and values as HashSets.
-pub fn r_list_to_btree_set(
-    r_list: List,
-) -> extendr_api::Result<BTreeMap<String, FxHashSet<String>>> {
-    let mut result = BTreeMap::new();
-    for (n, s) in r_list {
-        let s_vec = s.as_string_vector().ok_or_else(|| {
-            Error::Other(format!(
-                "Failed to convert value for key '{}' to string vector",
-                n
-            ))
-        })?;
-        let mut s_hash = FxHashSet::with_capacity_and_hasher(s_vec.len(), FxBuildHasher);
-        for item in s_vec {
-            s_hash.insert(item);
-        }
-        result.insert(n.to_string(), s_hash);
-    }
-    Ok(result)
-}
-
-/// Transform an Robj nested list into a nested BtreeMap
-///
-/// A helper that generates a nested BTreeMap from a nested R list.
-///
-/// ### Params
-///
-/// * `r_nested_list` - A named R list that contains named lists with String vectors.
-///
-/// ### Returns
-///
-/// Returns a `NestedBtreeMap`
-pub fn r_nested_list_to_btree_nest(r_nested_list: List) -> extendr_api::Result<NestedBtreeMap> {
-    let mut result = BTreeMap::new();
-
-    for (n, obj) in r_nested_list {
-        let inner_list = obj.as_list().ok_or_else(|| {
-            Error::Other(format!("Failed to convert value for key '{}' to list", n))
-        })?;
-        let inner_tree = r_list_to_btree_set(inner_list)?;
-        result.insert(n.to_string(), inner_tree);
-    }
-
     Ok(result)
 }
 

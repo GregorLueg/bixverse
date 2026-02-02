@@ -178,7 +178,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#07225f4621f44f24f0f815a900099271adc1c361"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#cde19a5d617a89db5b7120c3c52534305cdbd845"
 dependencies = [
  "ann-search-rs",
  "extendr-api",
@@ -2061,7 +2061,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

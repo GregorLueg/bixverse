@@ -1,10 +1,11 @@
+use bixverse_rs::ontology::ontology_r_wrappers::ic_list_to_ic_hashmap;
+use bixverse_rs::ontology::similarity::*;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
-use crate::core::ontology::similarity::*;
 use crate::utils::general::{
     faer_mat_to_upper_triangle, flatten_vector, upper_triangle_to_sym_faer,
 };
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_list_to_hashmap_set};
 
 /// Calculate the semantic similarity in an ontology
 ///
@@ -147,7 +148,7 @@ fn rs_onto_sim_wang_mat(
     w: &[f64],
     flat_matrix: bool,
 ) -> extendr_api::Result<List> {
-    let fast_onto = WangSimOntology::new(&parents, &children, w)?;
+    let fast_onto = WangSimOntology::new(&parents, &children, w);
 
     let (sim_mat, names) = fast_onto.calc_sim_matrix();
 
@@ -195,7 +196,7 @@ fn rs_onto_sim_wang(
     children: Vec<String>,
     w: &[f64],
 ) -> extendr_api::Result<List> {
-    let fast_onto = WangSimOntology::new(&parents, &children, w).unwrap();
+    let fast_onto = WangSimOntology::new(&parents, &children, w);
 
     let terms_split: Vec<(String, &[String])> = terms
         .iter()
@@ -204,10 +205,10 @@ fn rs_onto_sim_wang(
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
-    let res: Vec<Vec<OntoSimRes<'_>>> = terms_split
+    let res: Vec<Vec<OntoSimRes<'_, f64>>> = terms_split
         .iter()
         .map(|(origin, targets)| {
-            let mut sub_res: Vec<OntoSimRes<'_>> = Vec::with_capacity(targets.len());
+            let mut sub_res: Vec<OntoSimRes<'_, f64>> = Vec::with_capacity(targets.len());
             for term in targets.iter() {
                 let sim = fast_onto.wang_sim(origin, term).unwrap_or(f64::NAN);
                 sub_res.push(OntoSimRes {

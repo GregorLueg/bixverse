@@ -1,10 +1,12 @@
+use bixverse_rs::methods::methods_r_wrapper::{
+    r_matrix_list_to_vec, r_matrix_vec_to_named_matrices,
+};
+use bixverse_rs::methods::rbh::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::utils::vec_utils::flatten_vector;
 use extendr_api::prelude::*;
 
 use rayon::prelude::*;
-
-use crate::core::methods::rbh::*;
-use crate::utils::general::flatten_vector;
-use crate::utils::r_rust_interface::{r_nested_list_to_btree_nest, NestedBtreeMap};
 
 /// Generate reciprocal best hits based on set similarities
 ///
@@ -52,14 +54,14 @@ fn rs_rbh_sets(
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
-    let rbh_results: Vec<Vec<RbhResult>> = origins_split
+    let rbh_results: Vec<Vec<RbhResult<f64>>> = origins_split
         .par_iter()
         .map(|(origin_module, target_modules)| {
             // Parallel iterator starts here
             let origin_module_data = module_list.get(origin_module).unwrap();
 
             // Iterate over the remaining target modules
-            let res: Vec<RbhResult> = target_modules
+            let res: Vec<RbhResult<f64>> = target_modules
                 .iter()
                 .map(|target| {
                     let target_module_data = module_list.get(target).unwrap();
@@ -164,7 +166,7 @@ fn rs_rbh_cor(
 ) -> extendr_api::Result<List> {
     let matrix_vec = r_matrix_list_to_vec(module_matrices);
 
-    let matrix_map = r_matrix_vec_to_btree_list(&matrix_vec);
+    let matrix_map = r_matrix_vec_to_named_matrices(&matrix_vec);
 
     let origins: Vec<String> = matrix_map.keys().cloned().collect();
 
@@ -175,11 +177,11 @@ fn rs_rbh_cor(
         .take_while(|(_, rest)| !rest.is_empty())
         .collect();
 
-    let rbh_results: Vec<Vec<RbhResult>> = origins_split
+    let rbh_results: Vec<Vec<RbhResult<f64>>> = origins_split
         .par_iter()
         .map(|(origin_module, target_modules)| {
             let origin_mat = matrix_map.get(origin_module).unwrap();
-            let res: Vec<RbhResult> = target_modules
+            let res: Vec<RbhResult<f64>> = target_modules
                 .iter()
                 .map(|target| {
                     let target_matrix = matrix_map.get(target).unwrap();

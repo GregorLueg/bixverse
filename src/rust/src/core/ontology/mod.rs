@@ -3,4 +3,3 @@
 //! within ontologies.
 
 pub mod go_elim;
-pub mod similarity;

@@ -1,10 +1,9 @@
+use bixverse_rs::methods::methods_r_wrapper::r_matrix_list_to_vec;
 use bixverse_rs::methods::snf::*;
 use bixverse_rs::prelude::*;
 use extendr_api::scalar::Rbool;
 use extendr_api::*;
 use faer::MatRef;
-
-use crate::core::methods::rbh::r_matrix_list_to_vec;
 
 /// Calculate the SNF affinity matrix for continuous values
 ///
