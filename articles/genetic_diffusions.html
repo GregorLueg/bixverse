@@ -87,7 +87,7 @@
 <span></span>
 <span><span class="co"># The classes expects a data.table representing the edges</span></span>
 <span><span class="co"># Weighted and directed graphs are supported</span></span>
-<span><span class="va">edge_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">setDT</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/graph_from_data_frame.html" class="external-link">as_data_frame</a></span><span class="op">(</span><span class="va">barabasi_graph</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">edge_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setDT.html" class="external-link">setDT</a></span><span class="op">(</span><span class="fu">igraph</span><span class="fu">::</span><span class="fu"><a href="https://r.igraph.org/reference/graph_from_data_frame.html" class="external-link">as_data_frame</a></span><span class="op">(</span><span class="va">barabasi_graph</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># We will be creating two diffusion vectors based on the degree distribution</span></span>
 <span><span class="co"># and one set of gold standard genes</span></span>

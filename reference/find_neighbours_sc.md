@@ -1,6 +1,6 @@
 # Find the neighbours for single cell.
 
-This function will generate the kNNs based on a given embedding. Five
+This function will generate the kNNs based on a given embedding. Four
 different algorithms are implemented with different speed and accuracy
 to approximate the nearest neighbours. `"hnsw"` implements a
 Hierarchical Navigatable Small Worlds vector search that has slower
@@ -9,10 +9,9 @@ Approximate Nearest Neighbours Oh Yeah algorithm and is more rapid in
 terms of index generation, but querying on large data sets can be slow.
 `"nndescent"` is a Rust-based implementation of the PyNNDescent
 algorithm and is a good all-rounder and performs well on very large data
-sets. `"lsh"` uses locality-sensitive hashing for approximate search and
-is the fastest at the cost of precision. `"exhaustive"` performs exact
-nearest neighbour search. Subsequently, the kNN data will be used to
-generate an sNN igraph for clustering methods.
+sets. `"exhaustive"` performs exact nearest neighbour search.
+Subsequently, the kNN data will be used to generate an sNN igraph for
+clustering methods.
 
 ## Usage
 

@@ -24,7 +24,8 @@ rs_fast_ica(whiten, w_init, ica_type, ica_params)
 
 - ica_type:
 
-  String. One of 'logcosh' or 'exp'.
+  String. One of 'logcosh' or 'exp'. If weird string is provided, it
+  will default to `"logcosh"`.
 
 - ica_params:
 

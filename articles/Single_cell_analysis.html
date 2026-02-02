@@ -443,38 +443,38 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_idx  gene_id ensembl_id no_cells_exp      mean      var  var_exp</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;        &lt;int&gt;     &lt;num&gt;    &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        1 gene_001    ens_001          758 11.747801 511.5848 2.652159</span></span>
-<span><span class="co">#&gt; 2:        2 gene_002    ens_002          742 11.024927 388.6639 2.604914</span></span>
-<span><span class="co">#&gt; 3:        3 gene_003    ens_003          772 13.149560 541.0187 2.724832</span></span>
-<span><span class="co">#&gt; 4:        4 gene_004    ens_004          724  9.629032 312.5029 2.507178</span></span>
-<span><span class="co">#&gt; 5:        5 gene_005    ens_005          533  4.703812 153.0825 1.926829</span></span>
-<span><span class="co">#&gt; 6:        6 gene_006    ens_006          724 10.136364 351.4315 2.546862</span></span>
+<span><span class="co">#&gt; 1:        1 gene_001    ens_001          758 11.747801 511.5848 2.653164</span></span>
+<span><span class="co">#&gt; 2:        2 gene_002    ens_002          742 11.024927 388.6639 2.604927</span></span>
+<span><span class="co">#&gt; 3:        3 gene_003    ens_003          772 13.149560 541.0187 2.725066</span></span>
+<span><span class="co">#&gt; 4:        4 gene_004    ens_004          724  9.629032 312.5029 2.508433</span></span>
+<span><span class="co">#&gt; 5:        5 gene_005    ens_005          533  4.703812 153.0825 1.926915</span></span>
+<span><span class="co">#&gt; 6:        6 gene_006    ens_006          724 10.136364 351.4315 2.547019</span></span>
 <span><span class="co">#&gt;      var_std</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 1.1396177</span></span>
-<span><span class="co">#&gt; 2: 0.9652928</span></span>
-<span><span class="co">#&gt; 3: 1.0194833</span></span>
-<span><span class="co">#&gt; 4: 0.9720214</span></span>
-<span><span class="co">#&gt; 5: 1.8117409</span></span>
-<span><span class="co">#&gt; 6: 0.9976512</span></span>
+<span><span class="co">#&gt; 1: 1.1369790</span></span>
+<span><span class="co">#&gt; 2: 0.9652646</span></span>
+<span><span class="co">#&gt; 3: 1.0189347</span></span>
+<span><span class="co">#&gt; 4: 0.9692179</span></span>
+<span><span class="co">#&gt; 5: 1.8113831</span></span>
+<span><span class="co">#&gt; 6: 0.9972912</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## You can then which genes are highly variable as follows</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_sc_var.html">get_sc_var</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="../reference/get_hvg.html">get_hvg</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">]</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_idx  gene_id ensembl_id no_cells_exp      mean       var  var_exp</span></span>
 <span><span class="co">#&gt;       &lt;num&gt;   &lt;char&gt;     &lt;char&gt;        &lt;int&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:        4 gene_004    ens_004          724  9.629032 312.50287 2.507178</span></span>
-<span><span class="co">#&gt; 2:       16 gene_016    ens_016          655  7.756598 226.22502 2.403411</span></span>
-<span><span class="co">#&gt; 3:       39 gene_043    ens_043          549  3.527859  33.90901 1.522625</span></span>
-<span><span class="co">#&gt; 4:       18 gene_018    ens_018          750 10.665689 364.52734 2.581662</span></span>
-<span><span class="co">#&gt; 5:        9 gene_009    ens_009          590  7.294722 246.94691 2.360737</span></span>
+<span><span class="co">#&gt; 1:        4 gene_004    ens_004          724  9.629032 312.50287 2.508433</span></span>
+<span><span class="co">#&gt; 2:       16 gene_016    ens_016          655  7.756598 226.22502 2.403317</span></span>
+<span><span class="co">#&gt; 3:       39 gene_043    ens_043          549  3.527859  33.90901 1.522636</span></span>
+<span><span class="co">#&gt; 4:       18 gene_018    ens_018          750 10.665689 364.52734 2.581492</span></span>
+<span><span class="co">#&gt; 5:        9 gene_009    ens_009          590  7.294722 246.94691 2.360593</span></span>
 <span><span class="co">#&gt;      var_std</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.9720214</span></span>
-<span><span class="co">#&gt; 2: 0.8935734</span></span>
-<span><span class="co">#&gt; 3: 1.0178647</span></span>
-<span><span class="co">#&gt; 4: 0.9551431</span></span>
-<span><span class="co">#&gt; 5: 1.0761360</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: 0.9692179</span></span>
+<span><span class="co">#&gt; 2: 0.8937656</span></span>
+<span><span class="co">#&gt; 3: 1.0178397</span></span>
+<span><span class="co">#&gt; 4: 0.9555150</span></span>
+<span><span class="co">#&gt; 5: 1.0764916</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="pca">PCA<a class="anchor" aria-label="anchor" href="#pca"></a>
 </h3>
@@ -493,20 +493,20 @@
 <span><span class="co"># get the PCA factors</span></span>
 <span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5</span></span>
-<span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630</span></span>
-<span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982</span></span>
-<span><span class="co">#&gt; cell_0004  2.5719275 -1.4721915  1.2367083  0.8602270 -2.01101637</span></span>
-<span><span class="co">#&gt; cell_0005  1.8453631  3.3306789 -0.3060451  0.8307743  2.15308475</span></span>
-<span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276</span></span>
+<span><span class="co">#&gt; cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629</span></span>
+<span><span class="co">#&gt; cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133</span></span>
+<span><span class="co">#&gt; cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021</span></span>
+<span><span class="co">#&gt; cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686</span></span>
+<span><span class="co">#&gt; cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366</span></span>
 <span></span>
 <span><span class="co"># Get PCA loadings for each gene</span></span>
 <span><span class="fu"><a href="../reference/get_pca_loadings.html">get_pca_loadings</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                 PC_1       PC_2        PC_3         PC_4        PC_5</span></span>
-<span><span class="co">#&gt; gene_005  0.20317698 -0.3045997  0.05578877 -0.010422311  0.01976835</span></span>
-<span><span class="co">#&gt; gene_017  0.15731421  0.3486673 -0.03532208 -0.046772514  0.08763239</span></span>
-<span><span class="co">#&gt; gene_045 -0.02124721  0.0529221 -0.20211859  0.028571185 -0.01772384</span></span>
-<span><span class="co">#&gt; gene_019  0.13870865  0.3136349  0.11827516  0.008420937 -0.00150319</span></span>
-<span><span class="co">#&gt; gene_010  0.17827085 -0.3270922 -0.01653624  0.012350544  0.01573452</span></span></code></pre></div>
+<span><span class="co">#&gt;                 PC_1        PC_2        PC_3        PC_4         PC_5</span></span>
+<span><span class="co">#&gt; gene_005  0.20317666 -0.30459997  0.05578838 -0.01042195  0.019768905</span></span>
+<span><span class="co">#&gt; gene_017  0.15731445  0.34866709 -0.03532203 -0.04677037  0.087633520</span></span>
+<span><span class="co">#&gt; gene_045 -0.02124709  0.05292213 -0.20211791  0.02857097 -0.017724339</span></span>
+<span><span class="co">#&gt; gene_019  0.13870871  0.31363463  0.11827458  0.00842014 -0.001503941</span></span>
+<span><span class="co">#&gt; gene_010  0.17827064 -0.32709226 -0.01653633  0.01235061  0.015733555</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
@@ -690,28 +690,28 @@
 <code class="sourceCode R"><span><span class="co">## PCA in original object exists</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5</span></span>
-<span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630</span></span>
-<span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982</span></span>
-<span><span class="co">#&gt; cell_0004  2.5719275 -1.4721915  1.2367083  0.8602270 -2.01101637</span></span>
-<span><span class="co">#&gt; cell_0005  1.8453631  3.3306789 -0.3060451  0.8307743  2.15308475</span></span>
-<span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276</span></span>
+<span><span class="co">#&gt; cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629</span></span>
+<span><span class="co">#&gt; cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133</span></span>
+<span><span class="co">#&gt; cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021</span></span>
+<span><span class="co">#&gt; cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686</span></span>
+<span><span class="co">#&gt; cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366</span></span>
 <span></span>
 <span><span class="co">## PCA in loaded in object does exist as has been loaded back in from the qs2 file</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 PC_1       PC_2       PC_3       PC_4        PC_5        PC_6</span></span>
-<span><span class="co">#&gt; cell_0001  0.7916713 -2.1312935 -1.3696928  0.4485300  2.23568630  0.10833390</span></span>
-<span><span class="co">#&gt; cell_0003 -2.4218905 -1.2342623 -0.3744556 -1.7982795 -1.55481982 -1.73168576</span></span>
-<span><span class="co">#&gt; cell_0004  2.5719275 -1.4721915  1.2367083  0.8602270 -2.01101637 -0.98504061</span></span>
-<span><span class="co">#&gt; cell_0005  1.8453631  3.3306789 -0.3060451  0.8307743  2.15308475 -0.88234264</span></span>
-<span><span class="co">#&gt; cell_0006 -1.9956303 -0.4817278 -0.7805332 -1.3205884  0.06048276 -1.61810422</span></span>
-<span><span class="co">#&gt; cell_0008  0.8654820  0.2562445 -1.4927127  1.1618458  1.81161833  0.09957793</span></span>
+<span><span class="co">#&gt; cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629  0.10832164</span></span>
+<span><span class="co">#&gt; cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133 -1.73166561</span></span>
+<span><span class="co">#&gt; cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021 -0.98503643</span></span>
+<span><span class="co">#&gt; cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686 -0.88237613</span></span>
+<span><span class="co">#&gt; cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366 -1.61809599</span></span>
+<span><span class="co">#&gt; cell_0008  0.8654826  0.2562440 -1.4927160  1.1618899  1.81158805  0.09955216</span></span>
 <span><span class="co">#&gt;                 PC_7       PC_8        PC_9      PC_10</span></span>
-<span><span class="co">#&gt; cell_0001 -0.8307593 -0.9369759  0.11120906  0.1123955</span></span>
-<span><span class="co">#&gt; cell_0003  0.4090152  0.5485656 -0.03805275  0.6408936</span></span>
-<span><span class="co">#&gt; cell_0004 -2.1615980  0.6148190  0.08886870  0.5149482</span></span>
-<span><span class="co">#&gt; cell_0005  1.3377242  0.8726504  0.93318295  0.5300551</span></span>
-<span><span class="co">#&gt; cell_0006 -0.5391674  0.1609078 -0.24828078  1.1093334</span></span>
-<span><span class="co">#&gt; cell_0008 -0.1490478  1.2157899  1.11126518 -1.0982429</span></span>
+<span><span class="co">#&gt; cell_0001 -0.8306807 -0.9370393  0.11120244  0.1123903</span></span>
+<span><span class="co">#&gt; cell_0003  0.4089674  0.5485801 -0.03806071  0.6408930</span></span>
+<span><span class="co">#&gt; cell_0004 -2.1616533  0.6146336  0.08884051  0.5149339</span></span>
+<span><span class="co">#&gt; cell_0005  1.3376453  0.8727602  0.93317527  0.5300566</span></span>
+<span><span class="co">#&gt; cell_0006 -0.5391824  0.1608551 -0.24829476  1.1093277</span></span>
+<span><span class="co">#&gt; cell_0008 -0.1491522  1.2157903  1.11126757 -1.0982397</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## Same for knn</span></span>

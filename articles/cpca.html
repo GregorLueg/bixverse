@@ -93,7 +93,7 @@
 <code class="sourceCode R"><span><span class="va">raw_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">cpca_test_data</span><span class="op">$</span><span class="va">target</span><span class="op">)</span></span>
 <span><span class="va">background_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">cpca_test_data</span><span class="op">$</span><span class="va">background</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">sample_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
+<span><span class="va">sample_meta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
 <span>  sample_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">raw_data</span><span class="op">)</span>,</span>
 <span>  grp <span class="op">=</span> <span class="va">cpca_test_data</span><span class="op">$</span><span class="va">target_labels</span></span>
 <span><span class="op">)</span></span>

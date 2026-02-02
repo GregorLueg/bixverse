@@ -6,7 +6,7 @@ and the nrows/ncols and returns a list.
 ## Usage
 
 ``` r
-rs_upper_triangle_to_sparse(value, shift, n)
+rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 ```
 
 ## Arguments

@@ -52,13 +52,13 @@ package.</p>
     <p>A list with default parameters for kNN searches. Following
 parameters:</p><ul><li><p>k - Number of neighbours. Defaults to <code>15L</code>.</p></li>
 <li><p>knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to <code>"hnsw"</code>. The implementations are:
-<code>c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")</code>.</p></li>
+neighbour search. Defaults to <code>"annoy"</code>. The implementations are:
+<code>c("hnsw", "annoy", "nndescent", "exhaustive")</code>.</p></li>
 <li><p>ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to <code>"euclidean"</code>. The implementations are
 <code>c("euclidean", "cosine")</code>.</p></li>
 <li><p>n_trees - Annoy param: number of trees to generate for Annoy. Defaults
-to <code>75L</code>.</p></li>
+to <code>50L</code>.</p></li>
 <li><p>search_budget - Annoy param: optional search budget per tree for
 Annoy. If not provided, it will default to <code>n_tree * k * 20L</code>.</p></li>
 <li><p>diversify_prob - NNDescent param: diversification probability for the
@@ -74,11 +74,6 @@ Defaults to <code>16L</code>.</p></li>
 construction. Defaults to <code>200L</code>.</p></li>
 <li><p>ef_search - HNSW param: size of candidate list (higher = better
 recall, slower). Defaults to <code>100L</code>.</p></li>
-<li><p>n_bits - LSH param: number of bits to use. Lower values yield better
-Recall at the cost.</p></li>
-<li><p>n_tables - LSH param: number of hashmaps to use. Defaults to <code>50L</code>.</p></li>
-<li><p>max_candidates - LSH param: optional search budget for querying. If
-provided, can speed up queries, at the cost of Recall.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

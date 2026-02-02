@@ -160,7 +160,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.658 sec elapsed
+#> 0.553 sec elapsed
 ```
 
 ### Gene ontology aware enrichment tests (for sets)
@@ -298,7 +298,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.564 sec elapsed
+#> 1.453 sec elapsed
 ```
 
 ### Alternative: simplifying results
@@ -367,20 +367,10 @@ go_results_simplified <- simplify_hypergeom_res(
 head(go_results_simplified)
 #>    gene_set_name odds_ratios        pvals          fdr  hits gene_set_lengths
 #>           <char>       <num>        <num>        <num> <num>            <num>
-#> 1:    GO:0003723   22.120609 1.723343e-23 1.579099e-19    31             1546
-#> 2:    GO:0006364   35.837205 2.936032e-12 1.345143e-08    10              159
-#> 3:    GO:0005730    8.860092 6.601460e-12 1.581347e-08    23             1927
-#> 4:    GO:0042254   43.069954 6.903186e-12 1.581347e-08     9              118
-#> 5:    GO:0032040   44.202960 1.623943e-08 2.023038e-05     6               72
-#> 6:    GO:0000055  455.891304 2.368116e-07 2.169905e-04     3                6
+#> 1:    GO:0003723    22.12061 1.723343e-23 1.579099e-19    31             1546
 #>    target_set_lengths
 #>                 <int>
 #> 1:                 50
-#> 2:                 50
-#> 3:                 50
-#> 4:                 50
-#> 5:                 50
-#> 6:                 50
 ```
 
 ### GSEA
@@ -507,8 +497,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.316707 2.337821 2.611730 2.515765 2.918557 3.036625    10
-#>   rust 2.465979 2.470676 2.486004 2.478393 2.495422 2.544073    10
+#>  fgsea 2.305173 2.410611 2.620625 2.507747 2.868472 3.031975    10
+#>   rust 2.403925 2.413912 2.431027 2.429511 2.446402 2.455571    10
 ```
 
 ### GSEA gene ontology aware

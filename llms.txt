@@ -1147,6 +1147,9 @@ this:
 - [`rs_ica_iters_cv()`](rs_ica_iters_cv.md) : Run ICA with
   cross-validation and random initialsiation
 
+- [`rs_jaccard_row_integers()`](rs_jaccard_row_integers.md) : Calculate
+  rapidbly Jaccard similarities between rows
+
 - [`rs_kbet()`](rs_kbet.md) : Calculate kBET type scores
 
 - [`rs_knn_label_propagation()`](rs_knn_label_propagation.md) : kNN

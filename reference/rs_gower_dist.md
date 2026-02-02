@@ -21,4 +21,4 @@ rs_gower_dist(x, is_cat)
 
 ## Value
 
-The Gower distance matrix.
+The Gower distance matrix between the rows

@@ -51,42 +51,20 @@ generate_knn_sc(
   List. Output of [`params_sc_neighbours()`](params_sc_neighbours.md). A
   list with the following items:
 
-  - k - Integer. Number of neighbours to identify.
+  - full_snn - Boolean. Shall the full shared nearest neighbour graph be
+    generated that generates edges between all cells instead of between
+    only neighbours.
 
-  - knn_algorithm - String. One of `c("annoy", "hnsw", "nndescent")`.
-    `"hnsw"` takes longer, is more precise and more memory friendly.
-    `"annoy"` is faster, less precise and will take more memory.
-    `"nndescent"` skips index generation and can be faster on small
-    datasets.
-
-  - n_trees - Integer. Number of trees to use for the `annoy` algorithm.
-    The higher, the longer the algorithm takes, but the more precise the
-    approximated nearest neighbours.
-
-  - search_budget - Integer. Search budget per tree for the `annoy`
-    algorithm. The higher, the longer the algorithm takes, but the more
-    precise the approximated nearest neighbours.
-
-  - ann_dist - String. One of `c("cosine", "euclidean")`.
-
-  - max_iter - Integer. Maximum iterations for the `"nndescent"` method.
-
-  - rho - Numeric. Sampling rate for the `"nndescent"` method.
-
-  - delta - Numeric. Early termination criterium for the `"nndescent"`
-    method.
-
-  - full_snn - Boolean. Shall the sNN graph be generated across all
-    cells (standard in the `bluster` package.) Defaults to `FALSE`. Not
-    relevant for this function.
-
-  - pruning - Value below which the weight in the sNN graph is set to 0.
-    Not relevant for this function.
+  - pruning - Numeric. Weights below this threshold will be set to 0 in
+    the generation of the sNN graph.
 
   - snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-    the weight form the SNN graph is calculated. For details, please see
-    [`params_sc_neighbours()`](params_sc_neighbours.md). Not relevant
-    for this function.
+    the weight from the SNN graph is calculated. For details, please see
+    [`params_sc_neighbours()`](params_sc_neighbours.md).
+
+  - knn - List of kNN parameters. See
+    [`params_knn_defaults()`](params_knn_defaults.md) for available
+    parameters and their defaults.
 
 - seed:
 

@@ -34,8 +34,9 @@ rs_rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type)
 
 - rbf_type:
 
-  String. Option of `c('gaussian', 'bump')` for the currently
-  implemented RBF function.
+  String. One of `c('gaussian', 'bump', 'inverse_quadratic')` for the
+  currently implemented RBF function. Weird strings will default to
+  Gaussian.
 
 ## Value
 

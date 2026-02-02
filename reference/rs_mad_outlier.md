@@ -22,7 +22,7 @@ rs_mad_outlier(x, threshold, direction)
 
   String. One of `c("below", "above", "twosided")`. Shall the outlier
   direction be done for values below the threshold, above the threshold
-  or in both directions.
+  or in both directions. Weird strings default to twosided tests.
 
 ## Value
 

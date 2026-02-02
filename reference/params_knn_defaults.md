@@ -17,15 +17,15 @@ A list with default parameters for kNN searches. Following parameters:
 - k - Number of neighbours. Defaults to `15L`.
 
 - knn_method - Which of method to use for the approximate nearest
-  neighbour search. Defaults to `"hnsw"`. The implementations are:
-  `c("hnsw", "annoy", "nndescent", "lsh", "exhaustive")`.
+  neighbour search. Defaults to `"annoy"`. The implementations are:
+  `c("hnsw", "annoy", "nndescent", "exhaustive")`.
 
 - ann_dist - Which distance metric to use for the approximate nearest
   neighbour search. Defaults to `"euclidean"`. The implementations are
   `c("euclidean", "cosine")`.
 
 - n_trees - Annoy param: number of trees to generate for Annoy. Defaults
-  to `75L`.
+  to `50L`.
 
 - search_budget - Annoy param: optional search budget per tree for
   Annoy. If not provided, it will default to `n_tree * k * 20L`.
@@ -48,11 +48,3 @@ A list with default parameters for kNN searches. Following parameters:
 
 - ef_search - HNSW param: size of candidate list (higher = better
   recall, slower). Defaults to `100L`.
-
-- n_bits - LSH param: number of bits to use. Lower values yield better
-  Recall at the cost.
-
-- n_tables - LSH param: number of hashmaps to use. Defaults to `50L`.
-
-- max_candidates - LSH param: optional search budget for querying. If
-  provided, can speed up queries, at the cost of Recall.

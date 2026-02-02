@@ -19,6 +19,4 @@ A list with default parameters for kNN searches. Following parameters:
 
 - loess_span - In case of
 
-- search_budget - Search budget per tree for Annoy. Defaults to `100L`.
-
-- n_trees - Number of trees to generate for Annoy. Defaults to `100L`.
+- clip_max -

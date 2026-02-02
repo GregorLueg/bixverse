@@ -41,10 +41,9 @@ params_sc_miloR(
   List. Optional overrides for kNN parameters. See
   [`params_knn_defaults()`](params_knn_defaults.md) for available
   parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
-  `ef_search`, `n_bits`, `n_tables` and `max_candidates`. Note:
-  `knn_method` cannot be `"exhaustive"` for MiloR as it doesn't generate
-  an index!
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and
+  `ef_search`. Note: `knn_method` cannot be `"exhaustive"` for MiloR as
+  it doesn't generate an index!
 
 ## Value
 

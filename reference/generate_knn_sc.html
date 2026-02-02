@@ -101,30 +101,16 @@ use. If <code>NULL</code> all will be used.</p></dd>
 
 <dt id="arg-neighbours-params">neighbours_params<a class="anchor" aria-label="anchor" href="#arg-neighbours-params"></a></dt>
 <dd><p>List. Output of <code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.
-A list with the following items:</p><ul><li><p>k - Integer. Number of neighbours to identify.</p></li>
-<li><p>knn_algorithm - String. One of <code>c("annoy", "hnsw", "nndescent")</code>.
-<code>"hnsw"</code> takes longer, is more precise and more memory friendly. <code>"annoy"</code>
-is faster, less precise and will take more memory. <code>"nndescent"</code> skips
-index generation and can be faster on small datasets.</p></li>
-<li><p>n_trees -  Integer. Number of trees to use for the <code>annoy</code> algorithm.
-The higher, the longer the algorithm takes, but the more precise the
-approximated nearest neighbours.</p></li>
-<li><p>search_budget - Integer. Search budget per tree for the <code>annoy</code>
-algorithm. The higher, the longer the algorithm takes, but the more precise
-the approximated nearest neighbours.</p></li>
-<li><p>ann_dist - String. One of <code>c("cosine", "euclidean")</code>.</p></li>
-<li><p>max_iter - Integer. Maximum iterations for the <code>"nndescent"</code> method.</p></li>
-<li><p>rho - Numeric. Sampling rate for the <code>"nndescent"</code> method.</p></li>
-<li><p>delta - Numeric. Early termination criterium for the <code>"nndescent"</code>
-method.</p></li>
-<li><p>full_snn - Boolean. Shall the sNN graph be generated across all
-cells (standard in the <code>bluster</code> package.) Defaults to <code>FALSE</code>. Not
-relevant for this function.</p></li>
-<li><p>pruning - Value below which the weight in the sNN graph is set to 0.
-Not relevant for this function.</p></li>
+A list with the following items:</p><ul><li><p>full_snn - Boolean. Shall the full shared nearest neighbour graph
+be generated that generates edges between all cells instead of between
+only neighbours.</p></li>
+<li><p>pruning - Numeric. Weights below this threshold will be set to 0 in
+the generation of the sNN graph.</p></li>
 <li><p>snn_similarity - String. One of <code>c("rank", "jaccard")</code>. Defines how
-the weight form the SNN graph is calculated. For details, please see
-<code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>. Not relevant for this function.</p></li>
+the weight from the SNN graph is calculated. For details, please see
+<code><a href="params_sc_neighbours.html">params_sc_neighbours()</a></code>.</p></li>
+<li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
+for available parameters and their defaults.</p></li>
 </ul></dd>
 
 

@@ -21,7 +21,8 @@ rs_mutual_info(x, n_bins, strategy, normalise)
 
 - strategy:
 
-  String. Binning strategy One of `c("equal_width", "equal_freq")`.
+  String. Binning strategy One of `c("equal_width", "equal_freq")`. If
+  weird string is provided, it will default to `"equal_width"`.
 
 - normalise:
 

@@ -200,7 +200,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.658 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.553 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gene-ontology-aware-enrichment-tests-for-sets">Gene ontology aware enrichment tests (for sets)<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-tests-for-sets"></a>
 </h3>
@@ -316,7 +316,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.564 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.453 sec elapsed</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="alternative-simplifying-results">Alternative: simplifying results<a class="anchor" aria-label="anchor" href="#alternative-simplifying-results"></a>
 </h3>
@@ -363,7 +363,7 @@
 <code class="sourceCode R"><span><span class="va">go_parent_child_dt</span> <span class="op">&lt;-</span> <span class="va">go_data</span><span class="op">$</span><span class="va">gene_ontology</span><span class="op">[</span></span>
 <span>  <span class="va">relationship</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"is_a"</span>, <span class="st">"part_of"</span><span class="op">)</span></span>
 <span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setattr.html" class="external-link">setnames</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setattr.html" class="external-link">setnames</a></span><span class="op">(</span></span>
 <span>    old <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"from"</span>, <span class="st">"to"</span>, <span class="st">"relationship"</span><span class="op">)</span>,</span>
 <span>    new <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parent"</span>, <span class="st">"child"</span>, <span class="st">"type"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -377,20 +377,10 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">go_results_simplified</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    gene_set_name odds_ratios        pvals          fdr  hits gene_set_lengths</span></span>
 <span><span class="co">#&gt;           &lt;char&gt;       &lt;num&gt;        &lt;num&gt;        &lt;num&gt; &lt;num&gt;            &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:    GO:0003723   22.120609 1.723343e-23 1.579099e-19    31             1546</span></span>
-<span><span class="co">#&gt; 2:    GO:0006364   35.837205 2.936032e-12 1.345143e-08    10              159</span></span>
-<span><span class="co">#&gt; 3:    GO:0005730    8.860092 6.601460e-12 1.581347e-08    23             1927</span></span>
-<span><span class="co">#&gt; 4:    GO:0042254   43.069954 6.903186e-12 1.581347e-08     9              118</span></span>
-<span><span class="co">#&gt; 5:    GO:0032040   44.202960 1.623943e-08 2.023038e-05     6               72</span></span>
-<span><span class="co">#&gt; 6:    GO:0000055  455.891304 2.368116e-07 2.169905e-04     3                6</span></span>
+<span><span class="co">#&gt; 1:    GO:0003723    22.12061 1.723343e-23 1.579099e-19    31             1546</span></span>
 <span><span class="co">#&gt;    target_set_lengths</span></span>
 <span><span class="co">#&gt;                 &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1:                 50</span></span>
-<span><span class="co">#&gt; 2:                 50</span></span>
-<span><span class="co">#&gt; 3:                 50</span></span>
-<span><span class="co">#&gt; 4:                 50</span></span>
-<span><span class="co">#&gt; 5:                 50</span></span>
-<span><span class="co">#&gt; 6:                 50</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:                 50</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gsea">GSEA<a class="anchor" aria-label="anchor" href="#gsea"></a>
 </h3>
@@ -411,7 +401,7 @@
 <span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
 <span>  minSize <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  maxSize <span class="op">=</span> <span class="fl">500</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fgsea_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                                                                    pathway</span></span>
@@ -446,7 +436,7 @@
 <span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
 <span>  pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
 <span>  gsea_params <span class="op">=</span> <span class="fu"><a href="../reference/params_gsea.html">params_gsea</a></span><span class="op">(</span>min_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway_name</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway_name</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">bixverse_fgsea</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            es        nes     pvals n_more_extreme  size</span></span>
@@ -510,8 +500,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.316707 2.337821 2.611730 2.515765 2.918557 3.036625    10</span></span>
-<span><span class="co">#&gt;   rust 2.465979 2.470676 2.486004 2.478393 2.495422 2.544073    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.305173 2.410611 2.620625 2.507747 2.868472 3.031975    10</span></span>
+<span><span class="co">#&gt;   rust 2.403925 2.413912 2.431027 2.429511 2.446402 2.455571    10</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gsea-gene-ontology-aware">GSEA gene ontology aware<a class="anchor" aria-label="anchor" href="#gsea-gene-ontology-aware"></a>
 </h3>

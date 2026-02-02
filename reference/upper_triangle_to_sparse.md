@@ -5,7 +5,7 @@ Transform an upper triangle-stored matrix to a sparse one
 ## Usage
 
 ``` r
-upper_triangle_to_sparse(upper_triangle_vals, shift, n)
+upper_triangle_to_sparse(upper_triangle_vals, shift, n, type = c("csc", "csr"))
 ```
 
 ## Arguments
