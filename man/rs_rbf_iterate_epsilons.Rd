@@ -18,8 +18,9 @@ distance matrix.}
 \item{shift}{Integer. Was the matrix shifted up (0 = diagonal included; 1
 diagonal not incldued).}
 
-\item{rbf_type}{String. Option of \code{c('gaussian', 'bump')} for the currently
-implemented RBF function.}
+\item{rbf_type}{String. One of \code{c('gaussian', 'bump', 'inverse_quadratic')}
+for the currently implemented RBF function. Weird strings will default
+to Gaussian.}
 }
 \value{
 A matrix with rows being the epsilons tested, and columns

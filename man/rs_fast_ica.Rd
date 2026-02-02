@@ -12,7 +12,8 @@ rs_fast_ica(whiten, w_init, ica_type, ica_params)
 \item{w_init}{Numerical matrix. The initial unmixing matrix. ncols need to
 be equal to nrows of whiten.}
 
-\item{ica_type}{String. One of 'logcosh' or 'exp'.}
+\item{ica_type}{String. One of 'logcosh' or 'exp'. If weird string is
+provided, it will default to \code{"logcosh"}.}
 
 \item{ica_params}{A list containing:
 \itemize{
