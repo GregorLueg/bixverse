@@ -3,10 +3,6 @@ use bixverse_rs::ontology::similarity::*;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
-use crate::utils::general::{
-    faer_mat_to_upper_triangle, flatten_vector, upper_triangle_to_sym_faer,
-};
-
 /// Calculate the semantic similarity in an ontology
 ///
 /// @description This function calculates the specified semantic similarity and

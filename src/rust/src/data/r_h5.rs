@@ -1,8 +1,12 @@
 use extendr_api::prelude::*;
 
-use crate::core::data::sparse_io_h5::*;
-use crate::core::data::sparse_structures::*;
-use crate::single_cell::processing::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_data::h5ad_io::*;
+
+extendr_module! {
+    mod r_h5;
+    fn rs_h5ad_data;
+}
 
 /// Load in h5ad data via Rust
 ///
@@ -39,7 +43,7 @@ fn rs_h5ad_data(
 ) -> extendr_api::Result<List> {
     let cell_quality = MinCellQuality::from_r_list(cell_quality);
 
-    let file_format = parse_cs_format(&cs_type).unwrap();
+    let file_format = parse_compressed_sparse_format(&cs_type).unwrap();
 
     let file_quality = match file_format {
         CompressedSparseFormat::Csr => {
@@ -79,9 +83,4 @@ fn rs_h5ad_data(
         no_genes = file_quality.genes_to_keep.len(),
         no_cells = file_quality.cells_to_keep.len()
     ))
-}
-
-extendr_module! {
-    mod r_h5;
-    fn rs_h5ad_data;
 }

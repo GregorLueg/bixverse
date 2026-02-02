@@ -3,13 +3,12 @@ use faer::Mat;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
-use crate::core::data::sparse_io::*;
-use crate::core::data::sparse_structures::*;
-use crate::single_cell::cell_aggregations::*;
-use crate::single_cell::methods::seacells::*;
-use crate::single_cell::sc_knn_snn::*;
-use crate::utils::r_rust_interface::*;
-use crate::utils::traits::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::cell_aggregation_utils::*;
+use bixverse_rs::single_cell::sc_analysis::hdwgcna_meta_cells::*;
+use bixverse_rs::single_cell::sc_analysis::seacells::*;
+use bixverse_rs::single_cell::sc_analysis::super_cells::*;
+use bixverse_rs::single_cell::sc_r_wrappers::assignments_to_r_list;
 
 extendr_module! {
     mod r_sc_metacells;

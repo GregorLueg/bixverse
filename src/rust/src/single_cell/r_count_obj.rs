@@ -5,15 +5,11 @@ use std::sync::Arc;
 use std::time::Instant;
 use thousands::Separable;
 
-use crate::core::data::sparse_io::*;
-use crate::core::data::sparse_io_h5::*;
-use crate::core::data::sparse_io_mtx::*;
-use crate::core::data::sparse_io_r_obj::*;
-use crate::core::data::sparse_structures::*;
-use crate::single_cell::processing::*;
-use crate::utils::general::flatten_vector;
-use crate::utils::r_rust_interface::list_to_sparse_matrix;
-use crate::utils::traits::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_data::data_io::*;
+use bixverse_rs::single_cell::sc_data::h5ad_io::*;
+use bixverse_rs::single_cell::sc_data::mtx_io::*;
+use bixverse_rs::single_cell::sc_data::r_obj_io::*;
 
 // Extendr unfortunately cannot do Roxygen2 manipulation of R6 type
 // classes. This will have to be done manually in R... Documentation

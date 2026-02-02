@@ -1,111 +1,22 @@
 use extendr_api::prelude::*;
 
-use crate::core::data::sparse_structures::*;
-use crate::core::data::synthetic_data::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer};
-use crate::utils::traits::*;
+use bixverse_rs::data::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 
 extendr_module! {
     mod r_synthetic;
-    fn rs_synthetic_sc_data_csc;
-    fn rs_synthetic_sc_data_csr;
-    fn rs_synthetic_sc_data_with_cell_types;
-    fn rs_sample_ids_for_cell_types;
+    // fn rs_synthetic_sc_data_csc;
+    // fn rs_synthetic_sc_data_csr;
+    // fn rs_synthetic_sc_data_with_cell_types;
+    // fn rs_sample_ids_for_cell_types;
     fn rs_generate_bulk_rnaseq;
     fn rs_simulate_dropouts;
 }
 
-/// Generate synthetic single cell data (Seurat type)
-///
-/// @description This function generates pseudo data to test single cell
-/// functions in form of the Seurat version, with cells = columns and genes =
-/// rows. The data is CSC type.
-///
-/// @param n_genes Integer. Number of genes you wish to have in the synthetic
-/// data.
-/// @param n_cells Integer. Number of cells you wish to have in the synthetic
-/// data.
-/// @param min_genes Integer. Minimum number of genes expressed per cell.
-/// @param max_genes Integer. Maximum number of genes expressed per cell.
-/// @param max_exp Upper bound in terms of expression. Expression values will be
-/// sampled from `1:max_exp`.
-/// @param seed Integer. Seed for reproducibility purposes.
-///
-/// @return The list with the synthetic data with the following items:
-///  \itemize{
-///   \item data - The synthetic counts
-///   \item col_ptrs - The column pointers
-///   \item row_indices - The row indices
-///   \item nrow - Number of rows (cells)
-///   \item ncol - Number of cols (genes)
-/// }
-#[extendr]
-fn rs_synthetic_sc_data_csc(
-    n_genes: usize,
-    n_cells: usize,
-    min_genes: usize,
-    max_genes: usize,
-    max_exp: i32,
-    seed: usize,
-) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
-        create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
-
-    list!(
-        data = synthetic_data.data,
-        indptr = synthetic_data.indptr,
-        indices = synthetic_data.indices,
-        nrow = n_cells,
-        ncol = n_genes
-    )
-}
-
-/// Generate synthetic single cell data (h5ad type)
-///
-/// @description This function generates pseudo data to test single cell
-/// functions in form of the h5ad version, with cells = rows and genes =
-/// columns. The data is encoded in CSR.
-///
-/// @param n_genes Integer. Number of genes you wish to have in the synthetic
-/// data.
-/// @param n_cells Integer. Number of cells you wish to have in the synthetic
-/// data.
-/// @param min_genes Integer. Minimum number of genes expressed per cell.
-/// @param max_genes Integer. Maximum number of genes expressed per cell.
-/// @param max_exp Upper bound in terms of expression. Expression values will be
-/// sampled from `1:max_exp`.
-/// @param seed Integer. Seed for reproducibility purposes.
-///
-/// @return The list with the synthetic data with the following items:
-///  \itemize{
-///   \item data - The synthetic counts
-///   \item row_ptrs - The row pointers
-///   \item col_indices - The column indices
-///   \item nrow - Number of rows (cells)
-///   \item ncol - Number of cols (genes)
-/// }
-///
-/// @export
-#[extendr]
-fn rs_synthetic_sc_data_csr(
-    n_genes: usize,
-    n_cells: usize,
-    min_genes: usize,
-    max_genes: usize,
-    max_exp: i32,
-    seed: usize,
-) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
-        create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
-
-    list!(
-        data = synthetic_data.data,
-        indptr = synthetic_data.indptr,
-        indices = synthetic_data.indices,
-        nrow = n_cells,
-        ncol = n_genes
-    )
-}
+//////////
+// Bulk //
+//////////
 
 /// Generation of bulkRNAseq-like data with optional correlation structure
 ///
@@ -145,7 +56,7 @@ fn rs_generate_bulk_rnaseq(
         .map(|x| *x as usize)
         .collect();
 
-    let data = generate_bulk_rnaseq(
+    let data: SyntheticRnaSeqData<f64> = generate_bulk_rnaseq(
         num_samples,
         num_genes,
         seed as u64,
@@ -242,6 +153,102 @@ fn rs_simulate_dropouts(
     };
 
     Ok(faer_to_r_matrix(sparse_data.as_ref()))
+}
+
+/////////////////
+// Single cell //
+/////////////////
+
+/// Generate synthetic single cell data (Seurat type)
+///
+/// @description This function generates pseudo data to test single cell
+/// functions in form of the Seurat version, with cells = columns and genes =
+/// rows. The data is CSC type.
+///
+/// @param n_genes Integer. Number of genes you wish to have in the synthetic
+/// data.
+/// @param n_cells Integer. Number of cells you wish to have in the synthetic
+/// data.
+/// @param min_genes Integer. Minimum number of genes expressed per cell.
+/// @param max_genes Integer. Maximum number of genes expressed per cell.
+/// @param max_exp Upper bound in terms of expression. Expression values will be
+/// sampled from `1:max_exp`.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return The list with the synthetic data with the following items:
+///  \itemize{
+///   \item data - The synthetic counts
+///   \item col_ptrs - The column pointers
+///   \item row_indices - The row indices
+///   \item nrow - Number of rows (cells)
+///   \item ncol - Number of cols (genes)
+/// }
+#[extendr]
+fn rs_synthetic_sc_data_csc(
+    n_genes: usize,
+    n_cells: usize,
+    min_genes: usize,
+    max_genes: usize,
+    max_exp: i32,
+    seed: usize,
+) -> List {
+    let synthetic_data: CompressedSparseData<i32> =
+        create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
+
+    list!(
+        data = synthetic_data.data,
+        indptr = synthetic_data.indptr,
+        indices = synthetic_data.indices,
+        nrow = n_cells,
+        ncol = n_genes
+    )
+}
+
+/// Generate synthetic single cell data (h5ad type)
+///
+/// @description This function generates pseudo data to test single cell
+/// functions in form of the h5ad version, with cells = rows and genes =
+/// columns. The data is encoded in CSR.
+///
+/// @param n_genes Integer. Number of genes you wish to have in the synthetic
+/// data.
+/// @param n_cells Integer. Number of cells you wish to have in the synthetic
+/// data.
+/// @param min_genes Integer. Minimum number of genes expressed per cell.
+/// @param max_genes Integer. Maximum number of genes expressed per cell.
+/// @param max_exp Upper bound in terms of expression. Expression values will be
+/// sampled from `1:max_exp`.
+/// @param seed Integer. Seed for reproducibility purposes.
+///
+/// @return The list with the synthetic data with the following items:
+///  \itemize{
+///   \item data - The synthetic counts
+///   \item row_ptrs - The row pointers
+///   \item col_indices - The column indices
+///   \item nrow - Number of rows (cells)
+///   \item ncol - Number of cols (genes)
+/// }
+///
+/// @export
+#[extendr]
+fn rs_synthetic_sc_data_csr(
+    n_genes: usize,
+    n_cells: usize,
+    min_genes: usize,
+    max_genes: usize,
+    max_exp: i32,
+    seed: usize,
+) -> List {
+    let synthetic_data: CompressedSparseData<i32> =
+        create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
+
+    list!(
+        data = synthetic_data.data,
+        indptr = synthetic_data.indptr,
+        indices = synthetic_data.indices,
+        nrow = n_cells,
+        ncol = n_genes
+    )
 }
 
 /// Generates synthetic data for single cell

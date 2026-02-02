@@ -2,14 +2,13 @@ use extendr_api::*;
 use faer::Mat;
 use rand::prelude::*;
 
-use crate::core::base::stats::calc_fdr;
-use crate::single_cell::dge_pathway_scores::*;
-use crate::single_cell::methods::milo_r::*;
-use crate::single_cell::methods::module_scoring::*;
-use crate::single_cell::methods::vision_hotspot::*;
-use crate::single_cell::sc_knn_snn::*;
-use crate::utils::r_rust_interface::*;
-use crate::utils::traits::*;
+use bixverse_rs::core::math::stats::calc_fdr;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
+use bixverse_rs::single_cell::sc_analysis::hotspot::*;
+use bixverse_rs::single_cell::sc_analysis::milo_r::*;
+use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
+use bixverse_rs::single_cell::sc_analysis::vision::*;
 
 extendr_module! {
     mod r_sc_analysis;

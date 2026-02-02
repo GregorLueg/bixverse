@@ -1,9 +1,0 @@
-//! Module containing key statistic functions that inlude correlations,
-//! similarities, distributions tests, radial basis functions, etc.
-
-pub mod linear_algebra;
-pub mod loess;
-pub mod pca_svd;
-pub mod sparse_math;
-pub mod stats;
-pub mod utils;

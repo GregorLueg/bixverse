@@ -178,12 +178,18 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.0"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#ceaaacebe10f5ff1b0848fa37dd4ed036ec51400"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=dev#77d22efe2f2dd04e61fe6ef98cd1a7d758dddff9"
 dependencies = [
  "ann-search-rs",
+ "bincode",
  "extendr-api",
  "faer",
  "faer-entity",
+ "half",
+ "hdf5-metno",
+ "indexmap",
+ "lz4_flex",
+ "memmap2",
  "num-traits",
  "once_cell",
  "petgraph",
@@ -2061,7 +2067,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

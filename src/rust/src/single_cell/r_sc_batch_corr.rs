@@ -1,11 +1,10 @@
 use extendr_api::*;
 use faer::Mat;
 
-use crate::single_cell::methods::bbknn::*;
-use crate::single_cell::methods::fast_mnn::*;
-use crate::single_cell::metrics::kbet;
-use crate::utils::r_rust_interface::*;
-use crate::utils::traits::VecConvert;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_batch_correction::bbknn::*;
+use bixverse_rs::single_cell::sc_batch_correction::fast_mnn::*;
+use bixverse_rs::single_cell::sc_processing::metrics::kbet;
 
 extendr_module! {
     mod r_sc_batch_corr;

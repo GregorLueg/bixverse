@@ -2,12 +2,10 @@ use extendr_api::prelude::*;
 use faer::Mat;
 use std::time::Instant;
 
-use crate::single_cell::methods::doublet_detection::*;
-use crate::single_cell::methods::scrublet::*;
-use crate::single_cell::processing::*;
-use crate::single_cell::sc_knn_snn::*;
-use crate::utils::r_rust_interface::{faer_to_r_matrix, r_matrix_to_faer_fp32};
-use crate::utils::traits::*;
+use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_processing::{
+    doublet_detection::*, hvg::*, pca::*, qc::*, scrublet::*, snn::*,
+};
 
 extendr_module! {
     mod r_sc_processing;
@@ -329,14 +327,16 @@ fn rs_sc_hvg(
     let hvg_res: HvgRes = if streaming {
         match hvg_type {
             HvgMethod::Vst => {
-                get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span, clip_max, verbose)
+                get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
             }
             HvgMethod::MeanVarBin => get_hvg_mvb_streaming(),
             HvgMethod::Dispersion => get_hvg_dispersion_streaming(),
         }
     } else {
         match hvg_type {
-            HvgMethod::Vst => get_hvg_vst(f_path_gene, &cell_set, loess_span, clip_max, verbose),
+            HvgMethod::Vst => {
+                get_hvg_vst(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
+            }
             HvgMethod::MeanVarBin => get_hvg_mvb(),
             HvgMethod::Dispersion => get_hvg_dispersion(),
         }
@@ -408,7 +408,7 @@ fn rs_sc_hvg_batch_aware(
                 f_path_gene,
                 &cell_set,
                 &batch_set,
-                loess_span,
+                loess_span as f32,
                 clip_max,
                 verbose,
             ),
@@ -421,7 +421,7 @@ fn rs_sc_hvg_batch_aware(
                 f_path_gene,
                 &cell_set,
                 &batch_set,
-                loess_span,
+                loess_span as f32,
                 clip_max,
                 verbose,
             ),
