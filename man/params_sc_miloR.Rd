@@ -29,9 +29,9 @@ One of \code{c("approximate", "bruteforce", "index")}. Defaults to
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search},
-\code{n_bits}, \code{n_tables} and \code{max_candidates}. Note: \code{knn_method}
-cannot be \code{"exhaustive"} for MiloR as it doesn't generate an index!}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, and \code{ef_search}.
+Note: \code{knn_method} cannot be \code{"exhaustive"} for MiloR as it doesn't generate
+an index!}
 }
 \value{
 A list with the MiloR parameters.

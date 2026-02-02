@@ -12,10 +12,7 @@ KNN_PARAM_NAMES <- c(
   "ef_budget",
   "m",
   "ef_construction",
-  "ef_search",
-  "n_bits",
-  "n_tables",
-  "max_candidates"
+  "ef_search"
 )
 
 # checks -----------------------------------------------------------------------
@@ -840,10 +837,7 @@ checkKnnParams <- function(x, required_params = NULL) {
     "m" = "I1[1,)",
     "ef_construction" = "I1[1,)",
     "ef_search" = "I1[1,)",
-    "ef_budget" = c("0", "I1[1,)"),
-    "n_bits" = "I1[1,)",
-    "n_tables" = "I1[1,)",
-    "max_candidates" = c("0", "I1[1,)")
+    "ef_budget" = c("0", "I1[1,)")
   )
 
   res <- purrr::imap_lgl(x, \(val, name) {
@@ -860,9 +854,8 @@ checkKnnParams <- function(x, required_params = NULL) {
       sprintf(
         paste(
           "The following kNN parameter `%s` is incorrect:",
-          "k must be >= 0; n_trees, m, ef_construction, ef_search, n_bits,",
-          "n_tables must be >= 1; search_budget, ef_budget, max_candidates",
-          "must be NULL or >= 1."
+          "k must be >= 0; n_trees, m, ef_construction, ef_search must be >= 1;",
+          "search_budget, ef_budget must be NULL or >= 1."
         ),
         broken_elem
       )
@@ -895,7 +888,7 @@ checkKnnParams <- function(x, required_params = NULL) {
 
   # choice rules
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent", "lsh", "exhaustive"),
+    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive"),
     ann_dist = c("euclidean", "cosine")
   )
 

@@ -14,8 +14,7 @@ parameters:
 to include. Defaults to \code{0.7}.
 \item hvg_method - Which method to use to identify HVG. Defaults to \code{"vst"}.
 \item loess_span - In case of
-\item search_budget - Search budget per tree for Annoy. Defaults to \code{100L}.
-\item n_trees - Number of trees to generate for Annoy. Defaults to \code{100L}.
+\item clip_max -
 }
 }
 \description{

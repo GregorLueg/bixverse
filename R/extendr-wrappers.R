@@ -101,7 +101,8 @@ rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
 #' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 #' the function will default to `sqrt(nrows(x))`.
 #' @param strategy String. Binning strategy One of
-#' `c("equal_width", "equal_freq")`.
+#' `c("equal_width", "equal_freq")`. If weird string is provided, it will
+#' default to `"equal_width"`.
 #' @param normalise Boolean. Shall the normalised mutual information be
 #' calculated via joint entropy.
 #'
@@ -194,6 +195,19 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculate rapidbly Jaccard similarities between rows
+#'
+#' @description Helper function to quickly calculate the Jaccard similarity
+#' between the rows across the two matrices.
+#'
+#' @param data_1 Integer matrix. The first matrix to compare.
+#' @param data_2 Integer matrix. The second matrix to compare.
+#'
+#' @returns The average Jaccard similarity.
+#'
+#' @export
+rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_integers, data_1, data_2)
+
 #' Calculates the Hamming distance between categorical columns
 #'
 #' @param x Integer matrix. The integers represent the factor data.
@@ -209,7 +223,7 @@ rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
 #' variables as numerical values.
 #' @param is_cat Boolean. Which of the columns represent categorical values.
 #'
-#' @return The Gower distance matrix.
+#' @return The Gower distance matrix between the rows
 #'
 #' @export
 rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
@@ -355,8 +369,9 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' distance matrix.
 #' @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
 #' diagonal not incldued).
-#' @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
-#' implemented RBF function.
+#' @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
+#' for the currently implemented RBF function. Weird strings will default
+#' to Gaussian.
 #'
 #' @return A matrix with rows being the epsilons tested, and columns
 #' representing the summed affinity to other features.
@@ -447,7 +462,7 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' acceptable.
 #' @param direction String. One of `c("below", "above", "twosided")`. Shall
 #' the outlier direction be done for values below the threshold, above the
-#' threshold or in both directions.
+#' threshold or in both directions. Weird strings default to twosided tests.
 #'
 #' @return A list with the following items:
 #' \itemize{
@@ -568,7 +583,7 @@ rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span,
 #' }
 #'
 #' @export
-rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
+rs_upper_triangle_to_sparse <- function(value, shift, n, cs_type) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n, cs_type)
 
 #' Helper to get zero stats from a given matrix
 #'
@@ -1560,7 +1575,8 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' @param whiten Numerical matrix. The whitened matrix.
 #' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 #' be equal to nrows of whiten.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
+#' provided, it will default to `"logcosh"`.
 #' @param ica_params A list containing:
 #'  \itemize{
 #'   \item maxit - Integer. Maximum number of iterations for ICA.
