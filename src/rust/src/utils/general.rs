@@ -1,6 +1,5 @@
 use std::cmp::PartialOrd;
 use std::fmt::Debug;
-use std::ops::AddAssign;
 
 use faer::{Mat, MatRef};
 use faer_entity::Entity;
@@ -26,44 +25,6 @@ where
     vec.into_iter().flatten().collect()
 }
 
-/// Get the maximum value of an array
-///
-/// ### Params
-///
-/// * `arr` - The array of values
-///
-/// ### Returns
-///
-/// The maximum value found in the array
-pub fn array_max<T: PartialOrd + Copy>(arr: &[T]) -> T {
-    let mut max_val = arr[0];
-    for number in arr {
-        if *number > max_val {
-            max_val = *number
-        }
-    }
-    max_val
-}
-
-/// Get the minimum value of an array
-///
-/// ### Params
-///
-/// * `arr` - The array of values
-///
-/// ### Returns
-///
-/// The minimum value found in the array
-pub fn array_min<T: PartialOrd + Copy>(arr: &[T]) -> T {
-    let mut min_val = arr[0];
-    for number in arr {
-        if *number < min_val {
-            min_val = *number
-        }
-    }
-    min_val
-}
-
 /// Get the maximum and minimum value of an array
 ///
 /// ### Params
@@ -86,28 +47,6 @@ pub fn array_max_min<T: PartialOrd + Copy>(arr: &[T]) -> (T, T) {
     }
 
     (min_val, max_val)
-}
-
-/// Calculate the cumulative sum over a vector
-///
-/// ### Params
-///
-/// * `x` - The slice of numerical values
-///
-/// ### Returns
-///
-/// The cumulative sum over the vector.
-pub fn cumsum<T>(x: &[T]) -> Vec<T>
-where
-    T: Copy + Default + AddAssign<T>,
-{
-    let mut sum = T::default();
-    x.iter()
-        .map(|&val| {
-            sum += val;
-            sum
-        })
-        .collect()
 }
 
 //////////////////

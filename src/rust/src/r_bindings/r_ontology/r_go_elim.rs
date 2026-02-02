@@ -1,11 +1,11 @@
+use bixverse_rs::enrichment::enrichment_r_wrapper::prepare_gsea_params;
+use bixverse_rs::enrichment::gsea::*;
+use bixverse_rs::ontology::go_elim::*;
+use bixverse_rs::ontology::ontology_r_wrappers::prepare_go_data;
+use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
-
-use crate::core::enrichment::gsea::*;
-use crate::core::ontology::go_elim::*;
-use crate::utils::general::flatten_vector;
-use crate::utils::r_rust_interface::*;
 
 /// Run hypergeometric enrichment over the gene ontology
 ///
@@ -51,16 +51,16 @@ fn rs_gse_geom_elim(
     min_overlap: Option<usize>,
     fdr_threshold: Option<f64>,
 ) -> extendr_api::Result<List> {
-    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
+    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj);
 
     let mut go_obj: GeneOntology<'_> = GeneOntology::new(go_to_gene, &ancestors_map, &levels_map);
 
-    let mut go_res: Vec<GoElimLevelResults> = Vec::with_capacity(levels.len());
+    let mut go_res: Vec<GoElimLevelResults<f64>> = Vec::with_capacity(levels.len());
 
     let target_set: FxHashSet<String> = target_genes.iter().cloned().collect();
 
     for level in levels.iter() {
-        let level_res: GoElimLevelResults = process_ontology_level(
+        let level_res: GoElimLevelResults<f64> = process_ontology_level(
             &target_set,
             level,
             &mut go_obj,
@@ -71,7 +71,8 @@ fn rs_gse_geom_elim(
         go_res.push(level_res)
     }
 
-    let filtered_res: GoElimFinalResults = finalise_go_res(&go_res, min_overlap, fdr_threshold);
+    let filtered_res: GoElimFinalResults<f64> =
+        finalise_go_res(&go_res, min_overlap, fdr_threshold);
 
     Ok(list!(
         go_ids = filtered_res.go_ids,
@@ -136,22 +137,22 @@ fn rs_gse_geom_elim_list(
     let target_genes_list = r_list_to_str_vec(target_genes_list)?;
 
     // Prepare the data
-    let go_data = prepare_go_data(go_obj)?;
+    let go_data = prepare_go_data(go_obj);
 
-    let (geom_res, test_passed): (Vec<GoElimFinalResults>, Vec<usize>) = target_genes_list
+    let (geom_res, test_passed): (Vec<GoElimFinalResults<f64>>, Vec<usize>) = target_genes_list
         .par_iter()
         .map(|targets| {
             // Create necessary mutables
             let mut go_obj: GeneOntology<'_> =
                 GeneOntology::new(go_data.0.clone(), &go_data.1, &go_data.2);
 
-            let mut go_res: Vec<GoElimLevelResults> = Vec::with_capacity(levels.len());
+            let mut go_res: Vec<GoElimLevelResults<f64>> = Vec::with_capacity(levels.len());
 
             let target_set: FxHashSet<String> = targets.iter().cloned().collect();
 
             // Iterate over the levels
             for level in levels.iter() {
-                let level_res: GoElimLevelResults = process_ontology_level(
+                let level_res: GoElimLevelResults<f64> = process_ontology_level(
                     &target_set,
                     level,
                     &mut go_obj,
@@ -163,7 +164,7 @@ fn rs_gse_geom_elim_list(
                 go_res.push(level_res);
             }
 
-            let filtered_res: GoElimFinalResults =
+            let filtered_res: GoElimFinalResults<f64> =
                 finalise_go_res(&go_res, min_overlap, fdr_threshold);
 
             let passed_tests = filtered_res.go_ids.len();
@@ -259,7 +260,7 @@ fn rs_geom_elim_fgsea_simple(
 ) -> extendr_api::Result<List> {
     let vec_data = r_named_vec_data(stats)?;
 
-    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj)?;
+    let (go_to_gene, ancestors_map, levels_map) = prepare_go_data(go_obj);
 
     let gsea_params = prepare_gsea_params(gsea_params);
 
@@ -305,7 +306,7 @@ fn rs_geom_elim_fgsea_simple(
             &go_shared_perm,
             &gsea_params,
             elim_threshold,
-        )?;
+        );
 
         go_ids.push(level_res.go_ids);
         es.push(level_res.es);
