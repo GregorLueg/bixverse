@@ -229,7 +229,7 @@ S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This function implements the batch-balanced k-nearest neighbour algorithm
-#' from Polański, et al. Briefly, the algorithm generate a KNN index on a per
+#' from Polański, et al. Briefly, the algorithm generates a KNN index on a per
 #' batch basis and identifies the neighbours of cells for each individual index.
 #' Subsequently, it leverages UMAP connectivity calculations to reduce spurious
 #' connections. For more details, please refer to Polański, et al.
@@ -250,24 +250,17 @@ S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
 #' \itemize{
 #'   \item neighbours_within_batch - Integer. Number of neighbours to consider
 #'   per batch.
-#'   \item knn_method - String. One of `c("annoy", "hnsw")`. Defaults to
-#'   `"annoy"`.
-#'   \item ann_dist - String. One of `c("cosine", "euclidean")`. The distance
-#'   metric to be used for the approximate neighbour search. Defaults to
-#'   `"cosine"`.
 #'   \item set_op_mix_ratio - Numeric. Mixing ratio between union (1.0) and
 #'   intersection (0.0).
 #'   \item local_connectivity - Numeric. UMAP connectivity computation
 #'   parameter, how many nearest neighbours of each cell are assumed to be fully
 #'   connected.
-#'   \item annoy_n_trees - Integer. Number of trees to use in the generation of
-#'   the Annoy index.
-#'   \item search_budget - Integer. Search budget per tree for the `annoy`
-#'   algorithm.
 #'   \item trim - Optional integer. Trim the neighbours of each cell to these
 #'   many top connectivities. May help with population independence and improve
 #'   the tidiness of clustering. If `NULL`, it defaults to
 #'   `10 * neighbours_within_batch`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. Random seed.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -421,7 +414,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #' @description
 #' This function implements the fast mutual nearest neighbour (MNN) from
 #' Haghverdi, et al. This version works on the PCA embedding and generates
-#' an embedding only and not fully corrected count matrix. The function will
+#' an embedding only and not a fully corrected count matrix. The function will
 #' iterate through the batches, identify the MNN and generate correction vectors
 #' and generate a corrected embedding which is added to the function.
 #'
@@ -433,7 +426,18 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #' [bixverse::find_hvg_batch_aware_sc()] for more details.
 #' @param fastmnn_params A list, please see [bixverse::params_sc_fastmnn()]. The
 #' list has the following parameters:
-#' Claude fill this out
+#' \itemize{
+#'   \item sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
+#'   proportion of space radius).
+#'   \item cos_norm - Logical. Apply cosine normalisation before computing
+#'   distances.
+#'   \item var_adj - Logical. Apply variance adjustment to avoid kissing
+#'   effects.
+#'   \item no_pcs - Integer. Number of PCs to use for MNN calculations.
+#'   \item random_svd - Logical. Use randomised SVD.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
 #' @param seed Integer. Random seed.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'

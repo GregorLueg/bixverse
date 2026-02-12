@@ -558,6 +558,15 @@ get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
     indices <- indices - 1
   }
 
+  missing <- !cell_ids %in% names(cell_map)
+
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided cell_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+  }
+
   if (length(indices) == 0) {
     stop(
       "The cell indices have length 0. Please double check provided parameters!"

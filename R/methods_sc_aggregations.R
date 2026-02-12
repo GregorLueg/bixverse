@@ -20,25 +20,8 @@
 #'   \item target_no_metacells - Number of target meta cells you wish to reach.
 #'   \item max_iter - Maximum number of iterations you want to use for the
 #'   algorithm.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Only relevant if you set
@@ -97,7 +80,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScMetacells(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -200,7 +183,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #'
 #' @description
 #' This function implements the meta cell aggregation from Persad et al., and
-#' returns the resuling SEACells. Compared to other algorithms, a kernel
+#' returns the resulting SEACells. Compared to other algorithms, a kernel
 #' archetype analysis is used to identify the metacells. For details, please
 #' refer to the publication.
 #'
@@ -222,18 +205,8 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #'   Wolfe iterations.
 #'   \item pruning_threshold - The threshold below which pruning shall be
 #'   applied during Franke-Wolfe iterations.
-#'   \item k - Number of neighbours for the kNN algorithm.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   \item search_budget - Integer. Search budget during querying for the annoy
-#'   algorithm.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you use `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param embd_to_use String. The embedding to use. Atm, the only option is
 #' `"pca"`. Only relevant if you set regenerate_knn to `TRUE`.
@@ -253,7 +226,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #' @export
 #'
 #' @references
-#' Morabito, et al. Cell Rep Methods, 2023
+#' Persad, et al. Nat Biotechnol, 2023
 get_seacells_sc <- S7::new_generic(
   name = "get_seacells_sc",
   dispatch_args = "object",
@@ -288,7 +261,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScSeacells(seacell_params)
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -352,25 +325,8 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
 #'   the final dataset)
 #'   \item linkage_dist - String. Which type of distance metric to use for the
 #'   linkage. Defaults to `"complete"`.
-#'   \item k - Number of neighbours for the kNN search. Only relevant if you
-#'   set regenerate_knn to `TRUE`.
-#'   \item knn_method - String. Which kNN algorithm to use. One of
-#'   `c("annoy", "hnsw", "nndescent")`. Defaults to `"annoy"`. Only relevant if
-#'   you set regenerate_knn to `TRUE`.
-#'   \item ann_dist - String. Distance metric for the approximate neighbour
-#'   search. One of `c("cosine", "euclidean")`. Defaults to `"cosine"`. Only
-#'   relevant if you set regenerate_knn to `TRUE`.
-#'   \item n_trees - Integer. Number of trees to use for the annoy algorithm.
-#'   Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item search_budget - Integer. Search budget per tree for the annoy
-#'   algorithm. Only relevant if you set regenerate_knn to `TRUE`.
-#'   \item nn_max_iter - Integer. Maximum iterations for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use
-#'   `"nndescent"`.
-#'   \item rho - Numeric. Sampling rate for NN Descent. Only relevant if you
-#'   set regenerate_knn to `TRUE` and use `"nndescent"`.
-#'   \item delta - Numeric. Early termination criterion for NN Descent. Only
-#'   relevant if you set regenerate_knn to `TRUE` and use `"nndescent"`.
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
 #' }
 #' @param regenerate_knn Boolean. Shall a kNN graph be regenerated.
 #' @param embd_to_use String. The embedding to use. Only relevant if you set
@@ -426,7 +382,7 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
   assertScSupercell(sc_supercell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -521,4 +477,116 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   )
 
   return(meta_cell_obj)
+}
+
+## pseudo bulk -----------------------------------------------------------------
+
+#' Generate pseudo-bulked matrices
+#'
+#' @description
+#' This is a wrapper function to generate pseudo-bulked counts from a list of
+#' cell identifiers. You have the option to return sparse or dense matrices and
+#' if you wish to sum raw counts or calculate the mean of the normalised counts.
+#'
+#' @param object `single_cell_exp` class.
+#' @param cell_list Named list.
+#' @param return_format String. One of `c("dense", "sparse")`.
+#' @param assay String. One of `c("raw", "norm")`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @return Pending on your setting in return_format a dense matrix or sparse
+#' CSR matrix with aggregated cells x genes.
+#'
+#' @importFrom magrittr `%$%`
+#'
+#' @export
+get_pseudobulked_sc <- S7::new_generic(
+  name = "get_supercells_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    cell_list,
+    return_format = c("dense", "sparse"),
+    assay = c("raw", "norm"),
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method get_pseudobulked_sc single_cell_exp
+#'
+#' @export
+S7::method(get_pseudobulked_sc, single_cell_exp) <- function(
+  object,
+  cell_list,
+  return_format = c("dense", "sparse"),
+  assay = c("raw", "norm"),
+  .verbose = TRUE
+) {
+  # params
+  return_format <- match.arg(return_format)
+  assay <- match.arg(assay)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertList(cell_list, types = "character", names = "named")
+  checkmate::assertChoice(return_format, c("dense", "sparse"))
+  checkmate::assertChoice(assay, c("raw", "norm"))
+  checkmate::qassert(.verbose, "B1")
+
+  # get the cell indices
+  cell_list <- purrr::map(
+    cell_list,
+    get_cell_indices,
+    x = object,
+    rust_index = TRUE
+  )
+
+  if (any(purrr::map_dbl(cell_list, length) == 0)) {
+    stop(
+      paste(
+        "Some of the elements in your cell_list could not",
+        "be matched to any cell index.",
+        "Please check your inputs!"
+      )
+    )
+  }
+
+  res <- switch(
+    return_format,
+    "dense" = {
+      data <- rs_pseudobulk_cells_dense(
+        f_path = get_rust_count_cell_f_path(object),
+        cell_indices_ls = cell_list,
+        assay = assay,
+        verbose = .verbose
+      )
+      rownames(data) <- names(cell_list)
+      colnames(data) <- get_gene_names(object)
+
+      data
+    },
+    "sparse" = {
+      data <- rs_pseudobulk_cells_sparse(
+        f_path = get_rust_count_cell_f_path(object),
+        cell_indices_ls = cell_list,
+        assay = assay,
+        verbose = .verbose
+      )
+      data <- new(
+        "dgRMatrix",
+        p = as.integer(data$indptr),
+        j = as.integer(data$indices),
+        x = as.numeric(data$data),
+        Dim = as.integer(c(data$nrow, data$ncol))
+      )
+      rownames(data) <- names(cell_list)
+      colnames(data) <- get_gene_names(object)
+
+      data
+    }
+  )
+
+  res
 }

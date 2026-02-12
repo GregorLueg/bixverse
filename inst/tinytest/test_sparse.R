@@ -13,18 +13,18 @@ expected_sparse_matrix <- as(
 
 ### rust tests -----------------------------------------------------------------
 
-rs_data <- rs_upper_triangle_to_sparse(data, 1, 4)
+rs_data <- rs_upper_triangle_to_sparse(data, 1, 4, cs_type = "csc")
 
 sparse_matrix <- sparse_list_to_mat(rs_data)
 
 expect_equal(
-  current = rs_data$row_indices,
+  current = rs_data$indices,
   target = expected_sparse_matrix@i,
   info = "Rust sparse implementation - row indices"
 )
 
 expect_equal(
-  current = rs_data$col_ptr,
+  current = rs_data$indptr,
   target = expected_sparse_matrix@p,
   info = "Rust sparse implementation - col pointers"
 )

@@ -8,8 +8,10 @@ rs_synthetic_sc_data_with_cell_types(
   n_cells,
   n_genes,
   n_batches,
+  n_samples,
   cell_configs,
   batch_effect_strength,
+  sample_bias,
   seed
 )
 }
@@ -20,11 +22,17 @@ rs_synthetic_sc_data_with_cell_types(
 
 \item{n_batches}{Integer. Number of the batches to generated.}
 
+\item{n_samples}{Optional integer. Shall the cells be distributed over
+\code{n_samples} samples.}
+
 \item{cell_configs}{A nested list that indicates which gene indices
 are markers for which cell.}
 
 \item{batch_effect_strength}{String. One of \code{c("strong", "medium", "low")}.
 Defines the strength of the added batch effect.}
+
+\item{sample_bias}{Optional string. One of
+\code{c("even", "slightly_uneven", "very_uneven")}}
 
 \item{seed}{Integer. Random seed for reproducibility.}
 }
@@ -38,6 +46,7 @@ A list with the following items.
 \item ncol - Number of columns
 \item cell_type_indices - Vector indicating which cell type this is.
 \item batch_indices - Vector indicating the batch.
+\item sample_indices - Optional sample indices if asked for.
 }
 }
 \description{

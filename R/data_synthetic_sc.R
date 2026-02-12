@@ -35,8 +35,8 @@ generate_single_cell_test_data <- function(
   seed = 42L
 ) {
   # checks
-  checkmate::qassert(seed, "I1")
   assertScSyntheticData(syn_data_params)
+  checkmate::qassert(seed, "I1")
 
   if (!requireNamespace("Matrix", quietly = TRUE)) {
     stop(
@@ -51,8 +51,10 @@ generate_single_cell_test_data <- function(
       n_cells = n_cells,
       n_genes = n_genes,
       n_batches = n_batches,
+      n_samples = n_samples,
       cell_configs = marker_genes,
       batch_effect_strength = batch_effect_strength,
+      sample_bias = sample_bias,
       seed = seed
     )
   )
@@ -83,6 +85,10 @@ generate_single_cell_test_data <- function(
     cell_grp = sprintf("cell_type_%i", data$cell_type_indices + 1),
     batch_index = data$batch_indices + 1
   )
+
+  if (!is.null(data$sample_indices)) {
+    obs[, sample_id := sprintf("sample_%i", data$sample_indices + 1)]
+  }
 
   n_digits <- nchar(as.character(syn_data_params$n_genes))
   format_str <- sprintf("gene_%%0%dd", n_digits)

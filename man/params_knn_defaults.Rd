@@ -13,18 +13,31 @@ parameters:
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
 neighbour search. Defaults to \code{"annoy"}. The implementations are:
-\code{c("annoy", "hnsw", "nndescent")}.
+\code{c("hnsw", "annoy", "nndescent", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"euclidean"}. The implementations are
 \code{c("euclidean", "cosine")}.
-\item search_budget - Search budget per tree for Annoy. Defaults to \code{100L}.
-\item n_trees - Number of trees to generate for Annoy. Defaults to \code{100L}.
-\item nn_max_iter - Maximum iterations for NNDescent. Defaults to \code{15L}.
-\item rho - Sampling rate for NNDescent. Defaults to \code{1.0}.
-\item delta - Early termination criterium for NNDescent. Defaults to
-\code{0.001}.
+\item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
+to \code{50L}.
+\item search_budget - Annoy param: optional search budget per tree for
+Annoy. If not provided, it will default to \code{n_tree * k * 20L}.
+\item diversify_prob - NNDescent param: diversification probability for the
+NNDescent index. This will diversify the index at the end and identify
+potentiall better edges. Defaults to \code{0.0}.
+\item delta - NNDescent param: early termination criterium for NNDescent.
+Defaults to \code{0.001}.
+\item ef_budget - NNDescent param: optional query budget parameter. Can
+accelerate querying, but at the cost of Recall.
+\item m - HNSW param: number of connections between layers for HNSW.
+Defaults to \code{16L}.
+\item ef_construction - HNSW param: size of dynamic candidate list during
+construction. Defaults to \code{200L}.
+\item ef_search - HNSW param: size of candidate list (higher = better
+recall, slower). Defaults to \code{100L}.
 }
 }
 \description{
-Helper function to generate kNN defaults
+This function generates various sensible default parameters for all of the
+different approximate nearest neighbours that are available within this
+package.
 }

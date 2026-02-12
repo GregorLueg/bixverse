@@ -530,19 +530,22 @@ params_cistarget <- function(
 
 ### general --------------------------------------------------------------------
 
-# TODO - too many kNN parameters - refactor them out
-
 ### synthetic data -------------------------------------------------------------
 
 #' Default parameters for generation of synthetic data
 #'
 #' @param n_cells Integer. Number of cells.
 #' @param n_genes Integer. Number of genes.
+#' @param n_batches Integer. Number of batches.
 #' @param marker_genes List. A nested list that indicates which gene indices
 #' are markers for which cell.
-#' @param n_batches Integer. Number of batches.
 #' @param batch_effect_strength String. One of
 #' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
+#' @param n_samples Optional integer. Shall sample membership be added to the
+#' synthetic data. If you want sample information you need to provide
+#' `n_samples` and `sample_bias`.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
 #'
 #' @return A list with the parameters.
 #'
@@ -550,6 +553,7 @@ params_cistarget <- function(
 params_sc_synthetic_data <- function(
   n_cells = 1000L,
   n_genes = 100L,
+  n_batches = 1L,
   marker_genes = list(
     cell_type_1 = list(
       marker_genes = 0:9L
@@ -561,8 +565,9 @@ params_sc_synthetic_data <- function(
       marker_genes = 20:29L
     )
   ),
-  n_batches = 1L,
-  batch_effect_strength = c("strong", "medium", "weak")
+  batch_effect_strength = c("strong", "medium", "weak"),
+  n_samples = NULL,
+  sample_bias = NULL
 ) {
   batch_effect_strength <- match.arg(batch_effect_strength)
 
@@ -572,13 +577,23 @@ params_sc_synthetic_data <- function(
   checkmate::assertList(marker_genes, types = "list", names = "named")
   checkmate::qassert(n_batches, "I1")
   checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+  checkmate::qassert(n_samples, c("I1", "0"))
+  checkmate::assert(
+    checkmate::testNull(sample_bias),
+    checkmate::testChoice(
+      sample_bias,
+      c("even", "slightly_uneven", "very_uneven")
+    )
+  )
 
   list(
     n_cells = n_cells,
     n_genes = n_genes,
     marker_genes = marker_genes,
     n_batches = n_batches,
-    batch_effect_strength = batch_effect_strength
+    batch_effect_strength = batch_effect_strength,
+    n_samples = n_samples,
+    sample_bias = sample_bias
   )
 }
 
@@ -683,136 +698,5 @@ params_sc_hvg <- function(
     loess_span = loess_span,
     num_bin = num_bin,
     bin_method = bin_method
-  )
-}
-
-### batch corrections ----------------------------------------------------------
-
-#### BBKNN ---------------------------------------------------------------------
-
-#' Wrapper function for the BBKNN parameters
-#'
-#' @param neighbours_within_batch Integer. Number of neighbours to consider
-#' per batch.
-#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`.
-#' @param ann_dist String. One of `c("cosine", "euclidean")`. The distance
-#' metric to be used for the approximate neighbour search.
-#' @param set_op_mix_ratio Numeric. Mixing ratio between union (1.0) and
-#' intersection (0.0).
-#' @param local_connectivity Numeric. UMAP connectivity computation parameter,
-#' how many nearest neighbours of each cell are assumed to be fully connected.
-#' @param annoy_n_trees Integer. Number of trees to use in the generation of
-#' the Annoy index.
-#' @param search_budget Integer. Search budget per tree for the `annoy`
-#' algorithm.
-#' @param trim Optional integer. Trim the neighbours of each cell to these many
-#' top connectivities. May help with population independence and improve the
-#' tidiness of clustering. If `NULL`, it defaults to
-#' `10 * neighbours_within_batch`.
-#'
-#' @returns A list with the BBKNN parameters.
-#'
-#' @export
-params_sc_bbknn <- function(
-  neighbours_within_batch = 5L,
-  knn_method = c("annoy", "hnsw"),
-  ann_dist = c("cosine", "euclidean"),
-  set_op_mix_ratio = 1.0,
-  local_connectivity = 1.0,
-  annoy_n_trees = 100L,
-  search_budget = 100L,
-  trim = NULL
-) {
-  knn_method <- match.arg(knn_method)
-  ann_dist <- match.arg(ann_dist)
-
-  # checks
-  checkmate::qassert(neighbours_within_batch, "I1")
-  checkmate::assertChoice(knn_method, c("hnsw", "annoy"))
-  checkmate::assertChoice(ann_dist, c("cosine", "euclidean"))
-  checkmate::qassert(set_op_mix_ratio, "N1[0, 1]")
-  checkmate::qassert(local_connectivity, "N1")
-  checkmate::qassert(annoy_n_trees, "I1")
-  checkmate::qassert(search_budget, "I1")
-  checkmate::qassert(trim, c("0", "I1"))
-
-  # returns
-  list(
-    neighbours_within_batch = neighbours_within_batch,
-    knn_method = knn_method,
-    ann_dist = ann_dist,
-    set_op_mix_ratio = set_op_mix_ratio,
-    local_connectivity = local_connectivity,
-    annoy_n_trees = annoy_n_trees,
-    search_budget = search_budget,
-    trim = trim
-  )
-}
-
-#### fastMNN -------------------------------------------------------------------
-
-#' Wrapper function for the fastMNN parameters
-#'
-#' @param k Integer. Number of mutual nearest neighbours to identify.
-#' Defaults to `20L`.
-#' @param sigma Numeric. Bandwidth of the Gaussian smoothing kernel
-#' (as proportion of space radius). Defaults to `0.1`.
-#' @param knn_method String. One of `c("annoy", "hnsw")`. Defaults to
-#' `"annoy"`.
-#' @param dist_metric String. One of `c("cosine", "euclidean")`. Defaults to
-#' `"cosine"`.
-#' @param annoy_n_trees Integer. Number of trees for Annoy index. Defaults to
-#' `100L`.
-#' @param annoy_search_budget Integer. Search budget per tree for Annoy.
-#' Defaults to `100L`.
-#' @param cos_norm Logical. Apply cosine normalisation before computing
-#' distances. Defaults to `TRUE`.
-#' @param var_adj Logical. Apply variance adjustment to avoid kissing effects.
-#' Defaults to `TRUE`.
-#' @param no_pcs Integer. Number of PCs to use for MNN calculations.
-#' Defaults to `30L`.
-#' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
-#'
-#' @returns A list with the fastMNN parameters.
-#'
-#' @export
-params_sc_fastmnn <- function(
-  k = 20L,
-  sigma = 0.1,
-  knn_method = c("annoy", "hnsw"),
-  dist_metric = c("cosine", "euclidean"),
-  annoy_n_trees = 100L,
-  annoy_search_budget = 100L,
-  cos_norm = TRUE,
-  var_adj = TRUE,
-  no_pcs = 30L,
-  random_svd = TRUE
-) {
-  knn_method <- match.arg(knn_method)
-  dist_metric <- match.arg(dist_metric)
-
-  checkmate::qassert(k, "I1")
-  checkmate::qassert(sigma, "N1")
-  checkmate::assertChoice(knn_method, c("annoy", "hnsw"))
-  checkmate::assertChoice(dist_metric, c("cosine", "euclidean"))
-  checkmate::qassert(annoy_n_trees, "I1")
-  checkmate::qassert(annoy_search_budget, "I1")
-  checkmate::qassert(cos_norm, "B1")
-  checkmate::qassert(var_adj, "B1")
-  checkmate::qassert(no_pcs, "I1")
-  checkmate::qassert(random_svd, "B1")
-
-  list(
-    k = k,
-    sigma = sigma,
-    knn_method = knn_method,
-    dist_metric = dist_metric,
-    annoy_n_trees = annoy_n_trees,
-    annoy_search_budget = annoy_search_budget,
-    cos_norm = cos_norm,
-    var_adj = var_adj,
-    no_pcs = no_pcs,
-    random_svd = random_svd
   )
 }

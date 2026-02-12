@@ -25,7 +25,18 @@ identified by a batch-aware method. Please refer to
 
 \item{fastmnn_params}{A list, please see \code{\link[=params_sc_fastmnn]{params_sc_fastmnn()}}. The
 list has the following parameters:
-Claude fill this out}
+\itemize{
+\item sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
+proportion of space radius).
+\item cos_norm - Logical. Apply cosine normalisation before computing
+distances.
+\item var_adj - Logical. Apply variance adjustment to avoid kissing
+effects.
+\item no_pcs - Integer. Number of PCs to use for MNN calculations.
+\item random_svd - Logical. Use randomised SVD.
+\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults.
+}}
 
 \item{seed}{Integer. Random seed.}
 
@@ -37,7 +48,7 @@ The object with the added fastMNN embeddings to the object.
 \description{
 This function implements the fast mutual nearest neighbour (MNN) from
 Haghverdi, et al. This version works on the PCA embedding and generates
-an embedding only and not fully corrected count matrix. The function will
+an embedding only and not a fully corrected count matrix. The function will
 iterate through the batches, identify the MNN and generate correction vectors
 and generate a corrected embedding which is added to the function.
 }

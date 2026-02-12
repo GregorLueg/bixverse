@@ -101,7 +101,8 @@ rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
 #' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 #' the function will default to `sqrt(nrows(x))`.
 #' @param strategy String. Binning strategy One of
-#' `c("equal_width", "equal_freq")`.
+#' `c("equal_width", "equal_freq")`. If weird string is provided, it will
+#' default to `"equal_width"`.
 #' @param normalise Boolean. Shall the normalised mutual information be
 #' calculated via joint entropy.
 #'
@@ -194,6 +195,19 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculate rapidbly Jaccard similarities between rows
+#'
+#' @description Helper function to quickly calculate the Jaccard similarity
+#' between the rows across the two matrices.
+#'
+#' @param data_1 Integer matrix. The first matrix to compare.
+#' @param data_2 Integer matrix. The second matrix to compare.
+#'
+#' @returns The average Jaccard similarity.
+#'
+#' @export
+rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_integers, data_1, data_2)
+
 #' Calculates the Hamming distance between categorical columns
 #'
 #' @param x Integer matrix. The integers represent the factor data.
@@ -209,7 +223,7 @@ rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
 #' variables as numerical values.
 #' @param is_cat Boolean. Which of the columns represent categorical values.
 #'
-#' @return The Gower distance matrix.
+#' @return The Gower distance matrix between the rows
 #'
 #' @export
 rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
@@ -355,8 +369,9 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' distance matrix.
 #' @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
 #' diagonal not incldued).
-#' @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
-#' implemented RBF function.
+#' @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
+#' for the currently implemented RBF function. Weird strings will default
+#' to Gaussian.
 #'
 #' @return A matrix with rows being the epsilons tested, and columns
 #' representing the summed affinity to other features.
@@ -447,7 +462,7 @@ rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 #' acceptable.
 #' @param direction String. One of `c("below", "above", "twosided")`. Shall
 #' the outlier direction be done for values below the threshold, above the
-#' threshold or in both directions.
+#' threshold or in both directions. Weird strings default to twosided tests.
 #'
 #' @return A list with the following items:
 #' \itemize{
@@ -568,7 +583,7 @@ rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span,
 #' }
 #'
 #' @export
-rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
+rs_upper_triangle_to_sparse <- function(value, shift, n, cs_type) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n, cs_type)
 
 #' Helper to get zero stats from a given matrix
 #'
@@ -651,10 +666,14 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #' @param n_cells Integer. Number of cells to generate.
 #' @param n_genes Integer. Number of genes to generate.
 #' @param n_batches Integer. Number of the batches to generated.
+#' @param n_samples Optional integer. Shall the cells be distributed over
+#' `n_samples` samples.
 #' @param cell_configs A nested list that indicates which gene indices
 #' are markers for which cell.
 #' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
 #' Defines the strength of the added batch effect.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
 #' @param seed Integer. Random seed for reproducibility.
 #'
 #' @return A list with the following items.
@@ -666,10 +685,28 @@ rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max
 #'   \item ncol - Number of columns
 #'   \item cell_type_indices - Vector indicating which cell type this is.
 #'   \item batch_indices - Vector indicating the batch.
+#'   \item sample_indices - Optional sample indices if asked for.
 #' }
 #'
 #' @export
-rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, cell_configs, batch_effect_strength, seed)
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed)
+
+#' Helper function to generate sample identifiers based on cells
+#'
+#' @description
+#' Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
+#' over different sample to cell type patterns
+#'
+#' @param cell_type_indices Integer vector. Each integer represents a cell
+#' type.
+#' @param n_samples Integer. Number of different sample ids to generate.
+#' @param sample_bias String. One of
+#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
+#' to sample id associations.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns An integer vector representing the samples.
+rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bias, seed) .Call(wrap__rs_sample_ids_for_cell_types, cell_type_indices, n_samples, sample_bias, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -1538,7 +1575,8 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' @param whiten Numerical matrix. The whitened matrix.
 #' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 #' be equal to nrows of whiten.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
+#' provided, it will default to `"logcosh"`.
 #' @param ica_params A list containing:
 #'  \itemize{
 #'   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -2445,6 +2483,36 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
+#' Generate the neighbourhoods akin to the miloR approach
+#'
+#' @description Rust version of the
+#'
+#' @param embd Numeric matrix. Represents the matrix used to generate the kNN
+#' graph and will be used to refine the neighbourhoods.
+#' @param knn_indices Integer matrix. Each row represents a given cell and
+#' the columns the neighbours. (0-indexed!)
+#' @param milor_params Named list. Contains the parameters for running the
+#' miloR approach.
+#' @param seed Integer. Seed for reproducibility.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item index_cell - Integer. 0-indexed positions of the cells defining the
+#'  neighbourhood.
+#'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
+#'  neighbourhood.
+#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
+#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
+#'  defaults to `1.0`.
+#'  \item nrows - Integer. Number of cells in the matrix
+#'  \item ncols - Integer. Number of refined neighbourhoods.
+#'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#' }
+#'
+#' @export
+rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
+
 #' Calculate module activity scores in Rust
 #'
 #' @description
@@ -2606,6 +2674,49 @@ rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use,
 #'
 #' @references Persad, et al., Nat. Biotechnol., 2023.
 rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
+
+#' Pseudo-bulk a set of cells (dense)
+#'
+#' @description This function will return a dense matrix of
+#' `length(cell_indices_ls) x number of genes`. The function has the option
+#' to return the sum of the sum of the raw counts or the average of the
+#' normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A dense matrix with the pseudo-bulked data.
+#'
+#' @export
+rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_dense, f_path, cell_indices_ls, assay, verbose)
+
+#' Pseudo-bulk a set of cells (sparse)
+#'
+#' @description This function will return a sparse matrix of
+#' `length(cell_indices_ls) x number of genes` (in list form in CSR).
+#' The function has the option to return the sum of the sum of the raw counts
+#' or the average of the normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A list with the following elements (easy to convert into CSR in R)
+#' \itemize{
+#'   \item indptr - The index pointers (representing cells)
+#'   \item indices - The indices (representing genes)
+#'   \item data - The pseudo-bulked data
+#'   \item nrow - Number of rows (i.e., pseudo-bulked samples)
+#'   \item ncol - Number of columns
+#' }
+#'
+#' @export
+rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_sparse, f_path, cell_indices_ls, assay, verbose)
 
 #' Generate SuperCells.
 #'

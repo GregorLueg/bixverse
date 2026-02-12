@@ -13,7 +13,7 @@ variables as numerical values.}
 \item{is_cat}{Boolean. Which of the columns represent categorical values.}
 }
 \value{
-The Gower distance matrix.
+The Gower distance matrix between the rows
 }
 \description{
 Calculates the Gower distance for a given matrix

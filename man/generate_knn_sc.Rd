@@ -29,30 +29,16 @@ use. If \code{NULL} all will be used.}
 \item{neighbours_params}{List. Output of \code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
 A list with the following items:
 \itemize{
-\item k - Integer. Number of neighbours to identify.
-\item knn_algorithm - String. One of \code{c("annoy", "hnsw", "nndescent")}.
-\code{"hnsw"} takes longer, is more precise and more memory friendly. \code{"annoy"}
-is faster, less precise and will take more memory. \code{"nndescent"} skips
-index generation and can be faster on small datasets.
-\item n_trees -  Integer. Number of trees to use for the \code{annoy} algorithm.
-The higher, the longer the algorithm takes, but the more precise the
-approximated nearest neighbours.
-\item search_budget - Integer. Search budget per tree for the \code{annoy}
-algorithm. The higher, the longer the algorithm takes, but the more precise
-the approximated nearest neighbours.
-\item ann_dist - String. One of \code{c("cosine", "euclidean")}.
-\item max_iter - Integer. Maximum iterations for the \code{"nndescent"} method.
-\item rho - Numeric. Sampling rate for the \code{"nndescent"} method.
-\item delta - Numeric. Early termination criterium for the \code{"nndescent"}
-method.
-\item full_snn - Boolean. Shall the sNN graph be generated across all
-cells (standard in the \code{bluster} package.) Defaults to \code{FALSE}. Not
-relevant for this function.
-\item pruning - Value below which the weight in the sNN graph is set to 0.
-Not relevant for this function.
+\item full_snn - Boolean. Shall the full shared nearest neighbour graph
+be generated that generates edges between all cells instead of between
+only neighbours.
+\item pruning - Numeric. Weights below this threshold will be set to 0 in
+the generation of the sNN graph.
 \item snn_similarity - String. One of \code{c("rank", "jaccard")}. Defines how
-the weight form the SNN graph is calculated. For details, please see
-\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}. Not relevant for this function.
+the weight from the SNN graph is calculated. For details, please see
+\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
+\item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
+for available parameters and their defaults.
 }}
 
 \item{seed}{Integer. For reproducibility.}

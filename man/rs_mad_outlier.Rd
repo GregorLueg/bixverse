@@ -14,7 +14,7 @@ acceptable.}
 
 \item{direction}{String. One of \code{c("below", "above", "twosided")}. Shall
 the outlier direction be done for values below the threshold, above the
-threshold or in both directions.}
+threshold or in both directions. Weird strings default to twosided tests.}
 }
 \value{
 A list with the following items:
