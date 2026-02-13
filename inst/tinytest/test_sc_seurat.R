@@ -8,11 +8,15 @@ if (!requireNamespace("Seurat", quietly = TRUE)) {
 # key differences are likely due to f16 vs f64 in terms of count storage
 # for norm counts
 
+library(magrittr)
+
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "seurat"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## parameters ------------------------------------------------------------------
 
@@ -293,5 +297,7 @@ expect_true(
   current = all(f1_scores >= 0.95),
   info = "seurat <> bixverse - broadly similar clusters identified"
 )
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

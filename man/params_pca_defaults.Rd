@@ -12,6 +12,12 @@ A list with the following parameters for PCA.
 \item no_pcs - Integer. Number of PCs to consider. Defaults to \code{30L}.
 \item random_svd - Boolean. Shall randomised SVD be used. Defaults to
 \code{TRUE}.
+\item sparse - Boolean. Shall sparse solvers be used that do not do
+scaling. If set to yes, in the case of \code{random_svd = FALSE}, Lanczos
+iterations are used to solve the sparse SVD. With \code{random_svd = TRUE}, the
+sparse initial matrix is multiplied with the random matrix, yielding a
+much smaller dense matrix that does not increase the memory pressure
+massively.
 }
 }
 \description{

@@ -9,13 +9,18 @@ use bixverse_rs::single_cell::sc_processing::{
 
 extendr_module! {
     mod r_sc_processing;
+    // doublet detection
     fn rs_sc_scrublet;
     fn rs_sc_doublet_detection;
+    // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
+    // hvg and pca
     fn rs_sc_hvg;
     fn rs_sc_hvg_batch_aware;
     fn rs_sc_pca;
+    fn rs_sc_pca_sparse;
+    // knn and snn
     fn rs_sc_knn;
     fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
@@ -485,6 +490,7 @@ fn rs_sc_hvg_batch_aware(
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space.
 ///   \item loadings - The loadings of the features for the PCA.
+///   \item singular_values - The singular values for the PCA.
 ///   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
 /// }
 ///
@@ -501,14 +507,8 @@ fn rs_sc_pca(
     return_scaled: bool,
     verbose: bool,
 ) -> List {
-    let cell_set = cell_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
-    let gene_indices = gene_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cell_set = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
 
     let res = pca_on_sc(
         f_path_gene,
@@ -529,6 +529,69 @@ fn rs_sc_pca(
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = singular_values_f64,
         scaled = scaled
+    )
+}
+
+/// Calculates sparse PCA for single cell
+///
+/// @description
+/// Helper function that will calculate sparse PCA without scaling the data.
+/// This has the advantage that you avoid creating a large dense matrix due
+/// to scaling; however, it has the disadvantage that the first PC will be
+/// heavily influenced by average expression. If random_svd is set to `FALSE`,
+/// Lanczos iterations will be used to solve the SVD; if random_svd is set
+/// to `TRUE`, the randomised version will be used with multiplication of the
+/// initial sparse matrix with a much smaller random dense matrix, avoiding
+/// holding a large dense matrix in memory.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param no_pcs Integer. Number of PCs to calculate.
+/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!)
+/// @param seed Integer. Random seed for the randomised SVD.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @returns A list with with the following items
+/// \itemize{
+///   \item scores - The samples projected on the PCA space (solved via sparse
+///   SVD).
+///   \item loadings - The loadings of the features for the PCA (solved via
+///   sparse SVD).
+///   \item singular_values - The singular values for the PCA (solved via sparse
+///   SVD).
+/// }
+///
+/// @export
+#[extendr]
+fn rs_sc_pca_sparse(
+    f_path_gene: &str,
+    no_pcs: usize,
+    random_svd: bool,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let cell_set = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+
+    let res = pca_on_sc_sparse(
+        f_path_gene,
+        &cell_set,
+        &gene_indices,
+        no_pcs,
+        random_svd,
+        seed,
+        verbose,
+    );
+
+    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
+
+    list!(
+        scores = faer_to_r_matrix(res.0.as_ref()),
+        loadings = faer_to_r_matrix(res.1.as_ref()),
+        singular_values = singular_values_f64
     )
 }
 

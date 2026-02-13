@@ -14,11 +14,11 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"annoy"`. The implementations are:
+#'  neighbour search. Defaults to `"hnsw"`. The implementations are:
 #'  `c("hnsw", "annoy", "nndescent", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
-#'  neighbour search. Defaults to `"euclidean"`. The implementations are
-#'  `c("euclidean", "cosine")`.
+#'  neighbour search. Defaults to `"cosine"`. The implementations are
+#'  `c("cosine", "euclidean")`.
 #'  \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 #'  to `50L`.
 #'  \item search_budget - Annoy param: optional search budget per tree for
@@ -43,7 +43,7 @@ params_knn_defaults <- function() {
   list(
     # General parameters
     k = 15L,
-    knn_method = "annoy",
+    knn_method = "hnsw",
     ann_dist = "euclidean",
     # Annoy
     n_trees = 50L,
@@ -88,7 +88,7 @@ params_hvg_defaults <- function() {
 #' \itemize{
 #'  \item log_transform - Boolean. Shall the counts be log-normalised.
 #'  Defaults to `TRUE`.
-#'  \item mean_center - Boolean. Shall mean centreing be applied. Defaults
+#'  \item mean_center - Boolean. Shall mean centring be applied. Defaults
 #'  to `FALSE`.
 #'  \item normalise_variance - Boolean. Shall the variance be normalised.
 #'  Defaults to `FALSE`.
@@ -112,11 +112,18 @@ params_norm_doublet_detection_defaults <- function() {
 #'  \item no_pcs - Integer. Number of PCs to consider. Defaults to `30L`.
 #'  \item random_svd - Boolean. Shall randomised SVD be used. Defaults to
 #'  `TRUE`.
+#'  \item sparse - Boolean. Shall sparse solvers be used that do not do
+#'  scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
+#'  iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
+#'  sparse initial matrix is multiplied with the random matrix, yielding a
+#'  much smaller dense matrix that does not increase the memory pressure
+#'  massively.
 #' }
 params_pca_defaults <- function() {
   list(
     no_pcs = 30L,
-    random_svd = TRUE
+    random_svd = TRUE,
+    sparse = FALSE
   )
 }
 
@@ -154,7 +161,7 @@ params_pca_defaults <- function() {
 #' `min_gene_var_pctl`, `hvg_method`, `loess_span`, `clip_max`.
 #' @param pca List. Optional overrides for PCA parameters. See
 #' [bixverse::params_pca_defaults()] for available parameters: `no_pcs`,
-#' `random_svd`.
+#' `random_svd`, `sparse` and `skip_first_pc`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -174,7 +181,7 @@ params_scrublet <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, knn_method = "hnsw")
+  knn = list(k = 0L, ann_dist = "euclidean")
 ) {
   # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
@@ -257,7 +264,7 @@ params_boost <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L)
+  knn = list(k = 0L, ann_dist = "euclidean")
 ) {
   # checks
   checkmate::qassert(boost_rate, "N1[0,1]")
@@ -442,7 +449,7 @@ params_sc_hotspot <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("annoy", "hnsw")`. Defaults to `"annoy"`.
+#' `c("hnsw", "annoy", "nndescent")`. Defaults to `"hnsw"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -457,7 +464,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("annoy", "hnsw"),
+  index_type = c("hnsw", "annoy", "nndescent"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)

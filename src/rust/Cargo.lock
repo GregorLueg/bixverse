@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d032e5c3f2e7317a434be141c04efa212c49db6bbfac5ce0ccc075d0431f0de7"
+checksum = "694802a0386266bfa95195ff9d198afef5a270cc31ec4af7af4583a9ca18e052"
 dependencies = [
  "approx",
  "clap",
@@ -156,11 +156,11 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479533d79ae6f4d60f501c60fd54b92ef7c31adbecbe4fdb03a7d6041e29ad7b"
+version = "0.1.1"
+source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-harmony#2a34cccdd65e6e640a808e8c64d46461f576d662"
 dependencies = [
  "ann-search-rs",
+ "approx",
  "bincode",
  "extendr-api",
  "faer",
@@ -180,6 +180,7 @@ dependencies = [
  "serde",
  "statrs",
  "thousands",
+ "wide 1.1.1",
 ]
 
 [[package]]

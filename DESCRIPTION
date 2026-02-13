@@ -50,6 +50,7 @@ Imports:
     ggplot2,
     igraph,
     jsonlite,
+    lifecycle,
     limma,
     magrittr,
     MASS,

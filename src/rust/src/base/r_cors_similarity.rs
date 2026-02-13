@@ -8,6 +8,10 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::utils::matrix_utils::upper_triangle_indices;
 use bixverse_rs::utils::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
 extendr_module! {
   mod r_cors_similarity;
   fn rs_covariance;
@@ -26,6 +30,10 @@ extendr_module! {
   fn rs_hamming_dist;
   fn rs_gower_dist;
 }
+
+///////////////
+// Functions //
+///////////////
 
 /// Calculate the column-wise co-variance.
 ///

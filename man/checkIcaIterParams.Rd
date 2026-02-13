@@ -13,6 +13,6 @@ checkIcaIterParams(x)
 \code{TRUE} if the check was successful, otherwise an error message.
 }
 \description{
-Checkmate extension for checking the ICA randomisation parameters
-for a version of stabilised ICA.
+Checkmate extension for checking the ICA randomisation
+parameters for a version of stabilised ICA.
 }

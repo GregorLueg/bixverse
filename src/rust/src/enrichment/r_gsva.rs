@@ -4,6 +4,13 @@ use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 use rustc_hash::FxHashMap;
 
+extendr_module! {
+    mod r_gsva;
+    fn rs_prepare_gsva_gs;
+    fn rs_gsva;
+    fn rs_ssgsea;
+}
+
 /// Prepare a pathway list for GSVA
 ///
 /// @param feature_names String vector. The feature names of the matrix (should
@@ -149,11 +156,4 @@ fn rs_ssgsea(
     let results = ssgsea(&exp, &gs_indices, alpha, normalise, timings);
 
     Ok(faer_to_r_matrix(results.as_ref()))
-}
-
-extendr_module! {
-    mod r_gsva;
-    fn rs_prepare_gsva_gs;
-    fn rs_gsva;
-    fn rs_ssgsea;
 }

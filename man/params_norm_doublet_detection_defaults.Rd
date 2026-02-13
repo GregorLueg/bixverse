@@ -12,7 +12,7 @@ designed for doublet detection methods:
 \itemize{
 \item log_transform - Boolean. Shall the counts be log-normalised.
 Defaults to \code{TRUE}.
-\item mean_center - Boolean. Shall mean centreing be applied. Defaults
+\item mean_center - Boolean. Shall mean centring be applied. Defaults
 to \code{FALSE}.
 \item normalise_variance - Boolean. Shall the variance be normalised.
 Defaults to \code{FALSE}.

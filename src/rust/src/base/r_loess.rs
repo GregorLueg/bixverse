@@ -2,6 +2,19 @@ use extendr_api::*;
 
 use bixverse_rs::core::base::loess::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
+extendr_module! {
+  mod r_loess;
+  fn rs_2d_loess;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Rust implementation of a Loess function
 ///
 /// @param x Numeric. The x values to fit.
@@ -32,9 +45,4 @@ fn rs_2d_loess(x: &[f64], y: &[f64], span: f64, degree: usize) -> List {
             .map(|x| (*x + 1) as i32)
             .collect::<Vec<i32>>(),
     )
-}
-
-extendr_module! {
-  mod r_loess;
-  fn rs_2d_loess;
 }

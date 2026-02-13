@@ -6,6 +6,24 @@ use extendr_api::prelude::*;
 use rand::prelude::*;
 use rayon::prelude::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
+extendr_module! {
+    mod r_stats;
+    fn rs_fast_auc;
+    fn rs_create_random_aucs;
+    fn rs_hedges_g;
+    fn rs_fdr_adjustment;
+    fn rs_phyper;
+    fn rs_mad_outlier;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Fast AUC calculation
 ///
 /// @description This function calculates rapidly AUCs based on an approximation.
@@ -174,14 +192,4 @@ fn rs_mad_outlier(x: &[f64], threshold: f64, direction: &str) -> extendr_api::Re
     let (outliers, threshold) = mad_outlier(x, threshold, direction);
 
     Ok(list!(outlier = outliers, threshold = threshold))
-}
-
-extendr_module! {
-    mod r_stats;
-    fn rs_fast_auc;
-    fn rs_create_random_aucs;
-    fn rs_hedges_g;
-    fn rs_fdr_adjustment;
-    fn rs_phyper;
-    fn rs_mad_outlier;
 }

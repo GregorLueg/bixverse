@@ -5,6 +5,24 @@ use rayon::prelude::*;
 use bixverse_rs::core::math::stats::calculate_critval;
 use bixverse_rs::prelude::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
+extendr_module! {
+    mod r_helpers;
+    fn rs_upper_triangle_to_dense;
+    fn rs_dense_to_upper_triangle;
+    fn rs_ot_harmonic_sum;
+    fn rs_range_norm;
+    fn rs_critval;
+    fn rs_critval_mat;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Calculate the OT harmonic sum
 ///
 /// @param x The numeric vector (should be between 0 and 1) for which to
@@ -174,14 +192,4 @@ fn rs_critval_mat(mat: RMatrix<f64>, iters: usize, alpha: f64, seed: usize) -> f
     }
 
     calculate_critval(&values, iters, &alpha, seed)
-}
-
-extendr_module! {
-    mod r_helpers;
-    fn rs_upper_triangle_to_dense;
-    fn rs_dense_to_upper_triangle;
-    fn rs_ot_harmonic_sum;
-    fn rs_range_norm;
-    fn rs_critval;
-    fn rs_critval_mat;
 }

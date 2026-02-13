@@ -9,6 +9,7 @@ rs_mnn(
   cell_indices,
   gene_indices,
   batch_indices,
+  precomputed_pca,
   mnn_params,
   verbose,
   seed
@@ -24,6 +25,9 @@ these are batch-aware highly variable genes.}
 
 \item{batch_indices}{Integer vector. These represent to which batch a given
 cell belongs.}
+
+\item{precomputed_pca}{Optional PCA matrix. If you want to provide a
+pre-computed matrix.}
 
 \item{mnn_params}{List. Contains all of the fastMNN parameters.}
 

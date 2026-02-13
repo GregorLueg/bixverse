@@ -4,6 +4,21 @@ use faer::Mat;
 
 use bixverse_rs::core::math::rbf::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
+extendr_module! {
+    mod r_rbf;
+    fn rs_rbf_function;
+    fn rs_rbf_function_mat;
+    fn rs_rbf_iterate_epsilons;
+}
+
+///////////////
+// Functions //
+///////////////
+
 /// Apply a Radial Basis Function
 ///
 /// @description Applies a radial basis function (RBF) to a given distance
@@ -104,11 +119,4 @@ fn rs_rbf_iterate_epsilons(
     let band_width_data = rbf_iterate_epsilons(dist, epsilon_vec, original_dim, shift, rbf_type);
 
     faer_to_r_matrix(band_width_data.as_ref())
-}
-
-extendr_module! {
-    mod r_rbf;
-    fn rs_rbf_function;
-    fn rs_rbf_function_mat;
-    fn rs_rbf_iterate_epsilons;
 }

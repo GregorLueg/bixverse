@@ -34,4 +34,6 @@ rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
-bixverse-rs = { version = "0.1.0", features = ["single-cell"] }
+bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs", branch = "feat-harmony", features = [
+    "single-cell",
+] }

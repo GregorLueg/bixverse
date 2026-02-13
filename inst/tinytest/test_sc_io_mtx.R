@@ -1,10 +1,14 @@
 # mtx io -----------------------------------------------------------------------
 
+library(magrittr)
+
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "io_mtx"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## parameters ------------------------------------------------------------------
 
@@ -466,5 +470,7 @@ expect_equal(
   target = vars_filtered$gene_id,
   info = "correct gene names"
 )
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

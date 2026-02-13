@@ -2018,7 +2018,6 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' Instead of working on the full matrix, it uses under the hood PCA and
 #' generates an aligned embedding space.
 #'
-#'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
 #' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
@@ -2026,13 +2025,15 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #' @param batch_indices Integer vector. These represent to which batch a given
 #' cell belongs.
 #' @param mnn_params List. Contains all of the fastMNN parameters.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix.
 #' @param seed Integer. Seed for reproducibility purposes.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The batch-corrected embedding space.
 #'
 #' @export
-rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, mnn_params, verbose, seed)
+rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
 
 #' Calculate kBET type scores
 #'
@@ -2053,6 +2054,23 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, mnn_p
 #'
 #' @export
 rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+
+#' Harmony batch correction in Rust
+#'
+#' @description
+#' This function implements the Harmony algorithm from
+#'
+#' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
+#' @param harmony_params List. The parameters for the Harmony algorithm.
+#' @param batch_labels List. Each element in the list needs to be a 0-indexed
+#' integer that represents the batch effects you wish to regress out.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The batch-corrected Harmony embedding space.
+#'
+#' @export
+rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony, pca, harmony_params, batch_labels, seed, verbose)
 
 #' Scrublet Rust interface
 #'
@@ -2251,11 +2269,45 @@ rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_l
 #' \itemize{
 #'   \item scores - The samples projected on the PCA space.
 #'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
 #'   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
 #' }
 #'
 #' @export
 rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose)
+
+#' Calculates sparse PCA for single cell
+#'
+#' @description
+#' Helper function that will calculate sparse PCA without scaling the data.
+#' This has the advantage that you avoid creating a large dense matrix due
+#' to scaling; however, it has the disadvantage that the first PC will be
+#' heavily influenced by average expression. If random_svd is set to `FALSE`,
+#' Lanczos iterations will be used to solve the SVD; if random_svd is set
+#' to `TRUE`, the randomised version will be used with multiplication of the
+#' initial sparse matrix with a much smaller random dense matrix, avoiding
+#' holding a large dense matrix in memory.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space (solved via sparse
+#'   SVD).
+#'   \item loadings - The loadings of the features for the PCA (solved via
+#'   sparse SVD).
+#'   \item singular_values - The singular values for the PCA (solved via sparse
+#'   SVD).
+#' }
+#'
+#' @export
+rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
 
 #' Generates the kNN graph
 #'

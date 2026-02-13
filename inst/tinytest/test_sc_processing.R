@@ -1,5 +1,7 @@
 # sc processing ----------------------------------------------------------------
 
+set.seed(123L)
+
 test_temp_dir <- file.path(
   tempdir(),
   paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
@@ -15,7 +17,7 @@ min_cells_exp <- 500L
 # hvg
 hvg_to_keep <- 30L
 # pca
-no_pcs <- 10L
+no_pcs <- 15L
 
 ## synthetic test data ---------------------------------------------------------
 
@@ -557,7 +559,13 @@ zeallot::`%<-%`(
   )
 )
 
-expect_equivalent(current = scaled, target = scaled_data, tolerance = 1e-3)
+expect_equivalent(
+  current = diag(cor(scaled, scaled_data)),
+  target = rep(1, hvg_to_keep),
+  tolerance = 1e-7,
+  info = "scaling behaves"
+)
+
 
 ## knn and snn -----------------------------------------------------------------
 
@@ -656,5 +664,96 @@ expect_true(
   ),
   info = "all expected cell markers identified"
 )
+
+## sparse pca ------------------------------------------------------------------
+
+### direct rust functions ------------------------------------------------------
+
+zeallot::`%<-%`(
+  c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
+  rs_sc_pca_sparse(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = FALSE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    verbose = FALSE
+  )
+)
+
+zeallot::`%<-%`(
+  c(sparse_pca_factors_rnd, sparse_pca_loadings_rnd, sparse_pca_eigenvals_rnd),
+  rs_sc_pca_sparse(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = TRUE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    verbose = FALSE
+  )
+)
+
+expect_equal(
+  current = abs(diag(cor(sparse_pca_factors, sparse_pca_factors_rnd))),
+  target = rep(1, 15),
+  tolerance = 1e-7,
+  into = "sparse svd - randomised and normal return very similar results"
+)
+
+expect_true(
+  current = all(
+    abs(diag(cor(pca_factors, sparse_pca_factors)))[1:2] >= 0.95
+  ),
+  info = "first two PCs are highly correlated)"
+)
+
+### object method --------------------------------------------------------------
+
+# more PCs needed for sparse SVD to recover all of the data set structure
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  randomised_svd = FALSE,
+  sparse_svd = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    x = get_pca_factors(sc_object),
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named",
+    ncol = no_pcs
+  ),
+  info = "sparse PCA correctly added to object and returned"
+)
+
+### test synthetic data set structure recovery ---------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(),
+  .verbose = FALSE
+)
+
+sc_object <- find_clusters_sc(sc_object)
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+
+f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
+
+expect_true(
+  current = all(f1_scores > 0.95),
+  info = "leiden clustering on top of sparse SVD identifies the cell groups"
+)
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

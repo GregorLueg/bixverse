@@ -15,9 +15,9 @@ KNN_PARAM_NAMES <- c(
   "ef_search"
 )
 
-# checks -----------------------------------------------------------------------
+## checks ----------------------------------------------------------------------
 
-## others ----------------------------------------------------------------------
+### others ---------------------------------------------------------------------
 
 #' Check that files exist
 #'
@@ -46,7 +46,22 @@ checkFilesExist <- function(x, file_names) {
   }
 }
 
-## correlation params ----------------------------------------------------------
+#' Assert that files exist
+#'
+#' @description Checkmate extension for asserting if files exist in the
+#' directory.
+#'
+#' @inheritParams checkFilesExist
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
+
+### correlation params ---------------------------------------------------------
 
 #' Check correlation graph parameters
 #'
@@ -93,6 +108,22 @@ checkCorGraphParams <- function(x) {
   return(TRUE)
 }
 
+#' Assert correlation graph parameters
+#'
+#' @description Checkmate extension for asserting the graph parameters.
+#'
+#' @inheritParams checkCorGraphParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
+
+### graph resolution -----------------------------------------------------------
+
 #' Check resolution graph parameters
 #'
 #' @description Checkmate extension for checking the resolution parameters for
@@ -134,7 +165,24 @@ checkGraphResParams <- function(x) {
   return(TRUE)
 }
 
-## ica params ------------------------------------------------------------------
+#' Assert resolution graph parameters
+#'
+#' @description Checkmate extension for asserting the resolution parameters for
+#' community detection with Leiden.
+#'
+#' @inheritParams checkGraphResParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
+
+### ica ------------------------------------------------------------------------
+
+#### ica params ----------------------------------------------------------------
 
 #' Check ICA parameters
 #'
@@ -181,6 +229,21 @@ checkIcaParams <- function(x) {
   return(TRUE)
 }
 
+#' Assert ICA parameters
+#'
+#' @description Checkmate extension for asserting the ICA parameters
+#'
+#' @inheritParams checkIcaParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
+
+#### ica components ------------------------------------------------------------
 
 #' Check ICA no of component parameters
 #'
@@ -227,10 +290,27 @@ checkIcaNcomps <- function(x) {
   return(TRUE)
 }
 
+#' Assert ICA no of component parameters
+#'
+#' @description Checkmate extension for asserting the ICA number of component
+#' parameters.
+#'
+#' @inheritParams checkIcaNcomps
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
+
+#### ica randomisation ---------------------------------------------------------
+
 #' Check ICA randomisation parameters
 #'
-#' @description Checkmate extension for checking the ICA randomisation parameters
-#' for a version of stabilised ICA.
+#' @description Checkmate extension for checking the ICA randomisation
+#' parameters for a version of stabilised ICA.
 #'
 #' @param x The list to check/assert
 #'
@@ -272,7 +352,22 @@ checkIcaIterParams <- function(x) {
   return(TRUE)
 }
 
-## community detections --------------------------------------------------------
+#' Assert ICA randomisation parameters
+#'
+#' @description Checkmate extension for asserting the ICA randomisation
+#' parameters for a version of stabilised ICA.
+#'
+#' @inheritParams checkIcaIterParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
+
+### community detections -------------------------------------------------------
 
 #' Check community detection parameters
 #'
@@ -343,7 +438,22 @@ checkCommunityParams <- function(x) {
   return(TRUE)
 }
 
-## gsea ------------------------------------------------------------------------
+#' Assert community detection parameter
+#'
+#' @description Checkmate extension for asserting the community detection
+#' parameters for identifying genetically privileged communities.
+#'
+#' @inheritParams checkCommunityParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
+
+### gsea -----------------------------------------------------------------------
 
 #' Check GSEA parameters
 #'
@@ -393,7 +503,22 @@ checkGSEAParams <- function(x) {
   return(TRUE)
 }
 
-## gsva ------------------------------------------------------------------------
+#' Assert GSEA parameter
+#'
+#' @description Checkmate extension for asserting the gene set enrichment
+#' analysis (GSEA) parameters.
+#'
+#' @inheritParams checkGSEAParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
+
+### gsva -----------------------------------------------------------------------
 
 #' Check GSVA parameters
 #'
@@ -449,7 +574,22 @@ checkGSVAParams <- function(x) {
   return(TRUE)
 }
 
-## ssgsea ----------------------------------------------------------------------
+#' Assert GSVA parameter
+#'
+#' @description Checkmate extension for asserting the gene set variation
+#' analysis (GSVA) parameters.
+#'
+#' @inheritParams checkGSVAParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
+
+### ssgsea ---------------------------------------------------------------------
 
 #' Check ssGSEA parameters
 #'
@@ -503,7 +643,24 @@ checkSingleSampleGSEAparams <- function(x) {
   return(TRUE)
 }
 
-## coremo ----------------------------------------------------------------------
+#' Assert ssGSEA parameter
+#'
+#' @description Checkmate extension for asserting single sample gene set
+#' enrichment analysis parameters.
+#'
+#' @inheritParams checkSingleSampleGSEAparams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
+  checkSingleSampleGSEAparams
+)
+
+### coremo ---------------------------------------------------------------------
 
 #' Check CoReMo parameters
 #'
@@ -588,7 +745,21 @@ checkCoReMoParams <- function(x) {
   return(TRUE)
 }
 
-## dgrdl -----------------------------------------------------------------------
+#' Assert CoReMo parameter
+#'
+#' @description Checkmate extension for asserting the CoReMo parameters.
+#'
+#' @inheritParams checkCoReMoParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
+
+### dgrdl ----------------------------------------------------------------------
 
 #' Check DGRDL parameters
 #'
@@ -650,7 +821,22 @@ checkDGRDLparams <- function(x) {
   return(TRUE)
 }
 
-## snf -------------------------------------------------------------------------
+#' Assert DGRDL parameter
+#'
+#' @description Checkmate extension for asserting dual graph regularised
+#' dictionary learning parameters.
+#'
+#' @inheritParams checkDGRDLparams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
+
+### snf ------------------------------------------------------------------------
 
 #' Check SNF parameters
 #'
@@ -742,7 +928,26 @@ checkSNFParams <- function(x) {
   return(TRUE)
 }
 
-## cistarget -------------------------------------------------------------------
+#' Assert SNF parameter
+#'
+#' @description Checkmate extension for asserting the SNF parameters.
+#'
+#' @inheritParams checkSNFParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
+
+#' @rdname checkSNFParams
+#'
+#' @export
+testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
+
+### cistarget ------------------------------------------------------------------
 
 #' Check CisTarget parameters
 #'
@@ -808,9 +1013,23 @@ checkCistargetParams <- function(x) {
   return(TRUE)
 }
 
-## single cell -----------------------------------------------------------------
+#' Assert CisTarget parameters
+#'
+#' @description Checkmate extension for asserting the CisTarget parameters.
+#'
+#' @inheritParams checkCistargetParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
 
-### general --------------------------------------------------------------------
+### single cell ----------------------------------------------------------------
+
+#### general -------------------------------------------------------------------
 
 #' Check kNN parameters
 #'
@@ -916,7 +1135,7 @@ checkKnnParams <- function(x, required_params = NULL) {
   return(TRUE)
 }
 
-### synthetic data -------------------------------------------------------------
+#### synthetic data ------------------------------------------------------------
 
 #' Check synthetic data parameters
 #'
@@ -1009,7 +1228,22 @@ checkScSyntheticData <- function(x) {
   return(TRUE)
 }
 
-### io -------------------------------------------------------------------------
+#' Assert synthetic data parameters
+#'
+#' @description Checkmate extension for asserting the synthetic data
+#' parameters.
+#'
+#' @inheritParams checkScSyntheticData
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
+
+#### io ------------------------------------------------------------------------
 
 #' Check SC MTX load parameters
 #'
@@ -1056,7 +1290,21 @@ checkScMtxIO <- function(x) {
   return(TRUE)
 }
 
-### qc -------------------------------------------------------------------------
+#' Assert SC MTX load parameters
+#'
+#' @description Checkmate extension for asserting MTX loading parameters.
+#'
+#' @inheritParams checkScMtxIO
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
+
+#### qc ------------------------------------------------------------------------
 
 #' Check SC minimum QC parameters
 #'
@@ -1109,7 +1357,22 @@ checkScMinQC <- function(x) {
   return(TRUE)
 }
 
-### scrublet -------------------------------------------------------------------
+#' Assert SC minimum QC parameters
+#'
+#' @description Checkmate extension for asserting the minimum QC parameters
+#' in single cell.
+#'
+#' @inheritParams checkScMinQC
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
+
+#### scrublet ------------------------------------------------------------------
 
 #' Check Scrublet parameters
 #'
@@ -1274,7 +1537,21 @@ checkScScrublet <- function(x) {
   return(TRUE)
 }
 
-### boost ----------------------------------------------------------------------
+#' Assert Scrublet parameters
+#'
+#' @description Checkmate extension for asserting the Scrublet parameters.
+#'
+#' @inheritParams checkScScrublet
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#'   to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#'   [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
+
+#### boost ---------------------------------------------------------------------
 
 #' Check Boost parameters
 #'
@@ -1440,7 +1717,21 @@ checkScBoost <- function(x) {
   return(TRUE)
 }
 
-### hvg ------------------------------------------------------------------------
+#' Assert Boost parameters
+#'
+#' @description Checkmate extension for asserting the Boost parameters.
+#'
+#' @inheritParams checkScBoost
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#'   to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#'   [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
+
+#### hvg -----------------------------------------------------------------------
 
 #' Check HVG selection parameters
 #'
@@ -1520,7 +1811,22 @@ checkScHvg <- function(x) {
   return(TRUE)
 }
 
-### knn ------------------------------------------------------------------------
+#' Assert HVG selection parameters
+#'
+#' @description Checkmate extension for checking the HVG parameters for single
+#' cell.
+#'
+#' @inheritParams checkScHvg
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
+
+#### knn -----------------------------------------------------------------------
 
 #' Check neighbour generation parameters
 #'
@@ -1589,7 +1895,22 @@ checkScNeighbours <- function(x) {
   return(TRUE)
 }
 
-### cells in object ------------------------------------------------------------
+#' Assert neighbour generation parameters
+#'
+#' @description Checkmate extension for assert the neighbour generation
+#' parameters for single cell.
+#'
+#' @inheritParams checkScNeighbours
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
+
+#### cells in object -----------------------------------------------------------
 
 #' Check that the cell name exists in the object
 #'
@@ -1622,7 +1943,22 @@ checkCellsExist <- function(x, cell_names) {
   return(TRUE)
 }
 
-### meta cells -----------------------------------------------------------------
+#' Assert neighbour generation parameters
+#'
+#' @description Checkmate extension for asserting if the prodivided cell names
+#  exist in the object.
+#'
+#' @inheritParams checkCellsExist
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
+
+#### meta cells ----------------------------------------------------------------
 
 #' Check metacell generation parameters
 #'
@@ -1688,7 +2024,22 @@ checkScMetacells <- function(x) {
   return(TRUE)
 }
 
-### seacells -------------------------------------------------------------------
+#' Assert metacell generation parameters
+#'
+#' @description Checkmate extension for assert the metacell generation
+#' parameters.
+#'
+#' @inheritParams checkScMetacells
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
+
+#### seacells ------------------------------------------------------------------
 
 #' Check SEACells parameters
 #'
@@ -1801,7 +2152,21 @@ checkScSeacells <- function(x) {
   TRUE
 }
 
-### supercells -----------------------------------------------------------------
+#' Assert SEACells parameters
+#'
+#' @description Checkmate extension for asserting the SEACells parameters.
+#'
+#' @inheritParams checkScSeacells
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
+
+#### supercells ----------------------------------------------------------------
 
 #' Check SuperCell parameters
 #'
@@ -1866,7 +2231,21 @@ checkScSupercell <- function(x) {
   return(TRUE)
 }
 
-### bbknn ----------------------------------------------------------------------
+#' Assert SuperCell parameters
+#'
+#' @description Checkmate extension for asserting the SuperCell parameters.
+#'
+#' @inheritParams checkScSupercell
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
+
+#### bbknn ---------------------------------------------------------------------
 
 #' Check BBKNN parameters
 #'
@@ -1926,7 +2305,21 @@ checkScBbknn <- function(x) {
   return(TRUE)
 }
 
-### fastMNN --------------------------------------------------------------------
+#' Assert BBKNN parameters
+#'
+#' @description Checkmate extension for asserting the BBKNN parameters.
+#'
+#' @inheritParams checkScBbknn
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
+
+#### fastMNN -------------------------------------------------------------------
 
 #' Check fastMNN parameters
 #'
@@ -1990,6 +2383,20 @@ checkScFastmnn <- function(x) {
   return(TRUE)
 }
 
+#' Assert fastMNN parameters
+#'
+#' @description Checkmate extension for asserting the fastMNN parameters.
+#'
+#' @inheritParams checkScFastmnn
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
+
 ### VISION ---------------------------------------------------------------------
 
 #' Check VISION parameters
@@ -2052,7 +2459,21 @@ checkScVision <- function(x) {
   return(TRUE)
 }
 
-### HotSpot --------------------------------------------------------------------
+#' Assert VISION parameters
+#'
+#' @description Checkmate extension for asserting the VISION parameters.
+#'
+#' @inheritParams checkScVision
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScVision <- checkmate::makeAssertionFunction(checkScVision)
+
+#### HotSpot -------------------------------------------------------------------
 
 #' Check HotSpot parameters
 #'
@@ -2100,7 +2521,21 @@ checkScHotspot <- function(x) {
   return(TRUE)
 }
 
-### miloR ----------------------------------------------------------------------
+#' Assert HotSpot parameters
+#'
+#' @description Checkmate extension for asserting the HotSpot parameters.
+#'
+#' @inheritParams checkScHotspot
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
+
+#### miloR ---------------------------------------------------------------------
 
 #' Check MiloR parameters
 #'
@@ -2177,488 +2612,6 @@ checkScMiloR <- function(x) {
   return(TRUE)
 }
 
-# asserts ----------------------------------------------------------------------
-
-## other -----------------------------------------------------------------------
-
-#' Assert that files exist
-#'
-#' @description Checkmate extension for asserting if files exist in the
-#' directory.
-#'
-#' @inheritParams checkFilesExist
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
-
-## correlation params ----------------------------------------------------------
-
-#' Assert correlation graph parameters
-#'
-#' @description Checkmate extension for asserting the graph parameters.
-#'
-#' @inheritParams checkCorGraphParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
-
-
-#' Assert resolution graph parameters
-#'
-#' @description Checkmate extension for asserting the resolution parameters for
-#' community detection with Leiden.
-#'
-#' @inheritParams checkGraphResParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
-
-## ica params ------------------------------------------------------------------
-
-#' Assert ICA parameters
-#'
-#' @description Checkmate extension for asserting the ICA parameters
-#'
-#' @inheritParams checkIcaParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
-
-#' Assert ICA no of component parameters
-#'
-#' @description Checkmate extension for asserting the ICA number of component
-#' parameters.
-#'
-#' @inheritParams checkIcaNcomps
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
-
-#' Assert ICA randomisation parameters
-#'
-#' @description Checkmate extension for asserting the ICA randomisation
-#' parameters for a version of stabilised ICA.
-#'
-#' @inheritParams checkIcaIterParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
-
-## community detections --------------------------------------------------------
-
-#' Assert community detection parameter
-#'
-#' @description Checkmate extension for asserting the community detection
-#' parameters for identifying genetically privileged communities.
-#'
-#' @inheritParams checkCommunityParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
-
-## gsea ------------------------------------------------------------------------
-
-#' Assert GSEA parameter
-#'
-#' @description Checkmate extension for asserting the gene set enrichment
-#' analysis (GSEA) parameters.
-#'
-#' @inheritParams checkGSEAParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
-
-## ssgsea ----------------------------------------------------------------------
-
-#' Assert ssGSEA parameter
-#'
-#' @description Checkmate extension for asserting single sample gene set
-#' enrichment analysis parameters.
-#'
-#' @inheritParams checkSingleSampleGSEAparams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
-  checkSingleSampleGSEAparams
-)
-
-## gsva ------------------------------------------------------------------------
-
-#' Assert GSVA parameter
-#'
-#' @description Checkmate extension for asserting the gene set variation
-#' analysis (GSVA) parameters.
-#'
-#' @inheritParams checkGSVAParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
-
-## coremo ----------------------------------------------------------------------
-
-#' Assert CoReMo parameter
-#'
-#' @description Checkmate extension for asserting the CoReMo parameters.
-#'
-#' @inheritParams checkCoReMoParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
-
-## DGRDL ------------------------------------------------------------------------
-
-#' Assert DGRDL parameter
-#'
-#' @description Checkmate extension for asserting dual graph regularised
-#' dictionary learning parameters.
-#'
-#' @inheritParams checkDGRDLparams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
-
-## SNF -------------------------------------------------------------------------
-
-#' Assert CisTarget parameters
-#'
-#' @description Checkmate extension for asserting the CisTarget parameters.
-#'
-#' @inheritParams checkCistargetParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
-
-## CisTarget -------------------------------------------------------------------
-
-#' Assert SNF parameter
-#'
-#' @description Checkmate extension for asserting the SNF parameters.
-#'
-#' @inheritParams checkSNFParams
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
-
-## single cell -----------------------------------------------------------------
-
-### synthetic data -------------------------------------------------------------
-
-#' Assert synthetic data parameters
-#'
-#' @description Checkmate extension for asserting the synthetic data
-#' parameters.
-#'
-#' @inheritParams checkScSyntheticData
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
-
-### io -------------------------------------------------------------------------
-
-#' Assert SC MTX load parameters
-#'
-#' @description Checkmate extension for asserting MTX loading parameters.
-#'
-#' @inheritParams checkScMtxIO
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
-
-### qc -------------------------------------------------------------------------
-
-#' Assert SC minimum QC parameters
-#'
-#' @description Checkmate extension for asserting the minimum QC parameters
-#' in single cell.
-#'
-#' @inheritParams checkScMinQC
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
-
-### scrublet -------------------------------------------------------------------
-
-#' Assert Scrublet parameters
-#'
-#' @description Checkmate extension for asserting the Scrublet parameters.
-#'
-#' @inheritParams checkScScrublet
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#'   to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#'   [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
-
-### boost ----------------------------------------------------------------------
-
-#' Assert Boost parameters
-#'
-#' @description Checkmate extension for asserting the Boost parameters.
-#'
-#' @inheritParams checkScBoost
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#'   to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#'   [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
-
-### hvg ------------------------------------------------------------------------
-
-#' Assert HVG selection parameters
-#'
-#' @description Checkmate extension for checking the HVG parameters for single
-#' cell.
-#'
-#' @inheritParams checkScHvg
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
-
-### knn ------------------------------------------------------------------------
-
-#' Assert neighbour generation parameters
-#'
-#' @description Checkmate extension for assert the neighbour generation
-#' parameters for single cell.
-#'
-#' @inheritParams checkScNeighbours
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
-
-### cell exists ----------------------------------------------------------------
-
-#' Assert neighbour generation parameters
-#'
-#' @description Checkmate extension for asserting if the prodivided cell names
-#  exist in the object.
-#'
-#' @inheritParams checkCellsExist
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
-
-### meta cells -----------------------------------------------------------------
-
-#' Assert metacell generation parameters
-#'
-#' @description Checkmate extension for assert the metacell generation
-#' parameters.
-#'
-#' @inheritParams checkScMetacells
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
-
-### seacells -------------------------------------------------------------------
-
-#' Assert SEACells parameters
-#'
-#' @description Checkmate extension for asserting the SEACells parameters.
-#'
-#' @inheritParams checkScSeacells
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
-
-### supercells -----------------------------------------------------------------
-
-#' Assert SuperCell parameters
-#'
-#' @description Checkmate extension for asserting the SuperCell parameters.
-#'
-#' @inheritParams checkScSupercell
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
-
-### bbknn ----------------------------------------------------------------------
-
-#' Assert BBKNN parameters
-#'
-#' @description Checkmate extension for asserting the BBKNN parameters.
-#'
-#' @inheritParams checkScBbknn
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
-
-### fastMNN --------------------------------------------------------------------
-
-#' Assert fastMNN parameters
-#'
-#' @description Checkmate extension for asserting the fastMNN parameters.
-#'
-#' @inheritParams checkScFastmnn
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
-
-### VISION ---------------------------------------------------------------------
-
-#' Assert VISION parameters
-#'
-#' @description Checkmate extension for asserting the VISION parameters.
-#'
-#' @inheritParams checkScVision
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScVision <- checkmate::makeAssertionFunction(checkScVision)
-
-### hotspot --------------------------------------------------------------------
-
-#' Assert HotSpot parameters
-#'
-#' @description Checkmate extension for asserting the HotSpot parameters.
-#'
-#' @inheritParams checkScHotspot
-#'
-#' @param .var.name Name of the checked object to print in assertions. Defaults
-#' to the heuristic implemented in checkmate.
-#' @param add Collection to store assertion messages. See
-#' [checkmate::makeAssertCollection()].
-#'
-#' @return Invisibly returns the checked object if the assertion is successful.
-assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
-
-### miloR ----------------------------------------------------------------------
-
 #' Assert MiloR parameters
 #'
 #' @description Checkmate extension for asserting the MiloR parameters.
@@ -2673,11 +2626,141 @@ assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScMiloR <- checkmate::makeAssertionFunction(checkScMiloR)
 
-# tests ------------------------------------------------------------------------
+#### Harmony -------------------------------------------------------------------
 
-## SNF -------------------------------------------------------------------------
-
-#'@rdname checkSNFParams
+#' Check Harmony parameters
 #'
-#' @export
-testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
+#' @description Checkmate extension for checking Harmony parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkScHarmonyParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "sigma",
+      "theta",
+      "lambda",
+      "block_size",
+      "max_iter_kmeans",
+      "max_iter_harmony",
+      "epsilon_kmeans",
+      "epsilon_harmony",
+      "window_size"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "k" = "I1[1,)",
+    "max_iter_kmeans" = "I1[1,)",
+    "max_iter_harmony" = "I1[1,)",
+    "window_size" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony parameters is incorrect:",
+          "k, max_iter_kmeans, max_iter_harmony,",
+          "and window_size must be integers >= 1."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Numeric vector rules (can be length 1 or longer)
+  vector_rules <- list(
+    "sigma" = "N+[0,)",
+    "theta" = "N+[0,)",
+    "lambda" = "N+[0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(vector_rules)) {
+      checkmate::qtest(x, vector_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony parameters is incorrect:",
+          "sigma, theta, and lambda must be numeric vectors",
+          "with non-negative values."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Scalar numeric rules
+  scalar_rules <- list(
+    "block_size" = "N1(0,1]",
+    "epsilon_kmeans" = "N1(0,)",
+    "epsilon_harmony" = "N1(0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(scalar_rules)) {
+      checkmate::qtest(x, scalar_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony parameters is incorrect:",
+          "block_size must be in (0,1]; epsilon_kmeans",
+          "and epsilon_harmony must be > 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+#' Assert Harmony parameters
+#'
+#' @description Checkmate extension for asserting the Harmony parameters.
+#'
+#' @inheritParams checkScHarmonyParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)

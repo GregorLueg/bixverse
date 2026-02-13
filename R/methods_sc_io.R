@@ -206,6 +206,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
   checkmate::assertDataTable(var, nrows = no_genes)
   checkmate::qassert(.verbose, "B1")
 
+  if (.verbose) {
+    message("Writing counts to disk.")
+  }
   # body
   counts <- sparse_mat_to_list(counts)
 
@@ -217,6 +220,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
     verbose = .verbose
   )
 
+  if (.verbose) {
+    message("Generating gene-based data.")
+  }
   if (streaming) {
     rust_con$generate_gene_based_data_streaming(
       batch_size = batch_size,
@@ -231,6 +237,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
   gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
   gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
 
+  if (.verbose) {
+    message("Writing to the DuckDB.")
+  }
   duckdb_con <- get_sc_duckdb(object)
 
   duckdb_con$populate_obs_from_data.table(
@@ -245,6 +254,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
+  if (.verbose) {
+    message("Setting internal mapping.")
+  }
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()

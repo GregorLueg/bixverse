@@ -34,7 +34,6 @@ params_ica_general <- function(
   ))
 }
 
-
 #' Wrapper function for ICA ncomp iterations
 #'
 #' @description Wrapper function to provide parameters through which ncomps to
@@ -698,5 +697,71 @@ params_sc_hvg <- function(
     loess_span = loess_span,
     num_bin = num_bin,
     bin_method = bin_method
+  )
+}
+
+### harmony --------------------------------------------------------------------
+
+#' Default parameters for Harmony batch correction
+#'
+#' @param k Integer. Number of clusters for k-means clustering.
+#' @param sigma Numeric vector. Per-cluster diversity weights. Either a single
+#' value (broadcast to all clusters) or a vector of length k.
+#' @param theta Numeric vector. Per-variable diversity penalties. Either a
+#' single value (broadcast to all variables) or a vector of length equal to the
+#' number of batch variables.
+#' @param lambda Numeric vector. Ridge regression penalty for the linear model.
+#' Typically a single value that is broadcast to all design matrix columns.
+#' @param block_size Numeric. Fraction of cells to update per block during
+#' optimisation (0.0-1.0). Lower values reduce memory usage but increase
+#' computation time.
+#' @param max_iter_kmeans Integer. Maximum number of k-means iterations per
+#' Harmony round.
+#' @param max_iter_harmony Integer. Maximum number of Harmony outer iterations.
+#' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
+#' Stops when the relative change in cluster assignments falls below this value.
+#' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
+#' the relative change in the objective function falls below this value.
+#' @param window_size Integer. Number of previous iterations to consider when
+#' checking convergence.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_sc_harmony <- function(
+  k = 10L,
+  sigma = 0.1,
+  theta = 2.0,
+  lambda = 1.0,
+  block_size = 0.05,
+  max_iter_kmeans = 20L,
+  max_iter_harmony = 10L,
+  epsilon_kmeans = 1e-5,
+  epsilon_harmony = 1e-4,
+  window_size = 2L
+) {
+  # checks
+  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(sigma, "N+[0,)")
+  checkmate::qassert(theta, "N+[0,)")
+  checkmate::qassert(lambda, "N+[0,)")
+  checkmate::qassert(block_size, "N1(0,1]")
+  checkmate::qassert(max_iter_kmeans, "I1[1,)")
+  checkmate::qassert(max_iter_harmony, "I1[1,)")
+  checkmate::qassert(epsilon_kmeans, "N1(0,)")
+  checkmate::qassert(epsilon_harmony, "N1(0,)")
+  checkmate::qassert(window_size, "I1[1,)")
+
+  list(
+    k = k,
+    sigma = sigma,
+    theta = theta,
+    lambda = lambda,
+    block_size = block_size,
+    max_iter_kmeans = max_iter_kmeans,
+    max_iter_harmony = max_iter_harmony,
+    epsilon_kmeans = epsilon_kmeans,
+    epsilon_harmony = epsilon_harmony,
+    window_size = window_size
   )
 }

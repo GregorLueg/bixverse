@@ -380,8 +380,8 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   if (.verbose) {
     message(paste(
       "Generating graph based on BBKNN connectivities.",
-      "Weights will be based on the connectivities and not shared nearest neighour",
-      "calculations."
+      "Weights will be based on the connectivities",
+      "and not shared nearest neighour calculations."
     ))
   }
 
@@ -438,6 +438,9 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
+#' @param use_precomputed_pca Boolean. Should the PCA in the object be used
+#' if found. If you decide to do this, make sure that you have run the PCA
+#' on the batch-aware HVG ideally.
 #' @param seed Integer. Random seed.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
@@ -454,6 +457,7 @@ fast_mnn_sc <- S7::new_generic(
     batch_column,
     batch_hvg_genes,
     fastmnn_params = params_sc_fastmnn(),
+    use_precomputed_pca = FALSE,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -469,6 +473,7 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
   batch_column,
   batch_hvg_genes,
   fastmnn_params = params_sc_fastmnn(),
+  use_precomputed_pca = FALSE,
   seed = 42L,
   .verbose = TRUE
 ) {
@@ -477,6 +482,7 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
   assertScFastmnn(fastmnn_params)
+  checkmate::qassert(use_precomputed_pca, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -485,17 +491,130 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
   batch_factor <- factor(batch_indices)
   batch_indices <- as.integer(batch_factor) - 1L
 
+  pca_data <- if (use_precomputed_pca && !is.null(get_pca_factors(object))) {
+    if (.verbose) {
+      message("Using pre-computed PCA found in the object")
+    }
+    get_pca_factors(object)
+  } else {
+    NULL
+  }
+
   mnn_embd <- rs_mnn(
     f_path = get_rust_count_gene_f_path(object),
     cell_indices = get_cells_to_keep(object),
     gene_indices = as.integer(batch_hvg_genes - 1L),
     batch_indices = batch_indices,
     mnn_params = fastmnn_params,
+    precomputed_pca = pca_data,
     verbose = .verbose,
     seed = 42L
   )
 
+  colnames(mnn_embd) <- sprintf("mnn_%s", 1:ncol(mnn_embd))
+
   object <- set_embedding(x = object, embd = mnn_embd, name = "mnn")
+
+  return(object)
+}
+
+## harmony ---------------------------------------------------------------------
+
+#' Run Harmony
+#'
+#' @description
+#' A version of Harmony by Korsunsky et al., implemented in Rust.
+#'
+#' @param object ...
+#' @param batch_column ...
+#' @param additional_batch_columns ...
+#' @param harmony_params ...
+#' @param seed ...
+#' @param .verbose ...
+#'
+#' @returns ...
+#'
+#' @export
+harmony_sc <- S7::new_generic(
+  name = "harmony_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    additional_batch_columns = NULL,
+    harmony_params = params_sc_harmony(),
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method harmony_sc single_cell_exp
+#'
+#' @export
+S7::method(harmony_sc, single_cell_exp) <- function(
+  object,
+  batch_column,
+  additional_batch_columns = NULL,
+  harmony_params = params_sc_harmony(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(additional_batch_columns, c("S+", "0"))
+  assertScHarmonyParams(harmony_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  if (is.null(get_pca_factors(object))) {
+    warning(paste(
+      "No PCA embeddings found in the object. Returning class as is"
+    ))
+    return(object)
+  } else {
+    pca_data <- get_pca_factors(object)
+  }
+
+  # function body
+  # main batch
+  batch_index_ls <- list()
+
+  batch_indices <- unlist(object[[batch_column]])
+  batch_factor <- factor(batch_indices)
+  batch_indices <- as.integer(batch_factor) - 1L
+
+  batch_index_ls[[1]] <- batch_indices
+
+  # add optional batch effects to regress out
+  if (!is.null(additional_batch_columns)) {
+    for (i in seq_along(additional_batch_columns)) {
+      batch_indices_i <- unlist(object[[additional_batch_columns[[i]]]])
+      batch_factor_i <- factor(batch_indices_i)
+      batch_indices_i <- as.integer(batch_factor_i) - 1L
+
+      batch_index_ls[[i + 1]] <- batch_indices_i
+    }
+  }
+
+  checkmate::assertTRUE(all(
+    purrr::map_dbl(batch_index_ls, length) == nrow(pca_data)
+  ))
+
+  harmony_embd <- rs_harmony(
+    pca = pca_data,
+    harmony_params = harmony_params,
+    batch_labels = batch_index_ls,
+    seed = seed,
+    verbose = .verbose
+  )
+
+  colnames(harmony_embd) <- sprintf("harmony_%s", 1:ncol(harmony_embd))
+
+  object <- set_embedding(x = object, embd = harmony_embd, name = "harmony")
 
   return(object)
 }

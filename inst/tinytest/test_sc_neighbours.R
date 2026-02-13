@@ -10,11 +10,15 @@ if (
   exit_file("BiocNeighbors, bluster and cluster not available")
 }
 
+library(magrittr)
+
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "neighbours"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## test parameters -------------------------------------------------------------
 
@@ -550,3 +554,7 @@ expect_true(
     1,
   info = "sc_knn class - expected overlap nndescent euclidean"
 )
+
+# clean up ---------------------------------------------------------------------
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

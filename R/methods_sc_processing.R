@@ -457,6 +457,16 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
 #' less precise.
+#' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
+#' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
+#' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
+#' sparse initial matrix is multiplied with the random matrix, yielding a
+#' much smaller dense matrix that does not increase the memory pressure
+#' massively.
+#' @param hvg Optional integer. If you want to provide your own HVG genes.
+#' Otherwise, the function will default to what is found in
+#' [bixverse::get_hvg()]. Please provide 1-indexed genes here! If you provide
+#' these, the internal HVG will be overwritten.
 #' @param seed Integer. Controls reproducibility. Only relevant if
 #' `randomised_svd = TRUE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
@@ -472,6 +482,8 @@ calculate_pca_sc <- S7::new_generic(
     object,
     no_pcs,
     randomised_svd = TRUE,
+    sparse_svd = FALSE,
+    hvg = NULL,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -489,42 +501,104 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
   object,
   no_pcs,
   randomised_svd = TRUE,
+  sparse_svd = FALSE,
+  hvg = NULL,
   seed = 42L,
   .verbose = TRUE
 ) {
   checkmate::assertClass(object, "bixverse::single_cell_exp")
   checkmate::qassert(no_pcs, "I1")
   checkmate::qassert(randomised_svd, "B1")
+  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  if (length(get_hvg(object)) == 0) {
+  if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(
-      "No HVGs identified in this object. Did you run find_hvg_sc()?",
+      "No HVGs identified in the object nor provided.",
+      "Please run find_hvg_sc() or provide the indices of the HVG",
       "Returning object as is."
     ))
     return(object)
   }
 
-  zeallot::`%<-%`(
-    c(pca_factors, pca_loadings, singular_values, scaled),
-    rs_sc_pca(
-      f_path_gene = get_rust_count_gene_f_path(object),
-      no_pcs = no_pcs,
-      random_svd = randomised_svd,
-      cell_indices = get_cells_to_keep(object),
-      gene_indices = get_hvg(object),
-      seed = seed,
-      return_scaled = FALSE,
-      verbose = .verbose
+  selected_hvg <- if (!is.null(hvg)) {
+    if (.verbose) {
+      message(
+        paste(
+          "HVGs provided.",
+          "Will use these ones and set the internal HVG to the provided genes."
+        )
+      )
+    }
+    object <- set_hvg(object, hvg) # this one deals with zero/one indexing internally
+    hvg - 1L
+  } else {
+    get_hvg(object)
+  }
+
+  # dense path
+  if (!sparse_svd) {
+    if (.verbose) {
+      message(
+        sprintf(
+          "Using dense SVD solving on scaled data on %i HVG.",
+          length(selected_hvg)
+        )
+      )
+    }
+    zeallot::`%<-%`(
+      c(pca_factors, pca_loadings, singular_values, scaled),
+      rs_sc_pca(
+        f_path_gene = get_rust_count_gene_f_path(object),
+        no_pcs = no_pcs,
+        random_svd = randomised_svd,
+        cell_indices = get_cells_to_keep(object),
+        gene_indices = selected_hvg,
+        seed = seed,
+        return_scaled = FALSE,
+        verbose = .verbose
+      )
     )
-  )
 
-  object <- set_pca_factors(object, pca_factors)
-  object <- set_pca_loadings(object, pca_loadings)
-  object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
+    object <- set_pca_factors(object, pca_factors)
+    object <- set_pca_loadings(object, pca_loadings)
+    object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
 
-  return(object)
+    return(object)
+  } else {
+    if (.verbose) {
+      message(
+        sprintf(
+          "Using sparse SVD solving on scaled data on %i HVG.",
+          length(selected_hvg)
+        )
+      )
+    }
+
+    zeallot::`%<-%`(
+      c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
+      rs_sc_pca_sparse(
+        f_path_gene = bixverse:::get_rust_count_gene_f_path(object),
+        no_pcs = no_pcs,
+        random_svd = randomised_svd,
+        cell_indices = get_cells_to_keep(object),
+        gene_indices = selected_hvg,
+        seed = seed,
+        verbose = .verbose
+      )
+    )
+
+    object <- set_pca_factors(object, sparse_pca_factors)
+    object <- set_pca_loadings(object, sparse_pca_loadings)
+    object <- set_pca_singular_vals(
+      object,
+      sparse_pca_eigenvals[1:no_pcs]
+    )
+
+    return(object)
+  }
 }
 
 ### neighbours -----------------------------------------------------------------

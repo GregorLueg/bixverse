@@ -12,11 +12,11 @@ parameters:
 \itemize{
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to \code{"annoy"}. The implementations are:
+neighbour search. Defaults to \code{"hnsw"}. The implementations are:
 \code{c("hnsw", "annoy", "nndescent", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
-neighbour search. Defaults to \code{"euclidean"}. The implementations are
-\code{c("euclidean", "cosine")}.
+neighbour search. Defaults to \code{"cosine"}. The implementations are
+\code{c("cosine", "euclidean")}.
 \item n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 to \code{50L}.
 \item search_budget - Annoy param: optional search budget per tree for
