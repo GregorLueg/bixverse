@@ -461,6 +461,101 @@ head(get_sc_var(sc_object))
 head(get_sc_var(sc_object)[get_hvg(sc_object)], 5)
 ```
 
+## Doublet Detection 
+
+Doublet detection is a critical quality control step in single-cell RNA-seq analysis. Doublets occur when two cells are captured in a single droplet, leading to artificial transcriptional profiles that can confound downstream analysis. The `bixverse` package provides two complementary methods for doublet detection: **Scrublet** and **Boost-based detection**.
+
+### Scrublet
+
+Scrublet (Single-Cell Remover of Doublets) works by simulating artificial doublets from your data, then comparing each observed cell to these simulations. Cells that closely resemble simulated doublets receive high doublet scores.
+
+The method can be customized using `params_scrublet()`, which allows you to control:
+
+- **normalisation**: Log-normalization parameters including `target_size` (library size to normalize to), `mean_center` (whether to mean-center), and `normalise_variance` (whether to z-score normalize). The original Scrublet paper found that log transformation WITHOUT z-scoring performs optimally.
+- **pca**: PCA parameters via `list(no_pcs = 15L)` to specify the number of principal components to use
+- **hvg**: Highly variable gene selection via `list(min_gene_var_pctl = 0.0)` to set the minimum gene variability percentile
+- **expected_doublet_rate**: Expected proportion of doublets in your dataset (typically 0.05-0.1 for 10x data)
+- **sim_doublet_ratio**: Ratio of simulated doublets to observed cells (typically 1.0-2.0)
+- **n_bins**: Number of bins for histogram-based threshold detection
+
+```{r}
+#| label: scrublet-detection
+
+# Run Scrublet with default parameters
+scrublet_result <- scrublet_sc(
+  sc_object,
+  scrublet_params = params_scrublet(), # Use defaults
+  .verbose = TRUE
+)
+
+# View the automatic doublet detection plot
+plot(scrublet_result)
+
+# Access doublet predictions and scores
+head(get_obs_data(scrublet_result))
+```
+
+You can also manually adjust the doublet calling threshold if the automatic threshold doesn't perform optimally:
+
+```{r}
+#| label: scrublet-manual-threshold
+#| eval: false
+
+# Manually set threshold
+scrublet_result_adjusted <- call_doublets_manual(
+  scrublet_result, 
+  threshold = 0.20, 
+  .verbose = TRUE
+)
+
+# View updated results
+head(get_obs_data(scrublet_result_adjusted))
+```
+
+### Boost-based Doublet Detection
+
+The Boost method uses iterative clustering and classification to identify doublets. It repeatedly clusters cells, trains a classifier to distinguish cell types, and identifies cells that appear to be mixtures of multiple types based on classification uncertainty.
+
+The method can be customized using `params_boost()`, which allows you to control:
+
+- **hvg**: Highly variable gene selection parameters
+- **pca**: PCA dimensionality and parameters via `list(no_pcs = 10L)`
+- **normalisation**: Log-normalization settings including `target_size`
+- **resolution**: Leiden clustering resolution parameter (higher = more clusters)
+- **voter_thresh**: Threshold for classification voting (0-1, lower = more stringent)
+- **n_iters**: Number of boosting iterations (typically 10-50)
+
+```{r}
+#| label: boost-detection
+
+# Run Boost-based doublet detection with default parameters
+boost_result <- doublet_detection_boost_sc(
+  sc_object,
+  boost_params = params_boost(), # Use defaults
+  .verbose = TRUE
+)
+
+# Access results
+head(get_obs_data(boost_result))
+```
+
+Both methods add doublet information to the cell metadata, which you can then use to filter cells before downstream analysis:
+
+```{r}
+#| label: filter-doublets
+#| eval: false
+
+# Get doublet calls from either method
+doublet_data <- get_obs_data(scrublet_result) # or get_obs_data(boost_result)
+
+# Filter to keep only singlets
+singlet_cells <- doublet_data[doublet == FALSE, cell_idx]
+
+# Update sc_object to only include singlets
+sc_object <- set_cells_to_keep(sc_object, singlet_cells)
+```
+
+**Recommendation**: Both methods have complementary strengths. Scrublet excels at detecting cross-cell-type doublets (cells from different populations), while Boost can be more sensitive to within-cluster doublets. For critical analyses, consider running both methods and investigating cells flagged by either approach.
 
 ## PCA
 
@@ -524,6 +619,240 @@ ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
 
 ```
 
+## Batch Correction
+
+Batch effects are technical variations that arise from differences in sample processing, sequencing runs, experimental conditions, or operators. These technical artifacts can obscure true biological signals and lead to misleading conclusions in downstream analyses such as clustering and differential expression. The `bixverse` package provides multiple strategies for handling batch effects in single-cell data.
+
+### Understanding Batch Effects
+
+To demonstrate batch correction methods, we'll create synthetic datasets with varying batch effect strengths. This allows us to illustrate how well each method performs under different scenarios.
+
+```{r}
+#| label: create-batch-effect-data
+
+# Create a temporary directory for batch correction examples
+batch_temp_dir <- file.path(tempdir(), "batch_correction_example")
+dir.create(batch_temp_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Define cell type markers for synthetic data
+cell_markers <- list(
+  cell_type_1 = list(marker_genes = 0:8L),
+  cell_type_2 = list(marker_genes = 9:19L),
+  cell_type_3 = list(marker_genes = 20:29L),
+  cell_type_4 = list(marker_genes = 30:44L)
+)
+
+# Generate synthetic data with medium batch effects
+# This creates 900 cells across 4 cell types and 3 batches
+batch_test_data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 900L,
+    marker_genes = cell_markers,
+    n_batches = 3L,
+    batch_effect_strength = "medium"  # Can be "weak", "medium", or "strong"
+  )
+)
+
+# Create and load the sc_object
+sc_batch_object <- single_cell_exp(dir_data = batch_temp_dir)
+
+sc_batch_object <- load_r_data(
+  object = sc_batch_object,
+  counts = batch_test_data$counts,
+  obs = batch_test_data$obs,
+  var = batch_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 45L,
+    min_lib_size = 300L,
+    min_cells = 450L
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+# Standard preprocessing pipeline
+sc_batch_object <- find_hvg_sc(sc_batch_object, hvg_no = 30L, .verbose = FALSE)
+sc_batch_object <- calculate_pca_sc(sc_batch_object, no_pcs = 15L, .verbose = FALSE)
+sc_batch_object <- find_neighbours_sc(
+  sc_batch_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+```
+
+### Assessing Batch Effects with kBET
+
+Before correcting batch effects, it's important to quantify their severity. The k-nearest neighbor Batch Effect Test (kBET) evaluates how well batches are mixed in the local neighborhood of each cell. A high kBET score indicates poor batch mixing (strong batch effects), while a low score indicates good mixing.
+
+```{r}
+#| label: kbet-assessment
+
+# Calculate kBET score before batch correction
+kbet_before <- calculate_kbet_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index"  # Column in obs table containing batch labels
+)
+
+# The kbet_score represents the proportion of cells with significant batch effects
+print(paste("kBET score before correction:", 
+            round(kbet_before$kbet_score, 3)))
+
+# Visualize batch effects in PCA space
+pca_batch_df <- cbind(sc_batch_object[[]], get_pca_factors(sc_batch_object))
+
+ggplot(pca_batch_df, aes(x = PC_1, y = PC_2, color = as.factor(batch_index))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "PCA colored by batch (before correction)", 
+       color = "Batch") +
+  theme_bw()
+```
+
+### Batch-Aware HVG Selection
+
+When batch effects are present, selecting highly variable genes (HVGs) independently within each batch and then combining them can improve downstream analysis. This prevents batch-specific variation from dominating the HVG selection.
+
+The `find_hvg_batch_aware_sc()` function offers three methods for combining HVGs across batches:
+
+- **average**: Ranks genes by their average variability score across batches (balanced approach)
+- **union**: Takes the union of top HVGs from each batch (more inclusive, captures batch-specific variation)
+- **intersection**: Takes only genes highly variable in all batches (more stringent, conservative)
+
+```{r}
+#| label: batch-aware-hvg
+
+# Select HVGs using batch-aware method (average ranking)
+hvg_batch_avg <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "average",  # Can be "average", "union", or "intersection"
+  .verbose = FALSE
+)
+
+# View the HVG information
+head(hvg_batch_avg$hvg_data)
+```
+
+### BBKNN: Batch Balanced k-Nearest Neighbors
+
+BBKNN (Batch Balanced k-Nearest Neighbors) corrects batch effects by constructing a k-nearest neighbor graph that enforces balanced representation of batches in each cell's neighborhood. Instead of finding neighbors globally, BBKNN finds a specified number of neighbors from within each batch, ensuring that local neighborhoods are batch-diverse.
+
+The method can be customized using parameters passed to `bbknn_sc()`:
+
+- **neighbours_within_batch**: Number of neighbors to find within each batch (default: 3-5)
+- **knn_method**: Approximate nearest neighbor algorithm (`"annoy"`, `"hnsw"`, or `"nndescent"`)
+- **set_op_mix_ratio**: Balance between union and intersection when combining neighbor sets (0-1)
+- **no_neighbours_to_keep**: Final number of neighbors to retain per cell
+
+```{r}
+#| label: bbknn-correction
+
+# Apply BBKNN batch correction
+# Note: This will replace the existing kNN matrix
+sc_batch_bbknn <- bbknn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  no_neighbours_to_keep = 10L,  # Final k for kNN graph
+  .verbose = TRUE
+)
+
+# Assess batch mixing after BBKNN
+kbet_after_bbknn <- calculate_kbet_sc(
+  object = sc_batch_bbknn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after BBKNN:", 
+            round(kbet_after_bbknn$kbet_score, 3)))
+
+# The corrected kNN graph is now stored in the object
+# and can be used for clustering
+```
+
+### fastMNN: Fast Mutual Nearest Neighbors
+
+fastMNN performs batch correction by identifying mutual nearest neighbors (MNNs) across batches and using them to learn batch-specific correction vectors. It projects the corrected data into a new embedding space that preserves biological variation while removing batch effects.
+
+The method can be customized using `params_sc_fastmnn()`:
+
+- **no_pcs**: Number of principal components to compute in the corrected space
+- **knn**: k-nearest neighbor parameters for finding MNNs via `list(k = 5L, knn_method = "annoy")`
+- **n_iter**: Number of iterations for correction refinement
+- **variance_adj**: Whether to adjust for variance differences between batches
+
+fastMNN is particularly effective when batch effects are strong and when you want a new corrected embedding for visualization and downstream analysis.
+
+```{r}
+#| label: fastmnn-correction
+
+# First, find batch-aware HVGs for fastMNN
+hvg_for_mnn <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+
+# Apply fastMNN correction
+sc_batch_mnn <- fast_mnn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg_for_mnn$hvg_genes,
+  fastmnn_params = params_sc_fastmnn(
+    no_pcs = 10L,
+    knn = list(k = 5L)
+  ),
+  .verbose = TRUE
+)
+
+# fastMNN creates a new "mnn" embedding that can be used for downstream analysis
+# Build a new kNN graph using the corrected embedding
+sc_batch_mnn <- find_neighbours_sc(
+  sc_batch_mnn,
+  embd_to_use = "mnn",  # Use the corrected embedding
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+# Assess batch mixing after fastMNN
+kbet_after_mnn <- calculate_kbet_sc(
+  object = sc_batch_mnn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after fastMNN:", 
+            round(kbet_after_mnn$kbet_score, 3)))
+
+# Visualize the corrected MNN embedding
+# Note: fastMNN returns its own embedding, access it accordingly
+# for visualization purposes you would extract and plot the MNN coordinates
+```
+
+### Choosing a Batch Correction Method
+
+**When to use each approach:**
+
+- **Batch-aware HVG selection**: Use as a first step when batch effects are mild to moderate. It's computationally cheap and prevents batch-specific genes from dominating feature selection. Use `"average"` for balanced results, `"union"` to capture batch-specific biology, or `"intersection"` for conservative selection.
+
+- **BBKNN**: Best for moderate batch effects when you want to preserve the original PCA space while improving neighborhood structure. It's fast, works directly on existing embeddings, and is ideal when you trust your PCA but need better batch mixing for clustering. The correction is applied at the graph level rather than to the data itself.
+
+- **fastMNN**: Best for strong batch effects or when you need a new corrected embedding for visualization. It's more computationally intensive but provides a corrected low-dimensional space that explicitly removes batch effects while preserving biological variation. Use when BBKNN isn't sufficient or when you want corrected coordinates for plotting.
+
+**General workflow:**
+1. Always assess batch effects first using kBET and visualization
+2. Start with batch-aware HVG selection as a baseline
+3. Apply BBKNN or fastMNN depending on severity
+4. Re-assess using kBET to verify improvement
+5. Use the corrected neighborhood graph or embedding for clustering and downstream analysis
+
+```{r}
+#| label: cleanup-batch
+#| include: false
+
+# Clean up temporary directory
+unlink(batch_temp_dir, recursive = TRUE, force = TRUE)
+```
 
 ## Clustering 
 
