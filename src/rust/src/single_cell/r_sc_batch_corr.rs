@@ -120,7 +120,7 @@ fn rs_bbknn_filtering(
     indptr: Vec<i32>,
     indices: Vec<i32>,
     no_neighbours_to_keep: usize,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let nrow = indptr.len() - 1;
     let ncol = no_neighbours_to_keep;
     let mut mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
@@ -174,7 +174,7 @@ fn rs_mnn(
     mnn_params: List,
     verbose: bool,
     seed: usize,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
@@ -218,7 +218,7 @@ fn rs_harmony(
     batch_labels: List,
     seed: usize,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let mut batch_indices: Vec<Vec<usize>> = Vec::new();
 
     for i in 0..batch_labels.len() {

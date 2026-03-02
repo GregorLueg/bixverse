@@ -11,32 +11,41 @@ path_h5 <- path.expand(
 
 sce <- single_cell_exp(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
 
+# sce <- stream_h5ad(object = sce, h5_path = path_h5)
+
 sce <- load_existing(object = sce)
 
-# sce <- stream_h5ad(object = sce, h5_path = path_h5)
+dim(sce)
+
+pryr::object_size(sce)
+
+tictoc::tic()
+sce[1:100, , return_format = "cell"][1:5, 1:5]
+tictoc::toc()
+
+tictoc::tic()
+sce[1:1000, , return_format = "cell", assay = "norm"][1:5, 1:5]
+tictoc::toc()
+
+tictoc::tic()
+sce[, 1:10, return_format = "gene"][1:5, 1:5]
+tictoc::toc()
 
 sce <- find_hvg_sc(sce, streaming = TRUE)
 
-sce <- calculate_pca_sc(sce, no_pcs = 32L, sparse_svd = FALSE)
+sce <- calculate_pca_sc(sce, no_pcs = 30L)
 
-cumsum(get_pca_singular_val(sce) / sum(get_pca_singular_val(sce)))
-
-# Using sparse SVD solving on scaled data on 2000 HVG.
-# Loaded in data : 377.32ms
-# Finished the data preparations : 6.72s
-# Finished sparse PCA calculations : 59.65s
-# Total run time sparse PCA detection: 66.91s
-
-# Using dense SVD solving on scaled data on 2000 HVG.
-# Loaded in data : 1.59s
-# Finished scaling : 19.72s
-# Finished PCA calculations : 42.10s
-# Total run time PCA detection: 63.57s
+pryr::object_size(sce)
 
 sce <- find_neighbours_sc(
   object = sce,
-  neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
+  no_embd_to_use = 16L,
+  neighbours_params = params_sc_neighbours(knn = list(knn_method = "hnsw"))
 )
+
+pryr::object_size(sce)
+
+sce[1:100, , return_format = "cell"]
 
 ########
 # HNSW #

@@ -106,7 +106,7 @@ fn rs_gsva(
     max_diff: bool,
     abs_rank: bool,
     timings: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let exp = r_matrix_to_faer(&exp);
 
     let gs_indices = get_gsva_gs_indices(gs_list)?;
@@ -148,7 +148,7 @@ fn rs_ssgsea(
     alpha: f64,
     normalise: bool,
     timings: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let exp = r_matrix_to_faer(&exp);
 
     let gs_indices = get_gsva_gs_indices(gs_list)?;

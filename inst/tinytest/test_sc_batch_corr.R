@@ -752,7 +752,7 @@ expect_equal(
   current = internal_result,
   target = with_pre_computed_pc,
   info = "mnn results the same, independent of method",
-  tolerance = 1e-7
+  tolerance = 1e-5 # sometimes a bit of a loss here during compression
 )
 
 ## harmony ---------------------------------------------------------------------

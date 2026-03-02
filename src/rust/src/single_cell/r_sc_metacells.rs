@@ -729,7 +729,7 @@ fn rs_pseudobulk_cells_dense(
     cell_indices_ls: List,
     assay: String,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
 
     let mut cell_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_ls.len());

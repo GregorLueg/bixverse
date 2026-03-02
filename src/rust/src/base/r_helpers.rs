@@ -71,7 +71,7 @@ fn rs_upper_triangle_to_dense(
     cor_vector: &[f64],
     shift: usize,
     n: usize,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let mut mat = Mat::<f64>::zeros(n, n);
     let mut idx = 0;
     for i in 0..n {

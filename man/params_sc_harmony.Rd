@@ -14,7 +14,7 @@ params_sc_harmony(
   max_iter_harmony = 10L,
   epsilon_kmeans = 1e-05,
   epsilon_harmony = 1e-04,
-  window_size = 3L
+  window_size = 2L
 )
 }
 \arguments{

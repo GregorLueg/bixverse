@@ -8,6 +8,7 @@ use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
 use bixverse_rs::single_cell::sc_analysis::hotspot::*;
 use bixverse_rs::single_cell::sc_analysis::milo_r::*;
 use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
+use bixverse_rs::single_cell::sc_analysis::scenic::*;
 use bixverse_rs::single_cell::sc_analysis::vision::*;
 
 extendr_module! {
@@ -21,6 +22,8 @@ extendr_module! {
     fn rs_module_scoring;
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
+    fn rs_scenic_gene_filter;
+    fn rs_scenic_grn;
 }
 
 //////////
@@ -218,7 +221,7 @@ fn rs_aucell(
     auc_type: &str,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -267,7 +270,7 @@ fn rs_vision(
     cells_to_keep: Vec<i32>,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
@@ -756,4 +759,76 @@ fn rs_make_milor_nhoods(
         ncols = len_unique_indices,
         kth_distances = kth_distances
     )
+}
+
+//////////
+// GRNs //
+//////////
+
+/// Identifies genes to include into a SCENIC analysis
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis
+/// @param min_counts Integer. Number of minimum total counts in the data. The
+/// regressions will be run on the normalised UMI data, but this can remove
+/// lowly expressed genes.
+/// @param min_cells Numeric. Proportion of cells that have to have the gene
+/// expressed.
+///
+/// @returns The 0-indexed positions of the genes to include in the scenic
+/// analysis.
+///
+/// @export
+#[extendr]
+fn rs_scenic_gene_filter(
+    f_path_genes: String,
+    cell_indices: Vec<i32>,
+    min_counts: usize,
+    min_cells: f64,
+    verbose: bool,
+) -> Vec<i32> {
+    let cell_indices = cell_indices.r_int_convert();
+
+    let genes_to_use = scenic_gene_filter(
+        &f_path_genes,
+        &cell_indices,
+        min_counts,
+        min_cells as f32,
+        verbose,
+    );
+
+    genes_to_use.r_int_convert()
+}
+
+/// @export
+#[extendr]
+fn rs_scenic_grn(
+    f_path_genes: String,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    tf_indices: Vec<i32>,
+    n_genes_batch: Option<usize>,
+    learner: String,
+    seed: usize,
+    verbose: bool,
+) -> RArray<f64, [usize; 2]> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let tf_indices = tf_indices.r_int_convert();
+
+    let learner = parse_regression_learner(&learner).unwrap_or_default();
+
+    let grn_matrix = run_scenic_grn(
+        &f_path_genes,
+        &cell_indices,
+        &gene_indices,
+        &tf_indices,
+        &learner,
+        n_genes_batch,
+        seed,
+        verbose,
+    );
+
+    faer_to_r_matrix(grn_matrix.as_ref())
 }

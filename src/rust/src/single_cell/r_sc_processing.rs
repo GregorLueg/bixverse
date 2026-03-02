@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, pca::*, qc::*, scrublet::*, snn::*,
+    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scrublet::*, snn::*,
 };
 
 extendr_module! {
@@ -24,6 +24,7 @@ extendr_module! {
     fn rs_sc_knn;
     fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
+    fn rs_compare_knn;
 }
 
 ///////////////////////
@@ -803,4 +804,18 @@ fn rs_sc_snn(
         edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
         weights = snn_data.1
     ))
+}
+
+/// Helper to compare kNN graphs
+///
+/// @param knn_mat_a Integer matrix. The first kNN graph to compare.
+/// @param knn_mat_b Integer matrix. The second kNN graph to compare.
+///
+/// @returns Vector of number of overlaps per sample.
+#[extendr]
+fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> {
+    let knn_mat_a = r_matrix_to_faer(&knn_mat_a);
+    let knn_mat_b = r_matrix_to_faer(&knn_mat_b);
+
+    compare_knn_graphs(knn_mat_a, knn_mat_b)
 }

@@ -806,7 +806,7 @@ single_cell_exp <- S7::new_class(
       S7::S7_object(),
       db_connection = db_connection,
       count_connection = count_connection,
-      dir_data = dir_data,
+      dir_data = path.expand(dir_data),
       sc_cache = new_sc_cache(),
       sc_map = new_sc_mapper(),
       dims = c(0L, 0L)
@@ -2120,4 +2120,67 @@ S7::method(remove_snn_graph, single_cell_exp) <- function(
   )
 
   return(x)
+}
+
+### generic --------------------------------------------------------------------
+
+#' @name print.single_cell_exp
+#' @title print Method for single_cell_exp object
+#'
+#' @description
+#' Print a single_cell_exp object.
+#'
+#' @param x An object of class `single_cell_exp`.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @method print single_cell_exp
+S7::method(print, single_cell_exp) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, single_cell_exp))
+
+  dims <- S7::prop(x, "dims")
+  sc_map <- S7::prop(x, "sc_map")
+  sc_cache <- S7::prop(x, "sc_cache")
+
+  hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
+  pca_calculated <- !is.null(sc_cache[["pca_factors"]])
+  knn_generated <- !is.null(sc_cache[["knn_matrix"]])
+  snn_generated <- !is.null(sc_cache[["snn_graph"]])
+
+  other_embeddings <- names(sc_cache[["other_embeddings"]])
+  other_embeddings_str <- if (length(other_embeddings) > 0) {
+    paste(other_embeddings, collapse = ", ")
+  } else {
+    "none"
+  }
+
+  cat(
+    "Single cell experiment (single_cell_exp).\n",
+    sprintf("  No cells: %i\n", dims[1]),
+    sprintf("  No genes: %i\n", dims[2]),
+    sprintf("  HVG calculated: %s\n", hvg_calculated),
+    sprintf("  PCA calculated: %s\n", pca_calculated),
+    sprintf("  Other embeddings: %s\n", other_embeddings_str),
+    sprintf("  KNN generated: %s\n", knn_generated),
+    sprintf("  SNN generated: %s\n", snn_generated),
+    sep = ""
+  )
+
+  invisible(x)
+}
+
+#' @name dim.single_cell_exp
+#' @title dim Method for single_cell_exp object
+#'
+#' @description
+#' Returns the dimensions of a single_cell_exp object.
+#'
+#' @param x An object of class `single_cell_exp`.
+#'
+#' @returns An integer vector of length 2 with the number of cells and genes.
+#'
+#' @method dim single_cell_exp
+S7::method(dim, single_cell_exp) <- function(x) {
+  S7::prop(x, "dims")
 }

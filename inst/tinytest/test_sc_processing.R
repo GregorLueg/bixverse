@@ -560,12 +560,11 @@ zeallot::`%<-%`(
 )
 
 expect_equivalent(
-  current = diag(cor(scaled, scaled_data)),
-  target = rep(1, hvg_to_keep),
-  tolerance = 1e-7,
+  current = scaled,
+  target = scaled_data,
+  tolerance = 1e-6,
   info = "scaling behaves"
 )
-
 
 ## knn and snn -----------------------------------------------------------------
 
@@ -702,11 +701,10 @@ expect_equal(
   into = "sparse svd - randomised and normal return very similar results"
 )
 
-expect_true(
-  current = all(
-    abs(diag(cor(pca_factors, sparse_pca_factors)))[1:2] >= 0.95
-  ),
-  info = "first two PCs are highly correlated)"
+expect_equal(
+  current = abs(diag(cor(pca_factors, sparse_pca_factors))),
+  target = rep(1, no_pcs),
+  info = "sparse PCA returns the same as dense PCA"
 )
 
 ### object method --------------------------------------------------------------

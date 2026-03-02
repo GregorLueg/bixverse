@@ -66,7 +66,7 @@ fn rs_page_rank_parallel(
     weights: Option<&[f64]>,
     diffusion_scores: List,
     undirected: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let graph = graph_from_strings(&node_names, &from, &to, weights, undirected);
 
     // Pre-process graph once
@@ -133,7 +133,7 @@ fn rs_tied_diffusion_parallel(
     diffusion_scores_2: List,
     summarisation_fun: String,
     undirected: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     assert!(
         diffusion_scores_1.len() == diffusion_scores_2.len(),
         "The two sets of random diffusion scores need to be the same length"

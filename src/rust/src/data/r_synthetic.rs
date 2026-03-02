@@ -129,7 +129,7 @@ fn rs_simulate_dropouts(
     power_factor: f64,
     global_sparsity: f64,
     seed: usize,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let data = r_matrix_to_faer(&count_mat);
 
     let dropout_type = parse_sparsification(&dropout_function)
