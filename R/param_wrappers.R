@@ -526,6 +526,54 @@ params_cistarget <- function(
   ))
 }
 
+## graph label propagation -----------------------------------------------------
+
+#' Wrapper function to generate label propagation parameters
+#'
+#' @param alpha Numeric. Controls the spreading strength. Higher values anchor
+#' labelled nodes more strongly to their original label. Defaults to `0.9`.
+#' @param iter Integer. Maximum number of iterations to run. Defaults to `100L`.
+#' @param tolerance Numeric. Convergence threshold. Stops early if the maximum
+#' change across all nodes falls below this value. Defaults to `1e-6`.
+#' @param symmetrise Logical. Whether to symmetrise the graph. Defaults to
+#' `TRUE`.
+#' @param symmetry_strategy Character. Strategy to resolve weight conflicts when
+#' symmetrising. One of `"average"`, `"min"`, or `"max"`. Only relevant when
+#' `symmetrise = TRUE` and edge weights are provided. Defaults to `"average"`.
+#' @param max_hops Integer or NULL. If provided, restricts label spreading to
+#' nodes within this many hops of any labelled node. Nodes beyond this limit
+#' remain all-zeroes. Defaults to `NULL`.
+#'
+#' @returns A named list of label propagation parameters.
+#'
+#' @export
+params_label_propagation <- function(
+  alpha = 0.9,
+  iter = 100L,
+  tolerance = 1e-6,
+  symmetrise = TRUE,
+  symmetry_strategy = "average",
+  max_hops = NULL
+) {
+  checkmate::qassert(alpha, "R1[0, 1]")
+  checkmate::qassert(iter, "I1[1,]")
+  checkmate::qassert(tolerance, "R1")
+  checkmate::qassert(symmetrise, "B1")
+  checkmate::assert_choice(symmetry_strategy, c("average", "avg", "min", "max"))
+  if (!is.null(max_hops)) {
+    checkmate::qassert(max_hops, "I1[0,]")
+  }
+
+  list(
+    alpha = alpha,
+    iter = iter,
+    tolerance = tolerance,
+    symmetrise = symmetrise,
+    symmetry_strategy = symmetry_strategy,
+    max_hops = max_hops
+  )
+}
+
 ## single cell -----------------------------------------------------------------
 
 ### general --------------------------------------------------------------------

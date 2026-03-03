@@ -12,6 +12,9 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 \item{shift}{Integer Did you apply a shift to remove the diagonal values?}
 
 \item{n}{Integer. The number of columns/rows in the symmetric matrix.}
+
+\item{cs_type}{String. One of \code{c("csr", "csc")}. Which type of list to
+return.}
 }
 \value{
 A list containing:

@@ -573,6 +573,8 @@ rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span,
 #' @param value Numeric vector. The upper triangle values.
 #' @param shift Integer Did you apply a shift to remove the diagonal values?
 #' @param n Integer. The number of columns/rows in the symmetric matrix.
+#' @param cs_type String. One of `c("csr", "csc")`. Which type of list to
+#' return.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -1306,23 +1308,47 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' be useful for semi-supervised tasks. It implements the label spreading
 #' method.
 #'
-#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
-#' which indicates alternating pairs (node_1, node_2), etc in terms of edges
+#' @param from Integer vector. Source node indices for each edge.
+#' @param to Integer vector. Target node indices for each edge. Must be the
+#' same length as `from`.
 #' @param one_hot_encoding Integer matrix. Each row represents a sample, the
 #' columns the one-hot encodings. Everything 0 denotes the unlabelled data.
 #' @param label_mask Boolean vector. Which of the samples do not have a label.
 #' Needs to be same length as `nrow(one_hot_encoding)`.
-#' @param alpha Numeric. Parameter that controls the spreading. Usually between
-#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
-#' conversative.
-#' @param iterations For how many (max) iterations to run the algorithm.
-#' @param tolerance If the value below this is reached, an early stop is
-#' initialised
+#' @param weights Optional numeric vector. Edge weights for each pair in
+#' `from`/`to`. Must have the same length as `from`. If NULL, all edges are
+#' treated as unweighted.
+#' @param label_prop_params List. Named list of parameters with the following
+#' optional fields (defaults in parentheses):
+#' \itemize{
+#'   \item \code{alpha} numeric, spreading strength (0.9)
+#'   \item \code{iter} integer, max iterations (100)
+#'   \item \code{tolerance} numeric, convergence threshold (1e-6)
+#'   \item \code{symmetrise} logical, symmetrise the graph (FALSE)
+#'   \item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
+#'   \item \code{max_hops} integer, restrict spreading radius (unrestricted)
+#' }
 #'
-#' @return The matrix with the probabilities of being of a certain class
+#' @return The matrix with the probabilities of being of a certain class.
 #'
 #' @export
-rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
+rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, weights, label_prop_params) .Call(wrap__rs_knn_label_propagation, from, to, one_hot_encoding, label_mask, weights, label_prop_params)
+
+#' Flatten kNN matrix to edge list
+#'
+#' @description
+#' Helper function to leverage Rust to transform a kNN matrix into two vectors
+#' of from, to
+#'
+#' @param knn_mat Integer matrix. Rows represent the samples and the columns
+#' the indices of the k-nearest neighbours.
+#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
+#' data be returned.
+#'
+#' @return A flat vector representing the edge list.
+#'
+#' @export
+rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
 
 #' Flatten kNN matrix to edge list
 #'
@@ -1335,10 +1361,14 @@ rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, al
 #' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
 #' data be returned.
 #'
-#' @return A flat vector representing the edge list.
+#' @return A list with the following elements
+#' \itemize{
+#'   \item from - the from indices
+#'   \item to - the to indices
+#' }
 #'
 #' @export
-rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
+rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_pairs, knn_mat, one_index)
 
 #' Calculates the TOM over an affinity matrix
 #'

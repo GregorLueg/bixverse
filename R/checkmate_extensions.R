@@ -2681,3 +2681,78 @@ assertScMiloR <- checkmate::makeAssertionFunction(checkScMiloR)
 #'
 #' @export
 testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
+
+## graph label propagation -----------------------------------------------------
+
+#' Check label propagation parameters
+#'
+#' @description Checkmate extension for checking label propagation parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkLabelPropParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "alpha",
+      "iter",
+      "tolerance",
+      "symmetrise",
+      "symmetry_strategy"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "alpha" = "R1[0, 1]",
+    "iter" = "I1[1,]",
+    "tolerance" = "R1",
+    "symmetrise" = "B1",
+    "symmetry_strategy" = "S1"
+  )
+  res <- purrr::imap_lgl(x[names(rules)], \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in label propagation params does not",
+        "conform to the expected format. alpha must be in [0, 1], iter a",
+        "positive integer, tolerance a double, symmetrise a boolean, and",
+        "symmetry_strategy a string."
+      ),
+      broken_elem
+    ))
+  }
+
+  if (
+    !is.null(x[["max_hops"]]) && !checkmate::qtest(x[["max_hops"]], "I1[0,]")
+  ) {
+    return("`max_hops` must be a positive integer or NULL.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert label propagation parameters
+#'
+#' @description Checkmate extension for asserting label propagation parameters.
+#'
+#' @inheritParams checkLabelPropParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)

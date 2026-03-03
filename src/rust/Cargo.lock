@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d032e5c3f2e7317a434be141c04efa212c49db6bbfac5ce0ccc075d0431f0de7"
+checksum = "742469b8cde5d666fadbd1d1481bd55fefc4df0d930a767dc2cada5ffeb87574"
 dependencies = [
  "approx",
  "clap",
@@ -23,7 +23,6 @@ dependencies = [
  "faer-traits",
  "fixedbitset",
  "num-traits",
- "parking_lot",
  "rand 0.9.2",
  "rand_distr 0.5.1",
  "rayon",
@@ -156,9 +155,9 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.1.0"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479533d79ae6f4d60f501c60fd54b92ef7c31adbecbe4fdb03a7d6041e29ad7b"
+checksum = "9786424bd06e666443f26e1bc16ee45eda2a3ed8464a6efe67da795ab9cbcc2e"
 dependencies = [
  "ann-search-rs",
  "bincode",
