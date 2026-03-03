@@ -45,12 +45,12 @@ method.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">rs_knn_label_propagation</span><span class="op">(</span></span>
-<span>  <span class="va">edge_list</span>,</span>
+<span>  <span class="va">from</span>,</span>
+<span>  <span class="va">to</span>,</span>
 <span>  <span class="va">one_hot_encoding</span>,</span>
 <span>  <span class="va">label_mask</span>,</span>
-<span>  <span class="va">alpha</span>,</span>
-<span>  <span class="va">iterations</span>,</span>
-<span>  <span class="va">tolerance</span></span>
+<span>  <span class="va">weights</span>,</span>
+<span>  <span class="va">label_prop_params</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -58,9 +58,13 @@ method.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-edge-list">edge_list<a class="anchor" aria-label="anchor" href="#arg-edge-list"></a></dt>
-<dd><p>Integer vector. In form of node_1, node_2, node_3, ...
-which indicates alternating pairs (node_1, node_2), etc in terms of edges</p></dd>
+<dl><dt id="arg-from">from<a class="anchor" aria-label="anchor" href="#arg-from"></a></dt>
+<dd><p>Integer vector. Source node indices for each edge.</p></dd>
+
+
+<dt id="arg-to">to<a class="anchor" aria-label="anchor" href="#arg-to"></a></dt>
+<dd><p>Integer vector. Target node indices for each edge. Must be the
+same length as <code>from</code>.</p></dd>
 
 
 <dt id="arg-one-hot-encoding">one_hot_encoding<a class="anchor" aria-label="anchor" href="#arg-one-hot-encoding"></a></dt>
@@ -73,24 +77,26 @@ columns the one-hot encodings. Everything 0 denotes the unlabelled data.</p></dd
 Needs to be same length as <code>nrow(one_hot_encoding)</code>.</p></dd>
 
 
-<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Numeric. Parameter that controls the spreading. Usually between
-0.9 to 0.95. Larger values drive further labelling, smaller values are more
-conversative.</p></dd>
+<dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
+<dd><p>Optional numeric vector. Edge weights for each pair in
+<code>from</code>/<code>to</code>. Must have the same length as <code>from</code>. If NULL, all edges are
+treated as unweighted.</p></dd>
 
 
-<dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
-<dd><p>For how many (max) iterations to run the algorithm.</p></dd>
-
-
-<dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
-<dd><p>If the value below this is reached, an early stop is
-initialised</p></dd>
+<dt id="arg-label-prop-params">label_prop_params<a class="anchor" aria-label="anchor" href="#arg-label-prop-params"></a></dt>
+<dd><p>List. Named list of parameters with the following
+optional fields (defaults in parentheses):</p><ul><li><p><code>alpha</code> numeric, spreading strength (0.9)</p></li>
+<li><p><code>iter</code> integer, max iterations (100)</p></li>
+<li><p><code>tolerance</code> numeric, convergence threshold (1e-6)</p></li>
+<li><p><code>symmetrise</code> logical, symmetrise the graph (FALSE)</p></li>
+<li><p><code>symmetry_strategy</code> character, one of "average", "min", "max" ("average")</p></li>
+<li><p><code>max_hops</code> integer, restrict spreading radius (unrestricted)</p></li>
+</ul></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The matrix with the probabilities of being of a certain class</p>
+    <p>The matrix with the probabilities of being of a certain class.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -49,6 +49,9 @@
 
 - [`assertIcaParams()`](assertIcaParams.md) : Assert ICA parameters
 
+- [`assertLabelPropParams()`](assertLabelPropParams.md) : Assert label
+  propagation parameters
+
 - [`assertSNFParams()`](assertSNFParams.md) : Assert SNF parameter
 
 - [`assertScBbknn()`](assertScBbknn.md) : Assert BBKNN parameters
@@ -233,6 +236,9 @@
 - [`checkIcaParams()`](checkIcaParams.md) : Check ICA parameters
 
 - [`checkKnnParams()`](checkKnnParams.md) : Check kNN parameters
+
+- [`checkLabelPropParams()`](checkLabelPropParams.md) : Check label
+  propagation parameters
 
 - [`checkSNFParams()`](checkSNFParams.md)
   [`testSNFParams()`](checkSNFParams.md) : Check SNF parameters
@@ -764,6 +770,9 @@
 - [`params_knn_defaults()`](params_knn_defaults.md) : Helper function to
   generate kNN defaults
 
+- [`params_label_propagation()`](params_label_propagation.md) : Wrapper
+  function to generate label propagation parameters
+
 - [`params_norm_doublet_detection_defaults()`](params_norm_doublet_detection_defaults.md)
   : Helper function to generate normalisation defaults for doublet
   detection.
@@ -1075,6 +1084,9 @@
   label propagation
 
 - [`rs_knn_mat_to_edge_list()`](rs_knn_mat_to_edge_list.md) : Flatten
+  kNN matrix to edge list
+
+- [`rs_knn_mat_to_edge_pairs()`](rs_knn_mat_to_edge_pairs.md) : Flatten
   kNN matrix to edge list
 
 - [`rs_mad_outlier()`](rs_mad_outlier.md) : Calculate MAD outlier

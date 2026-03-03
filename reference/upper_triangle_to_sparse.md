@@ -23,6 +23,11 @@ upper_triangle_to_sparse(upper_triangle_vals, shift, n, type = c("csc", "csr"))
 
   Integer. Number of columns and rows of the symmetric matrix.
 
+- type:
+
+  String. One of `c("csc", "csr")`. Which type of of sparse matrix to
+  return.
+
 ## Value
 
 The sparse matrix.

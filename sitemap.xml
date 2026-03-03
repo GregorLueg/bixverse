@@ -28,6 +28,7 @@
 <url><loc>/reference/assertIcaIterParams.html</loc></url>
 <url><loc>/reference/assertIcaNcomps.html</loc></url>
 <url><loc>/reference/assertIcaParams.html</loc></url>
+<url><loc>/reference/assertLabelPropParams.html</loc></url>
 <url><loc>/reference/assertSNFParams.html</loc></url>
 <url><loc>/reference/assertScBbknn.html</loc></url>
 <url><loc>/reference/assertScBoost.html</loc></url>
@@ -98,6 +99,7 @@
 <url><loc>/reference/checkIcaNcomps.html</loc></url>
 <url><loc>/reference/checkIcaParams.html</loc></url>
 <url><loc>/reference/checkKnnParams.html</loc></url>
+<url><loc>/reference/checkLabelPropParams.html</loc></url>
 <url><loc>/reference/checkSNFParams.html</loc></url>
 <url><loc>/reference/checkScBbknn.html</loc></url>
 <url><loc>/reference/checkScBoost.html</loc></url>
@@ -288,6 +290,7 @@
 <url><loc>/reference/params_ica_ncomp.html</loc></url>
 <url><loc>/reference/params_ica_randomisation.html</loc></url>
 <url><loc>/reference/params_knn_defaults.html</loc></url>
+<url><loc>/reference/params_label_propagation.html</loc></url>
 <url><loc>/reference/params_norm_doublet_detection_defaults.html</loc></url>
 <url><loc>/reference/params_pca_defaults.html</loc></url>
 <url><loc>/reference/params_sc_bbknn.html</loc></url>
@@ -398,6 +401,7 @@
 <url><loc>/reference/rs_kbet.html</loc></url>
 <url><loc>/reference/rs_knn_label_propagation.html</loc></url>
 <url><loc>/reference/rs_knn_mat_to_edge_list.html</loc></url>
+<url><loc>/reference/rs_knn_mat_to_edge_pairs.html</loc></url>
 <url><loc>/reference/rs_mad_outlier.html</loc></url>
 <url><loc>/reference/rs_make_milor_nhoods.html</loc></url>
 <url><loc>/reference/rs_mitch_calc.html</loc></url>

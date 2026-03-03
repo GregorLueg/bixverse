@@ -8,21 +8,25 @@ method.
 
 ``` r
 rs_knn_label_propagation(
-  edge_list,
+  from,
+  to,
   one_hot_encoding,
   label_mask,
-  alpha,
-  iterations,
-  tolerance
+  weights,
+  label_prop_params
 )
 ```
 
 ## Arguments
 
-- edge_list:
+- from:
 
-  Integer vector. In form of node_1, node_2, node_3, ... which indicates
-  alternating pairs (node_1, node_2), etc in terms of edges
+  Integer vector. Source node indices for each edge.
+
+- to:
+
+  Integer vector. Target node indices for each edge. Must be the same
+  length as `from`.
 
 - one_hot_encoding:
 
@@ -34,20 +38,30 @@ rs_knn_label_propagation(
   Boolean vector. Which of the samples do not have a label. Needs to be
   same length as `nrow(one_hot_encoding)`.
 
-- alpha:
+- weights:
 
-  Numeric. Parameter that controls the spreading. Usually between 0.9 to
-  0.95. Larger values drive further labelling, smaller values are more
-  conversative.
+  Optional numeric vector. Edge weights for each pair in `from`/`to`.
+  Must have the same length as `from`. If NULL, all edges are treated as
+  unweighted.
 
-- iterations:
+- label_prop_params:
 
-  For how many (max) iterations to run the algorithm.
+  List. Named list of parameters with the following optional fields
+  (defaults in parentheses):
 
-- tolerance:
+  - `alpha` numeric, spreading strength (0.9)
 
-  If the value below this is reached, an early stop is initialised
+  - `iter` integer, max iterations (100)
+
+  - `tolerance` numeric, convergence threshold (1e-6)
+
+  - `symmetrise` logical, symmetrise the graph (FALSE)
+
+  - `symmetry_strategy` character, one of "average", "min", "max"
+    ("average")
+
+  - `max_hops` integer, restrict spreading radius (unrestricted)
 
 ## Value
 
-The matrix with the probabilities of being of a certain class
+The matrix with the probabilities of being of a certain class.

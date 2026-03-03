@@ -23,6 +23,10 @@ rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 
   Integer. The number of columns/rows in the symmetric matrix.
 
+- cs_type:
+
+  String. One of `c("csr", "csc")`. Which type of list to return.
+
 ## Value
 
 A list containing:

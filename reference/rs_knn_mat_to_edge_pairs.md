@@ -1,12 +1,12 @@
 # Flatten kNN matrix to edge list
 
-Helper function to leverage Rust to transform a kNN matrix into two
-vectors of from, to
+Helper function to leverage Rust to transform a kNN matrix into an edge
+list.
 
 ## Usage
 
 ``` r
-rs_knn_mat_to_edge_list(knn_mat, one_index)
+rs_knn_mat_to_edge_pairs(knn_mat, one_index)
 ```
 
 ## Arguments
@@ -23,4 +23,8 @@ rs_knn_mat_to_edge_list(knn_mat, one_index)
 
 ## Value
 
-A flat vector representing the edge list.
+A list with the following elements
+
+- from - the from indices
+
+- to - the to indices
