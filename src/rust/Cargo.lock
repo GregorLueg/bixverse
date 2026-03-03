@@ -156,7 +156,8 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.2"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-better-label-prop#2dcafbc11dff2d36100630958c22e3a26dbbbbe6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9786424bd06e666443f26e1bc16ee45eda2a3ed8464a6efe67da795ab9cbcc2e"
 dependencies = [
  "ann-search-rs",
  "bincode",
