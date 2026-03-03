@@ -1,5 +1,90 @@
-use bixverse_rs::graph::graph_label_propagations::KnnLabPropGraph;
+use bixverse_rs::graph::graph_label_propagations::*;
 use extendr_api::prelude::*;
+
+/////////////
+// ExtendR //
+/////////////
+
+extendr_module! {
+    mod r_knn;
+    fn rs_knn_label_propagation;
+    fn rs_knn_mat_to_edge_list;
+    fn rs_knn_mat_to_edge_pairs;
+}
+
+/////////////
+// Helpers //
+/////////////
+
+/// Helper for graph label propagation parameters
+///
+/// ### Params
+///
+/// * `alpha` - Parameter that controls the spreading
+/// * `iter` - Number of iterations to run the algorithm for
+/// * `tolerance` - Tolerance for early stopping
+/// * `symmetrise` - Shall the graph be symmetrised
+/// * `symmetry_strategy` - If weighted graph, which symmetrisation strategy
+///   shall be used.
+/// * `max_hops` - Optional usize. If provided, restricts label spreading to
+///   nodes within this many hops of any labelled node. Nodes beyond this limit
+///   are left as all-zeroes. If None, spreading is unrestricted.
+struct LabelPropParams {
+    alpha: f64,
+    iter: usize,
+    tolerance: f64,
+    symmetrise: bool,
+    symmetry_strategy: String,
+    max_hops: Option<usize>,
+}
+
+impl LabelPropParams {
+    fn from_list(r_list: List) -> Self {
+        let map = r_list.into_hashmap();
+
+        let alpha = map.get("alpha").and_then(|v| v.as_real()).unwrap_or(0.9);
+
+        let iter = map
+            .get("iter")
+            .and_then(|v| v.as_integer())
+            .map(|v| v as usize)
+            .unwrap_or(100);
+
+        let tolerance = map
+            .get("tolerance")
+            .and_then(|v| v.as_real())
+            .unwrap_or(1e-6);
+
+        let symmetrise = map
+            .get("symmetrise")
+            .and_then(|v| v.as_logical())
+            .map(|v| v.is_true())
+            .unwrap_or(false);
+
+        let symmetry_strategy = map
+            .get("symmetry_strategy")
+            .and_then(|v| v.as_str().map(|s| s.to_string()))
+            .unwrap_or_else(|| "average".to_string());
+
+        let max_hops = map
+            .get("max_hops")
+            .and_then(|v| v.as_integer())
+            .map(|v| v as usize);
+
+        Self {
+            alpha,
+            iter,
+            tolerance,
+            symmetrise,
+            symmetry_strategy,
+            max_hops,
+        }
+    }
+}
+
+////////////////////
+// Main functions //
+////////////////////
 
 /// kNN label propagation
 ///
@@ -8,59 +93,75 @@ use extendr_api::prelude::*;
 /// be useful for semi-supervised tasks. It implements the label spreading
 /// method.
 ///
-/// @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
-/// which indicates alternating pairs (node_1, node_2), etc in terms of edges
+/// @param from Integer vector. Source node indices for each edge.
+/// @param to Integer vector. Target node indices for each edge. Must be the
+/// same length as `from`.
 /// @param one_hot_encoding Integer matrix. Each row represents a sample, the
 /// columns the one-hot encodings. Everything 0 denotes the unlabelled data.
 /// @param label_mask Boolean vector. Which of the samples do not have a label.
 /// Needs to be same length as `nrow(one_hot_encoding)`.
-/// @param alpha Numeric. Parameter that controls the spreading. Usually between
-/// 0.9 to 0.95. Larger values drive further labelling, smaller values are more
-/// conversative.
-/// @param iterations For how many (max) iterations to run the algorithm.
-/// @param tolerance If the value below this is reached, an early stop is
-/// initialised
+/// @param weights Optional numeric vector. Edge weights for each pair in
+/// `from`/`to`. Must have the same length as `from`. If NULL, all edges are
+/// treated as unweighted.
+/// @param label_prop_params List. Named list of parameters with the following
+/// optional fields (defaults in parentheses):
+/// \itemize{
+///   \item \code{alpha} numeric, spreading strength (0.9)
+///   \item \code{iter} integer, max iterations (100)
+///   \item \code{tolerance} numeric, convergence threshold (1e-6)
+///   \item \code{symmetrise} logical, symmetrise the graph (FALSE)
+///   \item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
+///   \item \code{max_hops} integer, restrict spreading radius (unrestricted)
+/// }
 ///
-/// @return The matrix with the probabilities of being of a certain class
+/// @return The matrix with the probabilities of being of a certain class.
 ///
 /// @export
 #[extendr]
 fn rs_knn_label_propagation(
-    edge_list: &[i32],
+    from: &[i32],
+    to: &[i32],
     one_hot_encoding: RMatrix<i32>,
     label_mask: &[Rbool],
-    alpha: f64,
-    iterations: usize,
-    tolerance: f64,
+    weights: Nullable<Vec<f64>>,
+    label_prop_params: List,
 ) -> RMatrix<f64> {
-    let edge_list = edge_list
-        .iter()
-        .map(|x| (*x - 1) as usize)
-        .collect::<Vec<usize>>();
-    let label_mask = label_mask
-        .iter()
-        .map(|r_obj| r_obj.to_bool())
-        .collect::<Vec<bool>>();
+    let params = LabelPropParams::from_list(label_prop_params);
 
-    // transform the one hot encoding
+    // deal with 1 indexing from R
+    let from: Vec<usize> = from.iter().map(|x| (*x - 1) as usize).collect();
+    let to: Vec<usize> = to.iter().map(|x| (*x - 1) as usize).collect();
+    let label_mask: Vec<bool> = label_mask.iter().map(|r| r.to_bool()).collect();
+
     let nrow = one_hot_encoding.nrows();
     let ncol = one_hot_encoding.ncols();
     let data = one_hot_encoding.data();
-
     let n_nodes = nrow;
 
     let one_hot_encoding: Vec<Vec<f32>> = (0..nrow)
         .map(|i| (0..ncol).map(|j| data[i + j * nrow] as f32).collect())
         .collect();
 
-    let knn_prog = KnnLabPropGraph::from_edge_list(&edge_list, n_nodes);
+    let knn_graph = match weights {
+        Nullable::NotNull(w) => {
+            let w: Vec<f32> = w.iter().map(|x| *x as f32).collect();
+            let strategy = if params.symmetrise {
+                parse_symmetry_strategy(&params.symmetry_strategy)
+            } else {
+                None
+            };
+            KnnLabPropGraph::from_weighted_node_pairs(&from, &to, &w, n_nodes, strategy)
+        }
+        Nullable::Null => KnnLabPropGraph::from_node_pairs(&from, &to, n_nodes, params.symmetrise),
+    };
 
-    let new_labels = knn_prog.label_spreading(
+    let new_labels = knn_graph.label_spreading(
         &one_hot_encoding,
         &label_mask,
-        alpha as f32,
-        iterations,
-        tolerance as f32,
+        params.alpha as f32,
+        params.iter,
+        params.tolerance as f32,
+        params.max_hops,
     );
 
     RMatrix::new_matrix(nrow, ncol, |r, c| new_labels[r][c] as f64)
@@ -69,8 +170,8 @@ fn rs_knn_label_propagation(
 /// Flatten kNN matrix to edge list
 ///
 /// @description
-/// Helper function to leverage Rust to transform a kNN matrix into an edge
-/// list.
+/// Helper function to leverage Rust to transform a kNN matrix into two vectors
+/// of from, to
 ///
 /// @param knn_mat Integer matrix. Rows represent the samples and the columns
 /// the indices of the k-nearest neighbours.
@@ -84,6 +185,7 @@ fn rs_knn_label_propagation(
 fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
     let samples = knn_mat.nrows();
     let neighbours = knn_mat.ncols();
+
     let mut res = Vec::with_capacity(samples * neighbours * 2);
 
     if one_index {
@@ -107,8 +209,45 @@ fn rs_knn_mat_to_edge_list(knn_mat: RMatrix<i32>, one_index: bool) -> Vec<i32> {
     res
 }
 
-extendr_module! {
-    mod r_knn;
-    fn rs_knn_label_propagation;
-    fn rs_knn_mat_to_edge_list;
+/// Flatten kNN matrix to edge list
+///
+/// @description
+/// Helper function to leverage Rust to transform a kNN matrix into an edge
+/// list.
+///
+/// @param knn_mat Integer matrix. Rows represent the samples and the columns
+/// the indices of the k-nearest neighbours.
+/// @param one_index Boolean. If the original data is 0-index, shall 1-indexed
+/// data be returned.
+///
+/// @return A list with the following elements
+/// \itemize{
+///   \item from - the from indices
+///   \item to - the to indices
+/// }
+///
+/// @export
+#[extendr]
+fn rs_knn_mat_to_edge_pairs(knn_mat: RMatrix<i32>, one_index: bool) -> List {
+    let n = knn_mat.nrows();
+    let k = knn_mat.ncols();
+
+    let mut from: Vec<usize> = Vec::with_capacity(n * k);
+    let mut to: Vec<usize> = Vec::with_capacity(n * k);
+
+    for i in 0..n {
+        for j in 0..k {
+            let from_idx = if one_index { i + 1 } else { i };
+            let to_idx = if one_index {
+                (knn_mat[[i, j]] as usize) + 1
+            } else {
+                knn_mat[[i, j]] as usize
+            };
+
+            from.push(from_idx);
+            to.push(to_idx);
+        }
+    }
+
+    list![from = from, to = to]
 }
