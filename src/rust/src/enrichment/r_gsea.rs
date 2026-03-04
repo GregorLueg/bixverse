@@ -267,6 +267,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_calc_multi_level(
     stats: Robj,
     es: &[f64],

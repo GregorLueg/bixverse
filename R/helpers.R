@@ -223,6 +223,8 @@ get_go_levels <- function(edge_dt) {
 #' stored in a row major format.
 #' @param shift Integer. Did you shift the diagonal up.
 #' @param n Integer. Number of columns and rows of the symmetric matrix.
+#' @param type String. One of `c("csc", "csr")`. Which type of of sparse matrix
+#' to return.
 #'
 #' @returns The sparse matrix.
 #'

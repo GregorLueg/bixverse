@@ -13,6 +13,9 @@ stored in a row major format.}
 \item{shift}{Integer. Did you shift the diagonal up.}
 
 \item{n}{Integer. Number of columns and rows of the symmetric matrix.}
+
+\item{type}{String. One of \code{c("csc", "csr")}. Which type of of sparse matrix
+to return.}
 }
 \value{
 The sparse matrix.
