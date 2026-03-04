@@ -270,6 +270,7 @@ fn rs_calc_gsea_stat_cumulative_batch(
 fn rs_calc_multi_level(
     stats: Robj,
     es: &[f64],
+    gsea_param: f64,
     pathway_size: &[i32],
     sample_size: usize,
     seed: u64,
@@ -292,8 +293,16 @@ fn rs_calc_multi_level(
             let mut local_results = Vec::with_capacity(chunk.len());
 
             for (es_i, size_i) in chunk {
-                let res_i =
-                    fgsea_multilevel_helper(*es_i, &ranks, *size_i, sample_size, seed, eps, sign);
+                let res_i = fgsea_multilevel_helper(
+                    *es_i,
+                    gsea_param,
+                    &ranks,
+                    *size_i,
+                    sample_size,
+                    seed,
+                    eps,
+                    sign,
+                );
                 local_results.push(res_i);
             }
 

@@ -192,7 +192,7 @@ fn rs_synthetic_sc_data_csc(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
+    let synthetic_data: CompressedSparseData2<i32> =
         create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
@@ -239,7 +239,7 @@ fn rs_synthetic_sc_data_csr(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
+    let synthetic_data: CompressedSparseData2<i32> =
         create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
@@ -304,7 +304,7 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data: (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) =
+    let synthetic_data: (CompressedSparseData2<u32>, Vec<usize>, Vec<usize>) =
         create_celltype_sparse_csr_data(
             n_cells,
             n_genes,

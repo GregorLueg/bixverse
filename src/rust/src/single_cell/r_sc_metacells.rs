@@ -238,7 +238,7 @@ fn rs_get_metacells(
 
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
-    let aggregated: CompressedSparseData<u32, f32> =
+    let aggregated: CompressedSparseData2<u32, f32> =
         aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
 
     Ok(list!(
@@ -443,7 +443,7 @@ fn rs_get_seacells(
     let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
-    let aggregated: CompressedSparseData<u32, f32> =
+    let aggregated: CompressedSparseData2<u32, f32> =
         aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
 
     let end_seacell = start_seacell.elapsed();
@@ -687,7 +687,7 @@ fn rs_supercell(
     let reader = ParallelSparseReader::new(&f_path).unwrap();
     let n_genes = reader.get_header().total_genes;
 
-    let aggregated: CompressedSparseData<u32, f32> =
+    let aggregated: CompressedSparseData2<u32, f32> =
         aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
 
     Ok(list!(
@@ -785,7 +785,7 @@ fn rs_pseudobulk_cells_sparse(
         cell_indices.push(vec_i);
     }
 
-    let data: CompressedSparseData<f64> =
+    let data: CompressedSparseData2<f64> =
         get_pseudo_bulked_counts_sparse(&f_path, &cell_indices, bulk_type, verbose);
 
     Ok(list!(

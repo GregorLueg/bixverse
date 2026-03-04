@@ -254,7 +254,7 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `r_data` - A list that can be transformed into CompressedSparseData.
+    /// * `r_data` - A list that can be transformed into CompressedSparseData2.
     ///   Needs to have following elements: `"indptr"`, `"indices"`, `"data"`,
     ///   `"nrow"`, `"ncol"` and `"format"`.
     /// * `qc_params` - List with the quality control parameters.
@@ -266,7 +266,7 @@ impl SingeCellCountData {
     pub fn r_data_to_file(&mut self, r_data: List, qc_params: List, verbose: bool) -> List {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let compressed_data: CompressedSparseData<u32> = list_to_sparse_matrix(r_data);
+        let compressed_data: CompressedSparseData2<u32> = list_to_sparse_matrix(r_data);
 
         let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) =
             write_r_counts(&self.f_path_cells, compressed_data, qc_params, verbose);
@@ -601,7 +601,7 @@ impl SingeCellCountData {
         let col_idx = flatten_vector(col_idx);
         let col_idx = col_idx.iter().map(|x| *x as usize).collect::<Vec<usize>>();
 
-        let sparse_data = CompressedSparseData::new_csr(
+        let sparse_data = CompressedSparseData2::new_csr(
             &data,
             &col_idx,
             &row_ptr,

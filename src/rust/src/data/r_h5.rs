@@ -54,7 +54,7 @@ fn rs_h5ad_data(
         }
     };
 
-    let file_data: CompressedSparseData<u16> = match file_format {
+    let file_data: CompressedSparseData2<u16> = match file_format {
         CompressedSparseFormat::Csr => {
             read_h5ad_x_data_csr(&f_path, &file_quality, verbose).unwrap()
         }

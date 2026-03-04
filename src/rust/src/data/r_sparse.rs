@@ -30,7 +30,8 @@ fn rs_upper_triangle_to_sparse(
     let include_diagonal = shift != 1;
     let cs_type = parse_compressed_sparse_format(cs_type)
         .ok_or_else(|| extendr_api::Error::Other("Invalid cs_type".into()))?;
-    let sparse = CompressedSparseData::from_upper_triangle_sym(value, n, include_diagonal, cs_type);
+    let sparse =
+        CompressedSparseData2::from_upper_triangle_sym(value, n, include_diagonal, cs_type);
     Ok(sparse_data_to_list(sparse))
 }
 
