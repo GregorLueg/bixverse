@@ -3,6 +3,8 @@ library(ggplot2)
 library(magrittr)
 
 rextendr::document()
+
+rextendr::document()
 # devtools::document()
 devtools::load_all()
 
