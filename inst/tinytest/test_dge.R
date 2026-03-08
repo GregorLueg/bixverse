@@ -66,7 +66,7 @@ expect_error(
   info = paste("DGE class with bad counts.")
 )
 
-dge_class <- bulk_dge(
+dge_class <- BulkDge(
   raw_counts = test_data$counts,
   meta_data = test_data$meta_data
 )
@@ -272,7 +272,7 @@ gene_lengths <- c(
 )
 names(gene_lengths) <- rownames(test_data$counts)[1:10]
 
-dge_class <- bulk_dge(
+dge_class <- BulkDge(
   raw_counts = test_data$counts[1:10, ],
   meta_data = test_data$meta_data
 )

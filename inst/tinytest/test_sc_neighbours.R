@@ -61,7 +61,7 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,

@@ -43,7 +43,7 @@ targets <- c("set_B_a", "set_B_b")
 
 #### overlap coefficients ------------------------------------------------------
 
-object <- rbh_graph(
+object <- RbhGraph(
   full_data,
   rbh_type = "set",
   dataset_col = "origin",
@@ -52,7 +52,7 @@ object <- rbh_graph(
 )
 
 expect_error(
-  current = rbh_graph(
+  current = RbhGraph(
     full_data,
     rbh_type = "cor",
     dataset_col = "origin",
@@ -154,13 +154,13 @@ full_data <- list(
 
 #### pearson correlations ------------------------------------------------------
 
-object <- rbh_graph(
+object <- RbhGraph(
   full_data,
   rbh_type = "cor"
 )
 
 expect_error(
-  current = rbh_graph(
+  current = RbhGraph(
     full_data,
     rbh_type = "set"
   ),
@@ -208,7 +208,7 @@ full_data_empty <- list(
   origin_2 = matrix_c
 )
 
-object <- rbh_graph(
+object <- RbhGraph(
   full_data_empty,
   rbh_type = "cor"
 )

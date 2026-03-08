@@ -49,7 +49,7 @@ toy_go_data <- data.table::data.table(
 
 ## test rust implementations ---------------------------------------------------
 
-object <- gene_ontology_data(toy_go_data, min_genes = 3L)
+object <- GeneOntologyElim(toy_go_data, min_genes = 3L)
 
 levels <- names(S7::prop(object, "levels"))
 
@@ -271,7 +271,7 @@ toy_go_data <- data.table::data.table(
 ) %>%
   data.table::setorder(-depth)
 
-object <- gene_ontology_data(toy_go_data, min_genes = 3L)
+object <- GeneOntologyElim(toy_go_data, min_genes = 3L)
 
 levels <- names(S7::prop(object, "levels"))
 

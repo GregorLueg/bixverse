@@ -799,7 +799,7 @@ SingleCells <- S7::new_class(
     )
 
     # generate the DuckDB connector
-    db_connection <- single_cell_duckdb_con$new(
+    db_connection <- SingleCellDuckDB$new(
       db_dir = dir_data
     )
 

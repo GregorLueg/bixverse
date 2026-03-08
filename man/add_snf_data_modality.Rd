@@ -7,7 +7,7 @@
 add_snf_data_modality(object, data, data_name, params = NULL)
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=snf]{snf()}}.}
+\item{object}{The underlying class, see \code{\link[=Snf]{Snf()}}.}
 
 \item{data}{matrix or data.table. The data to transform into adjacency data
 and add to the class. Any data supplied will be assumed to be samples x

@@ -150,7 +150,7 @@ S7::method(find_markers_sc, SingleCells) <- function(
 #'
 #' @export
 find_all_markers_sc <- S7::new_generic(
-  name = "find_markers_sc",
+  name = "find_all_markers_sc",
   dispatch_args = "object",
   fun = function(
     object,

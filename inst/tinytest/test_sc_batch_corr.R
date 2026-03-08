@@ -81,7 +81,7 @@ dir_data <- purrr::imap(dir_data, \(elem, name) {
 
 ### weak batch effect ----------------------------------------------------------
 
-sc_object.weak_batch_effect <- suppressWarnings(single_cell_exp(
+sc_object.weak_batch_effect <- suppressWarnings(SingleCells(
   dir_data = dir_data$weak
 ))
 
@@ -120,7 +120,7 @@ sc_object.weak_batch_effect <- find_neighbours_sc(
 
 ### medium batch effect --------------------------------------------------------
 
-sc_object.medium_batch_effect <- suppressWarnings(single_cell_exp(
+sc_object.medium_batch_effect <- suppressWarnings(SingleCells(
   dir_data = dir_data$medium
 ))
 
@@ -159,7 +159,7 @@ sc_object.medium_batch_effect <- find_neighbours_sc(
 
 ### strong batch effect --------------------------------------------------------
 
-sc_object.strong_batch_effect <- suppressWarnings(single_cell_exp(
+sc_object.strong_batch_effect <- suppressWarnings(SingleCells(
   dir_data = dir_data$strong
 ))
 
@@ -254,7 +254,7 @@ expect_true(
 # Calculates both kBET score and the proportion of same-type neighbours in
 # the k-nearest neighbour graph.
 #
-# @param object A single_cell_exp object with PCA factors, batch labels,
+# @param object A SingleCells object with PCA factors, batch labels,
 #   and cell type annotations
 #
 # @return A list with:
@@ -264,7 +264,7 @@ expect_true(
 #   - neighbours_corrected: count of same-type neighbours per cell (corrected)
 assess_bbknn_impact <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   # get key data from the object
   batch_labels <- unlist(object[["batch_index"]])
@@ -548,7 +548,7 @@ expect_true(
 # Calculates both kBET score and the proportion of same-type neighbours in
 # the k-nearest neighbour graph.
 #
-# @param object A single_cell_exp object with PCA factors, batch labels,
+# @param object A SingleCells object with PCA factors, batch labels,
 #   and cell type annotations
 #
 # @return A list with:
@@ -763,7 +763,7 @@ expect_equal(
 # Calculates both kBET score and the proportion of same-type neighbours in
 # the k-nearest neighbour graph.
 #
-# @param object A single_cell_exp object with PCA factors, batch labels,
+# @param object A SingleCells object with PCA factors, batch labels,
 # and cell type annotations
 #
 # @return A list with

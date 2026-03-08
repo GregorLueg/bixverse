@@ -7,7 +7,7 @@
 get_sim_matrix(object, as_data_table = FALSE, .verbose = TRUE)
 }
 \arguments{
-\item{object}{\verb{Ontology class}. See \code{\link[=Ontology]{Ontology()}}.}
+\item{object}{\verb{OntologySim class}. See \code{\link[=OntologySim]{OntologySim()}}.}
 
 \item{as_data_table}{Boolean. Shall the data be returned as a long
 data.table.}

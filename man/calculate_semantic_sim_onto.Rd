@@ -11,7 +11,7 @@ calculate_semantic_sim_onto(
 )
 }
 \arguments{
-\item{object}{\code{Ontology} class. See \code{\link[=Ontology]{Ontology()}}.}
+\item{object}{\code{OntologySim} class. See \code{\link[=OntologySim]{OntologySim()}}.}
 
 \item{sim_type}{String. One of \code{c("resnik", "lin", "combined")}.}
 

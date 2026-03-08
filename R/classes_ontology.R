@@ -108,9 +108,9 @@ S7::method(print, GeneOntologyElim) <- function(x, ...) {
 }
 
 
-# Ontology class ---------------------------------------------------------------
+# OntologySim class ------------------------------------------------------------
 
-#' Ontology class
+#' OntologySim class
 #'
 #' @description
 #' This class is used to store any ontology and apply different methods to it.
@@ -138,10 +138,10 @@ S7::method(print, GeneOntologyElim) <- function(x, ...) {
 #' @return Returns the class for subsequent usage.
 #'
 #' @export
-Ontology <- S7::new_class(
+OntologySim <- S7::new_class(
   # Names, parents
   parent = BixverseBaseClass,
-  name = "Ontology",
+  name = "OntologySim",
 
   # Properties, i.e., slots
   properties = list(
@@ -180,27 +180,27 @@ Ontology <- S7::new_class(
 
 ## print -----------------------------------------------------------------------
 
-#' @name print.Ontology
+#' @name print.OntologySim
 #'
-#' @title print Method for Ontology object
+#' @title print Method for OntologySim object
 #'
 #' @description
-#' Print a Ontology object.
+#' Print a OntologySim object.
 #'
-#' @param x An object of class `Ontology`, see [bixverse::Ontology()].
+#' @param x An object of class `OntologySim`, see [bixverse::OntologySim()].
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print Ontology
-S7::method(print, Ontology) <- function(x, ...) {
+#' @method print OntologySim
+S7::method(print, OntologySim) <- function(x, ...) {
   # Get necessary parameters
   ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]
   sim_mat <- S7::prop(x, "sim_mat")
   semantic_calculated <- ifelse(is.null(sim_mat), "No.", "Yes.")
 
   cat(paste(
-    "Ontology class:",
+    "OntologySim class:",
     sprintf(" Size of the ontology: %i.", ontology_size),
     sprintf(" Semantic similarities calculated: %s", semantic_calculated),
     sep = "\n"
@@ -213,7 +213,7 @@ S7::method(print, Ontology) <- function(x, ...) {
 
 #' Get the similarity matrix
 #'
-#' @param object `Ontology class`. See [bixverse::Ontology()].
+#' @param object `OntologySim class`. See [bixverse::OntologySim()].
 #' @param as_data_table Boolean. Shall the data be returned as a long
 #' data.table.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -234,10 +234,10 @@ get_sim_matrix <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_sim_matrix Ontology
-S7::method(get_sim_matrix, Ontology) <-
+#' @method get_sim_matrix OntologySim
+S7::method(get_sim_matrix, OntologySim) <-
   function(object, as_data_table = FALSE, .verbose = TRUE) {
-    checkmate::assertClass(object, "bixverse::Ontology")
+    checkmate::assertClass(object, "bixverse::OntologySim")
     sim_mat <- S7::prop(object, "sim_mat")
     # Early return
     if (is.null(sim_mat)) {

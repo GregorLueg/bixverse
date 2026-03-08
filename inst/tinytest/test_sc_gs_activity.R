@@ -48,7 +48,7 @@ expect_true(
 
 ## underlying class ------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,

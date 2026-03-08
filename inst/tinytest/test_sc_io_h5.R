@@ -187,7 +187,7 @@ sc_qc_param = params_sc_min_quality(
 #### direct writing ------------------------------------------------------------
 
 # test the underlying rust directly
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
@@ -364,7 +364,7 @@ expect_true(
 
 ## direct object load ----------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_h5ad(
   object = sc_object,
@@ -473,7 +473,7 @@ expect_equal(
 
 ## streaming h5ad --------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- stream_h5ad(
   object = sc_object,

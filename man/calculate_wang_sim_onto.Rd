@@ -7,7 +7,7 @@
 calculate_wang_sim_onto(object, weights, .verbose = TRUE)
 }
 \arguments{
-\item{object}{\code{Ontology} class. See \code{\link[=Ontology]{Ontology()}}.}
+\item{object}{\code{OntologySim} class. See \code{\link[=OntologySim]{OntologySim()}}.}
 
 \item{weights}{Named numeric. The relationship of type to weight for this
 specific edge. For example \code{c("part_of" = 0.8, "is_a" = 0.6)}.}

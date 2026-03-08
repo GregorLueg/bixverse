@@ -7,7 +7,7 @@
 checkCellsExist(x, cell_names)
 }
 \arguments{
-\item{x}{The \code{single_cell_exp} object to check/assert.}
+\item{x}{The \code{SingleCells} object to check/assert.}
 
 \item{cell_names}{String. The provided cell names.}
 }

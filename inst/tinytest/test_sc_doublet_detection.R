@@ -78,7 +78,7 @@ new_obs <- data.table::rbindlist(list(
 
 ## generate the object ---------------------------------------------------------
 
-sc_object <- single_cell_exp(
+sc_object <- SingleCells(
   dir_data = test_temp_dir
 )
 

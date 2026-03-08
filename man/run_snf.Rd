@@ -7,7 +7,7 @@
 run_snf(object, to_include = NULL, params = NULL)
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=snf]{snf()}}.}
+\item{object}{The underlying class, see \code{\link[=Snf]{Snf()}}.}
 
 \item{to_include}{Optional string, if you wish to only use a subset of the
 generated adjacency matrices. If \code{NULL} all matrices will be used for the
