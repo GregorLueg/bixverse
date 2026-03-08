@@ -787,9 +787,10 @@ single_cell_exp <- S7::new_class(
     dims = S7::class_integer
   ),
   constructor = function(dir_data) {
-    # nightly_feature()
     # checks
     checkmate::assertDirectoryExists(dir_data)
+
+    dir_data <- path.expand(dir_data)
 
     # generate the Rust pointer
     count_connection <- SingeCellCountData$new(

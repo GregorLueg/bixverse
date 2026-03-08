@@ -58,7 +58,11 @@ observation/cell metadata and the feature/gene metadata.
 \subsection{Method \code{populate_obs_from_h5()}}{
 This function populates the obs table from an h5 file (if found).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_h5(h5_path, filter = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{single_cell_duckdb_con$populate_obs_from_h5(
+  h5_path,
+  filter = NULL,
+  cell_id_col = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -68,6 +72,10 @@ This function populates the obs table from an h5 file (if found).
 observation table.}
 
 \item{\code{filter}}{Optional integer. Positions of obs to read in from file.}
+
+\item{\code{cell_id_col}}{Optional string. If you can see that the first column
+in the h5ad obs table is NOT the cell identifier, you can provide
+here the correct column name to use as cell_name.}
 }
 \if{html}{\out{</div>}}
 }

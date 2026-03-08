@@ -331,6 +331,64 @@ get_h5ad_dimensions <- function(f_path) {
   ))
 }
 
+#' Read obs and var tables and metadata from an h5ad file
+#'
+#' @description
+#' Useful for exploring the data stored in an h5ad file.
+#'
+#' @param f_path File path to the `.h5ad` file.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item obs - data.table of cell-level metadata
+#'   \item var - data.table of gene-level metadata
+#'   \item dims - named integer vector c(obs, var)
+#'   \item type - "CSR" or "CSC"
+#' }
+#'
+#' @export
+read_h5ad_metadata <- function(f_path) {
+  checkmate::assertFileExists(f_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  h5_content <- rhdf5::h5ls(f_path) |> data.table::setDT()
+  meta <- get_h5ad_dimensions(f_path)
+
+  read_group_as_dt <- function(group_path) {
+    entries <- h5_content[group == group_path]
+    groups <- h5_content[group == group_path & otype == "H5I_GROUP", name]
+
+    cols <- list()
+
+    # categorical columns (stored as categories + codes)
+    for (g in groups) {
+      sub_path <- paste0(group_path, "/", g)
+      cats <- rhdf5::h5read(f_path, paste0(sub_path, "/categories"))
+      codes <- rhdf5::h5read(f_path, paste0(sub_path, "/codes")) + 1L
+      cols[[g]] <- factor(cats[codes], levels = cats)
+    }
+
+    # direct datasets
+    direct <- entries[otype == "H5I_DATASET" & name != "_index", name]
+    for (d in direct) {
+      cols[[d]] <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", d)))
+    }
+
+    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/_index")))
+    dt <- data.table::as.data.table(cols)
+    dt[, .id := idx]
+    data.table::setcolorder(dt, c(".id", setdiff(names(dt), ".id")))
+    dt
+  }
+
+  list(
+    obs = read_group_as_dt("/obs"),
+    var = read_group_as_dt("/var"),
+    dims = meta$dims,
+    type = meta$type
+  )
+}
+
 # inflection points ------------------------------------------------------------
 
 #' Identify the inflection point for elbow-like data

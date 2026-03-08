@@ -603,13 +603,21 @@ single_cell_duckdb_con <- R6::R6Class(
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
     #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param cell_id_col Optional string. If you can see that the first column
+    #' in the h5ad obs table is NOT the cell identifier, you can provide
+    #' here the correct column name to use as cell_name.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, filter = NULL) {
+    populate_obs_from_h5 = function(
+      h5_path,
+      filter = NULL,
+      cell_id_col = NULL
+    ) {
       # checks
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
+      checkmate::qassert(cell_id_col, c("S1", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -654,8 +662,13 @@ single_cell_duckdb_con <- R6::R6Class(
       obs_dt <- data.table::as.data.table(obs_values)
       data.table::setnames(obs_dt, obs_col_names)
 
-      # Ensure first column is cell_id
-      colnames(obs_dt)[1] <- "cell_id"
+      # set the cell id column
+      if (!is.null(cell_id_col)) {
+        col_idx <- which(colnames(obs_dt) == cell_id_col)
+        colnames(obs_dt)[col_idx] <- "cell_id"
+      } else {
+        colnames(obs_dt)[1] <- "cell_id"
+      }
 
       if (!is.null(filter)) {
         obs_dt <- obs_dt[filter]
@@ -679,23 +692,6 @@ single_cell_duckdb_con <- R6::R6Class(
         obs_dt,
         overwrite = TRUE
       )
-
-      ### Don't think this is needed, as we are just adding the obs data to the lake
-
-      # DBI::dbExecute(
-      #   con,
-      #   sprintf(
-      #     'CREATE TABLE obs_new AS
-      #         SELECT obs.*, temp_col.%s
-      #         FROM obs
-      #         JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
-      #         ORDER BY obs.cell_idx;
-      #         DROP table obs;
-      #         ALTER TABLE obs_new RENAME TO obs;
-      #         DROP TABLE temp_col',
-      #     col_name
-      #   )
-      # )
 
       invisible(self)
     },

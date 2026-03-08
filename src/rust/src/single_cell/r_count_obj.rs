@@ -328,6 +328,63 @@ impl SingeCellCountData {
         )
     }
 
+    /// Save h5 with normalised counts to file
+    ///
+    /// For datasets where only normalised counts are available in X. Reads
+    /// library sizes from a specified obs column to reconstruct raw counts.
+    ///
+    /// ### Params
+    ///
+    /// * `cs_type` - How was the h5 data saved. CSC or CSR.
+    /// * `h5_path` - Path to the h5 file.
+    /// * `no_cells` - Number of cells in the h5 file.
+    /// * `no_genes` - Number of genes in the h5 file.
+    /// * `obs_lib_size_col` - Name of the obs column containing total counts per
+    ///   cell (e.g. "nCount_RNA").
+    /// * `target_size` - Target size used in the original normalisation (e.g. 1e4).
+    /// * `qc_params` - List with the quality control parameters.
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// A list with qc parameters.
+    #[allow(clippy::too_many_arguments)]
+    pub fn norm_h5_to_file(
+        &mut self,
+        cs_type: String,
+        h5_path: String,
+        no_cells: usize,
+        no_genes: usize,
+        obs_lib_size_col: String,
+        target_size: f64,
+        qc_params: List,
+        verbose: bool,
+    ) -> List {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = write_h5_normalised_counts(
+            &h5_path,
+            &self.f_path_cells,
+            &cs_type,
+            no_cells,
+            no_genes,
+            &obs_lib_size_col,
+            target_size as f32,
+            qc_params,
+            verbose,
+        );
+
+        self.n_cells = no_cells;
+        self.n_genes = no_genes;
+
+        list!(
+            cell_indices = cell_qc.cell_indices,
+            gene_indices = cell_qc.gene_indices,
+            lib_size = cell_qc.lib_size,
+            nnz = cell_qc.nnz
+        )
+    }
+
     /// Save h5 to file
     ///
     /// Slower version that is less memory heavy and will make usage of

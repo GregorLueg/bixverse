@@ -295,6 +295,8 @@ S7::method(load_r_data, single_cell_exp) <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
+#' @param cell_id_col Optional string. If a specific column in the h5ad
+#' obs data is representing the cell identifiers, you can specify it here.
 #' @param streaming Boolean. Shall the data be streamed during the conversion
 #' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
 #' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
@@ -313,6 +315,7 @@ load_h5ad <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     streaming = TRUE,
+    cell_id_col = NULL,
     batch_size = 1000L,
     .verbose = TRUE
   ) {
@@ -331,6 +334,7 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = TRUE,
+  cell_id_col = NULL,
   batch_size = 1000L,
   .verbose = TRUE
 ) {
@@ -340,6 +344,9 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
+
+  # make rust happier
+  h5_path <- path.expand(h5_path)
 
   # rust part
   h5_meta <- get_h5ad_dimensions(f_path = h5_path)
@@ -376,7 +383,159 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   }
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
-    filter = as.integer(file_res$cell_indices + 1)
+    filter = as.integer(file_res$cell_indices + 1),
+    cell_id_col = cell_id_col
+  )
+  if (.verbose) {
+    message("Loading variables data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_vars_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
+#### normalised ----------------------------------------------------------------
+
+#' Load in h5ad with normalised counts to `single_cell_exp`
+#'
+#' @description
+#' This function takes an h5ad file where only normalised counts are available
+#' in the X slot and loads the obs and var data into the DuckDB of the
+#' `single_cell_exp` class and the counts into a Rust-binarised format for
+#' rapid access. Raw counts are reconstructed from the normalised values using
+#' the library sizes stored in a specified obs column.
+#'
+#' The reconstruction assumes the normalisation was:
+#' `norm = log1p(x / lib_size * target_size)`
+#'
+#' @param object `single_cell_exp` class.
+#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param obs_lib_size_col String. Name of the obs column containing the total
+#' counts per cell or spot (e.g. `"nCount_RNA"`). You will have to check the
+#' original obs data for this.
+#' @param target_size Numeric. The target size used in the original
+#' normalisation (e.g. `1e4`).
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param cell_id_col Optional string. If a specific column in the h5ad obs
+#' data represents the cell identifiers, you can specify it here.
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+load_h5ad_norm <- S7::new_generic(
+  name = "load_h5ad_norm",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    obs_lib_size_col,
+    target_size,
+    sc_qc_param = params_sc_min_quality(),
+    streaming = TRUE,
+    cell_id_col = NULL,
+    batch_size = 1000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_h5ad_norm single_cell_exp
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_h5ad_norm, single_cell_exp) <- function(
+  object,
+  h5_path,
+  obs_lib_size_col,
+  target_size,
+  sc_qc_param = params_sc_min_quality(),
+  streaming = TRUE,
+  cell_id_col = NULL,
+  batch_size = 1000L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(obs_lib_size_col, "S1")
+  checkmate::qassert(target_size, "N1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  h5_path <- path.expand(h5_path)
+
+  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$norm_h5_to_file(
+    cs_type = h5_meta$type,
+    h5_path = h5_path,
+    no_cells = h5_meta$dims["obs"],
+    no_genes = h5_meta$dims["var"],
+    obs_lib_size_col = obs_lib_size_col,
+    target_size = target_size,
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_obs_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$cell_indices + 1),
+    cell_id_col = cell_id_col
   )
   if (.verbose) {
     message("Loading variables data from h5ad into the DuckDB.")
