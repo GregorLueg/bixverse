@@ -278,7 +278,7 @@ impl SingeCellCountData {
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
-            nnz = cell_qc.no_genes
+            nnz = cell_qc.nnz
         )
     }
 
@@ -324,7 +324,7 @@ impl SingeCellCountData {
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
-            nnz = cell_qc.no_genes
+            nnz = cell_qc.nnz
         )
     }
 
@@ -373,7 +373,7 @@ impl SingeCellCountData {
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
-            nnz = cell_qc.no_genes
+            nnz = cell_qc.nnz
         )
     }
 
@@ -416,7 +416,7 @@ impl SingeCellCountData {
             cell_indices = mtx_res.cell_qc.cell_indices,
             gene_indices = mtx_res.cell_qc.gene_indices,
             lib_size = mtx_res.cell_qc.lib_size,
-            nnz = mtx_res.cell_qc.no_genes
+            nnz = mtx_res.cell_qc.nnz
         ))
     }
 
