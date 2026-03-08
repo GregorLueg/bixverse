@@ -11,7 +11,7 @@
 #' between two groups in the single cell data. At the moment, it has only
 #' an implementation for the Wilcox-based rank statistic.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param cells_1 String. The names of the cells in group 1. Need to be part
 #' of the cell names in the object, see [bixverse::get_cell_names()].
 #' @param cells_2 String. The names of the cells in group 2. Need to be part
@@ -44,13 +44,13 @@ find_markers_sc <- S7::new_generic(
   }
 )
 
-#' @method find_markers_sc single_cell_exp
+#' @method find_markers_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_markers_sc, single_cell_exp) <- function(
+S7::method(find_markers_sc, SingleCells) <- function(
   object,
   cells_1,
   cells_2,
@@ -62,7 +62,7 @@ S7::method(find_markers_sc, single_cell_exp) <- function(
   alternative <- match.arg(alternative)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertCellsExist(object, cells_1)
   assertCellsExist(object, cells_2)
   checkmate::assertChoice(method, c("wilcox"))
@@ -130,7 +130,7 @@ S7::method(find_markers_sc, single_cell_exp) <- function(
 #' of 100,000 cells if it should exceed that. This automatic downsampling can
 #' be turned off however.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param column_of_interest String. The column you wish to use to identify
 #' the markers between all combination. Needs to be in the obs table
 #' @param method String. Which method to use for the calculations of the DGE.
@@ -166,13 +166,13 @@ find_all_markers_sc <- S7::new_generic(
   }
 )
 
-#' @method find_all_markers_sc single_cell_exp
+#' @method find_all_markers_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_all_markers_sc, single_cell_exp) <- function(
+S7::method(find_all_markers_sc, SingleCells) <- function(
   object,
   column_of_interest,
   method = "wilcox",
@@ -185,7 +185,7 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
   alternative <- match.arg(alternative)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(column_of_interest, "S1")
   checkmate::assertChoice(method, c("wilcox"))
   checkmate::assertChoice(alternative, c("twosided", "greater", "less"))
@@ -298,11 +298,11 @@ S7::method(find_all_markers_sc, single_cell_exp) <- function(
 #' generated from the single cell data, generate representative neighbourhoods
 #' and calculate differential abundances within these neighbourhoods. For
 #' further details on the method, please refer to Dann, et al. This function
-#' will take a `single_cell_exp` class, run the neighbourhood detection,
+#' will take a `SingleCells` class, run the neighbourhood detection,
 #' count the occurrences of a sample and return a `sc_miloR` class for
 #' subsequent differential abundance testing and further annotations.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param sample_id_col Character. The column in the obs table representing
 #' the sample identifier to count.
 #' @param embd_to_use Character. The embedding to use for the refinement
@@ -346,13 +346,13 @@ get_miloR_abundances_sc <- S7::new_generic(
   }
 )
 
-#' @method get_miloR_abundances_sc single_cell_exp
+#' @method get_miloR_abundances_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(get_miloR_abundances_sc, single_cell_exp) <- function(
+S7::method(get_miloR_abundances_sc, SingleCells) <- function(
   object,
   sample_id_col,
   embd_to_use = "pca",
@@ -362,7 +362,7 @@ S7::method(get_miloR_abundances_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(sample_id_col, "S1")
   assertScMiloR(miloR_params)
   checkmate::qassert(seed, "I1")

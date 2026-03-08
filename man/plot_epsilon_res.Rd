@@ -7,7 +7,7 @@
 plot_epsilon_res(object)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
 If epsilon results were found, returns the ggplot. Otherwise, throws

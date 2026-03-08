@@ -13,7 +13,7 @@
 #' Large number of positive tests indicate bad mixing overall. For more details,
 #' please see Büttner et al.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param threshold Numeric. Number between 0 and 1. Below this threshold, the
@@ -46,17 +46,17 @@ calculate_kbet_sc <- S7::new_generic(
 )
 
 
-#' @method calculate_kbet_sc single_cell_exp
+#' @method calculate_kbet_sc SingleCells
 #'
 #' @export
-S7::method(calculate_kbet_sc, single_cell_exp) <- function(
+S7::method(calculate_kbet_sc, SingleCells) <- function(
   object,
   batch_column,
   threshold = 0.05,
   .verbose = TRUE
 ) {
   # check
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(threshold, "N1[0, 1]")
   checkmate::qassert(.verbose, "B1")
@@ -103,7 +103,7 @@ S7::method(calculate_kbet_sc, single_cell_exp) <- function(
 #' batch), based on the average variance per batch or only take genes that are
 #' amongst the Top X HVG in all batches.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param batch_column String. The column name of the batch column in the obs
 #' table.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
@@ -150,10 +150,10 @@ find_hvg_batch_aware_sc <- S7::new_generic(
   }
 )
 
-#' @method find_hvg_batch_aware_sc single_cell_exp
+#' @method find_hvg_batch_aware_sc SingleCells
 #'
 #' @export
-S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
+S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   object,
   batch_column,
   hvg_no = 2000L,
@@ -165,7 +165,7 @@ S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
   gene_comb_method <- match.arg(gene_comb_method)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(hvg_no, "I1")
   checkmate::assertChoice(
@@ -234,7 +234,7 @@ S7::method(find_hvg_batch_aware_sc, single_cell_exp) <- function(
 #' Subsequently, it leverages UMAP connectivity calculations to reduce spurious
 #' connections. For more details, please refer to Polański, et al.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param no_neighbours_to_keep Integer. Maximum number of neighbours to keep
@@ -288,10 +288,10 @@ bbknn_sc <- S7::new_generic(
   }
 )
 
-#' @method bbknn_sc single_cell_exp
+#' @method bbknn_sc SingleCells
 #'
 #' @export
-S7::method(bbknn_sc, single_cell_exp) <- function(
+S7::method(bbknn_sc, SingleCells) <- function(
   object,
   batch_column,
   no_neighbours_to_keep = 15L,
@@ -302,7 +302,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::assertChoice(embd_to_use, c("pca"))
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -418,7 +418,7 @@ S7::method(bbknn_sc, single_cell_exp) <- function(
 #' iterate through the batches, identify the MNN and generate correction vectors
 #' and generate a corrected embedding which is added to the function.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param batch_column String. The column with the batch information in the
 #' obs data of the class.
 #' @param batch_hvg_genes Integer vector. These are the highly variable genes,
@@ -465,10 +465,10 @@ fast_mnn_sc <- S7::new_generic(
   }
 )
 
-#' @method fast_mnn_sc single_cell_exp
+#' @method fast_mnn_sc SingleCells
 #'
 #' @export
-S7::method(fast_mnn_sc, single_cell_exp) <- function(
+S7::method(fast_mnn_sc, SingleCells) <- function(
   object,
   batch_column,
   batch_hvg_genes,
@@ -478,7 +478,7 @@ S7::method(fast_mnn_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(batch_hvg_genes, "I+")
   assertScFastmnn(fastmnn_params)
@@ -550,10 +550,10 @@ harmony_sc <- S7::new_generic(
   }
 )
 
-#' @method harmony_sc single_cell_exp
+#' @method harmony_sc SingleCells
 #'
 #' @export
-S7::method(harmony_sc, single_cell_exp) <- function(
+S7::method(harmony_sc, SingleCells) <- function(
   object,
   batch_column,
   additional_batch_columns = NULL,
@@ -562,7 +562,7 @@ S7::method(harmony_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(additional_batch_columns, c("S+", "0"))
   assertScHarmonyParams(harmony_params)

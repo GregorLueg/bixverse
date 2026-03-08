@@ -1,4 +1,6 @@
-# classes ---------------------------------------------------------------------
+# classes ----------------------------------------------------------------------
+
+## BulkCoExp -------------------------------------------------------------------
 
 #' @title Bulk RNAseq co-expression modules
 #'
@@ -25,13 +27,13 @@
 #'   \item{final_results}{A data.table that will contain the final results.}
 #' }
 #'
-#' @return Returns the `bulk_coexp` class for further operations.
+#' @return Returns the `BulkCoExp` class for further operations.
 #'
 #' @export
-bulk_coexp <- S7::new_class(
+BulkCoExp <- S7::new_class(
   # Names, parents
-  name = "bulk_coexp",
-  parent = bixverse_base_class,
+  name = "BulkCoExp",
+  parent = BixverseBaseClass,
 
   # Properties
   properties = list(
@@ -87,7 +89,7 @@ bulk_coexp <- S7::new_class(
 #' [edgeR::DGEList()] for subsequent processing.
 #'
 #' @param raw_counts matrix. The raw count matrix. Rows = genes, columns =
-#' samples. Note: this is different from the [bixverse::bulk_coexp()] class!
+#' samples. Note: this is different from the [bixverse::BulkCoExp()] class!
 #' @param meta_data data.table. Metadata information on the samples. It expects
 #' to have a column sample_id and case_control column.
 #' @param variable_info data.table. Metadata information on the features. This
@@ -108,13 +110,13 @@ bulk_coexp <- S7::new_class(
 #'   \item{final_results}{A list in which final results will be stored.}
 #' }
 #'
-#' @return Returns the `bulk_coexp` class for further operations.
+#' @return Returns the `BulkDge` class for further operations.
 #'
 #' @export
-bulk_dge <- S7::new_class(
+BulkDge <- S7::new_class(
   # Names, parents
-  name = "bulk_dge",
-  parent = bixverse_base_class,
+  name = "BulkDge",
+  parent = BixverseBaseClass,
 
   # Properties
   properties = list(
@@ -178,18 +180,18 @@ bulk_dge <- S7::new_class(
 
 # additional constructors ------------------------------------------------------
 
-## bulk_dge --------------------------------------------------------------------
+## BulkDge ---------------------------------------------------------------------
 
-#' Wrapper function to generate bulk_dge object from h5ad
+#' Wrapper function to generate BulkDge object from h5ad
 #'
 #' @description
-#' This is a helper function that can be used to create a `bulk_dge` object
-#' (see [bixverse::bulk_dge()]) directly from h5ad objects.
+#' This is a helper function that can be used to create a `BulkDge` object
+#' (see [bixverse::BulkDge()]) directly from h5ad objects.
 #'
 #' @param h5_path String. Path to the h5ad object.
 #' @param .verbose Controls verbosity of the function
 #'
-#' @returns `bulk_dge` object.
+#' @returns `BulkDge` object.
 #'
 #' @export
 #'
@@ -210,7 +212,7 @@ bulk_dge_from_h5ad <- function(
     message("Loading data from the h5ad object")
   }
   c(meta_data, var_info, counts) %<-% h5_obj$get_key_data()
-  bulk_dge_obj <- bulk_dge(
+  bulk_dge_obj <- BulkDge(
     raw_counts = counts,
     meta_data = meta_data,
     variable_info = var_info
@@ -227,8 +229,8 @@ bulk_dge_from_h5ad <- function(
 #' @description
 #' This function allows to remove certain samples from the object
 #'
-#' @param object The underlying object, either `bixverse::bulk_coexp` or
-#' `bixverse::bulk_dge`.
+#' @param object The underlying object, either [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #' @param samples_to_remove Character vector. The sample identifiers to remove.
 #' @param ... Additional arguments to parse to the functions.
 #'
@@ -244,16 +246,16 @@ remove_samples <- S7::new_generic(
   }
 )
 
-#' @method remove_samples bulk_dge
+#' @method remove_samples BulkDge
 #'
 #' @export
-S7::method(remove_samples, bulk_dge) <-
+S7::method(remove_samples, BulkDge) <-
   function(object, samples_to_remove, ...) {
     sample_id <- NULL
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
     # Data
     meta_data <- S7::prop(object, "meta_data")
@@ -263,7 +265,7 @@ S7::method(remove_samples, bulk_dge) <-
     meta_data_new <- meta_data[!sample_id %in% samples_to_remove]
     raw_counts_new <- raw_counts[, meta_data_new$sample_id]
 
-    object_new <- bulk_dge(
+    object_new <- BulkDge(
       raw_counts = raw_counts_new,
       meta_data = meta_data_new,
       variable_info = variable_info
@@ -278,12 +280,12 @@ S7::method(remove_samples, bulk_dge) <-
 #'
 #' @description
 #' This function will update the specified columns in the metadata of an
-#' `bixverse::bulk_dge` or `bixverse::bulk_coexp` to be conform with R standard
+#' [bixverse::BulkDge()] or [bixverse::BulkCoExp()] to be conform with R standard
 #' naming convetions. This is useful to do before running DGE methods as they
 #' expect standardised names.
 #'
-#' @param object The underlying object, either `bixverse::bulk_coexp` or
-#' `bixverse::bulk_dge`.
+#' @param object The underlying object, either [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #' @param col_names Character vector. The columns to fix.
 #' @param ... Additional arguments to parse to the functions.
 #'
@@ -298,14 +300,14 @@ fix_meta_data_column <- S7::new_generic(
   }
 )
 
-#' @method fix_meta_data_column bulk_dge
+#' @method fix_meta_data_column BulkDge
 #'
 #' @export
-S7::method(fix_meta_data_column, bulk_dge) <-
+S7::method(fix_meta_data_column, BulkDge) <-
   function(object, col_names) {
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
     # Data
     S7::prop(object, "meta_data") <- S7::prop(object, "meta_data")[,
@@ -324,8 +326,8 @@ S7::method(fix_meta_data_column, bulk_dge) <-
 #' This function will update the values in a given metadata column based on
 #' what you are providing in terms of replacement.
 #'
-#' @param object The underlying object, either `bixverse::bulk_coexp` or
-#' `bixverse::bulk_dge`.
+#' @param object The underlying object, either [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #' @param column Character vector. The columns for which to replace the
 #' values.
 #' @param replacement Named character vector. The values with which to replace
@@ -343,16 +345,16 @@ update_metadata_values <- S7::new_generic(
   }
 )
 
-#' @method update_metadata_values bulk_dge
+#' @method update_metadata_values BulkDge
 #'
 #' @export
-S7::method(update_metadata_values, bulk_dge) <-
+S7::method(update_metadata_values, BulkDge) <-
   function(object, column, replacement) {
     meta_data <- S7::prop(object, "meta_data")
 
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
     checkmate::assertTRUE(
       all(meta_data[[column]] %in% names(replacement))
@@ -371,11 +373,11 @@ S7::method(update_metadata_values, bulk_dge) <-
 #' Return the metadata
 #'
 #' @description
-#' Getter function to extract the metadata from the [bixverse::bulk_coexp()] or
-#' [bixverse::bulk_dge()].
+#' Getter function to extract the metadata from the [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #'
-#' @param object The underlying object, either `bixverse::bulk_coexp` or
-#' `bixverse::bulk_dge`.
+#' @param object The underlying object, either [bixverse::bulkCoExp()] or
+#' [bixverse::BulkDge()].
 #' @param ... Additional arguments to parse to the functions.
 #'
 #' @return Returns the metadata stored in the class.
@@ -389,15 +391,15 @@ get_metadata <- S7::new_generic(
   }
 )
 
-#' @method get_metadata bulk_coexp
+#' @method get_metadata BulkCoExp
 #'
 #' @export
-S7::method(get_metadata, bulk_coexp) <-
+S7::method(get_metadata, BulkCoExp) <-
   function(object, ...) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_coexp"
+      "bixverse::BulkCoExp"
     )
 
     # Return
@@ -405,15 +407,15 @@ S7::method(get_metadata, bulk_coexp) <-
   }
 
 
-#' @method get_metadata bulk_dge
+#' @method get_metadata BulkDge
 #'
 #' @export
-S7::method(get_metadata, bulk_dge) <-
+S7::method(get_metadata, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     # Return
@@ -424,11 +426,11 @@ S7::method(get_metadata, bulk_dge) <-
 #' Return the outputs
 #'
 #' @description
-#' Getter function to extract the outputs from the [bixverse::bulk_coexp()] or
-#' [bixverse::bulk_dge()].
+#' Getter function to extract the outputs from the [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #'
-#' @param object The underlying object, either `bixverse::bulk_coexp` or
-#' `bixverse::bulk_dge`.
+#' @param object The underlying object, either [bixverse::BulkCoExp()] or
+#' [bixverse::BulkDge()].
 #' @param ... Additional arguments to parse to the functions.
 #'
 #' @return Returns the outputs stored in the class.
@@ -443,15 +445,15 @@ get_outputs <- S7::new_generic(
 )
 
 
-#' @method get_outputs bulk_coexp
+#' @method get_outputs BulkCoExp
 #'
 #' @export
-S7::method(get_outputs, bulk_coexp) <-
+S7::method(get_outputs, BulkCoExp) <-
   function(object, ...) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_coexp"
+      "bixverse::BulkCoExp"
     )
 
     # Return
@@ -459,15 +461,15 @@ S7::method(get_outputs, bulk_coexp) <-
   }
 
 
-#' @method get_outputs bulk_dge
+#' @method get_outputs BulkDge
 #'
 #' @export
-S7::method(get_outputs, bulk_dge) <-
+S7::method(get_outputs, BulkDge) <-
   function(object, ...) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     # Return
@@ -481,9 +483,9 @@ S7::method(get_outputs, bulk_dge) <-
 #' Return the DGEList
 #'
 #' @description
-#' Getter function to extract the DGEList from the [bixverse::bulk_dge()] class.
+#' Getter function to extract the DGEList from the [bixverse::BulkDge()] class.
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #'
 #' @return Returns the DGEList stored in the class.
 #'
@@ -497,15 +499,15 @@ get_dge_list <- S7::new_generic(
 )
 
 
-#' @method get_dge_list bulk_dge
+#' @method get_dge_list BulkDge
 #'
 #' @export
-S7::method(get_dge_list, bulk_dge) <-
+S7::method(get_dge_list, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     # Return
@@ -517,9 +519,9 @@ S7::method(get_dge_list, bulk_dge) <-
 #'
 #' @description
 #' Getter function to extract the Limma Voom results from the
-#' [bixverse::bulk_dge()] class.
+#' [bixverse::BulkDge()] class.
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #'
 #' @return Returns the Limma Voom results. (If found.)
 #'
@@ -533,15 +535,15 @@ get_dge_limma_voom <- S7::new_generic(
 )
 
 
-#' @method get_dge_limma_voom bulk_dge
+#' @method get_dge_limma_voom BulkDge
 #'
 #' @export
-S7::method(get_dge_limma_voom, bulk_dge) <-
+S7::method(get_dge_limma_voom, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     limma_res <- S7::prop(object, "outputs")[['limma_voom_res']]
@@ -561,9 +563,9 @@ S7::method(get_dge_limma_voom, bulk_dge) <-
 #'
 #' @description
 #' Getter function to extract the Effect size results from the
-#' [bixverse::bulk_dge()] class.
+#' [bixverse::BulkDge()] class.
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #'
 #' @return Returns the effect size results. (If found.)
 #'
@@ -576,15 +578,15 @@ get_dge_effect_sizes <- S7::new_generic(
   }
 )
 
-#' @method get_dge_effect_sizes bulk_dge
+#' @method get_dge_effect_sizes BulkDge
 #'
 #' @export
-S7::method(get_dge_effect_sizes, bulk_dge) <-
+S7::method(get_dge_effect_sizes, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     hedges_g_res <- S7::prop(object, "outputs")[['hedges_g_res']]
@@ -603,9 +605,9 @@ S7::method(get_dge_effect_sizes, bulk_dge) <-
 #'
 #' @description
 #' Getter function to extract the TPM-normalised counts from the
-#' [bixverse::bulk_dge()] class.
+#' [bixverse::BulkDge()] class.
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #'
 #' @return Returns the TPM-normalised counts. (If found.)
 #'
@@ -618,15 +620,15 @@ get_tpm_counts <- S7::new_generic(
   }
 )
 
-#' @method get_tpm_counts bulk_dge
+#' @method get_tpm_counts BulkDge
 #'
 #' @export
-S7::method(get_tpm_counts, bulk_dge) <-
+S7::method(get_tpm_counts, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     tpm_counts <- S7::prop(object, "outputs")[['tpm_counts']]
@@ -645,9 +647,9 @@ S7::method(get_tpm_counts, bulk_dge) <-
 #'
 #' @description
 #' Getter function to extract the FPKM-normalised counts from the
-#' [bixverse::bulk_dge()] class.
+#' [bixverse::BulkDge()] class.
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #'
 #' @return Returns the FPKM-normalised counts. (If found.)
 #'
@@ -660,15 +662,15 @@ get_fpkm_counts <- S7::new_generic(
   }
 )
 
-#' @method get_fpkm_counts bulk_dge
+#' @method get_fpkm_counts BulkDge
 #'
 #' @export
-S7::method(get_fpkm_counts, bulk_dge) <-
+S7::method(get_fpkm_counts, BulkDge) <-
   function(object) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
 
     fpkm_counts <- S7::prop(object, "outputs")[['fpkm_counts']]
@@ -689,9 +691,9 @@ S7::method(get_fpkm_counts, bulk_dge) <-
 #'
 #' @description
 #' Getter function to extract the `epsilon param ~ power law goodness of fit`
-#' data from the [bixverse::bulk_coexp()] class.
+#' data from the [bixverse::BulkCoExp()] class.
 #'
-#' @param object `bulk_coexp` class.
+#' @param object `BulkCoExp` class.
 #'
 #' @return Returns the epsilon data. (If found. Otherwise `NULL`).
 #'
@@ -704,15 +706,15 @@ get_epsilon_res <- S7::new_generic(
   }
 )
 
-#' @method get_epsilon_res bulk_coexp
+#' @method get_epsilon_res BulkCoExp
 #'
 #' @export
-S7::method(get_epsilon_res, bulk_coexp) <-
+S7::method(get_epsilon_res, BulkCoExp) <-
   function(object) {
     # checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_coexp"
+      "bixverse::BulkCoExp"
     )
     # body
     epsilon_results <- S7::prop(object, "outputs")[['epsilon_data']]
@@ -734,7 +736,7 @@ S7::method(get_epsilon_res, bulk_coexp) <-
 #' @description
 #' Getter function to get the resolution results (if available).
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #'
 #' @return If resolution results were found, returns the data.table. Otherwise,
 #' throws a warning and returns NULL.
@@ -749,10 +751,10 @@ get_resolution_res <- S7::new_generic(
 )
 
 #' @export
-#' @method get_resolution_res bulk_coexp
-S7::method(get_resolution_res, bulk_coexp) <- function(object) {
+#' @method get_resolution_res BulkCoExp
+S7::method(get_resolution_res, BulkCoExp) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   # Body
   resolution_results <- S7::prop(object, "outputs")[["resolution_results"]]
   if (is.null(resolution_results)) {
@@ -771,15 +773,15 @@ S7::method(get_resolution_res, bulk_coexp) <- function(object) {
 
 ### bulk dge class -------------------------------------------------------------
 
-#' Change the primary gene identifier of bulk_dge
+#' Change the primary gene identifier of BulkDge
 #'
 #' @description
-#' Changes the primary gene identifier in the bulk_dge class. To do so, you need
+#' Changes the primary gene identifier in the BulkDge class. To do so, you need
 #' to either provide a `variable_info` data.table with the alternative gene
 #' identifier you wish to use or it exists already in the object itself. If it
 #' exists in the object, that variable_info will be used.
 #'
-#' @param object `bulk_dge` class, see [bixverse::bulk_dge].
+#' @param object `BulkDge` class, see [bixverse::BulkDge()].
 #' @param alternative_gene_id String. The column containing the alternative gene
 #' identifier. Must be present in the provided `variable_info` data.table or
 #' within the class attributes.
@@ -798,44 +800,44 @@ change_gene_identifier <- S7::new_generic(
 )
 
 
-#' @method change_gene_identifier bulk_dge
+#' @method change_gene_identifier BulkDge
 #'
 #' @export
-S7::method(change_gene_identifier, bulk_dge) <-
-  function(object, alternative_gene_id, variable_info = NULL) {
-    # Checks
-    checkmate::assertClass(
-      object,
-      "bixverse::bulk_dge"
-    )
+BulkDge
+function(object, alternative_gene_id, variable_info = NULL) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "bixverse::BulkDge"
+  )
 
-    if (is.null(S7::prop(object, "variable_info"))) {
-      expected_nrows <- S7::prop(object, "params")[['original_dim']][1]
-      checkmate::assertDataTable(variable_info, nrows = expected_nrows)
-      S7::prop(object, "variable_info") <- variable_info
-    }
-
-    variable_info <- S7::prop(object, "variable_info")
-    checkmate::assertTRUE(alternative_gene_id %in% colnames(variable_info))
-
-    rownames(S7::prop(object, "raw_counts")) <- variable_info[[
-      alternative_gene_id
-    ]]
-
-    # Return
-    return(object)
+  if (is.null(S7::prop(object, "variable_info"))) {
+    expected_nrows <- S7::prop(object, "params")[['original_dim']][1]
+    checkmate::assertDataTable(variable_info, nrows = expected_nrows)
+    S7::prop(object, "variable_info") <- variable_info
   }
 
+  variable_info <- S7::prop(object, "variable_info")
+  checkmate::assertTRUE(alternative_gene_id %in% colnames(variable_info))
 
-#' @method add_new_metadata bulk_dge
+  rownames(S7::prop(object, "raw_counts")) <- variable_info[[
+    alternative_gene_id
+  ]]
+
+  # Return
+  return(object)
+}
+
+
+#' @method add_new_metadata BulkDge
 #'
 #' @export
-S7::method(add_new_metadata, bulk_dge) <-
+S7::method(add_new_metadata, BulkDge) <-
   function(object, new_metadata, ...) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
     checkmate::assertNames(
       names(new_metadata),
@@ -855,19 +857,19 @@ S7::method(add_new_metadata, bulk_dge) <-
 
 # TODO These need updating.
 
-#' @name print.bulk_coexp
-#' @title print Method for bulk_coexp object
+#' @name print.BulkCoExp
+#' @title print Method for BulkCoExp object
 #'
 #' @description
-#' Print a bulk_coexp object.
+#' Print a BulkCoExp object.
 #'
-#' @param x An object of class `bulk_coexp`.
+#' @param x An object of class `BulkCoExp`.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print bulk_coexp
-S7::method(print, bulk_coexp) <- function(x, ...) {
+#' @method print BulkCoExp
+S7::method(print, BulkCoExp) <- function(x, ...) {
   . <- hvg <- NULL
   # Pre-processing
   preprocessed <- !is.null(S7::prop(x, "processed_data")[["processed_data"]])
@@ -910,7 +912,7 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   }
 
   cat(
-    "Bulk co-expression module class (bulk_coexp).\n",
+    "Bulk co-expression module class (BulkCoExp).\n",
     " Pre-processing done: ",
     preprocessed,
     ".\n",
@@ -922,4 +924,4 @@ S7::method(print, bulk_coexp) <- function(x, ...) {
   invisible(x)
 }
 
-# TODO write print for bulk_dge
+# TODO write print for BulkDge

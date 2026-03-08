@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{load_mtx}
 \alias{load_mtx}
-\title{Load in mtx/plain text files to \code{single_cell_exp} (nightly!)}
+\title{Load in mtx/plain text files to \code{SingleCells}}
 \usage{
 load_mtx(
   object,
@@ -14,7 +14,7 @@ load_mtx(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{sc_mtx_io_param}{List. Please generate this one via
 \code{\link[=params_sc_mtx_io]{params_sc_mtx_io()}}. Needs to contain:

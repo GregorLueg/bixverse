@@ -7,10 +7,10 @@
 get_sc_cache(object)
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 }
 \value{
-Returns the sc_cache class from the object with all the
+Returns the ScCache class from the object with all the
 memory-stored data.
 }
 \description{

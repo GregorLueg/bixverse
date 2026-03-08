@@ -17,7 +17,7 @@ get_supercells_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{sc_supercell_params}{List. Output of \code{\link[=params_sc_supercell]{params_sc_supercell()}}.
 A list with the following items:

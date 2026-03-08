@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_pca_loadings}
 \alias{set_pca_loadings}
-\alias{set_pca_loadings.sc_cache}
-\alias{set_pca_loadings.single_cell_exp}
+\alias{set_pca_loadings.ScCache}
+\alias{set_pca_loadings.SingleCells}
 \title{Set/add PCA loadings}
 \usage{
 set_pca_loadings(x, pca_loading)
 
-\method{set_pca_loadings}{sc_cache}(x, pca_loading)
+\method{set_pca_loadings}{ScCache}(x, pca_loading)
 }
 \arguments{
 \item{x}{An object to add the PCA loadings for.}
@@ -18,5 +18,5 @@ set_pca_loadings(x, pca_loading)
 \description{
 Set/add PCA loadings
 
-Set the PCA factors for a \code{single_cell_exp} class.
+Set the PCA factors for a \code{SingleCells} class.
 }

@@ -12,7 +12,7 @@ diffcor_module_processing(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. Ideally, you
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{background_mat}{Numerical matrix. The background data set.}

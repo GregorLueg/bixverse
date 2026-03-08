@@ -226,7 +226,7 @@ meta_data <- data.table::data.table(
 ### run the class (pre processing) ---------------------------------------------
 
 # this stuff is extensively tested in test_cor_modules.R
-ica_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
+ica_test <- BulkCoExp(raw_data = data, meta_data = meta_data)
 
 expect_warning(
   current = ica_processing(ica_test, .verbose = FALSE),

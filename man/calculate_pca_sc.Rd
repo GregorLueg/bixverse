@@ -15,7 +15,7 @@ calculate_pca_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{no_pcs}{Integer. Number of PCs to calculate.}
 

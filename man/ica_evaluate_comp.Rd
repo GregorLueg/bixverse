@@ -15,7 +15,7 @@ ica_evaluate_comp(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to apply
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to apply
 \code{\link[=ica_processing]{ica_processing()}} before running this function.}
 
 \item{ica_type}{String, element of \code{c("logcosh", "exp")}.}
@@ -60,7 +60,7 @@ Should be between 1 to 2.
 \item{.verbose}{Boolean. Controls verbosity.}
 }
 \value{
-\code{bulk_coexp} with the added information of stability of the components
+\code{BulkCoExp} with the added information of stability of the components
 and other data to plot to choose the right \code{ncomp}.
 }
 \description{

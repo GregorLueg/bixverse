@@ -25,9 +25,9 @@
 #' @return Returns the class for subsequent usage.
 #'
 #' @export
-gene_ontology_data <- S7::new_class(
+GeneOntologyElim <- S7::new_class(
   # Names, parents
-  name = "gene_ontology_data",
+  name = "GeneOntologyElim",
 
   # Properties, i.e., slots
   properties = list(
@@ -76,21 +76,21 @@ gene_ontology_data <- S7::new_class(
 
 ## print ------------------------------------------------------------------------
 
-#' @name print.gene_ontology_data
+#' @name print.GeneOntologyElim
 #'
-#' @title print Method for gene_ontology_data object
+#' @title print Method for GeneOntologyElim object
 #'
 #' @description
-#' Print a gene_ontology_data object.
+#' Print a GeneOntologyElim object.
 #'
-#' @param x An object of class `gene_ontology_data`, see
-#' [bixverse::gene_ontology_data()].
+#' @param x An object of class `GeneOntologyElim`, see
+#' [bixverse::GeneOntologyElim()].
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print gene_ontology_data
-S7::method(print, gene_ontology_data) <- function(x, ...) {
+#' @method print GeneOntologyElim
+S7::method(print, GeneOntologyElim) <- function(x, ...) {
   # Get necessary parameters
   number_levels <- length(S7::prop(x, "levels"))
   number_gene_sets <- length(S7::prop(x, "go_to_genes"))
@@ -108,7 +108,7 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 }
 
 
-# ontology class ---------------------------------------------------------------
+# Ontology class ---------------------------------------------------------------
 
 #' Ontology class
 #'
@@ -138,10 +138,10 @@ S7::method(print, gene_ontology_data) <- function(x, ...) {
 #' @return Returns the class for subsequent usage.
 #'
 #' @export
-ontology <- S7::new_class(
+Ontology <- S7::new_class(
   # Names, parents
-  parent = bixverse_base_class,
-  name = "ontology",
+  parent = BixverseBaseClass,
+  name = "Ontology",
 
   # Properties, i.e., slots
   properties = list(
@@ -180,20 +180,20 @@ ontology <- S7::new_class(
 
 ## print -----------------------------------------------------------------------
 
-#' @name print.ontology
+#' @name print.Ontology
 #'
-#' @title print Method for ontology object
+#' @title print Method for Ontology object
 #'
 #' @description
-#' Print a ontology object.
+#' Print a Ontology object.
 #'
-#' @param x An object of class `ontology`, see [bixverse::ontology()].
+#' @param x An object of class `Ontology`, see [bixverse::Ontology()].
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print ontology
-S7::method(print, ontology) <- function(x, ...) {
+#' @method print Ontology
+S7::method(print, Ontology) <- function(x, ...) {
   # Get necessary parameters
   ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]
   sim_mat <- S7::prop(x, "sim_mat")
@@ -213,7 +213,7 @@ S7::method(print, ontology) <- function(x, ...) {
 
 #' Get the similarity matrix
 #'
-#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param object `Ontology class`. See [bixverse::Ontology()].
 #' @param as_data_table Boolean. Shall the data be returned as a long
 #' data.table.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -234,10 +234,10 @@ get_sim_matrix <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_sim_matrix ontology
-S7::method(get_sim_matrix, ontology) <-
+#' @method get_sim_matrix Ontology
+S7::method(get_sim_matrix, Ontology) <-
   function(object, as_data_table = FALSE, .verbose = TRUE) {
-    checkmate::assertClass(object, "bixverse::ontology")
+    checkmate::assertClass(object, "bixverse::Ontology")
     sim_mat <- S7::prop(object, "sim_mat")
     # Early return
     if (is.null(sim_mat)) {

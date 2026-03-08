@@ -7,7 +7,7 @@
 cor_module_coremo_cor_sign(object, min_stability = NULL, .verbose = TRUE)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{min_stability}{Optional float. The minimum stability for the gene
 you wish to filter for based on the leave-one-out resampling. If \code{NULL},

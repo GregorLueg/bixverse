@@ -17,7 +17,7 @@ cor_module_graph_final_modules(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{resolution}{The Leiden resolution parameter you wish to use. If NULL,
 it will use the optimal one identified by

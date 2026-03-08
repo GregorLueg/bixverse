@@ -7,7 +7,7 @@
 pre_process_sim_onto(object, .verbose = TRUE)
 }
 \arguments{
-\item{object}{\verb{ontology class}. See \code{\link[=ontology]{ontology()}}.}
+\item{object}{\verb{Ontology class}. See \code{\link[=Ontology]{Ontology()}}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

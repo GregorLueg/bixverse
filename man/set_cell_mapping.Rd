@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_cell_mapping}
 \alias{set_cell_mapping}
-\alias{set_cell_mapping.sc_mapper}
-\alias{set_cell_mapping.single_cell_exp}
-\title{Set cell mapping for sc_mapper object}
+\alias{set_cell_mapping.ScMap}
+\alias{set_cell_mapping.SingleCells}
+\title{Set cell mapping for ScMap object}
 \usage{
 set_cell_mapping(x, cell_map)
 
-\method{set_cell_mapping}{sc_mapper}(x, cell_map)
+\method{set_cell_mapping}{ScMap}(x, cell_map)
 }
 \arguments{
 \item{x}{An object to set cell mapping for}
@@ -16,7 +16,7 @@ set_cell_mapping(x, cell_map)
 \item{cell_map}{Named integer indicating indices and names of the cells}
 }
 \description{
-Set cell mapping for sc_mapper object
+Set cell mapping for ScMap object
 
-Set the cell mapping for a \code{single_cell_exp} class.
+Set the cell mapping for a \code{SingleCells} class.
 }

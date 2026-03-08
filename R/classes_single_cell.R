@@ -12,7 +12,7 @@
 #' Helper class that contains various mappings and makes it easier to use
 #' getters/setters with
 #'
-#' @return Generates an empty version of the `sc_mapper` class.
+#' @return Generates an empty version of the `ScMap` class.
 #'
 #' @export
 new_sc_mapper <- function() {
@@ -23,7 +23,7 @@ new_sc_mapper <- function() {
     hvg_gene_indices = NULL
   )
 
-  class(sc_mapper) <- "sc_mapper"
+  class(sc_mapper) <- "ScMap"
 
   return(sc_mapper)
 }
@@ -36,7 +36,7 @@ new_sc_mapper <- function() {
 #' Helper class that contains various data that is held in memory and not on
 #' disk.
 #'
-#' @return Generates an empty version of the `sc_cache` class.
+#' @return Generates an empty version of the `ScCache` class.
 #'
 #' @export
 new_sc_cache <- function() {
@@ -49,7 +49,7 @@ new_sc_cache <- function() {
     snn_graph = NULL
   )
 
-  class(sc_cache) <- "sc_cache"
+  class(sc_cache) <- "ScCache"
 
   return(sc_cache)
 }
@@ -58,9 +58,9 @@ new_sc_cache <- function() {
 
 ### generics -------------------------------------------------------------------
 
-#### sc_mapper -----------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
-#' Set gene mapping for sc_mapper object
+#' Set gene mapping for ScMap object
 #'
 #' @param x An object to set gene mapping for
 #' @param gene_map Named integer indicating indices and names of the genes
@@ -70,7 +70,7 @@ set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
 
-#' Set cell mapping for sc_mapper object
+#' Set cell mapping for ScMap object
 #'
 #' @param x An object to set cell mapping for
 #' @param cell_map Named integer indicating indices and names of the cells
@@ -80,7 +80,7 @@ set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
 
-#' Set cells to keep for sc_mapper object
+#' Set cells to keep for ScMap object
 #'
 #' @param x An object to set cells to keep for
 #' @param cells_to_keep String or integer. The names or indices of the cells
@@ -102,7 +102,7 @@ set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
 
-#### sc_cache ------------------------------------------------------------------
+#### ScCache -------------------------------------------------------------------
 
 #' Set/add PCA factors
 #'
@@ -185,14 +185,14 @@ remove_snn_graph <- function(x) {
 
 ### methods --------------------------------------------------------------------
 
-#### sc_mapper -----------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
 #' @rdname set_gene_mapping
 #'
 #' @export
-set_gene_mapping.sc_mapper <- function(x, gene_map) {
+set_gene_mapping.ScMap <- function(x, gene_map) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map)
 
@@ -204,9 +204,9 @@ set_gene_mapping.sc_mapper <- function(x, gene_map) {
 #' @rdname set_cell_mapping
 #'
 #' @export
-set_cell_mapping.sc_mapper <- function(x, cell_map) {
+set_cell_mapping.ScMap <- function(x, cell_map) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map)
 
@@ -218,9 +218,9 @@ set_cell_mapping.sc_mapper <- function(x, cell_map) {
 #' @rdname set_cells_to_keep
 #'
 #' @export
-set_cells_to_keep.sc_mapper <- function(x, cells_to_keep) {
+set_cells_to_keep.ScMap <- function(x, cells_to_keep) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(cells_to_keep, c("N+", "S+"))
 
   # transform to Rust 0-based indexing
@@ -238,9 +238,9 @@ set_cells_to_keep.sc_mapper <- function(x, cells_to_keep) {
 #' @rdname set_hvg
 #'
 #' @export
-set_hvg.sc_mapper <- function(x, hvg) {
+set_hvg.ScMap <- function(x, hvg) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(hvg, c("N+", "S+"))
 
   # transform to Rust 0-based indexing
@@ -255,14 +255,14 @@ set_hvg.sc_mapper <- function(x, hvg) {
   return(x)
 }
 
-#### sc_cache ------------------------------------------------------------------
+#### ScCache -------------------------------------------------------------------
 
 #' @rdname set_pca_factors
 #'
 #' @export
-set_pca_factors.sc_cache <- function(x, pca_factor) {
+set_pca_factors.ScCache <- function(x, pca_factor) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
 
   x[["pca_factors"]] <- pca_factor
@@ -273,9 +273,9 @@ set_pca_factors.sc_cache <- function(x, pca_factor) {
 #' @rdname set_pca_loadings
 #'
 #' @export
-set_pca_loadings.sc_cache <- function(x, pca_loading) {
+set_pca_loadings.ScCache <- function(x, pca_loading) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   x[["pca_loadings"]] <- pca_loading
@@ -286,9 +286,9 @@ set_pca_loadings.sc_cache <- function(x, pca_loading) {
 #' @rdname set_pca_singular_vals
 #'
 #' @export
-set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
+set_pca_singular_vals.ScCache <- function(x, singular_vals) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::qassert(singular_vals, "N+")
 
   x[["pca_singular_vals"]] <- singular_vals
@@ -299,9 +299,9 @@ set_pca_singular_vals.sc_cache <- function(x, singular_vals) {
 #' @rdname set_embedding
 #'
 #' @export
-set_embedding.sc_cache <- function(x, embd, name) {
+set_embedding.ScCache <- function(x, embd, name) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
@@ -313,9 +313,9 @@ set_embedding.sc_cache <- function(x, embd, name) {
 #' @rdname set_knn
 #'
 #' @export
-set_knn.sc_cache <- function(x, knn_mat) {
+set_knn.ScCache <- function(x, knn_mat) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
 
   x[["knn_matrix"]] <- knn_mat
@@ -326,9 +326,9 @@ set_knn.sc_cache <- function(x, knn_mat) {
 #' @rdname set_snn_graph
 #'
 #' @export
-set_snn_graph.sc_cache <- function(x, snn_graph) {
+set_snn_graph.ScCache <- function(x, snn_graph) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertClass(snn_graph, "igraph")
 
   x[["snn_graph"]] <- snn_graph
@@ -339,9 +339,9 @@ set_snn_graph.sc_cache <- function(x, snn_graph) {
 #' @rdname remove_knn
 #'
 #' @export
-remove_knn.sc_cache <- function(x) {
+remove_knn.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   x[["knn_matrix"]] <- NULL
 
@@ -351,9 +351,9 @@ remove_knn.sc_cache <- function(x) {
 #' @rdname remove_snn_graph
 #'
 #' @export
-remove_snn_graph.sc_cache <- function(x) {
+remove_snn_graph.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   x[["snn_graph"]] <- NULL
 
@@ -364,7 +364,7 @@ remove_snn_graph.sc_cache <- function(x) {
 
 ### generics -------------------------------------------------------------------
 
-#### sc_mapper -----------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
 #' Get the gene names
 #'
@@ -440,7 +440,7 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
   UseMethod("get_gene_names_from_idx")
 }
 
-#### sc_cache ------------------------------------------------------------------
+#### ScCache -------------------------------------------------------------------
 
 #' Get the PCA factors
 #'
@@ -473,7 +473,7 @@ get_pca_singular_val <- function(x) {
 #'
 #' @description
 #' General wrapper function that can be used to pull out any embedding stored
-#' in the `sc_cache`.
+#' in the `ScCache`.
 #'
 #' @param x An object to get embedding from
 #' @param embd_name String. The name of the embedding to return. The function
@@ -507,14 +507,14 @@ get_snn_graph <- function(x) {
 
 ### methods --------------------------------------------------------------------
 
-#### sc_mapper -----------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
 #' @rdname get_gene_names
 #'
 #' @export
-get_gene_names.sc_mapper <- function(x) {
+get_gene_names.ScMap <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
 
   return(names(x[["gene_mapping"]]))
 }
@@ -522,9 +522,9 @@ get_gene_names.sc_mapper <- function(x) {
 #' @rdname get_gene_indices
 #'
 #' @export
-get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
+get_gene_indices.ScMap <- function(x, gene_ids, rust_index) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -546,9 +546,9 @@ get_gene_indices.sc_mapper <- function(x, gene_ids, rust_index) {
 #' @rdname get_cell_indices
 #'
 #' @export
-get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
+get_cell_indices.ScMap <- function(x, cell_ids, rust_index) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -579,9 +579,9 @@ get_cell_indices.sc_mapper <- function(x, cell_ids, rust_index) {
 #' @rdname get_cells_to_keep
 #'
 #' @export
-get_cells_to_keep.sc_mapper <- function(x) {
+get_cells_to_keep.ScMap <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
 
   return(as.integer(x[["cells_to_keep_idx"]]))
 }
@@ -589,9 +589,9 @@ get_cells_to_keep.sc_mapper <- function(x) {
 #' @rdname get_cell_names
 #'
 #' @export
-get_cell_names.sc_mapper <- function(x, filtered = FALSE) {
+get_cell_names.ScMap <- function(x, filtered = FALSE) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(filtered, "B1")
 
   cell_names <- names(x[["cell_mapping"]])
@@ -609,9 +609,9 @@ get_cell_names.sc_mapper <- function(x, filtered = FALSE) {
 #' @rdname get_hvg
 #'
 #' @export
-get_hvg.sc_mapper <- function(x) {
+get_hvg.ScMap <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
 
   hvg_indices <- as.integer(x[["hvg_gene_indices"]])
   if (length(hvg_indices) == 0) {
@@ -624,9 +624,9 @@ get_hvg.sc_mapper <- function(x) {
 #' @rdname get_gene_names_from_idx
 #'
 #' @export
-get_gene_names_from_idx.sc_mapper <- function(x, gene_idx, rust_based = TRUE) {
+get_gene_names_from_idx.ScMap <- function(x, gene_idx, rust_based = TRUE) {
   # checks
-  checkmate::assertClass(x, "sc_mapper")
+  checkmate::assertClass(x, "ScMap")
   checkmate::qassert(gene_idx, "I+")
   checkmate::qassert(rust_based, "B1")
 
@@ -643,14 +643,14 @@ get_gene_names_from_idx.sc_mapper <- function(x, gene_idx, rust_based = TRUE) {
   return(gene_map_rev[as.character(gene_idx)])
 }
 
-#### sc_cache ------------------------------------------------------------------
+#### ScCache -------------------------------------------------------------------
 
 #' @rdname get_pca_factors
 #'
 #' @export
-get_pca_factors.sc_cache <- function(x) {
+get_pca_factors.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   res <- x[["pca_factors"]]
 
@@ -660,9 +660,9 @@ get_pca_factors.sc_cache <- function(x) {
 #' @rdname get_pca_loadings
 #'
 #' @export
-get_pca_loadings.sc_cache <- function(x) {
+get_pca_loadings.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   res <- x[["pca_loadings"]]
 
@@ -672,9 +672,9 @@ get_pca_loadings.sc_cache <- function(x) {
 #' @rdname get_pca_singular_val
 #'
 #' @export
-get_pca_singular_val.sc_cache <- function(x) {
+get_pca_singular_val.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   res <- x[["pca_singular_vals"]]
 
@@ -684,10 +684,10 @@ get_pca_singular_val.sc_cache <- function(x) {
 #' @rdname get_embedding
 #'
 #' @export
-get_embedding.sc_cache <- function(x, embd_name) {
+get_embedding.ScCache <- function(x, embd_name) {
   possible_embedding_names <- c(names(x[["other_embeddings"]]), "pca")
 
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
   checkmate::assertChoice(embd_name, possible_embedding_names)
 
   embd <- if (embd_name == "pca") {
@@ -709,9 +709,9 @@ get_embedding.sc_cache <- function(x, embd_name) {
 #' @rdname get_available_embeddings
 #'
 #' @export
-get_available_embeddings.sc_cache <- function(x) {
+get_available_embeddings.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   pca_available <- ifelse(!is.null(x[["pca_factors"]]), "pca", NULL)
   other_embeddings <- names(x[["other_embeddings"]])
@@ -722,9 +722,9 @@ get_available_embeddings.sc_cache <- function(x) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.sc_cache <- function(x) {
+get_knn_mat.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   return(x[["knn_matrix"]])
 }
@@ -732,9 +732,9 @@ get_knn_mat.sc_cache <- function(x) {
 #' @rdname get_snn_graph
 #'
 #' @export
-get_snn_graph.sc_cache <- function(x) {
+get_snn_graph.ScCache <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_cache")
+  checkmate::assertClass(x, "ScCache")
 
   return(x[["snn_graph"]])
 }
@@ -773,11 +773,11 @@ get_snn_graph.sc_cache <- function(x) {
 #'   \item{dims}{Dimensions of the original data.}
 #' }
 #'
-#' @return Returns the `single_cell_exp` class for further operations.
+#' @return Returns the `SingleCells` class for further operations.
 #'
 #' @export
-single_cell_exp <- S7::new_class(
-  name = "single_cell_exp",
+SingleCells <- S7::new_class(
+  name = "SingleCells",
   properties = list(
     db_connection = S7::class_any,
     count_connection = S7::class_any,
@@ -821,7 +821,7 @@ single_cell_exp <- S7::new_class(
 
 #' Getter for the single cell DuckDB connection
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @return The DuckDB connector
 #'
@@ -836,19 +836,19 @@ get_sc_duckdb <- S7::new_generic(
   }
 )
 
-#' @method get_sc_duckdb single_cell_exp
+#' @method get_sc_duckdb SingleCells
 #'
 #' @export
-S7::method(get_sc_duckdb, single_cell_exp) <- function(object) {
+S7::method(get_sc_duckdb, SingleCells) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   return(S7::prop(object, "db_connection"))
 }
 
 #' Getter for the single cell Rust pointer
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @return The Rust structure
 #'
@@ -863,19 +863,19 @@ get_sc_rust_ptr <- S7::new_generic(
   }
 )
 
-#' @method get_sc_rust_ptr single_cell_exp
+#' @method get_sc_rust_ptr SingleCells
 #'
 #' @export
-S7::method(get_sc_rust_ptr, single_cell_exp) <- function(object) {
+S7::method(get_sc_rust_ptr, SingleCells) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   return(S7::prop(object, "count_connection"))
 }
 
 #' Get the file path to the counts in gene format
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_genes.bin`
 get_rust_count_gene_f_path <- S7::new_generic(
@@ -888,12 +888,12 @@ get_rust_count_gene_f_path <- S7::new_generic(
   }
 )
 
-#' @method get_rust_count_gene_f_path single_cell_exp
+#' @method get_rust_count_gene_f_path SingleCells
 #'
 #' @export
-S7::method(get_rust_count_gene_f_path, single_cell_exp) <- function(object) {
+S7::method(get_rust_count_gene_f_path, SingleCells) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_genes.bin")
 
@@ -902,7 +902,7 @@ S7::method(get_rust_count_gene_f_path, single_cell_exp) <- function(object) {
 
 #' Get the file path to the counts in cell format
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_cells.bin`
 get_rust_count_cell_f_path <- S7::new_generic(
@@ -915,12 +915,12 @@ get_rust_count_cell_f_path <- S7::new_generic(
   }
 )
 
-#' @method get_rust_count_cell_f_path single_cell_exp
+#' @method get_rust_count_cell_f_path SingleCells
 #'
 #' @export
-S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
+S7::method(get_rust_count_cell_f_path, SingleCells) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   f_path <- file.path(S7::prop(object, "dir_data"), "counts_cells.bin")
 
@@ -929,17 +929,17 @@ S7::method(get_rust_count_cell_f_path, single_cell_exp) <- function(object) {
 
 #### duckdb getters ------------------------------------------------------------
 
-#' @method get_sc_obs single_cell_exp
+#' @method get_sc_obs SingleCells
 #'
 #' @export
-S7::method(get_sc_obs, single_cell_exp) <- function(
+S7::method(get_sc_obs, SingleCells) <- function(
   object,
   indices = NULL,
   cols = NULL,
   filtered = FALSE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
   duckdb_con <- get_sc_duckdb(object)
@@ -955,16 +955,16 @@ S7::method(get_sc_obs, single_cell_exp) <- function(
   return(obs_table)
 }
 
-#' @method get_sc_var single_cell_exp
+#' @method get_sc_var SingleCells
 #'
 #' @export
-S7::method(get_sc_var, single_cell_exp) <- function(
+S7::method(get_sc_var, SingleCells) <- function(
   object,
   indices = NULL,
   cols = NULL
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(indices, c("0", "I+"))
 
   duckdb_con <- get_sc_duckdb(object)
@@ -974,10 +974,10 @@ S7::method(get_sc_var, single_cell_exp) <- function(
   return(var_table)
 }
 
-#' @method `[[` single_cell_exp
+#' @method `[[` SingleCells
 #'
 #' @export
-S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
+S7::method(`[[`, SingleCells) <- function(x, i, ...) {
   if (missing(i)) {
     i <- NULL
   }
@@ -997,7 +997,7 @@ S7::method(`[[`, single_cell_exp) <- function(x, i, ...) {
 
 #' Getter for the different maps in the object
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @returns Returns the maps within the class.
 #'
@@ -1012,14 +1012,14 @@ get_sc_map <- S7::new_generic(
   }
 )
 
-#' @method get_sc_var single_cell_exp
+#' @method get_sc_var SingleCells
 #'
 #' @export
-S7::method(get_sc_map, single_cell_exp) <- function(
+S7::method(get_sc_map, SingleCells) <- function(
   object
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   res <- S7::prop(object, "sc_map")
 
@@ -1030,9 +1030,9 @@ S7::method(get_sc_map, single_cell_exp) <- function(
 
 #' Getter the memory-stored data from the class
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
-#' @returns Returns the sc_cache class from the object with all the
+#' @returns Returns the ScCache class from the object with all the
 #' memory-stored data.
 #'
 #' @export
@@ -1046,14 +1046,14 @@ get_sc_cache <- S7::new_generic(
   }
 )
 
-#' @method get_sc_cache single_cell_exp
+#' @method get_sc_cache SingleCells
 #'
 #' @export
-S7::method(get_sc_cache, single_cell_exp) <- function(
+S7::method(get_sc_cache, SingleCells) <- function(
   object
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   res <- S7::prop(object, "sc_cache")
 
@@ -1062,10 +1062,10 @@ S7::method(get_sc_cache, single_cell_exp) <- function(
 
 #### count getters -------------------------------------------------------------
 
-#' @method get_sc_counts single_cell_exp
+#' @method get_sc_counts SingleCells
 #'
 #' @export
-S7::method(get_sc_counts, single_cell_exp) <- function(
+S7::method(get_sc_counts, SingleCells) <- function(
   object,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
@@ -1078,7 +1078,7 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   return_format <- match.arg(return_format)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertChoice(assay, c("raw", "norm"))
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
@@ -1130,10 +1130,10 @@ S7::method(get_sc_counts, single_cell_exp) <- function(
   return(count_data)
 }
 
-#' @method `[` single_cell_exp
+#' @method `[` SingleCells
 #'
 #' @export
-S7::method(`[`, single_cell_exp) <- function(
+S7::method(`[`, SingleCells) <- function(
   x,
   i,
   j,
@@ -1272,7 +1272,7 @@ create_sparse_matrix <- function(count_data, return_format) {
 #' @param return_format String. One of `c("cell", "gene")`.
 #' @param cell_indices Optional integer. The cell indices to return.
 #' @param gene_indices Optional integer. The gene indices to return.
-#' @param sc_map A `sc_mapper` class. Contains various mapping information.
+#' @param sc_map A `ScMap` class. Contains various mapping information.
 #'
 #' @return The finalised matrix.
 finalise_matrix <- function(
@@ -1289,7 +1289,7 @@ finalise_matrix <- function(
   checkmate::assertChoice(return_format, c("cell", "gene"))
   checkmate::qassert(cell_indices, c("0", "I+"))
   checkmate::qassert(gene_indices, c("0", "I+"))
-  checkmate::assertClass(sc_map, "sc_mapper")
+  checkmate::assertClass(sc_map, "ScMap")
 
   gene_names <- get_gene_names(sc_map)
   cell_names <- get_cell_names(sc_map)
@@ -1328,19 +1328,19 @@ finalise_matrix <- function(
 
 #### sc map --------------------------------------------------------------------
 
-#' @name get_cell_names.single_cell_exp
+#' @name get_cell_names.SingleCells
 #'
-#' @title Get the cell names from a `single_cell_exp`.
+#' @title Get the cell names from a `SingleCells`.
 #'
 #' @rdname get_cell_names
 #'
-#' @method get_cell_names single_cell_exp
-S7::method(get_cell_names, single_cell_exp) <- function(
+#' @method get_cell_names SingleCells
+S7::method(get_cell_names, SingleCells) <- function(
   x,
   filtered = FALSE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # add the data using the S3 method
   cell_names <- get_cell_names(
@@ -1351,18 +1351,18 @@ S7::method(get_cell_names, single_cell_exp) <- function(
   return(cell_names)
 }
 
-#' @name get_gene_names.single_cell_exp
+#' @name get_gene_names.SingleCells
 #'
-#' @title Get the gene names from a `single_cell_exp`.
+#' @title Get the gene names from a `SingleCells`.
 #'
 #' @rdname get_gene_names
 #'
-#' @method get_gene_names single_cell_exp
-S7::method(get_gene_names, single_cell_exp) <- function(
+#' @method get_gene_names SingleCells
+S7::method(get_gene_names, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # add the data using the S3 method
   gene_names <- get_gene_names(
@@ -1372,18 +1372,18 @@ S7::method(get_gene_names, single_cell_exp) <- function(
   return(gene_names)
 }
 
-#' @name get_cells_to_keep.single_cell_exp
+#' @name get_cells_to_keep.SingleCells
 #'
-#' @title Get the cells to keep from a `single_cell_exp`.
+#' @title Get the cells to keep from a `SingleCells`.
 #'
 #' @rdname get_cells_to_keep
 #'
-#' @method get_cells_to_keep single_cell_exp
-S7::method(get_cells_to_keep, single_cell_exp) <- function(
+#' @method get_cells_to_keep SingleCells
+S7::method(get_cells_to_keep, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_cells_to_keep(
@@ -1398,20 +1398,20 @@ S7::method(get_cells_to_keep, single_cell_exp) <- function(
   return(as.integer(res))
 }
 
-#' @name get_gene_indices.single_cell_exp
+#' @name get_gene_indices.SingleCells
 #'
-#' @title Get the gene indices from a `single_cell_exp`.
+#' @title Get the gene indices from a `SingleCells`.
 #'
 #' @rdname get_gene_indices
 #'
-#' @method get_gene_indices single_cell_exp
-S7::method(get_gene_indices, single_cell_exp) <- function(
+#' @method get_gene_indices SingleCells
+S7::method(get_gene_indices, SingleCells) <- function(
   x,
   gene_ids,
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1426,20 +1426,20 @@ S7::method(get_gene_indices, single_cell_exp) <- function(
 }
 
 
-#' @name get_cell_indices.single_cell_exp
+#' @name get_cell_indices.SingleCells
 #'
-#' @title Set the gene mapping for a `single_cell_exp` class.
+#' @title Set the gene mapping for a `SingleCells` class.
 #'
 #' @rdname get_cell_indices
 #'
-#' @method get_cell_indices single_cell_exp
-S7::method(get_cell_indices, single_cell_exp) <- function(
+#' @method get_cell_indices SingleCells
+S7::method(get_cell_indices, SingleCells) <- function(
   x,
   cell_ids,
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1453,18 +1453,18 @@ S7::method(get_cell_indices, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_hvg.single_cell_exp
+#' @name get_hvg.SingleCells
 #'
-#' @title Get the highly variable gene indices from a `single_cell_exp`.
+#' @title Get the highly variable gene indices from a `SingleCells`.
 #'
 #' @rdname get_hvg
 #'
-#' @method get_hvg single_cell_exp
-S7::method(get_hvg, single_cell_exp) <- function(
+#' @method get_hvg SingleCells
+S7::method(get_hvg, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_hvg(
@@ -1474,20 +1474,20 @@ S7::method(get_hvg, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_gene_names_from_idx.single_cell_exp
+#' @name get_gene_names_from_idx.SingleCells
 #'
-#' @title Get the highly variable gene indices from a `single_cell_exp`.
+#' @title Get the highly variable gene indices from a `SingleCells`.
 #'
 #' @rdname get_gene_names_from_idx
 #'
-#' @method get_gene_names_from_idx single_cell_exp
-S7::method(get_gene_names_from_idx, single_cell_exp) <- function(
+#' @method get_gene_names_from_idx SingleCells
+S7::method(get_gene_names_from_idx, SingleCells) <- function(
   x,
   gene_idx,
   rust_based = TRUE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(gene_idx, "I+")
   checkmate::qassert(rust_based, "B1")
 
@@ -1501,20 +1501,20 @@ S7::method(get_gene_names_from_idx, single_cell_exp) <- function(
   return(res)
 }
 
-#### sc_cache ------------------------------------------------------------------
+#### ScCache -------------------------------------------------------------------
 
-#' @name get_pca_factors.single_cell_exp
+#' @name get_pca_factors.SingleCells
 #'
-#' @title Get the PCA factors from a `single_cell_exp`.
+#' @title Get the PCA factors from a `SingleCells`.
 #'
 #' @rdname get_pca_factors
 #'
-#' @method get_pca_factors single_cell_exp
-S7::method(get_pca_factors, single_cell_exp) <- function(
+#' @method get_pca_factors SingleCells
+S7::method(get_pca_factors, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_pca_factors(
@@ -1531,18 +1531,18 @@ S7::method(get_pca_factors, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_pca_loadings.single_cell_exp
+#' @name get_pca_loadings.SingleCells
 #'
-#' @title Get the PCA loadings from a `single_cell_exp`.
+#' @title Get the PCA loadings from a `SingleCells`.
 #'
 #' @rdname get_pca_loadings
 #'
-#' @method get_pca_loadings single_cell_exp
-S7::method(get_pca_loadings, single_cell_exp) <- function(
+#' @method get_pca_loadings SingleCells
+S7::method(get_pca_loadings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_pca_loadings(
@@ -1555,18 +1555,18 @@ S7::method(get_pca_loadings, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_pca_singular_val.single_cell_exp
+#' @name get_pca_singular_val.SingleCells
 #'
-#' @title Get the PCA singular values from a `single_cell_exp`.
+#' @title Get the PCA singular values from a `SingleCells`.
 #'
 #' @rdname get_pca_singular_val
 #'
-#' @method get_pca_singular_val single_cell_exp
-S7::method(get_pca_singular_val, single_cell_exp) <- function(
+#' @method get_pca_singular_val SingleCells
+S7::method(get_pca_singular_val, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_pca_singular_val(
@@ -1576,19 +1576,19 @@ S7::method(get_pca_singular_val, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_embedding.single_cell_exp
+#' @name get_embedding.SingleCells
 #'
-#' @title Get the embeddings from a `single_cell_exp`.
+#' @title Get the embeddings from a `SingleCells`.
 #'
 #' @rdname get_embedding
 #'
-#' @method get_embedding single_cell_exp
-S7::method(get_embedding, single_cell_exp) <- function(
+#' @method get_embedding SingleCells
+S7::method(get_embedding, SingleCells) <- function(
   x,
   embd_name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(embd_name, "S1")
 
   # forward to S3
@@ -1602,18 +1602,18 @@ S7::method(get_embedding, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_available_embeddings.single_cell_exp
+#' @name get_available_embeddings.SingleCells
 #'
-#' @title Get the embeddings from a `single_cell_exp`.
+#' @title Get the embeddings from a `SingleCells`.
 #'
 #' @rdname get_available_embeddings
 #'
-#' @method get_available_embeddings single_cell_exp
-S7::method(get_available_embeddings, single_cell_exp) <- function(
+#' @method get_available_embeddings SingleCells
+S7::method(get_available_embeddings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_available_embeddings(
@@ -1623,18 +1623,18 @@ S7::method(get_available_embeddings, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_knn_mat.single_cell_exp
+#' @name get_knn_mat.SingleCells
 #'
-#' @title Get the KNN matrix from a `single_cell_exp`.
+#' @title Get the KNN matrix from a `SingleCells`.
 #'
 #' @rdname get_knn_mat
 #'
-#' @method get_knn_mat single_cell_exp
-S7::method(get_knn_mat, single_cell_exp) <- function(
+#' @method get_knn_mat SingleCells
+S7::method(get_knn_mat, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_knn_mat(
@@ -1644,18 +1644,18 @@ S7::method(get_knn_mat, single_cell_exp) <- function(
   return(res)
 }
 
-#' @name get_snn_graph.single_cell_exp
+#' @name get_snn_graph.SingleCells
 #'
-#' @title Get the SNN graph from a `single_cell_exp`.
+#' @title Get the SNN graph from a `SingleCells`.
 #'
 #' @rdname get_snn_graph
 #'
-#' @method get_snn_graph single_cell_exp
-S7::method(get_snn_graph, single_cell_exp) <- function(
+#' @method get_snn_graph SingleCells
+S7::method(get_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # forward to S3
   res <- get_snn_graph(
@@ -1671,7 +1671,7 @@ S7::method(get_snn_graph, single_cell_exp) <- function(
 
 #' Add a new column to the obs table
 #'
-#' @param object `bixverse::single_cell_exp` class.
+#' @param object `bixverse::SingleCells` class.
 #' @param col_name String. The name of the column to add.
 #' @param new_data Atomic vector. The data to add to the column. Needs to be
 #' of same length as [bixverse::get_cells_to_keep()] and have the same order.
@@ -1691,17 +1691,17 @@ set_sc_new_obs_col <- S7::new_generic(
   }
 )
 
-#' @method set_sc_new_obs_col single_cell_exp
+#' @method set_sc_new_obs_col SingleCells
 #'
 #' @export
-S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
+S7::method(set_sc_new_obs_col, SingleCells) <- function(
   object,
   col_name,
   new_data
 ) {
   cells_to_keep <- (get_cells_to_keep(object) + 1)
 
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(col_name, "S1")
   checkmate::qassert(new_data, sprintf("a%i", length(cells_to_keep)))
 
@@ -1718,7 +1718,7 @@ S7::method(set_sc_new_obs_col, single_cell_exp) <- function(
 
 #' Add multiple new columns to the obs table
 #'
-#' @param object `bixverse::single_cell_exp` class.
+#' @param object `bixverse::SingleCells` class.
 #' @param new_data Named list. The names will be the column names and the
 #' elements will be added to the obs table. Needs to be of same length as
 #' [bixverse::get_cells_to_keep()] and have the same order!
@@ -1737,16 +1737,16 @@ set_sc_new_obs_col_multiple <- S7::new_generic(
   }
 )
 
-#' @method set_sc_new_obs_col_multiple single_cell_exp
+#' @method set_sc_new_obs_col_multiple SingleCells
 #'
 #' @export
-S7::method(set_sc_new_obs_col_multiple, single_cell_exp) <- function(
+S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
   object,
   new_data
 ) {
   cells_to_keep <- (get_cells_to_keep(object) + 1)
 
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(new_data, names = "named", types = "atomic")
   checkmate::assertTRUE(all(
     purrr::map_dbl(new_data, length) == length(cells_to_keep)
@@ -1762,11 +1762,11 @@ S7::method(set_sc_new_obs_col_multiple, single_cell_exp) <- function(
   return(object)
 }
 
-#' @method `[[<-` single_cell_exp
+#' @method `[[<-` SingleCells
 #'
 #' @export
-S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+S7::method(`[[<-`, SingleCells) <- function(x, i, ..., value) {
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(i, "S+")
 
   if (length(i) == 1) {
@@ -1788,7 +1788,7 @@ S7::method(`[[<-`, single_cell_exp) <- function(x, i, ..., value) {
 
 #' Add a new column to the var table
 #'
-#' @param object `bixverse::single_cell_exp` class.
+#' @param object `bixverse::SingleCells` class.
 #' @param data_list Named list with the data to add.
 #'
 #' @return The class with updated var table in the DuckDB
@@ -1805,14 +1805,14 @@ set_sc_new_var_cols <- S7::new_generic(
   }
 )
 
-#' @method set_sc_new_var_cols single_cell_exp
+#' @method set_sc_new_var_cols SingleCells
 #'
 #' @export
-S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
+S7::method(set_sc_new_var_cols, SingleCells) <- function(
   object,
   data_list
 ) {
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(data_list, types = "atomic", names = "named")
 
   new_data <- data.table::as.data.table(data_list)
@@ -1825,19 +1825,19 @@ S7::method(set_sc_new_var_cols, single_cell_exp) <- function(
 
 #### sc map --------------------------------------------------------------------
 
-#' @name set_gene_mapping.single_cell_exp
+#' @name set_gene_mapping.SingleCells
 #'
-#' @title Set the gene mapping for a `single_cell_exp` class.
+#' @title Set the gene mapping for a `SingleCells` class.
 #'
 #' @rdname set_gene_mapping
 #'
-#' @method set_gene_mapping single_cell_exp
-S7::method(set_gene_mapping, single_cell_exp) <- function(
+#' @method set_gene_mapping SingleCells
+S7::method(set_gene_mapping, SingleCells) <- function(
   x,
   gene_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map, "named")
 
@@ -1850,19 +1850,19 @@ S7::method(set_gene_mapping, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_cell_mapping.single_cell_exp
+#' @name set_cell_mapping.SingleCells
 #'
-#' @title Set the cell mapping for a `single_cell_exp` class.
+#' @title Set the cell mapping for a `SingleCells` class.
 #'
 #' @rdname set_cell_mapping
 #'
-#' @method set_cell_mapping single_cell_exp
-S7::method(set_cell_mapping, single_cell_exp) <- function(
+#' @method set_cell_mapping SingleCells
+S7::method(set_cell_mapping, SingleCells) <- function(
   x,
   cell_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map, "named")
 
@@ -1875,19 +1875,19 @@ S7::method(set_cell_mapping, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_cells_to_keep.single_cell_exp
+#' @name set_cells_to_keep.SingleCells
 #'
-#' @title Set the cell mapping for a `single_cell_exp` class.
+#' @title Set the cell mapping for a `SingleCells` class.
 #'
 #' @rdname set_cells_to_keep
 #'
-#' @method set_cells_to_keep single_cell_exp
-S7::method(set_cells_to_keep, single_cell_exp) <- function(
+#' @method set_cells_to_keep SingleCells
+S7::method(set_cells_to_keep, SingleCells) <- function(
   x,
   cells_to_keep
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -1906,19 +1906,19 @@ S7::method(set_cells_to_keep, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_hvg.single_cell_exp
+#' @name set_hvg.SingleCells
 #'
-#' @title Set the highly variable genes for a `single_cell_exp` class.
+#' @title Set the highly variable genes for a `SingleCells` class.
 #'
 #' @rdname set_hvg
 #'
-#' @method set_hvg single_cell_exp
-S7::method(set_hvg, single_cell_exp) <- function(
+#' @method set_hvg SingleCells
+S7::method(set_hvg, SingleCells) <- function(
   x,
   hvg
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(hvg, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -1932,19 +1932,19 @@ S7::method(set_hvg, single_cell_exp) <- function(
 
 #### sc cache ------------------------------------------------------------------
 
-#' @name set_pca_factors.single_cell_exp
+#' @name set_pca_factors.SingleCells
 #'
-#' @title Set the PCA factors for a `single_cell_exp` class.
+#' @title Set the PCA factors for a `SingleCells` class.
 #'
 #' @rdname set_pca_factors
 #'
-#' @method set_pca_factors single_cell_exp
-S7::method(set_pca_factors, single_cell_exp) <- function(
+#' @method set_pca_factors SingleCells
+S7::method(set_pca_factors, SingleCells) <- function(
   x,
   pca_factor
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::assertMatrix(pca_factor, mode = "numeric")
 
   # add the data using the S3 method
@@ -1956,19 +1956,19 @@ S7::method(set_pca_factors, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_pca_loadings.single_cell_exp
+#' @name set_pca_loadings.SingleCells
 #'
-#' @title Set the PCA factors for a `single_cell_exp` class.
+#' @title Set the PCA factors for a `SingleCells` class.
 #'
 #' @rdname set_pca_loadings
 #'
-#' @method set_pca_loadings single_cell_exp
-S7::method(set_pca_loadings, single_cell_exp) <- function(
+#' @method set_pca_loadings SingleCells
+S7::method(set_pca_loadings, SingleCells) <- function(
   x,
   pca_loading
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   # add the data using the S3 method
@@ -1980,19 +1980,19 @@ S7::method(set_pca_loadings, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_pca_singular_vals.single_cell_exp
+#' @name set_pca_singular_vals.SingleCells
 #'
-#' @title Set the PCA singular values for a `single_cell_exp` class.
+#' @title Set the PCA singular values for a `SingleCells` class.
 #'
 #' @rdname set_pca_singular_vals
 #'
-#' @method set_pca_singular_vals single_cell_exp
-S7::method(set_pca_singular_vals, single_cell_exp) <- function(
+#' @method set_pca_singular_vals SingleCells
+S7::method(set_pca_singular_vals, SingleCells) <- function(
   x,
   singular_vals
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::qassert(singular_vals, "N+")
 
   # add the data using the S3 method
@@ -2004,20 +2004,20 @@ S7::method(set_pca_singular_vals, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_embedding.single_cell_exp
+#' @name set_embedding.SingleCells
 #'
-#' @title Set additional embeddings to `single_cell_exp`.
+#' @title Set additional embeddings to `SingleCells`.
 #'
 #' @rdname set_embedding
 #'
-#' @method set_embedding single_cell_exp
-S7::method(set_embedding, single_cell_exp) <- function(
+#' @method set_embedding SingleCells
+S7::method(set_embedding, SingleCells) <- function(
   x,
   embd,
   name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
@@ -2031,19 +2031,19 @@ S7::method(set_embedding, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name set_knn.single_cell_exp
+#' @name set_knn.SingleCells
 #'
-#' @title Set the KNN matrix for a `single_cell_exp` class.
+#' @title Set the KNN matrix for a `SingleCells` class.
 #'
 #' @rdname set_knn
 #'
-#' @method set_knn single_cell_exp
-S7::method(set_knn, single_cell_exp) <- function(
+#' @method set_knn SingleCells
+S7::method(set_knn, SingleCells) <- function(
   x,
   knn_mat
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::assertMatrix(knn_mat, mode = "numeric")
 
   # add the data using the S3 method
@@ -2056,19 +2056,19 @@ S7::method(set_knn, single_cell_exp) <- function(
 }
 
 
-#' @name set_snn_graph.single_cell_exp
+#' @name set_snn_graph.SingleCells
 #'
-#' @title Set the sNN graph for a `single_cell_exp` class.
+#' @title Set the sNN graph for a `SingleCells` class.
 #'
 #' @rdname set_snn_graph
 #'
-#' @method set_snn_graph single_cell_exp
-S7::method(set_snn_graph, single_cell_exp) <- function(
+#' @method set_snn_graph SingleCells
+S7::method(set_snn_graph, SingleCells) <- function(
   x,
   snn_graph
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
   checkmate::assertClass(snn_graph, "igraph")
 
   # add the data using the S3 method
@@ -2080,18 +2080,18 @@ S7::method(set_snn_graph, single_cell_exp) <- function(
   return(x)
 }
 
-#' @name remove_knn.single_cell_exp
+#' @name remove_knn.SingleCells
 #'
-#' @title Remove the KNN matrix from a `single_cell_exp` class.
+#' @title Remove the KNN matrix from a `SingleCells` class.
 #'
 #' @rdname remove_knn
 #'
-#' @method remove_knn single_cell_exp
-S7::method(remove_knn, single_cell_exp) <- function(
+#' @method remove_knn SingleCells
+S7::method(remove_knn, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_knn(
@@ -2102,18 +2102,18 @@ S7::method(remove_knn, single_cell_exp) <- function(
 }
 
 
-#' @name remove_snn_graph.single_cell_exp
+#' @name remove_snn_graph.SingleCells
 #'
-#' @title Remove the sNN graph from a `single_cell_exp` class.
+#' @title Remove the sNN graph from a `SingleCells` class.
 #'
 #' @rdname remove_snn_graph
 #'
-#' @method remove_snn_graph single_cell_exp
-S7::method(remove_snn_graph, single_cell_exp) <- function(
+#' @method remove_snn_graph SingleCells
+S7::method(remove_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::single_cell_exp")
+  checkmate::assertClass(x, "bixverse::SingleCells")
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_snn_graph(
@@ -2125,20 +2125,20 @@ S7::method(remove_snn_graph, single_cell_exp) <- function(
 
 ### generic --------------------------------------------------------------------
 
-#' @name print.single_cell_exp
-#' @title print Method for single_cell_exp object
+#' @name print.SingleCells
+#' @title print Method for SingleCells object
 #'
 #' @description
-#' Print a single_cell_exp object.
+#' Print a SingleCells object.
 #'
-#' @param x An object of class `single_cell_exp`.
+#' @param x An object of class `SingleCells`.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @returns Invisibly returns `x`.
 #'
-#' @method print single_cell_exp
-S7::method(print, single_cell_exp) <- function(x, ...) {
-  checkmate::assertTRUE(S7::S7_inherits(x, single_cell_exp))
+#' @method print SingleCells
+S7::method(print, SingleCells) <- function(x, ...) {
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   dims <- S7::prop(x, "dims")
   sc_map <- S7::prop(x, "sc_map")
@@ -2171,17 +2171,17 @@ S7::method(print, single_cell_exp) <- function(x, ...) {
   invisible(x)
 }
 
-#' @name dim.single_cell_exp
-#' @title dim Method for single_cell_exp object
+#' @name dim.SingleCells
+#' @title dim Method for SingleCells object
 #'
 #' @description
-#' Returns the dimensions of a single_cell_exp object.
+#' Returns the dimensions of a SingleCells object.
 #'
-#' @param x An object of class `single_cell_exp`.
+#' @param x An object of class `SingleCells`.
 #'
 #' @returns An integer vector of length 2 with the number of cells and genes.
 #'
-#' @method dim single_cell_exp
-S7::method(dim, single_cell_exp) <- function(x) {
+#' @method dim SingleCells
+S7::method(dim, SingleCells) <- function(x) {
   S7::prop(x, "dims")
 }

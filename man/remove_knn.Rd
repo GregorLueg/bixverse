@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{remove_knn}
 \alias{remove_knn}
-\alias{remove_knn.sc_cache}
-\alias{remove_knn.single_cell_exp}
+\alias{remove_knn.ScCache}
+\alias{remove_knn.SingleCells}
 \title{Remove the KNN data}
 \usage{
 remove_knn(x)
 
-\method{remove_knn}{sc_cache}(x)
+\method{remove_knn}{ScCache}(x)
 }
 \arguments{
 \item{x}{An object from which to remove the kNN data}
@@ -16,5 +16,5 @@ remove_knn(x)
 \description{
 Remove the KNN data
 
-Remove the KNN matrix from a \code{single_cell_exp} class.
+Remove the KNN matrix from a \code{SingleCells} class.
 }

@@ -12,7 +12,7 @@ cor_module_check_epsilon(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to run
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to run
 \code{\link[=cor_module_processing]{cor_module_processing()}} before running this function.}
 
 \item{rbf_func}{The type of RBF function you want to apply. A choice of

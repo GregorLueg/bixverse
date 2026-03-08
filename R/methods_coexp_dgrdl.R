@@ -7,7 +7,7 @@
 #' number of neighbours for the KNN graph and dictionary sizes to identify
 #' optimal hyperparameters for your DGRDL run.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param neighbours_vec Integer vector. The different k nearest neighbours
 #' to test.
@@ -32,7 +32,7 @@
 #' }
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `bulk_coexp` with the grid search results added to the class.
+#' @return `BulkCoExp` with the grid search results added to the class.
 #'
 #' @export
 #'
@@ -57,8 +57,8 @@ dgrdl_grid_search <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method dgrdl_grid_search bulk_coexp
-S7::method(dgrdl_grid_search, bulk_coexp) <- function(
+#' @method dgrdl_grid_search BulkCoExp
+S7::method(dgrdl_grid_search, BulkCoExp) <- function(
   object,
   neighbours_vec,
   dict_size_vec,
@@ -67,7 +67,7 @@ S7::method(dgrdl_grid_search, bulk_coexp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(neighbours_vec, "I+")
   checkmate::qassert(dict_size_vec, "I+")
   checkmate::qassert(seed_vec, "I+")
@@ -134,7 +134,7 @@ S7::method(dgrdl_grid_search, bulk_coexp) <- function(
 #' To determine the hyperparameters, you can use
 #' [bixverse::dgrdl_grid_search()].
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param dgrdl_params List. Output of [bixverse::params_dgrdl()]:
 #' \itemize{
@@ -174,15 +174,15 @@ dgrdl_result <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method dgrdl_result bulk_coexp
-S7::method(dgrdl_result, bulk_coexp) <- function(
+#' @method dgrdl_result BulkCoExp
+S7::method(dgrdl_result, BulkCoExp) <- function(
   object,
   dgrdl_params = params_dgrdl(),
   seed = 42L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(seed, "I1")
   assertDGRDLparams(dgrdl_params)
   checkmate::qassert(.verbose, "B1")
@@ -252,7 +252,7 @@ S7::method(dgrdl_result, bulk_coexp) <- function(
 #' Getter function to extract the grid search results. If not found will return
 #' `NULL`.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #'
 #' @return data.table with the grid search results (if found. Otherwise `NULL`.)
 #'
@@ -267,9 +267,9 @@ get_grid_search_res <- S7::new_generic(
 
 #' @export
 #'
-#' @method get_grid_search_res bulk_coexp
-S7::method(get_grid_search_res, bulk_coexp) <- function(object) {
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+#' @method get_grid_search_res BulkCoExp
+S7::method(get_grid_search_res, BulkCoExp) <- function(object) {
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
 
   grid_search_res <- S7::prop(object, "outputs")[["grid_search_res"]]
 

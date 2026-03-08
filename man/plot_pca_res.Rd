@@ -12,7 +12,7 @@ plot_pca_res(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{cols_to_plot}{String vector. The columns within the meta-data to plot.
 Defaults to \code{c('contrast_info', 'sample_source')}}

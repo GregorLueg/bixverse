@@ -7,7 +7,7 @@
 get_diffusion_perms(object)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=NetworkDiffusions]{NetworkDiffusions()}}.}
 }
 \value{
 The diffusion Z scores if found. Otherwise \code{NULL}.

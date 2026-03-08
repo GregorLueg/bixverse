@@ -17,7 +17,7 @@ get_meta_cells_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{sc_meta_cell_params}{List. Output of \code{\link[=params_sc_metacells]{params_sc_metacells()}}.
 A list with the following items:

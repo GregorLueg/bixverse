@@ -1,4 +1,4 @@
-# network_diffusions -----------------------------------------------------------
+# NetworkDiffusions ------------------------------------------------------------
 
 ## diffusion methods -----------------------------------------------------------
 
@@ -9,8 +9,8 @@
 #' diffusion to identify influential nodes. These can be used subsequently for
 #' community detection or check AUROC values given a set of genes.
 #'
-#' @param object `network_diffusions` object. The underlying class
-#' [bixverse::network_diffusions()].
+#' @param object `NetworkDiffusions` object. The underlying class
+#' [bixverse::NetworkDiffusions()].
 #' @param diffusion_vector Named nuermic. A named vector with values to use for
 #' the reset parameter in the personalised page-rank diffusion. Names should
 #' represent node names of the graph.
@@ -37,15 +37,15 @@ diffuse_seed_nodes <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method diffuse_seed_nodes network_diffusions
-S7::method(diffuse_seed_nodes, network_diffusions) <-
+#' @method diffuse_seed_nodes NetworkDiffusions
+S7::method(diffuse_seed_nodes, NetworkDiffusions) <-
   function(
     object,
     diffusion_vector,
     summarisation = c("max", "mean", "harmonic_sum")
   ) {
     # Checks
-    checkmate::assertClass(object, "bixverse::network_diffusions")
+    checkmate::assertClass(object, "bixverse::NetworkDiffusions")
     checkmate::assertNumeric(diffusion_vector)
     checkmate::assertNamed(diffusion_vector, .var.name = "diffusion_vector")
     checkmate::assertChoice(summarisation, c("max", "mean", "harmonic_sum"))
@@ -100,8 +100,8 @@ S7::method(diffuse_seed_nodes, network_diffusions) <-
 #' undirected, the method will run two personalised page rank diffusions based
 #' on the diffusion vectors and generate the score aggregation
 #'
-#' @param object `network_diffusions` object. The underlying class
-#' [bixverse::network_diffusions()].
+#' @param object `NetworkDiffusions` object. The underlying class
+#' [bixverse::NetworkDiffusions()].
 #' @param diffusion_vector_1 Named numeric. The first named vector with values
 #' to use for the reset parameter in the personalised page-rank diffusion. Names
 #' should represent node names of the graph.
@@ -136,8 +136,8 @@ tied_diffusion <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method tied_diffusion network_diffusions
-S7::method(tied_diffusion, network_diffusions) <-
+#' @method tied_diffusion NetworkDiffusions
+S7::method(tied_diffusion, NetworkDiffusions) <-
   function(
     object,
     diffusion_vector_1,
@@ -147,7 +147,7 @@ S7::method(tied_diffusion, network_diffusions) <-
     .verbose = FALSE
   ) {
     # Checks
-    checkmate::assertClass(object, "bixverse::network_diffusions")
+    checkmate::assertClass(object, "bixverse::NetworkDiffusions")
     checkmate::assertNumeric(diffusion_vector_1)
     checkmate::assertNamed(diffusion_vector_1, .var.name = "diffusion_vector_1")
     checkmate::assertNumeric(diffusion_vector_2)
@@ -257,8 +257,8 @@ S7::method(tied_diffusion, network_diffusions) <-
 #' determine if the original diffusion was a single or tied diffusion and
 #' construct permutations accordingly.
 #'
-#' @param object `network_diffusions` object. The underlying class
-#' [bixverse::network_diffusions()].
+#' @param object `NetworkDiffusions` object. The underlying class
+#' [bixverse::NetworkDiffusions()].
 #' @param perm_iters Integer. Number of permutations to test for. Defaults to
 #' `1000L`.
 #' @param random_seed Integer. Random seed for determinism.
@@ -285,15 +285,15 @@ permute_seed_nodes <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method permute_seed_nodes network_diffusions
-S7::method(permute_seed_nodes, network_diffusions) <- function(
+#' @method permute_seed_nodes NetworkDiffusions
+S7::method(permute_seed_nodes, NetworkDiffusions) <- function(
   object,
   perm_iters = 1000L,
   random_seed = 10101L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::assertClass(object, "bixverse::NetworkDiffusions")
   checkmate::qassert(perm_iters, "I1")
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -401,8 +401,8 @@ S7::method(permute_seed_nodes, network_diffusions) <- function(
 #' @description Detects privileged communities after a diffusion based on seed
 #' nodes.
 #'
-#' @param object `network_diffusions` object. The underlying class
-#' [bixverse::network_diffusions()].
+#' @param object `NetworkDiffusions` object. The underlying class
+#' [bixverse::NetworkDiffusions()].
 #' @param community_params List. Parameters for the community detection within
 #' the reduced network, see [bixverse::params_community_detection()]. A list
 #' with the following items:
@@ -454,8 +454,8 @@ community_detection <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method community_detection network_diffusions
-S7::method(community_detection, network_diffusions) <- function(
+#' @method community_detection NetworkDiffusions
+S7::method(community_detection, NetworkDiffusions) <- function(
   object,
   community_params = params_community_detection(),
   seed = 42L,
@@ -466,7 +466,7 @@ S7::method(community_detection, network_diffusions) <- function(
   . <- N <- cluster_id <- node_id <- cluster_size <- seed_nodes_no <-
     seed_nodes_no <- seed_nodes_1 <- seed_nodes_2 <- seed_node <- `:=` <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::assertClass(object, "bixverse::NetworkDiffusions")
   assertCommunityParams(community_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -731,12 +731,12 @@ S7::method(community_detection, network_diffusions) <- function(
 #' Calculate the AUROC for a diffusion score
 #'
 #' @description
-#' This functions can take a given `network_diffusions` object and calculates an
+#' This functions can take a given `NetworkDiffusions` object and calculates an
 #' AUC and generates a Z-score based on random permutation of `random_aucs` for
 #' test for statistical significance if desired.
 #'
-#' @param object `network_diffusions` object. The underlying class
-#' [bixverse::network_diffusions()].
+#' @param object `NetworkDiffusions` object. The underlying class
+#' [bixverse::NetworkDiffusions()].
 #' @param hit_nodes String vector. Which nodes in the graph are considered a
 #' 'hit'.
 #' @param auc_iters Integer. How many iterations to run to approximate the
@@ -771,8 +771,8 @@ calculate_diffusion_auc <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method tied_diffusion network_diffusions
-S7::method(calculate_diffusion_auc, network_diffusions) <-
+#' @method tied_diffusion NetworkDiffusions
+S7::method(calculate_diffusion_auc, NetworkDiffusions) <-
   function(
     object,
     hit_nodes,
@@ -782,7 +782,7 @@ S7::method(calculate_diffusion_auc, network_diffusions) <-
     seed = 42L
   ) {
     # Checks
-    checkmate::assertClass(object, "bixverse::network_diffusions")
+    checkmate::assertClass(object, "bixverse::NetworkDiffusions")
     checkmate::qassert(hit_nodes, "S+")
     checkmate::qassert(auc_iters, "I1")
     checkmate::qassert(seed, "I1")
@@ -924,7 +924,7 @@ summarise_scores <- function(
   res
 }
 
-# rbh_graph --------------------------------------------------------------------
+# RbhGraph ---------------------------------------------------------------------
 
 ## graph generation ------------------------------------------------------------
 
@@ -935,7 +935,7 @@ summarise_scores <- function(
 #' gene modules. You have the option to use an overlap coefficient instead of
 #' Jaccard similarity and to specify a minimum similarity.
 #'
-#' @param object The underlying class, see [bixverse::rbh_graph()].
+#' @param object The underlying class, see [bixverse::RbhGraph()].
 #' @param minimum_similarity The minimum similarity to create an edge.
 #' @param overlap_coefficient Boolean. Shall the overlap coefficient be used
 #' instead of Jaccard similarity. Only relevant if the underlying class is set
@@ -964,8 +964,8 @@ generate_rbh_graph <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method generate_rbh_graph rbh_graph
-S7::method(generate_rbh_graph, rbh_graph) <-
+#' @method generate_rbh_graph RbhGraph
+S7::method(generate_rbh_graph, RbhGraph) <-
   function(
     object,
     minimum_similarity,
@@ -976,7 +976,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
     origin_modules <- . <- similiarity <- origin <- target <- `:=` <-
       target_modules <- NULL
     # checks
-    checkmate::assertClass(object, "bixverse::rbh_graph")
+    checkmate::assertClass(object, "bixverse::RbhGraph")
     checkmate::qassert(minimum_similarity, "R[0, 1]")
     checkmate::qassert(overlap_coefficient, "B1")
     checkmate::qassert(spearman, "B1")
@@ -1071,7 +1071,7 @@ S7::method(generate_rbh_graph, rbh_graph) <-
 #' class. Additionally, a column will be added that signifies the resolution
 #' with the best modularity.
 #'
-#' @param object The underlying class, see [bixverse::rbh_graph()].
+#' @param object The underlying class, see [bixverse::RbhGraph()].
 #' @param resolution_params List. Parameters for the resolution search, see
 #' [bixverse::params_graph_resolution()]. Contains:
 #' \itemize{
@@ -1110,8 +1110,8 @@ find_rbh_communities <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @import data.table
 #'
-#' @method find_rbh_communities rbh_graph
-S7::method(find_rbh_communities, rbh_graph) <- function(
+#' @method find_rbh_communities RbhGraph
+S7::method(find_rbh_communities, RbhGraph) <- function(
   object,
   resolution_params = params_graph_resolution(),
   max_workers = NULL,
@@ -1122,18 +1122,18 @@ S7::method(find_rbh_communities, rbh_graph) <- function(
   # Scope checks
   best_modularity <- modularity <- . <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::rbh_graph")
+  checkmate::assertClass(object, "bixverse::RbhGraph")
   assertGraphResParams(resolution_params)
   checkmate::qassert(parallel, "B1")
   checkmate::qassert(max_workers, c("I1", "0"))
   checkmate::qassert(.verbose, "B1")
 
-  if (is.null(S7::prop(object, "rbh_graph"))) {
+  if (is.null(S7::prop(object, "RbhGraph"))) {
     warning("No RBH graph yet generated. Returning class as is.")
     return(object)
   }
 
-  graph <- S7::prop(object, "rbh_graph")
+  graph <- S7::prop(object, "RbhGraph")
 
   resolutions <- with(
     resolution_params,
@@ -1492,13 +1492,13 @@ S7::method(check_dim, snf) <- function(object, no_samples) {
 #'
 #' @import ggplot2
 #'
-#' @method plot_resolution_res rbh_graph
-S7::method(plot_resolution_res, rbh_graph) <- function(
+#' @method plot_resolution_res RbhGraph
+S7::method(plot_resolution_res, RbhGraph) <- function(
   object,
   print_head = TRUE,
   ...
 ) {
-  checkmate::assertClass(object, "bixverse::rbh_graph")
+  checkmate::assertClass(object, "bixverse::RbhGraph")
   # Ignoring print_head for this class
 
   plot_df <- S7::prop(object, "final_results")

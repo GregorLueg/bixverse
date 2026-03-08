@@ -12,8 +12,8 @@ permute_seed_nodes(
 )
 }
 \arguments{
-\item{object}{\code{network_diffusions} object. The underlying class
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{\code{NetworkDiffusions} object. The underlying class
+\code{\link[=NetworkDiffusions]{NetworkDiffusions()}}.}
 
 \item{perm_iters}{Integer. Number of permutations to test for. Defaults to
 \code{1000L}.}

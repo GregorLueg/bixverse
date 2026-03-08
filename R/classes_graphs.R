@@ -1,4 +1,4 @@
-# network_diffusions -----------------------------------------------------------
+# NetworkDiffusions ------------------------------------------------------------
 
 ## class -----------------------------------------------------------------------
 
@@ -27,13 +27,13 @@
 #' `edge_data_frame` needs to have a weight column.
 #' @param directed Boolean. Shall the graph be stored as directed.
 #'
-#' @return Returns the `network_diffusions` class for further operations.
+#' @return Returns the `NetworkDiffusions` class for further operations.
 #'
 #' @export
-network_diffusions <- S7::new_class(
+NetworkDiffusions <- S7::new_class(
   # Names, parents
-  name = "network_diffusions",
-  parent = bixverse_base_class,
+  name = "NetworkDiffusions",
+  parent = BixverseBaseClass,
 
   # Properties, i.e., slots
   properties = list(
@@ -92,7 +92,7 @@ network_diffusions <- S7::new_class(
 #' @description Returns the diffusion vector if you ran [bixverse::tied_diffusion()]
 #' or [bixverse::diffuse_seed_nodes()].
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
 #' @return The diffusion vector if found. If you did not run either diffusion
 #' functions, it will return `NULL` and a warning.
@@ -110,10 +110,10 @@ get_diffusion_vector <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_diffusion_vector network_diffusions
-S7::method(get_diffusion_vector, network_diffusions) <- function(object) {
+#' @method get_diffusion_vector NetworkDiffusions
+S7::method(get_diffusion_vector, NetworkDiffusions) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::assertClass(object, "bixverse::NetworkDiffusions")
   # Get the data
   diffusion_vec <- S7::prop(object, "diffusion_res")
   if (is.null(diffusion_vec)) {
@@ -127,7 +127,7 @@ S7::method(get_diffusion_vector, network_diffusions) <- function(object) {
 #' @description Returns the diffusion Z-scores if you ran
 #' [bixverse::permute_seed_nodes()].
 #'
-#' @param object The underlying class [bixverse::network_diffusions()].
+#' @param object The underlying class [bixverse::NetworkDiffusions()].
 #'
 #' @return The diffusion Z scores if found. Otherwise `NULL`.
 #'
@@ -144,10 +144,10 @@ get_diffusion_perms <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_diffusion_perms network_diffusions
-S7::method(get_diffusion_perms, network_diffusions) <- function(object) {
+#' @method get_diffusion_perms NetworkDiffusions
+S7::method(get_diffusion_perms, NetworkDiffusions) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::network_diffusions")
+  checkmate::assertClass(object, "bixverse::NetworkDiffusions")
   # Get the data
   diffusion_perm <- S7::prop(object, "diffusion_perm")
   if (is.null(diffusion_perm)) {
@@ -156,7 +156,7 @@ S7::method(get_diffusion_perms, network_diffusions) <- function(object) {
   diffusion_perm
 }
 
-# rbh_graphs -------------------------------------------------------------------
+# RbhGraph ---------------------------------------------------------------------
 
 ## class -----------------------------------------------------------------------
 
@@ -192,13 +192,13 @@ S7::method(get_diffusion_perms, network_diffusions) <- function(object) {
 #' @param value_col The column (name) which stores the genes that are part of
 #' the modules. Only needed if you want to use set similarities.
 #'
-#' @return Returns the `rbh_graph` class for further operations.
+#' @return Returns the `RbhGraph` class for further operations.
 #'
 #' @export
-rbh_graph <- S7::new_class(
+RbhGraph <- S7::new_class(
   # Names, parents
-  name = "rbh_graph",
-  parent = bixverse_base_class,
+  name = "RbhGraph",
+  parent = BixverseBaseClass,
 
   # Properties, i.e., slots
   properties = list(
@@ -279,7 +279,7 @@ rbh_graph <- S7::new_class(
 #' @description Pulls out the RBH results if you ran
 #' [bixverse::generate_rbh_graph()]
 #'
-#' @param object The underlying class [bixverse::rbh_graph()].
+#' @param object The underlying class [bixverse::RbhGraph()].
 #'
 #' @return The data.table with the RBH result if found, otherwise NULL.
 #'
@@ -296,10 +296,10 @@ get_rbh_res <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_rbh_res rbh_graph
-S7::method(get_rbh_res, rbh_graph) <- function(object) {
+#' @method get_rbh_res RbhGraph
+S7::method(get_rbh_res, RbhGraph) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::rbh_graph")
+  checkmate::assertClass(object, "bixverse::RbhGraph")
   # Get the data
   edge_dt <- S7::prop(object, "rbh_edge_df")
   if (is.null(edge_dt)) {
@@ -361,7 +361,7 @@ S7::method(get_rbh_res, rbh_graph) <- function(object) {
 snf <- S7::new_class(
   # Names, parents
   name = "snf",
-  parent = bixverse_base_class,
+  parent = BixverseBaseClass,
 
   # Properties, i.e., slots
   properties = list(

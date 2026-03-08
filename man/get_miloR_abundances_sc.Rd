@@ -15,7 +15,7 @@ get_miloR_abundances_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{sample_id_col}{Character. The column in the obs table representing
 the sample identifier to count.}
@@ -52,7 +52,7 @@ of the kNN graph. The general idea of the approach is to use the kNN graph
 generated from the single cell data, generate representative neighbourhoods
 and calculate differential abundances within these neighbourhoods. For
 further details on the method, please refer to Dann, et al. This function
-will take a \code{single_cell_exp} class, run the neighbourhood detection,
+will take a \code{SingleCells} class, run the neighbourhood detection,
 count the occurrences of a sample and return a \code{sc_miloR} class for
 subsequent differential abundance testing and further annotations.
 }

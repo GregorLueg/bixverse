@@ -14,7 +14,7 @@ get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
 \item{object}{A class within bixverse that inherits from
-\code{\link[=bixverse_base_class]{bixverse_base_class()}} or defined S3 classes.}
+\code{\link[=BixverseBaseClass]{BixverseBaseClass()}} or defined S3 classes.}
 
 \item{to_json}{Shall the params be returned as a JSON string.}
 
@@ -24,7 +24,7 @@ get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
 Depending on parameters either the R list or a (pretty) JSON string.
 }
 \description{
-Extracts parameters from the \code{bixverse_base_class} class (or
+Extracts parameters from the \code{BixverseBaseClass} class (or
 child classes) and has options to return (pretty) JSONs. This generic
 also gets inherited by other classes and can be used to extract parameters.
 Also, can dispatch to specific methods for certain S3 classes.

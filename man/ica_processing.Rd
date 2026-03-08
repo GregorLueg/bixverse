@@ -7,7 +7,7 @@
 ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. Ideally, you
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{fast_svd}{Boolean. Shall randomised SVD be used for the whitening.
@@ -19,7 +19,7 @@ fast_svd = \code{TRUE}.}
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} with the needed data for ICA in the
+\code{BulkCoExp} with the needed data for ICA in the
 properties of the class.
 }
 \description{

@@ -8,6 +8,7 @@ use thousands::Separable;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::data_io::*;
 use bixverse_rs::single_cell::sc_data::h5ad_io::*;
+use bixverse_rs::single_cell::sc_data::h5ad_multifile_io::*;
 use bixverse_rs::single_cell::sc_data::mtx_io::*;
 use bixverse_rs::single_cell::sc_data::r_obj_io::*;
 
@@ -431,6 +432,71 @@ impl SingeCellCountData {
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
             nnz = cell_qc.nnz
+        )
+    }
+
+    /// Load multiple h5ad files into a single binary
+    ///
+    /// ### Params
+    ///
+    /// * `file_tasks` - R list of lists, each produced by the R prescan
+    ///   function. Each inner list must contain: exp_id, h5_path, cs_type,
+    ///   no_cells, no_genes, gene_local_to_universe.
+    /// * `universe_size` - Total number of genes in the universe.
+    /// * `qc_params` - List with QC parameters (min_unique_genes,
+    ///   min_lib_size, min_cells, target_size).
+    /// * `verbose` - Controls verbosity.
+    ///
+    /// ### Returns
+    ///
+    /// A list with: global_gene_indices, total_cells, total_genes,
+    /// per_file (list of lists with exp_id, cell_indices, lib_size, nnz).
+    pub fn multi_h5_to_file(
+        &mut self,
+        file_tasks: List,
+        universe_size: i32,
+        qc_params: List,
+        verbose: bool,
+    ) -> List {
+        let qc = MinCellQuality::from_r_list(qc_params);
+
+        let tasks: Vec<H5adFileTask> = file_tasks
+            .into_iter()
+            .map(|(_, robj)| {
+                let inner_list = List::try_from(robj).expect("Each file_task must be a list");
+                H5adFileTask::from_r_list(inner_list)
+            })
+            .collect();
+
+        let result = multi_h5ad_to_file(
+            &tasks,
+            &self.f_path_cells,
+            universe_size as usize,
+            &qc,
+            verbose,
+        );
+
+        self.n_cells = result.total_cells;
+        self.n_genes = result.total_genes;
+
+        let per_file: List = result
+            .per_file
+            .into_iter()
+            .map(|f| {
+                list!(
+                    exp_id = f.exp_id,
+                    cell_indices = f.cells_to_keep,
+                    lib_size = f.lib_size,
+                    nnz = f.nnz
+                )
+            })
+            .collect::<List>();
+
+        list!(
+            global_gene_indices = result.global_gene_indices,
+            total_cells = result.total_cells,
+            total_genes = result.total_genes,
+            per_file = per_file
         )
     }
 

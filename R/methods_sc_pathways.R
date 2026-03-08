@@ -12,7 +12,7 @@
 #' Genes are binned based on their average expression across cells to ensure
 #' controls are expression-matched.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
 #' respective gene sets.
 #' @param n_bins Integer. Number of bins to use. Defaults to `24L`.
@@ -45,10 +45,10 @@ module_scores_sc <- S7::new_generic(
   }
 )
 
-#' @method module_scores_sc single_cell_exp
+#' @method module_scores_sc SingleCells
 #'
 #' @export
-S7::method(module_scores_sc, single_cell_exp) <- function(
+S7::method(module_scores_sc, SingleCells) <- function(
   object,
   gs_list,
   n_bins = 24L,
@@ -58,7 +58,7 @@ S7::method(module_scores_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::qassert(n_bins, "I1")
   checkmate::qassert(n_ctrl, "I1")
@@ -102,7 +102,7 @@ S7::method(module_scores_sc, single_cell_exp) <- function(
 #' pathway activity measurs, use the `"wilcox"`). Data can be streamed in chunks
 #' of 50k cells per or loaded in in one go.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param gs_list Named list. The elements have the gene identifiers of the
 #' respective gene sets.
 #' @param auc_type String. Which type of AUC to calculate. Choice of
@@ -130,10 +130,10 @@ aucell_sc <- S7::new_generic(
   }
 )
 
-#' @method aucell_sc single_cell_exp
+#' @method aucell_sc SingleCells
 #'
 #' @export
-S7::method(aucell_sc, single_cell_exp) <- function(
+S7::method(aucell_sc, SingleCells) <- function(
   object,
   gs_list,
   auc_type = c("wilcox", "auroc"),
@@ -143,7 +143,7 @@ S7::method(aucell_sc, single_cell_exp) <- function(
   auc_type <- match.arg(auc_type)
 
   # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "character", names = "named")
   checkmate::assertChoice(auc_type, c("wilcox", "auroc"))
   checkmate::qassert(streaming, "B1")
@@ -187,7 +187,7 @@ S7::method(aucell_sc, single_cell_exp) <- function(
 #' @param gs_list Named nested list for which to calculate the local
 #' auto-correlations. The elements have the gene identifiers of the respective
 #' gene sets and have the option to have a `"pos"` and `"neg"` gene sets. The
-#' names need to be part of the variables of the `single_cell_exp` class.
+#' names need to be part of the variables of the `SingleCells` class.
 #' @param expr_genes Character vector. Represents the genes expressed in the
 #' experiment.
 #' @param n_perm Integer. Number of random permutations to generate.
@@ -313,11 +313,11 @@ generate_null_perm_gs <- function(
 #' between positive and negative gene indices, think epithelial vs mesenchymal
 #' gene signature, etc.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param gs_list Named nested list. The elements have the gene identifiers of
 #' the respective gene sets and have the option to have a `"pos"` and `"neg"`
 #' gene sets. The names need to be part of the variables of the
-#' `single_cell_exp` class.
+#' `SingleCells` class.
 #' @param streaming Boolean. Shall the cell data be streamed in. Useful for
 #' larger data sets.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -341,17 +341,17 @@ vision_sc <- S7::new_generic(
   }
 )
 
-#' @method vision_sc single_cell_exp
+#' @method vision_sc SingleCells
 #'
 #' @export
-S7::method(vision_sc, single_cell_exp) <- function(
+S7::method(vision_sc, SingleCells) <- function(
   object,
   gs_list,
   streaming = FALSE,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::checkTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::checkTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(gs_list, types = "list", names = "named")
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
@@ -388,11 +388,11 @@ S7::method(vision_sc, single_cell_exp) <- function(
 #' random enrichment on the kNN graph. The kNN graph (and distance measures)
 #' will be generated on-the-fly based on the embedding you wish to use.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param gs_list Named nested list. The elements have the gene identifiers of
 #' the respective gene sets and have the option to have a `"pos"` and `"neg"`
 #' gene sets. The names need to be part of the variables of the
-#' `single_cell_exp` class.
+#' `SingleCells` class.
 #' @param vision_params List with vision parameters, see
 #' [bixverse::params_sc_vision()] with the following elements:
 #' \itemize{
@@ -434,10 +434,10 @@ vision_w_autocor_sc <- S7::new_generic(
   }
 )
 
-#' @method vision_w_autocor_sc single_cell_exp
+#' @method vision_w_autocor_sc SingleCells
 #'
 #' @export
-S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
+S7::method(vision_w_autocor_sc, SingleCells) <- function(
   object,
   gs_list,
   embd_to_use,
@@ -448,7 +448,7 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScVision(vision_params)
@@ -536,7 +536,7 @@ S7::method(vision_w_autocor_sc, single_cell_exp) <- function(
 #' the chosen embedding. This can be used to identify genes that have strong
 #' local correlations and vary across the kNN graph.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
 #' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
@@ -588,10 +588,10 @@ hotspot_autocor_sc <- S7::new_generic(
   }
 )
 
-#' @method hotspot_autocor_sc single_cell_exp
+#' @method hotspot_autocor_sc SingleCells
 #'
 #' @export
-S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
+S7::method(hotspot_autocor_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
   hotspot_params = params_sc_hotspot(),
@@ -603,7 +603,7 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   assertScHotspot(hotspot_params)
   checkmate::qassert(no_embd_to_use, c("0", "I1"))
@@ -678,7 +678,7 @@ S7::method(hotspot_autocor_sc, single_cell_exp) <- function(
 #' This method implements the HotSpot approach (see DeTomaso, et al.) to
 #' calculate the local gene-gene correlations and their Z-scores.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Defaults to `"pca"`.
 #' @param hotspot_params List with hotspot parameters, see
 #' [bixverse::params_sc_hotspot()] with the following elements:
@@ -728,10 +728,10 @@ hotspot_gene_cor_sc <- S7::new_generic(
   }
 )
 
-#' @method hotspot_gene_cor_sc single_cell_exp
+#' @method hotspot_gene_cor_sc SingleCells
 #'
 #' @export
-S7::method(hotspot_gene_cor_sc, single_cell_exp) <- function(
+S7::method(hotspot_gene_cor_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
   hotspot_params = params_sc_hotspot(),
@@ -743,7 +743,7 @@ S7::method(hotspot_gene_cor_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   assertScHotspot(hotspot_params)
   checkmate::qassert(no_embd_to_use, c("0", "I1"))

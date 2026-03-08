@@ -7,7 +7,7 @@
 get_sc_map(object)
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 }
 \value{
 Returns the maps within the class.

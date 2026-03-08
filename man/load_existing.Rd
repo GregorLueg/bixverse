@@ -2,12 +2,12 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{load_existing}
 \alias{load_existing}
-\title{Load an existing single_cell_exp from disk}
+\title{Load an existing SingleCells from disk}
 \usage{
 load_existing(object)
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 }
 \value{
 The object with added information on the data on disk.

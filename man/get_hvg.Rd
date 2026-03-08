@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_hvg}
 \alias{get_hvg}
-\alias{get_hvg.sc_mapper}
-\alias{get_hvg.single_cell_exp}
+\alias{get_hvg.ScMap}
+\alias{get_hvg.SingleCells}
 \title{Get the HVG}
 \usage{
 get_hvg(x)
 
-\method{get_hvg}{sc_mapper}(x)
+\method{get_hvg}{ScMap}(x)
 }
 \arguments{
 \item{x}{An object to get HVG from.}
@@ -16,5 +16,5 @@ get_hvg(x)
 \description{
 Get the HVG
 
-Get the highly variable gene indices from a \code{single_cell_exp}.
+Get the highly variable gene indices from a \code{SingleCells}.
 }

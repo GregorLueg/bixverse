@@ -11,7 +11,7 @@
 #' show substantially lower expression of genes compared to the rest of the
 #' data and remove lowly expressed genes.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
 #' @param outlier_threshold Float. Number of standard deviations in terms of
@@ -46,12 +46,12 @@ qc_bulk_dge <- S7::new_generic(
 )
 
 
-#' @method qc_bulk_dge bulk_dge
+#' @method qc_bulk_dge BulkDge
 #'
 #' @import ggplot2
 #'
 #' @export
-S7::method(qc_bulk_dge, bulk_dge) <- function(
+S7::method(qc_bulk_dge, BulkDge) <- function(
   object,
   group_col,
   outlier_threshold = 2,
@@ -64,7 +64,7 @@ S7::method(qc_bulk_dge, bulk_dge) <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "bixverse::bulk_dge"
+    "bixverse::BulkDge"
   )
   checkmate::qassert(group_col, "S1")
   checkmate::qassert(outlier_threshold, "N1")
@@ -162,7 +162,7 @@ S7::method(qc_bulk_dge, bulk_dge) <- function(
 #' This function will apply the CPM + Voom normalisation and can additionally
 #' calculate TPM and FPKM values for plotting purposes.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
 #' @param norm_method String. One of
@@ -200,12 +200,12 @@ normalise_bulk_dge <- S7::new_generic(
 )
 
 
-#' @method normalise_bulk_dge bulk_dge
+#' @method normalise_bulk_dge BulkDge
 #'
 #' @import ggplot2
 #'
 #' @export
-S7::method(normalise_bulk_dge, bulk_dge) <- function(
+S7::method(normalise_bulk_dge, BulkDge) <- function(
   object,
   group_col,
   norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
@@ -222,7 +222,7 @@ S7::method(normalise_bulk_dge, bulk_dge) <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "bixverse::bulk_dge"
+    "bixverse::BulkDge"
   )
   checkmate::qassert(group_col, "S1")
   checkmate::assertChoice(
@@ -313,10 +313,10 @@ S7::method(normalise_bulk_dge, bulk_dge) <- function(
 #' Process the raw data
 #'
 #' @description
-#' Function to do general pre-processing on top of the [bixverse::bulk_coexp()].
+#' Function to do general pre-processing on top of the [bixverse::BulkCoExp()].
 #' Options to do scaling, HVG selection, etc.
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #' @param hvg Integer or float. If an integer, the top `hvg` genes will be
 #' included; if float, the float has to be between 0 and 1, representing the
 #' percentage of genes to include.
@@ -351,9 +351,9 @@ preprocess_bulk_coexp <- S7::new_generic(
 )
 
 
-#' @method preprocess_bulk_coexp bulk_coexp
+#' @method preprocess_bulk_coexp BulkCoExp
 #' @export
-S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
+S7::method(preprocess_bulk_coexp, BulkCoExp) <- function(
   object,
   hvg = NULL,
   mad_threshold = NULL,
@@ -364,7 +364,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
   # Scope checks
   feature_name <- MAD <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(mad_threshold, c("R1", "0"))
   nfeatures <- S7::prop(object, "params")[["original_dim"]][2]
   checkmate::qassert(hvg, c("R1[0,1]", sprintf("I1[0,%i]", nfeatures), "0"))
@@ -466,7 +466,7 @@ S7::method(preprocess_bulk_coexp, bulk_coexp) <- function(
 #' Calculates the principal component on top of the filtered count matrix and
 #' adds the information of the first 10 principal components to the outputs.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param scale_genes Boolean. Shall the log(cpm) counts be scaled prior the PCA
 #' calculation. Defaults to `FALSE`.
 #' @param pcs Integer. Number of PCs to return and add to the outputs slot.
@@ -489,14 +489,14 @@ calculate_pca_bulk_dge <- S7::new_generic(
   }
 )
 
-#' @method calculate_pca_bulk_dge bulk_dge
+#' @method calculate_pca_bulk_dge BulkDge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
+S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
   object,
   scale_genes = FALSE,
   pcs = 10L,
@@ -506,7 +506,7 @@ S7::method(calculate_pca_bulk_dge, bulk_dge) <- function(
     NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::assertClass(object, "bixverse::BulkDge")
   checkmate::qassert(scale_genes, "B1")
   checkmate::qassert(pcs, "I1")
   checkmate::qassert(no_hvg_genes, "I1")
@@ -636,7 +636,7 @@ check_pca_grp_differences <- function(pc1, pc2, grps) {
 #' be found by [bixverse::calculate_dge_hedges()], they will be used for
 #' calculations of effect sizes based on Hedge's G.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
 #' @param batch_col String. The column in which the batch effect groups can
@@ -663,7 +663,7 @@ batch_correction_bulk_dge <- S7::new_generic(
   }
 )
 
-#' @method batch_correction_bulk_dge bulk_dge
+#' @method batch_correction_bulk_dge BulkDge
 #'
 #' @export
 #'
@@ -672,7 +672,7 @@ batch_correction_bulk_dge <- S7::new_generic(
 #' @importFrom magrittr `%$%`
 #' @import patchwork
 #' @import ggplot2
-S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
+S7::method(batch_correction_bulk_dge, BulkDge) <- function(
   object,
   contrast_column,
   batch_col,
@@ -682,7 +682,7 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
   gene_id <- . <- sample_id <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::assertClass(object, "bixverse::BulkDge")
   checkmate::qassert(contrast_column, "S1")
   checkmate::qassert(batch_col, "S1")
   checkmate::qassert(scale_genes, "B1")
@@ -806,7 +806,7 @@ S7::method(batch_correction_bulk_dge, bulk_dge) <- function(
 #' permutation of groups represented in that column will be tested against each
 #' other.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
 #' @param contrast_list Optional string vector. A vectors that contains the
@@ -844,14 +844,14 @@ calculate_dge_limma <- S7::new_generic(
   }
 )
 
-#' @method calculate_dge_limma bulk_dge
+#' @method calculate_dge_limma BulkDge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_dge_limma, bulk_dge) <- function(
+S7::method(calculate_dge_limma, BulkDge) <- function(
   object,
   contrast_column,
   contrast_list = NULL,
@@ -864,7 +864,7 @@ S7::method(calculate_dge_limma, bulk_dge) <- function(
   . <- subgroup <- NULL
 
   # First checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::assertClass(object, "bixverse::BulkDge")
   checkmate::qassert(contrast_column, "S+")
   checkmate::qassert(co_variates, c("S+", "0"))
   checkmate::qassert(filter_column, c("S+", "0"))
@@ -971,7 +971,7 @@ S7::method(calculate_dge_limma, bulk_dge) <- function(
 #' for, every permutation of groups represented in that column will be tested
 #' against each other.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
 #' @param contrast_list Optional string vector. A vectors that contains the
@@ -1000,14 +1000,14 @@ calculate_dge_hedges <- S7::new_generic(
   }
 )
 
-#' @method calculate_dge_hedges bulk_dge
+#' @method calculate_dge_hedges BulkDge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_dge_hedges, bulk_dge) <- function(
+S7::method(calculate_dge_hedges, BulkDge) <- function(
   object,
   contrast_column,
   contrast_list = NULL,
@@ -1017,7 +1017,7 @@ S7::method(calculate_dge_hedges, bulk_dge) <- function(
   . <- subgroup <- NULL
 
   # First checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::assertClass(object, "bixverse::BulkDge")
   checkmate::qassert(contrast_column, "S+")
   checkmate::qassert(filter_column, c("S+", "0"))
 
@@ -1128,7 +1128,7 @@ S7::method(calculate_dge_hedges, bulk_dge) <- function(
 #' This is a deprecated method and will raise an error. Please use
 #' [bixverse::qc_bulk_dge()] and [bixverse::normalise_bulk_dge()] instead.
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param group_col String. The column in the metadata that will contain the
 #' contrast groups. Needs to be part of the metadata stored in the class.
 #' @param norm_method String. One of
@@ -1162,12 +1162,12 @@ preprocess_bulk_dge <- S7::new_generic(
   }
 )
 
-#' @method preprocess_bulk_dge bulk_dge
+#' @method preprocess_bulk_dge BulkDge
 #'
 #' @import ggplot2
 #'
 #' @export
-S7::method(preprocess_bulk_dge, bulk_dge) <- function(
+S7::method(preprocess_bulk_dge, BulkDge) <- function(
   object,
   group_col,
   norm_method = c("TMM", "TMMwsp", "RLE", "upperquartile", "none"),
@@ -1189,7 +1189,7 @@ S7::method(preprocess_bulk_dge, bulk_dge) <- function(
 #' This is a deprecated method and will raise an error. Please use
 #' [bixverse::calculate_dge_limma()] and [bixverse::calculate_dge_hedges()].
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param contrast_column String. The contrast column in which the groupings
 #' are stored. Needs to be found in the meta_data within the properties.
 #' @param filter_column Optional String. If there is a column you wish to use as
@@ -1227,14 +1227,14 @@ calculate_all_dges <- S7::new_generic(
   }
 )
 
-#' @method calculate_all_dges bulk_dge
+#' @method calculate_all_dges BulkDge
 #'
 #' @export
 #'
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(calculate_all_dges, bulk_dge) <- function(
+S7::method(calculate_all_dges, BulkDge) <- function(
   object,
   contrast_column,
   contrast_list = NULL,

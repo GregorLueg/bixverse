@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_gene_mapping}
 \alias{set_gene_mapping}
-\alias{set_gene_mapping.sc_mapper}
-\alias{set_gene_mapping.single_cell_exp}
-\title{Set gene mapping for sc_mapper object}
+\alias{set_gene_mapping.ScMap}
+\alias{set_gene_mapping.SingleCells}
+\title{Set gene mapping for ScMap object}
 \usage{
 set_gene_mapping(x, gene_map)
 
-\method{set_gene_mapping}{sc_mapper}(x, gene_map)
+\method{set_gene_mapping}{ScMap}(x, gene_map)
 }
 \arguments{
 \item{x}{An object to set gene mapping for}
@@ -16,7 +16,7 @@ set_gene_mapping(x, gene_map)
 \item{gene_map}{Named integer indicating indices and names of the genes}
 }
 \description{
-Set gene mapping for sc_mapper object
+Set gene mapping for ScMap object
 
-Set the gene mapping for a \code{single_cell_exp} class.
+Set the gene mapping for a \code{SingleCells} class.
 }

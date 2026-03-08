@@ -16,7 +16,7 @@ load_r_data(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{counts}{Sparse matrix. The cells represent the rows, the genes the
 indices. Needs to be \code{"dgRMatrix"}.}

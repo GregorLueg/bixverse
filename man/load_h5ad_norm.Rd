@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{load_h5ad_norm}
 \alias{load_h5ad_norm}
-\title{Load in h5ad with normalised counts to \code{single_cell_exp}}
+\title{Load in h5ad with normalised counts to \code{SingleCells}}
 \usage{
 load_h5ad_norm(
   object,
@@ -17,7 +17,7 @@ load_h5ad_norm(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{h5_path}{File path to the h5ad object you wish to load in.}
 
@@ -58,7 +58,7 @@ shape information.
 \description{
 This function takes an h5ad file where only normalised counts are available
 in the X slot and loads the obs and var data into the DuckDB of the
-\code{single_cell_exp} class and the counts into a Rust-binarised format for
+\code{SingleCells} class and the counts into a Rust-binarised format for
 rapid access. Raw counts are reconstructed from the normalised values using
 the library sizes stored in a specified obs column.
 

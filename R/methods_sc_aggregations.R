@@ -11,7 +11,7 @@
 #' The generation of metacells is a useful approach for subsequent application
 #' of for example correlation-based methods to identify co-regulated genes.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param sc_meta_cell_params List. Output of [bixverse::params_sc_metacells()].
 #' A list with the following items:
 #' \itemize{
@@ -62,13 +62,13 @@ get_meta_cells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_meta_cells_sc single_cell_exp
+#' @method get_meta_cells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(get_meta_cells_sc, single_cell_exp) <- function(
+S7::method(get_meta_cells_sc, SingleCells) <- function(
   object,
   sc_meta_cell_params = params_sc_metacells(),
   regenerate_knn = FALSE,
@@ -80,7 +80,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMetacells(sc_meta_cell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -187,7 +187,7 @@ S7::method(get_meta_cells_sc, single_cell_exp) <- function(
 #' archetype analysis is used to identify the metacells. For details, please
 #' refer to the publication.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param seacell_params List. Output of [bixverse::params_sc_seacells()].
 #' A list with the following items:
 #' \itemize{
@@ -244,13 +244,13 @@ get_seacells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_seacells_sc single_cell_exp
+#' @method get_seacells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(get_seacells_sc, single_cell_exp) <- function(
+S7::method(get_seacells_sc, SingleCells) <- function(
   object,
   seacell_params = params_sc_seacells(),
   embd_to_use = "pca",
@@ -261,7 +261,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScSeacells(seacell_params)
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -315,7 +315,7 @@ S7::method(get_seacells_sc, single_cell_exp) <- function(
 #' The core idea is to use the walktrap community detection on the kNN graph.
 #' For details, please refer to the paper.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param sc_supercell_params List. Output of [bixverse::params_sc_supercell()].
 #' A list with the following items:
 #' \itemize{
@@ -367,10 +367,10 @@ get_supercells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_supercells_sc single_cell_exp
+#' @method get_supercells_sc SingleCells
 #'
 #' @export
-S7::method(get_supercells_sc, single_cell_exp) <- function(
+S7::method(get_supercells_sc, SingleCells) <- function(
   object,
   sc_supercell_params = params_sc_supercell(),
   regenerate_knn = FALSE,
@@ -382,7 +382,7 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScSupercell(sc_supercell_params)
   checkmate::qassert(regenerate_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
@@ -488,7 +488,7 @@ S7::method(get_supercells_sc, single_cell_exp) <- function(
 #' cell identifiers. You have the option to return sparse or dense matrices and
 #' if you wish to sum raw counts or calculate the mean of the normalised counts.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param cell_list Named list.
 #' @param return_format String. One of `c("dense", "sparse")`.
 #' @param assay String. One of `c("raw", "norm")`.
@@ -514,10 +514,10 @@ get_pseudobulked_sc <- S7::new_generic(
   }
 )
 
-#' @method get_pseudobulked_sc single_cell_exp
+#' @method get_pseudobulked_sc SingleCells
 #'
 #' @export
-S7::method(get_pseudobulked_sc, single_cell_exp) <- function(
+S7::method(get_pseudobulked_sc, SingleCells) <- function(
   object,
   cell_list,
   return_format = c("dense", "sparse"),
@@ -529,7 +529,7 @@ S7::method(get_pseudobulked_sc, single_cell_exp) <- function(
   assay <- match.arg(assay)
 
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertList(cell_list, types = "character", names = "named")
   checkmate::assertChoice(return_format, c("dense", "sparse"))
   checkmate::assertChoice(assay, c("raw", "norm"))

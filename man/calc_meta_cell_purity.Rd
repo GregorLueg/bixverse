@@ -7,14 +7,14 @@
 calc_meta_cell_purity(object, original_cell_type)
 }
 \arguments{
-\item{object}{\code{meta_cells} class.}
+\item{object}{\code{MetaCells} class.}
 
 \item{original_cell_type}{Character vector. The original cell type
 annotations. The indices need to match with the original cell indices used
 to generate the meta-cells! (1-indexed)}
 }
 \value{
-The \code{meta_cells} with an added columns to the observation table
+The \code{MetaCells} with an added columns to the observation table
 with the purity measures
 }
 \description{

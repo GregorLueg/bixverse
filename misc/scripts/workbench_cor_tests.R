@@ -48,7 +48,7 @@ data_2 <- t(d)[samples_to_keep_2, ]
 meta_data_1 <- new_meta_data[gtex_subgrp == "Brain - Caudate (basal ganglia)"]
 meta_data_2 <- new_meta_data[gtex_subgrp == "Brain - Frontal Cortex (BA9)"]
 
-cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+cor_test <- BulkCoExp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   cor_module_processing(., cor_method = "spearman")
 
@@ -70,7 +70,7 @@ devtools::load_all()
 
 cor_test <- cor_module_graph_final_modules(cor_test)
 
-cor_test <- bulk_coexp(raw_data = data_2, meta_data = meta_data_2) %>%
+cor_test <- BulkCoExp(raw_data = data_2, meta_data = meta_data_2) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   cor_module_processing(., cor_method = "spearman")
 
@@ -82,7 +82,7 @@ devtools::document()
 dim(data_1)
 
 tictoc::tic()
-cor_test_2 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+cor_test_2 <- BulkCoExp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   diffcor_module_processing(
     .,
@@ -102,7 +102,7 @@ devtools::load_all()
 rextendr::document()
 
 tictoc::tic()
-cor_test <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1) %>%
+cor_test <- BulkCoExp(raw_data = data_1, meta_data = meta_data_1) %>%
   preprocess_bulk_coexp(., mad_threshold = 1) %>%
   cor_module_processing(., cor_method = "spearman")
 
@@ -132,7 +132,7 @@ meta_data <- data.table::data.table(
   case_control = syn_data$group
 )
 
-cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
+cor_test <- BulkCoExp(raw_data = data, meta_data = meta_data) %>%
   preprocess_bulk_coexp(., hvg = 0.5) %>%
   cor_module_processing(., cor_method = "spearman")
 

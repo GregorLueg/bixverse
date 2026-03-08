@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_pca_singular_val}
 \alias{get_pca_singular_val}
-\alias{get_pca_singular_val.sc_cache}
-\alias{get_pca_singular_val.single_cell_exp}
+\alias{get_pca_singular_val.ScCache}
+\alias{get_pca_singular_val.SingleCells}
 \title{Get the PCA singular values}
 \usage{
 get_pca_singular_val(x)
 
-\method{get_pca_singular_val}{sc_cache}(x)
+\method{get_pca_singular_val}{ScCache}(x)
 }
 \arguments{
 \item{x}{An object to get PCA singular values from.}
@@ -16,5 +16,5 @@ get_pca_singular_val(x)
 \description{
 Get the PCA singular values
 
-Get the PCA singular values from a \code{single_cell_exp}.
+Get the PCA singular values from a \code{SingleCells}.
 }

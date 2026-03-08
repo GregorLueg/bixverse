@@ -14,9 +14,9 @@
 #' @export
 #'
 #' @import data.table
-single_cell_duckdb_base <- R6::R6Class(
+SingleCellDuckDBBase <- R6::R6Class(
   # class name
-  classname = "single_cell_duckdb_base",
+  classname = "SingleCellDuckDBBase",
   # public functions, slots
   public = list(
     #' @description
@@ -587,11 +587,11 @@ single_cell_duckdb_base <- R6::R6Class(
 #' @export
 #'
 #' @import data.table
-single_cell_duckdb_con <- R6::R6Class(
+SingleCellDuckDB <- R6::R6Class(
   # class name
-  classname = "single_cell_duckdb_con",
+  classname = "SingleCellDuckDB",
   # public functions, slots
-  inherit = single_cell_duckdb_base,
+  inherit = SingleCellDuckDBBase,
   public = list(
     ##############
     # Readers h5 #

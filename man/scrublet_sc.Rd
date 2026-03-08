@@ -15,7 +15,7 @@ scrublet_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{scrublet_params}{A list with the final scrublet parameters, see
 \code{\link[=params_scrublet]{params_scrublet()}} for full details.}

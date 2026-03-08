@@ -7,7 +7,7 @@
 #' @description This function calculates needed information for semantic
 #' similiary calculations
 #'
-#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param object `Ontology class`. See [bixverse::Ontology()].
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @return The class with added pre-processed data for semantic similarities to
@@ -27,8 +27,8 @@ pre_process_sim_onto <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method pre_process_sim_onto ontology
-S7::method(pre_process_sim_onto, ontology) <- function(
+#' @method pre_process_sim_onto Ontology
+S7::method(pre_process_sim_onto, Ontology) <- function(
   object,
   .verbose = TRUE
 ) {
@@ -36,7 +36,7 @@ S7::method(pre_process_sim_onto, ontology) <- function(
   ancestors <- descendants <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::ontology")
+  checkmate::assertClass(object, "bixverse::Ontology")
   checkmate::qassert(.verbose, "B1")
 
   parent_child_dt <- S7::prop(object, "parent_child_dt")
@@ -66,7 +66,7 @@ S7::method(pre_process_sim_onto, ontology) <- function(
 #' @description This function calculates the specified semantic similarities for
 #' the whole ontology and adds it to the class.
 #'
-#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param object `Ontology` class. See [bixverse::Ontology()].
 #' @param sim_type String. One of `c("resnik", "lin", "combined")`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
@@ -90,8 +90,8 @@ calculate_semantic_sim_onto <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method calculate_semantic_sim_onto ontology
-S7::method(calculate_semantic_sim_onto, ontology) <-
+#' @method calculate_semantic_sim_onto Ontology
+S7::method(calculate_semantic_sim_onto, Ontology) <-
   function(
     object,
     sim_type = c("resnik", "lin", "combined"),
@@ -100,7 +100,7 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
     sim_type <- match.arg(sim_type)
 
     # Checks
-    checkmate::assertClass(object, "bixverse::ontology")
+    checkmate::assertClass(object, "bixverse::Ontology")
     checkmate::assertChoice(sim_type, c("resnik", "lin", "combined"))
     checkmate::qassert(.verbose, "B1")
 
@@ -158,7 +158,7 @@ S7::method(calculate_semantic_sim_onto, ontology) <-
 #' ontology and adds it to the class in a memory-efficient format for
 #' subsequent usage.
 #'
-#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param object `Ontology` class. See [bixverse::Ontology()].
 #' @param weights Named numeric. The relationship of type to weight for this
 #' specific edge. For example `c("part_of" = 0.8, "is_a" = 0.6)`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
@@ -184,8 +184,8 @@ calculate_wang_sim_onto <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @importFrom zeallot `%<-%`
 #'
-#' @method calculate_wang_sim_onto ontology
-S7::method(calculate_wang_sim_onto, ontology) <- function(
+#' @method calculate_wang_sim_onto Ontology
+S7::method(calculate_wang_sim_onto, Ontology) <- function(
   object,
   weights,
   .verbose = TRUE
@@ -194,7 +194,7 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
   weight <- type <- NULL
 
   # checks
-  checkmate::assertClass(object, "bixverse::ontology")
+  checkmate::assertClass(object, "bixverse::Ontology")
   checkmate::assertNumeric(weights, min.len = 1L, names = "named")
   checkmate::qassert(.verbose, "B1")
 
@@ -257,7 +257,7 @@ S7::method(calculate_wang_sim_onto, ontology) <- function(
 #' [bixverse::calculate_critical_value()] and filters subsequently all the
 #' term pairs to the ones with a value ≥ critical value.
 #'
-#' @param object `ontology class`. See [bixverse::ontology()].
+#' @param object `Ontology` class. See [bixverse::Ontology()].
 #' @param alpha Float. The alpha value. For example, 0.001 would mean that the
 #' critical value is smaller than 0.1 percentile of the random permutations.
 #' @param permutations Number of random permutations.
@@ -287,8 +287,8 @@ filter_similarities <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method calculate_wang_sim_onto ontology
-S7::method(filter_similarities, ontology) <- function(
+#' @method calculate_wang_sim_onto Ontology
+S7::method(filter_similarities, Ontology) <- function(
   object,
   alpha,
   permutations = 100000L,
@@ -296,7 +296,7 @@ S7::method(filter_similarities, ontology) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::ontology")
+  checkmate::assertClass(object, "bixverse::Ontology")
   checkmate::qassert(alpha, "N1(0, 1)")
   checkmate::qassert(permutations, "I1")
   checkmate::qassert(seed, "I1")

@@ -16,7 +16,7 @@ cor_module_graph_check_res(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{resolution_params}{List. Parameters for the resolution search, see
 \code{\link[=params_graph_resolution]{params_graph_resolution()}}. Contains:
