@@ -2860,6 +2860,8 @@ SingeCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_ge
 
 SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
+SingeCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingeCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
+
 SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 
 SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)

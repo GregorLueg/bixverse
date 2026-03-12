@@ -27,6 +27,8 @@ observation/cell metadata and the feature/gene metadata.
 \itemize{
 \item \href{#method-SingleCellDuckDB-populate_obs_from_h5}{\code{SingleCellDuckDB$populate_obs_from_h5()}}
 \item \href{#method-SingleCellDuckDB-populate_vars_from_h5}{\code{SingleCellDuckDB$populate_vars_from_h5()}}
+\item \href{#method-SingleCellDuckDB-populate_obs_from_multi_h5}{\code{SingleCellDuckDB$populate_obs_from_multi_h5()}}
+\item \href{#method-SingleCellDuckDB-populate_vars_from_h5_reordered}{\code{SingleCellDuckDB$populate_vars_from_h5_reordered()}}
 \item \href{#method-SingleCellDuckDB-populate_obs_from_plain_text}{\code{SingleCellDuckDB$populate_obs_from_plain_text()}}
 \item \href{#method-SingleCellDuckDB-populate_var_from_plain_text}{\code{SingleCellDuckDB$populate_var_from_plain_text()}}
 \item \href{#method-SingleCellDuckDB-populate_obs_from_data.table}{\code{SingleCellDuckDB$populate_obs_from_data.table()}}
@@ -106,6 +108,53 @@ observation table.}
 \subsection{Returns}{
 Returns invisible self. As a side effect, it will load in the
 obs data from the h5ad file into the DuckDB.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_obs_from_multi_h5"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_obs_from_multi_h5}{}}}
+\subsection{Method \code{populate_obs_from_multi_h5()}}{
+Populate the obs table from multiple h5ad files.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_obs_from_multi_h5(per_file_info, cell_id_col = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{per_file_info}}{List of lists, each containing: h5_path, exp_id,
+cell_filter (1-indexed integer vector of cells to keep).}
+
+\item{\code{cell_id_col}}{Optional string. Column name for cell identifiers.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self. Populates the obs table in DuckDB.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDB-populate_vars_from_h5_reordered"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDB-populate_vars_from_h5_reordered}{}}}
+\subsection{Method \code{populate_vars_from_h5_reordered()}}{
+Populate the var table from an h5ad file, filtered and reordered to
+match a target gene set.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDB$populate_vars_from_h5_reordered(h5_path, final_gene_names)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{h5_path}}{String. Path to the reference h5ad file.}
+
+\item{\code{final_gene_names}}{Character vector. Gene names in the desired
+final order.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self. Populates the var table in DuckDB.
 Function to populate the obs table from plain text files
 }
 }

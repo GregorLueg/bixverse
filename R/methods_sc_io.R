@@ -795,24 +795,11 @@ S7::method(load_multi_h5ad, SingleCells) <- function(
     message("Loading variable data into DuckDB.")
   }
 
-  # global_gene_indices maps final -> universe position (0-indexed)
-  # universe genes are sorted alphabetically, so we can index directly
-  global_gene_filter <- as.integer(file_res$global_gene_indices + 1L)
+  final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
 
-  # use first file for var metadata
-  ref_h5_path <- prescan_result$file_tasks[[1L]]$h5_path
-  ref_gene_filter <- which(
-    !is.na(prescan_result$file_tasks[[1L]]$gene_local_to_universe)
-  )
-  # reorder to universe order, then filter to final set
-  ref_universe_order <- order(
-    prescan_result$file_tasks[[1L]]$gene_local_to_universe[ref_gene_filter]
-  )
-  ref_gene_filter <- ref_gene_filter[ref_universe_order][global_gene_filter]
-
-  duckdb_con$populate_vars_from_h5(
-    h5_path = ref_h5_path,
-    filter = ref_gene_filter
+  duckdb_con$populate_vars_from_h5_reordered(
+    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
+    final_gene_names = final_gene_names
   )
 
   # add QC columns

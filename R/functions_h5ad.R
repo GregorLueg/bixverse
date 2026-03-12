@@ -88,6 +88,8 @@ prescan_h5ad_files <- function(
     )
   })
 
+  names(file_tasks) <- exp_ids
+
   list(
     universe = universe,
     universe_size = length(universe),
