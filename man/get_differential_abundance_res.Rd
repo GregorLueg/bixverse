@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{get_differential_abundance_res}
 \alias{get_differential_abundance_res}
-\alias{get_differential_abundance_res.sc_miloR}
+\alias{get_differential_abundance_res.miloR}
 \title{Get the differential abundance results}
 \usage{
 get_differential_abundance_res(x)
 
-\method{get_differential_abundance_res}{sc_miloR}(x)
+\method{get_differential_abundance_res}{miloR}(x)
 }
 \arguments{
 \item{x}{An object from which to get the differential abundance results

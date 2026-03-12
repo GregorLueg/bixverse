@@ -112,7 +112,7 @@ S7::method(scrublet_sc, SingleCells) <- function(
   )
 
   attr(scrublet_res, "cell_indices") <- cells_to_keep
-  class(scrublet_res) <- "scrublet_res"
+  class(scrublet_res) <- "ScrubletRes"
 
   return(scrublet_res)
 }
@@ -192,7 +192,7 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   )
 
   attr(boost_res, "cell_indices") <- cells_to_keep
-  class(boost_res) <- "boost_res"
+  class(boost_res) <- "BoostRes"
 
   return(boost_res)
 }

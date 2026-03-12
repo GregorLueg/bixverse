@@ -52,13 +52,13 @@ get_obs_data.sc_proportion_res <- function(x, ...) {
 ### histogram plotting ---------------------------------------------------------
 
 #' @export
-plot.scrublet_res <- function(
+plot.ScrubletRes <- function(
   x,
   break_number = 31L,
   ...
 ) {
   # checks
-  checkmate::assertClass(x, "scrublet_res")
+  checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")
 
   # plotting
@@ -119,17 +119,17 @@ plot.scrublet_res <- function(
 #' Can update the Scrublet thresholding after manual introspection of the
 #' histogram.
 #'
-#' @param scrublet_res `scrublet_res` result class.
+#' @param scrublet_res `ScrubletRes` result class.
 #' @param threshold Numeric. The new threshold to use.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @returns `scrublet_res` class with updated doublet calls based on the new
+#' @returns `ScrubletRes` class with updated doublet calls based on the new
 #' threshold.
 #'
 #' @export
 call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
   # checks
-  checkmate::assertClass(scrublet_res, "scrublet_res")
+  checkmate::assertClass(scrublet_res, "ScrubletRes")
   checkmate::qassert(threshold, "N1[0,1]")
   checkmate::qassert(.verbose, "B1")
 
@@ -181,9 +181,9 @@ call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
 #' @rdname get_obs_data
 #'
 #' @export
-get_obs_data.scrublet_res <- function(x, ...) {
+get_obs_data.ScrubletRes <- function(x, ...) {
   # checks
-  checkmate::assertClass(x, "scrublet_res")
+  checkmate::assertClass(x, "ScrubletRes")
 
   # function body
   obs_dt <- data.table::data.table(
@@ -200,9 +200,9 @@ get_obs_data.scrublet_res <- function(x, ...) {
 #' @rdname get_obs_data
 #'
 #' @export
-get_obs_data.boost_res <- function(x, ...) {
+get_obs_data.BoostRes <- function(x, ...) {
   # checks
-  checkmate::assertClass(x, "boost_res")
+  checkmate::assertClass(x, "BoostRes")
 
   # function body
   obs_dt <- data.table::as.data.table(
@@ -232,7 +232,7 @@ get_obs_data.boost_res <- function(x, ...) {
 #' @param used_cells Character vector. The cells used to generate the kNN graph
 #' with the distances.
 #'
-#' @return Generates the `sc_knn` class.
+#' @return Generates the `SingleCellNearestNeighbour` class.
 #'
 #' @export
 new_sc_knn <- function(knn_data, used_cells) {
@@ -251,7 +251,7 @@ new_sc_knn <- function(knn_data, used_cells) {
     used_cells = used_cells
   )
 
-  class(sc_knn) <- "sc_knn"
+  class(sc_knn) <- "SingleCellNearestNeighbour"
 
   return(sc_knn)
 }
@@ -263,9 +263,9 @@ new_sc_knn <- function(knn_data, used_cells) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.sc_knn <- function(x) {
+get_knn_mat.SingleCellNearestNeighbour <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_knn")
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
   return(x[["indices"]])
 }
@@ -273,9 +273,9 @@ get_knn_mat.sc_knn <- function(x) {
 #' @rdname get_knn_dist
 #'
 #' @export
-get_knn_dist.sc_knn <- function(x) {
+get_knn_dist.SingleCellNearestNeighbour <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_knn")
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
   return(x[["dist"]])
 }
@@ -319,7 +319,7 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
     module_memership = NULL
   )
 
-  class(sc_hotspot) <- "sc_hotspot"
+  class(sc_hotspot) <- "Hotspot"
 
   return(sc_hotspot)
 }
@@ -328,12 +328,12 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
 
 #### getters -------------------------------------------------------------------
 
-#' @method get_params sc_hotspot
+#' @method get_params Hotspot
 #'
 #' @export
-S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
+S7::method(get_params, S7::new_S3_class("Hotspot")) <-
   function(object, to_json = FALSE, pretty_json = FALSE) {
-    get_params.sc_hotspot(
+    get_params.Hotspot(
       object = object,
       to_json = to_json,
       pretty_json = pretty_json
@@ -344,7 +344,7 @@ S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
 #' @rdname get_params
 #'
 #' @export
-get_params.sc_hotspot <- function(
+get_params.Hotspot <- function(
   object,
   to_json = FALSE,
   pretty_json = FALSE
@@ -352,7 +352,7 @@ get_params.sc_hotspot <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "sc_hotspot"
+    "Hotspot"
   )
   checkmate::qassert(to_json, "B1")
   checkmate::qassert(pretty_json, "B1")
@@ -381,11 +381,11 @@ get_hotspot_membership <- function(x) {
 #' @rdname get_hotspot_membership
 #'
 #' @export
-get_hotspot_membership.sc_hotspot <- function(
+get_hotspot_membership.Hotspot <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_hotspot")
+  checkmate::assertClass(x, "Hotspot")
 
   x[["module_memership"]]
 }
@@ -407,13 +407,13 @@ set_hotspot_membership <- function(x, fdr_threshold = 0.05, min_size = 10L) {
 #' @rdname set_hotspot_membership
 #'
 #' @export
-set_hotspot_membership.sc_hotspot <- function(
+set_hotspot_membership.Hotspot <- function(
   x,
   fdr_threshold = 0.05,
   min_size = 10L
 ) {
   # checks
-  checkmate::assertClass(x, "sc_hotspot")
+  checkmate::assertClass(x, "Hotspot")
   checkmate::qassert(fdr_threshold, "N1[0, 1]")
   checkmate::qassert(min_size, "I1")
 
@@ -450,7 +450,7 @@ set_hotspot_membership.sc_hotspot <- function(
 #' @param params Named list. The parameters that were used to generate these
 #' results.
 #'
-#' @returns An `sc_miloR` class that contains the provided data and has
+#' @returns An `miloR` class that contains the provided data and has
 #' subsequent methods to calculate differential abundance statistics.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022
@@ -476,19 +476,19 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
     params = params
   )
 
-  class(sc_milor) <- "sc_miloR"
+  class(sc_milor) <- "miloR"
 
   return(sc_milor)
 }
 
 ### getters --------------------------------------------------------------------
 
-#' @method get_params sc_miloR
+#' @method get_params miloR
 #'
 #' @export
-S7::method(get_params, S7::new_S3_class("sc_miloR")) <-
+S7::method(get_params, S7::new_S3_class("miloR")) <-
   function(object, to_json = FALSE, pretty_json = FALSE) {
-    get_params.sc_miloR(
+    get_params.miloR(
       object = object,
       to_json = to_json,
       pretty_json = pretty_json
@@ -498,7 +498,7 @@ S7::method(get_params, S7::new_S3_class("sc_miloR")) <-
 #' @rdname get_params
 #'
 #' @export
-get_params.sc_miloR <- function(
+get_params.miloR <- function(
   object,
   to_json = FALSE,
   pretty_json = FALSE
@@ -506,7 +506,7 @@ get_params.sc_miloR <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "sc_miloR"
+    "miloR"
   )
   checkmate::qassert(to_json, "B1")
   checkmate::qassert(pretty_json, "B1")
@@ -537,11 +537,11 @@ get_differential_abundance_res <- function(x) {
 #' @rdname get_differential_abundance_res
 #'
 #' @export
-get_differential_abundance_res.sc_miloR <- function(
+get_differential_abundance_res.miloR <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   res <- x[["nhoods_info"]]
 
@@ -571,11 +571,11 @@ get_model_fit <- function(x) {
 #' @rdname get_model_fit
 #'
 #' @export
-get_model_fit.sc_miloR <- function(
+get_model_fit.miloR <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   res <- x[["model"]]
 
@@ -604,9 +604,9 @@ get_index_cells <- function(x) {
 #' @rdname get_index_cells
 #'
 #' @export
-get_index_cells.sc_miloR <- function(x) {
+get_index_cells.miloR <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   x[["params"]]$index_cell
 }
@@ -693,7 +693,7 @@ spatial_fdr_correction <- function(
 #' described in Dann et al., using graph-based neighbourhoods to identify
 #' regions of significant compositional changes in single-cell data.
 #'
-#' @param x `sc_miloR` object for which to run the differential abundance
+#' @param x `miloR` object for which to run the differential abundance
 #' analysis.
 #' @param design Formula for the experimental design
 #' @param design_df data.frame. Contains the metadata to be used for the
@@ -713,7 +713,7 @@ spatial_fdr_correction <- function(
 #' the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
 #' Defaults to k-distance.
 #'
-#' @return The `sc_miloR` object with added model and results from the
+#' @return The `miloR` object with added model and results from the
 #' differential abundance analysis.
 #'
 #' @references Dann et al., 2022, Nat Biotechnol
@@ -735,7 +735,7 @@ test_nhoods <- function(
 #' @rdname test_nhoods
 #'
 #' @export
-test_nhoods.sc_miloR <- function(
+test_nhoods.miloR <- function(
   x,
   design,
   design_df,
@@ -749,7 +749,7 @@ test_nhoods.sc_miloR <- function(
   fdr_weighting <- match.arg(fdr_weighting)
 
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
   checkmate::assertFormula(design)
   checkmate::assertDataFrame(design_df, row.names = "named")
   checkmate::qassert(coef, c("0", "S1", "X1"))
@@ -842,18 +842,18 @@ test_nhoods.sc_miloR <- function(
 #'
 #' @description
 #' This function adds cell type composition information to the `nhoods_info`
-#' slot within the `sc_miloR` object. For each neighbourhood, it calculates
+#' slot within the `miloR` object. For each neighbourhood, it calculates
 #' the proportion of the majority cell type and identifies which cell type
 #' is most abundant. This is useful for annotating differential abundance
 #' results with the cellular composition of each neighbourhood.
 #'
-#' @param x `sc_miloR` object on which to tag on additional neighbourhood
+#' @param x `miloR` object on which to tag on additional neighbourhood
 #' information.
 #' @param cell_info Character vector. Represents the cell type annotations
 #' you wish to add to the different neighbourhoods. Must be the same length
 #' as the number of cells (rows) in the nhoods matrix.
 #'
-#' @return Modified `sc_miloR` object with updated `nhoods_info` containing
+#' @return Modified `miloR` object with updated `nhoods_info` containing
 #' `majority_celltype` and `majority_prop` columns.
 #'
 #' @export
@@ -867,9 +867,9 @@ add_nhoods_info <- function(
 #' @rdname add_nhoods_info
 #'
 #' @export
-add_nhoods_info.sc_miloR <- function(x, cell_info) {
+add_nhoods_info.miloR <- function(x, cell_info) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
   checkmate::qassert(cell_info, "S+")
 
   # early return

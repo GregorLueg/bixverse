@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{get_model_fit}
 \alias{get_model_fit}
-\alias{get_model_fit.sc_miloR}
+\alias{get_model_fit.miloR}
 \title{Get the fitted model}
 \usage{
 get_model_fit(x)
 
-\method{get_model_fit}{sc_miloR}(x)
+\method{get_model_fit}{miloR}(x)
 }
 \arguments{
 \item{x}{An object from which to get the differential abundance results

@@ -19,7 +19,7 @@ to calculate the spatial FDR.}
 results.}
 }
 \value{
-An \code{sc_miloR} class that contains the provided data and has
+An \code{miloR} class that contains the provided data and has
 subsequent methods to calculate differential abundance statistics.
 }
 \description{

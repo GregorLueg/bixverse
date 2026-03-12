@@ -176,3 +176,118 @@ snf <- function(data = NULL, data_name = NULL, snf_params = params_snf()) {
   )
   Snf(data = data, data_name = data_name, snf_params = snf_params)
 }
+
+## gene ontology elim ----------------------------------------------------------
+
+#' @title Gene Ontology data (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This constructor has been renamed to [bixverse::GeneOntologyElim()].
+#'
+#' @param go_data_dt A data.table that contains the gene ontology information.
+#' This can be extracted with for example [bixverse::get_go_data_human()].
+#' @param min_genes Integer. The minimum number of genes in a gene ontology
+#' term to conduct the test.
+#'
+#' @return Returns a [bixverse::GeneOntologyElim()] object.
+#'
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
+#' @export
+gene_ontology_data <- function(go_data_dt, min_genes) {
+  lifecycle::deprecate_warn(
+    when = "0.3.0",
+    what = "gene_ontology_data()",
+    with = "GeneOntologyElim()"
+  )
+  GeneOntologyElim(go_data_dt = go_data_dt, min_genes = min_genes)
+}
+
+## general ontology ------------------------------------------------------------
+
+#' @title Ontology class (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This constructor has been renamed to [bixverse::OntologySim()].
+#'
+#' @param parent_child_dt A data.table containing the ontological information
+#' as parent-child relationships. Must contain the `c("parent", "child")`
+#' columns.
+#' @param .verbose Boolean. Controls the verbosity of the class.
+#'
+#' @return Returns a [bixverse::OntologySim()] object.
+#'
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
+#' @export
+ontology <- function(parent_child_dt, .verbose = TRUE) {
+  lifecycle::deprecate_warn(
+    when = "0.3.0",
+    what = "ontology()",
+    with = "OntologySim()"
+  )
+  OntologySim(parent_child_dt = parent_child_dt, .verbose = .verbose)
+}
+
+## single cell -----------------------------------------------------------------
+
+#' @title bixverse single cell class (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This constructor has been renamed to [bixverse::SingleCells()].
+#'
+#' @param dir_data String. The directory in which the experimental files will
+#' be stored.
+#'
+#' @return Returns a [bixverse::SingleCells()] object.
+#'
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
+#' @export
+single_cell_exp <- function(dir_data) {
+  lifecycle::deprecate_warn(
+    when = "0.3.0",
+    what = "single_cell_exp()",
+    with = "SingleCells()"
+  )
+  SingleCells(dir_data = dir_data)
+}
+
+## metacells -------------------------------------------------------------------
+
+#' @title bixverse meta cell class (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This constructor has been renamed to [bixverse::MetaCells()].
+#'
+#' @param meta_cell_data Named list. Output of meta-cell generation Rust
+#' functions. Will contain the aggregated raw and normalised counts, plus
+#' additional information on the origin of the meta cells.
+#' @param var_data data.table with the variable/feature informations.
+#' @param meta_cell_method String describing the origin of the metacell.
+#'
+#' @return Returns a [bixverse::MetaCells()] object.
+#'
+#' @keywords internal
+#' @importFrom lifecycle deprecate_warn
+#' @export
+meta_cells <- function(meta_cell_data, var_data, meta_cell_method) {
+  lifecycle::deprecate_warn(
+    when = "0.3.0",
+    what = "meta_cells()",
+    with = "MetaCells()"
+  )
+  MetaCells(
+    meta_cell_data = meta_cell_data,
+    var_data = var_data,
+    meta_cell_method = meta_cell_method
+  )
+}

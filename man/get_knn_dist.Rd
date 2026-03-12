@@ -2,12 +2,12 @@
 % Please edit documentation in R/base_generics.R, R/classes_single_cell_others.R
 \name{get_knn_dist}
 \alias{get_knn_dist}
-\alias{get_knn_dist.sc_knn}
+\alias{get_knn_dist.SingleCellNearestNeighbour}
 \title{Get the KNN distance measures}
 \usage{
 get_knn_dist(x)
 
-\method{get_knn_dist}{sc_knn}(x)
+\method{get_knn_dist}{SingleCellNearestNeighbour}(x)
 }
 \arguments{
 \item{x}{An object to get the kNN distances from.}

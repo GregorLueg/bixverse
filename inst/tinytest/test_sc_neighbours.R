@@ -452,8 +452,8 @@ annoy_knn_data <- generate_knn_sc(
 )
 
 expect_true(
-  current = checkmate::testClass(annoy_knn_data, "sc_knn"),
-  info = "sc_knn - expected class returned"
+  current = checkmate::testClass(annoy_knn_data, "SingleCellNearestNeighbour"),
+  info = "SingleCellNearestNeighbour - expected class returned"
 )
 
 expect_true(
@@ -461,7 +461,7 @@ expect_true(
     get_knn_mat(annoy_knn_data),
     mode = "integer"
   ),
-  info = "sc_knn - indices of expected type"
+  info = "SingleCellNearestNeighbour - indices of expected type"
 )
 
 expect_true(
@@ -469,7 +469,7 @@ expect_true(
     get_knn_dist(annoy_knn_data),
     mode = "numeric"
   ),
-  info = "sc_knn - distances of expected type"
+  info = "SingleCellNearestNeighbour - distances of expected type"
 )
 
 annoy_knn_data_red <- generate_knn_sc(
@@ -487,7 +487,7 @@ annoy_knn_data_red <- generate_knn_sc(
 expect_equivalent(
   current = annoy_knn_data_red$used_cells,
   target = cells_to_keep,
-  info = "sc_knn - reduced version behaves"
+  info = "SingleCellNearestNeighbour - reduced version behaves"
 )
 
 ### annoy ----------------------------------------------------------------------
@@ -506,13 +506,13 @@ annoy_knn_data_cosine <- generate_knn_sc(
 
 expect_true(
   current = calc_recall_exh(rs_annoy_euc, get_knn_mat(annoy_knn_data)) == 1,
-  info = "sc_knn class - expected overlap annoy euclidean"
+  info = "SingleCellNearestNeighbour class - expected overlap annoy euclidean"
 )
 
 expect_true(
   current = calc_recall_exh(rs_annoy_cos, get_knn_mat(annoy_knn_data_cosine)) ==
     1,
-  info = "sc_knn class - expected overlap annoy cosine"
+  info = "SingleCellNearestNeighbour class - expected overlap annoy cosine"
 )
 
 ### hnsw -----------------------------------------------------------------------
@@ -530,7 +530,7 @@ hnsw_knn_data <- generate_knn_sc(
 
 expect_true(
   current = calc_recall_exh(rs_hnsw_euc, get_knn_mat(hnsw_knn_data)) == 1,
-  info = "sc_knn class - expected overlap hnsw euclidean"
+  info = "SingleCellNearestNeighbour class - expected overlap hnsw euclidean"
 )
 
 ### nndescent ------------------------------------------------------------------
