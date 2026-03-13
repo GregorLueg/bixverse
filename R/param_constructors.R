@@ -830,6 +830,42 @@ params_scenic_extra_trees_defaults <- function() {
   )
 }
 
+#' Default parameters for the SCENIC GradientBoosting (GRNBoost2) regression
+#' learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees_max - Integer. Maximum number of boosting rounds. Early
+#'  stopping usually triggers well before this limit. Defaults to `1000L`.
+#'  \item learning_rate - Numeric. Shrinkage applied to each tree's
+#'  predictions. Defaults to `0.01`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Shallow trees
+#'  (3-5) work best for GBM. Defaults to `3L`.
+#'  \item min_samples_leaf - Integer. Minimum number of training samples
+#'  required at a leaf node. Defaults to `50L`.
+#'  \item early_stop_window - Integer. Number of recent OOB improvements to
+#'  average for the early stopping criterion. Stops when the rolling average
+#'  drops to zero or below. Defaults to `25L`.
+#'  \item subsample_rate - Numeric. Fraction of samples used for training
+#'  each tree. The complement forms the OOB set. Defaults to `0.9`.
+#'  \item n_features_split - Integer. Number of features to evaluate per
+#'  split. `0L` means all features (recommended with histogram subtraction).
+#'  Defaults to `0L`.
+#' }
+#'
+#' @export
+params_scenic_gradient_boosting_defaults <- function() {
+  list(
+    n_trees_max = 1000L,
+    learning_rate = 0.01,
+    max_depth = 3L,
+    min_samples_leaf = 50L,
+    early_stop_window = 25L,
+    subsample_rate = 0.9,
+    n_features_split = 0L
+  )
+}
+
 ### main params ----------------------------------------------------------------
 
 #' Constructor for SCENIC parameters
@@ -839,11 +875,15 @@ params_scenic_extra_trees_defaults <- function() {
 #' @param min_cells Numeric. Minimum proportion of cells (between 0 and 1) that
 #' must express a gene for it to be considered. Defaults to `0.03`.
 #' @param learner_type Character. Regression learner to use. One of
-#' `"randomforest"` or `"extratrees"`. Defaults to `"randomforest"`.
+#' `"randomforest"`, `"extratrees"`, or `"grnboost2"`. Defaults to
+#' `"grnboost2"`.
 #' @param gene_batch_strategy Character. Strategy for grouping target genes into
-#' batches. One of `"random"` or `"correlated"`. Defaults to `"correlated"`.
+#' batches. One of `"random"` or `"correlated"`. Only used for `"randomforest"`
+#' and `"extratrees"` learners; ignored for `"grnboost2"`. Defaults to
+#' `"correlated"`.
 #' @param gene_batch_size Optional integer. Number of genes per batch. If `NULL`
-#' (default), the batch size is determined automatically.
+#' (default), the batch size is determined automatically. Ignored for
+#' `"grnboost2"`.
 #' @param n_pcs Integer. Number of PCs to use for the correlated gene batch
 #' strategy. Defaults to `50L`.
 #' @param n_subsample Integer. Cell subsampling threshold for the correlated
@@ -852,12 +892,9 @@ params_scenic_extra_trees_defaults <- function() {
 #' Defaults to `100000L`.
 #' @param learner_params List. Optional overrides for the regression learner
 #' parameters. For `"randomforest"`, see
-#' [bixverse::params_scenic_random_forest_defaults()] for available parameters:
-#' `n_trees`, `min_samples_leaf`, `n_features_split`, `subsample_rate`,
-#' `bootstrap`, `max_depth`, `subsample_frac`. For `"extratrees"`, see
-#' [bixverse::params_scenic_extra_trees_defaults()] for available parameters:
-#' `n_trees`, `min_samples_leaf`, `n_features_split`, `n_thresholds`,
-#' `max_depth`, `subsample_frac`.
+#' [bixverse::params_scenic_random_forest_defaults()]. For `"extratrees"`, see
+#' [bixverse::params_scenic_extra_trees_defaults()]. For `"grnboost2"`, see
+#' [bixverse::params_scenic_gradient_boosting_defaults()].
 #'
 #' @returns A named flat list with all SCENIC parameters.
 #'
@@ -865,7 +902,7 @@ params_scenic_extra_trees_defaults <- function() {
 params_scenic <- function(
   min_counts = 50L,
   min_cells = 0.03,
-  learner_type = "randomforest",
+  learner_type = "grnboost2",
   gene_batch_strategy = "correlated",
   gene_batch_size = NULL,
   n_pcs = 50L,
@@ -874,7 +911,10 @@ params_scenic <- function(
 ) {
   checkmate::qassert(min_counts, "I1[1,)")
   checkmate::qassert(min_cells, "N1(0,1]")
-  checkmate::assert_choice(learner_type, c("randomforest", "extratrees"))
+  checkmate::assert_choice(
+    learner_type,
+    c("randomforest", "extratrees", "grnboost2")
+  )
   checkmate::assert_choice(gene_batch_strategy, c("random", "correlated"))
   if (!is.null(gene_batch_size)) {
     checkmate::qassert(gene_batch_size, "I1[1,)")
@@ -882,11 +922,12 @@ params_scenic <- function(
   checkmate::qassert(n_pcs, "I1[1,)")
   checkmate::qassert(n_subsample, "I1[1,)")
 
-  learner_defaults <- if (learner_type == "extratrees") {
-    params_scenic_extra_trees_defaults()
-  } else {
+  learner_defaults <- switch(
+    learner_type,
+    extratrees = params_scenic_extra_trees_defaults(),
+    grnboost2 = params_scenic_gradient_boosting_defaults(),
     params_scenic_random_forest_defaults()
-  }
+  )
 
   params <- c(
     list(

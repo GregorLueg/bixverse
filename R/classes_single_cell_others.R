@@ -928,3 +928,51 @@ add_nhoods_info.miloR <- function(x, cell_info) {
 
   x
 }
+
+## scenic grns -----------------------------------------------------------------
+
+#' Constructor for SCENIC GRN results
+#'
+#' @description
+#' Stores the TF-gene importance matrix and associated metadata from a SCENIC
+#' GRN inference run. Intended as input to downstream regulon generation
+#' functions.
+#'
+#' @param importance_matrix Matrix. Importance matrix of shape
+#' `(n_genes, n_tfs)` with gene identifiers as rownames and TF identifiers
+#' as colnames.
+#' @param gene_ids Character vector. Gene identifiers corresponding to rows.
+#' @param tf_ids Character vector. TF identifiers corresponding to columns.
+#' @param params List. The full SCENIC parameters used for the run.
+#'
+#' @return An object of class `ScenicGrn`.
+#'
+#' @export
+new_scenic_grn <- function(
+  importance_matrix,
+  gene_ids,
+  tf_ids,
+  learner_type,
+  params
+) {
+  checkmate::assertMatrix(importance_matrix, mode = "numeric")
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(tf_ids, "S+")
+  checkmate::assertChoice(
+    learner_type,
+    c("randomforest", "extratrees", "grnboost2")
+  )
+  checkmate::assertList(params)
+  checkmate::assertTRUE(nrow(importance_matrix) == length(gene_ids))
+  checkmate::assertTRUE(ncol(importance_matrix) == length(tf_ids))
+
+  scenic_grn <- list(
+    importance_matrix = importance_matrix,
+    gene_ids = gene_ids,
+    tf_ids = tf_ids,
+    params = params
+  )
+
+  class(scenic_grn) <- "ScenicGrn"
+  return(scenic_grn)
+}

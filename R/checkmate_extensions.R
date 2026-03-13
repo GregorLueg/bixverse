@@ -2855,6 +2855,7 @@ checkScenicParams <- function(x) {
     return(res)
   }
 
+  # Fields shared across all learner types
   required_names <- c(
     "min_counts",
     "min_cells",
@@ -2862,7 +2863,6 @@ checkScenicParams <- function(x) {
     "gene_batch_strategy",
     "n_pcs",
     "n_subsample",
-    "n_trees",
     "min_samples_leaf",
     "n_features_split",
     "max_depth"
@@ -2872,7 +2872,10 @@ checkScenicParams <- function(x) {
     return(res)
   }
 
-  res <- checkmate::checkChoice(x$learner_type, c("randomforest", "extratrees"))
+  res <- checkmate::checkChoice(
+    x$learner_type,
+    c("randomforest", "extratrees", "grnboost2")
+  )
   if (!isTRUE(res)) {
     return(paste("learner_type:", res))
   }
@@ -2885,13 +2888,14 @@ checkScenicParams <- function(x) {
     return(paste("gene_batch_strategy:", res))
   }
 
+  # Integer validation shared across all types
   integer_rules <- list(
     min_counts = "I1[1,)",
     n_pcs = "I1[1,)",
     n_subsample = "I1[1,)",
-    n_trees = "I1[1,)",
     min_samples_leaf = "I1[1,)",
-    n_features_split = "I1[0,)"
+    n_features_split = "I1[0,)",
+    max_depth = "I1[1,)"
   )
   res <- purrr::imap_lgl(x, \(val, name) {
     if (name %in% names(integer_rules)) {
@@ -2907,6 +2911,7 @@ checkScenicParams <- function(x) {
     ))
   }
 
+  # Numeric validation shared across all types
   scalar_numeric_rules <- list(
     min_cells = "N1(0,1]"
   )
@@ -2930,13 +2935,11 @@ checkScenicParams <- function(x) {
     }
   }
 
-  if (!is.null(x$subsample_frac)) {
-    if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
-      return("subsample_frac must be a numeric in (0, 1] or NULL.")
-    }
-  }
-
+  # Learner-specific validation
   if (x$learner_type == "randomforest") {
+    if (is.null(x$n_trees) || !checkmate::qtest(x$n_trees, "I1[1,)")) {
+      return("n_trees must be a positive integer for randomforest.")
+    }
     if (
       is.null(x$subsample_rate) ||
         !checkmate::qtest(x$subsample_rate, "N1(0,1]")
@@ -2946,13 +2949,54 @@ checkScenicParams <- function(x) {
     if (is.null(x$bootstrap) || !checkmate::qtest(x$bootstrap, "B1")) {
       return("bootstrap must be a single logical for randomforest.")
     }
+    if (!is.null(x$subsample_frac)) {
+      if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
+        return("subsample_frac must be a numeric in (0, 1] or NULL.")
+      }
+    }
   }
 
   if (x$learner_type == "extratrees") {
+    if (is.null(x$n_trees) || !checkmate::qtest(x$n_trees, "I1[1,)")) {
+      return("n_trees must be a positive integer for extratrees.")
+    }
     if (
-      is.null(x$n_thresholds) || !checkmate::qtest(x$n_thresholds, "I1[1,)")
+      is.null(x$n_thresholds) ||
+        !checkmate::qtest(x$n_thresholds, "I1[1,)")
     ) {
       return("n_thresholds must be a positive integer for extratrees.")
+    }
+    if (!is.null(x$subsample_frac)) {
+      if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
+        return("subsample_frac must be a numeric in (0, 1] or NULL.")
+      }
+    }
+  }
+
+  if (x$learner_type == "grnboost2") {
+    if (
+      is.null(x$n_trees_max) ||
+        !checkmate::qtest(x$n_trees_max, "I1[1,)")
+    ) {
+      return("n_trees_max must be a positive integer for grnboost2.")
+    }
+    if (
+      is.null(x$learning_rate) ||
+        !checkmate::qtest(x$learning_rate, "N1(0,1]")
+    ) {
+      return("learning_rate must be a numeric in (0, 1] for grnboost2.")
+    }
+    if (
+      is.null(x$early_stop_window) ||
+        !checkmate::qtest(x$early_stop_window, "I1[1,)")
+    ) {
+      return("early_stop_window must be a positive integer for grnboost2.")
+    }
+    if (
+      is.null(x$subsample_rate) ||
+        !checkmate::qtest(x$subsample_rate, "N1(0,1]")
+    ) {
+      return("subsample_rate must be a numeric in (0, 1] for grnboost2.")
     }
   }
 

@@ -7,7 +7,7 @@
 params_scenic(
   min_counts = 50L,
   min_cells = 0.03,
-  learner_type = "randomforest",
+  learner_type = "grnboost2",
   gene_batch_strategy = "correlated",
   gene_batch_size = NULL,
   n_pcs = 50L,
@@ -23,13 +23,17 @@ in the analysis. Defaults to \code{50L}.}
 must express a gene for it to be considered. Defaults to \code{0.03}.}
 
 \item{learner_type}{Character. Regression learner to use. One of
-\code{"randomforest"} or \code{"extratrees"}. Defaults to \code{"randomforest"}.}
+\code{"randomforest"}, \code{"extratrees"}, or \code{"grnboost2"}. Defaults to
+\code{"grnboost2"}.}
 
 \item{gene_batch_strategy}{Character. Strategy for grouping target genes into
-batches. One of \code{"random"} or \code{"correlated"}. Defaults to \code{"correlated"}.}
+batches. One of \code{"random"} or \code{"correlated"}. Only used for \code{"randomforest"}
+and \code{"extratrees"} learners; ignored for \code{"grnboost2"}. Defaults to
+\code{"correlated"}.}
 
 \item{gene_batch_size}{Optional integer. Number of genes per batch. If \code{NULL}
-(default), the batch size is determined automatically.}
+(default), the batch size is determined automatically. Ignored for
+\code{"grnboost2"}.}
 
 \item{n_pcs}{Integer. Number of PCs to use for the correlated gene batch
 strategy. Defaults to \code{50L}.}
@@ -41,12 +45,9 @@ Defaults to \code{100000L}.}
 
 \item{learner_params}{List. Optional overrides for the regression learner
 parameters. For \code{"randomforest"}, see
-\code{\link[=params_scenic_random_forest_defaults]{params_scenic_random_forest_defaults()}} for available parameters:
-\code{n_trees}, \code{min_samples_leaf}, \code{n_features_split}, \code{subsample_rate},
-\code{bootstrap}, \code{max_depth}, \code{subsample_frac}. For \code{"extratrees"}, see
-\code{\link[=params_scenic_extra_trees_defaults]{params_scenic_extra_trees_defaults()}} for available parameters:
-\code{n_trees}, \code{min_samples_leaf}, \code{n_features_split}, \code{n_thresholds},
-\code{max_depth}, \code{subsample_frac}.}
+\code{\link[=params_scenic_random_forest_defaults]{params_scenic_random_forest_defaults()}}. For \code{"extratrees"}, see
+\code{\link[=params_scenic_extra_trees_defaults]{params_scenic_extra_trees_defaults()}}. For \code{"grnboost2"}, see
+\code{\link[=params_scenic_gradient_boosting_defaults]{params_scenic_gradient_boosting_defaults()}}.}
 }
 \value{
 A named flat list with all SCENIC parameters.
