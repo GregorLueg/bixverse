@@ -766,3 +766,140 @@ params_sc_fastmnn <- function(
     knn_params
   )
 }
+
+## scenic ----------------------------------------------------------------------
+
+### regression learner params --------------------------------------------------
+
+#' Default parameters for the SCENIC RandomForest regression learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees - Integer. Number of trees to build. Defaults to `250L`.
+#'  \item min_samples_leaf - Integer. Minimum number of samples required at a
+#'  leaf node. Defaults to `50L`.
+#'  \item n_features_split - Integer. Number of features considered per split.
+#'  `0L` resolves to `sqrt(n_features)` at runtime. Defaults to `0L`.
+#'  \item subsample_rate - Numeric. Fraction of samples to draw per tree.
+#'  Defaults to `0.632`.
+#'  \item bootstrap - Logical. Whether to sample with replacement. Defaults to
+#'  `FALSE`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Defaults to `8L`.
+#'  \item subsample_frac - Optional numeric. Fraction of cells to subsample per
+#'  tree. If set, overrides `subsample_rate`. Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_scenic_random_forest_defaults <- function() {
+  list(
+    n_trees = 250L,
+    min_samples_leaf = 50L,
+    n_features_split = 0L,
+    subsample_rate = 0.632,
+    bootstrap = FALSE,
+    max_depth = 8L,
+    subsample_frac = NULL
+  )
+}
+
+#' Default parameters for the SCENIC ExtraTrees regression learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees - Integer. Number of trees to build. Defaults to `500L`.
+#'  \item min_samples_leaf - Integer. Minimum number of samples required at a
+#'  leaf node. Defaults to `50L`.
+#'  \item n_features_split - Integer. Number of features considered per split.
+#'  `0L` resolves to `sqrt(n_features)` at runtime. Defaults to `0L`.
+#'  \item n_thresholds - Integer. Number of random thresholds to evaluate per
+#'  feature per node. Defaults to `1L`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Defaults to `8L`.
+#'  \item subsample_frac - Optional numeric. Fraction of cells to subsample per
+#'  tree. Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_scenic_extra_trees_defaults <- function() {
+  list(
+    n_trees = 500L,
+    min_samples_leaf = 50L,
+    n_features_split = 0L,
+    n_thresholds = 1L,
+    max_depth = 8L,
+    subsample_frac = NULL
+  )
+}
+
+### main params ----------------------------------------------------------------
+
+#' Constructor for SCENIC parameters
+#'
+#' @param min_counts Integer. Minimum total counts a gene needs to be included
+#' in the analysis. Defaults to `50L`.
+#' @param min_cells Numeric. Minimum proportion of cells (between 0 and 1) that
+#' must express a gene for it to be considered. Defaults to `0.03`.
+#' @param learner_type Character. Regression learner to use. One of
+#' `"randomforest"` or `"extratrees"`. Defaults to `"randomforest"`.
+#' @param gene_batch_strategy Character. Strategy for grouping target genes into
+#' batches. One of `"random"` or `"correlated"`. Defaults to `"correlated"`.
+#' @param gene_batch_size Optional integer. Number of genes per batch. If `NULL`
+#' (default), the batch size is determined automatically.
+#' @param n_pcs Integer. Number of PCs to use for the correlated gene batch
+#' strategy. Defaults to `50L`.
+#' @param n_subsample Integer. Cell subsampling threshold for the correlated
+#' gene batch strategy. If the number of cells meets or exceeds this value,
+#' `n_subsample` cells are randomly selected prior to running randomised SVD.
+#' Defaults to `100000L`.
+#' @param learner_params List. Optional overrides for the regression learner
+#' parameters. For `"randomforest"`, see
+#' [bixverse::params_scenic_random_forest_defaults()] for available parameters:
+#' `n_trees`, `min_samples_leaf`, `n_features_split`, `subsample_rate`,
+#' `bootstrap`, `max_depth`, `subsample_frac`. For `"extratrees"`, see
+#' [bixverse::params_scenic_extra_trees_defaults()] for available parameters:
+#' `n_trees`, `min_samples_leaf`, `n_features_split`, `n_thresholds`,
+#' `max_depth`, `subsample_frac`.
+#'
+#' @returns A named flat list with all SCENIC parameters.
+#'
+#' @export
+params_scenic <- function(
+  min_counts = 50L,
+  min_cells = 0.03,
+  learner_type = "randomforest",
+  gene_batch_strategy = "correlated",
+  gene_batch_size = NULL,
+  n_pcs = 50L,
+  n_subsample = 100000L,
+  learner_params = list()
+) {
+  checkmate::qassert(min_counts, "I1[1,)")
+  checkmate::qassert(min_cells, "N1(0,1]")
+  checkmate::assert_choice(learner_type, c("randomforest", "extratrees"))
+  checkmate::assert_choice(gene_batch_strategy, c("random", "correlated"))
+  if (!is.null(gene_batch_size)) {
+    checkmate::qassert(gene_batch_size, "I1[1,)")
+  }
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(n_subsample, "I1[1,)")
+
+  learner_defaults <- if (learner_type == "extratrees") {
+    params_scenic_extra_trees_defaults()
+  } else {
+    params_scenic_random_forest_defaults()
+  }
+
+  params <- c(
+    list(
+      min_counts = min_counts,
+      min_cells = min_cells,
+      learner_type = learner_type,
+      gene_batch_strategy = gene_batch_strategy,
+      gene_batch_size = gene_batch_size,
+      n_pcs = n_pcs,
+      n_subsample = n_subsample
+    ),
+    modifyList(learner_defaults, learner_params, keep.null = TRUE)
+  )
+
+  params
+}

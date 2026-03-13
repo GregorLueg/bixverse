@@ -7,7 +7,7 @@
 get_snf_adjcacency_mat(object, name)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=Snf]{Snf()}}.}
+\item{object}{The underlying class \code{\link[=SimilarityNetworkFusion]{SimilarityNetworkFusion()}}.}
 
 \item{name}{String. The name of the individual data modality affinity
 matrix to return.}

@@ -7,7 +7,7 @@
 get_snf_params(object)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=Snf]{Snf()}}.}
+\item{object}{The underlying class \code{\link[=SimilarityNetworkFusion]{SimilarityNetworkFusion()}}.}
 }
 \value{
 Returns the stored SNF params

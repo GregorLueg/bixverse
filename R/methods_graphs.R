@@ -1256,7 +1256,7 @@ S7::method(find_rbh_communities, RbhGraph) <- function(
 #' to the object. To note: all of the modalities need to have the same number
 #' of rows, i.e., samples!
 #'
-#' @param object The underlying class, see [bixverse::Snf()].
+#' @param object The underlying class, see [bixverse::SimilarityNetworkFusion()].
 #' @param data matrix or data.table. The data to transform into adjacency data
 #' and add to the class. Any data supplied will be assumed to be samples x
 #' features. The provided data type can be a data.table (for categorical and/or
@@ -1290,15 +1290,15 @@ add_snf_data_modality <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @import data.table
 #'
-#' @method add_snf_data_modality Snf
-S7::method(add_snf_data_modality, Snf) <- function(
+#' @method add_snf_data_modality SimilarityNetworkFusion
+S7::method(add_snf_data_modality, SimilarityNetworkFusion) <- function(
   object,
   data,
   data_name,
   params = NULL
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   checkmate::assert(
     checkmate::testDataTable(data),
     checkmate::testMatrix(data, mode = "numeric")
@@ -1357,7 +1357,7 @@ S7::method(add_snf_data_modality, Snf) <- function(
 #' found in the object. You can also optionally specify which adjacency matrices
 #' to use via the `to_include` parameter.
 #'
-#' @param object The underlying class, see [bixverse::Snf()].
+#' @param object The underlying class, see [bixverse::SimilarityNetworkFusion()].
 #' @param to_include Optional string, if you wish to only use a subset of the
 #' generated adjacency matrices. If `NULL` all matrices will be used for the
 #' fusion process.
@@ -1386,14 +1386,14 @@ run_snf <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @import data.table
 #'
-#' @method run_snf Snf
-S7::method(run_snf, Snf) <- function(
+#' @method run_snf SimilarityNetworkFusion
+S7::method(run_snf, SimilarityNetworkFusion) <- function(
   object,
   to_include = NULL,
   params = NULL
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   checkmate::qassert(to_include, c("S+", "0"))
   checkmate::assert(
     checkmate::test_null(params),
@@ -1442,7 +1442,7 @@ S7::method(run_snf, Snf) <- function(
 
 #' Helper to assert same number of samples
 #'
-#' @param object `Snf` class.
+#' @param object `SimilarityNetworkFusion` class.
 #' @param no_samples Integer. New number of samples
 #'
 #' @returns The object. If no dimensions were found in the object yet, it will
@@ -1464,10 +1464,10 @@ check_dim <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @import data.table
 #'
-#' @method check_dim Snf
-S7::method(check_dim, Snf) <- function(object, no_samples) {
+#' @method check_dim SimilarityNetworkFusion
+S7::method(check_dim, SimilarityNetworkFusion) <- function(object, no_samples) {
   # checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   checkmate::qassert(no_samples, "I1")
 
   if (is.null(S7::prop(object, "params")[["no_samples"]])) {

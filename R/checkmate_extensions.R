@@ -1027,6 +1027,81 @@ checkCistargetParams <- function(x) {
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
 
+### graph label propagation ----------------------------------------------------
+
+#' Check label propagation parameters
+#'
+#' @description Checkmate extension for checking label propagation parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+checkLabelPropParams <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "alpha",
+      "iter",
+      "tolerance",
+      "symmetrise",
+      "symmetry_strategy"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  rules <- list(
+    "alpha" = "R1[0, 1]",
+    "iter" = "I1[1,]",
+    "tolerance" = "R1",
+    "symmetrise" = "B1",
+    "symmetry_strategy" = "S1"
+  )
+  res <- purrr::imap_lgl(x[names(rules)], \(x, name) {
+    checkmate::qtest(x, rules[[name]])
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      paste(
+        "The following element `%s` in label propagation params does not",
+        "conform to the expected format. alpha must be in [0, 1], iter a",
+        "positive integer, tolerance a double, symmetrise a boolean, and",
+        "symmetry_strategy a string."
+      ),
+      broken_elem
+    ))
+  }
+
+  if (
+    !is.null(x[["max_hops"]]) && !checkmate::qtest(x[["max_hops"]], "I1[0,]")
+  ) {
+    return("`max_hops` must be a positive integer or NULL.")
+  }
+
+  return(TRUE)
+}
+
+#' Assert label propagation parameters
+#'
+#' @description Checkmate extension for asserting label propagation parameters.
+#'
+#' @inheritParams checkLabelPropParams
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
+
 ### single cell ----------------------------------------------------------------
 
 #### general -------------------------------------------------------------------
@@ -2765,72 +2840,130 @@ checkScHarmonyParams <- function(x) {
 #' @return Invisibly returns the checked object if the assertion is successful.
 assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
 
-## graph label propagation -----------------------------------------------------
+#### scenic --------------------------------------------------------------------
 
-#' Check label propagation parameters
+#' Check SCENIC parameters
 #'
-#' @description Checkmate extension for checking label propagation parameters.
+#' @description Checkmate extension for checking SCENIC parameters.
 #'
 #' @param x The list to check/assert.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
-checkLabelPropParams <- function(x) {
+checkScenicParams <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
     return(res)
   }
 
-  res <- checkmate::checkNames(
-    names(x),
-    must.include = c(
-      "alpha",
-      "iter",
-      "tolerance",
-      "symmetrise",
-      "symmetry_strategy"
-    )
+  required_names <- c(
+    "min_counts",
+    "min_cells",
+    "learner_type",
+    "gene_batch_strategy",
+    "n_pcs",
+    "n_subsample",
+    "n_trees",
+    "min_samples_leaf",
+    "n_features_split",
+    "max_depth"
   )
+  res <- checkmate::checkNames(names(x), must.include = required_names)
   if (!isTRUE(res)) {
     return(res)
   }
 
-  rules <- list(
-    "alpha" = "R1[0, 1]",
-    "iter" = "I1[1,]",
-    "tolerance" = "R1",
-    "symmetrise" = "B1",
-    "symmetry_strategy" = "S1"
+  res <- checkmate::checkChoice(x$learner_type, c("randomforest", "extratrees"))
+  if (!isTRUE(res)) {
+    return(paste("learner_type:", res))
+  }
+
+  res <- checkmate::checkChoice(
+    x$gene_batch_strategy,
+    c("random", "correlated")
   )
-  res <- purrr::imap_lgl(x[names(rules)], \(x, name) {
-    checkmate::qtest(x, rules[[name]])
+  if (!isTRUE(res)) {
+    return(paste("gene_batch_strategy:", res))
+  }
+
+  integer_rules <- list(
+    min_counts = "I1[1,)",
+    n_pcs = "I1[1,)",
+    n_subsample = "I1[1,)",
+    n_trees = "I1[1,)",
+    min_samples_leaf = "I1[1,)",
+    n_features_split = "I1[0,)"
+  )
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(val, integer_rules[[name]])
+    } else {
+      TRUE
+    }
   })
-  if (!isTRUE(all(res))) {
-    broken_elem <- names(res)[which(!res)][1]
+  if (!all(res)) {
     return(sprintf(
-      paste(
-        "The following element `%s` in label propagation params does not",
-        "conform to the expected format. alpha must be in [0, 1], iter a",
-        "positive integer, tolerance a double, symmetrise a boolean, and",
-        "symmetry_strategy a string."
-      ),
-      broken_elem
+      "Element `%s` in SCENIC parameters failed integer validation.",
+      names(res)[!res][1]
     ))
   }
 
-  if (
-    !is.null(x[["max_hops"]]) && !checkmate::qtest(x[["max_hops"]], "I1[0,]")
-  ) {
-    return("`max_hops` must be a positive integer or NULL.")
+  scalar_numeric_rules <- list(
+    min_cells = "N1(0,1]"
+  )
+  res <- purrr::imap_lgl(x, \(val, name) {
+    if (name %in% names(scalar_numeric_rules)) {
+      checkmate::qtest(val, scalar_numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!all(res)) {
+    return(sprintf(
+      "Element `%s` in SCENIC parameters failed numeric validation.",
+      names(res)[!res][1]
+    ))
   }
 
-  return(TRUE)
+  if (!is.null(x$gene_batch_size)) {
+    if (!checkmate::qtest(x$gene_batch_size, "I1[1,)")) {
+      return("gene_batch_size must be a positive integer or NULL.")
+    }
+  }
+
+  if (!is.null(x$subsample_frac)) {
+    if (!checkmate::qtest(x$subsample_frac, "N1(0,1]")) {
+      return("subsample_frac must be a numeric in (0, 1] or NULL.")
+    }
+  }
+
+  if (x$learner_type == "randomforest") {
+    if (
+      is.null(x$subsample_rate) ||
+        !checkmate::qtest(x$subsample_rate, "N1(0,1]")
+    ) {
+      return("subsample_rate must be a numeric in (0, 1] for randomforest.")
+    }
+    if (is.null(x$bootstrap) || !checkmate::qtest(x$bootstrap, "B1")) {
+      return("bootstrap must be a single logical for randomforest.")
+    }
+  }
+
+  if (x$learner_type == "extratrees") {
+    if (
+      is.null(x$n_thresholds) || !checkmate::qtest(x$n_thresholds, "I1[1,)")
+    ) {
+      return("n_thresholds must be a positive integer for extratrees.")
+    }
+  }
+
+  TRUE
 }
 
-#' Assert label propagation parameters
+#' Assert SCENIC parameters
 #'
-#' @description Checkmate extension for asserting label propagation parameters.
+#' @description Checkmate extension for asserting SCENIC parameters.
 #'
-#' @inheritParams checkLabelPropParams
+#' @inheritParams checkScenicParams
 #'
 #' @param .var.name Name of the checked object to print in assertions. Defaults
 #' to the heuristic implemented in checkmate.
@@ -2838,7 +2971,4 @@ checkLabelPropParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
-assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
-
-#' @export
-testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
+assertScenicParams <- checkmate::makeAssertionFunction(checkScenicParams)

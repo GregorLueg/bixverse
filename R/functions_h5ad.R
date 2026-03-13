@@ -203,3 +203,52 @@ read_h5ad_metadata <- function(f_path) {
     type = meta$type
   )
 }
+
+#' Read summary statistics from the X slot of an h5ad file
+#'
+#' @param f_path File path to the `.h5ad` file.
+#' @param n_sample Number of non-zero values to sample for the preview. NULL
+#' reads all.
+#'
+#' @return A list with:
+#' \itemize{
+#'   \item stats - named vector: min, max, mean, median, and fraction of values
+#'   that are whole numbers
+#'   \item is_integer_valued - logical; TRUE if >99% of sampled non-zero values
+#'   are whole numbers
+#'   \item type - "CSR" or "CSC"
+#'   \item dims - named integer vector c(obs, var)
+#'   \item sample - numeric vector of sampled non-zero values
+#' }
+#'
+#' @export
+read_h5ad_x_summary <- function(f_path, n_sample = 10000L) {
+  checkmate::assertFileExists(f_path)
+  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
+
+  meta <- get_h5ad_dimensions(f_path)
+
+  vals <- rhdf5::h5read(f_path, "/X/data")
+
+  if (!is.null(n_sample) && length(vals) > n_sample) {
+    vals_sample <- sample(vals, n_sample)
+  } else {
+    vals_sample <- vals
+  }
+
+  whole_number_frac <- mean(vals_sample == floor(vals_sample))
+
+  list(
+    stats = c(
+      min = min(vals_sample),
+      max = max(vals_sample),
+      mean = mean(vals_sample),
+      median = median(vals_sample),
+      whole_number_frac = whole_number_frac
+    ),
+    is_integer_valued = whole_number_frac > 0.99,
+    type = meta$type,
+    dims = meta$dims,
+    sample = vals_sample
+  )
+}

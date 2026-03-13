@@ -358,9 +358,9 @@ S7::method(get_rbh_res, RbhGraph) <- function(object) {
 #' @return Returns the `Snf` class for further operations.
 #'
 #' @export
-Snf <- S7::new_class(
+SimilarityNetworkFusion <- S7::new_class(
   # Names, parents
-  name = "Snf",
+  name = "SimilarityNetworkFusion",
   parent = BixverseBaseClass,
 
   # Properties, i.e., slots
@@ -437,7 +437,7 @@ Snf <- S7::new_class(
 
 #' Get the SNF params
 #'
-#' @param object The underlying class [bixverse::Snf()].
+#' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
 #' @return Returns the stored SNF params
 #'
@@ -454,10 +454,10 @@ get_snf_params <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_snf_params Snf
-S7::method(get_snf_params, Snf) <- function(object) {
+#' @method get_snf_params SimilarityNetworkFusion
+S7::method(get_snf_params, SimilarityNetworkFusion) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   # Get the data
   snf_params <- S7::prop(object, "params")[["snf"]]
 
@@ -467,7 +467,7 @@ S7::method(get_snf_params, Snf) <- function(object) {
 
 #' Get an individual affinity matrix
 #'
-#' @param object The underlying class [bixverse::Snf()].
+#' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #' @param name String. The name of the individual data modality affinity
 #' matrix to return.
 #'
@@ -486,10 +486,13 @@ get_snf_adjcacency_mat <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_snf_adjcacency_mat Snf
-S7::method(get_snf_adjcacency_mat, Snf) <- function(object, name) {
+#' @method get_snf_adjcacency_mat SimilarityNetworkFusion
+S7::method(get_snf_adjcacency_mat, SimilarityNetworkFusion) <- function(
+  object,
+  name
+) {
   # Checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   checkmate::qassert(name, "S1")
   # Get the data
   adj_matrix <- S7::prop(object, "adj_matrices")[[name]]
@@ -504,7 +507,7 @@ S7::method(get_snf_adjcacency_mat, Snf) <- function(object, name) {
 
 #' Get the final SNF matrix
 #'
-#' @param object The underlying class [bixverse::Snf()].
+#' @param object The underlying class [bixverse::SimilarityNetworkFusion()].
 #'
 #' @return Returns the SNF adjacency/similarity matrix.
 #'
@@ -521,10 +524,10 @@ get_snf_final_mat <- S7::new_generic(
 #'
 #' @importFrom magrittr `%>%`
 #'
-#' @method get_snf_final_mat Snf
-S7::method(get_snf_final_mat, Snf) <- function(object) {
+#' @method get_snf_final_mat SimilarityNetworkFusion
+S7::method(get_snf_final_mat, SimilarityNetworkFusion) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::Snf")
+  checkmate::assertClass(object, "bixverse::SimilarityNetworkFusion")
   # Get the data
   res <- S7::prop(object, "snf_adj")
 

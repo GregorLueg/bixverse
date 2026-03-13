@@ -2690,6 +2690,40 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #' @export
 rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
 
+#' Identifies genes to include into a SCENIC analysis
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The 0-indexed positions of the genes to include in the scenic
+#' analysis.
+#'
+#' @export
+rs_scenic_gene_filter <- function(f_path_genes, cell_indices, scenic_params, verbose) .Call(wrap__rs_scenic_gene_filter, f_path_genes, cell_indices, scenic_params, verbose)
+
+#' SCENIC to generate gene-regulatory networks
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+#' predictor variables to use in the generation of the regression learners.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param Seed. Controls reproducibility of the function.
+#' @param Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_scenic_grn <- function(f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_scenic_grn, f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose)
+
 #' Generate meta cells (hdWGCNA method)
 #'
 #' @description This function implements the approach from Morabito, et al.

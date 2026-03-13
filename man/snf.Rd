@@ -20,6 +20,6 @@ Returns a \code{\link[=Snf]{Snf()}} object.
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 
-This constructor has been renamed to \code{\link[=Snf]{Snf()}}.
+This constructor has been renamed to \code{\link[=SimilarityNetworkFusion]{SimilarityNetworkFusion()}}.
 }
 \keyword{internal}

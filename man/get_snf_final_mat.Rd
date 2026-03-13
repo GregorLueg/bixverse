@@ -7,7 +7,7 @@
 get_snf_final_mat(object)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=Snf]{Snf()}}.}
+\item{object}{The underlying class \code{\link[=SimilarityNetworkFusion]{SimilarityNetworkFusion()}}.}
 }
 \value{
 Returns the SNF adjacency/similarity matrix.

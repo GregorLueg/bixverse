@@ -2157,7 +2157,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
   }
 
   cat(
-    "Single cell experiment (single_cell_exp).\n",
+    "Single cell experiment (Single Cells).\n",
     sprintf("  No cells: %i\n", dims[1]),
     sprintf("  No genes: %i\n", dims[2]),
     sprintf("  HVG calculated: %s\n", hvg_calculated),

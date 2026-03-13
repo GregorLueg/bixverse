@@ -156,7 +156,7 @@ rbh_graph <- function(
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #'
-#' This constructor has been renamed to [bixverse::Snf()].
+#' This constructor has been renamed to [bixverse::SimilarityNetworkFusion()].
 #'
 #' @param data Optional data to transform into adjacency data. Can be a
 #' data.table (categorical/mixed) or a matrix (continuous).
@@ -172,7 +172,7 @@ snf <- function(data = NULL, data_name = NULL, snf_params = params_snf()) {
   lifecycle::deprecate_warn(
     when = "0.3.0",
     what = "snf()",
-    with = "Snf()"
+    with = "SimilarityNetworkFusion()"
   )
   Snf(data = data, data_name = data_name, snf_params = snf_params)
 }

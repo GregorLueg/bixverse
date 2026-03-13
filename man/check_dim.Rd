@@ -7,7 +7,7 @@
 check_dim(object, no_samples)
 }
 \arguments{
-\item{object}{\code{Snf} class.}
+\item{object}{\code{SimilarityNetworkFusion} class.}
 
 \item{no_samples}{Integer. New number of samples}
 }
