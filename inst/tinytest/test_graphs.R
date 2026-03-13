@@ -395,29 +395,13 @@ expect_true(
 
 ## synthetic data --------------------------------------------------------------
 
-# fmt: skip
-edge_list <- c(
-  1, 2,   # Sample 1 (A) connects to 2
-  1, 5,   # Sample 1 (A) connects to 5
-  2, 3,   # Sample 2 connects to 3 (B)
-  2, 4,   # Sample 2 connects to 4
-  3, 4,   # Sample 3 (B) connects to 4
-  3, 6,   # Sample 3 (B) connects to 6
-  4, 7,   # Sample 4 connects to 7
-  5, 6,   # Sample 5 connects to 6
-  5, 9,   # Sample 5 connects to 9
-  6, 7,   # Sample 6 connects to 7
-  7, 8,   # Sample 7 connects to 8 (C)
-  8, 9,   # Sample 8 (C) connects to 9
-  8, 10,  # Sample 8 (C) connects to 10
-  9, 10   # Sample 9 connects to 10
-)
-edge_list <- as.integer(edge_list)
-
+from <- as.integer(c(1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 8, 8, 9))
+to <- as.integer(c(2, 5, 3, 4, 4, 6, 7, 6, 9, 7, 8, 9, 10, 10))
 labels <- c("A", NA, "B", NA, NA, NA, NA, "C", NA, NA)
 
 propagated_labels <- knn_graph_label_propagation(
-  edge_list = edge_list,
+  from = from,
+  to = to,
   labels = labels
 )
 
@@ -425,6 +409,30 @@ expect_equal(
   current = propagated_labels$final_labels,
   target = c("A", "B", "B", "B", "A", "B", "C", "C", "C", "C"),
   info = "graph label propagation working as expected"
+)
+expect_true(
+  current = checkmate::test_list(propagated_labels, names = "named"),
+  info = "graph label returning a list"
+)
+expect_equal(
+  current = names(propagated_labels),
+  target = c("assignment_probs", "final_labels"),
+  info = "graph label returning the right names"
+)
+
+# test zero hop
+propagated_labels_no_hops <- knn_graph_label_propagation(
+  from = from,
+  to = to,
+  labels = labels,
+  label_prop_params = params_label_propagation(max_hops = 0L)
+)
+unlabelled_idx <- which(is.na(labels))
+unlabelled_probs <- propagated_labels_no_hops$assignment_probs[unlabelled_idx, ]
+
+expect_true(
+  all(unlabelled_probs == 0),
+  info = "max_hops = 0 should leave unlabelled nodes with no propagated probability"
 )
 
 # igraph comparisons -----------------------------------------------------------

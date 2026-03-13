@@ -10,6 +10,8 @@ use extendr_api::prelude::*;
 /// @param value Numeric vector. The upper triangle values.
 /// @param shift Integer Did you apply a shift to remove the diagonal values?
 /// @param n Integer. The number of columns/rows in the symmetric matrix.
+/// @param cs_type String. One of `c("csr", "csc")`. Which type of list to
+/// return.
 ///
 /// @return A list containing:
 ///  \itemize{
