@@ -361,6 +361,9 @@
 - [`doublet_detection_boost_sc()`](doublet_detection_boost_sc.md) :
   Doublet detection with boosted doublet classification
 
+- [`download_pbmc3k()`](download_pbmc3k.md) : Download PBMC3K data from
+  10x Genomics
+
 - [`f1_score_confusion_mat()`](f1_score_confusion_mat.md) : F1 scores on
   top of a confusion matrix
 

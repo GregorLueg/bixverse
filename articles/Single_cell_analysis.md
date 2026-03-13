@@ -33,6 +33,8 @@ single-cell analysis with minimal memory requirements.
 ``` r
 library(bixverse)
 library(ggplot2)
+library(magrittr)
+# devtools::load_all()
 ```
 
 ### Create test data
@@ -122,9 +124,9 @@ to be used in each analysis by default it will be set to all TRUE \*\*
 ``` r
 ## The QC parameters are set using the constructor function
 sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = 45L,
-  min_lib_size = 300L,
-  min_cells = 500L,
+  min_unique_genes = 20L,
+  min_lib_size = 100L,
+  min_cells = 20L,
   target_size = 1000
 )
 ```
@@ -169,27 +171,23 @@ We have accounted for all possible combinations of outputs when loading
 data from mtx files it can either be cells as rows or cells as columns,
 and the obs and var tables can either be loaded as `.tsv` or `.csv`
 
-``` r
-sc_object <- single_cell_exp(dir_data = tempdir())
+Here we are going to use the PBMC 3k dataset for the remainder of the
+vignette.
 
+``` r
+pbmc3k_path <- bixverse:::download_pbmc3k()
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- single_cell_exp(dir_data = tempdir_pbmc)
 
 params_cells_rows_csv <- params_sc_mtx_io(
-  path_mtx = file.path(f_path_v1, "mat.mtx"),
-  path_obs = file.path(f_path_v1, "barcodes.csv"),
-  path_var = file.path(f_path_v1, "features.csv"),
-  cells_as_rows = TRUE,
+  path_mtx = file.path(pbmc3k_path, "matrix.mtx"),
+  path_obs = file.path(pbmc3k_path, "barcodes.tsv"),
+  path_var = file.path(pbmc3k_path, "genes.tsv"),
+  cells_as_rows = FALSE,
   has_hdr = TRUE
 )
-
-## Data can also be loaded in this way, not run here shown purely as an example
-
-# params_genes_rows_tsv <- params_sc_mtx_io(
-#   path_mtx = file.path(f_path_v2, "mat.mtx"),
-#   path_obs = file.path(f_path_v2, "barcodes.tsv"),
-#   path_var = file.path(f_path_v2, "features.tsv"),
-#   cells_as_rows = FALSE,
-#   has_hdr = TRUE
-# )
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -209,40 +207,43 @@ in memory, however for some operations (plotting) you do need the data,
 A number of helpful getter functions have to been written to retrieve
 the data.
 
+*Note by default these getters will return the filtered cells, as
+filtered by the specified params_sc_min_quality()*
+
 #### Obs table (cell info)
 
 ``` r
 # this returns a data.table of the obs table which can then be interacted with
 sc_object[[]]
-#>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
-#>         <num>    <char>      <char>       <num> <num>    <num>  <lgcl>
-#>   1:        1 cell_0001 cell_type_1           1    52      371    TRUE
-#>   2:        2 cell_0003 cell_type_3           1    52      495    TRUE
-#>   3:        3 cell_0004 cell_type_1           1    48      551    TRUE
-#>   4:        4 cell_0005 cell_type_2           1    53      422    TRUE
-#>   5:        5 cell_0006 cell_type_3           1    57      394    TRUE
-#>  ---                                                                  
-#> 925:      925 cell_0995 cell_type_2           1    53      548    TRUE
-#> 926:      926 cell_0996 cell_type_3           1    57      545    TRUE
-#> 927:      927 cell_0997 cell_type_1           1    56      543    TRUE
-#> 928:      928 cell_0998 cell_type_2           1    49      487    TRUE
-#> 929:      929 cell_1000 cell_type_1           1    60      474    TRUE
+#>       cell_idx          cell_id   nnz lib_size to_keep
+#>          <num>           <char> <num>    <num>  <lgcl>
+#>    1:        1 AAACATACAACCAC-1   771     2411    TRUE
+#>    2:        2 AAACATTGAGCTAC-1  1329     4861    TRUE
+#>    3:        3 AAACATTGATCAGC-1  1116     3133    TRUE
+#>    4:        4 AAACCGTGCTTCCG-1   948     2627    TRUE
+#>    5:        5 AAACCGTGTATGCG-1   517      976    TRUE
+#>   ---                                                 
+#> 2696:     2696 TTTCGAACTCTCAT-1  1140     3444    TRUE
+#> 2697:     2697 TTTCTACTGAGGCA-1  1196     3401    TRUE
+#> 2698:     2698 TTTCTACTTCCTCG-1   611     1673    TRUE
+#> 2699:     2699 TTTGCATGAGAGGC-1   445     1015    TRUE
+#> 2700:     2700 TTTGCATGCCTCAC-1   718     1979    TRUE
 
 # The obs can also be retrieved using the obs getter which has mutliple arguments for fitlering
 get_sc_obs(sc_object)
-#>      cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
-#>         <num>    <char>      <char>       <num> <num>    <num>  <lgcl>
-#>   1:        1 cell_0001 cell_type_1           1    52      371    TRUE
-#>   2:        2 cell_0003 cell_type_3           1    52      495    TRUE
-#>   3:        3 cell_0004 cell_type_1           1    48      551    TRUE
-#>   4:        4 cell_0005 cell_type_2           1    53      422    TRUE
-#>   5:        5 cell_0006 cell_type_3           1    57      394    TRUE
-#>  ---                                                                  
-#> 925:      925 cell_0995 cell_type_2           1    53      548    TRUE
-#> 926:      926 cell_0996 cell_type_3           1    57      545    TRUE
-#> 927:      927 cell_0997 cell_type_1           1    56      543    TRUE
-#> 928:      928 cell_0998 cell_type_2           1    49      487    TRUE
-#> 929:      929 cell_1000 cell_type_1           1    60      474    TRUE
+#>       cell_idx          cell_id   nnz lib_size to_keep
+#>          <num>           <char> <num>    <num>  <lgcl>
+#>    1:        1 AAACATACAACCAC-1   771     2411    TRUE
+#>    2:        2 AAACATTGAGCTAC-1  1329     4861    TRUE
+#>    3:        3 AAACATTGATCAGC-1  1116     3133    TRUE
+#>    4:        4 AAACCGTGCTTCCG-1   948     2627    TRUE
+#>    5:        5 AAACCGTGTATGCG-1   517      976    TRUE
+#>   ---                                                 
+#> 2696:     2696 TTTCGAACTCTCAT-1  1140     3444    TRUE
+#> 2697:     2697 TTTCTACTGAGGCA-1  1196     3401    TRUE
+#> 2698:     2698 TTTCTACTTCCTCG-1   611     1673    TRUE
+#> 2699:     2699 TTTGCATGAGAGGC-1   445     1015    TRUE
+#> 2700:     2700 TTTGCATGCCTCAC-1   718     1979    TRUE
 ```
 
 **Add data to obs**
@@ -273,22 +274,22 @@ sc_object <- set_sc_new_obs_col(
 sc_object[["random_new_data2"]] <- new_data
 
 head(sc_object[[]])
-#>    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
-#>       <num>    <char>      <char>       <num> <num>    <num>  <lgcl>
-#> 1:        1 cell_0001 cell_type_1           1    52      371    TRUE
-#> 2:        2 cell_0003 cell_type_3           1    52      495    TRUE
-#> 3:        3 cell_0004 cell_type_1           1    48      551    TRUE
-#> 4:        4 cell_0005 cell_type_2           1    53      422    TRUE
-#> 5:        5 cell_0006 cell_type_3           1    57      394    TRUE
-#> 6:        6 cell_0007 cell_type_1           1    49      593    TRUE
-#>    random_new_data random_new_data2
-#>             <char>           <char>
-#> 1: random_new_data  random_new_data
-#> 2: random_new_data  random_new_data
-#> 3: random_new_data  random_new_data
-#> 4: random_new_data  random_new_data
-#> 5: random_new_data  random_new_data
-#> 6: random_new_data  random_new_data
+#>    cell_idx          cell_id   nnz lib_size to_keep random_new_data
+#>       <num>           <char> <num>    <num>  <lgcl>          <char>
+#> 1:        1 AAACATACAACCAC-1   771     2411    TRUE random_new_data
+#> 2:        2 AAACATTGAGCTAC-1  1329     4861    TRUE random_new_data
+#> 3:        3 AAACATTGATCAGC-1  1116     3133    TRUE random_new_data
+#> 4:        4 AAACCGTGCTTCCG-1   948     2627    TRUE random_new_data
+#> 5:        5 AAACCGTGTATGCG-1   517      976    TRUE random_new_data
+#> 6:        6 AAACGCACTGGTAC-1   771     2145    TRUE random_new_data
+#>    random_new_data2
+#>              <char>
+#> 1:  random_new_data
+#> 2:  random_new_data
+#> 3:  random_new_data
+#> 4:  random_new_data
+#> 5:  random_new_data
+#> 6:  random_new_data
 
 ## Multiple columns can also be added must be a list of vector
 new_data_list <- list(
@@ -311,14 +312,14 @@ sc_object[[c("new_name_a", "new_name_b")]] <- new_data_list
 ``` r
 # Returns gene info as a data.table
 head(get_sc_var(sc_object))
-#>    gene_idx  gene_id ensembl_id no_cells_exp
-#>       <num>   <char>     <char>        <int>
-#> 1:        1 gene_001    ens_001          758
-#> 2:        2 gene_002    ens_002          742
-#> 3:        3 gene_003    ens_003          772
-#> 4:        4 gene_004    ens_004          724
-#> 5:        5 gene_005    ens_005          533
-#> 6:        6 gene_006    ens_006          724
+#>    gene_idx         gene_id gene_name no_cells_exp
+#>       <num>          <char>    <char>        <int>
+#> 1:        1 ENSG00000188976     NOC2L          258
+#> 2:        2 ENSG00000188290      HES4          145
+#> 3:        3 ENSG00000187608     ISG15         1206
+#> 4:        4 ENSG00000131591  C1orf159           24
+#> 5:        5 ENSG00000186891  TNFRSF18           92
+#> 6:        6 ENSG00000186827   TNFRSF4          155
 ```
 
 #### Accessing Count data
@@ -346,7 +347,7 @@ matrix <- get_sc_counts(
   return_format = "cell"
 )
 tictoc::toc()
-#> 0.005 sec elapsed
+#> 0.006 sec elapsed
 
 ## Now we are to select the incorrect orientation
 ## This dataset is too small to see a difference however try it on your own larger and it will shock you
@@ -358,7 +359,7 @@ matrix <- get_sc_counts(
   return_format = "gene"
 )
 tictoc::toc()
-#> 0.02 sec elapsed
+#> 0.259 sec elapsed
 
 
 ## matrices can also be accessed with sinle brackets
@@ -369,16 +370,48 @@ matrix <- sc_object[, , return_format = "cell", assay = "norm"]
 ### Gene proportions
 
 Usual QC procedure involves checking the proportions of mitochondrial
-and ribosomal genes in you sample bixverse can do this as follows
+and ribosomal genes in your samples. We have also added the standard G2M
+and S phase genes from seurat to the package. To assess cell cycle
+shifts.
 
 This operation also be chunked by using by setting `streaming = TRUE`,
 this is useful when working with very large datasets to avoid running
 into memory constraints.
 
 ``` r
-gs_of_interest <- list(
-  gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
-  gs_2 = c("gene_096", "gene_097", "gene_100")
+
+gene_data <- get_sc_var(sc_object)
+
+gs_of_interest <-  list(
+      MT = gene_data[
+        stringr::str_detect(gene_data$gene_name, "^MT-"),
+      ]$gene_id,
+      Ribo = gene_data[
+        stringr::str_detect(gene_data$gene_name, "^RPS|^RPL"),
+      ]$gene_id,
+      S_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
+        ),
+      ]$gene_id,
+      G2M_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
+        )]$gene_id,
+      T_cells = gene_data[
+        gene_data$gene_name %in% c("CD3D", "CD3E", "CD3G"),
+      ]$gene_id,
+      B_cells = gene_data[
+        gene_data$gene_name %in% c("CD19", "MS4A1", "CD79A"),
+      ]$gene_id,
+      Monocytes = gene_data[
+        gene_data$gene_name %in% c("CD14", "FCGR3A", "LYZ"),
+      ]$gene_id,
+      NK_cells = gene_data[
+        gene_data$gene_name %in% c("GNLY", "NKG7", "NCAM1"),
+      ]$gene_id
 )
 
 ## This will add proportions to the obs table
@@ -390,30 +423,38 @@ sc_object <- gene_set_proportions_sc(
 )
 
 head(sc_object[[]])
-#>    cell_idx   cell_id    cell_grp batch_index   nnz lib_size to_keep
-#>       <num>    <char>      <char>       <num> <num>    <num>  <lgcl>
-#> 1:        1 cell_0001 cell_type_1           1    52      371    TRUE
-#> 2:        2 cell_0003 cell_type_3           1    52      495    TRUE
-#> 3:        3 cell_0004 cell_type_1           1    48      551    TRUE
-#> 4:        4 cell_0005 cell_type_2           1    53      422    TRUE
-#> 5:        5 cell_0006 cell_type_3           1    57      394    TRUE
-#> 6:        6 cell_0007 cell_type_1           1    49      593    TRUE
-#>    random_new_data random_new_data2 other_random_data
-#>             <char>           <char>            <char>
-#> 1: random_new_data  random_new_data                 A
-#> 2: random_new_data  random_new_data                 A
-#> 3: random_new_data  random_new_data                 A
-#> 4: random_new_data  random_new_data                 A
-#> 5: random_new_data  random_new_data                 A
-#> 6: random_new_data  random_new_data                 A
-#>    even_different_random_data new_name_a new_name_b        gs_1        gs_2
-#>                         <int>     <char>      <int>       <num>       <num>
-#> 1:                          1          A          1 0.156334236 0.008086253
-#> 2:                          2          A          2 0.022222223 0.006060606
-#> 3:                          3          A          3 0.181488201 0.000000000
-#> 4:                          4          A          4 0.007109005 0.033175357
-#> 5:                          5          A          5 0.017766498 0.015228426
-#> 6:                          6          A          6 0.242833048 0.079258010
+#>    cell_idx          cell_id   nnz lib_size to_keep random_new_data
+#>       <num>           <char> <num>    <num>  <lgcl>          <char>
+#> 1:        1 AAACATACAACCAC-1   771     2411    TRUE random_new_data
+#> 2:        2 AAACATTGAGCTAC-1  1329     4861    TRUE random_new_data
+#> 3:        3 AAACATTGATCAGC-1  1116     3133    TRUE random_new_data
+#> 4:        4 AAACCGTGCTTCCG-1   948     2627    TRUE random_new_data
+#> 5:        5 AAACCGTGTATGCG-1   517      976    TRUE random_new_data
+#> 6:        6 AAACGCACTGGTAC-1   771     2145    TRUE random_new_data
+#>    random_new_data2 other_random_data even_different_random_data new_name_a
+#>              <char>            <char>                      <int>     <char>
+#> 1:  random_new_data                 A                          1          A
+#> 2:  random_new_data                 A                          2          A
+#> 3:  random_new_data                 A                          3          A
+#> 4:  random_new_data                 A                          4          A
+#> 5:  random_new_data                 A                          5          A
+#> 6:  random_new_data                 A                          6          A
+#>    new_name_b          MT      Ribo      S_phase    G2M_phase     T_cells
+#>         <int>       <num>     <num>        <num>        <num>       <num>
+#> 1:          1 0.030277893 0.4384073 0.0012442970 0.0004147656 0.002488594
+#> 2:          2 0.038263731 0.4276898 0.0002057190 0.0004114380 0.000000000
+#> 3:          3 0.008937121 0.3182254 0.0003191829 0.0019150974 0.003830195
+#> 4:          4 0.017510468 0.2436239 0.0007613247 0.0007613247 0.000000000
+#> 5:          5 0.012295082 0.1495902 0.0000000000 0.0020491802 0.000000000
+#> 6:          6 0.016783217 0.3650350 0.0000000000 0.0000000000 0.001864802
+#>        B_cells    Monocytes     NK_cells
+#>          <num>        <num>        <num>
+#> 1: 0.000000000 0.0004147656 0.0000000000
+#> 2: 0.001851471 0.0006171570 0.0002057190
+#> 3: 0.000000000 0.0006383658 0.0003191829
+#> 4: 0.000000000 0.0095165586 0.0003806624
+#> 5: 0.000000000 0.0000000000 0.0143442620
+#> 6: 0.000000000 0.0004662005 0.0000000000
 ```
 
 We can then set cells to keep based on proportions of reads mapping to
@@ -433,22 +474,22 @@ function has been applied to the `sc_object` only cells marked TRUE in
 the `to_keep` column will be used in the downstream analysis
 
 ``` r
-threshold <- 0.05
+threshold <- 0.8 # dummy threshold to keep cells
 
-cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
+cells_to_keep <- sc_object[[]][Ribo < threshold, cell_id]
 
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
 obs_data <- get_sc_obs(sc_object, filtered = FALSE)
 table(obs_data$to_keep)
 #> 
-#> FALSE  TRUE 
-#>   247   682
+#> TRUE 
+#> 2700
 
 table(sc_object[["to_keep"]])
 #> to_keep
 #> TRUE 
-#>  682
+#> 2700
 ```
 
 ### Highly Variable Genes (HVG)
@@ -478,41 +519,180 @@ sc_object <- find_hvg_sc(
 )
 
 head(get_sc_var(sc_object))
-#>    gene_idx  gene_id ensembl_id no_cells_exp      mean      var  var_exp
-#>       <num>   <char>     <char>        <int>     <num>    <num>    <num>
-#> 1:        1 gene_001    ens_001          758 11.747801 511.5848 2.653164
-#> 2:        2 gene_002    ens_002          742 11.024927 388.6639 2.604927
-#> 3:        3 gene_003    ens_003          772 13.149560 541.0187 2.725066
-#> 4:        4 gene_004    ens_004          724  9.629032 312.5029 2.508433
-#> 5:        5 gene_005    ens_005          533  4.703812 153.0825 1.926915
-#> 6:        6 gene_006    ens_006          724 10.136364 351.4315 2.547019
-#>      var_std
-#>        <num>
-#> 1: 1.1369790
-#> 2: 0.9652646
-#> 3: 1.0189347
-#> 4: 0.9692179
-#> 5: 1.8113831
-#> 6: 0.9972912
+#>    gene_idx         gene_id gene_name no_cells_exp        mean         var
+#>       <num>          <char>    <char>        <int>       <num>       <num>
+#> 1:        1 ENSG00000188976     NOC2L          258 0.106666669 0.158251688
+#> 2:        2 ENSG00000188290      HES4          145 0.078888886 0.145258144
+#> 3:        3 ENSG00000187608     ISG15         1206 1.195555568 7.049901485
+#> 4:        4 ENSG00000131591  C1orf159           24 0.008888889 0.008809879
+#> 5:        5 ENSG00000186891  TNFRSF18           92 0.041481480 0.058279283
+#> 6:        6 ENSG00000186827   TNFRSF4          155 0.077407405 0.161785558
+#>       var_exp   var_std
+#>         <num>     <num>
+#> 1: -0.7872334 0.9695728
+#> 2: -0.8848057 1.1141561
+#> 3:  0.6116099 1.7241368
+#> 4: -2.0270026 0.9375023
+#> 5: -1.1272545 0.7812110
+#> 6: -0.8963790 1.2744414
 
 
 ## You can then which genes are highly variable as follows
 head(get_sc_var(sc_object)[get_hvg(sc_object)], 5)
-#>    gene_idx  gene_id ensembl_id no_cells_exp      mean       var  var_exp
-#>       <num>   <char>     <char>        <int>     <num>     <num>    <num>
-#> 1:        4 gene_004    ens_004          724  9.629032 312.50287 2.508433
-#> 2:       16 gene_016    ens_016          655  7.756598 226.22502 2.403317
-#> 3:       39 gene_043    ens_043          549  3.527859  33.90901 1.522636
-#> 4:       18 gene_018    ens_018          750 10.665689 364.52734 2.581492
-#> 5:        9 gene_009    ens_009          590  7.294722 246.94691 2.360593
-#>      var_std
-#>        <num>
-#> 1: 0.9692179
-#> 2: 0.8937656
-#> 3: 1.0178397
-#> 4: 0.9555150
-#> 5: 1.0764916
+#>    gene_idx         gene_id    gene_name no_cells_exp       mean         var
+#>       <num>          <char>       <char>        <int>      <num>       <num>
+#> 1:     8472 ENSG00000230155 RP3-477O4.14           57 0.02148148  0.02176075
+#> 2:     2337 ENSG00000163737          PF4           43 0.11074074  2.72144103
+#> 3:     6165 ENSG00000111605        CPSF6          219 0.08555555  0.08786562
+#> 4:      624 ENSG00000163191      S100A11         1421 1.94296300 12.96710682
+#> 5:     1261 ENSG00000168887      C2orf68           98 0.03740741  0.03897104
+#>       var_exp   var_std
+#>         <num>     <num>
+#> 1: -1.5917225 0.8499563
+#> 2: -0.6673856 7.0562515
+#> 3: -0.8555639 0.6300592
+#> 4:  0.8978275 1.6406555
+#> 5: -1.2791641 0.7411495
 ```
+
+### Doublet Detection
+
+Doublet detection is a critical quality control step in single-cell
+RNA-seq analysis. Doublets occur when two cells are captured in a single
+droplet, leading to artificial transcriptional profiles that can
+confound downstream analysis. The `bixverse` package provides two
+complementary methods for doublet detection: **Scrublet** and
+**Boost-based detection**.
+
+#### Scrublet
+
+Scrublet (Single-Cell Remover of Doublets) works by simulating
+artificial doublets from your data, then comparing each observed cell to
+these simulations. Cells that closely resemble simulated doublets
+receive high doublet scores.
+
+The method can be customized using
+[`params_scrublet()`](../reference/params_scrublet.md), which allows you
+to control:
+
+- **normalisation**: Log-normalization parameters including
+  `target_size` (library size to normalize to), `mean_center` (whether
+  to mean-center), and `normalise_variance` (whether to z-score
+  normalize). The original Scrublet paper found that log transformation
+  WITHOUT z-scoring performs optimally.
+- **pca**: PCA parameters via `list(no_pcs = 15L)` to specify the number
+  of principal components to use
+- **hvg**: Highly variable gene selection via
+  `list(min_gene_var_pctl = 0.0)` to set the minimum gene variability
+  percentile
+- **expected_doublet_rate**: Expected proportion of doublets in your
+  dataset (typically 0.05-0.1 for 10x data)
+- **sim_doublet_ratio**: Ratio of simulated doublets to observed cells
+  (typically 1.0-2.0)
+- **n_bins**: Number of bins for histogram-based threshold detection
+
+``` r
+# Run Scrublet with default parameters
+scrublet_result <- scrublet_sc(
+  sc_object,
+  scrublet_params = params_scrublet(), # Use defaults
+  .verbose = TRUE
+)
+
+# View the automatic doublet detection plot
+plot(scrublet_result)
+```
+
+![](Single_cell_analysis_files/figure-html/scrublet-detection-1.png)
+
+``` r
+
+# Access doublet predictions and scores
+head(get_obs_data(scrublet_result))
+#>    doublet doublet_score cell_idx
+#>     <lgcl>         <num>    <num>
+#> 1:   FALSE    0.01752022        1
+#> 2:    TRUE    0.27383867        2
+#> 3:    TRUE    0.21900825        3
+#> 4:   FALSE    0.01752022        4
+#> 5:   FALSE    0.00468110        5
+#> 6:   FALSE    0.01434159        6
+```
+
+You can also manually adjust the doublet calling threshold if the
+automatic threshold doesn’t perform optimally:
+
+``` r
+# Manually set threshold
+scrublet_result_adjusted <- call_doublets_manual(
+  scrublet_result, 
+  threshold = 0.20, 
+  .verbose = TRUE
+)
+
+# View updated results
+head(get_obs_data(scrublet_result_adjusted))
+```
+
+#### Boost-based Doublet Detection
+
+The Boost method uses iterative clustering and classification to
+identify doublets. It repeatedly clusters cells, trains a classifier to
+distinguish cell types, and identifies cells that appear to be mixtures
+of multiple types based on classification uncertainty.
+
+The method can be customized using
+[`params_boost()`](../reference/params_boost.md), which allows you to
+control:
+
+- **hvg**: Highly variable gene selection parameters
+- **pca**: PCA dimensionality and parameters via `list(no_pcs = 10L)`
+- **normalisation**: Log-normalization settings including `target_size`
+- **resolution**: Leiden clustering resolution parameter (higher = more
+  clusters)
+- **voter_thresh**: Threshold for classification voting (0-1, lower =
+  more stringent)
+- **n_iters**: Number of boosting iterations (typically 10-50)
+
+``` r
+# Run Boost-based doublet detection with default parameters
+boost_result <- doublet_detection_boost_sc(
+  sc_object,
+  boost_params = params_boost(), # Use defaults
+  .verbose = TRUE
+)
+
+# Access results
+head(get_obs_data(boost_result))
+#>    doublet doublet_score voting_avg cell_idx
+#>     <lgcl>         <num>      <num>    <num>
+#> 1:   FALSE    0.03639780       0.00        1
+#> 2:   FALSE    0.65208429       0.80        2
+#> 3:   FALSE    0.46183160       0.64        3
+#> 4:   FALSE    0.12220496       0.00        4
+#> 5:   FALSE    0.10452713       0.00        5
+#> 6:   FALSE    0.04662628       0.00        6
+```
+
+Both methods add doublet information to the cell metadata, which you can
+then use to filter cells before downstream analysis:
+
+``` r
+# Get doublet calls from either method
+doublet_data <- get_obs_data(scrublet_result) # or get_obs_data(boost_result)
+
+# Filter to keep only singlets
+singlet_cells <- doublet_data[doublet == FALSE, cell_idx]
+
+# Update sc_object to only include singlets
+sc_object <- set_cells_to_keep(sc_object, singlet_cells)
+```
+
+**Recommendation**: Both methods have complementary strengths. Scrublet
+excels at detecting cross-cell-type doublets (cells from different
+populations), while Boost can be more sensitive to within-cluster
+doublets. For critical analyses, consider running both methods and
+investigating cells flagged by either approach.
 
 ### PCA
 
@@ -550,33 +730,341 @@ sc_object <- calculate_pca_sc(
 
 # get the PCA factors
 get_pca_factors(sc_object)[1:5, 1:5]
-#>                 PC_1       PC_2       PC_3       PC_4        PC_5
-#> cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629
-#> cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133
-#> cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021
-#> cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686
-#> cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366
+#>                        PC_1       PC_2       PC_3      PC_4       PC_5
+#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
+#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
+#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
+#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
+#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
 
 # Get PCA loadings for each gene
 get_pca_loadings(sc_object)[1:5, 1:5]
-#>                 PC_1        PC_2        PC_3        PC_4         PC_5
-#> gene_005  0.20317666 -0.30459997  0.05578838 -0.01042195  0.019768905
-#> gene_017  0.15731445  0.34866709 -0.03532203 -0.04677037  0.087633520
-#> gene_045 -0.02124709  0.05292213 -0.20211791  0.02857097 -0.017724339
-#> gene_019  0.13870871  0.31363463  0.11827458  0.00842014 -0.001503941
-#> gene_010  0.17827064 -0.32709226 -0.01653633  0.01235061  0.015733555
+#>                         PC_1        PC_2         PC_3        PC_4         PC_5
+#> ENSG00000125991 -0.003343013 -0.03231181  0.012509830 -0.02836288  0.311175138
+#> ENSG00000163736 -0.323547810  0.21558243 -0.007027924  0.01526336 -0.001063451
+#> ENSG00000090382 -0.198042095 -0.30515635 -0.173240870 -0.08887842  0.073860973
+#> ENSG00000163220 -0.183531880 -0.28671673 -0.198169768 -0.17102498  0.158384219
+#> ENSG00000115523  0.090477377  0.10992564 -0.428311616  0.20027384  0.011486083
 ```
 
 ``` r
 pca_plot_df <- cbind(sc_object[[]], get_pca_factors(sc_object))
 
-
-ggplot(pca_plot_df, aes(x = PC_1, y = PC_2, color = cell_grp)) +
-  geom_point() +
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = T_cells)) +
+  labs(title = "T cell markers", color = "Proportion") +
+  scale_color_viridis_c() +
   theme_bw()
 ```
 
 ![](Single_cell_analysis_files/figure-html/plot-pca-1.png)
+
+``` r
+
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = B_cells)) +
+  labs(title = "B cell markers", color = "Proportion") +
+  scale_color_viridis_c() +
+  theme_bw()
+```
+
+![](Single_cell_analysis_files/figure-html/plot-pca-2.png)
+
+``` r
+
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = Monocytes)) +
+  labs(title = "Monocyte markers", color = "Proportion") +
+  scale_color_viridis_c() +
+  theme_bw()
+```
+
+![](Single_cell_analysis_files/figure-html/plot-pca-3.png)
+
+### Batch Correction
+
+Batch effects are technical variations that arise from differences in
+sample processing, sequencing runs, experimental conditions, or
+operators. These technical artifacts can obscure true biological signals
+and lead to misleading conclusions in downstream analyses such as
+clustering and differential expression. The `bixverse` package provides
+multiple strategies for handling batch effects in single-cell data.
+
+#### Understanding Batch Effects
+
+To demonstrate batch correction methods, we’ll create synthetic datasets
+with varying batch effect strengths. This allows us to illustrate how
+well each method performs under different scenarios.
+
+``` r
+# Create a temporary directory for batch correction examples
+batch_temp_dir <- file.path(tempdir(), "batch_correction_example")
+dir.create(batch_temp_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Define cell type markers for synthetic data
+cell_markers <- list(
+  cell_type_1 = list(marker_genes = 0:8L),
+  cell_type_2 = list(marker_genes = 9:19L),
+  cell_type_3 = list(marker_genes = 20:29L),
+  cell_type_4 = list(marker_genes = 30:44L)
+)
+
+# Generate synthetic data with medium batch effects
+# This creates 900 cells across 4 cell types and 3 batches
+batch_test_data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 900L,
+    marker_genes = cell_markers,
+    n_batches = 3L,
+    batch_effect_strength = "medium"  # Can be "weak", "medium", or "strong"
+  )
+)
+
+# Create and load the sc_object
+sc_batch_object <- single_cell_exp(dir_data = batch_temp_dir)
+
+sc_batch_object <- load_r_data(
+  object = sc_batch_object,
+  counts = batch_test_data$counts,
+  obs = batch_test_data$obs,
+  var = batch_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 45L,
+    min_lib_size = 300L,
+    min_cells = 450L
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+# Standard preprocessing pipeline
+sc_batch_object <- find_hvg_sc(sc_batch_object, hvg_no = 30L, .verbose = FALSE)
+sc_batch_object <- calculate_pca_sc(sc_batch_object, no_pcs = 15L, .verbose = FALSE)
+sc_batch_object <- find_neighbours_sc(
+  sc_batch_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+```
+
+#### Assessing Batch Effects with kBET
+
+Before correcting batch effects, it’s important to quantify their
+severity. The k-nearest neighbor Batch Effect Test (kBET) evaluates how
+well batches are mixed in the local neighborhood of each cell. A high
+kBET score indicates poor batch mixing (strong batch effects), while a
+low score indicates good mixing.
+
+``` r
+# Calculate kBET score before batch correction
+kbet_before <- calculate_kbet_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index"  # Column in obs table containing batch labels
+)
+
+# The kbet_score represents the proportion of cells with significant batch effects
+print(paste("kBET score before correction:", 
+            round(kbet_before$kbet_score, 3)))
+#> [1] "kBET score before correction: 0.461"
+
+# Visualize batch effects in PCA space
+pca_batch_df <- cbind(sc_batch_object[[]], get_pca_factors(sc_batch_object))
+
+ggplot(pca_batch_df, aes(x = PC_1, y = PC_2, color = as.factor(batch_index))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "PCA colored by batch (before correction)", 
+       color = "Batch") +
+  theme_bw()
+```
+
+![](Single_cell_analysis_files/figure-html/kbet-assessment-1.png)
+
+#### Batch-Aware HVG Selection
+
+When batch effects are present, selecting highly variable genes (HVGs)
+independently within each batch and then combining them can improve
+downstream analysis. This prevents batch-specific variation from
+dominating the HVG selection.
+
+The
+[`find_hvg_batch_aware_sc()`](../reference/find_hvg_batch_aware_sc.md)
+function offers three methods for combining HVGs across batches:
+
+- **average**: Ranks genes by their average variability score across
+  batches (balanced approach)
+- **union**: Takes the union of top HVGs from each batch (more
+  inclusive, captures batch-specific variation)
+- **intersection**: Takes only genes highly variable in all batches
+  (more stringent, conservative)
+
+``` r
+# Select HVGs using batch-aware method (average ranking)
+hvg_batch_avg <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "average",  # Can be "average", "union", or "intersection"
+  .verbose = FALSE
+)
+
+# View the HVG information
+head(hvg_batch_avg$hvg_data)
+#>         mean      var  var_exp   var_std  batch gene_idx
+#>        <num>    <num>    <num>     <num> <char>    <int>
+#> 1: 11.926666 389.7347 2.755905 0.6836970      1        0
+#> 2: 12.530000 723.2823 2.850586 1.0202860      1        1
+#> 3:  4.110000 129.9112 1.892482 1.6640435      1        2
+#> 4:  5.006667 143.3733 1.988857 1.4709948      1        3
+#> 5:  9.443334 284.1265 2.577703 0.7512938      1        4
+#> 6: 11.620000 443.5222 2.704578 0.8756624      1        5
+```
+
+#### BBKNN: Batch Balanced k-Nearest Neighbors
+
+BBKNN (Batch Balanced k-Nearest Neighbors) corrects batch effects by
+constructing a k-nearest neighbor graph that enforces balanced
+representation of batches in each cell’s neighborhood. Instead of
+finding neighbors globally, BBKNN finds a specified number of neighbors
+from within each batch, ensuring that local neighborhoods are
+batch-diverse.
+
+The method can be customized using parameters passed to
+[`bbknn_sc()`](../reference/bbknn_sc.md):
+
+- **neighbours_within_batch**: Number of neighbors to find within each
+  batch (default: 3-5)
+- **knn_method**: Approximate nearest neighbor algorithm (`"annoy"`,
+  `"hnsw"`, or `"nndescent"`)
+- **set_op_mix_ratio**: Balance between union and intersection when
+  combining neighbor sets (0-1)
+- **no_neighbours_to_keep**: Final number of neighbors to retain per
+  cell
+
+``` r
+# Apply BBKNN batch correction
+# Note: This will replace the existing kNN matrix
+sc_batch_bbknn <- bbknn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  no_neighbours_to_keep = 10L,  # Final k for kNN graph
+  .verbose = TRUE
+)
+#> Warning in `method(bbknn_sc, bixverse::single_cell_exp)`(object = <object>, :
+#> Prior kNN matrix found. Will be overwritten.
+#> Running BBKNN algorithm.
+#> Generating graph based on BBKNN connectivities. Weights will be based on the connectivities and not shared nearest neighour calculations.
+
+# Assess batch mixing after BBKNN
+kbet_after_bbknn <- calculate_kbet_sc(
+  object = sc_batch_bbknn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after BBKNN:", 
+            round(kbet_after_bbknn$kbet_score, 3)))
+#> [1] "kBET score after BBKNN: 0"
+
+# The corrected kNN graph is now stored in the object
+# and can be used for clustering
+```
+
+#### fastMNN: Fast Mutual Nearest Neighbors
+
+fastMNN performs batch correction by identifying mutual nearest
+neighbors (MNNs) across batches and using them to learn batch-specific
+correction vectors. It projects the corrected data into a new embedding
+space that preserves biological variation while removing batch effects.
+
+The method can be customized using
+[`params_sc_fastmnn()`](../reference/params_sc_fastmnn.md):
+
+- **no_pcs**: Number of principal components to compute in the corrected
+  space
+- **knn**: k-nearest neighbor parameters for finding MNNs via
+  `list(k = 5L, knn_method = "annoy")`
+- **n_iter**: Number of iterations for correction refinement
+- **variance_adj**: Whether to adjust for variance differences between
+  batches
+
+fastMNN is particularly effective when batch effects are strong and when
+you want a new corrected embedding for visualization and downstream
+analysis.
+
+``` r
+# First, find batch-aware HVGs for fastMNN
+hvg_for_mnn <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+
+# Apply fastMNN correction
+sc_batch_mnn <- fast_mnn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg_for_mnn$hvg_genes,
+  fastmnn_params = params_sc_fastmnn(
+    no_pcs = 10L,
+    knn = list(k = 5L)
+  ),
+  .verbose = TRUE
+)
+
+# fastMNN creates a new "mnn" embedding that can be used for downstream analysis
+# Build a new kNN graph using the corrected embedding
+sc_batch_mnn <- find_neighbours_sc(
+  sc_batch_mnn,
+  embd_to_use = "mnn",  # Use the corrected embedding
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+# Assess batch mixing after fastMNN
+kbet_after_mnn <- calculate_kbet_sc(
+  object = sc_batch_mnn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after fastMNN:", 
+            round(kbet_after_mnn$kbet_score, 3)))
+#> [1] "kBET score after fastMNN: 0.104"
+
+# Visualize the corrected MNN embedding
+# Note: fastMNN returns its own embedding, access it accordingly
+# for visualization purposes you would extract and plot the MNN coordinates
+```
+
+#### Choosing a Batch Correction Method
+
+**When to use each approach:**
+
+- **Batch-aware HVG selection**: Use as a first step when batch effects
+  are mild to moderate. It’s computationally cheap and prevents
+  batch-specific genes from dominating feature selection. Use
+  `"average"` for balanced results, `"union"` to capture batch-specific
+  biology, or `"intersection"` for conservative selection.
+
+- **BBKNN**: Best for moderate batch effects when you want to preserve
+  the original PCA space while improving neighborhood structure. It’s
+  fast, works directly on existing embeddings, and is ideal when you
+  trust your PCA but need better batch mixing for clustering. The
+  correction is applied at the graph level rather than to the data
+  itself.
+
+- **fastMNN**: Best for strong batch effects or when you need a new
+  corrected embedding for visualization. It’s more computationally
+  intensive but provides a corrected low-dimensional space that
+  explicitly removes batch effects while preserving biological
+  variation. Use when BBKNN isn’t sufficient or when you want corrected
+  coordinates for plotting.
+
+**General workflow:** 1. Always assess batch effects first using kBET
+and visualization 2. Start with batch-aware HVG selection as a baseline
+3. Apply BBKNN or fastMNN depending on severity 4. Re-assess using kBET
+to verify improvement 5. Use the corrected neighborhood graph or
+embedding for clustering and downstream analysis
 
 ### Clustering
 
@@ -633,20 +1121,20 @@ sc_object <- find_neighbours_sc(
 
 head(get_knn_mat(sc_object))[1:5, 1:5]
 #>      [,1] [,2] [,3] [,4] [,5]
-#> [1,]  597  607  416   13  666
-#> [2,]  419    4  308  645   24
-#> [3,]    8  630  311  632  489
-#> [4,]  430  178  449  678  413
-#> [5,]   24    1  152  168  419
+#> [1,]  548  241 2204  488  188
+#> [2,] 1835 2214 2318 1013 2442
+#> [3,] 2273 1351 1266 2529  234
+#> [4,] 1552  518 1297  811  721
+#> [5,] 1964  829 1261 2238 1962
 
 head(get_snn_graph(sc_object))[1:5, 1:5]
 #> 5 x 5 sparse Matrix of class "dgCMatrix"
-#>                               
-#> [1,] . .         . . .        
-#> [2,] . .         . . 0.9333333
-#> [3,] . .         . . .        
-#> [4,] . .         . . .        
-#> [5,] . 0.9333333 . . .
+#>               
+#> [1,] . . . . .
+#> [2,] . . . . .
+#> [3,] . . . . .
+#> [4,] . . . . .
+#> [5,] . . . . .
 ```
 
 #### Community detection
@@ -689,14 +1177,22 @@ dge_leiden_clusters <- find_markers_sc(
 )
 
 head(dge_leiden_clusters)
-#>     gene_id      lfc     prop1     prop2 z_scores     p_values          fdr
-#>      <char>    <num>     <num>     <num>    <num>        <num>        <num>
-#> 1: gene_001 2.335875 0.9819005 0.7521739 16.09610 2.717026e-58 2.445323e-57
-#> 2: gene_002 2.352085 0.9819005 0.7217391 16.34724 4.551388e-60 4.608280e-59
-#> 3: gene_003 2.470452 1.0000000 0.7739130 17.17004 4.451217e-66 9.834427e-65
-#> 4: gene_004 2.318489 0.9728507 0.6869565 15.64946 3.350099e-55 2.087369e-54
-#> 5: gene_005 1.743340 0.8371041 0.4000000 12.08653 1.244202e-33 5.304231e-33
-#> 6: gene_006 2.235862 0.9728507 0.7130435 15.89808 6.533862e-57 5.292428e-56
+#>            gene_id          lfc      prop1       prop2   z_scores  p_values
+#>             <char>        <num>      <num>       <num>      <num>     <num>
+#> 1: ENSG00000188976 -0.004697453 0.10447761 0.119047619 -0.1705327 0.8645912
+#> 2: ENSG00000187608  0.031933323 0.40298507 0.253968269  1.2045563 0.2283746
+#> 3: ENSG00000186827  0.019535586 0.07462686 0.007936508  0.7552162 0.4501193
+#> 4: ENSG00000078808  0.052448999 0.16417910 0.039682541  1.4454675 0.1483266
+#> 5: ENSG00000160087  0.010973066 0.11940298 0.095238097  0.2544456 0.7991513
+#> 6: ENSG00000169972  0.022716010 0.05970149 0.000000000  0.6821307 0.4951563
+#>          fdr
+#>        <num>
+#> 1: 0.9996141
+#> 2: 0.9996141
+#> 3: 0.9996141
+#> 4: 0.9996141
+#> 5: 0.9996141
+#> 6: 0.9996141
 ```
 
 Specify a column, and the function will calculate differential gene
@@ -718,7 +1214,29 @@ dge_test_2 <- find_all_markers_sc(
 )
 ```
 
-### AUcell
+### Pathway Analysis
+
+Gene set scoring methods allow you to evaluate the activity or
+expression of predefined gene sets (such as pathways, cell type markers,
+or biological processes) at the single-cell level. The `bixverse`
+package provides three complementary approaches for this task:
+**AUCell**, **Vision**, and **module_scores_sc**. AUCell uses a
+ranking-based approach where it calculates the Area Under the Curve
+(AUC) to determine how highly a gene set ranks within each cell’s
+expression profile, making it particularly effective for identifying
+cells that express specific marker genes. Vision employs a signature
+scoring method that accounts for the background distribution of gene
+expression across the dataset, providing robust scores that can capture
+subtle pathway activities. Module scoring (inspired by Seurat’s
+AddModuleScore) calculates the average expression of genes in a set
+while controlling for expression levels by randomly sampling control
+gene sets with similar properties, which helps account for technical
+variability and cellular detection rates. Each method has its strengths:
+use AUCell for marker-based cell type identification, Vision for
+comprehensive pathway activity analysis, and module scores for quick
+comparative assessments of gene set expression across cell populations.
+
+#### AUcell
 
 AUCell calculates how well a set of genes (or pathway) “ranks” in each
 cell compared to all other genes. It produces a score between 0 and 1
@@ -732,26 +1250,208 @@ cells at once or stream them in chunks of 50,000 cells for memory
 efficiency.
 
 ``` r
-auc_gene_sets <- list(
-  markers_cell_type_1 = sprintf("gene_%03d", 1:10),
-  markers_cell_type_2 = sprintf("gene_%03d", 11:20),
-  markers_cell_type_3 = sprintf("gene_%03d", 21:30)
+gene_sets <- list(
+  S_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
+        ),
+      ]$gene_id,
+      G2M_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
+        )]$gene_id
 )
 
 auc_res_auroc <- aucell_sc(
   object = sc_object,
-  gs_list = auc_gene_sets,
+  gs_list = gene_sets,
   auc_type = "auroc",
   .verbose = FALSE
 )
 
-cbind(auc_res_auroc, get_pca_factors(sc_object)) |>
-  ggplot(aes(y = PC_1, x = PC_2, color = markers_cell_type_1)) +
+
+plot_data_aucell <- cbind(auc_res_auroc, get_pca_factors(sc_object))
+
+p1_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = S_phase)) +
   geom_point() +
+  labs(title = "S Phase") +
   theme_bw()
+
+p2_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_aucell + p2_aucell
 ```
 
 ![](Single_cell_analysis_files/figure-html/auc-cell-1.png)
+
+#### Vision
+
+``` r
+
+    genesets_vs <- purrr::map(
+        gene_sets,
+        ~ {
+            list(pos = .x)
+        }
+    )
+
+vision_res <- vision_sc(
+        object = sc_object,
+        gs_list = genesets_vs,
+        streaming = TRUE,
+        .verbose = TRUE
+    )
+
+
+plot_data_vision <- cbind(vision_res, get_pca_factors(sc_object))
+
+p1_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = S_phase)) +
+  geom_point() +
+  labs(title = "S Phase") +
+  theme_bw()
+
+p2_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_vision + p2_vision
+```
+
+![](Single_cell_analysis_files/figure-html/vision-1.png)
+
+#### Module Scores
+
+``` r
+module_score_res <- module_scores_sc(
+        object = sc_object,
+        gs_list = gene_sets,
+        n_bins = 24L,
+        n_ctrl = 100L,
+        seed = 42L,
+        .verbose = TRUE
+    )
+
+
+plot_data_module_score <- cbind(module_score_res, get_pca_factors(sc_object))
+
+p1_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = S_phase)) +
+  geom_point() +
+  labs(title = "S Phase") +
+  theme_bw()
+
+p2_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_module_score + p2_module_score
+```
+
+![](Single_cell_analysis_files/figure-html/module_score-1.png)
+
+### Hotspot Analysis
+
+Hotspot analysis identifies genes that exhibit spatially coherent
+patterns of expression across the cellular neighborhood structure.
+Unlike traditional differential expression methods that compare discrete
+groups, Hotspot calculates local auto-correlation statistics for each
+gene based on the kNN graph constructed from your chosen embedding
+(typically PCA). This approach reveals genes whose expression varies
+smoothly and systematically across the transcriptional landscape, rather
+than being randomly distributed. Genes with high auto-correlation scores
+show coordinated expression patterns among neighboring cells, indicating
+they may be involved in gradual developmental transitions, spatial
+organization, or continuous cellular processes. The method supports
+multiple statistical models (DANB, normal, or Bernoulli) to accommodate
+different expression distributions, and can efficiently process large
+datasets through streaming. The resulting auto-correlation scores and
+statistical significance values help prioritize genes that drive local
+structure in your data, complementing cluster-based marker
+identification by capturing genes involved in continuous variation and
+spatial patterning.
+
+``` r
+hotspot_autocor_danb_res <- hotspot_autocor_sc(
+    object = sc_object,
+    embd_to_use = "pca",
+    streaming = TRUE,
+    .verbose = TRUE
+)
+
+head(hotspot_autocor_danb_res)
+#>            gene_id     gaerys_c    z_score          pval           fdr
+#>             <char>        <num>      <num>         <num>         <num>
+#> 1: ENSG00000188976  0.001354641  0.1547889  8.769878e-01  9.985216e-01
+#> 2: ENSG00000188290  0.205669463 21.4344425 6.379228e-102 3.161298e-100
+#> 3: ENSG00000187608  0.118260309 10.3465157  4.338843e-25  9.386010e-24
+#> 4: ENSG00000131591 -0.008443281 -0.9828783  3.256673e-01  7.737786e-01
+#> 5: ENSG00000186891  0.003888038  0.5505558  5.819382e-01  9.415786e-01
+#> 6: ENSG00000186827  0.038622454  3.1006124  1.931209e-03  1.423204e-02
+```
+
+#### Hotspot Gene Modules
+
+After identifying genes with significant local auto-correlation, the
+next step is to discover modules of co-expressed genes that vary
+together across the cellular landscape. The
+[`hotspot_gene_cor_sc()`](../reference/hotspot_gene_cor_sc.md) function
+computes pairwise local correlations between genes (typically focusing
+on the top auto-correlated genes to reduce computational burden),
+generating both a correlation matrix and Z-score matrix that quantify
+how genes co-vary within the local neighborhood structure. These
+correlation patterns are then used to identify gene modules—groups of
+genes that exhibit coordinated expression patterns across space. Module
+membership is assigned through clustering of the correlation structure,
+and genes that don’t meet the Z-score threshold are excluded (marked as
+NA). The resulting modules represent functional gene programs or
+biological processes that vary systematically across your cellular
+populations, providing a data-driven way to identify coherent
+transcriptional programs without relying on predefined gene sets.
+
+``` r
+# Order results by auto-correlation score (Geary's C statistic)
+hotspot_autocor_danb_res_ordered <- hotspot_autocor_danb_res[order(-gaerys_c)]
+
+# Compute gene-gene correlations for top auto-correlated genes
+hotspot_gene_gene_cor <- hotspot_gene_cor_sc(
+    object = sc_object,
+    embd_to_use = "pca",
+    genes_to_take = hotspot_autocor_danb_res_ordered[1:500, gene_id],
+    streaming = TRUE,
+    .verbose = TRUE
+)
+
+# Assign genes to modules based on correlation structure
+hotspot_gene_gene_cor <- set_hotspot_membership(hotspot_gene_gene_cor)
+
+# Get module membership results (NA = below threshold, excluded)
+membership_results <- get_hotspot_membership(hotspot_gene_gene_cor)
+
+head(membership_results)
+#>            gene_id cluster_member
+#>             <char>          <num>
+#> 1: ENSG00000087086            249
+#> 2: ENSG00000019582            249
+#> 3: ENSG00000167996            251
+#> 4: ENSG00000105374            249
+#> 5: ENSG00000101439            249
+#> 6: ENSG00000163220            249
+
+# Create gene sets from modules
+hotspot_gs <- na.omit(get_hotspot_membership(hotspot_gene_gene_cor)) %$%
+    split(gene_id, cluster_member)
+
+# View module sizes
+sapply(hotspot_gs, length)
+#> 238 247 249 251 252 
+#>  61  25 227 108  71
+```
 
 ### Save object
 
@@ -794,73 +1494,57 @@ rerun (unless data has been saved with
 recommended).
 
 ``` r
-sc_object_loaded <- single_cell_exp(dir_data = tempdir())
+sc_object_loaded <- single_cell_exp(dir_data = tempdir_pbmc)
 
 sc_object_loaded <- load_existing(sc_object_loaded)
 #> Found stored data from save_sc_exp_to_disk(). Loading that one into the object.
 
 dim(sc_object_loaded[])
-#> [1] 682  81
+#> [1] 2700 9713
 
 dim(sc_object[])
-#> [1] 682  81
+#> [1] 2700 9713
 
 dim(sc_object[[]])
-#> [1] 682  16
+#> [1] 2700   20
 dim(sc_object_loaded[[]])
-#> [1] 682  16
+#> [1] 2700   20
 ```
 
 ``` r
 ## PCA in original object exists
 head(get_pca_factors(sc_object))[1:5, 1:5]
-#>                 PC_1       PC_2       PC_3       PC_4        PC_5
-#> cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629
-#> cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133
-#> cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021
-#> cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686
-#> cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366
+#>                        PC_1       PC_2       PC_3      PC_4       PC_5
+#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
+#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
+#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
+#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
+#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
 
 ## PCA in loaded in object does exist as has been loaded back in from the qs2 file
-head(get_pca_factors(sc_object_loaded))
-#>                 PC_1       PC_2       PC_3       PC_4        PC_5        PC_6
-#> cell_0001  0.7916701 -2.1312938 -1.3696921  0.4485890  2.23567629  0.10832164
-#> cell_0003 -2.4218912 -1.2342602 -0.3744557 -1.7983242 -1.55479133 -1.73166561
-#> cell_0004  2.5719264 -1.4721935  1.2367138  0.8601690 -2.01104021 -0.98503643
-#> cell_0005  1.8453653  3.3306770 -0.3060488  0.8308226  2.15305686 -0.88237613
-#> cell_0006 -1.9956309 -0.4817263 -0.7805346 -1.3205948  0.06050366 -1.61809599
-#> cell_0008  0.8654826  0.2562440 -1.4927160  1.1618899  1.81158805  0.09955216
-#>                 PC_7       PC_8        PC_9      PC_10
-#> cell_0001 -0.8306807 -0.9370393  0.11120244  0.1123903
-#> cell_0003  0.4089674  0.5485801 -0.03806071  0.6408930
-#> cell_0004 -2.1616533  0.6146336  0.08884051  0.5149339
-#> cell_0005  1.3376453  0.8727602  0.93317527  0.5300566
-#> cell_0006 -0.5391824  0.1608551 -0.24829476  1.1093277
-#> cell_0008 -0.1491522  1.2157903  1.11126757 -1.0982397
+head(get_pca_factors(sc_object_loaded))[1:5, 1:5]
+#>                        PC_1       PC_2       PC_3      PC_4       PC_5
+#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
+#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
+#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
+#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
+#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
 
 
 ## Same for knn
 head(get_knn_mat(sc_object))[1:5, 1:5]
 #>      [,1] [,2] [,3] [,4] [,5]
-#> [1,]  597  607  416   13  666
-#> [2,]  419    4  308  645   24
-#> [3,]    8  630  311  632  489
-#> [4,]  430  178  449  678  413
-#> [5,]   24    1  152  168  419
+#> [1,]  548  241 2204  488  188
+#> [2,] 1835 2214 2318 1013 2442
+#> [3,] 2273 1351 1266 2529  234
+#> [4,] 1552  518 1297  811  721
+#> [5,] 1964  829 1261 2238 1962
 
-head(get_knn_mat(sc_object_loaded))
-#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
-#> [1,]  597  607  416   13  666  300  177  453  654    96   507   127    99   605
-#> [2,]  419    4  308  645   24  665  168  558  390   104   536   217   452    64
-#> [3,]    8  630  311  632  489   83  383  381  183    40   119    32   253   671
-#> [4,]  430  178  449  678  413  644  315  626  189   483    14   620   382    61
-#> [5,]   24    1  152  168  419   94  514  221  308   190   602   277    15   231
-#> [6,]  189  318  633  236  453  666  461  290  550    25   564   266   191   661
-#>      [,15]
-#> [1,]   424
-#> [2,]   465
-#> [3,]   292
-#> [4,]   238
-#> [5,]    73
-#> [6,]   663
+head(get_knn_mat(sc_object_loaded))[1:5, 1:5]
+#>      [,1] [,2] [,3] [,4] [,5]
+#> [1,]  548  241 2204  488  188
+#> [2,] 1835 2214 2318 1013 2442
+#> [3,] 2273 1351 1266 2529  234
+#> [4,] 1552  518 1297  811  721
+#> [5,] 1964  829 1261 2238 1962
 ```
