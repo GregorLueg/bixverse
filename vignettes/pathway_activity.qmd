@@ -133,7 +133,7 @@ microbenchmark::microbenchmark(
     pathways = gs,
     gaussian = TRUE
   ),
-  times = 10L
+  times = 5L
 )
 ```
 
@@ -205,7 +205,7 @@ microbenchmark::microbenchmark(
     pathways = gs,
     gaussian = FALSE
   ),
-  times = 10L
+  times = 5L
 )
 ```
 
@@ -273,6 +273,6 @@ microbenchmark::microbenchmark(
     exp = X,
     pathways = gs
   ),
-  times = 10L
+  times = 5L
 )
 ```

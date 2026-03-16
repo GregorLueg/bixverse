@@ -103,7 +103,7 @@ expect_warning(
 
 # should error
 expect_error(
-  current = snf(data = continuous_data),
+  current = SimilarityNetworkFusion(data = continuous_data),
   info = paste("error without modality name")
 )
 

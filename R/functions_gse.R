@@ -863,6 +863,17 @@ calc_fgsea <- function(
     )] %>%
     data.table::setorder(pvals)
 
+  all_results <- all_results[, c(
+    "pathway_name",
+    "es",
+    "nes",
+    "pvals",
+    "fdr",
+    "leading_edge",
+    "n_more_extreme",
+    "log2err"
+  )]
+
   return(all_results)
 }
 

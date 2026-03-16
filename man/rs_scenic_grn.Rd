@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_scenic_grn}
 \alias{rs_scenic_grn}
-\title{SCENIC to generate gene-regulatory networks}
+\title{SCENIC: Generating gene-regulatory networks}
 \usage{
 rs_scenic_grn(
   f_path_genes,
@@ -37,5 +37,5 @@ SCENIC.}
 A gene x TF importance matrix
 }
 \description{
-SCENIC to generate gene-regulatory networks
+SCENIC: Generating gene-regulatory networks
 }

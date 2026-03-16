@@ -253,11 +253,11 @@ fn rs_sc_get_gene_set_perc(
 
     for i in 0..gene_set_idx.len() {
         let element = gene_set_idx.elt(i).unwrap();
-        let indices_i: Vec<u16> = element
+        let indices_i: Vec<u32> = element
             .as_integer_vector()
             .unwrap()
             .iter()
-            .map(|x| *x as u16)
+            .map(|x| *x as u32)
             .collect();
         gene_set_indices.push(indices_i);
     }
@@ -675,6 +675,15 @@ fn rs_sc_knn(
         KnnSearch::Exhaustive => {
             generate_knn_exhaustive(embd.as_ref(), &knn_params.ann_dist, knn_params.k, verbose)
         }
+        KnnSearch::Ivf => generate_knn_ivf(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_list,
+            knn_params.n_probe,
+            seed,
+            verbose,
+        ),
     };
 
     let end_knn = start_knn.elapsed();

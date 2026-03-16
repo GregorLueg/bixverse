@@ -1,6 +1,7 @@
 use extendr_api::*;
 use faer::Mat;
 use rand::prelude::*;
+use std::cmp::Ordering;
 
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::prelude::*;
@@ -13,18 +14,26 @@ use bixverse_rs::single_cell::sc_analysis::vision::*;
 
 extendr_module! {
     mod r_sc_analysis;
-    fn rs_aucell;
+    // dge
     fn rs_calculate_dge_mann_whitney;
+    // aucell
+    fn rs_aucell;
+    // hotspot
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
     fn rs_hotspot_gene_cor;
-    fn rs_make_milor_nhoods;
+    // module scoring
     fn rs_module_scoring;
+    // miloR
+    fn rs_make_milor_nhoods;
+    // vision
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
+    // scenic
     fn rs_scenic_gene_filter;
     fn rs_scenic_grn;
     fn rs_scenic_grn_streaming;
+    fn rs_top_k_targets;
 }
 
 //////////
@@ -795,7 +804,7 @@ fn rs_scenic_gene_filter(
     genes_to_use.r_int_convert()
 }
 
-/// SCENIC to generate gene-regulatory networks
+/// SCENIC: Generating gene-regulatory networks
 ///
 /// @param f_path_genes Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
@@ -841,7 +850,7 @@ fn rs_scenic_grn(
     faer_to_r_matrix(grn_matrix.as_ref())
 }
 
-/// SCENIC to generate gene-regulatory networks (streaming version)
+/// SCENIC: Generating gene-regulatory networks (streaming version)
 ///
 /// @description Loads the genes in as chunks to avoid high memory pressure.
 ///
@@ -887,4 +896,78 @@ fn rs_scenic_grn_streaming(
     );
 
     faer_to_r_matrix(grn_matrix.as_ref())
+}
+
+/// SCENIC: Select the Top TF <> Gene pairs
+///
+/// @param matrix Numeric matrix with genes x TF importance values
+/// @param k Integer. Number of top genes / TFs to extract.
+/// @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
+/// top k genes per TF are used. Both versions were used in the original paper.
+/// @param min_value Float. An
+///
+/// @returns A TF x gene list
+///
+/// @export
+#[extendr]
+fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option<f64>) -> List {
+    let nrow = matrix.nrows();
+    let ncol = matrix.ncols();
+    let data = matrix.data();
+    let k = match margin {
+        1 => (k as usize).min(ncol),
+        2 => (k as usize).min(nrow),
+        _ => panic!("margin must be 1 (rows) or 2 (cols)"),
+    };
+    let dimnames = matrix.get_attrib("dimnames").unwrap();
+    let dimnames_list: List = dimnames.try_into().unwrap();
+    let rownames: Strings = dimnames_list.elt(0).unwrap().try_into().unwrap();
+    let colnames: Strings = dimnames_list.elt(1).unwrap().try_into().unwrap();
+    let (outer_len, outer_names): (usize, Vec<&str>) = match margin {
+        1 => (nrow, rownames.iter().map(|s| s.as_str()).collect()),
+        _ => (ncol, colnames.iter().map(|s| s.as_str()).collect()),
+    };
+    let result: Vec<Robj> = (0..outer_len)
+        .map(|i| {
+            let mut idx: Vec<usize> = (0..match margin {
+                1 => ncol,
+                _ => nrow,
+            })
+                .filter(|&j| {
+                    let v = match margin {
+                        1 => data[j * nrow + i],
+                        _ => data[i * nrow + j],
+                    };
+                    min_value.is_none_or(|min| v >= min)
+                })
+                .collect();
+
+            let take = k.min(idx.len());
+            if take == 0 {
+                return r!(Strings::new(0));
+            }
+
+            idx.select_nth_unstable_by(take - 1, |&a, &b| {
+                let va = match margin {
+                    1 => data[a * nrow + i],
+                    _ => data[i * nrow + a],
+                };
+                let vb = match margin {
+                    1 => data[b * nrow + i],
+                    _ => data[i * nrow + b],
+                };
+                vb.partial_cmp(&va).unwrap_or(Ordering::Equal)
+            });
+
+            let names: Vec<&str> = idx[..take]
+                .iter()
+                .map(|&j| match margin {
+                    1 => colnames[j].as_str(),
+                    _ => rownames[j].as_str(),
+                })
+                .collect();
+            r!(names)
+        })
+        .collect();
+    List::from_names_and_values(outer_names, result).unwrap()
 }

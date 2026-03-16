@@ -4,7 +4,7 @@
 \alias{new_scenic_grn}
 \title{Constructor for SCENIC GRN results}
 \usage{
-new_scenic_grn(importance_matrix, gene_ids, tf_ids, learner_type, params)
+new_scenic_grn(importance_matrix, gene_ids, tf_ids, params)
 }
 \arguments{
 \item{importance_matrix}{Matrix. Importance matrix of shape

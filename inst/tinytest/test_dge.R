@@ -51,7 +51,7 @@ bad_counts <- test_data$counts
 rownames(bad_counts) <- NULL
 
 expect_error(
-  current = bulk_dge(
+  current = BulkDge(
     raw_counts = test_data$counts,
     meta_data = bad_metadata
   ),
@@ -59,7 +59,7 @@ expect_error(
 )
 
 expect_error(
-  current = bulk_dge(
+  current = BulkDge(
     raw_counts = bad_counts,
     meta_data = test_data$meta_data
   ),

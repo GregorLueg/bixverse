@@ -601,6 +601,199 @@ expect_true(
   )
 )
 
+## scenic ----------------------------------------------------------------------
+
+### gene filtering -------------------------------------------------------------
+
+genes_pre_filter <- get_sc_var(sc_object)
+
+filtered_genes <- genes_pre_filter[no_cells_exp >= 500L, gene_id]
+
+genes_to_keep_scenic <- scenic_gene_filter_sc(
+  object = sc_object,
+  # absurdly high, but releted to synthetic data
+  scenic_params = params_scenic(min_counts = 500L),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::qtest(genes_to_keep_scenic, "S+"),
+  info = "scenic_gene_filter returning right type"
+)
+
+expect_true(
+  current = length(setdiff(filtered_genes, genes_to_keep_scenic)) == 0,
+  info = "scenic_gene_filter returning the right genes"
+)
+
+### scenic tf <> gene ----------------------------------------------------------
+
+tfs <- sprintf("gene_%03i", c(1, 2, 11, 12, 21, 22, 50, 60, 70, 80, 90, 100))
+
+expect_true(
+  current = length(intersect(tfs, filtered_genes)) > 6,
+  info = "sensible tf numbers pass"
+)
+
+#### rf ------------------------------------------------------------------------
+
+# test various batch sizes and check that stuff behaves
+rf_scenic_res_batch_32 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(gene_batch_size = 32L),
+  .verbose = FALSE
+)
+
+
+str(rf_scenic_res_batch_32)
+
+expect_true(
+  current = checkmate::testClass(rf_scenic_res_batch_32, "ScenicGrn"),
+  info = "scenic correct class returned"
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    as.matrix(rf_scenic_res_batch_32),
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named"
+  ),
+  info = "scenic correct as.matrix() behaves"
+)
+
+##### other batch sizes --------------------------------------------------------
+
+rf_scenic_res_batch_16 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(gene_batch_size = 16L),
+  .verbose = FALSE
+)
+
+rf_scenic_res_batch_1 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(gene_batch_size = 1L),
+  .verbose = FALSE
+)
+
+##### add tf <> gene info ------------------------------------------------------
+
+#### extra trees ---------------------------------------------------------------
+
+et_scenic_res_batch_32 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(
+    gene_batch_size = 32L,
+    learner_type = "extratrees"
+  ),
+  .verbose = FALSE
+)
+
+et_scenic_res_batch_16 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(
+    gene_batch_size = 16L,
+    learner_type = "extratrees"
+  ),
+  .verbose = FALSE
+)
+
+et_scenic_res_batch_1 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(
+    gene_batch_size = 1L,
+    learner_type = "extratrees"
+  ),
+  .verbose = FALSE
+)
+
+#### boosted -------------------------------------------------------------------
+
+grnboost2_scenic_res_batch_1 <- scenic_grn_sc(
+  object = sc_object,
+  tf_ids = tfs,
+  genes_to_take = genes_to_keep_scenic,
+  scenic_params = params_scenic(
+    gene_batch_size = 1L,
+    learner_type = "grnboost2"
+  ),
+  .verbose = FALSE
+)
+
 # clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+
+# dasda
+
+class(x)
+
+x = rf_scenic_res_batch_32
+k_tfs = 5L
+k_genes = 10L
+min_importance = NULL
+
+gene_tf_imp <- x$importance_matrix
+
+# check if users wants to go from gene -> TF
+tf_to_gene_1 <- if (!is.null(k_tfs)) {
+  gene_to_tf <- rs_top_k_targets(
+    matrix = gene_tf_imp,
+    k = k_tfs,
+    margin = 1L,
+    min_value = min_importance
+  )
+
+  tapply(
+    rep(names(gene_to_tf), lengths(gene_to_tf)),
+    unlist(gene_to_tf),
+    unique
+  )
+} else {
+  NULL
+}
+
+# check if users wants to go from TF -> gene
+tf_to_gene_2 <- if (!is.null(k_tfs)) {
+  rs_top_k_targets(
+    matrix = gene_tf_imp,
+    k = k_tfs,
+    margin = 2L,
+    min_value = min_importance
+  )
+} else {
+  NULL
+}
+
+
+# combine lists
+tf_to_gene_final <- if (!is.null(tf_to_gene_1) & !is.null(tf_to_gene_2)) {
+  purrr::map2(tf_to_gene_1, tf_to_gene_2, \(tg_1, tg_2) {
+    sort(union(tg_1, tg_2))
+  })
+} else if (!is.null(tf_to_gene_1)) {
+  tf_to_gene_1
+} else {
+  tf_to_gene_2
+}
+
+tf_gene_dt <- data.table::data.table(
+  tf = rep(names(tf_to_gene_final), lengths(tf_to_gene_final)),
+  target_gene = unlist(tf_to_gene_final, use.names = FALSE)
+)
+
+
+get_gene_indices(x = sc_object, gene_ids = tfs, rust_index = TRUE)

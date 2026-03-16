@@ -53,5 +53,16 @@ TF identifiers that are not found in the object's gene list are silently
 dropped with a warning indicating how many were removed. TF indices are
 intersected with the target gene indices so that TFs not passing the gene
 filter are excluded from the predictor set but remain as potential targets
-if present in \code{genes_to_take}.
+if present in \code{genes_to_take}. You have the option to generate the TF-gene
+importance values with three distinct methods. For the \code{random_forest} and
+the \code{extratrees} version, a batching strategy is applied in the default
+settings. Correlated genes are identified and clustered together via
+k-means clustering on the feature loadings of the PCA. These are then
+divided into batches of \code{gene_batch_size} and the regression learners
+are leveraging multi-target regression to fit all genes in the batch in one
+go. This massively accelerates the algorithm and the importance values per
+gene-TF pair are calculated then individually. Due to the batching by
+similar gene, the signal dilution is limited. If you wish to run the
+traditional approach, you can set gene_batch_size to \code{1L} or use the
+\code{grnboost2} learner that can only fit one gene at a given time.
 }

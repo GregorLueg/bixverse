@@ -13,7 +13,7 @@ parameters:
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
 neighbour search. Defaults to \code{"hnsw"}. The implementations are:
-\code{c("hnsw", "annoy", "nndescent", "exhaustive")}.
+\code{c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"cosine"}. The implementations are
 \code{c("cosine", "euclidean")}.
@@ -34,6 +34,10 @@ Defaults to \code{16L}.
 construction. Defaults to \code{200L}.
 \item ef_search - HNSW param: size of candidate list (higher = better
 recall, slower). Defaults to \code{100L}.
+\item n_list - IVF param: number of clusters/centroids to generate. Defaults
+to \code{NULL} (sqrt(n) n_lists will be generated in this case).
+\item n_probe - IVF param: number of clusters/centroids to query Defaults
+to \code{NULL} (sqrt(n_lists) clusters will be queried in this case).
 }
 }
 \description{

@@ -7,7 +7,7 @@
 params_scenic(
   min_counts = 50L,
   min_cells = 0.03,
-  learner_type = "grnboost2",
+  learner_type = "randomforest",
   gene_batch_strategy = "correlated",
   gene_batch_size = NULL,
   n_pcs = 50L,
@@ -24,7 +24,7 @@ must express a gene for it to be considered. Defaults to \code{0.03}.}
 
 \item{learner_type}{Character. Regression learner to use. One of
 \code{"randomforest"}, \code{"extratrees"}, or \code{"grnboost2"}. Defaults to
-\code{"grnboost2"}.}
+\code{"randomforest"}.}
 
 \item{gene_batch_strategy}{Character. Strategy for grouping target genes into
 batches. One of \code{"random"} or \code{"correlated"}. Only used for \code{"randomforest"}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_scenic_grn_streaming}
 \alias{rs_scenic_grn_streaming}
-\title{SCENIC to generate gene-regulatory networks (streaming version)}
+\title{SCENIC: Generating gene-regulatory networks (streaming version)}
 \usage{
 rs_scenic_grn_streaming(
   f_path_genes,
