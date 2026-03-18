@@ -42,6 +42,8 @@ memory requirements.
 #| label: setup
 library(bixverse)
 library(ggplot2)
+library(magrittr)
+# devtools::load_all()
 ```
 
 ## Create test data
@@ -136,9 +138,9 @@ analysis by default it will be set to all TRUE **
 
 ## The QC parameters are set using the constructor function
 sc_qc_param <- params_sc_min_quality(
-  min_unique_genes = 45L,
-  min_lib_size = 300L,
-  min_cells = 500L,
+  min_unique_genes = 20L,
+  min_lib_size = 100L,
+  min_cells = 20L,
   target_size = 1000
 )
 ```
@@ -188,28 +190,25 @@ We have accounted for all possible combinations of outputs when loading data
 from mtx files it can either be cells as rows or cells as columns, and the obs 
 and var tables can either be loaded as `.tsv` or `.csv` 
 
-```{r}
-#| label: load-mtx
-sc_object <- single_cell_exp(dir_data = tempdir())
+Here we are going to use the PBMC 3k dataset for the remainder of the vignette.
 
+```{r}
+#| label: load-PBMC-data
+#| echo: true
+
+pbmc3k_path <- bixverse:::download_pbmc3k()
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- single_cell_exp(dir_data = tempdir_pbmc)
 
 params_cells_rows_csv <- params_sc_mtx_io(
-  path_mtx = file.path(f_path_v1, "mat.mtx"),
-  path_obs = file.path(f_path_v1, "barcodes.csv"),
-  path_var = file.path(f_path_v1, "features.csv"),
-  cells_as_rows = TRUE,
+  path_mtx = file.path(pbmc3k_path, "matrix.mtx"),
+  path_obs = file.path(pbmc3k_path, "barcodes.tsv"),
+  path_var = file.path(pbmc3k_path, "genes.tsv"),
+  cells_as_rows = FALSE,
   has_hdr = TRUE
 )
-
-## Data can also be loaded in this way, not run here shown purely as an example
-
-# params_genes_rows_tsv <- params_sc_mtx_io(
-#   path_mtx = file.path(f_path_v2, "mat.mtx"),
-#   path_obs = file.path(f_path_v2, "barcodes.tsv"),
-#   path_var = file.path(f_path_v2, "features.tsv"),
-#   cells_as_rows = FALSE,
-#   has_hdr = TRUE
-# )
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -225,6 +224,8 @@ sc_object <- load_mtx(
 A duckdb with the single cell data has been created and it does not live in
 memory, however for some operations (plotting) you do need the data, A number
 of helpful getter functions have to been written to retrieve the data.
+
+*Note by default these getters will return the filtered cells, as filtered by the specified params_sc_min_quality()* 
 
 ### Obs table (cell info)
 
@@ -341,7 +342,8 @@ matrix <- sc_object[, , return_format = "cell", assay = "norm"]
 ## Gene proportions
 
 Usual QC procedure involves checking the proportions of mitochondrial and
-ribosomal genes in you sample bixverse can do this as follows
+ribosomal genes in your samples. We have also added the standard G2M and S phase genes from seurat to the package. 
+To assess cell cycle shifts.
 
 This operation also be chunked by using by setting `streaming = TRUE`, this is
 useful when working with very large datasets to avoid running into memory 
@@ -349,9 +351,40 @@ constraints.
 
 ```{r}
 #| label: gene-props
-gs_of_interest <- list(
-  gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
-  gs_2 = c("gene_096", "gene_097", "gene_100")
+
+
+gene_data <- get_sc_var(sc_object)
+
+gs_of_interest <-  list(
+      MT = gene_data[
+        stringr::str_detect(gene_data$gene_name, "^MT-"),
+      ]$gene_id,
+      Ribo = gene_data[
+        stringr::str_detect(gene_data$gene_name, "^RPS|^RPL"),
+      ]$gene_id,
+      S_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
+        ),
+      ]$gene_id,
+      G2M_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
+        )]$gene_id,
+      T_cells = gene_data[
+        gene_data$gene_name %in% c("CD3D", "CD3E", "CD3G"),
+      ]$gene_id,
+      B_cells = gene_data[
+        gene_data$gene_name %in% c("CD19", "MS4A1", "CD79A"),
+      ]$gene_id,
+      Monocytes = gene_data[
+        gene_data$gene_name %in% c("CD14", "FCGR3A", "LYZ"),
+      ]$gene_id,
+      NK_cells = gene_data[
+        gene_data$gene_name %in% c("GNLY", "NKG7", "NCAM1"),
+      ]$gene_id
 )
 
 ## This will add proportions to the obs table
@@ -381,9 +414,9 @@ analysis
 
 ```{r}
 #| label: removing-cells
-threshold <- 0.05
+threshold <- 0.8 # dummy threshold to keep cells
 
-cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
+cells_to_keep <- sc_object[[]][Ribo < threshold, cell_id]
 
 sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
@@ -428,6 +461,101 @@ head(get_sc_var(sc_object))
 head(get_sc_var(sc_object)[get_hvg(sc_object)], 5)
 ```
 
+## Doublet Detection 
+
+Doublet detection is a critical quality control step in single-cell RNA-seq analysis. Doublets occur when two cells are captured in a single droplet, leading to artificial transcriptional profiles that can confound downstream analysis. The `bixverse` package provides two complementary methods for doublet detection: **Scrublet** and **Boost-based detection**.
+
+### Scrublet
+
+Scrublet (Single-Cell Remover of Doublets) works by simulating artificial doublets from your data, then comparing each observed cell to these simulations. Cells that closely resemble simulated doublets receive high doublet scores.
+
+The method can be customized using `params_scrublet()`, which allows you to control:
+
+- **normalisation**: Log-normalization parameters including `target_size` (library size to normalize to), `mean_center` (whether to mean-center), and `normalise_variance` (whether to z-score normalize). The original Scrublet paper found that log transformation WITHOUT z-scoring performs optimally.
+- **pca**: PCA parameters via `list(no_pcs = 15L)` to specify the number of principal components to use
+- **hvg**: Highly variable gene selection via `list(min_gene_var_pctl = 0.0)` to set the minimum gene variability percentile
+- **expected_doublet_rate**: Expected proportion of doublets in your dataset (typically 0.05-0.1 for 10x data)
+- **sim_doublet_ratio**: Ratio of simulated doublets to observed cells (typically 1.0-2.0)
+- **n_bins**: Number of bins for histogram-based threshold detection
+
+```{r}
+#| label: scrublet-detection
+
+# Run Scrublet with default parameters
+scrublet_result <- scrublet_sc(
+  sc_object,
+  scrublet_params = params_scrublet(), # Use defaults
+  .verbose = TRUE
+)
+
+# View the automatic doublet detection plot
+plot(scrublet_result)
+
+# Access doublet predictions and scores
+head(get_obs_data(scrublet_result))
+```
+
+You can also manually adjust the doublet calling threshold if the automatic threshold doesn't perform optimally:
+
+```{r}
+#| label: scrublet-manual-threshold
+#| eval: false
+
+# Manually set threshold
+scrublet_result_adjusted <- call_doublets_manual(
+  scrublet_result, 
+  threshold = 0.20, 
+  .verbose = TRUE
+)
+
+# View updated results
+head(get_obs_data(scrublet_result_adjusted))
+```
+
+### Boost-based Doublet Detection
+
+The Boost method uses iterative clustering and classification to identify doublets. It repeatedly clusters cells, trains a classifier to distinguish cell types, and identifies cells that appear to be mixtures of multiple types based on classification uncertainty.
+
+The method can be customized using `params_boost()`, which allows you to control:
+
+- **hvg**: Highly variable gene selection parameters
+- **pca**: PCA dimensionality and parameters via `list(no_pcs = 10L)`
+- **normalisation**: Log-normalization settings including `target_size`
+- **resolution**: Leiden clustering resolution parameter (higher = more clusters)
+- **voter_thresh**: Threshold for classification voting (0-1, lower = more stringent)
+- **n_iters**: Number of boosting iterations (typically 10-50)
+
+```{r}
+#| label: boost-detection
+
+# Run Boost-based doublet detection with default parameters
+boost_result <- doublet_detection_boost_sc(
+  sc_object,
+  boost_params = params_boost(), # Use defaults
+  .verbose = TRUE
+)
+
+# Access results
+head(get_obs_data(boost_result))
+```
+
+Both methods add doublet information to the cell metadata, which you can then use to filter cells before downstream analysis:
+
+```{r}
+#| label: filter-doublets
+#| eval: false
+
+# Get doublet calls from either method
+doublet_data <- get_obs_data(scrublet_result) # or get_obs_data(boost_result)
+
+# Filter to keep only singlets
+singlet_cells <- doublet_data[doublet == FALSE, cell_idx]
+
+# Update sc_object to only include singlets
+sc_object <- set_cells_to_keep(sc_object, singlet_cells)
+```
+
+**Recommendation**: Both methods have complementary strengths. Scrublet excels at detecting cross-cell-type doublets (cells from different populations), while Boost can be more sensitive to within-cluster doublets. For critical analyses, consider running both methods and investigating cells flagged by either approach.
 
 ## PCA
 
@@ -471,12 +599,260 @@ get_pca_loadings(sc_object)[1:5, 1:5]
 #| label: plot-pca
 pca_plot_df <- cbind(sc_object[[]], get_pca_factors(sc_object))
 
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = T_cells)) +
+  labs(title = "T cell markers", color = "Proportion") +
+  scale_color_viridis_c() +
+  theme_bw()
 
-ggplot(pca_plot_df, aes(x = PC_1, y = PC_2, color = cell_grp)) +
-  geom_point() +
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = B_cells)) +
+  labs(title = "B cell markers", color = "Proportion") +
+  scale_color_viridis_c() +
+  theme_bw()
+
+ggplot(pca_plot_df, aes(x = PC_1, y = PC_2)) +
+  geom_point(aes(color = Monocytes)) +
+  labs(title = "Monocyte markers", color = "Proportion") +
+  scale_color_viridis_c() +
+  theme_bw()
+
+```
+
+## Batch Correction
+
+Batch effects are technical variations that arise from differences in sample processing, sequencing runs, experimental conditions, or operators. These technical artifacts can obscure true biological signals and lead to misleading conclusions in downstream analyses such as clustering and differential expression. The `bixverse` package provides multiple strategies for handling batch effects in single-cell data.
+
+### Understanding Batch Effects
+
+To demonstrate batch correction methods, we'll create synthetic datasets with varying batch effect strengths. This allows us to illustrate how well each method performs under different scenarios.
+
+```{r}
+#| label: create-batch-effect-data
+
+# Create a temporary directory for batch correction examples
+batch_temp_dir <- file.path(tempdir(), "batch_correction_example")
+dir.create(batch_temp_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Define cell type markers for synthetic data
+cell_markers <- list(
+  cell_type_1 = list(marker_genes = 0:8L),
+  cell_type_2 = list(marker_genes = 9:19L),
+  cell_type_3 = list(marker_genes = 20:29L),
+  cell_type_4 = list(marker_genes = 30:44L)
+)
+
+# Generate synthetic data with medium batch effects
+# This creates 900 cells across 4 cell types and 3 batches
+batch_test_data <- generate_single_cell_test_data(
+  syn_data_params = params_sc_synthetic_data(
+    n_cells = 900L,
+    marker_genes = cell_markers,
+    n_batches = 3L,
+    batch_effect_strength = "medium"  # Can be "weak", "medium", or "strong"
+  )
+)
+
+# Create and load the sc_object
+sc_batch_object <- single_cell_exp(dir_data = batch_temp_dir)
+
+sc_batch_object <- load_r_data(
+  object = sc_batch_object,
+  counts = batch_test_data$counts,
+  obs = batch_test_data$obs,
+  var = batch_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = 45L,
+    min_lib_size = 300L,
+    min_cells = 450L
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+# Standard preprocessing pipeline
+sc_batch_object <- find_hvg_sc(sc_batch_object, hvg_no = 30L, .verbose = FALSE)
+sc_batch_object <- calculate_pca_sc(sc_batch_object, no_pcs = 15L, .verbose = FALSE)
+sc_batch_object <- find_neighbours_sc(
+  sc_batch_object,
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+```
+
+### Assessing Batch Effects with kBET
+
+Before correcting batch effects, it's important to quantify their severity. The k-nearest neighbor Batch Effect Test (kBET) evaluates how well batches are mixed in the local neighborhood of each cell. A high kBET score indicates poor batch mixing (strong batch effects), while a low score indicates good mixing.
+
+```{r}
+#| label: kbet-assessment
+
+# Calculate kBET score before batch correction
+kbet_before <- calculate_kbet_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index"  # Column in obs table containing batch labels
+)
+
+# The kbet_score represents the proportion of cells with significant batch effects
+print(paste("kBET score before correction:", 
+            round(kbet_before$kbet_score, 3)))
+
+# Visualize batch effects in PCA space
+pca_batch_df <- cbind(sc_batch_object[[]], get_pca_factors(sc_batch_object))
+
+ggplot(pca_batch_df, aes(x = PC_1, y = PC_2, color = as.factor(batch_index))) +
+  geom_point(alpha = 0.6) +
+  labs(title = "PCA colored by batch (before correction)", 
+       color = "Batch") +
   theme_bw()
 ```
 
+### Batch-Aware HVG Selection
+
+When batch effects are present, selecting highly variable genes (HVGs) independently within each batch and then combining them can improve downstream analysis. This prevents batch-specific variation from dominating the HVG selection.
+
+The `find_hvg_batch_aware_sc()` function offers three methods for combining HVGs across batches:
+
+- **average**: Ranks genes by their average variability score across batches (balanced approach)
+- **union**: Takes the union of top HVGs from each batch (more inclusive, captures batch-specific variation)
+- **intersection**: Takes only genes highly variable in all batches (more stringent, conservative)
+
+```{r}
+#| label: batch-aware-hvg
+
+# Select HVGs using batch-aware method (average ranking)
+hvg_batch_avg <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "average",  # Can be "average", "union", or "intersection"
+  .verbose = FALSE
+)
+
+# View the HVG information
+head(hvg_batch_avg$hvg_data)
+```
+
+### BBKNN: Batch Balanced k-Nearest Neighbors
+
+BBKNN (Batch Balanced k-Nearest Neighbors) corrects batch effects by constructing a k-nearest neighbor graph that enforces balanced representation of batches in each cell's neighborhood. Instead of finding neighbors globally, BBKNN finds a specified number of neighbors from within each batch, ensuring that local neighborhoods are batch-diverse.
+
+The method can be customized using parameters passed to `bbknn_sc()`:
+
+- **neighbours_within_batch**: Number of neighbors to find within each batch (default: 3-5)
+- **knn_method**: Approximate nearest neighbor algorithm (`"annoy"`, `"hnsw"`, or `"nndescent"`)
+- **set_op_mix_ratio**: Balance between union and intersection when combining neighbor sets (0-1)
+- **no_neighbours_to_keep**: Final number of neighbors to retain per cell
+
+```{r}
+#| label: bbknn-correction
+
+# Apply BBKNN batch correction
+# Note: This will replace the existing kNN matrix
+sc_batch_bbknn <- bbknn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  no_neighbours_to_keep = 10L,  # Final k for kNN graph
+  .verbose = TRUE
+)
+
+# Assess batch mixing after BBKNN
+kbet_after_bbknn <- calculate_kbet_sc(
+  object = sc_batch_bbknn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after BBKNN:", 
+            round(kbet_after_bbknn$kbet_score, 3)))
+
+# The corrected kNN graph is now stored in the object
+# and can be used for clustering
+```
+
+### fastMNN: Fast Mutual Nearest Neighbors
+
+fastMNN performs batch correction by identifying mutual nearest neighbors (MNNs) across batches and using them to learn batch-specific correction vectors. It projects the corrected data into a new embedding space that preserves biological variation while removing batch effects.
+
+The method can be customized using `params_sc_fastmnn()`:
+
+- **no_pcs**: Number of principal components to compute in the corrected space
+- **knn**: k-nearest neighbor parameters for finding MNNs via `list(k = 5L, knn_method = "annoy")`
+- **n_iter**: Number of iterations for correction refinement
+- **variance_adj**: Whether to adjust for variance differences between batches
+
+fastMNN is particularly effective when batch effects are strong and when you want a new corrected embedding for visualization and downstream analysis.
+
+```{r}
+#| label: fastmnn-correction
+
+# First, find batch-aware HVGs for fastMNN
+hvg_for_mnn <- find_hvg_batch_aware_sc(
+  sc_batch_object,
+  hvg_no = 30L,
+  batch_column = "batch_index",
+  gene_comb_method = "union",
+  .verbose = FALSE
+)
+
+# Apply fastMNN correction
+sc_batch_mnn <- fast_mnn_sc(
+  object = sc_batch_object,
+  batch_column = "batch_index",
+  batch_hvg_genes = hvg_for_mnn$hvg_genes,
+  fastmnn_params = params_sc_fastmnn(
+    no_pcs = 10L,
+    knn = list(k = 5L)
+  ),
+  .verbose = TRUE
+)
+
+# fastMNN creates a new "mnn" embedding that can be used for downstream analysis
+# Build a new kNN graph using the corrected embedding
+sc_batch_mnn <- find_neighbours_sc(
+  sc_batch_mnn,
+  embd_to_use = "mnn",  # Use the corrected embedding
+  neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+  .verbose = FALSE
+)
+
+# Assess batch mixing after fastMNN
+kbet_after_mnn <- calculate_kbet_sc(
+  object = sc_batch_mnn,
+  batch_column = "batch_index"
+)
+
+print(paste("kBET score after fastMNN:", 
+            round(kbet_after_mnn$kbet_score, 3)))
+
+# Visualize the corrected MNN embedding
+# Note: fastMNN returns its own embedding, access it accordingly
+# for visualization purposes you would extract and plot the MNN coordinates
+```
+
+### Choosing a Batch Correction Method
+
+**When to use each approach:**
+
+- **Batch-aware HVG selection**: Use as a first step when batch effects are mild to moderate. It's computationally cheap and prevents batch-specific genes from dominating feature selection. Use `"average"` for balanced results, `"union"` to capture batch-specific biology, or `"intersection"` for conservative selection.
+
+- **BBKNN**: Best for moderate batch effects when you want to preserve the original PCA space while improving neighborhood structure. It's fast, works directly on existing embeddings, and is ideal when you trust your PCA but need better batch mixing for clustering. The correction is applied at the graph level rather than to the data itself.
+
+- **fastMNN**: Best for strong batch effects or when you need a new corrected embedding for visualization. It's more computationally intensive but provides a corrected low-dimensional space that explicitly removes batch effects while preserving biological variation. Use when BBKNN isn't sufficient or when you want corrected coordinates for plotting.
+
+**General workflow:**
+1. Always assess batch effects first using kBET and visualization
+2. Start with batch-aware HVG selection as a baseline
+3. Apply BBKNN or fastMNN depending on severity
+4. Re-assess using kBET to verify improvement
+5. Use the corrected neighborhood graph or embedding for clustering and downstream analysis
+
+```{r}
+#| label: cleanup-batch
+#| include: false
+
+# Clean up temporary directory
+unlink(batch_temp_dir, recursive = TRUE, force = TRUE)
+```
 
 ## Clustering 
 
@@ -595,7 +971,11 @@ dge_test_2 <- find_all_markers_sc(
 )
 ```
 
-## AUcell 
+## Pathway Analysis
+
+Gene set scoring methods allow you to evaluate the activity or expression of predefined gene sets (such as pathways, cell type markers, or biological processes) at the single-cell level. The `bixverse` package provides three complementary approaches for this task: **AUCell**, **Vision**, and **module_scores_sc**. AUCell uses a ranking-based approach where it calculates the Area Under the Curve (AUC) to determine how highly a gene set ranks within each cell's expression profile, making it particularly effective for identifying cells that express specific marker genes. Vision employs a signature scoring method that accounts for the background distribution of gene expression across the dataset, providing robust scores that can capture subtle pathway activities. Module scoring (inspired by Seurat's AddModuleScore) calculates the average expression of genes in a set while controlling for expression levels by randomly sampling control gene sets with similar properties, which helps account for technical variability and cellular detection rates. Each method has its strengths: use AUCell for marker-based cell type identification, Vision for comprehensive pathway activity analysis, and module scores for quick comparative assessments of gene set expression across cell populations.
+
+### AUcell 
 
 AUCell calculates how well a set of genes (or pathway) "ranks" in each cell
 compared to all other genes. It produces a score between 0 and 1 for each
@@ -610,23 +990,160 @@ at once or stream them in chunks of 50,000 cells for memory efficiency.
 
 ```{r}
 #| label: auc-cell
-auc_gene_sets <- list(
-  markers_cell_type_1 = sprintf("gene_%03d", 1:10),
-  markers_cell_type_2 = sprintf("gene_%03d", 11:20),
-  markers_cell_type_3 = sprintf("gene_%03d", 21:30)
+gene_sets <- list(
+  S_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
+        ),
+      ]$gene_id,
+      G2M_phase = gene_data[
+        stringr::str_detect(
+          gene_data$gene_id,
+          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
+        )]$gene_id
 )
 
 auc_res_auroc <- aucell_sc(
   object = sc_object,
-  gs_list = auc_gene_sets,
+  gs_list = gene_sets,
   auc_type = "auroc",
   .verbose = FALSE
 )
 
-cbind(auc_res_auroc, get_pca_factors(sc_object)) |>
-  ggplot(aes(y = PC_1, x = PC_2, color = markers_cell_type_1)) +
+
+plot_data_aucell <- cbind(auc_res_auroc, get_pca_factors(sc_object))
+
+p1_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = S_phase)) +
   geom_point() +
+  labs(title = "S Phase") +
   theme_bw()
+
+p2_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_aucell + p2_aucell
+```
+
+### Vision
+
+```{r}
+#| label: vision
+
+
+    genesets_vs <- purrr::map(
+        gene_sets,
+        ~ {
+            list(pos = .x)
+        }
+    )
+
+vision_res <- vision_sc(
+        object = sc_object,
+        gs_list = genesets_vs,
+        streaming = TRUE,
+        .verbose = TRUE
+    )
+
+
+plot_data_vision <- cbind(vision_res, get_pca_factors(sc_object))
+
+p1_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = S_phase)) +
+  geom_point() +
+  labs(title = "S Phase") +
+  theme_bw()
+
+p2_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_vision + p2_vision
+```
+
+### Module Scores
+
+
+```{r}
+#| label: module_score
+
+module_score_res <- module_scores_sc(
+        object = sc_object,
+        gs_list = gene_sets,
+        n_bins = 24L,
+        n_ctrl = 100L,
+        seed = 42L,
+        .verbose = TRUE
+    )
+
+
+plot_data_module_score <- cbind(module_score_res, get_pca_factors(sc_object))
+
+p1_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = S_phase)) +
+  geom_point() +
+  labs(title = "S Phase") +
+  theme_bw()
+
+p2_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+  geom_point() +
+  labs(title = "G2/M Phase") +
+  theme_bw()
+
+p1_module_score + p2_module_score
+```
+
+## Hotspot Analysis
+
+Hotspot analysis identifies genes that exhibit spatially coherent patterns of expression across the cellular neighborhood structure. Unlike traditional differential expression methods that compare discrete groups, Hotspot calculates local auto-correlation statistics for each gene based on the kNN graph constructed from your chosen embedding (typically PCA). This approach reveals genes whose expression varies smoothly and systematically across the transcriptional landscape, rather than being randomly distributed. Genes with high auto-correlation scores show coordinated expression patterns among neighboring cells, indicating they may be involved in gradual developmental transitions, spatial organization, or continuous cellular processes. The method supports multiple statistical models (DANB, normal, or Bernoulli) to accommodate different expression distributions, and can efficiently process large datasets through streaming. The resulting auto-correlation scores and statistical significance values help prioritize genes that drive local structure in your data, complementing cluster-based marker identification by capturing genes involved in continuous variation and spatial patterning.
+
+```{r}
+#| label: hotspot
+
+hotspot_autocor_danb_res <- hotspot_autocor_sc(
+    object = sc_object,
+    embd_to_use = "pca",
+    streaming = TRUE,
+    .verbose = TRUE
+)
+
+head(hotspot_autocor_danb_res)
+```
+
+### Hotspot Gene Modules
+
+After identifying genes with significant local auto-correlation, the next step is to discover modules of co-expressed genes that vary together across the cellular landscape. The `hotspot_gene_cor_sc()` function computes pairwise local correlations between genes (typically focusing on the top auto-correlated genes to reduce computational burden), generating both a correlation matrix and Z-score matrix that quantify how genes co-vary within the local neighborhood structure. These correlation patterns are then used to identify gene modules—groups of genes that exhibit coordinated expression patterns across space. Module membership is assigned through clustering of the correlation structure, and genes that don't meet the Z-score threshold are excluded (marked as NA). The resulting modules represent functional gene programs or biological processes that vary systematically across your cellular populations, providing a data-driven way to identify coherent transcriptional programs without relying on predefined gene sets.
+
+```{r}
+#| label: hotspot-modules
+
+# Order results by auto-correlation score (Geary's C statistic)
+hotspot_autocor_danb_res_ordered <- hotspot_autocor_danb_res[order(-gaerys_c)]
+
+# Compute gene-gene correlations for top auto-correlated genes
+hotspot_gene_gene_cor <- hotspot_gene_cor_sc(
+    object = sc_object,
+    embd_to_use = "pca",
+    genes_to_take = hotspot_autocor_danb_res_ordered[1:500, gene_id],
+    streaming = TRUE,
+    .verbose = TRUE
+)
+
+# Assign genes to modules based on correlation structure
+hotspot_gene_gene_cor <- set_hotspot_membership(hotspot_gene_gene_cor)
+
+# Get module membership results (NA = below threshold, excluded)
+membership_results <- get_hotspot_membership(hotspot_gene_gene_cor)
+
+head(membership_results)
+
+# Create gene sets from modules
+hotspot_gs <- na.omit(get_hotspot_membership(hotspot_gene_gene_cor)) %$%
+    split(gene_id, cluster_member)
+
+# View module sizes
+sapply(hotspot_gs, length)
 ```
 
 
@@ -672,7 +1189,7 @@ saved with `save_sc_exp_to_disk()`, recommended).
 ```{r}
 #| label: load-existing
 
-sc_object_loaded <- single_cell_exp(dir_data = tempdir())
+sc_object_loaded <- single_cell_exp(dir_data = tempdir_pbmc)
 
 sc_object_loaded <- load_existing(sc_object_loaded)
 
@@ -691,11 +1208,11 @@ dim(sc_object_loaded[[]])
 head(get_pca_factors(sc_object))[1:5, 1:5]
 
 ## PCA in loaded in object does exist as has been loaded back in from the qs2 file
-head(get_pca_factors(sc_object_loaded))
+head(get_pca_factors(sc_object_loaded))[1:5, 1:5]
 
 
 ## Same for knn
 head(get_knn_mat(sc_object))[1:5, 1:5]
 
-head(get_knn_mat(sc_object_loaded))
+head(get_knn_mat(sc_object_loaded))[1:5, 1:5]
 ```

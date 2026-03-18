@@ -21,9 +21,14 @@ general. This vignette will show you to use:
 * Covariance to correlation (via `rs_cov2cor()`).
 * Distance calculations (vs `rs_dist()`).
 * Correlations between two matrices (via `rs_cor2()`).
-* Calculate the mutual information between columns (via `rs_mutual_information()`)
+* Calculate the mutual information between columns (via 
+  `rs_mutual_information()`)
 * Calculations of set similarities between (via `rs_set_similarity_list()` or
 `rs_set_similarity()`).
+
+They might be useful for your down package development.
+
+## Set-up
 
 ```{r}
 #| label: setup
@@ -78,7 +83,7 @@ Speed differences:
 microbenchmark::microbenchmark(
   r = cor(random_data),
   rust = rs_cor(random_data, spearman = FALSE),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -106,7 +111,7 @@ Speed differences:
 microbenchmark::microbenchmark(
   r = cor(random_data, method = "spearman"),
   rust = rs_cor(random_data, spearman = TRUE),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -134,7 +139,7 @@ Speed differences:
 microbenchmark::microbenchmark(
   r = cov(random_data),
   rust = rs_covariance(random_data),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -160,7 +165,7 @@ How much faster is Rust here? (This is where we observe the least improvement.)
 microbenchmark::microbenchmark(
   r = cov2cor(r_covar_res),
   rust = rs_cov2cor(rust_covar_res),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -204,7 +209,7 @@ And speed between Rust and R
 microbenchmark::microbenchmark(
   r = cor(random_data, random_data_2),
   rust = rs_cor2(random_data, random_data_2, spearman = FALSE),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -252,7 +257,7 @@ Again, Rust is much faster...
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "euclidean"),
   rust = rs_dist(random_data, distance_type = "euclidean"),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -299,7 +304,7 @@ And speed ups in Rust.
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "manhattan"),
   rust = rs_dist(random_data, distance_type = "manhattan"),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -342,7 +347,7 @@ all.equal(
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "canberra"),
   rust = rs_dist(random_data, distance_type = "canberra"),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -434,7 +439,7 @@ microbenchmark::microbenchmark(
     normalise = FALSE,
     strategy = "equal_width"
   ),
-  times = 50L
+  times = 10L
 )
 ```
 
@@ -455,7 +460,7 @@ microbenchmark::microbenchmark(
     normalise = FALSE,
     strategy = "equal_freq"
   ),
-  times = 50L
+  times = 10L
 )
 ```
 

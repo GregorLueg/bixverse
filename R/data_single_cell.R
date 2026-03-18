@@ -342,3 +342,41 @@ write_cellranger_output <- function(
 
   invisible()
 }
+
+#' Download PBMC3K data from 10x Genomics
+#'
+#' @description
+#' This function downloads the PBMC3K dataset from 10x Genomics and extracts
+#' it to a temporary directory. It returns the path to the extracted data.
+#'
+#' @returns String. The path to the extracted PBMC3K data.
+#'
+#' @export
+download_pbmc3k <- function() {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
+  url <- "https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz"
+
+  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  untar(dest_file, exdir = temp_dir)
+
+  # Add headers to genes.tsv
+  data_path <- file.path(temp_dir, "filtered_gene_bc_matrices", "hg19")
+  genes_file <- file.path(data_path, "genes.tsv")
+
+  if (file.exists(genes_file)) {
+    genes_data <- data.table::fread(genes_file, header = FALSE)
+    data.table::setnames(genes_data, c("gene_id", "gene_name"))
+    data.table::fwrite(genes_data, genes_file, sep = "\t", col.names = TRUE)
+  }
+
+  cells_file <- file.path(data_path, "barcodes.tsv")
+
+  if (file.exists(cells_file)) {
+    cells_data <- data.table::fread(cells_file, header = FALSE)
+    data.table::setnames(cells_data, "cell_id")
+    data.table::fwrite(cells_data, cells_file, sep = "\t", col.names = TRUE)
+  }
+
+  data_path
+}
