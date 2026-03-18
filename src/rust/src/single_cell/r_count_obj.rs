@@ -16,6 +16,15 @@ use bixverse_rs::single_cell::sc_data::r_obj_io::*;
 // classes. This will have to be done manually in R... Documentation
 // still here to make it easier.
 
+/////////////
+// extendR //
+/////////////
+
+extendr_module! {
+    mod r_count_obj;
+    impl SingeCellCountData;
+}
+
 //////////////////
 // Type aliases //
 //////////////////
@@ -623,7 +632,7 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `indices` - The cell indices which to return (1-indexed.)
+    /// * `indices` - The cell indices which to return (1-indexed).
     /// * `assay` - Shall the raw or norm counts be returned
     ///
     /// ### Returns
@@ -1046,7 +1055,7 @@ impl SingeCellCountData {
     ///
     /// ### Params
     ///
-    /// * `indices` - The gene indices which to return (1-indexed.)
+    /// * `indices` - The gene indices which to return (1-indexed).
     /// * `assay` - Shall the raw or norm counts be returned
     ///
     /// ### Returns
@@ -1134,9 +1143,4 @@ impl SingeCellCountData {
 
         nnz.r_int_convert()
     }
-}
-
-extendr_module! {
-    mod r_count_obj;
-    impl SingeCellCountData;
 }

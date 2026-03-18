@@ -17,7 +17,7 @@ top k genes per TF are used. Both versions were used in the original paper.}
 \item{min_value}{Float. An}
 }
 \value{
-A TF x gene list
+A list with three vectors: tf, gene, importance
 }
 \description{
 SCENIC: Select the Top TF <> Gene pairs

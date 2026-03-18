@@ -5,9 +5,25 @@
 \alias{identify_tf_to_genes.ScenicGrn}
 \title{Identify the TF to gene regulation}
 \usage{
-identify_tf_to_genes(x, k_tfs, k_genes, min_importance = NULL)
+identify_tf_to_genes(x, k_tfs, k_genes, min_importance = NULL, .verbose = TRUE)
 
-\method{identify_tf_to_genes}{ScenicGrn}(x, k_tfs, k_genes, min_importance = NULL)
+\method{identify_tf_to_genes}{ScenicGrn}(x, k_tfs, k_genes, min_importance = NULL, .verbose = TRUE)
+}
+\arguments{
+\item{x}{\code{ScenicGrn} object for which to generate the TF to gene
+associations.}
+
+\item{k_tfs}{Optional integer. How many TFs per given gene you want to
+include.}
+
+\item{k_genes}{Optional integer. How many genes you want to include
+downstream of each TF. Warning. \code{k_tfs = NULL} and \code{k_genes = NULL} does
+not work.}
+
+\item{min_importance}{Optional float. If you want a minimum importance
+score for including a TF to gene association.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 Adds a data.table with the first tf to gene results to the class.
@@ -34,4 +50,6 @@ importance score to filter out noisy genes.
 }
 You can provide all three parameters at once, in this case you will get a
 union of the TF -> gene, gene <- TF approach, filtered by min_importance.
+This is the first step and you can subsequently filter by correlation of
+TF to target gene and motif enrichment for a given TF.
 }

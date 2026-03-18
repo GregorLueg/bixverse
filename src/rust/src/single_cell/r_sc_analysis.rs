@@ -906,7 +906,7 @@ fn rs_scenic_grn_streaming(
 /// top k genes per TF are used. Both versions were used in the original paper.
 /// @param min_value Float. An
 ///
-/// @returns A TF x gene list
+/// @returns A list with three vectors: tf, gene, importance
 ///
 /// @export
 #[extendr]
@@ -914,60 +914,69 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
     let nrow = matrix.nrows();
     let ncol = matrix.ncols();
     let data = matrix.data();
-    let k = match margin {
-        1 => (k as usize).min(ncol),
-        2 => (k as usize).min(nrow),
-        _ => panic!("margin must be 1 (rows) or 2 (cols)"),
-    };
+
     let dimnames = matrix.get_attrib("dimnames").unwrap();
     let dimnames_list: List = dimnames.try_into().unwrap();
     let rownames: Strings = dimnames_list.elt(0).unwrap().try_into().unwrap();
     let colnames: Strings = dimnames_list.elt(1).unwrap().try_into().unwrap();
-    let (outer_len, outer_names): (usize, Vec<&str>) = match margin {
-        1 => (nrow, rownames.iter().map(|s| s.as_str()).collect()),
-        _ => (ncol, colnames.iter().map(|s| s.as_str()).collect()),
+
+    let (outer_len, inner_len) = match margin {
+        1 => (nrow, ncol),
+        2 => (ncol, nrow),
+        _ => panic!("margin must be 1 (rows) or 2 (cols)"),
     };
-    let result: Vec<Robj> = (0..outer_len)
-        .map(|i| {
-            let mut idx: Vec<usize> = (0..match margin {
-                1 => ncol,
-                _ => nrow,
+    let k = (k as usize).min(inner_len);
+
+    let mut tfs: Vec<String> = Vec::new();
+    let mut genes: Vec<String> = Vec::new();
+    let mut importances: Vec<f64> = Vec::new();
+
+    for i in 0..outer_len {
+        let mut idx: Vec<usize> = (0..inner_len)
+            .filter(|&j| {
+                let v = match margin {
+                    1 => data[j * nrow + i],
+                    _ => data[i * nrow + j],
+                };
+                min_value.is_none_or(|min| v >= min)
             })
-                .filter(|&j| {
-                    let v = match margin {
-                        1 => data[j * nrow + i],
-                        _ => data[i * nrow + j],
-                    };
-                    min_value.is_none_or(|min| v >= min)
-                })
-                .collect();
+            .collect();
 
-            let take = k.min(idx.len());
-            if take == 0 {
-                return r!(Strings::new(0));
-            }
+        let take = k.min(idx.len());
+        if take == 0 {
+            continue;
+        }
 
-            idx.select_nth_unstable_by(take - 1, |&a, &b| {
-                let va = match margin {
-                    1 => data[a * nrow + i],
-                    _ => data[i * nrow + a],
-                };
-                let vb = match margin {
-                    1 => data[b * nrow + i],
-                    _ => data[i * nrow + b],
-                };
-                vb.partial_cmp(&va).unwrap_or(Ordering::Equal)
-            });
+        idx.select_nth_unstable_by(take - 1, |&a, &b| {
+            let va = match margin {
+                1 => data[a * nrow + i],
+                _ => data[i * nrow + a],
+            };
+            let vb = match margin {
+                1 => data[b * nrow + i],
+                _ => data[i * nrow + b],
+            };
+            vb.partial_cmp(&va).unwrap_or(Ordering::Equal)
+        });
 
-            let names: Vec<&str> = idx[..take]
-                .iter()
-                .map(|&j| match margin {
-                    1 => colnames[j].as_str(),
-                    _ => rownames[j].as_str(),
-                })
-                .collect();
-            r!(names)
-        })
-        .collect();
-    List::from_names_and_values(outer_names, result).unwrap()
+        for &j in &idx[..take] {
+            let (tf_name, gene_name, val) = match margin {
+                1 => (
+                    colnames[j].as_str(),
+                    rownames[i].as_str(),
+                    data[j * nrow + i],
+                ),
+                _ => (
+                    colnames[i].as_str(),
+                    rownames[j].as_str(),
+                    data[i * nrow + j],
+                ),
+            };
+            tfs.push(tf_name.to_string());
+            genes.push(gene_name.to_string());
+            importances.push(val);
+        }
+    }
+
+    list!(tf = tfs, gene = genes, importance = importances)
 }

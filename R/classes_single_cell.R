@@ -2123,7 +2123,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
   return(x)
 }
 
-### generic --------------------------------------------------------------------
+### generic / primitives -------------------------------------------------------
 
 #' @name print.SingleCells
 #' @title print Method for SingleCells object

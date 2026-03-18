@@ -966,7 +966,8 @@ new_scenic_grn <- function(
     gene_ids = gene_ids,
     tf_ids = tf_ids,
     params = params,
-    tf_to_gene_results = data.table()
+    tf_to_gene_results = data.table(),
+    cis_targets_results = data.table()
   )
 
   class(scenic_grn) <- "ScenicGrn"
@@ -984,15 +985,26 @@ as.matrix.ScenicGrn <- function(x, ...) {
 
 #### prints --------------------------------------------------------------------
 
+#' Print a ScenicGrn object
+#'
+#' @param x A `ScenicGrn` object.
+#' @param ... Further arguments passed to or from other methods.
+#'
+#' @returns Invisibly returns `x`.
+#'
 #' @export
+#'
+#' @keywords internal
 print.ScenicGrn <- function(x, ...) {
   tf_to_gene_generated <- nrow(x$tf_to_gene_results) > 0
+  cis_targets_results_generated <- nrow(x$cis_targets_results) > 0
 
   cat("ScenicGrn (GRN results)\n")
-  cat("  No genes:              ", length(x$gene_ids), "\n")
-  cat("  No TFs:                ", length(x$tf_ids), "\n")
-  cat("  TF to gene generated:  ", tf_to_gene_generated, "\n")
-  cat("  Applied learner:       ", x$params$learner_type, "\n")
+  cat("  No genes:                ", length(x$gene_ids), "\n")
+  cat("  No TFs:                  ", length(x$tf_ids), "\n")
+  cat("  Applied learner:         ", x$params$learner_type, "\n")
+  cat("  TF to gene generated:    ", tf_to_gene_generated, "\n")
+  cat("  CisTarget res generated: ", cis_targets_results_generated, "\n")
 
   invisible(x)
 }
@@ -1038,6 +1050,68 @@ get_params.ScenicGrn <- function(
   return(to_ret)
 }
 
+#' Extract the TF to gene data from the ScenicGrn object
+#'
+#' @param x `ScenicGrn` object from which to extract the TF to gene data.table.
+#'
+#' @returns data.table with TF to gene information
+#'
+#' @export
+get_tf_to_gene <- function(x) {
+  UseMethod("get_tf_to_gene")
+}
+
+#' @rdname get_tf_to_gene
+#'
+#' @export
+get_tf_to_gene.ScenicGrn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+
+  # return a proper copy
+  tf_to_gene <- data.table::copy(x[["tf_to_gene_results"]])
+
+  if (nrow(tf_to_gene) == 0) {
+    warning(paste(
+      "You did not seem to have run identify_tf_to_genes().",
+      "Returning empty data.table"
+    ))
+  }
+
+  return(tf_to_gene)
+}
+
+#' Extract the TF to gene data from the ScenicGrn object
+#'
+#' @param x `ScenicGrn` object from which to extract the TF to gene data.table.
+#'
+#' @returns data.table with TF to gene information
+#'
+#' @export
+get_cistarget_res <- function(x) {
+  UseMethod("get_cistarget_res")
+}
+
+#' @rdname get_cistarget_res
+#'
+#' @export
+get_cistarget_res.ScenicGrn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+
+  # return a proper copy
+  cis_targets_results <- data.table::copy(x[["cis_targets_results"]])
+
+  if (nrow(cis_targets_results) == 0) {
+    warning(paste(
+      "You did not seem to have run identify_tf_to_genes().",
+      "Returning empty data.table"
+    ))
+  }
+
+  return(cis_targets_results)
+}
+
 ### generate tf to gene --------------------------------------------------------
 
 #' Identify the TF to gene regulation
@@ -1064,12 +1138,31 @@ get_params.ScenicGrn <- function(
 #' }
 #' You can provide all three parameters at once, in this case you will get a
 #' union of the TF -> gene, gene <- TF approach, filtered by min_importance.
+#' This is the first step and you can subsequently filter by correlation of
+#' TF to target gene and motif enrichment for a given TF.
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param k_tfs Optional integer. How many TFs per given gene you want to
+#' include.
+#' @param k_genes Optional integer. How many genes you want to include
+#' downstream of each TF. Warning. `k_tfs = NULL` and `k_genes = NULL` does
+#' not work.
+#' @param min_importance Optional float. If you want a minimum importance
+#' score for including a TF to gene association.
+#' @param .verbose Boolean. Controls verbosity of the function.
 #'
 #' @returns Adds a data.table with the first tf to gene results to the class.
 #'
 #' @export
-identify_tf_to_genes <- function(x, k_tfs, k_genes, min_importance = NULL) {
-  UseMethod("add_nhoods_info")
+identify_tf_to_genes <- function(
+  x,
+  k_tfs,
+  k_genes,
+  min_importance = NULL,
+  .verbose = TRUE
+) {
+  UseMethod("identify_tf_to_genes")
 }
 
 #' @rdname identify_tf_to_genes
@@ -1079,68 +1172,278 @@ identify_tf_to_genes.ScenicGrn <- function(
   x,
   k_tfs,
   k_genes,
-  min_importance = NULL
+  min_importance = NULL,
+  .verbose = TRUE
 ) {
   # checks
   checkmate::assertClass(x, "ScenicGrn")
   checkmate::qassert(k_tfs, c("I1", "0"))
   checkmate::qassert(k_genes, c("I1", "0"))
   checkmate::qassert(min_importance, c("N1[0, 1]", "0"))
+  checkmate::qassert(.verbose, "B1")
   if (is.null(k_tfs) & is.null(k_genes)) {
     stop("k_tfs and k_genes cannot be both NULL.")
   }
 
+  if (.verbose) {
+    message(
+      "Extracting TF to gene associations based on the importance values."
+    )
+  }
+
   gene_tf_imp <- x$importance_matrix
+  parts <- list()
 
-  gene_tf_imp <- x$importance_matrix
-
-  # check if users wants to go from gene -> TF
-  tf_to_gene_1 <- if (!is.null(k_tfs)) {
-    gene_to_tf <- rs_top_k_targets(
-      matrix = gene_tf_imp,
-      k = k_tfs,
-      margin = 1L,
-      min_value = min_importance
+  if (!is.null(k_tfs)) {
+    parts[[length(parts) + 1L]] <- data.table::as.data.table(
+      rs_top_k_targets(gene_tf_imp, k_tfs, 1L, min_importance)
     )
-
-    tapply(
-      rep(names(gene_to_tf), lengths(gene_to_tf)),
-      unlist(gene_to_tf),
-      unique
-    )
-  } else {
-    NULL
   }
 
-  # check if users wants to go from TF -> gene
-  tf_to_gene_2 <- if (!is.null(k_tfs)) {
-    rs_top_k_targets(
-      matrix = gene_tf_imp,
-      k = k_tfs,
-      margin = 2L,
-      min_value = min_importance
+  if (!is.null(k_genes)) {
+    parts[[length(parts) + 1L]] <- data.table::as.data.table(
+      rs_top_k_targets(gene_tf_imp, k_genes, 2L, min_importance)
     )
-  } else {
-    NULL
   }
 
-  # combine lists
-  tf_to_gene_final <- if (!is.null(tf_to_gene_1) & !is.null(tf_to_gene_2)) {
-    purrr::map2(tf_to_gene_1, tf_to_gene_2, \(tg_1, tg_2) {
-      sort(union(tg_1, tg_2))
-    })
-  } else if (!is.null(tf_to_gene_1)) {
-    tf_to_gene_1
-  } else {
-    tf_to_gene_2
-  }
-
-  tf_gene_dt <- data.table::data.table(
-    tf = rep(names(tf_to_gene_final), lengths(tf_to_gene_final)),
-    target_gene = unlist(tf_to_gene_final, use.names = FALSE)
-  )
+  tf_gene_dt <- data.table::rbindlist(parts)
+  tf_gene_dt <- unique(tf_gene_dt, by = c("tf", "gene"))
 
   x$tf_to_gene_results <- tf_gene_dt
+  return(x)
+}
 
+### tf to gene correlation -----------------------------------------------------
+
+#' Generate TF to gene correlations
+#'
+#' @description
+#' This function will calculate the correlations between the identified TF to
+#' gene pairs. You need to have run [identify_tf_to_genes()]!
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param object `SingleCells` object that was used to generate the original
+#' GRNs.
+#' @param cor_filter Optional float. If you wish to filter out TF genes below
+#' a certain correlation. If `NULL` all genes will be kept.
+#' @param remove_self Boolean. Shall self loops (where TF controls its own
+#' expression) be removed. Defaults to `TRUE`.
+#' @param spearman Boolean. Shall Spearman correlation be used. Defaults to
+#' `TRUE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Adds the correlations coefficients between to the TF to gene.
+#'
+#' @export
+tf_to_genes_correlations <- function(
+  x,
+  object,
+  cor_filter = NULL,
+  remove_self = TRUE,
+  spearman = TRUE,
+  .verbose = TRUE
+) {
+  UseMethod("tf_to_genes_correlations")
+}
+
+#' @rdname tf_to_genes_correlations
+#'
+#' @export
+tf_to_genes_correlations.ScenicGrn <- function(
+  x,
+  object,
+  cor_filter = NULL,
+  remove_self = TRUE,
+  spearman = TRUE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(cor_filter, c("0", "N1"))
+  checkmate::qassert(remove_self, "B1")
+  checkmate::qassert(spearman, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  if (nrow(x$tf_to_gene_results) == 0) {
+    warning(paste(
+      "No TF to gene pairs found. Returning class as is.",
+      "Did you run identify_tf_to_genes()?"
+    ))
+    return(x)
+  }
+
+  tf_to_gene <- get_tf_to_gene(x)
+
+  if (.verbose) {
+    message("Calculating the pairwise correlations between the TFs and genes")
+  }
+
+  indices_1 <- get_sc_map(object)$gene_mapping[tf_to_gene$tf] - 1L
+  indices_2 <- get_sc_map(object)$gene_mapping[tf_to_gene$gene] - 1L
+
+  pairwise_cors <- rs_pairwise_gene_cors(
+    f_path = get_rust_count_gene_f_path(object),
+    gene_indices_1 = indices_1,
+    gene_indices_2 = indices_2,
+    cells_to_keep = get_cells_to_keep(object),
+    spearman = FALSE
+  )
+
+  tf_to_gene[, pairwise_cor := pairwise_cors]
+
+  if (!is.null(cor_filter)) {
+    if (.verbose) {
+      message(sprintf("Removing TF <> gene pairs with cors ≤ %.3f", cor_filter))
+    }
+    tf_to_gene <- tf_to_gene[pairwise_cor >= cor_filter]
+  }
+
+  if (remove_self) {
+    if (.verbose) {
+      message("Removing self loops (TF controlling its own expression")
+    }
+    tf_to_gene <- tf_to_gene[tf != gene]
+  }
+
+  x[["tf_to_gene_results"]] <- tf_to_gene
+
+  return(x)
+}
+
+### scenic cistarget -----------------------------------------------------------
+
+#' Run the SCENIC motif enrichment
+#'
+#' @description
+#' This function will run the motif enrichment based on RCisTarget (or in this
+#' case the internal implementation via [run_cistarget()]). You need to provide
+#' the expected rankings and TF annotations (for details, please see
+#' [run_cistarget()]). Briefly, this function will run CisTarget and add the
+#' results to the `ScenicGrn` object and add additionally a column `"in_motif"`,
+#' for a given TF to gene set to say if it was part of the motifs associated
+#' with this TF (or not). You have the option to limit this to only the
+#' the high confidence TFs (default), or also include the low confidence TFs
+#' (i.e., links from TF to motif that are less certain).
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param motif_rankings Integer matrix. Motif rankings for genes. Row names are
+#' gene identifiers, column names are motif identifiers. Lower values indicate
+#' higher regulatory potential.
+#' @param annot_data data.table. Motif annotation database mapping motifs to
+#' transcription factors. Must contain columns: `motif`, `TF`, and
+#' `annotationSource`.
+#' @param cis_target_params List. Output of [bixverse::params_cistarget()]:
+#' \itemize{
+#'   \item{auc_threshold - Numeric. Proportion of genes to use for AUC
+#'   threshold calculation. Default 0.05 means top 5 percent of genes.}
+#'   \item{nes_threshold - Numeric. Normalised Enrichment Score threshold for
+#'   determining significant motifs. Default is 3.0.}
+#'   \item{rcc_method - Character. Recovery curve calculation method: "approx"
+#'   (approximate, faster) or "icistarget" (exact, slower).}
+#'   \item{high_conf_cats - Character vector. Annotation categories considered
+#'   high confidence (e.g., "directAnnotation", "inferredBy_Orthology").}
+#'   \item{low_conf_cats - Character vector. Annotation categories considered
+#'   lower confidence (e.g., "inferredBy_MotifSimilarity").}
+#' }
+#' @param only_high_confidence Boolean. Shall only the high confidence TF to
+#' motif association be used. Defaults to `TRUE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Adds a data.table with the first tf to gene results to the class.
+#'
+#' @export
+tf_to_genes_motif_enrichment <- function(
+  x,
+  motif_rankings,
+  annot_data,
+  cis_target_params = params_cistarget(),
+  only_high_conf_tf = TRUE,
+  .verbose = TRUE
+) {
+  UseMethod("tf_to_genes_motif_enrichment")
+}
+
+#' @rdname tf_to_genes_motif_enrichment
+#'
+#' @export
+tf_to_genes_motif_enrichment.ScenicGrn <- function(
+  x,
+  motif_rankings,
+  annot_data,
+  cis_target_params = params_cistarget(),
+  only_high_conf_tf = TRUE,
+  .verbose = TRUE
+) {
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::assertMatrix(
+    motif_rankings,
+    mode = "integer",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertDataTable(annot_data)
+  checkmate::assertNames(
+    names(annot_data),
+    must.include = c("motif", "TF", "annotationSource")
+  )
+  assertCistargetParams(cis_target_params)
+  checkmate::qassert(only_high_conf_tf, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  tf_gene_dt <- get_tf_to_gene(x)
+  tf_gene_lists <- split(tf_gene_dt$gene, tf_gene_dt$tf)
+
+  if (.verbose) {
+    message(paste(
+      "Running CisTarget to associate TF to gene pairs",
+      "with motif enrichment info."
+    ))
+  }
+
+  cis_res <- run_cistarget(
+    gs_list = tf_gene_lists,
+    rankings = motif_rankings,
+    annot_data = annot_data,
+    cis_target_params = cis_target_params
+  )
+  x[["cis_targets_results"]] <- cis_res
+
+  # helper: explode a semicolon-separated TF column, keeping only rows where
+  # gs_name matches one of the TFs, then explode leading edge genes
+  explode_leading_edge <- function(dt, tf_col) {
+    dt <- dt[!is.na(get(tf_col))]
+    if (nrow(dt) == 0L) {
+      return(data.table::data.table(tf = character(), le_gene = character()))
+    }
+    dt[,
+      .(single_tf = unlist(strsplit(get(tf_col), ";"))),
+      by = .(gs_name, leading_edge_genes)
+    ][
+      single_tf == gs_name,
+      .(le_gene = unlist(strsplit(leading_edge_genes, ";"))),
+      by = .(tf = gs_name)
+    ]
+  }
+
+  le_high <- explode_leading_edge(cis_res, "TF_highConf")
+
+  tf_gene_dt[, in_leading_edge := FALSE]
+  tf_gene_dt[le_high, in_leading_edge := TRUE, on = .(tf, gene = le_gene)]
+
+  if (!only_high_conf_tf) {
+    if (.verbose) {
+      message(" Adding also low confidence TF to motif info")
+    }
+
+    le_low <- explode_leading_edge(cis_res, "TF_lowConf")
+    tf_gene_dt[le_low, in_leading_edge := TRUE, on = .(tf, gene = le_gene)]
+  }
+
+  data.table::setorder(tf_gene_dt, tf)
+  x$tf_to_gene_results <- tf_gene_dt
   return(x)
 }

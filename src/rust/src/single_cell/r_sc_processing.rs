@@ -3,9 +3,14 @@ use faer::Mat;
 use std::time::Instant;
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
     doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scrublet::*, snn::*,
 };
+
+/////////////
+// extendR //
+/////////////
 
 extendr_module! {
     mod r_sc_processing;
@@ -15,6 +20,8 @@ extendr_module! {
     // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
+    // other
+    fn rs_pairwise_gene_cors;
     // hvg and pca
     fn rs_sc_hvg;
     fn rs_sc_hvg_batch_aware;
@@ -168,6 +175,10 @@ fn rs_sc_doublet_detection(
     )
 }
 
+/////////////
+// Metrics //
+/////////////
+
 //////////////////////
 // Cumulative genes //
 //////////////////////
@@ -279,6 +290,48 @@ fn rs_sc_get_gene_set_perc(
     }
 
     Ok(result_list)
+}
+
+///////////////////
+// Pairwise cors //
+///////////////////
+
+/// Calculates pairwise gene correlations in single cell
+///
+/// @param f_path Path to the `counts_genes.bin` file.
+/// @param gene_indices_1 Integer vector. The first set of gene indices to
+/// correlate against `gene_indices_2` (0-indexed!)
+/// @param gene_indices_2 Integer vector. The second set of gene indices. Needs
+/// to be of same length as `gene_indices_1`. (0-indexed!)
+/// @param cells_to_keep Integer. The indices of the cells to include in this
+/// analysis. (0-indexed!)
+/// @param spearman Boolean. Shall spearman correlation be used.
+///
+/// @returns The vector of correlations between the pairs of gene_indices_1
+/// and gene_indices_2
+///
+/// @export
+#[extendr]
+fn rs_pairwise_gene_cors(
+    f_path: &str,
+    gene_indices_1: &[i32],
+    gene_indices_2: &[i32],
+    cells_to_keep: &[i32],
+    spearman: bool,
+) -> Vec<f64> {
+    let gene_indices_1 = gene_indices_1.r_int_convert();
+    let gene_indices_2 = gene_indices_2.r_int_convert();
+    let cells_to_keep = cells_to_keep.r_int_convert();
+
+    let pairwise_cors = pairwise_gene_correlations(
+        f_path,
+        &gene_indices_1,
+        &gene_indices_2,
+        &cells_to_keep,
+        spearman,
+    );
+
+    pairwise_cors.r_float_convert()
 }
 
 ///////////////////////////

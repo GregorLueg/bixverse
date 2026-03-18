@@ -2213,6 +2213,23 @@ rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, stre
 #' @export
 rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, cell_indices, streaming, verbose)
 
+#' Calculates pairwise gene correlations in single cell
+#'
+#' @param f_path Path to the `counts_genes.bin` file.
+#' @param gene_indices_1 Integer vector. The first set of gene indices to
+#' correlate against `gene_indices_2` (0-indexed!)
+#' @param gene_indices_2 Integer vector. The second set of gene indices. Needs
+#' to be of same length as `gene_indices_1`. (0-indexed!)
+#' @param cells_to_keep Integer. The indices of the cells to include in this
+#' analysis. (0-indexed!)
+#' @param spearman Boolean. Shall spearman correlation be used.
+#'
+#' @returns The vector of correlations between the pairs of gene_indices_1
+#' and gene_indices_2
+#'
+#' @export
+rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description
@@ -2753,7 +2770,7 @@ rs_scenic_grn_streaming <- function(f_path_genes, cell_indices, gene_indices, tf
 #' top k genes per TF are used. Both versions were used in the original paper.
 #' @param min_value Float. An
 #'
-#' @returns A TF x gene list
+#' @returns A list with three vectors: tf, gene, importance
 #'
 #' @export
 rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_targets, matrix, k, margin, min_value)
