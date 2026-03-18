@@ -23,3 +23,4 @@ Invisibly returns the checked object if the assertion is successful.
 \description{
 Checkmate extension for asserting if the prodivided cell names
 }
+\keyword{internal}

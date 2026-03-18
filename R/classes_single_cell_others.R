@@ -1296,7 +1296,10 @@ tf_to_genes_correlations.ScenicGrn <- function(
 
   if (!is.null(cor_filter)) {
     if (.verbose) {
-      message(sprintf("Removing TF <> gene pairs with cors ≤ %.3f", cor_filter))
+      message(sprintf(
+        "Removing TF <> gene pairs with cors <= %.3f",
+        cor_filter
+      ))
     }
     tf_to_gene <- tf_to_gene[pairwise_cor >= cor_filter]
   }
@@ -1349,7 +1352,7 @@ tf_to_genes_correlations.ScenicGrn <- function(
 #'   \item{low_conf_cats - Character vector. Annotation categories considered
 #'   lower confidence (e.g., "inferredBy_MotifSimilarity").}
 #' }
-#' @param only_high_confidence Boolean. Shall only the high confidence TF to
+#' @param only_high_conf_tf Boolean. Shall only the high confidence TF to
 #' motif association be used. Defaults to `TRUE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'

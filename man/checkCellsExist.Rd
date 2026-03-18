@@ -18,3 +18,4 @@ checkCellsExist(x, cell_names)
 Checkmate extension for checking if the prodivided cell names
 exist in the object.
 }
+\keyword{internal}

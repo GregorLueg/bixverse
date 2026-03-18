@@ -16,3 +16,4 @@ checkScHvg(x)
 Checkmate extension for checking the HVG parameters for single
 cell.
 }
+\keyword{internal}

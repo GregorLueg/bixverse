@@ -49,10 +49,10 @@ high confidence (e.g., "directAnnotation", "inferredBy_Orthology").}
 lower confidence (e.g., "inferredBy_MotifSimilarity").}
 }}
 
-\item{.verbose}{Boolean. Controls verbosity of the function.}
-
-\item{only_high_confidence}{Boolean. Shall only the high confidence TF to
+\item{only_high_conf_tf}{Boolean. Shall only the high confidence TF to
 motif association be used. Defaults to \code{TRUE}.}
+
+\item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
 Adds a data.table with the first tf to gene results to the class.

@@ -163,7 +163,7 @@ rbh_graph <- function(
 #' @param data_name Optional string. Name of the data modality.
 #' @param snf_params List. The SNF parameters, see [bixverse::params_snf()].
 #'
-#' @return Returns a [bixverse::Snf()] object.
+#' @return Returns a [bixverse::SimilarityNetworkFusion()] object.
 #'
 #' @keywords internal
 #' @importFrom lifecycle deprecate_warn

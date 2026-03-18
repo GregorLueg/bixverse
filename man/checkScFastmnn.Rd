@@ -15,3 +15,4 @@ checkScFastmnn(x)
 \description{
 Checkmate extension for checking the fastMNN parameters.
 }
+\keyword{internal}

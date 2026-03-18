@@ -22,3 +22,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for asserting the resolution parameters for
 community detection with Leiden.
 }
+\keyword{internal}

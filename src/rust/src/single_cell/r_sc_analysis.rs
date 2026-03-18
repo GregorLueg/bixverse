@@ -815,8 +815,8 @@ fn rs_scenic_gene_filter(
 /// predictor variables to use in the generation of the regression learners.
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
-/// @param Seed. Controls reproducibility of the function.
-/// @param Boolean. Controls the verbosity of the function.
+/// @param seed Integer. Controls reproducibility of the function.
+/// @param verbose Boolean. Controls the verbosity of the function.
 ///
 /// @returns A gene x TF importance matrix
 ///
@@ -863,8 +863,8 @@ fn rs_scenic_grn(
 /// predictor variables to use in the generation of the regression learners.
 /// @param scenic_params Named list. Contains all of the parameters need for
 /// SCENIC.
-/// @param Seed. Controls reproducibility of the function.
-/// @param Boolean. Controls the verbosity of the function.
+/// @param seed Integer. Controls reproducibility of the function.
+/// @param verbose Boolean. Controls the verbosity of the function.
 ///
 /// @returns A gene x TF importance matrix
 ///

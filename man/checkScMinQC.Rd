@@ -16,3 +16,4 @@ checkScMinQC(x)
 Checkmate extension for checking the minimum QC parameters
 in single cell.
 }
+\keyword{internal}

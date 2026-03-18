@@ -15,3 +15,4 @@ checkScHotspot(x)
 \description{
 Checkmate extension for checking the HotSpot parameters.
 }
+\keyword{internal}

@@ -15,7 +15,7 @@ data.table (categorical/mixed) or a matrix (continuous).}
 \item{snf_params}{List. The SNF parameters, see \code{\link[=params_snf]{params_snf()}}.}
 }
 \value{
-Returns a \code{\link[=Snf]{Snf()}} object.
+Returns a \code{\link[=SimilarityNetworkFusion]{SimilarityNetworkFusion()}} object.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}

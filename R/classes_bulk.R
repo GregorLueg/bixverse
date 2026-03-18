@@ -376,7 +376,7 @@ S7::method(update_metadata_values, BulkDge) <-
 #' Getter function to extract the metadata from the [bixverse::BulkCoExp()] or
 #' [bixverse::BulkDge()].
 #'
-#' @param object The underlying object, either [bixverse::bulkCoExp()] or
+#' @param object The underlying object, either [bixverse::BulkCoExp()] or
 #' [bixverse::BulkDge()].
 #' @param ... Additional arguments to parse to the functions.
 #'

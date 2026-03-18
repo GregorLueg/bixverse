@@ -25,3 +25,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for asserting if files exist in the
 directory.
 }
+\keyword{internal}

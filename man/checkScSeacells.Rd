@@ -15,3 +15,4 @@ checkScSeacells(x)
 \description{
 Checkmate extension for checking the SEACells parameters.
 }
+\keyword{internal}

@@ -29,9 +29,9 @@ predictor variables to use in the generation of the regression learners.}
 \item{scenic_params}{Named list. Contains all of the parameters need for
 SCENIC.}
 
-\item{Seed.}{Controls reproducibility of the function.}
+\item{seed}{Integer. Controls reproducibility of the function.}
 
-\item{Boolean.}{Controls the verbosity of the function.}
+\item{verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
 A gene x TF importance matrix

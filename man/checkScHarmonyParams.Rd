@@ -15,3 +15,4 @@ checkScHarmonyParams(x)
 \description{
 Checkmate extension for checking Harmony parameters.
 }
+\keyword{internal}

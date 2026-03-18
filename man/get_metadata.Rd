@@ -7,7 +7,7 @@
 get_metadata(object, ...)
 }
 \arguments{
-\item{object}{The underlying object, either \code{\link[=bulkCoExp]{bulkCoExp()}} or
+\item{object}{The underlying object, either \code{\link[=BulkCoExp]{BulkCoExp()}} or
 \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{...}{Additional arguments to parse to the functions.}

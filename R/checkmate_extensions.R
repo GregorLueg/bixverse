@@ -31,6 +31,8 @@ KNN_PARAM_NAMES <- c(
 #' directory.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkFilesExist <- function(x, file_names) {
   res <- purrr::map(file_names, \(file) {
     checkmate::checkFileExists(file.path(x, file))
@@ -61,6 +63,8 @@ checkFilesExist <- function(x, file_names) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
 
 ### correlation params ---------------------------------------------------------
@@ -72,6 +76,8 @@ assertFileExists <- checkmate::makeAssertionFunction(checkFilesExist)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkCorGraphParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -122,6 +128,8 @@ checkCorGraphParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
 
 ### graph resolution -----------------------------------------------------------
@@ -134,6 +142,8 @@ assertCorGraphParams <- checkmate::makeAssertionFunction(checkCorGraphParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkGraphResParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -180,6 +190,8 @@ checkGraphResParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
 
 ### ica ------------------------------------------------------------------------
@@ -193,6 +205,8 @@ assertGraphResParams <- checkmate::makeAssertionFunction(checkGraphResParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkIcaParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -243,6 +257,8 @@ checkIcaParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
 
 #### ica components ------------------------------------------------------------
@@ -255,6 +271,8 @@ assertIcaParams <- checkmate::makeAssertionFunction(checkIcaParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkIcaNcomps <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -305,6 +323,8 @@ checkIcaNcomps <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
 
 #### ica randomisation ---------------------------------------------------------
@@ -317,6 +337,8 @@ assertIcaNcomps <- checkmate::makeAssertionFunction(checkIcaNcomps)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkIcaIterParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -367,6 +389,8 @@ checkIcaIterParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 
 ### community detections -------------------------------------------------------
@@ -379,6 +403,8 @@ assertIcaIterParams <- checkmate::makeAssertionFunction(checkIcaIterParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkCommunityParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -453,6 +479,8 @@ checkCommunityParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
 
 ### gsea -----------------------------------------------------------------------
@@ -465,6 +493,8 @@ assertCommunityParams <- checkmate::makeAssertionFunction(checkCommunityParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkGSEAParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -518,6 +548,8 @@ checkGSEAParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
 
 ### gsva -----------------------------------------------------------------------
@@ -530,6 +562,8 @@ assertGSEAParams <- checkmate::makeAssertionFunction(checkGSEAParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkGSVAParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -589,6 +623,8 @@ checkGSVAParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 
 ### ssgsea ---------------------------------------------------------------------
@@ -601,6 +637,8 @@ assertGSVAParams <- checkmate::makeAssertionFunction(checkGSVAParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkSingleSampleGSEAparams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -658,6 +696,8 @@ checkSingleSampleGSEAparams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
   checkSingleSampleGSEAparams
 )
@@ -671,6 +711,8 @@ assertSingleSampleGSEAparams <- checkmate::makeAssertionFunction(
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkCoReMoParams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -759,6 +801,8 @@ checkCoReMoParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 
 ### dgrdl ----------------------------------------------------------------------
@@ -771,6 +815,8 @@ assertCoReMoParams <- checkmate::makeAssertionFunction(checkCoReMoParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkDGRDLparams <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -836,6 +882,8 @@ checkDGRDLparams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 
 ### snf ------------------------------------------------------------------------
@@ -847,6 +895,8 @@ assertDGRDLparams <- checkmate::makeAssertionFunction(checkDGRDLparams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkSNFParams <- function(x) {
   # Check it's a list
   res <- checkmate::checkList(x)
@@ -942,11 +992,15 @@ checkSNFParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertSNFParams <- checkmate::makeAssertionFunction(checkSNFParams)
 
 #' @rdname checkSNFParams
 #'
 #' @export
+#'
+#' @keywords internal
 testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
 
 ### cistarget ------------------------------------------------------------------
@@ -958,6 +1012,8 @@ testSNFParams <- checkmate::makeTestFunction(checkSNFParams)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkCistargetParams <- function(x) {
   # Check it's a list
   res <- checkmate::checkList(x)
@@ -1027,6 +1083,8 @@ checkCistargetParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
 
 ### graph label propagation ----------------------------------------------------
@@ -1038,6 +1096,8 @@ assertCistargetParams <- checkmate::makeAssertionFunction(checkCistargetParams)
 #' @param x The list to check/assert.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkLabelPropParams <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1102,6 +1162,8 @@ checkLabelPropParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 
 ### single cell ----------------------------------------------------------------
@@ -1116,6 +1178,8 @@ assertLabelPropParams <- checkmate::makeAssertionFunction(checkLabelPropParams)
 #' @param required_params Character vector of required kNN parameter names
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkKnnParams <- function(x, required_params = NULL) {
   # If required_params not specified, check all that are present
   if (!is.null(required_params)) {
@@ -1224,6 +1288,8 @@ checkKnnParams <- function(x, required_params = NULL) {
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScSyntheticData <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1320,6 +1386,8 @@ checkScSyntheticData <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
 
 #### io ------------------------------------------------------------------------
@@ -1331,6 +1399,8 @@ assertScSyntheticData <- checkmate::makeAssertionFunction(checkScSyntheticData)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScMtxIO <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1381,6 +1451,8 @@ checkScMtxIO <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
 
 #### qc ------------------------------------------------------------------------
@@ -1393,6 +1465,8 @@ assertScMtxIO <- checkmate::makeAssertionFunction(checkScMtxIO)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScMinQC <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -1449,6 +1523,8 @@ checkScMinQC <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 
 #### scrublet ------------------------------------------------------------------
@@ -1460,6 +1536,8 @@ assertScMinQC <- checkmate::makeAssertionFunction(checkScMinQC)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScScrublet <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1628,6 +1706,8 @@ checkScScrublet <- function(x) {
 #'   [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
 
 #### boost ---------------------------------------------------------------------
@@ -1639,6 +1719,8 @@ assertScScrublet <- checkmate::makeAssertionFunction(checkScScrublet)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScBoost <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1808,6 +1890,8 @@ checkScBoost <- function(x) {
 #'   [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
 
 #### hvg -----------------------------------------------------------------------
@@ -1820,6 +1904,8 @@ assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScHvg <- function(x) {
   # Checkmate extension
   res <- checkmate::checkList(x)
@@ -1903,6 +1989,8 @@ checkScHvg <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 
 #### knn -----------------------------------------------------------------------
@@ -1915,6 +2003,8 @@ assertScHvg <- checkmate::makeAssertionFunction(checkScHvg)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScNeighbours <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -1987,6 +2077,8 @@ checkScNeighbours <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
 
 #### cells in object -----------------------------------------------------------
@@ -2000,6 +2092,8 @@ assertScNeighbours <- checkmate::makeAssertionFunction(checkScNeighbours)
 #' @param cell_names String. The provided cell names.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkCellsExist <- function(x, cell_names) {
   res <- checkmate::checkClass(x, "bixverse::SingleCells")
   if (!isTRUE(res)) {
@@ -2035,6 +2129,8 @@ checkCellsExist <- function(x, cell_names) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 
 #### meta cells ----------------------------------------------------------------
@@ -2047,6 +2143,8 @@ assertCellsExist <- checkmate::makeAssertionFunction(checkCellsExist)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScMetacells <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2116,6 +2214,8 @@ checkScMetacells <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
 
 #### seacells ------------------------------------------------------------------
@@ -2127,6 +2227,8 @@ assertScMetacells <- checkmate::makeAssertionFunction(checkScMetacells)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScSeacells <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2243,6 +2345,8 @@ checkScSeacells <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
 
 #### supercells ----------------------------------------------------------------
@@ -2254,6 +2358,8 @@ assertScSeacells <- checkmate::makeAssertionFunction(checkScSeacells)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScSupercell <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2322,6 +2428,8 @@ checkScSupercell <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 
 #### bbknn ---------------------------------------------------------------------
@@ -2333,6 +2441,8 @@ assertScSupercell <- checkmate::makeAssertionFunction(checkScSupercell)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScBbknn <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2396,6 +2506,8 @@ checkScBbknn <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 
 #### fastMNN -------------------------------------------------------------------
@@ -2407,6 +2519,8 @@ assertScBbknn <- checkmate::makeAssertionFunction(checkScBbknn)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScFastmnn <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2474,6 +2588,8 @@ checkScFastmnn <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
 
 ### VISION ---------------------------------------------------------------------
@@ -2485,6 +2601,8 @@ assertScFastmnn <- checkmate::makeAssertionFunction(checkScFastmnn)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScVision <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2550,6 +2668,8 @@ checkScVision <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScVision <- checkmate::makeAssertionFunction(checkScVision)
 
 #### HotSpot -------------------------------------------------------------------
@@ -2561,6 +2681,8 @@ assertScVision <- checkmate::makeAssertionFunction(checkScVision)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScHotspot <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2612,6 +2734,8 @@ checkScHotspot <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
 
 #### miloR ---------------------------------------------------------------------
@@ -2623,6 +2747,8 @@ assertScHotspot <- checkmate::makeAssertionFunction(checkScHotspot)
 #' @param x The list to check/assert
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScMiloR <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2703,6 +2829,8 @@ checkScMiloR <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScMiloR <- checkmate::makeAssertionFunction(checkScMiloR)
 
 #### Harmony -------------------------------------------------------------------
@@ -2714,6 +2842,8 @@ assertScMiloR <- checkmate::makeAssertionFunction(checkScMiloR)
 #' @param x The list to check/assert.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScHarmonyParams <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -2842,6 +2972,8 @@ checkScHarmonyParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
 
 #### scenic --------------------------------------------------------------------
@@ -2853,6 +2985,8 @@ assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
 #' @param x The list to check/assert.
 #'
 #' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
 checkScenicParams <- function(x) {
   res <- checkmate::checkList(x)
   if (!isTRUE(res)) {
@@ -3019,4 +3153,6 @@ checkScenicParams <- function(x) {
 #' [checkmate::makeAssertCollection()].
 #'
 #' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
 assertScenicParams <- checkmate::makeAssertionFunction(checkScenicParams)

@@ -15,3 +15,4 @@ checkScenicParams(x)
 \description{
 Checkmate extension for checking SCENIC parameters.
 }
+\keyword{internal}

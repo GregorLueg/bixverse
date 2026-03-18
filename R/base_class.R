@@ -21,6 +21,8 @@
 #' @return Returns the S7 object for further operations.
 #'
 #' @export
+#'
+#' @keywords internal
 BixverseBaseClass <- S7::new_class(
   # Name
   name = "BixverseBaseClass",
