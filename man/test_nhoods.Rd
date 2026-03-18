@@ -2,7 +2,7 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{test_nhoods}
 \alias{test_nhoods}
-\alias{test_nhoods.sc_miloR}
+\alias{test_nhoods.miloR}
 \title{Test neighbourhoods for differential abundance}
 \usage{
 test_nhoods(
@@ -16,7 +16,7 @@ test_nhoods(
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 
-\method{test_nhoods}{sc_miloR}(
+\method{test_nhoods}{miloR}(
   x,
   design,
   design_df,
@@ -28,7 +28,7 @@ test_nhoods(
 )
 }
 \arguments{
-\item{x}{\code{sc_miloR} object for which to run the differential abundance
+\item{x}{\code{miloR} object for which to run the differential abundance
 analysis.}
 
 \item{design}{Formula for the experimental design}
@@ -56,7 +56,7 @@ the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
 Defaults to k-distance.}
 }
 \value{
-The \code{sc_miloR} object with added model and results from the
+The \code{miloR} object with added model and results from the
 differential abundance analysis.
 }
 \description{

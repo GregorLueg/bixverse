@@ -22,3 +22,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for checking the HVG parameters for single
 cell.
 }
+\keyword{internal}

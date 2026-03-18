@@ -221,7 +221,7 @@ plot_pca <- function(pca_dt, grps) {
 #' Return QC plots
 #'
 #' @description
-#' Getter function to extract the QC plots from the [bixverse::bulk_dge()]
+#' Getter function to extract the QC plots from the [bixverse::BulkDge()]
 #' class. These are added when you run for example
 #' [bixverse::qc_bulk_dge()] and [bixverse::normalise_bulk_dge()]. You can
 #' either leave the plot choice as `NULL` and provide input when prompted, or
@@ -242,7 +242,7 @@ plot_pca <- function(pca_dt, grps) {
 #'  [bixverse::batch_correction_bulk_dge()] is run.
 #' }
 #'
-#' @param object `bulk_dge` class.
+#' @param object `BulkDge` class.
 #' @param plot_choice Optional string or integer. Index or name of the plate.
 #'
 #' @return Returns the DGEList stored in the class.
@@ -256,15 +256,15 @@ get_dge_qc_plot <- S7::new_generic(
   }
 )
 
-#' @method get_dge_qc_plot bulk_dge
+#' @method get_dge_qc_plot BulkDge
 #'
 #' @export
-S7::method(get_dge_qc_plot, bulk_dge) <-
+S7::method(get_dge_qc_plot, BulkDge) <-
   function(object, plot_choice = NULL) {
     # Checks
     checkmate::assertClass(
       object,
-      "bixverse::bulk_dge"
+      "bixverse::BulkDge"
     )
     checkmate::qassert(plot_choice, c("0", "I1", "S1"))
 
@@ -297,7 +297,7 @@ S7::method(get_dge_qc_plot, bulk_dge) <-
 
 #' Plot the PCA data
 #'
-#' @param object The underlying class, see [bixverse::bulk_dge()].
+#' @param object The underlying class, see [bixverse::BulkDge()].
 #' @param pcs_to_plot String vector of length 2.
 #' Will default to `c("PC_1", "PC_2")`.
 #' @param cols_to_plot String vector. The columns within the meta-data to plot.
@@ -320,7 +320,7 @@ plot_pca_res <- S7::new_generic(
   }
 )
 
-#' @method plot_pca_res bulk_dge
+#' @method plot_pca_res BulkDge
 #'
 #' @export
 #'
@@ -328,14 +328,14 @@ plot_pca_res <- S7::new_generic(
 #' @import ggplot2
 #' @importFrom magrittr `%>%`
 #' @importFrom magrittr `%$%`
-S7::method(plot_pca_res, bulk_dge) <- function(
+S7::method(plot_pca_res, BulkDge) <- function(
   object,
   cols_to_plot = c('contrast_info', 'sample_source'),
   pcs_to_plot = c("PC_1", "PC_2"),
   ...
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_dge")
+  checkmate::assertClass(object, "bixverse::BulkDge")
   checkmate::qassert(cols_to_plot, "S+")
   checkmate::qassert(pcs_to_plot, "S2")
 
@@ -394,7 +394,7 @@ S7::method(plot_pca_res, bulk_dge) <- function(
 #' Expects that [bixverse::preprocess_bulk_coexp()] was run and will throw an
 #' error otherwise.
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #' @param bins Integer. Number of bins to plot.
 #'
 #' @export
@@ -406,14 +406,14 @@ plot_hvgs <- S7::new_generic(
   }
 )
 
-#' @method plot_hvgs bulk_coexp
+#' @method plot_hvgs BulkCoExp
 #'
 #' @import ggplot2
 #'
 #' @export
-S7::method(plot_hvgs, bulk_coexp) <- function(object, bins = 50L) {
+S7::method(plot_hvgs, BulkCoExp) <- function(object, bins = 50L) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(bins, "I1")
   # Early return
   if (is.null(S7::prop(object, "params")[["preprocessing"]])) {

@@ -18,3 +18,4 @@ testSNFParams(x)
 \description{
 Checkmate extension for checking the SNF parameters.
 }
+\keyword{internal}

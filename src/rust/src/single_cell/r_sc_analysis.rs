@@ -1,6 +1,7 @@
 use extendr_api::*;
 use faer::Mat;
 use rand::prelude::*;
+use std::cmp::Ordering;
 
 use bixverse_rs::core::math::stats::calc_fdr;
 use bixverse_rs::prelude::*;
@@ -8,19 +9,31 @@ use bixverse_rs::single_cell::sc_analysis::dge_pathway_scores::*;
 use bixverse_rs::single_cell::sc_analysis::hotspot::*;
 use bixverse_rs::single_cell::sc_analysis::milo_r::*;
 use bixverse_rs::single_cell::sc_analysis::module_scoring::*;
+use bixverse_rs::single_cell::sc_analysis::scenic::*;
 use bixverse_rs::single_cell::sc_analysis::vision::*;
 
 extendr_module! {
     mod r_sc_analysis;
-    fn rs_aucell;
+    // dge
     fn rs_calculate_dge_mann_whitney;
+    // aucell
+    fn rs_aucell;
+    // hotspot
     fn rs_hotspot_autocor;
     fn rs_hotspot_cluster_genes;
     fn rs_hotspot_gene_cor;
-    fn rs_make_milor_nhoods;
+    // module scoring
     fn rs_module_scoring;
+    // miloR
+    fn rs_make_milor_nhoods;
+    // vision
     fn rs_vision;
     fn rs_vision_with_autocorrelation;
+    // scenic
+    fn rs_scenic_gene_filter;
+    fn rs_scenic_grn;
+    fn rs_scenic_grn_streaming;
+    fn rs_top_k_targets;
 }
 
 //////////
@@ -218,7 +231,7 @@ fn rs_aucell(
     auc_type: &str,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -267,7 +280,7 @@ fn rs_vision(
     cells_to_keep: Vec<i32>,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
@@ -756,4 +769,214 @@ fn rs_make_milor_nhoods(
         ncols = len_unique_indices,
         kth_distances = kth_distances
     )
+}
+
+//////////
+// GRNs //
+//////////
+
+/// Identifies genes to include into a SCENIC analysis
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis
+/// @param scenic_params Named list. Contains all of the parameters need for
+/// SCENIC.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns The 0-indexed positions of the genes to include in the scenic
+/// analysis.
+///
+/// @export
+#[extendr]
+fn rs_scenic_gene_filter(
+    f_path_genes: String,
+    cell_indices: Vec<i32>,
+    scenic_params: List,
+    verbose: bool,
+) -> Vec<i32> {
+    let cell_indices = cell_indices.r_int_convert();
+
+    let scenic_params = ScenicParams::from_r_list(scenic_params);
+
+    let genes_to_use = scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose);
+
+    genes_to_use.r_int_convert()
+}
+
+/// SCENIC: Generating gene-regulatory networks
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+/// predictor variables to use in the generation of the regression learners.
+/// @param scenic_params Named list. Contains all of the parameters need for
+/// SCENIC.
+/// @param seed Integer. Controls reproducibility of the function.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A gene x TF importance matrix
+///
+/// @export
+#[extendr]
+fn rs_scenic_grn(
+    f_path_genes: String,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    tf_indices: Vec<i32>,
+    scenic_params: List,
+    seed: usize,
+    verbose: bool,
+) -> RArray<f64, [usize; 2]> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let tf_indices = tf_indices.r_int_convert();
+
+    let scenic_params = ScenicParams::from_r_list(scenic_params);
+
+    let grn_matrix = run_scenic_grn(
+        &f_path_genes,
+        &cell_indices,
+        &gene_indices,
+        &tf_indices,
+        &scenic_params,
+        seed,
+        verbose,
+    );
+
+    faer_to_r_matrix(grn_matrix.as_ref())
+}
+
+/// SCENIC: Generating gene-regulatory networks (streaming version)
+///
+/// @description Loads the genes in as chunks to avoid high memory pressure.
+///
+/// @param f_path_genes Path to the `counts_genes.bin` file.
+/// @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+/// include in the analysis
+/// @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+/// to include.
+/// @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+/// predictor variables to use in the generation of the regression learners.
+/// @param scenic_params Named list. Contains all of the parameters need for
+/// SCENIC.
+/// @param seed Integer. Controls reproducibility of the function.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A gene x TF importance matrix
+///
+/// @export
+#[extendr]
+fn rs_scenic_grn_streaming(
+    f_path_genes: String,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    tf_indices: Vec<i32>,
+    scenic_params: List,
+    seed: usize,
+    verbose: bool,
+) -> RArray<f64, [usize; 2]> {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let tf_indices = tf_indices.r_int_convert();
+
+    let scenic_params = ScenicParams::from_r_list(scenic_params);
+
+    let grn_matrix = run_scenic_grn_streaming(
+        &f_path_genes,
+        &cell_indices,
+        &gene_indices,
+        &tf_indices,
+        &scenic_params,
+        seed,
+        verbose,
+    );
+
+    faer_to_r_matrix(grn_matrix.as_ref())
+}
+
+/// SCENIC: Select the Top TF <> Gene pairs
+///
+/// @param matrix Numeric matrix with genes x TF importance values
+/// @param k Integer. Number of top genes / TFs to extract.
+/// @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
+/// top k genes per TF are used. Both versions were used in the original paper.
+/// @param min_value Float. An
+///
+/// @returns A list with three vectors: tf, gene, importance
+///
+/// @export
+#[extendr]
+fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option<f64>) -> List {
+    let nrow = matrix.nrows();
+    let ncol = matrix.ncols();
+    let data = matrix.data();
+
+    let dimnames = matrix.get_attrib("dimnames").unwrap();
+    let dimnames_list: List = dimnames.try_into().unwrap();
+    let rownames: Strings = dimnames_list.elt(0).unwrap().try_into().unwrap();
+    let colnames: Strings = dimnames_list.elt(1).unwrap().try_into().unwrap();
+
+    let (outer_len, inner_len) = match margin {
+        1 => (nrow, ncol),
+        2 => (ncol, nrow),
+        _ => panic!("margin must be 1 (rows) or 2 (cols)"),
+    };
+    let k = (k as usize).min(inner_len);
+
+    let mut tfs: Vec<String> = Vec::new();
+    let mut genes: Vec<String> = Vec::new();
+    let mut importances: Vec<f64> = Vec::new();
+
+    for i in 0..outer_len {
+        let mut idx: Vec<usize> = (0..inner_len)
+            .filter(|&j| {
+                let v = match margin {
+                    1 => data[j * nrow + i],
+                    _ => data[i * nrow + j],
+                };
+                min_value.is_none_or(|min| v >= min)
+            })
+            .collect();
+
+        let take = k.min(idx.len());
+        if take == 0 {
+            continue;
+        }
+
+        idx.select_nth_unstable_by(take - 1, |&a, &b| {
+            let va = match margin {
+                1 => data[a * nrow + i],
+                _ => data[i * nrow + a],
+            };
+            let vb = match margin {
+                1 => data[b * nrow + i],
+                _ => data[i * nrow + b],
+            };
+            vb.partial_cmp(&va).unwrap_or(Ordering::Equal)
+        });
+
+        for &j in &idx[..take] {
+            let (tf_name, gene_name, val) = match margin {
+                1 => (
+                    colnames[j].as_str(),
+                    rownames[i].as_str(),
+                    data[j * nrow + i],
+                ),
+                _ => (
+                    colnames[i].as_str(),
+                    rownames[j].as_str(),
+                    data[i * nrow + j],
+                ),
+            };
+            tfs.push(tf_name.to_string());
+            genes.push(gene_name.to_string());
+            importances.push(val);
+        }
+    }
+
+    list!(tf = tfs, gene = genes, importance = importances)
 }

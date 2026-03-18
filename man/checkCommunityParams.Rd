@@ -16,3 +16,4 @@ checkCommunityParams(x)
 Checkmate extension for checking the community detection
 parameters for identifying genetically privileged communities.
 }
+\keyword{internal}

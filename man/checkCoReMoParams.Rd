@@ -15,3 +15,4 @@ checkCoReMoParams(x)
 \description{
 Checkmate extension for checking the CoReMo parameters.
 }
+\keyword{internal}

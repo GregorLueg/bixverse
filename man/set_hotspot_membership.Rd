@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{set_hotspot_membership}
 \alias{set_hotspot_membership}
-\alias{set_hotspot_membership.sc_hotspot}
+\alias{set_hotspot_membership.Hotspot}
 \title{Identify hotspot gene clusters}
 \usage{
 set_hotspot_membership(x, fdr_threshold = 0.05, min_size = 10L)
 
-\method{set_hotspot_membership}{sc_hotspot}(x, fdr_threshold = 0.05, min_size = 10L)
+\method{set_hotspot_membership}{Hotspot}(x, fdr_threshold = 0.05, min_size = 10L)
 }
 \arguments{
 \item{x}{An object to generate the hotspot gene clusters for.}

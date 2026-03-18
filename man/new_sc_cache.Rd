@@ -7,7 +7,7 @@
 new_sc_cache()
 }
 \value{
-Generates an empty version of the \code{sc_cache} class.
+Generates an empty version of the \code{ScCache} class.
 }
 \description{
 Helper class that contains various data that is held in memory and not on

@@ -15,3 +15,4 @@ checkLabelPropParams(x)
 \description{
 Checkmate extension for checking label propagation parameters.
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ checkScScrublet(x)
 \description{
 Checkmate extension for checking the Scrublet parameters.
 }
+\keyword{internal}

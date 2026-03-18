@@ -8,7 +8,7 @@ params_sc_miloR(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("annoy", "hnsw"),
+  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
   knn = list()
 )
 }
@@ -24,14 +24,14 @@ One of \code{c("approximate", "bruteforce", "index")}. Defaults to
 \code{"index"}.}
 
 \item{index_type}{String. Type of kNN index to use. One of
-\code{c("annoy", "hnsw")}. Defaults to \code{"annoy"}.}
+\code{c("hnsw", "annoy", "nndescent", "ivf")}. Defaults to \code{"hnsw"}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, and \code{ef_search}.
-Note: \code{knn_method} cannot be \code{"exhaustive"} for MiloR as it doesn't generate
-an index!}
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
+and \code{n_probe}. Note: \code{knn_method} cannot be \code{"exhaustive"} for MiloR as it
+doesn't generate an index!}
 }
 \value{
 A list with the MiloR parameters.

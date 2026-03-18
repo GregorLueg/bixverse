@@ -150,7 +150,7 @@ tied_expected_seed_nodes_2 <- rep(1, 5)
 
 ### single diffusion -----------------------------------------------------------
 
-test_class <- network_diffusions(edge_data, weighted = FALSE, directed = FALSE)
+test_class <- NetworkDiffusions(edge_data, weighted = FALSE, directed = FALSE)
 
 test_class <- diffuse_seed_nodes(test_class, diffusion_vector_1, "max")
 
@@ -286,7 +286,7 @@ expect_true(
 
 ### tied diffusion -------------------------------------------------------------
 
-test_class <- network_diffusions(edge_data, weighted = FALSE, directed = FALSE)
+test_class <- NetworkDiffusions(edge_data, weighted = FALSE, directed = FALSE)
 
 test_class <- tied_diffusion(
   test_class,

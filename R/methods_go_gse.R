@@ -3,7 +3,7 @@
 #' Run gene ontology enrichment with elimination method.
 #'
 #' @description
-#' This method takes the gene_ontology_data and a target gene set and performs
+#' This method takes the GeneOntologyElim and a target gene set and performs
 #' an GSE enrichment leveraging ontological information. It starts at the lowest
 #' levels of the ontology and tests if there is significant enrichment for any
 #' GO terms. If the threshold of the p-value is below the elimination threshold,
@@ -12,7 +12,7 @@
 #' gene universe will be automatically set to every gene represented in the
 #' ontology.
 #'
-#' @param object The underlying class, see [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::GeneOntologyElim()].
 #' @param target_genes String. The target genes you wish to apply the GSEA over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
 #' @param fdr_threshold Float. Threshold for maximum fdr to include in the
@@ -21,7 +21,7 @@
 #' elimination on the ancestors shall be conducted.
 #' @param min_genes Integer. Minimum number of genes that have to be included in
 #' the gene ontology term. If NULL, it will default to the number of minimum
-#' genes stored in `gene_ontology_data`.
+#' genes stored in `GeneOntologyElim`.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -47,8 +47,8 @@ gse_go_elim_method <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method gse_go_elim_method gene_ontology_data
-S7::method(gse_go_elim_method, gene_ontology_data) <-
+#' @method gse_go_elim_method GeneOntologyElim
+S7::method(gse_go_elim_method, GeneOntologyElim) <-
   function(
     object,
     target_genes,
@@ -60,7 +60,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
     # Scope checks
     . <- pvals <- fdr <- hits <- NULL
     # First check
-    checkmate::assertClass(object, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::GeneOntologyElim")
     checkmate::qassert(target_genes, "S+")
     checkmate::qassert(fdr_threshold, "R+[0,1]")
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -113,7 +113,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' Run gene ontology enrichment with elimination method over a list.
 #'
 #' @description
-#' This method takes the gene_ontology_data and a list of target gene sets and
+#' This method takes the GeneOntologyElim and a list of target gene sets and
 #' performs an GSE enrichment leveraging ontological information. It starts at
 #' the lowest levels of the ontology and tests if there is significant
 #' enrichment for any GO terms. If the threshold of the p-value is below the
@@ -123,7 +123,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' the process. The gene universe will be automatically set to every gene
 #' represented in the ontology.
 #'
-#' @param object The underlying class, see [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::GeneOntologyElim()].
 #' @param target_gene_list List. The target genes list you wish to apply the
 #' gene set enrichment analysis over.
 #' @param minimum_overlap Integer. Threshold for the minimal overlap.
@@ -133,7 +133,7 @@ S7::method(gse_go_elim_method, gene_ontology_data) <-
 #' elimination on the ancestors shall be conducted.
 #' @param min_genes Integer. Minimum number of genes that have to be included in
 #' the gene ontology term. If NULL, it will default to the number of minimum
-#' genes stored in `gene_ontology_data`.
+#' genes stored in `GeneOntologyElim`.
 #'
 #' @return data.table with enrichment results.
 #'
@@ -159,8 +159,8 @@ gse_go_elim_method_list <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method gse_go_elim_method_list gene_ontology_data
-S7::method(gse_go_elim_method_list, gene_ontology_data) <-
+#' @method gse_go_elim_method_list GeneOntologyElim
+S7::method(gse_go_elim_method_list, GeneOntologyElim) <-
   function(
     object,
     target_gene_list,
@@ -172,7 +172,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
     # Scope checks
     . <- pvals <- fdr <- hits <- target_set_name <- NULL
     # First check
-    checkmate::assertClass(object, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::GeneOntologyElim")
     checkmate::assertList(
       target_gene_list,
       types = "character",
@@ -247,7 +247,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
 #' Run GO enrichment with elimination with fgsea simple
 #'
 #' @description
-#' This method takes the gene_ontology_data and a vector of gene level
+#' This method takes the GeneOntologyElim and a vector of gene level
 #' statistics to perform fgsea (simple) leveraging ontological information.
 #' It starts at the lowest levels of the ontology and tests if there is
 #' significant enrichment for any GO terms. If the threshold of the p-value is
@@ -255,7 +255,7 @@ S7::method(gse_go_elim_method_list, gene_ontology_data) <-
 #' from all its ancestors. The function then proceeds to the next level of the
 #' ontology and repeats the process.
 #'
-#' @param object The underlying class, see [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::GeneOntologyElim()].
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param elim_threshold Float. Threshold from which p-value onwards the
 #' elimination on the ancestors shall be conducted.
@@ -296,8 +296,8 @@ fgsea_simple_go_elim <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method fgsea_simple_go_elim gene_ontology_data
-S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
+#' @method fgsea_simple_go_elim GeneOntologyElim
+S7::method(fgsea_simple_go_elim, GeneOntologyElim) <-
   function(
     object,
     stats,
@@ -309,7 +309,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
     # Scope checks
     . <- leading_edge <- fdr <- NULL
     # Checks
-    checkmate::assertClass(object, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::GeneOntologyElim")
     checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
     checkmate::assertNames(names(stats))
     checkmate::qassert(elim_threshold, "R+[0,1]")
@@ -358,7 +358,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
 #' Run GO enrichment with elimination method over a continuous vectors
 #'
 #' @description
-#' This method takes the gene_ontology_data and a vector of gene level
+#' This method takes the GeneOntologyElim and a vector of gene level
 #' statistics to perform fgsea (multi-level) leveraging ontological information.
 #' It starts at the lowest levels of the ontology and tests if there is
 #' significant enrichment for any GO terms. If the threshold of the p-value is
@@ -368,7 +368,7 @@ S7::method(fgsea_simple_go_elim, gene_ontology_data) <-
 #' method to estimate lower p-values for significant terms, see Korotkevich, et
 #' al.
 #'
-#' @param object The underlying class, see [bixverse::gene_ontology_data()].
+#' @param object The underlying class, see [bixverse::GeneOntologyElim()].
 #' @param stats Named numeric vector. The gene level statistic.
 #' @param elim_threshold Float. Threshold from which p-value onwards the
 #' elimination on the ancestors shall be conducted.
@@ -411,8 +411,8 @@ fgsea_go_elim <- S7::new_generic(
 #' @import data.table
 #' @importFrom magrittr `%>%`
 #'
-#' @method fgsea_go_elim gene_ontology_data
-S7::method(fgsea_go_elim, gene_ontology_data) <-
+#' @method fgsea_go_elim GeneOntologyElim
+S7::method(fgsea_go_elim, GeneOntologyElim) <-
   function(
     object,
     stats,
@@ -424,7 +424,7 @@ S7::method(fgsea_go_elim, gene_ontology_data) <-
     # Scope checks
     . <- leading_edge <- fdr <- mode_fraction <- pvals <- log2err <- NULL
     # Checks
-    checkmate::assertClass(object, "bixverse::gene_ontology_data")
+    checkmate::assertClass(object, "bixverse::GeneOntologyElim")
     checkmate::assertNumeric(stats, min.len = 3L, finite = TRUE)
     checkmate::assertNames(names(stats))
     checkmate::qassert(elim_threshold, "R+[0,1]")

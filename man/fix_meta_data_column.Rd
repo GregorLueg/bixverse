@@ -7,8 +7,8 @@
 fix_meta_data_column(object, col_names, ...)
 }
 \arguments{
-\item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
-\code{bixverse::bulk_dge}.}
+\item{object}{The underlying object, either \code{\link[=BulkCoExp]{BulkCoExp()}} or
+\code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{col_names}{Character vector. The columns to fix.}
 
@@ -19,7 +19,7 @@ Returns the object with the respective metadata columns updated.
 }
 \description{
 This function will update the specified columns in the metadata of an
-\code{bixverse::bulk_dge} or \code{bixverse::bulk_coexp} to be conform with R standard
+\code{\link[=BulkDge]{BulkDge()}} or \code{\link[=BulkCoExp]{BulkCoExp()}} to be conform with R standard
 naming convetions. This is useful to do before running DGE methods as they
 expect standardised names.
 }

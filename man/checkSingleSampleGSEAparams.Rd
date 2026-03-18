@@ -16,3 +16,4 @@ checkSingleSampleGSEAparams(x)
 Checkmate extension for checking single sample gene set
 enrichment analysis parameters.
 }
+\keyword{internal}

@@ -3,16 +3,16 @@
 %   R/classes_single_cell_others.R
 \name{get_knn_mat}
 \alias{get_knn_mat}
-\alias{get_knn_mat.sc_cache}
-\alias{get_knn_mat.single_cell_exp}
-\alias{get_knn_mat.sc_knn}
+\alias{get_knn_mat.ScCache}
+\alias{get_knn_mat.SingleCells}
+\alias{get_knn_mat.SingleCellNearestNeighbour}
 \title{Get the KNN matrix}
 \usage{
 get_knn_mat(x)
 
-\method{get_knn_mat}{sc_cache}(x)
+\method{get_knn_mat}{ScCache}(x)
 
-\method{get_knn_mat}{sc_knn}(x)
+\method{get_knn_mat}{SingleCellNearestNeighbour}(x)
 }
 \arguments{
 \item{x}{An object to get the kNN matrix from.}
@@ -20,5 +20,5 @@ get_knn_mat(x)
 \description{
 Get the KNN matrix
 
-Get the KNN matrix from a \code{single_cell_exp}.
+Get the KNN matrix from a \code{SingleCells}.
 }

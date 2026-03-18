@@ -80,7 +80,7 @@ categorical_df <- data.table(
 
 ## class generation ------------------------------------------------------------
 
-snf_obj <- snf()
+snf_obj <- SimilarityNetworkFusion()
 
 # getter behaving
 expect_true(
@@ -103,11 +103,11 @@ expect_warning(
 
 # should error
 expect_error(
-  current = snf(data = continuous_data),
+  current = SimilarityNetworkFusion(data = continuous_data),
   info = paste("error without modality name")
 )
 
-snf_obj <- snf(
+snf_obj <- SimilarityNetworkFusion(
   data = continuous_data,
   data_name = "continous",
   snf_params = params_snf(k = 3L)
@@ -127,7 +127,7 @@ expect_true(
   info = paste("continuous adjacency matrix has expected type, names and dim")
 )
 
-snf_obj <- snf(
+snf_obj <- SimilarityNetworkFusion(
   data = mixed_data,
   data_name = "mixed",
   snf_params = params_snf(k = 3L)
@@ -147,7 +147,7 @@ expect_true(
   info = paste("mixed adjacency matrix has expected type, names and dim")
 )
 
-snf_obj <- snf(
+snf_obj <- SimilarityNetworkFusion(
   data = categorical_df,
   data_name = "categorical",
   snf_params = params_snf(k = 3L)
@@ -171,7 +171,7 @@ expect_true(
 
 ### addition of data -----------------------------------------------------------
 
-snf_obj <- snf(
+snf_obj <- SimilarityNetworkFusion(
   data = continuous_data,
   data_name = "continous",
   snf_params = params_snf(k = 3L)

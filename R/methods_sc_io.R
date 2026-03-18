@@ -2,13 +2,13 @@
 
 ## seurat ----------------------------------------------------------------------
 
-#' Load in Seurat to `single_cell_exp`
+#' Load in Seurat to `SingleCells`
 #'
 #' @description
-#' This function takes a Seurat file and generates `single_cell_exp` class
+#' This function takes a Seurat file and generates `SingleCells` class
 #' from it.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param seurat `Seurat` class you want to transform.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
@@ -46,13 +46,13 @@ load_seurat <- S7::new_generic(
   }
 )
 
-#' @method load_seurat single_cell_exp
+#' @method load_seurat SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_seurat, single_cell_exp) <- function(
+S7::method(load_seurat, SingleCells) <- function(
   object,
   seurat,
   sc_qc_param = params_sc_min_quality(),
@@ -61,7 +61,7 @@ S7::method(load_seurat, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertClass(seurat, "Seurat")
   assertScMinQC(sc_qc_param)
   checkmate::qassert(batch_size, "I1")
@@ -136,7 +136,7 @@ S7::method(load_seurat, single_cell_exp) <- function(
 #' @description
 #' This function loads in data directly from R objects.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param counts Sparse matrix. The cells represent the rows, the genes the
 #' indices. Needs to be `"dgRMatrix"`.
 #' @param obs data.table. The data.table representing the observations, i.e.,
@@ -181,13 +181,13 @@ load_r_data <- S7::new_generic(
   }
 )
 
-#' @method load_r_data single_cell_exp
+#' @method load_r_data SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_r_data, single_cell_exp) <- function(
+S7::method(load_r_data, SingleCells) <- function(
   object,
   counts,
   obs,
@@ -198,7 +198,7 @@ S7::method(load_r_data, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertClass(counts, "dgRMatrix")
   no_cells <- nrow(counts)
   no_genes <- ncol(counts)
@@ -206,6 +206,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
   checkmate::assertDataTable(var, nrows = no_genes)
   checkmate::qassert(.verbose, "B1")
 
+  if (.verbose) {
+    message("Writing counts to disk.")
+  }
   # body
   counts <- sparse_mat_to_list(counts)
 
@@ -217,6 +220,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
     verbose = .verbose
   )
 
+  if (.verbose) {
+    message("Generating gene-based data.")
+  }
   if (streaming) {
     rust_con$generate_gene_based_data_streaming(
       batch_size = batch_size,
@@ -231,6 +237,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
   gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
   gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
 
+  if (.verbose) {
+    message("Writing to the DuckDB.")
+  }
   duckdb_con <- get_sc_duckdb(object)
 
   duckdb_con$populate_obs_from_data.table(
@@ -245,6 +254,9 @@ S7::method(load_r_data, single_cell_exp) <- function(
 
   cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
 
+  if (.verbose) {
+    message("Setting internal mapping.")
+  }
   duckdb_con$add_data_obs(new_data = cell_res_dt)
   duckdb_con$add_data_var(new_data = gene_nnz_dt)
   duckdb_con$set_to_keep_column()
@@ -262,15 +274,15 @@ S7::method(load_r_data, single_cell_exp) <- function(
 
 #### fast ----------------------------------------------------------------------
 
-#' Load in h5ad to `single_cell_exp`
+#' Load in h5ad to `SingleCells`
 #'
 #' @description
 #' This function takes an h5ad file and loads the obs and var data into the
-#' DuckDB of the `single_cell_exp` class and the counts into a Rust-binarised
+#' DuckDB of the `SingleCells` class and the counts into a Rust-binarised
 #' format for rapid access. During the reading in of the counts, the log CPM
 #' transformation will occur automatically.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param h5_path File path to the h5ad object you wish to load in.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
@@ -283,6 +295,8 @@ S7::method(load_r_data, single_cell_exp) <- function(
 #'   detected to be included.
 #'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
 #' }
+#' @param cell_id_col Optional string. If a specific column in the h5ad
+#' obs data is representing the cell identifiers, you can specify it here.
 #' @param streaming Boolean. Shall the data be streamed during the conversion
 #' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
 #' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
@@ -301,6 +315,7 @@ load_h5ad <- S7::new_generic(
     h5_path,
     sc_qc_param = params_sc_min_quality(),
     streaming = TRUE,
+    cell_id_col = NULL,
     batch_size = 1000L,
     .verbose = TRUE
   ) {
@@ -308,26 +323,30 @@ load_h5ad <- S7::new_generic(
   }
 )
 
-#' @method load_h5ad single_cell_exp
+#' @method load_h5ad SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_h5ad, single_cell_exp) <- function(
+S7::method(load_h5ad, SingleCells) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = TRUE,
+  cell_id_col = NULL,
   batch_size = 1000L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQC(sc_qc_param)
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(batch_size, "I1")
   checkmate::qassert(.verbose, "B1")
+
+  # make rust happier
+  h5_path <- path.expand(h5_path)
 
   # rust part
   h5_meta <- get_h5ad_dimensions(f_path = h5_path)
@@ -364,7 +383,159 @@ S7::method(load_h5ad, single_cell_exp) <- function(
   }
   duckdb_con$populate_obs_from_h5(
     h5_path = h5_path,
-    filter = as.integer(file_res$cell_indices + 1)
+    filter = as.integer(file_res$cell_indices + 1),
+    cell_id_col = cell_id_col
+  )
+  if (.verbose) {
+    message("Loading variables data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_vars_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$gene_indices + 1)
+  )
+
+  cell_res_dt <- data.table::setDT(file_res[c("nnz", "lib_size")])
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
+#### normalised ----------------------------------------------------------------
+
+#' Load in h5ad with normalised counts to `SingleCells`
+#'
+#' @description
+#' This function takes an h5ad file where only normalised counts are available
+#' in the X slot and loads the obs and var data into the DuckDB of the
+#' `SingleCells` class and the counts into a Rust-binarised format for
+#' rapid access. Raw counts are reconstructed from the normalised values using
+#' the library sizes stored in a specified obs column.
+#'
+#' The reconstruction assumes the normalisation was:
+#' `norm = log1p(x / lib_size * target_size)`
+#'
+#' @param object `SingleCells` class.
+#' @param h5_path File path to the h5ad object you wish to load in.
+#' @param obs_lib_size_col String. Name of the obs column containing the total
+#' counts per cell or spot (e.g. `"nCount_RNA"`). You will have to check the
+#' original obs data for this.
+#' @param target_size Numeric. The target size used in the original
+#' normalisation (e.g. `1e4`).
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
+#' list with the following elements:
+#' \itemize{
+#'   \item min_unique_genes - Integer. Minimum number of genes to be detected
+#'   in the cell to be included.
+#'   \item min_lib_size - Integer. Minimum library size in the cell to be
+#'   included.
+#'   \item min_cells - Integer. Minimum number of cells a gene needs to be
+#'   detected to be included.
+#'   \item target_size - Float. Target size to normalise to. Defaults to `1e5`.
+#' }
+#' @param cell_id_col Optional string. If a specific column in the h5ad obs
+#' data represents the cell identifiers, you can specify it here.
+#' @param streaming Boolean. Shall the data be streamed during the conversion
+#' of CSR to CSC. Defaults to `TRUE` and should be used for larger data sets.
+#' @param batch_size Integer. If `streaming = TRUE`, how many cells to process
+#' in one batch. Defaults to `1000L`.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @return It will populate the files on disk and return the class with updated
+#' shape information.
+#'
+#' @export
+load_h5ad_norm <- S7::new_generic(
+  name = "load_h5ad_norm",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    h5_path,
+    obs_lib_size_col,
+    target_size,
+    sc_qc_param = params_sc_min_quality(),
+    streaming = TRUE,
+    cell_id_col = NULL,
+    batch_size = 1000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_h5ad_norm SingleCells
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(load_h5ad_norm, SingleCells) <- function(
+  object,
+  h5_path,
+  obs_lib_size_col,
+  target_size,
+  sc_qc_param = params_sc_min_quality(),
+  streaming = TRUE,
+  cell_id_col = NULL,
+  batch_size = 1000L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::qassert(obs_lib_size_col, "S1")
+  checkmate::qassert(target_size, "N1")
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  h5_path <- path.expand(h5_path)
+
+  h5_meta <- get_h5ad_dimensions(f_path = h5_path)
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  file_res <- rust_con$norm_h5_to_file(
+    cs_type = h5_meta$type,
+    h5_path = h5_path,
+    no_cells = h5_meta$dims["obs"],
+    no_genes = h5_meta$dims["var"],
+    obs_lib_size_col = obs_lib_size_col,
+    target_size = target_size,
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(
+      verbose = .verbose
+    )
+  }
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  duckdb_con <- get_sc_duckdb(object)
+  if (.verbose) {
+    message("Loading observations data from h5ad into the DuckDB.")
+  }
+  duckdb_con$populate_obs_from_h5(
+    h5_path = h5_path,
+    filter = as.integer(file_res$cell_indices + 1),
+    cell_id_col = cell_id_col
   )
   if (.verbose) {
     message("Loading variables data from h5ad into the DuckDB.")
@@ -391,17 +562,17 @@ S7::method(load_h5ad, single_cell_exp) <- function(
 
 #### slower streaming version --------------------------------------------------
 
-#' Stream in h5ad to `single_cell_exp`
+#' Stream in h5ad to `SingleCells`
 #'
 #' @description
 #' This function takes an h5ad file and loads (via streaming) the obs and var
-#' data into the DuckDB of the `single_cell_exp` class and the counts into
+#' data into the DuckDB of the `SingleCells` class and the counts into
 #' a Rust-binarised format for rapid access. During the reading in of the
 #' counts, the log CPM transformation will occur automatically. This function
 #' is specifically designed to deal with larger amounts of data and is slower
 #' than [bixverse::load_h5ad()].
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param h5_path File path to the h5ad object you wish to load in.
 #' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()]. A
 #' list with the following elements:
@@ -440,13 +611,13 @@ stream_h5ad <- S7::new_generic(
   }
 )
 
-#' @method stream_h5ad single_cell_exp
+#' @method stream_h5ad SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(stream_h5ad, single_cell_exp) <- function(
+S7::method(stream_h5ad, SingleCells) <- function(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
@@ -455,7 +626,7 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScMinQC(sc_qc_param)
   checkmate::qassert(max_genes_in_memory, "I1")
   checkmate::qassert(max_genes_in_memory, "I1")
@@ -516,9 +687,144 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
   return(object)
 }
 
+##### multiple h5ad files ------------------------------------------------------
+
+#' Load multiple h5ad files into a single `SingleCells`
+#'
+#' @description
+#' Takes a pre-scan result from [bixverse::prescan_h5ad_files()] and loads
+#' all files into a single experiment with global gene QC and sequential
+#' cell indexing.
+#'
+#' @param object `SingleCells` class.
+#' @param prescan_result Output of [bixverse::prescan_h5ad_files()].
+#' @param sc_qc_param List. Output of [bixverse::params_sc_min_quality()].
+#' @param cell_id_col Optional string. Column name for cell identifiers in obs.
+#' @param streaming Boolean. Use streaming for CSR-to-CSC conversion.
+#' @param batch_size Integer. Batch size if `streaming = TRUE`.
+#' @param .verbose Boolean.
+#'
+#' @return The class with updated shape and populated DuckDB.
+#'
+#' @export
+load_multi_h5ad <- S7::new_generic(
+  name = "load_multi_h5ad",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    prescan_result,
+    sc_qc_param = params_sc_min_quality(),
+    cell_id_col = NULL,
+    streaming = TRUE,
+    batch_size = 1000L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method load_multi_h5ad SingleCells
+#'
+#' @export
+S7::method(load_multi_h5ad, SingleCells) <- function(
+  object,
+  prescan_result,
+  sc_qc_param = params_sc_min_quality(),
+  cell_id_col = NULL,
+  streaming = TRUE,
+  batch_size = 1000L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  assertScMinQC(sc_qc_param)
+  checkmate::assertList(prescan_result)
+  checkmate::assertTRUE(all(
+    c("universe", "universe_size", "file_tasks") %in%
+      names(prescan_result)
+  ))
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  rust_con <- get_sc_rust_ptr(object)
+
+  # call Rust
+  file_res <- rust_con$multi_h5_to_file(
+    file_tasks = prescan_result$file_tasks,
+    universe_size = as.integer(prescan_result$universe_size),
+    qc_params = sc_qc_param,
+    verbose = .verbose
+  )
+
+  # generate gene-based binary
+  if (streaming) {
+    rust_con$generate_gene_based_data_streaming(
+      batch_size = batch_size,
+      verbose = .verbose
+    )
+  } else {
+    rust_con$generate_gene_based_data(verbose = .verbose)
+  }
+
+  gene_nnz <- rust_con$get_nnz_genes(gene_indices = NULL)
+  gene_nnz_dt <- data.table::data.table(no_cells_exp = gene_nnz)
+
+  # DuckDB: obs
+  duckdb_con <- get_sc_duckdb(object)
+
+  if (.verbose) {
+    message("Loading observation data from h5ad files into DuckDB.")
+  }
+
+  per_file_info <- lapply(file_res$per_file, function(f) {
+    list(
+      h5_path = prescan_result$file_tasks[[f$exp_id]]$h5_path,
+      exp_id = f$exp_id,
+      cell_filter = as.integer(f$cell_indices + 1L)
+    )
+  })
+
+  duckdb_con$populate_obs_from_multi_h5(
+    per_file_info = per_file_info,
+    cell_id_col = cell_id_col
+  )
+
+  # DuckDB: var (use first file as reference)
+  if (.verbose) {
+    message("Loading variable data into DuckDB.")
+  }
+
+  final_gene_names <- prescan_result$universe[file_res$global_gene_indices + 1L]
+
+  duckdb_con$populate_vars_from_h5_reordered(
+    h5_path = prescan_result$file_tasks[[1L]]$h5_path,
+    final_gene_names = final_gene_names
+  )
+
+  # add QC columns
+  per_file_qc <- lapply(file_res$per_file, function(f) {
+    data.table::data.table(nnz = f$nnz, lib_size = f$lib_size)
+  })
+  cell_res_dt <- data.table::rbindlist(per_file_qc)
+
+  duckdb_con$add_data_obs(new_data = cell_res_dt)
+  duckdb_con$add_data_var(new_data = gene_nnz_dt)
+  duckdb_con$set_to_keep_column()
+
+  cell_map <- duckdb_con$get_obs_index_map()
+  gene_map <- duckdb_con$get_var_index_map()
+
+  S7::prop(object, "dims") <- as.integer(rust_con$get_shape())
+  object <- set_cell_mapping(x = object, cell_map = cell_map)
+  object <- set_gene_mapping(x = object, gene_map = gene_map)
+
+  return(object)
+}
+
 ### mtx ------------------------------------------------------------------------
 
-#' Load in mtx/plain text files to `single_cell_exp` (nightly!)
+#' Load in mtx/plain text files to `SingleCells`
 #'
 #' @description
 #' This is a helper function to load in mtx files and corresponding plain text
@@ -526,7 +832,7 @@ S7::method(stream_h5ad, single_cell_exp) <- function(
 #' high quality cells. Under the hood DucKDB and high performance Rust binary
 #' files are being used to store the counts.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param sc_mtx_io_param List. Please generate this one via
 #' [bixverse::params_sc_mtx_io()]. Needs to contain:
 #' \itemize{
@@ -572,13 +878,13 @@ load_mtx <- S7::new_generic(
   }
 )
 
-#' @method load_mtx single_cell_exp
+#' @method load_mtx SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_mtx, single_cell_exp) <- function(
+S7::method(load_mtx, SingleCells) <- function(
   object,
   sc_mtx_io_param = params_sc_mtx_io(),
   sc_qc_param = params_sc_min_quality(),
@@ -587,7 +893,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertClass(object, "bixverse::SingleCells")
   assertScMtxIO(sc_mtx_io_param)
   assertScMinQC(sc_qc_param)
   checkmate::qassert(.verbose, "B1")
@@ -669,7 +975,7 @@ S7::method(load_mtx, single_cell_exp) <- function(
 #' option to save as `".rds"` or `".qs2"` (you need to have the package `"qs2"`
 #' installed for this option!).
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param type String. One of `c("qs2", "rds")`. Defines which binary format to
 #' use. Will default to `"qs2"` for speed.
 #'
@@ -687,16 +993,16 @@ save_sc_exp_to_disk <- S7::new_generic(
   }
 )
 
-#' @method save_sc_exp_to_disk single_cell_exp
+#' @method save_sc_exp_to_disk SingleCells
 #'
 #' @export
-S7::method(save_sc_exp_to_disk, single_cell_exp) <- function(
+S7::method(save_sc_exp_to_disk, SingleCells) <- function(
   object,
   type = c("qs2", "rds")
 ) {
   type <- match.arg(type)
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::assertChoice(type, c("qs2", "rds"))
 
   # pull the data out from the class
@@ -718,13 +1024,13 @@ S7::method(save_sc_exp_to_disk, single_cell_exp) <- function(
 
 ### from disk ------------------------------------------------------------------
 
-#' Load an existing single_cell_exp from disk
+#' Load an existing SingleCells from disk
 #'
 #' @description
 #' Helper function that can load the parameters to access the on-disk stored
 #' data into the class.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #'
 #' @returns The object with added information on the data on disk.
 #'
@@ -739,15 +1045,15 @@ load_existing <- S7::new_generic(
   }
 )
 
-#' @method load_mtx single_cell_exp
+#' @method load_mtx SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(load_existing, single_cell_exp) <- function(object) {
+S7::method(load_existing, SingleCells) <- function(object) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
 
   dir_data <- S7::prop(object, "dir_data")
 

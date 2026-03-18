@@ -17,3 +17,4 @@ checkKnnParams(x, required_params = NULL)
 \description{
 Checkmate extension for checking kNN parameters.
 }
+\keyword{internal}

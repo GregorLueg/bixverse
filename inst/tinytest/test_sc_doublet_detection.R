@@ -1,12 +1,14 @@
 # test data and params ---------------------------------------------------------
 
-set.seed(42L)
+library(magrittr)
 
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "doublet_detection"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## parameters ------------------------------------------------------------------
 
@@ -76,7 +78,7 @@ new_obs <- data.table::rbindlist(list(
 
 ## generate the object ---------------------------------------------------------
 
-sc_object <- single_cell_exp(
+sc_object <- SingleCells(
   dir_data = test_temp_dir
 )
 
@@ -264,7 +266,7 @@ expect_true(
 )
 
 expect_true(
-  current = checkmate::testClass(obj_res, "scrublet_res"),
+  current = checkmate::testClass(obj_res, "ScrubletRes"),
   info = "S7 scrublet: the correct class is being returned"
 )
 
@@ -409,7 +411,7 @@ obj_res <- doublet_detection_boost_sc(
 )
 
 expect_true(
-  current = checkmate::testClass(obj_res, "boost_res"),
+  current = checkmate::testClass(obj_res, "BoostRes"),
   info = "S7 boost - correct class returned"
 )
 
@@ -433,5 +435,7 @@ expect_true(
   ),
   info = "getter on scrublet res working - expected columns"
 )
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

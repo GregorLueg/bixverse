@@ -2,15 +2,15 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{add_nhoods_info}
 \alias{add_nhoods_info}
-\alias{add_nhoods_info.sc_miloR}
+\alias{add_nhoods_info.miloR}
 \title{Add neighbourhood info on majority cell type}
 \usage{
 add_nhoods_info(x, cell_info)
 
-\method{add_nhoods_info}{sc_miloR}(x, cell_info)
+\method{add_nhoods_info}{miloR}(x, cell_info)
 }
 \arguments{
-\item{x}{\code{sc_miloR} object on which to tag on additional neighbourhood
+\item{x}{\code{miloR} object on which to tag on additional neighbourhood
 information.}
 
 \item{cell_info}{Character vector. Represents the cell type annotations
@@ -18,12 +18,12 @@ you wish to add to the different neighbourhoods. Must be the same length
 as the number of cells (rows) in the nhoods matrix.}
 }
 \value{
-Modified \code{sc_miloR} object with updated \code{nhoods_info} containing
+Modified \code{miloR} object with updated \code{nhoods_info} containing
 \code{majority_celltype} and \code{majority_prop} columns.
 }
 \description{
 This function adds cell type composition information to the \code{nhoods_info}
-slot within the \code{sc_miloR} object. For each neighbourhood, it calculates
+slot within the \code{miloR} object. For each neighbourhood, it calculates
 the proportion of the majority cell type and identifies which cell type
 is most abundant. This is useful for annotating differential abundance
 results with the cellular composition of each neighbourhood.

@@ -1,10 +1,14 @@
 # h5 io ------------------------------------------------------------------------
 
+library(magrittr)
+
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "io_h5"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## parameters ------------------------------------------------------------------
 
@@ -183,7 +187,7 @@ sc_qc_param = params_sc_min_quality(
 #### direct writing ------------------------------------------------------------
 
 # test the underlying rust directly
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
@@ -360,7 +364,7 @@ expect_true(
 
 ## direct object load ----------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_h5ad(
   object = sc_object,
@@ -469,7 +473,7 @@ expect_equal(
 
 ## streaming h5ad --------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- stream_h5ad(
   object = sc_object,
@@ -575,5 +579,187 @@ expect_equal(
   target = vars_filtered$gene_id,
   info = "correct gene names"
 )
+
+## multi file read -------------------------------------------------------------
+
+### write to files to disk -----------------------------------------------------
+
+#### file 1 --------------------------------------------------------------------
+
+single_cell_test_data_1 <- generate_single_cell_test_data(seed = 1L)
+
+f_path_csr_1 = file.path(test_temp_dir, "csr_test_1.h5ad")
+
+write_h5ad_sc(
+  f_path = f_path_csr_1,
+  counts = single_cell_test_data_1$counts,
+  obs = single_cell_test_data_1$obs,
+  var = single_cell_test_data_1$var,
+  .verbose = FALSE
+)
+
+#### file 2 --------------------------------------------------------------------
+
+single_cell_test_data_2 <- generate_single_cell_test_data(seed = 2L)
+
+f_path_csr_2 = file.path(test_temp_dir, "csr_test_2.h5ad")
+
+write_h5ad_sc(
+  f_path = f_path_csr_2,
+  counts = single_cell_test_data_2$counts,
+  obs = single_cell_test_data_2$obs,
+  var = single_cell_test_data_2$var,
+  .verbose = FALSE
+)
+
+### test file scanning ---------------------------------------------------------
+
+h5ad_files <- list.files(test_temp_dir)
+
+h5ad_files <- h5ad_files[
+  grepl("test_1", h5ad_files) | grepl("test_2", h5ad_files)
+]
+
+h5ad_files_final <- file.path(test_temp_dir, h5ad_files)
+names(h5ad_files_final) <- c("exp1", "exp2")
+
+h5_tasks <- prescan_h5ad_files(h5_paths = h5ad_files_final)
+
+expect_true(
+  current = checkmate::testList(h5_tasks),
+  info = "h5_task_list correct type"
+)
+
+expect_true(
+  current = all(
+    c("universe", "universe_size", "file_tasks") %in%
+      names(h5_tasks)
+  ),
+  info = "h5_task_list expected names"
+)
+
+### test rust part directly ----------------------------------------------------
+
+# test the underlying rust directly
+sc_object <- SingleCells(dir_data = test_temp_dir)
+
+rust_con <- get_sc_rust_ptr(sc_object)
+
+file_res <- rust_con$multi_h5_to_file(
+  file_tasks = h5_tasks$file_tasks,
+  universe_size = as.integer(h5_tasks$universe_size),
+  qc_params = sc_qc_param,
+  verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testList(file_res),
+  info = "h5 rust file rult is a list"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(file_res),
+    must.include = c(
+      "global_gene_indices",
+      "total_cells",
+      "total_genes",
+      "per_file"
+    )
+  ),
+  info = "h5 rust file result has expected structure"
+)
+
+counts <- rust_con$return_full_mat(
+  assay = "raw",
+  cell_based = FALSE,
+  verbose = FALSE
+)
+
+expect_true(
+  current = counts$no_cells > 1000,
+  info = "more than 1000 cells were written to file"
+)
+
+### test duckdb part -----------------------------------------------------------
+
+#### obs -----------------------------------------------------------------------
+
+duckdb_con <- get_sc_duckdb(sc_object)
+
+per_file_info <- lapply(file_res$per_file, function(f) {
+  list(
+    h5_path = h5_tasks$file_tasks[[f$exp_id]]$h5_path,
+    exp_id = f$exp_id,
+    cell_filter = as.integer(f$cell_indices + 1L)
+  )
+})
+
+duckdb_con$populate_obs_from_multi_h5(
+  per_file_info = per_file_info,
+  cell_id_col = NULL
+)
+
+obs_direct <- duckdb_con$get_obs_table()
+
+expect_true(
+  current = checkmate::testDataTable(obs_direct),
+  info = "obs table correctly being written"
+)
+
+expect_true(
+  current = nrow(obs_direct) == counts$no_cells,
+  info = "counts and obs match in multi-file import"
+)
+
+#### vars ----------------------------------------------------------------------
+
+final_gene_names <- h5_tasks$universe[file_res$global_gene_indices + 1L]
+
+duckdb_con$populate_vars_from_h5_reordered(
+  h5_path = h5_tasks$file_tasks[[1L]]$h5_path,
+  final_gene_names = final_gene_names
+)
+
+var_direct <- duckdb_con$get_vars_table()
+
+expect_true(
+  current = checkmate::testDataTable(var_direct),
+  info = "var table correctly being written"
+)
+
+expect_true(
+  current = nrow(var_direct) == counts$no_genes,
+  info = "counts and vars match in multi-file import"
+)
+
+### main method ----------------------------------------------------------------
+
+sc_object <- load_multi_h5ad(
+  object = sc_object,
+  prescan_result = h5_tasks,
+  sc_qc_param = sc_qc_param,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = sc_object[[colnames(obs_direct)]],
+  target = obs_direct,
+  info = "main multi-read method returns an obs table"
+)
+
+expect_equal(
+  current = dim(sc_object[]),
+  target = c(counts$no_cells, counts$no_genes),
+  info = "main multi-read method returns counts"
+)
+
+expect_equal(
+  current = get_sc_var(sc_object)[, colnames(var_direct), with = FALSE],
+  target = var_direct,
+  info = "main multi-read method returns a var table"
+)
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

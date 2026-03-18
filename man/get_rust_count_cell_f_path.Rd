@@ -7,7 +7,7 @@
 get_rust_count_cell_f_path(object)
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 }
 \value{
 The path to the \code{counts_cells.bin}

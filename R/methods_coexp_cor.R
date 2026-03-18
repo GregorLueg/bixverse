@@ -8,7 +8,7 @@
 #' use the raw data). The data will be stored in a memory-efficient format
 #' in the properties of the class.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param cor_method String. Option of `c("pearson", "spearman")`.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -31,14 +31,14 @@ cor_module_processing <- S7::new_generic(
 
 #' @export
 #'
-#' @method cor_module_processing bulk_coexp
-S7::method(cor_module_processing, bulk_coexp) <- function(
+#' @method cor_module_processing BulkCoExp
+S7::method(cor_module_processing, BulkCoExp) <- function(
   object,
   cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
 
@@ -94,7 +94,7 @@ S7::method(cor_module_processing, bulk_coexp) <- function(
 #' matrix. It defaults to `"v2"` and the signed version, please see
 #' [bixverse::calculate_tom()] for details.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to have
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to have
 #' applied [bixverse::cor_module_processing()] before applying this function.
 #' @param signed Boolean. Do you want to use the signed or unsigned version.
 #' Defaults to `TRUE`.
@@ -119,8 +119,8 @@ cor_module_tom <- S7::new_generic(
 
 #' @export
 #'
-#' @method cor_module_tom bulk_coexp
-S7::method(cor_module_tom, bulk_coexp) <- function(
+#' @method cor_module_tom BulkCoExp
+S7::method(cor_module_tom, BulkCoExp) <- function(
   object,
   signed = TRUE,
   version = c("v2", "v1"),
@@ -129,7 +129,7 @@ S7::method(cor_module_tom, bulk_coexp) <- function(
   version <- match.arg(version)
 
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(signed, "B1")
   checkmate::assertChoice(version, c("v2", "v1"))
   checkmate::qassert(.verbose, "B1")
@@ -184,7 +184,7 @@ S7::method(cor_module_tom, bulk_coexp) <- function(
 #' score based on the delta. The function will automatically subset into shared
 #' features between the two data sets.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param background_mat Numerical matrix. The background data set.
 #' @param cor_method String. Option of `c("pearson", "spearman")`.
@@ -208,15 +208,15 @@ diffcor_module_processing <- S7::new_generic(
 
 #' @export
 #'
-#' @method diffcor_module_processing bulk_coexp
-S7::method(diffcor_module_processing, bulk_coexp) <- function(
+#' @method diffcor_module_processing BulkCoExp
+S7::method(diffcor_module_processing, BulkCoExp) <- function(
   object,
   background_mat,
   cor_method = c("pearson", "spearman"),
   .verbose = TRUE
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertMatrix(background_mat, mode = "numeric")
   checkmate::assertChoice(cor_method, c("pearson", "spearman"))
   checkmate::qassert(.verbose, "B1")
@@ -310,7 +310,7 @@ S7::method(diffcor_module_processing, bulk_coexp) <- function(
 #' each one to what extend the underlying affinity matrix will follow a power
 #' law distribution.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to run
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to run
 #' [bixverse::cor_module_processing()] before running this function.
 #' @param rbf_func The type of RBF function you want to apply. A choice of
 #' `c('bump', 'gaussian', 'inverse_quadratic')`.
@@ -340,15 +340,15 @@ cor_module_check_epsilon <- S7::new_generic(
 #' @importFrom zeallot `%->%`
 #' @import data.table
 #'
-#' @method cor_module_check_epsilon bulk_coexp
-S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
+#' @method cor_module_check_epsilon BulkCoExp
+S7::method(cor_module_check_epsilon, BulkCoExp) <- function(
   object,
   rbf_func = c('bump', 'gaussian', 'inverse_quadratic'),
   epsilons = c(0.25, seq(from = 0.5, to = 10, by = 0.5)),
   .verbose = TRUE
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(epsilons, "R+")
   checkmate::qassert(.verbose, "B1")
   checkmate::assertChoice(rbf_func, c('bump', 'gaussian', 'inverse_quadratic'))
@@ -419,7 +419,7 @@ S7::method(cor_module_check_epsilon, bulk_coexp) <- function(
 #' identify the best suitable resolution parameter to identify co-expression
 #' modules.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param resolution_params List. Parameters for the resolution search, see
 #' [bixverse::params_graph_resolution()]. Contains:
 #' \itemize{
@@ -476,8 +476,8 @@ cor_module_graph_check_res <- S7::new_generic(
 #' @importFrom zeallot `%->%`
 #' @import data.table
 #'
-#' @method cor_module_graph_check_res bulk_coexp
-S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
+#' @method cor_module_graph_check_res BulkCoExp
+S7::method(cor_module_graph_check_res, BulkCoExp) <- function(
   object,
   resolution_params = params_graph_resolution(),
   graph_params = params_cor_graph(),
@@ -490,7 +490,7 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
   combined_id <- . <- good_clusters <- N <- graph <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   assertCorGraphParams(graph_params)
   assertGraphResParams(resolution_params)
   checkmate::qassert(min_genes, "I1")
@@ -664,7 +664,7 @@ S7::method(cor_module_graph_check_res, bulk_coexp) <- function(
 #' their respective sub graphs, akin to the approach taken by Barrio-Hernandez,
 #' et al.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param resolution The Leiden resolution parameter you wish to use. If NULL,
 #' it will use the optimal one identified by
 #' [bixverse::cor_module_graph_check_res()]. If nothing can be found, will
@@ -722,8 +722,8 @@ cor_module_graph_final_modules <- S7::new_generic(
 #' @importFrom zeallot `%->%`
 #' @import data.table
 #'
-#' @method cor_module_graph_final_modules bulk_coexp
-S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
+#' @method cor_module_graph_final_modules BulkCoExp
+S7::method(cor_module_graph_final_modules, BulkCoExp) <- function(
   object,
   resolution = NULL,
   min_size = 10L,
@@ -737,20 +737,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
   graph_params <- graph <- modularity <- . <- N <- cluster_id <- node_id <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
-  checkmate::qassert(resolution, c("0", "N1"))
-  checkmate::qassert(min_size, "I1")
-  checkmate::qassert(max_size, "I1")
-  checkmate::qassert(subclustering, "B1")
-  checkmate::qassert(random_seed, "I1")
-  assertCorGraphParams(.graph_params)
-  checkmate::qassert(.max_iters, "I1")
-  checkmate::qassert(.verbose, "B1")
-
-  detection_method <- S7::prop(object, "params")[["detection_method"]]
-
-  # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(resolution, c("0", "N1"))
   checkmate::qassert(min_size, "I1")
   checkmate::qassert(max_size, "I1")
@@ -981,7 +968,7 @@ S7::method(cor_module_graph_final_modules, bulk_coexp) <- function(
 #' identify the optimal cut. Gene modules with low R2 are being considered as
 #' the 'junk module'.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param span Float. Defines the span parameter for the loess function to
 #' identify the inflection point. Defaults to `0.1`. Must be between 0.1 and 1.
 #' @param coremo_params List. Parameters for the generation of the CoReMo
@@ -1028,8 +1015,8 @@ cor_module_coremo_clustering <- S7::new_generic(
 #' @importFrom zeallot `%<-%`
 #' @import data.table
 #'
-#' @method cor_module_coremo_clustering bulk_coexp
-S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
+#' @method cor_module_coremo_clustering BulkCoExp
+S7::method(cor_module_coremo_clustering, BulkCoExp) <- function(
   object,
   span = 0.1,
   coremo_params = params_coremo(),
@@ -1039,7 +1026,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
   # Out of scope
   gradient_change <- r2med <- cluster_id <- . <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   assertCoReMoParams(coremo_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -1182,7 +1169,7 @@ S7::method(cor_module_coremo_clustering, bulk_coexp) <- function(
 #' a surrogate for membership stability) is calculated for each feature across
 #' the different resamplings and added to the `final_modules` data.table.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param chunk_size Integer. Chunk size in which to process the data. Defaults
 #' to `15L`, i.e., 15 samples are being processed in one go. You can use bigger
 #' values here, but be aware of memory pressure.
@@ -1206,16 +1193,16 @@ cor_module_coremo_stability <- S7::new_generic(
   }
 )
 
-#' @method cor_module_coremo_stability bulk_coexp
+#' @method cor_module_coremo_stability BulkCoExp
 #'
 #' @export
-S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
+S7::method(cor_module_coremo_stability, BulkCoExp) <- function(
   object,
   chunk_size = 15L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(chunk_size, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -1321,7 +1308,7 @@ S7::method(cor_module_coremo_stability, bulk_coexp) <- function(
 #' the same module. This function will annotate them with `"_pos"` and `"_neg"`
 #' respectively.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param min_stability Optional float. The minimum stability for the gene
 #' you wish to filter for based on the leave-one-out resampling. If `NULL`,
 #' no filtering will be applied.
@@ -1345,16 +1332,16 @@ cor_module_coremo_cor_sign <- S7::new_generic(
   }
 )
 
-#' @method cor_module_coremo_cor_sign bulk_coexp
+#' @method cor_module_coremo_cor_sign BulkCoExp
 #'
 #' @export
-S7::method(cor_module_coremo_cor_sign, bulk_coexp) <- function(
+S7::method(cor_module_coremo_cor_sign, BulkCoExp) <- function(
   object,
   min_stability = NULL,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(min_stability, c("0", "N1[0, 1]"))
   checkmate::qassert(.verbose, "B1")
 
@@ -1428,7 +1415,7 @@ S7::method(cor_module_coremo_cor_sign, bulk_coexp) <- function(
 #' sample basis and add correlations of the gene expression of a given gene
 #' within the module to its eigengene.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param min_stability Optional float. The minimum stability for the gene
 #' you wish to filter for based on the leave-one-out resampling. If `NULL`,
 #' no filtering will be applied.
@@ -1453,16 +1440,16 @@ cor_module_coremo_eigengene <- S7::new_generic(
   }
 )
 
-#' @method cor_module_coremo_eigengene bulk_coexp
+#' @method cor_module_coremo_eigengene BulkCoExp
 #'
 #' @export
-S7::method(cor_module_coremo_eigengene, bulk_coexp) <- function(
+S7::method(cor_module_coremo_eigengene, BulkCoExp) <- function(
   object,
   min_stability = NULL,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(min_stability, c("0", "N1[0, 1]"))
   checkmate::qassert(.verbose, "B1")
 
@@ -1588,7 +1575,7 @@ scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
 #' @description
 #' Helper function to get a correlation-based igraph from the class
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param epsilon Float. The epsilon parameter for the RBF function, in this
 #' case the bump function.
 #' @param .verbose Boolean. Controls verbosity of the function.
@@ -1611,12 +1598,12 @@ get_cor_graph <- S7::new_generic(
 
 
 #' @export
-#' @method get_cor_graph bulk_coexp
-S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
+#' @method get_cor_graph BulkCoExp
+S7::method(get_cor_graph, BulkCoExp) <- function(object, epsilon, .verbose) {
   # Scope checks...
   . <- cor_abs <- affinity <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(epsilon, "R1")
   checkmate::qassert(.verbose, "B1")
   # Function body
@@ -1664,7 +1651,7 @@ S7::method(get_cor_graph, bulk_coexp) <- function(object, epsilon, .verbose) {
 #' @description
 #' Helper function to get a differential correlation-based igraph from the class
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #' @param min_cor Float. The minimum absolute correlation that needs to be
 #' present in either data set.
 #' @param fdr_threshold Float. The maximum FDR that is tolerated for the
@@ -1688,8 +1675,8 @@ get_diffcor_graph <- S7::new_generic(
 )
 
 #' @export
-#' @method get_diffcor_graph bulk_coexp
-S7::method(get_diffcor_graph, bulk_coexp) <- function(
+#' @method get_diffcor_graph BulkCoExp
+S7::method(get_diffcor_graph, BulkCoExp) <- function(
   object,
   min_cor = 0.2,
   fdr_threshold = 0.05,
@@ -1698,7 +1685,7 @@ S7::method(get_diffcor_graph, bulk_coexp) <- function(
   # Scope checks
   . <- delta_cor <- cor_a <- cor_b <- fdr <- weight <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(min_cor, "R1[0,1]")
   checkmate::qassert(fdr_threshold, "R1[0,1]")
   checkmate::qassert(.verbose, "B1")
@@ -1963,14 +1950,14 @@ create_dist_obj <- function(x, size) {
 #'
 #' @import ggplot2
 #'
-#' @method plot_resolution_res bulk_coexp
-S7::method(plot_resolution_res, bulk_coexp) <- function(
+#' @method plot_resolution_res BulkCoExp
+S7::method(plot_resolution_res, BulkCoExp) <- function(
   object,
   print_head = TRUE,
   ...
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(print_head, "B1")
   # Body
   plot_df <- S7::prop(object, "outputs")[["resolution_results"]]
@@ -2024,7 +2011,7 @@ S7::method(plot_resolution_res, bulk_coexp) <- function(
 #' and the y-axis the R2 value that the resulting networks follows a power law
 #' distribution (i.e., scale free topology).
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #'
 #' @return If epsilon results were found, returns the ggplot. Otherwise, throws
 #' a warning and returns NULL.
@@ -2042,10 +2029,10 @@ plot_epsilon_res <- S7::new_generic(
 #'
 #' @import ggplot2
 #'
-#' @method plot_epsilon_res bulk_coexp
-S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
+#' @method plot_epsilon_res BulkCoExp
+S7::method(plot_epsilon_res, BulkCoExp) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   # Body
   plot_df <- S7::prop(object, "outputs")[["epsilon_data"]]
   if (is.null(plot_df)) {
@@ -2080,7 +2067,7 @@ S7::method(plot_epsilon_res, bulk_coexp) <- function(object) {
 #' Plots the optimal k vs. median of median R2 graph to identify the optimal
 #' number of cuts.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #'
 #' @return If optimal cuts results were found, returns the ggplot. Otherwise,
 #' throws a warning and returns NULL.
@@ -2098,10 +2085,10 @@ plot_optimal_cuts <- S7::new_generic(
 #'
 #' @import ggplot2
 #'
-#' @method plot_optimal_cuts bulk_coexp
-S7::method(plot_optimal_cuts, bulk_coexp) <- function(object) {
+#' @method plot_optimal_cuts BulkCoExp
+S7::method(plot_optimal_cuts, BulkCoExp) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
 
   plot_df <- data.table::copy(S7::prop(object = object, name = "outputs")[[
     "optimal_cuts"

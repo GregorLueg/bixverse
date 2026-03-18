@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{get_hotspot_membership}
 \alias{get_hotspot_membership}
-\alias{get_hotspot_membership.sc_hotspot}
+\alias{get_hotspot_membership.Hotspot}
 \title{Get the hotspot gene membership table}
 \usage{
 get_hotspot_membership(x)
 
-\method{get_hotspot_membership}{sc_hotspot}(x)
+\method{get_hotspot_membership}{Hotspot}(x)
 }
 \arguments{
 \item{x}{The object from which to retrieve the hotspot gene membership}

@@ -4,7 +4,12 @@ use faer::Mat;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_batch_correction::bbknn::*;
 use bixverse_rs::single_cell::sc_batch_correction::fast_mnn::*;
+use bixverse_rs::single_cell::sc_batch_correction::harmony::*;
 use bixverse_rs::single_cell::sc_processing::metrics::kbet;
+
+////////////////////
+// extendr Module //
+////////////////////
 
 extendr_module! {
     mod r_sc_batch_corr;
@@ -12,7 +17,12 @@ extendr_module! {
     fn rs_bbknn_filtering;
     fn rs_mnn;
     fn rs_kbet;
+    fn rs_harmony;
 }
+
+///////////////
+// Functions //
+///////////////
 
 /// Calculate kBET type scores
 ///
@@ -110,7 +120,7 @@ fn rs_bbknn_filtering(
     indptr: Vec<i32>,
     indices: Vec<i32>,
     no_neighbours_to_keep: usize,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let nrow = indptr.len() - 1;
     let ncol = no_neighbours_to_keep;
     let mut mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
@@ -138,7 +148,6 @@ fn rs_bbknn_filtering(
 /// Instead of working on the full matrix, it uses under the hood PCA and
 /// generates an aligned embedding space.
 ///
-///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
 /// @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
@@ -146,6 +155,8 @@ fn rs_bbknn_filtering(
 /// @param batch_indices Integer vector. These represent to which batch a given
 /// cell belongs.
 /// @param mnn_params List. Contains all of the fastMNN parameters.
+/// @param precomputed_pca Optional PCA matrix. If you want to provide a
+/// pre-computed matrix.
 /// @param seed Integer. Seed for reproducibility purposes.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
@@ -153,30 +164,80 @@ fn rs_bbknn_filtering(
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_mnn(
     f_path_gene: &str,
     cell_indices: Vec<i32>,
     gene_indices: Vec<i32>,
     batch_indices: Vec<i32>,
+    precomputed_pca: Option<RMatrix<f64>>,
     mnn_params: List,
     verbose: bool,
     seed: usize,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
-
     let mnn_params = FastMnnParams::from_r_list(mnn_params);
+
+    let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
     let corrected_embd = fast_mnn_main(
         f_path_gene,
         &cell_indices,
         &gene_indices,
         &batch_indices,
+        pre_computed_pca,
         &mnn_params,
         verbose,
         seed,
     );
 
     faer_to_r_matrix(corrected_embd.as_ref())
+}
+
+/// Harmony batch correction in Rust
+///
+/// @description
+/// This function implements the Harmony algorithm from
+///
+/// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
+/// @param harmony_params List. The parameters for the Harmony algorithm.
+/// @param batch_labels List. Each element in the list needs to be a 0-indexed
+/// integer that represents the batch effects you wish to regress out.
+/// @param seed Integer. Seed for reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return The batch-corrected Harmony embedding space.
+///
+/// @export
+#[extendr]
+fn rs_harmony(
+    pca: RMatrix<f64>,
+    harmony_params: List,
+    batch_labels: List,
+    seed: usize,
+    verbose: bool,
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+    let mut batch_indices: Vec<Vec<usize>> = Vec::new();
+
+    for i in 0..batch_labels.len() {
+        let batch_indices_i = batch_labels.elt(i)?;
+        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
+        batch_indices.push(batch_indices_i.r_int_convert());
+    }
+
+    let harmony_params = HarmonyParams::from_r_list(harmony_params);
+
+    let embd = r_matrix_to_faer_fp32(&pca);
+
+    let res = harmony(
+        embd.as_ref(),
+        &batch_indices,
+        &harmony_params,
+        seed,
+        verbose,
+    );
+
+    Ok(faer_to_r_matrix(res.as_ref()))
 }

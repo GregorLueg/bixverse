@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_pca_factors}
 \alias{get_pca_factors}
-\alias{get_pca_factors.sc_cache}
-\alias{get_pca_factors.single_cell_exp}
+\alias{get_pca_factors.ScCache}
+\alias{get_pca_factors.SingleCells}
 \title{Get the PCA factors}
 \usage{
 get_pca_factors(x)
 
-\method{get_pca_factors}{sc_cache}(x)
+\method{get_pca_factors}{ScCache}(x)
 }
 \arguments{
 \item{x}{An object to get PCA factors from.}
@@ -16,5 +16,5 @@ get_pca_factors(x)
 \description{
 Get the PCA factors
 
-Get the PCA factors from a \code{single_cell_exp}.
+Get the PCA factors from a \code{SingleCells}.
 }

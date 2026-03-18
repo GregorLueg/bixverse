@@ -14,7 +14,7 @@ dgrdl_grid_search(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. Ideally, you
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{neighbours_vec}{Integer vector. The different k nearest neighbours
@@ -45,7 +45,7 @@ algorithm.}
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} with the grid search results added to the class.
+\code{BulkCoExp} with the grid search results added to the class.
 }
 \description{
 This function allows you to quickly iterate over different initial seeds,

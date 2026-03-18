@@ -15,3 +15,4 @@ checkScBoost(x)
 \description{
 Checkmate extension for checking the Boost parameters.
 }
+\keyword{internal}

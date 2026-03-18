@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_gene_indices}
 \alias{get_gene_indices}
-\alias{get_gene_indices.sc_mapper}
-\alias{get_gene_indices.single_cell_exp}
+\alias{get_gene_indices.ScMap}
+\alias{get_gene_indices.SingleCells}
 \title{Get the index position for a gene}
 \usage{
 get_gene_indices(x, gene_ids, rust_index)
 
-\method{get_gene_indices}{sc_mapper}(x, gene_ids, rust_index)
+\method{get_gene_indices}{ScMap}(x, gene_ids, rust_index)
 }
 \arguments{
 \item{x}{An object to get the gene index from.}
@@ -20,5 +20,5 @@ get_gene_indices(x, gene_ids, rust_index)
 \description{
 Get the index position for a gene
 
-Get the gene indices from a \code{single_cell_exp}.
+Get the gene indices from a \code{SingleCells}.
 }

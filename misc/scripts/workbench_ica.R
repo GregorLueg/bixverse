@@ -42,7 +42,7 @@ samples_to_keep_1 <- new_meta_data[
 data_1 <- t(d)[samples_to_keep_1, ]
 meta_data_1 <- new_meta_data[gtex_subgrp == "Brain - Putamen (basal ganglia)"]
 
-ica_test_1 <- bulk_coexp(raw_data = data_1, meta_data = meta_data_1)
+ica_test_1 <- BulkCoExp(raw_data = data_1, meta_data = meta_data_1)
 ica_test_1 <- preprocess_bulk_coexp(ica_test_1, mad_threshold = 1)
 
 plot_hvgs(ica_test_1)

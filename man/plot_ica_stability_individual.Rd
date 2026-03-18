@@ -7,7 +7,7 @@
 plot_ica_stability_individual(object)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to apply
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to apply
 \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}} before running this function.}
 }
 \description{

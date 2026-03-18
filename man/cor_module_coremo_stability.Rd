@@ -7,7 +7,7 @@
 cor_module_coremo_stability(object, chunk_size = 15L, .verbose = TRUE)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{chunk_size}{Integer. Chunk size in which to process the data. Defaults
 to \code{15L}, i.e., 15 samples are being processed in one go. You can use bigger

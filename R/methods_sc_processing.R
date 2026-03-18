@@ -15,7 +15,7 @@
 #' classifier is used to assign a probability that a given cell in the original
 #' data is a doublet. For more details, please check the publication.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param scrublet_params A list with the final scrublet parameters, see
 #' [bixverse::params_scrublet()] for full details.
 #' @param seed Integer. Random seed.
@@ -72,13 +72,13 @@ scrublet_sc <- S7::new_generic(
   }
 )
 
-#' @method scrublet_sc single_cell_exp
+#' @method scrublet_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(scrublet_sc, single_cell_exp) <- function(
+S7::method(scrublet_sc, SingleCells) <- function(
   object,
   scrublet_params = params_scrublet(),
   seed = 42L,
@@ -88,7 +88,7 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScScrublet(scrublet_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
@@ -112,7 +112,7 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
   )
 
   attr(scrublet_res, "cell_indices") <- cells_to_keep
-  class(scrublet_res) <- "scrublet_res"
+  class(scrublet_res) <- "ScrubletRes"
 
   return(scrublet_res)
 }
@@ -126,7 +126,7 @@ S7::method(scrublet_sc, single_cell_exp) <- function(
 #' runs Louvain clustering and assesses how often an observed cells clsuters
 #' together with the simulated doublets.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param boost_params A list with the final scrublet parameters, see
 #' [bixverse::params_boost()] for full details.
 #' @param seed Integer. Random seed.
@@ -158,13 +158,13 @@ doublet_detection_boost_sc <- S7::new_generic(
   }
 )
 
-#' @method doublet_detection_boost_sc single_cell_exp
+#' @method doublet_detection_boost_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
+S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   object,
   boost_params = params_boost(),
   seed = 42L,
@@ -172,7 +172,7 @@ S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScBoost(boost_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(streaming, "B1")
@@ -192,7 +192,7 @@ S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
   )
 
   attr(boost_res, "cell_indices") <- cells_to_keep
-  class(boost_res) <- "boost_res"
+  class(boost_res) <- "BoostRes"
 
   return(boost_res)
 }
@@ -209,7 +209,7 @@ S7::method(doublet_detection_boost_sc, single_cell_exp) <- function(
 #' complexity, quality cells. The values will be automatically added to the
 #' obs table.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param top_n_vals Integer. The Top N thresholds to test.
 #' @param streaming Boolean. Shall the cells be streamed in. Useful for larger
 #' data sets where you wish to avoid loading in the whole data. Default to
@@ -233,20 +233,20 @@ top_genes_perc_sc <- S7::new_generic(
   }
 )
 
-#' @method top_genes_perc_sc single_cell_exp
+#' @method top_genes_perc_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(top_genes_perc_sc, single_cell_exp) <- function(
+S7::method(top_genes_perc_sc, SingleCells) <- function(
   object,
   top_n_vals = c(25L, 50L, 100L),
   streaming = FALSE,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(top_n_vals, "I+")
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
@@ -282,7 +282,7 @@ S7::method(top_genes_perc_sc, single_cell_exp) <- function(
 #' percentage mitochondrial reads per cell. These will be automatically added
 #' to the obs table
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param gene_set_list A named list with each element containing the gene
 #' identifiers of that set. These should be the same as
 #' `get_gene_names(object)`!
@@ -309,19 +309,19 @@ gene_set_proportions_sc <- S7::new_generic(
 )
 
 
-#' @method gene_set_proportions_sc single_cell_exp
+#' @method gene_set_proportions_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
+S7::method(gene_set_proportions_sc, SingleCells) <- function(
   object,
   gene_set_list,
   streaming = FALSE,
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::assertList(gene_set_list, names = "named", types = "character")
   checkmate::qassert(streaming, "B1")
   checkmate::qassert(.verbose, "B1")
@@ -358,7 +358,7 @@ S7::method(gene_set_proportions_sc, single_cell_exp) <- function(
 #' the implementation has only the VST-based version (known as Seurat v3). The
 #' other methods will be implemented in the future.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param hvg_no Integer. Number of highly variable genes to include. Defaults
 #' to `2000L`.
 #' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
@@ -394,20 +394,20 @@ find_hvg_sc <- S7::new_generic(
   }
 )
 
-#' @method find_hvg_sc single_cell_exp
+#' @method find_hvg_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_hvg_sc, single_cell_exp) <- function(
+S7::method(find_hvg_sc, SingleCells) <- function(
   object,
   hvg_no = 2000L,
   hvg_params = params_sc_hvg(),
   streaming = FALSE,
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, "B1")
@@ -453,10 +453,20 @@ S7::method(find_hvg_sc, single_cell_exp) <- function(
 #' This function will run PCA (option of full SVD and randomised SVD for now)
 #' on the detected highly variable genes.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param no_pcs Integer. Number of PCs to calculate.
 #' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
 #' less precise.
+#' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
+#' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
+#' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
+#' sparse initial matrix is multiplied with the random matrix, yielding a
+#' much smaller dense matrix that does not increase the memory pressure
+#' massively.
+#' @param hvg Optional integer. If you want to provide your own HVG genes.
+#' Otherwise, the function will default to what is found in
+#' [bixverse::get_hvg()]. Please provide 1-indexed genes here! If you provide
+#' these, the internal HVG will be overwritten.
 #' @param seed Integer. Controls reproducibility. Only relevant if
 #' `randomised_svd = TRUE`.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
@@ -472,6 +482,8 @@ calculate_pca_sc <- S7::new_generic(
     object,
     no_pcs,
     randomised_svd = TRUE,
+    sparse_svd = FALSE,
+    hvg = NULL,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -479,52 +491,114 @@ calculate_pca_sc <- S7::new_generic(
   }
 )
 
-#' @method calculate_pca_sc single_cell_exp
+#' @method calculate_pca_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(calculate_pca_sc, single_cell_exp) <- function(
+S7::method(calculate_pca_sc, SingleCells) <- function(
   object,
   no_pcs,
   randomised_svd = TRUE,
+  sparse_svd = FALSE,
+  hvg = NULL,
   seed = 42L,
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(no_pcs, "I1")
   checkmate::qassert(randomised_svd, "B1")
+  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(hvg, c("I+", "0"))
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  if (length(get_hvg(object)) == 0) {
+  if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
     warning(paste(
-      "No HVGs identified in this object. Did you run find_hvg_sc()?",
+      "No HVGs identified in the object nor provided.",
+      "Please run find_hvg_sc() or provide the indices of the HVG",
       "Returning object as is."
     ))
     return(object)
   }
 
-  zeallot::`%<-%`(
-    c(pca_factors, pca_loadings, singular_values, scaled),
-    rs_sc_pca(
-      f_path_gene = get_rust_count_gene_f_path(object),
-      no_pcs = no_pcs,
-      random_svd = randomised_svd,
-      cell_indices = get_cells_to_keep(object),
-      gene_indices = get_hvg(object),
-      seed = seed,
-      return_scaled = FALSE,
-      verbose = .verbose
+  selected_hvg <- if (!is.null(hvg)) {
+    if (.verbose) {
+      message(
+        paste(
+          "HVGs provided.",
+          "Will use these ones and set the internal HVG to the provided genes."
+        )
+      )
+    }
+    object <- set_hvg(object, hvg) # this one deals with zero/one indexing internally
+    hvg - 1L
+  } else {
+    get_hvg(object)
+  }
+
+  # dense path
+  if (!sparse_svd) {
+    if (.verbose) {
+      message(
+        sprintf(
+          "Using dense SVD solving on scaled data on %i HVG.",
+          length(selected_hvg)
+        )
+      )
+    }
+    zeallot::`%<-%`(
+      c(pca_factors, pca_loadings, singular_values, scaled),
+      rs_sc_pca(
+        f_path_gene = get_rust_count_gene_f_path(object),
+        no_pcs = no_pcs,
+        random_svd = randomised_svd,
+        cell_indices = get_cells_to_keep(object),
+        gene_indices = selected_hvg,
+        seed = seed,
+        return_scaled = FALSE,
+        verbose = .verbose
+      )
     )
-  )
 
-  object <- set_pca_factors(object, pca_factors)
-  object <- set_pca_loadings(object, pca_loadings)
-  object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
+    object <- set_pca_factors(object, pca_factors)
+    object <- set_pca_loadings(object, pca_loadings)
+    object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
 
-  return(object)
+    return(object)
+  } else {
+    if (.verbose) {
+      message(
+        sprintf(
+          "Using sparse SVD solving on scaled data on %i HVG.",
+          length(selected_hvg)
+        )
+      )
+    }
+
+    zeallot::`%<-%`(
+      c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
+      rs_sc_pca_sparse(
+        f_path_gene = bixverse:::get_rust_count_gene_f_path(object),
+        no_pcs = no_pcs,
+        random_svd = randomised_svd,
+        cell_indices = get_cells_to_keep(object),
+        gene_indices = selected_hvg,
+        seed = seed,
+        verbose = .verbose
+      )
+    )
+
+    object <- set_pca_factors(object, sparse_pca_factors)
+    object <- set_pca_loadings(object, sparse_pca_loadings)
+    object <- set_pca_singular_vals(
+      object,
+      sparse_pca_eigenvals[1:no_pcs]
+    )
+
+    return(object)
+  }
 }
 
 ### neighbours -----------------------------------------------------------------
@@ -544,7 +618,7 @@ S7::method(calculate_pca_sc, single_cell_exp) <- function(
 #' search. Subsequently, the kNN data will be used to generate an sNN igraph for
 #' clustering methods.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -584,13 +658,13 @@ find_neighbours_sc <- S7::new_generic(
   }
 )
 
-#' @method find_neighbours_sc single_cell_exp
+#' @method find_neighbours_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_neighbours_sc, single_cell_exp) <- function(
+S7::method(find_neighbours_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -599,7 +673,7 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
@@ -669,7 +743,7 @@ S7::method(find_neighbours_sc, single_cell_exp) <- function(
 #' This function will apply Leiden clustering on the sNN graph with the
 #' given resolution and add a column to the obs table.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
 #' @param name String. The name to add to the obs table in the DuckDB.
 #'
@@ -688,19 +762,19 @@ find_clusters_sc <- S7::new_generic(
   }
 )
 
-#' @method find_clusters_sc single_cell_exp
+#' @method find_clusters_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(find_clusters_sc, single_cell_exp) <- function(
+S7::method(find_clusters_sc, SingleCells) <- function(
   object,
   res = 1,
   name = "leiden_clustering"
 ) {
   # checks
-  checkmate::assertClass(object, "bixverse::single_cell_exp")
+  checkmate::assertClass(object, "bixverse::SingleCells")
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")
 
@@ -749,7 +823,7 @@ S7::method(find_clusters_sc, single_cell_exp) <- function(
 #' This version of the function returns an `sc_knn` object that can be
 #' used in other functions.
 #'
-#' @param object `single_cell_exp` class.
+#' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
 #' needs to be part of the object.
 #' @param cells_to_use String. Optional cell names to include in the generation
@@ -792,13 +866,13 @@ generate_knn_sc <- S7::new_generic(
   }
 )
 
-#' @method generate_knn_sc single_cell_exp
+#' @method generate_knn_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(generate_knn_sc, single_cell_exp) <- function(
+S7::method(generate_knn_sc, SingleCells) <- function(
   object,
   embd_to_use = "pca",
   cells_to_use = NULL,
@@ -808,7 +882,7 @@ S7::method(generate_knn_sc, single_cell_exp) <- function(
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, single_cell_exp))
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(cells_to_use, c("S+", "0"))

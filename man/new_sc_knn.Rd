@@ -20,7 +20,7 @@ neighbours.
 with the distances.}
 }
 \value{
-Generates the \code{sc_knn} class.
+Generates the \code{SingleCellNearestNeighbour} class.
 }
 \description{
 Wrapper class that stores kNN data for subsequent usage in various other

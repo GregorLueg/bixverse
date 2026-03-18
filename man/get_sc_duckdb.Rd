@@ -7,7 +7,7 @@
 get_sc_duckdb(object)
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 }
 \value{
 The DuckDB connector

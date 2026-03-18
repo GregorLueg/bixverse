@@ -13,7 +13,7 @@ params_scrublet(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, knn_method = "hnsw")
+  knn = list(k = 0L, ann_dist = "euclidean")
 )
 }
 \arguments{
@@ -46,12 +46,13 @@ parameters. See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}} for av
 
 \item{pca}{List. Optional overrides for PCA parameters. See
 \code{\link[=params_pca_defaults]{params_pca_defaults()}} for available parameters: \code{no_pcs},
-\code{random_svd}.}
+\code{random_svd}, \code{sparse} and \code{skip_first_pc}.}
 
 \item{knn}{List. Optional overrides for kNN parameters. See
 \code{\link[=params_knn_defaults]{params_knn_defaults()}} for available parameters: \code{k},
 \code{knn_method}, \code{ann_dist}, \code{search_budget}, \code{n_trees}, \code{delta},
-\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, and \code{ef_search}.
+\code{diversify_prob}, \code{ef_budget}, \code{m}, \code{ef_construction}, \code{ef_search}, \code{n_list}
+and \code{n_probe}.
 Note: this function defaults to \code{k = 0L} (automatic neighbour detection).}
 }
 \value{

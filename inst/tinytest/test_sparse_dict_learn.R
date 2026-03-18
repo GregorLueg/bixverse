@@ -264,7 +264,7 @@ expect_equal(
 
 ## initialisation and first warnings -------------------------------------------
 
-s7_obj <- bulk_coexp(
+s7_obj <- BulkCoExp(
   raw_data = synthetic_data_2$data,
   meta_data = synthetic_data_2$meta_data
 )

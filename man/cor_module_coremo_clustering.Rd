@@ -13,7 +13,7 @@ cor_module_coremo_clustering(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{span}{Float. Defines the span parameter for the loess function to
 identify the inflection point. Defaults to \code{0.1}. Must be between 0.1 and 1.}

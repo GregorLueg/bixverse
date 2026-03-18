@@ -8,6 +8,10 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::utils::matrix_utils::upper_triangle_indices;
 use bixverse_rs::utils::*;
 
+////////////////////
+// extendr Module //
+////////////////////
+
 extendr_module! {
   mod r_cors_similarity;
   fn rs_covariance;
@@ -27,6 +31,10 @@ extendr_module! {
   fn rs_gower_dist;
 }
 
+///////////////
+// Functions //
+///////////////
+
 /// Calculate the column-wise co-variance.
 ///
 /// @description Calculates the co-variance of the columns.
@@ -39,7 +47,7 @@ extendr_module! {
 ///
 /// @export
 #[extendr]
-fn rs_covariance(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_covariance(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
     let covar = column_pairwise_cov(&mat);
 
@@ -60,7 +68,7 @@ fn rs_covariance(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_cor(x: RMatrix<f64>, spearman: bool) -> RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
     let cor = column_pairwise_cor(&mat, spearman);
@@ -78,7 +86,7 @@ fn rs_cor(x: RMatrix<f64>, spearman: bool) -> extendr_api::RArray<f64, [usize; 2
 ///
 /// @export
 #[extendr]
-fn rs_cos(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_cos(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
     let cos = column_pairwise_cos(&mat);
@@ -100,11 +108,7 @@ fn rs_cos(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
 ///
 /// @export
 #[extendr]
-fn rs_cor2(
-    x: RMatrix<f64>,
-    y: RMatrix<f64>,
-    spearman: bool,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_cor2(x: RMatrix<f64>, y: RMatrix<f64>, spearman: bool) -> RArray<f64, [usize; 2]> {
     let x = r_matrix_to_faer(&x);
     let y = r_matrix_to_faer(&y);
 
@@ -124,7 +128,7 @@ fn rs_cor2(
 ///
 /// @export
 #[extendr]
-fn rs_cov2cor(x: RMatrix<f64>) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_cov2cor(x: RMatrix<f64>) -> RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
     let cor = cov2cor(mat);
@@ -155,7 +159,7 @@ fn rs_mutual_info(
     n_bins: Option<usize>,
     strategy: String,
     normalise: bool,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+) -> RArray<f64, [usize; 2]> {
     let mat = r_matrix_to_faer(&x);
 
     let mi_mat = column_mutual_information(&mat, n_bins, normalise, &strategy);
@@ -178,10 +182,7 @@ fn rs_mutual_info(
 ///
 /// @export
 #[extendr]
-fn rs_pointwise_mutual_info(
-    x: RMatrix<Rbool>,
-    normalise: bool,
-) -> extendr_api::RArray<f64, [usize; 2]> {
+fn rs_pointwise_mutual_info(x: RMatrix<Rbool>, normalise: bool) -> RArray<f64, [usize; 2]> {
     let data = r_matrix_to_vec_bool(&x);
 
     let npmi_mat = calc_pmi::<f64>(&data, normalise);
@@ -204,10 +205,7 @@ fn rs_pointwise_mutual_info(
 ///
 /// @export
 #[extendr]
-fn rs_dist(
-    x: RMatrix<f64>,
-    distance_type: String,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+fn rs_dist(x: RMatrix<f64>, distance_type: String) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let data = &r_matrix_to_faer(&x);
 
     let dist_type = parse_distance_type(&distance_type)

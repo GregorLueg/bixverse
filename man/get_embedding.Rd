@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_embedding}
 \alias{get_embedding}
-\alias{get_embedding.sc_cache}
-\alias{get_embedding.single_cell_exp}
+\alias{get_embedding.ScCache}
+\alias{get_embedding.SingleCells}
 \title{Get the embedding from the cache}
 \usage{
 get_embedding(x, embd_name)
 
-\method{get_embedding}{sc_cache}(x, embd_name)
+\method{get_embedding}{ScCache}(x, embd_name)
 }
 \arguments{
 \item{x}{An object to get embedding from}
@@ -18,5 +18,5 @@ will throw an error if the embedding does not exist.}
 }
 \description{
 General wrapper function that can be used to pull out any embedding stored
-in the \code{sc_cache}.
+in the \code{ScCache}.
 }

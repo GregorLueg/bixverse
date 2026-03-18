@@ -15,3 +15,4 @@ checkScVision(x)
 \description{
 Checkmate extension for checking the VISION parameters.
 }
+\keyword{internal}

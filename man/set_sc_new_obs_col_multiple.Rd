@@ -7,7 +7,7 @@
 set_sc_new_obs_col_multiple(object, new_data)
 }
 \arguments{
-\item{object}{\code{bixverse::single_cell_exp} class.}
+\item{object}{\code{bixverse::SingleCells} class.}
 
 \item{new_data}{Named list. The names will be the column names and the
 elements will be added to the obs table. Needs to be of same length as

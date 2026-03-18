@@ -12,9 +12,9 @@
 #' @export
 #'
 #' @import data.table
-anndata_parser <- R6::R6Class(
+AnnDataParser <- R6::R6Class(
   # Class name
-  classname = "anndata_parser",
+  classname = "AnnDataParser",
   public = list(
     #' @description Initialises the Anndata Parser.
     #'

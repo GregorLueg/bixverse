@@ -29,11 +29,11 @@
 #'   generating methods.}
 #' }
 #'
-#' @return Returns the `meta_cells` class for further operations.
+#' @return Returns the `MetaCells` class for further operations.
 #'
 #' @export
-meta_cells <- S7::new_class(
-  name = "meta_cells",
+MetaCells <- S7::new_class(
+  name = "MetaCells",
   properties = list(
     obs_table = S7::class_data.frame,
     var_table = S7::class_data.frame,
@@ -111,16 +111,16 @@ meta_cells <- S7::new_class(
 
 ### obs ------------------------------------------------------------------------
 
-#' @method get_sc_obs meta_cells
+#' @method get_sc_obs MetaCells
 #'
 #' @export
-S7::method(get_sc_obs, meta_cells) <- function(
+S7::method(get_sc_obs, MetaCells) <- function(
   object,
   indices = NULL,
   cols = NULL,
   filtered = FALSE
 ) {
-  checkmate::assertClass(object, "bixverse::meta_cells")
+  checkmate::assertClass(object, "bixverse::MetaCells")
   checkmate::qassert(indices, c("0", "I+"))
   checkmate::qassert(filtered, "B1")
 
@@ -137,10 +137,10 @@ S7::method(get_sc_obs, meta_cells) <- function(
   return(obs_table)
 }
 
-#' @method `[[` meta_cells
+#' @method `[[` MetaCells
 #'
 #' @export
-S7::method(`[[`, meta_cells) <- function(x, i, ...) {
+S7::method(`[[`, MetaCells) <- function(x, i, ...) {
   if (missing(i)) {
     i <- NULL
   }
@@ -157,15 +157,15 @@ S7::method(`[[`, meta_cells) <- function(x, i, ...) {
 
 ### vars -----------------------------------------------------------------------
 
-#' @method get_sc_var meta_cells
+#' @method get_sc_var MetaCells
 #'
 #' @export
-S7::method(get_sc_var, meta_cells) <- function(
+S7::method(get_sc_var, MetaCells) <- function(
   object,
   indices = NULL,
   cols = NULL
 ) {
-  checkmate::assertClass(object, "bixverse::meta_cells")
+  checkmate::assertClass(object, "bixverse::MetaCells")
   checkmate::qassert(indices, c("0", "I+"))
 
   var_table <- object@var_table
@@ -183,10 +183,10 @@ S7::method(get_sc_var, meta_cells) <- function(
 
 ### counts ---------------------------------------------------------------------
 
-#' @method get_sc_counts meta_cells
+#' @method get_sc_counts MetaCells
 #'
 #' @export
-S7::method(get_sc_counts, meta_cells) <- function(
+S7::method(get_sc_counts, MetaCells) <- function(
   object,
   assay = c("raw", "norm"),
   return_format = c("cell", "gene"),
@@ -195,7 +195,7 @@ S7::method(get_sc_counts, meta_cells) <- function(
   use_cells_to_keep = TRUE,
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::meta_cells")
+  checkmate::assertClass(object, "bixverse::MetaCells")
   assay <- match.arg(assay)
 
   counts <- S7::prop(object, "data")[[assay]]
@@ -211,10 +211,10 @@ S7::method(get_sc_counts, meta_cells) <- function(
   return(counts)
 }
 
-#' @method `[` meta_cells
+#' @method `[` MetaCells
 #'
 #' @export
-S7::method(`[`, meta_cells) <- function(
+S7::method(`[`, MetaCells) <- function(
   x,
   i,
   j,
@@ -246,11 +246,11 @@ S7::method(`[`, meta_cells) <- function(
 
 ### obs table ------------------------------------------------------------------
 
-#' @method `[[<-` meta_cells
+#' @method `[[<-` MetaCells
 #'
 #' @export
-S7::method(`[[<-`, meta_cells) <- function(x, i, ..., value) {
-  checkmate::assertClass(x, "bixverse::meta_cells")
+S7::method(`[[<-`, MetaCells) <- function(x, i, ..., value) {
+  checkmate::assertClass(x, "bixverse::MetaCells")
   checkmate::qassert(i, "S+")
 
   if (length(i) == 1) {

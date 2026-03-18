@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_embedding}
 \alias{set_embedding}
-\alias{set_embedding.sc_cache}
-\alias{set_embedding.single_cell_exp}
+\alias{set_embedding.ScCache}
+\alias{set_embedding.SingleCells}
 \title{Add additional embeddings to the class}
 \usage{
 set_embedding(x, embd, name)
 
-\method{set_embedding}{sc_cache}(x, embd, name)
+\method{set_embedding}{ScCache}(x, embd, name)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}
@@ -20,5 +20,5 @@ set_embedding(x, embd, name)
 \description{
 Add additional embeddings to the class
 
-Set additional embeddings to \code{single_cell_exp}.
+Set additional embeddings to \code{SingleCells}.
 }

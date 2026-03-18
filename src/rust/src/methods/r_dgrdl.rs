@@ -50,11 +50,11 @@ fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbos
 
     let res: DgrdlResults<f64> = dgrdl_object.fit(&x, seed, verbose);
 
-    let feature_laplacian = CompressedSparseData::from_dense_matrix(
+    let feature_laplacian = CompressedSparseData2::from_dense_matrix(
         res.feature_laplacian.as_ref(),
         CompressedSparseFormat::Csr,
     );
-    let sample_laplacian = CompressedSparseData::from_dense_matrix(
+    let sample_laplacian = CompressedSparseData2::from_dense_matrix(
         res.sample_laplacian.as_ref(),
         CompressedSparseFormat::Csr,
     );

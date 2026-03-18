@@ -12,7 +12,7 @@ calculate_pca_bulk_dge(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{scale_genes}{Boolean. Shall the log(cpm) counts be scaled prior the PCA
 calculation. Defaults to \code{FALSE}.}

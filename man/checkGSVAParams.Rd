@@ -16,3 +16,4 @@ checkGSVAParams(x)
 Checkmate extension for checking the gene set variation analysis
 (GSVA) parameters.
 }
+\keyword{internal}

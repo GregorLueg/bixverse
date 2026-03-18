@@ -7,7 +7,7 @@
 get_dge_qc_plot(object, plot_choice = NULL)
 }
 \arguments{
-\item{object}{\code{bulk_dge} class.}
+\item{object}{\code{BulkDge} class.}
 
 \item{plot_choice}{Optional string or integer. Index or name of the plate.}
 }
@@ -15,7 +15,7 @@ get_dge_qc_plot(object, plot_choice = NULL)
 Returns the DGEList stored in the class.
 }
 \description{
-Getter function to extract the QC plots from the \code{\link[=bulk_dge]{bulk_dge()}}
+Getter function to extract the QC plots from the \code{\link[=BulkDge]{BulkDge()}}
 class. These are added when you run for example
 \code{\link[=qc_bulk_dge]{qc_bulk_dge()}} and \code{\link[=normalise_bulk_dge]{normalise_bulk_dge()}}. You can
 either leave the plot choice as \code{NULL} and provide input when prompted, or

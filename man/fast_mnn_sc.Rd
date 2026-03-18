@@ -9,12 +9,13 @@ fast_mnn_sc(
   batch_column,
   batch_hvg_genes,
   fastmnn_params = params_sc_fastmnn(),
+  use_precomputed_pca = FALSE,
   seed = 42L,
   .verbose = TRUE
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{batch_column}{String. The column with the batch information in the
 obs data of the class.}
@@ -37,6 +38,10 @@ effects.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
 for available parameters and their defaults.
 }}
+
+\item{use_precomputed_pca}{Boolean. Should the PCA in the object be used
+if found. If you decide to do this, make sure that you have run the PCA
+on the batch-aware HVG ideally.}
 
 \item{seed}{Integer. Random seed.}
 

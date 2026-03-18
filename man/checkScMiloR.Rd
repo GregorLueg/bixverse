@@ -15,3 +15,4 @@ checkScMiloR(x)
 \description{
 Checkmate extension for checking the MiloR parameters.
 }
+\keyword{internal}

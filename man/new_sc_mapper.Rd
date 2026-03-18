@@ -7,7 +7,7 @@
 new_sc_mapper()
 }
 \value{
-Generates an empty version of the \code{sc_mapper} class.
+Generates an empty version of the \code{ScMap} class.
 }
 \description{
 Helper class that contains various mappings and makes it easier to use

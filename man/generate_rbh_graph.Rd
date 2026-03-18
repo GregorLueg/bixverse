@@ -12,7 +12,7 @@ generate_rbh_graph(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
+\item{object}{The underlying class, see \code{\link[=RbhGraph]{RbhGraph()}}.}
 
 \item{minimum_similarity}{The minimum similarity to create an edge.}
 

@@ -7,7 +7,7 @@
 find_clusters_sc(object, res = 1, name = "leiden_clustering")
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{res}{Numeric. The resolution parameter for \code{\link[igraph:cluster_leiden]{igraph::cluster_leiden()}}.}
 

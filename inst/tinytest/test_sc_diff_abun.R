@@ -1,5 +1,15 @@
 # differential abundance tests -------------------------------------------------
 
+library(magrittr)
+
+test_temp_dir <- file.path(
+  tempdir(),
+  "sc_diff_abund"
+)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+
 ## test parameters -------------------------------------------------------------
 
 # thresholds
@@ -8,12 +18,6 @@ min_genes_exp <- 45L
 min_cells_exp <- 500L
 hvg_to_keep <- 50L
 no_pcs <- 20L
-
-test_temp_dir <- file.path(
-  tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
-)
-dir.create(test_temp_dir, recursive = TRUE)
 
 ## synthetic test data ---------------------------------------------------------
 
@@ -66,7 +70,7 @@ expect_true(
 
 ## object gen ------------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,
@@ -146,19 +150,19 @@ miloR_obj_bruteforce <- get_miloR_abundances_sc(
 
 expect_inherits(
   current = miloR_obj_index,
-  class = "sc_miloR",
+  class = "miloR",
   info = "correct class returned index strategy"
 )
 
 expect_inherits(
   current = miloR_obj_approx,
-  class = "sc_miloR",
-  info = "correct class returned approx strategy"
+  class = "miloR",
+  info = "miloR class returned approx strategy"
 )
 
 expect_inherits(
   current = miloR_obj_bruteforce,
-  class = "sc_miloR",
+  class = "miloR",
   info = "correct class returned brute force strategy"
 )
 
@@ -340,5 +344,7 @@ expect_true(
   current = mean(miloR_obj_index$nhoods_info$majority_prop) > 0.9,
   info = "majority of the neighbourhoods are the same cell type"
 )
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

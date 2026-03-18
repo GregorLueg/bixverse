@@ -16,3 +16,4 @@ checkScMetacells(x)
 Checkmate extension for checking the metacell generation
 parameters.
 }
+\keyword{internal}

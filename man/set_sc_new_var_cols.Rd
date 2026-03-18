@@ -7,7 +7,7 @@
 set_sc_new_var_cols(object, data_list)
 }
 \arguments{
-\item{object}{\code{bixverse::single_cell_exp} class.}
+\item{object}{\code{bixverse::SingleCells} class.}
 
 \item{data_list}{Named list with the data to add.}
 }

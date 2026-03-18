@@ -7,11 +7,11 @@
 get_dge_list(object)
 }
 \arguments{
-\item{object}{\code{bulk_dge} class.}
+\item{object}{\code{BulkDge} class.}
 }
 \value{
 Returns the DGEList stored in the class.
 }
 \description{
-Getter function to extract the DGEList from the \code{\link[=bulk_dge]{bulk_dge()}} class.
+Getter function to extract the DGEList from the \code{\link[=BulkDge]{BulkDge()}} class.
 }

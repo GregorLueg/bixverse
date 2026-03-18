@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_cells_to_keep}
 \alias{get_cells_to_keep}
-\alias{get_cells_to_keep.sc_mapper}
-\alias{get_cells_to_keep.single_cell_exp}
+\alias{get_cells_to_keep.ScMap}
+\alias{get_cells_to_keep.SingleCells}
 \title{Get the cells to keep}
 \usage{
 get_cells_to_keep(x)
 
-\method{get_cells_to_keep}{sc_mapper}(x)
+\method{get_cells_to_keep}{ScMap}(x)
 }
 \arguments{
 \item{x}{An object to get the gene index from.}
@@ -16,5 +16,5 @@ get_cells_to_keep(x)
 \description{
 Get the cells to keep
 
-Get the cells to keep from a \code{single_cell_exp}.
+Get the cells to keep from a \code{SingleCells}.
 }

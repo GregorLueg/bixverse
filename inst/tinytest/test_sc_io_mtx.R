@@ -1,10 +1,14 @@
 # mtx io -----------------------------------------------------------------------
 
+library(magrittr)
+
 test_temp_dir <- file.path(
   tempdir(),
-  paste0("test_", format(Sys.time(), "%Y%m%d_%H%M%S_"), sample(1000:9999, 1))
+  "io_mtx"
 )
-dir.create(test_temp_dir, recursive = TRUE)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
 
 ## parameters ------------------------------------------------------------------
 
@@ -119,7 +123,7 @@ expect_true(
 #### rust ----------------------------------------------------------------------
 
 # test the underlying rust directly
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
@@ -183,7 +187,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -293,7 +297,7 @@ expect_equal(
 
 ### rust = genes ; tsv format --------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 #### rust ----------------------------------------------------------------------
 
@@ -359,7 +363,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -466,5 +470,7 @@ expect_equal(
   target = vars_filtered$gene_id,
   info = "correct gene names"
 )
+
+# clean up ---------------------------------------------------------------------
 
 on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

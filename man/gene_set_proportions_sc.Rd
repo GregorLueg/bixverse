@@ -12,7 +12,7 @@ gene_set_proportions_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{gene_set_list}{A named list with each element containing the gene
 identifiers of that set. These should be the same as

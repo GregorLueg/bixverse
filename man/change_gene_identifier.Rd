@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_bulk.R
 \name{change_gene_identifier}
 \alias{change_gene_identifier}
-\title{Change the primary gene identifier of bulk_dge}
+\title{Change the primary gene identifier of BulkDge}
 \usage{
 change_gene_identifier(object, alternative_gene_id, variable_info = NULL)
 }
 \arguments{
-\item{object}{\code{bulk_dge} class, see \link{bulk_dge}.}
+\item{object}{\code{BulkDge} class, see \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{alternative_gene_id}{String. The column containing the alternative gene
 identifier. Must be present in the provided \code{variable_info} data.table or
@@ -20,7 +20,7 @@ within the class attributes.}
 The class with modified primary gene identifier.
 }
 \description{
-Changes the primary gene identifier in the bulk_dge class. To do so, you need
+Changes the primary gene identifier in the BulkDge class. To do so, you need
 to either provide a \code{variable_info} data.table with the alternative gene
 identifier you wish to use or it exists already in the object itself. If it
 exists in the object, that variable_info will be used.

@@ -3,22 +3,35 @@ use faer::Mat;
 use std::time::Instant;
 
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, pca::*, qc::*, scrublet::*, snn::*,
+    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scrublet::*, snn::*,
 };
+
+/////////////
+// extendR //
+/////////////
 
 extendr_module! {
     mod r_sc_processing;
+    // doublet detection
     fn rs_sc_scrublet;
     fn rs_sc_doublet_detection;
+    // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
+    // other
+    fn rs_pairwise_gene_cors;
+    // hvg and pca
     fn rs_sc_hvg;
     fn rs_sc_hvg_batch_aware;
     fn rs_sc_pca;
+    fn rs_sc_pca_sparse;
+    // knn and snn
     fn rs_sc_knn;
     fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
+    fn rs_compare_knn;
 }
 
 ///////////////////////
@@ -162,6 +175,10 @@ fn rs_sc_doublet_detection(
     )
 }
 
+/////////////
+// Metrics //
+/////////////
+
 //////////////////////
 // Cumulative genes //
 //////////////////////
@@ -247,11 +264,11 @@ fn rs_sc_get_gene_set_perc(
 
     for i in 0..gene_set_idx.len() {
         let element = gene_set_idx.elt(i).unwrap();
-        let indices_i: Vec<u16> = element
+        let indices_i: Vec<u32> = element
             .as_integer_vector()
             .unwrap()
             .iter()
-            .map(|x| *x as u16)
+            .map(|x| *x as u32)
             .collect();
         gene_set_indices.push(indices_i);
     }
@@ -273,6 +290,48 @@ fn rs_sc_get_gene_set_perc(
     }
 
     Ok(result_list)
+}
+
+///////////////////
+// Pairwise cors //
+///////////////////
+
+/// Calculates pairwise gene correlations in single cell
+///
+/// @param f_path Path to the `counts_genes.bin` file.
+/// @param gene_indices_1 Integer vector. The first set of gene indices to
+/// correlate against `gene_indices_2` (0-indexed!)
+/// @param gene_indices_2 Integer vector. The second set of gene indices. Needs
+/// to be of same length as `gene_indices_1`. (0-indexed!)
+/// @param cells_to_keep Integer. The indices of the cells to include in this
+/// analysis. (0-indexed!)
+/// @param spearman Boolean. Shall spearman correlation be used.
+///
+/// @returns The vector of correlations between the pairs of gene_indices_1
+/// and gene_indices_2
+///
+/// @export
+#[extendr]
+fn rs_pairwise_gene_cors(
+    f_path: &str,
+    gene_indices_1: &[i32],
+    gene_indices_2: &[i32],
+    cells_to_keep: &[i32],
+    spearman: bool,
+) -> Vec<f64> {
+    let gene_indices_1 = gene_indices_1.r_int_convert();
+    let gene_indices_2 = gene_indices_2.r_int_convert();
+    let cells_to_keep = cells_to_keep.r_int_convert();
+
+    let pairwise_cors = pairwise_gene_correlations(
+        f_path,
+        &gene_indices_1,
+        &gene_indices_2,
+        &cells_to_keep,
+        spearman,
+    );
+
+    pairwise_cors.r_float_convert()
 }
 
 ///////////////////////////
@@ -485,6 +544,7 @@ fn rs_sc_hvg_batch_aware(
 /// \itemize{
 ///   \item scores - The samples projected on the PCA space.
 ///   \item loadings - The loadings of the features for the PCA.
+///   \item singular_values - The singular values for the PCA.
 ///   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
 /// }
 ///
@@ -501,14 +561,8 @@ fn rs_sc_pca(
     return_scaled: bool,
     verbose: bool,
 ) -> List {
-    let cell_set = cell_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
-    let gene_indices = gene_indices
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let cell_set = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
 
     let res = pca_on_sc(
         f_path_gene,
@@ -529,6 +583,69 @@ fn rs_sc_pca(
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = singular_values_f64,
         scaled = scaled
+    )
+}
+
+/// Calculates sparse PCA for single cell
+///
+/// @description
+/// Helper function that will calculate sparse PCA without scaling the data.
+/// This has the advantage that you avoid creating a large dense matrix due
+/// to scaling; however, it has the disadvantage that the first PC will be
+/// heavily influenced by average expression. If random_svd is set to `FALSE`,
+/// Lanczos iterations will be used to solve the SVD; if random_svd is set
+/// to `TRUE`, the randomised version will be used with multiplication of the
+/// initial sparse matrix with a much smaller random dense matrix, avoiding
+/// holding a large dense matrix in memory.
+///
+/// @param f_path_gene String. Path to the `counts_genes.bin` file.
+/// @param no_pcs Integer. Number of PCs to calculate.
+/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param cell_indices Integer. The cell indices to use. (0-indexed!)
+/// @param gene_indices Integer. The gene indices to use. (0-indexed!)
+/// @param seed Integer. Random seed for the randomised SVD.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @returns A list with with the following items
+/// \itemize{
+///   \item scores - The samples projected on the PCA space (solved via sparse
+///   SVD).
+///   \item loadings - The loadings of the features for the PCA (solved via
+///   sparse SVD).
+///   \item singular_values - The singular values for the PCA (solved via sparse
+///   SVD).
+/// }
+///
+/// @export
+#[extendr]
+fn rs_sc_pca_sparse(
+    f_path_gene: &str,
+    no_pcs: usize,
+    random_svd: bool,
+    cell_indices: Vec<i32>,
+    gene_indices: Vec<i32>,
+    seed: usize,
+    verbose: bool,
+) -> List {
+    let cell_set = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+
+    let res = pca_on_sc_sparse(
+        f_path_gene,
+        &cell_set,
+        &gene_indices,
+        no_pcs,
+        random_svd,
+        seed,
+        verbose,
+    );
+
+    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
+
+    list!(
+        scores = faer_to_r_matrix(res.0.as_ref()),
+        loadings = faer_to_r_matrix(res.1.as_ref()),
+        singular_values = singular_values_f64
     )
 }
 
@@ -611,6 +728,15 @@ fn rs_sc_knn(
         KnnSearch::Exhaustive => {
             generate_knn_exhaustive(embd.as_ref(), &knn_params.ann_dist, knn_params.k, verbose)
         }
+        KnnSearch::Ivf => generate_knn_ivf(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_list,
+            knn_params.n_probe,
+            seed,
+            verbose,
+        ),
     };
 
     let end_knn = start_knn.elapsed();
@@ -740,4 +866,18 @@ fn rs_sc_snn(
         edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
         weights = snn_data.1
     ))
+}
+
+/// Helper to compare kNN graphs
+///
+/// @param knn_mat_a Integer matrix. The first kNN graph to compare.
+/// @param knn_mat_b Integer matrix. The second kNN graph to compare.
+///
+/// @returns Vector of number of overlaps per sample.
+#[extendr]
+fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> {
+    let knn_mat_a = r_matrix_to_faer(&knn_mat_a);
+    let knn_mat_b = r_matrix_to_faer(&knn_mat_b);
+
+    compare_knn_graphs(knn_mat_a, knn_mat_b)
 }

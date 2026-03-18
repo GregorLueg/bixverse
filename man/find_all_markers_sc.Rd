@@ -16,7 +16,7 @@ find_all_markers_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{column_of_interest}{String. The column you wish to use to identify
 the markers between all combination. Needs to be in the obs table}

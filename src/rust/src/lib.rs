@@ -51,8 +51,13 @@ pub use ontology::r_similiarity;
 pub use single_cell::r_count_obj;
 pub use single_cell::r_sc_analysis;
 pub use single_cell::r_sc_batch_corr;
+pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
 pub use single_cell::r_sc_processing;
+
+/////////////
+// extendR //
+/////////////
 
 extendr_module! {
     mod bixverse;

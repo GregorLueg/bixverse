@@ -15,7 +15,7 @@ find_markers_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{cells_1}{String. The names of the cells in group 1. Need to be part
 of the cell names in the object, see \code{\link[=get_cell_names]{get_cell_names()}}.}

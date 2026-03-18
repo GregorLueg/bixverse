@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 
-use bixverse_rs::data::*;
+use bixverse_rs::core::synthetic_data::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 
@@ -129,7 +129,7 @@ fn rs_simulate_dropouts(
     power_factor: f64,
     global_sparsity: f64,
     seed: usize,
-) -> extendr_api::Result<extendr_api::RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
     let data = r_matrix_to_faer(&count_mat);
 
     let dropout_type = parse_sparsification(&dropout_function)
@@ -192,7 +192,7 @@ fn rs_synthetic_sc_data_csc(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
+    let synthetic_data: CompressedSparseData2<i32> =
         create_sparse_csc_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
@@ -239,7 +239,7 @@ fn rs_synthetic_sc_data_csr(
     max_exp: i32,
     seed: usize,
 ) -> List {
-    let synthetic_data: CompressedSparseData<i32> =
+    let synthetic_data: CompressedSparseData2<i32> =
         create_sparse_csr_data(n_cells, n_genes, (min_genes, max_genes), max_exp, seed);
 
     list!(
@@ -304,7 +304,7 @@ fn rs_synthetic_sc_data_with_cell_types(
         cell_configs_vec.push(cell_config);
     }
 
-    let synthetic_data: (CompressedSparseData<u32>, Vec<usize>, Vec<usize>) =
+    let synthetic_data: (CompressedSparseData2<u32>, Vec<usize>, Vec<usize>) =
         create_celltype_sparse_csr_data(
             n_cells,
             n_genes,

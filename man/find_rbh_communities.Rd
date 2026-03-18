@@ -14,7 +14,7 @@ find_rbh_communities(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=rbh_graph]{rbh_graph()}}.}
+\item{object}{The underlying class, see \code{\link[=RbhGraph]{RbhGraph()}}.}
 
 \item{resolution_params}{List. Parameters for the resolution search, see
 \code{\link[=params_graph_resolution]{params_graph_resolution()}}. Contains:

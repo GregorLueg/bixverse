@@ -12,12 +12,12 @@
 #' based on annotated cell types. These can be also just unsupervised
 #' memberships to graph-based clustering, etc.
 #'
-#' @param object `meta_cells` class.
+#' @param object `MetaCells` class.
 #' @param original_cell_type Character vector. The original cell type
 #' annotations. The indices need to match with the original cell indices used
 #' to generate the meta-cells! (1-indexed)
 #'
-#' @returns The `meta_cells` with an added columns to the observation table
+#' @returns The `MetaCells` with an added columns to the observation table
 #' with the purity measures
 #'
 #' @export
@@ -32,13 +32,13 @@ calc_meta_cell_purity <- S7::new_generic(
   }
 )
 
-#' @method calc_meta_cell_purity meta_cells
-S7::method(calc_meta_cell_purity, meta_cells) <- function(
+#' @method calc_meta_cell_purity MetaCells
+S7::method(calc_meta_cell_purity, MetaCells) <- function(
   object,
   original_cell_type
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, meta_cells))
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(original_cell_type, "S+")
 
   # calculate purity

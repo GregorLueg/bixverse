@@ -15,3 +15,4 @@ checkScSupercell(x)
 \description{
 Checkmate extension for checking the SuperCell parameters.
 }
+\keyword{internal}

@@ -183,7 +183,7 @@ data and exposes it in Rust.
 go_data_dt <- get_go_data_human()
 
 # Generate the S7 object for subsequent usage
-go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+go_data_s7 <- GeneOntologyElim(go_data_dt, min_genes = 3L)
 ```
 
 Similar to the more generic hypergeometric tests, you can provide either a 
