@@ -14,7 +14,7 @@ find_neighbours_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{embd_to_use}{String. The embedding to use. Whichever you chose, it
 needs to be part of the object.}

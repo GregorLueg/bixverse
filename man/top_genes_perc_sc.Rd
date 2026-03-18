@@ -12,7 +12,7 @@ top_genes_perc_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{top_n_vals}{Integer. The Top N thresholds to test.}
 

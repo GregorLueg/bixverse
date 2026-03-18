@@ -7,7 +7,7 @@
 get_ica_stability_res(object)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
 data.table with the ICA parameter data (if found. Otherwise \code{NULL}.)

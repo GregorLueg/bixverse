@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{load_seurat}
 \alias{load_seurat}
-\title{Load in Seurat to \code{single_cell_exp}}
+\title{Load in Seurat to \code{SingleCells}}
 \usage{
 load_seurat(
   object,
@@ -14,7 +14,7 @@ load_seurat(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{seurat}{\code{Seurat} class you want to transform.}
 
@@ -43,6 +43,6 @@ It will populate the files on disk and return the class with updated
 shape information.
 }
 \description{
-This function takes a Seurat file and generates \code{single_cell_exp} class
+This function takes a Seurat file and generates \code{SingleCells} class
 from it.
 }

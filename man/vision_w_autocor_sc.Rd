@@ -16,12 +16,12 @@ vision_w_autocor_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{gs_list}{Named nested list. The elements have the gene identifiers of
 the respective gene sets and have the option to have a \code{"pos"} and \code{"neg"}
 gene sets. The names need to be part of the variables of the
-\code{single_cell_exp} class.}
+\code{SingleCells} class.}
 
 \item{embd_to_use}{String. The embedding to use. Whichever you chose, it
 needs to be part of the object.}

@@ -16,3 +16,4 @@ checkIcaIterParams(x)
 Checkmate extension for checking the ICA randomisation
 parameters for a version of stabilised ICA.
 }
+\keyword{internal}

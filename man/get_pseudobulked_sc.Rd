@@ -13,7 +13,7 @@ get_pseudobulked_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{cell_list}{Named list.}
 

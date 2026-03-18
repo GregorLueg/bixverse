@@ -15,7 +15,7 @@ module_scores_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{gs_list}{Named list. The elements have the gene identifiers of the
 respective gene sets.}

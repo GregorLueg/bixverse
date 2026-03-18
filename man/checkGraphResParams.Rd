@@ -16,3 +16,4 @@ checkGraphResParams(x)
 Checkmate extension for checking the resolution parameters for
 community detection with Leiden.
 }
+\keyword{internal}

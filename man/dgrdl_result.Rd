@@ -12,7 +12,7 @@ dgrdl_result(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. Ideally, you
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. Ideally, you
 should run \code{\link[=preprocess_bulk_coexp]{preprocess_bulk_coexp()}} before applying this function.}
 
 \item{dgrdl_params}{List. Output of \code{\link[=params_dgrdl]{params_dgrdl()}}:

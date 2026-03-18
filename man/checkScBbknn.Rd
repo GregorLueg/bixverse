@@ -15,3 +15,4 @@ checkScBbknn(x)
 \description{
 Checkmate extension for checking the BBKNN parameters.
 }
+\keyword{internal}

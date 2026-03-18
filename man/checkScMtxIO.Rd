@@ -15,3 +15,4 @@ checkScMtxIO(x)
 \description{
 Checkmate extension for checking MTX loading parameters
 }
+\keyword{internal}

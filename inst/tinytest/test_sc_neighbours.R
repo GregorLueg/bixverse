@@ -61,7 +61,7 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,
@@ -158,12 +158,27 @@ rs_nndescent_euc <- rs_sc_knn(
   seed = 42L
 )
 
+rs_ivf_euc <- rs_sc_knn(
+  embd = pca_embd,
+  knn_params = list(
+    knn_method = "ivf",
+    ann_dist = "euclidean",
+    # for very small sets, IVF is not very good... n_list and n_probe needs to
+    # be set higher
+    n_list = 3L,
+    n_probe = 2L
+  ),
+  verbose = FALSE,
+  seed = 42L
+)
+
 ##### comparison against bioc --------------------------------------------------
 
 bioc_exhaustive_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_exhaustive_euc)
 bioc_annoy_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_annoy_euc)
 bioc_hnsw_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_hnsw_euc)
 bioc_nndescent_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_nndescent_euc)
+bioc_ivf_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_ivf_euc)
 
 expect_true(
   current = bioc_exhaustive_euc >= 0.98,
@@ -181,12 +196,17 @@ expect_true(
   current = bioc_nndescent_euc >= 0.98,
   info = "bioc <> NNDescent (euclidean dist) - high overlap"
 )
+expect_true(
+  current = bioc_ivf_euc >= 0.98,
+  info = "bioc <> IVF (euclidean dist) - high overlap"
+)
 
 ##### against ground truth -----------------------------------------------------
 
 gt_annoy_euc <- calc_recall_exh(rs_exhaustive_euc, rs_annoy_euc)
 gt_hnsw_euc <- calc_recall_exh(rs_exhaustive_euc, rs_hnsw_euc)
 gt_nndescent_euc <- calc_recall_exh(rs_exhaustive_euc, rs_nndescent_euc)
+gt_ivf_euc <- calc_recall_exh(rs_exhaustive_euc, rs_ivf_euc)
 
 expect_true(
   current = gt_annoy_euc >= 0.98,
@@ -199,6 +219,10 @@ expect_true(
 expect_true(
   current = gt_nndescent_euc >= 0.98,
   info = "nndescent <> exhaustive search (euclidean dist) - high overlap"
+)
+expect_true(
+  current = gt_ivf_euc >= 0.98,
+  info = "ivf <> exhaustive search (euclidean dist) - high overlap"
 )
 
 #### cosine distances ----------------------------------------------------------
@@ -231,6 +255,20 @@ rs_nndescent_cos <- rs_sc_knn(
   seed = 42L
 )
 
+rs_ivf_cos <- rs_sc_knn(
+  embd = pca_embd,
+  knn_params = list(
+    knn_method = "ivf",
+    ann_dist = "cosine",
+    # for very small sets, IVF is not very good... n_list and n_probe needs to
+    # be set higher
+    n_list = 3L,
+    n_probe = 2L
+  ),
+  verbose = FALSE,
+  seed = 42L
+)
+
 ##### comparison against bioc --------------------------------------------------
 
 # in all cases, there is a slight difference... the exhaustive difference
@@ -240,6 +278,7 @@ bioc_exhaustive_cos <- calc_recall_bioc(bioc_knn_cosine, rs_exhaustive_cos)
 bioc_annoy_cos <- calc_recall_bioc(bioc_knn_cosine, rs_annoy_cos)
 bioc_hnsw_cos <- calc_recall_bioc(bioc_knn_cosine, rs_hnsw_cos)
 bioc_nndescent_cos <- calc_recall_bioc(bioc_knn_cosine, rs_hnsw_cos)
+bioc_nndescent_cos <- calc_recall_bioc(bioc_knn_cosine, rs_ivf_cos)
 
 expect_true(
   current = bioc_exhaustive_cos >= 0.98,
@@ -257,12 +296,17 @@ expect_true(
   current = bioc_nndescent_cos >= 0.98,
   info = "bioc <> NNDescent (cosine dist) - high overlap"
 )
+expect_true(
+  current = bioc_nndescent_cos >= 0.98,
+  info = "bioc <> IVF (cosine dist) - high overlap"
+)
 
 ##### against ground truth -----------------------------------------------------
 
 gt_annoy_cos <- calc_recall_exh(rs_exhaustive_cos, rs_annoy_cos)
 gt_hnsw_cos <- calc_recall_exh(rs_exhaustive_cos, rs_hnsw_cos)
 gt_nndescent_cos <- calc_recall_exh(rs_exhaustive_cos, rs_nndescent_cos)
+gt_ivf_cos <- calc_recall_exh(rs_exhaustive_cos, rs_ivf_cos)
 
 expect_true(
   current = gt_annoy_cos >= 0.98,
@@ -275,6 +319,10 @@ expect_true(
 expect_true(
   current = gt_nndescent_cos >= 0.98,
   info = "nndescent <> exhaustive search (cosine dist) - high overlap"
+)
+expect_true(
+  current = gt_ivf_cos >= 0.98,
+  info = "ivf <> exhaustive search (cosine dist) - high overlap"
 )
 
 ## object ----------------------------------------------------------------------
@@ -452,8 +500,8 @@ annoy_knn_data <- generate_knn_sc(
 )
 
 expect_true(
-  current = checkmate::testClass(annoy_knn_data, "sc_knn"),
-  info = "sc_knn - expected class returned"
+  current = checkmate::testClass(annoy_knn_data, "SingleCellNearestNeighbour"),
+  info = "SingleCellNearestNeighbour - expected class returned"
 )
 
 expect_true(
@@ -461,7 +509,7 @@ expect_true(
     get_knn_mat(annoy_knn_data),
     mode = "integer"
   ),
-  info = "sc_knn - indices of expected type"
+  info = "SingleCellNearestNeighbour - indices of expected type"
 )
 
 expect_true(
@@ -469,7 +517,7 @@ expect_true(
     get_knn_dist(annoy_knn_data),
     mode = "numeric"
   ),
-  info = "sc_knn - distances of expected type"
+  info = "SingleCellNearestNeighbour - distances of expected type"
 )
 
 annoy_knn_data_red <- generate_knn_sc(
@@ -487,7 +535,7 @@ annoy_knn_data_red <- generate_knn_sc(
 expect_equivalent(
   current = annoy_knn_data_red$used_cells,
   target = cells_to_keep,
-  info = "sc_knn - reduced version behaves"
+  info = "SingleCellNearestNeighbour - reduced version behaves"
 )
 
 ### annoy ----------------------------------------------------------------------
@@ -506,13 +554,13 @@ annoy_knn_data_cosine <- generate_knn_sc(
 
 expect_true(
   current = calc_recall_exh(rs_annoy_euc, get_knn_mat(annoy_knn_data)) == 1,
-  info = "sc_knn class - expected overlap annoy euclidean"
+  info = "SingleCellNearestNeighbour class - expected overlap annoy euclidean"
 )
 
 expect_true(
   current = calc_recall_exh(rs_annoy_cos, get_knn_mat(annoy_knn_data_cosine)) ==
     1,
-  info = "sc_knn class - expected overlap annoy cosine"
+  info = "SingleCellNearestNeighbour class - expected overlap annoy cosine"
 )
 
 ### hnsw -----------------------------------------------------------------------
@@ -530,7 +578,7 @@ hnsw_knn_data <- generate_knn_sc(
 
 expect_true(
   current = calc_recall_exh(rs_hnsw_euc, get_knn_mat(hnsw_knn_data)) == 1,
-  info = "sc_knn class - expected overlap hnsw euclidean"
+  info = "SingleCellNearestNeighbour class - expected overlap hnsw euclidean"
 )
 
 ### nndescent ------------------------------------------------------------------
@@ -553,6 +601,30 @@ expect_true(
   ) ==
     1,
   info = "sc_knn class - expected overlap nndescent euclidean"
+)
+
+### ivf ------------------------------------------------------------------------
+
+ivf_knn_data <- generate_knn_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(
+      knn_method = "ivf",
+      ann_dist = "euclidean",
+      n_list = 3L,
+      n_probe = 2L
+    )
+  ),
+  .verbose = FALSE
+)
+
+expect_true(
+  current = calc_recall_exh(
+    rs_ivf_euc,
+    get_knn_mat(ivf_knn_data)
+  ) ==
+    1,
+  info = "sc_knn class - expected overlap ivf euclidean"
 )
 
 # clean up ---------------------------------------------------------------------

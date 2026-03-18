@@ -1,6 +1,6 @@
 use extendr_api::prelude::*;
 
-use bixverse_rs::data::*;
+use bixverse_rs::core::synthetic_data::*;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_data::sc_synthetic_data::*;
 

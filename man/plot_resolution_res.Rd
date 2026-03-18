@@ -7,10 +7,10 @@
 plot_resolution_res(object, print_head = TRUE, ...)
 }
 \arguments{
-\item{object}{The class, either \code{bixverse::rbh_graph} or \code{bixverse::bulk_coexp}.}
+\item{object}{The class, either \code{bixverse::rbh_graph} or \code{bixverse::BulkCoExp}.}
 
 \item{print_head}{Boolean. Print the Top5 resolution parameters and their
-meta data. Only applicable for \code{bulk_coexp} objects.}
+meta data. Only applicable for \code{BulkCoExp} objects.}
 
 \item{...}{Additional arguments to parse to the functions.}
 }

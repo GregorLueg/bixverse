@@ -7,12 +7,12 @@
 get_fpkm_counts(object)
 }
 \arguments{
-\item{object}{\code{bulk_dge} class.}
+\item{object}{\code{BulkDge} class.}
 }
 \value{
 Returns the FPKM-normalised counts. (If found.)
 }
 \description{
 Getter function to extract the FPKM-normalised counts from the
-\code{\link[=bulk_dge]{bulk_dge()}} class.
+\code{\link[=BulkDge]{BulkDge()}} class.
 }

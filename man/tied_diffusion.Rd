@@ -14,8 +14,8 @@ tied_diffusion(
 )
 }
 \arguments{
-\item{object}{\code{network_diffusions} object. The underlying class
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{\code{NetworkDiffusions} object. The underlying class
+\code{\link[=NetworkDiffusions]{NetworkDiffusions()}}.}
 
 \item{diffusion_vector_1}{Named numeric. The first named vector with values
 to use for the reset parameter in the personalised page-rank diffusion. Names

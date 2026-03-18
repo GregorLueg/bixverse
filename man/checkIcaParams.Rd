@@ -15,3 +15,4 @@ checkIcaParams(x)
 \description{
 Checkmate extension for checking the ICA parameters.
 }
+\keyword{internal}

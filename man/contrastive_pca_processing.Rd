@@ -12,7 +12,7 @@ contrastive_pca_processing(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{background_matrix}{Numeric matrix. The background matrix you wish to
 remove. You should apply any data transformation to this matrix, too!}
@@ -22,11 +22,11 @@ remove. You should apply any data transformation to this matrix, too!}
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} with the needed data for contrastive PCA in the
+\code{BulkCoExp} with the needed data for contrastive PCA in the
 properties of the class.
 }
 \description{
-This function will prepare the \code{bulk_coexp} for subsequent usage of the
+This function will prepare the \code{BulkCoExp} for subsequent usage of the
 contrastive PCA functions. This is based on the work of Abid, et al.
 }
 \references{

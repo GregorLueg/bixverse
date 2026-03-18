@@ -14,7 +14,7 @@ preprocess_bulk_coexp(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{hvg}{Integer or float. If an integer, the top \code{hvg} genes will be
 included; if float, the float has to be between 0 and 1, representing the
@@ -35,6 +35,6 @@ Returns the class with the \code{processed_data} data slot populated and
 applied parameters added to the \code{params} slot.
 }
 \description{
-Function to do general pre-processing on top of the \code{\link[=bulk_coexp]{bulk_coexp()}}.
+Function to do general pre-processing on top of the \code{\link[=BulkCoExp]{BulkCoExp()}}.
 Options to do scaling, HVG selection, etc.
 }

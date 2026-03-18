@@ -15,7 +15,7 @@ normalise_bulk_dge(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{group_col}{String. The column in the metadata that will contain the
 contrast groups. Needs to be part of the metadata stored in the class.}

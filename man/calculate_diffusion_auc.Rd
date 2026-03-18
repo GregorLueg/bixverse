@@ -14,8 +14,8 @@ calculate_diffusion_auc(
 )
 }
 \arguments{
-\item{object}{\code{network_diffusions} object. The underlying class
-\code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{\code{NetworkDiffusions} object. The underlying class
+\code{\link[=NetworkDiffusions]{NetworkDiffusions()}}.}
 
 \item{hit_nodes}{String vector. Which nodes in the graph are considered a
 'hit'.}
@@ -36,7 +36,7 @@ List with AUC and Z-score as the two named elements if permutations
 test set to TRUE; otherwise just the AUC.
 }
 \description{
-This functions can take a given \code{network_diffusions} object and calculates an
+This functions can take a given \code{NetworkDiffusions} object and calculates an
 AUC and generates a Z-score based on random permutation of \code{random_aucs} for
 test for statistical significance if desired.
 }

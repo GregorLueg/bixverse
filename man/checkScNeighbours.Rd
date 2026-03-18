@@ -16,3 +16,4 @@ checkScNeighbours(x)
 Checkmate extension for checking the neighbour generation
 parameters for single cell.
 }
+\keyword{internal}

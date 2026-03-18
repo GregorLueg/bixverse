@@ -22,3 +22,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for assert the neighbour generation
 parameters for single cell.
 }
+\keyword{internal}

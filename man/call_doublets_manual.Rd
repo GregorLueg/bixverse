@@ -7,14 +7,14 @@
 call_doublets_manual(scrublet_res, threshold, .verbose = TRUE)
 }
 \arguments{
-\item{scrublet_res}{\code{scrublet_res} result class.}
+\item{scrublet_res}{\code{ScrubletRes} result class.}
 
 \item{threshold}{Numeric. The new threshold to use.}
 
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-\code{scrublet_res} class with updated doublet calls based on the new
+\code{ScrubletRes} class with updated doublet calls based on the new
 threshold.
 }
 \description{

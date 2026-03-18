@@ -2,7 +2,7 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{stream_h5ad}
 \alias{stream_h5ad}
-\title{Stream in h5ad to \code{single_cell_exp}}
+\title{Stream in h5ad to \code{SingleCells}}
 \usage{
 stream_h5ad(
   object,
@@ -14,7 +14,7 @@ stream_h5ad(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{h5_path}{File path to the h5ad object you wish to load in.}
 
@@ -45,7 +45,7 @@ shape information.
 }
 \description{
 This function takes an h5ad file and loads (via streaming) the obs and var
-data into the DuckDB of the \code{single_cell_exp} class and the counts into
+data into the DuckDB of the \code{SingleCells} class and the counts into
 a Rust-binarised format for rapid access. During the reading in of the
 counts, the log CPM transformation will occur automatically. This function
 is specifically designed to deal with larger amounts of data and is slower

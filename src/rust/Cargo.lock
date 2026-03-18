@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.2.4"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "742469b8cde5d666fadbd1d1481bd55fefc4df0d930a767dc2cada5ffeb87574"
+checksum = "642da62a63dd26c5859d639bda8adb69ee705884d2dd4b3e9c4c958147248096"
 dependencies = [
  "approx",
  "clap",
@@ -155,12 +155,14 @@ dependencies = [
 
 [[package]]
 name = "bixverse-rs"
-version = "0.1.3"
-source = "git+https://github.com/GregorLueg/bixverse-rs?branch=feat-better-gsea#1b717be2c21b830c1438cd85553fd5e35c6ab0f5"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c749df324a12f57ebf3a774ea6c43d72313184573acea9d7d5c54dabdbd450b"
 dependencies = [
  "ann-search-rs",
  "approx",
  "bincode",
+ "document-features",
  "extendr-api",
  "faer",
  "faer-entity",
@@ -389,6 +391,15 @@ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
  "block-buffer",
  "crypto-common",
+]
+
+[[package]]
+name = "document-features"
+version = "0.2.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
+dependencies = [
+ "litrs",
 ]
 
 [[package]]
@@ -941,6 +952,12 @@ dependencies = [
  "pkg-config",
  "vcpkg",
 ]
+
+[[package]]
+name = "litrs"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
 name = "lock_api"

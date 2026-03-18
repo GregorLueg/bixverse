@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{set_pca_singular_vals}
 \alias{set_pca_singular_vals}
-\alias{set_pca_singular_vals.sc_cache}
-\alias{set_pca_singular_vals.single_cell_exp}
+\alias{set_pca_singular_vals.ScCache}
+\alias{set_pca_singular_vals.SingleCells}
 \title{Set/add PCA singular values}
 \usage{
 set_pca_singular_vals(x, singular_vals)
 
-\method{set_pca_singular_vals}{sc_cache}(x, singular_vals)
+\method{set_pca_singular_vals}{ScCache}(x, singular_vals)
 }
 \arguments{
 \item{x}{An object to add the singular values for.}
@@ -18,5 +18,5 @@ set_pca_singular_vals(x, singular_vals)
 \description{
 Set/add PCA singular values
 
-Set the PCA singular values for a \code{single_cell_exp} class.
+Set the PCA singular values for a \code{SingleCells} class.
 }

@@ -15,7 +15,7 @@ fast_mnn_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{batch_column}{String. The column with the batch information in the
 obs data of the class.}

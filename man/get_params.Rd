@@ -2,19 +2,22 @@
 % Please edit documentation in R/base_class.R, R/classes_single_cell_others.R
 \name{get_params}
 \alias{get_params}
-\alias{get_params.sc_hotspot}
-\alias{get_params.sc_miloR}
+\alias{get_params.Hotspot}
+\alias{get_params.miloR}
+\alias{get_params.ScenicGrn}
 \title{Get the parameters that were used.}
 \usage{
 get_params(object, to_json = FALSE, pretty_json = FALSE)
 
-get_params.sc_hotspot(object, to_json = FALSE, pretty_json = FALSE)
+get_params.Hotspot(object, to_json = FALSE, pretty_json = FALSE)
 
-get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
+get_params.miloR(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.ScenicGrn(object, to_json = FALSE, pretty_json = FALSE)
 }
 \arguments{
 \item{object}{A class within bixverse that inherits from
-\code{\link[=bixverse_base_class]{bixverse_base_class()}} or defined S3 classes.}
+\code{\link[=BixverseBaseClass]{BixverseBaseClass()}} or defined S3 classes.}
 
 \item{to_json}{Shall the params be returned as a JSON string.}
 
@@ -24,7 +27,7 @@ get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
 Depending on parameters either the R list or a (pretty) JSON string.
 }
 \description{
-Extracts parameters from the \code{bixverse_base_class} class (or
+Extracts parameters from the \code{BixverseBaseClass} class (or
 child classes) and has options to return (pretty) JSONs. This generic
 also gets inherited by other classes and can be used to extract parameters.
 Also, can dispatch to specific methods for certain S3 classes.

@@ -7,7 +7,7 @@
 get_cor_graph(object, epsilon, .verbose)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{epsilon}{Float. The epsilon parameter for the RBF function, in this
 case the bump function.}

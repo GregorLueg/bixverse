@@ -6,7 +6,7 @@
 #' This is the generic function for doing the necessary preprocessing for
 #' running independent component analysis.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. Ideally, you
+#' @param object The class, see [bixverse::BulkCoExp()]. Ideally, you
 #' should run [bixverse::preprocess_bulk_coexp()] before applying this function.
 #' @param fast_svd Boolean. Shall randomised SVD be used for the whitening.
 #' This is faster and usually causes little precision loss.
@@ -14,7 +14,7 @@
 #' fast_svd = `TRUE`.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `bulk_coexp` with the needed data for ICA in the
+#' @return `BulkCoExp` with the needed data for ICA in the
 #' properties of the class.
 #'
 #' @export
@@ -34,8 +34,8 @@ ica_processing <- S7::new_generic(
 #' @importFrom zeallot `%<-%`
 #' @import data.table
 #'
-#' @method ica_processing bulk_coexp
-S7::method(ica_processing, bulk_coexp) <- function(
+#' @method ica_processing BulkCoExp
+S7::method(ica_processing, BulkCoExp) <- function(
   object,
   fast_svd = TRUE,
   random_seed = 123L,
@@ -44,7 +44,7 @@ S7::method(ica_processing, bulk_coexp) <- function(
   # Scope checks
   X1 <- K <- NULL
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(fast_svd, "B1")
   checkmate::qassert(random_seed, "I1")
   checkmate::qassert(.verbose, "B1")
@@ -95,7 +95,7 @@ S7::method(ica_processing, bulk_coexp) <- function(
 #' stability, low mutual information and good convergence of the identified
 #' independent components
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
 #' @param ica_type String, element of `c("logcosh", "exp")`.
 #' @param iter_params List. This list controls the randomisation parameters for
@@ -133,7 +133,7 @@ S7::method(ica_processing, bulk_coexp) <- function(
 #' @param random_seed Integer. For reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return `bulk_coexp` with the added information of stability of the components
+#' @return `BulkCoExp` with the added information of stability of the components
 #' and other data to plot to choose the right `ncomp`.
 #'
 #' @export
@@ -159,8 +159,8 @@ ica_evaluate_comp <- S7::new_generic(
 #'
 #' @export
 #'
-#' @method ica_evaluate_comp bulk_coexp
-S7::method(ica_evaluate_comp, bulk_coexp) <- function(
+#' @method ica_evaluate_comp BulkCoExp
+S7::method(ica_evaluate_comp, BulkCoExp) <- function(
   object,
   ica_type = c("logcosh", "exp"),
   iter_params = params_ica_randomisation(),
@@ -173,7 +173,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
   . <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaParams(ica_params)
   assertIcaNcomps(ncomp_params)
@@ -392,7 +392,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 #' option to plot the loess function for additional control over the span
 #' parameter (defaults to `TRUE`).
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #' @param span Float. A value between 0.1 and 1.0 for the loess function
 #' defining the span. Defaults to `0.2`.
@@ -400,7 +400,7 @@ S7::method(ica_evaluate_comp, bulk_coexp) <- function(
 #' Defaults to `TRUE`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @return `bulk_coexp` with optimal ncomp based on the inflection point method.
+#' @return `BulkCoExp` with optimal ncomp based on the inflection point method.
 #'
 #' @export
 ica_optimal_ncomp <- S7::new_generic(
@@ -421,8 +421,8 @@ ica_optimal_ncomp <- S7::new_generic(
 #' @import data.table
 #' @importFrom zeallot `%<-%`
 #'
-#' @method ica_optimal_ncomp bulk_coexp
-S7::method(ica_optimal_ncomp, bulk_coexp) <- function(
+#' @method ica_optimal_ncomp BulkCoExp
+S7::method(ica_optimal_ncomp, BulkCoExp) <- function(
   object,
   span = 0.2,
   show_plot = TRUE,
@@ -431,7 +431,7 @@ S7::method(ica_optimal_ncomp, bulk_coexp) <- function(
   inflection_idx <- gradient_change <- NULL
 
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(span, "N1[0.1, 1.0]")
   checkmate::qassert(.verbose, "B1")
 
@@ -523,7 +523,7 @@ S7::method(ica_optimal_ncomp, bulk_coexp) <- function(
 #' @description
 #' This function runs stabilised ICA with the defined number of components.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_processing()] before running this function.
 #' @param no_comp Optional integer. Number of components you wish to use for the
 #' ICA run. If you have run [bixverse::ica_evaluate_comp()] the optimal number
@@ -558,7 +558,7 @@ S7::method(ica_optimal_ncomp, bulk_coexp) <- function(
 #' absolute bigger tail is set to positive floats.
 #' @param .verbose Boolean. Controls verbosity.
 #'
-#' @return `bulk_coexp` with the the source matrix S, mixing matrix A and other
+#' @return `BulkCoExp` with the the source matrix S, mixing matrix A and other
 #' parameters added to the slots.
 #'
 #' @export
@@ -586,8 +586,8 @@ ica_stabilised_results <- S7::new_generic(
 #' @importFrom magrittr `%>%`
 #' @importFrom zeallot `%<-%`
 #'
-#' @method ica_stabilised_results bulk_coexp
-S7::method(ica_stabilised_results, bulk_coexp) <- function(
+#' @method ica_stabilised_results BulkCoExp
+S7::method(ica_stabilised_results, BulkCoExp) <- function(
   object,
   no_comp = NULL,
   ica_type = c("logcosh", "exp"),
@@ -598,7 +598,7 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
   .verbose = TRUE
 ) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(no_comp, c("0", "I1"))
   checkmate::assertChoice(ica_type, c("logcosh", "exp"))
   assertIcaIterParams(iter_params)
@@ -740,7 +740,7 @@ S7::method(ica_stabilised_results, bulk_coexp) <- function(
 #' If found, the function will also add the optimal number of components based
 #' on [bixverse::ica_optimal_ncomp()] (if a loess function could be fitted).
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #'
 #' @return The plot with no comp ~ vs. various parameters.
@@ -754,10 +754,10 @@ plot_ica_ncomp_params <- S7::new_generic(
   }
 )
 
-#' @method plot_ica_ncomp_params bulk_coexp
-S7::method(plot_ica_ncomp_params, bulk_coexp) <- function(object) {
+#' @method plot_ica_ncomp_params BulkCoExp
+S7::method(plot_ica_ncomp_params, BulkCoExp) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   # Function body
   plot_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
 
@@ -832,7 +832,7 @@ S7::method(plot_ica_ncomp_params, bulk_coexp) <- function(object) {
 #' Helper function to plot the individual stability profiles over the tested
 #' ncomps.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()]. You need to apply
+#' @param object The class, see [bixverse::BulkCoExp()]. You need to apply
 #' [bixverse::ica_evaluate_comp()] before running this function.
 #'
 #' @export
@@ -844,10 +844,10 @@ plot_ica_stability_individual <- S7::new_generic(
   }
 )
 
-#' @method plot_ica_stability_individual bulk_coexp
-S7::method(plot_ica_stability_individual, bulk_coexp) <- function(object) {
+#' @method plot_ica_stability_individual BulkCoExp
+S7::method(plot_ica_stability_individual, BulkCoExp) <- function(object) {
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   # Function body
   plot_df <- S7::prop(object, "outputs")[["ica_stability_res"]]
   if (is.null(plot_df)) {
@@ -1037,7 +1037,7 @@ flip_ica_loading_signs <- function(x) {
 #' convergence and normalised mutual information between the components. If not
 #' found will return `NULL`.
 #'
-#' @param object The class, see [bixverse::bulk_coexp()].
+#' @param object The class, see [bixverse::BulkCoExp()].
 #'
 #' @return data.table with the ICA parameter data (if found. Otherwise `NULL`.)
 #'
@@ -1052,10 +1052,10 @@ get_ica_stability_res <- S7::new_generic(
 
 #' @export
 #'
-#' @method get_ica_stability_res bulk_coexp
-S7::method(get_ica_stability_res, bulk_coexp) <- function(object) {
+#' @method get_ica_stability_res BulkCoExp
+S7::method(get_ica_stability_res, BulkCoExp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
 
   stability_df <- S7::prop(object, "outputs")[["ica_stability_res_sum"]]
   if (is.null(stability_df)) {

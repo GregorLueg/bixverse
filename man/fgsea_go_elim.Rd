@@ -14,7 +14,7 @@ fgsea_go_elim(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{object}{The underlying class, see \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.}
 
 \item{stats}{Named numeric vector. The gene level statistic.}
 
@@ -41,7 +41,7 @@ level implementation of fgsea.
 data.table with enrichment results.
 }
 \description{
-This method takes the gene_ontology_data and a vector of gene level
+This method takes the GeneOntologyElim and a vector of gene level
 statistics to perform fgsea (multi-level) leveraging ontological information.
 It starts at the lowest levels of the ontology and tests if there is
 significant enrichment for any GO terms. If the threshold of the p-value is

@@ -149,7 +149,7 @@ toy_go_data <- data.table::data.table(
 ) %>%
   data.table::setorder(-depth)
 
-object <- gene_ontology_data(toy_go_data, min_genes = 1L)
+object <- GeneOntologyElim(toy_go_data, min_genes = 1L)
 
 #### scenario 1 data -----------------------------------------------------------
 

@@ -17,7 +17,7 @@ generate_null_perm_gs(
 \item{gs_list}{Named nested list for which to calculate the local
 auto-correlations. The elements have the gene identifiers of the respective
 gene sets and have the option to have a \code{"pos"} and \code{"neg"} gene sets. The
-names need to be part of the variables of the \code{single_cell_exp} class.}
+names need to be part of the variables of the \code{SingleCells} class.}
 
 \item{expr_genes}{Character vector. Represents the genes expressed in the
 experiment.}

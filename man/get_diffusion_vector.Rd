@@ -7,7 +7,7 @@
 get_diffusion_vector(object)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=network_diffusions]{network_diffusions()}}.}
+\item{object}{The underlying class \code{\link[=NetworkDiffusions]{NetworkDiffusions()}}.}
 }
 \value{
 The diffusion vector if found. If you did not run either diffusion

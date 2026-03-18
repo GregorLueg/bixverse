@@ -12,9 +12,9 @@
 #' reflects the different resolutions and the y axis the modularity observed
 #' with that resolution.
 #'
-#' @param object The class, either `bixverse::rbh_graph` or `bixverse::bulk_coexp`.
+#' @param object The class, either `bixverse::rbh_graph` or `bixverse::BulkCoExp`.
 #' @param print_head Boolean. Print the Top5 resolution parameters and their
-#' meta data. Only applicable for `bulk_coexp` objects.
+#' meta data. Only applicable for `BulkCoExp` objects.
 #' @param ... Additional arguments to parse to the functions.
 #'
 #' @return Plots the result, if the results were found in the class. Otherwise,

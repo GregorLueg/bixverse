@@ -7,8 +7,8 @@
 get_metadata(object, ...)
 }
 \arguments{
-\item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
-\code{bixverse::bulk_dge}.}
+\item{object}{The underlying object, either \code{\link[=BulkCoExp]{BulkCoExp()}} or
+\code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{...}{Additional arguments to parse to the functions.}
 }
@@ -16,6 +16,6 @@ get_metadata(object, ...)
 Returns the metadata stored in the class.
 }
 \description{
-Getter function to extract the metadata from the \code{\link[=bulk_coexp]{bulk_coexp()}} or
-\code{\link[=bulk_dge]{bulk_dge()}}.
+Getter function to extract the metadata from the \code{\link[=BulkCoExp]{BulkCoExp()}} or
+\code{\link[=BulkDge]{BulkDge()}}.
 }

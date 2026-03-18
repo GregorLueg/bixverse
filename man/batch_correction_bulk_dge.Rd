@@ -13,7 +13,7 @@ batch_correction_bulk_dge(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_dge]{bulk_dge()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{contrast_column}{String. The contrast column in which the groupings
 are stored. Needs to be found in the meta_data within the properties.}

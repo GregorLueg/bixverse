@@ -21,3 +21,4 @@ Invisibly returns the checked object if the assertion is successful.
 \description{
 Checkmate extension for asserting the VISION parameters.
 }
+\keyword{internal}

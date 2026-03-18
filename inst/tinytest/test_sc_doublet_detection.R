@@ -78,7 +78,7 @@ new_obs <- data.table::rbindlist(list(
 
 ## generate the object ---------------------------------------------------------
 
-sc_object <- single_cell_exp(
+sc_object <- SingleCells(
   dir_data = test_temp_dir
 )
 
@@ -266,7 +266,7 @@ expect_true(
 )
 
 expect_true(
-  current = checkmate::testClass(obj_res, "scrublet_res"),
+  current = checkmate::testClass(obj_res, "ScrubletRes"),
   info = "S7 scrublet: the correct class is being returned"
 )
 
@@ -411,7 +411,7 @@ obj_res <- doublet_detection_boost_sc(
 )
 
 expect_true(
-  current = checkmate::testClass(obj_res, "boost_res"),
+  current = checkmate::testClass(obj_res, "BoostRes"),
   info = "S7 boost - correct class returned"
 )
 

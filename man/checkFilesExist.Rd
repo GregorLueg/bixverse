@@ -19,3 +19,4 @@ directory.}
 Checkmate extension for checking if files exist in the
 directory.
 }
+\keyword{internal}

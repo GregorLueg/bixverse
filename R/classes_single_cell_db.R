@@ -14,9 +14,9 @@
 #' @export
 #'
 #' @import data.table
-single_cell_duckdb_base <- R6::R6Class(
+SingleCellDuckDBBase <- R6::R6Class(
   # class name
-  classname = "single_cell_duckdb_base",
+  classname = "SingleCellDuckDBBase",
   # public functions, slots
   public = list(
     #' @description
@@ -587,11 +587,11 @@ single_cell_duckdb_base <- R6::R6Class(
 #' @export
 #'
 #' @import data.table
-single_cell_duckdb_con <- R6::R6Class(
+SingleCellDuckDB <- R6::R6Class(
   # class name
-  classname = "single_cell_duckdb_con",
+  classname = "SingleCellDuckDB",
   # public functions, slots
-  inherit = single_cell_duckdb_base,
+  inherit = SingleCellDuckDBBase,
   public = list(
     ##############
     # Readers h5 #
@@ -603,13 +603,21 @@ single_cell_duckdb_con <- R6::R6Class(
     #' @param h5_path String. Path to the h5 file from which to load in the
     #' observation table.
     #' @param filter Optional integer. Positions of obs to read in from file.
+    #' @param cell_id_col Optional string. If you can see that the first column
+    #' in the h5ad obs table is NOT the cell identifier, you can provide
+    #' here the correct column name to use as cell_name.
     #'
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
-    populate_obs_from_h5 = function(h5_path, filter = NULL) {
+    populate_obs_from_h5 = function(
+      h5_path,
+      filter = NULL,
+      cell_id_col = NULL
+    ) {
       # checks
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
+      checkmate::qassert(cell_id_col, c("S1", "0"))
 
       h5_content <- rhdf5::h5ls(
         h5_path
@@ -654,8 +662,13 @@ single_cell_duckdb_con <- R6::R6Class(
       obs_dt <- data.table::as.data.table(obs_values)
       data.table::setnames(obs_dt, obs_col_names)
 
-      # Ensure first column is cell_id
-      colnames(obs_dt)[1] <- "cell_id"
+      # set the cell id column
+      if (!is.null(cell_id_col)) {
+        col_idx <- which(colnames(obs_dt) == cell_id_col)
+        colnames(obs_dt)[col_idx] <- "cell_id"
+      } else {
+        colnames(obs_dt)[1] <- "cell_id"
+      }
 
       if (!is.null(filter)) {
         obs_dt <- obs_dt[filter]
@@ -679,23 +692,6 @@ single_cell_duckdb_con <- R6::R6Class(
         obs_dt,
         overwrite = TRUE
       )
-
-      ### Don't think this is needed, as we are just adding the obs data to the lake
-
-      # DBI::dbExecute(
-      #   con,
-      #   sprintf(
-      #     'CREATE TABLE obs_new AS
-      #         SELECT obs.*, temp_col.%s
-      #         FROM obs
-      #         JOIN temp_col ON obs.cell_idx = temp_col.cell_idx
-      #         ORDER BY obs.cell_idx;
-      #         DROP table obs;
-      #         ALTER TABLE obs_new RENAME TO obs;
-      #         DROP TABLE temp_col',
-      #     col_name
-      #   )
-      # )
 
       invisible(self)
     },
@@ -789,6 +785,121 @@ single_cell_duckdb_con <- R6::R6Class(
           )
         }
       }
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the obs table from multiple h5ad files.
+    #'
+    #' @param per_file_info List of lists, each containing: h5_path, exp_id,
+    #'   cell_filter (1-indexed integer vector of cells to keep).
+    #' @param cell_id_col Optional string. Column name for cell identifiers.
+    #'
+    #' @return Invisible self. Populates the obs table in DuckDB.
+    populate_obs_from_multi_h5 = function(per_file_info, cell_id_col = NULL) {
+      checkmate::assertList(per_file_info, min.len = 2L)
+      checkmate::qassert(cell_id_col, c("S1", "0"))
+
+      obs_parts <- vector("list", length(per_file_info))
+
+      for (i in seq_along(per_file_info)) {
+        fi <- per_file_info[[i]]
+
+        h5_content <- rhdf5::h5ls(fi$h5_path) |> data.table::setDT()
+
+        obs_entries <- h5_content[
+          group == "/obs" & otype == "H5I_DATASET",
+          setNames(paste(group, name, sep = "/"), name)
+        ]
+
+        if (length(obs_entries) == 0L) {
+          stop(sprintf("No obs data found in %s", fi$h5_path))
+        }
+
+        names(obs_entries) <- to_snake_case(obs_entries)
+        names(obs_entries) <- gsub("^obs_", "", names(obs_entries))
+
+        obs_values <- lapply(obs_entries, function(path) {
+          rhdf5::h5read(fi$h5_path, path)
+        })
+        rhdf5::h5closeAll()
+
+        obs_dt <- data.table::as.data.table(obs_values)
+        data.table::setnames(obs_dt, names(obs_entries))
+
+        if (!is.null(cell_id_col)) {
+          col_idx <- which(colnames(obs_dt) == cell_id_col)
+          colnames(obs_dt)[col_idx] <- "cell_id"
+        } else {
+          colnames(obs_dt)[1L] <- "cell_id"
+        }
+
+        # filter to kept cells
+        obs_dt <- obs_dt[fi$cell_filter]
+        obs_dt[, exp_id := fi$exp_id]
+        obs_dt[, cell_id := paste(exp_id, cell_id, sep = "_")]
+
+        obs_parts[[i]] <- obs_dt
+      }
+
+      # find shared columns (cell_id and exp_id are guaranteed)
+      shared_cols <- Reduce(intersect, lapply(obs_parts, names))
+      obs_parts <- lapply(obs_parts, function(dt) {
+        dt[, .SD, .SDcols = shared_cols]
+      })
+
+      obs_combined <- data.table::rbindlist(obs_parts, use.names = TRUE)
+      obs_combined[, cell_idx := .I]
+      data.table::setcolorder(
+        obs_combined,
+        c(
+          "cell_idx",
+          "cell_id",
+          "exp_id",
+          setdiff(names(obs_combined), c("cell_idx", "cell_id", "exp_id"))
+        )
+      )
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbWriteTable(con, "obs", obs_combined, overwrite = TRUE)
+
+      invisible(self)
+    },
+
+    #' @description
+    #' Populate the var table from an h5ad file, filtered and reordered to
+    #' match a target gene set.
+    #'
+    #' @param h5_path String. Path to the reference h5ad file.
+    #' @param final_gene_names Character vector. Gene names in the desired
+    #'   final order.
+    #'
+    #' @return Invisible self. Populates the var table in DuckDB.
+    populate_vars_from_h5_reordered = function(h5_path, final_gene_names) {
+      checkmate::assertFileExists(h5_path)
+      checkmate::assertCharacter(final_gene_names, min.len = 1L)
+
+      self$populate_vars_from_h5(h5_path = h5_path, filter = NULL)
+
+      var_dt <- self$get_vars_table()
+      var_dt <- var_dt[match(final_gene_names, gene_id)]
+      var_dt[, gene_idx := .I]
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
 
       invisible(self)
     },

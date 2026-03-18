@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_available_embeddings}
 \alias{get_available_embeddings}
-\alias{get_available_embeddings.sc_cache}
-\alias{get_available_embeddings.single_cell_exp}
+\alias{get_available_embeddings.ScCache}
+\alias{get_available_embeddings.SingleCells}
 \title{Get the available embeddings from the cache}
 \usage{
 get_available_embeddings(x)
 
-\method{get_available_embeddings}{sc_cache}(x)
+\method{get_available_embeddings}{ScCache}(x)
 }
 \arguments{
 \item{x}{An object to get embedding from}

@@ -45,7 +45,7 @@ seurat_obj <- suppressWarnings(Seurat::CreateSeuratObject(
   min.cells = min_cells_exp
 ))
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_seurat(
   object = sc_object,

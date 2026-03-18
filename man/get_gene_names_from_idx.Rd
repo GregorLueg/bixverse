@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_gene_names_from_idx}
 \alias{get_gene_names_from_idx}
-\alias{get_gene_names_from_idx.sc_mapper}
-\alias{get_gene_names_from_idx.single_cell_exp}
+\alias{get_gene_names_from_idx.ScMap}
+\alias{get_gene_names_from_idx.SingleCells}
 \title{Get the gene names based on the gene idx}
 \usage{
 get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
 
-\method{get_gene_names_from_idx}{sc_mapper}(x, gene_idx, rust_based = TRUE)
+\method{get_gene_names_from_idx}{ScMap}(x, gene_idx, rust_based = TRUE)
 }
 \arguments{
 \item{x}{An object to get the gene names from.}
@@ -22,5 +22,5 @@ the gene names.}
 \description{
 Get the gene names based on the gene idx
 
-Get the highly variable gene indices from a \code{single_cell_exp}.
+Get the highly variable gene indices from a \code{SingleCells}.
 }

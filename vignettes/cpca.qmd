@@ -58,7 +58,10 @@ sample_meta <- data.table(
   grp = cpca_test_data$target_labels
 )
 
-cpca_obj <- bulk_coexp(raw_data = raw_data, meta_data = sample_meta)
+cpca_obj <- BulkCoExp(
+  raw_data = raw_data, 
+  meta_data = sample_meta
+)
 
 # This function allows you to do scaling, HVG selection, etc.
 # We won't be doing any of that
@@ -116,4 +119,6 @@ c_pca_loadings <- get_c_pca_loadings(cpca_obj)
 c_pca_factors <- get_c_pca_factors(cpca_obj)
 ```
 
-The data can then be used for subsequent further analysis.
+The data can then be used for subsequent further analysis. If you want to get
+some ideas what you can do with the data, please check out 
+[Abid, et al.](https://www.nature.com/articles/s41467-018-04608-8).

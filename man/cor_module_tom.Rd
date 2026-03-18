@@ -7,7 +7,7 @@
 cor_module_tom(object, signed = TRUE, version = c("v2", "v1"), .verbose = TRUE)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to have
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to have
 applied \code{\link[=cor_module_processing]{cor_module_processing()}} before applying this function.}
 
 \item{signed}{Boolean. Do you want to use the signed or unsigned version.

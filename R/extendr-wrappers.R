@@ -2213,6 +2213,23 @@ rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, stre
 #' @export
 rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, cell_indices, streaming, verbose)
 
+#' Calculates pairwise gene correlations in single cell
+#'
+#' @param f_path Path to the `counts_genes.bin` file.
+#' @param gene_indices_1 Integer vector. The first set of gene indices to
+#' correlate against `gene_indices_2` (0-indexed!)
+#' @param gene_indices_2 Integer vector. The second set of gene indices. Needs
+#' to be of same length as `gene_indices_1`. (0-indexed!)
+#' @param cells_to_keep Integer. The indices of the cells to include in this
+#' analysis. (0-indexed!)
+#' @param spearman Boolean. Shall spearman correlation be used.
+#'
+#' @returns The vector of correlations between the pairs of gene_indices_1
+#' and gene_indices_2
+#'
+#' @export
+rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman)
+
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description
@@ -2433,31 +2450,6 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #' @returns Vector of number of overlaps per sample.
 rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn_mat_a, knn_mat_b)
 
-#' Calculate AUCell in Rust
-#'
-#' @description
-#' The function will take in a list of gene set indices (0-indexed!) and
-#' calculate an AUCell type statistic. Two options here: calculate this
-#' with proper AUROC calculations (useful for marker gene expression) or
-#' based on the Mann-Whitney statistic (useful for pathway activity
-#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
-#' in one go.
-#'
-#' @param f_path String. Path to the `counts_cells.bin` file.
-#' @param gs_list List. List with the gene set indices (0-indexed!) of the
-#' genes of interest.
-#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
-#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
-#' which statistic you wish to calculate.
-#' @param streaming Boolean. Shall the data be streamed.
-#' @param verbose Boolean. Controls verbosity of the function.
-#'
-#' @return A matrix of cells x gene sets with the values representing the
-#' AUC.
-#'
-#' @export
-rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
-
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description
@@ -2489,6 +2481,31 @@ rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbo
 #'
 #' @export
 rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
+
+#' Calculate AUCell in Rust
+#'
+#' @description
+#' The function will take in a list of gene set indices (0-indexed!) and
+#' calculate an AUCell type statistic. Two options here: calculate this
+#' with proper AUROC calculations (useful for marker gene expression) or
+#' based on the Mann-Whitney statistic (useful for pathway activity
+#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
+#' in one go.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list List. List with the gene set indices (0-indexed!) of the
+#' genes of interest.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
+#' which statistic you wish to calculate.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of cells x gene sets with the values representing the
+#' AUC.
+#'
+#' @export
+rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
 
 #' Calculate gene spatial auto-correlations
 #'
@@ -2573,36 +2590,6 @@ rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wr
 #' @references DeTomaso, et al., Cell Systems, 2021
 rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
 
-#' Generate the neighbourhoods akin to the miloR approach
-#'
-#' @description Rust version of the
-#'
-#' @param embd Numeric matrix. Represents the matrix used to generate the kNN
-#' graph and will be used to refine the neighbourhoods.
-#' @param knn_indices Integer matrix. Each row represents a given cell and
-#' the columns the neighbours. (0-indexed!)
-#' @param milor_params Named list. Contains the parameters for running the
-#' miloR approach.
-#' @param seed Integer. Seed for reproducibility.
-#' @param verbose Boolean. Controls verbosity of the function.
-#'
-#' @returns A list with the following elements:
-#' \itemize{
-#'  \item index_cell - Integer. 0-indexed positions of the cells defining the
-#'  neighbourhood.
-#'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
-#'  neighbourhood.
-#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
-#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
-#'  defaults to `1.0`.
-#'  \item nrows - Integer. Number of cells in the matrix
-#'  \item ncols - Integer. Number of refined neighbourhoods.
-#'  \item kth_distances - The k-th distances for spatial FDR calculations.
-#' }
-#'
-#' @export
-rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
-
 #' Calculate module activity scores in Rust
 #'
 #' @description
@@ -2633,6 +2620,36 @@ rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose)
 #'
 #' @export
 rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep, nbin, ctrl, seed, streaming, verbose) .Call(wrap__rs_module_scoring, f_path_cells, f_path_genes, gs_list, cells_to_keep, nbin, ctrl, seed, streaming, verbose)
+
+#' Generate the neighbourhoods akin to the miloR approach
+#'
+#' @description Rust version of the
+#'
+#' @param embd Numeric matrix. Represents the matrix used to generate the kNN
+#' graph and will be used to refine the neighbourhoods.
+#' @param knn_indices Integer matrix. Each row represents a given cell and
+#' the columns the neighbours. (0-indexed!)
+#' @param milor_params Named list. Contains the parameters for running the
+#' miloR approach.
+#' @param seed Integer. Seed for reproducibility.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item index_cell - Integer. 0-indexed positions of the cells defining the
+#'  neighbourhood.
+#'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
+#'  neighbourhood.
+#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
+#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
+#'  defaults to `1.0`.
+#'  \item nrows - Integer. Number of cells in the matrix
+#'  \item ncols - Integer. Number of refined neighbourhoods.
+#'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#' }
+#'
+#' @export
+rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
 
 #' Calculate VISION pathway scores in Rust
 #'
@@ -2689,6 +2706,74 @@ rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(
 #'
 #' @export
 rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
+
+#' Identifies genes to include into a SCENIC analysis
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The 0-indexed positions of the genes to include in the scenic
+#' analysis.
+#'
+#' @export
+rs_scenic_gene_filter <- function(f_path_genes, cell_indices, scenic_params, verbose) .Call(wrap__rs_scenic_gene_filter, f_path_genes, cell_indices, scenic_params, verbose)
+
+#' SCENIC: Generating gene-regulatory networks
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+#' predictor variables to use in the generation of the regression learners.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param seed Integer. Controls reproducibility of the function.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_scenic_grn <- function(f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_scenic_grn, f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose)
+
+#' SCENIC: Generating gene-regulatory networks (streaming version)
+#'
+#' @description Loads the genes in as chunks to avoid high memory pressure.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+#' predictor variables to use in the generation of the regression learners.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param seed Integer. Controls reproducibility of the function.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_scenic_grn_streaming <- function(f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_scenic_grn_streaming, f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose)
+
+#' SCENIC: Select the Top TF <> Gene pairs
+#'
+#' @param matrix Numeric matrix with genes x TF importance values
+#' @param k Integer. Number of top genes / TFs to extract.
+#' @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
+#' top k genes per TF are used. Both versions were used in the original paper.
+#' @param min_value Float. An
+#'
+#' @returns A list with three vectors: tf, gene, importance
+#'
+#' @export
+rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_targets, matrix, k, margin, min_value)
 
 #' Generate meta cells (hdWGCNA method)
 #'
@@ -2856,7 +2941,11 @@ SingeCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(
 
 SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
 
+SingeCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingeCellCountData__norm_h5_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
+
 SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+
+SingeCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingeCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
 
 SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
 

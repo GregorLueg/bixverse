@@ -438,7 +438,7 @@ expect_true(
 # igraph comparisons -----------------------------------------------------------
 
 if (!requireNamespace("igraph", quietly = TRUE)) {
-  exit_file("BiocNeighbors, bluster and cluster not available")
+  exit_file("igraph not available")
 }
 
 ## data ------------------------------------------------------------------------

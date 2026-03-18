@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{remove_snn_graph}
 \alias{remove_snn_graph}
-\alias{remove_snn_graph.sc_cache}
-\alias{remove_snn_graph.single_cell_exp}
+\alias{remove_snn_graph.ScCache}
+\alias{remove_snn_graph.SingleCells}
 \title{Remove the sNN graph}
 \usage{
 remove_snn_graph(x)
 
-\method{remove_snn_graph}{sc_cache}(x)
+\method{remove_snn_graph}{ScCache}(x)
 }
 \arguments{
 \item{x}{An object from which to remove the sNN graph}
@@ -16,5 +16,5 @@ remove_snn_graph(x)
 \description{
 Remove the sNN graph
 
-Remove the sNN graph from a \code{single_cell_exp} class.
+Remove the sNN graph from a \code{SingleCells} class.
 }

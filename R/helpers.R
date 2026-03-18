@@ -286,51 +286,6 @@ sparse_list_to_mat <- function(ls) {
   return(sparse_mat)
 }
 
-## h5ad ------------------------------------------------------------------------
-
-#' Helper function to get the dimensions and compressed sparse format
-#'
-#' @param f_path File path to the `.h5ad` file.
-#'
-#' @return A list with the following elements:
-#' \itemize{
-#'   \item dims - Dimensions of the stored data in the h5ad file.
-#'   \item type - Was the data stored in CSR (indptr = cells) or CSC (indptr =
-#'   genes).
-#' }
-get_h5ad_dimensions <- function(f_path) {
-  # checks
-  checkmate::assertFileExists(f_path)
-
-  # function
-  h5_content <- rhdf5::h5ls(
-    f_path
-  ) %>%
-    data.table::setDT()
-
-  on.exit(tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()))
-
-  no_obs <- h5_content[
-    group == "/obs" & otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
-
-  no_var <- h5_content[
-    group == "/var" & otype == "H5I_DATASET"
-  ][1, as.numeric(dim)]
-
-  indptr <- h5_content[
-    group == "/X" & name == "indptr",
-    as.numeric(dim)
-  ]
-
-  cs_format <- ifelse(no_var + 1 == indptr, "CSC", "CSR")
-
-  return(list(
-    dims = setNames(c(as.integer(no_obs), as.integer(no_var)), c("obs", "var")),
-    type = cs_format
-  ))
-}
-
 # inflection points ------------------------------------------------------------
 
 #' Identify the inflection point for elbow-like data

@@ -2,19 +2,20 @@
 % Please edit documentation in R/methods_sc_io.R
 \name{load_h5ad}
 \alias{load_h5ad}
-\title{Load in h5ad to \code{single_cell_exp}}
+\title{Load in h5ad to \code{SingleCells}}
 \usage{
 load_h5ad(
   object,
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = TRUE,
+  cell_id_col = NULL,
   batch_size = 1000L,
   .verbose = TRUE
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{h5_path}{File path to the h5ad object you wish to load in.}
 
@@ -33,6 +34,9 @@ detected to be included.
 \item{streaming}{Boolean. Shall the data be streamed during the conversion
 of CSR to CSC. Defaults to \code{TRUE} and should be used for larger data sets.}
 
+\item{cell_id_col}{Optional string. If a specific column in the h5ad
+obs data is representing the cell identifiers, you can specify it here.}
+
 \item{batch_size}{Integer. If \code{streaming = TRUE}, how many cells to process
 in one batch. Defaults to \code{1000L}.}
 
@@ -44,7 +48,7 @@ shape information.
 }
 \description{
 This function takes an h5ad file and loads the obs and var data into the
-DuckDB of the \code{single_cell_exp} class and the counts into a Rust-binarised
+DuckDB of the \code{SingleCells} class and the counts into a Rust-binarised
 format for rapid access. During the reading in of the counts, the log CPM
 transformation will occur automatically.
 }

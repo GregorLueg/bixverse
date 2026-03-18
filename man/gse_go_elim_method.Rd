@@ -14,7 +14,7 @@ gse_go_elim_method(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=gene_ontology_data]{gene_ontology_data()}}.}
+\item{object}{The underlying class, see \code{\link[=GeneOntologyElim]{GeneOntologyElim()}}.}
 
 \item{target_genes}{String. The target genes you wish to apply the GSEA over.}
 
@@ -28,13 +28,13 @@ elimination on the ancestors shall be conducted.}
 
 \item{min_genes}{Integer. Minimum number of genes that have to be included in
 the gene ontology term. If NULL, it will default to the number of minimum
-genes stored in \code{gene_ontology_data}.}
+genes stored in \code{GeneOntologyElim}.}
 }
 \value{
 data.table with enrichment results.
 }
 \description{
-This method takes the gene_ontology_data and a target gene set and performs
+This method takes the GeneOntologyElim and a target gene set and performs
 an GSE enrichment leveraging ontological information. It starts at the lowest
 levels of the ontology and tests if there is significant enrichment for any
 GO terms. If the threshold of the p-value is below the elimination threshold,

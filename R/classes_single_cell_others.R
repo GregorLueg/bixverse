@@ -52,13 +52,13 @@ get_obs_data.sc_proportion_res <- function(x, ...) {
 ### histogram plotting ---------------------------------------------------------
 
 #' @export
-plot.scrublet_res <- function(
+plot.ScrubletRes <- function(
   x,
   break_number = 31L,
   ...
 ) {
   # checks
-  checkmate::assertClass(x, "scrublet_res")
+  checkmate::assertClass(x, "ScrubletRes")
   checkmate::qassert(break_number, "I1")
 
   # plotting
@@ -119,17 +119,17 @@ plot.scrublet_res <- function(
 #' Can update the Scrublet thresholding after manual introspection of the
 #' histogram.
 #'
-#' @param scrublet_res `scrublet_res` result class.
+#' @param scrublet_res `ScrubletRes` result class.
 #' @param threshold Numeric. The new threshold to use.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @returns `scrublet_res` class with updated doublet calls based on the new
+#' @returns `ScrubletRes` class with updated doublet calls based on the new
 #' threshold.
 #'
 #' @export
 call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
   # checks
-  checkmate::assertClass(scrublet_res, "scrublet_res")
+  checkmate::assertClass(scrublet_res, "ScrubletRes")
   checkmate::qassert(threshold, "N1[0,1]")
   checkmate::qassert(.verbose, "B1")
 
@@ -181,9 +181,9 @@ call_doublets_manual <- function(scrublet_res, threshold, .verbose = TRUE) {
 #' @rdname get_obs_data
 #'
 #' @export
-get_obs_data.scrublet_res <- function(x, ...) {
+get_obs_data.ScrubletRes <- function(x, ...) {
   # checks
-  checkmate::assertClass(x, "scrublet_res")
+  checkmate::assertClass(x, "ScrubletRes")
 
   # function body
   obs_dt <- data.table::data.table(
@@ -200,9 +200,9 @@ get_obs_data.scrublet_res <- function(x, ...) {
 #' @rdname get_obs_data
 #'
 #' @export
-get_obs_data.boost_res <- function(x, ...) {
+get_obs_data.BoostRes <- function(x, ...) {
   # checks
-  checkmate::assertClass(x, "boost_res")
+  checkmate::assertClass(x, "BoostRes")
 
   # function body
   obs_dt <- data.table::as.data.table(
@@ -232,7 +232,7 @@ get_obs_data.boost_res <- function(x, ...) {
 #' @param used_cells Character vector. The cells used to generate the kNN graph
 #' with the distances.
 #'
-#' @return Generates the `sc_knn` class.
+#' @return Generates the `SingleCellNearestNeighbour` class.
 #'
 #' @export
 new_sc_knn <- function(knn_data, used_cells) {
@@ -251,7 +251,7 @@ new_sc_knn <- function(knn_data, used_cells) {
     used_cells = used_cells
   )
 
-  class(sc_knn) <- "sc_knn"
+  class(sc_knn) <- "SingleCellNearestNeighbour"
 
   return(sc_knn)
 }
@@ -263,9 +263,9 @@ new_sc_knn <- function(knn_data, used_cells) {
 #' @rdname get_knn_mat
 #'
 #' @export
-get_knn_mat.sc_knn <- function(x) {
+get_knn_mat.SingleCellNearestNeighbour <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_knn")
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
   return(x[["indices"]])
 }
@@ -273,9 +273,9 @@ get_knn_mat.sc_knn <- function(x) {
 #' @rdname get_knn_dist
 #'
 #' @export
-get_knn_dist.sc_knn <- function(x) {
+get_knn_dist.SingleCellNearestNeighbour <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_knn")
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
   return(x[["dist"]])
 }
@@ -319,7 +319,7 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
     module_memership = NULL
   )
 
-  class(sc_hotspot) <- "sc_hotspot"
+  class(sc_hotspot) <- "Hotspot"
 
   return(sc_hotspot)
 }
@@ -328,12 +328,12 @@ new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
 
 #### getters -------------------------------------------------------------------
 
-#' @method get_params sc_hotspot
+#' @method get_params Hotspot
 #'
 #' @export
-S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
+S7::method(get_params, S7::new_S3_class("Hotspot")) <-
   function(object, to_json = FALSE, pretty_json = FALSE) {
-    get_params.sc_hotspot(
+    get_params.Hotspot(
       object = object,
       to_json = to_json,
       pretty_json = pretty_json
@@ -344,7 +344,7 @@ S7::method(get_params, S7::new_S3_class("sc_hotspot")) <-
 #' @rdname get_params
 #'
 #' @export
-get_params.sc_hotspot <- function(
+get_params.Hotspot <- function(
   object,
   to_json = FALSE,
   pretty_json = FALSE
@@ -352,7 +352,7 @@ get_params.sc_hotspot <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "sc_hotspot"
+    "Hotspot"
   )
   checkmate::qassert(to_json, "B1")
   checkmate::qassert(pretty_json, "B1")
@@ -381,11 +381,11 @@ get_hotspot_membership <- function(x) {
 #' @rdname get_hotspot_membership
 #'
 #' @export
-get_hotspot_membership.sc_hotspot <- function(
+get_hotspot_membership.Hotspot <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_hotspot")
+  checkmate::assertClass(x, "Hotspot")
 
   x[["module_memership"]]
 }
@@ -407,13 +407,13 @@ set_hotspot_membership <- function(x, fdr_threshold = 0.05, min_size = 10L) {
 #' @rdname set_hotspot_membership
 #'
 #' @export
-set_hotspot_membership.sc_hotspot <- function(
+set_hotspot_membership.Hotspot <- function(
   x,
   fdr_threshold = 0.05,
   min_size = 10L
 ) {
   # checks
-  checkmate::assertClass(x, "sc_hotspot")
+  checkmate::assertClass(x, "Hotspot")
   checkmate::qassert(fdr_threshold, "N1[0, 1]")
   checkmate::qassert(min_size, "I1")
 
@@ -450,7 +450,7 @@ set_hotspot_membership.sc_hotspot <- function(
 #' @param params Named list. The parameters that were used to generate these
 #' results.
 #'
-#' @returns An `sc_miloR` class that contains the provided data and has
+#' @returns An `miloR` class that contains the provided data and has
 #' subsequent methods to calculate differential abundance statistics.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022
@@ -476,19 +476,19 @@ new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
     params = params
   )
 
-  class(sc_milor) <- "sc_miloR"
+  class(sc_milor) <- "miloR"
 
   return(sc_milor)
 }
 
 ### getters --------------------------------------------------------------------
 
-#' @method get_params sc_miloR
+#' @method get_params miloR
 #'
 #' @export
-S7::method(get_params, S7::new_S3_class("sc_miloR")) <-
+S7::method(get_params, S7::new_S3_class("miloR")) <-
   function(object, to_json = FALSE, pretty_json = FALSE) {
-    get_params.sc_miloR(
+    get_params.miloR(
       object = object,
       to_json = to_json,
       pretty_json = pretty_json
@@ -498,7 +498,7 @@ S7::method(get_params, S7::new_S3_class("sc_miloR")) <-
 #' @rdname get_params
 #'
 #' @export
-get_params.sc_miloR <- function(
+get_params.miloR <- function(
   object,
   to_json = FALSE,
   pretty_json = FALSE
@@ -506,7 +506,7 @@ get_params.sc_miloR <- function(
   # Checks
   checkmate::assertClass(
     object,
-    "sc_miloR"
+    "miloR"
   )
   checkmate::qassert(to_json, "B1")
   checkmate::qassert(pretty_json, "B1")
@@ -537,11 +537,11 @@ get_differential_abundance_res <- function(x) {
 #' @rdname get_differential_abundance_res
 #'
 #' @export
-get_differential_abundance_res.sc_miloR <- function(
+get_differential_abundance_res.miloR <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   res <- x[["nhoods_info"]]
 
@@ -571,11 +571,11 @@ get_model_fit <- function(x) {
 #' @rdname get_model_fit
 #'
 #' @export
-get_model_fit.sc_miloR <- function(
+get_model_fit.miloR <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   res <- x[["model"]]
 
@@ -604,9 +604,9 @@ get_index_cells <- function(x) {
 #' @rdname get_index_cells
 #'
 #' @export
-get_index_cells.sc_miloR <- function(x) {
+get_index_cells.miloR <- function(x) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
 
   x[["params"]]$index_cell
 }
@@ -693,7 +693,7 @@ spatial_fdr_correction <- function(
 #' described in Dann et al., using graph-based neighbourhoods to identify
 #' regions of significant compositional changes in single-cell data.
 #'
-#' @param x `sc_miloR` object for which to run the differential abundance
+#' @param x `miloR` object for which to run the differential abundance
 #' analysis.
 #' @param design Formula for the experimental design
 #' @param design_df data.frame. Contains the metadata to be used for the
@@ -713,7 +713,7 @@ spatial_fdr_correction <- function(
 #' the k-th nearest neighbour, graph-overlap uses neighbourhood overlap counts.
 #' Defaults to k-distance.
 #'
-#' @return The `sc_miloR` object with added model and results from the
+#' @return The `miloR` object with added model and results from the
 #' differential abundance analysis.
 #'
 #' @references Dann et al., 2022, Nat Biotechnol
@@ -735,7 +735,7 @@ test_nhoods <- function(
 #' @rdname test_nhoods
 #'
 #' @export
-test_nhoods.sc_miloR <- function(
+test_nhoods.miloR <- function(
   x,
   design,
   design_df,
@@ -749,7 +749,7 @@ test_nhoods.sc_miloR <- function(
   fdr_weighting <- match.arg(fdr_weighting)
 
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
   checkmate::assertFormula(design)
   checkmate::assertDataFrame(design_df, row.names = "named")
   checkmate::qassert(coef, c("0", "S1", "X1"))
@@ -842,18 +842,18 @@ test_nhoods.sc_miloR <- function(
 #'
 #' @description
 #' This function adds cell type composition information to the `nhoods_info`
-#' slot within the `sc_miloR` object. For each neighbourhood, it calculates
+#' slot within the `miloR` object. For each neighbourhood, it calculates
 #' the proportion of the majority cell type and identifies which cell type
 #' is most abundant. This is useful for annotating differential abundance
 #' results with the cellular composition of each neighbourhood.
 #'
-#' @param x `sc_miloR` object on which to tag on additional neighbourhood
+#' @param x `miloR` object on which to tag on additional neighbourhood
 #' information.
 #' @param cell_info Character vector. Represents the cell type annotations
 #' you wish to add to the different neighbourhoods. Must be the same length
 #' as the number of cells (rows) in the nhoods matrix.
 #'
-#' @return Modified `sc_miloR` object with updated `nhoods_info` containing
+#' @return Modified `miloR` object with updated `nhoods_info` containing
 #' `majority_celltype` and `majority_prop` columns.
 #'
 #' @export
@@ -867,9 +867,9 @@ add_nhoods_info <- function(
 #' @rdname add_nhoods_info
 #'
 #' @export
-add_nhoods_info.sc_miloR <- function(x, cell_info) {
+add_nhoods_info.miloR <- function(x, cell_info) {
   # checks
-  checkmate::assertClass(x, "sc_miloR")
+  checkmate::assertClass(x, "miloR")
   checkmate::qassert(cell_info, "S+")
 
   # early return
@@ -927,4 +927,526 @@ add_nhoods_info.sc_miloR <- function(x, cell_info) {
   ]
 
   x
+}
+
+## scenic grns -----------------------------------------------------------------
+
+#' Constructor for SCENIC GRN results
+#'
+#' @description
+#' Stores the TF-gene importance matrix and associated metadata from a SCENIC
+#' GRN inference run. Intended as input to downstream regulon generation
+#' functions.
+#'
+#' @param importance_matrix Matrix. Importance matrix of shape
+#' `(n_genes, n_tfs)` with gene identifiers as rownames and TF identifiers
+#' as colnames.
+#' @param gene_ids Character vector. Gene identifiers corresponding to rows.
+#' @param tf_ids Character vector. TF identifiers corresponding to columns.
+#' @param params List. The full SCENIC parameters used for the run.
+#'
+#' @return An object of class `ScenicGrn`.
+#'
+#' @export
+new_scenic_grn <- function(
+  importance_matrix,
+  gene_ids,
+  tf_ids,
+  params
+) {
+  checkmate::assertMatrix(importance_matrix, mode = "numeric")
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(tf_ids, "S+")
+  checkmate::assertList(params)
+  checkmate::assertTRUE(nrow(importance_matrix) == length(gene_ids))
+  checkmate::assertTRUE(ncol(importance_matrix) == length(tf_ids))
+
+  scenic_grn <- list(
+    importance_matrix = importance_matrix,
+    gene_ids = gene_ids,
+    tf_ids = tf_ids,
+    params = params,
+    tf_to_gene_results = data.table(),
+    cis_targets_results = data.table()
+  )
+
+  class(scenic_grn) <- "ScenicGrn"
+  return(scenic_grn)
+}
+
+### primitives -----------------------------------------------------------------
+
+#### transforms ----------------------------------------------------------------
+
+#' @export
+as.matrix.ScenicGrn <- function(x, ...) {
+  x$importance_matrix
+}
+
+#### prints --------------------------------------------------------------------
+
+#' Print a ScenicGrn object
+#'
+#' @param x A `ScenicGrn` object.
+#' @param ... Further arguments passed to or from other methods.
+#'
+#' @returns Invisibly returns `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.ScenicGrn <- function(x, ...) {
+  tf_to_gene_generated <- nrow(x$tf_to_gene_results) > 0
+  cis_targets_results_generated <- nrow(x$cis_targets_results) > 0
+
+  cat("ScenicGrn (GRN results)\n")
+  cat("  No genes:                ", length(x$gene_ids), "\n")
+  cat("  No TFs:                  ", length(x$tf_ids), "\n")
+  cat("  Applied learner:         ", x$params$learner_type, "\n")
+  cat("  TF to gene generated:    ", tf_to_gene_generated, "\n")
+  cat("  CisTarget res generated: ", cis_targets_results_generated, "\n")
+
+  invisible(x)
+}
+
+### getters --------------------------------------------------------------------
+
+#' @method get_params ScenicGrn
+#'
+#' @export
+S7::method(get_params, S7::new_S3_class("ScenicGrn")) <-
+  function(object, to_json = FALSE, pretty_json = FALSE) {
+    get_params.ScenicGrn(
+      object = object,
+      to_json = to_json,
+      pretty_json = pretty_json
+    )
+  }
+
+#' @rdname get_params
+#'
+#' @export
+get_params.ScenicGrn <- function(
+  object,
+  to_json = FALSE,
+  pretty_json = FALSE
+) {
+  # Checks
+  checkmate::assertClass(
+    object,
+    "ScenicGrn"
+  )
+  checkmate::qassert(to_json, "B1")
+  checkmate::qassert(pretty_json, "B1")
+
+  to_ret <- object[["params"]]
+  if (to_json) {
+    to_ret <- jsonlite::toJSON(to_ret)
+  }
+  if (to_json && pretty_json) {
+    to_ret <- jsonlite::prettify(to_ret)
+  }
+
+  return(to_ret)
+}
+
+#' Extract the TF to gene data from the ScenicGrn object
+#'
+#' @param x `ScenicGrn` object from which to extract the TF to gene data.table.
+#'
+#' @returns data.table with TF to gene information
+#'
+#' @export
+get_tf_to_gene <- function(x) {
+  UseMethod("get_tf_to_gene")
+}
+
+#' @rdname get_tf_to_gene
+#'
+#' @export
+get_tf_to_gene.ScenicGrn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+
+  # return a proper copy
+  tf_to_gene <- data.table::copy(x[["tf_to_gene_results"]])
+
+  if (nrow(tf_to_gene) == 0) {
+    warning(paste(
+      "You did not seem to have run identify_tf_to_genes().",
+      "Returning empty data.table"
+    ))
+  }
+
+  return(tf_to_gene)
+}
+
+#' Extract the TF to gene data from the ScenicGrn object
+#'
+#' @param x `ScenicGrn` object from which to extract the TF to gene data.table.
+#'
+#' @returns data.table with TF to gene information
+#'
+#' @export
+get_cistarget_res <- function(x) {
+  UseMethod("get_cistarget_res")
+}
+
+#' @rdname get_cistarget_res
+#'
+#' @export
+get_cistarget_res.ScenicGrn <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+
+  # return a proper copy
+  cis_targets_results <- data.table::copy(x[["cis_targets_results"]])
+
+  if (nrow(cis_targets_results) == 0) {
+    warning(paste(
+      "You did not seem to have run identify_tf_to_genes().",
+      "Returning empty data.table"
+    ))
+  }
+
+  return(cis_targets_results)
+}
+
+### generate tf to gene --------------------------------------------------------
+
+#' Identify the TF to gene regulation
+#'
+#' @description
+#' The function will generate the TF to gene associations that can be further
+#' subfiltered subsequently.
+#'
+#' @details
+#' You have three options to extract the information
+#' based on the importance scores generated by the tree-based regression model.
+#' \itemize{
+#'  \item `k_tfs` - This defines how many of the Top TFs per given gene you wish
+#'  to include in a given analysis. If you assume that there are 5 TFs
+#'  controlling your gene, you would set this to `5L`. For each gene, the Top 5
+#'  TFs are identified and subsequently the TF -> c(gene_1, gene_2, gene_3)
+#'  associations are generated.
+#'  \item k_genes - This defines how many target genes per given TF you wish
+#'  to include. If you assume that a TF has a 100 potential target genes, you
+#'  would set this to `100L`. For each TF, the Top 100 potential downstream
+#'  targets are being included in this case.
+#'  \item min_importance - If you want to set a threshold for the minimum
+#'  importance score to filter out noisy genes.
+#' }
+#' You can provide all three parameters at once, in this case you will get a
+#' union of the TF -> gene, gene <- TF approach, filtered by min_importance.
+#' This is the first step and you can subsequently filter by correlation of
+#' TF to target gene and motif enrichment for a given TF.
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param k_tfs Optional integer. How many TFs per given gene you want to
+#' include.
+#' @param k_genes Optional integer. How many genes you want to include
+#' downstream of each TF. Warning. `k_tfs = NULL` and `k_genes = NULL` does
+#' not work.
+#' @param min_importance Optional float. If you want a minimum importance
+#' score for including a TF to gene association.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Adds a data.table with the first tf to gene results to the class.
+#'
+#' @export
+identify_tf_to_genes <- function(
+  x,
+  k_tfs,
+  k_genes,
+  min_importance = NULL,
+  .verbose = TRUE
+) {
+  UseMethod("identify_tf_to_genes")
+}
+
+#' @rdname identify_tf_to_genes
+#'
+#' @export
+identify_tf_to_genes.ScenicGrn <- function(
+  x,
+  k_tfs,
+  k_genes,
+  min_importance = NULL,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::qassert(k_tfs, c("I1", "0"))
+  checkmate::qassert(k_genes, c("I1", "0"))
+  checkmate::qassert(min_importance, c("N1[0, 1]", "0"))
+  checkmate::qassert(.verbose, "B1")
+  if (is.null(k_tfs) & is.null(k_genes)) {
+    stop("k_tfs and k_genes cannot be both NULL.")
+  }
+
+  if (.verbose) {
+    message(
+      "Extracting TF to gene associations based on the importance values."
+    )
+  }
+
+  gene_tf_imp <- x$importance_matrix
+  parts <- list()
+
+  if (!is.null(k_tfs)) {
+    parts[[length(parts) + 1L]] <- data.table::as.data.table(
+      rs_top_k_targets(gene_tf_imp, k_tfs, 1L, min_importance)
+    )
+  }
+
+  if (!is.null(k_genes)) {
+    parts[[length(parts) + 1L]] <- data.table::as.data.table(
+      rs_top_k_targets(gene_tf_imp, k_genes, 2L, min_importance)
+    )
+  }
+
+  tf_gene_dt <- data.table::rbindlist(parts)
+  tf_gene_dt <- unique(tf_gene_dt, by = c("tf", "gene"))
+
+  x$tf_to_gene_results <- tf_gene_dt
+  return(x)
+}
+
+### tf to gene correlation -----------------------------------------------------
+
+#' Generate TF to gene correlations
+#'
+#' @description
+#' This function will calculate the correlations between the identified TF to
+#' gene pairs. You need to have run [identify_tf_to_genes()]!
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param object `SingleCells` object that was used to generate the original
+#' GRNs.
+#' @param cor_filter Optional float. If you wish to filter out TF genes below
+#' a certain correlation. If `NULL` all genes will be kept.
+#' @param remove_self Boolean. Shall self loops (where TF controls its own
+#' expression) be removed. Defaults to `TRUE`.
+#' @param spearman Boolean. Shall Spearman correlation be used. Defaults to
+#' `TRUE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Adds the correlations coefficients between to the TF to gene.
+#'
+#' @export
+tf_to_genes_correlations <- function(
+  x,
+  object,
+  cor_filter = NULL,
+  remove_self = TRUE,
+  spearman = TRUE,
+  .verbose = TRUE
+) {
+  UseMethod("tf_to_genes_correlations")
+}
+
+#' @rdname tf_to_genes_correlations
+#'
+#' @export
+tf_to_genes_correlations.ScenicGrn <- function(
+  x,
+  object,
+  cor_filter = NULL,
+  remove_self = TRUE,
+  spearman = TRUE,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(cor_filter, c("0", "N1"))
+  checkmate::qassert(remove_self, "B1")
+  checkmate::qassert(spearman, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  # early return
+  if (nrow(x$tf_to_gene_results) == 0) {
+    warning(paste(
+      "No TF to gene pairs found. Returning class as is.",
+      "Did you run identify_tf_to_genes()?"
+    ))
+    return(x)
+  }
+
+  tf_to_gene <- get_tf_to_gene(x)
+
+  if (.verbose) {
+    message("Calculating the pairwise correlations between the TFs and genes")
+  }
+
+  indices_1 <- get_sc_map(object)$gene_mapping[tf_to_gene$tf] - 1L
+  indices_2 <- get_sc_map(object)$gene_mapping[tf_to_gene$gene] - 1L
+
+  pairwise_cors <- rs_pairwise_gene_cors(
+    f_path = get_rust_count_gene_f_path(object),
+    gene_indices_1 = indices_1,
+    gene_indices_2 = indices_2,
+    cells_to_keep = get_cells_to_keep(object),
+    spearman = FALSE
+  )
+
+  tf_to_gene[, pairwise_cor := pairwise_cors]
+
+  if (!is.null(cor_filter)) {
+    if (.verbose) {
+      message(sprintf(
+        "Removing TF <> gene pairs with cors <= %.3f",
+        cor_filter
+      ))
+    }
+    tf_to_gene <- tf_to_gene[pairwise_cor >= cor_filter]
+  }
+
+  if (remove_self) {
+    if (.verbose) {
+      message("Removing self loops (TF controlling its own expression")
+    }
+    tf_to_gene <- tf_to_gene[tf != gene]
+  }
+
+  x[["tf_to_gene_results"]] <- tf_to_gene
+
+  return(x)
+}
+
+### scenic cistarget -----------------------------------------------------------
+
+#' Run the SCENIC motif enrichment
+#'
+#' @description
+#' This function will run the motif enrichment based on RCisTarget (or in this
+#' case the internal implementation via [run_cistarget()]). You need to provide
+#' the expected rankings and TF annotations (for details, please see
+#' [run_cistarget()]). Briefly, this function will run CisTarget and add the
+#' results to the `ScenicGrn` object and add additionally a column `"in_motif"`,
+#' for a given TF to gene set to say if it was part of the motifs associated
+#' with this TF (or not). You have the option to limit this to only the
+#' the high confidence TFs (default), or also include the low confidence TFs
+#' (i.e., links from TF to motif that are less certain).
+#'
+#' @param x `ScenicGrn` object for which to generate the TF to gene
+#' associations.
+#' @param motif_rankings Integer matrix. Motif rankings for genes. Row names are
+#' gene identifiers, column names are motif identifiers. Lower values indicate
+#' higher regulatory potential.
+#' @param annot_data data.table. Motif annotation database mapping motifs to
+#' transcription factors. Must contain columns: `motif`, `TF`, and
+#' `annotationSource`.
+#' @param cis_target_params List. Output of [bixverse::params_cistarget()]:
+#' \itemize{
+#'   \item{auc_threshold - Numeric. Proportion of genes to use for AUC
+#'   threshold calculation. Default 0.05 means top 5 percent of genes.}
+#'   \item{nes_threshold - Numeric. Normalised Enrichment Score threshold for
+#'   determining significant motifs. Default is 3.0.}
+#'   \item{rcc_method - Character. Recovery curve calculation method: "approx"
+#'   (approximate, faster) or "icistarget" (exact, slower).}
+#'   \item{high_conf_cats - Character vector. Annotation categories considered
+#'   high confidence (e.g., "directAnnotation", "inferredBy_Orthology").}
+#'   \item{low_conf_cats - Character vector. Annotation categories considered
+#'   lower confidence (e.g., "inferredBy_MotifSimilarity").}
+#' }
+#' @param only_high_conf_tf Boolean. Shall only the high confidence TF to
+#' motif association be used. Defaults to `TRUE`.
+#' @param .verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns Adds a data.table with the first tf to gene results to the class.
+#'
+#' @export
+tf_to_genes_motif_enrichment <- function(
+  x,
+  motif_rankings,
+  annot_data,
+  cis_target_params = params_cistarget(),
+  only_high_conf_tf = TRUE,
+  .verbose = TRUE
+) {
+  UseMethod("tf_to_genes_motif_enrichment")
+}
+
+#' @rdname tf_to_genes_motif_enrichment
+#'
+#' @export
+tf_to_genes_motif_enrichment.ScenicGrn <- function(
+  x,
+  motif_rankings,
+  annot_data,
+  cis_target_params = params_cistarget(),
+  only_high_conf_tf = TRUE,
+  .verbose = TRUE
+) {
+  checkmate::assertClass(x, "ScenicGrn")
+  checkmate::assertMatrix(
+    motif_rankings,
+    mode = "integer",
+    row.names = "named",
+    col.names = "named"
+  )
+  checkmate::assertDataTable(annot_data)
+  checkmate::assertNames(
+    names(annot_data),
+    must.include = c("motif", "TF", "annotationSource")
+  )
+  assertCistargetParams(cis_target_params)
+  checkmate::qassert(only_high_conf_tf, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  tf_gene_dt <- get_tf_to_gene(x)
+  tf_gene_lists <- split(tf_gene_dt$gene, tf_gene_dt$tf)
+
+  if (.verbose) {
+    message(paste(
+      "Running CisTarget to associate TF to gene pairs",
+      "with motif enrichment info."
+    ))
+  }
+
+  cis_res <- run_cistarget(
+    gs_list = tf_gene_lists,
+    rankings = motif_rankings,
+    annot_data = annot_data,
+    cis_target_params = cis_target_params
+  )
+  x[["cis_targets_results"]] <- cis_res
+
+  # helper: explode a semicolon-separated TF column, keeping only rows where
+  # gs_name matches one of the TFs, then explode leading edge genes
+  explode_leading_edge <- function(dt, tf_col) {
+    dt <- dt[!is.na(get(tf_col))]
+    if (nrow(dt) == 0L) {
+      return(data.table::data.table(tf = character(), le_gene = character()))
+    }
+    dt[,
+      .(single_tf = unlist(strsplit(get(tf_col), ";"))),
+      by = .(gs_name, leading_edge_genes)
+    ][
+      single_tf == gs_name,
+      .(le_gene = unlist(strsplit(leading_edge_genes, ";"))),
+      by = .(tf = gs_name)
+    ]
+  }
+
+  le_high <- explode_leading_edge(cis_res, "TF_highConf")
+
+  tf_gene_dt[, in_leading_edge := FALSE]
+  tf_gene_dt[le_high, in_leading_edge := TRUE, on = .(tf, gene = le_gene)]
+
+  if (!only_high_conf_tf) {
+    if (.verbose) {
+      message(" Adding also low confidence TF to motif info")
+    }
+
+    le_low <- explode_leading_edge(cis_res, "TF_lowConf")
+    tf_gene_dt[le_low, in_leading_edge := TRUE, on = .(tf, gene = le_gene)]
+  }
+
+  data.table::setorder(tf_gene_dt, tf)
+  x$tf_to_gene_results <- tf_gene_dt
+  return(x)
 }

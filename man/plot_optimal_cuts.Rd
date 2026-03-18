@@ -7,7 +7,7 @@
 plot_optimal_cuts(object)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
 If optimal cuts results were found, returns the ggplot. Otherwise,

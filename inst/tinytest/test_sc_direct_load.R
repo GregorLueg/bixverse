@@ -32,7 +32,7 @@ sc_qc_param = params_sc_min_quality(
   target_size = 1000
 )
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,
@@ -60,7 +60,7 @@ rm(sc_object)
 
 ## load from disk --------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- suppressMessages(load_existing(sc_object))
 
@@ -161,7 +161,7 @@ expect_true(
 
 rm(sc_object)
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 expect_message(current = load_existing(sc_object), info = "message working")
 
@@ -183,7 +183,7 @@ expect_equal(
 
 rm(sc_object)
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 # will force the function to load from rds
 removed <- file.remove(file.path(test_temp_dir, "memory.qs2"))

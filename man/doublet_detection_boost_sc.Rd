@@ -13,7 +13,7 @@ doublet_detection_boost_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{boost_params}{A list with the final scrublet parameters, see
 \code{\link[=params_boost]{params_boost()}} for full details.}

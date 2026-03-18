@@ -17,7 +17,7 @@ hotspot_gene_cor_sc(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{embd_to_use}{String. The embedding to use. Defaults to \code{"pca"}.}
 

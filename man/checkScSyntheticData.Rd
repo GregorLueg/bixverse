@@ -16,3 +16,4 @@ checkScSyntheticData(x)
 Checkmate extension for checking the synthetic data
 parameters.
 }
+\keyword{internal}

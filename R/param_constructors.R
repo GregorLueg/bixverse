@@ -15,7 +15,7 @@
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
 #'  neighbour search. Defaults to `"hnsw"`. The implementations are:
-#'  `c("hnsw", "annoy", "nndescent", "exhaustive")`.
+#'  `c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"cosine"`. The implementations are
 #'  `c("cosine", "euclidean")`.
@@ -36,6 +36,10 @@
 #'  construction. Defaults to `200L`.
 #'  \item ef_search - HNSW param: size of candidate list (higher = better
 #'  recall, slower). Defaults to `100L`.
+#'  \item n_list - IVF param: number of clusters/centroids to generate. Defaults
+#'  to `NULL` (sqrt(n) n_lists will be generated in this case).
+#'  \item n_probe - IVF param: number of clusters/centroids to query Defaults
+#'  to `NULL` (sqrt(n_lists) clusters will be queried in this case).
 #' }
 #'
 #' @export
@@ -55,7 +59,10 @@ params_knn_defaults <- function() {
     # HNSW
     m = 16L,
     ef_construction = 200L,
-    ef_search = 100L
+    ef_search = 100L,
+    # IVF
+    n_list = NULL,
+    n_probe = NULL
   )
 }
 
@@ -165,7 +172,8 @@ params_pca_defaults <- function() {
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #' Note: this function defaults to `k = 0L` (automatic neighbour detection).
 #'
 #' @returns A named list with all Scrublet parameters, combining defaults with
@@ -245,8 +253,9 @@ params_scrublet <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
-#' Note: this function defaults to `k = 0L` (automatic neighbour detection).
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note: this function defaults to `k = 0L` (automatic neighbour
+#' detection).
 #'
 #' @returns A named list with all Boost parameters, combining defaults with
 #' any user-specified overrides.
@@ -318,7 +327,8 @@ params_boost <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the neighbour parameters.
 #'
@@ -365,7 +375,8 @@ params_sc_neighbours <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the VISION parameters when you wish to use the
 #' auto-correlation version.
@@ -404,7 +415,8 @@ params_sc_vision <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the HotSpot parameters.
 #'
@@ -449,13 +461,13 @@ params_sc_hotspot <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("hnsw", "annoy", "nndescent")`. Defaults to `"hnsw"`.
+#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"hnsw"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
-#' Note: `knn_method` cannot be `"exhaustive"` for MiloR as it doesn't generate
-#' an index!
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Note: `knn_method` cannot be `"exhaustive"` for MiloR as it
+#' doesn't generate an index!
 #'
 #' @returns A list with the MiloR parameters.
 #'
@@ -464,7 +476,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("hnsw", "annoy", "nndescent"),
+  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)
@@ -509,7 +521,8 @@ params_sc_miloR <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the metacell parameters.
 #'
@@ -564,7 +577,8 @@ params_sc_metacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the SEACells parameters.
 #'
@@ -627,7 +641,8 @@ params_sc_seacells <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the SuperCell parameters.
 #'
@@ -680,7 +695,8 @@ params_sc_supercell <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the BBKNN parameters.
 #'
@@ -730,7 +746,8 @@ params_sc_bbknn <- function(
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
-#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and `ef_search`.
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`.
 #'
 #' @returns A list with the fastMNN parameters.
 #'
@@ -765,4 +782,182 @@ params_sc_fastmnn <- function(
     ),
     knn_params
   )
+}
+
+## scenic ----------------------------------------------------------------------
+
+### regression learner params --------------------------------------------------
+
+#' Default parameters for the SCENIC RandomForest regression learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees - Integer. Number of trees to build. Defaults to `250L`.
+#'  \item min_samples_leaf - Integer. Minimum number of samples required at a
+#'  leaf node. Defaults to `50L`.
+#'  \item n_features_split - Integer. Number of features considered per split.
+#'  `0L` resolves to `sqrt(n_features)` at runtime. Defaults to `0L`.
+#'  \item subsample_rate - Numeric. Fraction of samples to draw per tree.
+#'  Defaults to `0.632`.
+#'  \item bootstrap - Logical. Whether to sample with replacement. Defaults to
+#'  `FALSE`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Defaults to `8L`.
+#'  \item subsample_frac - Optional numeric. Fraction of cells to subsample per
+#'  tree. If set, overrides `subsample_rate`. Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_scenic_random_forest_defaults <- function() {
+  list(
+    n_trees = 250L,
+    min_samples_leaf = 50L,
+    n_features_split = 0L,
+    subsample_rate = 0.632,
+    bootstrap = FALSE,
+    max_depth = 8L,
+    subsample_frac = NULL
+  )
+}
+
+#' Default parameters for the SCENIC ExtraTrees regression learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees - Integer. Number of trees to build. Defaults to `500L`.
+#'  \item min_samples_leaf - Integer. Minimum number of samples required at a
+#'  leaf node. Defaults to `50L`.
+#'  \item n_features_split - Integer. Number of features considered per split.
+#'  `0L` resolves to `sqrt(n_features)` at runtime. Defaults to `0L`.
+#'  \item n_thresholds - Integer. Number of random thresholds to evaluate per
+#'  feature per node. Defaults to `1L`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Defaults to `8L`.
+#'  \item subsample_frac - Optional numeric. Fraction of cells to subsample per
+#'  tree. Defaults to `NULL`.
+#' }
+#'
+#' @export
+params_scenic_extra_trees_defaults <- function() {
+  list(
+    n_trees = 500L,
+    min_samples_leaf = 50L,
+    n_features_split = 0L,
+    n_thresholds = 1L,
+    max_depth = 8L,
+    subsample_frac = NULL
+  )
+}
+
+#' Default parameters for the SCENIC GradientBoosting (GRNBoost2) regression
+#' learner
+#'
+#' @return A list with the following parameters:
+#' \itemize{
+#'  \item n_trees_max - Integer. Maximum number of boosting rounds. Early
+#'  stopping usually triggers well before this limit. Defaults to `1000L`.
+#'  \item learning_rate - Numeric. Shrinkage applied to each tree's
+#'  predictions. Defaults to `0.01`.
+#'  \item max_depth - Integer. Maximum depth of each tree. Shallow trees
+#'  (3-5) work best for GBM. Defaults to `3L`.
+#'  \item min_samples_leaf - Integer. Minimum number of training samples
+#'  required at a leaf node. Defaults to `50L`.
+#'  \item early_stop_window - Integer. Number of recent OOB improvements to
+#'  average for the early stopping criterion. Stops when the rolling average
+#'  drops to zero or below. Defaults to `25L`.
+#'  \item subsample_rate - Numeric. Fraction of samples used for training
+#'  each tree. The complement forms the OOB set. Defaults to `0.9`.
+#'  \item n_features_split - Integer. Number of features to evaluate per
+#'  split. `0L` means all features (recommended with histogram subtraction).
+#'  Defaults to `0L`.
+#' }
+#'
+#' @export
+params_scenic_gradient_boosting_defaults <- function() {
+  list(
+    n_trees_max = 1000L,
+    learning_rate = 0.01,
+    max_depth = 3L,
+    min_samples_leaf = 50L,
+    early_stop_window = 25L,
+    subsample_rate = 0.9,
+    n_features_split = 0L
+  )
+}
+
+### main params ----------------------------------------------------------------
+
+#' Constructor for SCENIC parameters
+#'
+#' @param min_counts Integer. Minimum total counts a gene needs to be included
+#' in the analysis. Defaults to `50L`.
+#' @param min_cells Numeric. Minimum proportion of cells (between 0 and 1) that
+#' must express a gene for it to be considered. Defaults to `0.03`.
+#' @param learner_type Character. Regression learner to use. One of
+#' `"randomforest"`, `"extratrees"`, or `"grnboost2"`. Defaults to
+#' `"randomforest"`.
+#' @param gene_batch_strategy Character. Strategy for grouping target genes into
+#' batches. One of `"random"` or `"correlated"`. Only used for `"randomforest"`
+#' and `"extratrees"` learners; ignored for `"grnboost2"`. Defaults to
+#' `"correlated"`.
+#' @param gene_batch_size Optional integer. Number of genes per batch. If `NULL`
+#' (default), the batch size is determined automatically. Ignored for
+#' `"grnboost2"`.
+#' @param n_pcs Integer. Number of PCs to use for the correlated gene batch
+#' strategy. Defaults to `50L`.
+#' @param n_subsample Integer. Cell subsampling threshold for the correlated
+#' gene batch strategy. If the number of cells meets or exceeds this value,
+#' `n_subsample` cells are randomly selected prior to running randomised SVD.
+#' Defaults to `100000L`.
+#' @param learner_params List. Optional overrides for the regression learner
+#' parameters. For `"randomforest"`, see
+#' [bixverse::params_scenic_random_forest_defaults()]. For `"extratrees"`, see
+#' [bixverse::params_scenic_extra_trees_defaults()]. For `"grnboost2"`, see
+#' [bixverse::params_scenic_gradient_boosting_defaults()].
+#'
+#' @returns A named flat list with all SCENIC parameters.
+#'
+#' @export
+params_scenic <- function(
+  min_counts = 50L,
+  min_cells = 0.03,
+  learner_type = "randomforest",
+  gene_batch_strategy = "correlated",
+  gene_batch_size = NULL,
+  n_pcs = 50L,
+  n_subsample = 100000L,
+  learner_params = list()
+) {
+  checkmate::qassert(min_counts, "I1[1,)")
+  checkmate::qassert(min_cells, "N1(0,1]")
+  checkmate::assert_choice(
+    learner_type,
+    c("randomforest", "extratrees", "grnboost2")
+  )
+  checkmate::assert_choice(gene_batch_strategy, c("random", "correlated"))
+  if (!is.null(gene_batch_size)) {
+    checkmate::qassert(gene_batch_size, "I1[1,)")
+  }
+  checkmate::qassert(n_pcs, "I1[1,)")
+  checkmate::qassert(n_subsample, "I1[1,)")
+
+  learner_defaults <- switch(
+    learner_type,
+    extratrees = params_scenic_extra_trees_defaults(),
+    grnboost2 = params_scenic_gradient_boosting_defaults(),
+    params_scenic_random_forest_defaults()
+  )
+
+  params <- c(
+    list(
+      min_counts = min_counts,
+      min_cells = min_cells,
+      learner_type = learner_type,
+      gene_batch_strategy = gene_batch_strategy,
+      gene_batch_size = gene_batch_size,
+      n_pcs = n_pcs,
+      n_subsample = n_subsample
+    ),
+    modifyList(learner_defaults, learner_params, keep.null = TRUE)
+  )
+
+  params
 }

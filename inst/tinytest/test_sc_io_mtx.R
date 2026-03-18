@@ -123,7 +123,7 @@ expect_true(
 #### rust ----------------------------------------------------------------------
 
 # test the underlying rust directly
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 rust_con <- get_sc_rust_ptr(sc_object)
 
@@ -187,7 +187,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_mtx(
   object = sc_object,
@@ -297,7 +297,7 @@ expect_equal(
 
 ### rust = genes ; tsv format --------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 #### rust ----------------------------------------------------------------------
 
@@ -363,7 +363,7 @@ expect_equivalent(
 
 #### full object ---------------------------------------------------------------
 
-sc_object <- suppressWarnings(single_cell_exp(dir_data = test_temp_dir))
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_mtx(
   object = sc_object,

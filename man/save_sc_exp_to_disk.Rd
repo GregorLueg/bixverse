@@ -7,7 +7,7 @@
 save_sc_exp_to_disk(object, type = c("qs2", "rds"))
 }
 \arguments{
-\item{object}{\code{single_cell_exp} class.}
+\item{object}{\code{SingleCells} class.}
 
 \item{type}{String. One of \code{c("qs2", "rds")}. Defines which binary format to
 use. Will default to \code{"qs2"} for speed.}

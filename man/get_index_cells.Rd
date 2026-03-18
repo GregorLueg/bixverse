@@ -2,12 +2,12 @@
 % Please edit documentation in R/classes_single_cell_others.R
 \name{get_index_cells}
 \alias{get_index_cells}
-\alias{get_index_cells.sc_miloR}
+\alias{get_index_cells.miloR}
 \title{Get the index cells}
 \usage{
 get_index_cells(x)
 
-\method{get_index_cells}{sc_miloR}(x)
+\method{get_index_cells}{miloR}(x)
 }
 \arguments{
 \item{x}{An object from which get the index cells.}

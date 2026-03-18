@@ -22,3 +22,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for assert the metacell generation
 parameters.
 }
+\keyword{internal}

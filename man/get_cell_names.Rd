@@ -2,13 +2,13 @@
 % Please edit documentation in R/classes_single_cell.R
 \name{get_cell_names}
 \alias{get_cell_names}
-\alias{get_cell_names.sc_mapper}
-\alias{get_cell_names.single_cell_exp}
+\alias{get_cell_names.ScMap}
+\alias{get_cell_names.SingleCells}
 \title{Get the cell names}
 \usage{
 get_cell_names(x, filtered = FALSE)
 
-\method{get_cell_names}{sc_mapper}(x, filtered = FALSE)
+\method{get_cell_names}{ScMap}(x, filtered = FALSE)
 }
 \arguments{
 \item{x}{An object to get the cell names from.}
@@ -20,5 +20,5 @@ to \code{FALSE}}
 \description{
 Get the cell names
 
-Get the cell names from a \code{single_cell_exp}.
+Get the cell names from a \code{SingleCells}.
 }

@@ -70,7 +70,7 @@ expect_true(
 
 ## object gen ------------------------------------------------------------------
 
-sc_object <- single_cell_exp(dir_data = test_temp_dir)
+sc_object <- SingleCells(dir_data = test_temp_dir)
 
 sc_object <- load_r_data(
   object = sc_object,
@@ -150,19 +150,19 @@ miloR_obj_bruteforce <- get_miloR_abundances_sc(
 
 expect_inherits(
   current = miloR_obj_index,
-  class = "sc_miloR",
+  class = "miloR",
   info = "correct class returned index strategy"
 )
 
 expect_inherits(
   current = miloR_obj_approx,
-  class = "sc_miloR",
-  info = "correct class returned approx strategy"
+  class = "miloR",
+  info = "miloR class returned approx strategy"
 )
 
 expect_inherits(
   current = miloR_obj_bruteforce,
-  class = "sc_miloR",
+  class = "miloR",
   info = "correct class returned brute force strategy"
 )
 
