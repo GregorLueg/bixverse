@@ -2,7 +2,7 @@
 
 ## _Why a code style?_
 
-_Last update: 17.11.2025_ </br>
+_Last update: 18.03.2026_ </br>
 
 If you wish to contribute to the package, please, follow this code style. It is
 not set in stone, but is just designed to generally make the maintenance of this
@@ -70,7 +70,10 @@ leverage early returns and warnings if data is not what it should be.
    understand that not everyone can or will be able to recode the function into
    Rust, please refer to the next points for additional suggestions on code
    improvements that can already go a long way to make workflows more efficient
-   (though not as **brrrrrr** as using Rust).
+   (though not as **brrrrrr** as using Rust). The code has now been fully
+   abstracted into an independent crate, see [here](https://crates.io/crates/bixverse-rs).
+   If you wish to work on the underlying Rust code, please refer to the 
+   repsective GitHub supporting the crate here.
 4. Use [data.table](https://github.com/Rdatatable/data.table) (see point before)
    over tibble and/or data.frame. _"Yeah, but I like dplyr and the tidyverse."_
    We get it... But the speed-ups, increased memory efficacy, feature richness of
