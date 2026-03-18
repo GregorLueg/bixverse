@@ -13,6 +13,6 @@ plot_ica_stability_individual(object)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to apply
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
   [`ica_evaluate_comp()`](ica_evaluate_comp.md) before running this
   function.

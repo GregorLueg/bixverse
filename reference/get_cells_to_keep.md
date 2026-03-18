@@ -2,14 +2,14 @@
 
 Get the cells to keep
 
-Get the cells to keep from a `single_cell_exp`.
+Get the cells to keep from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_cells_to_keep(x)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 get_cells_to_keep(x)
 ```
 

@@ -12,7 +12,7 @@ assertCellsExist(x, cell_names, .var.name = checkmate::vname(x), add = NULL)
 
 - x:
 
-  The `single_cell_exp` object to check/assert.
+  The `SingleCells` object to check/assert.
 
 - cell_names:
 

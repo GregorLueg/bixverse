@@ -12,7 +12,7 @@ get_sim_matrix(object, as_data_table = FALSE, .verbose = TRUE)
 
 - object:
 
-  `ontology class`. See [`ontology()`](ontology.md).
+  `OntologySim class`. See [`OntologySim()`](OntologySim.md).
 
 - as_data_table:
 

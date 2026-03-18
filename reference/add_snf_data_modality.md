@@ -14,7 +14,8 @@ add_snf_data_modality(object, data, data_name, params = NULL)
 
 - object:
 
-  The underlying class, see [`snf()`](snf.md).
+  The underlying class, see
+  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
 
 - data:
 

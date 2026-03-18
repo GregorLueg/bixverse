@@ -52,11 +52,11 @@ package.</p>
     <p>A list with default parameters for kNN searches. Following
 parameters:</p><ul><li><p>k - Number of neighbours. Defaults to <code>15L</code>.</p></li>
 <li><p>knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to <code>"annoy"</code>. The implementations are:
-<code>c("hnsw", "annoy", "nndescent", "exhaustive")</code>.</p></li>
+neighbour search. Defaults to <code>"hnsw"</code>. The implementations are:
+<code>c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")</code>.</p></li>
 <li><p>ann_dist - Which distance metric to use for the approximate nearest
-neighbour search. Defaults to <code>"euclidean"</code>. The implementations are
-<code>c("euclidean", "cosine")</code>.</p></li>
+neighbour search. Defaults to <code>"cosine"</code>. The implementations are
+<code>c("cosine", "euclidean")</code>.</p></li>
 <li><p>n_trees - Annoy param: number of trees to generate for Annoy. Defaults
 to <code>50L</code>.</p></li>
 <li><p>search_budget - Annoy param: optional search budget per tree for
@@ -74,6 +74,10 @@ Defaults to <code>16L</code>.</p></li>
 construction. Defaults to <code>200L</code>.</p></li>
 <li><p>ef_search - HNSW param: size of candidate list (higher = better
 recall, slower). Defaults to <code>100L</code>.</p></li>
+<li><p>n_list - IVF param: number of clusters/centroids to generate. Defaults
+to <code>NULL</code> (sqrt(n) n_lists will be generated in this case).</p></li>
+<li><p>n_probe - IVF param: number of clusters/centroids to query Defaults
+to <code>NULL</code> (sqrt(n_lists) clusters will be queried in this case).</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

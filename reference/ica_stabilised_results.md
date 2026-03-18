@@ -21,7 +21,7 @@ ica_stabilised_results(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to apply
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
   [`ica_processing()`](ica_processing.md) before running this function.
 
 - no_comp:
@@ -83,5 +83,5 @@ ica_stabilised_results(
 
 ## Value
 
-`bulk_coexp` with the the source matrix S, mixing matrix A and other
+`BulkCoExp` with the the source matrix S, mixing matrix A and other
 parameters added to the slots.

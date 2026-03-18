@@ -12,7 +12,7 @@ check_dim(object, no_samples)
 
 - object:
 
-  `snf` class.
+  `SimilarityNetworkFusion` class.
 
 - no_samples:
 

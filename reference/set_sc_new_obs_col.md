@@ -12,7 +12,7 @@ set_sc_new_obs_col(object, col_name, new_data)
 
 - object:
 
-  [`bixverse::single_cell_exp`](single_cell_exp.md) class.
+  [`bixverse::SingleCells`](SingleCells.md) class.
 
 - col_name:
 

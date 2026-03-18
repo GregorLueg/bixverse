@@ -22,7 +22,7 @@ find_rbh_communities(
 
 - object:
 
-  The underlying class, see [`rbh_graph()`](rbh_graph.md).
+  The underlying class, see [`RbhGraph()`](RbhGraph.md).
 
 - resolution_params:
 

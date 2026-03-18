@@ -21,7 +21,7 @@ load_r_data(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - counts:
 

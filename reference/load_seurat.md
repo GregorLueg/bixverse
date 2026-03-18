@@ -1,7 +1,7 @@
-# Load in Seurat to `single_cell_exp`
+# Load in Seurat to `SingleCells`
 
-This function takes a Seurat file and generates `single_cell_exp` class
-from it.
+This function takes a Seurat file and generates `SingleCells` class from
+it.
 
 ## Usage
 
@@ -20,7 +20,7 @@ load_seurat(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - seurat:
 

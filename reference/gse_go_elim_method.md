@@ -1,6 +1,6 @@
 # Run gene ontology enrichment with elimination method.
 
-This method takes the gene_ontology_data and a target gene set and
+This method takes the GeneOntologyElim and a target gene set and
 performs an GSE enrichment leveraging ontological information. It starts
 at the lowest levels of the ontology and tests if there is significant
 enrichment for any GO terms. If the threshold of the p-value is below
@@ -26,8 +26,7 @@ gse_go_elim_method(
 
 - object:
 
-  The underlying class, see
-  [`gene_ontology_data()`](gene_ontology_data.md).
+  The underlying class, see [`GeneOntologyElim()`](GeneOntologyElim.md).
 
 - target_genes:
 
@@ -50,7 +49,7 @@ gse_go_elim_method(
 
   Integer. Minimum number of genes that have to be included in the gene
   ontology term. If NULL, it will default to the number of minimum genes
-  stored in `gene_ontology_data`.
+  stored in `GeneOntologyElim`.
 
 ## Value
 

@@ -5,7 +5,7 @@ of the kNN graph. The general idea of the approach is to use the kNN
 graph generated from the single cell data, generate representative
 neighbourhoods and calculate differential abundances within these
 neighbourhoods. For further details on the method, please refer to Dann,
-et al. This function will take a `single_cell_exp` class, run the
+et al. This function will take a `SingleCells` class, run the
 neighbourhood detection, count the occurrences of a sample and return a
 `sc_miloR` class for subsequent differential abundance testing and
 further annotations.
@@ -28,7 +28,7 @@ get_miloR_abundances_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - sample_id_col:
 

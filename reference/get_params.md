@@ -1,6 +1,6 @@
 # Get the parameters that were used.
 
-Extracts parameters from the `bixverse_base_class` class (or child
+Extracts parameters from the `BixverseBaseClass` class (or child
 classes) and has options to return (pretty) JSONs. This generic also
 gets inherited by other classes and can be used to extract parameters.
 Also, can dispatch to specific methods for certain S3 classes.
@@ -10,9 +10,11 @@ Also, can dispatch to specific methods for certain S3 classes.
 ``` r
 get_params(object, to_json = FALSE, pretty_json = FALSE)
 
-get_params.sc_hotspot(object, to_json = FALSE, pretty_json = FALSE)
+get_params.Hotspot(object, to_json = FALSE, pretty_json = FALSE)
 
-get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
+get_params.miloR(object, to_json = FALSE, pretty_json = FALSE)
+
+get_params.ScenicGrn(object, to_json = FALSE, pretty_json = FALSE)
 ```
 
 ## Arguments
@@ -20,8 +22,7 @@ get_params.sc_miloR(object, to_json = FALSE, pretty_json = FALSE)
 - object:
 
   A class within bixverse that inherits from
-  [`bixverse_base_class()`](bixverse_base_class.md) or defined S3
-  classes.
+  [`BixverseBaseClass()`](BixverseBaseClass.md) or defined S3 classes.
 
 - to_json:
 

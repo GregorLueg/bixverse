@@ -12,8 +12,8 @@ remove_samples(object, samples_to_remove, ...)
 
 - object:
 
-  The underlying object, either [`bixverse::bulk_coexp`](bulk_coexp.md)
-  or [`bixverse::bulk_dge`](bulk_dge.md).
+  The underlying object, either [`BulkCoExp()`](BulkCoExp.md) or
+  [`BulkDge()`](BulkDge.md).
 
 - samples_to_remove:
 

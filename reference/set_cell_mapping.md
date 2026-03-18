@@ -1,15 +1,15 @@
-# Set cell mapping for sc_mapper object
+# Set cell mapping for ScMap object
 
-Set cell mapping for sc_mapper object
+Set cell mapping for ScMap object
 
-Set the cell mapping for a `single_cell_exp` class.
+Set the cell mapping for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_cell_mapping(x, cell_map)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 set_cell_mapping(x, cell_map)
 ```
 

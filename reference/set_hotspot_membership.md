@@ -7,7 +7,7 @@ Identify hotspot gene clusters
 ``` r
 set_hotspot_membership(x, fdr_threshold = 0.05, min_size = 10L)
 
-# S3 method for class 'sc_hotspot'
+# S3 method for class 'Hotspot'
 set_hotspot_membership(x, fdr_threshold = 0.05, min_size = 10L)
 ```
 

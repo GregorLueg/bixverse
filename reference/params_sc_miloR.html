@@ -42,7 +42,7 @@
 <span>  prop <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  k_refine <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  refinement_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"index"</span>, <span class="st">"approximate"</span>, <span class="st">"bruteforce"</span><span class="op">)</span>,</span>
-<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"annoy"</span>, <span class="st">"hnsw"</span><span class="op">)</span>,</span>
+<span>  index_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hnsw"</span>, <span class="st">"annoy"</span>, <span class="st">"nndescent"</span>, <span class="st">"ivf"</span><span class="op">)</span>,</span>
 <span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -69,16 +69,16 @@ One of <code>c("approximate", "bruteforce", "index")</code>. Defaults to
 
 <dt id="arg-index-type">index_type<a class="anchor" aria-label="anchor" href="#arg-index-type"></a></dt>
 <dd><p>String. Type of kNN index to use. One of
-<code>c("annoy", "hnsw")</code>. Defaults to <code>"annoy"</code>.</p></dd>
+<code>c("hnsw", "annoy", "nndescent", "ivf")</code>. Defaults to <code>"hnsw"</code>.</p></dd>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, and <code>ef_search</code>.
-Note: <code>knn_method</code> cannot be <code>"exhaustive"</code> for MiloR as it doesn't generate
-an index!</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
+and <code>n_probe</code>. Note: <code>knn_method</code> cannot be <code>"exhaustive"</code> for MiloR as it
+doesn't generate an index!</p></dd>
 
 </dl></div>
     <div class="section level2">

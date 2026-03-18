@@ -15,12 +15,12 @@ plot_resolution_res(object, print_head = TRUE, ...)
 - object:
 
   The class, either [`bixverse::rbh_graph`](rbh_graph.md) or
-  [`bixverse::bulk_coexp`](bulk_coexp.md).
+  [`bixverse::BulkCoExp`](BulkCoExp.md).
 
 - print_head:
 
   Boolean. Print the Top5 resolution parameters and their meta data.
-  Only applicable for `bulk_coexp` objects.
+  Only applicable for `BulkCoExp` objects.
 
 - ...:
 

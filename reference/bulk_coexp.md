@@ -1,7 +1,8 @@
-# Bulk RNAseq co-expression modules
+# Bulk RNAseq co-expression modules (deprecated)
 
-Class for applying various co-expression module detection methods on top
-of bulk RNAseq data.
+**\[deprecated\]**
+
+This constructor has been renamed to [`BulkCoExp()`](BulkCoExp.md).
 
 ## Usage
 
@@ -17,7 +18,7 @@ bulk_coexp(raw_data, meta_data, variable_info = NULL)
 
 - meta_data:
 
-  data.table Metadata information on the samples. Expects to have a
+  data.table. Metadata information on the samples. Expects to have a
   `sample_id` column.
 
 - variable_info:
@@ -27,35 +28,4 @@ bulk_coexp(raw_data, meta_data, variable_info = NULL)
 
 ## Value
 
-Returns the `bulk_coexp` class for further operations.
-
-## Properties
-
-- raw_data:
-
-  A numerical matrix of the provided raw data.
-
-- meta_data:
-
-  A data.table with the meta-information about the samples.
-
-- variable_info:
-
-  An optional data.table containing the variable info.
-
-- processed_data:
-
-  A list in which various types of processed data will be stored.
-
-- outputs:
-
-  A list in which key outputs will be stored.
-
-- params:
-
-  A (nested) list that will store all the parameters of the applied
-  function.
-
-- final_results:
-
-  A data.table that will contain the final results.
+Returns a [`BulkCoExp()`](BulkCoExp.md) object.

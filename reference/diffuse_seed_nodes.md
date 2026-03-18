@@ -19,8 +19,8 @@ diffuse_seed_nodes(
 
 - object:
 
-  `network_diffusions` object. The underlying class
-  [`network_diffusions()`](network_diffusions.md).
+  `NetworkDiffusions` object. The underlying class
+  [`NetworkDiffusions()`](NetworkDiffusions.md).
 
 - diffusion_vector:
 

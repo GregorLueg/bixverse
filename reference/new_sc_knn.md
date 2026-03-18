@@ -30,4 +30,4 @@ new_sc_knn(knn_data, used_cells)
 
 ## Value
 
-Generates the `sc_knn` class.
+Generates the `SingleCellNearestNeighbour` class.

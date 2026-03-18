@@ -12,7 +12,7 @@ set_sc_new_var_cols(object, data_list)
 
 - object:
 
-  [`bixverse::single_cell_exp`](single_cell_exp.md) class.
+  [`bixverse::SingleCells`](SingleCells.md) class.
 
 - data_list:
 

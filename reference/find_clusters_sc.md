@@ -13,7 +13,7 @@ find_clusters_sc(object, res = 1, name = "leiden_clustering")
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - res:
 

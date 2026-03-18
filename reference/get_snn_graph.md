@@ -2,14 +2,14 @@
 
 Get the sNN graph
 
-Get the SNN graph from a `single_cell_exp`.
+Get the SNN graph from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_snn_graph(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 get_snn_graph(x)
 ```
 

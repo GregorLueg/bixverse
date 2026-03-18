@@ -25,7 +25,7 @@ calculate_dge_limma(
 
 - object:
 
-  The underlying class, see [`bulk_dge()`](bulk_dge.md).
+  The underlying class, see [`BulkDge()`](BulkDge.md).
 
 - contrast_column:
 

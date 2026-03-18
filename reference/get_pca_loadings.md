@@ -2,14 +2,14 @@
 
 Get the PCA loadings
 
-Get the PCA loadings from a `single_cell_exp`.
+Get the PCA loadings from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_pca_loadings(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 get_pca_loadings(x)
 ```
 

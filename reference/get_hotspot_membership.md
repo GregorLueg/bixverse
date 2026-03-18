@@ -7,7 +7,7 @@ Get the hotspot gene membership table
 ``` r
 get_hotspot_membership(x)
 
-# S3 method for class 'sc_hotspot'
+# S3 method for class 'Hotspot'
 get_hotspot_membership(x)
 ```
 

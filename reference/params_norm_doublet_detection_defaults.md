@@ -17,7 +17,7 @@ designed for doublet detection methods:
 - log_transform - Boolean. Shall the counts be log-normalised. Defaults
   to `TRUE`.
 
-- mean_center - Boolean. Shall mean centreing be applied. Defaults to
+- mean_center - Boolean. Shall mean centring be applied. Defaults to
   `FALSE`.
 
 - normalise_variance - Boolean. Shall the variance be normalised.

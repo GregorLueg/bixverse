@@ -25,7 +25,7 @@ cor_module_graph_final_modules(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - resolution:
 

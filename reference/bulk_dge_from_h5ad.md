@@ -1,7 +1,7 @@
-# Wrapper function to generate bulk_dge object from h5ad
+# Wrapper function to generate BulkDge object from h5ad
 
-This is a helper function that can be used to create a `bulk_dge` object
-(see [`bulk_dge()`](bulk_dge.md)) directly from h5ad objects.
+This is a helper function that can be used to create a `BulkDge` object
+(see [`BulkDge()`](BulkDge.md)) directly from h5ad objects.
 
 ## Usage
 
@@ -21,4 +21,4 @@ bulk_dge_from_h5ad(h5_path, .verbose = TRUE)
 
 ## Value
 
-`bulk_dge` object.
+`BulkDge` object.

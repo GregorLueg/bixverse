@@ -25,7 +25,7 @@ module_scores_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - gs_list:
 

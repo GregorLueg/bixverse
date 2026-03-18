@@ -2,14 +2,14 @@
 
 Set/add KNN
 
-Set the sNN graph for a `single_cell_exp` class.
+Set the sNN graph for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_snn_graph(x, snn_graph)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 set_snn_graph(x, snn_graph)
 ```
 

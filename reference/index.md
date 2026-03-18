@@ -2,6 +2,35 @@
 
 ## All functions
 
+- [`AnnDataParser`](AnnDataParser.md) : Class for Anndata
+
+- [`BulkCoExp()`](BulkCoExp.md) : Bulk RNAseq co-expression modules
+
+- [`BulkDge()`](BulkDge.md) : Bulk RNAseq differential gene expression
+  class
+
+- [`GeneOntologyElim()`](GeneOntologyElim.md) : Gene Ontology data
+
+- [`MetaCells()`](MetaCells.md) : bixverse meta cell class
+
+- [`NetworkDiffusions()`](NetworkDiffusions.md) : Network diffusion
+  class
+
+- [`OntologySim()`](OntologySim.md) : OntologySim class
+
+- [`RbhGraph()`](RbhGraph.md) : Reciprocal best hit graph
+
+- [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md) : Similarity
+  network fusion
+
+- [`SingleCellDuckDB`](SingleCellDuckDB.md) : Class for storing single
+  cell experimental data in DuckDB (nightly!)
+
+- [`SingleCellDuckDBBase`](SingleCellDuckDBBase.md) : Base class for the
+  single cell DuckDB connection
+
+- [`SingleCells()`](SingleCells.md) : bixverse single cell class
+
 - [`add_new_metadata()`](add_new_metadata.md) : Replace the meta data
 
 - [`add_nhoods_info()`](add_nhoods_info.md) : Add neighbourhood info on
@@ -13,87 +42,6 @@
 - [`all_limma_contrasts()`](all_limma_contrasts.md) : Create all limma
   contrasts (based on combination of everything)
 
-- [`anndata_parser`](anndata_parser.md) : Class for Anndata
-
-- [`assertCellsExist()`](assertCellsExist.md) : Assert neighbour
-  generation parameters
-
-- [`assertCistargetParams()`](assertCistargetParams.md) : Assert
-  CisTarget parameters
-
-- [`assertCoReMoParams()`](assertCoReMoParams.md) : Assert CoReMo
-  parameter
-
-- [`assertCommunityParams()`](assertCommunityParams.md) : Assert
-  community detection parameter
-
-- [`assertCorGraphParams()`](assertCorGraphParams.md) : Assert
-  correlation graph parameters
-
-- [`assertDGRDLparams()`](assertDGRDLparams.md) : Assert DGRDL parameter
-
-- [`assertFileExists()`](assertFileExists.md) : Assert that files exist
-
-- [`assertGSEAParams()`](assertGSEAParams.md) : Assert GSEA parameter
-
-- [`assertGSVAParams()`](assertGSVAParams.md) : Assert GSVA parameter
-
-- [`assertGraphResParams()`](assertGraphResParams.md) : Assert
-  resolution graph parameters
-
-- [`assertIcaIterParams()`](assertIcaIterParams.md) : Assert ICA
-  randomisation parameters
-
-- [`assertIcaNcomps()`](assertIcaNcomps.md) : Assert ICA no of component
-  parameters
-
-- [`assertIcaParams()`](assertIcaParams.md) : Assert ICA parameters
-
-- [`assertLabelPropParams()`](assertLabelPropParams.md) : Assert label
-  propagation parameters
-
-- [`assertSNFParams()`](assertSNFParams.md) : Assert SNF parameter
-
-- [`assertScBbknn()`](assertScBbknn.md) : Assert BBKNN parameters
-
-- [`assertScBoost()`](assertScBoost.md) : Assert Boost parameters
-
-- [`assertScFastmnn()`](assertScFastmnn.md) : Assert fastMNN parameters
-
-- [`assertScHotspot()`](assertScHotspot.md) : Assert HotSpot parameters
-
-- [`assertScHvg()`](assertScHvg.md) : Assert HVG selection parameters
-
-- [`assertScMetacells()`](assertScMetacells.md) : Assert metacell
-  generation parameters
-
-- [`assertScMiloR()`](assertScMiloR.md) : Assert MiloR parameters
-
-- [`assertScMinQC()`](assertScMinQC.md) : Assert SC minimum QC
-  parameters
-
-- [`assertScMtxIO()`](assertScMtxIO.md) : Assert SC MTX load parameters
-
-- [`assertScNeighbours()`](assertScNeighbours.md) : Assert neighbour
-  generation parameters
-
-- [`assertScScrublet()`](assertScScrublet.md) : Assert Scrublet
-  parameters
-
-- [`assertScSeacells()`](assertScSeacells.md) : Assert SEACells
-  parameters
-
-- [`assertScSupercell()`](assertScSupercell.md) : Assert SuperCell
-  parameters
-
-- [`assertScSyntheticData()`](assertScSyntheticData.md) : Assert
-  synthetic data parameters
-
-- [`assertScVision()`](assertScVision.md) : Assert VISION parameters
-
-- [`assertSingleSampleGSEAparams()`](assertSingleSampleGSEAparams.md) :
-  Assert ssGSEA parameter
-
 - [`aucell_sc()`](aucell_sc.md) : Calculate AUC scores (akin to AUCell)
 
 - [`batch_correction_bulk_dge()`](batch_correction_bulk_dge.md) : Run a
@@ -101,16 +49,8 @@
 
 - [`bbknn_sc()`](bbknn_sc.md) : Run BBKNN
 
-- [`bixverse_base_class()`](bixverse_base_class.md) : bixverse base
-  class
-
-- [`bulk_coexp()`](bulk_coexp.md) : Bulk RNAseq co-expression modules
-
-- [`bulk_dge()`](bulk_dge.md) : Bulk RNAseq differential gene expression
-  class
-
 - [`bulk_dge_from_h5ad()`](bulk_dge_from_h5ad.md) : Wrapper function to
-  generate bulk_dge object from h5ad
+  generate BulkDge object from h5ad
 
 - [`c_pca_plot_alphas()`](c_pca_plot_alphas.md) : Plot various alphas
   for the contrastive PCA
@@ -199,86 +139,7 @@
 - [`cell_cycle_genes`](cell_cycle_genes.md) : Cell cycle genes
 
 - [`change_gene_identifier()`](change_gene_identifier.md) : Change the
-  primary gene identifier of bulk_dge
-
-- [`checkCellsExist()`](checkCellsExist.md) : Check that the cell name
-  exists in the object
-
-- [`checkCistargetParams()`](checkCistargetParams.md) : Check CisTarget
-  parameters
-
-- [`checkCoReMoParams()`](checkCoReMoParams.md) : Check CoReMo
-  parameters
-
-- [`checkCommunityParams()`](checkCommunityParams.md) : Check community
-  detection parameters
-
-- [`checkCorGraphParams()`](checkCorGraphParams.md) : Check correlation
-  graph parameters
-
-- [`checkDGRDLparams()`](checkDGRDLparams.md) : Check DGRDL parameters
-
-- [`checkFilesExist()`](checkFilesExist.md) : Check that files exist
-
-- [`checkGSEAParams()`](checkGSEAParams.md) : Check GSEA parameters
-
-- [`checkGSVAParams()`](checkGSVAParams.md) : Check GSVA parameters
-
-- [`checkGraphResParams()`](checkGraphResParams.md) : Check resolution
-  graph parameters
-
-- [`checkIcaIterParams()`](checkIcaIterParams.md) : Check ICA
-  randomisation parameters
-
-- [`checkIcaNcomps()`](checkIcaNcomps.md) : Check ICA no of component
-  parameters
-
-- [`checkIcaParams()`](checkIcaParams.md) : Check ICA parameters
-
-- [`checkKnnParams()`](checkKnnParams.md) : Check kNN parameters
-
-- [`checkLabelPropParams()`](checkLabelPropParams.md) : Check label
-  propagation parameters
-
-- [`checkSNFParams()`](checkSNFParams.md)
-  [`testSNFParams()`](checkSNFParams.md) : Check SNF parameters
-
-- [`checkScBbknn()`](checkScBbknn.md) : Check BBKNN parameters
-
-- [`checkScBoost()`](checkScBoost.md) : Check Boost parameters
-
-- [`checkScFastmnn()`](checkScFastmnn.md) : Check fastMNN parameters
-
-- [`checkScHotspot()`](checkScHotspot.md) : Check HotSpot parameters
-
-- [`checkScHvg()`](checkScHvg.md) : Check HVG selection parameters
-
-- [`checkScMetacells()`](checkScMetacells.md) : Check metacell
-  generation parameters
-
-- [`checkScMiloR()`](checkScMiloR.md) : Check MiloR parameters
-
-- [`checkScMinQC()`](checkScMinQC.md) : Check SC minimum QC parameters
-
-- [`checkScMtxIO()`](checkScMtxIO.md) : Check SC MTX load parameters
-
-- [`checkScNeighbours()`](checkScNeighbours.md) : Check neighbour
-  generation parameters
-
-- [`checkScScrublet()`](checkScScrublet.md) : Check Scrublet parameters
-
-- [`checkScSeacells()`](checkScSeacells.md) : Check SEACells parameters
-
-- [`checkScSupercell()`](checkScSupercell.md) : Check SuperCell
-  parameters
-
-- [`checkScSyntheticData()`](checkScSyntheticData.md) : Check synthetic
-  data parameters
-
-- [`checkScVision()`](checkScVision.md) : Check VISION parameters
-
-- [`checkSingleSampleGSEAparams()`](checkSingleSampleGSEAparams.md) :
-  Check ssGSEA parameters
+  primary gene identifier of BulkDge
 
 - [`check_dim()`](check_dim.md) : Helper to assert same number of
   samples
@@ -358,8 +219,14 @@
 - [`diffuse_seed_nodes()`](diffuse_seed_nodes.md) : Diffuse seed genes
   over a network
 
+- [`dim.SingleCells`](dim.SingleCells.md) : dim Method for SingleCells
+  object
+
 - [`doublet_detection_boost_sc()`](doublet_detection_boost_sc.md) :
   Doublet detection with boosted doublet classification
+
+- [`download_cistarget_hg38()`](download_cistarget_hg38.md) : Download
+  CisTarget reference files for human (hg38)
 
 - [`download_pbmc3k()`](download_pbmc3k.md) : Download PBMC3K data from
   10x Genomics
@@ -413,8 +280,6 @@
 - [`flip_ica_loading_signs()`](flip_ica_loading_signs.md) : Flips the
   ICA source sign
 
-- [`gene_ontology_data()`](gene_ontology_data.md) : Gene Ontology data
-
 - [`gene_set_proportions_sc()`](gene_set_proportions_sc.md) : Calculate
   the proportions of reads for specific gene sets
 
@@ -458,6 +323,9 @@
 
 - [`get_cells_to_keep()`](get_cells_to_keep.md) : Get the cells to keep
 
+- [`get_cistarget_res()`](get_cistarget_res.md) : Extract the TF to gene
+  data from the ScenicGrn object
+
 - [`get_cor_graph()`](get_cor_graph.md) : Get correlation-based graph
 
 - [`get_cores()`](get_cores.md) : Helper function for core detection.
@@ -498,10 +366,10 @@
 - [`get_gene_indices()`](get_gene_indices.md) : Get the index position
   for a gene
 
-- [`get_gene_lengths()`](get_gene_lengths.md) : Get the gene lengths
+- [`get_gene_lengths.BulkCoExp`](get_gene_lengths.BulkCoExp.md) : Get
+  gene set lengths for a BulkCoExp class
 
-- [`get_gene_lengths.bulk_coexp`](get_gene_lengths.bulk_coexp.md) : Get
-  gene set lengths for a bulk_coexp class
+- [`get_gene_lengths()`](get_gene_lengths.md) : Get the gene lengths
 
 - [`get_gene_lengths(`*`<matrix>`*`)`](get_gene_lengths.matrix.md) : Get
   gene set lengths for a matrix
@@ -545,7 +413,7 @@
 
 - [`get_meta_cells_sc()`](get_meta_cells_sc.md) :
 
-  Generate meta cells based on hdWGCNA and return a `meta_cells` object
+  Generate meta cells based on hdWGCNA and return a `MetaCells` object
 
 - [`get_metadata()`](get_metadata.md) : Return the metadata
 
@@ -563,8 +431,9 @@
 - [`get_outputs()`](get_outputs.md) : Return the outputs
 
 - [`get_params()`](get_params.md)
-  [`get_params.sc_hotspot()`](get_params.md)
-  [`get_params.sc_miloR()`](get_params.md) : Get the parameters that
+  [`get_params.Hotspot()`](get_params.md)
+  [`get_params.miloR()`](get_params.md)
+  [`get_params.ScenicGrn()`](get_params.md) : Get the parameters that
   were used.
 
 - [`get_pca_factors()`](get_pca_factors.md) : Get the PCA factors
@@ -611,7 +480,7 @@
 
 - [`get_seacells_sc()`](get_seacells_sc.md) :
 
-  Generate meta cells based on SEACells and return a `meta_cells` object
+  Generate meta cells based on SEACells and return a `MetaCells` object
 
 - [`get_seurat_counts_to_list()`](get_seurat_counts_to_list.md) :
   Transform Seurat raw counts into a List
@@ -630,7 +499,10 @@
 
 - [`get_supercells_sc()`](get_supercells_sc.md) :
 
-  Generate SuperCells and return a `meta_cells` object
+  Generate SuperCells and return a `MetaCells` object
+
+- [`get_tf_to_gene()`](get_tf_to_gene.md) : Extract the TF to gene data
+  from the ScenicGrn object
 
 - [`get_tpm_counts()`](get_tpm_counts.md) : Return the TPM-normalised
   counts
@@ -646,6 +518,8 @@
 
 - [`gse_hypergeometric_list()`](gse_hypergeometric_list.md) : Gene set
   enrichment (GSE) based on a hypergeometric test over a list.
+
+- [`harmony_sc()`](harmony_sc.md) : Run Harmony
 
 - [`hedges_g_dge()`](hedges_g_dge.md) : Calculate the effect size
 
@@ -666,40 +540,46 @@
 - [`ica_stabilised_results()`](ica_stabilised_results.md) : Run
   stabilised ICA with a given number of components
 
+- [`identify_tf_to_genes()`](identify_tf_to_genes.md) : Identify the TF
+  to gene regulation
+
 - [`knn_graph_label_propagation()`](knn_graph_label_propagation.md) :
   kNN-based graph label propagation
 
-- [`load_existing()`](load_existing.md) : Load an existing
-  single_cell_exp from disk
+- [`load_existing()`](load_existing.md) : Load an existing SingleCells
+  from disk
 
 - [`load_go_human_data()`](load_go_human_data.md) : Get the Gene
   Ontology data human
 
 - [`load_h5ad()`](load_h5ad.md) :
 
-  Load in h5ad to `single_cell_exp`
+  Load in h5ad to `SingleCells`
+
+- [`load_h5ad_norm()`](load_h5ad_norm.md) :
+
+  Load in h5ad with normalised counts to `SingleCells`
 
 - [`load_mtx()`](load_mtx.md) :
 
-  Load in mtx/plain text files to `single_cell_exp` (nightly!)
+  Load in mtx/plain text files to `SingleCells`
+
+- [`load_multi_h5ad()`](load_multi_h5ad.md) :
+
+  Load multiple h5ad files into a single `SingleCells`
 
 - [`load_r_data()`](load_r_data.md) : Load in data directly from R
   objects.
 
 - [`load_seurat()`](load_seurat.md) :
 
-  Load in Seurat to `single_cell_exp`
-
-- [`meta_cells()`](meta_cells.md) : bixverse meta cell class
+  Load in Seurat to `SingleCells`
 
 - [`module_scores_sc()`](module_scores_sc.md) : Calculate module
   activity scores
 
 - [`multilevel_error()`](multilevel_error.md) : Helper function to
   calculate the multi-level error
-
-- [`network_diffusions()`](network_diffusions.md) : Network diffusion
-  class
 
 - [`new_sc_cache()`](new_sc_cache.md) : Helper function to hold relevant
   cached data
@@ -716,6 +596,9 @@
 - [`new_sc_miloR_res()`](new_sc_miloR_res.md) : Generate a new miloR
   result
 
+- [`new_scenic_grn()`](new_scenic_grn.md) : Constructor for SCENIC GRN
+  results
+
 - [`nightly_feature()`](nightly_feature.md) : Helper functions to mark
   something unstable/nightly
 
@@ -724,8 +607,6 @@
 
 - [`one_hot_encode()`](one_hot_encode.md) : Helper to generate one-hot
   encodings
-
-- [`ontology()`](ontology.md) : Ontology class
 
 - [`ot_harmonic_score()`](ot_harmonic_score.md) : Calculates a harmonic
   sum normalised between 0 to 1.
@@ -789,6 +670,9 @@
 - [`params_sc_fastmnn()`](params_sc_fastmnn.md) : Wrapper function for
   the fastMNN parameters
 
+- [`params_sc_harmony()`](params_sc_harmony.md) : Default parameters for
+  Harmony batch correction
+
 - [`params_sc_hotspot()`](params_sc_hotspot.md) : Wrapper function for
   parameters for HotSpot
 
@@ -821,6 +705,19 @@
 
 - [`params_sc_vision()`](params_sc_vision.md) : Wrapper function for
   parameters for VISION with auto-correlation
+
+- [`params_scenic()`](params_scenic.md) : Constructor for SCENIC
+  parameters
+
+- [`params_scenic_extra_trees_defaults()`](params_scenic_extra_trees_defaults.md)
+  : Default parameters for the SCENIC ExtraTrees regression learner
+
+- [`params_scenic_gradient_boosting_defaults()`](params_scenic_gradient_boosting_defaults.md)
+  : Default parameters for the SCENIC GradientBoosting (GRNBoost2)
+  regression learner
+
+- [`params_scenic_random_forest_defaults()`](params_scenic_random_forest_defaults.md)
+  : Default parameters for the SCENIC RandomForest regression learner
 
 - [`params_scrublet()`](params_scrublet.md) : Wrapper function for
   Scrublet doublet detection parameters
@@ -895,14 +792,20 @@
 - [`preprocess_bulk_dge()`](preprocess_bulk_dge.md) : QC on the bulk dge
   data (DEPRECATED!)
 
-- [`print.bulk_coexp`](print.bulk_coexp.md) : print Method for
-  bulk_coexp object
+- [`prescan_h5ad_files()`](prescan_h5ad_files.md) : Pre-scan multiple
+  h5ad files for multi-sample loading
 
-- [`print.gene_ontology_data`](print.gene_ontology_data.md) : print
-  Method for gene_ontology_data object
-
-- [`print.ontology`](print.ontology.md) : print Method for ontology
+- [`print.BulkCoExp`](print.BulkCoExp.md) : print Method for BulkCoExp
   object
+
+- [`print.GeneOntologyElim`](print.GeneOntologyElim.md) : print Method
+  for GeneOntologyElim object
+
+- [`print.OntologySim`](print.OntologySim.md) : print Method for
+  OntologySim object
+
+- [`print.SingleCells`](print.SingleCells.md) : print Method for
+  SingleCells object
 
 - [`process_cistarget_res()`](process_cistarget_res.md) : Helper to
   process CisTarget results
@@ -912,7 +815,11 @@
 
 - [`qc_bulk_dge()`](qc_bulk_dge.md) : QC on the bulk dge data
 
-- [`rbh_graph()`](rbh_graph.md) : Reciprocal best hit graph
+- [`read_h5ad_metadata()`](read_h5ad_metadata.md) : Read obs and var
+  tables and metadata from an h5ad file
+
+- [`read_h5ad_x_summary()`](read_h5ad_x_summary.md) : Read summary
+  statistics from the X slot of an h5ad file
 
 - [`read_motif_annotation_file()`](read_motif_annotation_file.md) : Read
   in the motif annotation file
@@ -961,6 +868,8 @@
 
 - [`rs_cluster_stability()`](rs_cluster_stability.md) : Helper function
   to assess cluster stability
+
+- [`rs_compare_knn()`](rs_compare_knn.md) : Helper to compare kNN graphs
 
 - [`rs_constrained_page_rank()`](rs_constrained_page_rank.md) :
   Calculate a constrained page-rank score
@@ -1055,6 +964,8 @@
 - [`rs_hamming_dist()`](rs_hamming_dist.md) : Calculates the Hamming
   distance between categorical columns
 
+- [`rs_harmony()`](rs_harmony.md) : Harmony batch correction in Rust
+
 - [`rs_hedges_g()`](rs_hedges_g.md) : Calculate the Hedge's G effect
 
 - [`rs_hotspot_autocor()`](rs_hotspot_autocor.md) : Calculate gene
@@ -1130,6 +1041,9 @@
 - [`rs_page_rank_parallel()`](rs_page_rank_parallel.md) : Calculate
   massively parallelised personalised page rank scores
 
+- [`rs_pairwise_gene_cors()`](rs_pairwise_gene_cors.md) : Calculates
+  pairwise gene correlations in single cell
+
 - [`rs_phyper()`](rs_phyper.md) : Calculate the hypergeometric rest in
   Rust
 
@@ -1196,9 +1110,21 @@
 
 - [`rs_sc_pca()`](rs_sc_pca.md) : Calculates PCA for single cell
 
+- [`rs_sc_pca_sparse()`](rs_sc_pca_sparse.md) : Calculates sparse PCA
+  for single cell
+
 - [`rs_sc_scrublet()`](rs_sc_scrublet.md) : Scrublet Rust interface
 
 - [`rs_sc_snn()`](rs_sc_snn.md) : Generates the sNN graph for igraph
+
+- [`rs_scenic_gene_filter()`](rs_scenic_gene_filter.md) : Identifies
+  genes to include into a SCENIC analysis
+
+- [`rs_scenic_grn()`](rs_scenic_grn.md) : SCENIC: Generating
+  gene-regulatory networks
+
+- [`rs_scenic_grn_streaming()`](rs_scenic_grn_streaming.md) : SCENIC:
+  Generating gene-regulatory networks (streaming version)
 
 - [`rs_set_similarity()`](rs_set_similarity.md) : Set similarities
 
@@ -1258,6 +1184,9 @@
 
 - [`rs_tom()`](rs_tom.md) : Calculates the TOM over an affinity matrix
 
+- [`rs_top_k_targets()`](rs_top_k_targets.md) : SCENIC: Select the Top
+  TF \<\> Gene pairs
+
 - [`rs_upper_triangle_to_dense()`](rs_upper_triangle_to_dense.md) :
   Reconstruct a matrix from a flattened upper triangle vector
 
@@ -1280,8 +1209,16 @@
 - [`save_sc_exp_to_disk()`](save_sc_exp_to_disk.md) : Save memory-bound
   data to disk
 
+- [`sc_old_file_conversion()`](sc_old_file_conversion.md) : Convert
+  legacy v2 single-cell data files to v3 format
+
 - [`scale_free_fit()`](scale_free_fit.md) : Calculate the goodness of
   fit for a power law distribution.
+
+- [`scenic_gene_filter_sc()`](scenic_gene_filter_sc.md) : Filter genes
+  for SCENIC GRN inference
+
+- [`scenic_grn_sc()`](scenic_grn_sc.md) : Run SCENIC GRN inference
 
 - [`scrublet_sc()`](scrublet_sc.md) : Doublet detection with Scrublet
 
@@ -1289,16 +1226,16 @@
   user option selection
 
 - [`set_cell_mapping()`](set_cell_mapping.md) : Set cell mapping for
-  sc_mapper object
+  ScMap object
 
 - [`set_cells_to_keep()`](set_cells_to_keep.md) : Set cells to keep for
-  sc_mapper object
+  ScMap object
 
 - [`set_embedding()`](set_embedding.md) : Add additional embeddings to
   the class
 
 - [`set_gene_mapping()`](set_gene_mapping.md) : Set gene mapping for
-  sc_mapper object
+  ScMap object
 
 - [`set_hotspot_membership()`](set_hotspot_membership.md) : Identify
   hotspot gene clusters
@@ -1331,16 +1268,6 @@
 - [`simulate_dropouts()`](simulate_dropouts.md) : Simulate dropouts via
   different functions on synthetic bulk data
 
-- [`single_cell_duckdb_base`](single_cell_duckdb_base.md) : Base class
-  for the single cell DuckDB connection
-
-- [`single_cell_duckdb_con`](single_cell_duckdb_con.md) : Class for
-  storing single cell experimental data in DuckDB (nightly!)
-
-- [`single_cell_exp()`](single_cell_exp.md) : bixverse single cell class
-
-- [`snf()`](snf.md) : Similarity network fusion
-
 - [`snf_process_aff_cat_mixed()`](snf_process_aff_cat_mixed.md) : Helper
   function to process categorical or mixed data for SNF
 
@@ -1355,7 +1282,7 @@
 
 - [`stream_h5ad()`](stream_h5ad.md) :
 
-  Stream in h5ad to `single_cell_exp`
+  Stream in h5ad to `SingleCells`
 
 - [`summarise_scores()`](summarise_scores.md) : Summarise gene scores if
   they are duplicates.
@@ -1371,6 +1298,12 @@
 
 - [`test_nhoods()`](test_nhoods.md) : Test neighbourhoods for
   differential abundance
+
+- [`tf_to_genes_correlations()`](tf_to_genes_correlations.md) : Generate
+  TF to gene correlations
+
+- [`tf_to_genes_motif_enrichment()`](tf_to_genes_motif_enrichment.md) :
+  Run the SCENIC motif enrichment
 
 - [`tied_diffusion()`](tied_diffusion.md) : Diffuse seed genes in a tied
   manner over a network

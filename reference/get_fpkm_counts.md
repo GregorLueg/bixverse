@@ -1,7 +1,7 @@
 # Return the FPKM-normalised counts
 
 Getter function to extract the FPKM-normalised counts from the
-[`bulk_dge()`](bulk_dge.md) class.
+[`BulkDge()`](BulkDge.md) class.
 
 ## Usage
 
@@ -13,7 +13,7 @@ get_fpkm_counts(object)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 ## Value
 

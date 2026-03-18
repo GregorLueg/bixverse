@@ -12,10 +12,10 @@ get_obs_data(x, ...)
 # S3 method for class 'sc_proportion_res'
 get_obs_data(x, ...)
 
-# S3 method for class 'scrublet_res'
+# S3 method for class 'ScrubletRes'
 get_obs_data(x, ...)
 
-# S3 method for class 'boost_res'
+# S3 method for class 'BoostRes'
 get_obs_data(x, ...)
 ```
 

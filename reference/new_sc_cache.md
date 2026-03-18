@@ -11,4 +11,4 @@ new_sc_cache()
 
 ## Value
 
-Generates an empty version of the `sc_cache` class.
+Generates an empty version of the `ScCache` class.

@@ -20,7 +20,7 @@ top_genes_perc_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - top_n_vals:
 

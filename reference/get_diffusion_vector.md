@@ -14,7 +14,7 @@ get_diffusion_vector(object)
 
 - object:
 
-  The underlying class [`network_diffusions()`](network_diffusions.md).
+  The underlying class [`NetworkDiffusions()`](NetworkDiffusions.md).
 
 ## Value
 

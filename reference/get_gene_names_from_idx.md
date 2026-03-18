@@ -2,14 +2,14 @@
 
 Get the gene names based on the gene idx
 
-Get the highly variable gene indices from a `single_cell_exp`.
+Get the highly variable gene indices from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 get_gene_names_from_idx(x, gene_idx, rust_based = TRUE)
 ```
 

@@ -1,7 +1,6 @@
 # Get the final results from the class
 
-Get the final results from `bixverse_base_class` class (or child
-classes).
+Get the final results from `BixverseBaseClass` class (or child classes).
 
 ## Usage
 
@@ -13,9 +12,9 @@ get_results(object)
 
 - object:
 
-  The underlying [`bixverse_base_class()`](bixverse_base_class.md)
-  class. The class functionality is usually inherited by other S7
-  classes in `bixverse`.
+  The underlying [`BixverseBaseClass()`](BixverseBaseClass.md) class.
+  The class functionality is usually inherited by other S7 classes in
+  `bixverse`.
 
 ## Value
 

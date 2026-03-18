@@ -46,6 +46,12 @@
     <p>A list with the following parameters for PCA.</p><ul><li><p>no_pcs - Integer. Number of PCs to consider. Defaults to <code>30L</code>.</p></li>
 <li><p>random_svd - Boolean. Shall randomised SVD be used. Defaults to
 <code>TRUE</code>.</p></li>
+<li><p>sparse - Boolean. Shall sparse solvers be used that do not do
+scaling. If set to yes, in the case of <code>random_svd = FALSE</code>, Lanczos
+iterations are used to solve the sparse SVD. With <code>random_svd = TRUE</code>, the
+sparse initial matrix is multiplied with the random matrix, yielding a
+much smaller dense matrix that does not increase the memory pressure
+massively.</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

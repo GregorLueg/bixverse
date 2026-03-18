@@ -17,7 +17,7 @@ plot_pca_res(
 
 - object:
 
-  The underlying class, see [`bulk_dge()`](bulk_dge.md).
+  The underlying class, see [`BulkDge()`](BulkDge.md).
 
 - cols_to_plot:
 

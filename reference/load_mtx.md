@@ -1,4 +1,4 @@
-# Load in mtx/plain text files to `single_cell_exp` (nightly!)
+# Load in mtx/plain text files to `SingleCells`
 
 This is a helper function to load in mtx files and corresponding plain
 text files. It will automatically filter out low quality cells and only
@@ -22,7 +22,7 @@ load_mtx(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - sc_mtx_io_param:
 

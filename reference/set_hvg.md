@@ -2,14 +2,14 @@
 
 Set the HVG genes
 
-Set the highly variable genes for a `single_cell_exp` class.
+Set the highly variable genes for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_hvg(x, hvg)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 set_hvg(x, hvg)
 ```
 

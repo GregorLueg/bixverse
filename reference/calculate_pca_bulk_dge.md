@@ -19,7 +19,7 @@ calculate_pca_bulk_dge(
 
 - object:
 
-  The underlying class, see [`bulk_dge()`](bulk_dge.md).
+  The underlying class, see [`BulkDge()`](BulkDge.md).
 
 - scale_genes:
 

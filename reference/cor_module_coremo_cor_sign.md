@@ -15,7 +15,7 @@ cor_module_coremo_cor_sign(object, min_stability = NULL, .verbose = TRUE)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - min_stability:
 

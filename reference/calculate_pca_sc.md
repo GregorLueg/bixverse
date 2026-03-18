@@ -10,6 +10,8 @@ calculate_pca_sc(
   object,
   no_pcs,
   randomised_svd = TRUE,
+  sparse_svd = FALSE,
+  hvg = NULL,
   seed = 42L,
   .verbose = TRUE
 )
@@ -19,7 +21,7 @@ calculate_pca_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - no_pcs:
 
@@ -28,6 +30,22 @@ calculate_pca_sc(
 - randomised_svd:
 
   Boolean. Shall randomised SVD be used. Faster, but less precise.
+
+- sparse_svd:
+
+  Boolean. Shall sparse solvers be used that do not do scaling. If set
+  to yes, in the case of `random_svd = FALSE`, Lanczos iterations are
+  used to solve the sparse SVD. With `random_svd = TRUE`, the sparse
+  initial matrix is multiplied with the random matrix, yielding a much
+  smaller dense matrix that does not increase the memory pressure
+  massively.
+
+- hvg:
+
+  Optional integer. If you want to provide your own HVG genes.
+  Otherwise, the function will default to what is found in
+  [`get_hvg()`](get_hvg.md). Please provide 1-indexed genes here! If you
+  provide these, the internal HVG will be overwritten.
 
 - seed:
 

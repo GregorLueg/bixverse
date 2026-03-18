@@ -55,6 +55,7 @@ and generate a corrected embedding which is added to the function.</p>
 <span>  <span class="va">batch_column</span>,</span>
 <span>  <span class="va">batch_hvg_genes</span>,</span>
 <span>  fastmnn_params <span class="op">=</span> <span class="fu"><a href="params_sc_fastmnn.html">params_sc_fastmnn</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  use_precomputed_pca <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -65,7 +66,7 @@ and generate a corrected embedding which is added to the function.</p>
 
 
 <dl><dt id="arg-object">object<a class="anchor" aria-label="anchor" href="#arg-object"></a></dt>
-<dd><p><code>single_cell_exp</code> class.</p></dd>
+<dd><p><code>SingleCells</code> class.</p></dd>
 
 
 <dt id="arg-batch-column">batch_column<a class="anchor" aria-label="anchor" href="#arg-batch-column"></a></dt>
@@ -92,6 +93,12 @@ effects.</p></li>
 <li><p>knn - List of kNN parameters. See <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code>
 for available parameters and their defaults.</p></li>
 </ul></dd>
+
+
+<dt id="arg-use-precomputed-pca">use_precomputed_pca<a class="anchor" aria-label="anchor" href="#arg-use-precomputed-pca"></a></dt>
+<dd><p>Boolean. Should the PCA in the object be used
+if found. If you decide to do this, make sure that you have run the PCA
+on the batch-aware HVG ideally.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

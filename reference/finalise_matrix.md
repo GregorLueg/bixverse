@@ -28,7 +28,7 @@ finalise_matrix(matrix, return_format, cell_indices, gene_indices, sc_map)
 
 - sc_map:
 
-  A `sc_mapper` class. Contains various mapping information.
+  A `ScMap` class. Contains various mapping information.
 
 ## Value
 

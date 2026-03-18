@@ -61,4 +61,6 @@ A list with with the following items
 
 - loadings - The loadings of the features for the PCA.
 
+- singular_values - The singular values for the PCA.
+
 - scaled - The scaled matrix if you set return_scaled to `TRUE`.

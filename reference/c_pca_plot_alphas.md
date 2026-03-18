@@ -21,7 +21,7 @@ c_pca_plot_alphas(
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md). You need to
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md). You need to
   apply [`contrastive_pca_processing()`](contrastive_pca_processing.md)
   to the function for this method to work. Checkmate will raise errors
   otherwise.
@@ -29,7 +29,7 @@ c_pca_plot_alphas(
 - label_column:
 
   An optional sample label column. Needs to exist in the meta_data of
-  the `bulk_coexp` class.
+  the `BulkCoExp` class.
 
 - min_alpha:
 

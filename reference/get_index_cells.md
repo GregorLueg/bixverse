@@ -7,7 +7,7 @@ Get the index cells
 ``` r
 get_index_cells(x)
 
-# S3 method for class 'sc_miloR'
+# S3 method for class 'miloR'
 get_index_cells(x)
 ```
 

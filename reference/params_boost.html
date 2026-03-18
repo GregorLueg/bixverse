@@ -48,7 +48,7 @@
 <span>  normalisation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  hvg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  pca <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span><span class="op">)</span></span>
+<span>  knn <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">0L</span>, ann_dist <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -111,8 +111,9 @@ parameters. See <code><a href="params_hvg_defaults.html">params_hvg_defaults()</
 <dd><p>List. Optional overrides for kNN parameters. See
 <code><a href="params_knn_defaults.html">params_knn_defaults()</a></code> for available parameters: <code>k</code>,
 <code>knn_method</code>, <code>ann_dist</code>, <code>search_budget</code>, <code>n_trees</code>, <code>delta</code>,
-<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, and <code>ef_search</code>.
-Note: this function defaults to <code>k = 0L</code> (automatic neighbour detection).</p></dd>
+<code>diversify_prob</code>, <code>ef_budget</code>, <code>m</code>, <code>ef_construction</code>, <code>ef_search</code>, <code>n_list</code>
+and <code>n_probe</code>. Note: this function defaults to <code>k = 0L</code> (automatic neighbour
+detection).</p></dd>
 
 </dl></div>
     <div class="section level2">

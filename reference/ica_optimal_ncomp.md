@@ -21,7 +21,7 @@ ica_optimal_ncomp(object, span = 0.2, show_plot = TRUE, .verbose = TRUE)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to apply
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
   [`ica_evaluate_comp()`](ica_evaluate_comp.md) before running this
   function.
 
@@ -41,4 +41,4 @@ ica_optimal_ncomp(object, span = 0.2, show_plot = TRUE, .verbose = TRUE)
 
 ## Value
 
-`bulk_coexp` with optimal ncomp based on the inflection point method.
+`BulkCoExp` with optimal ncomp based on the inflection point method.

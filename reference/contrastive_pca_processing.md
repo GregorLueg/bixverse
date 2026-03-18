@@ -1,6 +1,6 @@
 # Prepare class for contrastive PCA
 
-This function will prepare the `bulk_coexp` for subsequent usage of the
+This function will prepare the `BulkCoExp` for subsequent usage of the
 contrastive PCA functions. This is based on the work of Abid, et al.
 
 ## Usage
@@ -18,7 +18,7 @@ contrastive_pca_processing(
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md).
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - background_matrix:
 
@@ -35,7 +35,7 @@ contrastive_pca_processing(
 
 ## Value
 
-`bulk_coexp` with the needed data for contrastive PCA in the properties
+`BulkCoExp` with the needed data for contrastive PCA in the properties
 of the class.
 
 ## References

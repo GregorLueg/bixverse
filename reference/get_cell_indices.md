@@ -2,14 +2,14 @@
 
 Get the index position for a gene
 
-Set the gene mapping for a `single_cell_exp` class.
+Set the gene mapping for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 get_cell_indices(x, cell_ids, rust_index)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 get_cell_indices(x, cell_ids, rust_index)
 ```
 

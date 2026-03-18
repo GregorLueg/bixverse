@@ -13,7 +13,7 @@ call_doublets_manual(scrublet_res, threshold, .verbose = TRUE)
 
 - scrublet_res:
 
-  `scrublet_res` result class.
+  `ScrubletRes` result class.
 
 - threshold:
 
@@ -25,5 +25,5 @@ call_doublets_manual(scrublet_res, threshold, .verbose = TRUE)
 
 ## Value
 
-`scrublet_res` class with updated doublet calls based on the new
+`ScrubletRes` class with updated doublet calls based on the new
 threshold.

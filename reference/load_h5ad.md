@@ -1,9 +1,9 @@
-# Load in h5ad to `single_cell_exp`
+# Load in h5ad to `SingleCells`
 
 This function takes an h5ad file and loads the obs and var data into the
-DuckDB of the `single_cell_exp` class and the counts into a
-Rust-binarised format for rapid access. During the reading in of the
-counts, the log CPM transformation will occur automatically.
+DuckDB of the `SingleCells` class and the counts into a Rust-binarised
+format for rapid access. During the reading in of the counts, the log
+CPM transformation will occur automatically.
 
 ## Usage
 
@@ -13,6 +13,7 @@ load_h5ad(
   h5_path,
   sc_qc_param = params_sc_min_quality(),
   streaming = TRUE,
+  cell_id_col = NULL,
   batch_size = 1000L,
   .verbose = TRUE
 )
@@ -22,7 +23,7 @@ load_h5ad(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - h5_path:
 
@@ -48,6 +49,11 @@ load_h5ad(
 
   Boolean. Shall the data be streamed during the conversion of CSR to
   CSC. Defaults to `TRUE` and should be used for larger data sets.
+
+- cell_id_col:
+
+  Optional string. If a specific column in the h5ad obs data is
+  representing the cell identifiers, you can specify it here.
 
 - batch_size:
 

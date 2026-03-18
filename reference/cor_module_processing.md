@@ -19,9 +19,9 @@ cor_module_processing(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). Ideally, you should
-  run [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before
-  applying this function.
+  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
+  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
+  this function.
 
 - cor_method:
 

@@ -2,14 +2,14 @@
 
 Set/add PCA singular values
 
-Set the PCA singular values for a `single_cell_exp` class.
+Set the PCA singular values for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_pca_singular_vals(x, singular_vals)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 set_pca_singular_vals(x, singular_vals)
 ```
 

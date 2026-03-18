@@ -15,14 +15,14 @@ vision_sc(object, gs_list, streaming = FALSE, .verbose = TRUE)
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - gs_list:
 
   Named nested list. The elements have the gene identifiers of the
   respective gene sets and have the option to have a `"pos"` and `"neg"`
   gene sets. The names need to be part of the variables of the
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - streaming:
 

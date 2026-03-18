@@ -23,7 +23,7 @@ cor_module_coremo_clustering(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - span:
 

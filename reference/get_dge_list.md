@@ -1,7 +1,7 @@
 # Return the DGEList
 
 Getter function to extract the DGEList from the
-[`bulk_dge()`](bulk_dge.md) class.
+[`BulkDge()`](BulkDge.md) class.
 
 ## Usage
 
@@ -13,7 +13,7 @@ get_dge_list(object)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 ## Value
 

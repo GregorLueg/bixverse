@@ -2,14 +2,14 @@
 
 Get the cell names
 
-Get the cell names from a `single_cell_exp`.
+Get the cell names from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_cell_names(x, filtered = FALSE)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 get_cell_names(x, filtered = FALSE)
 ```
 

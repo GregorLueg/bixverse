@@ -13,7 +13,7 @@ get_diffusion_perms(object)
 
 - object:
 
-  The underlying class [`network_diffusions()`](network_diffusions.md).
+  The underlying class [`NetworkDiffusions()`](NetworkDiffusions.md).
 
 ## Value
 

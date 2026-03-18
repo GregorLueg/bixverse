@@ -11,4 +11,4 @@ new_sc_mapper()
 
 ## Value
 
-Generates an empty version of the `sc_mapper` class.
+Generates an empty version of the `ScMap` class.

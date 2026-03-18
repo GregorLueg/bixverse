@@ -22,7 +22,7 @@ find_markers_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - cells_1:
 

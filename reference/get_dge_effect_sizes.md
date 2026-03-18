@@ -1,7 +1,7 @@
 # Return the effect size results
 
 Getter function to extract the Effect size results from the
-[`bulk_dge()`](bulk_dge.md) class.
+[`BulkDge()`](BulkDge.md) class.
 
 ## Usage
 
@@ -13,7 +13,7 @@ get_dge_effect_sizes(object)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 ## Value
 

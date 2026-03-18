@@ -2,14 +2,14 @@
 
 Get the PCA factors
 
-Get the PCA factors from a `single_cell_exp`.
+Get the PCA factors from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_pca_factors(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 get_pca_factors(x)
 ```
 

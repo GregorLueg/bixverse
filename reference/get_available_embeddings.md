@@ -7,7 +7,7 @@ Returns the available embedding names from the cache.
 ``` r
 get_available_embeddings(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 get_available_embeddings(x)
 ```
 

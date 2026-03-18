@@ -12,7 +12,7 @@ get_sc_duckdb(object)
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 ## Value
 

@@ -1,7 +1,7 @@
 # Return QC plots
 
 Getter function to extract the QC plots from the
-[`bulk_dge()`](bulk_dge.md) class. These are added when you run for
+[`BulkDge()`](BulkDge.md) class. These are added when you run for
 example [`qc_bulk_dge()`](qc_bulk_dge.md) and
 [`normalise_bulk_dge()`](normalise_bulk_dge.md). You can either leave
 the plot choice as `NULL` and provide input when prompted, or you
@@ -39,7 +39,7 @@ get_dge_qc_plot(object, plot_choice = NULL)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 - plot_choice:
 

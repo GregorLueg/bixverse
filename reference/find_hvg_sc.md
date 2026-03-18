@@ -20,7 +20,7 @@ find_hvg_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - hvg_no:
 

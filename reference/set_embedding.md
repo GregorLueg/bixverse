@@ -2,14 +2,14 @@
 
 Add additional embeddings to the class
 
-Set additional embeddings to `single_cell_exp`.
+Set additional embeddings to `SingleCells`.
 
 ## Usage
 
 ``` r
 set_embedding(x, embd, name)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 set_embedding(x, embd, name)
 ```
 

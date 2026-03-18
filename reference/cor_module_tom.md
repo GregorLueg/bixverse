@@ -14,9 +14,9 @@ cor_module_tom(object, signed = TRUE, version = c("v2", "v1"), .verbose = TRUE)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to have
-  applied [`cor_module_processing()`](cor_module_processing.md) before
-  applying this function.
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to have applied
+  [`cor_module_processing()`](cor_module_processing.md) before applying
+  this function.
 
 - signed:
 

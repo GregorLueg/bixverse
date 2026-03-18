@@ -1,6 +1,6 @@
-# Change the primary gene identifier of bulk_dge
+# Change the primary gene identifier of BulkDge
 
-Changes the primary gene identifier in the bulk_dge class. To do so, you
+Changes the primary gene identifier in the BulkDge class. To do so, you
 need to either provide a `variable_info` data.table with the alternative
 gene identifier you wish to use or it exists already in the object
 itself. If it exists in the object, that variable_info will be used.
@@ -15,7 +15,7 @@ change_gene_identifier(object, alternative_gene_id, variable_info = NULL)
 
 - object:
 
-  `bulk_dge` class, see [bulk_dge](bulk_dge.md).
+  `BulkDge` class, see [`BulkDge()`](BulkDge.md).
 
 - alternative_gene_id:
 

@@ -15,7 +15,7 @@ save_sc_exp_to_disk(object, type = c("qs2", "rds"))
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - type:
 

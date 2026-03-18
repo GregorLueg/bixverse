@@ -1,15 +1,15 @@
-# Set gene mapping for sc_mapper object
+# Set gene mapping for ScMap object
 
-Set gene mapping for sc_mapper object
+Set gene mapping for ScMap object
 
-Set the gene mapping for a `single_cell_exp` class.
+Set the gene mapping for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_gene_mapping(x, gene_map)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 set_gene_mapping(x, gene_map)
 ```
 

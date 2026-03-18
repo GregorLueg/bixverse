@@ -15,7 +15,7 @@ calc_meta_cell_purity(object, original_cell_type)
 
 - object:
 
-  `meta_cells` class.
+  `MetaCells` class.
 
 - original_cell_type:
 
@@ -25,5 +25,5 @@ calc_meta_cell_purity(object, original_cell_type)
 
 ## Value
 
-The `meta_cells` with an added columns to the observation table with the
+The `MetaCells` with an added columns to the observation table with the
 purity measures

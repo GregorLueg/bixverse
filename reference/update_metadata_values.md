@@ -13,8 +13,8 @@ update_metadata_values(object, column, replacement, ...)
 
 - object:
 
-  The underlying object, either [`bixverse::bulk_coexp`](bulk_coexp.md)
-  or [`bixverse::bulk_dge`](bulk_dge.md).
+  The underlying object, either [`BulkCoExp()`](BulkCoExp.md) or
+  [`BulkDge()`](BulkDge.md).
 
 - column:
 

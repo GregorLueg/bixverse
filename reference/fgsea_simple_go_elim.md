@@ -1,6 +1,6 @@
 # Run GO enrichment with elimination with fgsea simple
 
-This method takes the gene_ontology_data and a vector of gene level
+This method takes the GeneOntologyElim and a vector of gene level
 statistics to perform fgsea (simple) leveraging ontological information.
 It starts at the lowest levels of the ontology and tests if there is
 significant enrichment for any GO terms. If the threshold of the p-value
@@ -25,8 +25,7 @@ fgsea_simple_go_elim(
 
 - object:
 
-  The underlying class, see
-  [`gene_ontology_data()`](gene_ontology_data.md).
+  The underlying class, see [`GeneOntologyElim()`](GeneOntologyElim.md).
 
 - stats:
 

@@ -13,7 +13,7 @@ pre_process_sim_onto(object, .verbose = TRUE)
 
 - object:
 
-  `ontology class`. See [`ontology()`](ontology.md).
+  `OntologySim class`. See [`OntologySim()`](OntologySim.md).
 
 - .verbose:
 

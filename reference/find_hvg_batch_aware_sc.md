@@ -27,7 +27,7 @@ find_hvg_batch_aware_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - batch_column:
 

@@ -26,7 +26,7 @@ bbknn_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - batch_column:
 

@@ -24,7 +24,7 @@ ica_evaluate_comp(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to apply
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
   [`ica_processing()`](ica_processing.md) before running this function.
 
 - ica_type:
@@ -88,5 +88,5 @@ ica_evaluate_comp(
 
 ## Value
 
-`bulk_coexp` with the added information of stability of the components
+`BulkCoExp` with the added information of stability of the components
 and other data to plot to choose the right `ncomp`.

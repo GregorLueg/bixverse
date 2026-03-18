@@ -1,7 +1,7 @@
 # Process the raw data
 
 Function to do general pre-processing on top of the
-[`bulk_coexp()`](bulk_coexp.md). Options to do scaling, HVG selection,
+[`BulkCoExp()`](BulkCoExp.md). Options to do scaling, HVG selection,
 etc.
 
 ## Usage
@@ -21,7 +21,7 @@ preprocess_bulk_coexp(
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md).
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - hvg:
 

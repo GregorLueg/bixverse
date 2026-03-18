@@ -21,9 +21,9 @@ dgrdl_grid_search(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). Ideally, you should
-  run [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before
-  applying this function.
+  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
+  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
+  this function.
 
 - neighbours_vec:
 
@@ -68,7 +68,7 @@ dgrdl_grid_search(
 
 ## Value
 
-`bulk_coexp` with the grid search results added to the class.
+`BulkCoExp` with the grid search results added to the class.
 
 ## References
 

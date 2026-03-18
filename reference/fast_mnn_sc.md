@@ -15,6 +15,7 @@ fast_mnn_sc(
   batch_column,
   batch_hvg_genes,
   fastmnn_params = params_sc_fastmnn(),
+  use_precomputed_pca = FALSE,
   seed = 42L,
   .verbose = TRUE
 )
@@ -24,7 +25,7 @@ fast_mnn_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - batch_column:
 
@@ -59,6 +60,12 @@ fast_mnn_sc(
   - knn - List of kNN parameters. See
     [`params_knn_defaults()`](params_knn_defaults.md) for available
     parameters and their defaults.
+
+- use_precomputed_pca:
+
+  Boolean. Should the PCA in the object be used if found. If you decide
+  to do this, make sure that you have run the PCA on the batch-aware HVG
+  ideally.
 
 - seed:
 

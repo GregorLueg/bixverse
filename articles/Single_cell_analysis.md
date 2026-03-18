@@ -180,6 +180,8 @@ pbmc3k_path <- bixverse:::download_pbmc3k()
 tempdir_pbmc <- tempdir()
 
 sc_object <- single_cell_exp(dir_data = tempdir_pbmc)
+#> Warning: `single_cell_exp()` was deprecated in bixverse 0.3.0.
+#> ℹ Please use `SingleCells()` instead.
 
 params_cells_rows_csv <- params_sc_mtx_io(
   path_mtx = file.path(pbmc3k_path, "matrix.mtx"),
@@ -347,7 +349,7 @@ matrix <- get_sc_counts(
   return_format = "cell"
 )
 tictoc::toc()
-#> 0.006 sec elapsed
+#> 0.007 sec elapsed
 
 ## Now we are to select the incorrect orientation
 ## This dataset is too small to see a difference however try it on your own larger and it will shock you
@@ -359,7 +361,7 @@ matrix <- get_sc_counts(
   return_format = "gene"
 )
 tictoc::toc()
-#> 0.259 sec elapsed
+#> 0.277 sec elapsed
 
 
 ## matrices can also be accessed with sinle brackets
@@ -666,12 +668,12 @@ boost_result <- doublet_detection_boost_sc(
 head(get_obs_data(boost_result))
 #>    doublet doublet_score voting_avg cell_idx
 #>     <lgcl>         <num>      <num>    <num>
-#> 1:   FALSE    0.03639780       0.00        1
-#> 2:   FALSE    0.65208429       0.80        2
-#> 3:   FALSE    0.46183160       0.64        3
-#> 4:   FALSE    0.12220496       0.00        4
-#> 5:   FALSE    0.10452713       0.00        5
-#> 6:   FALSE    0.04662628       0.00        6
+#> 1:   FALSE    0.03442983       0.00        1
+#> 2:   FALSE    0.68259084       0.84        2
+#> 3:   FALSE    0.50783771       0.72        3
+#> 4:   FALSE    0.11885773       0.00        4
+#> 5:   FALSE    0.12274123       0.00        5
+#> 6:   FALSE    0.05808103       0.04        6
 ```
 
 Both methods add doublet information to the cell metadata, which you can
@@ -727,24 +729,25 @@ sc_object <- calculate_pca_sc(
   randomised_svd = FALSE,
   .verbose = TRUE
 )
+#> Using dense SVD solving on scaled data on 30 HVG.
 
 # get the PCA factors
 get_pca_factors(sc_object)[1:5, 1:5]
 #>                        PC_1       PC_2       PC_3      PC_4       PC_5
-#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
-#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
-#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
-#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
-#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
+#> AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675
+#> AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888
+#> AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138
+#> AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458
+#> AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605
 
 # Get PCA loadings for each gene
 get_pca_loadings(sc_object)[1:5, 1:5]
-#>                         PC_1        PC_2         PC_3        PC_4         PC_5
-#> ENSG00000125991 -0.003343013 -0.03231181  0.012509830 -0.02836288  0.311175138
-#> ENSG00000163736 -0.323547810  0.21558243 -0.007027924  0.01526336 -0.001063451
-#> ENSG00000090382 -0.198042095 -0.30515635 -0.173240870 -0.08887842  0.073860973
-#> ENSG00000163220 -0.183531880 -0.28671673 -0.198169768 -0.17102498  0.158384219
-#> ENSG00000115523  0.090477377  0.10992564 -0.428311616  0.20027384  0.011486083
+#>                         PC_1       PC_2         PC_3        PC_4         PC_5
+#> ENSG00000125991 -0.003344497 -0.0323110  0.012509749 -0.02836219  0.311027139
+#> ENSG00000163736 -0.323539853  0.2156020 -0.007027835  0.01526347 -0.001063928
+#> ENSG00000090382 -0.198058128 -0.3051449 -0.173239112 -0.08887634  0.073859990
+#> ENSG00000163220 -0.183546484 -0.2867053 -0.198168010 -0.17102289  0.158386111
+#> ENSG00000115523  0.090482146  0.1099188 -0.428308934  0.20027515  0.011484474
 ```
 
 ``` r
@@ -865,7 +868,7 @@ kbet_before <- calculate_kbet_sc(
 # The kbet_score represents the proportion of cells with significant batch effects
 print(paste("kBET score before correction:", 
             round(kbet_before$kbet_score, 3)))
-#> [1] "kBET score before correction: 0.461"
+#> [1] "kBET score before correction: 0.462"
 
 # Visualize batch effects in PCA space
 pca_batch_df <- cbind(sc_batch_object[[]], get_pca_factors(sc_batch_object))
@@ -949,8 +952,8 @@ sc_batch_bbknn <- bbknn_sc(
   no_neighbours_to_keep = 10L,  # Final k for kNN graph
   .verbose = TRUE
 )
-#> Warning in `method(bbknn_sc, bixverse::single_cell_exp)`(object = <object>, :
-#> Prior kNN matrix found. Will be overwritten.
+#> Warning in `method(bbknn_sc, bixverse::SingleCells)`(object = <object>, : Prior
+#> kNN matrix found. Will be overwritten.
 #> Running BBKNN algorithm.
 #> Generating graph based on BBKNN connectivities. Weights will be based on the connectivities and not shared nearest neighour calculations.
 
@@ -1029,7 +1032,7 @@ kbet_after_mnn <- calculate_kbet_sc(
 
 print(paste("kBET score after fastMNN:", 
             round(kbet_after_mnn$kbet_score, 3)))
-#> [1] "kBET score after fastMNN: 0.104"
+#> [1] "kBET score after fastMNN: 0.102"
 
 # Visualize the corrected MNN embedding
 # Note: fastMNN returns its own embedding, access it accordingly
@@ -1179,20 +1182,20 @@ dge_leiden_clusters <- find_markers_sc(
 head(dge_leiden_clusters)
 #>            gene_id          lfc      prop1       prop2   z_scores  p_values
 #>             <char>        <num>      <num>       <num>      <num>     <num>
-#> 1: ENSG00000188976 -0.004697453 0.10447761 0.119047619 -0.1705327 0.8645912
-#> 2: ENSG00000187608  0.031933323 0.40298507 0.253968269  1.2045563 0.2283746
-#> 3: ENSG00000186827  0.019535586 0.07462686 0.007936508  0.7552162 0.4501193
-#> 4: ENSG00000078808  0.052448999 0.16417910 0.039682541  1.4454675 0.1483266
-#> 5: ENSG00000160087  0.010973066 0.11940298 0.095238097  0.2544456 0.7991513
-#> 6: ENSG00000169972  0.022716010 0.05970149 0.000000000  0.6821307 0.4951563
+#> 1: ENSG00000188976 -0.004295975 0.10447761 0.118110240 -0.1600114 0.8728721
+#> 2: ENSG00000187608  0.025825217 0.40298507 0.259842515  1.1093230 0.2672909
+#> 3: ENSG00000186827  0.019572020 0.07462686 0.007874016  0.7570289 0.4490326
+#> 4: ENSG00000078808  0.052552961 0.16417910 0.039370079  1.4508600 0.1468189
+#> 5: ENSG00000160087  0.010340076 0.11940298 0.102362208  0.1842148 0.8538449
+#> 6: ENSG00000169972  0.022716010 0.05970149 0.000000000  0.6830740 0.4945601
 #>          fdr
 #>        <num>
-#> 1: 0.9996141
-#> 2: 0.9996141
-#> 3: 0.9996141
-#> 4: 0.9996141
-#> 5: 0.9996141
-#> 6: 0.9996141
+#> 1: 0.9976685
+#> 2: 0.9976685
+#> 3: 0.9976685
+#> 4: 0.9976685
+#> 5: 0.9976685
+#> 6: 0.9976685
 ```
 
 Specify a column, and the function will calculate differential gene
@@ -1387,12 +1390,12 @@ hotspot_autocor_danb_res <- hotspot_autocor_sc(
 head(hotspot_autocor_danb_res)
 #>            gene_id     gaerys_c    z_score          pval           fdr
 #>             <char>        <num>      <num>         <num>         <num>
-#> 1: ENSG00000188976  0.001354641  0.1547889  8.769878e-01  9.985216e-01
-#> 2: ENSG00000188290  0.205669463 21.4344425 6.379228e-102 3.161298e-100
-#> 3: ENSG00000187608  0.118260309 10.3465157  4.338843e-25  9.386010e-24
-#> 4: ENSG00000131591 -0.008443281 -0.9828783  3.256673e-01  7.737786e-01
-#> 5: ENSG00000186891  0.003888038  0.5505558  5.819382e-01  9.415786e-01
-#> 6: ENSG00000186827  0.038622454  3.1006124  1.931209e-03  1.423204e-02
+#> 1: ENSG00000188976  0.001289273  0.1473542  8.828525e-01  9.990468e-01
+#> 2: ENSG00000188290  0.205720052 21.4417973 5.446830e-102 2.713080e-100
+#> 3: ENSG00000187608  0.118394487 10.3541613  4.005820e-25  8.665597e-24
+#> 4: ENSG00000131591 -0.008500200 -0.9920494  3.211734e-01  7.699534e-01
+#> 5: ENSG00000186891  0.003847624  0.5450743  5.857024e-01  9.418119e-01
+#> 6: ENSG00000186827  0.038622946  3.1006773  1.930786e-03  1.425055e-02
 ```
 
 #### Hotspot Gene Modules
@@ -1436,12 +1439,12 @@ membership_results <- get_hotspot_membership(hotspot_gene_gene_cor)
 head(membership_results)
 #>            gene_id cluster_member
 #>             <char>          <num>
-#> 1: ENSG00000087086            249
-#> 2: ENSG00000019582            249
-#> 3: ENSG00000167996            251
-#> 4: ENSG00000105374            249
-#> 5: ENSG00000101439            249
-#> 6: ENSG00000163220            249
+#> 1: ENSG00000087086            248
+#> 2: ENSG00000019582            248
+#> 3: ENSG00000167996            250
+#> 4: ENSG00000105374            248
+#> 5: ENSG00000101439            248
+#> 6: ENSG00000163220            248
 
 # Create gene sets from modules
 hotspot_gs <- na.omit(get_hotspot_membership(hotspot_gene_gene_cor)) %$%
@@ -1449,7 +1452,7 @@ hotspot_gs <- na.omit(get_hotspot_membership(hotspot_gene_gene_cor)) %$%
 
 # View module sizes
 sapply(hotspot_gs, length)
-#> 238 247 249 251 252 
+#> 237 246 248 250 251 
 #>  61  25 227 108  71
 ```
 
@@ -1515,20 +1518,20 @@ dim(sc_object_loaded[[]])
 ## PCA in original object exists
 head(get_pca_factors(sc_object))[1:5, 1:5]
 #>                        PC_1       PC_2       PC_3      PC_4       PC_5
-#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
-#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
-#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
-#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
-#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
+#> AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675
+#> AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888
+#> AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138
+#> AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458
+#> AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605
 
 ## PCA in loaded in object does exist as has been loaded back in from the qs2 file
 head(get_pca_factors(sc_object_loaded))[1:5, 1:5]
 #>                        PC_1       PC_2       PC_3      PC_4       PC_5
-#> AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093
-#> AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220
-#> AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204
-#> AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234
-#> AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611
+#> AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675
+#> AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888
+#> AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138
+#> AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458
+#> AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605
 
 
 ## Same for knn

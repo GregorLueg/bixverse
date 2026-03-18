@@ -2,7 +2,7 @@
 
 Getter function to extract the
 `epsilon param ~ power law goodness of fit` data from the
-[`bulk_coexp()`](bulk_coexp.md) class.
+[`BulkCoExp()`](BulkCoExp.md) class.
 
 ## Usage
 
@@ -14,7 +14,7 @@ get_epsilon_res(object)
 
 - object:
 
-  `bulk_coexp` class.
+  `BulkCoExp` class.
 
 ## Value
 

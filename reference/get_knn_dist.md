@@ -7,7 +7,7 @@ Get the KNN distance measures
 ``` r
 get_knn_dist(x)
 
-# S3 method for class 'sc_knn'
+# S3 method for class 'SingleCellNearestNeighbour'
 get_knn_dist(x)
 ```
 

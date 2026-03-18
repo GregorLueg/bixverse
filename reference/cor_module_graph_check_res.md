@@ -33,7 +33,7 @@ cor_module_graph_check_res(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - resolution_params:
 

@@ -2,14 +2,14 @@
 
 Remove the sNN graph
 
-Remove the sNN graph from a `single_cell_exp` class.
+Remove the sNN graph from a `SingleCells` class.
 
 ## Usage
 
 ``` r
 remove_snn_graph(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 remove_snn_graph(x)
 ```
 

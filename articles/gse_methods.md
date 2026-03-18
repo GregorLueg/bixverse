@@ -50,9 +50,9 @@ results <- gse_hypergeometric(
 head(results)
 #>              gene_set_name odds_ratios        pvals          fdr  hits
 #>                     <char>       <num>        <num>        <num> <num>
-#> 1: HALLMARK_MYC_TARGETS_V2  170.749267 5.847007e-41 2.923504e-39    27
-#> 2: HALLMARK_MYC_TARGETS_V1   35.385088 2.083184e-27 5.207959e-26    29
-#> 3:    HALLMARK_E2F_TARGETS    4.219512 1.444580e-03 2.407633e-02     8
+#> 1: HALLMARK_MYC_TARGETS_V2   170.67009 5.919144e-41 2.959572e-39    27
+#> 2: HALLMARK_MYC_TARGETS_V1    35.36813 2.110201e-27 5.275502e-26    29
+#> 3:    HALLMARK_E2F_TARGETS     4.21748 1.448776e-03 2.414627e-02     8
 #>    gene_set_lengths target_set_lengths
 #>               <num>              <int>
 #> 1:               58                 50
@@ -86,12 +86,12 @@ results_multiple <- gse_hypergeometric_list(
 head(results_multiple)
 #>    target_set_name odds_ratios        pvals          fdr  hits gene_set_lengths
 #>             <char>       <num>        <num>        <num> <num>            <num>
-#> 1:           set_2  162.370744 4.603263e-43 2.301631e-41    30               91
-#> 2:           set_1  170.868035 5.740508e-41 2.870254e-39    27               58
-#> 3:           set_1   35.410526 2.043327e-27 5.108317e-26    29              200
-#> 4:           set_2   29.978469 5.916124e-22 1.479031e-20    24              200
-#> 5:           set_2   12.001728 2.323959e-10 3.873265e-09    15              201
-#> 6:           set_2    8.575841 2.503092e-07 3.128865e-06    12              200
+#> 1:           set_2  165.038462 3.137168e-43 1.568584e-41    30               90
+#> 2:           set_1  170.788856 5.811282e-41 2.905641e-39    27               58
+#> 3:           set_1   35.393567 2.069809e-27 5.174524e-26    29              200
+#> 4:           set_2   29.964115 5.979167e-22 1.494792e-20    24              200
+#> 5:           set_2   11.995968 2.338661e-10 3.897768e-09    15              201
+#> 6:           set_2    8.571723 2.515351e-07 3.144189e-06    12              200
 #>                         gene_set_name target_set_lengths
 #>                                <char>              <int>
 #> 1:   HALLMARK_IL6_JAK_STAT3_SIGNALING                 45
@@ -160,7 +160,7 @@ rs_results_example <- gse_hypergeometric_list(
   gene_set_list = gene_sets
 )
 tictoc::toc()
-#> 0.552 sec elapsed
+#> 0.493 sec elapsed
 ```
 
 ### Gene ontology aware enrichment tests (for sets)
@@ -199,7 +199,7 @@ go_data_dt <- get_go_data_human()
 #>   Please report the issue to the authors.
 
 # Generate the S7 object for subsequent usage
-go_data_s7 <- gene_ontology_data(go_data_dt, min_genes = 3L)
+go_data_s7 <- GeneOntologyElim(go_data_dt, min_genes = 3L)
 ```
 
 Similar to the more generic hypergeometric tests, you can provide either
@@ -247,16 +247,16 @@ head(go_aware_res_2)
 #> 2:           set_2 cell surface receptor signaling pathway via JAK-STAT
 #> 3:           set_2                                inflammatory response
 #> 4:           set_2                                    cytokine activity
-#> 5:           set_2                     external side of plasma membrane
-#> 6:           set_2                           cellular response to virus
+#> 5:           set_2                                   chemokine activity
+#> 6:           set_2                     external side of plasma membrane
 #>         go_id odds_ratios        pvals          fdr  hits gene_set_lengths
 #>        <char>       <num>        <num>        <num> <num>            <num>
 #> 1: GO:0003723    14.81244 3.122680e-16 3.441817e-12    23             1205
-#> 2: GO:0007259    97.16563 8.704402e-15 9.587028e-11     9               66
-#> 3: GO:0006954    22.90818 1.408854e-13 7.758558e-10    14              447
-#> 4: GO:0005125    31.85212 1.130962e-12 4.152138e-09    11              235
-#> 5: GO:0009897    19.25374 1.941168e-10 5.133756e-07    11              379
-#> 6: GO:0098586    56.46451 2.330559e-10 5.133756e-07     7               79
+#> 2: GO:0007259    97.16563 8.704402e-15 9.588769e-11     9               66
+#> 3: GO:0006954    22.90818 1.408854e-13 7.759966e-10    14              447
+#> 4: GO:0005125    31.85212 1.130962e-12 4.152892e-09    11              235
+#> 5: GO:0008009    99.30420 6.201736e-12 1.707958e-08     7               48
+#> 6: GO:0009897    21.74176 9.192276e-12 2.025242e-08    12              379
 ```
 
 #### Speed of the functions
@@ -298,7 +298,7 @@ rs_results_example <- gse_go_elim_method_list(
   target_gene_list = go_target_gene_sets
 )
 tictoc::toc()
-#> 1.603 sec elapsed
+#> 1.39 sec elapsed
 ```
 
 ### Alternative: simplifying results
@@ -436,14 +436,6 @@ bixverse_fgsea <- calc_fgsea(
 ) %>% setorder(pathway_name)
 
 head(bixverse_fgsea)
-#>            es        nes     pvals n_more_extreme  size
-#>         <num>      <num>     <num>          <num> <num>
-#> 1:  0.2885754  0.9321129 0.5588723            336    27
-#> 2:  0.2387284  0.8353752 0.7140600            451    39
-#> 3: -0.3640706 -1.3241710 0.1282051             49    31
-#> 4:  0.2516324  0.7211793 0.8109541            458    17
-#> 5:  0.2469065  1.0551934 0.3751804            259   106
-#> 6:  0.3607407  1.0338840 0.4204947            237    17
 #>                                                                               pathway_name
 #>                                                                                     <char>
 #> 1:                                                                1221633_Meiotic_Synapsis
@@ -452,14 +444,22 @@ head(bixverse_fgsea)
 #> 4:                                                                  508751_Circadian_Clock
 #> 5:                                               5334727_Mus_musculus_biological_processes
 #> 6:                                        573389_NoRC_negatively_regulates_rRNA_expression
-#>                                    leading_edge    log2err       fdr
-#>                                          <list>      <num>     <num>
-#> 1:                      15270,12189,71846,19357 0.06407038 0.7359532
-#> 2:  17918,19341,20336,22628,22627,20619,...[15] 0.05029481 0.8557113
-#> 3: 76199,19014,26896,229003,17977,17978,...[12] 0.19991523 0.2900703
-#> 4:                            20893,59027,19883 0.04959020 0.9063587
-#> 5:  60406,19361,15270,20893,12189,68240,...[13] 0.07707367 0.5816288
-#> 6:                     60406,20018,245688,20017 0.08175156 0.6207015
+#>            es        nes     pvals       fdr
+#>         <num>      <num>     <num>     <num>
+#> 1:  0.2885754  0.9321129 0.5588723 0.7359532
+#> 2:  0.2387284  0.8353752 0.7140600 0.8557113
+#> 3: -0.3640706 -1.3241710 0.1282051 0.2900703
+#> 4:  0.2516324  0.7211793 0.8109541 0.9063587
+#> 5:  0.2469065  1.0551934 0.3751804 0.5816288
+#> 6:  0.3607407  1.0338840 0.4204947 0.6207015
+#>                                    leading_edge n_more_extreme    log2err
+#>                                          <list>          <num>      <num>
+#> 1:                      15270,12189,71846,19357            336 0.06407038
+#> 2:  17918,19341,20336,22628,22627,20619,...[15]            451 0.05029481
+#> 3: 76199,19014,26896,229003,17977,17978,...[12]             49 0.19991523
+#> 4:                            20893,59027,19883            458 0.04959020
+#> 5:  60406,19361,15270,20893,12189,68240,...[13]            259 0.07707367
+#> 6:                     60406,20018,245688,20017            237 0.08175156
 ```
 
 We can appreciate the (more or less) same p-values estimated by both
@@ -497,8 +497,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: seconds
 #>   expr      min       lq     mean   median       uq      max neval
-#>  fgsea 2.348167 2.454672 2.668862 2.528788 2.942352 3.108703    10
-#>   rust 2.321419 2.354257 2.364043 2.363302 2.380649 2.395565    10
+#>  fgsea 2.343831 2.370726 2.612927 2.492375 2.839090 3.179838    10
+#>   rust 2.218328 2.223741 2.232515 2.227505 2.235185 2.272516    10
 ```
 
 ### GSEA gene ontology aware

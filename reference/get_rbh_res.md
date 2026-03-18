@@ -13,7 +13,7 @@ get_rbh_res(object)
 
 - object:
 
-  The underlying class [`rbh_graph()`](rbh_graph.md).
+  The underlying class [`RbhGraph()`](RbhGraph.md).
 
 ## Value
 

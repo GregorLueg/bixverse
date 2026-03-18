@@ -21,7 +21,7 @@ doublet_detection_boost_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - boost_params:
 

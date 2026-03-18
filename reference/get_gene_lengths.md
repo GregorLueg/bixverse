@@ -12,7 +12,7 @@ get_gene_lengths(x, species = c("human", "mouse", "rat"), ...)
 
 - x:
 
-  Object to extract gene lengths from. Can be a matrix or bulk_coexp
+  Object to extract gene lengths from. Can be a matrix or BulkCoExp
   object.
 
 - species:

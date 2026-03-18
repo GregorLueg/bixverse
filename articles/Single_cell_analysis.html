@@ -189,6 +189,8 @@
 <span><span class="va">tempdir_pbmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/single_cell_exp.html">single_cell_exp</a></span><span class="op">(</span>dir_data <span class="op">=</span> <span class="va">tempdir_pbmc</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `single_cell_exp()` was deprecated in bixverse 0.3.0.</span></span>
+<span><span class="co">#&gt; ℹ Please use `SingleCells()` instead.</span></span>
 <span></span>
 <span><span class="va">params_cells_rows_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/params_sc_mtx_io.html">params_sc_mtx_io</a></span><span class="op">(</span></span>
 <span>  path_mtx <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">pbmc3k_path</span>, <span class="st">"matrix.mtx"</span><span class="op">)</span>,</span>
@@ -331,7 +333,7 @@
 <span>  return_format <span class="op">=</span> <span class="st">"cell"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.006 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.007 sec elapsed</span></span>
 <span></span>
 <span><span class="co">## Now we are to select the incorrect orientation</span></span>
 <span><span class="co">## This dataset is too small to see a difference however try it on your own larger and it will shock you</span></span>
@@ -343,7 +345,7 @@
 <span>  return_format <span class="op">=</span> <span class="st">"gene"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.259 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.277 sec elapsed</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## matrices can also be accessed with sinle brackets</span></span>
@@ -608,12 +610,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_obs_data.html">get_obs_data</a></span><span class="op">(</span><span class="va">boost_result</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    doublet doublet_score voting_avg cell_idx</span></span>
 <span><span class="co">#&gt;     &lt;lgcl&gt;         &lt;num&gt;      &lt;num&gt;    &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:   FALSE    0.03639780       0.00        1</span></span>
-<span><span class="co">#&gt; 2:   FALSE    0.65208429       0.80        2</span></span>
-<span><span class="co">#&gt; 3:   FALSE    0.46183160       0.64        3</span></span>
-<span><span class="co">#&gt; 4:   FALSE    0.12220496       0.00        4</span></span>
-<span><span class="co">#&gt; 5:   FALSE    0.10452713       0.00        5</span></span>
-<span><span class="co">#&gt; 6:   FALSE    0.04662628       0.00        6</span></span></code></pre></div>
+<span><span class="co">#&gt; 1:   FALSE    0.03442983       0.00        1</span></span>
+<span><span class="co">#&gt; 2:   FALSE    0.68259084       0.84        2</span></span>
+<span><span class="co">#&gt; 3:   FALSE    0.50783771       0.72        3</span></span>
+<span><span class="co">#&gt; 4:   FALSE    0.11885773       0.00        4</span></span>
+<span><span class="co">#&gt; 5:   FALSE    0.12274123       0.00        5</span></span>
+<span><span class="co">#&gt; 6:   FALSE    0.05808103       0.04        6</span></span></code></pre></div>
 </div>
 <p>Both methods add doublet information to the cell metadata, which you can then use to filter cells before downstream analysis:</p>
 <div class="cell">
@@ -641,24 +643,25 @@
 <span>  randomised_svd <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Using dense SVD solving on scaled data on 30 HVG.</span></span>
 <span></span>
 <span><span class="co"># get the PCA factors</span></span>
 <span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                        PC_1       PC_2       PC_3      PC_4       PC_5</span></span>
-<span><span class="co">#&gt; AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093</span></span>
-<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220</span></span>
-<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204</span></span>
-<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234</span></span>
-<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611</span></span>
+<span><span class="co">#&gt; AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675</span></span>
+<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888</span></span>
+<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138</span></span>
+<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458</span></span>
+<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605</span></span>
 <span></span>
 <span><span class="co"># Get PCA loadings for each gene</span></span>
 <span><span class="fu"><a href="../reference/get_pca_loadings.html">get_pca_loadings</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;                         PC_1        PC_2         PC_3        PC_4         PC_5</span></span>
-<span><span class="co">#&gt; ENSG00000125991 -0.003343013 -0.03231181  0.012509830 -0.02836288  0.311175138</span></span>
-<span><span class="co">#&gt; ENSG00000163736 -0.323547810  0.21558243 -0.007027924  0.01526336 -0.001063451</span></span>
-<span><span class="co">#&gt; ENSG00000090382 -0.198042095 -0.30515635 -0.173240870 -0.08887842  0.073860973</span></span>
-<span><span class="co">#&gt; ENSG00000163220 -0.183531880 -0.28671673 -0.198169768 -0.17102498  0.158384219</span></span>
-<span><span class="co">#&gt; ENSG00000115523  0.090477377  0.10992564 -0.428311616  0.20027384  0.011486083</span></span></code></pre></div>
+<span><span class="co">#&gt;                         PC_1       PC_2         PC_3        PC_4         PC_5</span></span>
+<span><span class="co">#&gt; ENSG00000125991 -0.003344497 -0.0323110  0.012509749 -0.02836219  0.311027139</span></span>
+<span><span class="co">#&gt; ENSG00000163736 -0.323539853  0.2156020 -0.007027835  0.01526347 -0.001063928</span></span>
+<span><span class="co">#&gt; ENSG00000090382 -0.198058128 -0.3051449 -0.173239112 -0.08887634  0.073859990</span></span>
+<span><span class="co">#&gt; ENSG00000163220 -0.183546484 -0.2867053 -0.198168010 -0.17102289  0.158386111</span></span>
+<span><span class="co">#&gt; ENSG00000115523  0.090482146  0.1099188 -0.428308934  0.20027515  0.011484474</span></span></code></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
@@ -773,7 +776,7 @@
 <span><span class="co"># The kbet_score represents the proportion of cells with significant batch effects</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"kBET score before correction:"</span>, </span>
 <span>            <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">kbet_before</span><span class="op">$</span><span class="va">kbet_score</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "kBET score before correction: 0.461"</span></span>
+<span><span class="co">#&gt; [1] "kBET score before correction: 0.462"</span></span>
 <span></span>
 <span><span class="co"># Visualize batch effects in PCA space</span></span>
 <span><span class="va">pca_batch_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sc_batch_object</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_batch_object</span><span class="op">)</span><span class="op">)</span></span>
@@ -848,8 +851,8 @@
 <span>  no_neighbours_to_keep <span class="op">=</span> <span class="fl">10L</span>,  <span class="co"># Final k for kNN graph</span></span>
 <span>  .verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in `method(bbknn_sc, bixverse::single_cell_exp)`(object = &lt;object&gt;, :</span></span>
-<span><span class="co">#&gt; Prior kNN matrix found. Will be overwritten.</span></span>
+<span><span class="co">#&gt; Warning in `method(bbknn_sc, bixverse::SingleCells)`(object = &lt;object&gt;, : Prior</span></span>
+<span><span class="co">#&gt; kNN matrix found. Will be overwritten.</span></span>
 <span><span class="co">#&gt; Running BBKNN algorithm.</span></span>
 <span><span class="co">#&gt; Generating graph based on BBKNN connectivities. Weights will be based on the connectivities and not shared nearest neighour calculations.</span></span>
 <span></span>
@@ -922,7 +925,7 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"kBET score after fastMNN:"</span>, </span>
 <span>            <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">kbet_after_mnn</span><span class="op">$</span><span class="va">kbet_score</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "kBET score after fastMNN: 0.104"</span></span>
+<span><span class="co">#&gt; [1] "kBET score after fastMNN: 0.102"</span></span>
 <span></span>
 <span><span class="co"># Visualize the corrected MNN embedding</span></span>
 <span><span class="co"># Note: fastMNN returns its own embedding, access it accordingly</span></span>
@@ -1018,20 +1021,20 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">dge_leiden_clusters</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            gene_id          lfc      prop1       prop2   z_scores  p_values</span></span>
 <span><span class="co">#&gt;             &lt;char&gt;        &lt;num&gt;      &lt;num&gt;       &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000188976 -0.004697453 0.10447761 0.119047619 -0.1705327 0.8645912</span></span>
-<span><span class="co">#&gt; 2: ENSG00000187608  0.031933323 0.40298507 0.253968269  1.2045563 0.2283746</span></span>
-<span><span class="co">#&gt; 3: ENSG00000186827  0.019535586 0.07462686 0.007936508  0.7552162 0.4501193</span></span>
-<span><span class="co">#&gt; 4: ENSG00000078808  0.052448999 0.16417910 0.039682541  1.4454675 0.1483266</span></span>
-<span><span class="co">#&gt; 5: ENSG00000160087  0.010973066 0.11940298 0.095238097  0.2544456 0.7991513</span></span>
-<span><span class="co">#&gt; 6: ENSG00000169972  0.022716010 0.05970149 0.000000000  0.6821307 0.4951563</span></span>
+<span><span class="co">#&gt; 1: ENSG00000188976 -0.004295975 0.10447761 0.118110240 -0.1600114 0.8728721</span></span>
+<span><span class="co">#&gt; 2: ENSG00000187608  0.025825217 0.40298507 0.259842515  1.1093230 0.2672909</span></span>
+<span><span class="co">#&gt; 3: ENSG00000186827  0.019572020 0.07462686 0.007874016  0.7570289 0.4490326</span></span>
+<span><span class="co">#&gt; 4: ENSG00000078808  0.052552961 0.16417910 0.039370079  1.4508600 0.1468189</span></span>
+<span><span class="co">#&gt; 5: ENSG00000160087  0.010340076 0.11940298 0.102362208  0.1842148 0.8538449</span></span>
+<span><span class="co">#&gt; 6: ENSG00000169972  0.022716010 0.05970149 0.000000000  0.6830740 0.4945601</span></span>
 <span><span class="co">#&gt;          fdr</span></span>
 <span><span class="co">#&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.9996141</span></span>
-<span><span class="co">#&gt; 2: 0.9996141</span></span>
-<span><span class="co">#&gt; 3: 0.9996141</span></span>
-<span><span class="co">#&gt; 4: 0.9996141</span></span>
-<span><span class="co">#&gt; 5: 0.9996141</span></span>
-<span><span class="co">#&gt; 6: 0.9996141</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: 0.9976685</span></span>
+<span><span class="co">#&gt; 2: 0.9976685</span></span>
+<span><span class="co">#&gt; 3: 0.9976685</span></span>
+<span><span class="co">#&gt; 4: 0.9976685</span></span>
+<span><span class="co">#&gt; 5: 0.9976685</span></span>
+<span><span class="co">#&gt; 6: 0.9976685</span></span></code></pre></div>
 </div>
 <p>Specify a column, and the function will calculate differential gene expression for each cluster against all other cells combined. It processes clusters sequentially: cluster one vs. all others, cluster two vs. all others, and so on. To manage computational efficiency, the “all others” group is automatically downsampled to a random 100,000 cells if it exceeds that threshold.</p>
 <p>Currently this functions alternative hypothesis is set to “greater”, i.e., genes upregulated in the group.</p>
@@ -1184,12 +1187,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hotspot_autocor_danb_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            gene_id     gaerys_c    z_score          pval           fdr</span></span>
 <span><span class="co">#&gt;             &lt;char&gt;        &lt;num&gt;      &lt;num&gt;         &lt;num&gt;         &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000188976  0.001354641  0.1547889  8.769878e-01  9.985216e-01</span></span>
-<span><span class="co">#&gt; 2: ENSG00000188290  0.205669463 21.4344425 6.379228e-102 3.161298e-100</span></span>
-<span><span class="co">#&gt; 3: ENSG00000187608  0.118260309 10.3465157  4.338843e-25  9.386010e-24</span></span>
-<span><span class="co">#&gt; 4: ENSG00000131591 -0.008443281 -0.9828783  3.256673e-01  7.737786e-01</span></span>
-<span><span class="co">#&gt; 5: ENSG00000186891  0.003888038  0.5505558  5.819382e-01  9.415786e-01</span></span>
-<span><span class="co">#&gt; 6: ENSG00000186827  0.038622454  3.1006124  1.931209e-03  1.423204e-02</span></span></code></pre></div>
+<span><span class="co">#&gt; 1: ENSG00000188976  0.001289273  0.1473542  8.828525e-01  9.990468e-01</span></span>
+<span><span class="co">#&gt; 2: ENSG00000188290  0.205720052 21.4417973 5.446830e-102 2.713080e-100</span></span>
+<span><span class="co">#&gt; 3: ENSG00000187608  0.118394487 10.3541613  4.005820e-25  8.665597e-24</span></span>
+<span><span class="co">#&gt; 4: ENSG00000131591 -0.008500200 -0.9920494  3.211734e-01  7.699534e-01</span></span>
+<span><span class="co">#&gt; 5: ENSG00000186891  0.003847624  0.5450743  5.857024e-01  9.418119e-01</span></span>
+<span><span class="co">#&gt; 6: ENSG00000186827  0.038622946  3.1006773  1.930786e-03  1.425055e-02</span></span></code></pre></div>
 </div>
 <section class="level3"><h4 id="hotspot-gene-modules">Hotspot Gene Modules<a class="anchor" aria-label="anchor" href="#hotspot-gene-modules"></a>
 </h4>
@@ -1217,12 +1220,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">membership_results</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            gene_id cluster_member</span></span>
 <span><span class="co">#&gt;             &lt;char&gt;          &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: ENSG00000087086            249</span></span>
-<span><span class="co">#&gt; 2: ENSG00000019582            249</span></span>
-<span><span class="co">#&gt; 3: ENSG00000167996            251</span></span>
-<span><span class="co">#&gt; 4: ENSG00000105374            249</span></span>
-<span><span class="co">#&gt; 5: ENSG00000101439            249</span></span>
-<span><span class="co">#&gt; 6: ENSG00000163220            249</span></span>
+<span><span class="co">#&gt; 1: ENSG00000087086            248</span></span>
+<span><span class="co">#&gt; 2: ENSG00000019582            248</span></span>
+<span><span class="co">#&gt; 3: ENSG00000167996            250</span></span>
+<span><span class="co">#&gt; 4: ENSG00000105374            248</span></span>
+<span><span class="co">#&gt; 5: ENSG00000101439            248</span></span>
+<span><span class="co">#&gt; 6: ENSG00000163220            248</span></span>
 <span></span>
 <span><span class="co"># Create gene sets from modules</span></span>
 <span><span class="va">hotspot_gs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_hotspot_membership.html">get_hotspot_membership</a></span><span class="op">(</span><span class="va">hotspot_gene_gene_cor</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/exposition.html" class="external-link">%$%</a></span></span>
@@ -1230,7 +1233,7 @@
 <span></span>
 <span><span class="co"># View module sizes</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">hotspot_gs</span>, <span class="va">length</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 238 247 249 251 252 </span></span>
+<span><span class="co">#&gt; 237 246 248 250 251 </span></span>
 <span><span class="co">#&gt;  61  25 227 108  71</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h3 id="save-object">Save object<a class="anchor" aria-label="anchor" href="#save-object"></a>
@@ -1271,20 +1274,20 @@
 <code class="sourceCode R"><span><span class="co">## PCA in original object exists</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                        PC_1       PC_2       PC_3      PC_4       PC_5</span></span>
-<span><span class="co">#&gt; AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093</span></span>
-<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220</span></span>
-<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204</span></span>
-<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234</span></span>
-<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611</span></span>
+<span><span class="co">#&gt; AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675</span></span>
+<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888</span></span>
+<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138</span></span>
+<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458</span></span>
+<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605</span></span>
 <span></span>
 <span><span class="co">## PCA in loaded in object does exist as has been loaded back in from the qs2 file</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/get_pca_factors.html">get_pca_factors</a></span><span class="op">(</span><span class="va">sc_object_loaded</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
 <span><span class="co">#&gt;                        PC_1       PC_2       PC_3      PC_4       PC_5</span></span>
-<span><span class="co">#&gt; AAACATACAACCAC-1  1.1304877  1.2587612  0.5557253 -1.048803 -0.3754093</span></span>
-<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1361281 -0.4063550  1.5543214  2.175365  0.1694220</span></span>
-<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8242129  0.8231875  0.5782169 -1.131134  0.1818204</span></span>
-<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4241612 -3.2066815 -0.7072210  1.011224 -0.2476234</span></span>
-<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9866564  2.2468381 -6.2985854  2.895518 -0.6819611</span></span>
+<span><span class="co">#&gt; AAACATACAACCAC-1  1.1303505  1.2584710  0.5556017 -1.048613 -0.3753675</span></span>
+<span><span class="co">#&gt; AAACATTGAGCTAC-1  0.1360883 -0.4062732  1.5540446  2.174946  0.1693888</span></span>
+<span><span class="co">#&gt; AAACATTGATCAGC-1  0.8241050  0.8229902  0.5780997 -1.130924  0.1816138</span></span>
+<span><span class="co">#&gt; AAACCGTGCTTCCG-1 -2.4238942 -3.2059493 -0.7070727  1.011035 -0.2475458</span></span>
+<span><span class="co">#&gt; AAACCGTGTATGCG-1  1.9863925  2.2462864 -6.2973962  2.895016 -0.6814605</span></span>
 <span></span>
 <span></span>
 <span><span class="co">## Same for knn</span></span>

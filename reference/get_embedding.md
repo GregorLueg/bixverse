@@ -1,14 +1,14 @@
 # Get the embedding from the cache
 
 General wrapper function that can be used to pull out any embedding
-stored in the `sc_cache`.
+stored in the `ScCache`.
 
 ## Usage
 
 ``` r
 get_embedding(x, embd_name)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 get_embedding(x, embd_name)
 ```
 

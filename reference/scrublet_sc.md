@@ -28,7 +28,7 @@ scrublet_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - scrublet_params:
 

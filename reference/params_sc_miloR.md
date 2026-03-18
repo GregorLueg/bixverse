@@ -9,7 +9,7 @@ params_sc_miloR(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("annoy", "hnsw"),
+  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
   knn = list()
 )
 ```
@@ -33,17 +33,17 @@ params_sc_miloR(
 
 - index_type:
 
-  String. Type of kNN index to use. One of `c("annoy", "hnsw")`.
-  Defaults to `"annoy"`.
+  String. Type of kNN index to use. One of
+  `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"hnsw"`.
 
 - knn:
 
   List. Optional overrides for kNN parameters. See
   [`params_knn_defaults()`](params_knn_defaults.md) for available
   parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and
-  `ef_search`. Note: `knn_method` cannot be `"exhaustive"` for MiloR as
-  it doesn't generate an index!
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+  `ef_search`, `n_list` and `n_probe`. Note: `knn_method` cannot be
+  `"exhaustive"` for MiloR as it doesn't generate an index!
 
 ## Value
 

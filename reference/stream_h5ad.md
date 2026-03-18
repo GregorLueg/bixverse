@@ -1,9 +1,9 @@
-# Stream in h5ad to `single_cell_exp`
+# Stream in h5ad to `SingleCells`
 
 This function takes an h5ad file and loads (via streaming) the obs and
-var data into the DuckDB of the `single_cell_exp` class and the counts
-into a Rust-binarised format for rapid access. During the reading in of
-the counts, the log CPM transformation will occur automatically. This
+var data into the DuckDB of the `SingleCells` class and the counts into
+a Rust-binarised format for rapid access. During the reading in of the
+counts, the log CPM transformation will occur automatically. This
 function is specifically designed to deal with larger amounts of data
 and is slower than [`load_h5ad()`](load_h5ad.md).
 
@@ -24,7 +24,7 @@ stream_h5ad(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - h5_path:
 

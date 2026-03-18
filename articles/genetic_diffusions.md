@@ -73,7 +73,7 @@ gold_standard_genes <- sample(
 To generate the class, you run
 
 ``` r
-diffusion_obj <- network_diffusions(
+diffusion_obj <- NetworkDiffusions(
   edge_data, 
   weighted = FALSE, 
   directed = FALSE
@@ -362,3 +362,9 @@ head(results_v2)
 #> 5:     0.002532385       FALSE       FALSE
 #> 6:     0.002532385       FALSE       FALSE
 ```
+
+As you can appreciate, the diffusions can be used to identify more
+“influenced” parts of the network. If you want to transform the graphs
+into some embeddings for visualisations, also check out
+[genewalkR](https://gregorlueg.github.io/genewalkR/) which has very fast
+node2vec methods.

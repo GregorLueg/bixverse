@@ -1,7 +1,7 @@
 # Return the Limma Voom results
 
 Getter function to extract the Limma Voom results from the
-[`bulk_dge()`](bulk_dge.md) class.
+[`BulkDge()`](BulkDge.md) class.
 
 ## Usage
 
@@ -13,7 +13,7 @@ get_dge_limma_voom(object)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 ## Value
 

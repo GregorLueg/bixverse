@@ -14,7 +14,7 @@ plot_hvgs(object, bins = 50L)
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md).
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - bins:
 

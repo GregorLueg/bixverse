@@ -1,4 +1,4 @@
-# Load an existing single_cell_exp from disk
+# Load an existing SingleCells from disk
 
 Helper function that can load the parameters to access the on-disk
 stored data into the class.
@@ -13,7 +13,7 @@ load_existing(object)
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 ## Value
 

@@ -2,14 +2,14 @@
 
 Get the gene names
 
-Get the gene names from a `single_cell_exp`.
+Get the gene names from a `SingleCells`.
 
 ## Usage
 
 ``` r
 get_gene_names(x)
 
-# S3 method for class 'sc_mapper'
+# S3 method for class 'ScMap'
 get_gene_names(x)
 ```
 

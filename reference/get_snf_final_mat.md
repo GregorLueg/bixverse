@@ -12,7 +12,8 @@ get_snf_final_mat(object)
 
 - object:
 
-  The underlying class [`snf()`](snf.md).
+  The underlying class
+  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
 
 ## Value
 

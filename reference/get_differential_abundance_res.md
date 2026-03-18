@@ -7,7 +7,7 @@ Get the differential abundance results
 ``` r
 get_differential_abundance_res(x)
 
-# S3 method for class 'sc_miloR'
+# S3 method for class 'miloR'
 get_differential_abundance_res(x)
 ```
 

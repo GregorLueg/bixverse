@@ -23,7 +23,7 @@ hotspot_gene_cor_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - embd_to_use:
 

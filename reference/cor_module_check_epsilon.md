@@ -19,7 +19,7 @@ cor_module_check_epsilon(
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). You need to run
+  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to run
   [`cor_module_processing()`](cor_module_processing.md) before running
   this function.
 

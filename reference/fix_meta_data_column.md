@@ -1,10 +1,9 @@
 # Helper to fix meta-data columns to be R conform
 
 This function will update the specified columns in the metadata of an
-[`bixverse::bulk_dge`](bulk_dge.md) or
-[`bixverse::bulk_coexp`](bulk_coexp.md) to be conform with R standard
-naming convetions. This is useful to do before running DGE methods as
-they expect standardised names.
+[`BulkDge()`](BulkDge.md) or [`BulkCoExp()`](BulkCoExp.md) to be conform
+with R standard naming convetions. This is useful to do before running
+DGE methods as they expect standardised names.
 
 ## Usage
 
@@ -16,8 +15,8 @@ fix_meta_data_column(object, col_names, ...)
 
 - object:
 
-  The underlying object, either [`bixverse::bulk_coexp`](bulk_coexp.md)
-  or [`bixverse::bulk_dge`](bulk_dge.md).
+  The underlying object, either [`BulkCoExp()`](BulkCoExp.md) or
+  [`BulkDge()`](BulkDge.md).
 
 - col_names:
 

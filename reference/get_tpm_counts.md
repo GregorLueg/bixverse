@@ -1,7 +1,7 @@
 # Return the TPM-normalised counts
 
 Getter function to extract the TPM-normalised counts from the
-[`bulk_dge()`](bulk_dge.md) class.
+[`BulkDge()`](BulkDge.md) class.
 
 ## Usage
 
@@ -13,7 +13,7 @@ get_tpm_counts(object)
 
 - object:
 
-  `bulk_dge` class.
+  `BulkDge` class.
 
 ## Value
 

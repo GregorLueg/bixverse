@@ -42,8 +42,8 @@ params_sc_neighbours(
   List. Optional overrides for kNN parameters. See
   [`params_knn_defaults()`](params_knn_defaults.md) for available
   parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`, and
-  `ef_search`.
+  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
+  `ef_search`, `n_list` and `n_probe`.
 
 ## Value
 

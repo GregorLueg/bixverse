@@ -12,7 +12,7 @@ get_rust_count_gene_f_path(object)
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 ## Value
 

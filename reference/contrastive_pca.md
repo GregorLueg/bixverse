@@ -13,7 +13,7 @@ contrastive_pca(object, alpha, no_pcs)
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md).
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - alpha:
 
@@ -25,7 +25,7 @@ contrastive_pca(object, alpha, no_pcs)
 
 ## Value
 
-`bulk_coexp` with additional data in the slots
+`BulkCoExp` with additional data in the slots
 
 ## References
 

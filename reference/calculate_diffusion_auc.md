@@ -1,6 +1,6 @@
 # Calculate the AUROC for a diffusion score
 
-This functions can take a given `network_diffusions` object and
+This functions can take a given `NetworkDiffusions` object and
 calculates an AUC and generates a Z-score based on random permutation of
 `random_aucs` for test for statistical significance if desired.
 
@@ -21,8 +21,8 @@ calculate_diffusion_auc(
 
 - object:
 
-  `network_diffusions` object. The underlying class
-  [`network_diffusions()`](network_diffusions.md).
+  `NetworkDiffusions` object. The underlying class
+  [`NetworkDiffusions()`](NetworkDiffusions.md).
 
 - hit_nodes:
 

@@ -2,14 +2,14 @@
 
 Remove the KNN data
 
-Remove the KNN matrix from a `single_cell_exp` class.
+Remove the KNN matrix from a `SingleCells` class.
 
 ## Usage
 
 ``` r
 remove_knn(x)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 remove_knn(x)
 ```
 

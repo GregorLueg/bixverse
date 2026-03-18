@@ -20,7 +20,7 @@ gene_set_proportions_sc(
 
 - object:
 
-  `single_cell_exp` class.
+  `SingleCells` class.
 
 - gene_set_list:
 

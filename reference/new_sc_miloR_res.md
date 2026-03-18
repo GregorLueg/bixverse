@@ -34,7 +34,7 @@ new_sc_miloR_res(nhoods, sample_counts, spatial_dist, params)
 
 ## Value
 
-An `sc_miloR` class that contains the provided data and has subsequent
+An `miloR` class that contains the provided data and has subsequent
 methods to calculate differential abundance statistics.
 
 ## References

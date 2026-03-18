@@ -12,7 +12,7 @@ get_cor_graph(object, epsilon, .verbose)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - epsilon:
 

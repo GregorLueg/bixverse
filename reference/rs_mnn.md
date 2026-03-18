@@ -12,6 +12,7 @@ rs_mnn(
   cell_indices,
   gene_indices,
   batch_indices,
+  precomputed_pca,
   mnn_params,
   verbose,
   seed
@@ -36,6 +37,10 @@ rs_mnn(
 - batch_indices:
 
   Integer vector. These represent to which batch a given cell belongs.
+
+- precomputed_pca:
+
+  Optional PCA matrix. If you want to provide a pre-computed matrix.
 
 - mnn_params:
 

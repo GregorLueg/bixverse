@@ -13,7 +13,7 @@ checkCellsExist(x, cell_names)
 
 - x:
 
-  The `single_cell_exp` object to check/assert.
+  The `SingleCells` object to check/assert.
 
 - cell_names:
 

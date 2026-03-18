@@ -23,7 +23,7 @@ test_nhoods(
   fdr_weighting = c("k-distance", "graph-overlap", "none")
 )
 
-# S3 method for class 'sc_miloR'
+# S3 method for class 'miloR'
 test_nhoods(
   x,
   design,
@@ -40,8 +40,7 @@ test_nhoods(
 
 - x:
 
-  `sc_miloR` object for which to run the differential abundance
-  analysis.
+  `miloR` object for which to run the differential abundance analysis.
 
 - design:
 
@@ -86,7 +85,7 @@ test_nhoods(
 
 ## Value
 
-The `sc_miloR` object with added model and results from the differential
+The `miloR` object with added model and results from the differential
 abundance analysis.
 
 ## References

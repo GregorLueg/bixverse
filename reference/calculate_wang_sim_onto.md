@@ -13,7 +13,7 @@ calculate_wang_sim_onto(object, weights, .verbose = TRUE)
 
 - object:
 
-  `ontology class`. See [`ontology()`](ontology.md).
+  `OntologySim` class. See [`OntologySim()`](OntologySim.md).
 
 - weights:
 

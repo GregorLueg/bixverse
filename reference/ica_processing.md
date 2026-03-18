@@ -13,9 +13,9 @@ ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md). Ideally, you should
-  run [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before
-  applying this function.
+  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
+  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
+  this function.
 
 - fast_svd:
 
@@ -33,5 +33,4 @@ ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 
 ## Value
 
-`bulk_coexp` with the needed data for ICA in the properties of the
-class.
+`BulkCoExp` with the needed data for ICA in the properties of the class.

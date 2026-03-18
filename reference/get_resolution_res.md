@@ -12,7 +12,7 @@ get_resolution_res(object)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 ## Value
 

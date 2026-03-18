@@ -98,7 +98,10 @@
 <span>  grp <span class="op">=</span> <span class="va">cpca_test_data</span><span class="op">$</span><span class="va">target_labels</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">cpca_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bulk_coexp.html">bulk_coexp</a></span><span class="op">(</span>raw_data <span class="op">=</span> <span class="va">raw_data</span>, meta_data <span class="op">=</span> <span class="va">sample_meta</span><span class="op">)</span></span>
+<span><span class="va">cpca_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BulkCoExp.html">BulkCoExp</a></span><span class="op">(</span></span>
+<span>  raw_data <span class="op">=</span> <span class="va">raw_data</span>, </span>
+<span>  meta_data <span class="op">=</span> <span class="va">sample_meta</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># This function allows you to do scaling, HVG selection, etc.</span></span>
 <span><span class="co"># We won't be doing any of that</span></span>
@@ -149,7 +152,7 @@
 <span><span class="co"># extract the factors</span></span>
 <span><span class="va">c_pca_factors</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_c_pca_factors.html">get_c_pca_factors</a></span><span class="op">(</span><span class="va">cpca_obj</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>The data can then be used for subsequent further analysis.</p>
+<p>The data can then be used for subsequent further analysis. If you want to get some ideas what you can do with the data, please check out <a href="https://www.nature.com/articles/s41467-018-04608-8" class="external-link">Abid, et al.</a>.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

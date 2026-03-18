@@ -7,7 +7,7 @@ Get the fitted model
 ``` r
 get_model_fit(x)
 
-# S3 method for class 'sc_miloR'
+# S3 method for class 'miloR'
 get_model_fit(x)
 ```
 

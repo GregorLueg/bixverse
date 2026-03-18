@@ -12,7 +12,7 @@ get_c_pca_factors(object)
 
 - object:
 
-  The underlying class, see [`bulk_coexp()`](bulk_coexp.md).
+  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
 
 ## Value
 

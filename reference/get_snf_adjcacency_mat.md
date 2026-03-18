@@ -12,7 +12,8 @@ get_snf_adjcacency_mat(object, name)
 
 - object:
 
-  The underlying class [`snf()`](snf.md).
+  The underlying class
+  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
 
 - name:
 

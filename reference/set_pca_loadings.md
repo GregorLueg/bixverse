@@ -2,14 +2,14 @@
 
 Set/add PCA loadings
 
-Set the PCA factors for a `single_cell_exp` class.
+Set the PCA factors for a `SingleCells` class.
 
 ## Usage
 
 ``` r
 set_pca_loadings(x, pca_loading)
 
-# S3 method for class 'sc_cache'
+# S3 method for class 'ScCache'
 set_pca_loadings(x, pca_loading)
 ```
 

@@ -19,7 +19,7 @@ generate_rbh_graph(
 
 - object:
 
-  The underlying class, see [`rbh_graph()`](rbh_graph.md).
+  The underlying class, see [`RbhGraph()`](RbhGraph.md).
 
 - minimum_similarity:
 

@@ -17,7 +17,7 @@ cor_module_coremo_stability(object, chunk_size = 15L, .verbose = TRUE)
 
 - object:
 
-  The class, see [`bulk_coexp()`](bulk_coexp.md).
+  The class, see [`BulkCoExp()`](BulkCoExp.md).
 
 - chunk_size:
 
