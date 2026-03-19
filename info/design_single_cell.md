@@ -330,8 +330,8 @@ about this).
   operate on whatever is set here. If you want to change this, you need to think 
   carefully about the state of what is on disk. That is a real disadvantage and
   can be a NASTY footgun. Especially for methods that will do something like
-  "read in embedding AND kNN graph". It the state was not synchronised here,
-  it will blow up.
+  "read in embedding AND kNN graph". If the state was not synchronised here,
+  it will blow up and you will see red unhappy Rust messages in your console.
 
 - The "ecosystem" (quotation marks because at the moment it is just this R 
 package and several Rust crates) is in its infancy. Stuff will break; breaking 
