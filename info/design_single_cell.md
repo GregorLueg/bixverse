@@ -1,56 +1,59 @@
+<i>Author:</i> Gregor Lueg
+
 # Technical design choices for the single cell implementation
 
-This file is an attempt to explain the technical decisions behind the way the
-singe cell has been implemented in this crate. This is an opinionated piece,
-so take what is written here 
+This file is an attempt to explain the technical decisions behind the way single 
+cell has been implemented in this package. This is an opinionated piece, so take 
+what is written here with a pinch of salt. The statements here reflect my 
+personal opinions, not those of any of my past, current, or future employers.
 
-## Why do we need another single cell framework ... ?
+## Why do we need yet another single cell framework ... ?
 
 <img src="../man/figures/standards.png" alt="standards">
 
-Why the hell would you write a single cell framework from scratch and not use
-one of the established libraries? We have in R [Seurat](https://satijalab.org/seurat/),
-in the BioConductor universe [single cell experiments](https://bioconductor.org/books/release/OSCA/);
-in Python [ScanPy](https://scanpy.readthedocs.io/en/stable/) and even now
-GPU-accelerated [RAPIDS-singlecell](https://rapids-singlecell.readthedocs.io/en/latest/)
-leveraging cuda and Nvidia GPUs. In Rust, we have [SingleRust](https://singlerust.com)
-which is porting ScanPy over... What the hell is the point you might ask? Well,
-the design philosophy in this package is quite different from all the solutions
-above - if better/worse you shall discover, but it is different. But let's 
-start with the problem setting...
+Why the hell would you write a single cell framework from scratch and not use 
+one of the established libraries? We have in R [Seurat](https://satijalab.org/seurat/), 
+in the BioConductor universe [single cell experiments](https://bioconductor.org/books/release/OSCA/); 
+in Python [ScanPy](https://scanpy.readthedocs.io/en/stable/) and even now 
+GPU-accelerated [RAPIDS-singlecell](https://rapids-singlecell.readthedocs.io/en/latest/) 
+leveraging CUDA and Nvidia GPUs. In Rust, we have [SingleRust](https://singlerust.com) 
+which is porting ScanPy over... What the hell is the point, you might ask? Well, 
+the design philosophy in this package is quite different from all of the above — 
+whether better or worse you shall discover, but it *is* different. Let's start 
+with the problem though...
 
-### Chapter 1: Single cell is just not performant...
+### Chapter 1: Single cell is just not (very) performant...
 
-Some quotes from some recent papers: </br>
+Some quotes from recent papers: </br>
 
-<i>We benchmarked rapids-singlecell on 1 million cells from the 10x Genomics mouse 
-brain dataset, running a standard workflow: preprocessing, normalization, HVG 
-selection, dimensionality reduction (PCA, UMAP, t-SNE), neighborhood graph 
-construction, and Leiden clustering (Methods). <b>On a 32-core workstation, the 
-pipeline took over 52 minutes (Methods)</b></i> - 
+<i>We benchmarked rapids-singlecell on 1 million cells from the 10x Genomics 
+mouse brain dataset, running a standard workflow: preprocessing, normalization, 
+HVG selection, dimensionality reduction (PCA, UMAP, t-SNE), neighborhood graph 
+construction, and Leiden clustering (Methods). <b>On a 32-core workstation, 
+the pipeline took over 52 minutes (Methods)</b></i> —
 [from Dicks, et al., arXive, 2026](https://arxiv.org/abs/2603.02402)
 
-<i>For instance, a typical single-cell data analysis pipeline5—encompassing data 
-integration, clustering, visualization, and differential expression analysis—
-requires about 16 h to process half a million cells on a standard desktop. 
-When the cell number slightly increases to 600,000, <b>the above pipeline can crash 
-due to memory exceeding, even on a professional computing platform with 512 GB 
-RAM</b></i> - [from Li, et al., Nat Comm, 2025](https://www.nature.com/articles/s41467-025-56424-6)
+<i>For instance, a typical single-cell data analysis pipeline — encompassing 
+data integration, clustering, visualisation, and differential expression 
+analysis — requires about 16 h to process half a million cells on a standard 
+desktop. When the cell number slightly increases to 600,000, <b>the above 
+pipeline can crash due to memory exceeding, even on a professional computing 
+platform with 512 GB RAM</b></i> — [from Li, et al., Nat Comm, 2025](https://www.nature.com/articles/s41467-025-56424-6)
 
 </br>
-Anyone who worked with more than 500k cells can attest to that it is painful.
-VERY painful. The question then here is... why... ? Why can frameworks like
-[DuckDB](https://duckdb.org) and [polars](https://pola.rs) deal with massive
-data sets without needing fat memory machines? You can easily analyse 100's
-of million of rows on a local laptop with these two. Why cannot we do this 
-with single cell?
+Anyone who has worked with more than 500k cells can attest to it being painful. 
+Actually VERY painful. The question is... why? Why can analytical engines like 
+[DuckDB](https://duckdb.org) and [polars](https://pola.rs) handle massive data 
+sets without needing fat memory machines? You can easily analyse hundreds of 
+millions of rows on a local laptop with those two. Why can we not do the same 
+with single cell? Is the answer really "Bro, just throw more cores, memory, 
+and GPUs at the problem"? Or is it time to rethink **HOW** we are doing this.
 
 ### Chapter 2: Do not keep data in memory...
 
-Let's do some math... Let's say we have some single cell experiment with 1m
-cells. We assume that in average something like 1000 genes are detected per
-cell. What actually happens to our memory? And let's take the worst case here:
-R.
+Let's do some maths. Say we have a single cell experiment with 1M cells, with 
+on average 1000 genes detected per cell. What actually happens to our memory? 
+Worst case: R with its double precision floats.
 
 ```
 # raw counts
@@ -64,7 +67,7 @@ Total: ~12 GB (double) / ~8 GB (int32)
 # norm counts
 For sure double, so 12 GB
 
-# scaled counts with 3k HVG
+# scaled counts with 2k HVG (if 3k, just increase this by 50%)
 2k HVGs:  1M × 2,000 × 8 bytes = 16 GB
 
 # embeddings
@@ -84,63 +87,94 @@ Total: ~244 MB
 Same as kNN graph ~244 MB
 ```
 
-How much are we looking at here? For sure 40 GBs of memory already occupied. 
-Then you have some horrible tibbles with 1m of rows and just imagine a bunch
-of string columns which can add in nasty situations for sure another 250 to 500
-MB. Now R has a lovely copy and modify mechanic and suddenly everything becomes
-unbearable slow, memory hungry and you end up with bloated objects that store 
-way too much stuff in memory. The question is... Should we do any of this? Why 
-do we keep the raw and norm counts in memory to start with? 
-[BPCells](https://github.com/bnprks/BPCells) is going in the right direction
-here, but can we do even better ... ?
+You are already looking at 40+ GB of occupied memory. Then you have some 
+horrible tibbles with 1M rows — throw in a bunch of string columns and you are 
+adding another 250–500 MB in nasty situations. Now add R's copy-on-modify 
+semantics and suddenly everything becomes unbearably slow, memory hungry, and 
+you end up with bloated objects storing data you rarely actually need in memory. 
+The question is: should we be doing any of this? Why do we keep raw and 
+normalised counts in memory at all? [BPCells](https://github.com/bnprks/BPCells) 
+is going in the right direction here, but can we do even better?
 
 ### Chapter 3: Python and R are slow...
 
 <img src="../man/figures/python_r_slow.jpg" alt="Python and R are slow">
 
-There. I said it. They are slow and let us stop pretending otherwise. But meh,
-NumPy! But meh, Rccp! Yeah great. You are using code/libraries in low level 
-languages as an argument against these two languages being slow. You are still 
-paying an performance and memory penalty just due to the way these languages are 
-designed (which makes them great for quick iterative work!). You can make them 
-faster, you will struggle to make them FAST. You do not have tight control over 
-memory allocations, if you are not careful and you roundtrip between the 
-kernels, things can get substantially slowed down and your memory pressure 
-increases massively. 
+There. It has been said. They are slow and let us stop pretending otherwise. 
+Yes, you can drop into NumPy or Rcpp for the heavy lifting — but that argument 
+rather proves the point. The real problem is not any single kernel; it is what 
+happens between them.
+
+A lot of algorithms in practice end up looking like this:
+
+```
+R/Python → low-level kernel → R/Python → low-level kernel → R/Python → ...
+```
+
+Each arrow is a context switch. Data gets passed across a language boundary, 
+some "simple" bookkeeping happens in the interpreter — a filter here, a reshape 
+there, maybe a quick normalisation — and then you hand it back down again. None 
+of those individual steps looks expensive. Collectively, they are death by a 
+thousand cuts: repeated allocations, data copies you did not ask for, and the 
+interpreter's garbage collector doing God knows what in between. You also lose 
+any hope of the compiler reasoning across those boundaries and optimising the 
+full pipeline.
+
+The solution is not to make the interpreted bits faster. It is to keep the data 
+in low-level code for as long as possible and only surface results to R when the 
+user actually needs to look at something. R then becomes a thin orchestration 
+layer, not an active participant in the computation.
 
 ## What is your proposal then ... ?
 
+Okay, everything so far reads like a rant. What is the solution, mate?
+
 ### Let's not keep data in memory...
 
-Taking what is written above, we can now come up with a solution to the 
-problems. Ideally, we want an interface from an interpreted, dynamically typed
-language, so going all in into Rust is just too heavyhanded. But we can then
-take certain design decisions:
+If we think this through, we can arrive at a solution. Ideally, we want an 
+interface from an interpreted, dynamically typed language — going all-in on Rust 
+is just too heavy. The average person does not want to deal with the borrow 
+checker, does not want to compile code, and wants to quickly analyse and 
+iterate over data. The average bioinformatician lives in blissful ignorance and 
+will not be able to comment on `f32` vs `f64` float representation in memory — 
+and frankly should not have to. That means the interface should be a dynamically 
+typed, interpreted language. This opens the package up to more people and 
+makes plotting (ggplot2 for the win) much easier. From there we can make some 
+design decisions.
 
-1. We do not keep data in memory if not needed. Most analyses leveraging counts
-   only need subsets of cells and genes. We can also avoid holding metadata in
-   memory via DuckDB. Data will be streamed from disk when needed and Rust's
-   compiler will free memory once it is not needed anymore. In times, this
-   is even enforced by `drop()` to help. Raw counts? Nope. Normalised counts?
-   Nope. Scaled counts? Nope. We just removed 40 GB of unnecessary stuff from
-   memory. Data can be loaded into memory in ms if need be.
-2. We do not even load all data into memory to start with. In 99.99% of the 
-   cases, we know that we do not want low quality cells with tiny library sizes
-   and lack of unique features. We also basically always to the usual library
-   size to target size with log transformation. That means while reading in
-   h5ad files or mtx files, we can already pre-scan these, only write 
-3. We accept that single cell is noisy and do not even bother with `f32` or even
-   `f64` precision. In terms of raw counts, most of the time `u16` is enough. 
-   The ML field has shown us that one can get away with `f16`, 
-   which reduces memory pressure substantially (they quantise even more 
-   aggressively). We also do not bother doing any calculations in R (or Python). 
-   Rust is superior for speed and optimisation, we can leverage aggressive 
-   multi-threading, we avoid unnecessary copy semantics, we control
-   memory tightly. R in this case just serves as an interface and telling
-   the underlying Rust code what to do. More to that in the next section.
+1. <b><i>We do not keep data in memory if not needed!</b></i> Most analyses 
+leveraging counts only need subsets of cells and genes. We can also avoid 
+holding metadata in memory via DuckDB. Data will be streamed from disk when 
+needed and Rust's compiler will free memory once it is no longer needed — 
+sometimes enforced explicitly with `drop()`. Raw counts? Nope. Normalised 
+counts? Nope. Scaled counts? Nope. We just removed 40 GB of unnecessary stuff 
+from memory (in our 1M cell example). Data can be loaded into memory in 
+milliseconds if need be.
 
-But if you do not have the data in memory, is this not going to be slow? Well
-no. We store the data in structures like this. One for cells:
+2. <b><i>We do not even load all data into memory to begin with.</b></i> In 
+99.99% of cases, we know we do not want low quality cells with tiny library 
+sizes and few unique features. We also almost always do the usual 
+library-size-to-target-size normalisation with log transformation. (Anyone who 
+has tried fancy Pearson residual modelling on large data sets knows what I am 
+talking about.) That means when reading h5ad or mtx files, we can pre-scan them, 
+take only what we want, and normalise in a single pass — avoiding the 
+load-everything, then-filter, then-normalise pattern.
+
+3. <b><i>We accept that single cell is noisy</b></i> and do not bother with 
+`f32` or even `f64` precision for storage. For raw counts, `u16` is sufficient 
+most of the time. The ML field has shown that you can get away with `f16`, which 
+reduces memory pressure and I/O substantially — and they are pushing 
+quantisation even further than that.
+
+4. <b><i>We are not doing any heavy calculations in R (or Python — future 
+roadmap).</b></i> Rust is superior for speed and optimisation: aggressive 
+multi-threading, no copy-on-modify semantics, tight memory control, and SIMD 
+acceleration for specific bottlenecks (distance calculations, averaging, 
+summing, normalising). R here is just an interface, telling the underlying Rust 
+code what to do.
+
+But if the data is not in memory, will this not be slow? Well, no. We store data 
+in structures like this. One for cells:
 
 ```{Rust}
 /// CsrCellChunk
@@ -156,7 +190,7 @@ pub struct CsrCellChunk {
     /// Raw counts for this cell, stored as either u16 or u32 depending on
     /// the data range
     pub data_raw: RawCounts,
-    /// Vector of the norm counts of this cell. A lossy compression for f16 is
+    /// Vector of the norm counts of this cell. A lossy compression to f16 is
     /// applied.
     pub data_norm: Vec<F16>,
     /// Total library size/UMI counts of the cell.
@@ -170,7 +204,9 @@ pub struct CsrCellChunk {
 }
 ```
 
-One for genes:
+One for genes (if you are even vaguely familiar with compressed sparse formats, 
+you have probably already clocked that this is essentially CSR and CSC storage 
+with two data layers).
 
 ```{Rust}
 /// CscGeneChunk
@@ -201,38 +237,123 @@ pub struct CscGeneChunk {
 ```
 
 But you are duplicating the data! Yep, indeed. But this allows extremely 
-efficient retrieval of data. You want to do DGEs between two groups? Only the
-cells of these two groups will be loaded in via `CsrCellChunk`s. You want do
-iterate over genes to identify the HVGs? That happens via the `CscGeneChunk`.
-Another advantage is that in quite a few analyses, we can just load in subsets
-of data and stream over the data. This allows to reduce the memory fingerprint
-MASSIVELY during analyses. We still use [lz4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm))
-compression to reduce the disk finger print, but the core philosophy is: </br></br>
+efficient retrieval. Want to run DGE between two groups? Only those cells are 
+loaded via `CsrCellChunk`s. Want to iterate over genes to identify HVGs? That 
+goes through `CscGeneChunk`. A further advantage is that for quite a few 
+analyses, we can load subsets and stream over the data rather than reading 
+everything at once, which massively reduces the memory footprint. We still use 
+[lz4](https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)) compression to 
+reduce the on-disk footprint, but the core philosophy is: </br></br>
 
 <b>Disk space is cheap; memory ain't</b></br></br>
 
-The approach allows to very quickly load in raw counts or normalised counts,
-pending on what is needed and leverage the two-layer approach here (heavily
-used by tileDB) to also not have to duplicate indices and indptr.
+This approach allows fast loading of raw or normalised counts depending on what 
+is needed, and the two-layer approach (heavily inspired by TileDB) means we 
+avoid duplicating indices and indptr. This assumes decent SSD speeds, but most 
+modern hardware has that covered.
 
 ### Let's not round trip into interpreted languages
 
-Continuing from step 3, we will also avoid round trips to R completely. This
-avoids R quirks like copy-on-modify. One of the key algorithms in single cell
-are (approximate) kNN searches, so, `bixverse` leverages a HIGHLY optimised
-library for this, written from scratch, see [ann-search-rs](https://crates.io/crates/ann-search-rs).
-The typical approximate nearest neighbour library used in R (Annoy) actually
-writes the index to disk (which was Spotify's initial implementation)... Why
-we are doing this in R? I don't know. There is also a full library for the
-beloved (however not uncontroversial) 2D embeddings available that also 
-leverages aggressively optimised Rust, see 
-[manifoldsR](https://github.com/GregorLueg/manifoldsR). 
-Million cell UMAP? Can be done in mere minutes... Any approach gets aggressively
-optimised specifically for single cell in mind? SCENIC? Let's do multi-target
-predictions with smart clustering of the genes together... The tree-based
-regression models are anyway just used to calculate importance values, so, let
-us aggressively remove everything that is not needed, leverage feature
-quantisation, the fact that single cell is notoriously sparse and implement
-highly optimised versions that run on local compute faster.
+Continuing from step 4, we avoid round trips to R entirely. This sidesteps R 
+quirks like copy-on-modify. The typical approximate nearest neighbour library 
+used in R (Annoy) actually writes the index to disk — which was Spotify's 
+original design and made total sense for their use case — but why are we doing 
+this in R? No idea. The core philosophy is to take a hard look at the algorithms 
+and methods used and, where needed, implement a highly specialised version for 
+single cell. Some examples:
 
-## There is no free launch
+- Custom implementation of various kNN searches, all running in Rust: [ann-search-rs](https://crates.io/crates/ann-search-rs). No on-disk index round trips, SIMD-accelerated distance calculations, aggressive 
+optimisations with single cell in mind. Since kNN graphs underlie a lot of 
+downstream methods, speeding this up has a wide impact.
+- The above integrated into a library for 2D embedding generation: [manifoldsR](https://github.com/GregorLueg/manifoldsR). 
+Same philosophy: parallelise what can be parallelised, use CPU-friendly memory 
+layouts, avoid round trips to the interpreter. Million-cell UMAP? Done in 
+minutes on a laptop.
+- [SCENIC](https://pubmed.ncbi.nlm.nih.gov/32561888/) infers gene regulatory 
+networks by asking, for each target gene: which transcription factors best 
+predict its expression? It does this by training a tree ensemble per gene, 
+using the importance scores from those trees as a proxy for regulatory 
+influence. The trees themselves are then thrown away — only the importance 
+scores matter. That means we can optimise purely for speed, without caring about 
+prediction quality at all. A few tricks compound here. 
+  * First, rather than training one ensemble per gene independently, we share 
+  the same tree structure across a batch of genes simultaneously: the splits 
+  are chosen to reduce prediction error across all targets in the batch at once, 
+  and each gene contributes its own importance scores as a side effect. This 
+  amortises most of the cost. 
+  * Second, transcription factor expression data is quantised down to 256 bins 
+  (one byte per cell), which makes histogram construction and split evaluation 
+  very fast and cache-friendly. 
+  * Third, single cell data is sparse — most genes are zero in most cells — so 
+  rather than densifying the target matrix (which would be enormous), we exploit 
+  that sparsity directly during tree building.
+  These approaches yield massive improvements for the random forest approach and
+  ExtraTrees approach. The net result is GRN inference that runs in Rust 
+  end-to-end, with no data leaving low-level code until results are ready.
+- PCA underlies a lot of algorithms, is a key dimensionality reduction step, 
+  and — perhaps embarrassingly — [still beats fancy foundation models](https://arxiv.org/abs/2410.13956). 
+  A few tricks make it fast:
+    * [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA much 
+    faster. Instead of decomposing a matrix of millions of cells × HVGs, we 
+    reduce the problem to a few hundred cells × HVGs.
+    * Smart scaling without ever densifying the matrix. As shown in the numbers 
+    above, densifying with 2k HVGs means holding a 16 GB matrix in memory for a 
+    million cells — 80 GB for five million. With smart matrix algebra, you never 
+    have to densify at all. An 80 GB problem becomes something closer to 10 GB.
+
+These are just some examples where purpose-built code can deliver massive gains 
+in both memory usage and speed. This allows the package to run multi-million 
+cell analyses (the GRNs will still be slow — sorry) on a decent local laptop. 
+I have churned through 3 million cell data sets on my loyal M1 Max MacBook Pro 
+with 64 GB. Something that would be completely impossible with several of the 
+other libraries.
+
+## There is no free lunch
+
+While this all sounds great, one significant caveat is that using this package 
+forces you to think differently about your data. Because data is NOT in memory, 
+we need to carefully synchronise state between:
+
+- The binary files Rust writes to disk with specific indexing for cells and 
+genes. Rust uses 0-indexing and R uses 1-indexing, which causes yet another 
+headache (mostly for developers; as an end user you should never have to think 
+about this).
+- What is stored in DuckDB as metadata. This can get tricky once you start 
+  selecting subgroups of cells. In a standard workflow you might:
+    * Filter a first wave of cells/spots based on library size and number of features.
+    * Run doublet detection to remove doublets.
+    * Recheck library sizes, feature counts, transcriptional complexity, mitochondrial counts, and only then finalise your cell selection — flagged as `cells_to_keep` in the object.
+
+  Any subsequent analysis — HVG detection, PCA, kNN construction, etc. — will operate on whatever is set here. If you want to change this, you need to think carefully about the state of what is on disk. That is a real disadvantage.
+
+- The "ecosystem" (quotation marks because at the moment it is just this R 
+package and several Rust crates) is in its infancy. Stuff will break; breaking 
+changes will likely have to be introduced at some point. If you want to 
+contribute at the methods level, you will need to go low-level and learn Rust. 
+The Rust code powering all of this is [here](https://crates.io/crates/bixverse-rs).
+
+This is a side/hobby project, mostly a labour of love. I do hope other people 
+find it useful and at least rethink some of their assumptions.
+
+## Future directions
+
+The future is bright. The longer-term roadmap is to implement more methods, 
+mature the system, build out the plotting helpers, and then tackle two bigger 
+projects:
+
+- <b>Spatial transcriptomics:</b> Spatial data does not (yet) reach the scale of 
+the largest single cell data sets most of the time. However, if you are 
+analysing many Visium or similar data sets, it can become quite heavy, and a 
+lot of current frameworks are built on top of single cell ones anyway. There 
+are also some interesting methods that leverage the spatial grid information 
+directly, which I find genuinely exciting.
+- <b>GPU acceleration:</b> GPUs are becoming increasingly accessible, and if you 
+have the budget for data-centre-scale GPUs, please do use them — Nvidia knows 
+what they are doing and cuBLAS is insanely fast, in ways that simply cannot be 
+matched on CPUs. However, most people do not have several B200s lying around at
+home, so the aim is to make better use of the powerful GPUs in Apple Silicon, 
+for example. I have had some first attempts writing GPU kernels via 
+[cubeCL](https://github.com/tracel-ai/cubecl) for nearest neighbour searches, 
+which makes exhaustive searches brutally fast. There is likely room to run kNN 
+searches on the GPU to really squeeze out better times — first tentative 
+attempts [here](https://github.com/GregorLueg/ann-search-rs/blob/main/docs/benchmarks_gpu.md).
