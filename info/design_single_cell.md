@@ -98,7 +98,7 @@ is going in the right direction here, but can we do even better?
 
 ### Chapter 3: Python and R are slow...
 
-<img src="../man/figures/python_r_slow.jpg" alt="Python and R are slow">
+<img src="../man/figures/python_r_slow.png" alt="Python and R are slow">
 
 There. It has been said. They are slow and let us stop pretending otherwise. 
 Yes, you can drop into NumPy or Rcpp for the heavy lifting — but that argument 
