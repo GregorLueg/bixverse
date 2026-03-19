@@ -320,11 +320,19 @@ headache (mostly for developers; as an end user you should never have to think
 about this).
 - What is stored in DuckDB as metadata. This can get tricky once you start 
   selecting subgroups of cells. In a standard workflow you might:
-    * Filter a first wave of cells/spots based on library size and number of features.
+    * Filter a first wave of cells/spots based on library size and number of 
+      features.
     * Run doublet detection to remove doublets.
-    * Recheck library sizes, feature counts, transcriptional complexity, mitochondrial counts, and only then finalise your cell selection — flagged as `cells_to_keep` in the object.
+    * Recheck library sizes, feature counts, transcriptional complexity, 
+      mitochondrial counts, and only then finalise your cell selection — flagged 
+      as `cells_to_keep` in the object.
 
-  Any subsequent analysis — HVG detection, PCA, kNN construction, etc. — will operate on whatever is set here. If you want to change this, you need to think carefully about the state of what is on disk. That is a real disadvantage.
+  Any subsequent analysis — HVG detection, PCA, kNN construction, etc. — will 
+  operate on whatever is set here. If you want to change this, you need to think 
+  carefully about the state of what is on disk. That is a real disadvantage and
+  can be a NASTY footgun. Especially for methods that will do something like
+  "read in embedding AND kNN graph". It the state was not synchronised here,
+  it will blow up.
 
 - The "ecosystem" (quotation marks because at the moment it is just this R 
 package and several Rust crates) is in its infancy. Stuff will break; breaking 
