@@ -40,7 +40,6 @@ desktop. When the cell number slightly increases to 600,000, <b>the above
 pipeline can crash due to memory exceeding, even on a professional computing 
 platform with 512 GB RAM</b></i> — [from Li, et al., Nat Comm, 2025](https://www.nature.com/articles/s41467-025-56424-6)
 
-</br>
 Anyone who has worked with more than 500k cells can attest to it being painful. 
 Actually VERY painful. The question is... why? Why can analytical engines like 
 [DuckDB](https://duckdb.org) and [polars](https://pola.rs) handle massive data 
