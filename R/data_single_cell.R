@@ -215,6 +215,8 @@ write_h5ad_sc <- function(
   invisible()
 }
 
+### write cell ranger output ---------------------------------------------------
+
 #' Helper function to write data to a cell ranger like output
 #'
 #' @description This is a helper to write synthetic data to cell ranger like

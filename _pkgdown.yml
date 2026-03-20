@@ -1,4 +1,5 @@
-url: ~
+url: https://gregorlueg.github.io/bixverse/
+
 template:
   bootstrap: 5
   bootswatch: darkly
@@ -13,37 +14,59 @@ template:
     btn-border-radius: 0.4rem
   css: pkgdown/extra.css
 
+home:
+  title: "bixverse"
+  description: "The tidyverse wanna-be of bioinformatics"
 navbar:
   structure:
-    left:
-      - intro
-      - reference
-      - articles
-      - tutorials
-      - news
-    right:
-      - search
-      - github
-      - lightswitch
+    left: [intro, reference, articles, tutorials, singlecells, news]
+    right: [search, github]
   components:
-    reference:
-      text: Reference
-      href: reference/index.html
+    tutorials:
+      text: Tutorials
+      menu:
+        - text: Gene Set Enrichment Methods
+          href: articles/gse_methods.html
+        - text: Pathway activity functions
+          href: articles/pathway_activity.html
+        - text: Genetic diffusion and community detections
+          href: articles/genetic_diffusions.html
+        - text: Contrastive PCA
+          href: articles/cpca.html
+    singlecells:
+      text: Single Cells
+      menu:
+        - text: Single Cell Analysis
+          href: articles/Single_cell_analysis.html
     articles:
       text: Articles
-      href: articles/index.html
+      menu:
+        - text: Bixverse R <> Rust interface
+          href: articles/rust_functions.html
+        - text: Technical design choices
+          href: articles/design_single_cell.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/GregorLueg/bixverse
+      aria-label: GitHub
 
 articles:
   - title: Articles
+    navbar: Articles
     contents:
       - rust_functions
+      - design_single_cell
   - title: Tutorials
+    navbar: Tutorials
     contents:
-      - Single_cell_analysis
       - gse_methods
       - pathway_activity
       - genetic_diffusions
       - cpca
+  - title: Single Cells
+    navbar: Single Cells
+    contents:
+      - Single_cell_analysis
 
 reference:
   # General getters shared across classes
@@ -62,11 +85,11 @@ reference:
       - calc_fgsea
       - calc_fgsea_simple
       - calc_gsea_traditional
-      - params_gsea
       - calc_mitch
       - calc_gsva
-      - params_gsva
       - calc_ssgsea
+      - params_gsea
+      - params_gsva
       - params_ssgsea
   # Gene Ontology-related functions
   - title: Gene Ontology-related gene set enrichment helpers
@@ -124,13 +147,13 @@ reference:
       - get_c_pca_loadings
       - dgrdl_grid_search
       - dgrdl_result
-      - params_dgrdl
       - get_ica_stability_res
       - get_grid_search_res
       - ica_evaluate_comp
       - ica_optimal_ncomp
       - ica_processing
       - ica_stabilised_results
+      - params_dgrdl
       - params_ica_general
       - params_ica_ncomp
       - params_ica_randomisation
@@ -141,7 +164,10 @@ reference:
       - BulkDge
       - add_new_metadata
       - change_gene_identifier
+      - update_metadata_values
       - fix_meta_data_column
+      - remove_samples
+      - qc_bulk_dge
       - preprocess_bulk_dge
       - normalise_bulk_dge
       - batch_correction_bulk_dge
@@ -162,15 +188,12 @@ reference:
       - get_gene_lengths
       - get_model_fit
       - get_tpm_counts
-      - update_metadata_values
-      - qc_bulk_dge
-      - remove_samples
   # Ontologies
   - title: Biomedical ontologies
     desc: For dealing with ontologies and calculating (semantic) similarities
     contents:
       - OntologySim
-      - calculate_critical_value
+      - pre_process_sim_onto
       - calculate_information_content
       - calculate_semantic_sim
       - calculate_semantic_sim_mat
@@ -179,9 +202,9 @@ reference:
       - calculate_wang_sim_mat
       - calculate_wang_sim_onto
       - filter_similarities
+      - calculate_critical_value
       - get_sim_matrix
       - get_ontology_ancestry
-      - pre_process_sim_onto
   # Methods related to graphs... Diffusions, RBH, SNF
   - title: Helpers for graph-based analysis
     desc: Different methods like similarity network fusions or reciprocal best hit graphs
@@ -195,7 +218,7 @@ reference:
       - permute_seed_nodes
       - get_diffusion_perms
       - generate_personalisation_vec
-      - params_community_detection
+      - tied_diffusion
       - RbhGraph
       - find_rbh_communities
       - generate_rbh_graph
@@ -207,14 +230,17 @@ reference:
       - get_snf_final_mat
       - get_snf_adjcacency_mat
       - params_graph_resolution
-      - tied_diffusion
       - run_snf
+      - params_community_detection
       - params_snf
   # Single cell classes and getters
   - title: Single cell classe and getters
     desc: Classes to generate the SingleCells and various getters
     contents:
       - SingleCells
+      - get_sc_obs
+      - get_sc_var
+      - get_sc_counts
       - get_available_embeddings
       - get_cell_indices
       - get_cell_names
@@ -227,9 +253,6 @@ reference:
       - get_pca_singular_val
       - get_pca_loadings
       - get_pca_factors
-      - get_sc_counts
-      - get_sc_obs
-      - get_sc_var
       - get_snn_graph
       - get_gene_names_from_idx
       - set_sc_new_obs_col
@@ -243,10 +266,10 @@ reference:
       - calc_meta_cell_purity
       - generate_supercells_sc
       - generate_meta_cells_sc
-      - params_sc_metacells
       - generate_seacells_sc
-      - params_sc_seacells
       - params_sc_supercell
+      - params_sc_metacells
+      - params_sc_seacells
   # Single cell data I/O
   - title: Single cell i/o
     desc: Helpers to load in data from h5ad, mtx files or R directly
@@ -259,41 +282,43 @@ reference:
       - load_h5ad_norm
       - load_mtx
       - load_multi_h5ad
+      - stream_h5ad
       - load_r_data
       - load_seurat
       - read_h5ad_metadata
       - read_h5ad_x_summary
-      - params_sc_min_quality
-      - params_sc_mtx_io
       - save_sc_exp_to_disk
       - sc_old_file_conversion
-      - stream_h5ad
+      - params_sc_min_quality
+      - params_sc_mtx_io
   # Processing of single cell
   - title: Single cell processing
     desc: Helpers to process single cell data... Think batch corrections, PCA, doublet calling etc.
     contents:
-      - calculate_kbet_sc
-      - calculate_pca_sc
+      - scrublet_sc
       - call_doublets_manual
       - doublet_detection_boost_sc
+      - gene_set_proportions_sc
+      - find_hvg_sc
+      - find_hvg_batch_aware_sc
+      - calculate_pca_sc
+      - find_neighbours_sc
       - top_genes_perc_sc
-      - params_boost
       - fast_mnn_sc
       - harmony_sc
       - bbknn_sc
-      - find_hvg_batch_aware_sc
-      - find_hvg_sc
-      - find_neighbours_sc
-      - gene_set_proportions_sc
-      - get_pseudobulked_sc
-      - scrublet_sc
-      - params_hvg_defaults
-      - params_knn_defaults
-      - params_pca_defaults
-      - params_sc_hvg
+      - calculate_kbet_sc
       - params_norm_doublet_detection_defaults
+      - params_boost
+      - params_sc_hvg
       - params_scrublet
+      - params_sc_bbknn
+      - params_sc_fastmnn
+      - params_sc_harmony
       - params_sc_neighbours
+      - params_hvg_defaults
+      - params_pca_defaults
+      - params_knn_defaults
   # Single cell analysis
   - title: Single cell analysis methods
     desc: Anything and everything to analyise single cell data
@@ -301,37 +326,35 @@ reference:
       - aucell_sc
       - module_scores_sc
       - find_clusters_sc
-      - find_all_markers_sc
       - find_markers_sc
-      - add_nhoods_info
-      - test_nhoods
+      - find_all_markers_sc
+      - get_pseudobulked_sc
       - generate_knn_sc
-      - get_cistarget_res
       - get_differential_abundance_res
-      - get_index_cells
-      - get_tf_to_gene
       - hotspot_autocor_sc
       - hotspot_gene_cor_sc
       - generate_hotspot_membership
       - get_hotspot_membership
-      - params_sc_hotspot
       - get_miloR_abundances_sc
+      - get_index_cells
+      - add_nhoods_info
+      - test_nhoods
       - vision_sc
       - vision_w_autocor_sc
       - identify_tf_to_genes
       - scenic_gene_filter_sc
       - scenic_grn_sc
-      - params_sc_bbknn
-      - params_sc_fastmnn
-      - params_sc_harmony
+      - get_cistarget_res
+      - get_tf_to_gene
+      - tf_to_genes_correlations
+      - tf_to_genes_motif_enrichment
+      - params_sc_hotspot
       - params_sc_miloR
       - params_sc_vision
       - params_scenic
       - params_scenic_extra_trees_defaults
       - params_scenic_gradient_boosting_defaults
       - params_scenic_random_forest_defaults
-      - tf_to_genes_correlations
-      - tf_to_genes_motif_enrichment
   # Other single cell class methods
   - title: Single-cell related classes and methods
     desc: 
@@ -339,6 +362,13 @@ reference:
       - get_knn_dist
       - get_obs_data
       - new_sc_knn
+  # Single cell plotting helpers
+  - title: Single-cell plotting stuff
+    desc: Various helpers that generate data for plotting single cell, such as 2D embeddings, etc.
+    contents:
+      - umap_sc
+      - tsne_sc
+      - phate_sc
   # Different statistical functions
   - title: Stastical functions
     desc: Any types of functions that help with statistics
@@ -412,9 +442,6 @@ reference:
       - rs_cistarget
       - rs_cluster_stability
       - rs_compare_knn
-      - rs_constrained_page_rank
-      - rs_constrained_page_rank_list
-      - rs_contrastive_pca
       - rs_constrained_page_rank
       - rs_constrained_page_rank_list
       - rs_contrastive_pca

@@ -523,16 +523,21 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 #' Run Harmony
 #'
 #' @description
-#' A version of Harmony by Korsunsky et al., implemented in Rust.
+#' A version of Harmony by Korsunsky et al., implemented in Rust. Performs
+#' batch correction on PCA embeddings and stores the result as a `"harmony"`
+#' embedding in the object.
 #'
-#' @param object ...
-#' @param batch_column ...
-#' @param additional_batch_columns ...
-#' @param harmony_params ...
-#' @param seed ...
-#' @param .verbose ...
+#' @param object `SingleCells` class.
+#' @param batch_column String. Column name in the object containing the primary
+#' batch labels.
+#' @param additional_batch_columns Optional character vector. Additional batch
+#' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
 #'
-#' @returns ...
+#' @return The object with a `"harmony"` embedding added. If no PCA embeddings
+#' are found, returns the object unchanged with a warning.
 #'
 #' @export
 harmony_sc <- S7::new_generic(

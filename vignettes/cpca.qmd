@@ -8,6 +8,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+author:
+  - Gregor Lueg
 ---
 
 ## Contrastive PCA

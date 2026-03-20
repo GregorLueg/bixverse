@@ -1,3 +1,5 @@
+//! R interfaces to all of the core functions of `bixverse-rs`.
+
 pub mod r_cors_similarity;
 pub mod r_helpers;
 pub mod r_loess;

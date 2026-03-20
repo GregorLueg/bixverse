@@ -8,12 +8,15 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+author:
+  - Gregor Lueg
 ---
 
 ## Gene Set Enrichment Methods in bixverse
 
 This vignette shows you how to use the gene set enrichment methods implemented
 in `bixverse`.
+
 ```{r}
 #| label: setup
 if (!requireNamespace("fgsea", quietly = TRUE)) {
@@ -64,7 +67,7 @@ collapses redundant terms after running a standard enrichment.
 
 All methods are implemented in Rust and exposed via `extendr`. The performance
 gains relative to existing R implementations range from modest (~20% faster for
-GSEA relative to `fgsea`'s Rcpp implementation) to substantial — the
+GSEA relative to `fgsea`'s Rcpp implementation) to substantial: the
 parallelised hypergeometric test over large gene set libraries can be orders of
 magnitude faster than a naive R loop.
 
@@ -92,7 +95,7 @@ target_genes_1 <- c(
 
 To test a single target gene set, use `gse_hypergeometric`. The gene universe
 defaults to the union of all genes represented in the `gene_set_list` if not
-provided explicitly — this is usually reasonable but worth checking if your
+provided explicitly. This is usually reasonable but worth checking if your
 assay covers a non-standard set of genes. FDR threshold and minimum overlap are
 also configurable.
 
@@ -108,7 +111,9 @@ head(results)
 
 When you have many target gene sets to test simultaneously, use
 `gse_hypergeometric_list`. Under the hood this runs all tests in parallel via
-[rayon](https://github.com/rayon-rs/rayon), making it very fast even at scale.
+[rayon](https://github.com/rayon-rs/rayon) and optimiser 
+[FxHashSets](https://docs.rs/rustc-hash/latest/rustc_hash/index.html), making it 
+very fast even at scale.
 
 ```{r}
 #| label: run hypergeom test multiple
@@ -229,6 +234,7 @@ go_aware_res <- gse_go_elim_method(
 head(go_aware_res)
 ```
 
+And the version for lists:
 
 ```{r}
 #| label: run multiple go-aware gse
@@ -288,6 +294,7 @@ test statistics themselves the way the elimination method does. Whether you
 prefer pre-hoc elimination or post-hoc simplification depends on your use case;
 for exploratory analyses the simplification approach can be more convenient,
 while for rigorous GO reporting the elimination method is generally preferable.
+
 ```{r}
 #| label: prepare go data for simplification approach
 
@@ -310,6 +317,7 @@ head(go_results_unfiltered)
 The simplification uses Wang semantic similarity to group related terms, then
 retains the term with the best test statistic within each cluster. Ties on FDR
 are broken by ontology depth, preferring the more specific term.
+
 ```{r}
 #| label: run simplification with the gene ontology info
 
@@ -359,14 +367,8 @@ fgsea_res <- fgsea(
   setorder(pathway)
 
 head(fgsea_res)
-`
-`
-`
-`
-``
-{
-  r
-}
+```
+```{r}
 #| label: bixverse version of fgsea
 bixverse_fgsea <- calc_fgsea(
   stats = exampleRanks,
@@ -379,6 +381,7 @@ head(bixverse_fgsea)
 ```
 
 The p-values from both implementations are in close agreement, as expected:
+
 ```{r}
 #| label: p-value comparison between fgsea and bixverse fgsea
 plot(

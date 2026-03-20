@@ -1,3 +1,5 @@
+//! Contains the Rust to R interface for bixverse
+
 #![allow(clippy::needless_range_loop)] // I want these loops!
 
 use extendr_api::prelude::*;
@@ -53,6 +55,7 @@ pub use single_cell::r_sc_analysis;
 pub use single_cell::r_sc_batch_corr;
 pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
+pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
 
 /////////////
@@ -98,4 +101,5 @@ extendr_module! {
     use r_sc_processing;
     use r_sc_analysis;
     use r_sc_metacells;
+    use r_sc_plot_extraction;
 }
