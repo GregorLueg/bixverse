@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.3-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.0.3.0-orange) 
 
 </br>
 

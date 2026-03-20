@@ -538,8 +538,3 @@ reference:
       - rs_vision
       - rs_vision_with_autocorrelation
       - rs_2d_loess
-  - title: Depracated
-    desc: Old functions that should not be used anymore
-    contents:
-      - bulk_coexp
-      - bulk_dge
