@@ -13,6 +13,9 @@ get_pca_factors(x)
 \arguments{
 \item{x}{An object to get PCA factors from.}
 }
+\value{
+The PCA factors from the object (if found).
+}
 \description{
 Get the PCA factors
 

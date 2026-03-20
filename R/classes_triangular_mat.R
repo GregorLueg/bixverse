@@ -219,10 +219,12 @@ upper_triangular_sym_mat <- R6::R6Class(
 #' The class allows to store the upper triangular matrices of of differential
 #' correlation results in an memory-efficient form and return a data.table or
 #' dense R matrix for a given parameter if need be.
-upper_triangle_diffcor_mat <- R6::R6Class(
+#'
+#' @keywords internal
+UpperTriangleDiffcorMat <- R6::R6Class(
   # Class name
   inherit = upper_triangular_sym_mat,
-  classname = "upper_triangle_diffcor_mat",
+  classname = "UpperTriangleDiffcorMat",
   public = list(
     #' @description Initialises the R6 class.
     #'

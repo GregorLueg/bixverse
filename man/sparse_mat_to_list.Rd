@@ -23,3 +23,4 @@ A list with the following elements
 \description{
 Helper function to transform R sparse matrices to list
 }
+\keyword{internal}

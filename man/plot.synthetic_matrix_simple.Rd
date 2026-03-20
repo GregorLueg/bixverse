@@ -25,4 +25,6 @@ synthetic_gex <- synthetic_signal_matrix()
 
 plot(synthetic_gex)
 }
+
 }
+\keyword{internal}

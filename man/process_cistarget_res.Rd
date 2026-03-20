@@ -23,3 +23,4 @@ A data.table with the results if there were any significant motifs.
 \description{
 Helper to process CisTarget results
 }
+\keyword{internal}

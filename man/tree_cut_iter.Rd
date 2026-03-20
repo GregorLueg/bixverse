@@ -41,3 +41,4 @@ This function uses a tree (output of \code{\link[stats:hclust]{stats::hclust()}}
 across all values from k_min to k_max and returns the quality at each
 individual cut.
 }
+\keyword{internal}

@@ -20,3 +20,4 @@ Set cell mapping for ScMap object
 
 Set the cell mapping for a \code{SingleCells} class.
 }
+\keyword{internal}

@@ -25,3 +25,4 @@ The affinity matrix based on continuous values.
 \description{
 Helper function to process continuous data for SNF
 }
+\keyword{internal}

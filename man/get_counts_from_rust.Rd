@@ -41,3 +41,4 @@ Returns a list with:
 \description{
 Helper function to get counts from Rust
 }
+\keyword{internal}

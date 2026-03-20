@@ -13,3 +13,4 @@ Generates an empty version of the \code{ScCache} class.
 Helper class that contains various data that is held in memory and not on
 disk.
 }
+\keyword{internal}

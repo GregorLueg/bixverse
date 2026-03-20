@@ -20,3 +20,4 @@ Set/add KNN
 
 Set the sNN graph for a \code{SingleCells} class.
 }
+\keyword{internal}

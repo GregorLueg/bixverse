@@ -87,7 +87,7 @@ Same as kNN graph ~244 MB
 ```
 
 You are already looking at 40+ GB of occupied memory. Then you have some 
-horrible tibbles with 1M rows — throw in a bunch of string columns and you are 
+horrible tibbles with 1M rows; throw in a bunch of string columns and you are 
 adding another 250–500 MB in nasty situations. Now add R's copy-on-modify 
 semantics and suddenly everything becomes unbearably slow, memory hungry, and 
 you end up with bloated objects storing data you rarely actually need in memory. 
@@ -101,7 +101,7 @@ is going in the right direction here, but can we do even better?
 
 There. It has been said. They are slow and let us stop pretending otherwise. 
 Yes, you can drop into NumPy or Rcpp for the heavy lifting — but that argument 
-rather proves the point. The real problem is not any single kernel; it is what 
+rather proves the point! The real problem is not any single kernel; it is what 
 happens between them.
 
 A lot of algorithms in practice end up looking like this:
@@ -111,8 +111,8 @@ R/Python → low-level kernel → R/Python → low-level kernel → R/Python →
 ```
 
 Each arrow is a context switch. Data gets passed across a language boundary, 
-some "simple" bookkeeping happens in the interpreter — a filter here, a reshape 
-there, maybe a quick normalisation — and then you hand it back down again. None 
+some "simple" bookkeeping happens in the interpreter - a filter here, a reshape 
+there, maybe a quick normalisation - and then you hand it back down again. None 
 of those individual steps looks expensive. Collectively, they are death by a 
 thousand cuts: repeated allocations, data copies you did not ask for, and the 
 interpreter's garbage collector doing God knows what in between. You also lose 
@@ -131,11 +131,11 @@ Okay, everything so far reads like a rant. What is the solution, mate?
 ### Let's not keep data in memory...
 
 If we think this through, we can arrive at a solution. Ideally, we want an 
-interface from an interpreted, dynamically typed language — going all-in on Rust 
+interface from an interpreted, dynamically typed language: going all-in on Rust 
 is just too heavy. The average person does not want to deal with the borrow 
 checker, does not want to compile code, and wants to quickly analyse and 
 iterate over data. The average bioinformatician lives in blissful ignorance and 
-will not be able to comment on `f32` vs `f64` float representation in memory — 
+will not be able to comment on `f32` vs `f64` float representation in memory, 
 and frankly should not have to. That means the interface should be a dynamically 
 typed, interpreted language. This opens the package up to more people and 
 makes plotting (ggplot2 for the win) much easier. From there we can make some 
@@ -290,7 +290,7 @@ prediction quality at all. A few tricks compound here.
   ExtraTrees approach. The net result is GRN inference that runs in Rust 
   end-to-end, with no data leaving low-level code until results are ready.
 - PCA underlies a lot of algorithms, is a key dimensionality reduction step, 
-  and — perhaps embarrassingly — [still beats fancy foundation models](https://arxiv.org/abs/2410.13956). 
+  and — perhaps embarrassingly – [still beats fancy foundation models](https://arxiv.org/abs/2410.13956). 
   A few tricks make it fast:
     * [Randomised SVD](https://arxiv.org/abs/0909.4061) to approximate PCA much 
     faster. Instead of decomposing a matrix of millions of cells × HVGs, we 

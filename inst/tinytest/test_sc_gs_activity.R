@@ -573,9 +573,9 @@ expect_equal(
   )
 )
 
-hotspot_gene_gene_cor <- set_hotspot_membership(hotspot_gene_gene_cor)
+hotspot_gene_gene_cor <- generate_hotspot_membership(hotspot_gene_gene_cor)
 
-hotspot_gene_gene_cor_streaming <- set_hotspot_membership(
+hotspot_gene_gene_cor_streaming <- generate_hotspot_membership(
   hotspot_gene_gene_cor_streaming
 )
 

@@ -19,3 +19,4 @@ with what has been stored in the class so far, it will throw an error.
 \description{
 Helper to assert same number of samples
 }
+\keyword{internal}

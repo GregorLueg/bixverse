@@ -30,3 +30,4 @@ generated independent components and run hierarchical clustering on top of
 these and assess the cluster stability. If desired, it can also return the
 centrotype of each cluster.
 }
+\keyword{internal}

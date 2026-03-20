@@ -20,3 +20,4 @@ Set/add KNN
 
 Set the KNN matrix for a \code{SingleCells} class.
 }
+\keyword{internal}

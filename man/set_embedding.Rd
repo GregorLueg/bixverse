@@ -22,3 +22,4 @@ Add additional embeddings to the class
 
 Set additional embeddings to \code{SingleCells}.
 }
+\keyword{internal}

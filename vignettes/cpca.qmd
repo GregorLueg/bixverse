@@ -59,7 +59,7 @@ sample_meta <- data.table(
 )
 
 cpca_obj <- BulkCoExp(
-  raw_data = raw_data, 
+  raw_data = raw_data,
   meta_data = sample_meta
 )
 

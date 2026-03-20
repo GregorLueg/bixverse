@@ -19,6 +19,7 @@ Invisible self and populates the internal obs table.
 This class wraps up the DB connection and methods to interact with the
 observation/cell metadata and the feature/gene metadata.
 }
+\keyword{internal}
 \section{Super class}{
 \code{\link[bixverse:SingleCellDuckDBBase]{bixverse::SingleCellDuckDBBase}} -> \code{SingleCellDuckDB}
 }

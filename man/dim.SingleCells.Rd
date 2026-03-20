@@ -12,3 +12,4 @@ An integer vector of length 2 with the number of cells and genes.
 \description{
 Returns the dimensions of a SingleCells object.
 }
+\keyword{internal}

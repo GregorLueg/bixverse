@@ -16,3 +16,4 @@ One-hot encoded matrix.
 Helper function that generate one-hot encoding with the option
 of unlabelled data. (Denoted as \code{NA} in the labels vector.)
 }
+\keyword{internal}

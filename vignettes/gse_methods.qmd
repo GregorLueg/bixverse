@@ -17,8 +17,12 @@ methods in `bixverse`.
 
 ```{r}
 #| label: setup
-if (!requireNamespace("fgsea", quietly = TRUE)) BiocManager::install("fgsea")
-if (!requireNamespace("msigdbr", quietly = TRUE)) install.packages("msigdbr")
+if (!requireNamespace("fgsea", quietly = TRUE)) {
+  BiocManager::install("fgsea")
+}
+if (!requireNamespace("msigdbr", quietly = TRUE)) {
+  install.packages("msigdbr")
+}
 library(bixverse)
 library(data.table)
 library(magrittr)
@@ -334,11 +338,12 @@ data(exampleRanks)
 set.seed(42L)
 
 fgsea_res <- fgsea(
-  pathways = examplePathways, 
+  pathways = examplePathways,
   stats = exampleRanks,
   minSize = 15,
   maxSize = 500
-) %>% setorder(pathway)
+) %>%
+  setorder(pathway)
 
 head(fgsea_res)
 ```
@@ -351,7 +356,8 @@ bixverse_fgsea <- calc_fgsea(
   stats = exampleRanks,
   pathways = examplePathways,
   gsea_params = params_gsea(min_size = 15L)
-) %>% setorder(pathway_name)
+) %>%
+  setorder(pathway_name)
 
 head(bixverse_fgsea)
 ```
@@ -378,7 +384,7 @@ no issues in terms of performance.
 
 microbenchmark::microbenchmark(
   fgsea = fgsea(
-    pathways = examplePathways, 
+    pathways = examplePathways,
     stats = exampleRanks,
     minSize = 15,
     maxSize = 500

@@ -207,7 +207,7 @@ expect_true(
 
 ### hdwgcna --------------------------------------------------------------------
 
-hdwgcna <- get_meta_cells_sc(
+hdwgcna <- generate_meta_cells_sc(
   sc_object,
   sc_meta_cell_params = params_sc_metacells(
     target_no_metacells = 50L
@@ -271,7 +271,7 @@ expect_true(
 # in specific cell types; will remove cell_type_3
 cells_to_use <- sc_object[[]][cell_grp != "cell_type_3", cell_id]
 
-hdwgcna_small <- get_meta_cells_sc(
+hdwgcna_small <- generate_meta_cells_sc(
   sc_object,
   sc_meta_cell_params = params_sc_metacells(
     target_no_metacells = 50L,
@@ -313,7 +313,7 @@ expect_true(
 
 ### seacells -------------------------------------------------------------------
 
-seacells <- get_seacells_sc(
+seacells <- generate_seacells_sc(
   sc_object,
   seacell_params = params_sc_seacells(
     n_sea_cells = 50L,
@@ -375,7 +375,7 @@ expect_true(
 
 #### smaller subset ------------------------------------------------------------
 
-seacells_small <- get_seacells_sc(
+seacells_small <- generate_seacells_sc(
   sc_object,
   seacell_params = params_sc_seacells(
     n_sea_cells = 50L,
@@ -417,7 +417,7 @@ expect_true(
 
 graining_factor <- 20
 
-supercells <- get_supercells_sc(
+supercells <- generate_supercells_sc(
   sc_object,
   sc_supercell_params = params_sc_supercell(
     graining_factor = graining_factor,
@@ -480,7 +480,7 @@ expect_true(
 
 #### smaller subset ------------------------------------------------------------
 
-supercell_small <- get_supercells_sc(
+supercell_small <- generate_supercells_sc(
   sc_object,
   sc_supercell_params = params_sc_supercell(
     graining_factor = graining_factor,

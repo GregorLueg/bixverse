@@ -170,7 +170,6 @@ detected in the cell and `lib_size` which is number of UMTs
 #| label: load-h5ad
 #| eval: false
 
-
 #  For demonstration
 sc_object <- single_cell_exp(dir_data = tempdir())
 
@@ -335,7 +334,7 @@ tictoc::toc()
 
 ## matrices can also be accessed with sinle brackets
 
-matrix <- sc_object[, , return_format = "cell", assay = "norm"]
+matrix <- sc_object[,, return_format = "cell", assay = "norm"]
 ```
 
 
@@ -352,39 +351,42 @@ constraints.
 ```{r}
 #| label: gene-props
 
-
 gene_data <- get_sc_var(sc_object)
 
-gs_of_interest <-  list(
-      MT = gene_data[
-        stringr::str_detect(gene_data$gene_name, "^MT-"),
-      ]$gene_id,
-      Ribo = gene_data[
-        stringr::str_detect(gene_data$gene_name, "^RPS|^RPL"),
-      ]$gene_id,
-      S_phase = gene_data[
-        stringr::str_detect(
-          gene_data$gene_id,
-          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
-        ),
-      ]$gene_id,
-      G2M_phase = gene_data[
-        stringr::str_detect(
-          gene_data$gene_id,
-          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
-        )]$gene_id,
-      T_cells = gene_data[
-        gene_data$gene_name %in% c("CD3D", "CD3E", "CD3G"),
-      ]$gene_id,
-      B_cells = gene_data[
-        gene_data$gene_name %in% c("CD19", "MS4A1", "CD79A"),
-      ]$gene_id,
-      Monocytes = gene_data[
-        gene_data$gene_name %in% c("CD14", "FCGR3A", "LYZ"),
-      ]$gene_id,
-      NK_cells = gene_data[
-        gene_data$gene_name %in% c("GNLY", "NKG7", "NCAM1"),
-      ]$gene_id
+gs_of_interest <- list(
+  MT = gene_data[
+    stringr::str_detect(gene_data$gene_name, "^MT-"),
+  ]$gene_id,
+  Ribo = gene_data[
+    stringr::str_detect(gene_data$gene_name, "^RPS|^RPL"),
+  ]$gene_id,
+  S_phase = gene_data[
+    stringr::str_detect(
+      gene_data$gene_id,
+      paste(cell_cycle_genes[set == "S phase", ensembl_gene_id], collapse = "|")
+    ),
+  ]$gene_id,
+  G2M_phase = gene_data[
+    stringr::str_detect(
+      gene_data$gene_id,
+      paste(
+        cell_cycle_genes[set == "G2/M phase", ensembl_gene_id],
+        collapse = "|"
+      )
+    )
+  ]$gene_id,
+  T_cells = gene_data[
+    gene_data$gene_name %in% c("CD3D", "CD3E", "CD3G"),
+  ]$gene_id,
+  B_cells = gene_data[
+    gene_data$gene_name %in% c("CD19", "MS4A1", "CD79A"),
+  ]$gene_id,
+  Monocytes = gene_data[
+    gene_data$gene_name %in% c("CD14", "FCGR3A", "LYZ"),
+  ]$gene_id,
+  NK_cells = gene_data[
+    gene_data$gene_name %in% c("GNLY", "NKG7", "NCAM1"),
+  ]$gene_id
 )
 
 ## This will add proportions to the obs table
@@ -503,8 +505,8 @@ You can also manually adjust the doublet calling threshold if the automatic thre
 
 # Manually set threshold
 scrublet_result_adjusted <- call_doublets_manual(
-  scrublet_result, 
-  threshold = 0.20, 
+  scrublet_result,
+  threshold = 0.20,
   .verbose = TRUE
 )
 
@@ -649,7 +651,7 @@ batch_test_data <- generate_single_cell_test_data(
     n_cells = 900L,
     marker_genes = cell_markers,
     n_batches = 3L,
-    batch_effect_strength = "medium"  # Can be "weak", "medium", or "strong"
+    batch_effect_strength = "medium" # Can be "weak", "medium", or "strong"
   )
 )
 
@@ -672,7 +674,11 @@ sc_batch_object <- load_r_data(
 
 # Standard preprocessing pipeline
 sc_batch_object <- find_hvg_sc(sc_batch_object, hvg_no = 30L, .verbose = FALSE)
-sc_batch_object <- calculate_pca_sc(sc_batch_object, no_pcs = 15L, .verbose = FALSE)
+sc_batch_object <- calculate_pca_sc(
+  sc_batch_object,
+  no_pcs = 15L,
+  .verbose = FALSE
+)
 sc_batch_object <- find_neighbours_sc(
   sc_batch_object,
   neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
@@ -690,20 +696,18 @@ Before correcting batch effects, it's important to quantify their severity. The 
 # Calculate kBET score before batch correction
 kbet_before <- calculate_kbet_sc(
   object = sc_batch_object,
-  batch_column = "batch_index"  # Column in obs table containing batch labels
+  batch_column = "batch_index" # Column in obs table containing batch labels
 )
 
 # The kbet_score represents the proportion of cells with significant batch effects
-print(paste("kBET score before correction:", 
-            round(kbet_before$kbet_score, 3)))
+print(paste("kBET score before correction:", round(kbet_before$kbet_score, 3)))
 
 # Visualize batch effects in PCA space
 pca_batch_df <- cbind(sc_batch_object[[]], get_pca_factors(sc_batch_object))
 
 ggplot(pca_batch_df, aes(x = PC_1, y = PC_2, color = as.factor(batch_index))) +
   geom_point(alpha = 0.6) +
-  labs(title = "PCA colored by batch (before correction)", 
-       color = "Batch") +
+  labs(title = "PCA colored by batch (before correction)", color = "Batch") +
   theme_bw()
 ```
 
@@ -725,7 +729,7 @@ hvg_batch_avg <- find_hvg_batch_aware_sc(
   sc_batch_object,
   hvg_no = 30L,
   batch_column = "batch_index",
-  gene_comb_method = "average",  # Can be "average", "union", or "intersection"
+  gene_comb_method = "average", # Can be "average", "union", or "intersection"
   .verbose = FALSE
 )
 
@@ -752,7 +756,7 @@ The method can be customized using parameters passed to `bbknn_sc()`:
 sc_batch_bbknn <- bbknn_sc(
   object = sc_batch_object,
   batch_column = "batch_index",
-  no_neighbours_to_keep = 10L,  # Final k for kNN graph
+  no_neighbours_to_keep = 10L, # Final k for kNN graph
   .verbose = TRUE
 )
 
@@ -762,8 +766,7 @@ kbet_after_bbknn <- calculate_kbet_sc(
   batch_column = "batch_index"
 )
 
-print(paste("kBET score after BBKNN:", 
-            round(kbet_after_bbknn$kbet_score, 3)))
+print(paste("kBET score after BBKNN:", round(kbet_after_bbknn$kbet_score, 3)))
 
 # The corrected kNN graph is now stored in the object
 # and can be used for clustering
@@ -810,7 +813,7 @@ sc_batch_mnn <- fast_mnn_sc(
 # Build a new kNN graph using the corrected embedding
 sc_batch_mnn <- find_neighbours_sc(
   sc_batch_mnn,
-  embd_to_use = "mnn",  # Use the corrected embedding
+  embd_to_use = "mnn", # Use the corrected embedding
   neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
   .verbose = FALSE
 )
@@ -821,8 +824,7 @@ kbet_after_mnn <- calculate_kbet_sc(
   batch_column = "batch_index"
 )
 
-print(paste("kBET score after fastMNN:", 
-            round(kbet_after_mnn$kbet_score, 3)))
+print(paste("kBET score after fastMNN:", round(kbet_after_mnn$kbet_score, 3)))
 
 # Visualize the corrected MNN embedding
 # Note: fastMNN returns its own embedding, access it accordingly
@@ -992,16 +994,20 @@ at once or stream them in chunks of 50,000 cells for memory efficiency.
 #| label: auc-cell
 gene_sets <- list(
   S_phase = gene_data[
-        stringr::str_detect(
-          gene_data$gene_id,
-          paste(cell_cycle_genes[set == "S phase", ensembl_gene_id] , collapse = "|")
-        ),
-      ]$gene_id,
-      G2M_phase = gene_data[
-        stringr::str_detect(
-          gene_data$gene_id,
-          paste(cell_cycle_genes[set == "G2/M phase", ensembl_gene_id] , collapse = "|")
-        )]$gene_id
+    stringr::str_detect(
+      gene_data$gene_id,
+      paste(cell_cycle_genes[set == "S phase", ensembl_gene_id], collapse = "|")
+    ),
+  ]$gene_id,
+  G2M_phase = gene_data[
+    stringr::str_detect(
+      gene_data$gene_id,
+      paste(
+        cell_cycle_genes[set == "G2/M phase", ensembl_gene_id],
+        collapse = "|"
+      )
+    )
+  ]$gene_id
 )
 
 auc_res_auroc <- aucell_sc(
@@ -1014,12 +1020,18 @@ auc_res_auroc <- aucell_sc(
 
 plot_data_aucell <- cbind(auc_res_auroc, get_pca_factors(sc_object))
 
-p1_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = S_phase)) +
+p1_aucell <- ggplot(
+  plot_data_aucell,
+  aes(y = PC_1, x = PC_2, color = S_phase)
+) +
   geom_point() +
   labs(title = "S Phase") +
   theme_bw()
 
-p2_aucell <- ggplot(plot_data_aucell, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+p2_aucell <- ggplot(
+  plot_data_aucell,
+  aes(y = PC_1, x = PC_2, color = G2M_phase)
+) +
   geom_point() +
   labs(title = "G2/M Phase") +
   theme_bw()
@@ -1032,30 +1044,35 @@ p1_aucell + p2_aucell
 ```{r}
 #| label: vision
 
-
-    genesets_vs <- purrr::map(
-        gene_sets,
-        ~ {
-            list(pos = .x)
-        }
-    )
+genesets_vs <- purrr::map(
+  gene_sets,
+  ~ {
+    list(pos = .x)
+  }
+)
 
 vision_res <- vision_sc(
-        object = sc_object,
-        gs_list = genesets_vs,
-        streaming = TRUE,
-        .verbose = TRUE
-    )
+  object = sc_object,
+  gs_list = genesets_vs,
+  streaming = TRUE,
+  .verbose = TRUE
+)
 
 
 plot_data_vision <- cbind(vision_res, get_pca_factors(sc_object))
 
-p1_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = S_phase)) +
+p1_vision <- ggplot(
+  plot_data_vision,
+  aes(y = PC_1, x = PC_2, color = S_phase)
+) +
   geom_point() +
   labs(title = "S Phase") +
   theme_bw()
 
-p2_vision <- ggplot(plot_data_vision, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+p2_vision <- ggplot(
+  plot_data_vision,
+  aes(y = PC_1, x = PC_2, color = G2M_phase)
+) +
   geom_point() +
   labs(title = "G2/M Phase") +
   theme_bw()
@@ -1070,23 +1087,29 @@ p1_vision + p2_vision
 #| label: module_score
 
 module_score_res <- module_scores_sc(
-        object = sc_object,
-        gs_list = gene_sets,
-        n_bins = 24L,
-        n_ctrl = 100L,
-        seed = 42L,
-        .verbose = TRUE
-    )
+  object = sc_object,
+  gs_list = gene_sets,
+  n_bins = 24L,
+  n_ctrl = 100L,
+  seed = 42L,
+  .verbose = TRUE
+)
 
 
 plot_data_module_score <- cbind(module_score_res, get_pca_factors(sc_object))
 
-p1_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = S_phase)) +
+p1_module_score <- ggplot(
+  plot_data_module_score,
+  aes(y = PC_1, x = PC_2, color = S_phase)
+) +
   geom_point() +
   labs(title = "S Phase") +
   theme_bw()
 
-p2_module_score <- ggplot(plot_data_module_score, aes(y = PC_1, x = PC_2, color = G2M_phase)) +
+p2_module_score <- ggplot(
+  plot_data_module_score,
+  aes(y = PC_1, x = PC_2, color = G2M_phase)
+) +
   geom_point() +
   labs(title = "G2/M Phase") +
   theme_bw()
@@ -1102,10 +1125,10 @@ Hotspot analysis identifies genes that exhibit spatially coherent patterns of ex
 #| label: hotspot
 
 hotspot_autocor_danb_res <- hotspot_autocor_sc(
-    object = sc_object,
-    embd_to_use = "pca",
-    streaming = TRUE,
-    .verbose = TRUE
+  object = sc_object,
+  embd_to_use = "pca",
+  streaming = TRUE,
+  .verbose = TRUE
 )
 
 head(hotspot_autocor_danb_res)
@@ -1123,15 +1146,15 @@ hotspot_autocor_danb_res_ordered <- hotspot_autocor_danb_res[order(-gaerys_c)]
 
 # Compute gene-gene correlations for top auto-correlated genes
 hotspot_gene_gene_cor <- hotspot_gene_cor_sc(
-    object = sc_object,
-    embd_to_use = "pca",
-    genes_to_take = hotspot_autocor_danb_res_ordered[1:500, gene_id],
-    streaming = TRUE,
-    .verbose = TRUE
+  object = sc_object,
+  embd_to_use = "pca",
+  genes_to_take = hotspot_autocor_danb_res_ordered[1:500, gene_id],
+  streaming = TRUE,
+  .verbose = TRUE
 )
 
 # Assign genes to modules based on correlation structure
-hotspot_gene_gene_cor <- set_hotspot_membership(hotspot_gene_gene_cor)
+hotspot_gene_gene_cor <- generate_hotspot_membership(hotspot_gene_gene_cor)
 
 # Get module membership results (NA = below threshold, excluded)
 membership_results <- get_hotspot_membership(hotspot_gene_gene_cor)
@@ -1140,7 +1163,7 @@ head(membership_results)
 
 # Create gene sets from modules
 hotspot_gs <- na.omit(get_hotspot_membership(hotspot_gene_gene_cor)) %$%
-    split(gene_id, cluster_member)
+  split(gene_id, cluster_member)
 
 # View module sizes
 sapply(hotspot_gs, length)

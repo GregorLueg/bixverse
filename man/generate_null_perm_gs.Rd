@@ -50,3 +50,4 @@ via k-means clustering. The original gene sets are than matched to the
 closest cluster. The authors observed that this sufficed to estimate
 significance, see DeTomaso, et al.
 }
+\keyword{internal}

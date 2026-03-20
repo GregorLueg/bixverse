@@ -24,3 +24,4 @@ Generates the \code{sc_hotspot} class.
 \description{
 Wrapper class that stores the HotSpot
 }
+\keyword{internal}

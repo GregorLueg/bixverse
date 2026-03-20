@@ -23,3 +23,4 @@ The finalised matrix.
 \description{
 Finalise the count matrix
 }
+\keyword{internal}

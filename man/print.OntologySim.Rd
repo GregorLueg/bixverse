@@ -14,3 +14,4 @@ Invisibly returns \code{x}.
 \description{
 Print a OntologySim object.
 }
+\keyword{internal}

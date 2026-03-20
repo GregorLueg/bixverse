@@ -8,6 +8,7 @@ This is the base class for the single cell experiment DuckDB connection,
 containing standard functions such as retrievel of tables, connection checks,
 etc.
 }
+\keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

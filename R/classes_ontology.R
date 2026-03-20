@@ -90,6 +90,8 @@ GeneOntologyElim <- S7::new_class(
 #' @returns Invisibly returns `x`.
 #'
 #' @method print GeneOntologyElim
+#'
+#' @keywords internal
 S7::method(print, GeneOntologyElim) <- function(x, ...) {
   # Get necessary parameters
   number_levels <- length(S7::prop(x, "levels"))
@@ -193,6 +195,8 @@ OntologySim <- S7::new_class(
 #' @returns Invisibly returns `x`.
 #'
 #' @method print OntologySim
+#'
+#' @keywords internal
 S7::method(print, OntologySim) <- function(x, ...) {
   # Get necessary parameters
   ontology_size <- S7::prop(x, "params")[["ontology_data"]][["total_size"]]

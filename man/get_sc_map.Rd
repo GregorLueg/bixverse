@@ -15,3 +15,4 @@ Returns the maps within the class.
 \description{
 Getter for the different maps in the object
 }
+\keyword{internal}

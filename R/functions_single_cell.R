@@ -72,6 +72,8 @@ get_seurat_counts_to_list <- function(seurat_obj) {
 #'  \item raw - Sparse matrix representing the raw counts.
 #'  \item norm - Sparse matrix representing the norm counts.
 #' }
+#'
+#' @keywords internal
 get_meta_cell_matrices <- function(meta_cell_data) {
   # checks
   checkmate::assertList(meta_cell_data, names = "named")

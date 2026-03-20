@@ -17,3 +17,4 @@ Integer. Number of cores to use.
 Identifies the number of cores/workers to use for parallel tasks. Will
 default to half of the available cores, to a maximum of \code{abs_max_workers}.
 }
+\keyword{internal}

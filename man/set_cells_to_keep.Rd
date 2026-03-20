@@ -21,3 +21,4 @@ Set cells to keep for ScMap object
 
 Set the cell mapping for a \code{SingleCells} class.
 }
+\keyword{internal}

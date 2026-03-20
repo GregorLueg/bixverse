@@ -13,6 +13,9 @@ get_available_embeddings(x)
 \arguments{
 \item{x}{An object to get embedding from}
 }
+\value{
+Get the names of the available embeddings.
+}
 \description{
 Returns the available embedding names from the cache.
 }

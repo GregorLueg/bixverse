@@ -192,6 +192,8 @@ generate_personalisation_vec <- function(graph, node_weights) {
 #' @param normalise Boolean. Shall continuous values be Z-scored.
 #'
 #' @return The affinity matrix based on continuous values.
+#'
+#' @keywords internal
 snf_process_aff_continuous <- function(
   data,
   k,
@@ -240,6 +242,8 @@ snf_process_aff_continuous <- function(
 #' @param mu Float. Normalisation factor for the Gaussian kernel width.
 #'
 #' @return The affinity matrix based on categorical and/or mixed values.
+#'
+#' @keywords internal
 snf_process_aff_cat_mixed <- function(
   data,
   k,

@@ -19,3 +19,4 @@ matrix.
 \description{
 Plot the contrastive PCA example data
 }
+\keyword{internal}

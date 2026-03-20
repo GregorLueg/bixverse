@@ -301,6 +301,8 @@ get_knn_dist.SingleCellNearestNeighbour <- function(x) {
 #' @export
 #'
 #' @importFrom magrittr `%>%`
+#'
+#' @keywords internal
 new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
   # checks
   checkmate::assertList(hotspot_res, types = "matrix")
@@ -400,14 +402,18 @@ get_hotspot_membership.Hotspot <- function(
 #' @param min_size Integer. Minimum cluster size.
 #'
 #' @export
-set_hotspot_membership <- function(x, fdr_threshold = 0.05, min_size = 10L) {
-  UseMethod("set_hotspot_membership")
+generate_hotspot_membership <- function(
+  x,
+  fdr_threshold = 0.05,
+  min_size = 10L
+) {
+  UseMethod("generate_hotspot_membership")
 }
 
-#' @rdname set_hotspot_membership
+#' @rdname generate_hotspot_membership
 #'
 #' @export
-set_hotspot_membership.Hotspot <- function(
+generate_hotspot_membership.Hotspot <- function(
   x,
   fdr_threshold = 0.05,
   min_size = 10L
@@ -454,6 +460,8 @@ set_hotspot_membership.Hotspot <- function(
 #' subsequent methods to calculate differential abundance statistics.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022
+#'
+#' @keywords internal
 new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
   # checks
   checkmate::checkClass(nhoods, "dgCMatrix")
@@ -948,6 +956,8 @@ add_nhoods_info.miloR <- function(x, cell_info) {
 #' @return An object of class `ScenicGrn`.
 #'
 #' @export
+#'
+#' @keywords internal
 new_scenic_grn <- function(
   importance_matrix,
   gene_ids,

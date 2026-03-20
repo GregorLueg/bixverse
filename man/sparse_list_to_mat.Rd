@@ -15,3 +15,4 @@ The sparseMatrix from the data.
 \description{
 Helper function to transform the Rust-exported sparse matrices into R ones
 }
+\keyword{internal}

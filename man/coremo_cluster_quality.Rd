@@ -23,3 +23,4 @@ Utility functions to give back the summary stats (median and mean R²) for
 each of the identified clusters. Clusters over a size of 1000 genes will
 be randomly sampled.
 }
+\keyword{internal}

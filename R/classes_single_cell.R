@@ -15,6 +15,8 @@
 #' @return Generates an empty version of the `ScMap` class.
 #'
 #' @export
+#'
+#' @keywords internal
 new_sc_mapper <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
@@ -39,6 +41,8 @@ new_sc_mapper <- function() {
 #' @return Generates an empty version of the `ScCache` class.
 #'
 #' @export
+#'
+#' @keywords internal
 new_sc_cache <- function() {
   sc_cache <- list(
     pca_factors = NULL,
@@ -66,6 +70,8 @@ new_sc_cache <- function() {
 #' @param gene_map Named integer indicating indices and names of the genes
 #'
 #' @export
+#'
+#' @keywords internal
 set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
@@ -76,6 +82,8 @@ set_gene_mapping <- function(x, gene_map) {
 #' @param cell_map Named integer indicating indices and names of the cells
 #'
 #' @export
+#'
+#' @keywords internal
 set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
@@ -87,6 +95,8 @@ set_cell_mapping <- function(x, cell_map) {
 #' to keep in downstream analysis.
 #'
 #' @export
+#'
+#' @keywords internal
 set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
@@ -98,6 +108,8 @@ set_cells_to_keep <- function(x, cells_to_keep) {
 #' genes.
 #'
 #' @export
+#'
+#' @keywords internal
 set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
@@ -110,6 +122,8 @@ set_hvg <- function(x, hvg) {
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_factors <- function(x, pca_factor) {
   UseMethod("set_pca_factors")
 }
@@ -120,6 +134,8 @@ set_pca_factors <- function(x, pca_factor) {
 #' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_loadings <- function(x, pca_loading) {
   UseMethod("set_pca_loadings")
 }
@@ -130,6 +146,8 @@ set_pca_loadings <- function(x, pca_loading) {
 #' @param singular_vals Numerical vector. The singular values.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_singular_vals <- function(x, singular_vals) {
   UseMethod("set_pca_singular_vals")
 }
@@ -141,6 +159,8 @@ set_pca_singular_vals <- function(x, singular_vals) {
 #' @param name String. Name of the embedding.
 #'
 #' @export
+#'
+#' @keywords internal
 set_embedding <- function(x, embd, name) {
   UseMethod("set_embedding")
 }
@@ -151,6 +171,8 @@ set_embedding <- function(x, embd, name) {
 #' @param knn_mat Numerical matrix. The matrix with the KNN data
 #'
 #' @export
+#'
+#' @keywords internal
 set_knn <- function(x, knn_mat) {
   UseMethod("set_knn")
 }
@@ -161,6 +183,8 @@ set_knn <- function(x, knn_mat) {
 #' @param snn_graph Igraph. The sNN graph for subsequent clustering.
 #'
 #' @export
+#'
+#' @keywords internal
 set_snn_graph <- function(x, snn_graph) {
   UseMethod("set_snn_graph")
 }
@@ -170,6 +194,8 @@ set_snn_graph <- function(x, snn_graph) {
 #' @param x An object from which to remove the kNN data
 #'
 #' @export
+#'
+#' @keywords internal
 remove_knn <- function(x) {
   UseMethod("remove_knn")
 }
@@ -179,6 +205,8 @@ remove_knn <- function(x) {
 #' @param x An object from which to remove the sNN graph
 #'
 #' @export
+#'
+#' @keywords internal
 remove_snn_graph <- function(x) {
   UseMethod("remove_knn")
 }
@@ -446,6 +474,8 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
 #'
 #' @param x An object to get PCA factors from.
 #'
+#' @returns The PCA factors from the object (if found).
+#'
 #' @export
 get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
@@ -455,6 +485,8 @@ get_pca_factors <- function(x) {
 #'
 #' @param x An object to get PCA loadings from.
 #'
+#' @returns The PCA feature loadings from the object (if found).
+#'
 #' @export
 get_pca_loadings <- function(x) {
   UseMethod("get_pca_loadings")
@@ -463,6 +495,8 @@ get_pca_loadings <- function(x) {
 #' Get the PCA singular values
 #'
 #' @param x An object to get PCA singular values from.
+#'
+#' @returns The PCA singular values from the object (if found).
 #'
 #' @export
 get_pca_singular_val <- function(x) {
@@ -479,6 +513,8 @@ get_pca_singular_val <- function(x) {
 #' @param embd_name String. The name of the embedding to return. The function
 #' will throw an error if the embedding does not exist.
 #'
+#' @returns Get the specified embeddings from the object (if found).
+#'
 #' @export
 get_embedding <- function(x, embd_name) {
   UseMethod("get_embedding")
@@ -491,6 +527,8 @@ get_embedding <- function(x, embd_name) {
 #'
 #' @param x An object to get embedding from
 #'
+#' @return Get the names of the available embeddings.
+#'
 #' @export
 get_available_embeddings <- function(x) {
   UseMethod("get_available_embeddings")
@@ -499,6 +537,8 @@ get_available_embeddings <- function(x) {
 #' Get the sNN graph
 #'
 #' @param x An object to get the sNN graph from.
+#'
+#' @returns The igraph that has the shared nearest neighbours.
 #'
 #' @export
 get_snn_graph <- function(x) {
@@ -826,6 +866,8 @@ SingleCells <- S7::new_class(
 #' @return The DuckDB connector
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_duckdb <- S7::new_generic(
   name = "get_sc_duckdb",
   dispatch_args = "object",
@@ -853,6 +895,8 @@ S7::method(get_sc_duckdb, SingleCells) <- function(object) {
 #' @return The Rust structure
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_rust_ptr <- S7::new_generic(
   name = "get_sc_rust_ptr",
   dispatch_args = "object",
@@ -878,6 +922,8 @@ S7::method(get_sc_rust_ptr, SingleCells) <- function(object) {
 #' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_genes.bin`
+#'
+#' @keywords internal
 get_rust_count_gene_f_path <- S7::new_generic(
   name = "get_rust_count_gene_f_path",
   dispatch_args = "object",
@@ -905,6 +951,8 @@ S7::method(get_rust_count_gene_f_path, SingleCells) <- function(object) {
 #' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_cells.bin`
+#'
+#' @keywords internal
 get_rust_count_cell_f_path <- S7::new_generic(
   name = "get_rust_count_cell_f_path",
   dispatch_args = "object",
@@ -1002,6 +1050,8 @@ S7::method(`[[`, SingleCells) <- function(x, i, ...) {
 #' @returns Returns the maps within the class.
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_map <- S7::new_generic(
   name = "get_sc_maps",
   dispatch_args = "object",
@@ -1036,6 +1086,8 @@ S7::method(get_sc_map, SingleCells) <- function(
 #' memory-stored data.
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_cache <- S7::new_generic(
   name = "get_sc_cache",
   dispatch_args = "object",
@@ -1191,6 +1243,8 @@ S7::method(`[`, SingleCells) <- function(
 #'  \item no_cells - Number of cells.
 #'  \item no_genes - Number of genes.
 #' }
+#'
+#' @keywords internal
 get_counts_from_rust <- function(
   rust_con,
   assay,
@@ -1240,6 +1294,8 @@ get_counts_from_rust <- function(
 #'
 #' @return The sparse matrix in CSR or CSC format, pending the choice in
 #' `return_format`
+#'
+#' @keywords internal
 create_sparse_matrix <- function(count_data, return_format) {
   # checks
   checkmate::assertList(count_data)
@@ -1275,6 +1331,8 @@ create_sparse_matrix <- function(count_data, return_format) {
 #' @param sc_map A `ScMap` class. Contains various mapping information.
 #'
 #' @return The finalised matrix.
+#'
+#' @keywords internal
 finalise_matrix <- function(
   matrix,
   return_format,
@@ -2137,6 +2195,8 @@ S7::method(remove_snn_graph, SingleCells) <- function(
 #' @returns Invisibly returns `x`.
 #'
 #' @method print SingleCells
+#'
+#' @keywords internal
 S7::method(print, SingleCells) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
@@ -2182,6 +2242,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #' @returns An integer vector of length 2 with the number of cells and genes.
 #'
 #' @method dim SingleCells
+#'
+#' @keywords internal
 S7::method(dim, SingleCells) <- function(x) {
   S7::prop(x, "dims")
 }

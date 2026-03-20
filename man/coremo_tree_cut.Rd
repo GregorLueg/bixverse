@@ -34,3 +34,4 @@ This function uses a tree (output of \code{\link[stats:hclust]{stats::hclust()}}
 to the parameter k. If a \code{min_size} is specified, modules are merged by their
 similarity of their eigen values in the distance matrix.
 }
+\keyword{internal}

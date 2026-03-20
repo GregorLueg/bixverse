@@ -20,3 +20,4 @@ Set/add PCA loadings
 
 Set the PCA factors for a \code{SingleCells} class.
 }
+\keyword{internal}

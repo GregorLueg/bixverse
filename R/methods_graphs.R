@@ -844,6 +844,8 @@ S7::method(calculate_diffusion_auc, NetworkDiffusions) <-
 #' @return List with the permutations.
 #'
 #' @importFrom magrittr `%$%`
+#'
+#' @keywords internal
 generate_perm_diffusion_vecs <- function(
   graph,
   diffusion_vec,
@@ -897,6 +899,8 @@ generate_perm_diffusion_vecs <- function(
 #' @return Named numeric.
 #'
 #' @importFrom magrittr `%$%`
+#'
+#' @keywords internal
 summarise_scores <- function(
   x,
   summarisation = c("max", "mean", "harmonic_sum")
@@ -1448,6 +1452,8 @@ S7::method(run_snf, SimilarityNetworkFusion) <- function(
 #' @returns The object. If no dimensions were found in the object yet, it will
 #' be added. If the addition of the new data has dimensions that do not fit
 #' with what has been stored in the class so far, it will throw an error.
+#'
+#' @keywords internal
 check_dim <- S7::new_generic(
   name = "check_dim",
   dispatch_args = "object",

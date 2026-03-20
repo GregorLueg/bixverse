@@ -16,6 +16,9 @@ get_embedding(x, embd_name)
 \item{embd_name}{String. The name of the embedding to return. The function
 will throw an error if the embedding does not exist.}
 }
+\value{
+Get the specified embeddings from the object (if found).
+}
 \description{
 General wrapper function that can be used to pull out any embedding stored
 in the \code{ScCache}.

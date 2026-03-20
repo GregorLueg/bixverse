@@ -227,7 +227,7 @@ Let's check out the very classical Euclidean distance.
 
 r_euclidean_distance <- as.matrix(
   dist(
-    random_data, 
+    random_data,
     method = "euclidean"
   )
 )
@@ -238,8 +238,8 @@ rs_euclidean_distance <- rs_dist(
 )
 
 all.equal(
-  r_euclidean_distance, 
-  rs_euclidean_distance, 
+  r_euclidean_distance,
+  rs_euclidean_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
@@ -274,7 +274,7 @@ We observe again equivalence of Rust and R results.
 
 r_manhattan_distance <- as.matrix(
   dist(
-    random_data, 
+    random_data,
     method = "manhattan"
   )
 )
@@ -285,8 +285,8 @@ rs_manhattan_distance <- rs_dist(
 )
 
 all.equal(
-  r_manhattan_distance, 
-  rs_manhattan_distance, 
+  r_manhattan_distance,
+  rs_manhattan_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
@@ -317,7 +317,7 @@ Equivalence observed...
 
 r_canberra_distance <- as.matrix(
   dist(
-    random_data, 
+    random_data,
     method = "canberra"
   )
 )
@@ -328,8 +328,8 @@ rs_canberra_distance <- rs_dist(
 )
 
 all.equal(
-  r_canberra_distance, 
-  rs_canberra_distance, 
+  r_canberra_distance,
+  rs_canberra_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
@@ -360,7 +360,7 @@ interface into very rapid calculations in this regard.
 ```{r}
 #| label: generate new smaller data
 
-# we are going to create a reduced set for the benchmark to finish 
+# we are going to create a reduced set for the benchmark to finish
 # in a reasonable time
 set.seed(246L)
 
@@ -380,8 +380,8 @@ will default to sqrt(nrow())
 #| eval: !expr requireNamespace("infotheo", quietly = TRUE)
 
 rust_res_mi <- rs_mutual_info(
-  mat, 
-  n_bins = NULL, 
+  mat,
+  n_bins = NULL,
   normalise = FALSE,
   strategy = "equal_width"
 )
@@ -404,8 +404,8 @@ There is also an equal frequency strategy implemented:
 #| eval: !expr requireNamespace("infotheo", quietly = TRUE)
 
 rust_res_mi <- rs_mutual_info(
-  mat, 
-  n_bins = NULL, 
+  mat,
+  n_bins = NULL,
   normalise = FALSE,
   strategy = "equal_freq"
 )
@@ -434,8 +434,8 @@ microbenchmark::microbenchmark(
     nbins = sqrt(nrow(mat))
   )),
   rust = rs_mutual_info(
-    mat, 
-    n_bins = NULL, 
+    mat,
+    n_bins = NULL,
     normalise = FALSE,
     strategy = "equal_width"
   ),
@@ -455,8 +455,8 @@ microbenchmark::microbenchmark(
     nbins = sqrt(nrow(mat))
   )),
   rust = rs_mutual_info(
-    mat, 
-    n_bins = NULL, 
+    mat,
+    n_bins = NULL,
     normalise = FALSE,
     strategy = "equal_freq"
   ),
@@ -480,13 +480,19 @@ jaccard_sim <- function(x, y) {
 
 set.seed(42L)
 
-random_sets_1 <- purrr::map(1:1000L, ~{
-  paste(sample(LETTERS, sample(1:20, 1)))
-})
+random_sets_1 <- purrr::map(
+  1:1000L,
+  ~ {
+    paste(sample(LETTERS, sample(1:20, 1)))
+  }
+)
 
-random_sets_2 <- purrr::map(1:500L, ~{
-  paste(sample(LETTERS, sample(1:20, 1)))
-})
+random_sets_2 <- purrr::map(
+  1:500L,
+  ~ {
+    paste(sample(LETTERS, sample(1:20, 1)))
+  }
+)
 ```
 
 Let's start with a naive [purrr](https://purrr.tidyverse.org) approach. 
@@ -499,13 +505,19 @@ for completeness, let's run this version, too.
 
 tictoc::tic()
 
-r_results <- purrr::map(random_sets_1, \(x) {
-  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
-}, .progress = TRUE)
+r_results <- purrr::map(
+  random_sets_1,
+  \(x) {
+    purrr::map_dbl(random_sets_2, \(y) {
+      jaccard_sim(x, y)
+    })
+  },
+  .progress = TRUE
+)
 
 similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
@@ -523,13 +535,19 @@ future::plan(strategy = future::multisession(workers = parallel::detectCores()))
 
 tictoc::tic()
 
-r_results <- furrr::future_map(random_sets_1, \(x) {
-  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
-}, .progress = TRUE)
+r_results <- furrr::future_map(
+  random_sets_1,
+  \(x) {
+    purrr::map_dbl(random_sets_2, \(y) {
+      jaccard_sim(x, y)
+    })
+  },
+  .progress = TRUE
+)
 
 similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
@@ -550,15 +568,19 @@ mirai::daemons(parallel::detectCores())
 
 tictoc::tic()
 
-r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
-  purrr::map_dbl(sets_2, \(y) {
-    length(intersect(x, y)) / length(union(x, y))
-  })
-}, .args = list(sets_2 = random_sets_2))[]
+r_results_mirai <- mirai::mirai_map(
+  random_sets_1,
+  \(x, sets_2) {
+    purrr::map_dbl(sets_2, \(y) {
+      length(intersect(x, y)) / length(union(x, y))
+    })
+  },
+  .args = list(sets_2 = random_sets_2)
+)[]
 
 similarity_matrix <- matrix(
-  data = unlist(r_results_mirai), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results_mirai),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
@@ -578,18 +600,22 @@ function further and accelerate this even more.
 tictoc::tic()
 mirai::daemons(4)
 
-r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
-  purrr::map_dbl(sets_2, \(y) {
-    # Optimised function
-    intersection <- length(intersect(x, y))
-    union_size <- length(x) + length(y) - intersection
-    intersection / union_size
-  })
-}, .args = list(sets_2 = random_sets_2))[]
+r_results_mirai <- mirai::mirai_map(
+  random_sets_1,
+  \(x, sets_2) {
+    purrr::map_dbl(sets_2, \(y) {
+      # Optimised function
+      intersection <- length(intersect(x, y))
+      union_size <- length(x) + length(y) - intersection
+      intersection / union_size
+    })
+  },
+  .args = list(sets_2 = random_sets_2)
+)[]
 
 similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
@@ -607,8 +633,8 @@ against the Rust version implemented in `bixverse`:
 
 tictoc::tic()
 rust_res <- rs_set_similarity_list2(
-    s_1_list = random_sets_1,
-    s_2_list = random_sets_2,
+  s_1_list = random_sets_1,
+  s_2_list = random_sets_2,
   overlap_coefficient = FALSE
 )
 tictoc::toc()

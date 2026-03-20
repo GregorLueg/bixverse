@@ -60,6 +60,8 @@ download_cistarget_hg38 <- function(
 #' rankings.
 #'
 #' @return A data.table with the results if there were any significant motifs.
+#'
+#' @keywords internal
 process_cistarget_res <- function(
   cs_ls,
   gs_name,

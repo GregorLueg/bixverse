@@ -14,6 +14,8 @@
 #' @export
 #'
 #' @import data.table
+#'
+#' @keywords internal
 SingleCellDuckDBBase <- R6::R6Class(
   # class name
   classname = "SingleCellDuckDBBase",
@@ -587,6 +589,8 @@ SingleCellDuckDBBase <- R6::R6Class(
 #' @export
 #'
 #' @import data.table
+#'
+#' @keywords internal
 SingleCellDuckDB <- R6::R6Class(
   # class name
   classname = "SingleCellDuckDB",

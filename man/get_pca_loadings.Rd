@@ -13,6 +13,9 @@ get_pca_loadings(x)
 \arguments{
 \item{x}{An object to get PCA loadings from.}
 }
+\value{
+The PCA feature loadings from the object (if found).
+}
 \description{
 Get the PCA loadings
 

@@ -13,6 +13,9 @@ get_pca_singular_val(x)
 \arguments{
 \item{x}{An object to get PCA singular values from.}
 }
+\value{
+The PCA singular values from the object (if found).
+}
 \description{
 Get the PCA singular values
 
