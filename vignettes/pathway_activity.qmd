@@ -8,6 +8,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+author:
+  - name: Gregor Lueg
 ---
 
 ## Single sample pathway activity functions

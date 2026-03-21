@@ -1,3 +1,6 @@
+# checkmate extensions for various parameter lists provided to the many methods
+# in this package
+
 # globals ----------------------------------------------------------------------
 
 # Global to reduce repetition

@@ -1391,7 +1391,7 @@ finalise_matrix <- function(
   matrix
 }
 
-#### sc map --------------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
 #' @name get_cell_names.SingleCells
 #'
@@ -1730,9 +1730,68 @@ S7::method(get_snn_graph, SingleCells) <- function(
   return(res)
 }
 
+#### available variables -------------------------------------------------------
+
+#' @method get_sc_available_features SingleCells
+#'
+#' @export
+S7::method(get_sc_available_features, SingleCells) <- function(
+  object
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  # get the duckdb and obs features
+  duckdb_con <- get_sc_duckdb(object)
+  obs_cols <- duckdb_con$get_obs_cols()
+  obs_features <- data.table::data.table(
+    feature_name = obs_cols,
+    origin = "obs"
+  )
+
+  feature_cols <- get_gene_names(object)
+  counts_features <- data.table::data.table(
+    feature_name = feature_cols,
+    origin = "counts"
+  )
+
+  final_features <- data.table::rbindlist(list(obs_features, counts_features))
+
+  return(final_features)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
+
+#' @method setnames_sc SingleCells
+#'
+#' @export
+S7::method(setnames_sc, SingleCells) <- function(
+  object,
+  table = c("obs", "var"),
+  old,
+  new
+) {
+  table <- match.arg(table)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertChoice(table, c("obs", "var"))
+  checkmate::qassert(old, "S+")
+  checkmate::qassert(new, "S+")
+  checkmate::assertTRUE(length(old) == length(new))
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  for (i in seq_along(old)) {
+    old_i <- old[[i]]
+    new_i <- new[[i]]
+    duckdb_con$rename_column(table = table, old = old_i, new = new_i)
+  }
+
+  invisible(object)
+}
 
 #' Add a new column to the obs table
 #'

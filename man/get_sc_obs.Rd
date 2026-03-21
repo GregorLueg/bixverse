@@ -7,7 +7,7 @@
 get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 }
 \arguments{
-\item{object}{\code{single_cell_exp}, \code{meta_cells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{indices}{Optional integer vector. The integer positions of the cells
 to return.}
@@ -15,7 +15,7 @@ to return.}
 \item{cols}{Optional string vector. The columns from the obs table to return.}
 
 \item{filtered}{Boolean. Whether to return all cells or filtered to \code{to_keep}
-cells. Not relevant for \code{meta_cells}.}
+cells. Not relevant for \code{MetaCells}.}
 }
 \value{
 The obs table

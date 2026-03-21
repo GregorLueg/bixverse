@@ -9,8 +9,8 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-    - Gregor Lueg
-    - Grant Neilson
+  - name: Gregor Lueg
+  - name: Grant Neilson
 ---
 
 ## Intro
@@ -421,6 +421,6 @@ sc_object[
 ```
 
 And that's it. If you understand this vignette and the design choices, we have
-answered the why, the how and can move on to the what in the other vignettes
-with some example analyses and how to actually use the package to analyse
-single cell experiments.
+answered the *why*, the *how* and can move on to the *what* in the other 
+vignettes with some example analyses and how to actually use the package to 
+analyse single cell experiments.

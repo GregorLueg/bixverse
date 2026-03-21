@@ -15,21 +15,21 @@ get_sc_counts(
 )
 }
 \arguments{
-\item{object}{\code{single_cell_exp}, \code{meta_cells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{assay}{String. Which slot to return. One of \code{c("raw", "norm")}.
 Defaults to \code{"raw"}.}
 
 \item{return_format}{String. One of \code{c("cell", "gene")}. Return data in
 cell-centric compressed format (CSR) or gene-centric compressed format (CSC).
-Defaults to \code{"cell"}. Not relevant for \code{meta_cells}.}
+Defaults to \code{"cell"}. Not relevant for \code{MetaCells}.}
 
 \item{cell_indices}{Optional cell indices.}
 
 \item{gene_indices}{Optional gene indices.}
 
 \item{use_cells_to_keep}{Boolean. Shall cells to keep be found in the class,
-shall the counts be reduced to these. Not relevant for \code{meta_cells}.}
+shall the counts be reduced to these. Not relevant for \code{MetaCells}.}
 
 \item{.verbose}{Boolean. Controls verbosity of the function.}
 }

@@ -9,7 +9,7 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - Gregor Lueg
+  - name: Gregor Lueg
 ---
 
 ## Gene Set Enrichment Methods in bixverse
@@ -368,6 +368,9 @@ fgsea_res <- fgsea(
 
 head(fgsea_res)
 ```
+
+How does bixverse look in comparison?
+
 ```{r}
 #| label: bixverse version of fgsea
 bixverse_fgsea <- calc_fgsea(
@@ -396,6 +399,7 @@ plot(
 The Rust implementation is consistently faster than `fgsea`'s Rcpp backend —
 not by an enormous margin on small data (roughly 20% in typical benchmarks),
 but the gap widens with the number of pathways and permutations:
+
 ```{r}
 #| label: comparison of speed fgsea vs. bixverse version
 #| eval: !expr requireNamespace("microbenchmark", quietly = TRUE)
@@ -426,6 +430,7 @@ from all ancestors before they are tested. Once the full traversal is complete,
 the fgsea multilevel method is applied to terms that reached nominal
 significance to obtain more precise p-values than pure permutation alone can
 provide.
+
 ```{r}
 #| label: gsea gene ontology aware
 

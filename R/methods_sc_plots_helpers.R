@@ -20,7 +20,7 @@
 #' to `0.5`.
 #' @param spread Numeric. Effective scale of embedded points. Defaults to `1.0`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"balltree"`, `"hnsw"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param umap_params Named list. See [manifoldsR::params_umap()].
 #' @param seed Integer. For reproducibility.
@@ -40,7 +40,7 @@ umap_sc <- S7::new_generic(
     k = 15L,
     min_dist = 0.5,
     spread = 1.0,
-    knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
     nn_params = manifoldsR::params_nn(),
     umap_params = manifoldsR::params_umap(),
     seed = 42L,
@@ -61,7 +61,7 @@ S7::method(umap_sc, SingleCells) <- function(
   k = 15L,
   min_dist = 0.5,
   spread = 1.0,
-  knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
@@ -130,7 +130,7 @@ S7::method(umap_sc, SingleCells) <- function(
 #' @param approx_type String. Approximation method. One of `"bh"` (Barnes-Hut)
 #' or `"fft"`. Defaults to `"bh"`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"balltree"`, `"hnsw"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param tsne_params Named list. See [manifoldsR::params_tsne()].
 #' @param seed Integer. For reproducibility.
@@ -149,7 +149,7 @@ tsne_sc <- S7::new_generic(
     n_dim = 2L,
     perplexity = 30.0,
     approx_type = c("bh", "fft"),
-    knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
     nn_params = manifoldsR::params_nn(),
     tsne_params = manifoldsR::params_tsne(),
     seed = 42L,
@@ -169,7 +169,7 @@ S7::method(tsne_sc, SingleCells) <- function(
   n_dim = 2L,
   perplexity = 30.0,
   approx_type = c("bh", "fft"),
-  knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -234,7 +234,7 @@ S7::method(tsne_sc, SingleCells) <- function(
 #' @param k Integer. Number of nearest neighbours for graph construction.
 #' Defaults to `5L`.
 #' @param knn_method String. Approximate nearest neighbour algorithm. One of
-#' `"balltree"`, `"hnsw"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
+#' `"hnsw"`, `"balltree"`, `"annoy"`, `"nndescent"`, or `"exhaustive"`.
 #' @param nn_params Named list. See [manifoldsR::params_nn()].
 #' @param phate_params Named list. See [manifoldsR::params_phate()].
 #' @param seed Integer. For reproducibility.
@@ -252,7 +252,7 @@ phate_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     n_dim = 2L,
     k = 5L,
-    knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
     nn_params = manifoldsR::params_nn(),
     phate_params = manifoldsR::params_phate(),
     seed = 42L,
@@ -271,7 +271,7 @@ S7::method(phate_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
-  knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   phate_params = manifoldsR::params_phate(),
   seed = 42L,

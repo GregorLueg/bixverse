@@ -1,11 +1,11 @@
 ---
 title: "Technical design choices for the single cell implementation"
-author: 
-  - "Gregor Lueg"
 format:
   html:
     toc: true
     toc-depth: 3
+author: 
+  - name: Gregor Lueg
 ---
 
 *This is an opinionated piece, so take what is written here with a pinch of 

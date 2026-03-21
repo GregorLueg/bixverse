@@ -13,12 +13,13 @@ dependencies = [
 
 [[package]]
 name = "ann-search-rs"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "642da62a63dd26c5859d639bda8adb69ee705884d2dd4b3e9c4c958147248096"
+checksum = "b18b0564940c11f37a1c8aa912a13f1a7a57e79c077b90a2ae33820be35dbff8"
 dependencies = [
  "approx",
  "clap",
+ "document-features",
  "faer",
  "faer-traits",
  "fixedbitset",
@@ -156,7 +157,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.6"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-gpu#aaef2f5b5dab9218b2fbb349b5290c74059c3732"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-gpu#11c04c277901b9e932458a3d84563711e41db586"
 dependencies = [
  "ann-search-rs",
  "approx",

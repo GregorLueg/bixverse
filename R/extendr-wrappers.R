@@ -2931,6 +2931,59 @@ rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) 
 #' @export
 rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
 
+#' Helper to extract single cell counts as a dense vector for plotting
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_index Integer. Gene index position to return (0-indexed!).
+#' @param norm Boolean. Shall normalised counts be returned.
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns The dense vector of expression values for this gene.
+#'
+#' @export
+rs_extract_counts_plots <- function(f_path, cell_indices, gene_index, norm, scale, clip) .Call(wrap__rs_extract_counts_plots, f_path, cell_indices, gene_index, norm, scale, clip)
+
+#' Helper to extract single cell counts for several genes
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_index Integer. Gene index position to return (0-indexed!).
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns A list of dense vectors of the normalised counts.
+#'
+#' @export
+rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, scale, clip) .Call(wrap__rs_extract_several_genes_plots, f_path, cell_indices, gene_indices, scale, clip)
+
+#' Calculates the gene statistics for a set of cell groups and genes
+#'
+#' @description
+#' Helper function to extract data for dot plots and/or heatmaps.
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_index Integer. Gene index position to return (0-indexed!).
+#' @param group_ids Integer. The levels of the data. (0-indexed!)
+#' @param group_levels String. Name of the factors.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'   \item grp_label - The label of that group
+#'   \item mean_exp - Vector of mean expression values in row major (genes x
+#'   n_levels)
+#'   \item perc_exp - Vector of proportions of cells with expression in row
+#'   major (genes x n_levels)
+#' }
+rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)

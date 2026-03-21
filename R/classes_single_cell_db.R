@@ -230,6 +230,26 @@ SingleCellDuckDBBase <- R6::R6Class(
       return(as.integer(data$cell_idx))
     },
 
+    #' @description
+    #' Returns the available column names in the obs table.
+    #'
+    #' @return A character vector of column names.
+    get_obs_cols = function() {
+      private$check_obs_exists()
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbGetQuery(
+        con,
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
+      )$column_name
+    },
+
     #####################
     # Setters / filters #
     #####################
@@ -500,6 +520,61 @@ SingleCellDuckDBBase <- R6::R6Class(
           ",
           exclude_clause
         )
+      )
+
+      invisible(self)
+    },
+
+    ##########
+    # Rename #
+    ##########
+
+    #' @description
+    #' Rename a column in the obs or var table.
+    #'
+    #' @param table String. Either "obs" or "var".
+    #' @param old String. The current column name.
+    #' @param new String. The desired new column name.
+    #'
+    #' @return Invisible self.
+    rename_column = function(table = c("obs", "var"), old, new) {
+      table <- match.arg(table)
+      checkmate::qassert(old, "S1")
+      checkmate::qassert(new, "S1")
+
+      if (table == "obs") {
+        private$check_obs_exists()
+      } else {
+        private$check_var_exists()
+      }
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      existing <- DBI::dbGetQuery(
+        con,
+        sprintf(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = '%s'",
+          table
+        )
+      )$column_name
+
+      if (!old %in% existing) {
+        warning(sprintf(
+          "Column '%s' not found in table '%s'. No renaming done.",
+          old,
+          table
+        ))
+        return(invisible(self))
+      }
+
+      DBI::dbExecute(
+        con,
+        sprintf('ALTER TABLE %s RENAME COLUMN "%s" TO "%s"', table, old, new)
       )
 
       invisible(self)

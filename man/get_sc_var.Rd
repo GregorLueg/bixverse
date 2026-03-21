@@ -7,7 +7,7 @@
 get_sc_var(object, indices = NULL, cols = NULL)
 }
 \arguments{
-\item{object}{\code{single_cell_exp}, \code{meta_cells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{indices}{Optional integer vector. The integer positions of the genes
 to return.}

@@ -12,7 +12,7 @@ umap_sc(
   k = 15L,
   min_dist = 0.5,
   spread = 1,
-  knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
@@ -38,7 +38,7 @@ to \code{0.5}.}
 \item{spread}{Numeric. Effective scale of embedded points. Defaults to \code{1.0}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"balltree"}, \code{"hnsw"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
+\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 

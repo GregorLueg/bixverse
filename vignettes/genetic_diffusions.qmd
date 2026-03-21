@@ -9,7 +9,7 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - Gregor Lueg
+  - name: Gregor Lueg
 ---
 
 ## Genetic diffusion and community detections

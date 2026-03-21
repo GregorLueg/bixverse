@@ -11,7 +11,7 @@ tsne_sc(
   n_dim = 2L,
   perplexity = 30,
   approx_type = c("bh", "fft"),
-  knn_method = c("balltree", "hnsw", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -37,7 +37,7 @@ and 50. Defaults to \code{30.0}.}
 or \code{"fft"}. Defaults to \code{"bh"}.}
 
 \item{knn_method}{String. Approximate nearest neighbour algorithm. One of
-\code{"balltree"}, \code{"hnsw"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
+\code{"hnsw"}, \code{"balltree"}, \code{"annoy"}, \code{"nndescent"}, or \code{"exhaustive"}.}
 
 \item{nn_params}{Named list. See \code{\link[manifoldsR:params_nn]{manifoldsR::params_nn()}}.}
 
