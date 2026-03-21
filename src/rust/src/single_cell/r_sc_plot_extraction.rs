@@ -92,6 +92,10 @@ fn rs_extract_grouped_gene_stats(
     f_path: &str,
     cell_indices: &[i32],
     gene_indices: &[i32],
-    group_ids: Vec<String>,
+    group_ids: &[i32],
+    group_levels: Vec<String>,
 ) {
+    let cell_indices = cell_indices.r_int_convert();
+    let gene_indices = gene_indices.r_int_convert();
+    let group_ids = group_ids.r_int_convert();
 }

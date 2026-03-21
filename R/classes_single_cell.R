@@ -1201,6 +1201,13 @@ S7::method(`[`, SingleCells) <- function(
   if (missing(j)) {
     j <- NULL
   }
+  # transform cell ids and gene ids to indices
+  if (checkmate::qtest(i, "S+")) {
+    i <- get_cell_indices(x = x, cell_ids = i, rust_index = FALSE)
+  }
+  if (checkmate::qtest(j, "S+")) {
+    j <- get_gene_indices(x = x, gene_ids = j, rust_index = FALSE)
+  }
 
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
@@ -2201,6 +2208,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   dims <- S7::prop(x, "dims")
+  no_cells_to_keep <- length(get_cells_to_keep(x))
   sc_map <- S7::prop(x, "sc_map")
   sc_cache <- S7::prop(x, "sc_cache")
 
@@ -2218,7 +2226,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 
   cat(
     "Single cell experiment (Single Cells).\n",
-    sprintf("  No cells: %i\n", dims[1]),
+    sprintf("  No cells (original): %i\n", dims[1]),
+    sprintf("   To keep n: %i\n", no_cells_to_keep),
     sprintf("  No genes: %i\n", dims[2]),
     sprintf("  HVG calculated: %s\n", hvg_calculated),
     sprintf("  PCA calculated: %s\n", pca_calculated),

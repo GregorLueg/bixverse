@@ -15,8 +15,10 @@ template:
   css: pkgdown/extra.css
 
 home:
-  title: "bixverse"
-  description: "The tidyverse wanna-be of bioinformatics"
+  title: bixverse
+  description: 
+    The tidyverse wanna-be of bioinformatics. Now also with a lot of single 
+    cell-related functionality.
 navbar:
   structure:
     left: [intro, reference, articles, tutorials, singlecells, news]
@@ -36,6 +38,8 @@ navbar:
     singlecells:
       text: Single Cells
       menu:
+        - text: Thinking about single cells the bixverse way
+          href: articles/thinking_single_cell.html
         - text: Single Cell Analysis
           href: articles/Single_cell_analysis.html
     articles:
@@ -66,19 +70,24 @@ articles:
   - title: Single Cells
     navbar: Single Cells
     contents:
+      - thinking_single_cell
       - Single_cell_analysis
 
 reference:
   # General getters shared across classes
   - title: General getters
-    desc: All types of general getters that work across various classes
+    desc: 
+      All types of general getters that work across various classes related to
+      co-expression module detection, graph-based clustering, etc.
     contents:
       - get_metadata
       - get_params
       - get_results
   # Everything, anything for gene set enrichment
   - title: Gene set enrichment helpers
-    desc: Everything and anything you need to do various types of gene set enrichments
+    desc: 
+      Everything and anything you need to do various types of gene set 
+      enrichments; hypergeometric tests, GSVA, (ss)GSEA.
     contents:
       - gse_hypergeometric
       - gse_hypergeometric_list
@@ -93,7 +102,9 @@ reference:
       - params_ssgsea
   # Gene Ontology-related functions
   - title: Gene Ontology-related gene set enrichment helpers
-    desc: GSE methods specifically designed with the Gene Ontology in mind.
+    desc: 
+      GSE methods specifically designed with the DAG of the Gene Ontology in
+      mind, identifying the most relevant Gene Ontology terms.
     contents:
       - load_go_human_data
       - get_go_data_human
@@ -106,7 +117,8 @@ reference:
       - simplify_hypergeom_res
   # CisTarget
   - title: CisTarget-related helpers
-    desc: Anything related to CisTarget enrichment
+    desc: 
+      Functions related to CisTarget enrichment.
     contents:
       - download_cistarget_hg38
       - read_motif_annotation_file
@@ -115,7 +127,10 @@ reference:
       - params_cistarget
   # Correlation-based gene module stuff
   - title: Correlation-based gene module detections
-    desc: Methods to identify co-expression modules via correlations in the data
+    desc: 
+      Methods to identify co-expression modules via correlations in the data.
+      Includes methods for differential correlations, some graph-based and some
+      hierarchical clustering based ones.
     contents:
       - BulkCoExp
       - preprocess_bulk_coexp
@@ -138,7 +153,10 @@ reference:
       - params_coremo
   # Matrix factorisations for gene module detection
   - title: Matrix factorisation methods
-    desc: Methods to identify co-expression via matrix factorisations. Uses the same classes as the correlation-based ones.
+    desc: 
+      Methods to identify co-expression via matrix factorisations. Uses the same 
+      class as the correlation-based ones. You have contrastive PCA, ICA and
+      dual graph-regularised dictionary learning as methods.
     contents:
       - contrastive_pca_processing
       - c_pca_plot_alphas
@@ -159,7 +177,10 @@ reference:
       - params_ica_randomisation
   # Differential gene expression
   - title: Helpers for differential gene expression
-    desc: Methods to help out with differential gene expression analyses in a structured way
+    desc: 
+      Methods to help out with differential gene expression analyses in a 
+      structured way. Useful when you have to analyse 10's to 100's of
+      differential gene expression results.
     contents:
       - BulkDge
       - add_new_metadata
@@ -190,7 +211,9 @@ reference:
       - get_tpm_counts
   # Ontologies
   - title: Biomedical ontologies
-    desc: For dealing with ontologies and calculating (semantic) similarities
+    desc: 
+      For dealing with ontologies and calculating (semantic) similarities in
+      disease, phenotype or gene ontologies.
     contents:
       - OntologySim
       - pre_process_sim_onto
@@ -207,7 +230,11 @@ reference:
       - get_ontology_ancestry
   # Methods related to graphs... Diffusions, RBH, SNF
   - title: Helpers for graph-based analysis
-    desc: Different methods like similarity network fusions or reciprocal best hit graphs
+    desc: 
+      Different methods working on graphs; diffuse information over a network
+      and identify communities, generate reciprocal best hit graphs from
+      correlations or set similarities, fuse networks together via similarity
+      network fusion.
     contents:
       - NetworkDiffusions
       - calculate_diffusion_auc
@@ -235,7 +262,8 @@ reference:
       - params_snf
   # Single cell classes and getters
   - title: Single cell classe and getters
-    desc: Classes to generate the SingleCells and various getters
+    desc: 
+      THE single cell class with a large number of getters.
     contents:
       - SingleCells
       - get_sc_obs
@@ -260,7 +288,8 @@ reference:
       - set_sc_new_var_cols
   # Meta cell generation, classes and generation
   - title: Meta cell-related generation, classes and methods
-    desc: Generating meta cells with different methods and interacting with them
+    desc: 
+      Generating meta cells.
     contents:
       - MetaCells
       - calc_meta_cell_purity
@@ -272,7 +301,9 @@ reference:
       - params_sc_seacells
   # Single cell data I/O
   - title: Single cell i/o
-    desc: Helpers to load in data from h5ad, mtx files or R directly
+    desc: 
+      I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into
+      Rust and the DuckDB supporting the metadata.
     contents:
       - get_cell_ranger_params
       - get_h5ad_dimensions
@@ -293,7 +324,9 @@ reference:
       - params_sc_mtx_io
   # Processing of single cell
   - title: Single cell processing
-    desc: Helpers to process single cell data... Think batch corrections, PCA, doublet calling etc.
+    desc: 
+      Helpers to process single cell data. Doublet detection, proportions of
+      gene sets, HVG (batch-aware), PCA and batch corrections.
     contents:
       - scrublet_sc
       - call_doublets_manual
@@ -321,7 +354,10 @@ reference:
       - params_knn_defaults
   # Single cell analysis
   - title: Single cell analysis methods
-    desc: Anything and everything to analyise single cell data
+    desc: 
+      A large number of different methods to extract insights from your single
+      cell experiment. Gene set scoring, DGEs, kNN generations, pseudo-bulk
+      count extraction, miloR, Hotspot, VISION and SCENIC.
     contents:
       - aucell_sc
       - module_scores_sc
@@ -358,20 +394,25 @@ reference:
   # Other single cell class methods
   - title: Single-cell related classes and methods
     desc: 
+      Additional helpers for specific small sub classes used in single cell.
     contents:
       - get_knn_dist
       - get_obs_data
       - new_sc_knn
   # Single cell plotting helpers
   - title: Single-cell plotting stuff
-    desc: Various helpers that generate data for plotting single cell, such as 2D embeddings, etc.
+    desc: 
+      Various helpers that generate data for plotting single cell, such as 2D 
+      embeddings, or extract specific columns from the metadata or genes (and
+      their summaries) from the binary storage files.
     contents:
       - umap_sc
       - tsne_sc
       - phate_sc
   # Different statistical functions
   - title: Stastical functions
-    desc: Any types of functions that help with statistics
+    desc: 
+      Any types of functions that help with statistics
     contents:
       - calculate_effect_size
       - calculate_tom
@@ -384,7 +425,9 @@ reference:
       - robust_scale
   # Plotting helpers
   - title: Plotting helpers
-    desc: Some core plotting helpers in the package. Most of them are in bixverse.plots
+    desc: 
+      Some core plotting helpers in the package (usually for QC). The ones to
+      plot downstream results can be found in bixverse.plots.
     contents:
       - plot_boxplot_normalization
       - plot_epsilon_res
@@ -401,7 +444,8 @@ reference:
       - plot_voom_normalization
   # Synthetic data and downloads
   - title: Data downloads and synthetic data generation
-    desc: Functions and helpers to download and generate synthetic data
+    desc: 
+      Functions and helpers to download or generate synthetic data.
     contents:
       - download_pbmc3k
       - calculate_sparsity_stats
@@ -417,7 +461,8 @@ reference:
       - synthetic_c_pca_data
   # General utils
   - title: Utils
-    desc: All types of other random helpers
+    desc: 
+      All types of other random helpers without a clear pattern
     contents:
       - AnnDataParser
       - calculate_sparsity_stats
@@ -427,8 +472,10 @@ reference:
       - upper_triangle_to_sparse
       - upper_triangular_sym_mat
       - to_snake_case
-  - title: "Rust wrappers"
-    desc: "Everything rusty - only use this if you know what you are doing... Maybe useful for your own package?"
+  - title: Rust wrappers
+    desc: 
+      Everything rusty - only use this if you know what you are doing... Maybe 
+      useful for your own package? Use with care and read the documentation!
     contents:
       - rs_aucell
       - rs_bbknn

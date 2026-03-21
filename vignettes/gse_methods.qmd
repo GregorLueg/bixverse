@@ -412,7 +412,7 @@ microbenchmark::microbenchmark(
     pathways = examplePathways,
     gsea_params = params_gsea(min_size = 15L)
   ),
-  times = 10L
+  times = 5L
 )
 ```
 
