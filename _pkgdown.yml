@@ -40,8 +40,10 @@ navbar:
       menu:
         - text: Thinking about single cells the bixverse way
           href: articles/thinking_single_cell.html
-        - text: Single Cell Analysis
-          href: articles/Single_cell_analysis.html
+        - text: Running an analysis with the bixverse single cell framework
+          href: articles/pbmc_single_cell.html
+        - text: Doublet detection in bixverse
+          href: articles/doublet_detection.html
     articles:
       text: Articles
       menu:
@@ -71,7 +73,8 @@ articles:
     navbar: Single Cells
     contents:
       - thinking_single_cell
-      - Single_cell_analysis
+      - pbmc_single_cell
+      - doublet_detection
 
 reference:
   # General getters shared across classes
@@ -283,6 +286,8 @@ reference:
       - get_pca_factors
       - get_snn_graph
       - get_gene_names_from_idx
+      - get_sc_available_features
+      - setnames_sc
       - set_sc_new_obs_col
       - set_sc_new_obs_col_multiple
       - set_sc_new_var_cols
@@ -332,6 +337,8 @@ reference:
       - call_doublets_manual
       - doublet_detection_boost_sc
       - gene_set_proportions_sc
+      - per_cell_qc_outlier
+      - run_cell_qc
       - find_hvg_sc
       - find_hvg_batch_aware_sc
       - calculate_pca_sc
@@ -409,6 +416,8 @@ reference:
       - umap_sc
       - tsne_sc
       - phate_sc
+      - extract_dot_plot_data
+      - extract_gene_expression
   # Different statistical functions
   - title: Stastical functions
     desc: 
@@ -507,6 +516,9 @@ reference:
       - rs_dense_to_upper_triangle
       - rs_differential_cor
       - rs_dist
+      - rs_extract_grouped_gene_stats
+      - rs_extract_several_genes_plots
+      - rs_extract_counts_plots
       - rs_fast_auc
       - rs_fast_ica
       - rs_fdr_adjustment

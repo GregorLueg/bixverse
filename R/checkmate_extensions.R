@@ -1897,6 +1897,170 @@ checkScBoost <- function(x) {
 #' @keywords internal
 assertScBoost <- checkmate::makeAssertionFunction(checkScBoost)
 
+#### scdblfinder ---------------------------------------------------------------
+
+#' Check scDblFinder parameters
+#'
+#' @description Checkmate extension for checking scDblFinder parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return `TRUE` if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScDblFinder <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "log_transform",
+      "mean_center",
+      "normalise_variance",
+      "target_size",
+      "min_gene_var_pctl",
+      "hvg_method",
+      "loess_span",
+      "clip_max",
+      "no_pcs",
+      "random_svd",
+      "doublet_ratio",
+      "heterotypic_bias",
+      "cluster_resolution",
+      "cluster_iters",
+      "n_iterations",
+      "n_trees",
+      "max_depth",
+      "learning_rate",
+      "min_samples_leaf",
+      "early_stop_window",
+      "subsample_rate",
+      "include_pcs",
+      "dbr_per_1k",
+      "n_bins"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # kNN
+  knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
+  res <- checkKnnParams(knn_params)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+  # Integer rules
+  integer_rules <- list(
+    "no_pcs" = "I1[1,)",
+    "cluster_iters" = "I1[1,)",
+    "n_iterations" = "I1[1,)",
+    "n_trees" = "I1[1,)",
+    "max_depth" = "I1[1,)",
+    "min_samples_leaf" = "I1[1,)",
+    "early_stop_window" = "I1[1,)",
+    "include_pcs" = "I1[1,)",
+    "n_bins" = "I1[10,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters is incorrect.",
+      broken_elem
+    ))
+  }
+  # Numeric rules
+  numeric_rules <- list(
+    "min_gene_var_pctl" = "N1[0,1]",
+    "loess_span" = "N1(0,)",
+    "doublet_ratio" = "N1(0,)",
+    "heterotypic_bias" = "N1[0,1]",
+    "cluster_resolution" = "N1(0,)",
+    "learning_rate" = "N1(0,)",
+    "subsample_rate" = "N1(0,1]",
+    "dbr_per_1k" = "N1(0,)",
+    "target_size" = "N1(0,)"
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(numeric_rules)) {
+      checkmate::qtest(x, numeric_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters has an invalid value.",
+      broken_elem
+    ))
+  }
+  # Boolean rules
+  boolean_rules <- c(
+    "log_transform",
+    "mean_center",
+    "normalise_variance",
+    "random_svd"
+  )
+  res <- purrr::map_lgl(boolean_rules, \(name) {
+    checkmate::qtest(x[[name]], "B1")
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- boolean_rules[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters must be TRUE or FALSE.",
+      broken_elem
+    ))
+  }
+  # Optional nullable
+  optional_rules <- list(
+    "clip_max" = c("0", "N1(0,)"),
+    "manual_threshold" = c("0", "N1[0,)")
+  )
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(optional_rules)) {
+      checkmate::qtest(x, optional_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(sprintf(
+      "The element `%s` in scDblFinder parameters is incorrect.",
+      broken_elem
+    ))
+  }
+  # Choice
+  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: vst, mvb, dispersion.")
+  }
+  return(TRUE)
+}
+
+#' Assert scDblFinder parameters
+#'
+#' @description Checkmate extension for asserting scDblFinder parameters.
+#'
+#' @inheritParams checkScDblFinder
+#'
+#' @param .var.name Name of the checked object to print in assertions.
+#' @param add Collection to store assertion messages.
+#'
+#' @return Invisibly returns the checked object if successful.
+#'
+#' @keywords internal
+assertScDblFinder <- checkmate::makeAssertionFunction(checkScDblFinder)
+
 #### hvg -----------------------------------------------------------------------
 
 #' Check HVG selection parameters

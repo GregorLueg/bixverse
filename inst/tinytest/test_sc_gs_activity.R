@@ -106,12 +106,12 @@ cells_per_cluster <- split(
 )
 
 expect_error(
-  current = aucell_sc(
+  current = suppressWarnings(aucell_sc(
     object = sc_object,
     gs_list = bad_list,
     auc_type = "auroc",
     .verbose = FALSE
-  ),
+  )),
   info = paste("aucell: error when provided a list where nothing matches.")
 )
 
@@ -221,11 +221,11 @@ module_scores_streaming <- module_scores_sc(
 )
 
 expect_error(
-  current = module_scores_sc(
+  current = suppressWarnings(module_scores_sc(
     object = sc_object,
     gs_list = bad_list,
     .verbose = FALSE
-  ),
+  )),
   info = paste(
     "module-scores: error when provided a list where nothing matches."
   )
@@ -350,6 +350,12 @@ vision_gs <- list(
     neg = sample(get_gene_names(sc_object)[30:80], 8)
   )
 )
+
+available <- get_gene_names(sc_object)
+
+vision_gs <- lapply(vision_gs, function(gs) {
+  lapply(gs, intersect, available)
+})
 
 vision_res <- vision_sc(
   object = sc_object,
@@ -921,7 +927,8 @@ rf_scenic_res_batch_32 <- tf_to_genes_motif_enrichment(
     nes_threshold = 0.5,
     high_conf_cats = "directAnnotation",
     low_conf_cats = "inferredBy_MotifSimilarity"
-  )
+  ),
+  .verbose = FALSE
 )
 
 expect_true(

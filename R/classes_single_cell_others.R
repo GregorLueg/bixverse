@@ -195,7 +195,63 @@ get_obs_data.ScrubletRes <- function(x, ...) {
   return(obs_dt)
 }
 
+### print ----------------------------------------------------------------------
+
+#' Print a ScrubletRes object
+#'
+#' @param x A `ScrubletRes` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.ScrubletRes <- function(x, ...) {
+  n_cells <- length(x$predicted_doublets)
+  n_doublets <- sum(x$predicted_doublets)
+
+  cat(sprintf(
+    "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf("  Threshold:              %.4f\n", x$threshold))
+  cat(sprintf(
+    "  Detected doublet rate:  %.1f%%\n",
+    100 * x$detected_doublet_rate
+  ))
+  cat(sprintf(
+    "  Detectable fraction:    %.1f%%\n",
+    100 * x$detectable_doublet_fraction
+  ))
+  cat(sprintf(
+    "  Overall doublet rate:   %.1f%%\n",
+    100 * x$overall_doublet_rate
+  ))
+  cat(sprintf("  Simulated doublets:     %d\n", length(x$doublet_scores_sim)))
+
+  extras <- character()
+  if (!is.null(x$pca)) {
+    extras <- c(extras, "PCA")
+  }
+  if (!is.null(x$pair_1)) {
+    extras <- c(extras, "doublet pairs")
+  }
+  if (length(extras) > 0) {
+    cat(sprintf(
+      "  Optional data:          %s\n",
+      paste(extras, collapse = ", ")
+    ))
+  }
+
+  invisible(x)
+}
+
 ## boost -----------------------------------------------------------------------
+
+### obs data -------------------------------------------------------------------
 
 #' @rdname get_obs_data
 #'
@@ -211,6 +267,85 @@ get_obs_data.BoostRes <- function(x, ...) {
   obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)] # was zero indexed
 
   return(obs_dt)
+}
+
+### print ----------------------------------------------------------------------
+
+#' Print a BoostRes object
+#'
+#' @param x A `BoostRes` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.BoostRes <- function(x, ...) {
+  n_cells <- length(x$doublet)
+  n_doublets <- sum(x$doublet)
+
+  cat(sprintf(
+    "BoostRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf(
+    "  Score range: [%.4f, %.4f]\n",
+    min(x$doublet_score),
+    max(x$doublet_score)
+  ))
+
+  invisible(x)
+}
+
+## scdblfinder -----------------------------------------------------------------
+
+### obs data -------------------------------------------------------------------
+
+#' @rdname get_obs_data
+#'
+#' @export
+get_obs_data.ScDblFinderRes <- function(x, ...) {
+  checkmate::assertClass(x, "ScDblFinderRes")
+  obs_dt <- data.table::as.data.table(unclass(x))
+  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)]
+  return(obs_dt)
+}
+
+### print ----------------------------------------------------------------------
+
+#' Print a ScDblFinderRes object
+#'
+#' @param x A `ScDblFinderRes` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.ScDblFinderRes <- function(x, ...) {
+  n_cells <- length(x$predicted_doublets)
+  n_doublets <- sum(x$predicted_doublets)
+  n_clusters <- length(unique(x$cluster_labels))
+
+  cat(sprintf(
+    "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf("  Threshold:        %.4f\n", x$threshold))
+  cat(sprintf(
+    "  Score range:      [%.4f, %.4f]\n",
+    min(x$doublet_score),
+    max(x$doublet_score)
+  ))
+  cat(sprintf("  Final clusters:   %d\n", n_clusters))
+
+  invisible(x)
 }
 
 ## kNN with distances ----------------------------------------------------------

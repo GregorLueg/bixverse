@@ -12,12 +12,12 @@ rs_extract_several_genes_plots(f_path, cell_indices, gene_indices, scale, clip)
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
 
+\item{gene_indices}{Integer. Gene index position to return (0-indexed!).}
+
 \item{scale}{Boolean. Shall the normalised counts be scaled.}
 
 \item{clip}{Optional float. Clipping for the Z-scores if scale is set to
 \code{TRUE}}
-
-\item{gene_index}{Integer. Gene index position to return (0-indexed!).}
 }
 \value{
 A list of dense vectors of the normalised counts.

@@ -58,7 +58,7 @@ fn rs_extract_counts_plots(
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
-/// @param gene_index Integer. Gene index position to return (0-indexed!).
+/// @param gene_indices Integer. Gene index position to return (0-indexed!).
 /// @param scale Boolean. Shall the normalised counts be scaled.
 /// @param clip Optional float. Clipping for the Z-scores if scale is set to
 /// `TRUE`
@@ -79,7 +79,7 @@ fn rs_extract_several_genes_plots(
 
     let all_counts = extract_norm_counts_multi(f_path, &cell_indices, &gene_indices, scale, clip);
 
-    let mut res = List::new(cell_indices.len());
+    let mut res = List::new(all_counts.len());
 
     for i in 0..res.len() {
         let vec_i = all_counts[i].clone().r_float_convert();
@@ -97,7 +97,7 @@ fn rs_extract_several_genes_plots(
 /// @param f_path String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
-/// @param gene_index Integer. Gene index position to return (0-indexed!).
+/// @param gene_indices Integer. Gene index position to return (0-indexed!).
 /// @param group_ids Integer. The levels of the data. (0-indexed!)
 /// @param group_levels String. Name of the factors.
 ///

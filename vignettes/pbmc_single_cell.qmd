@@ -1,0 +1,368 @@
+---
+title: "Analysing PBMCs with bixverse"
+vignette: >
+  %\VignetteIndexEntry{Analysing PBMCs with bixverse}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+author: "Grant Neilson and Gregor Lueg"
+---
+
+## Intro
+
+This vignette walks through a standard single cell analysis on the PBMC3k data
+set using `bixverse`. If you have not read the
+[design choices](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html)
+and the
+[introductory vignette](https://gregorlueg.github.io/bixverse/docs/articles/single_cell_intro.html),
+please do so first -- this vignette assumes familiarity with how the
+`SingleCells` class, on-disk storage and cells-to-keep logic work.
+
+```{r}
+#| label: setup
+library(bixverse)
+library(ggplot2)
+library(data.table)
+```
+
+## Loading the data
+
+We start by downloading the PBMC3k data set bundled with the package and
+loading it via Cell Ranger-style MTX I/O.
+
+```{r}
+#| label: load pbmc3k
+
+pbmc3k_path <- bixverse:::download_pbmc3k()
+
+tempdir_pbmc <- tempdir()
+
+sc_object <- SingleCells(dir_data = tempdir_pbmc)
+
+mtx_io_params <- get_cell_ranger_params(pbmc3k_path)
+
+sc_object <- load_mtx(
+  object = sc_object,
+  sc_mtx_io_param = mtx_io_params,
+  streaming = FALSE,
+  .verbose = TRUE
+)
+
+sc_object
+```
+
+Let's have a quick look at the variable table. The column names from the MTX
+files are not always informative, so we rename the gene symbol column to
+something sensible and set up mappings between Ensembl IDs and symbols.
+
+```{r}
+#| label: var table and renaming
+
+var <- get_sc_var(sc_object)
+
+head(var)
+
+setnames_sc(
+  object = sc_object,
+  table = "var",
+  old = "column1",
+  new = "gene_symbol"
+)
+
+var <- get_sc_var(sc_object)
+
+head(var)
+
+ensembl_to_symbol <- setNames(var$gene_symbol, var$gene_id)
+symbol_to_ensembl <- setNames(var$gene_id, var$gene_symbol)
+```
+
+## Quality control
+
+### Gene set proportions
+
+A typical first step is computing the proportion of counts mapping to
+mitochondrial and ribosomal genes per cell. These are added directly to the
+obs table in the DuckDB.
+
+```{r}
+#| label: gene set proportions
+
+gs_of_interest <- list(
+  MT = var[grepl("^MT-", gene_symbol), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_symbol), gene_id]
+)
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = FALSE,
+  .verbose = TRUE
+)
+
+sc_object[[1:5L]]
+```
+
+As we can see we now have MT and Ribo as columns in the obs table.
+
+### MAD outlier detection
+
+We use per-cell QC metrics and MAD-based outlier detection to flag problematic
+cells. The `run_cell_qc` function returns a `CellQc` object that carries the
+metrics, per-metric outlier calls and a combined outlier vector.
+
+```{r}
+#| label: qc outlier detection
+
+qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
+
+metrics <- list(
+  log10_lib_size = log10(qc_df$lib_size),
+  log10_nnz = log10(qc_df$nnz),
+  MT = qc_df$MT
+)
+
+directions <- c(
+  log10_lib_size = "twosided",
+  log10_nnz = "twosided",
+  MT = "above"
+)
+
+qc <- run_cell_qc(metrics, directions, threshold = 3)
+
+qc
+```
+
+The `CellQc` class has a `plot` method that produces violin plots with outliers
+highlighted.
+
+```{r}
+#| label: qc plots
+#| fig-width: 12
+#| fig-height: 4
+
+plots <- plot(qc, qc_df)
+
+plots$log10_lib_size + plots$log10_nnz + plots$MT
+```
+
+### Filtering cells
+
+We store the outlier flag in the obs table and then set the cells to keep. From
+this point on, all downstream methods (HVG selection, PCA, etc.) will only
+operate on the retained cells.
+
+```{r}
+#| label: set cells to keep
+
+sc_object[["outlier"]] <- qc$combined
+
+cells_to_keep <- qc_df[!qc$combined, cell_id]
+
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+
+sc_object
+```
+
+## Feature selection, PCA and neighbours
+
+With QC done, we move through the standard pipeline: highly variable gene
+selection, PCA, and nearest neighbour computation.
+
+```{r}
+#| label: hvg pca neighbours
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = 2000L,
+  .verbose = TRUE
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L
+)
+
+# the data is so tiny that exhaustive kNN search is faster than building
+# an approximate nearest neighbour index
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  neighbours_params = params_sc_neighbours(
+    knn = list(knn_method = "exhaustive")
+  )
+)
+```
+
+## Clustering and marker detection
+
+Leiden clustering followed by differential gene expression across all clusters.
+
+```{r}
+#| label: clustering and markers
+
+sc_object <- find_clusters_sc(sc_object, res = 1.5, name = "leiden_clusters")
+
+all_markers <- find_all_markers_sc(
+  object = sc_object,
+  column_of_interest = "leiden_clusters"
+)
+
+all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
+
+head(all_markers[fdr <= 0.05][order(-abs(lfc))])
+```
+
+## Visualisation
+
+### Dimensionality reduction
+
+Let us run quickly UMAP and tSNE.
+
+```{r}
+#| label: umap and tsne
+
+sc_object <- umap_sc(sc_object, knn_method = "annoy")
+
+sc_object <- tsne_sc(sc_object, perplexity = 30, knn_method = "annoy")
+```
+
+We can pull the embeddings back into data.tables and plot them. The obs columns
+can be appended directly.
+```{r}
+#| label: umap plot
+#| fig-width: 7
+#| fig-height: 5
+
+umap_dt <- as.data.table(
+  get_embedding(sc_object, "umap"),
+  keep.rownames = "cell_id"
+)[, leiden_clusters := sc_object[["leiden_clusters"]]]
+
+ggplot(umap_dt, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(colour = as.factor(leiden_clusters)), size = 0.5) +
+  theme_bw() +
+  labs(colour = "Leiden cluster")
+```
+
+Let's check out tSNE
+
+```{r}
+#| label: tsne plot
+#| fig-width: 7
+#| fig-height: 5
+
+tsne_dt <- as.data.table(
+  get_embedding(sc_object, "tsne"),
+  keep.rownames = "cell_id"
+)[, leiden_clusters := sc_object[["leiden_clusters"]]]
+
+ggplot(tsne_dt, aes(x = tsne_1, y = tsne_2)) +
+  geom_point(aes(colour = as.factor(leiden_clusters)), size = 0.5) +
+  theme_bw() +
+  labs(colour = "Leiden cluster")
+```
+
+### Dot plots
+
+Dot plots are a standard way to visualise marker gene expression across
+clusters. The `extract_dot_plot_data` method handles the Rust-level extraction,
+grouping statistics and optional min-max scaling in one call.
+
+```{r}
+#| label: dot plot
+#| fig-width: 8
+#| fig-height: 6
+
+cell_markers <- c(
+  "MS4A1",
+  "CD79B",
+  "GNLY",
+  "CD3D",
+  "CD8A",
+  "CD4",
+  "CD14",
+  "FCER1A",
+  "FCGR3A",
+  "LYZ",
+  "PPBP"
+)
+
+features <- symbol_to_ensembl[cell_markers]
+
+dot_dt <- extract_dot_plot_data(
+  object = sc_object,
+  features = features,
+  grouping_variable = "leiden_clusters",
+  scale_exp = TRUE
+)
+
+dot_dt[, gene_symbol := ensembl_to_symbol[as.character(gene)]]
+dot_dt[, gene_symbol := factor(gene_symbol, levels = rev(cell_markers))]
+
+ggplot(dot_dt, aes(x = group, y = gene_symbol)) +
+  geom_point(aes(size = pct_exp, colour = scaled_exp)) +
+  scale_colour_viridis_c() +
+  scale_size_continuous(range = c(0, 6)) +
+  theme_bw() +
+  labs(
+    size = "% expressed",
+    colour = "Scaled\nexpression",
+    x = "Cluster",
+    y = ""
+  )
+```
+
+### Per-cell gene expression
+
+For feature plots or other per-cell visualisations, `extract_gene_expression`
+returns a long data.table with one row per cell and columns for each requested
+gene, plus any obs metadata you need.
+
+```{r}
+#| label: feature plot
+#| fig-width: 10
+#| fig-height: 4
+
+expr_dt <- extract_gene_expression(
+  object = sc_object,
+  features = symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")],
+  obs_cols = "leiden_clusters"
+)
+
+# attach UMAP coordinates
+umap_embd <- as.data.table(
+  get_embedding(sc_object, "umap"),
+  keep.rownames = "cell_id"
+)
+
+plot_dt <- merge(expr_dt, umap_embd, by = "cell_id")
+
+# melt to long for faceting
+gene_cols <- symbol_to_ensembl[c("CD14", "MS4A1", "CD3E")]
+
+plot_long <- melt(
+  plot_dt,
+  id.vars = c("cell_id", "umap_1", "umap_2"),
+  measure.vars = gene_cols,
+  variable.name = "gene",
+  value.name = "expression"
+)
+plot_long[, gene_symbol := ensembl_to_symbol[as.character(gene)]]
+
+ggplot(plot_long, aes(x = umap_1, y = umap_2)) +
+  geom_point(aes(colour = expression), size = 0.3) +
+  scale_colour_viridis_c() +
+  facet_wrap(~gene_symbol) +
+  theme_bw() +
+  labs(colour = "log1p\nexpression")
+```
+
+## Clean up
+
+```{r}
+#| label: clean up
+unlink(tempdir_pbmc, recursive = TRUE, force = TRUE)
+```

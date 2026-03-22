@@ -17,3 +17,4 @@ Invisible \code{x}.
 \description{
 Print a CellQc object
 }
+\keyword{internal}

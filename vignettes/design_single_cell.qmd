@@ -6,6 +6,11 @@ format:
     toc-depth: 3
 author: 
   - name: Gregor Lueg
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+    eval: false
 ---
 
 *This is an opinionated piece, so take what is written here with a pinch of 

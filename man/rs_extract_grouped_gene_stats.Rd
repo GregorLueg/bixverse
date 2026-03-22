@@ -18,11 +18,11 @@ rs_extract_grouped_gene_stats(
 \item{cell_indices}{Integer positions (0-indexed!) that defines the cells
 to keep.}
 
+\item{gene_indices}{Integer. Gene index position to return (0-indexed!).}
+
 \item{group_ids}{Integer. The levels of the data. (0-indexed!)}
 
 \item{group_levels}{String. Name of the factors.}
-
-\item{gene_index}{Integer. Gene index position to return (0-indexed!).}
 }
 \value{
 A list with the following elements:

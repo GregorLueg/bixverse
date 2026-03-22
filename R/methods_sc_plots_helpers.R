@@ -316,3 +316,168 @@ S7::method(phate_sc, SingleCells) <- function(
 
   return(object)
 }
+
+## gene extracters -------------------------------------------------------------
+
+### gene summaries -------------------------------------------------------------
+
+#' Extract grouped gene statistics for dot plots
+#'
+#' @description
+#' Extracts per-group mean expression and percentage of expressing cells for a
+#' set of genes. Returns a long-format data.table suitable for dot plots.
+#'
+#' @param object `SingleCells` class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param grouping_variable String. Column name in the obs table to group by.
+#' @param scale_exp Boolean. Whether to min-max scale mean expression per gene.
+#'
+#' @return A data.table with columns: gene, group, mean_exp, scaled_exp, pct_exp.
+#'
+#' @export
+extract_dot_plot_data <- S7::new_generic(
+  name = "extract_dot_plot_data",
+  dispatch_args = "object",
+  fun = function(object, features, grouping_variable, scale_exp = TRUE) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method extract_dot_plot_data SingleCells
+#'
+#' @export
+S7::method(extract_dot_plot_data, SingleCells) <- function(
+  object,
+  features,
+  grouping_variable,
+  scale_exp = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(grouping_variable, "S1")
+  checkmate::qassert(scale_exp, "B1")
+
+  gene_idx <- get_gene_indices(
+    x = object,
+    gene_ids = features,
+    rust_index = TRUE
+  )
+
+  grouping <- as.factor(
+    unlist(object[[grouping_variable]], use.names = FALSE)
+  )
+
+  gene_res <- rs_extract_grouped_gene_stats(
+    f_path = get_rust_count_gene_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = gene_idx,
+    group_ids = as.integer(grouping) - 1L,
+    group_levels = levels(grouping)
+  )
+
+  n_groups <- length(gene_res$grp_label)
+
+  plot_dt <- data.table::data.table(
+    gene = rep(features, each = n_groups),
+    group = rep(gene_res$grp_label, times = length(features)),
+    mean_exp = gene_res$mean_exp,
+    pct_exp = gene_res$perc_exp * 100
+  )
+
+  plot_dt[, scaled_exp := mean_exp]
+  if (scale_exp) {
+    plot_dt[,
+      scaled_exp := {
+        rng <- range(mean_exp)
+        if (rng[1] == rng[2]) 0 else (mean_exp - rng[1]) / (rng[2] - rng[1])
+      },
+      by = gene
+    ]
+  }
+
+  plot_dt[, gene := factor(gene, levels = rev(features))]
+  plot_dt[, group := factor(group, levels = levels(grouping))]
+
+  plot_dt
+}
+
+### individual cells -----------------------------------------------------------
+
+#' Extract normalised gene expression for plotting
+#'
+#' @description
+#' Extracts dense normalised (log1p) expression values for a set of genes,
+#' optionally with additional observation metadata columns.
+#'
+#' @param object `SingleCells` class.
+#' @param features Character vector. Gene IDs to extract.
+#' @param obs_cols Optional character vector. Column names from the obs table
+#'   to include.
+#' @param scale Boolean. Whether to z-score the expression values.
+#' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
+#'   `[-clip, clip]`.
+#'
+#' @return A data.table with a `cell_id` column, one column per gene, and
+#'   any requested obs columns.
+#'
+#' @export
+extract_gene_expression <- S7::new_generic(
+  name = "extract_gene_expression",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    features,
+    obs_cols = NULL,
+    scale = FALSE,
+    clip = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method extract_gene_expression SingleCells
+#'
+#' @export
+S7::method(extract_gene_expression, SingleCells) <- function(
+  object,
+  features,
+  obs_cols = NULL,
+  scale = FALSE,
+  clip = NULL
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(features, "S+")
+  checkmate::qassert(obs_cols, c("0", "S+"))
+  checkmate::qassert(scale, "B1")
+  checkmate::qassert(clip, c("0", "N1(0,)"))
+
+  gene_idx <- get_gene_indices(
+    x = object,
+    gene_ids = features,
+    rust_index = TRUE
+  )
+
+  counts <- rs_extract_several_genes_plots(
+    f_path = get_rust_count_gene_f_path(object),
+    cell_indices = get_cells_to_keep(object),
+    gene_indices = gene_idx,
+    scale = scale,
+    clip = clip
+  )
+
+  dt <- data.table::data.table(
+    cell_id = get_cell_names(object, filtered = TRUE)
+  )
+  for (i in seq_along(features)) {
+    data.table::set(dt, j = features[i], value = counts[[i]])
+  }
+
+  if (!is.null(obs_cols)) {
+    obs_dt <- object[[obs_cols]]
+    for (col in names(obs_dt)) {
+      data.table::set(dt, j = col, value = obs_dt[[col]])
+    }
+  }
+
+  dt
+}

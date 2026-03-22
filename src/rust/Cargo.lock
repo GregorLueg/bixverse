@@ -157,7 +157,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.6"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-gpu#11c04c277901b9e932458a3d84563711e41db586"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=feat-gpu#126e268135ca29570f941ee1e154d1de8ea09014"
 dependencies = [
  "ann-search-rs",
  "approx",

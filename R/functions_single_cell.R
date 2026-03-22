@@ -214,6 +214,8 @@ run_cell_qc <- function(metrics, directions = NULL, threshold = 3) {
 #' @return Invisible `x`.
 #'
 #' @export
+#'
+#' @keywords internal
 print.CellQc <- function(x, ...) {
   n_cells <- length(x$combined)
   n_outliers <- sum(x$combined)
@@ -259,6 +261,8 @@ print.CellQc <- function(x, ...) {
 #' @export
 #'
 #' @import ggplot2
+#'
+#' @keywords internal
 plot.CellQc <- function(x, qc_df, ...) {
   outlier_colours <- c("FALSE" = "lightgrey", "TRUE" = "orange")
 

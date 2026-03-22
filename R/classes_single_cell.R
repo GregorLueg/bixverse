@@ -563,21 +563,30 @@ get_gene_names.ScMap <- function(x) {
 #'
 #' @export
 get_gene_indices.ScMap <- function(x, gene_ids, rust_index) {
-  # checks
   checkmate::assertClass(x, "ScMap")
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
   gene_map <- x$gene_mapping
-  indices <- which(names(gene_map) %in% gene_ids)
-  if (rust_index) {
-    indices <- indices - 1
+  indices <- match(gene_ids, names(gene_map))
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided gene_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
   }
 
   if (length(indices) == 0) {
     stop(
       "The gene indices have length 0. Please double check provided parameters!"
     )
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
   }
 
   return(as.integer(indices))
@@ -587,30 +596,30 @@ get_gene_indices.ScMap <- function(x, gene_ids, rust_index) {
 #'
 #' @export
 get_cell_indices.ScMap <- function(x, cell_ids, rust_index) {
-  # checks
   checkmate::assertClass(x, "ScMap")
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
   cell_map <- x$cell_mapping
-  indices <- which(names(cell_map) %in% cell_ids)
-  if (rust_index) {
-    indices <- indices - 1
-  }
+  indices <- match(cell_ids, names(cell_map))
 
-  missing <- !cell_ids %in% names(cell_map)
-
+  missing <- is.na(indices)
   if (any(missing)) {
     warning(sprintf(
       "With the provided cell_ids a total of %i could not be matched.",
       sum(missing)
     ))
+    indices <- indices[!missing]
   }
 
   if (length(indices) == 0) {
     stop(
       "The cell indices have length 0. Please double check provided parameters!"
     )
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
   }
 
   return(as.integer(indices))
