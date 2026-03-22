@@ -216,34 +216,14 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 ```
 
-### scDblFinder
-
-```{r}
-#| label: run scrublet
-
-scdblfinder <- scdblfinder_sc(
-  object = sc_object
-)
-```
-
-```{r}
-scdblfinder_dt <- get_obs_data(scdblfinder)
-
-scdblfinder_dt[, Barcode := get_cell_names(sc_object)]
-scdblfinder_dt <- merge(scdblfinder_dt, demuxlet_data, by = "Barcode")
-
-doublet_metrics(
-  predicted = scdblfinder_dt$predicted_doublets,
-  actual = scdblfinder_dt$Call
-)
-```
-
 ### Conclusion
 
 Both methods can help to identify in a data-driven way doublets in your data.
 In this example, Scrublet performed better compared to boosted doublet 
 detection, but you will have to see which one does better on your data. It can
 be worth running both and compare scores, expected doublet detections, etc.
+A longer idea will be to implement additionally also 
+[scDblFinder](https://pmc.ncbi.nlm.nih.gov/articles/PMC9204188/).
 
 ## Clean up
 

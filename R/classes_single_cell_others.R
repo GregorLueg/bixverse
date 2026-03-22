@@ -300,54 +300,6 @@ print.BoostRes <- function(x, ...) {
   invisible(x)
 }
 
-## scdblfinder -----------------------------------------------------------------
-
-### obs data -------------------------------------------------------------------
-
-#' @rdname get_obs_data
-#'
-#' @export
-get_obs_data.ScDblFinderRes <- function(x, ...) {
-  checkmate::assertClass(x, "ScDblFinderRes")
-  obs_dt <- data.table::as.data.table(unclass(x))
-  obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)]
-  return(obs_dt)
-}
-
-### print ----------------------------------------------------------------------
-
-#' Print a ScDblFinderRes object
-#'
-#' @param x A `ScDblFinderRes` object.
-#' @param ... Ignored.
-#'
-#' @return Invisible `x`.
-#'
-#' @export
-#'
-#' @keywords internal
-print.ScDblFinderRes <- function(x, ...) {
-  n_cells <- length(x$predicted_doublets)
-  n_doublets <- sum(x$predicted_doublets)
-  n_clusters <- length(unique(x$cluster_labels))
-
-  cat(sprintf(
-    "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
-    n_cells,
-    n_doublets,
-    100 * n_doublets / n_cells
-  ))
-  cat(sprintf("  Threshold:        %.4f\n", x$threshold))
-  cat(sprintf(
-    "  Score range:      [%.4f, %.4f]\n",
-    min(x$doublet_score),
-    max(x$doublet_score)
-  ))
-  cat(sprintf("  Final clusters:   %d\n", n_clusters))
-
-  invisible(x)
-}
-
 ## kNN with distances ----------------------------------------------------------
 
 #' Helper function to generate kNN data with distances
