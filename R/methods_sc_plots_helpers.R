@@ -2,6 +2,32 @@
 
 ## 2d embeddings ---------------------------------------------------------------
 
+### helpers --------------------------------------------------------------------
+
+#' Helper function to generate manifoldsR nearest neighbours
+#'
+#' @param x `SingleCells` object from which to extract the kNN data
+#'
+#' @returns The manifoldsR `NearestNeigbours` if possible
+#'
+#' @keywords internal
+.get_manifoldsr_knn <- function(x) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  knn_obj <- get_knn_obj(x)
+  if (is.null(knn_obj)) {
+    warning(paste(
+      "No kNN data found.",
+      "Attempting to use embeddings for 2D embedding"
+    ))
+    return(knn_obj)
+  }
+  manifold_nn <- sc_knn_to_nearest_neighbours(knn_obj)
+
+  return(manifold_nn)
+}
+
 ### umap -----------------------------------------------------------------------
 
 #' Run UMAP on a SingleCells object
@@ -10,6 +36,8 @@
 #' Wrapper around [manifoldsR::umap()] for the `SingleCells` class.
 #'
 #' @param object `SingleCells` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for UMAP. Must be available
 #' in the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -34,6 +62,7 @@ umap_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    use_knn = TRUE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     n_dim = 2L,
@@ -55,6 +84,7 @@ umap_sc <- S7::new_generic(
 #' @export
 S7::method(umap_sc, SingleCells) <- function(
   object,
+  use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
@@ -69,6 +99,7 @@ S7::method(umap_sc, SingleCells) <- function(
 ) {
   # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(use_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[1,)")
@@ -78,6 +109,13 @@ S7::method(umap_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
+
+  # get the knn
+  knn <- if (use_knn) {
+    .get_manifoldsr_knn(x = object)
+  } else {
+    NULL
+  }
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
@@ -95,6 +133,7 @@ S7::method(umap_sc, SingleCells) <- function(
   umap_embd <- manifoldsR::umap(
     data = embd,
     n_dim = n_dim,
+    knn = knn,
     k = k,
     min_dist = min_dist,
     spread = spread,
@@ -119,6 +158,8 @@ S7::method(umap_sc, SingleCells) <- function(
 #' Wrapper around [manifoldsR::tsne()] for the `SingleCells` class.
 #'
 #' @param object `SingleCells` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for t-SNE. Must be available
 #' in the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -144,6 +185,7 @@ tsne_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    use_knn = TRUE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     n_dim = 2L,
@@ -164,6 +206,7 @@ tsne_sc <- S7::new_generic(
 #' @export
 S7::method(tsne_sc, SingleCells) <- function(
   object,
+  use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
@@ -186,6 +229,13 @@ S7::method(tsne_sc, SingleCells) <- function(
   approx_type <- match.arg(approx_type)
   knn_method <- match.arg(knn_method)
 
+  # get the knn
+  knn <- if (use_knn) {
+    .get_manifoldsr_knn(x = object)
+  } else {
+    NULL
+  }
+
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
   embd <- get_embedding(x = object, embd_name = embd_to_use)
@@ -201,6 +251,7 @@ S7::method(tsne_sc, SingleCells) <- function(
 
   tsne_embd <- manifoldsR::tsne(
     data = embd,
+    knn = knn,
     n_dim = n_dim,
     perplexity = perplexity,
     approx_type = approx_type,
@@ -225,6 +276,8 @@ S7::method(tsne_sc, SingleCells) <- function(
 #' Wrapper around [manifoldsR::phate()] for the `SingleCells` class.
 #'
 #' @param object `SingleCells` class.
+#' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
+#' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
 #' in the object.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -248,6 +301,7 @@ phate_sc <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    use_knn = TRUE,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     n_dim = 2L,
@@ -267,6 +321,7 @@ phate_sc <- S7::new_generic(
 #' @export
 S7::method(phate_sc, SingleCells) <- function(
   object,
+  use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
@@ -286,6 +341,13 @@ S7::method(phate_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
   knn_method <- match.arg(knn_method)
+
+  # get the knn
+  knn <- if (use_knn) {
+    .get_manifoldsr_knn(x = object)
+  } else {
+    NULL
+  }
 
   # get the embedding
   checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))

@@ -18,13 +18,18 @@ test is considered significant. Defaults to \code{0.05}.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-A list with the following elements
+A \code{KbetScores} object with the following elements
 \itemize{
-\item kbet_score - Number of significant tests over all cells. 0 indicates
-perfect mixing, 1 indicates basically zero mixing between batches.
-\item significant_tests - Boolean indicating for which cells the statistic
-was below the threshold
-\item chisquare_pvals - The p-values of the ChiSquare test.
+\item kbet_score - Proportion of significant tests over all cells. 0
+indicates perfect mixing, 1 indicates no mixing between batches.
+\item significant_tests - Logical vector indicating for which cells the
+test was below the threshold.
+\item p_values - The p-values from the Chi-Square test.
+\item chi_square_stats - Per-cell Chi-Square statistics.
+\item mean_chi_square - Mean Chi-Square statistic across all cells.
+\item median_chi_square - Median Chi-Square statistic across all cells.
+\item threshold - The significance threshold used.
+\item n_batches - Number of batches in the data.
 }
 }
 \description{

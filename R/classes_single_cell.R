@@ -49,7 +49,7 @@ new_sc_cache <- function() {
     pca_loadings = NULL,
     pca_singular_vals = NULL,
     other_embeddings = list(),
-    knn_matrix = NULL,
+    knn = NULL,
     snn_graph = NULL
   )
 
@@ -168,12 +168,12 @@ set_embedding <- function(x, embd, name) {
 #' Set/add KNN
 #'
 #' @param x An object to add the KNN data to
-#' @param knn_mat Numerical matrix. The matrix with the KNN data
+#' @param knn `SingleCellNearestNeighbour` class to add to the classes.
 #'
 #' @export
 #'
 #' @keywords internal
-set_knn <- function(x, knn_mat) {
+set_knn <- function(x, knn) {
   UseMethod("set_knn")
 }
 
@@ -341,12 +341,12 @@ set_embedding.ScCache <- function(x, embd, name) {
 #' @rdname set_knn
 #'
 #' @export
-set_knn.ScCache <- function(x, knn_mat) {
+set_knn.ScCache <- function(x, knn) {
   # checks
   checkmate::assertClass(x, "ScCache")
-  checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
 
-  x[["knn_matrix"]] <- knn_mat
+  x[["knn"]] <- knn
 
   return(x)
 }
@@ -371,7 +371,7 @@ remove_knn.ScCache <- function(x) {
   # checks
   checkmate::assertClass(x, "ScCache")
 
-  x[["knn_matrix"]] <- NULL
+  x[["knn"]] <- NULL
 
   return(x)
 }
@@ -543,6 +543,17 @@ get_available_embeddings <- function(x) {
 #' @export
 get_snn_graph <- function(x) {
   UseMethod("get_snn_graph")
+}
+
+#' Get the KNN object
+#'
+#' @param x An object to get the KNN class from.
+#'
+#' @returns The `SingleCellNearestNeighbour` object.
+#'
+#' @export
+get_knn_obj <- function(x) {
+  UseMethod("get_knn_obj")
 }
 
 ### methods --------------------------------------------------------------------
@@ -759,13 +770,16 @@ get_embedding.ScCache <- function(x, embd_name) {
 #'
 #' @export
 get_available_embeddings.ScCache <- function(x) {
-  # checks
   checkmate::assertClass(x, "ScCache")
 
-  pca_available <- ifelse(!is.null(x[["pca_factors"]]), "pca", NULL)
+  pca_available <- if (!is.null(x[["pca_factors"]])) "pca" else character(0)
   other_embeddings <- names(x[["other_embeddings"]])
 
-  c(pca_available, other_embeddings)
+  res <- c(pca_available, other_embeddings)
+  if (length(res) == 0L) {
+    return("")
+  }
+  res
 }
 
 #' @rdname get_knn_mat
@@ -774,8 +788,34 @@ get_available_embeddings.ScCache <- function(x) {
 get_knn_mat.ScCache <- function(x) {
   # checks
   checkmate::assertClass(x, "ScCache")
+  knn <- x[["knn"]]
+  if (is.null(knn)) {
+    return(NULL)
+  }
+  get_knn_mat(knn)
+}
 
-  return(x[["knn_matrix"]])
+#' @rdname get_knn_dist
+#'
+#' @export
+get_knn_dist.ScCache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+  knn <- x[["knn"]]
+  if (is.null(knn)) {
+    return(NULL)
+  }
+  get_knn_dist(knn)
+}
+
+#' @rdname get_knn_obj
+#'
+#' @export
+get_knn_obj.ScCache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  x[["knn"]]
 }
 
 #' @rdname get_snn_graph
@@ -1414,7 +1454,7 @@ S7::method(get_cell_names, SingleCells) <- function(
   filtered = FALSE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   cell_names <- get_cell_names(
@@ -1436,7 +1476,7 @@ S7::method(get_gene_names, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   gene_names <- get_gene_names(
@@ -1457,7 +1497,7 @@ S7::method(get_cells_to_keep, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_cells_to_keep(
@@ -1485,7 +1525,7 @@ S7::method(get_gene_indices, SingleCells) <- function(
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1513,7 +1553,7 @@ S7::method(get_cell_indices, SingleCells) <- function(
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1538,7 +1578,7 @@ S7::method(get_hvg, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_hvg(
@@ -1561,7 +1601,7 @@ S7::method(get_gene_names_from_idx, SingleCells) <- function(
   rust_based = TRUE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_idx, "I+")
   checkmate::qassert(rust_based, "B1")
 
@@ -1588,7 +1628,7 @@ S7::method(get_pca_factors, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_factors(
@@ -1616,7 +1656,7 @@ S7::method(get_pca_loadings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_loadings(
@@ -1640,7 +1680,7 @@ S7::method(get_pca_singular_val, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_singular_val(
@@ -1662,7 +1702,7 @@ S7::method(get_embedding, SingleCells) <- function(
   embd_name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(embd_name, "S1")
 
   # forward to S3
@@ -1687,7 +1727,7 @@ S7::method(get_available_embeddings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_available_embeddings(
@@ -1708,10 +1748,52 @@ S7::method(get_knn_mat, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_knn_mat(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_dist.SingleCells
+#'
+#' @title Get the KNN distances from a `SingleCells`.
+#'
+#' @rdname get_knn_dist
+#'
+#' @method get_knn_dist SingleCells
+S7::method(get_knn_dist, SingleCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_knn_dist(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_obj.SingleCells
+#'
+#' @title Get the KNN object from a `SingleCells`.
+#'
+#' @rdname get_knn_obj
+#'
+#' @method get_knn_obj SingleCells
+S7::method(get_knn_obj, SingleCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_knn_obj(
     x = S7::prop(x, "sc_cache")
   )
 
@@ -1729,7 +1811,7 @@ S7::method(get_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_snn_graph(
@@ -1899,7 +1981,7 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
 #'
 #' @export
 S7::method(`[[<-`, SingleCells) <- function(x, i, ..., value) {
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(i, "S+")
 
   if (length(i) == 1) {
@@ -1970,7 +2052,7 @@ S7::method(set_gene_mapping, SingleCells) <- function(
   gene_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map, "named")
 
@@ -1995,7 +2077,7 @@ S7::method(set_cell_mapping, SingleCells) <- function(
   cell_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map, "named")
 
@@ -2020,7 +2102,7 @@ S7::method(set_cells_to_keep, SingleCells) <- function(
   cells_to_keep
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -2051,7 +2133,7 @@ S7::method(set_hvg, SingleCells) <- function(
   hvg
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(hvg, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -2077,7 +2159,7 @@ S7::method(set_pca_factors, SingleCells) <- function(
   pca_factor
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(pca_factor, mode = "numeric")
 
   # add the data using the S3 method
@@ -2101,7 +2183,7 @@ S7::method(set_pca_loadings, SingleCells) <- function(
   pca_loading
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   # add the data using the S3 method
@@ -2125,7 +2207,7 @@ S7::method(set_pca_singular_vals, SingleCells) <- function(
   singular_vals
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(singular_vals, "N+")
 
   # add the data using the S3 method
@@ -2150,7 +2232,7 @@ S7::method(set_embedding, SingleCells) <- function(
   name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
@@ -2173,16 +2255,16 @@ S7::method(set_embedding, SingleCells) <- function(
 #' @method set_knn SingleCells
 S7::method(set_knn, SingleCells) <- function(
   x,
-  knn_mat
+  knn
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
-  checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_knn(
     x = S7::prop(x, "sc_cache"),
-    knn_mat = knn_mat
+    knn = knn
   )
 
   return(x)
@@ -2201,7 +2283,7 @@ S7::method(set_snn_graph, SingleCells) <- function(
   snn_graph
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertClass(snn_graph, "igraph")
 
   # add the data using the S3 method
@@ -2224,7 +2306,7 @@ S7::method(remove_knn, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_knn(
@@ -2246,7 +2328,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_snn_graph(
@@ -2282,7 +2364,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
 
   hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
-  knn_generated <- !is.null(sc_cache[["knn_matrix"]])
+  knn_generated <- !is.null(sc_cache[["knn"]])
   snn_generated <- !is.null(sc_cache[["snn_graph"]])
 
   other_embeddings <- names(sc_cache[["other_embeddings"]])

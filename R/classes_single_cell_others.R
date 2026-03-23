@@ -24,6 +24,146 @@ get_obs_data <- function(x, ...) {
   UseMethod("get_obs_data")
 }
 
+## kNN class -------------------------------------------------------------------
+
+#' Helper function to generate kNN data with distances
+#'
+#' @description
+#' Wrapper class that stores kNN data for subsequent usage in various other
+#' functions, methods and helpers.
+#'
+#' @param knn_data Named list with the following items:
+#' \itemize{
+#'   \item indices - Integer matrix containing the indices of the nearest
+#'   neighbours (0-indexed).
+#'   \item dist - Numerical matrix containing the distances to the nearest
+#'   neighbours.
+#'   \item dist_metric - String. Distance metric used.
+#' }
+#' @param used_cells Character vector. The cells used to generate the kNN graph
+#' with the distances.
+#'
+#' @return Generates the `SingleCellNearestNeighbour` class.
+#'
+#' @export
+new_sc_knn <- function(knn_data, used_cells) {
+  # checks
+  checkmate::assertList(knn_data)
+  checkmate::assertNames(
+    names(knn_data),
+    must.include = c("indices", "dist", "dist_metric")
+  )
+  checkmate::qassert(used_cells, "S+")
+
+  k <- ncol(knn_data$indices)
+  n <- nrow(knn_data$indices)
+
+  sc_knn <- list(
+    indices = knn_data$indices,
+    dist = knn_data$dist,
+    k = k,
+    n = n,
+    dist_metric = knn_data$dist_metric,
+    used_cells = used_cells
+  )
+
+  class(sc_knn) <- "SingleCellNearestNeighbour"
+
+  return(sc_knn)
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+print.SingleCellNearestNeighbour <- function(x, ...) {
+  cat(
+    sprintf("SingleCellNearestNeighbour: %i cells, k = %i\n", x$n, x$k),
+    sprintf("  Distance metric: %s\n", x$dist_metric),
+    sprintf(
+      "  Index range: [%i, %i]\n",
+      min(x$indices, na.rm = TRUE),
+      max(x$indices, na.rm = TRUE)
+    ),
+    sprintf(
+      "  Distance range: [%.4f, %.4f]\n",
+      min(x$dist, na.rm = TRUE),
+      max(x$dist, na.rm = TRUE)
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+### methods --------------------------------------------------------------------
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_knn_mat
+#'
+#' @export
+get_knn_mat.SingleCellNearestNeighbour <- function(x) {
+  # checks
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  return(x[["indices"]])
+}
+
+#' @rdname get_knn_dist
+#'
+#' @export
+get_knn_dist.SingleCellNearestNeighbour <- function(x) {
+  # checks
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  return(x[["dist"]])
+}
+
+#### converstion ---------------------------------------------------------------
+
+#' @export
+print.SingleCellNearestNeighbour <- function(x, ...) {
+  cat(
+    sprintf("SingleCellNearestNeighbour: %i cells, k = %i\n", x$n, x$k),
+    sprintf("  Distance metric: %s\n", x$dist_metric),
+    sprintf(
+      "  Index range: [%i, %i]\n",
+      min(x$indices, na.rm = TRUE),
+      max(x$indices, na.rm = TRUE)
+    ),
+    sprintf(
+      "  Distance range: [%.4f, %.4f]\n",
+      min(x$dist, na.rm = TRUE),
+      max(x$dist, na.rm = TRUE)
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+#' Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
+#'
+#' @description
+#' Converts the bixverse single cell kNN class into the manifoldsR
+#' `NearestNeighbours` class for use in UMAP, tSNE, etc. Note that the
+#' bixverse class stores 0-indexed indices whereas manifoldsR expects
+#' 1-indexed, so the conversion handles that.
+#'
+#' @param x `SingleCellNearestNeighbour` class.
+#'
+#' @return A `NearestNeighbours` class compatible with manifoldsR.
+#'
+#' @export
+sc_knn_to_nearest_neighbours <- function(x) {
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  manifoldsR::generate_nearest_neigbours_class(
+    indices = as.vector(t(x$indices)) + 1L,
+    dist = as.vector(t(x$dist)),
+    k = x$k,
+    n = x$n
+  )
+}
+
 # methods ----------------------------------------------------------------------
 
 ## gene proportion analysis ----------------------------------------------------
@@ -298,73 +438,6 @@ print.BoostRes <- function(x, ...) {
   ))
 
   invisible(x)
-}
-
-## kNN with distances ----------------------------------------------------------
-
-#' Helper function to generate kNN data with distances
-#'
-#' @description
-#' Wrapper class that stores kNN data for subsequent usage in various other
-#' functions, methods and helpers.
-#'
-#' @param knn_data Named list with the following items:
-#' \itemize{
-#'   \item indices - Integer matrix containing the indices of the nearest
-#'   neighbours (0-indexed).
-#'   \item dist - Numerical matrix containing the distances to the nearest
-#'   neighbours.
-#'   \item dist_metric - String. Distance metric used.
-#' }
-#' @param used_cells Character vector. The cells used to generate the kNN graph
-#' with the distances.
-#'
-#' @return Generates the `SingleCellNearestNeighbour` class.
-#'
-#' @export
-new_sc_knn <- function(knn_data, used_cells) {
-  # checks
-  checkmate::assertList(knn_data)
-  checkmate::assertNames(
-    names(knn_data),
-    must.include = c("indices", "dist", "dist_metric")
-  )
-  checkmate::qassert(used_cells, "S+")
-
-  sc_knn <- list(
-    indices = knn_data$indices,
-    dist = knn_data$dist,
-    dist_metric = knn_data$dist_metric,
-    used_cells = used_cells
-  )
-
-  class(sc_knn) <- "SingleCellNearestNeighbour"
-
-  return(sc_knn)
-}
-
-### methods --------------------------------------------------------------------
-
-#### getters -------------------------------------------------------------------
-
-#' @rdname get_knn_mat
-#'
-#' @export
-get_knn_mat.SingleCellNearestNeighbour <- function(x) {
-  # checks
-  checkmate::assertClass(x, "SingleCellNearestNeighbour")
-
-  return(x[["indices"]])
-}
-
-#' @rdname get_knn_dist
-#'
-#' @export
-get_knn_dist.SingleCellNearestNeighbour <- function(x) {
-  # checks
-  checkmate::assertClass(x, "SingleCellNearestNeighbour")
-
-  return(x[["dist"]])
 }
 
 ## hotspot gene <> gene results ------------------------------------------------

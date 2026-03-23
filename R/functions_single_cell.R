@@ -286,3 +286,52 @@ plot.CellQc <- function(x, qc_df, ...) {
 
   setNames(plots, names(x$metrics))
 }
+
+## knn -------------------------------------------------------------------------
+
+#' Generate a new SingleCellNearestNeighbour from data
+#'
+#' @param data Numerical matrix. Samplex x features. The embedding matrix from
+#' which to generate the kNN data.
+#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
+#' A list with the following items:
+#' \itemize{
+#'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
+#'   be generated that generates edges between all cells instead of between
+#'   only neighbours. (Not used in this function.)
+#'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
+#'   the generation of the sNN graph. (Not used in this function.)
+#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
+#'   the weight from the SNN graph is calculated. For details, please see
+#'   [bixverse::params_sc_neighbours()]. (Not used in this function.)
+#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
+#'   for available parameters and their defaults.
+#' }
+#' @param seed Integer. Random seed for reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
+#'
+#' @returns The `SingleCellNearestNeighbour` for downstream usage.
+#'
+#' @export
+generate_sc_knn <- function(
+  data,
+  neighbours_params = params_sc_neighbours(),
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertMatrix(data, mode = "numeric")
+  assertScNeighbours(neighbours_params)
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  knn_data <- rs_sc_knn_w_dist(
+    embd = data,
+    knn_params = neighbours_params,
+    verbose = .verbose,
+    seed = seed
+  )
+
+  knn <- new_sc_knn(knn_data = knn_data, used_cells = row.names(data))
+
+  knn
+}

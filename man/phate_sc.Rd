@@ -6,6 +6,7 @@
 \usage{
 phate_sc(
   object,
+  use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
@@ -19,6 +20,9 @@ phate_sc(
 }
 \arguments{
 \item{object}{\code{SingleCells} class.}
+
+\item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
+\code{TRUE}. If not available, will default to the embedding.}
 
 \item{embd_to_use}{String. The embedding to use for PHATE. Must be available
 in the object.}

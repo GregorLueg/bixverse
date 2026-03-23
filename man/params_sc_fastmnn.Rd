@@ -5,23 +5,19 @@
 \title{Wrapper function for the fastMNN parameters}
 \usage{
 params_sc_fastmnn(
-  sigma = 0.1,
+  ndist = 3,
   cos_norm = TRUE,
-  var_adj = TRUE,
   no_pcs = 30L,
   random_svd = TRUE,
   knn = list(k = 20L)
 )
 }
 \arguments{
-\item{sigma}{Numeric. Bandwidth of the Gaussian smoothing kernel
-(as proportion of space radius). Defaults to \code{0.1}.}
+\item{ndist}{Numeric. Number of median distances for the tricube kernel
+bandwidth. Defaults to \code{3.0}.}
 
 \item{cos_norm}{Logical. Apply cosine normalisation before computing
 distances. Defaults to \code{TRUE}.}
-
-\item{var_adj}{Logical. Apply variance adjustment to avoid kissing effects.
-Defaults to \code{TRUE}.}
 
 \item{no_pcs}{Integer. Number of PCs to use for MNN calculations.
 Defaults to \code{30L}.}

@@ -171,22 +171,48 @@ read_h5ad_metadata <- function(f_path) {
 
   .read_group_as_dt <- function(group_path) {
     entries <- h5_content[group == group_path]
-    groups <- h5_content[group == group_path & otype == "H5I_GROUP", name]
+
+    new_cat_names <- h5_content[
+      group == paste0(group_path, "/__categories") & otype == "H5I_DATASET",
+      name
+    ]
+    has_new_cats <- length(new_cat_names) > 0L
+
+    groups <- entries[
+      otype == "H5I_GROUP" & name != "__categories",
+      name
+    ]
 
     cols <- list()
 
-    # categorical columns (stored as categories + codes)
+    # old-format categoricals
     for (g in groups) {
       sub_path <- paste0(group_path, "/", g)
-      cats <- rhdf5::h5read(f_path, paste0(sub_path, "/categories"))
-      codes <- rhdf5::h5read(f_path, paste0(sub_path, "/codes")) + 1L
-      cols[[g]] <- factor(cats[codes], levels = cats)
+      sub_entries <- h5_content[
+        group == sub_path & otype == "H5I_DATASET",
+        name
+      ]
+      if (all(c("categories", "codes") %in% sub_entries)) {
+        cats <- rhdf5::h5read(f_path, paste0(sub_path, "/categories"))
+        codes <- rhdf5::h5read(f_path, paste0(sub_path, "/codes"))
+        codes[codes < 0L] <- NA_integer_
+        cols[[g]] <- factor(cats[codes + 1L], levels = cats)
+      }
     }
 
     # direct datasets
     direct <- entries[otype == "H5I_DATASET" & name != "_index", name]
     for (d in direct) {
-      cols[[d]] <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", d)))
+      raw <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", d)))
+      if (has_new_cats && d %in% new_cat_names) {
+        categories <- as.vector(
+          rhdf5::h5read(f_path, paste0(group_path, "/__categories/", d))
+        )
+        raw[raw < 0L] <- NA_integer_
+        cols[[d]] <- factor(categories[raw + 1L], levels = categories)
+      } else {
+        cols[[d]] <- raw
+      }
     }
 
     idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/_index")))

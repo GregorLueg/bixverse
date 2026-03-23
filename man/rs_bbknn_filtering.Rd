@@ -2,22 +2,24 @@
 % Please edit documentation in R/extendr-wrappers.R
 \name{rs_bbknn_filtering}
 \alias{rs_bbknn_filtering}
-\title{Reduce BBKNN matrix to Top X neighbours}
+\title{Reduce BBKNN results to Top X neighbours}
 \usage{
-rs_bbknn_filtering(indptr, indices, no_neighbours_to_keep)
+rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 }
 \arguments{
 \item{indptr}{Integer vector. The index pointers of the underlying data.}
 
 \item{indices}{Integer vector. The indices of the nearest neighbours.}
 
+\item{data}{Numeric vector. The distances to the nearest neighbours.}
+
 \item{no_neighbours_to_keep}{Integer. Number of nearest neighbours to keep.}
 }
 \value{
-A numerical matrix with the Top X neighbours per row. If
-\code{no_neighbours_to_keep} is larger than the number of neighbours in the data,
-these positions will be \code{NA}.
+A list with \code{indices} (integer matrix) and \code{dist} (numeric matrix),
+each with shape (n_cells, no_neighbours_to_keep). Positions without
+neighbours are filled with -1 (indices) or NaN (distances).
 }
 \description{
-Reduce BBKNN matrix to Top X neighbours
+Reduce BBKNN results to Top X neighbours
 }

@@ -72,13 +72,18 @@ faster. If you wish to integrate this into your package, please feel free. If
 you wish to use the single cell part, it is really worth reading this 
 [here](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html) 
 first... It will give you a good explainer on the design decisions, the choices
-and trade-offs. 
-
-## For developers
+and trade-offs.
 
 ## Roadmap
 
-- 
+- For single cell:
+  * More multi-file read in support. At the moment, multiple h5ad files are
+    possible, but not yet for other file formats.
+  * Ge
+
+## For developers
+
+
 
 ## Code
 
