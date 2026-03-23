@@ -14,3 +14,4 @@
 \description{
 Print method for BatchLisiScores
 }
+\keyword{internal}

@@ -14,3 +14,4 @@
 \description{
 Print method for BatchSilhouetteScores
 }
+\keyword{internal}

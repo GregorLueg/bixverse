@@ -112,6 +112,8 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
 #' @param ... Additional arguments (ignored).
 #'
 #' @export
+#'
+#' @keywords internal
 print.KbetScores <- function(x, ...) {
   n_cells <- length(x$p_values)
   n_sig <- sum(x$significant_tests)
@@ -262,6 +264,8 @@ S7::method(calculate_batch_asw_sc, SingleCells) <- function(
 #' @param ... Additional arguments (ignored).
 #'
 #' @export
+#'
+#' @keywords internal
 print.BatchSilhouetteScores <- function(x, ...) {
   n_cells <- length(x$per_cell)
 
@@ -371,6 +375,8 @@ S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
 #' @param ... Additional arguments (ignored).
 #'
 #' @export
+#'
+#' @keywords internal
 print.BatchLisiScores <- function(x, ...) {
   n_cells <- length(x$per_cell)
 
@@ -590,7 +596,7 @@ bbknn_sc <- S7::new_generic(
 S7::method(bbknn_sc, SingleCells) <- function(
   object,
   batch_column,
-  no_neighbours_to_keep = 15L,
+  no_neighbours_to_keep = 5L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   bbknn_params = params_sc_bbknn(),

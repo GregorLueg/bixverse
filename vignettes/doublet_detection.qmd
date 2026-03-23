@@ -59,7 +59,7 @@ but irrelevant for this situation), giving us something to benchmark against.
 ```{r}
 #| label: load data
 
-doublet_path <- download_demuxlet_pmbcs()
+doublet_path <- download_demuxlet_pbmc()
 
 tempdir_doublet <- file.path(tempdir(), "demuxlet_bixverse")
 dir.create(tempdir_doublet, showWarnings = FALSE, recursive = TRUE)

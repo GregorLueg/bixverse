@@ -67,24 +67,32 @@ devtools::install_github("https://github.com/GregorLueg/bixverse")
 ### How to use the package.
 
 The package website can be found [here](https://gregorlueg.github.io/bixverse/).
-A good primer for [why Rust is here](https://gregorlueg.github.io/bixverse/docs/articles/rust_functions.html) - a show case of how much faster Rust can make a lot of basic functions much
-faster. If you wish to integrate this into your package, please feel free. If
+A good primer for [why Rust is here](https://gregorlueg.github.io/bixverse/docs/articles/rust_functions.html) - a show case of how much faster Rust can make a lot of basic functions much faster. 
+If you wish to integrate this into your package, please feel free. If
 you wish to use the single cell part, it is really worth reading this 
 [here](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html) 
 first... It will give you a good explainer on the design decisions, the choices
-and trade-offs.
+and trade-offs. The vignettes will show you how to analyse data.
 
 ## Roadmap
 
-- For single cell:
+- For single cell the following stuff will be hopefully soon'ish implemented:
   * More multi-file read in support. At the moment, multiple h5ad files are
     possible, but not yet for other file formats.
-  * Ge
+  * h5 file i/o.
+  * Saving data to h5ad for easier interoperability with Python. 
+  * Methods on top of the meta cells: co-expression network detection etc.
+  * Expansion of the [sister package](https://github.com/GregorLueg/bixverse.plots) to have plotting helpers 
+    in there for single cell.
+  * Helpers to slice and dice the data easier and add new data.
+  * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
+    [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
+  * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
+  * Add GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
+    for GPU-agnostic acceleration where appropriate.
+- Leverage the current infrastructure and add dedicated support and methods for
+  spatial transcriptomics.
 
 ## For developers
 
-
-
-## Code
-
-[Code Style](/info/code_style.md) (If you want to contribute).
+If you wish to contribute, please read the [Code Style](/info/code_style.md).

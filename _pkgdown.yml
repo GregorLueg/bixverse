@@ -18,7 +18,8 @@ home:
   title: bixverse
   description: 
     The tidyverse wanna-be of bioinformatics. Now also with a lot of single 
-    cell-related functionality.
+    cell-related functionality for scaling to millions of cells on local 
+    compute.
 navbar:
   structure:
     left: [intro, reference, articles, tutorials, singlecells, news]
@@ -44,6 +45,8 @@ navbar:
           href: articles/pbmc_single_cell.html
         - text: Doublet detection in bixverse
           href: articles/doublet_detection.html
+        - text: Batch corrections
+          href: articles/single_cell_batch_corrections.html
     articles:
       text: Articles
       menu:
@@ -75,6 +78,7 @@ articles:
       - thinking_single_cell
       - pbmc_single_cell
       - doublet_detection
+      - single_cell_batch_corrections
 
 reference:
   # General getters shared across classes
@@ -281,6 +285,7 @@ reference:
       - get_gene_names
       - get_hvg
       - get_knn_mat
+      - get_knn_obj
       - get_pca_singular_val
       - get_pca_loadings
       - get_pca_factors
@@ -342,12 +347,15 @@ reference:
       - find_hvg_sc
       - find_hvg_batch_aware_sc
       - calculate_pca_sc
+      - generate_sc_knn
       - find_neighbours_sc
       - top_genes_perc_sc
       - fast_mnn_sc
       - harmony_sc
       - bbknn_sc
       - calculate_kbet_sc
+      - calculate_batch_asw_sc
+      - calculate_batch_lisi_sc
       - params_norm_doublet_detection_defaults
       - params_boost
       - params_sc_hvg
@@ -413,6 +421,7 @@ reference:
       embeddings, or extract specific columns from the metadata or genes (and
       their summaries) from the binary storage files.
     contents:
+      - sc_knn_to_nearest_neighbours
       - umap_sc
       - tsne_sc
       - phate_sc
@@ -457,6 +466,8 @@ reference:
       Functions and helpers to download or generate synthetic data.
     contents:
       - download_pbmc3k
+      - download_demuxlet_pbmc
+      - download_pbmc_batches
       - calculate_sparsity_stats
       - generate_gene_module_data
       - generate_single_cell_test_data
@@ -487,6 +498,8 @@ reference:
       useful for your own package? Use with care and read the documentation!
     contents:
       - rs_aucell
+      - rs_batch_lisi
+      - rs_batch_silhouette_width
       - rs_bbknn
       - rs_bbknn_filtering
       - rs_calc_es

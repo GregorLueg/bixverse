@@ -361,7 +361,7 @@ write_cellranger_output <- function(
 download_pbmc3k <- function() {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
-  url <- "https://zenodo.org/records/19154035/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
+  url <- "https://zenodo.org/records/19183419/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = TRUE)
   untar(dest_file, exdir = temp_dir)
@@ -372,6 +372,8 @@ download_pbmc3k <- function() {
   data_path
 }
 
+### pbmc with demuxlet ---------------------------------------------------------
+
 #' Download PBMCs with demuxlet doublet information
 #'
 #' @description
@@ -381,16 +383,41 @@ download_pbmc3k <- function() {
 #' @returns String. The path to the extracted doublet detection data.
 #'
 #' @export
-download_demuxlet_pmbcs <- function() {
+download_demuxlet_pbmc <- function() {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
-  url <- "https://zenodo.org/records/19154064/files/demuxlet_PBMCs.tar.gz?download=1"
+  url <- "https://zenodo.org/records/19183419/files/demuxlet_PBMCs.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = TRUE)
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
   data_path <- file.path(temp_dir, "demuxlet_PBMCs")
+
+  data_path
+}
+
+### pbmc with demuxlet ---------------------------------------------------------
+
+#' Download two different PBMC data sets for batch correction testing
+#'
+#' @description
+#' This function downloads two different h5ad files for testing batch correction
+#' methods.
+#'
+#' @returns String. The path to the extracted doublet detection data.
+#'
+#' @export
+download_pbmc_batches <- function() {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
+  url <- "https://zenodo.org/records/19183419/files/pbmc_batches.tar.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  untar(dest_file, exdir = temp_dir)
+
+  # add headers to genes.tsv
+  data_path <- file.path(temp_dir, "PBMC_batches")
 
   data_path
 }

@@ -222,7 +222,7 @@ expect_true(
 
 expect_true(
   current = checkmate::qtest(
-    kbet_scores.weak_batch_effect$chisquare_pvals,
+    kbet_scores.weak_batch_effect$p_values,
     "N[0, 1]"
   ),
   info = paste("kbet scores - p-values are expected type and range")
@@ -315,7 +315,7 @@ assess_bbknn_impact <- function(object) {
   storage.mode(knn_corr$indices) <- "integer"
 
   k_bet_corrected <- sum(
-    rs_kbet(knn_corr$indices, as.integer(batch_effects)) < 0.05
+    rs_kbet(knn_corr$indices, as.integer(batch_effects))$pval < 0.05
   )
 
   correct_neighbours_cor <- vector(
@@ -440,7 +440,7 @@ expect_warning(
 object <- bbknn_sc(
   object = object,
   batch_column = "batch_index",
-  no_neighbours_to_keep = 10L,
+  no_neighbours_to_keep = 9L,
   .verbose = FALSE
 )
 
@@ -459,7 +459,7 @@ expect_true(
   current = checkmate::testMatrix(
     get_knn_mat(object),
     mode = "integer",
-    ncol = 10L
+    ncol = 9L
   ),
   info = "new knn matrix of correct type and dimensions"
 )
@@ -587,7 +587,8 @@ assess_fast_mnn_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_original <- sum(kbet_original <= 0.05) / length(kbet_original)
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
 
   batch_aware_hvg = find_hvg_batch_aware_sc(
     object,
@@ -619,7 +620,8 @@ assess_fast_mnn_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_corrected <- sum(kbet_corrected <= 0.05) / length(kbet_corrected)
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
 
   correct_neighbours_cor <- vector(
     mode = "numeric",
@@ -802,7 +804,8 @@ assess_harmony_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_original <- sum(kbet_original <= 0.05) / length(kbet_original)
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
 
   object = harmony_sc(
     object = object,
@@ -825,7 +828,8 @@ assess_harmony_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_corrected <- sum(kbet_corrected <= 0.05) / length(kbet_corrected)
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
 
   correct_neighbours_cor <- vector(
     mode = "numeric",
