@@ -1,4 +1,4 @@
-# bixverse 0.0.3.0
+# bixverse 0.3.0
 
 * Full refactor of the Rust code, so it lives in its own [crate](https://crates.io/crates/bixverse-rs)
 * Single cell officially released:
