@@ -1,5 +1,46 @@
 # h5ad functions and helpers ---------------------------------------------------
 
+## helpers ---------------------------------------------------------------------
+
+#' Resolve the index column from an h5ad group
+#'
+#' Checks for the `_index` attribute first (new anndata spec), then falls back
+#' to the `_index` dataset (old spec). Returns NULL if neither exists.
+#'
+#' @param f_path Path to the h5ad file.
+#' @param group_path The HDF5 group (e.g. "/obs", "/var").
+#' @param h5_content data.table from rhdf5::h5ls().
+#'
+#' @return A list with `idx` (character vector or NULL) and `idx_col` (the
+#'   dataset name used, or NULL).
+#'
+#' @keywords internal
+.resolve_h5_index <- function(f_path, group_path, h5_content) {
+  grp_attrs <- tryCatch(
+    rhdf5::h5readAttributes(f_path, group_path),
+    error = function(e) list()
+  )
+
+  if ("_index" %in% names(grp_attrs)) {
+    idx_col <- grp_attrs[["_index"]]
+    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", idx_col)))
+    return(list(idx = idx, idx_col = idx_col))
+  }
+
+  has_ds <- "_index" %in%
+    h5_content[
+      group == group_path & otype == "H5I_DATASET",
+      name
+    ]
+
+  if (has_ds) {
+    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/_index")))
+    return(list(idx = idx, idx_col = "_index"))
+  }
+
+  list(idx = NULL, idx_col = NULL)
+}
+
 ## scan multiple files for ingestion -------------------------------------------
 
 #' Pre-scan multiple h5ad files for multi-sample loading
@@ -183,6 +224,9 @@ read_h5ad_metadata <- function(f_path) {
       name
     ]
 
+    # resolve index first so we can exclude it from direct datasets
+    idx_info <- .resolve_h5_index(f_path, group_path, h5_content)
+
     cols <- list()
 
     # old-format categoricals
@@ -200,8 +244,13 @@ read_h5ad_metadata <- function(f_path) {
       }
     }
 
-    # direct datasets
-    direct <- entries[otype == "H5I_DATASET" & name != "_index", name]
+    # direct datasets — exclude _index dataset and the attribute-referenced col
+    skip <- c("_index", idx_info$idx_col)
+    direct <- entries[
+      otype == "H5I_DATASET" & !name %in% skip,
+      name
+    ]
+
     for (d in direct) {
       raw <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/", d)))
       if (has_new_cats && d %in% new_cat_names) {
@@ -215,9 +264,15 @@ read_h5ad_metadata <- function(f_path) {
       }
     }
 
-    idx <- as.vector(rhdf5::h5read(f_path, paste0(group_path, "/_index")))
     dt <- data.table::as.data.table(cols)
-    dt[, .id := idx]
+
+    if (!is.null(idx_info$idx)) {
+      dt[, .id := idx_info$idx]
+    } else {
+      n <- if (length(cols) > 0L) length(cols[[1L]]) else 0L
+      dt[, .id := seq_len(n)]
+    }
+
     data.table::setcolorder(dt, c(".id", setdiff(names(dt), ".id")))
     dt
   }

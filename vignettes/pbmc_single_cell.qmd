@@ -183,7 +183,8 @@ sc_object <- find_hvg_sc(
 
 sc_object <- calculate_pca_sc(
   object = sc_object,
-  no_pcs = 30L
+  no_pcs = 30L,
+  sparse_svd = TRUE
 )
 
 # the data is so tiny that exhaustive kNN search is faster than building

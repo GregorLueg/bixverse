@@ -538,6 +538,18 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
     get_hvg(object)
   }
 
+  # swap to sparse SVD for large data sets
+  n_cells <- length(get_cells_to_keep(object))
+
+  if (n_cells > 500000 & !sparse_svd) {
+    message(paste(
+      "More than 500,000 cells with sparse SVD = FALSE",
+      "Setting sparse SVD to TRUE to avoid high memory pressure."
+    ))
+
+    sparse_svd <- TRUE
+  }
+
   # dense path
   if (!sparse_svd) {
     if (.verbose) {

@@ -715,18 +715,25 @@ SingleCellDuckDB <- R6::R6Class(
         name
       ]
 
+      idx_info <- .resolve_h5_index(h5_path, "/obs", h5_content)
+
+      skip <- c("_index", idx_info$idx_col)
       direct <- h5_content[
-        group == "/obs" & otype == "H5I_DATASET" & name != "_index",
+        group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
         name
       ]
 
-      if (length(direct) == 0L && length(obs_groups) == 0L && !has_new_cats) {
+      if (
+        length(direct) == 0L &&
+          length(obs_groups) == 0L &&
+          !has_new_cats &&
+          is.null(idx_info$idx)
+      ) {
         stop("No obs data could be found in the h5 file. Nothing was loaded.")
       }
 
       cols <- list()
 
-      # old-format categoricals
       for (g in obs_groups) {
         sub_path <- paste0("/obs/", g)
         sub_entries <- h5_content[
@@ -741,7 +748,6 @@ SingleCellDuckDB <- R6::R6Class(
         }
       }
 
-      # direct datasets with new-format categorical reconstruction
       for (d in direct) {
         raw <- as.vector(rhdf5::h5read(h5_path, paste0("/obs/", d)))
         if (has_new_cats && d %in% new_cat_names) {
@@ -755,15 +761,10 @@ SingleCellDuckDB <- R6::R6Class(
         }
       }
 
-      idx <- tryCatch(
-        as.vector(rhdf5::h5read(h5_path, "/obs/_index")),
-        error = function(e) NULL
-      )
-
       obs_dt <- data.table::as.data.table(cols)
 
-      if (!is.null(idx)) {
-        obs_dt[, cell_id := idx]
+      if (!is.null(idx_info$idx)) {
+        obs_dt[, cell_id := idx_info$idx]
         data.table::setcolorder(
           obs_dt,
           c("cell_id", setdiff(names(obs_dt), "cell_id"))
@@ -839,18 +840,25 @@ SingleCellDuckDB <- R6::R6Class(
         name
       ]
 
+      idx_info <- .resolve_h5_index(h5_path, "/var", h5_content)
+
+      skip <- c("_index", idx_info$idx_col)
       direct <- h5_content[
-        group == "/var" & otype == "H5I_DATASET" & name != "_index",
+        group == "/var" & otype == "H5I_DATASET" & !name %in% skip,
         name
       ]
 
-      if (length(direct) == 0L && length(var_groups) == 0L && !has_new_cats) {
+      if (
+        length(direct) == 0L &&
+          length(var_groups) == 0L &&
+          !has_new_cats &&
+          is.null(idx_info$idx)
+      ) {
         stop("No var data could be found in the h5 file. Nothing was loaded.")
       }
 
       cols <- list()
 
-      # old-format categoricals
       for (g in var_groups) {
         sub_path <- paste0("/var/", g)
         sub_entries <- h5_content[
@@ -865,7 +873,6 @@ SingleCellDuckDB <- R6::R6Class(
         }
       }
 
-      # direct datasets with new-format categorical reconstruction
       for (d in direct) {
         raw <- as.vector(rhdf5::h5read(h5_path, paste0("/var/", d)))
         if (has_new_cats && d %in% new_cat_names) {
@@ -879,15 +886,10 @@ SingleCellDuckDB <- R6::R6Class(
         }
       }
 
-      idx <- tryCatch(
-        as.vector(rhdf5::h5read(h5_path, "/var/_index")),
-        error = function(e) NULL
-      )
-
       var_dt <- data.table::as.data.table(cols)
 
-      if (!is.null(idx)) {
-        var_dt[, gene_id := idx]
+      if (!is.null(idx_info$idx)) {
+        var_dt[, gene_id := idx_info$idx]
         data.table::setcolorder(
           var_dt,
           c("gene_id", setdiff(names(var_dt), "gene_id"))
@@ -960,18 +962,25 @@ SingleCellDuckDB <- R6::R6Class(
           name
         ]
 
+        idx_info <- .resolve_h5_index(fi$h5_path, "/obs", h5_content)
+
+        skip <- c("_index", idx_info$idx_col)
         direct <- h5_content[
-          group == "/obs" & otype == "H5I_DATASET" & name != "_index",
+          group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
           name
         ]
 
-        if (length(direct) == 0L && length(obs_groups) == 0L && !has_new_cats) {
+        if (
+          length(direct) == 0L &&
+            length(obs_groups) == 0L &&
+            !has_new_cats &&
+            is.null(idx_info$idx)
+        ) {
           stop(sprintf("No obs data found in %s", fi$h5_path))
         }
 
         cols <- list()
 
-        # old-format categoricals
         for (g in obs_groups) {
           sub_path <- paste0("/obs/", g)
           sub_entries <- h5_content[
@@ -989,7 +998,6 @@ SingleCellDuckDB <- R6::R6Class(
           }
         }
 
-        # direct datasets with new-format categorical reconstruction
         for (d in direct) {
           raw <- as.vector(rhdf5::h5read(fi$h5_path, paste0("/obs/", d)))
           if (has_new_cats && d %in% new_cat_names) {
@@ -1003,17 +1011,12 @@ SingleCellDuckDB <- R6::R6Class(
           }
         }
 
-        idx <- tryCatch(
-          as.vector(rhdf5::h5read(fi$h5_path, "/obs/_index")),
-          error = function(e) NULL
-        )
-
         rhdf5::h5closeAll()
 
         obs_dt <- data.table::as.data.table(cols)
 
-        if (!is.null(idx)) {
-          obs_dt[, cell_id := idx]
+        if (!is.null(idx_info$idx)) {
+          obs_dt[, cell_id := idx_info$idx]
           data.table::setcolorder(
             obs_dt,
             c("cell_id", setdiff(names(obs_dt), "cell_id"))
@@ -1029,7 +1032,6 @@ SingleCellDuckDB <- R6::R6Class(
           data.table::setnames(obs_dt, other_cols, to_snake_case(other_cols))
         }
 
-        # filter to kept cells
         obs_dt <- obs_dt[fi$cell_filter]
         obs_dt[, exp_id := fi$exp_id]
         obs_dt[, cell_id := paste(exp_id, cell_id, sep = "_")]
