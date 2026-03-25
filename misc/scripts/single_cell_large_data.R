@@ -9,221 +9,98 @@ path_h5 <- path.expand(
   "~/Downloads/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
 )
 
-meta_data <- read_h5ad_metadata(path_h5)
+meta <- get_h5ad_dimensions(path_h5)
 
-rm(meta_data)
+sc_object <- SingleCells(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
 
-meta <- get_h5ad_dimensions(f_path)
+sc_object <- stream_h5ad(object = sc_object, h5_path = path_h5)
 
+sc_object <- load_existing(object = sc_object)
 
-sce <- SingleCells(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
+var <- get_sc_var(object = sc_object)
 
-# sce <- stream_h5ad(object = sce, h5_path = path_h5)
-
-sce <- load_existing(object = sce)
-
-sce <- set_cells_to_keep(sce, get_cell_names(sce))
-
-pryr::object_size(sce)
-
-tictoc::tic()
-sce[1:100, , return_format = "cell"][1:5, 1:5]
-tictoc::toc()
-
-tictoc::tic()
-sce[1:1000, , return_format = "cell", assay = "norm"][1:5, 1:5]
-tictoc::toc()
-
-tictoc::tic()
-sce[, 1:10, return_format = "gene"][1:5, 1:5]
-tictoc::toc()
-
-tictoc::tic()
-sce <- find_hvg_sc(sce, streaming = TRUE)
-tictoc::toc()
-
-tictoc::tic()
-sce <- calculate_pca_sc(sce, no_pcs = 32L, sparse_svd = FALSE)
-tictoc::toc()
-
-pryr::object_size(sce)
-
-sce <- find_neighbours_sc(
-  object = sce,
-  no_embd_to_use = 16L,
-  neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
+gs_of_interest <- list(
+  MT = var[grepl("^MT-", gene_id), gene_id],
+  Ribo = var[grepl("^RPS|^RPL", gene_id), gene_id]
 )
 
-pca_test <- get_pca_factors(sce)
+sc_object <- gene_set_proportions_sc(
+  object = sc_object,
+  gene_set_list = gs_of_interest,
+  streaming = TRUE, # set streaming to TRUE !
+  .verbose = TRUE
+)
 
-qs2::qs_save(pca_test, "~/Desktop/pca_data.qs2")
+sc_object[[c(1:5L)]]
 
-pryr::object_size(sce)
+qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
 
-sce[1:100, , return_format = "cell"]
+rm(qc_df)
 
-########
-# HNSW #
-########
+metrics <- list(
+  log10_lib_size = log10(qc_df$lib_size),
+  log10_nnz = log10(qc_df$nnz),
+  MT = qc_df$MT
+)
 
-# hnsw with 32 dim
+directions <- c(
+  log10_lib_size = "twosided",
+  log10_nnz = "twosided",
+  MT = "above"
+)
 
-# Building HNSW index with 2_857_393 nodes, M = 16
-# Max layer: 6, Entry point: 299562
-#   Layer 0: 2_857_393 nodes
-#   Layer 1: 178_644 nodes
-#   Layer 2: 11_036 nodes
-#   Layer 3: 666 nodes
-#   Layer 4: 33 nodes
-#   Layer 5: 5 nodes
-#   Layer 6: 1 nodes
-# Building layer 6 with 1 nodes
-#   Layer 6 built in 1.48ms
-# Building layer 5 with 5 nodes
-#   Layer 5 built in 1.72ms
-# Building layer 4 with 33 nodes
-#   Layer 4 built in 2.19ms
-# Building layer 3 with 666 nodes
-#   Layer 3 built in 12.58ms
-# Building layer 2 with 11_036 nodes
-#   Layer 2 built in 155.21ms
-# Building layer 1 with 178_644 nodes
-#   Layer 1 built in 4.31s
-# Building layer 0 with 2_857_393 nodes
-#   Layer 0 built in 106.59s
-# Total HNSW build time: 111.38s
-# Generated HNSW index: 111.42s
-#   Processed 100_000 / 2_857_393 samples.
-#   Processed 200_000 / 2_857_393 samples.
-#   Processed 300_000 / 2_857_393 samples.
-#   Processed 400_000 / 2_857_393 samples.
-#   Processed 500_000 / 2_857_393 samples.
-#   Processed 600_000 / 2_857_393 samples.
-#   Processed 700_000 / 2_857_393 samples.
-#   Processed 800_000 / 2_857_393 samples.
-#   Processed 900_000 / 2_857_393 samples.
-#   Processed 1_000_000 / 2_857_393 samples.
-#   Processed 1_100_000 / 2_857_393 samples.
-#   Processed 1_200_000 / 2_857_393 samples.
-#   Processed 1_300_000 / 2_857_393 samples.
-#   Processed 1_400_000 / 2_857_393 samples.
-#   Processed 1_500_000 / 2_857_393 samples.
-#   Processed 1_600_000 / 2_857_393 samples.
-#   Processed 1_700_000 / 2_857_393 samples.
-#   Processed 1_800_000 / 2_857_393 samples.
-#   Processed 1_900_000 / 2_857_393 samples.
-#   Processed 2_000_000 / 2_857_393 samples.
-#   Processed 2_100_000 / 2_857_393 samples.
-#   Processed 2_200_000 / 2_857_393 samples.
-#   Processed 2_300_000 / 2_857_393 samples.
-#   Processed 2_400_000 / 2_857_393 samples.
-#   Processed 2_500_000 / 2_857_393 samples.
-#   Processed 2_600_000 / 2_857_393 samples.
-#   Processed 2_700_000 / 2_857_393 samples.
-#   Processed 2_800_000 / 2_857_393 samples.
-# Identified approximate nearest neighbours via HNSW: 59.52s
-# Recall of approximate nearest neighbours search in random subset: 1.00
-# KNN generation done : 185.52s
-# Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 13.64s
-# Transforming sNN data to igraph.
+qc <- run_cell_qc(metrics, directions, threshold = 3)
 
-#########
-# Annoy #
-#########
+qc
 
-# annoy with 32 dims
+sc_object[["outlier"]] <- qc$combined
 
-# Generated Annoy index: 15.24s
-#   Processed 100_000 / 2_857_393 samples.
-#   Processed 200_000 / 2_857_393 samples.
-#   Processed 300_000 / 2_857_393 samples.
-#   Processed 400_000 / 2_857_393 samples.
-#   Processed 500_000 / 2_857_393 samples.
-#   Processed 600_000 / 2_857_393 samples.
-#   Processed 700_000 / 2_857_393 samples.
-#   Processed 800_000 / 2_857_393 samples.
-#   Processed 900_000 / 2_857_393 samples.
-#   Processed 1_000_000 / 2_857_393 samples.
-#   Processed 1_100_000 / 2_857_393 samples.
-#   Processed 1_200_000 / 2_857_393 samples.
-#   Processed 1_300_000 / 2_857_393 samples.
-#   Processed 1_400_000 / 2_857_393 samples.
-#   Processed 1_500_000 / 2_857_393 samples.
-#   Processed 1_600_000 / 2_857_393 samples.
-#   Processed 1_700_000 / 2_857_393 samples.
-#   Processed 1_800_000 / 2_857_393 samples.
-#   Processed 1_900_000 / 2_857_393 samples.
-#   Processed 2_000_000 / 2_857_393 samples.
-#   Processed 2_100_000 / 2_857_393 samples.
-#   Processed 2_200_000 / 2_857_393 samples.
-#   Processed 2_300_000 / 2_857_393 samples.
-#   Processed 2_400_000 / 2_857_393 samples.
-#   Processed 2_500_000 / 2_857_393 samples.
-#   Processed 2_600_000 / 2_857_393 samples.
-#   Processed 2_700_000 / 2_857_393 samples.
-#   Processed 2_800_000 / 2_857_393 samples.
-# Identified approximate nearest neighbours via Annoy: 371.87s
-# Recall of approximate nearest neighbours search in random subset: 0.99
-# KNN generation done : 402.73s
-# Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 14.19s
-# Transforming sNN data to igraph.
+cells_to_keep <- qc_df[!qc$combined, cell_id]
 
-#############
-# NNDescent #
-#############
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
 
-# Built Annoy index: 9.18s
-# Running NN-Descent: 2_857_393 samples, max_candidates=30
-# Queried Annoy index: 53.26s
-# Using chunk size 145_635 (20 chunks) for memory-efficient updates
-#  Preparing candidates for iter 1
-#  Processing updates for iter 1 (20 chunks)
-#   Iter 1: 41_134_731 edge updates (rate=0.4799)
-#  Preparing candidates for iter 2
-#  Processing updates for iter 2 (20 chunks)
-#   Iter 2: 8_975_855 edge updates (rate=0.1047)
-#  Preparing candidates for iter 3
-#  Processing updates for iter 3 (20 chunks)
-#   Iter 3: 908_498 edge updates (rate=0.0106)
-#  Preparing candidates for iter 4
-#  Processing updates for iter 4 (20 chunks)
-#   Iter 4: 63_648 edge updates (rate=0.0007)
-#   Converged after 4 iterations
-# Total time: 204.08s
-# Generated NNDescent index: 214.81s
-#   Processed 100_000 / 2_857_393 samples
-#   Processed 200_000 / 2_857_393 samples
-#   Processed 300_000 / 2_857_393 samples
-#   Processed 400_000 / 2_857_393 samples
-#   Processed 500_000 / 2_857_393 samples
-#   Processed 600_000 / 2_857_393 samples
-#   Processed 700_000 / 2_857_393 samples
-#   Processed 800_000 / 2_857_393 samples
-#   Processed 900_000 / 2_857_393 samples
-#   Processed 1_000_000 / 2_857_393 samples
-#   Processed 1_100_000 / 2_857_393 samples
-#   Processed 1_200_000 / 2_857_393 samples
-#   Processed 1_300_000 / 2_857_393 samples
-#   Processed 1_400_000 / 2_857_393 samples
-#   Processed 1_500_000 / 2_857_393 samples
-#   Processed 1_600_000 / 2_857_393 samples
-#   Processed 1_700_000 / 2_857_393 samples
-#   Processed 1_800_000 / 2_857_393 samples
-#   Processed 1_900_000 / 2_857_393 samples
-#   Processed 2_000_000 / 2_857_393 samples
-#   Processed 2_100_000 / 2_857_393 samples
-#   Processed 2_200_000 / 2_857_393 samples
-#   Processed 2_300_000 / 2_857_393 samples
-#   Processed 2_400_000 / 2_857_393 samples
-#   Processed 2_500_000 / 2_857_393 samples
-#   Processed 2_600_000 / 2_857_393 samples
-#   Processed 2_700_000 / 2_857_393 samples
-#   Processed 2_800_000 / 2_857_393 samples
-# Identified approximate nearest neighbours via NNDescent: 17.70s.
-# Recall of approximate nearest neighbours search in random subset: 1.00
-# KNN generation done : 246.43s
-# Generating sNN graph (full: FALSE).
-# Transformed kNN into an sNN graph: 17.87s
-# Transforming sNN data to igraph.
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  streaming = TRUE # set streaming to TRUE!
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = 30L,
+  sparse_svd = TRUE # will automatically be set with ≥500k cells
+)
+
+# GPU-accelerated kNN search via a CAGRA style approach
+# This will also add the shared nearest neighbour graph
+
+library(bixverse.gpu)
+
+# leverage a GPU-accelerated kNN search...
+# otherwise, nndescent and HNSW are decent on the CPU
+sc_object <- find_neighbours_cagra_sc(
+  object = sc_object,
+  cagra_params = params_sc_cagra(k_query = 15L, ann_dist = "cosine"),
+  extract_knn = FALSE,
+  .verbose = TRUE
+)
+
+# this will take time, but does actually run...
+# but to be clear, this is running on 65m + edges
+sc_object <- umap_sc(object = sc_object)
+
+meta_data <- sc_object[[c("cell_id", "cell_name", "drug")]]
+
+cells_grp_a <- meta_data[drug == "AT7519", cell_id]
+cells_grp_b <- meta_data[drug == "palbociclib", cell_id]
+
+tictoc::tic()
+dge_results <- find_markers_sc(
+  object = sc_object,
+  cells_1 = cells_grp_a,
+  cells_2 = cells_grp_b
+)
+tictoc::toc()
+
+setorder(dge_results, fdr)
+
+head(dge_results, 25L)

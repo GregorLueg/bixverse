@@ -17,8 +17,9 @@
 
 This is an *opionated* package making various bioinformatics workflows in R (or
 ported from Python) much faster via low-level implementations in Rust. The core 
-idea is to take different methods, write low-level implementations with
-minimal kernel round trips and leverage R purely as an orchestraction layer.
+idea is to take different methods, write implementations in a compiled,
+memory-managed language with minimal kernel round trips and leverage R purely as 
+an orchestraction layer.
 Result? Blazingly fast performance with low memory usage, making large-scale
 analyses feasable without any cloud compute. Over time more and more methods
 will be added. The aim will be to come a `tidyverse` equivalent, but for
@@ -29,10 +30,10 @@ phase).
 
 ### Release notes
 
-With the `0.0.3.0` a lot has happened. The lack of updates had a reason Some 
+With the `0.3.0` a lot has happened. The lack of updates had a reason Some 
 cooking has been going on... The package now contains a full release of the a 
 single cell functionality suite that you can use to analyse millions of cells
-locally. 
+locally. Please checkout out the website of the package.
 
 ## Usage
 
@@ -64,6 +65,13 @@ install.packages("rextendr")
 devtools::install_github("https://github.com/GregorLueg/bixverse")
 ```
 
+### Windows support
+
+If you are using Windows, I am sorry, the tool chain is just very, very 
+painful... I really tried to make this work and maybe there are some hacks in 
+terms of compiling everything to install the package, but it has proven...
+challenging in the CI/CD. Hence, no official Windows support for now.
+
 ### How to use the package.
 
 The package website can be found [here](https://gregorlueg.github.io/bixverse/).
@@ -88,10 +96,12 @@ and trade-offs. The vignettes will show you how to analyse data.
   * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
     [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
   * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
-  * Add GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
-    for GPU-agnostic acceleration where appropriate.
+  * Add more GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
+    for GPU-agnostic acceleration where appropriate, see another 
+    [sister package](https://github.com/GregorLueg/bixverse.gpu)
 - Leverage the current infrastructure and add dedicated support and methods for
   spatial transcriptomics.
+- Add other interesting methods that I find.
 
 ## For developers
 
