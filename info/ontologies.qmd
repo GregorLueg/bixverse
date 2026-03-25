@@ -22,8 +22,12 @@ library(bixverse)
 library(data.table)
 library(magrittr)
 library(zeallot)
-if (!requireNamespace("ontologyIndex", quietly = TRUE)) install.packages("ontologyIndex")
-if (!requireNamespace("ontologySimilarity", quietly = TRUE)) install.packages("ontologySimilarity")
+if (!requireNamespace("ontologyIndex", quietly = TRUE)) {
+  install.packages("ontologyIndex")
+}
+if (!requireNamespace("ontologySimilarity", quietly = TRUE)) {
+  install.packages("ontologySimilarity")
+}
 
 ```
 
@@ -42,7 +46,7 @@ data("hpo")
 hpo_data <- as.data.table(stack(hpo$children)) %>%
   setnames(old = c("values", "ind"), new = c("child", "parent")) %>%
   .[, c("parent", "child"), with = FALSE] %>%
-  .[, type := "parent_of"] 
+  .[, type := "parent_of"]
 ```
 
 ### Semantic similarities
@@ -142,7 +146,7 @@ ontoSimiliarity_information_content <- descendants_IC(hpo)
 
 tictoc::tic()
 ontoSimiliarity_mat <- get_term_sim_mat(
-  ontology = hpo, 
+  ontology = hpo,
   information_content = ontoSimiliarity_information_content
 )
 tictoc::toc()
@@ -189,13 +193,13 @@ matrix
 ```{r}
 #| label: calculate full wang similarity
 
-# We are assigning a weight of 0.8 here... 
+# We are assigning a weight of 0.8 here...
 # In this ontology we only have one type of relationship, but for example
 # in the Gene Ontology there are more of them
 wang_weights <- setNames(0.8, "parent_of")
 
 wang_similarity <- calculate_wang_sim_mat(
-  parent_child_dt = hpo_data, 
+  parent_child_dt = hpo_data,
   weight = wang_weights
 )
 
@@ -209,7 +213,7 @@ Also here we provide functionality to only calculate similarities for subsets.
 
 wang_similarity_subset <- calculate_wang_sim(
   terms = random_term_sample,
-  parent_child_dt = hpo_data, 
+  parent_child_dt = hpo_data,
   weight = wang_weights
 )
 

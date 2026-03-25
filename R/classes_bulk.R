@@ -869,6 +869,8 @@ S7::method(add_new_metadata, BulkDge) <-
 #' @returns Invisibly returns `x`.
 #'
 #' @method print BulkCoExp
+#'
+#' @keywords internal
 S7::method(print, BulkCoExp) <- function(x, ...) {
   . <- hvg <- NULL
   # Pre-processing

@@ -215,6 +215,8 @@ write_h5ad_sc <- function(
   invisible()
 }
 
+### write cell ranger output ---------------------------------------------------
+
 #' Helper function to write data to a cell ranger like output
 #'
 #' @description This is a helper to write synthetic data to cell ranger like
@@ -343,11 +345,15 @@ write_cellranger_output <- function(
   invisible()
 }
 
-#' Download PBMC3K data from 10x Genomics
+## example data sets -----------------------------------------------------------
+
+### pbmc3k ---------------------------------------------------------------------
+
+#' Download PBMC3K data from Zenodo
 #'
 #' @description
-#' This function downloads the PBMC3K dataset from 10x Genomics and extracts
-#' it to a temporary directory. It returns the path to the extracted data.
+#' This function downloads the PBMC3K dataset from 10x Genomics (uploaded
+#' on Zenodo) and extracts it and returns the paths.
 #'
 #' @returns String. The path to the extracted PBMC3K data.
 #'
@@ -355,28 +361,63 @@ write_cellranger_output <- function(
 download_pbmc3k <- function() {
   temp_dir <- tempdir()
   dest_file <- file.path(temp_dir, "pbmc3k.tar.gz")
-  url <- "https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz"
+  url <- "https://zenodo.org/records/19183419/files/pbmc3k_filtered_gene_bc_matrices.tar.gz?download=1"
 
   download.file(url, dest_file, mode = "wb", quiet = TRUE)
   untar(dest_file, exdir = temp_dir)
 
-  # Add headers to genes.tsv
+  # add headers to genes.tsv
   data_path <- file.path(temp_dir, "filtered_gene_bc_matrices", "hg19")
-  genes_file <- file.path(data_path, "genes.tsv")
 
-  if (file.exists(genes_file)) {
-    genes_data <- data.table::fread(genes_file, header = FALSE)
-    data.table::setnames(genes_data, c("gene_id", "gene_name"))
-    data.table::fwrite(genes_data, genes_file, sep = "\t", col.names = TRUE)
-  }
+  data_path
+}
 
-  cells_file <- file.path(data_path, "barcodes.tsv")
+### pbmc with demuxlet ---------------------------------------------------------
 
-  if (file.exists(cells_file)) {
-    cells_data <- data.table::fread(cells_file, header = FALSE)
-    data.table::setnames(cells_data, "cell_id")
-    data.table::fwrite(cells_data, cells_file, sep = "\t", col.names = TRUE)
-  }
+#' Download PBMCs with demuxlet doublet information
+#'
+#' @description
+#' This function downloads a PBMC data set with demuxlet information to test
+#' doublet detection methods.
+#'
+#' @returns String. The path to the extracted doublet detection data.
+#'
+#' @export
+download_demuxlet_pbmc <- function() {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "demuxlet_PBMCs.tar.gz")
+  url <- "https://zenodo.org/records/19183419/files/demuxlet_PBMCs.tar.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  untar(dest_file, exdir = temp_dir)
+
+  # add headers to genes.tsv
+  data_path <- file.path(temp_dir, "demuxlet_PBMCs")
+
+  data_path
+}
+
+### pbmc with demuxlet ---------------------------------------------------------
+
+#' Download two different PBMC data sets for batch correction testing
+#'
+#' @description
+#' This function downloads two different h5ad files for testing batch correction
+#' methods.
+#'
+#' @returns String. The path to the extracted doublet detection data.
+#'
+#' @export
+download_pbmc_batches <- function() {
+  temp_dir <- tempdir()
+  dest_file <- file.path(temp_dir, "pbmc_batches.tar.gz")
+  url <- "https://zenodo.org/records/19183419/files/pbmc_batches.tar.gz?download=1"
+
+  download.file(url, dest_file, mode = "wb", quiet = TRUE)
+  untar(dest_file, exdir = temp_dir)
+
+  # add headers to genes.tsv
+  data_path <- file.path(temp_dir, "PBMC_batches")
 
   data_path
 }

@@ -87,11 +87,6 @@ expect_true(
 
 ## function warnings -----------------------------------------------------------
 
-# expect_warning(
-#   current = find_hvg_sc(sc_object),
-#   info = "warning that no cells to keep were specified"
-# )
-
 expect_warning(
   current = get_hvg(sc_object),
   info = "warning that hvgs can be found"
@@ -103,7 +98,7 @@ expect_warning(
 )
 
 expect_warning(
-  current = find_neighbours_sc(sc_object),
+  current = find_neighbours_sc(object = sc_object),
   info = "warning that no PCA data are detected"
 )
 

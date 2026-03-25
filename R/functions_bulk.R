@@ -75,6 +75,8 @@ get_gene_lengths <- function(x, species = c("human", "mouse", "rat"), ...) {
 #' @returns Named numeric representing the gene lengths.
 #'
 #' @export
+#'
+#' @keywords internal
 get_gene_lengths.matrix <- function(
   x,
   species = c("human", "mouse", "rat"),
@@ -145,6 +147,8 @@ get_gene_lengths.matrix <- function(
 #' @returns Named numeric representing the gene lengths.
 #'
 #' @method get_gene_lengths BulkCoExp
+#'
+#' @keywords internal
 S7::method(get_gene_lengths, BulkCoExp) <- function(
   x,
   species = c("human", "mouse", "rat"),
@@ -177,6 +181,8 @@ S7::method(get_gene_lengths, BulkCoExp) <- function(
 #' @param x Vector of strings or factors.
 #'
 #' @returns Vector with fixed naming based on R conventions.
+#'
+#' @keywords internal
 fix_contrast_names <- function(x) {
   checkmate::qassert(x, c("S+", "F+", "N+"))
   if (checkmate::qtest(x, c("S+", "F+"))) {
@@ -202,6 +208,8 @@ fix_contrast_names <- function(x) {
 #' all co-variate comparisons will be returned.
 #'
 #' @returns The Limma contrasts for further usage.
+#'
+#' @keywords internal
 all_limma_contrasts <- function(limma_fit, contrast_grps) {
   # Globals
   coef <- combn <- NULL
@@ -240,6 +248,8 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
 #' `"contrast1-contrast2"`.
 #'
 #' @returns The Limma contrasts for further usage.
+#'
+#' @keywords internal
 prep_limma_contrasts <- function(limma_fit, contrast_list) {
   # Checks
   checkmate::assertClass(limma_fit, "MArrayLM")

@@ -2007,6 +2007,80 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
 
+#' Calculate kBET type scores
+#'
+#' @description
+#' The function takes in a kNN matrix and a batch vector indicating which
+#' cell belongs to which batch. The function will check for the neighbourhood
+#' of each cell if the proportion of represented batches are different from
+#' the overall batch proportions. Good mixing of batches would mean very
+#' cells have significant differences; bad mixing a lot of the batches
+#' have bad mixing.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item pval - The p-values from the ChiSquare test
+#'   \item chi_square_stats - ChiSquare statistics
+#'   \item mean_chi_square - The mean ChiSquare value
+#'   \item median_chi_square - The median ChiSquare value
+#' }
+#'
+#' @export
+rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+
+#' Calculate batch silhouette width from an embedding
+#'
+#' @description
+#' Computes the average silhouette width on batch labels using pairwise
+#' distances in the embedding space. Values near 0 indicate good batch
+#' mixing, values near 1 indicate batch separation.
+#'
+#' @param embedding Numeric matrix. The embedding to assess (e.g. PCA or
+#' corrected embedding). Rows are cells, columns are dimensions.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#' @param max_cells Integer or NULL. If not NULL, subsample to this many
+#' cells for performance. Defaults to 5000.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell silhouette scores
+#'   \item mean_asw - Mean silhouette width
+#'   \item median_asw - Median silhouette width
+#' }
+#'
+#' @export
+rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, seed)
+
+#' Calculate batch LISI scores
+#'
+#' @description
+#' Computes the Local Inverse Simpson's Index on batch labels using the
+#' kNN graph. Measures the effective number of batches in each cell's
+#' neighbourhood. Under perfect mixing LISI equals the number of batches,
+#' under no mixing LISI equals 1.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell LISI scores
+#'   \item mean_lisi - Mean LISI
+#'   \item median_lisi - Median LISI
+#' }
+#'
+#' @export
+rs_batch_lisi <- function(knn_mat, batch_vector) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector)
+
 #' BBKNN implementation in Rust
 #'
 #' @description
@@ -2028,18 +2102,19 @@ rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter
 #' @references Polański, et al., Bioinformatics, 2020
 rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
 
-#' Reduce BBKNN matrix to Top X neighbours
+#' Reduce BBKNN results to Top X neighbours
 #'
 #' @param indptr Integer vector. The index pointers of the underlying data.
 #' @param indices Integer vector. The indices of the nearest neighbours.
+#' @param data Numeric vector. The distances to the nearest neighbours.
 #' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 #'
-#' @return A numerical matrix with the Top X neighbours per row. If
-#' `no_neighbours_to_keep` is larger than the number of neighbours in the data,
-#' these positions will be `NA`.
+#' @return A list with `indices` (integer matrix) and `dist` (numeric matrix),
+#' each with shape (n_cells, no_neighbours_to_keep). Positions without
+#' neighbours are filled with -1 (indices) or NaN (distances).
 #'
 #' @export
-rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, no_neighbours_to_keep)
+rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, no_neighbours_to_keep)
 
 #' FastMNN batch correction in Rust
 #'
@@ -2064,26 +2139,6 @@ rs_bbknn_filtering <- function(indptr, indices, no_neighbours_to_keep) .Call(wra
 #'
 #' @export
 rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
-
-#' Calculate kBET type scores
-#'
-#' @description
-#' The function takes in a kNN matrix and a batch vector indicating which
-#' cell belongs to which batch. The function will check for the neighbourhood
-#' of each cell if the proportion of represented batches are different from
-#' the overall batch proportions. Good mixing of batches would mean very
-#' cells have significant differences; bad mixing a lot of the batches
-#' have bad mixing.
-#'
-#' @param knn_mat Integer matrix. The rows represent the cells and the
-#' columns the neighbour indices.
-#' @param batch_vector Integer vector. The integers indicate to which
-#' batch a given cell belongs.
-#'
-#' @return A vector of p-values based on the ChiSquare statistic per cell.
-#'
-#' @export
-rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
 
 #' Harmony batch correction in Rust
 #'
@@ -2930,6 +2985,59 @@ rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) 
 #'
 #' @export
 rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
+
+#' Helper to extract single cell counts as a dense vector for plotting
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_index Integer. Gene index position to return (0-indexed!).
+#' @param norm Boolean. Shall normalised counts be returned.
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns The dense vector of expression values for this gene.
+#'
+#' @export
+rs_extract_counts_plots <- function(f_path, cell_indices, gene_index, norm, scale, clip) .Call(wrap__rs_extract_counts_plots, f_path, cell_indices, gene_index, norm, scale, clip)
+
+#' Helper to extract single cell counts for several genes
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_indices Integer. Gene index position to return (0-indexed!).
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns A list of dense vectors of the normalised counts.
+#'
+#' @export
+rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, scale, clip) .Call(wrap__rs_extract_several_genes_plots, f_path, cell_indices, gene_indices, scale, clip)
+
+#' Calculates the gene statistics for a set of cell groups and genes
+#'
+#' @description
+#' Helper function to extract data for dot plots and/or heatmaps.
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_indices Integer. Gene index position to return (0-indexed!).
+#' @param group_ids Integer. The levels of the data. (0-indexed!)
+#' @param group_levels String. Name of the factors.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'   \item grp_label - The label of that group
+#'   \item mean_exp - Vector of mean expression values in row major (genes x
+#'   n_levels)
+#'   \item perc_exp - Vector of proportions of cells with expression in row
+#'   major (genes x n_levels)
+#' }
+rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 

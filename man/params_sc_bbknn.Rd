@@ -5,7 +5,7 @@
 \title{Wrapper function for the BBKNN parameters}
 \usage{
 params_sc_bbknn(
-  neighbours_within_batch = 5L,
+  neighbours_within_batch = 3L,
   set_op_mix_ratio = 1,
   local_connectivity = 1,
   trim = NULL,
@@ -14,7 +14,7 @@ params_sc_bbknn(
 }
 \arguments{
 \item{neighbours_within_batch}{Integer. Number of neighbours to consider
-per batch. Defaults to \code{5L}.}
+per batch. Defaults to \code{3L}.}
 
 \item{set_op_mix_ratio}{Numeric. Mixing ratio between union (1.0) and
 intersection (0.0). Defaults to \code{1.0}.}

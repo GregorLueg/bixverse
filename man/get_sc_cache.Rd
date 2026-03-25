@@ -16,3 +16,4 @@ memory-stored data.
 \description{
 Getter the memory-stored data from the class
 }
+\keyword{internal}

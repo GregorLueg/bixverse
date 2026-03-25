@@ -81,9 +81,9 @@ dir_data <- purrr::imap(dir_data, \(elem, name) {
 
 ### weak batch effect ----------------------------------------------------------
 
-sc_object.weak_batch_effect <- suppressWarnings(SingleCells(
+sc_object.weak_batch_effect <- SingleCells(
   dir_data = dir_data$weak
-))
+)
 
 sc_object.weak_batch_effect <- load_r_data(
   object = sc_object.weak_batch_effect,
@@ -120,9 +120,9 @@ sc_object.weak_batch_effect <- find_neighbours_sc(
 
 ### medium batch effect --------------------------------------------------------
 
-sc_object.medium_batch_effect <- suppressWarnings(SingleCells(
+sc_object.medium_batch_effect <- SingleCells(
   dir_data = dir_data$medium
-))
+)
 
 sc_object.medium_batch_effect <- load_r_data(
   object = sc_object.medium_batch_effect,
@@ -159,9 +159,9 @@ sc_object.medium_batch_effect <- find_neighbours_sc(
 
 ### strong batch effect --------------------------------------------------------
 
-sc_object.strong_batch_effect <- suppressWarnings(SingleCells(
+sc_object.strong_batch_effect <- SingleCells(
   dir_data = dir_data$strong
-))
+)
 
 sc_object.strong_batch_effect <- load_r_data(
   object = sc_object.strong_batch_effect,
@@ -222,7 +222,7 @@ expect_true(
 
 expect_true(
   current = checkmate::qtest(
-    kbet_scores.weak_batch_effect$chisquare_pvals,
+    kbet_scores.weak_batch_effect$p_values,
     "N[0, 1]"
   ),
   info = paste("kbet scores - p-values are expected type and range")
@@ -308,12 +308,15 @@ assess_bbknn_impact <- function(object) {
   knn_corr <- rs_bbknn_filtering(
     indptr = bbknn_corrected_data$distances$indptr,
     indices = bbknn_corrected_data$distances$indices,
-    10L
+    data = bbknn_corrected_data$distances$data,
+    no_neighbours_to_keep = 10L
   )
 
-  storage.mode(knn_corr) <- "integer"
+  storage.mode(knn_corr$indices) <- "integer"
 
-  k_bet_corrected <- sum(rs_kbet(knn_corr, as.integer(batch_effects)) < 0.05)
+  k_bet_corrected <- sum(
+    rs_kbet(knn_corr$indices, as.integer(batch_effects))$pval < 0.05
+  )
 
   correct_neighbours_cor <- vector(
     mode = "numeric",
@@ -322,7 +325,7 @@ assess_bbknn_impact <- function(object) {
 
   for (cell_idx in seq_len(length(cell_types))) {
     correct_neighbours_cor[cell_idx] <- sum(
-      cell_types[knn_corr[cell_idx, ] + 1] == cell_types[cell_idx]
+      cell_types[knn_corr$indices[cell_idx, ] + 1] == cell_types[cell_idx]
     )
   }
 
@@ -437,7 +440,7 @@ expect_warning(
 object <- bbknn_sc(
   object = object,
   batch_column = "batch_index",
-  no_neighbours_to_keep = 10L,
+  no_neighbours_to_keep = 9L,
   .verbose = FALSE
 )
 
@@ -456,7 +459,7 @@ expect_true(
   current = checkmate::testMatrix(
     get_knn_mat(object),
     mode = "integer",
-    ncol = 10L
+    ncol = 9L
   ),
   info = "new knn matrix of correct type and dimensions"
 )
@@ -584,7 +587,8 @@ assess_fast_mnn_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_original <- sum(kbet_original <= 0.05) / length(kbet_original)
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
 
   batch_aware_hvg = find_hvg_batch_aware_sc(
     object,
@@ -616,7 +620,8 @@ assess_fast_mnn_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_corrected <- sum(kbet_corrected <= 0.05) / length(kbet_corrected)
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
 
   correct_neighbours_cor <- vector(
     mode = "numeric",
@@ -799,7 +804,8 @@ assess_harmony_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_original <- sum(kbet_original <= 0.05) / length(kbet_original)
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
 
   object = harmony_sc(
     object = object,
@@ -822,7 +828,8 @@ assess_harmony_impact <- function(object) {
     batch_vector = as.integer(batch_effects)
   )
 
-  kbet_score_corrected <- sum(kbet_corrected <= 0.05) / length(kbet_corrected)
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
 
   correct_neighbours_cor <- vector(
     mode = "numeric",

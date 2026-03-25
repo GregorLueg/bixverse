@@ -20,3 +20,4 @@ A list of two items
 \description{
 Create sparse dgRMatrix matrices for raw and norm counts
 }
+\keyword{internal}

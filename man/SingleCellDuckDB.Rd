@@ -19,6 +19,7 @@ Invisible self and populates the internal obs table.
 This class wraps up the DB connection and methods to interact with the
 observation/cell metadata and the feature/gene metadata.
 }
+\keyword{internal}
 \section{Super class}{
 \code{\link[bixverse:SingleCellDuckDBBase]{bixverse::SingleCellDuckDBBase}} -> \code{SingleCellDuckDB}
 }
@@ -43,12 +44,14 @@ observation/cell metadata and the feature/gene metadata.
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="add_data_var"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-add_data_var'><code>bixverse::SingleCellDuckDBBase$add_data_var()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="filter_var_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-filter_var_table'><code>bixverse::SingleCellDuckDBBase$filter_var_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_cells_to_keep'><code>bixverse::SingleCellDuckDBBase$get_cells_to_keep()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_cols"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_cols'><code>bixverse::SingleCellDuckDBBase$get_obs_cols()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_index_map'><code>bixverse::SingleCellDuckDBBase$get_obs_index_map()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_obs_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_obs_table'><code>bixverse::SingleCellDuckDBBase$get_obs_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_var_index_map"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_var_index_map'><code>bixverse::SingleCellDuckDBBase$get_var_index_map()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="get_vars_table"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-get_vars_table'><code>bixverse::SingleCellDuckDBBase$get_vars_table()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="initialize"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-initialize'><code>bixverse::SingleCellDuckDBBase$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="join_data_obs"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-join_data_obs'><code>bixverse::SingleCellDuckDBBase$join_data_obs()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="rename_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-rename_column'><code>bixverse::SingleCellDuckDBBase$rename_column()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_cells_to_keep"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_cells_to_keep'><code>bixverse::SingleCellDuckDBBase$set_cells_to_keep()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="bixverse" data-topic="SingleCellDuckDBBase" data-id="set_to_keep_column"><a href='../../bixverse/html/SingleCellDuckDBBase.html#method-SingleCellDuckDBBase-set_to_keep_column'><code>bixverse::SingleCellDuckDBBase$set_to_keep_column()</code></a></span></li>
 </ul>

@@ -15,3 +15,4 @@ The chosen option
 \description{
 Helper function for user option selection
 }
+\keyword{internal}

@@ -18,3 +18,4 @@ Returns the distance object
 \description{
 Create distance object from a vector
 }
+\keyword{internal}

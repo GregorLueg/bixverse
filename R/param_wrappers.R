@@ -752,7 +752,9 @@ params_sc_hvg <- function(
 
 #' Default parameters for Harmony batch correction
 #'
-#' @param k Integer. Number of clusters for k-means clustering.
+#' @param k Optional integer. Number of clusters for k-means clustering. If
+#' not provided, it will be automatically determined as
+#' `min(round(N / 30), 200)`.
 #' @param sigma Numeric vector. Per-cluster diversity weights. Either a single
 #' value (broadcast to all clusters) or a vector of length k.
 #' @param theta Numeric vector. Per-variable diversity penalties. Either a
@@ -777,7 +779,7 @@ params_sc_hvg <- function(
 #'
 #' @export
 params_sc_harmony <- function(
-  k = 10L,
+  k = NULL,
   sigma = 0.1,
   theta = 2.0,
   lambda = 1.0,
@@ -789,7 +791,7 @@ params_sc_harmony <- function(
   window_size = 2L
 ) {
   # checks
-  checkmate::qassert(k, "I1[1,)")
+  checkmate::qassert(k, c("I1[1,)", "0"))
   checkmate::qassert(sigma, "N+[0,)")
   checkmate::qassert(theta, "N+[0,)")
   checkmate::qassert(lambda, "N+[0,)")

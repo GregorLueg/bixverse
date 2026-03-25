@@ -600,6 +600,8 @@ S7::method(calculate_pca_bulk_dge, BulkDge) <- function(
 #' @returns A data.table with two columns
 #'
 #' @import data.table
+#'
+#' @keywords internal
 check_pca_grp_differences <- function(pc1, pc2, grps) {
   # Globals
   lm <- anova <- NULL

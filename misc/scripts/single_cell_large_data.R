@@ -9,13 +9,20 @@ path_h5 <- path.expand(
   "~/Downloads/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
 )
 
-sce <- single_cell_exp(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
+meta_data <- read_h5ad_metadata(path_h5)
+
+rm(meta_data)
+
+meta <- get_h5ad_dimensions(f_path)
+
+
+sce <- SingleCells(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
 
 # sce <- stream_h5ad(object = sce, h5_path = path_h5)
 
 sce <- load_existing(object = sce)
 
-dim(sce)
+sce <- set_cells_to_keep(sce, get_cell_names(sce))
 
 pryr::object_size(sce)
 
@@ -31,17 +38,25 @@ tictoc::tic()
 sce[, 1:10, return_format = "gene"][1:5, 1:5]
 tictoc::toc()
 
+tictoc::tic()
 sce <- find_hvg_sc(sce, streaming = TRUE)
+tictoc::toc()
 
-sce <- calculate_pca_sc(sce, no_pcs = 30L)
+tictoc::tic()
+sce <- calculate_pca_sc(sce, no_pcs = 32L, sparse_svd = FALSE)
+tictoc::toc()
 
 pryr::object_size(sce)
 
 sce <- find_neighbours_sc(
   object = sce,
   no_embd_to_use = 16L,
-  neighbours_params = params_sc_neighbours(knn = list(knn_method = "hnsw"))
+  neighbours_params = params_sc_neighbours(knn = list(knn_method = "nndescent"))
 )
+
+pca_test <- get_pca_factors(sce)
+
+qs2::qs_save(pca_test, "~/Desktop/pca_data.qs2")
 
 pryr::object_size(sce)
 

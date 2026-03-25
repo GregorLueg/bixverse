@@ -7,7 +7,7 @@
 bbknn_sc(
   object,
   batch_column,
-  no_neighbours_to_keep = 15L,
+  no_neighbours_to_keep = 5L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   bbknn_params = params_sc_bbknn(),
@@ -24,7 +24,7 @@ obs data of the class.}
 \item{no_neighbours_to_keep}{Integer. Maximum number of neighbours to keep
 from the BBKNN algorithm. Due to generating neighbours for each batch, there
 might be a large number of generated neighbours. This will only keep the top
-\code{no_neighbours_to_keep} neighbours.}
+\code{no_neighbours_to_keep} neighbours. Defaults to \code{5L}.}
 
 \item{embd_to_use}{String. The embedding to use. Atm, the only option is
 \code{"pca"}.}

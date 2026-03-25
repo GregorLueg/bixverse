@@ -5,7 +5,7 @@
 \title{Default parameters for Harmony batch correction}
 \usage{
 params_sc_harmony(
-  k = 10L,
+  k = NULL,
   sigma = 0.1,
   theta = 2,
   lambda = 1,
@@ -18,7 +18,9 @@ params_sc_harmony(
 )
 }
 \arguments{
-\item{k}{Integer. Number of clusters for k-means clustering.}
+\item{k}{Optional integer. Number of clusters for k-means clustering. If
+not provided, it will be automatically determined as
+\code{min(round(N / 30), 200)}.}
 
 \item{sigma}{Numeric vector. Per-cluster diversity weights. Either a single
 value (broadcast to all clusters) or a vector of length k.}

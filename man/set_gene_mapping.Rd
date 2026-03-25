@@ -20,3 +20,4 @@ Set gene mapping for ScMap object
 
 Set the gene mapping for a \code{SingleCells} class.
 }
+\keyword{internal}

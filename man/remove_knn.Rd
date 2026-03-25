@@ -18,3 +18,4 @@ Remove the KNN data
 
 Remove the KNN matrix from a \code{SingleCells} class.
 }
+\keyword{internal}

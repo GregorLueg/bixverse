@@ -20,3 +20,4 @@ Set/add PCA singular values
 
 Set the PCA singular values for a \code{SingleCells} class.
 }
+\keyword{internal}

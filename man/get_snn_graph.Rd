@@ -13,6 +13,9 @@ get_snn_graph(x)
 \arguments{
 \item{x}{An object to get the sNN graph from.}
 }
+\value{
+The igraph that has the shared nearest neighbours.
+}
 \description{
 Get the sNN graph
 

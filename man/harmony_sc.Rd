@@ -14,21 +14,26 @@ harmony_sc(
 )
 }
 \arguments{
-\item{object}{...}
+\item{object}{\code{SingleCells} class.}
 
-\item{batch_column}{...}
+\item{batch_column}{String. Column name in the object containing the primary
+batch labels.}
 
-\item{additional_batch_columns}{...}
+\item{additional_batch_columns}{Optional character vector. Additional batch
+columns to regress out. If \code{NULL}, only the primary batch column is used.}
 
-\item{harmony_params}{...}
+\item{harmony_params}{List. Output of \code{\link[=params_sc_harmony]{params_sc_harmony()}}.}
 
-\item{seed}{...}
+\item{seed}{Integer. For reproducibility.}
 
-\item{.verbose}{...}
+\item{.verbose}{Boolean. Controls verbosity.}
 }
 \value{
-...
+The object with a \code{"harmony"} embedding added. If no PCA embeddings
+are found, returns the object unchanged with a warning.
 }
 \description{
-A version of Harmony by Korsunsky et al., implemented in Rust.
+A version of Harmony by Korsunsky et al., implemented in Rust. Performs
+batch correction on PCA embeddings and stores the result as a \code{"harmony"}
+embedding in the object.
 }

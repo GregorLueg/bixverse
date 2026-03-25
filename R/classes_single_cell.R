@@ -15,6 +15,8 @@
 #' @return Generates an empty version of the `ScMap` class.
 #'
 #' @export
+#'
+#' @keywords internal
 new_sc_mapper <- function() {
   sc_mapper <- list(
     gene_mapping = NULL,
@@ -39,13 +41,15 @@ new_sc_mapper <- function() {
 #' @return Generates an empty version of the `ScCache` class.
 #'
 #' @export
+#'
+#' @keywords internal
 new_sc_cache <- function() {
   sc_cache <- list(
     pca_factors = NULL,
     pca_loadings = NULL,
     pca_singular_vals = NULL,
     other_embeddings = list(),
-    knn_matrix = NULL,
+    knn = NULL,
     snn_graph = NULL
   )
 
@@ -66,6 +70,8 @@ new_sc_cache <- function() {
 #' @param gene_map Named integer indicating indices and names of the genes
 #'
 #' @export
+#'
+#' @keywords internal
 set_gene_mapping <- function(x, gene_map) {
   UseMethod("set_gene_mapping")
 }
@@ -76,6 +82,8 @@ set_gene_mapping <- function(x, gene_map) {
 #' @param cell_map Named integer indicating indices and names of the cells
 #'
 #' @export
+#'
+#' @keywords internal
 set_cell_mapping <- function(x, cell_map) {
   UseMethod("set_cell_mapping")
 }
@@ -87,6 +95,8 @@ set_cell_mapping <- function(x, cell_map) {
 #' to keep in downstream analysis.
 #'
 #' @export
+#'
+#' @keywords internal
 set_cells_to_keep <- function(x, cells_to_keep) {
   UseMethod("set_cells_to_keep")
 }
@@ -98,6 +108,8 @@ set_cells_to_keep <- function(x, cells_to_keep) {
 #' genes.
 #'
 #' @export
+#'
+#' @keywords internal
 set_hvg <- function(x, hvg) {
   UseMethod("set_hvg")
 }
@@ -110,6 +122,8 @@ set_hvg <- function(x, hvg) {
 #' @param pca_factor Numerical matrix. The matrix with the PCA factors.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_factors <- function(x, pca_factor) {
   UseMethod("set_pca_factors")
 }
@@ -120,6 +134,8 @@ set_pca_factors <- function(x, pca_factor) {
 #' @param pca_loading Numerical matrix. The Matrix with the PCA loadings.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_loadings <- function(x, pca_loading) {
   UseMethod("set_pca_loadings")
 }
@@ -130,6 +146,8 @@ set_pca_loadings <- function(x, pca_loading) {
 #' @param singular_vals Numerical vector. The singular values.
 #'
 #' @export
+#'
+#' @keywords internal
 set_pca_singular_vals <- function(x, singular_vals) {
   UseMethod("set_pca_singular_vals")
 }
@@ -141,6 +159,8 @@ set_pca_singular_vals <- function(x, singular_vals) {
 #' @param name String. Name of the embedding.
 #'
 #' @export
+#'
+#' @keywords internal
 set_embedding <- function(x, embd, name) {
   UseMethod("set_embedding")
 }
@@ -148,10 +168,12 @@ set_embedding <- function(x, embd, name) {
 #' Set/add KNN
 #'
 #' @param x An object to add the KNN data to
-#' @param knn_mat Numerical matrix. The matrix with the KNN data
+#' @param knn `SingleCellNearestNeighbour` class to add to the classes.
 #'
 #' @export
-set_knn <- function(x, knn_mat) {
+#'
+#' @keywords internal
+set_knn <- function(x, knn) {
   UseMethod("set_knn")
 }
 
@@ -161,6 +183,8 @@ set_knn <- function(x, knn_mat) {
 #' @param snn_graph Igraph. The sNN graph for subsequent clustering.
 #'
 #' @export
+#'
+#' @keywords internal
 set_snn_graph <- function(x, snn_graph) {
   UseMethod("set_snn_graph")
 }
@@ -170,6 +194,8 @@ set_snn_graph <- function(x, snn_graph) {
 #' @param x An object from which to remove the kNN data
 #'
 #' @export
+#'
+#' @keywords internal
 remove_knn <- function(x) {
   UseMethod("remove_knn")
 }
@@ -179,6 +205,8 @@ remove_knn <- function(x) {
 #' @param x An object from which to remove the sNN graph
 #'
 #' @export
+#'
+#' @keywords internal
 remove_snn_graph <- function(x) {
   UseMethod("remove_knn")
 }
@@ -313,12 +341,12 @@ set_embedding.ScCache <- function(x, embd, name) {
 #' @rdname set_knn
 #'
 #' @export
-set_knn.ScCache <- function(x, knn_mat) {
+set_knn.ScCache <- function(x, knn) {
   # checks
   checkmate::assertClass(x, "ScCache")
-  checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
 
-  x[["knn_matrix"]] <- knn_mat
+  x[["knn"]] <- knn
 
   return(x)
 }
@@ -343,7 +371,7 @@ remove_knn.ScCache <- function(x) {
   # checks
   checkmate::assertClass(x, "ScCache")
 
-  x[["knn_matrix"]] <- NULL
+  x[["knn"]] <- NULL
 
   return(x)
 }
@@ -446,6 +474,8 @@ get_gene_names_from_idx <- function(x, gene_idx, rust_based = TRUE) {
 #'
 #' @param x An object to get PCA factors from.
 #'
+#' @returns The PCA factors from the object (if found).
+#'
 #' @export
 get_pca_factors <- function(x) {
   UseMethod("get_pca_factors")
@@ -455,6 +485,8 @@ get_pca_factors <- function(x) {
 #'
 #' @param x An object to get PCA loadings from.
 #'
+#' @returns The PCA feature loadings from the object (if found).
+#'
 #' @export
 get_pca_loadings <- function(x) {
   UseMethod("get_pca_loadings")
@@ -463,6 +495,8 @@ get_pca_loadings <- function(x) {
 #' Get the PCA singular values
 #'
 #' @param x An object to get PCA singular values from.
+#'
+#' @returns The PCA singular values from the object (if found).
 #'
 #' @export
 get_pca_singular_val <- function(x) {
@@ -479,6 +513,8 @@ get_pca_singular_val <- function(x) {
 #' @param embd_name String. The name of the embedding to return. The function
 #' will throw an error if the embedding does not exist.
 #'
+#' @returns Get the specified embeddings from the object (if found).
+#'
 #' @export
 get_embedding <- function(x, embd_name) {
   UseMethod("get_embedding")
@@ -491,6 +527,8 @@ get_embedding <- function(x, embd_name) {
 #'
 #' @param x An object to get embedding from
 #'
+#' @return Get the names of the available embeddings.
+#'
 #' @export
 get_available_embeddings <- function(x) {
   UseMethod("get_available_embeddings")
@@ -500,9 +538,22 @@ get_available_embeddings <- function(x) {
 #'
 #' @param x An object to get the sNN graph from.
 #'
+#' @returns The igraph that has the shared nearest neighbours.
+#'
 #' @export
 get_snn_graph <- function(x) {
   UseMethod("get_snn_graph")
+}
+
+#' Get the KNN object
+#'
+#' @param x An object to get the KNN class from.
+#'
+#' @returns The `SingleCellNearestNeighbour` object.
+#'
+#' @export
+get_knn_obj <- function(x) {
+  UseMethod("get_knn_obj")
 }
 
 ### methods --------------------------------------------------------------------
@@ -523,21 +574,30 @@ get_gene_names.ScMap <- function(x) {
 #'
 #' @export
 get_gene_indices.ScMap <- function(x, gene_ids, rust_index) {
-  # checks
   checkmate::assertClass(x, "ScMap")
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
   gene_map <- x$gene_mapping
-  indices <- which(names(gene_map) %in% gene_ids)
-  if (rust_index) {
-    indices <- indices - 1
+  indices <- match(gene_ids, names(gene_map))
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided gene_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
   }
 
   if (length(indices) == 0) {
     stop(
       "The gene indices have length 0. Please double check provided parameters!"
     )
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
   }
 
   return(as.integer(indices))
@@ -547,30 +607,30 @@ get_gene_indices.ScMap <- function(x, gene_ids, rust_index) {
 #'
 #' @export
 get_cell_indices.ScMap <- function(x, cell_ids, rust_index) {
-  # checks
   checkmate::assertClass(x, "ScMap")
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
   cell_map <- x$cell_mapping
-  indices <- which(names(cell_map) %in% cell_ids)
-  if (rust_index) {
-    indices <- indices - 1
-  }
+  indices <- match(cell_ids, names(cell_map))
 
-  missing <- !cell_ids %in% names(cell_map)
-
+  missing <- is.na(indices)
   if (any(missing)) {
     warning(sprintf(
       "With the provided cell_ids a total of %i could not be matched.",
       sum(missing)
     ))
+    indices <- indices[!missing]
   }
 
   if (length(indices) == 0) {
     stop(
       "The cell indices have length 0. Please double check provided parameters!"
     )
+  }
+
+  if (rust_index) {
+    indices <- indices - 1L
   }
 
   return(as.integer(indices))
@@ -710,13 +770,16 @@ get_embedding.ScCache <- function(x, embd_name) {
 #'
 #' @export
 get_available_embeddings.ScCache <- function(x) {
-  # checks
   checkmate::assertClass(x, "ScCache")
 
-  pca_available <- ifelse(!is.null(x[["pca_factors"]]), "pca", NULL)
+  pca_available <- if (!is.null(x[["pca_factors"]])) "pca" else character(0)
   other_embeddings <- names(x[["other_embeddings"]])
 
-  c(pca_available, other_embeddings)
+  res <- c(pca_available, other_embeddings)
+  if (length(res) == 0L) {
+    return("")
+  }
+  res
 }
 
 #' @rdname get_knn_mat
@@ -725,8 +788,34 @@ get_available_embeddings.ScCache <- function(x) {
 get_knn_mat.ScCache <- function(x) {
   # checks
   checkmate::assertClass(x, "ScCache")
+  knn <- x[["knn"]]
+  if (is.null(knn)) {
+    return(NULL)
+  }
+  get_knn_mat(knn)
+}
 
-  return(x[["knn_matrix"]])
+#' @rdname get_knn_dist
+#'
+#' @export
+get_knn_dist.ScCache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+  knn <- x[["knn"]]
+  if (is.null(knn)) {
+    return(NULL)
+  }
+  get_knn_dist(knn)
+}
+
+#' @rdname get_knn_obj
+#'
+#' @export
+get_knn_obj.ScCache <- function(x) {
+  # checks
+  checkmate::assertClass(x, "ScCache")
+
+  x[["knn"]]
 }
 
 #' @rdname get_snn_graph
@@ -826,6 +915,8 @@ SingleCells <- S7::new_class(
 #' @return The DuckDB connector
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_duckdb <- S7::new_generic(
   name = "get_sc_duckdb",
   dispatch_args = "object",
@@ -853,6 +944,8 @@ S7::method(get_sc_duckdb, SingleCells) <- function(object) {
 #' @return The Rust structure
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_rust_ptr <- S7::new_generic(
   name = "get_sc_rust_ptr",
   dispatch_args = "object",
@@ -878,6 +971,8 @@ S7::method(get_sc_rust_ptr, SingleCells) <- function(object) {
 #' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_genes.bin`
+#'
+#' @keywords internal
 get_rust_count_gene_f_path <- S7::new_generic(
   name = "get_rust_count_gene_f_path",
   dispatch_args = "object",
@@ -905,6 +1000,8 @@ S7::method(get_rust_count_gene_f_path, SingleCells) <- function(object) {
 #' @param object `SingleCells` class.
 #'
 #' @return The path to the `counts_cells.bin`
+#'
+#' @keywords internal
 get_rust_count_cell_f_path <- S7::new_generic(
   name = "get_rust_count_cell_f_path",
   dispatch_args = "object",
@@ -1002,6 +1099,8 @@ S7::method(`[[`, SingleCells) <- function(x, i, ...) {
 #' @returns Returns the maps within the class.
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_map <- S7::new_generic(
   name = "get_sc_maps",
   dispatch_args = "object",
@@ -1036,6 +1135,8 @@ S7::method(get_sc_map, SingleCells) <- function(
 #' memory-stored data.
 #'
 #' @export
+#'
+#' @keywords internal
 get_sc_cache <- S7::new_generic(
   name = "get_sc_cache",
   dispatch_args = "object",
@@ -1149,6 +1250,13 @@ S7::method(`[`, SingleCells) <- function(
   if (missing(j)) {
     j <- NULL
   }
+  # transform cell ids and gene ids to indices
+  if (checkmate::qtest(i, "S+")) {
+    i <- get_cell_indices(x = x, cell_ids = i, rust_index = FALSE)
+  }
+  if (checkmate::qtest(j, "S+")) {
+    j <- get_gene_indices(x = x, gene_ids = j, rust_index = FALSE)
+  }
 
   assay <- match.arg(assay)
   return_format <- match.arg(return_format)
@@ -1191,6 +1299,8 @@ S7::method(`[`, SingleCells) <- function(
 #'  \item no_cells - Number of cells.
 #'  \item no_genes - Number of genes.
 #' }
+#'
+#' @keywords internal
 get_counts_from_rust <- function(
   rust_con,
   assay,
@@ -1240,6 +1350,8 @@ get_counts_from_rust <- function(
 #'
 #' @return The sparse matrix in CSR or CSC format, pending the choice in
 #' `return_format`
+#'
+#' @keywords internal
 create_sparse_matrix <- function(count_data, return_format) {
   # checks
   checkmate::assertList(count_data)
@@ -1275,6 +1387,8 @@ create_sparse_matrix <- function(count_data, return_format) {
 #' @param sc_map A `ScMap` class. Contains various mapping information.
 #'
 #' @return The finalised matrix.
+#'
+#' @keywords internal
 finalise_matrix <- function(
   matrix,
   return_format,
@@ -1326,7 +1440,7 @@ finalise_matrix <- function(
   matrix
 }
 
-#### sc map --------------------------------------------------------------------
+#### ScMap ---------------------------------------------------------------------
 
 #' @name get_cell_names.SingleCells
 #'
@@ -1340,7 +1454,7 @@ S7::method(get_cell_names, SingleCells) <- function(
   filtered = FALSE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   cell_names <- get_cell_names(
@@ -1362,7 +1476,7 @@ S7::method(get_gene_names, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   gene_names <- get_gene_names(
@@ -1383,7 +1497,7 @@ S7::method(get_cells_to_keep, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_cells_to_keep(
@@ -1411,7 +1525,7 @@ S7::method(get_gene_indices, SingleCells) <- function(
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1439,7 +1553,7 @@ S7::method(get_cell_indices, SingleCells) <- function(
   rust_index
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cell_ids, "S+")
   checkmate::qassert(rust_index, "B1")
 
@@ -1464,7 +1578,7 @@ S7::method(get_hvg, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_hvg(
@@ -1487,7 +1601,7 @@ S7::method(get_gene_names_from_idx, SingleCells) <- function(
   rust_based = TRUE
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_idx, "I+")
   checkmate::qassert(rust_based, "B1")
 
@@ -1514,7 +1628,7 @@ S7::method(get_pca_factors, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_factors(
@@ -1542,7 +1656,7 @@ S7::method(get_pca_loadings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_loadings(
@@ -1566,7 +1680,7 @@ S7::method(get_pca_singular_val, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_pca_singular_val(
@@ -1588,7 +1702,7 @@ S7::method(get_embedding, SingleCells) <- function(
   embd_name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(embd_name, "S1")
 
   # forward to S3
@@ -1613,7 +1727,7 @@ S7::method(get_available_embeddings, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_available_embeddings(
@@ -1634,10 +1748,52 @@ S7::method(get_knn_mat, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_knn_mat(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_dist.SingleCells
+#'
+#' @title Get the KNN distances from a `SingleCells`.
+#'
+#' @rdname get_knn_dist
+#'
+#' @method get_knn_dist SingleCells
+S7::method(get_knn_dist, SingleCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_knn_dist(
+    x = S7::prop(x, "sc_cache")
+  )
+
+  return(res)
+}
+
+#' @name get_knn_obj.SingleCells
+#'
+#' @title Get the KNN object from a `SingleCells`.
+#'
+#' @rdname get_knn_obj
+#'
+#' @method get_knn_obj SingleCells
+S7::method(get_knn_obj, SingleCells) <- function(
+  x
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+
+  # forward to S3
+  res <- get_knn_obj(
     x = S7::prop(x, "sc_cache")
   )
 
@@ -1655,7 +1811,7 @@ S7::method(get_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # forward to S3
   res <- get_snn_graph(
@@ -1665,9 +1821,68 @@ S7::method(get_snn_graph, SingleCells) <- function(
   return(res)
 }
 
+#### available variables -------------------------------------------------------
+
+#' @method get_sc_available_features SingleCells
+#'
+#' @export
+S7::method(get_sc_available_features, SingleCells) <- function(
+  object
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+
+  # get the duckdb and obs features
+  duckdb_con <- get_sc_duckdb(object)
+  obs_cols <- duckdb_con$get_obs_cols()
+  obs_features <- data.table::data.table(
+    feature_name = obs_cols,
+    origin = "obs"
+  )
+
+  feature_cols <- get_gene_names(object)
+  counts_features <- data.table::data.table(
+    feature_name = feature_cols,
+    origin = "counts"
+  )
+
+  final_features <- data.table::rbindlist(list(obs_features, counts_features))
+
+  return(final_features)
+}
+
 ### setters --------------------------------------------------------------------
 
 #### obs -----------------------------------------------------------------------
+
+#' @method setnames_sc SingleCells
+#'
+#' @export
+S7::method(setnames_sc, SingleCells) <- function(
+  object,
+  table = c("obs", "var"),
+  old,
+  new
+) {
+  table <- match.arg(table)
+
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertChoice(table, c("obs", "var"))
+  checkmate::qassert(old, "S+")
+  checkmate::qassert(new, "S+")
+  checkmate::assertTRUE(length(old) == length(new))
+
+  duckdb_con <- get_sc_duckdb(object)
+
+  for (i in seq_along(old)) {
+    old_i <- old[[i]]
+    new_i <- new[[i]]
+    duckdb_con$rename_column(table = table, old = old_i, new = new_i)
+  }
+
+  invisible(object)
+}
 
 #' Add a new column to the obs table
 #'
@@ -1766,7 +1981,7 @@ S7::method(set_sc_new_obs_col_multiple, SingleCells) <- function(
 #'
 #' @export
 S7::method(`[[<-`, SingleCells) <- function(x, i, ..., value) {
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(i, "S+")
 
   if (length(i) == 1) {
@@ -1837,7 +2052,7 @@ S7::method(set_gene_mapping, SingleCells) <- function(
   gene_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(gene_map, "N+")
   checkmate::assertNamed(gene_map, "named")
 
@@ -1862,7 +2077,7 @@ S7::method(set_cell_mapping, SingleCells) <- function(
   cell_map
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cell_map, "N+")
   checkmate::assertNamed(cell_map, "named")
 
@@ -1887,7 +2102,7 @@ S7::method(set_cells_to_keep, SingleCells) <- function(
   cells_to_keep
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(cells_to_keep, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -1918,7 +2133,7 @@ S7::method(set_hvg, SingleCells) <- function(
   hvg
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(hvg, c("I+", "S+"))
 
   # add the data using the S3 method
@@ -1944,7 +2159,7 @@ S7::method(set_pca_factors, SingleCells) <- function(
   pca_factor
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(pca_factor, mode = "numeric")
 
   # add the data using the S3 method
@@ -1968,7 +2183,7 @@ S7::method(set_pca_loadings, SingleCells) <- function(
   pca_loading
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(pca_loading, mode = "numeric")
 
   # add the data using the S3 method
@@ -1992,7 +2207,7 @@ S7::method(set_pca_singular_vals, SingleCells) <- function(
   singular_vals
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::qassert(singular_vals, "N+")
 
   # add the data using the S3 method
@@ -2017,7 +2232,7 @@ S7::method(set_embedding, SingleCells) <- function(
   name
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertMatrix(embd, mode = "numeric")
   checkmate::qassert(name, "S1")
 
@@ -2040,16 +2255,16 @@ S7::method(set_embedding, SingleCells) <- function(
 #' @method set_knn SingleCells
 S7::method(set_knn, SingleCells) <- function(
   x,
-  knn_mat
+  knn
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
-  checkmate::assertMatrix(knn_mat, mode = "numeric")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::assertClass(knn, "SingleCellNearestNeighbour")
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- set_knn(
     x = S7::prop(x, "sc_cache"),
-    knn_mat = knn_mat
+    knn = knn
   )
 
   return(x)
@@ -2068,7 +2283,7 @@ S7::method(set_snn_graph, SingleCells) <- function(
   snn_graph
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
   checkmate::assertClass(snn_graph, "igraph")
 
   # add the data using the S3 method
@@ -2091,7 +2306,7 @@ S7::method(remove_knn, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_knn(
@@ -2113,7 +2328,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
   x
 ) {
   # checks
-  checkmate::assertClass(x, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   # add the data using the S3 method
   S7::prop(x, "sc_cache") <- remove_snn_graph(
@@ -2137,16 +2352,19 @@ S7::method(remove_snn_graph, SingleCells) <- function(
 #' @returns Invisibly returns `x`.
 #'
 #' @method print SingleCells
+#'
+#' @keywords internal
 S7::method(print, SingleCells) <- function(x, ...) {
   checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
 
   dims <- S7::prop(x, "dims")
+  no_cells_to_keep <- length(get_cells_to_keep(x))
   sc_map <- S7::prop(x, "sc_map")
   sc_cache <- S7::prop(x, "sc_cache")
 
   hvg_calculated <- !is.null(sc_map[["hvg_gene_indices"]])
   pca_calculated <- !is.null(sc_cache[["pca_factors"]])
-  knn_generated <- !is.null(sc_cache[["knn_matrix"]])
+  knn_generated <- !is.null(sc_cache[["knn"]])
   snn_generated <- !is.null(sc_cache[["snn_graph"]])
 
   other_embeddings <- names(sc_cache[["other_embeddings"]])
@@ -2158,7 +2376,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 
   cat(
     "Single cell experiment (Single Cells).\n",
-    sprintf("  No cells: %i\n", dims[1]),
+    sprintf("  No cells (original): %i\n", dims[1]),
+    sprintf("   To keep n: %i\n", no_cells_to_keep),
     sprintf("  No genes: %i\n", dims[2]),
     sprintf("  HVG calculated: %s\n", hvg_calculated),
     sprintf("  PCA calculated: %s\n", pca_calculated),
@@ -2182,6 +2401,8 @@ S7::method(print, SingleCells) <- function(x, ...) {
 #' @returns An integer vector of length 2 with the number of cells and genes.
 #'
 #' @method dim SingleCells
+#'
+#' @keywords internal
 S7::method(dim, SingleCells) <- function(x) {
   S7::prop(x, "dims")
 }

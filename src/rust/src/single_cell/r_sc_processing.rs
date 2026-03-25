@@ -754,16 +754,7 @@ fn rs_sc_knn(
 ///
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
-/// nearest neighbours. You have several options to get the approximate nearest
-/// neighbours:
-///
-/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
-///   an index. Good compromise of index generation, querying speed.
-/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-///   hood. The index generation takes more long, but higher recall and ideal
-///   for very large datasets due to subdued memory pressure.
-/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
-///   that is ideal for small, ephemeral kNN graphs.
+/// nearest neighbours.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
@@ -820,8 +811,11 @@ fn rs_sc_knn_w_dist(embd: RMatrix<f64>, knn_params: List, verbose: bool, seed: u
 /// the weight to 0.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A integer matrix of N x k with N being the number of cells and k the
-/// number of neighbours.
+/// @return A list with the following items:
+/// \itemize{
+///  \item edges - sNN edges as edge pairs.
+///  \item weights - sNN weights of the pairs above.
+/// }
 ///
 /// @export
 #[extendr]
@@ -833,11 +827,7 @@ fn rs_sc_snn(
     verbose: bool,
 ) -> extendr_api::Result<List> {
     let n_neighbours = knn_mat.ncols();
-    let data = knn_mat
-        .data()
-        .iter()
-        .map(|x| *x as usize)
-        .collect::<Vec<usize>>();
+    let data = knn_mat.data().r_int_convert();
 
     let snn_method = get_snn_similiarity_method(&snn_method)
         .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
@@ -863,7 +853,7 @@ fn rs_sc_snn(
     };
 
     Ok(list!(
-        edges = snn_data.0.iter().map(|x| *x as i32).collect::<Vec<i32>>(),
+        edges = snn_data.0.r_int_convert(),
         weights = snn_data.1
     ))
 }

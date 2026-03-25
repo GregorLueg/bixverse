@@ -25,3 +25,4 @@ Stores the TF-gene importance matrix and associated metadata from a SCENIC
 GRN inference run. Intended as input to downstream regulon generation
 functions.
 }
+\keyword{internal}

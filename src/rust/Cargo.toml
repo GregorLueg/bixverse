@@ -22,7 +22,7 @@ debug = false
 [profile.release]
 opt-level = 3
 lto = "thin"
-codegen-units = 16
+codegen-units = 4
 strip = true
 
 [dependencies]
@@ -34,6 +34,4 @@ rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
-bixverse-rs = { version = "0.1.5", features = [
-    "single-cell",
-] }
+bixverse-rs = { version = "0.1.6", features = ["single-cell",] }

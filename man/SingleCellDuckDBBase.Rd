@@ -8,6 +8,7 @@ This is the base class for the single cell experiment DuckDB connection,
 containing standard functions such as retrievel of tables, connection checks,
 etc.
 }
+\keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -17,12 +18,14 @@ etc.
 \item \href{#method-SingleCellDuckDBBase-get_obs_index_map}{\code{SingleCellDuckDBBase$get_obs_index_map()}}
 \item \href{#method-SingleCellDuckDBBase-get_var_index_map}{\code{SingleCellDuckDBBase$get_var_index_map()}}
 \item \href{#method-SingleCellDuckDBBase-get_cells_to_keep}{\code{SingleCellDuckDBBase$get_cells_to_keep()}}
+\item \href{#method-SingleCellDuckDBBase-get_obs_cols}{\code{SingleCellDuckDBBase$get_obs_cols()}}
 \item \href{#method-SingleCellDuckDBBase-set_cells_to_keep}{\code{SingleCellDuckDBBase$set_cells_to_keep()}}
 \item \href{#method-SingleCellDuckDBBase-filter_var_table}{\code{SingleCellDuckDBBase$filter_var_table()}}
 \item \href{#method-SingleCellDuckDBBase-add_data_obs}{\code{SingleCellDuckDBBase$add_data_obs()}}
 \item \href{#method-SingleCellDuckDBBase-join_data_obs}{\code{SingleCellDuckDBBase$join_data_obs()}}
 \item \href{#method-SingleCellDuckDBBase-set_to_keep_column}{\code{SingleCellDuckDBBase$set_to_keep_column()}}
 \item \href{#method-SingleCellDuckDBBase-add_data_var}{\code{SingleCellDuckDBBase$add_data_var()}}
+\item \href{#method-SingleCellDuckDBBase-rename_column}{\code{SingleCellDuckDBBase$rename_column()}}
 \item \href{#method-SingleCellDuckDBBase-clone}{\code{SingleCellDuckDBBase$clone()}}
 }
 }
@@ -137,6 +140,19 @@ Returns the indices of the cells that have to_keep = TRUE in the DB.
 
 \subsection{Returns}{
 The index positions (1-index) of the cells to keep.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-get_obs_cols"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-get_obs_cols}{}}}
+\subsection{Method \code{get_obs_cols()}}{
+Returns the available column names in the obs table.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDBBase$get_obs_cols()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector of column names.
 Filter the obs table and reset the cell idx
 }
 }
@@ -251,6 +267,30 @@ to be the same as the original in the var table.}
 \subsection{Returns}{
 Invisible self while adding the new columns to the var table
 in the DuckDB.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SingleCellDuckDBBase-rename_column"></a>}}
+\if{latex}{\out{\hypertarget{method-SingleCellDuckDBBase-rename_column}{}}}
+\subsection{Method \code{rename_column()}}{
+Rename a column in the obs or var table.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SingleCellDuckDBBase$rename_column(table = c("obs", "var"), old, new)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{table}}{String. Either "obs" or "var".}
+
+\item{\code{old}}{String. The current column name.}
+
+\item{\code{new}}{String. The desired new column name.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisible self.
 }
 }
 \if{html}{\out{<hr>}}

@@ -14,6 +14,8 @@
 #' @export
 #'
 #' @import data.table
+#'
+#' @keywords internal
 SingleCellDuckDBBase <- R6::R6Class(
   # class name
   classname = "SingleCellDuckDBBase",
@@ -226,6 +228,26 @@ SingleCellDuckDBBase <- R6::R6Class(
       ))
 
       return(as.integer(data$cell_idx))
+    },
+
+    #' @description
+    #' Returns the available column names in the obs table.
+    #'
+    #' @return A character vector of column names.
+    get_obs_cols = function() {
+      private$check_obs_exists()
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      DBI::dbGetQuery(
+        con,
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'obs'"
+      )$column_name
     },
 
     #####################
@@ -501,6 +523,61 @@ SingleCellDuckDBBase <- R6::R6Class(
       )
 
       invisible(self)
+    },
+
+    ##########
+    # Rename #
+    ##########
+
+    #' @description
+    #' Rename a column in the obs or var table.
+    #'
+    #' @param table String. Either "obs" or "var".
+    #' @param old String. The current column name.
+    #' @param new String. The desired new column name.
+    #'
+    #' @return Invisible self.
+    rename_column = function(table = c("obs", "var"), old, new) {
+      table <- match.arg(table)
+      checkmate::qassert(old, "S1")
+      checkmate::qassert(new, "S1")
+
+      if (table == "obs") {
+        private$check_obs_exists()
+      } else {
+        private$check_var_exists()
+      }
+
+      con <- private$connect_db()
+      on.exit({
+        if (exists("con") && !is.null(con)) {
+          tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+        }
+      })
+
+      existing <- DBI::dbGetQuery(
+        con,
+        sprintf(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = '%s'",
+          table
+        )
+      )$column_name
+
+      if (!old %in% existing) {
+        warning(sprintf(
+          "Column '%s' not found in table '%s'. No renaming done.",
+          old,
+          table
+        ))
+        return(invisible(self))
+      }
+
+      DBI::dbExecute(
+        con,
+        sprintf('ALTER TABLE %s RENAME COLUMN "%s" TO "%s"', table, old, new)
+      )
+
+      invisible(self)
     }
   ),
   private = list(
@@ -587,6 +664,8 @@ SingleCellDuckDBBase <- R6::R6Class(
 #' @export
 #'
 #' @import data.table
+#'
+#' @keywords internal
 SingleCellDuckDB <- R6::R6Class(
   # class name
   classname = "SingleCellDuckDB",
@@ -614,67 +693,97 @@ SingleCellDuckDB <- R6::R6Class(
       filter = NULL,
       cell_id_col = NULL
     ) {
-      # checks
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
       checkmate::qassert(cell_id_col, c("S1", "0"))
 
-      h5_content <- rhdf5::h5ls(
-        h5_path
-      ) %>%
-        data.table::setDT()
+      h5_content <- rhdf5::h5ls(h5_path) |> data.table::setDT()
 
-      obs <- h5_content[
-        group == "/obs" & otype == "H5I_DATASET",
-        setNames((paste(group, name, sep = "/")), name)
-      ]
-
-      if (length(obs) == 0) {
-        stop(
-          "No obs data could be found in the h5 file. Nothing was loaded."
-        )
-      }
-
-      con <- private$connect_db()
-
-      # close everything no matter what happens
       on.exit(
-        {
-          if (exists("con") && !is.null(con)) {
-            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
-          }
-          tryCatch(rhdf5::h5closeAll(), error = function(e) invisible())
-        },
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
         add = TRUE
       )
 
-      ## adds `obs_` prefix which needs to be removed
-      names(obs) <- to_snake_case(obs)
-      names(obs) <- gsub("^obs_", "", names(obs))
+      new_cat_names <- h5_content[
+        group == "/obs/__categories" & otype == "H5I_DATASET",
+        name
+      ]
+      has_new_cats <- length(new_cat_names) > 0L
 
-      obs_col_names <- names(obs)
-      obs_values <- vector(mode = "list", length = length(obs))
+      obs_groups <- h5_content[
+        group == "/obs" & otype == "H5I_GROUP" & name != "__categories",
+        name
+      ]
 
-      for (i in seq_along(obs)) {
-        obs_values[[i]] <- rhdf5::h5read(h5_path, obs[[i]])
+      idx_info <- .resolve_h5_index(h5_path, "/obs", h5_content)
+
+      skip <- c("_index", idx_info$idx_col)
+      direct <- h5_content[
+        group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
+        name
+      ]
+
+      if (
+        length(direct) == 0L &&
+          length(obs_groups) == 0L &&
+          !has_new_cats &&
+          is.null(idx_info$idx)
+      ) {
+        stop("No obs data could be found in the h5 file. Nothing was loaded.")
       }
 
-      obs_dt <- data.table::as.data.table(obs_values)
-      data.table::setnames(obs_dt, obs_col_names)
+      cols <- list()
 
-      # set the cell id column
-      if (!is.null(cell_id_col)) {
-        col_idx <- which(colnames(obs_dt) == cell_id_col)
-        colnames(obs_dt)[col_idx] <- "cell_id"
+      for (g in obs_groups) {
+        sub_path <- paste0("/obs/", g)
+        sub_entries <- h5_content[
+          group == sub_path & otype == "H5I_DATASET",
+          name
+        ]
+        if (all(c("categories", "codes") %in% sub_entries)) {
+          categories <- rhdf5::h5read(h5_path, paste0(sub_path, "/categories"))
+          codes <- rhdf5::h5read(h5_path, paste0(sub_path, "/codes"))
+          codes[codes < 0L] <- NA_integer_
+          cols[[g]] <- factor(categories[codes + 1L], levels = categories)
+        }
+      }
+
+      for (d in direct) {
+        raw <- as.vector(rhdf5::h5read(h5_path, paste0("/obs/", d)))
+        if (has_new_cats && d %in% new_cat_names) {
+          categories <- as.vector(
+            rhdf5::h5read(h5_path, paste0("/obs/__categories/", d))
+          )
+          raw[raw < 0L] <- NA_integer_
+          cols[[d]] <- factor(categories[raw + 1L], levels = categories)
+        } else {
+          cols[[d]] <- raw
+        }
+      }
+
+      obs_dt <- data.table::as.data.table(cols)
+
+      if (!is.null(idx_info$idx)) {
+        obs_dt[, cell_id := idx_info$idx]
+        data.table::setcolorder(
+          obs_dt,
+          c("cell_id", setdiff(names(obs_dt), "cell_id"))
+        )
+      } else if (!is.null(cell_id_col)) {
+        data.table::setnames(obs_dt, cell_id_col, "cell_id")
       } else {
-        colnames(obs_dt)[1] <- "cell_id"
+        data.table::setnames(obs_dt, names(obs_dt)[1L], "cell_id")
+      }
+
+      other_cols <- setdiff(names(obs_dt), "cell_id")
+      if (length(other_cols) > 0L) {
+        data.table::setnames(obs_dt, other_cols, to_snake_case(other_cols))
       }
 
       if (!is.null(filter)) {
         obs_dt <- obs_dt[filter]
       }
 
-      # Add cell_idx and order columns
       obs_dt[, cell_idx := .I]
       data.table::setcolorder(
         obs_dt,
@@ -685,13 +794,17 @@ SingleCellDuckDB <- R6::R6Class(
         )
       )
 
-      # Write once to DuckDB
-      DBI::dbWriteTable(
-        con,
-        "obs",
-        obs_dt,
-        overwrite = TRUE
+      con <- private$connect_db()
+      on.exit(
+        {
+          if (exists("con") && !is.null(con)) {
+            tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
+          }
+        },
+        add = TRUE
       )
+
+      DBI::dbWriteTable(con, "obs", obs_dt, overwrite = TRUE)
 
       invisible(self)
     },
@@ -706,85 +819,115 @@ SingleCellDuckDB <- R6::R6Class(
     #' @return Returns invisible self. As a side effect, it will load in the
     #' obs data from the h5ad file into the DuckDB.
     populate_vars_from_h5 = function(h5_path, filter = NULL) {
-      # checks
       checkmate::assertFileExists(h5_path)
       checkmate::qassert(filter, c("I+", "0"))
 
-      h5_content <- rhdf5::h5ls(
-        h5_path
-      ) %>%
-        data.table::setDT()
+      h5_content <- rhdf5::h5ls(h5_path) |> data.table::setDT()
 
-      var <- h5_content[
-        group == "/var" & otype == "H5I_DATASET",
-        setNames((paste(group, name, sep = "/")), name)
+      on.exit(
+        tryCatch(rhdf5::h5closeAll(), error = function(e) invisible()),
+        add = TRUE
+      )
+
+      new_cat_names <- h5_content[
+        group == "/var/__categories" & otype == "H5I_DATASET",
+        name
+      ]
+      has_new_cats <- length(new_cat_names) > 0L
+
+      var_groups <- h5_content[
+        group == "/var" & otype == "H5I_GROUP" & name != "__categories",
+        name
       ]
 
-      if (length(var) == 0) {
-        stop(
-          "No var data could be found in the h5 file. Nothing was loaded."
-        )
+      idx_info <- .resolve_h5_index(h5_path, "/var", h5_content)
+
+      skip <- c("_index", idx_info$idx_col)
+      direct <- h5_content[
+        group == "/var" & otype == "H5I_DATASET" & !name %in% skip,
+        name
+      ]
+
+      if (
+        length(direct) == 0L &&
+          length(var_groups) == 0L &&
+          !has_new_cats &&
+          is.null(idx_info$idx)
+      ) {
+        stop("No var data could be found in the h5 file. Nothing was loaded.")
       }
 
-      con <- private$connect_db()
+      cols <- list()
 
-      # close everything no matter what happens
+      for (g in var_groups) {
+        sub_path <- paste0("/var/", g)
+        sub_entries <- h5_content[
+          group == sub_path & otype == "H5I_DATASET",
+          name
+        ]
+        if (all(c("categories", "codes") %in% sub_entries)) {
+          categories <- rhdf5::h5read(h5_path, paste0(sub_path, "/categories"))
+          codes <- rhdf5::h5read(h5_path, paste0(sub_path, "/codes"))
+          codes[codes < 0L] <- NA_integer_
+          cols[[g]] <- factor(categories[codes + 1L], levels = categories)
+        }
+      }
+
+      for (d in direct) {
+        raw <- as.vector(rhdf5::h5read(h5_path, paste0("/var/", d)))
+        if (has_new_cats && d %in% new_cat_names) {
+          categories <- as.vector(
+            rhdf5::h5read(h5_path, paste0("/var/__categories/", d))
+          )
+          raw[raw < 0L] <- NA_integer_
+          cols[[d]] <- factor(categories[raw + 1L], levels = categories)
+        } else {
+          cols[[d]] <- raw
+        }
+      }
+
+      var_dt <- data.table::as.data.table(cols)
+
+      if (!is.null(idx_info$idx)) {
+        var_dt[, gene_id := idx_info$idx]
+        data.table::setcolorder(
+          var_dt,
+          c("gene_id", setdiff(names(var_dt), "gene_id"))
+        )
+      } else {
+        data.table::setnames(var_dt, names(var_dt)[1L], "gene_id")
+      }
+
+      other_cols <- setdiff(names(var_dt), "gene_id")
+      if (length(other_cols) > 0L) {
+        data.table::setnames(var_dt, other_cols, to_snake_case(other_cols))
+      }
+
+      if (!is.null(filter)) {
+        var_dt <- var_dt[filter]
+      }
+
+      var_dt[, gene_idx := .I]
+      data.table::setcolorder(
+        var_dt,
+        c(
+          "gene_idx",
+          "gene_id",
+          setdiff(names(var_dt), c("gene_idx", "gene_id"))
+        )
+      )
+
+      con <- private$connect_db()
       on.exit(
         {
           if (exists("con") && !is.null(con)) {
             tryCatch(DBI::dbDisconnect(con), error = function(e) invisible())
           }
-          tryCatch(rhdf5::h5closeAll(), error = function(e) invisible())
         },
         add = TRUE
       )
 
-      names(var) <- to_snake_case(var)
-
-      for (i in seq_along(var)) {
-        col_name <- names(var)[i]
-        col_path <- var[[i]]
-        col_data <- data.table(x = rhdf5::h5read(h5_path, col_path)) %>%
-          `names<-`(col_name)
-        if (!is.null(filter)) {
-          col_data <- col_data[filter]
-        }
-
-        col_data[, gene_idx := .I]
-        setcolorder(col_data, c("gene_idx", col_name))
-
-        if (i == 1) {
-          colnames(col_data) <- c("gene_idx", "gene_id")
-          DBI::dbWriteTable(
-            con,
-            "var",
-            col_data,
-            overwrite = TRUE
-          )
-        } else {
-          DBI::dbWriteTable(
-            con,
-            "temp_col",
-            col_data,
-            overwrite = TRUE
-          )
-
-          DBI::dbExecute(
-            con,
-            sprintf(
-              'CREATE TABLE var_new AS
-              SELECT var.*, temp_col.%s
-              FROM var
-              JOIN temp_col ON var.gene_idx = temp_col.gene_idx
-              ORDER BY var.gene_idx;
-              DROP table var;
-              ALTER TABLE var_new RENAME TO var;
-              DROP TABLE temp_col',
-              col_name
-            )
-          )
-        }
-      }
+      DBI::dbWriteTable(con, "var", var_dt, overwrite = TRUE)
 
       invisible(self)
     },
@@ -808,34 +951,87 @@ SingleCellDuckDB <- R6::R6Class(
 
         h5_content <- rhdf5::h5ls(fi$h5_path) |> data.table::setDT()
 
-        obs_entries <- h5_content[
-          group == "/obs" & otype == "H5I_DATASET",
-          setNames(paste(group, name, sep = "/"), name)
+        new_cat_names <- h5_content[
+          group == "/obs/__categories" & otype == "H5I_DATASET",
+          name
+        ]
+        has_new_cats <- length(new_cat_names) > 0L
+
+        obs_groups <- h5_content[
+          group == "/obs" & otype == "H5I_GROUP" & name != "__categories",
+          name
         ]
 
-        if (length(obs_entries) == 0L) {
+        idx_info <- .resolve_h5_index(fi$h5_path, "/obs", h5_content)
+
+        skip <- c("_index", idx_info$idx_col)
+        direct <- h5_content[
+          group == "/obs" & otype == "H5I_DATASET" & !name %in% skip,
+          name
+        ]
+
+        if (
+          length(direct) == 0L &&
+            length(obs_groups) == 0L &&
+            !has_new_cats &&
+            is.null(idx_info$idx)
+        ) {
           stop(sprintf("No obs data found in %s", fi$h5_path))
         }
 
-        names(obs_entries) <- to_snake_case(obs_entries)
-        names(obs_entries) <- gsub("^obs_", "", names(obs_entries))
+        cols <- list()
 
-        obs_values <- lapply(obs_entries, function(path) {
-          rhdf5::h5read(fi$h5_path, path)
-        })
-        rhdf5::h5closeAll()
-
-        obs_dt <- data.table::as.data.table(obs_values)
-        data.table::setnames(obs_dt, names(obs_entries))
-
-        if (!is.null(cell_id_col)) {
-          col_idx <- which(colnames(obs_dt) == cell_id_col)
-          colnames(obs_dt)[col_idx] <- "cell_id"
-        } else {
-          colnames(obs_dt)[1L] <- "cell_id"
+        for (g in obs_groups) {
+          sub_path <- paste0("/obs/", g)
+          sub_entries <- h5_content[
+            group == sub_path & otype == "H5I_DATASET",
+            name
+          ]
+          if (all(c("categories", "codes") %in% sub_entries)) {
+            categories <- rhdf5::h5read(
+              fi$h5_path,
+              paste0(sub_path, "/categories")
+            )
+            codes <- rhdf5::h5read(fi$h5_path, paste0(sub_path, "/codes"))
+            codes[codes < 0L] <- NA_integer_
+            cols[[g]] <- factor(categories[codes + 1L], levels = categories)
+          }
         }
 
-        # filter to kept cells
+        for (d in direct) {
+          raw <- as.vector(rhdf5::h5read(fi$h5_path, paste0("/obs/", d)))
+          if (has_new_cats && d %in% new_cat_names) {
+            categories <- as.vector(
+              rhdf5::h5read(fi$h5_path, paste0("/obs/__categories/", d))
+            )
+            raw[raw < 0L] <- NA_integer_
+            cols[[d]] <- factor(categories[raw + 1L], levels = categories)
+          } else {
+            cols[[d]] <- raw
+          }
+        }
+
+        rhdf5::h5closeAll()
+
+        obs_dt <- data.table::as.data.table(cols)
+
+        if (!is.null(idx_info$idx)) {
+          obs_dt[, cell_id := idx_info$idx]
+          data.table::setcolorder(
+            obs_dt,
+            c("cell_id", setdiff(names(obs_dt), "cell_id"))
+          )
+        } else if (!is.null(cell_id_col)) {
+          data.table::setnames(obs_dt, cell_id_col, "cell_id")
+        } else {
+          data.table::setnames(obs_dt, names(obs_dt)[1L], "cell_id")
+        }
+
+        other_cols <- setdiff(names(obs_dt), "cell_id")
+        if (length(other_cols) > 0L) {
+          data.table::setnames(obs_dt, other_cols, to_snake_case(other_cols))
+        }
+
         obs_dt <- obs_dt[fi$cell_filter]
         obs_dt[, exp_id := fi$exp_id]
         obs_dt[, cell_id := paste(exp_id, cell_id, sep = "_")]
@@ -843,7 +1039,6 @@ SingleCellDuckDB <- R6::R6Class(
         obs_parts[[i]] <- obs_dt
       }
 
-      # find shared columns (cell_id and exp_id are guaranteed)
       shared_cols <- Reduce(intersect, lapply(obs_parts, names))
       obs_parts <- lapply(obs_parts, function(dt) {
         dt[, .SD, .SDcols = shared_cols]

@@ -1,3 +1,6 @@
+# checkmate extensions for various parameter lists provided to the many methods
+# in this package
+
 # globals ----------------------------------------------------------------------
 
 # Global to reduce repetition
@@ -2526,13 +2529,11 @@ checkScFastmnn <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-
   res <- checkmate::checkNames(
     names(x),
     must.include = c(
-      "sigma",
+      "ndist",
       "cos_norm",
-      "var_adj",
       "no_pcs",
       "random_svd"
     )
@@ -2540,28 +2541,24 @@ checkScFastmnn <- function(x) {
   if (!isTRUE(res)) {
     return(res)
   }
-
   # knn
   knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
   res <- checkKnnParams(knn_params)
   if (!isTRUE(res)) {
     return(res)
   }
-
   # Check integer parameters
   res <- checkmate::qtest(x[["no_pcs"]], "I1[1,)")
   if (!isTRUE(res)) {
     return("no_pcs needs to be an integer >= 1.")
   }
-
   # Check numeric parameters
-  res <- checkmate::qtest(x[["sigma"]], "N1")
+  res <- checkmate::qtest(x[["ndist"]], "N1(0,)")
   if (!isTRUE(res)) {
-    return("sigma needs to be numeric.")
+    return("ndist needs to be a positive numeric.")
   }
-
   # Check logical parameters
-  logical_params <- c("cos_norm", "var_adj", "random_svd")
+  logical_params <- c("cos_norm", "random_svd")
   res <- purrr::map_lgl(logical_params, \(param) {
     checkmate::qtest(x[[param]], "B1")
   })
@@ -2572,7 +2569,6 @@ checkScFastmnn <- function(x) {
       broken_param
     ))
   }
-
   return(TRUE)
 }
 
@@ -2871,7 +2867,7 @@ checkScHarmonyParams <- function(x) {
 
   # Integer rules
   integer_rules <- list(
-    "k" = "I1[1,)",
+    "k" = c("I1[1,)", "0"),
     "max_iter_kmeans" = "I1[1,)",
     "max_iter_harmony" = "I1[1,)",
     "window_size" = "I1[1,)"
@@ -2891,8 +2887,8 @@ checkScHarmonyParams <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Harmony parameters is incorrect:",
-          "k, max_iter_kmeans, max_iter_harmony,",
-          "and window_size must be integers >= 1."
+          "max_iter_kmeans, max_iter_harmony,",
+          "and window_size must be integers >= 1. k must be NULL or an integer."
         ),
         broken_elem
       )

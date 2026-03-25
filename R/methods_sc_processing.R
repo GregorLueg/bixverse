@@ -538,6 +538,18 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
     get_hvg(object)
   }
 
+  # swap to sparse SVD for large data sets
+  n_cells <- length(get_cells_to_keep(object))
+
+  if (n_cells > 500000 & !sparse_svd) {
+    message(paste(
+      "More than 500,000 cells with sparse SVD = FALSE",
+      "Setting sparse SVD to TRUE to avoid high memory pressure."
+    ))
+
+    sparse_svd <- TRUE
+  }
+
   # dense path
   if (!sparse_svd) {
     if (.verbose) {
@@ -680,8 +692,12 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  # get the embedding
-  checkmate::assertTRUE(embd_to_use %in% get_available_embeddings(object))
+  # early return
+  if (!embd_to_use %in% get_available_embeddings(object)) {
+    warning("The desired embedding was not found. Returning class as is.")
+    return(object)
+  }
+  # get embedding
   embd <- get_embedding(x = object, embd_name = embd_to_use)
 
   if (!is.null(no_embd_to_use)) {
@@ -696,11 +712,11 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
     ))
   }
 
-  knn_data <- rs_sc_knn(
-    embd = embd,
-    knn_params = neighbours_params,
-    verbose = .verbose,
-    seed = seed
+  knn_data <- generate_sc_knn(
+    data = embd,
+    neighbours_params = neighbours_params,
+    seed = seed,
+    .verbose = .verbose
   )
 
   object <- set_knn(object, knn_data)
@@ -715,7 +731,7 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   snn_graph_rs <- with(
     neighbours_params,
     rs_sc_snn(
-      knn_data,
+      knn_mat = get_knn_mat(knn_data),
       snn_method = snn_similarity,
       pruning = pruning,
       limited_graph = !full_snn,

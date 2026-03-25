@@ -24,6 +24,146 @@ get_obs_data <- function(x, ...) {
   UseMethod("get_obs_data")
 }
 
+## kNN class -------------------------------------------------------------------
+
+#' Helper function to generate kNN data with distances
+#'
+#' @description
+#' Wrapper class that stores kNN data for subsequent usage in various other
+#' functions, methods and helpers.
+#'
+#' @param knn_data Named list with the following items:
+#' \itemize{
+#'   \item indices - Integer matrix containing the indices of the nearest
+#'   neighbours (0-indexed).
+#'   \item dist - Numerical matrix containing the distances to the nearest
+#'   neighbours.
+#'   \item dist_metric - String. Distance metric used.
+#' }
+#' @param used_cells Character vector. The cells used to generate the kNN graph
+#' with the distances.
+#'
+#' @return Generates the `SingleCellNearestNeighbour` class.
+#'
+#' @export
+new_sc_knn <- function(knn_data, used_cells) {
+  # checks
+  checkmate::assertList(knn_data)
+  checkmate::assertNames(
+    names(knn_data),
+    must.include = c("indices", "dist", "dist_metric")
+  )
+  checkmate::qassert(used_cells, "S+")
+
+  k <- ncol(knn_data$indices)
+  n <- nrow(knn_data$indices)
+
+  sc_knn <- list(
+    indices = knn_data$indices,
+    dist = knn_data$dist,
+    k = k,
+    n = n,
+    dist_metric = knn_data$dist_metric,
+    used_cells = used_cells
+  )
+
+  class(sc_knn) <- "SingleCellNearestNeighbour"
+
+  return(sc_knn)
+}
+
+### primitives -----------------------------------------------------------------
+
+#' @export
+print.SingleCellNearestNeighbour <- function(x, ...) {
+  cat(
+    sprintf("SingleCellNearestNeighbour: %i cells, k = %i\n", x$n, x$k),
+    sprintf("  Distance metric: %s\n", x$dist_metric),
+    sprintf(
+      "  Index range: [%i, %i]\n",
+      min(x$indices, na.rm = TRUE),
+      max(x$indices, na.rm = TRUE)
+    ),
+    sprintf(
+      "  Distance range: [%.4f, %.4f]\n",
+      min(x$dist, na.rm = TRUE),
+      max(x$dist, na.rm = TRUE)
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+### methods --------------------------------------------------------------------
+
+#### getters -------------------------------------------------------------------
+
+#' @rdname get_knn_mat
+#'
+#' @export
+get_knn_mat.SingleCellNearestNeighbour <- function(x) {
+  # checks
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  return(x[["indices"]])
+}
+
+#' @rdname get_knn_dist
+#'
+#' @export
+get_knn_dist.SingleCellNearestNeighbour <- function(x) {
+  # checks
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  return(x[["dist"]])
+}
+
+#### converstion ---------------------------------------------------------------
+
+#' @export
+print.SingleCellNearestNeighbour <- function(x, ...) {
+  cat(
+    sprintf("SingleCellNearestNeighbour: %i cells, k = %i\n", x$n, x$k),
+    sprintf("  Distance metric: %s\n", x$dist_metric),
+    sprintf(
+      "  Index range: [%i, %i]\n",
+      min(x$indices, na.rm = TRUE),
+      max(x$indices, na.rm = TRUE)
+    ),
+    sprintf(
+      "  Distance range: [%.4f, %.4f]\n",
+      min(x$dist, na.rm = TRUE),
+      max(x$dist, na.rm = TRUE)
+    ),
+    sep = ""
+  )
+  invisible(x)
+}
+
+#' Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
+#'
+#' @description
+#' Converts the bixverse single cell kNN class into the manifoldsR
+#' `NearestNeighbours` class for use in UMAP, tSNE, etc. Note that the
+#' bixverse class stores 0-indexed indices whereas manifoldsR expects
+#' 1-indexed, so the conversion handles that.
+#'
+#' @param x `SingleCellNearestNeighbour` class.
+#'
+#' @return A `NearestNeighbours` class compatible with manifoldsR.
+#'
+#' @export
+sc_knn_to_nearest_neighbours <- function(x) {
+  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+
+  manifoldsR::generate_nearest_neigbours_class(
+    indices = as.vector(t(x$indices)) + 1L,
+    dist = as.vector(t(x$dist)),
+    k = x$k,
+    n = x$n
+  )
+}
+
 # methods ----------------------------------------------------------------------
 
 ## gene proportion analysis ----------------------------------------------------
@@ -195,7 +335,63 @@ get_obs_data.ScrubletRes <- function(x, ...) {
   return(obs_dt)
 }
 
+### print ----------------------------------------------------------------------
+
+#' Print a ScrubletRes object
+#'
+#' @param x A `ScrubletRes` object.
+#' @param ... Ignored.
+#'
+#' @return Invisible `x`.
+#'
+#' @export
+#'
+#' @keywords internal
+print.ScrubletRes <- function(x, ...) {
+  n_cells <- length(x$predicted_doublets)
+  n_doublets <- sum(x$predicted_doublets)
+
+  cat(sprintf(
+    "ScrubletRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf("  Threshold:              %.4f\n", x$threshold))
+  cat(sprintf(
+    "  Detected doublet rate:  %.1f%%\n",
+    100 * x$detected_doublet_rate
+  ))
+  cat(sprintf(
+    "  Detectable fraction:    %.1f%%\n",
+    100 * x$detectable_doublet_fraction
+  ))
+  cat(sprintf(
+    "  Overall doublet rate:   %.1f%%\n",
+    100 * x$overall_doublet_rate
+  ))
+  cat(sprintf("  Simulated doublets:     %d\n", length(x$doublet_scores_sim)))
+
+  extras <- character()
+  if (!is.null(x$pca)) {
+    extras <- c(extras, "PCA")
+  }
+  if (!is.null(x$pair_1)) {
+    extras <- c(extras, "doublet pairs")
+  }
+  if (length(extras) > 0) {
+    cat(sprintf(
+      "  Optional data:          %s\n",
+      paste(extras, collapse = ", ")
+    ))
+  }
+
+  invisible(x)
+}
+
 ## boost -----------------------------------------------------------------------
+
+### obs data -------------------------------------------------------------------
 
 #' @rdname get_obs_data
 #'
@@ -213,71 +409,35 @@ get_obs_data.BoostRes <- function(x, ...) {
   return(obs_dt)
 }
 
-## kNN with distances ----------------------------------------------------------
+### print ----------------------------------------------------------------------
 
-#' Helper function to generate kNN data with distances
+#' Print a BoostRes object
 #'
-#' @description
-#' Wrapper class that stores kNN data for subsequent usage in various other
-#' functions, methods and helpers.
+#' @param x A `BoostRes` object.
+#' @param ... Ignored.
 #'
-#' @param knn_data Named list with the following items:
-#' \itemize{
-#'   \item indices - Integer matrix containing the indices of the nearest
-#'   neighbours (0-indexed).
-#'   \item dist - Numerical matrix containing the distances to the nearest
-#'   neighbours.
-#'   \item dist_metric - String. Distance metric used.
-#' }
-#' @param used_cells Character vector. The cells used to generate the kNN graph
-#' with the distances.
-#'
-#' @return Generates the `SingleCellNearestNeighbour` class.
+#' @return Invisible `x`.
 #'
 #' @export
-new_sc_knn <- function(knn_data, used_cells) {
-  # checks
-  checkmate::assertList(knn_data)
-  checkmate::assertNames(
-    names(knn_data),
-    must.include = c("indices", "dist", "dist_metric")
-  )
-  checkmate::qassert(used_cells, "S+")
-
-  sc_knn <- list(
-    indices = knn_data$indices,
-    dist = knn_data$dist,
-    dist_metric = knn_data$dist_metric,
-    used_cells = used_cells
-  )
-
-  class(sc_knn) <- "SingleCellNearestNeighbour"
-
-  return(sc_knn)
-}
-
-### methods --------------------------------------------------------------------
-
-#### getters -------------------------------------------------------------------
-
-#' @rdname get_knn_mat
 #'
-#' @export
-get_knn_mat.SingleCellNearestNeighbour <- function(x) {
-  # checks
-  checkmate::assertClass(x, "SingleCellNearestNeighbour")
+#' @keywords internal
+print.BoostRes <- function(x, ...) {
+  n_cells <- length(x$doublet)
+  n_doublets <- sum(x$doublet)
 
-  return(x[["indices"]])
-}
+  cat(sprintf(
+    "BoostRes: %d cells, %d doublets (%.1f%%)\n",
+    n_cells,
+    n_doublets,
+    100 * n_doublets / n_cells
+  ))
+  cat(sprintf(
+    "  Score range: [%.4f, %.4f]\n",
+    min(x$doublet_score),
+    max(x$doublet_score)
+  ))
 
-#' @rdname get_knn_dist
-#'
-#' @export
-get_knn_dist.SingleCellNearestNeighbour <- function(x) {
-  # checks
-  checkmate::assertClass(x, "SingleCellNearestNeighbour")
-
-  return(x[["dist"]])
+  invisible(x)
 }
 
 ## hotspot gene <> gene results ------------------------------------------------
@@ -301,6 +461,8 @@ get_knn_dist.SingleCellNearestNeighbour <- function(x) {
 #' @export
 #'
 #' @importFrom magrittr `%>%`
+#'
+#' @keywords internal
 new_sc_hotspot_res <- function(hotspot_res, used_genes, used_cells) {
   # checks
   checkmate::assertList(hotspot_res, types = "matrix")
@@ -400,14 +562,18 @@ get_hotspot_membership.Hotspot <- function(
 #' @param min_size Integer. Minimum cluster size.
 #'
 #' @export
-set_hotspot_membership <- function(x, fdr_threshold = 0.05, min_size = 10L) {
-  UseMethod("set_hotspot_membership")
+generate_hotspot_membership <- function(
+  x,
+  fdr_threshold = 0.05,
+  min_size = 10L
+) {
+  UseMethod("generate_hotspot_membership")
 }
 
-#' @rdname set_hotspot_membership
+#' @rdname generate_hotspot_membership
 #'
 #' @export
-set_hotspot_membership.Hotspot <- function(
+generate_hotspot_membership.Hotspot <- function(
   x,
   fdr_threshold = 0.05,
   min_size = 10L
@@ -454,6 +620,8 @@ set_hotspot_membership.Hotspot <- function(
 #' subsequent methods to calculate differential abundance statistics.
 #'
 #' @references Dann, et al., Nat Biotechnol, 2022
+#'
+#' @keywords internal
 new_sc_miloR_res <- function(nhoods, sample_counts, spatial_dist, params) {
   # checks
   checkmate::checkClass(nhoods, "dgCMatrix")
@@ -948,6 +1116,8 @@ add_nhoods_info.miloR <- function(x, cell_info) {
 #' @return An object of class `ScenicGrn`.
 #'
 #' @export
+#'
+#' @keywords internal
 new_scenic_grn <- function(
   importance_matrix,
   gene_ids,

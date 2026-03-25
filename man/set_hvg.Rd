@@ -21,3 +21,4 @@ Set the HVG genes
 
 Set the highly variable genes for a \code{SingleCells} class.
 }
+\keyword{internal}

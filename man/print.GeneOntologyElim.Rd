@@ -15,3 +15,4 @@ Invisibly returns \code{x}.
 \description{
 Print a GeneOntologyElim object.
 }
+\keyword{internal}

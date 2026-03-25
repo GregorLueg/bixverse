@@ -893,6 +893,8 @@ calc_fgsea <- function(
 #'  \item pathways - The prepared pathways for further usage in the functions
 #'  \item pathway_sizes - The sizes of the pathways
 #' }
+#'
+#' @keywords internal
 prep_stats_pathways <- function(
   stats,
   pathways,
@@ -933,6 +935,8 @@ prep_stats_pathways <- function(
 #' @param sample_size Integer. The sample size.
 #'
 #' @return Returns the log2error
+#'
+#' @keywords internal
 multilevel_error <- function(pval, sample_size) {
   # Checks
   checkmate::qassert(pval, "N+")

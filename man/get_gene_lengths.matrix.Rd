@@ -20,3 +20,4 @@ Named numeric representing the gene lengths.
 \description{
 Get gene set lengths for a matrix
 }
+\keyword{internal}

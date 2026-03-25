@@ -15,3 +15,4 @@ The DuckDB connector
 \description{
 Getter for the single cell DuckDB connection
 }
+\keyword{internal}

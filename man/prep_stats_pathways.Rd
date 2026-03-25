@@ -27,3 +27,4 @@ A list with the following elements:
 \description{
 Helper function to prepare data for GSEA
 }
+\keyword{internal}

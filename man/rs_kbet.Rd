@@ -14,7 +14,13 @@ columns the neighbour indices.}
 batch a given cell belongs.}
 }
 \value{
-A vector of p-values based on the ChiSquare statistic per cell.
+A list with the following items
+\itemize{
+\item pval - The p-values from the ChiSquare test
+\item chi_square_stats - ChiSquare statistics
+\item mean_chi_square - The mean ChiSquare value
+\item median_chi_square - The median ChiSquare value
+}
 }
 \description{
 The function takes in a kNN matrix and a batch vector indicating which

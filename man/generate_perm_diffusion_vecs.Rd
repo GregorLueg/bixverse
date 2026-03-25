@@ -30,3 +30,4 @@ List with the permutations.
 \description{
 Generates random permutation vectors
 }
+\keyword{internal}

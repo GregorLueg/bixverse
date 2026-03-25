@@ -1,37 +1,639 @@
-url: ~
+url: https://gregorlueg.github.io/bixverse/
+
 template:
   bootstrap: 5
+  bootswatch: darkly
+  bslib:
+    bg: "#0d1b2e"
+    fg: "#e0e0e0"
+    primary: "#e07a5a"
+    secondary: "#7ba7bc"
+    navbar-bg: "#08111e"
+    code-bg: "#0a1628"
+    border-radius: 0.4rem
+    btn-border-radius: 0.4rem
+  css: pkgdown/extra.css
+
+home:
+  title: bixverse
+  description: 
+    The tidyverse wanna-be of bioinformatics. Now also with a lot of single 
+    cell-related functionality for scaling to millions of cells on local 
+    compute.
 navbar:
   structure:
-    left:
-      - intro
-      - reference
-      - articles
-      - tutorials
-      - news
-    right:
-      - search
-      - github
-      - lightswitch
+    left: [intro, reference, articles, tutorials, singlecells, news]
+    right: [search, github]
   components:
-    reference:
-      text: Reference
-      href: reference/index.html
-    search:
-      search: []
+    tutorials:
+      text: Tutorials
+      menu:
+        - text: Gene Set Enrichment Methods
+          href: articles/gse_methods.html
+        - text: Pathway activity functions
+          href: articles/pathway_activity.html
+        - text: Genetic diffusion and community detections
+          href: articles/genetic_diffusions.html
+        - text: Contrastive PCA
+          href: articles/cpca.html
+    singlecells:
+      text: Single Cells
+      menu:
+        - text: Thinking about single cells the bixverse way
+          href: articles/thinking_single_cell.html
+        - text: Running an analysis with the bixverse single cell framework
+          href: articles/pbmc_single_cell.html
+        - text: Doublet detection in bixverse
+          href: articles/doublet_detection.html
+        - text: Batch corrections
+          href: articles/single_cell_batch_corrections.html
     articles:
       text: Articles
-      href: articles/index.html
+      menu:
+        - text: Bixverse R <> Rust interface
+          href: articles/rust_functions.html
+        - text: Technical design choices
+          href: articles/design_single_cell.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/GregorLueg/bixverse
+      aria-label: GitHub
 
 articles:
   - title: Articles
+    navbar: Articles
     contents:
       - rust_functions
-
+      - design_single_cell
   - title: Tutorials
+    navbar: Tutorials
     contents:
-      - Single_cell_analysis
       - gse_methods
       - pathway_activity
       - genetic_diffusions
       - cpca
+  - title: Single Cells
+    navbar: Single Cells
+    contents:
+      - thinking_single_cell
+      - pbmc_single_cell
+      - doublet_detection
+      - single_cell_batch_corrections
+
+reference:
+  # General getters shared across classes
+  - title: General getters
+    desc: 
+      All types of general getters that work across various classes related to
+      co-expression module detection, graph-based clustering, etc.
+    contents:
+      - get_metadata
+      - get_params
+      - get_results
+  # Everything, anything for gene set enrichment
+  - title: Gene set enrichment helpers
+    desc: 
+      Everything and anything you need to do various types of gene set 
+      enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+    contents:
+      - gse_hypergeometric
+      - gse_hypergeometric_list
+      - calc_fgsea
+      - calc_fgsea_simple
+      - calc_gsea_traditional
+      - calc_mitch
+      - calc_gsva
+      - calc_ssgsea
+      - params_gsea
+      - params_gsva
+      - params_ssgsea
+  # Gene Ontology-related functions
+  - title: Gene Ontology-related gene set enrichment helpers
+    desc: 
+      GSE methods specifically designed with the DAG of the Gene Ontology in
+      mind, identifying the most relevant Gene Ontology terms.
+    contents:
+      - load_go_human_data
+      - get_go_data_human
+      - process_go_data
+      - GeneOntologyElim
+      - gse_go_elim_method
+      - gse_go_elim_method_list
+      - fgsea_go_elim
+      - fgsea_simple_go_elim
+      - simplify_hypergeom_res
+  # CisTarget
+  - title: CisTarget-related helpers
+    desc: 
+      Functions related to CisTarget enrichment.
+    contents:
+      - download_cistarget_hg38
+      - read_motif_annotation_file
+      - read_motif_ranking
+      - run_cistarget
+      - params_cistarget
+  # Correlation-based gene module stuff
+  - title: Correlation-based gene module detections
+    desc: 
+      Methods to identify co-expression modules via correlations in the data.
+      Includes methods for differential correlations, some graph-based and some
+      hierarchical clustering based ones.
+    contents:
+      - BulkCoExp
+      - preprocess_bulk_coexp
+      - cor_module_check_epsilon
+      - cor_module_coremo_clustering
+      - cor_module_coremo_cor_sign
+      - cor_module_coremo_eigengene
+      - cor_module_coremo_stability
+      - cor_module_graph_check_res
+      - cor_module_graph_final_modules
+      - cor_module_processing
+      - cor_module_tom
+      - diffcor_module_processing
+      - get_cor_graph
+      - get_diffcor_graph
+      - get_epsilon_res
+      - get_resolution_res
+      - get_outputs
+      - params_cor_graph
+      - params_coremo
+  # Matrix factorisations for gene module detection
+  - title: Matrix factorisation methods
+    desc: 
+      Methods to identify co-expression via matrix factorisations. Uses the same 
+      class as the correlation-based ones. You have contrastive PCA, ICA and
+      dual graph-regularised dictionary learning as methods.
+    contents:
+      - contrastive_pca_processing
+      - c_pca_plot_alphas
+      - contrastive_pca
+      - get_c_pca_factors
+      - get_c_pca_loadings
+      - dgrdl_grid_search
+      - dgrdl_result
+      - get_ica_stability_res
+      - get_grid_search_res
+      - ica_evaluate_comp
+      - ica_optimal_ncomp
+      - ica_processing
+      - ica_stabilised_results
+      - params_dgrdl
+      - params_ica_general
+      - params_ica_ncomp
+      - params_ica_randomisation
+  # Differential gene expression
+  - title: Helpers for differential gene expression
+    desc: 
+      Methods to help out with differential gene expression analyses in a 
+      structured way. Useful when you have to analyse 10's to 100's of
+      differential gene expression results.
+    contents:
+      - BulkDge
+      - add_new_metadata
+      - change_gene_identifier
+      - update_metadata_values
+      - fix_meta_data_column
+      - remove_samples
+      - qc_bulk_dge
+      - preprocess_bulk_dge
+      - normalise_bulk_dge
+      - batch_correction_bulk_dge
+      - bulk_dge_from_h5ad
+      - calculate_dge_hedges
+      - calculate_all_dges
+      - calculate_dge_limma
+      - calculate_pca_bulk_dge
+      - calculate_rpkm
+      - calculate_tpm
+      - run_limma_voom
+      - hedges_g_dge
+      - get_dge_effect_sizes
+      - get_dge_limma_voom
+      - get_dge_list
+      - get_dge_qc_plot
+      - get_fpkm_counts
+      - get_gene_lengths
+      - get_model_fit
+      - get_tpm_counts
+  # Ontologies
+  - title: Biomedical ontologies
+    desc: 
+      For dealing with ontologies and calculating (semantic) similarities in
+      disease, phenotype or gene ontologies.
+    contents:
+      - OntologySim
+      - pre_process_sim_onto
+      - calculate_information_content
+      - calculate_semantic_sim
+      - calculate_semantic_sim_mat
+      - calculate_semantic_sim_onto
+      - calculate_wang_sim
+      - calculate_wang_sim_mat
+      - calculate_wang_sim_onto
+      - filter_similarities
+      - calculate_critical_value
+      - get_sim_matrix
+      - get_ontology_ancestry
+  # Methods related to graphs... Diffusions, RBH, SNF
+  - title: Helpers for graph-based analysis
+    desc: 
+      Different methods working on graphs; diffuse information over a network
+      and identify communities, generate reciprocal best hit graphs from
+      correlations or set similarities, fuse networks together via similarity
+      network fusion.
+    contents:
+      - NetworkDiffusions
+      - calculate_diffusion_auc
+      - community_detection
+      - constrained_page_rank
+      - constrained_page_rank_ls
+      - diffuse_seed_nodes
+      - permute_seed_nodes
+      - get_diffusion_perms
+      - generate_personalisation_vec
+      - tied_diffusion
+      - RbhGraph
+      - find_rbh_communities
+      - generate_rbh_graph
+      - get_diffusion_vector
+      - get_rbh_res
+      - SimilarityNetworkFusion
+      - add_snf_data_modality
+      - get_snf_params
+      - get_snf_final_mat
+      - get_snf_adjcacency_mat
+      - params_graph_resolution
+      - run_snf
+      - params_community_detection
+      - params_snf
+  # Single cell classes and getters
+  - title: Single cell classe and getters
+    desc: 
+      THE single cell class with a large number of getters.
+    contents:
+      - SingleCells
+      - get_sc_obs
+      - get_sc_var
+      - get_sc_counts
+      - get_available_embeddings
+      - get_cell_indices
+      - get_cell_names
+      - get_cells_to_keep
+      - get_embedding
+      - get_gene_indices
+      - get_gene_names
+      - get_hvg
+      - get_knn_mat
+      - get_knn_obj
+      - get_pca_singular_val
+      - get_pca_loadings
+      - get_pca_factors
+      - get_snn_graph
+      - get_gene_names_from_idx
+      - get_sc_available_features
+      - setnames_sc
+      - set_sc_new_obs_col
+      - set_sc_new_obs_col_multiple
+      - set_sc_new_var_cols
+  # Meta cell generation, classes and generation
+  - title: Meta cell-related generation, classes and methods
+    desc: 
+      Generating meta cells.
+    contents:
+      - MetaCells
+      - calc_meta_cell_purity
+      - generate_supercells_sc
+      - generate_meta_cells_sc
+      - generate_seacells_sc
+      - params_sc_supercell
+      - params_sc_metacells
+      - params_sc_seacells
+  # Single cell data I/O
+  - title: Single cell i/o
+    desc: 
+      I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into
+      Rust and the DuckDB supporting the metadata.
+    contents:
+      - get_cell_ranger_params
+      - get_h5ad_dimensions
+      - prescan_h5ad_files
+      - load_existing
+      - load_h5ad
+      - load_h5ad_norm
+      - load_mtx
+      - load_multi_h5ad
+      - stream_h5ad
+      - load_r_data
+      - load_seurat
+      - read_h5ad_metadata
+      - read_h5ad_x_summary
+      - save_sc_exp_to_disk
+      - sc_old_file_conversion
+      - params_sc_min_quality
+      - params_sc_mtx_io
+  # Processing of single cell
+  - title: Single cell processing
+    desc: 
+      Helpers to process single cell data. Doublet detection, proportions of
+      gene sets, HVG (batch-aware), PCA and batch corrections.
+    contents:
+      - scrublet_sc
+      - call_doublets_manual
+      - doublet_detection_boost_sc
+      - gene_set_proportions_sc
+      - per_cell_qc_outlier
+      - run_cell_qc
+      - find_hvg_sc
+      - find_hvg_batch_aware_sc
+      - calculate_pca_sc
+      - generate_sc_knn
+      - find_neighbours_sc
+      - top_genes_perc_sc
+      - fast_mnn_sc
+      - harmony_sc
+      - bbknn_sc
+      - calculate_kbet_sc
+      - calculate_batch_asw_sc
+      - calculate_batch_lisi_sc
+      - params_norm_doublet_detection_defaults
+      - params_boost
+      - params_sc_hvg
+      - params_scrublet
+      - params_sc_bbknn
+      - params_sc_fastmnn
+      - params_sc_harmony
+      - params_sc_neighbours
+      - params_hvg_defaults
+      - params_pca_defaults
+      - params_knn_defaults
+  # Single cell analysis
+  - title: Single cell analysis methods
+    desc: 
+      A large number of different methods to extract insights from your single
+      cell experiment. Gene set scoring, DGEs, kNN generations, pseudo-bulk
+      count extraction, miloR, Hotspot, VISION and SCENIC.
+    contents:
+      - aucell_sc
+      - module_scores_sc
+      - find_clusters_sc
+      - find_markers_sc
+      - find_all_markers_sc
+      - get_pseudobulked_sc
+      - generate_knn_sc
+      - get_differential_abundance_res
+      - hotspot_autocor_sc
+      - hotspot_gene_cor_sc
+      - generate_hotspot_membership
+      - get_hotspot_membership
+      - get_miloR_abundances_sc
+      - get_index_cells
+      - add_nhoods_info
+      - test_nhoods
+      - vision_sc
+      - vision_w_autocor_sc
+      - identify_tf_to_genes
+      - scenic_gene_filter_sc
+      - scenic_grn_sc
+      - get_cistarget_res
+      - get_tf_to_gene
+      - tf_to_genes_correlations
+      - tf_to_genes_motif_enrichment
+      - params_sc_hotspot
+      - params_sc_miloR
+      - params_sc_vision
+      - params_scenic
+      - params_scenic_extra_trees_defaults
+      - params_scenic_gradient_boosting_defaults
+      - params_scenic_random_forest_defaults
+  # Other single cell class methods
+  - title: Single-cell related classes and methods
+    desc: 
+      Additional helpers for specific small sub classes used in single cell.
+    contents:
+      - get_knn_dist
+      - get_obs_data
+      - new_sc_knn
+  # Single cell plotting helpers
+  - title: Single-cell plotting stuff
+    desc: 
+      Various helpers that generate data for plotting single cell, such as 2D 
+      embeddings, or extract specific columns from the metadata or genes (and
+      their summaries) from the binary storage files.
+    contents:
+      - sc_knn_to_nearest_neighbours
+      - umap_sc
+      - tsne_sc
+      - phate_sc
+      - extract_dot_plot_data
+      - extract_gene_expression
+  # Different statistical functions
+  - title: Stastical functions
+    desc: 
+      Any types of functions that help with statistics
+    contents:
+      - calculate_effect_size
+      - calculate_tom
+      - calculate_tom_from_exp
+      - f1_score_confusion_mat
+      - fast_ica_rust
+      - fast_ica_rust_helper
+      - get_inflection_point
+      - ot_harmonic_score
+      - robust_scale
+  # Plotting helpers
+  - title: Plotting helpers
+    desc: 
+      Some core plotting helpers in the package (usually for QC). The ones to
+      plot downstream results can be found in bixverse.plots.
+    contents:
+      - plot_boxplot_normalization
+      - plot_epsilon_res
+      - plot_hvgs
+      - plot_ica_ncomp_params
+      - plot_ica_stability_individual
+      - plot_optimal_cuts
+      - plot_pca
+      - plot_pca_res
+      - plot_preprocessing_genes
+      - plot_preprocessing_outliers
+      - plot_rbf_impact
+      - plot_resolution_res
+      - plot_voom_normalization
+  # Synthetic data and downloads
+  - title: Data downloads and synthetic data generation
+    desc: 
+      Functions and helpers to download or generate synthetic data.
+    contents:
+      - download_pbmc3k
+      - download_demuxlet_pbmc
+      - download_pbmc_batches
+      - calculate_sparsity_stats
+      - generate_gene_module_data
+      - generate_single_cell_test_data
+      - cell_cycle_genes
+      - write_cellranger_output
+      - write_h5ad_sc
+      - params_sc_synthetic_data
+      - synthetic_signal_matrix
+      - simulate_dropouts
+      - synthetic_bulk_cor_matrix
+      - synthetic_c_pca_data
+  # General utils
+  - title: Utils
+    desc: 
+      All types of other random helpers without a clear pattern
+    contents:
+      - AnnDataParser
+      - calculate_sparsity_stats
+      - get_seurat_counts_to_list
+      - knn_graph_label_propagation
+      - params_label_propagation
+      - upper_triangle_to_sparse
+      - upper_triangular_sym_mat
+      - to_snake_case
+  - title: Rust wrappers
+    desc: 
+      Everything rusty - only use this if you know what you are doing... Maybe 
+      useful for your own package? Use with care and read the documentation!
+    contents:
+      - rs_aucell
+      - rs_batch_lisi
+      - rs_batch_silhouette_width
+      - rs_bbknn
+      - rs_bbknn_filtering
+      - rs_calc_es
+      - rs_calc_gsea_stat_cumulative_batch
+      - rs_calc_gsea_stat_traditional_batch
+      - rs_calc_gsea_stats
+      - rs_calc_multi_level
+      - rs_calculate_dge_mann_whitney
+      - rs_cistarget
+      - rs_cluster_stability
+      - rs_compare_knn
+      - rs_constrained_page_rank
+      - rs_constrained_page_rank_list
+      - rs_contrastive_pca
+      - rs_cor
+      - rs_cor2
+      - rs_coremo_quality
+      - rs_coremo_stability
+      - rs_cor_upper_triangle
+      - rs_cos
+      - rs_count_zeroes
+      - rs_cov2cor
+      - rs_covariance
+      - rs_create_random_aucs
+      - rs_critval
+      - rs_critval_mat
+      - rs_dense_to_upper_triangle
+      - rs_differential_cor
+      - rs_dist
+      - rs_extract_grouped_gene_stats
+      - rs_extract_several_genes_plots
+      - rs_extract_counts_plots
+      - rs_fast_auc
+      - rs_fast_ica
+      - rs_fdr_adjustment
+      - rs_filter_onto_sim
+      - rs_generate_bulk_rnaseq
+      - rs_geom_elim_fgsea_simple
+      - rs_get_gs_indices
+      - rs_get_metacells
+      - rs_get_seacells
+      - rs_gower_dist
+      - rs_gse_geom_elim
+      - rs_gse_geom_elim_list
+      - rs_gsva
+      - rs_h5ad_data
+      - rs_hamming_dist
+      - rs_harmony
+      - rs_hedges_g
+      - rs_hotspot_autocor
+      - rs_hotspot_cluster_genes
+      - rs_hotspot_gene_cor
+      - rs_hedges_g
+      - rs_hotspot_autocor
+      - rs_hotspot_cluster_genes
+      - rs_hypergeom_test
+      - rs_hypergeom_test_list
+      - rs_ica_iters
+      - rs_ica_iters_cv
+      - rs_jaccard_row_integers
+      - rs_kbet
+      - rs_knn_label_propagation
+      - rs_knn_mat_to_edge_list
+      - rs_knn_mat_to_edge_pairs
+      - rs_mad_outlier
+      - rs_make_milor_nhoods
+      - rs_mitch_calc
+      - rs_mnn
+      - rs_module_scoring
+      - rs_mutual_info
+      - rs_onto_semantic_sim
+      - rs_onto_semantic_sim_mat
+      - rs_onto_sim_wang
+      - rs_onto_sim_wang_mat
+      - rs_ot_harmonic_sum
+      - rs_page_rank
+      - rs_page_rank_parallel
+      - rs_pairwise_gene_cors
+      - rs_phyper
+      - rs_pointwise_mutual_info
+      - rs_prcomp
+      - rs_prepare_gsva_gs
+      - rs_prepare_whitening
+      - rs_pseudobulk_cells_dense
+      - rs_pseudobulk_cells_sparse
+      - rs_random_svd
+      - rs_range_norm
+      - rs_rbf_function
+      - rs_rbf_function_mat
+      - rs_rbf_iterate_epsilons
+      - rs_rbh_cor
+      - rs_rbh_sets
+      - rs_sample_ids_for_cell_types
+      - rs_sc_doublet_detection
+      - rs_sc_get_gene_set_perc
+      - rs_sc_get_top_genes_perc
+      - rs_sc_hvg
+      - rs_sc_hvg_batch_aware
+      - rs_sc_knn
+      - rs_sc_knn_w_dist
+      - rs_sc_pca
+      - rs_sc_pca_sparse
+      - rs_sc_scrublet
+      - rs_sc_snn
+      - rs_scenic_gene_filter
+      - rs_scenic_grn
+      - rs_sc_snn
+      - rs_scenic_gene_filter
+      - rs_scenic_grn
+      - rs_scenic_grn_streaming
+      - rs_set_similarity
+      - rs_set_similarity_list
+      - rs_set_similarity_list2
+      - rs_simple_and_multi_err
+      - rs_simulate_dropouts
+      - rs_snf
+      - rs_snf_affinity_cat
+      - rs_snf_affinity_continuous
+      - rs_snf_affinity_mixed
+      - rs_sparse_dict_dgrdl
+      - rs_sparse_dict_dgrdl_grid_search
+      - rs_spectral_clustering
+      - rs_spectral_clustering_sim
+      - rs_split_cor_signs
+      - rs_ssgsea
+      - rs_supercell
+      - rs_synthetic_sc_data_csc
+      - rs_synthetic_sc_data_csr
+      - rs_synthetic_sc_data_with_cell_types
+      - rs_tied_diffusion_parallel
+      - rs_tom
+      - rs_top_k_targets
+      - rs_upper_triangle_to_dense
+      - rs_upper_triangle_to_sparse
+      - rs_vision
+      - rs_vision_with_autocorrelation
+      - rs_2d_loess

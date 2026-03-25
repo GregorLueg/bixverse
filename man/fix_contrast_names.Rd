@@ -15,3 +15,4 @@ Vector with fixed naming based on R conventions.
 \description{
 Fixes contrast names for DGEs
 }
+\keyword{internal}

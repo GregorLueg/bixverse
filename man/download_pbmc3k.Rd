@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_single_cell.R
 \name{download_pbmc3k}
 \alias{download_pbmc3k}
-\title{Download PBMC3K data from 10x Genomics}
+\title{Download PBMC3K data from Zenodo}
 \usage{
 download_pbmc3k()
 }
@@ -10,6 +10,6 @@ download_pbmc3k()
 String. The path to the extracted PBMC3K data.
 }
 \description{
-This function downloads the PBMC3K dataset from 10x Genomics and extracts
-it to a temporary directory. It returns the path to the extracted data.
+This function downloads the PBMC3K dataset from 10x Genomics (uploaded
+on Zenodo) and extracts it and returns the paths.
 }

@@ -13,3 +13,4 @@ Generates an empty version of the \code{ScMap} class.
 Helper class that contains various mappings and makes it easier to use
 getters/setters with
 }
+\keyword{internal}

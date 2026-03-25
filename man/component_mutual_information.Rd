@@ -17,3 +17,4 @@ components
 \description{
 Assesses the normalised mutual information of the components.
 }
+\keyword{internal}

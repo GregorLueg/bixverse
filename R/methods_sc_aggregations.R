@@ -44,8 +44,8 @@
 #'
 #' @references
 #' Morabito, et al. Cell Rep Methods, 2023
-get_meta_cells_sc <- S7::new_generic(
-  name = "get_meta_cells_sc",
+generate_meta_cells_sc <- S7::new_generic(
+  name = "generate_meta_cells_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -62,13 +62,13 @@ get_meta_cells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_meta_cells_sc SingleCells
+#' @method generate_meta_cells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(get_meta_cells_sc, SingleCells) <- function(
+S7::method(generate_meta_cells_sc, SingleCells) <- function(
   object,
   sc_meta_cell_params = params_sc_metacells(),
   regenerate_knn = FALSE,
@@ -227,8 +227,8 @@ S7::method(get_meta_cells_sc, SingleCells) <- function(
 #'
 #' @references
 #' Persad, et al. Nat Biotechnol, 2023
-get_seacells_sc <- S7::new_generic(
-  name = "get_seacells_sc",
+generate_seacells_sc <- S7::new_generic(
+  name = "generate_seacells_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -244,13 +244,13 @@ get_seacells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_seacells_sc SingleCells
+#' @method generate_seacells_sc SingleCells
 #'
 #' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
-S7::method(get_seacells_sc, SingleCells) <- function(
+S7::method(generate_seacells_sc, SingleCells) <- function(
   object,
   seacell_params = params_sc_seacells(),
   embd_to_use = "pca",
@@ -349,8 +349,8 @@ S7::method(get_seacells_sc, SingleCells) <- function(
 #'
 #' @references
 #' Bilous, et al. BMC Bioinform., 2022
-get_supercells_sc <- S7::new_generic(
-  name = "get_supercells_sc",
+generate_supercells_sc <- S7::new_generic(
+  name = "generate_supercells_sc",
   dispatch_args = "object",
   fun = function(
     object,
@@ -367,10 +367,10 @@ get_supercells_sc <- S7::new_generic(
   }
 )
 
-#' @method get_supercells_sc SingleCells
+#' @method generate_supercells_sc SingleCells
 #'
 #' @export
-S7::method(get_supercells_sc, SingleCells) <- function(
+S7::method(generate_supercells_sc, SingleCells) <- function(
   object,
   sc_supercell_params = params_sc_supercell(),
   regenerate_knn = FALSE,
@@ -501,7 +501,7 @@ S7::method(get_supercells_sc, SingleCells) <- function(
 #'
 #' @export
 get_pseudobulked_sc <- S7::new_generic(
-  name = "get_supercells_sc",
+  name = "get_pseudobulked_sc",
   dispatch_args = "object",
   fun = function(
     object,

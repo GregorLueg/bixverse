@@ -15,3 +15,4 @@ The path to the \code{counts_genes.bin}
 \description{
 Get the file path to the counts in gene format
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ The Rust structure
 \description{
 Getter for the single cell Rust pointer
 }
+\keyword{internal}

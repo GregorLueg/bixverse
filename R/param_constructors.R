@@ -682,7 +682,7 @@ params_sc_supercell <- function(
 #' Wrapper function for the BBKNN parameters
 #'
 #' @param neighbours_within_batch Integer. Number of neighbours to consider
-#' per batch. Defaults to `5L`.
+#' per batch. Defaults to `3L`.
 #' @param set_op_mix_ratio Numeric. Mixing ratio between union (1.0) and
 #' intersection (0.0). Defaults to `1.0`.
 #' @param local_connectivity Numeric. UMAP connectivity computation parameter,
@@ -702,7 +702,7 @@ params_sc_supercell <- function(
 #'
 #' @export
 params_sc_bbknn <- function(
-  neighbours_within_batch = 5L,
+  neighbours_within_batch = 3L,
   set_op_mix_ratio = 1.0,
   local_connectivity = 1.0,
   trim = NULL,
@@ -734,12 +734,10 @@ params_sc_bbknn <- function(
 
 #' Wrapper function for the fastMNN parameters
 #'
-#' @param sigma Numeric. Bandwidth of the Gaussian smoothing kernel
-#' (as proportion of space radius). Defaults to `0.1`.
+#' @param ndist Numeric. Number of median distances for the tricube kernel
+#' bandwidth. Defaults to `3.0`.
 #' @param cos_norm Logical. Apply cosine normalisation before computing
 #' distances. Defaults to `TRUE`.
-#' @param var_adj Logical. Apply variance adjustment to avoid kissing effects.
-#' Defaults to `TRUE`.
 #' @param no_pcs Integer. Number of PCs to use for MNN calculations.
 #' Defaults to `30L`.
 #' @param random_svd Logical. Use randomised SVD. Defaults to `TRUE`.
@@ -753,16 +751,14 @@ params_sc_bbknn <- function(
 #'
 #' @export
 params_sc_fastmnn <- function(
-  sigma = 0.1,
+  ndist = 3.0,
   cos_norm = TRUE,
-  var_adj = TRUE,
   no_pcs = 30L,
   random_svd = TRUE,
   knn = list(k = 20L)
 ) {
-  checkmate::qassert(sigma, "N1")
+  checkmate::qassert(ndist, "N1(0,)")
   checkmate::qassert(cos_norm, "B1")
-  checkmate::qassert(var_adj, "B1")
   checkmate::qassert(no_pcs, "I1")
   checkmate::qassert(random_svd, "B1")
 
@@ -774,9 +770,8 @@ params_sc_fastmnn <- function(
 
   c(
     list(
-      sigma = sigma,
+      ndist = ndist,
       cos_norm = cos_norm,
-      var_adj = var_adj,
       no_pcs = no_pcs,
       random_svd = random_svd
     ),

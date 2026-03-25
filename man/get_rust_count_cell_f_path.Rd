@@ -15,3 +15,4 @@ The path to the \code{counts_cells.bin}
 \description{
 Get the file path to the counts in cell format
 }
+\keyword{internal}

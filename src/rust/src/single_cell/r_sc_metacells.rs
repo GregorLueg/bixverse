@@ -10,6 +10,10 @@ use bixverse_rs::single_cell::sc_analysis::seacells::*;
 use bixverse_rs::single_cell::sc_analysis::super_cells::*;
 use bixverse_rs::single_cell::sc_r_wrappers::assignments_to_r_list;
 
+/////////////
+// extendR //
+/////////////
+
 extendr_module! {
     mod r_sc_metacells;
     fn rs_get_metacells;

@@ -18,3 +18,4 @@ The sparse matrix in CSR or CSC format, pending the choice in
 \description{
 Helper function transform Rust counts into sparse matrices
 }
+\keyword{internal}

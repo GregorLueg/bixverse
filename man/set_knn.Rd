@@ -6,17 +6,18 @@
 \alias{set_knn.SingleCells}
 \title{Set/add KNN}
 \usage{
-set_knn(x, knn_mat)
+set_knn(x, knn)
 
-\method{set_knn}{ScCache}(x, knn_mat)
+\method{set_knn}{ScCache}(x, knn)
 }
 \arguments{
 \item{x}{An object to add the KNN data to}
 
-\item{knn_mat}{Numerical matrix. The matrix with the KNN data}
+\item{knn}{\code{SingleCellNearestNeighbour} class to add to the classes.}
 }
 \description{
 Set/add KNN
 
 Set the KNN matrix for a \code{SingleCells} class.
 }
+\keyword{internal}

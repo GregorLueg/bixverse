@@ -581,6 +581,8 @@ generate_gene_module_data <- function(
 #'
 #' plot(synthetic_gex)
 #' }
+#'
+#' @keywords internal
 plot.synthetic_matrix_simple <- function(x, ...) {
   # checks
   checkmate::assertClass(x, "synthetic_matrix_simple")
@@ -622,6 +624,8 @@ plot.synthetic_matrix_simple <- function(x, ...) {
 #' @import patchwork
 #' @import ggplot2
 #' @importFrom magrittr `%>%`
+#'
+#' @keywords internal
 plot.cpca_synthetic_data <- function(x, ...) {
   # scope
   . <- NULL

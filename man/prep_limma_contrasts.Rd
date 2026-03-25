@@ -18,3 +18,4 @@ The Limma contrasts for further usage.
 \description{
 Create all limma contrasts from a provided string
 }
+\keyword{internal}

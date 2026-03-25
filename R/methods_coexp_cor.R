@@ -277,7 +277,7 @@ S7::method(diffcor_module_processing, BulkCoExp) <- function(
     spearman = spearman
   )
 
-  cor_data <- upper_triangle_diffcor_mat$new(
+  cor_data <- UpperTriangleDiffcorMat$new(
     diff_cor_res = diff_cor_res,
     features = shared_features
   )
@@ -1544,6 +1544,8 @@ S7::method(cor_module_coremo_eigengene, BulkCoExp) <- function(
 #' @param plot Boolean. Shall the log-log plot be generated.
 #'
 #' @returns The R2 value of of the goodness of fit.
+#'
+#' @keywords internal
 scale_free_fit <- function(k, breaks = 50L, plot = FALSE) {
   # Visible global function stuff...
   lm <- NULL
@@ -1748,6 +1750,8 @@ S7::method(get_diffcor_graph, BulkCoExp) <- function(
 #' used.
 #'
 #' @return A data.table with the quality measures of the cluster.
+#'
+#' @keywords internal
 coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
   # Checks
   checkmate::qassert(modules, c("S+", "I+"))
@@ -1789,6 +1793,8 @@ coremo_cluster_quality <- function(modules, cor_mat, random_seed = 10101L) {
 #' @return A vector with module membership.
 #'
 #' @importFrom magrittr `%>%`
+#'
+#' @keywords internal
 coremo_tree_cut <- function(
   tree,
   k,
@@ -1865,6 +1871,8 @@ coremo_tree_cut <- function(
 #'
 #' @importFrom magrittr `%>%`
 #' @import data.table
+#'
+#' @keywords internal
 tree_cut_iter <- function(
   tree,
   cor_mat,
@@ -1928,6 +1936,8 @@ tree_cut_iter <- function(
 #' @param size Integer. Nrow (or ncol) of the symmetric matrix.
 #'
 #' @return Returns the distance object
+#'
+#' @keywords internal
 create_dist_obj <- function(x, size) {
   # checks
   checkmate::qassert(x, "N+")

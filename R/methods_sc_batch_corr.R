@@ -20,13 +20,18 @@
 #' test is considered significant. Defaults to `0.05`.
 #' @param .verbose Boolean. Controls the verbosity of the function.
 #'
-#' @returns A list with the following elements
+#' @returns A `KbetScores` object with the following elements
 #' \itemize{
-#'   \item kbet_score - Number of significant tests over all cells. 0 indicates
-#'   perfect mixing, 1 indicates basically zero mixing between batches.
-#'   \item significant_tests - Boolean indicating for which cells the statistic
-#'   was below the threshold
-#'   \item chisquare_pvals - The p-values of the ChiSquare test.
+#'   \item kbet_score - Proportion of significant tests over all cells. 0
+#'   indicates perfect mixing, 1 indicates no mixing between batches.
+#'   \item significant_tests - Logical vector indicating for which cells the
+#'   test was below the threshold.
+#'   \item p_values - The p-values from the Chi-Square test.
+#'   \item chi_square_stats - Per-cell Chi-Square statistics.
+#'   \item mean_chi_square - Mean Chi-Square statistic across all cells.
+#'   \item median_chi_square - Median Chi-Square statistic across all cells.
+#'   \item threshold - The significance threshold used.
+#'   \item n_batches - Number of batches in the data.
 #' }
 #'
 #' @export
@@ -44,7 +49,6 @@ calculate_kbet_sc <- S7::new_generic(
     S7::S7_dispatch()
   }
 )
-
 
 #' @method calculate_kbet_sc SingleCells
 #'
@@ -76,18 +80,316 @@ S7::method(calculate_kbet_sc, SingleCells) <- function(
     return(NULL)
   }
 
+  n_batches <- length(levels(factor(batch_index)))
+
   rs_res <- rs_kbet(
     knn_mat = knn_mat,
     batch_vector = as.integer(factor(batch_index))
   )
 
-  res <- list(
-    kbet_score = sum(rs_res <= threshold) / length(rs_res),
-    significant_tests = rs_res <= threshold,
-    chisquare_pvals = rs_res
+  res <- structure(
+    list(
+      kbet_score = sum(rs_res$pval <= threshold) / length(rs_res$pval),
+      significant_tests = rs_res$pval <= threshold,
+      p_values = rs_res$pval,
+      chi_square_stats = rs_res$chi_square_stats,
+      mean_chi_square = rs_res$mean_chi_square,
+      median_chi_square = rs_res$median_chi_square,
+      threshold = threshold,
+      n_batches = n_batches
+    ),
+    class = "KbetScores"
   )
 
   return(res)
+}
+
+### kbet print -----------------------------------------------------------------
+
+#' Print method for KbetScores
+#'
+#' @param x A `KbetScores` object.
+#' @param ... Additional arguments (ignored).
+#'
+#' @export
+#'
+#' @keywords internal
+print.KbetScores <- function(x, ...) {
+  n_cells <- length(x$p_values)
+  n_sig <- sum(x$significant_tests)
+  dof <- x$n_batches - 1
+
+  cat("kBET Scores\n")
+  cat(sprintf(
+    "  Cells: %d | Batches: %d | Threshold: %.3f\n",
+    n_cells,
+    x$n_batches,
+    x$threshold
+  ))
+  cat(sprintf(
+    "  Rejection rate:      %.4f (%d / %d)\n",
+    x$kbet_score,
+    n_sig,
+    n_cells
+  ))
+  cat(sprintf(
+    "  Mean Chi-Square:     %.4f (expected under H0: %d)\n",
+    x$mean_chi_square,
+    dof
+  ))
+  cat(sprintf("  Median Chi-Square:   %.4f\n", x$median_chi_square))
+
+  invisible(x)
+}
+
+## batch silhouette width ------------------------------------------------------
+
+#' Calculate batch average silhouette width
+#'
+#' @description
+#' Computes the average silhouette width (ASW) on batch labels using pairwise
+#' Euclidean distances in the embedding space. For each cell, the function
+#' estimates the mean distance to cells of the same batch (a) and the mean
+#' distance to cells of the nearest other batch (b), then computes
+#' s = (b - a) / max(a, b).
+#'
+#' Values near 0 indicate good batch mixing, values near 1 indicate batch
+#' separation, and negative values suggest overcorrection. This metric is
+#' best suited for embedding-based correction methods (e.g. Harmony, fastMNN).
+#' For graph-based methods like BBKNN, consider using
+#' [bixverse::calculate_batch_lisi_sc()] instead.
+#'
+#' @param object `SingleCells` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param embd_to_use String. Which embedding to compute the ASW on. One of
+#' `c("pca", "harmony", "mnn")`. Defaults to `"pca"`.
+#' @param max_cells Integer or `NULL`. If not `NULL`, subsample to this many
+#' cells for performance. The pairwise distance computation is O(n^2), so
+#' subsampling is recommended for large datasets. Defaults to `5000L`.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A `BatchSilhouetteScores` object with the following elements
+#' \itemize{
+#'   \item per_cell - Per-cell silhouette scores in `[-1, 1]`.
+#'   \item mean_asw - Mean silhouette width across all cells.
+#'   \item median_asw - Median silhouette width across all cells.
+#'   \item n_batches - Number of batches in the data.
+#'   \item embedding_used - Which embedding the ASW was computed on.
+#' }
+#'
+#' @export
+calculate_batch_asw_sc <- S7::new_generic(
+  name = "calculate_batch_asw_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    embd_to_use = "pca",
+    max_cells = 5000L,
+    seed = 42L,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_batch_asw_sc SingleCells
+#'
+#' @export
+S7::method(calculate_batch_asw_sc, SingleCells) <- function(
+  object,
+  batch_column,
+  embd_to_use = "pca",
+  max_cells = 5000L,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::assertChoice(embd_to_use, c("pca", "harmony", "mnn"))
+  checkmate::qassert(max_cells, c("I1", "0"))
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  batch_index <- unlist(object[[batch_column]])
+
+  if (!length(levels(factor(batch_index))) > 1) {
+    warning("The batch column only has one batch. Returning NULL")
+    return(NULL)
+  }
+
+  embd <- switch(
+    embd_to_use,
+    pca = get_pca_factors(object),
+    harmony = get_embedding(object, "harmony"),
+    mnn = get_embedding(object, "mnn")
+  )
+
+  if (is.null(embd)) {
+    warning("Embedding not found. Returning NULL")
+    return(NULL)
+  }
+
+  n_batches <- length(levels(factor(batch_index)))
+
+  rs_res <- rs_batch_silhouette_width(
+    embedding = embd,
+    batch_vector = as.integer(factor(batch_index)),
+    max_cells = max_cells,
+    seed = seed
+  )
+
+  res <- structure(
+    list(
+      per_cell = rs_res$per_cell,
+      mean_asw = rs_res$mean_asw,
+      median_asw = rs_res$median_asw,
+      n_batches = n_batches,
+      embedding_used = embd_to_use
+    ),
+    class = "BatchSilhouetteScores"
+  )
+
+  return(res)
+}
+
+### batch silhouette print -----------------------------------------------------
+
+#' Print method for BatchSilhouetteScores
+#'
+#' @param x A `BatchSilhouetteScores` object.
+#' @param ... Additional arguments (ignored).
+#'
+#' @export
+#'
+#' @keywords internal
+print.BatchSilhouetteScores <- function(x, ...) {
+  n_cells <- length(x$per_cell)
+
+  cat("Batch Silhouette Width\n")
+  cat(sprintf("  Cells: %d | Batches: %d\n", n_cells, x$n_batches))
+  cat(sprintf(
+    "  Mean ASW:    %.4f (0 = perfect mixing, 1 = separated)\n",
+    x$mean_asw
+  ))
+  cat(sprintf("  Median ASW:  %.4f\n", x$median_asw))
+
+  invisible(x)
+}
+
+## batch LISI ------------------------------------------------------------------
+
+#' Calculate batch LISI scores
+#'
+#' @description
+#' Computes the Local Inverse Simpson's Index (LISI) on batch labels using the
+#' kNN graph. LISI measures the effective number of batches represented in each
+#' cell's neighbourhood. Under perfect mixing, LISI equals the number of
+#' batches. Under no mixing, LISI equals 1. Unlike kBET, LISI does not compare
+#' against global batch proportions, making it suitable for graph-based
+#' correction methods like BBKNN.
+#'
+#' @param object `SingleCells` class.
+#' @param batch_column String. The column with the batch information in the
+#' obs data of the class.
+#' @param .verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A `BatchLisiScores` object with the following elements
+#' \itemize{
+#'   \item per_cell - Per-cell LISI scores in `[1, n_batches]`.
+#'   \item mean_lisi - Mean LISI across all cells.
+#'   \item median_lisi - Median LISI across all cells.
+#'   \item n_batches - Number of batches in the data.
+#' }
+#'
+#' @export
+#'
+#' @references Korsunsky, et al., Nat. Methods, 2019
+calculate_batch_lisi_sc <- S7::new_generic(
+  name = "calculate_batch_lisi_sc",
+  dispatch_args = "object",
+  fun = function(
+    object,
+    batch_column,
+    .verbose = TRUE
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+#' @method calculate_batch_lisi_sc SingleCells
+#'
+#' @export
+S7::method(calculate_batch_lisi_sc, SingleCells) <- function(
+  object,
+  batch_column,
+  .verbose = TRUE
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::qassert(batch_column, "S1")
+  checkmate::qassert(.verbose, "B1")
+
+  batch_index <- unlist(object[[batch_column]])
+
+  if (!length(levels(factor(batch_index))) > 1) {
+    warning("The batch column only has one batch. Returning NULL")
+    return(NULL)
+  }
+
+  knn_mat <- get_knn_mat(object)
+
+  if (is.null(knn_mat)) {
+    warning("No kNN matrix found to calculate batch LISI. Returning NULL")
+    return(NULL)
+  }
+
+  n_batches <- length(levels(factor(batch_index)))
+
+  rs_res <- rs_batch_lisi(
+    knn_mat = knn_mat,
+    batch_vector = as.integer(factor(batch_index))
+  )
+
+  res <- structure(
+    list(
+      per_cell = rs_res$per_cell,
+      mean_lisi = rs_res$mean_lisi,
+      median_lisi = rs_res$median_lisi,
+      n_batches = n_batches
+    ),
+    class = "BatchLisiScores"
+  )
+
+  return(res)
+}
+
+### batch lisi print -----------------------------------------------------------
+
+#' Print method for BatchLisiScores
+#'
+#' @param x A `BatchLisiScores` object.
+#' @param ... Additional arguments (ignored).
+#'
+#' @export
+#'
+#' @keywords internal
+print.BatchLisiScores <- function(x, ...) {
+  n_cells <- length(x$per_cell)
+
+  cat("Batch LISI Scores\n")
+  cat(sprintf("  Cells: %d | Batches: %d\n", n_cells, x$n_batches))
+  cat(sprintf(
+    "  Mean LISI:    %.4f (1 = no mixing, %d = perfect mixing)\n",
+    x$mean_lisi,
+    x$n_batches
+  ))
+  cat(sprintf("  Median LISI:  %.4f\n", x$median_lisi))
+
+  invisible(x)
 }
 
 ## batch aware hvg -------------------------------------------------------------
@@ -240,7 +542,7 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 #' @param no_neighbours_to_keep Integer. Maximum number of neighbours to keep
 #' from the BBKNN algorithm. Due to generating neighbours for each batch, there
 #' might be a large number of generated neighbours. This will only keep the top
-#' `no_neighbours_to_keep` neighbours.
+#' `no_neighbours_to_keep` neighbours. Defaults to `5L`.
 #' @param embd_to_use String. The embedding to use. Atm, the only option is
 #' `"pca"`.
 #' @param no_embd_to_use Optional integer. Number of embedding dimensions to
@@ -277,7 +579,7 @@ bbknn_sc <- S7::new_generic(
   fun = function(
     object,
     batch_column,
-    no_neighbours_to_keep = 15L,
+    no_neighbours_to_keep = 5L,
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     bbknn_params = params_sc_bbknn(),
@@ -294,7 +596,7 @@ bbknn_sc <- S7::new_generic(
 S7::method(bbknn_sc, SingleCells) <- function(
   object,
   batch_column,
-  no_neighbours_to_keep = 15L,
+  no_neighbours_to_keep = 5L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   bbknn_params = params_sc_bbknn(),
@@ -316,7 +618,7 @@ S7::method(bbknn_sc, SingleCells) <- function(
   }
 
   embd <- switch(embd_to_use, pca = get_pca_factors(object))
-  # early return
+
   if (is.null(embd)) {
     warning(
       paste(
@@ -324,9 +626,9 @@ S7::method(bbknn_sc, SingleCells) <- function(
         "Returning NULL."
       )
     )
-
     return(NULL)
   }
+
   if (!is.null(no_embd_to_use)) {
     to_take <- min(c(no_embd_to_use, ncol(embd)))
     embd <- embd[, 1:to_take]
@@ -363,25 +665,35 @@ S7::method(bbknn_sc, SingleCells) <- function(
     verbose = .verbose
   )
 
-  knn_mat <- if (no_generated_neighbours <= no_neighbours_to_keep) {
-    matrix(data = bbknn_res$distances$indices, nrow = nrow(embd), byrow = TRUE)
-  } else {
-    rs_bbknn_filtering(
+  # extract kNN indices and distances
+  # In bbknn_sc, replace the if/else with:
+  knn_data <- {
+    no_k <- min(no_neighbours_to_keep, no_generated_neighbours)
+    filtered <- rs_bbknn_filtering(
       indptr = bbknn_res$distances$indptr,
       indices = bbknn_res$distances$indices,
-      no_neighbours_to_keep = no_neighbours_to_keep
+      data = bbknn_res$distances$data,
+      no_neighbours_to_keep = no_k
+    )
+    list(
+      indices = filtered$indices,
+      dist = filtered$dist,
+      dist_metric = bbknn_params[["ann_dist"]]
     )
   }
 
-  storage.mode(knn_mat) <- "integer"
+  storage.mode(knn_data$indices) <- "integer"
 
-  object <- set_knn(object, knn_mat = knn_mat)
+  used_cells <- get_cell_names(object, filtered = TRUE)
+  sc_knn <- new_sc_knn(knn_data = knn_data, used_cells = used_cells)
+  object <- set_knn(object, knn = sc_knn)
 
+  # build graph from BBKNN connectivities
   if (.verbose) {
     message(paste(
       "Generating graph based on BBKNN connectivities.",
       "Weights will be based on the connectivities",
-      "and not shared nearest neighour calculations."
+      "and not shared nearest neighbour calculations."
     ))
   }
 
@@ -523,16 +835,21 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
 #' Run Harmony
 #'
 #' @description
-#' A version of Harmony by Korsunsky et al., implemented in Rust.
+#' A version of Harmony by Korsunsky et al., implemented in Rust. Performs
+#' batch correction on PCA embeddings and stores the result as a `"harmony"`
+#' embedding in the object.
 #'
-#' @param object ...
-#' @param batch_column ...
-#' @param additional_batch_columns ...
-#' @param harmony_params ...
-#' @param seed ...
-#' @param .verbose ...
+#' @param object `SingleCells` class.
+#' @param batch_column String. Column name in the object containing the primary
+#' batch labels.
+#' @param additional_batch_columns Optional character vector. Additional batch
+#' columns to regress out. If `NULL`, only the primary batch column is used.
+#' @param harmony_params List. Output of [bixverse::params_sc_harmony()].
+#' @param seed Integer. For reproducibility.
+#' @param .verbose Boolean. Controls verbosity.
 #'
-#' @returns ...
+#' @return The object with a `"harmony"` embedding added. If no PCA embeddings
+#' are found, returns the object unchanged with a warning.
 #'
 #' @export
 harmony_sc <- S7::new_generic(
@@ -603,6 +920,16 @@ S7::method(harmony_sc, SingleCells) <- function(
   checkmate::assertTRUE(all(
     purrr::map_dbl(batch_index_ls, length) == nrow(pca_data)
   ))
+
+  if (is.null(harmony_params$k)) {
+    harmony_params$k <- min(round(nrow(pca_data) / 30), 200L)
+    if (.verbose) {
+      message(sprintf(
+        " Auto-determined number of Harmony clusters: %d",
+        harmony_params$k
+      ))
+    }
+  }
 
   harmony_embd <- rs_harmony(
     pca = pca_data,

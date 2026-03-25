@@ -913,6 +913,8 @@ S7::method(plot_ica_stability_individual, BulkCoExp) <- function(object) {
 #'  \item stability_scores - The stability scores for the given runs.
 #'  \item centrotype - The centrotype component of each cluster.
 #' }
+#'
+#' @keywords internal
 community_stability <- function(no_comp, s, return_centrotype) {
   # Visible global function stuff...
   as.dist <- hclust <- cutree <- NULL
@@ -986,6 +988,8 @@ community_stability <- function(no_comp, s, return_centrotype) {
 #'
 #' @returns Returns the average normalised mutual information across all
 #' components
+#'
+#' @keywords internal
 component_mutual_information <- function(centrotype) {
   # checks
   checkmate::assertMatrix(centrotype, mode = "numeric")
@@ -1017,6 +1021,8 @@ component_mutual_information <- function(centrotype) {
 #' @param x Numeric vector. The source signal for that independent component.
 #'
 #' @returns Returns a consistent ICA feature loading
+#'
+#' @keywords internal
 flip_ica_loading_signs <- function(x) {
   feature_sign <- sign(x)
   max_val_sign <- feature_sign[which(abs(x) == max(abs(x)))]

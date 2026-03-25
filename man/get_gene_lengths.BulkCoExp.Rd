@@ -17,3 +17,4 @@ Named numeric representing the gene lengths.
 Get gene lengths for a BulkCoExp object by extracting the count matrix
 and delegating to the matrix method.
 }
+\keyword{internal}

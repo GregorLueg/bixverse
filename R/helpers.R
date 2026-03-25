@@ -172,6 +172,8 @@ get_go_data_human <- function(filter_relationships = TRUE, .verbose = TRUE) {
 #' connections between the different terms)
 #'
 #' @return A data.table with the identifier and depth.
+#'
+#' @keywords internal
 get_go_levels <- function(edge_dt) {
   # checks
   checkmate::assertDataTable(edge_dt)
@@ -263,6 +265,8 @@ upper_triangle_to_sparse <- function(
 #' @returns The sparseMatrix from the data.
 #'
 #' @export
+#'
+#' @keywords internal
 sparse_list_to_mat <- function(ls) {
   # checks
   checkmate::assertList(ls, names = "named")
@@ -368,6 +372,8 @@ get_inflection_point <- function(x, y, span = 0.5) {
 #' Defaults to `8L`.
 #'
 #' @returns Integer. Number of cores to use.
+#'
+#' @keywords internal
 get_cores <- function(abs_max_workers = 8L) {
   checkmate::qassert(abs_max_workers, "I1")
   cores <- as.integer(parallel::detectCores() / 2)
@@ -415,22 +421,6 @@ to_snake_case <- function(x, ignore_na = FALSE) {
   }
 }
 
-## feature flags ---------------------------------------------------------------
-
-#' Helper functions to mark something unstable/nightly
-#'
-#' @returns Throws a warning.
-nightly_feature <- function() {
-  warning(
-    paste(
-      "This is a nightly/unstable feature!",
-      "These functions, classes and methods are not yet fully development and",
-      "can be subject to breaking changes, compelete removal!."
-    )
-  )
-  invisible()
-}
-
 ## user options --------------------q--------------------------------------------
 
 #' Helper function for user option selection
@@ -438,6 +428,8 @@ nightly_feature <- function() {
 #' @param options Character vector. The options the user has to choose from.
 #'
 #' @returns The chosen option
+#'
+#' @keywords internal
 select_user_option <- function(options) {
   cat("Please select an option:\n")
   for (i in seq_along(options)) {
@@ -483,6 +475,8 @@ select_user_option <- function(options) {
 #' }
 #'
 #' @export
+#'
+#' @keywords internal
 prep_data_gower_hamming_dist <- function(dt, sample_names) {
   # checks
   checkmate::assertDataTable(dt)
@@ -527,6 +521,8 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
 #' @param labels String vector. `NA`s signify unlabelled data.
 #'
 #' @return One-hot encoded matrix.
+#'
+#' @keywords internal
 one_hot_encode <- function(labels) {
   # checks
   checkmate::qassert(labels, "s+")
@@ -560,6 +556,8 @@ one_hot_encode <- function(labels) {
 #'   \item nrow - The number of rows.
 #'   \item ncol - The number of columns.
 #' }
+#'
+#' @keywords internal
 sparse_mat_to_list <- function(sparse_mat) {
   # checks
   checkmate::assert(

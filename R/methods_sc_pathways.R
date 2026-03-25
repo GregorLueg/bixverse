@@ -204,6 +204,8 @@ S7::method(aucell_sc, SingleCells) <- function(
 #'   \item clusters - Association of original gene set to random permutation
 #'   set.
 #' }
+#'
+#' @keywords internal
 generate_null_perm_gs <- function(
   gs_list,
   expr_genes,

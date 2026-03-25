@@ -5,7 +5,7 @@ use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_batch_correction::bbknn::*;
 use bixverse_rs::single_cell::sc_batch_correction::fast_mnn::*;
 use bixverse_rs::single_cell::sc_batch_correction::harmony::*;
-use bixverse_rs::single_cell::sc_processing::metrics::kbet;
+use bixverse_rs::single_cell::sc_processing::metrics::*;
 
 ////////////////////
 // extendr Module //
@@ -13,10 +13,14 @@ use bixverse_rs::single_cell::sc_processing::metrics::kbet;
 
 extendr_module! {
     mod r_sc_batch_corr;
+    // metrics
+    fn rs_kbet;
+    fn rs_batch_silhouette_width;
+    fn rs_batch_lisi;
+    // batch corrections
     fn rs_bbknn;
     fn rs_bbknn_filtering;
     fn rs_mnn;
-    fn rs_kbet;
     fn rs_harmony;
 }
 
@@ -39,11 +43,17 @@ extendr_module! {
 /// @param batch_vector Integer vector. The integers indicate to which
 /// batch a given cell belongs.
 ///
-/// @return A vector of p-values based on the ChiSquare statistic per cell.
+/// @return A list with the following items
+/// \itemize{
+///   \item pval - The p-values from the ChiSquare test
+///   \item chi_square_stats - ChiSquare statistics
+///   \item mean_chi_square - The mean ChiSquare value
+///   \item median_chi_square - The median ChiSquare value
+/// }
 ///
 /// @export
 #[extendr]
-fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
+fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
     let n_cells = knn_mat.nrows();
     let k_neighbours = knn_mat.ncols();
 
@@ -58,8 +68,105 @@ fn rs_kbet(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> Vec<f64> {
     // Convert batch_vector to Vec<usize>
     let batches: Vec<usize> = batch_vector.r_int_convert();
 
-    kbet(&knn_matrix, &batches)
+    let kbet_res = kbet(&knn_matrix, &batches);
+
+    list![
+        pval = kbet_res.p_values,
+        chi_square_stats = kbet_res.chi_square_stats,
+        mean_chi_square = kbet_res.mean_chi_square,
+        median_chi_square = kbet_res.median_chi_square
+    ]
 }
+
+/// Calculate batch silhouette width from an embedding
+///
+/// @description
+/// Computes the average silhouette width on batch labels using pairwise
+/// distances in the embedding space. Values near 0 indicate good batch
+/// mixing, values near 1 indicate batch separation.
+///
+/// @param embedding Numeric matrix. The embedding to assess (e.g. PCA or
+/// corrected embedding). Rows are cells, columns are dimensions.
+/// @param batch_vector Integer vector. The integers indicate to which
+/// batch a given cell belongs.
+/// @param max_cells Integer or NULL. If not NULL, subsample to this many
+/// cells for performance. Defaults to 5000.
+/// @param seed Integer. Seed for subsampling reproducibility.
+///
+/// @return A list with the following items
+/// \itemize{
+///   \item per_cell - Per-cell silhouette scores
+///   \item mean_asw - Mean silhouette width
+///   \item median_asw - Median silhouette width
+/// }
+///
+/// @export
+#[extendr]
+fn rs_batch_silhouette_width(
+    embedding: RMatrix<f64>,
+    batch_vector: Vec<i32>,
+    max_cells: Nullable<i32>,
+    seed: i32,
+) -> List {
+    let embd = r_matrix_to_faer_fp32(&embedding);
+    let batches: Vec<usize> = batch_vector.r_int_convert();
+    let subsample = match max_cells {
+        Nullable::NotNull(n) => Some(n as usize),
+        Nullable::Null => None,
+    };
+
+    let res = batch_silhouette_width(embd.as_ref(), &batches, subsample, seed as usize);
+
+    list![
+        per_cell = res.per_cell,
+        mean_asw = res.mean_asw,
+        median_asw = res.median_asw
+    ]
+}
+
+/// Calculate batch LISI scores
+///
+/// @description
+/// Computes the Local Inverse Simpson's Index on batch labels using the
+/// kNN graph. Measures the effective number of batches in each cell's
+/// neighbourhood. Under perfect mixing LISI equals the number of batches,
+/// under no mixing LISI equals 1.
+///
+/// @param knn_mat Integer matrix. The rows represent the cells and the
+/// columns the neighbour indices.
+/// @param batch_vector Integer vector. The integers indicate to which
+/// batch a given cell belongs.
+///
+/// @return A list with the following items
+/// \itemize{
+///   \item per_cell - Per-cell LISI scores
+///   \item mean_lisi - Mean LISI
+///   \item median_lisi - Median LISI
+/// }
+///
+/// @export
+#[extendr]
+fn rs_batch_lisi(knn_mat: RMatrix<i32>, batch_vector: Vec<i32>) -> List {
+    let n_cells = knn_mat.nrows();
+    let k = knn_mat.ncols();
+
+    let knn_indices: Vec<Vec<usize>> = (0..n_cells)
+        .map(|i| (0..k).map(|j| knn_mat[[i, j]] as usize).collect())
+        .collect();
+
+    let batches: Vec<usize> = batch_vector.r_int_convert();
+    let res = batch_lisi(&knn_indices, &batches);
+
+    list![
+        per_cell = res.per_cell,
+        mean_lisi = res.mean_lisi,
+        median_lisi = res.median_lisi
+    ]
+}
+
+///////////
+// BBKNN //
+///////////
 
 /// BBKNN implementation in Rust
 ///
@@ -104,42 +211,51 @@ fn rs_bbknn(
     )
 }
 
-/// Reduce BBKNN matrix to Top X neighbours
+/// Reduce BBKNN results to Top X neighbours
 ///
 /// @param indptr Integer vector. The index pointers of the underlying data.
 /// @param indices Integer vector. The indices of the nearest neighbours.
+/// @param data Numeric vector. The distances to the nearest neighbours.
 /// @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
 ///
-/// @return A numerical matrix with the Top X neighbours per row. If
-/// `no_neighbours_to_keep` is larger than the number of neighbours in the data,
-/// these positions will be `NA`.
+/// @return A list with `indices` (integer matrix) and `dist` (numeric matrix),
+/// each with shape (n_cells, no_neighbours_to_keep). Positions without
+/// neighbours are filled with -1 (indices) or NaN (distances).
 ///
 /// @export
 #[extendr]
 fn rs_bbknn_filtering(
     indptr: Vec<i32>,
     indices: Vec<i32>,
+    data: Vec<f64>,
     no_neighbours_to_keep: usize,
-) -> RArray<f64, [usize; 2]> {
+) -> List {
     let nrow = indptr.len() - 1;
     let ncol = no_neighbours_to_keep;
-    let mut mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
+
+    let mut idx_mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
+    let mut dist_mat: Mat<f64> = Mat::from_fn(nrow, ncol, |_, _| f64::NAN);
 
     for i in 0..nrow {
         let start_i = indptr[i] as usize;
         let end_i = indptr[i + 1] as usize;
-        let vals = end_i - start_i;
-        let neighbours = if vals <= no_neighbours_to_keep {
-            &indices[start_i..end_i]
-        } else {
-            &indices[start_i..(start_i + no_neighbours_to_keep)]
-        };
-        for (j, idx) in neighbours.iter().enumerate() {
-            mat[(i, j)] = *idx as f64;
+        let take = (end_i - start_i).min(no_neighbours_to_keep);
+
+        for j in 0..take {
+            idx_mat[(i, j)] = indices[start_i + j] as f64;
+            dist_mat[(i, j)] = data[start_i + j];
         }
     }
-    faer_to_r_matrix(mat.as_ref())
+
+    list!(
+        indices = faer_to_r_matrix(idx_mat.as_ref()),
+        dist = faer_to_r_matrix(dist_mat.as_ref())
+    )
 }
+
+/////////////
+// FastMNN //
+/////////////
 
 /// FastMNN batch correction in Rust
 ///
@@ -195,6 +311,10 @@ fn rs_mnn(
 
     faer_to_r_matrix(corrected_embd.as_ref())
 }
+
+/////////////
+// Harmony //
+/////////////
 
 /// Harmony batch correction in Rust
 ///
