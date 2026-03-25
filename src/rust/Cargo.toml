@@ -22,7 +22,7 @@ debug = false
 [profile.release]
 opt-level = 3
 lto = "thin"
-codegen-units = 16
+codegen-units = 4
 strip = true
 
 [dependencies]
