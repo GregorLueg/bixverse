@@ -47,6 +47,8 @@ navbar:
           href: articles/doublet_detection.html
         - text: Batch corrections
           href: articles/single_cell_batch_corrections.html
+        - text: Analysing big data
+          href: articles/single_cell_big_data.html
     articles:
       text: Articles
       menu:
@@ -79,6 +81,7 @@ articles:
       - pbmc_single_cell
       - doublet_detection
       - single_cell_batch_corrections
+      - single_cell_big_data
 
 reference:
   # General getters shared across classes
