@@ -19,7 +19,8 @@ generate_rbh_graph(
 
 - object:
 
-  The underlying class, see [`RbhGraph()`](RbhGraph.md).
+  The underlying class, see
+  [`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md).
 
 - minimum_similarity:
 

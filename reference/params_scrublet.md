@@ -51,31 +51,33 @@ params_scrublet(
 - normalisation:
 
   List. Optional overrides for normalisation parameters. See
-  [`params_norm_doublet_detection_defaults()`](params_norm_doublet_detection_defaults.md)
+  [`params_norm_doublet_detection_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublet_detection_defaults.md)
   for available parameters: `log_transform`, `mean_center`,
   `normalise_variance`, `target_size`.
 
 - hvg:
 
   List. Optional overrides for highly variable gene selection
-  parameters. See [`params_hvg_defaults()`](params_hvg_defaults.md) for
-  available parameters: `min_gene_var_pctl`, `hvg_method`, `loess_span`,
-  `clip_max`.
+  parameters. See
+  [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md)
+  for available parameters: `min_gene_var_pctl`, `hvg_method`,
+  `loess_span`, `clip_max`.
 
 - pca:
 
   List. Optional overrides for PCA parameters. See
-  [`params_pca_defaults()`](params_pca_defaults.md) for available
-  parameters: `no_pcs`, `random_svd`, `sparse` and `skip_first_pc`.
+  [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
+  for available parameters: `no_pcs`, `random_svd`, `sparse` and
+  `skip_first_pc`.
 
 - knn:
 
   List. Optional overrides for kNN parameters. See
-  [`params_knn_defaults()`](params_knn_defaults.md) for available
-  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
-  `ef_search`, `n_list` and `n_probe`. Note: this function defaults to
-  `k = 0L` (automatic neighbour detection).
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for available parameters: `k`, `knn_method`, `ann_dist`,
+  `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. Note:
+  this function defaults to `k = 0L` (automatic neighbour detection).
 
 ## Value
 

@@ -33,7 +33,8 @@ scrublet_sc(
 - scrublet_params:
 
   A list with the final scrublet parameters, see
-  [`params_scrublet()`](params_scrublet.md) for full details.
+  [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md)
+  for full details.
 
 - seed:
 

@@ -15,7 +15,8 @@ change_gene_identifier(object, alternative_gene_id, variable_info = NULL)
 
 - object:
 
-  `BulkDge` class, see [`BulkDge()`](BulkDge.md).
+  `BulkDge` class, see
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - alternative_gene_id:
 

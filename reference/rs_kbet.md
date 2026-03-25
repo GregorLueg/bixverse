@@ -27,4 +27,12 @@ rs_kbet(knn_mat, batch_vector)
 
 ## Value
 
-A vector of p-values based on the ChiSquare statistic per cell.
+A list with the following items
+
+- pval - The p-values from the ChiSquare test
+
+- chi_square_stats - ChiSquare statistics
+
+- mean_chi_square - The mean ChiSquare value
+
+- median_chi_square - The median ChiSquare value

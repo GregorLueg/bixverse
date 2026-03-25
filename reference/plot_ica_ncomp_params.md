@@ -15,8 +15,9 @@ You have:
 - Combined score - The product of the three other scores.
 
 If found, the function will also add the optimal number of components
-based on [`ica_optimal_ncomp()`](ica_optimal_ncomp.md) (if a loess
-function could be fitted).
+based on
+[`ica_optimal_ncomp()`](https://gregorlueg.github.io/bixverse/reference/ica_optimal_ncomp.md)
+(if a loess function could be fitted).
 
 ## Usage
 
@@ -28,9 +29,11 @@ plot_ica_ncomp_params(object)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
-  [`ica_evaluate_comp()`](ica_evaluate_comp.md) before running this
-  function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to apply
+  [`ica_evaluate_comp()`](https://gregorlueg.github.io/bixverse/reference/ica_evaluate_comp.md)
+  before running this function.
 
 ## Value
 

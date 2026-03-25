@@ -1,8 +1,9 @@
 # Get the diffusion vector
 
 Returns the diffusion vector if you ran
-[`tied_diffusion()`](tied_diffusion.md) or
-[`diffuse_seed_nodes()`](diffuse_seed_nodes.md).
+[`tied_diffusion()`](https://gregorlueg.github.io/bixverse/reference/tied_diffusion.md)
+or
+[`diffuse_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.md).
 
 ## Usage
 
@@ -14,7 +15,8 @@ get_diffusion_vector(object)
 
 - object:
 
-  The underlying class [`NetworkDiffusions()`](NetworkDiffusions.md).
+  The underlying class
+  [`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md).
 
 ## Value
 

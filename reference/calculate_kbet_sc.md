@@ -36,15 +36,25 @@ calculate_kbet_sc(object, batch_column, threshold = 0.05, .verbose = TRUE)
 
 ## Value
 
-A list with the following elements
+A `KbetScores` object with the following elements
 
-- kbet_score - Number of significant tests over all cells. 0 indicates
-  perfect mixing, 1 indicates basically zero mixing between batches.
+- kbet_score - Proportion of significant tests over all cells. 0
+  indicates perfect mixing, 1 indicates no mixing between batches.
 
-- significant_tests - Boolean indicating for which cells the statistic
-  was below the threshold
+- significant_tests - Logical vector indicating for which cells the test
+  was below the threshold.
 
-- chisquare_pvals - The p-values of the ChiSquare test.
+- p_values - The p-values from the Chi-Square test.
+
+- chi_square_stats - Per-cell Chi-Square statistics.
+
+- mean_chi_square - Mean Chi-Square statistic across all cells.
+
+- median_chi_square - Median Chi-Square statistic across all cells.
+
+- threshold - The significance threshold used.
+
+- n_batches - Number of batches in the data.
 
 ## References
 

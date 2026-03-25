@@ -19,9 +19,11 @@ cor_module_check_epsilon(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to run
-  [`cor_module_processing()`](cor_module_processing.md) before running
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to run
+  [`cor_module_processing()`](https://gregorlueg.github.io/bixverse/reference/cor_module_processing.md)
+  before running this function.
 
 - rbf_func:
 

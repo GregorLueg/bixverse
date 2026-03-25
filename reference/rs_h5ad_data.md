@@ -30,7 +30,7 @@ rs_h5ad_data(f_path, cs_type, nrows, ncols, cell_quality, verbose)
 - cell_quality:
 
   List. Specifiying the cell quality. Please refer to
-  [`params_sc_min_quality()`](params_sc_min_quality.md).
+  [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
 
 - verbose:
 

@@ -12,7 +12,7 @@ get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 
 - object:
 
-  `single_cell_exp`, `meta_cells` class.
+  `SingleCells`, `MetaCells` class.
 
 - indices:
 
@@ -25,7 +25,7 @@ get_sc_obs(object, indices = NULL, cols = NULL, filtered = FALSE)
 - filtered:
 
   Boolean. Whether to return all cells or filtered to `to_keep` cells.
-  Not relevant for `meta_cells`.
+  Not relevant for `MetaCells`.
 
 ## Value
 

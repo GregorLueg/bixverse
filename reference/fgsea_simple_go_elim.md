@@ -25,7 +25,8 @@ fgsea_simple_go_elim(
 
 - object:
 
-  The underlying class, see [`GeneOntologyElim()`](GeneOntologyElim.md).
+  The underlying class, see
+  [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 
 - stats:
 
@@ -42,7 +43,8 @@ fgsea_simple_go_elim(
 
 - gsea_params:
 
-  List. The GSEA parameters, see [`params_gsea()`](params_gsea.md)
+  List. The GSEA parameters, see
+  [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
   wrapper function. This function generates a list containing:
 
   - min_size - Integer. Minimum size for the gene sets.

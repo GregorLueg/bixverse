@@ -18,3 +18,7 @@ get_snn_graph(x)
 - x:
 
   An object to get the sNN graph from.
+
+## Value
+
+The igraph that has the shared nearest neighbours.

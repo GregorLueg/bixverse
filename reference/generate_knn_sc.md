@@ -48,8 +48,9 @@ generate_knn_sc(
 
 - neighbours_params:
 
-  List. Output of [`params_sc_neighbours()`](params_sc_neighbours.md). A
-  list with the following items:
+  List. Output of
+  [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
+  A list with the following items:
 
   - full_snn - Boolean. Shall the full shared nearest neighbour graph be
     generated that generates edges between all cells instead of between
@@ -60,11 +61,11 @@ generate_knn_sc(
 
   - snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
     the weight from the SNN graph is calculated. For details, please see
-    [`params_sc_neighbours()`](params_sc_neighbours.md).
+    [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md).
 
   - knn - List of kNN parameters. See
-    [`params_knn_defaults()`](params_knn_defaults.md) for available
-    parameters and their defaults.
+    [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
 
 - seed:
 

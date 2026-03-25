@@ -3,8 +3,8 @@
 Runs a linear batch correction over the data regressing out batch
 effects and adding `normalised_counts_corrected` to the object. Should
 these counts be found by
-[`calculate_dge_hedges()`](calculate_dge_hedges.md), they will be used
-for calculations of effect sizes based on Hedge's G.
+[`calculate_dge_hedges()`](https://gregorlueg.github.io/bixverse/reference/calculate_dge_hedges.md),
+they will be used for calculations of effect sizes based on Hedge's G.
 
 ## Usage
 
@@ -22,7 +22,8 @@ batch_correction_bulk_dge(
 
 - object:
 
-  The underlying class, see [`BulkDge()`](BulkDge.md).
+  The underlying class, see
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - contrast_column:
 

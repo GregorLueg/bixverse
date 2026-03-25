@@ -13,8 +13,8 @@ calculate_sparsity_stats(object, no_exp_bins = 10L)
 - object:
 
   `synthetic_bulk_data` object. You need to have run
-  [`simulate_dropouts()`](simulate_dropouts.md) for this function to
-  work.
+  [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md)
+  for this function to work.
 
 - no_exp_bins:
 
@@ -27,7 +27,7 @@ A list with various statistics about the sparsity
 - original_sparsity - Original proportion of zeroes in the counts.
 
 - final_sparsity - Sparsity after applying
-  [`simulate_dropouts()`](simulate_dropouts.md).
+  [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md).
 
 - added_sparsity - Added sparsity.
 

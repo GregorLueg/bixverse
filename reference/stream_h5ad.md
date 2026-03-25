@@ -5,7 +5,8 @@ var data into the DuckDB of the `SingleCells` class and the counts into
 a Rust-binarised format for rapid access. During the reading in of the
 counts, the log CPM transformation will occur automatically. This
 function is specifically designed to deal with larger amounts of data
-and is slower than [`load_h5ad()`](load_h5ad.md).
+and is slower than
+[`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md).
 
 ## Usage
 
@@ -32,7 +33,8 @@ stream_h5ad(
 
 - sc_qc_param:
 
-  List. Output of [`params_sc_min_quality()`](params_sc_min_quality.md).
+  List. Output of
+  [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
   A list with the following elements:
 
   - min_unique_genes - Integer. Minimum number of genes to be detected

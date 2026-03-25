@@ -17,7 +17,8 @@ calculate_semantic_sim_onto(
 
 - object:
 
-  `OntologySim` class. See [`OntologySim()`](OntologySim.md).
+  `OntologySim` class. See
+  [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 - sim_type:
 

@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`BulkDge()`](BulkDge.md).
+This constructor has been renamed to
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 ## Usage
 
@@ -37,4 +38,6 @@ bulk_dge(
 
 ## Value
 
-Returns a [`BulkDge()`](BulkDge.md) object.
+Returns a
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
+object.

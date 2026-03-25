@@ -34,8 +34,8 @@ hotspot_autocor_sc(
 - hotspot_params:
 
   List with hotspot parameters, see
-  [`params_sc_hotspot()`](params_sc_hotspot.md) with the following
-  elements:
+  [`params_sc_hotspot()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hotspot.md)
+  with the following elements:
 
   - model - String. Which of the available models to use for the gene
     expression. Choices are one of `c("danb", "normal", "bernoulli")`.
@@ -43,8 +43,8 @@ hotspot_autocor_sc(
   - normalise - Boolean. Shall the data be normalised.
 
   - knn - List of kNN parameters. See
-    [`params_knn_defaults()`](params_knn_defaults.md) for available
-    parameters and their defaults.
+    [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
 
 - no_embd_to_use:
 

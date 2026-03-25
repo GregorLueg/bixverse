@@ -21,9 +21,11 @@ dgrdl_grid_search(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
-  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  Ideally, you should run
+  [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
+  before applying this function.
 
 - neighbours_vec:
 
@@ -40,7 +42,8 @@ dgrdl_grid_search(
 
 - dgrdl_params:
 
-  List. Output of [`params_dgrdl()`](params_dgrdl.md):
+  List. Output of
+  [`params_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/params_dgrdl.md):
 
   - sparsity - Integer. Sparsity constraint (max non-zero coefficients
     per signal)

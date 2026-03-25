@@ -33,12 +33,14 @@ cor_module_graph_check_res(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - resolution_params:
 
   List. Parameters for the resolution search, see
-  [`params_graph_resolution()`](params_graph_resolution.md). Contains:
+  [`params_graph_resolution()`](https://gregorlueg.github.io/bixverse/reference/params_graph_resolution.md).
+  Contains:
 
   - min_res - Float. Minimum resolution to test.
 
@@ -50,7 +52,9 @@ cor_module_graph_check_res(
 - graph_params:
 
   List. Parameters for the generation of the (differential) correlation
-  graph, see [`params_cor_graph()`](params_cor_graph.md). Contains:
+  graph, see
+  [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md).
+  Contains:
 
   - Epsilon - Defines the epsilon parameter for the radial basis
     function. Defaults to 1, but should be ideally optimised.

@@ -19,7 +19,8 @@ rs_gsva(exp, gs_list, tau, gaussian, max_diff, abs_rank, timings)
 - gs_list:
 
   List. A list containing the indices of the pathway genes (needs to be
-  null indexed). See [`rs_prepare_gsva_gs()`](rs_prepare_gsva_gs.md).
+  null indexed). See
+  [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md).
 
 - tau:
 

@@ -1,25 +1,95 @@
 # Bixverse R \<\> Rust interface
 
+## Why Rust?
+
+Honest answer? The creation of this package was based on the desire of
+the author to play with Rust. To make it useful, the initial playground
+was stuff relevant to day-to-day work in bioinformatics and
+computational biology: correlations, PCA, other matrix factorisation
+methods, and so on. It quickly became apparent that Rust delivered
+incredible speed gains over R — sometimes 100x — with millions of
+hypergeometric tests completing in mere seconds. The results were
+striking. Memory safety and the fantastic work by the [rextendr
+team](https://github.com/extendr/rextendr) made interfacing R and Rust
+straightforward and, frankly, quite fun.
+
+### Correlations and covariance
+
+One of the most typical operations in computational biology is computing
+correlations and covariances; and these were the first functions
+implemented, largely to understand
+[faer](https://github.com/sarah-ek/faer-rs) and the Rust/R interface.
+What becomes apparent very quickly is the following. For 1000 x 1000
+matrices on an M1 Max MacBook Pro (using Apple’s Accelerate framework
+for R BLAS):
+
+**Covariance**
+
+| Implementation | Median (ms, 20 runs) |
+|---------------:|---------------------:|
+|         base R |               515.73 |
+|           Rust |                18.66 |
+
+*A 27x increase in speed.*
+
+**Pearson correlation**
+
+| Implementation | Median (ms, 20 runs) |
+|---------------:|---------------------:|
+|         base R |               512.83 |
+|           Rust |                20.90 |
+
+*A 24x increase in speed.*
+
+**Spearman correlation**
+
+| Implementation | Median (ms, 20 runs) |
+|---------------:|---------------------:|
+|         base R |               603.00 |
+|           Rust |                29.47 |
+
+*A 20x increase in speed.*
+
+The gains are even more pronounced on larger matrices. For a 1000 x 5000
+matrix:
+
+**Pearson correlation (1000 x 5000)**
+
+| Implementation | Median (ms, 20 runs) |
+|---------------:|---------------------:|
+|         base R |             12994.37 |
+|           Rust |               419.88 |
+
+*A 30x increase in speed.*
+
+Given that matrix algebra underlies a large proportion of computational
+bioinformatics workflows, this makes a compelling case for Rust under
+the hood. The rest of this vignette shows how to use the exposed Rust
+functions directly, with runnable benchmarks you can verify on your own
+machine.
+
 ## Using the Rust functions in more general R code
 
-`bixverse` has a number of R \<\> Rust functions that might be useful
-more generally. This vignette is there to explore how to use these
-functions more general. This vignette will show you to use:
+`bixverse` exposes a number of R/Rust functions that are useful beyond
+the higher-level package functionality. This vignette covers:
 
-- Correlations (via [`rs_cor()`](../reference/rs_cor.md)).
-- Covariance (via [`rs_covariance()`](../reference/rs_covariance.md)).
+- Correlations (via
+  [`rs_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cor.md)).
+- Covariance (via
+  [`rs_covariance()`](https://gregorlueg.github.io/bixverse/reference/rs_covariance.md)).
 - Covariance to correlation (via
-  [`rs_cov2cor()`](../reference/rs_cov2cor.md)).
-- Distance calculations (vs [`rs_dist()`](../reference/rs_dist.md)).
+  [`rs_cov2cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cov2cor.md)).
+- Distance calculations (via
+  [`rs_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_dist.md)).
 - Correlations between two matrices (via
-  [`rs_cor2()`](../reference/rs_cor2.md)).
-- Calculate the mutual information between columns (via
-  `rs_mutual_information()`)
-- Calculations of set similarities between (via
-  [`rs_set_similarity_list()`](../reference/rs_set_similarity_list.md)
-  or [`rs_set_similarity()`](../reference/rs_set_similarity.md)).
+  [`rs_cor2()`](https://gregorlueg.github.io/bixverse/reference/rs_cor2.md)).
+- Mutual information between columns (via `rs_mutual_information()`).
+- Set similarities (via
+  [`rs_set_similarity_list()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list.md)
+  or
+  [`rs_set_similarity()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity.md)).
 
-They might be useful for your down package development.
+These may be useful for your own package development.
 
 ## Set-up
 
@@ -27,14 +97,14 @@ They might be useful for your down package development.
 library(bixverse)
 ```
 
-This vignette will explore the interfaces in `bixverse` to underlying
-Rust code you can leverage to make your code faster. But be careful… Any
-function with `rs_` can cause panics when misused.
+Any function prefixed with `rs_` calls directly into Rust and can panic
+if misused — check inputs before passing them through. There is a LOT of
+these functions in the package, and they are all exported. Why? I want
+other people to be able to integrate the code into their own R packages,
+or if they feel brave, they can just use the Rust crate directly, see
+[here](https://crates.io/crates/bixverse-rs).
 
-### Correlations, co-variance, and cosine distance
-
-A typical thing one uses a lot are correlations, co-variance and cosine
-distances. Let’s look at how to use `bixverse` to calculate these.
+### Correlations, covariance, and cosine distance
 
 ``` r
 no_rows <- 500L
@@ -51,8 +121,6 @@ random_data <- matrix(
 
 #### Pearson’s correlation
 
-Let’s look at Pearson’s correlations.
-
 ``` r
 r_pearsons_res <- cor(random_data)
 
@@ -63,7 +131,7 @@ all.equal(r_pearsons_res, rust_pearsons_res, tolerance = 1e-15)
 #> [1] TRUE
 ```
 
-Speed differences:
+Let’s check the speed.
 
 ``` r
 microbenchmark::microbenchmark(
@@ -73,25 +141,24 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr        min         lq       mean     median         uq        max neval
-#>     r 135.116561 135.374703 135.694504 135.451325 135.615893 137.517553    10
-#>  rust   4.833584   5.687348   6.611594   6.064698   7.519058   9.437831    10
+#>     r 135.241895 135.313458 135.665693 135.453034 135.498064 137.076731    10
+#>  rust   5.556664   5.709669   6.889014   6.311979   7.682172   9.536936    10
 ```
 
-#### Spearman’s correlations
+#### Spearman’s correlation
 
-Let’s look at Spearman’s correlations…
+What about ranked correlations?
 
 ``` r
 r_spearman_res <- cor(random_data, method = "spearman")
 
 rust_spearman_res <- rs_cor(random_data, spearman = TRUE)
 
-# tiny numerical differences do exist
 all.equal(r_spearman_res, rust_spearman_res, tolerance = 1e-15)
 #> [1] TRUE
 ```
 
-Speed differences:
+And speed
 
 ``` r
 microbenchmark::microbenchmark(
@@ -101,25 +168,24 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr        min         lq       mean     median         uq       max neval
-#>     r 165.934707 166.705857 168.693532 169.082249 170.122426 170.44173    10
-#>  rust   6.830593   7.456691   8.556271   7.787109   9.668221  11.24746    10
+#>     r 165.555780 167.547639 168.788814 169.256169 170.230338 170.71219    10
+#>  rust   6.946779   7.348049   8.446806   7.580959   9.636351  11.42343    10
 ```
 
 #### Covariance
 
-And covariance calculations
+Covariance matrices are also very common…
 
 ``` r
 r_covar_res <- cov(random_data)
 
 rust_covar_res <- rs_covariance(random_data)
 
-# tiny numerical differences do exist
 all.equal(r_covar_res, rust_covar_res, tolerance = 1e-15)
 #> [1] TRUE
 ```
 
-Speed differences:
+And speed comparisons
 
 ``` r
 microbenchmark::microbenchmark(
@@ -128,25 +194,25 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr        min         lq       mean     median         uq        max neval
-#>     r 134.807513 134.909675 135.723772 135.164806 137.266274 137.543692    10
-#>  rust   4.410174   5.248078   5.956568   5.339143   6.164369   9.031191    10
+#>  expr        min        lq       mean    median         uq        max neval
+#>     r 134.929502 135.00677 135.212938 135.03700 135.305193 135.899683    10
+#>  rust   5.014732   5.17392   6.053929   5.26522   6.330047   9.087846    10
 ```
 
-Let’s transform covariance to correlations
+#### Covariance to correlation
 
 ``` r
 r_cor_from_covar <- cov2cor(r_covar_res)
 
 rust_cor_from_covar <- rs_cov2cor(rust_covar_res)
 
-# tiny numerical differences do exist
 all.equal(r_cor_from_covar, rust_cor_from_covar, tolerance = 1e-15)
 #> [1] TRUE
 ```
 
-How much faster is Rust here? (This is where we observe the least
-improvement.)
+This is where the Rust implementation shows the least improvement — the
+operation is already cheap in base R — but the interface remains
+consistent with the rest of the `rs_` family.
 
 ``` r
 microbenchmark::microbenchmark(
@@ -156,13 +222,14 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr      min       lq     mean   median       uq      max neval
-#>     r 2.202402 2.600345 3.587493 3.106631 4.725663 6.442809    10
-#>  rust 1.416324 1.621778 3.063695 2.211825 4.044251 7.315849    10
+#>     r 2.203605 2.617898 3.652097 3.444501 4.264161 6.510295    10
+#>  rust 1.409932 1.600939 3.061236 2.210457 4.012982 7.611040    10
 ```
 
 #### Correlations between two matrices
 
-We also provide interface to do correlations between two sets of data
+So far, all of the functions did pairwise column-based correlations.
+What about two correlations against each other?
 
 ``` r
 no_rows_2 <- 500L
@@ -177,19 +244,19 @@ random_data_2 <- matrix(
 )
 ```
 
-Let’s test the correlations between the two matrices
+Let’s compare against R:
 
 ``` r
 r_cor_2_matrices <- cor(random_data, random_data_2)
 
 rust_cor_2_matrices <- rs_cor2(random_data, random_data_2, spearman = FALSE)
 
-# The small precision differences are further propagated in here
+# small precision differences are further propagated here
 all.equal(r_cor_2_matrices, rust_cor_2_matrices, tolerance = 1e-14)
 #> [1] TRUE
 ```
 
-And speed between Rust and R
+And speed:
 
 ``` r
 microbenchmark::microbenchmark(
@@ -198,95 +265,77 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr        min         lq       mean     median         uq        max neval
-#>     r 193.675318 193.788000 193.943031 193.861592 194.090434 194.336814    10
-#>  rust   4.885381   5.664866   6.639908   6.452732   7.354741   8.657143    10
+#>  expr        min       lq       mean     median       uq        max neval
+#>     r 193.664869 193.8425 193.947782 193.912076 194.0072 194.408017    10
+#>  rust   4.902894   5.5165   6.684202   6.457175   7.5630   8.897171    10
 ```
 
 ### Distance metrics
 
-`bixverse` also includes various distance metrics. Let’s have a look at
-very common ones.
-
 #### Euclidean distance
 
-Let’s check out the very classical Euclidean distance.
+Note that [`dist()`](https://rdrr.io/r/stats/dist.html) computes
+row-wise distances, while
+[`rs_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_dist.md)
+expects columns to represent observations — hence the transpose.
 
 ``` r
 r_euclidean_distance <- as.matrix(
-  dist(
-    random_data, 
-    method = "euclidean"
-  )
+  dist(random_data, method = "euclidean")
 )
 
 rs_euclidean_distance <- rs_dist(
-  t(random_data), # dist() calculates row-wise distances
+  t(random_data),
   distance_type = "euclidean"
 )
 
 all.equal(
-  r_euclidean_distance, 
-  rs_euclidean_distance, 
+  r_euclidean_distance,
+  rs_euclidean_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
 #> [1] TRUE
 ```
 
-Again, Rust is much faster…
+And speed…
 
 ``` r
-# to remove any overhead, we do not do the matrix transformation
-# or the transpositation. due to the equal dimensions, it will
-# not matter
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "euclidean"),
   rust = rs_dist(random_data, distance_type = "euclidean"),
   times = 10L
 )
 #> Unit: milliseconds
-#>  expr       min        lq      mean    median       uq       max neval
-#>     r 96.781609 97.136392 97.604174 97.455328 97.81650 99.277270    10
-#>  rust  4.661733  4.693232  5.096851  5.049387  5.52716  5.614954    10
+#>  expr       min        lq      mean    median        uq       max neval
+#>     r 96.647249 96.721958 96.894406 96.808871 97.013001 97.529166    10
+#>  rust  4.520029  4.626577  4.989143  4.939632  5.436109  5.503635    10
 ```
 
-#### Other distance metrics
-
-Let’s test other distance metrics…
-
-**Manhattan distance**
-
-We observe again equivalence of Rust and R results.
+#### Manhattan distance
 
 ``` r
 r_manhattan_distance <- as.matrix(
-  dist(
-    random_data, 
-    method = "manhattan"
-  )
+  dist(random_data, method = "manhattan")
 )
 
 rs_manhattan_distance <- rs_dist(
-  t(random_data), # dist() calculates row-wise distances
+  t(random_data),
   distance_type = "manhattan"
 )
 
 all.equal(
-  r_manhattan_distance, 
-  rs_manhattan_distance, 
+  r_manhattan_distance,
+  rs_manhattan_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
 #> [1] TRUE
 ```
 
-And speed ups in Rust.
+And speed… ?
 
 ``` r
-# to remove any overhead, we do not do the matrix transformation
-# or the transpositation. due to the equal dimensions, it will
-# not matter
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "manhattan"),
   rust = rs_dist(random_data, distance_type = "manhattan"),
@@ -294,42 +343,34 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr      min       lq     mean   median       uq      max neval
-#>     r 91.70112 91.82370 92.22460 92.10353 92.67924 92.98861    10
-#>  rust 17.37504 17.71626 17.88436 17.89619 18.14033 18.27615    10
+#>     r 91.45109 91.55063 91.61923 91.59810 91.63273 92.05923    10
+#>  rust 17.04653 17.11719 17.44383 17.39706 17.70762 18.07922    10
 ```
 
-**Canberra distance**
-
-Equivalence observed…
+#### Canberra distance
 
 ``` r
 r_canberra_distance <- as.matrix(
-  dist(
-    random_data, 
-    method = "canberra"
-  )
+  dist(random_data, method = "canberra")
 )
 
 rs_canberra_distance <- rs_dist(
-  t(random_data), # dist() calculates row-wise distances
+  t(random_data),
   distance_type = "canberra"
 )
 
 all.equal(
-  r_canberra_distance, 
-  rs_canberra_distance, 
+  r_canberra_distance,
+  rs_canberra_distance,
   tolerance = 1e-14,
   check.attributes = FALSE
 )
 #> [1] TRUE
 ```
 
-… and speed-ups.
+Same benchmarks as before…
 
 ``` r
-# to remove any overhead, we do not do the matrix transformation
-# or the transpositation. due to the equal dimensions, it will
-# not matter
 microbenchmark::microbenchmark(
   r = dist(random_data, method = "canberra"),
   rust = rs_dist(random_data, distance_type = "canberra"),
@@ -337,19 +378,13 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>  expr       min        lq      mean    median        uq       max neval
-#>     r 137.31488 137.44399 137.77648 137.60419 137.89925 139.28767    10
-#>  rust  46.04405  46.33603  46.46993  46.46933  46.66423  46.80639    10
+#>     r 137.27918 137.38207 137.74128 137.45232 137.80695 139.29936    10
+#>  rust  46.01513  46.30661  46.41266  46.43713  46.50769  46.88659    10
 ```
 
 ### Mutual information
 
-Another quantity you might be interested in is the mutual information
-between between your variables of interest. `bixverse` also provides a
-Rust-powered interface into very rapid calculations in this regard.
-
 ``` r
-# we are going to create a reduced set for the benchmark to finish 
-# in a reasonable time
 set.seed(246L)
 
 nrows <- 100
@@ -360,19 +395,20 @@ rownames(mat) <- sprintf("sample_%i", 1:nrows)
 colnames(mat) <- sprintf("feature_%i", 1:ncols)
 ```
 
-To run the function you can just use the following code. The Rust
-version will default to sqrt(nrow())
+The Rust version defaults to `sqrt(nrow())` bins when `n_bins = NULL`.
+Two discretisation strategies are available.
+
+**Equal width:**
 
 ``` r
 rust_res_mi <- rs_mutual_info(
-  mat, 
-  n_bins = NULL, 
+  mat,
+  n_bins = NULL,
   normalise = FALSE,
   strategy = "equal_width"
 )
 rownames(rust_res_mi) <- colnames(rust_res_mi) <- colnames(mat)
 
-# ensure that the same discretisation is used
 infotheo_res_mi <- infotheo::mutinformation(infotheo::discretize(
   mat,
   disc = "equalwidth",
@@ -383,18 +419,38 @@ all.equal(rust_res_mi, infotheo_res_mi)
 #> [1] TRUE
 ```
 
-There is also an equal frequency strategy implemented:
+``` r
+microbenchmark::microbenchmark(
+  infotheo = infotheo::mutinformation(infotheo::discretize(
+    mat,
+    disc = "equalwidth",
+    nbins = sqrt(nrow(mat))
+  )),
+  rust = rs_mutual_info(
+    mat,
+    n_bins = NULL,
+    normalise = FALSE,
+    strategy = "equal_width"
+  ),
+  times = 10L
+)
+#> Unit: milliseconds
+#>      expr      min        lq      mean    median        uq       max neval
+#>  infotheo 83.97013 84.080587 84.281618 84.202455 84.438976 84.920365    10
+#>      rust  3.33700  3.380712  3.605351  3.645396  3.802359  3.861028    10
+```
+
+**Equal frequency:**
 
 ``` r
 rust_res_mi <- rs_mutual_info(
-  mat, 
-  n_bins = NULL, 
+  mat,
+  n_bins = NULL,
   normalise = FALSE,
   strategy = "equal_freq"
 )
 rownames(rust_res_mi) <- colnames(rust_res_mi) <- colnames(mat)
 
-# ensure that the same discretisation is used
 infotheo_res_mi <- infotheo::mutinformation(infotheo::discretize(
   mat,
   disc = "equalfreq",
@@ -405,31 +461,6 @@ all.equal(rust_res_mi, infotheo_res_mi)
 #> [1] TRUE
 ```
 
-Again, the Rust implementation is way faster.
-
-``` r
-microbenchmark::microbenchmark(
-  infotheo = infotheo::mutinformation(infotheo::discretize(
-    mat,
-    disc = "equalwidth",
-    nbins = sqrt(nrow(mat))
-  )),
-  rust = rs_mutual_info(
-    mat, 
-    n_bins = NULL, 
-    normalise = FALSE,
-    strategy = "equal_width"
-  ),
-  times = 10L
-)
-#> Unit: milliseconds
-#>      expr       min        lq      mean    median        uq     max neval
-#>  infotheo 83.936368 84.467209 84.731817 84.861846 85.008380 85.1825    10
-#>      rust  3.355194  3.383918  3.623576  3.669992  3.755551  4.0067    10
-```
-
-And with equal frequency per bin:
-
 ``` r
 microbenchmark::microbenchmark(
   infotheo = infotheo::mutinformation(infotheo::discretize(
@@ -438,17 +469,17 @@ microbenchmark::microbenchmark(
     nbins = sqrt(nrow(mat))
   )),
   rust = rs_mutual_info(
-    mat, 
-    n_bins = NULL, 
+    mat,
+    n_bins = NULL,
     normalise = FALSE,
     strategy = "equal_freq"
   ),
   times = 10L
 )
 #> Unit: milliseconds
-#>      expr        min        lq       mean     median         uq        max
-#>  infotheo 101.078833 101.28361 101.527034 101.530731 101.755696 102.042983
-#>      rust   4.363978   4.39203   4.621804   4.690928   4.787278   4.916459
+#>      expr        min         lq       mean     median         uq       max
+#>  infotheo 101.023148 101.708970 102.035959 102.115037 102.500567 102.80878
+#>      rust   4.347687   4.389455   4.603822   4.733904   4.746742   4.77277
 #>  neval
 #>     10
 #>     10
@@ -456,10 +487,9 @@ microbenchmark::microbenchmark(
 
 ### Set similarities
 
-`bixverse` also provides various functions that leverage Rust to do set
-similarities. Let’s compare this against some R implementation. Below is
-a naive R implementation to calculate the Jaccard similarities between
-two lists containing strings.
+`bixverse` also exposes Rust-accelerated set similarity calculations. To
+illustrate the performance, below is a comparison against a naive R
+implementation of Jaccard similarity across two lists.
 
 ``` r
 jaccard_sim <- function(x, y) {
@@ -468,144 +498,132 @@ jaccard_sim <- function(x, y) {
 
 set.seed(42L)
 
-random_sets_1 <- purrr::map(1:1000L, ~{
-  paste(sample(LETTERS, sample(1:20, 1)))
-})
+random_sets_1 <- purrr::map(
+  1:1000L,
+  ~ paste(sample(LETTERS, sample(1:20, 1)))
+)
 
-random_sets_2 <- purrr::map(1:500L, ~{
-  paste(sample(LETTERS, sample(1:20, 1)))
-})
+random_sets_2 <- purrr::map(
+  1:500L,
+  ~ paste(sample(LETTERS, sample(1:20, 1)))
+)
 ```
 
-Let’s start with a naive [purrr](https://purrr.tidyverse.org) approach.
-The problem obviously will benefit from some form of parallel
-processing, but for completeness, let’s run this version, too.
+Starting with a sequential [purrr](https://purrr.tidyverse.org) approach
+as the baseline:
 
 ``` r
 tictoc::tic()
 
-r_results <- purrr::map(random_sets_1, \(x) {
-  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
-}, .progress = TRUE)
+r_results <- purrr::map(
+  random_sets_1,
+  \(x) {
+    purrr::map_dbl(random_sets_2, \(y) jaccard_sim(x, y))
+  },
+  .progress = TRUE
+)
 #>  ■■■                                6% |  ETA: 24s
 #>  ■■■■■■                            18% |  ETA: 21s
 #>  ■■■■■■■■■■                        30% |  ETA: 18s
 #>  ■■■■■■■■■■■■■■                    42% |  ETA: 15s
 #>  ■■■■■■■■■■■■■■■■■                 54% |  ETA: 12s
 #>  ■■■■■■■■■■■■■■■■■■■■■             66% |  ETA:  9s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■■          78% |  ETA:  6s
-#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      89% |  ETA:  3s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■          78% |  ETA:  5s
+#>  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% |  ETA:  3s
 
 similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
+
 tictoc::toc()
-#> 25.195 sec elapsed
+#> 25.12 sec elapsed
 ```
 
-Let’s try to parallelise this vi [furrr](https://furrr.futureverse.org)
-and evaluate how much we can improve this.
+Parallelising via [furrr](https://furrr.futureverse.org) gives a
+meaningful speedup:
 
 ``` r
 future::plan(strategy = future::multisession(workers = parallel::detectCores()))
 
 tictoc::tic()
 
-r_results <- furrr::future_map(random_sets_1, \(x) {
-  purrr::map_dbl(random_sets_2, \(y) {jaccard_sim(x, y)})
-}, .progress = TRUE)
+r_results <- furrr::future_map(
+  random_sets_1,
+  \(x) {
+    purrr::map_dbl(random_sets_2, \(y) jaccard_sim(x, y))
+  },
+  .progress = TRUE
+)
 
 similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
+
 tictoc::toc()
-#> 14.108 sec elapsed
+#> 14.17 sec elapsed
 
 future::plan(strategy = future::sequential())
 ```
 
-Parallelisation as expected accelerates the calculations substantially.
-What about [mirai](https://mirai.r-lib.org/articles/mirai.html)? It
-should produce less overhead compared to future.
+[mirai](https://mirai.r-lib.org/articles/mirai.html) reduces process
+scheduling overhead (somtimes) compared to `future` and does a bit
+better:
 
 ``` r
 mirai::daemons(parallel::detectCores())
 
 tictoc::tic()
 
-r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
-  purrr::map_dbl(sets_2, \(y) {
-    length(intersect(x, y)) / length(union(x, y))
-  })
-}, .args = list(sets_2 = random_sets_2))[]
+r_results_mirai <- mirai::mirai_map(
+  random_sets_1,
+  \(x, sets_2) {
+    purrr::map_dbl(sets_2, \(y) {
+      length(intersect(x, y)) / length(union(x, y))
+    })
+  },
+  .args = list(sets_2 = random_sets_2)
+)[]
 
 similarity_matrix <- matrix(
-  data = unlist(r_results_mirai), 
-  nrow = length(random_sets_1), 
+  data = unlist(r_results_mirai),
+  nrow = length(random_sets_1),
   ncol = length(random_sets_2),
   byrow = TRUE
 )
 
 tictoc::toc()
-#> 13.372 sec elapsed
+#> 13.758 sec elapsed
 
 mirai::daemons(0)
 ```
 
-That’s already a bit better. Maybe we can optimise the Jaccard
-similarity function further and accelerate this even more.
+Depending on your system this optimised parallel R version may be around
+4x faster than the naive sequential baseline. Now compare against the
+Rust implementation:
 
 ``` r
 tictoc::tic()
-mirai::daemons(4)
 
-r_results_mirai <- mirai::mirai_map(random_sets_1, \(x, sets_2) {
-  purrr::map_dbl(sets_2, \(y) {
-    # Optimised function
-    intersection <- length(intersect(x, y))
-    union_size <- length(x) + length(y) - intersection
-    intersection / union_size
-  })
-}, .args = list(sets_2 = random_sets_2))[]
-
-similarity_matrix <- matrix(
-  data = unlist(r_results), 
-  nrow = length(random_sets_1), 
-  ncol = length(random_sets_2),
-  byrow = TRUE
-)
-
-mirai::daemons(0)
-tictoc::toc()
-#> 8.093 sec elapsed
-```
-
-This is already much better… Pending on your system you might be seeing
-a 4x increase in speed compared to the naive purrr version. However,
-let’s compare against the Rust version implemented in `bixverse`:
-
-``` r
-tictoc::tic()
 rust_res <- rs_set_similarity_list2(
-    s_1_list = random_sets_1,
-    s_2_list = random_sets_2,
+  s_1_list = random_sets_1,
+  s_2_list = random_sets_2,
   overlap_coefficient = FALSE
 )
+
 tictoc::toc()
-#> 0.048 sec elapsed
+#> 0.05 sec elapsed
 
 all.equal(similarity_matrix, rust_res, tolerance = 1e-15)
 #> [1] TRUE
 ```
 
-Yep, that is MUCH faster… These are some of the functions that are
-exposed in `bixverse` and can be integrated into other workflows. There
-are many more highly specialised functions that can be used in other
-workflows. It’s best to explore the package and the underlying code base
-to identify all of these functions.
+The margin here is not subtle. The functions shown in this vignette are
+a representative sample of what is exposed in `bixverse`: there are many
+more specialised functions throughout the package worth exploring (if
+you are brave and can deal with a panic here and there).

@@ -31,7 +31,8 @@ load_h5ad(
 
 - sc_qc_param:
 
-  List. Output of [`params_sc_min_quality()`](params_sc_min_quality.md).
+  List. Output of
+  [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
   A list with the following elements:
 
   - min_unique_genes - Integer. Minimum number of genes to be detected

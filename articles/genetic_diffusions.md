@@ -49,21 +49,21 @@ edge_data <- setDT(igraph::as_data_frame(barabasi_graph))
 probs <- igraph::degree(barabasi_graph) / sum(igraph::degree(barabasi_graph))
 
 genes_1 <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 5, 
+  igraph::V(barabasi_graph)$name,
+  size = 5,
   prob = probs
 )
 genes_2 <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 8, 
+  igraph::V(barabasi_graph)$name,
+  size = 8,
   prob = probs
 )
 
 diffusion_vector_1 <- rep(1, length(genes_1)) %>% `names<-`(genes_1)
 diffusion_vector_2 <- rep(1, length(genes_2)) %>% `names<-`(genes_2)
 gold_standard_genes <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 6, 
+  igraph::V(barabasi_graph)$name,
+  size = 6,
   prob = probs
 )
 ```
@@ -74,8 +74,8 @@ To generate the class, you run
 
 ``` r
 diffusion_obj <- NetworkDiffusions(
-  edge_data, 
-  weighted = FALSE, 
+  edge_data,
+  weighted = FALSE,
   directed = FALSE
 )
 ```
@@ -84,8 +84,8 @@ For just running a single diffusion from a single set, you can do:
 
 ``` r
 diffusion_obj <- diffuse_seed_nodes(
-  object = diffusion_obj, 
-  diffusion_vector = diffusion_vector_1, 
+  object = diffusion_obj,
+  diffusion_vector = diffusion_vector_1,
   summarisation = "max"
 )
 
@@ -134,14 +134,14 @@ To assess if the diffusions are useful to start with, you can run:
 
 ``` r
 auc_results <- calculate_diffusion_auc(
-  object = diffusion_obj, 
+  object = diffusion_obj,
   hit_nodes = gold_standard_genes,
   permutation_test = TRUE # This will do permutation and generate Z-scores
 )
 
 print(
   sprintf(
-    "The AUC of the diffuion is %.3f.", 
+    "The AUC of the diffuion is %.3f.",
     auc_results$auc
   )
 )
@@ -251,8 +251,8 @@ run the algorithm, you can just do:
 
 ``` r
 diffusion_obj <- tied_diffusion(
-  object = diffusion_obj, 
-  diffusion_vector_1 = diffusion_vector_1, 
+  object = diffusion_obj,
+  diffusion_vector_1 = diffusion_vector_1,
   diffusion_vector_2 = diffusion_vector_2,
   summarisation = "max",
   score_aggregation = "min"
@@ -283,8 +283,8 @@ par(mfrow = c(1, 2))
 
 hist(diffusion_res, xlab = "Tied PPR score", main = "Diffusion result (tied)")
 hist(
-  permutation_res, 
-  xlab = "Tied PPR score", 
+  permutation_res,
+  xlab = "Tied PPR score",
   main = "Permutations result (tied)"
 )
 ```

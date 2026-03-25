@@ -22,7 +22,8 @@ get_params.ScenicGrn(object, to_json = FALSE, pretty_json = FALSE)
 - object:
 
   A class within bixverse that inherits from
-  [`BixverseBaseClass()`](BixverseBaseClass.md) or defined S3 classes.
+  [`BixverseBaseClass()`](https://gregorlueg.github.io/bixverse/reference/BixverseBaseClass.md)
+  or defined S3 classes.
 
 - to_json:
 

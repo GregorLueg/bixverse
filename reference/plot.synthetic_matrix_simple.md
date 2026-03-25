@@ -14,7 +14,7 @@ plot(x, ...)
 - x:
 
   `synthetic_matrix_simple` class. Output from
-  [`synthetic_signal_matrix()`](synthetic_signal_matrix.md).
+  [`synthetic_signal_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_signal_matrix.md).
 
 - ...:
 

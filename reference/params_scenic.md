@@ -62,11 +62,11 @@ params_scenic(
 
   List. Optional overrides for the regression learner parameters. For
   `"randomforest"`, see
-  [`params_scenic_random_forest_defaults()`](params_scenic_random_forest_defaults.md).
+  [`params_scenic_random_forest_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_random_forest_defaults.md).
   For `"extratrees"`, see
-  [`params_scenic_extra_trees_defaults()`](params_scenic_extra_trees_defaults.md).
+  [`params_scenic_extra_trees_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_extra_trees_defaults.md).
   For `"grnboost2"`, see
-  [`params_scenic_gradient_boosting_defaults()`](params_scenic_gradient_boosting_defaults.md).
+  [`params_scenic_gradient_boosting_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_gradient_boosting_defaults.md).
 
 ## Value
 

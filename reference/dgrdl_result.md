@@ -2,7 +2,7 @@
 
 Runs the DGRDL algorithm from Pan et al., with the specified
 hyperparamters. To determine the hyperparameters, you can use
-[`dgrdl_grid_search()`](dgrdl_grid_search.md).
+[`dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/dgrdl_grid_search.md).
 
 ## Usage
 
@@ -19,13 +19,16 @@ dgrdl_result(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
-  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  Ideally, you should run
+  [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
+  before applying this function.
 
 - dgrdl_params:
 
-  List. Output of [`params_dgrdl()`](params_dgrdl.md):
+  List. Output of
+  [`params_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/params_dgrdl.md):
 
   - sparsity - Integer. Sparsity constraint (max non-zero coefficients
     per signal)

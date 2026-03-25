@@ -35,8 +35,8 @@ fast_ica_rust(
 - ica_params:
 
   List. The ICA parameters, see
-  [`params_ica_general()`](params_ica_general.md) wrapper function. This
-  function generates a list containing:
+  [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
+  wrapper function. This function generates a list containing:
 
   - maxit - Integer. Maximum number of iterations for ICA.
 

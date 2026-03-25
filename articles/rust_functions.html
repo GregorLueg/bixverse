@@ -12,17 +12,18 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="rust_functions_files/libs/quarto-html/popper.min.js"></script><script src="rust_functions_files/libs/quarto-html/tippy.umd.min.js"></script><link href="rust_functions_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="rust_functions_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Bixverse R &lt;&gt; Rust interface">
+<!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Bixverse R &lt;&gt; Rust interface">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,12 +33,39 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/rust_functions.html">Bixverse R &lt;&gt; Rust interface</a></li>
+    <li><a class="dropdown-item" href="../articles/design_single_cell.html">Technical design choices</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+<li><a class="dropdown-item" href="../articles/gse_methods.html">Gene Set Enrichment Methods</a></li>
+    <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
+    <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
+    <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
+<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+  </ul>
+</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/GregorLueg/bixverse" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -49,7 +77,7 @@
 
       <h1>Bixverse R &lt;&gt; Rust interface</h1>
 
-
+      <p class="author">Gregor Lueg</p>
 
 
 
@@ -61,29 +89,108 @@
 
 
 
-    <section class="level2"><h2 id="using-the-rust-functions-in-more-general-r-code">Using the Rust functions in more general R code<a class="anchor" aria-label="anchor" href="#using-the-rust-functions-in-more-general-r-code"></a>
+    <section class="level2"><h2 id="why-rust">Why Rust?<a class="anchor" aria-label="anchor" href="#why-rust"></a>
 </h2>
-<p><code>bixverse</code> has a number of R &lt;&gt; Rust functions that might be useful more generally. This vignette is there to explore how to use these functions more general. This vignette will show you to use:</p>
+<p>Honest answer? The creation of this package was based on the desire of the author to play with Rust. To make it useful, the initial playground was stuff relevant to day-to-day work in bioinformatics and computational biology: correlations, PCA, other matrix factorisation methods, and so on. It quickly became apparent that Rust delivered incredible speed gains over R — sometimes 100x — with millions of hypergeometric tests completing in mere seconds. The results were striking. Memory safety and the fantastic work by the <a href="https://github.com/extendr/rextendr" class="external-link">rextendr team</a> made interfacing R and Rust straightforward and, frankly, quite fun.</p>
+<section class="level3"><h3 id="correlations-and-covariance">Correlations and covariance<a class="anchor" aria-label="anchor" href="#correlations-and-covariance"></a>
+</h3>
+<p>One of the most typical operations in computational biology is computing correlations and covariances; and these were the first functions implemented, largely to understand <a href="https://github.com/sarah-ek/faer-rs" class="external-link">faer</a> and the Rust/R interface. What becomes apparent very quickly is the following. For 1000 x 1000 matrices on an M1 Max MacBook Pro (using Apple’s Accelerate framework for R BLAS):</p>
+<p><strong>Covariance</strong></p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th style="text-align: right;">Implementation</th>
+<th style="text-align: right;">Median (ms, 20 runs)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">base R</td>
+<td style="text-align: right;">515.73</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Rust</td>
+<td style="text-align: right;">18.66</td>
+</tr>
+</tbody>
+</table>
+<p><em>A 27x increase in speed.</em></p>
+<p><strong>Pearson correlation</strong></p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th style="text-align: right;">Implementation</th>
+<th style="text-align: right;">Median (ms, 20 runs)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">base R</td>
+<td style="text-align: right;">512.83</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Rust</td>
+<td style="text-align: right;">20.90</td>
+</tr>
+</tbody>
+</table>
+<p><em>A 24x increase in speed.</em></p>
+<p><strong>Spearman correlation</strong></p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th style="text-align: right;">Implementation</th>
+<th style="text-align: right;">Median (ms, 20 runs)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">base R</td>
+<td style="text-align: right;">603.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Rust</td>
+<td style="text-align: right;">29.47</td>
+</tr>
+</tbody>
+</table>
+<p><em>A 20x increase in speed.</em></p>
+<p>The gains are even more pronounced on larger matrices. For a 1000 x 5000 matrix:</p>
+<p><strong>Pearson correlation (1000 x 5000)</strong></p>
+<table class="table caption-top">
+<thead><tr class="header">
+<th style="text-align: right;">Implementation</th>
+<th style="text-align: right;">Median (ms, 20 runs)</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">base R</td>
+<td style="text-align: right;">12994.37</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Rust</td>
+<td style="text-align: right;">419.88</td>
+</tr>
+</tbody>
+</table>
+<p><em>A 30x increase in speed.</em></p>
+<p>Given that matrix algebra underlies a large proportion of computational bioinformatics workflows, this makes a compelling case for Rust under the hood. The rest of this vignette shows how to use the exposed Rust functions directly, with runnable benchmarks you can verify on your own machine.</p>
+</section></section><section class="level2"><h2 id="using-the-rust-functions-in-more-general-r-code">Using the Rust functions in more general R code<a class="anchor" aria-label="anchor" href="#using-the-rust-functions-in-more-general-r-code"></a>
+</h2>
+<p><code>bixverse</code> exposes a number of R/Rust functions that are useful beyond the higher-level package functionality. This vignette covers:</p>
 <ul>
 <li>Correlations (via <code><a href="../reference/rs_cor.html">rs_cor()</a></code>).</li>
 <li>Covariance (via <code><a href="../reference/rs_covariance.html">rs_covariance()</a></code>).</li>
 <li>Covariance to correlation (via <code><a href="../reference/rs_cov2cor.html">rs_cov2cor()</a></code>).</li>
-<li>Distance calculations (vs <code><a href="../reference/rs_dist.html">rs_dist()</a></code>).</li>
+<li>Distance calculations (via <code><a href="../reference/rs_dist.html">rs_dist()</a></code>).</li>
 <li>Correlations between two matrices (via <code><a href="../reference/rs_cor2.html">rs_cor2()</a></code>).</li>
-<li>Calculate the mutual information between columns (via <code>rs_mutual_information()</code>)</li>
-<li>Calculations of set similarities between (via <code><a href="../reference/rs_set_similarity_list.html">rs_set_similarity_list()</a></code> or <code><a href="../reference/rs_set_similarity.html">rs_set_similarity()</a></code>).</li>
+<li>Mutual information between columns (via <code>rs_mutual_information()</code>).</li>
+<li>Set similarities (via <code><a href="../reference/rs_set_similarity_list.html">rs_set_similarity_list()</a></code> or <code><a href="../reference/rs_set_similarity.html">rs_set_similarity()</a></code>).</li>
 </ul>
-<p>They might be useful for your down package development.</p>
+<p>These may be useful for your own package development.</p>
 </section><section class="level2"><h2 id="set-up">Set-up<a class="anchor" aria-label="anchor" href="#set-up"></a>
 </h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>This vignette will explore the interfaces in <code>bixverse</code> to underlying Rust code you can leverage to make your code faster. But be careful… Any function with <code>rs_</code> can cause panics when misused.</p>
-<section class="level3"><h3 id="correlations-co-variance-and-cosine-distance">Correlations, co-variance, and cosine distance<a class="anchor" aria-label="anchor" href="#correlations-co-variance-and-cosine-distance"></a>
+<p>Any function prefixed with <code>rs_</code> calls directly into Rust and can panic if misused — check inputs before passing them through. There is a LOT of these functions in the package, and they are all exported. Why? I want other people to be able to integrate the code into their own R packages, or if they feel brave, they can just use the Rust crate directly, see <a href="https://crates.io/crates/bixverse-rs" class="external-link">here</a>.</p>
+<section class="level3"><h3 id="correlations-covariance-and-cosine-distance">Correlations, covariance, and cosine distance<a class="anchor" aria-label="anchor" href="#correlations-covariance-and-cosine-distance"></a>
 </h3>
-<p>A typical thing one uses a lot are correlations, co-variance and cosine distances. Let’s look at how to use <code>bixverse</code> to calculate these.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">no_rows</span> <span class="op">&lt;-</span> <span class="fl">500L</span></span>
@@ -99,7 +206,6 @@
 </div>
 <section class="level4"><h4 id="pearsons-correlation">Pearson’s correlation<a class="anchor" aria-label="anchor" href="#pearsons-correlation"></a>
 </h4>
-<p>Let’s look at Pearson’s correlations.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_pearsons_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span></span>
@@ -110,7 +216,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r_pearsons_res</span>, <span class="va">rust_pearsons_res</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Speed differences:</p>
+<p>Let’s check the speed.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -120,23 +226,22 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr        min         lq       mean     median         uq        max neval</span></span>
-<span><span class="co">#&gt;     r 135.116561 135.374703 135.694504 135.451325 135.615893 137.517553    10</span></span>
-<span><span class="co">#&gt;  rust   4.833584   5.687348   6.611594   6.064698   7.519058   9.437831    10</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 135.241895 135.313458 135.665693 135.453034 135.498064 137.076731    10</span></span>
+<span><span class="co">#&gt;  rust   5.556664   5.709669   6.889014   6.311979   7.682172   9.536936    10</span></span></code></pre></div>
 </div>
-</section><section class="level4"><h4 id="spearmans-correlations">Spearman’s correlations<a class="anchor" aria-label="anchor" href="#spearmans-correlations"></a>
+</section><section class="level4"><h4 id="spearmans-correlation">Spearman’s correlation<a class="anchor" aria-label="anchor" href="#spearmans-correlation"></a>
 </h4>
-<p>Let’s look at Spearman’s correlations…</p>
+<p>What about ranked correlations?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_spearman_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"spearman"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rust_spearman_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cor.html">rs_cor</a></span><span class="op">(</span><span class="va">random_data</span>, spearman <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># tiny numerical differences do exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r_spearman_res</span>, <span class="va">rust_spearman_res</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Speed differences:</p>
+<p>And speed</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -146,23 +251,22 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr        min         lq       mean     median         uq       max neval</span></span>
-<span><span class="co">#&gt;     r 165.934707 166.705857 168.693532 169.082249 170.122426 170.44173    10</span></span>
-<span><span class="co">#&gt;  rust   6.830593   7.456691   8.556271   7.787109   9.668221  11.24746    10</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 165.555780 167.547639 168.788814 169.256169 170.230338 170.71219    10</span></span>
+<span><span class="co">#&gt;  rust   6.946779   7.348049   8.446806   7.580959   9.636351  11.42343    10</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="covariance">Covariance<a class="anchor" aria-label="anchor" href="#covariance"></a>
 </h4>
-<p>And covariance calculations</p>
+<p>Covariance matrices are also very common…</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_covar_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cov</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rust_covar_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_covariance.html">rs_covariance</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># tiny numerical differences do exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r_covar_res</span>, <span class="va">rust_covar_res</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Speed differences:</p>
+<p>And speed comparisons</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -171,22 +275,22 @@
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr        min         lq       mean     median         uq        max neval</span></span>
-<span><span class="co">#&gt;     r 134.807513 134.909675 135.723772 135.164806 137.266274 137.543692    10</span></span>
-<span><span class="co">#&gt;  rust   4.410174   5.248078   5.956568   5.339143   6.164369   9.031191    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr        min        lq       mean    median         uq        max neval</span></span>
+<span><span class="co">#&gt;     r 134.929502 135.00677 135.212938 135.03700 135.305193 135.899683    10</span></span>
+<span><span class="co">#&gt;  rust   5.014732   5.17392   6.053929   5.26522   6.330047   9.087846    10</span></span></code></pre></div>
 </div>
-<p>Let’s transform covariance to correlations</p>
+</section><section class="level4"><h4 id="covariance-to-correlation">Covariance to correlation<a class="anchor" aria-label="anchor" href="#covariance-to-correlation"></a>
+</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_cor_from_covar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cov2cor</a></span><span class="op">(</span><span class="va">r_covar_res</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rust_cor_from_covar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cov2cor.html">rs_cov2cor</a></span><span class="op">(</span><span class="va">rust_covar_res</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># tiny numerical differences do exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r_cor_from_covar</span>, <span class="va">rust_cor_from_covar</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>How much faster is Rust here? (This is where we observe the least improvement.)</p>
+<p>This is where the Rust implementation shows the least improvement — the operation is already cheap in base R — but the interface remains consistent with the rest of the <code>rs_</code> family.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -196,12 +300,12 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     r 2.202402 2.600345 3.587493 3.106631 4.725663 6.442809    10</span></span>
-<span><span class="co">#&gt;  rust 1.416324 1.621778 3.063695 2.211825 4.044251 7.315849    10</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 2.203605 2.617898 3.652097 3.444501 4.264161 6.510295    10</span></span>
+<span><span class="co">#&gt;  rust 1.409932 1.600939 3.061236 2.210457 4.012982 7.611040    10</span></span></code></pre></div>
 </div>
 </section><section class="level4"><h4 id="correlations-between-two-matrices">Correlations between two matrices<a class="anchor" aria-label="anchor" href="#correlations-between-two-matrices"></a>
 </h4>
-<p>We also provide interface to do correlations between two sets of data</p>
+<p>So far, all of the functions did pairwise column-based correlations. What about two correlations against each other?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">no_rows_2</span> <span class="op">&lt;-</span> <span class="fl">500L</span></span>
@@ -215,18 +319,18 @@
 <span>  nrow <span class="op">=</span> <span class="va">no_rows_2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Let’s test the correlations between the two matrices</p>
+<p>Let’s compare against R:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_cor_2_matrices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">random_data</span>, <span class="va">random_data_2</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rust_cor_2_matrices</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_cor2.html">rs_cor2</a></span><span class="op">(</span><span class="va">random_data</span>, <span class="va">random_data_2</span>, spearman <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># The small precision differences are further propagated in here</span></span>
+<span><span class="co"># small precision differences are further propagated here</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r_cor_2_matrices</span>, <span class="va">rust_cor_2_matrices</span>, tolerance <span class="op">=</span> <span class="fl">1e-14</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>And speed between Rust and R</p>
+<p>And speed:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -235,145 +339,120 @@
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr        min         lq       mean     median         uq        max neval</span></span>
-<span><span class="co">#&gt;     r 193.675318 193.788000 193.943031 193.861592 194.090434 194.336814    10</span></span>
-<span><span class="co">#&gt;  rust   4.885381   5.664866   6.639908   6.452732   7.354741   8.657143    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr        min       lq       mean     median       uq        max neval</span></span>
+<span><span class="co">#&gt;     r 193.664869 193.8425 193.947782 193.912076 194.0072 194.408017    10</span></span>
+<span><span class="co">#&gt;  rust   4.902894   5.5165   6.684202   6.457175   7.5630   8.897171    10</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="distance-metrics">Distance metrics<a class="anchor" aria-label="anchor" href="#distance-metrics"></a>
 </h3>
-<p><code>bixverse</code> also includes various distance metrics. Let’s have a look at very common ones.</p>
 <section class="level4"><h4 id="euclidean-distance">Euclidean distance<a class="anchor" aria-label="anchor" href="#euclidean-distance"></a>
 </h4>
-<p>Let’s check out the very classical Euclidean distance.</p>
+<p>Note that <code><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist()</a></code> computes row-wise distances, while <code><a href="../reference/rs_dist.html">rs_dist()</a></code> expects columns to represent observations — hence the transpose.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_euclidean_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span></span>
-<span>    <span class="va">random_data</span>, </span>
-<span>    method <span class="op">=</span> <span class="st">"euclidean"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rs_euclidean_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>, <span class="co"># dist() calculates row-wise distances</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>,</span>
 <span>  distance_type <span class="op">=</span> <span class="st">"euclidean"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span></span>
-<span>  <span class="va">r_euclidean_distance</span>, </span>
-<span>  <span class="va">rs_euclidean_distance</span>, </span>
+<span>  <span class="va">r_euclidean_distance</span>,</span>
+<span>  <span class="va">rs_euclidean_distance</span>,</span>
 <span>  tolerance <span class="op">=</span> <span class="fl">1e-14</span>,</span>
 <span>  check.attributes <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Again, Rust is much faster…</p>
+<p>And speed…</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># to remove any overhead, we do not do the matrix transformation</span></span>
-<span><span class="co"># or the transpositation. due to the equal dimensions, it will</span></span>
-<span><span class="co"># not matter</span></span>
-<span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span>,</span>
 <span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span><span class="va">random_data</span>, distance_type <span class="op">=</span> <span class="st">"euclidean"</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;  expr       min        lq      mean    median       uq       max neval</span></span>
-<span><span class="co">#&gt;     r 96.781609 97.136392 97.604174 97.455328 97.81650 99.277270    10</span></span>
-<span><span class="co">#&gt;  rust  4.661733  4.693232  5.096851  5.049387  5.52716  5.614954    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  expr       min        lq      mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;     r 96.647249 96.721958 96.894406 96.808871 97.013001 97.529166    10</span></span>
+<span><span class="co">#&gt;  rust  4.520029  4.626577  4.989143  4.939632  5.436109  5.503635    10</span></span></code></pre></div>
 </div>
-</section><section class="level4"><h4 id="other-distance-metrics">Other distance metrics<a class="anchor" aria-label="anchor" href="#other-distance-metrics"></a>
+</section><section class="level4"><h4 id="manhattan-distance">Manhattan distance<a class="anchor" aria-label="anchor" href="#manhattan-distance"></a>
 </h4>
-<p>Let’s test other distance metrics…</p>
-<p><strong>Manhattan distance</strong></p>
-<p>We observe again equivalence of Rust and R results.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_manhattan_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span></span>
-<span>    <span class="va">random_data</span>, </span>
-<span>    method <span class="op">=</span> <span class="st">"manhattan"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"manhattan"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rs_manhattan_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>, <span class="co"># dist() calculates row-wise distances</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>,</span>
 <span>  distance_type <span class="op">=</span> <span class="st">"manhattan"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span></span>
-<span>  <span class="va">r_manhattan_distance</span>, </span>
-<span>  <span class="va">rs_manhattan_distance</span>, </span>
+<span>  <span class="va">r_manhattan_distance</span>,</span>
+<span>  <span class="va">rs_manhattan_distance</span>,</span>
 <span>  tolerance <span class="op">=</span> <span class="fl">1e-14</span>,</span>
 <span>  check.attributes <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>And speed ups in Rust.</p>
+<p>And speed… ?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># to remove any overhead, we do not do the matrix transformation</span></span>
-<span><span class="co"># or the transpositation. due to the equal dimensions, it will</span></span>
-<span><span class="co"># not matter</span></span>
-<span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"manhattan"</span><span class="op">)</span>,</span>
 <span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span><span class="va">random_data</span>, distance_type <span class="op">=</span> <span class="st">"manhattan"</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;     r 91.70112 91.82370 92.22460 92.10353 92.67924 92.98861    10</span></span>
-<span><span class="co">#&gt;  rust 17.37504 17.71626 17.88436 17.89619 18.14033 18.27615    10</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 91.45109 91.55063 91.61923 91.59810 91.63273 92.05923    10</span></span>
+<span><span class="co">#&gt;  rust 17.04653 17.11719 17.44383 17.39706 17.70762 18.07922    10</span></span></code></pre></div>
 </div>
-<p><strong>Canberra distance</strong></p>
-<p>Equivalence observed…</p>
+</section><section class="level4"><h4 id="canberra-distance">Canberra distance<a class="anchor" aria-label="anchor" href="#canberra-distance"></a>
+</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r_canberra_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span></span>
-<span>    <span class="va">random_data</span>, </span>
-<span>    method <span class="op">=</span> <span class="st">"canberra"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"canberra"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">rs_canberra_distance</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>, <span class="co"># dist() calculates row-wise distances</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">random_data</span><span class="op">)</span>,</span>
 <span>  distance_type <span class="op">=</span> <span class="st">"canberra"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span></span>
-<span>  <span class="va">r_canberra_distance</span>, </span>
-<span>  <span class="va">rs_canberra_distance</span>, </span>
+<span>  <span class="va">r_canberra_distance</span>,</span>
+<span>  <span class="va">rs_canberra_distance</span>,</span>
 <span>  tolerance <span class="op">=</span> <span class="fl">1e-14</span>,</span>
 <span>  check.attributes <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>… and speed-ups.</p>
+<p>Same benchmarks as before…</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># to remove any overhead, we do not do the matrix transformation</span></span>
-<span><span class="co"># or the transpositation. due to the equal dimensions, it will</span></span>
-<span><span class="co"># not matter</span></span>
-<span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">random_data</span>, method <span class="op">=</span> <span class="st">"canberra"</span><span class="op">)</span>,</span>
 <span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_dist.html">rs_dist</a></span><span class="op">(</span><span class="va">random_data</span>, distance_type <span class="op">=</span> <span class="st">"canberra"</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;  expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;     r 137.31488 137.44399 137.77648 137.60419 137.89925 139.28767    10</span></span>
-<span><span class="co">#&gt;  rust  46.04405  46.33603  46.46993  46.46933  46.66423  46.80639    10</span></span></code></pre></div>
+<span><span class="co">#&gt;     r 137.27918 137.38207 137.74128 137.45232 137.80695 139.29936    10</span></span>
+<span><span class="co">#&gt;  rust  46.01513  46.30661  46.41266  46.43713  46.50769  46.88659    10</span></span></code></pre></div>
 </div>
 </section></section><section class="level3"><h3 id="mutual-information">Mutual information<a class="anchor" aria-label="anchor" href="#mutual-information"></a>
 </h3>
-<p>Another quantity you might be interested in is the mutual information between between your variables of interest. <code>bixverse</code> also provides a Rust-powered interface into very rapid calculations in this regard.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># we are going to create a reduced set for the benchmark to finish </span></span>
-<span><span class="co"># in a reasonable time</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">246L</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">246L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">nrows</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">ncols</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
@@ -382,18 +461,18 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"sample_%i"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">nrows</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"feature_%i"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">ncols</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>To run the function you can just use the following code. The Rust version will default to sqrt(nrow())</p>
+<p>The Rust version defaults to <code>sqrt(nrow())</code> bins when <code>n_bins = NULL</code>. Two discretisation strategies are available.</p>
+<p><strong>Equal width:</strong></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rust_res_mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_mutual_info.html">rs_mutual_info</a></span><span class="op">(</span></span>
-<span>  <span class="va">mat</span>, </span>
-<span>  n_bins <span class="op">=</span> <span class="cn">NULL</span>, </span>
+<span>  <span class="va">mat</span>,</span>
+<span>  n_bins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"equal_width"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">rust_res_mi</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rust_res_mi</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># ensure that the same discretisation is used</span></span>
 <span><span class="va">infotheo_res_mi</span> <span class="op">&lt;-</span> <span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/mutinformation.html" class="external-link">mutinformation</a></span><span class="op">(</span><span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/discretize.html" class="external-link">discretize</a></span><span class="op">(</span></span>
 <span>  <span class="va">mat</span>,</span>
 <span>  disc <span class="op">=</span> <span class="st">"equalwidth"</span>,</span>
@@ -403,18 +482,38 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">rust_res_mi</span>, <span class="va">infotheo_res_mi</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>There is also an equal frequency strategy implemented:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<span>  infotheo <span class="op">=</span> <span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/mutinformation.html" class="external-link">mutinformation</a></span><span class="op">(</span><span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/discretize.html" class="external-link">discretize</a></span><span class="op">(</span></span>
+<span>    <span class="va">mat</span>,</span>
+<span>    disc <span class="op">=</span> <span class="st">"equalwidth"</span>,</span>
+<span>    nbins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span>,</span>
+<span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_mutual_info.html">rs_mutual_info</a></span><span class="op">(</span></span>
+<span>    <span class="va">mat</span>,</span>
+<span>    n_bins <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>    normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    strategy <span class="op">=</span> <span class="st">"equal_width"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  times <span class="op">=</span> <span class="fl">10L</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Unit: milliseconds</span></span>
+<span><span class="co">#&gt;      expr      min        lq      mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;  infotheo 83.97013 84.080587 84.281618 84.202455 84.438976 84.920365    10</span></span>
+<span><span class="co">#&gt;      rust  3.33700  3.380712  3.605351  3.645396  3.802359  3.861028    10</span></span></code></pre></div>
+</div>
+<p><strong>Equal frequency:</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rust_res_mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_mutual_info.html">rs_mutual_info</a></span><span class="op">(</span></span>
-<span>  <span class="va">mat</span>, </span>
-<span>  n_bins <span class="op">=</span> <span class="cn">NULL</span>, </span>
+<span>  <span class="va">mat</span>,</span>
+<span>  n_bins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"equal_freq"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">rust_res_mi</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">rust_res_mi</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># ensure that the same discretisation is used</span></span>
 <span><span class="va">infotheo_res_mi</span> <span class="op">&lt;-</span> <span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/mutinformation.html" class="external-link">mutinformation</a></span><span class="op">(</span><span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/discretize.html" class="external-link">discretize</a></span><span class="op">(</span></span>
 <span>  <span class="va">mat</span>,</span>
 <span>  disc <span class="op">=</span> <span class="st">"equalfreq"</span>,</span>
@@ -424,29 +523,6 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">rust_res_mi</span>, <span class="va">infotheo_res_mi</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Again, the Rust implementation is way faster.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
-<span>  infotheo <span class="op">=</span> <span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/mutinformation.html" class="external-link">mutinformation</a></span><span class="op">(</span><span class="fu">infotheo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/infotheo/man/discretize.html" class="external-link">discretize</a></span><span class="op">(</span></span>
-<span>    <span class="va">mat</span>,</span>
-<span>    disc <span class="op">=</span> <span class="st">"equalwidth"</span>,</span>
-<span>    nbins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">)</span><span class="op">)</span>,</span>
-<span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_mutual_info.html">rs_mutual_info</a></span><span class="op">(</span></span>
-<span>    <span class="va">mat</span>, </span>
-<span>    n_bins <span class="op">=</span> <span class="cn">NULL</span>, </span>
-<span>    normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    strategy <span class="op">=</span> <span class="st">"equal_width"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">10L</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq      mean    median        uq     max neval</span></span>
-<span><span class="co">#&gt;  infotheo 83.936368 84.467209 84.731817 84.861846 85.008380 85.1825    10</span></span>
-<span><span class="co">#&gt;      rust  3.355194  3.383918  3.623576  3.669992  3.755551  4.0067    10</span></span></code></pre></div>
-</div>
-<p>And with equal frequency per bin:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
@@ -456,24 +532,24 @@
 <span>    nbins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mat</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span><span class="op">)</span>,</span>
 <span>  rust <span class="op">=</span> <span class="fu"><a href="../reference/rs_mutual_info.html">rs_mutual_info</a></span><span class="op">(</span></span>
-<span>    <span class="va">mat</span>, </span>
-<span>    n_bins <span class="op">=</span> <span class="cn">NULL</span>, </span>
+<span>    <span class="va">mat</span>,</span>
+<span>    n_bins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>    normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>    strategy <span class="op">=</span> <span class="st">"equal_freq"</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">10L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr        min        lq       mean     median         uq        max</span></span>
-<span><span class="co">#&gt;  infotheo 101.078833 101.28361 101.527034 101.530731 101.755696 102.042983</span></span>
-<span><span class="co">#&gt;      rust   4.363978   4.39203   4.621804   4.690928   4.787278   4.916459</span></span>
+<span><span class="co">#&gt;      expr        min         lq       mean     median         uq       max</span></span>
+<span><span class="co">#&gt;  infotheo 101.023148 101.708970 102.035959 102.115037 102.500567 102.80878</span></span>
+<span><span class="co">#&gt;      rust   4.347687   4.389455   4.603822   4.733904   4.746742   4.77277</span></span>
 <span><span class="co">#&gt;  neval</span></span>
 <span><span class="co">#&gt;     10</span></span>
 <span><span class="co">#&gt;     10</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="set-similarities">Set similarities<a class="anchor" aria-label="anchor" href="#set-similarities"></a>
 </h3>
-<p><code>bixverse</code> also provides various functions that leverage Rust to do set similarities. Let’s compare this against some R implementation. Below is a naive R implementation to calculate the Jaccard similarities between two lists containing strings.</p>
+<p><code>bixverse</code> also exposes Rust-accelerated set similarity calculations. To illustrate the performance, below is a comparison against a naive R implementation of Jaccard similarity across two lists.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">jaccard_sim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
@@ -482,129 +558,121 @@
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">random_sets_1</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">1000L</span>, <span class="op">~</span><span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="va">random_sets_1</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="fl">1</span><span class="op">:</span><span class="fl">1000L</span>,</span>
+<span>  <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">random_sets_2</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">500L</span>, <span class="op">~</span><span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">random_sets_2</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="fl">1</span><span class="op">:</span><span class="fl">500L</span>,</span>
+<span>  <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Let’s start with a naive <a href="https://purrr.tidyverse.org" class="external-link">purrr</a> approach. The problem obviously will benefit from some form of parallel processing, but for completeness, let’s run this version, too.</p>
+<p>Starting with a sequential <a href="https://purrr.tidyverse.org" class="external-link">purrr</a> approach as the baseline:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">r_results</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span><span class="va">random_sets_1</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">random_sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span><span class="fu">jaccard_sim</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span>, .progress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">r_results</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
+<span>  <span class="va">random_sets_1</span>,</span>
+<span>  \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">random_sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="fu">jaccard_sim</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  .progress <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt;  ■■■                                6% |  ETA: 24s</span></span>
 <span><span class="co">#&gt;  ■■■■■■                            18% |  ETA: 21s</span></span>
 <span><span class="co">#&gt;  ■■■■■■■■■■                        30% |  ETA: 18s</span></span>
 <span><span class="co">#&gt;  ■■■■■■■■■■■■■■                    42% |  ETA: 15s</span></span>
 <span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■                 54% |  ETA: 12s</span></span>
 <span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■             66% |  ETA:  9s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■          78% |  ETA:  6s</span></span>
-<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      89% |  ETA:  3s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■          78% |  ETA:  5s</span></span>
+<span><span class="co">#&gt;  ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% |  ETA:  3s</span></span>
 <span></span>
 <span><span class="va">similarity_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>, </span>
-<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>, </span>
+<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_2</span><span class="op">)</span>,</span>
 <span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 25.195 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 25.12 sec elapsed</span></span></code></pre></div>
 </div>
-<p>Let’s try to parallelise this vi <a href="https://furrr.futureverse.org" class="external-link">furrr</a> and evaluate how much we can improve this.</p>
+<p>Parallelising via <a href="https://furrr.futureverse.org" class="external-link">furrr</a> gives a meaningful speedup:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span>strategy <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span><span class="op">(</span>workers <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">r_results</span> <span class="op">&lt;-</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/future_map.html" class="external-link">future_map</a></span><span class="op">(</span><span class="va">random_sets_1</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">random_sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span><span class="fu">jaccard_sim</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span>, .progress <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">r_results</span> <span class="op">&lt;-</span> <span class="fu">furrr</span><span class="fu">::</span><span class="fu"><a href="https://furrr.futureverse.org/reference/future_map.html" class="external-link">future_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">random_sets_1</span>,</span>
+<span>  \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">random_sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="fu">jaccard_sim</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  .progress <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">similarity_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>, </span>
-<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>, </span>
+<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_2</span><span class="op">)</span>,</span>
 <span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 14.108 sec elapsed</span></span>
+<span><span class="co">#&gt; 14.17 sec elapsed</span></span>
 <span></span>
 <span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span>strategy <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/sequential.html" class="external-link">sequential</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Parallelisation as expected accelerates the calculations substantially. What about <a href="https://mirai.r-lib.org/articles/mirai.html" class="external-link">mirai</a>? It should produce less overhead compared to future.</p>
+<p><a href="https://mirai.r-lib.org/articles/mirai.html" class="external-link">mirai</a> reduces process scheduling overhead (somtimes) compared to <code>future</code> and does a bit better:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">r_results_mirai</span> <span class="op">&lt;-</span> <span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/mirai_map.html" class="external-link">mirai_map</a></span><span class="op">(</span><span class="va">random_sets_1</span>, \<span class="op">(</span><span class="va">x</span>, <span class="va">sets_2</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">union</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span>, .args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sets_2 <span class="op">=</span> <span class="va">random_sets_2</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">]</span></span>
+<span><span class="va">r_results_mirai</span> <span class="op">&lt;-</span> <span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/mirai_map.html" class="external-link">mirai_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">random_sets_1</span>,</span>
+<span>  \<span class="op">(</span><span class="va">x</span>, <span class="va">sets_2</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">union</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  .args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sets_2 <span class="op">=</span> <span class="va">random_sets_2</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">[</span><span class="op">]</span></span>
 <span></span>
 <span><span class="va">similarity_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results_mirai</span><span class="op">)</span>, </span>
-<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>, </span>
+<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results_mirai</span><span class="op">)</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_2</span><span class="op">)</span>,</span>
 <span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 13.372 sec elapsed</span></span>
+<span><span class="co">#&gt; 13.758 sec elapsed</span></span>
 <span></span>
 <span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>That’s already a bit better. Maybe we can optimise the Jaccard similarity function further and accelerate this even more.</p>
+<p>Depending on your system this optimised parallel R version may be around 4x faster than the naive sequential baseline. Now compare against the Rust implementation:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">r_results_mirai</span> <span class="op">&lt;-</span> <span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/mirai_map.html" class="external-link">mirai_map</a></span><span class="op">(</span><span class="va">random_sets_1</span>, \<span class="op">(</span><span class="va">x</span>, <span class="va">sets_2</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">sets_2</span>, \<span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="co"># Optimised function</span></span>
-<span>    <span class="va">intersection</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="va">union_size</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">-</span> <span class="va">intersection</span></span>
-<span>    <span class="va">intersection</span> <span class="op">/</span> <span class="va">union_size</span></span>
-<span>  <span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span>, .args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sets_2 <span class="op">=</span> <span class="va">random_sets_2</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">]</span></span>
-<span></span>
-<span><span class="va">similarity_matrix</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">r_results</span><span class="op">)</span>, </span>
-<span>  nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_1</span><span class="op">)</span>, </span>
-<span>  ncol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">random_sets_2</span><span class="op">)</span>,</span>
-<span>  byrow <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">mirai</span><span class="fu">::</span><span class="fu"><a href="https://mirai.r-lib.org/reference/daemons.html" class="external-link">daemons</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
-<span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 8.093 sec elapsed</span></span></code></pre></div>
-</div>
-<p>This is already much better… Pending on your system you might be seeing a 4x increase in speed compared to the naive purrr version. However, let’s compare against the Rust version implemented in <code>bixverse</code>:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">rust_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rs_set_similarity_list2.html">rs_set_similarity_list2</a></span><span class="op">(</span></span>
-<span>    s_1_list <span class="op">=</span> <span class="va">random_sets_1</span>,</span>
-<span>    s_2_list <span class="op">=</span> <span class="va">random_sets_2</span>,</span>
+<span>  s_1_list <span class="op">=</span> <span class="va">random_sets_1</span>,</span>
+<span>  s_2_list <span class="op">=</span> <span class="va">random_sets_2</span>,</span>
 <span>  overlap_coefficient <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.048 sec elapsed</span></span>
+<span><span class="co">#&gt; 0.05 sec elapsed</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">similarity_matrix</span>, <span class="va">rust_res</span>, tolerance <span class="op">=</span> <span class="fl">1e-15</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
-<p>Yep, that is MUCH faster… These are some of the functions that are exposed in <code>bixverse</code> and can be integrated into other workflows. There are many more highly specialised functions that can be used in other workflows. It’s best to explore the package and the underlying code base to identify all of these functions.</p>
+<p>The margin here is not subtle. The functions shown in this vignette are a representative sample of what is exposed in <code>bixverse</code>: there are many more specialised functions throughout the package worth exploring (if you are brave and can deal with a panic here and there).</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

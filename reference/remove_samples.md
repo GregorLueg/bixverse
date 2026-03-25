@@ -12,8 +12,10 @@ remove_samples(object, samples_to_remove, ...)
 
 - object:
 
-  The underlying object, either [`BulkCoExp()`](BulkCoExp.md) or
-  [`BulkDge()`](BulkDge.md).
+  The underlying object, either
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+  or
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - samples_to_remove:
 

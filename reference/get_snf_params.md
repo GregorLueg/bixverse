@@ -13,7 +13,7 @@ get_snf_params(object)
 - object:
 
   The underlying class
-  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
+  [`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md).
 
 ## Value
 

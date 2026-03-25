@@ -1,8 +1,9 @@
 # Cell cycle genes
 
 (Human) cell cycle genes for scoring in single cell, please see
-[`module_scores_sc()`](module_scores_sc.md) and Tirosh et al, Science
-(2016). These genes are based on the updated version in Seurat.
+[`module_scores_sc()`](https://gregorlueg.github.io/bixverse/reference/module_scores_sc.md)
+and Tirosh et al, Science (2016). These genes are based on the updated
+version in Seurat.
 
 ## Usage
 

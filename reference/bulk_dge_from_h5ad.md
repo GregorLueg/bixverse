@@ -1,7 +1,9 @@
 # Wrapper function to generate BulkDge object from h5ad
 
 This is a helper function that can be used to create a `BulkDge` object
-(see [`BulkDge()`](BulkDge.md)) directly from h5ad objects.
+(see
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md))
+directly from h5ad objects.
 
 ## Usage
 

@@ -13,7 +13,8 @@ get_diffcor_graph(object, min_cor = 0.2, fdr_threshold = 0.05, .verbose = TRUE)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - min_cor:
 

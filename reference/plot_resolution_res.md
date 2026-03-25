@@ -14,8 +14,7 @@ plot_resolution_res(object, print_head = TRUE, ...)
 
 - object:
 
-  The class, either [`bixverse::rbh_graph`](rbh_graph.md) or
-  [`bixverse::BulkCoExp`](BulkCoExp.md).
+  The class, either `RbhGraph` or `BulkCoExp`.
 
 - print_head:
 

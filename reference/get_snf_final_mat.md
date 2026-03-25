@@ -13,7 +13,7 @@ get_snf_final_mat(object)
 - object:
 
   The underlying class
-  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
+  [`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md).
 
 ## Value
 

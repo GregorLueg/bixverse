@@ -27,7 +27,8 @@ load_mtx(
 - sc_mtx_io_param:
 
   List. Please generate this one via
-  [`params_sc_mtx_io()`](params_sc_mtx_io.md). Needs to contain:
+  [`params_sc_mtx_io()`](https://gregorlueg.github.io/bixverse/reference/params_sc_mtx_io.md).
+  Needs to contain:
 
   - path_mtx - String. Path to the .mtx file
 
@@ -40,7 +41,8 @@ load_mtx(
 
 - sc_qc_param:
 
-  List. Output of [`params_sc_min_quality()`](params_sc_min_quality.md).
+  List. Output of
+  [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
   A list with the following elements:
 
   - min_unique_genes - Integer. Minimum number of genes to be detected

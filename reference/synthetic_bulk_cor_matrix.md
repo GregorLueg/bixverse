@@ -46,6 +46,6 @@ A `synthetic_bulk_data` class containing:
 - counts - The count matrix
 
 - sparse_counts - A slot for sparse counts that can be added later, see
-  [`simulate_dropouts()`](simulate_dropouts.md).
+  [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md).
 
 - module_data - The module membership of the genes

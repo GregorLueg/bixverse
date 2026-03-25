@@ -2,7 +2,8 @@
 
 This function will update the correlation matrix to a topological
 overlap matrix. It defaults to `"v2"` and the signed version, please see
-[`calculate_tom()`](calculate_tom.md) for details.
+[`calculate_tom()`](https://gregorlueg.github.io/bixverse/reference/calculate_tom.md)
+for details.
 
 ## Usage
 
@@ -14,9 +15,11 @@ cor_module_tom(object, signed = TRUE, version = c("v2", "v1"), .verbose = TRUE)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to have applied
-  [`cor_module_processing()`](cor_module_processing.md) before applying
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to have applied
+  [`cor_module_processing()`](https://gregorlueg.github.io/bixverse/reference/cor_module_processing.md)
+  before applying this function.
 
 - signed:
 

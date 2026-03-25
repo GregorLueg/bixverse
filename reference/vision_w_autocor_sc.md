@@ -50,8 +50,8 @@ vision_w_autocor_sc(
 - vision_params:
 
   List with vision parameters, see
-  [`params_sc_vision()`](params_sc_vision.md) with the following
-  elements:
+  [`params_sc_vision()`](https://gregorlueg.github.io/bixverse/reference/params_sc_vision.md)
+  with the following elements:
 
   - n_perm - Integer. Number of random permutations
 
@@ -59,8 +59,8 @@ vision_w_autocor_sc(
     associate each set with.
 
   - knn - List of kNN parameters. See
-    [`params_knn_defaults()`](params_knn_defaults.md) for available
-    parameters and their defaults.
+    [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
 
 - streaming:
 

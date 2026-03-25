@@ -6,7 +6,7 @@ Default parameters for Harmony batch correction
 
 ``` r
 params_sc_harmony(
-  k = 10L,
+  k = NULL,
   sigma = 0.1,
   theta = 2,
   lambda = 1,
@@ -23,7 +23,9 @@ params_sc_harmony(
 
 - k:
 
-  Integer. Number of clusters for k-means clustering.
+  Optional integer. Number of clusters for k-means clustering. If not
+  provided, it will be automatically determined as
+  `min(round(N / 30), 200)`.
 
 - sigma:
 

@@ -15,7 +15,7 @@ add_snf_data_modality(object, data, data_name, params = NULL)
 - object:
 
   The underlying class, see
-  [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
+  [`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md).
 
 - data:
 
@@ -33,10 +33,11 @@ add_snf_data_modality(object, data, data_name, params = NULL)
 - params:
 
   Optional List. If you wish to overwite the already set up parameters
-  for SNF, see [`params_snf()`](params_snf.md). If `NULL`, the settings
-  from within the object will be used. If not NULL, the new parameters
-  will be used for this modality specifically and only for this
-  modality!
+  for SNF, see
+  [`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md).
+  If `NULL`, the settings from within the object will be used. If not
+  NULL, the new parameters will be used for this modality specifically
+  and only for this modality!
 
 ## Value
 

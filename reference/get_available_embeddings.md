@@ -16,3 +16,7 @@ get_available_embeddings(x)
 - x:
 
   An object to get embedding from
+
+## Value
+
+Get the names of the available embeddings.

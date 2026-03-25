@@ -14,7 +14,7 @@ plot(x, ...)
 - x:
 
   `cpca_synthetic_data` class. Output from
-  [`synthetic_c_pca_data()`](synthetic_c_pca_data.md).
+  [`synthetic_c_pca_data()`](https://gregorlueg.github.io/bixverse/reference/synthetic_c_pca_data.md).
 
 - ...:
 

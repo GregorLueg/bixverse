@@ -33,14 +33,15 @@ scenic_grn_sc(
 
 - scenic_params:
 
-  List. SCENIC parameters, see [`params_scenic()`](params_scenic.md).
+  List. SCENIC parameters, see
+  [`params_scenic()`](https://gregorlueg.github.io/bixverse/reference/params_scenic.md).
 
 - genes_to_take:
 
   Optional character vector. Target gene identifiers. If `NULL`, genes
   are selected automatically via
-  [`scenic_gene_filter_sc()`](scenic_gene_filter_sc.md) using the
-  `min_counts` and `min_cells` thresholds in `scenic_params`.
+  [`scenic_gene_filter_sc()`](https://gregorlueg.github.io/bixverse/reference/scenic_gene_filter_sc.md)
+  using the `min_counts` and `min_cells` thresholds in `scenic_params`.
 
 - cells_to_take:
 

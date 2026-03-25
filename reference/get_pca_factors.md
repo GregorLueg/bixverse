@@ -18,3 +18,7 @@ get_pca_factors(x)
 - x:
 
   An object to get PCA factors from.
+
+## Value
+
+The PCA factors from the object (if found).

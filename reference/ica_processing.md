@@ -13,9 +13,11 @@ ica_processing(object, fast_svd = TRUE, random_seed = 123L, .verbose = TRUE)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
-  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  Ideally, you should run
+  [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
+  before applying this function.
 
 - fast_svd:
 

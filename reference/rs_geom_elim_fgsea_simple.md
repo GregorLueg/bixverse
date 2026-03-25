@@ -30,11 +30,12 @@ rs_geom_elim_fgsea_simple(
 - go_obj:
 
   The gene_ontology_data S7 class. See
-  [`gene_ontology_data()`](gene_ontology_data.md).
+  [`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
 
 - gsea_params:
 
-  List. The GSEA parameters, see [`params_gsea()`](params_gsea.md)
+  List. The GSEA parameters, see
+  [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
   wrapper function. This function generates a list containing:
 
   - min_size - Integer. Minimum size for the gene sets.

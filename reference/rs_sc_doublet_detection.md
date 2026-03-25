@@ -33,7 +33,8 @@ rs_sc_doublet_detection(
 
 - boost_params:
 
-  List. Parameter list, see [`params_boost()`](params_boost.md).
+  List. Parameter list, see
+  [`params_boost()`](https://gregorlueg.github.io/bixverse/reference/params_boost.md).
 
 - seed:
 

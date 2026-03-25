@@ -2,7 +2,7 @@
 
 This function will calculate the correlations between the identified TF
 to gene pairs. You need to have run
-[`identify_tf_to_genes()`](identify_tf_to_genes.md)!
+[`identify_tf_to_genes()`](https://gregorlueg.github.io/bixverse/reference/identify_tf_to_genes.md)!
 
 ## Usage
 

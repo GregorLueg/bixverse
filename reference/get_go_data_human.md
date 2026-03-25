@@ -2,9 +2,12 @@
 
 This function loads in gene ontology data stored in the package and
 processes it into the format for
-[`gene_ontology_data()`](gene_ontology_data.md). Wraps
-[`load_go_human_data()`](load_go_human_data.md) and
-[`process_go_data()`](process_go_data.md) into one.
+[`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
+Wraps
+[`load_go_human_data()`](https://gregorlueg.github.io/bixverse/reference/load_go_human_data.md)
+and
+[`process_go_data()`](https://gregorlueg.github.io/bixverse/reference/process_go_data.md)
+into one.
 
 ## Usage
 

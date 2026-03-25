@@ -34,7 +34,8 @@ calc_fgsea(
 
 - gsea_params:
 
-  List. The GSEA parameters, see [`params_gsea()`](params_gsea.md)
+  List. The GSEA parameters, see
+  [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
   wrapper function. This function generates a list containing:
 
   - min_size - Integer. Minimum size for the gene sets.

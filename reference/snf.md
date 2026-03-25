@@ -3,7 +3,7 @@
 **\[deprecated\]**
 
 This constructor has been renamed to
-[`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md).
+[`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md).
 
 ## Usage
 
@@ -24,9 +24,11 @@ snf(data = NULL, data_name = NULL, snf_params = params_snf())
 
 - snf_params:
 
-  List. The SNF parameters, see [`params_snf()`](params_snf.md).
+  List. The SNF parameters, see
+  [`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md).
 
 ## Value
 
-Returns a [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md)
+Returns a
+[`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md)
 object.

@@ -1,7 +1,9 @@
 # Return the metadata
 
 Getter function to extract the metadata from the
-[`BulkCoExp()`](BulkCoExp.md) or [`BulkDge()`](BulkDge.md).
+[`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+or
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 ## Usage
 
@@ -13,8 +15,10 @@ get_metadata(object, ...)
 
 - object:
 
-  The underlying object, either [`BulkCoExp()`](BulkCoExp.md) or
-  [`BulkDge()`](BulkDge.md).
+  The underlying object, either
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+  or
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - ...:
 

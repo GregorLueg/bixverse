@@ -1,8 +1,9 @@
 # Calculate all possible DGE variants (DEPRECATED!)
 
 This is a deprecated method and will raise an error. Please use
-[`calculate_dge_limma()`](calculate_dge_limma.md) and
-[`calculate_dge_hedges()`](calculate_dge_hedges.md).
+[`calculate_dge_limma()`](https://gregorlueg.github.io/bixverse/reference/calculate_dge_limma.md)
+and
+[`calculate_dge_hedges()`](https://gregorlueg.github.io/bixverse/reference/calculate_dge_hedges.md).
 
 ## Usage
 
@@ -23,7 +24,8 @@ calculate_all_dges(
 
 - object:
 
-  The underlying class, see [`BulkDge()`](BulkDge.md).
+  The underlying class, see
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - contrast_column:
 

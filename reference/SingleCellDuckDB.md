@@ -18,8 +18,8 @@ Invisible self and populates the internal obs table.
 
 ## Super class
 
-[`bixverse::SingleCellDuckDBBase`](SingleCellDuckDBBase.md) -\>
-`SingleCellDuckDB`
+[`bixverse::SingleCellDuckDBBase`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.md)
+-\> `SingleCellDuckDB`
 
 ## Methods
 
@@ -45,18 +45,20 @@ Invisible self and populates the internal obs table.
 
 Inherited methods
 
-- [`bixverse::SingleCellDuckDBBase$add_data_obs()`](SingleCellDuckDBBase.html#method-add_data_obs)
-- [`bixverse::SingleCellDuckDBBase$add_data_var()`](SingleCellDuckDBBase.html#method-add_data_var)
-- [`bixverse::SingleCellDuckDBBase$filter_var_table()`](SingleCellDuckDBBase.html#method-filter_var_table)
-- [`bixverse::SingleCellDuckDBBase$get_cells_to_keep()`](SingleCellDuckDBBase.html#method-get_cells_to_keep)
-- [`bixverse::SingleCellDuckDBBase$get_obs_index_map()`](SingleCellDuckDBBase.html#method-get_obs_index_map)
-- [`bixverse::SingleCellDuckDBBase$get_obs_table()`](SingleCellDuckDBBase.html#method-get_obs_table)
-- [`bixverse::SingleCellDuckDBBase$get_var_index_map()`](SingleCellDuckDBBase.html#method-get_var_index_map)
-- [`bixverse::SingleCellDuckDBBase$get_vars_table()`](SingleCellDuckDBBase.html#method-get_vars_table)
-- [`bixverse::SingleCellDuckDBBase$initialize()`](SingleCellDuckDBBase.html#method-initialize)
-- [`bixverse::SingleCellDuckDBBase$join_data_obs()`](SingleCellDuckDBBase.html#method-join_data_obs)
-- [`bixverse::SingleCellDuckDBBase$set_cells_to_keep()`](SingleCellDuckDBBase.html#method-set_cells_to_keep)
-- [`bixverse::SingleCellDuckDBBase$set_to_keep_column()`](SingleCellDuckDBBase.html#method-set_to_keep_column)
+- [`bixverse::SingleCellDuckDBBase$add_data_obs()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-add_data_obs)
+- [`bixverse::SingleCellDuckDBBase$add_data_var()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-add_data_var)
+- [`bixverse::SingleCellDuckDBBase$filter_var_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-filter_var_table)
+- [`bixverse::SingleCellDuckDBBase$get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_cells_to_keep)
+- [`bixverse::SingleCellDuckDBBase$get_obs_cols()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_obs_cols)
+- [`bixverse::SingleCellDuckDBBase$get_obs_index_map()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_obs_index_map)
+- [`bixverse::SingleCellDuckDBBase$get_obs_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_obs_table)
+- [`bixverse::SingleCellDuckDBBase$get_var_index_map()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_var_index_map)
+- [`bixverse::SingleCellDuckDBBase$get_vars_table()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-get_vars_table)
+- [`bixverse::SingleCellDuckDBBase$initialize()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-initialize)
+- [`bixverse::SingleCellDuckDBBase$join_data_obs()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-join_data_obs)
+- [`bixverse::SingleCellDuckDBBase$rename_column()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-rename_column)
+- [`bixverse::SingleCellDuckDBBase$set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-set_cells_to_keep)
+- [`bixverse::SingleCellDuckDBBase$set_to_keep_column()`](https://gregorlueg.github.io/bixverse/reference/SingleCellDuckDBBase.html#method-set_to_keep_column)
 
 ------------------------------------------------------------------------
 

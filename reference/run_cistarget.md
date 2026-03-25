@@ -3,9 +3,9 @@
 The `bixverse` implementation of the RCisTarget workflow, one of the
 algorithms used in SCENIC, see Aibar, et al. You will need motif to
 target gene rankings, see
-[`read_motif_ranking()`](read_motif_ranking.md) and the motif to TF
-annotations, see
-[`read_motif_annotation_file()`](read_motif_annotation_file.md).
+[`read_motif_ranking()`](https://gregorlueg.github.io/bixverse/reference/read_motif_ranking.md)
+and the motif to TF annotations, see
+[`read_motif_annotation_file()`](https://gregorlueg.github.io/bixverse/reference/read_motif_annotation_file.md).
 
 ## Usage
 
@@ -38,7 +38,8 @@ run_cistarget(
 
 - cis_target_params:
 
-  List. Output of [`params_cistarget()`](params_cistarget.md):
+  List. Output of
+  [`params_cistarget()`](https://gregorlueg.github.io/bixverse/reference/params_cistarget.md):
 
   - auc_threshold - Numeric. Proportion of genes to use for AUC
     threshold calculation. Default 0.05 means top 5 percent of genes.

@@ -18,3 +18,7 @@ get_pca_loadings(x)
 - x:
 
   An object to get PCA loadings from.
+
+## Value
+
+The PCA feature loadings from the object (if found).

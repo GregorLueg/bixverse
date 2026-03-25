@@ -13,6 +13,8 @@ plot_ica_stability_individual(object)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
-  [`ica_evaluate_comp()`](ica_evaluate_comp.md) before running this
-  function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to apply
+  [`ica_evaluate_comp()`](https://gregorlueg.github.io/bixverse/reference/ica_evaluate_comp.md)
+  before running this function.

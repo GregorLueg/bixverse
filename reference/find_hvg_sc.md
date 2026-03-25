@@ -29,7 +29,9 @@ find_hvg_sc(
 
 - hvg_params:
 
-  List, see [`params_sc_hvg()`](params_sc_hvg.md). This list contains
+  List, see
+  [`params_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hvg.md).
+  This list contains
 
   - method - Which method to use. One of
     `c("vst", "meanvarbin", "dispersion")`

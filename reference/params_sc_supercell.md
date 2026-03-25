@@ -33,10 +33,10 @@ params_sc_supercell(
 - knn:
 
   List. Optional overrides for kNN parameters. See
-  [`params_knn_defaults()`](params_knn_defaults.md) for available
-  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
-  `ef_search`, `n_list` and `n_probe`.
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for available parameters: `k`, `knn_method`, `ann_dist`,
+  `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
 
 ## Value
 

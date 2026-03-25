@@ -17,7 +17,8 @@ cor_module_coremo_stability(object, chunk_size = 15L, .verbose = TRUE)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - chunk_size:
 

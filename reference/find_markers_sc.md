@@ -27,12 +27,14 @@ find_markers_sc(
 - cells_1:
 
   String. The names of the cells in group 1. Need to be part of the cell
-  names in the object, see [`get_cell_names()`](get_cell_names.md).
+  names in the object, see
+  [`get_cell_names()`](https://gregorlueg.github.io/bixverse/reference/get_cell_names.md).
 
 - cells_2:
 
   String. The names of the cells in group 2. Need to be part of the cell
-  names in the object, see [`get_cell_names()`](get_cell_names.md).
+  names in the object, see
+  [`get_cell_names()`](https://gregorlueg.github.io/bixverse/reference/get_cell_names.md).
 
 - method:
 

@@ -23,7 +23,8 @@ cor_module_coremo_clustering(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - span:
 
@@ -33,11 +34,12 @@ cor_module_coremo_clustering(
 - coremo_params:
 
   List. Parameters for the generation of the CoReMo modules, see
-  [`params_coremo()`](params_coremo.md). Contains:
+  [`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md).
+  Contains:
 
   - epsilon - Float. The epsilon parameter for the RBF. You can optimise
     that one with
-    [`cor_module_check_epsilon()`](cor_module_check_epsilon.md).
+    [`cor_module_check_epsilon()`](https://gregorlueg.github.io/bixverse/reference/cor_module_check_epsilon.md).
     Defaults to `2`.
 
   - k_min - Integer. Minimum number of cuts. Defaults to `2L`.

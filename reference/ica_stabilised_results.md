@@ -21,15 +21,19 @@ ica_stabilised_results(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
-  [`ica_processing()`](ica_processing.md) before running this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to apply
+  [`ica_processing()`](https://gregorlueg.github.io/bixverse/reference/ica_processing.md)
+  before running this function.
 
 - no_comp:
 
   Optional integer. Number of components you wish to use for the ICA
-  run. If you have run [`ica_evaluate_comp()`](ica_evaluate_comp.md) the
-  optimal number is identified via the elbow method and will be used if
-  set to `NULL`. You can overwrite this however.
+  run. If you have run
+  [`ica_evaluate_comp()`](https://gregorlueg.github.io/bixverse/reference/ica_evaluate_comp.md)
+  the optimal number is identified via the elbow method and will be used
+  if set to `NULL`. You can overwrite this however.
 
 - ica_type:
 
@@ -38,7 +42,8 @@ ica_stabilised_results(
 - iter_params:
 
   List. This list controls the randomisation parameters for the ICA
-  runs, see [`params_ica_randomisation()`](params_ica_randomisation.md)
+  runs, see
+  [`params_ica_randomisation()`](https://gregorlueg.github.io/bixverse/reference/params_ica_randomisation.md)
   for estimating stability. Has the following elements:
 
   - cross_validate - Boolean. Shall the data be split into different
@@ -55,8 +60,8 @@ ica_stabilised_results(
 - ica_params:
 
   List. The ICA parameters, see
-  [`params_ica_general()`](params_ica_general.md) wrapper function. This
-  function generates a list containing:
+  [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
+  wrapper function. This function generates a list containing:
 
   - maxit - Integer. Maximum number of iterations for ICA.
 

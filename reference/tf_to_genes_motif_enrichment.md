@@ -2,15 +2,16 @@
 
 This function will run the motif enrichment based on RCisTarget (or in
 this case the internal implementation via
-[`run_cistarget()`](run_cistarget.md)). You need to provide the expected
-rankings and TF annotations (for details, please see
-[`run_cistarget()`](run_cistarget.md)). Briefly, this function will run
-CisTarget and add the results to the `ScenicGrn` object and add
-additionally a column `"in_motif"`, for a given TF to gene set to say if
-it was part of the motifs associated with this TF (or not). You have the
-option to limit this to only the the high confidence TFs (default), or
-also include the low confidence TFs (i.e., links from TF to motif that
-are less certain).
+[`run_cistarget()`](https://gregorlueg.github.io/bixverse/reference/run_cistarget.md)).
+You need to provide the expected rankings and TF annotations (for
+details, please see
+[`run_cistarget()`](https://gregorlueg.github.io/bixverse/reference/run_cistarget.md)).
+Briefly, this function will run CisTarget and add the results to the
+`ScenicGrn` object and add additionally a column `"in_motif"`, for a
+given TF to gene set to say if it was part of the motifs associated with
+this TF (or not). You have the option to limit this to only the the high
+confidence TFs (default), or also include the low confidence TFs (i.e.,
+links from TF to motif that are less certain).
 
 ## Usage
 
@@ -54,7 +55,8 @@ tf_to_genes_motif_enrichment(
 
 - cis_target_params:
 
-  List. Output of [`params_cistarget()`](params_cistarget.md):
+  List. Output of
+  [`params_cistarget()`](https://gregorlueg.github.io/bixverse/reference/params_cistarget.md):
 
   - auc_threshold - Numeric. Proportion of genes to use for AUC
     threshold calculation. Default 0.05 means top 5 percent of genes.

@@ -7,10 +7,10 @@ Set the KNN matrix for a `SingleCells` class.
 ## Usage
 
 ``` r
-set_knn(x, knn_mat)
+set_knn(x, knn)
 
 # S3 method for class 'ScCache'
-set_knn(x, knn_mat)
+set_knn(x, knn)
 ```
 
 ## Arguments
@@ -19,6 +19,6 @@ set_knn(x, knn_mat)
 
   An object to add the KNN data to
 
-- knn_mat:
+- knn:
 
-  Numerical matrix. The matrix with the KNN data
+  `SingleCellNearestNeighbour` class to add to the classes.

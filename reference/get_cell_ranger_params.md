@@ -16,4 +16,5 @@ get_cell_ranger_params(dir_data)
 
 ## Value
 
-A list based on [`params_sc_mtx_io()`](params_sc_mtx_io.md).
+A list based on
+[`params_sc_mtx_io()`](https://gregorlueg.github.io/bixverse/reference/params_sc_mtx_io.md).

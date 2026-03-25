@@ -26,7 +26,8 @@ gse_go_elim_method(
 
 - object:
 
-  The underlying class, see [`GeneOntologyElim()`](GeneOntologyElim.md).
+  The underlying class, see
+  [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 
 - target_genes:
 

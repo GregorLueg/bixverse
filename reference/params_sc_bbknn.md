@@ -6,7 +6,7 @@ Wrapper function for the BBKNN parameters
 
 ``` r
 params_sc_bbknn(
-  neighbours_within_batch = 5L,
+  neighbours_within_batch = 3L,
   set_op_mix_ratio = 1,
   local_connectivity = 1,
   trim = NULL,
@@ -18,7 +18,7 @@ params_sc_bbknn(
 
 - neighbours_within_batch:
 
-  Integer. Number of neighbours to consider per batch. Defaults to `5L`.
+  Integer. Number of neighbours to consider per batch. Defaults to `3L`.
 
 - set_op_mix_ratio:
 
@@ -41,10 +41,10 @@ params_sc_bbknn(
 - knn:
 
   List. Optional overrides for kNN parameters. See
-  [`params_knn_defaults()`](params_knn_defaults.md) for available
-  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
-  `ef_search`, `n_list` and `n_probe`.
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for available parameters: `k`, `knn_method`, `ann_dist`,
+  `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`.
 
 ## Value
 

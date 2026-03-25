@@ -20,7 +20,7 @@ get_sc_counts(
 
 - object:
 
-  `single_cell_exp`, `meta_cells` class.
+  `SingleCells`, `MetaCells` class.
 
 - assay:
 
@@ -31,7 +31,7 @@ get_sc_counts(
 
   String. One of `c("cell", "gene")`. Return data in cell-centric
   compressed format (CSR) or gene-centric compressed format (CSC).
-  Defaults to `"cell"`. Not relevant for `meta_cells`.
+  Defaults to `"cell"`. Not relevant for `MetaCells`.
 
 - cell_indices:
 
@@ -44,7 +44,7 @@ get_sc_counts(
 - use_cells_to_keep:
 
   Boolean. Shall cells to keep be found in the class, shall the counts
-  be reduced to these. Not relevant for `meta_cells`.
+  be reduced to these. Not relevant for `MetaCells`.
 
 - .verbose:
 

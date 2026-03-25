@@ -22,12 +22,14 @@ find_rbh_communities(
 
 - object:
 
-  The underlying class, see [`RbhGraph()`](RbhGraph.md).
+  The underlying class, see
+  [`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md).
 
 - resolution_params:
 
   List. Parameters for the resolution search, see
-  [`params_graph_resolution()`](params_graph_resolution.md). Contains:
+  [`params_graph_resolution()`](https://gregorlueg.github.io/bixverse/reference/params_graph_resolution.md).
+  Contains:
 
   - min_res - Float. Minimum resolution to test.
 

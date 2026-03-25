@@ -22,5 +22,6 @@ get_cell_names(x, filtered = FALSE)
 - filtered:
 
   Boolean. Shall, if found only the cell names of the `cells_to_keep` be
-  returned (see [`set_cells_to_keep()`](set_cells_to_keep.md). Defaults
-  to `FALSE`
+  returned (see
+  [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md).
+  Defaults to `FALSE`

@@ -22,3 +22,7 @@ get_embedding(x, embd_name)
 
   String. The name of the embedding to return. The function will throw
   an error if the embedding does not exist.
+
+## Value
+
+Get the specified embeddings from the object (if found).

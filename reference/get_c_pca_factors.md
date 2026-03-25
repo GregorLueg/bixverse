@@ -12,7 +12,8 @@ get_c_pca_factors(object)
 
 - object:
 
-  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
+  The underlying class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 ## Value
 

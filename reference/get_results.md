@@ -12,9 +12,10 @@ get_results(object)
 
 - object:
 
-  The underlying [`BixverseBaseClass()`](BixverseBaseClass.md) class.
-  The class functionality is usually inherited by other S7 classes in
-  `bixverse`.
+  The underlying
+  [`BixverseBaseClass()`](https://gregorlueg.github.io/bixverse/reference/BixverseBaseClass.md)
+  class. The class functionality is usually inherited by other S7
+  classes in `bixverse`.
 
 ## Value
 

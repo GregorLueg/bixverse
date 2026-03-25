@@ -26,7 +26,8 @@ doublet_detection_boost_sc(
 - boost_params:
 
   A list with the final scrublet parameters, see
-  [`params_boost()`](params_boost.md) for full details.
+  [`params_boost()`](https://gregorlueg.github.io/bixverse/reference/params_boost.md)
+  for full details.
 
 - seed:
 

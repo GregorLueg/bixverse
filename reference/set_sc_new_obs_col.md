@@ -12,7 +12,8 @@ set_sc_new_obs_col(object, col_name, new_data)
 
 - object:
 
-  [`bixverse::SingleCells`](SingleCells.md) class.
+  [`bixverse::SingleCells`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md)
+  class.
 
 - col_name:
 
@@ -21,8 +22,9 @@ set_sc_new_obs_col(object, col_name, new_data)
 - new_data:
 
   Atomic vector. The data to add to the column. Needs to be of same
-  length as [`get_cells_to_keep()`](get_cells_to_keep.md) and have the
-  same order.
+  length as
+  [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md)
+  and have the same order.
 
 ## Value
 

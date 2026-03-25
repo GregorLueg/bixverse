@@ -2,7 +2,8 @@
 
 Getter function to extract the
 `epsilon param ~ power law goodness of fit` data from the
-[`BulkCoExp()`](BulkCoExp.md) class.
+[`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+class.
 
 ## Usage
 

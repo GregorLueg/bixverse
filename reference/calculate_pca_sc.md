@@ -44,8 +44,9 @@ calculate_pca_sc(
 
   Optional integer. If you want to provide your own HVG genes.
   Otherwise, the function will default to what is found in
-  [`get_hvg()`](get_hvg.md). Please provide 1-indexed genes here! If you
-  provide these, the internal HVG will be overwritten.
+  [`get_hvg()`](https://gregorlueg.github.io/bixverse/reference/get_hvg.md).
+  Please provide 1-indexed genes here! If you provide these, the
+  internal HVG will be overwritten.
 
 - seed:
 

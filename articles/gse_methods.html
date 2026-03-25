@@ -12,17 +12,18 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="gse_methods_files/libs/quarto-html/popper.min.js"></script><script src="gse_methods_files/libs/quarto-html/tippy.umd.min.js"></script><link href="gse_methods_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="gse_methods_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Gene Set Enrichment Methods">
+<!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Gene Set Enrichment Methods">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,12 +33,39 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/rust_functions.html">Bixverse R &lt;&gt; Rust interface</a></li>
+    <li><a class="dropdown-item" href="../articles/design_single_cell.html">Technical design choices</a></li>
+  </ul>
+</li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+<li><a class="dropdown-item" href="../articles/gse_methods.html">Gene Set Enrichment Methods</a></li>
+    <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
+    <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
+    <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
+<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+  </ul>
+</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/GregorLueg/bixverse" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -49,7 +77,7 @@
 
       <h1>Gene Set Enrichment Methods</h1>
 
-
+      <p class="author">Gregor Lueg</p>
 
 
 
@@ -63,18 +91,29 @@
 
     <section class="level2"><h2 id="gene-set-enrichment-methods-in-bixverse">Gene Set Enrichment Methods in bixverse<a class="anchor" aria-label="anchor" href="#gene-set-enrichment-methods-in-bixverse"></a>
 </h2>
-<p>This vignette shows you how to use the different implement gene set enrichment methods in <code>bixverse</code>.</p>
+<p>This vignette shows you how to use the gene set enrichment methods implemented in <code>bixverse</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"fgsea"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"fgsea"</span><span class="op">)</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"msigdbr"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"msigdbr"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"fgsea"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"fgsea"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"msigdbr"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"msigdbr"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="level3"><h3 id="hypergeometric-tests">Hypergeometric tests<a class="anchor" aria-label="anchor" href="#hypergeometric-tests"></a>
-</h3>
-<p><code>bixverse</code> has implementations of the standard hypergeometric tests to identify gene set enrichment for a given set of target genes. In this example, we will be loading the Hallmark gene sets from <code>msigdbr</code>. Let’s first load these in and create a list of gene sets (the expected format of most functions in <code>bixverse</code> for these type of analysis.)</p>
+</section><section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
+</h2>
+<p>Gene set enrichment analysis sits at the heart of most functional genomics workflows. Given a set of genes of interest (or a ranked list of all measured genes) you want to know which biological processes, pathways, or molecular functions are over-represented relative to what you would expect by chance. <code>bixverse</code> provides Rust-accelerated implementations of the two dominant paradigms for this, along with gene ontology-aware variants of each.</p>
+<p><strong>Over-representation analysis (ORA)</strong> via the hypergeometric test asks: given that I have drawn <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> genes from a universe of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>, and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> of those belong to a particular gene set, is the overlap of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>∩</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">k \cap K</annotation></semantics></math> larger than expected? This is fast and interpretable, but requires a discrete gene list — typically genes passing some fold-change and significance threshold. The choice of threshold and universe can substantially affect results, which is a known limitation of the approach.</p>
+<p><strong>Gene Set Enrichment Analysis (GSEA)</strong> sidesteps this by working with a continuously ranked list of all measured genes, asking whether the members of a gene set are systematically concentrated towards the top or bottom of the ranking. This avoids arbitrary thresholding and tends to be more sensitive to coordinated but modest shifts in expression, at the cost of being more computationally demanding and less straightforward to interpret.</p>
+<p>A practical complication with both approaches is the <strong>redundancy of the Gene Ontology (GO)</strong>. The GO is a directed acyclic graph: a significant hit on a specific term (e.g., “mitochondrial complex I assembly”) will typically also produce significant hits on all of its ancestor terms (e.g., “oxidative phosphorylation”, “metabolic process”), most of which add no new information. <code>bixverse</code> provides two strategies for dealing with this: the <strong>elimination method</strong> of <a href="https://academic.oup.com/bioinformatics/article/22/13/1600/193669" class="external-link">Adrian et al.</a>, which propagates signal up the DAG while removing explained genes, and a <strong>post-hoc simplification</strong> approach based on Wang semantic similarity, which collapses redundant terms after running a standard enrichment.</p>
+<p>All methods are implemented in Rust and exposed via <code>extendr</code>. The performance gains relative to existing R implementations range from modest (~20% faster for GSEA relative to <code>fgsea</code>’s Rcpp implementation) to substantial: the parallelised hypergeometric test over large gene set libraries can be orders of magnitude faster than a naive R loop.</p>
+</section><section class="level2"><h2 id="hypergeometric-tests">Hypergeometric tests<a class="anchor" aria-label="anchor" href="#hypergeometric-tests"></a>
+</h2>
+<p><code>bixverse</code> implements the standard hypergeometric over-representation test. In this example we load the Hallmark gene sets from <code>msigdbr</code> and construct a named list, which is the expected input format throughout <code>bixverse</code> for gene set analyses.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">h_gene_sets</span> <span class="op">&lt;-</span> <span class="fu">msigdbr</span><span class="fu">::</span><span class="fu"><a href="https://igordot.github.io/msigdbr/reference/msigdbr.html" class="external-link">msigdbr</a></span><span class="op">(</span>species <span class="op">=</span> <span class="st">"human"</span>, collection <span class="op">=</span> <span class="st">"H"</span><span class="op">)</span></span>
@@ -88,7 +127,7 @@
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">h_gene_sets_ls</span><span class="op">[[</span><span class="st">"HALLMARK_MYC_TARGETS_V2"</span><span class="op">]</span><span class="op">]</span>, <span class="fl">25</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>To run the hypergeometric test against one target set, you can just use <code>gse_hypergeometric</code>. The function has parameters to define a minimum FDR threshold and minimum overlap science. Additionally, the gene universe will be set (if not provided) to all of the genes represented in the <code>gene_set_list</code>. You can provide your own gene universe if you wish to.</p>
+<p>To test a single target gene set, use <code>gse_hypergeometric</code>. The gene universe defaults to the union of all genes represented in the <code>gene_set_list</code> if not provided explicitly. This is usually reasonable but worth checking if your assay covers a non-standard set of genes. FDR threshold and minimum overlap are also configurable.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_hypergeometric.html">gse_hypergeometric</a></span><span class="op">(</span></span>
@@ -108,7 +147,7 @@
 <span><span class="co">#&gt; 2:              200                 50</span></span>
 <span><span class="co">#&gt; 3:              200                 50</span></span></code></pre></div>
 </div>
-<p>To run the hypergeometric test over a list of target gene sets, <code>bixverse</code> provides <code>gse_hypergeometric_list</code> that leverages <a href="https://github.com/rayon-rs/rayon" class="external-link">rayon</a> in Rust for multi-threading. This makes this function very fast even on large gene set libraries with lots of target gene sets.</p>
+<p>When you have many target gene sets to test simultaneously, use <code>gse_hypergeometric_list</code>. Under the hood this runs all tests in parallel via <a href="https://github.com/rayon-rs/rayon" class="external-link">rayon</a> and optimiser <a href="https://docs.rs/rustc-hash/latest/rustc_hash/index.html" class="external-link">FxHashSets</a>, making it very fast even at scale.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">target_genes_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -145,19 +184,17 @@
 <span><span class="co">#&gt; 5:     HALLMARK_INFLAMMATORY_RESPONSE                 45</span></span>
 <span><span class="co">#&gt; 6: HALLMARK_INTERFERON_GAMMA_RESPONSE                 45</span></span></code></pre></div>
 </div>
-<p>To exemplify the speed in Rust, in this case we run for 250 target gene sets over-enrichment tests against 5000 gene sets sampled from 20k genes. This totals 1.25m hypergeometric tests. Pending on your system, you can expect this to be done in a few seconds.</p>
+<p>To give a sense of the scale this handles comfortably, the following runs 250 target gene sets against 5,000 gene sets drawn from a universe of 20,000 genes — 1.25 million hypergeometric tests in total. On most systems this completes in a few seconds.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seed</span> <span class="op">=</span> <span class="fl">10101L</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Define the parameters</span></span>
 <span><span class="va">universe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"gene_%i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">20000</span><span class="op">)</span></span>
 <span><span class="va">gene_sets_no</span> <span class="op">&lt;-</span> <span class="fl">5000</span></span>
 <span><span class="va">target_gene_sets_no</span> <span class="op">&lt;-</span> <span class="fl">250</span></span>
 <span></span>
-<span><span class="co"># Generate random gene sets</span></span>
 <span><span class="va">gene_sets</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
 <span>  <span class="fl">1</span><span class="op">:</span><span class="va">gene_sets_no</span>,</span>
 <span>  <span class="op">~</span> <span class="op">{</span></span>
@@ -175,7 +212,6 @@
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Generate random target sets</span></span>
 <span><span class="va">target_gene_sets</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
 <span>  <span class="fl">1</span><span class="op">:</span><span class="va">target_gene_sets_no</span>,</span>
 <span>  <span class="op">~</span> <span class="op">{</span></span>
@@ -193,30 +229,21 @@
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Run the Rust function</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">rs_results_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_hypergeometric_list.html">gse_hypergeometric_list</a></span><span class="op">(</span></span>
 <span>  target_genes_list <span class="op">=</span> <span class="va">target_gene_sets</span>,</span>
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.493 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.489 sec elapsed</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="gene-ontology-aware-enrichment-tests-for-sets">Gene ontology aware enrichment tests (for sets)<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-tests-for-sets"></a>
-</h3>
-<p>Additionally, <code>bixverse</code> provides Rust-accelerated functions to run an ontology- aware enrichment test for the gene ontology in particular - the concept is based on <a href="https://academic.oup.com/bioinformatics/article/22/13/1600/193669" class="external-link">Adrian et al.</a>. Briefly, the function will start in the leafs of the ontology (lowest level) and calculate the enrichment statistic for that level. If an enrichment test reaches a threshold, the genes from that term are removed from all of its ancestor terms, ensuring that the more specific terms have stronger test statistics. To make it easy for the users, we provide the human gene ontology as data in the package. This is a data.table with 5 columns:</p>
-<ul>
-<li>go_id: the gene ontology term identifier.</li>
-<li>go_name: the name gene ontology term name.</li>
-<li>ensembl_id: the ensembl identifiers belonging to this term.</li>
-<li>ancestors: in the ontology DAG all identified ancestors of this specific term</li>
-<li>depth: the depth of that term (identified via BFS) for this term. Higher values indicate further distance from the top terms.</li>
-</ul>
-<p>These columns are expected by the <code>gene_ontology_data</code> class that stores the data and exposes it in Rust.</p>
+</section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
+</h2>
+<p>The naive approach of running a hypergeometric test independently for each GO term produces heavily redundant results, because significant child terms mechanically inflate their ancestors. The elimination method from <a href="https://academic.oup.com/bioinformatics/article/22/13/1600/193669" class="external-link">Adrian et al.</a> addresses this by traversing the ontology from the most specific terms (leaves) upwards. When a term reaches the significance threshold, the genes annotated to that term are removed from all of its ancestor terms before their tests are computed. This means the ancestor terms are tested on the residual signal not already explained by their more specific descendants, yielding results that are both less redundant and more interpretable.</p>
+<p><code>bixverse</code> ships with the human GO data and exposes it via a dedicated S7 class that transfers the ontology structure into Rust for efficient traversal.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load in the package provided data and process it into the right format</span></span>
-<span><span class="va">go_data_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_go_data_human.html">get_go_data_human</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">go_data_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_go_data_human.html">get_go_data_human</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Loading the data from the package.</span></span>
 <span><span class="co">#&gt; Processing data for the gene_ontology class.</span></span>
 <span><span class="co">#&gt; Warning: The `father` argument of `dfs()` is deprecated as of igraph 2.2.0.</span></span>
@@ -224,10 +251,9 @@
 <span><span class="co">#&gt; ℹ The deprecated feature was likely used in the bixverse package.</span></span>
 <span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
 <span></span>
-<span><span class="co"># Generate the S7 object for subsequent usage</span></span>
 <span><span class="va">go_data_s7</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/GeneOntologyElim.html">GeneOntologyElim</a></span><span class="op">(</span><span class="va">go_data_dt</span>, min_genes <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>Similar to the more generic hypergeometric tests, you can provide either a single set of a target genes or a list of target genes. Leveraging Rusts borrowing, the overhead for multiple target gene sets is reduced and hence very fast.</p>
+<p>The interface mirrors the generic hypergeometric functions: a single target set or a list, with Rust’s ownership model ensuring the ontology structure is shared across all tests without copying, keeping memory overhead low.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">go_aware_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_go_elim_method.html">gse_go_elim_method</a></span><span class="op">(</span></span>
@@ -253,7 +279,7 @@
 <span><span class="co">#&gt; 5: 2.368116e-07 4.350230e-04     3                6</span></span>
 <span><span class="co">#&gt; 6: 2.368116e-07 4.350230e-04     3                6</span></span></code></pre></div>
 </div>
-<p>Here is the example on how to run this over a list.</p>
+<p>And the version for lists:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">go_aware_res_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_go_elim_method_list.html">gse_go_elim_method_list</a></span><span class="op">(</span></span>
@@ -279,17 +305,12 @@
 <span><span class="co">#&gt; 5: GO:0008009    99.30420 6.201736e-12 1.707958e-08     7               48</span></span>
 <span><span class="co">#&gt; 6: GO:0009897    21.74176 9.192276e-12 2.025242e-08    12              379</span></span></code></pre></div>
 </div>
-<section class="level4"><h4 id="speed-of-the-functions">Speed of the functions<a class="anchor" aria-label="anchor" href="#speed-of-the-functions"></a>
-</h4>
-<p>Also this functions were designed with speed in mind (leveraging Rust’s borrowing and parallelisations where possible). To run this over 100 potential target gene sets takes only a few seconds.</p>
+<p>The DAG traversal is inherently sequential per gene set (each level depends on the one below), but tests within a level are parallelised via rayon. Running 100 target gene sets against the full human GO completes in a matter of seconds:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">go_gene_universe</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">go_data_dt</span><span class="op">$</span><span class="va">ensembl_id</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Generate random target sets</span></span>
-<span></span>
 <span><span class="va">go_target_sets_no</span> <span class="op">&lt;-</span> <span class="fl">100L</span></span>
-<span></span>
 <span><span class="va">seed</span> <span class="op">&lt;-</span> <span class="fl">246L</span></span>
 <span></span>
 <span><span class="va">go_target_gene_sets</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map</a></span><span class="op">(</span></span>
@@ -309,31 +330,27 @@
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Quick test with tictoc</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">tic</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">rs_results_example</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_go_elim_method_list.html">gse_go_elim_method_list</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="va">go_data_s7</span>,</span>
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.39 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.429 sec elapsed</span></span></code></pre></div>
 </div>
-</section></section><section class="level3"><h3 id="alternative-simplifying-results">Alternative: simplifying results<a class="anchor" aria-label="anchor" href="#alternative-simplifying-results"></a>
-</h3>
-<p>Another approach is to run the enrichment over the gene ontology as is and simplify subsequently. <code>bixverse</code> also has options for that. Let’s run an example with the gene ontology:</p>
+</section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
+</h2>
+<p>An alternative strategy is to run an unconstrained hypergeometric test over all GO terms and then collapse redundant results afterwards using semantic similarity. This approach is more flexible — you can apply it to any enrichment results, not just those produced by <code>bixverse</code> — but it does not adjust the test statistics themselves the way the elimination method does. Whether you prefer pre-hoc elimination or post-hoc simplification depends on your use case; for exploratory analyses the simplification approach can be more convenient, while for rigorous GO reporting the elimination method is generally preferable.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load the go data that is part of the package</span></span>
-<span><span class="va">go_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_go_human_data.html">load_go_human_data</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">go_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_go_human_data.html">load_go_human_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># prepare the go &lt;&gt; gene information</span></span>
 <span><span class="va">min_genes</span> <span class="op">&lt;-</span> <span class="fl">3L</span></span>
 <span></span>
 <span><span class="va">go_genes</span> <span class="op">&lt;-</span> <span class="va">go_data</span><span class="op">$</span><span class="va">go_to_genes</span></span>
 <span><span class="va">go_genes_ls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">go_genes</span><span class="op">$</span><span class="va">ensembl_id</span>, <span class="va">go_genes</span><span class="op">$</span><span class="va">go_id</span><span class="op">)</span></span>
 <span><span class="va">go_genes_ls</span> <span class="op">&lt;-</span> <span class="fu">purrr</span><span class="fu">::</span><span class="fu"><a href="https://purrr.tidyverse.org/reference/keep.html" class="external-link">keep</a></span><span class="op">(</span><span class="va">go_genes_ls</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">min_genes</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># run the hypergeometric test</span></span>
 <span><span class="va">go_results_unfiltered</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gse_hypergeometric.html">gse_hypergeometric</a></span><span class="op">(</span></span>
 <span>  target_genes <span class="op">=</span> <span class="va">target_genes_1</span>,</span>
 <span>  gene_set_list <span class="op">=</span> <span class="va">go_genes_ls</span></span>
@@ -357,7 +374,7 @@
 <span><span class="co">#&gt; 5:                 50</span></span>
 <span><span class="co">#&gt; 6:                 50</span></span></code></pre></div>
 </div>
-<p>Now that we have the results, we can simplify them. The approach here is to identify similar terms via the Wang similarity and within a subset of similar terms take the term with the best test statistic, i.e., lowest FDR. Should the terms have the same FDR, the function will select for the most specific term (i.e., lower in the ontology).</p>
+<p>The simplification uses Wang semantic similarity to group related terms, then retains the term with the best test statistic within each cluster. Ties on FDR are broken by ontology depth, preferring the more specific term.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">go_parent_child_dt</span> <span class="op">&lt;-</span> <span class="va">go_data</span><span class="op">$</span><span class="va">gene_ontology</span><span class="op">[</span></span>
@@ -382,14 +399,12 @@
 <span><span class="co">#&gt;                 &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1:                 50</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="gsea">GSEA<a class="anchor" aria-label="anchor" href="#gsea"></a>
-</h3>
-<p><code>bixverse</code> also has implementations of the GSEA based on <a href="https://www.pnas.org/doi/10.1073/pnas.0506580102" class="external-link">Subramanian et al</a> to test against continuous scores. The package provides also the fgsea implementations of <a href="https://www.biorxiv.org/content/10.1101/060012v3" class="external-link">Korotkevich et al.</a>. These can be run like:</p>
+</section><section class="level2"><h2 id="gsea">GSEA<a class="anchor" aria-label="anchor" href="#gsea"></a>
+</h2>
+<p><code>bixverse</code> implements GSEA following <a href="https://www.pnas.org/doi/10.1073/pnas.0506580102" class="external-link">Subramanian et al.</a> for testing against a continuously ranked gene list. The package also wraps the <code>fgsea</code> multilevel method from <a href="https://www.biorxiv.org/content/10.1101/060012v3" class="external-link">Korotkevich et al.</a>, which uses an adaptive permutation scheme to estimate precise p-values efficiently. Both are available for comparison.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># This is the example of fgsea</span></span>
-<span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/ctlab/fgsea/" class="external-link">"fgsea"</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/ctlab/fgsea/" class="external-link">"fgsea"</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">examplePathways</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">exampleRanks</span><span class="op">)</span></span>
@@ -397,11 +412,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">fgsea_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/fgsea/man/fgsea.html" class="external-link">fgsea</a></span><span class="op">(</span></span>
-<span>  pathways <span class="op">=</span> <span class="va">examplePathways</span>, </span>
+<span>  pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
 <span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
 <span>  minSize <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>  maxSize <span class="op">=</span> <span class="fl">500</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fgsea_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                                                                    pathway</span></span>
@@ -429,14 +445,15 @@
 <span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[12]</span></span>
 <span><span class="co">#&gt; 6:                                  60406,20018</span></span></code></pre></div>
 </div>
-<p>And this is how you run it via <code>bixverse</code>.</p>
+<p>How does bixverse look in comparison?</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bixverse_fgsea</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_fgsea.html">calc_fgsea</a></span><span class="op">(</span></span>
 <span>  stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
 <span>  pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
 <span>  gsea_params <span class="op">=</span> <span class="fu"><a href="../reference/params_gsea.html">params_gsea</a></span><span class="op">(</span>min_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway_name</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setorder.html" class="external-link">setorder</a></span><span class="op">(</span><span class="va">pathway_name</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">bixverse_fgsea</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                                                               pathway_name</span></span>
@@ -464,7 +481,7 @@
 <span><span class="co">#&gt; 5:  60406,19361,15270,20893,12189,68240,...[13]            259 0.07707367</span></span>
 <span><span class="co">#&gt; 6:                     60406,20018,245688,20017            237 0.08175156</span></span></code></pre></div>
 </div>
-<p>We can appreciate the (more or less) same p-values estimated by both methods.</p>
+<p>The p-values from both implementations are in close agreement, as expected:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span></span>
@@ -481,12 +498,12 @@
 </div>
 </div>
 </div>
-<p>The speed is very comparable with the Rcpp implementation of fgsea, indicating no issues in terms of performance.</p>
+<p>The Rust implementation is consistently faster than <code>fgsea</code>’s Rcpp backend — not by an enormous margin on small data (roughly 20% in typical benchmarks), but the gap widens with the number of pathways and permutations:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  fgsea <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/fgsea/man/fgsea.html" class="external-link">fgsea</a></span><span class="op">(</span></span>
-<span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>, </span>
+<span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
 <span>    stats <span class="op">=</span> <span class="va">exampleRanks</span>,</span>
 <span>    minSize <span class="op">=</span> <span class="fl">15</span>,</span>
 <span>    maxSize <span class="op">=</span> <span class="fl">500</span></span>
@@ -496,16 +513,16 @@
 <span>    pathways <span class="op">=</span> <span class="va">examplePathways</span>,</span>
 <span>    gsea_params <span class="op">=</span> <span class="fu"><a href="../reference/params_gsea.html">params_gsea</a></span><span class="op">(</span>min_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">10L</span></span>
+<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.343831 2.370726 2.612927 2.492375 2.839090 3.179838    10</span></span>
-<span><span class="co">#&gt;   rust 2.218328 2.223741 2.232515 2.227505 2.235185 2.272516    10</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.449627 2.483603 2.657701 2.603835 2.698428 3.053011     5</span></span>
+<span><span class="co">#&gt;   rust 2.205492 2.214468 2.230479 2.232631 2.249130 2.250674     5</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="gsea-gene-ontology-aware">GSEA gene ontology aware<a class="anchor" aria-label="anchor" href="#gsea-gene-ontology-aware"></a>
-</h3>
-<p><code>bixverse</code> also implements GSEA in a gene-ontology aware form. In this case, you use the same object as for the hypergeometric test, but instead provide the ranked list. Similar to the hyper geometric version, the ontology is traversed from the lowest level first and the permutation-based p-values are calculated for a given term. Should this p-value be below the elimination threshold, the genes from that given gene ontology term are removed from all of its ancestors, yielding more specific GO terms. Once this has been done with the full ontology, the multi-level method from fgsea is used to estimate lower p-values than just possible via permutation for terms that show significance.</p>
+</section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
+</h2>
+<p><code>bixverse</code> combines the elimination method with GSEA, using the same <code>GeneOntologyElim</code> object as the hypergeometric variant. The ontology is traversed leaf-first; for each term a permutation-based p-value is computed and if it falls below the elimination threshold, genes from that term are removed from all ancestors before they are tested. Once the full traversal is complete, the fgsea multilevel method is applied to terms that reached nominal significance to obtain more precise p-values than pure permutation alone can provide.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">gene_universe_go</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span></span>
@@ -548,7 +565,7 @@
 <span><span class="co">#&gt; 5: 0.4984931 0.5917217 cellular response to estradiol stimulus</span></span>
 <span><span class="co">#&gt; 6: 0.4772708 0.8290480  regulation of receptor internalization</span></span></code></pre></div>
 </div>
-</section></section><script id="quarto-html-after-body" type="application/javascript">
+</section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

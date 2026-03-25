@@ -18,3 +18,7 @@ get_pca_singular_val(x)
 - x:
 
   An object to get PCA singular values from.
+
+## Value
+
+The PCA singular values from the object (if found).

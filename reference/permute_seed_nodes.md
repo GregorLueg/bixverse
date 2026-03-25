@@ -21,7 +21,7 @@ permute_seed_nodes(
 - object:
 
   `NetworkDiffusions` object. The underlying class
-  [`NetworkDiffusions()`](NetworkDiffusions.md).
+  [`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md).
 
 - perm_iters:
 

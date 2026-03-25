@@ -1,9 +1,9 @@
 # Filter the calculated similarities
 
 This function calculates the critical value, see
-[`calculate_critical_value()`](calculate_critical_value.md) and filters
-subsequently all the term pairs to the ones with a value ≥ critical
-value.
+[`calculate_critical_value()`](https://gregorlueg.github.io/bixverse/reference/calculate_critical_value.md)
+and filters subsequently all the term pairs to the ones with a value ≥
+critical value.
 
 ## Usage
 
@@ -21,7 +21,8 @@ filter_similarities(
 
 - object:
 
-  `OntologySim` class. See [`OntologySim()`](OntologySim.md).
+  `OntologySim` class. See
+  [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 - alpha:
 

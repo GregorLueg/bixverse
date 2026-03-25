@@ -1,7 +1,7 @@
 # Get the RBH results
 
 Pulls out the RBH results if you ran
-[`generate_rbh_graph()`](generate_rbh_graph.md)
+[`generate_rbh_graph()`](https://gregorlueg.github.io/bixverse/reference/generate_rbh_graph.md)
 
 ## Usage
 
@@ -13,7 +13,8 @@ get_rbh_res(object)
 
 - object:
 
-  The underlying class [`RbhGraph()`](RbhGraph.md).
+  The underlying class
+  [`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md).
 
 ## Value
 

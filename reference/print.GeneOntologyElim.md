@@ -7,7 +7,7 @@ Print a GeneOntologyElim object.
 - x:
 
   An object of class `GeneOntologyElim`, see
-  [`GeneOntologyElim()`](GeneOntologyElim.md).
+  [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md).
 
 - ...:
 

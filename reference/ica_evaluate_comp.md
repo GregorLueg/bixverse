@@ -24,8 +24,11 @@ ica_evaluate_comp(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). You need to apply
-  [`ica_processing()`](ica_processing.md) before running this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to apply
+  [`ica_processing()`](https://gregorlueg.github.io/bixverse/reference/ica_processing.md)
+  before running this function.
 
 - ica_type:
 
@@ -34,7 +37,8 @@ ica_evaluate_comp(
 - iter_params:
 
   List. This list controls the randomisation parameters for the ICA
-  runs, see [`params_ica_randomisation()`](params_ica_randomisation.md)
+  runs, see
+  [`params_ica_randomisation()`](https://gregorlueg.github.io/bixverse/reference/params_ica_randomisation.md)
   for estimating stability. Has the following elements:
 
   - cross_validate - Boolean. Shall the data be split into different
@@ -51,9 +55,9 @@ ica_evaluate_comp(
 - ncomp_params:
 
   List. Parameters for the ncomp to iterate through, see
-  [`params_ica_ncomp()`](params_ica_ncomp.md). In the standard setting,
-  `c(2, 3, 4, 5)` will be tested and then in steps until max_no_comp
-  will be tested, i.e.,
+  [`params_ica_ncomp()`](https://gregorlueg.github.io/bixverse/reference/params_ica_ncomp.md).
+  In the standard setting, `c(2, 3, 4, 5)` will be tested and then in
+  steps until max_no_comp will be tested, i.e.,
   `c(2, 3, 4, 5, 10, 15, ..., max_no_comp - 5, max_no_comp)`.
 
   - max_no_comp - Maximum number of ncomp to test.
@@ -66,8 +70,8 @@ ica_evaluate_comp(
 - ica_params:
 
   List. The ICA parameters, see
-  [`params_ica_general()`](params_ica_general.md) wrapper function. This
-  function generates a list containing:
+  [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
+  wrapper function. This function generates a list containing:
 
   - maxit - Integer. Maximum number of iterations for ICA.
 

@@ -12,17 +12,18 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="pathway_activity_files/libs/quarto-html/popper.min.js"></script><script src="pathway_activity_files/libs/quarto-html/tippy.umd.min.js"></script><link href="pathway_activity_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="pathway_activity_files/libs/quarto-html/light-border.css" rel="stylesheet">
-<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Pathway activity functions">
+<!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Pathway activity functions">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">bixverse</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,12 +33,39 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/rust_functions.html">Bixverse R &lt;&gt; Rust interface</a></li>
+    <li><a class="dropdown-item" href="../articles/design_single_cell.html">Technical design choices</a></li>
+  </ul>
+</li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-tutorials" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Tutorials</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-tutorials">
+<li><a class="dropdown-item" href="../articles/gse_methods.html">Gene Set Enrichment Methods</a></li>
+    <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
+    <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
+    <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
+<li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+  </ul>
+</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/GregorLueg/bixverse" aria-label="GitHub"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -49,7 +77,7 @@
 
       <h1>Pathway activity functions</h1>
 
-
+      <p class="author">Gregor Lueg</p>
 
 
 
@@ -74,8 +102,8 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">10000</span> <span class="co"># number of genes</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span>   <span class="co"># number of samples</span></span>
-<span>  </span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span> <span class="co"># number of samples</span></span>
+<span></span>
 <span><span class="co"># simulate expression values from a standard Gaussian distribution</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">p</span> <span class="op">*</span> <span class="va">n</span><span class="op">)</span>,</span>
@@ -113,12 +141,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4          s5</span></span>
-<span><span class="co">#&gt; gs1  0.07680500 -0.11302533 -0.03934923  0.08032242  0.22772860</span></span>
-<span><span class="co">#&gt; gs2  0.06230482  0.01609217  0.04576508 -0.12423160  0.21910595</span></span>
-<span><span class="co">#&gt; gs3 -0.13359384  0.16966518 -0.07890620 -0.04965710 -0.03368295</span></span>
-<span><span class="co">#&gt; gs4  0.33888260 -0.12072944 -0.09695866  0.05321099 -0.16570657</span></span>
-<span><span class="co">#&gt; gs5 -0.02333842  0.01419487  0.13741696  0.14782561 -0.09745488</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1           s2          s3          s4         s5</span></span>
+<span><span class="co">#&gt; gs1 -0.01320378 -0.093492292  0.10111879 -0.10211421  0.1019284</span></span>
+<span><span class="co">#&gt; gs2  0.14308516 -0.132894778  0.13513867  0.09514166 -0.1564986</span></span>
+<span><span class="co">#&gt; gs3 -0.21491357 -0.075694242  0.12316338 -0.04042700 -0.1765931</span></span>
+<span><span class="co">#&gt; gs4  0.12565312  0.129707548 -0.07585571 -0.22496932  0.2923787</span></span>
+<span><span class="co">#&gt; gs5  0.15323107  0.002392075 -0.07922392 -0.09677161  0.1677735</span></span></code></pre></div>
 </div>
 <p>If we compare against the original implementation of GSVA</p>
 <div class="cell">
@@ -128,16 +156,16 @@
 <span><span class="va">gsvaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gsva_res_gaussian</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gsva_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4          s5</span></span>
-<span><span class="co">#&gt; gs1  0.07679513 -0.11304124 -0.03935872  0.08031931  0.22771828</span></span>
-<span><span class="co">#&gt; gs2  0.06231932  0.01609697  0.04575791 -0.12421915  0.21910286</span></span>
-<span><span class="co">#&gt; gs3 -0.13359060  0.16967018 -0.07891350 -0.04966425 -0.03367729</span></span>
-<span><span class="co">#&gt; gs4  0.33881438 -0.12071677 -0.09704694  0.05316119 -0.16574295</span></span>
-<span><span class="co">#&gt; gs5 -0.02341718  0.01417917  0.13741696  0.14781638 -0.09745179</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1           s2          s3          s4         s5</span></span>
+<span><span class="co">#&gt; gs1 -0.01320378 -0.093486863  0.10113341 -0.10211972  0.1019327</span></span>
+<span><span class="co">#&gt; gs2  0.14309364 -0.133006505  0.13515390  0.09503537 -0.1563926</span></span>
+<span><span class="co">#&gt; gs3 -0.21491357 -0.075675821  0.12306305 -0.04043898 -0.1766003</span></span>
+<span><span class="co">#&gt; gs4  0.12565056  0.129698884 -0.07586936 -0.22497445  0.2923787</span></span>
+<span><span class="co">#&gt; gs5  0.15323059  0.002390686 -0.07921143 -0.09676413  0.1677762</span></span></code></pre></div>
 </div>
 <p>We can appreciated very similar values. There is slight differences in numerical precision due to optimisations in Rust. However, the correlations between the two are ≥0.99</p>
 <div class="cell">
@@ -169,12 +197,12 @@
 <span>    pathways <span class="op">=</span> <span class="va">gs</span>,</span>
 <span>    gaussian <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
+<span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq      mean   median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 2485.5005 2497.8297 2506.0742 2501.559 2503.1027 2542.3790     5</span></span>
-<span><span class="co">#&gt;  bixverse  570.5823  573.0117  573.3832  573.490  574.1456  575.6863     5</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean    median        uq      max neval</span></span>
+<span><span class="co">#&gt;      gsva 2505.7374 2511.5945 2525.2353 2517.4516 2534.9843 2552.517     3</span></span>
+<span><span class="co">#&gt;  bixverse  580.6615  580.7829  581.0223  580.9043  581.2026  581.501     3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="gsva-poisson-version">GSVA (Poisson version)<a class="anchor" aria-label="anchor" href="#gsva-poisson-version"></a>
 </h3>
@@ -191,12 +219,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4            s5</span></span>
-<span><span class="co">#&gt; gs1  0.03555496 -0.09479711 -0.10109203 -0.02258372 -0.0009649248</span></span>
-<span><span class="co">#&gt; gs2 -0.05455040  0.08703022 -0.03047756 -0.03334293  0.0902819622</span></span>
-<span><span class="co">#&gt; gs3 -0.09073528 -0.19721119 -0.06507774 -0.07967113 -0.0565364066</span></span>
-<span><span class="co">#&gt; gs4 -0.11190642  0.25317653  0.01823319 -0.08895262  0.2206121197</span></span>
-<span><span class="co">#&gt; gs5  0.18177513 -0.11916659  0.25600796  0.32930743 -0.3144384229</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1          s2           s3          s4           s5</span></span>
+<span><span class="co">#&gt; gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941</span></span>
+<span><span class="co">#&gt; gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030</span></span>
+<span><span class="co">#&gt; gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363</span></span>
+<span><span class="co">#&gt; gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450</span></span>
+<span><span class="co">#&gt; gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668</span></span></code></pre></div>
 </div>
 <p>This is how you would do this in the official GSVA code:</p>
 <div class="cell">
@@ -205,7 +233,7 @@
 <span><span class="va">gsvaParPoisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X1</span>, <span class="va">gs</span>, kcdf <span class="op">=</span> <span class="st">"Poisson"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gsva_res_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaParPoisson</span>, verbose<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaParPoisson</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check the correlation between the two</span></span>
@@ -225,12 +253,12 @@
 <span><span class="co">#&gt; [1] "GSVA and bixverse return (basically) the same results for GSVA (Poisson): TRUE"</span></span>
 <span></span>
 <span><span class="va">gsva_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3          s4            s5</span></span>
-<span><span class="co">#&gt; gs1  0.03555496 -0.09479711 -0.10109203 -0.02258372 -0.0009649248</span></span>
-<span><span class="co">#&gt; gs2 -0.05455040  0.08703022 -0.03047756 -0.03334293  0.0902819622</span></span>
-<span><span class="co">#&gt; gs3 -0.09073528 -0.19721119 -0.06507774 -0.07967113 -0.0565364066</span></span>
-<span><span class="co">#&gt; gs4 -0.11190642  0.25317653  0.01823319 -0.08895262  0.2206121197</span></span>
-<span><span class="co">#&gt; gs5  0.18177513 -0.11916659  0.25600796  0.32930743 -0.3144384229</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1          s2           s3          s4           s5</span></span>
+<span><span class="co">#&gt; gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941</span></span>
+<span><span class="co">#&gt; gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030</span></span>
+<span><span class="co">#&gt; gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363</span></span>
+<span><span class="co">#&gt; gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450</span></span>
+<span><span class="co">#&gt; gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668</span></span></code></pre></div>
 </div>
 <p>And speed comparisons for the Poisson kernel version between <code>GSVA</code> and <code>bixverse</code>:</p>
 <div class="cell">
@@ -245,12 +273,12 @@
 <span>    pathways <span class="op">=</span> <span class="va">gs</span>,</span>
 <span>    gaussian <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
+<span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
-<span><span class="co">#&gt;      expr      min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 18.85632 18.880832 18.885536 18.890584 18.892013 18.907932     5</span></span>
-<span><span class="co">#&gt;  bixverse  2.77629  2.777754  2.778904  2.778397  2.778452  2.783629     5</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
+<span><span class="co">#&gt;      gsva 18.893905 18.896677 18.899481 18.899448 18.902270 18.905091     3</span></span>
+<span><span class="co">#&gt;  bixverse  2.766826  2.771615  2.777271  2.776405  2.782494  2.788582     3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="single-sample-gsea">single sample GSEA<a class="anchor" aria-label="anchor" href="#single-sample-gsea"></a>
 </h3>
@@ -263,12 +291,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_ssgsea</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             s1          s2          s3         s4          s5</span></span>
-<span><span class="co">#&gt; gs1 0.16757295  0.02291227  0.05352661 0.15503778  0.17662940</span></span>
-<span><span class="co">#&gt; gs2 0.15706902  0.12685854  0.17477382 0.04851582  0.15316529</span></span>
-<span><span class="co">#&gt; gs3 0.04328484  0.18521995  0.03643323 0.07810993  0.12536501</span></span>
-<span><span class="co">#&gt; gs4 0.20389567 -0.11191251 -0.04096866 0.16114398  0.06374350</span></span>
-<span><span class="co">#&gt; gs5 0.13401626  0.14820729  0.12236692 0.13516653 -0.01950481</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1         s2         s3          s4         s5</span></span>
+<span><span class="co">#&gt; gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275</span></span>
+<span><span class="co">#&gt; gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417</span></span>
+<span><span class="co">#&gt; gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794</span></span>
+<span><span class="co">#&gt; gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069</span></span>
+<span><span class="co">#&gt; gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864</span></span></code></pre></div>
 </div>
 <p>This is the way you would run the ssGSEA algorithm in the GSVA package.</p>
 <div class="cell">
@@ -277,7 +305,7 @@
 <span><span class="va">ssgseaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/ssgseaParam-class.html" class="external-link">ssgseaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ssgsea_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">ssgseaPar</span>, verbose<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">ssgseaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check the correlation between the two</span></span>
@@ -297,12 +325,12 @@
 <span><span class="co">#&gt; [1] "GSVA and bixverse return (basically) the same results for ssGSEA: TRUE"</span></span>
 <span></span>
 <span><span class="va">ssgsea_res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             s1          s2          s3         s4          s5</span></span>
-<span><span class="co">#&gt; gs1 0.16757295  0.02291227  0.05352661 0.15503778  0.17662940</span></span>
-<span><span class="co">#&gt; gs2 0.15706902  0.12685854  0.17477382 0.04851582  0.15316529</span></span>
-<span><span class="co">#&gt; gs3 0.04328484  0.18521995  0.03643323 0.07810993  0.12536501</span></span>
-<span><span class="co">#&gt; gs4 0.20389567 -0.11191251 -0.04096866 0.16114398  0.06374350</span></span>
-<span><span class="co">#&gt; gs5 0.13401626  0.14820729  0.12236692 0.13516653 -0.01950481</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1         s2         s3          s4         s5</span></span>
+<span><span class="co">#&gt; gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275</span></span>
+<span><span class="co">#&gt; gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417</span></span>
+<span><span class="co">#&gt; gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794</span></span>
+<span><span class="co">#&gt; gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069</span></span>
+<span><span class="co">#&gt; gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864</span></span></code></pre></div>
 </div>
 <p>Again, you should observe speed improvements thanks to algorithm improvements and leveraging Rust’s performance.</p>
 <div class="cell">
@@ -316,12 +344,12 @@
 <span>    exp <span class="op">=</span> <span class="va">X</span>,</span>
 <span>    pathways <span class="op">=</span> <span class="va">gs</span></span>
 <span>  <span class="op">)</span>,</span>
-<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
+<span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;      gsva 615.9093 619.9724 625.3839 624.7308 624.9001 641.4067     5</span></span>
-<span><span class="co">#&gt;  bixverse 121.9735 122.4048 126.7067 122.7186 123.1249 143.3114     5</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 620.2673 623.9776 625.2376 627.6879 627.7227 627.7575     3</span></span>
+<span><span class="co">#&gt;  bixverse 119.0858 119.9084 120.4692 120.7310 121.1609 121.5908     3</span></span></code></pre></div>
 </div>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {

@@ -22,13 +22,13 @@ calculate_semantic_sim_mat(similarity_type, ancestor_list, ic_list)
 
   List. Names being the term and the elements in the list the names of
   the ancestors, see
-  [`get_ontology_ancestry()`](get_ontology_ancestry.md).
+  [`get_ontology_ancestry()`](https://gregorlueg.github.io/bixverse/reference/get_ontology_ancestry.md).
 
 - ic_list:
 
   List. The names being the term and the elements the information
   content of this given term. Needs to be a single float! See
-  [`calculate_information_content()`](calculate_information_content.md).
+  [`calculate_information_content()`](https://gregorlueg.github.io/bixverse/reference/calculate_information_content.md).
 
 ## Value
 

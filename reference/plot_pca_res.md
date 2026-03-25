@@ -17,7 +17,8 @@ plot_pca_res(
 
 - object:
 
-  The underlying class, see [`BulkDge()`](BulkDge.md).
+  The underlying class, see
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - cols_to_plot:
 

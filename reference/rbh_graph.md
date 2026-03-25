@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`RbhGraph()`](RbhGraph.md).
+This constructor has been renamed to
+[`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md).
 
 ## Usage
 
@@ -40,4 +41,6 @@ rbh_graph(
 
 ## Value
 
-Returns a [`RbhGraph()`](RbhGraph.md) object.
+Returns a
+[`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md)
+object.

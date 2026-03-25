@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`MetaCells()`](MetaCells.md).
+This constructor has been renamed to
+[`MetaCells()`](https://gregorlueg.github.io/bixverse/reference/MetaCells.md).
 
 ## Usage
 
@@ -28,4 +29,6 @@ meta_cells(meta_cell_data, var_data, meta_cell_method)
 
 ## Value
 
-Returns a [`MetaCells()`](MetaCells.md) object.
+Returns a
+[`MetaCells()`](https://gregorlueg.github.io/bixverse/reference/MetaCells.md)
+object.

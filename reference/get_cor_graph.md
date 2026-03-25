@@ -12,7 +12,8 @@ get_cor_graph(object, epsilon, .verbose)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - epsilon:
 

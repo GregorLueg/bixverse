@@ -1,7 +1,8 @@
 # Return the TPM-normalised counts
 
 Getter function to extract the TPM-normalised counts from the
-[`BulkDge()`](BulkDge.md) class.
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
+class.
 
 ## Usage
 

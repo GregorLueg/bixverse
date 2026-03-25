@@ -1,1341 +1,1033 @@
 # Package index
 
-## All functions
-
-- [`AnnDataParser`](AnnDataParser.md) : Class for Anndata
-
-- [`BulkCoExp()`](BulkCoExp.md) : Bulk RNAseq co-expression modules
-
-- [`BulkDge()`](BulkDge.md) : Bulk RNAseq differential gene expression
-  class
-
-- [`GeneOntologyElim()`](GeneOntologyElim.md) : Gene Ontology data
-
-- [`MetaCells()`](MetaCells.md) : bixverse meta cell class
-
-- [`NetworkDiffusions()`](NetworkDiffusions.md) : Network diffusion
-  class
-
-- [`OntologySim()`](OntologySim.md) : OntologySim class
-
-- [`RbhGraph()`](RbhGraph.md) : Reciprocal best hit graph
-
-- [`SimilarityNetworkFusion()`](SimilarityNetworkFusion.md) : Similarity
-  network fusion
-
-- [`SingleCellDuckDB`](SingleCellDuckDB.md) : Class for storing single
-  cell experimental data in DuckDB (nightly!)
-
-- [`SingleCellDuckDBBase`](SingleCellDuckDBBase.md) : Base class for the
-  single cell DuckDB connection
-
-- [`SingleCells()`](SingleCells.md) : bixverse single cell class
-
-- [`add_new_metadata()`](add_new_metadata.md) : Replace the meta data
-
-- [`add_nhoods_info()`](add_nhoods_info.md) : Add neighbourhood info on
-  majority cell type
-
-- [`add_snf_data_modality()`](add_snf_data_modality.md) : Add a data
-  modality for SNF generation
-
-- [`all_limma_contrasts()`](all_limma_contrasts.md) : Create all limma
-  contrasts (based on combination of everything)
-
-- [`aucell_sc()`](aucell_sc.md) : Calculate AUC scores (akin to AUCell)
-
-- [`batch_correction_bulk_dge()`](batch_correction_bulk_dge.md) : Run a
-  linear batch correction
-
-- [`bbknn_sc()`](bbknn_sc.md) : Run BBKNN
-
-- [`bulk_dge_from_h5ad()`](bulk_dge_from_h5ad.md) : Wrapper function to
-  generate BulkDge object from h5ad
-
-- [`c_pca_plot_alphas()`](c_pca_plot_alphas.md) : Plot various alphas
-  for the contrastive PCA
-
-- [`calc_fgsea()`](calc_fgsea.md) : Bixverse implementation of the fgsea
-  algorithm
-
-- [`calc_fgsea_simple()`](calc_fgsea_simple.md) : Bixverse
-  implementation of the simple fgsea algorithm
-
-- [`calc_gsea_traditional()`](calc_gsea_traditional.md) : Bixverse
-  implementation of the traditional GSEA algorithm
-
-- [`calc_gsva()`](calc_gsva.md) : Bixverse implementation of GSVA
-
-- [`calc_meta_cell_purity()`](calc_meta_cell_purity.md) : Calculate meta
-  cell purity
-
-- [`calc_mitch()`](calc_mitch.md) : Calculate a mitch gene set
-  enrichments on contrast
-
-- [`calc_ssgsea()`](calc_ssgsea.md) : Bixverse implementation of ssGSEA
-
-- [`calculate_all_dges()`](calculate_all_dges.md) : Calculate all
-  possible DGE variants (DEPRECATED!)
-
-- [`calculate_critical_value()`](calculate_critical_value.md) :
-  Calculates the critical value
-
-- [`calculate_dge_hedges()`](calculate_dge_hedges.md) : Calculates the
-  Hedge's G effect size
-
-- [`calculate_dge_limma()`](calculate_dge_limma.md) : Calculates the
-  Limma Voom DGE
-
-- [`calculate_diffusion_auc()`](calculate_diffusion_auc.md) : Calculate
-  the AUROC for a diffusion score
-
-- [`calculate_effect_size()`](calculate_effect_size.md) : Calculate the
-  Hedge G effect between two matrices
-
-- [`calculate_information_content()`](calculate_information_content.md)
-  : Calculate the information content for each ontology term
-
-- [`calculate_kbet_sc()`](calculate_kbet_sc.md) : Calculate kBET scores
-
-- [`calculate_pca_bulk_dge()`](calculate_pca_bulk_dge.md) : Calculate
-  PCA on the expression.
-
-- [`calculate_pca_sc()`](calculate_pca_sc.md) : Run PCA for single cell
-
-- [`calculate_rpkm()`](calculate_rpkm.md) : RPKM calculation
-
-- [`calculate_semantic_sim()`](calculate_semantic_sim.md) : Calculate
-  the Resnik or Lin semantic similarity
-
-- [`calculate_semantic_sim_mat()`](calculate_semantic_sim_mat.md) :
-  Calculate the Resnik or Lin semantic similarity matrix
-
-- [`calculate_semantic_sim_onto()`](calculate_semantic_sim_onto.md) :
-  Calculate the Resnik or Lin semantic similarity for an ontology.
-
-- [`calculate_sparsity_stats()`](calculate_sparsity_stats.md) : Helper
-  function to calculate the induced sparsity
-
-- [`calculate_tom()`](calculate_tom.md) : Calculate the TOM from a
-  correlation matrix
-
-- [`calculate_tom_from_exp()`](calculate_tom_from_exp.md) : Calculate
-  the TOM from an expression matrix
-
-- [`calculate_tpm()`](calculate_tpm.md) : TPM calculation
-
-- [`calculate_wang_sim()`](calculate_wang_sim.md) : Calculate the Wang
-  similarities between terms
-
-- [`calculate_wang_sim_mat()`](calculate_wang_sim_mat.md) : Calculate
-  the Wang similarity matrix
-
-- [`calculate_wang_sim_onto()`](calculate_wang_sim_onto.md) : Calculate
-  the Wang similarity for an ontology.
-
-- [`call_doublets_manual()`](call_doublets_manual.md) : Helper function
-  to manually readjust Scrublet thresholds
-
-- [`cell_cycle_genes`](cell_cycle_genes.md) : Cell cycle genes
-
-- [`change_gene_identifier()`](change_gene_identifier.md) : Change the
-  primary gene identifier of BulkDge
-
-- [`check_dim()`](check_dim.md) : Helper to assert same number of
-  samples
-
-- [`check_pca_grp_differences()`](check_pca_grp_differences.md) : Helper
-  function to check if PC1 and/or PC2 distinguish groups
-
-- [`community_detection()`](community_detection.md) : Identify
-  privileged communities based on a given diffusion vector
-
-- [`community_stability()`](community_stability.md) : Assess stability
-  of ICA components
-
-- [`component_mutual_information()`](component_mutual_information.md) :
-  Assess the NMI of the ICA components
-
-- [`constrained_page_rank()`](constrained_page_rank.md) : Constrained
-  personalised page rank
-
-- [`constrained_page_rank_ls()`](constrained_page_rank_ls.md) :
-  Constrained personalised page rank over a list
-
-- [`contrastive_pca()`](contrastive_pca.md) : Apply contrastive PCA.
-
-- [`contrastive_pca_processing()`](contrastive_pca_processing.md) :
-  Prepare class for contrastive PCA
-
-- [`cor_module_check_epsilon()`](cor_module_check_epsilon.md) : Iterate
-  through different epsilon parameters
-
-- [`cor_module_coremo_clustering()`](cor_module_coremo_clustering.md) :
-  Generates CoReMo-based gene modules
-
-- [`cor_module_coremo_cor_sign()`](cor_module_coremo_cor_sign.md) :
-  Split CoReMo modules by correlation sign
-
-- [`cor_module_coremo_eigengene()`](cor_module_coremo_eigengene.md) :
-  Calculate Eigengenes for CoReMo modules
-
-- [`cor_module_coremo_stability()`](cor_module_coremo_stability.md) :
-  Assesses CoReMo-based gene module stability
-
-- [`cor_module_graph_check_res()`](cor_module_graph_check_res.md) :
-  Iterate through Leiden resolutions for graph-based community
+## General getters
+
+All types of general getters that work across various classes related to
+co-expression module detection, graph-based clustering, etc.
+
+- [`get_metadata()`](https://gregorlueg.github.io/bixverse/reference/get_metadata.md)
+  : Return the metadata
+- [`get_params()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.Hotspot()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.miloR()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  [`get_params.ScenicGrn()`](https://gregorlueg.github.io/bixverse/reference/get_params.md)
+  : Get the parameters that were used.
+- [`get_results()`](https://gregorlueg.github.io/bixverse/reference/get_results.md)
+  : Get the final results from the class
+
+## Gene set enrichment helpers
+
+Everything and anything you need to do various types of gene set
+enrichments; hypergeometric tests, GSVA, (ss)GSEA.
+
+- [`gse_hypergeometric()`](https://gregorlueg.github.io/bixverse/reference/gse_hypergeometric.md)
+  : Gene set enrichment (GSE) based on a hypergeometric test.
+- [`gse_hypergeometric_list()`](https://gregorlueg.github.io/bixverse/reference/gse_hypergeometric_list.md)
+  : Gene set enrichment (GSE) based on a hypergeometric test over a
+  list.
+- [`calc_fgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_fgsea.md)
+  : Bixverse implementation of the fgsea algorithm
+- [`calc_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/calc_fgsea_simple.md)
+  : Bixverse implementation of the simple fgsea algorithm
+- [`calc_gsea_traditional()`](https://gregorlueg.github.io/bixverse/reference/calc_gsea_traditional.md)
+  : Bixverse implementation of the traditional GSEA algorithm
+- [`calc_mitch()`](https://gregorlueg.github.io/bixverse/reference/calc_mitch.md)
+  : Calculate a mitch gene set enrichments on contrast
+- [`calc_gsva()`](https://gregorlueg.github.io/bixverse/reference/calc_gsva.md)
+  : Bixverse implementation of GSVA
+- [`calc_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/calc_ssgsea.md)
+  : Bixverse implementation of ssGSEA
+- [`params_gsea()`](https://gregorlueg.github.io/bixverse/reference/params_gsea.md)
+  : Wrapper function to generate GSEA parameters
+- [`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md)
+  : Wrapper function to generate GSVA parameters
+- [`params_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/params_ssgsea.md)
+  : Wrapper function to generate ssGSEA parameters
+
+## Gene Ontology-related gene set enrichment helpers
+
+GSE methods specifically designed with the DAG of the Gene Ontology in
+mind, identifying the most relevant Gene Ontology terms.
+
+- [`load_go_human_data()`](https://gregorlueg.github.io/bixverse/reference/load_go_human_data.md)
+  : Get the Gene Ontology data human
+- [`get_go_data_human()`](https://gregorlueg.github.io/bixverse/reference/get_go_data_human.md)
+  : Wrapper function to load and process the gene ontology data.
+- [`process_go_data()`](https://gregorlueg.github.io/bixverse/reference/process_go_data.md)
+  : Process Gene Ontology data into the right format
+- [`GeneOntologyElim()`](https://gregorlueg.github.io/bixverse/reference/GeneOntologyElim.md)
+  : Gene Ontology data
+- [`gse_go_elim_method()`](https://gregorlueg.github.io/bixverse/reference/gse_go_elim_method.md)
+  : Run gene ontology enrichment with elimination method.
+- [`gse_go_elim_method_list()`](https://gregorlueg.github.io/bixverse/reference/gse_go_elim_method_list.md)
+  : Run gene ontology enrichment with elimination method over a list.
+- [`fgsea_go_elim()`](https://gregorlueg.github.io/bixverse/reference/fgsea_go_elim.md)
+  : Run GO enrichment with elimination method over a continuous vectors
+- [`fgsea_simple_go_elim()`](https://gregorlueg.github.io/bixverse/reference/fgsea_simple_go_elim.md)
+  : Run GO enrichment with elimination with fgsea simple
+- [`simplify_hypergeom_res()`](https://gregorlueg.github.io/bixverse/reference/simplify_hypergeom_res.md)
+  : Simplify gene set results via ontologies
+
+## CisTarget-related helpers
+
+Functions related to CisTarget enrichment.
+
+- [`download_cistarget_hg38()`](https://gregorlueg.github.io/bixverse/reference/download_cistarget_hg38.md)
+  : Download CisTarget reference files for human (hg38)
+- [`read_motif_annotation_file()`](https://gregorlueg.github.io/bixverse/reference/read_motif_annotation_file.md)
+  : Read in the motif annotation file
+- [`read_motif_ranking()`](https://gregorlueg.github.io/bixverse/reference/read_motif_ranking.md)
+  : Read in the motif rankings and transform them into a matrix
+- [`run_cistarget()`](https://gregorlueg.github.io/bixverse/reference/run_cistarget.md)
+  : Main function to run CisTarget
+- [`params_cistarget()`](https://gregorlueg.github.io/bixverse/reference/params_cistarget.md)
+  : Wrapper function to CisTarget parameters
+
+## Correlation-based gene module detections
+
+Methods to identify co-expression modules via correlations in the data.
+Includes methods for differential correlations, some graph-based and
+some hierarchical clustering based ones.
+
+- [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+  : Bulk RNAseq co-expression modules
+- [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
+  : Process the raw data
+- [`cor_module_check_epsilon()`](https://gregorlueg.github.io/bixverse/reference/cor_module_check_epsilon.md)
+  : Iterate through different epsilon parameters
+- [`cor_module_coremo_clustering()`](https://gregorlueg.github.io/bixverse/reference/cor_module_coremo_clustering.md)
+  : Generates CoReMo-based gene modules
+- [`cor_module_coremo_cor_sign()`](https://gregorlueg.github.io/bixverse/reference/cor_module_coremo_cor_sign.md)
+  : Split CoReMo modules by correlation sign
+- [`cor_module_coremo_eigengene()`](https://gregorlueg.github.io/bixverse/reference/cor_module_coremo_eigengene.md)
+  : Calculate Eigengenes for CoReMo modules
+- [`cor_module_coremo_stability()`](https://gregorlueg.github.io/bixverse/reference/cor_module_coremo_stability.md)
+  : Assesses CoReMo-based gene module stability
+- [`cor_module_graph_check_res()`](https://gregorlueg.github.io/bixverse/reference/cor_module_graph_check_res.md)
+  : Iterate through Leiden resolutions for graph-based community
   detection.
-
-- [`cor_module_graph_final_modules()`](cor_module_graph_final_modules.md)
+- [`cor_module_graph_final_modules()`](https://gregorlueg.github.io/bixverse/reference/cor_module_graph_final_modules.md)
   : Identify correlation-based gene modules via graphs
-
-- [`cor_module_processing()`](cor_module_processing.md) : Prepare
-  correlation-based module detection
-
-- [`cor_module_tom()`](cor_module_tom.md) : Update the correlation
-  matrix to a TOM
-
-- [`coremo_cluster_quality()`](coremo_cluster_quality.md) : Coremo:
-  measures the quality of the clusters
-
-- [`coremo_tree_cut()`](coremo_tree_cut.md) : Coremo: cuts a
-  hierarchical cluster based on k
-
-- [`create_dist_obj()`](create_dist_obj.md) : Create distance object
-  from a vector
-
-- [`create_sparse_matrix()`](create_sparse_matrix.md) : Helper function
-  transform Rust counts into sparse matrices
-
-- [`dgrdl_grid_search()`](dgrdl_grid_search.md) : Grid search over DGRDL
-  parameters
-
-- [`dgrdl_result()`](dgrdl_result.md) : Run DGRDL with the specified
-  parameters
-
-- [`diffcor_module_processing()`](diffcor_module_processing.md) :
-  Prepare differential correlation-based module detection
-
-- [`diffuse_seed_nodes()`](diffuse_seed_nodes.md) : Diffuse seed genes
-  over a network
-
-- [`dim.SingleCells`](dim.SingleCells.md) : dim Method for SingleCells
-  object
-
-- [`doublet_detection_boost_sc()`](doublet_detection_boost_sc.md) :
-  Doublet detection with boosted doublet classification
-
-- [`download_cistarget_hg38()`](download_cistarget_hg38.md) : Download
-  CisTarget reference files for human (hg38)
-
-- [`download_pbmc3k()`](download_pbmc3k.md) : Download PBMC3K data from
-  10x Genomics
-
-- [`f1_score_confusion_mat()`](f1_score_confusion_mat.md) : F1 scores on
-  top of a confusion matrix
-
-- [`fast_ica_rust()`](fast_ica_rust.md) : Fast ICA via Rust
-
-- [`fast_ica_rust_helper()`](fast_ica_rust_helper.md) : Fast ICA via
-  Rust from processed data
-
-- [`fast_mnn_sc()`](fast_mnn_sc.md) : Run fastMNN
-
-- [`fgsea_go_elim()`](fgsea_go_elim.md) : Run GO enrichment with
-  elimination method over a continuous vectors
-
-- [`fgsea_simple_go_elim()`](fgsea_simple_go_elim.md) : Run GO
-  enrichment with elimination with fgsea simple
-
-- [`filter_similarities()`](filter_similarities.md) : Filter the
-  calculated similarities
-
-- [`finalise_matrix()`](finalise_matrix.md) : Finalise the count matrix
-
-- [`find_all_markers_sc()`](find_all_markers_sc.md) : Find all markers
-
-- [`find_clusters_sc()`](find_clusters_sc.md) : Graph-based clustering
-  of cells on the sNN graph
-
-- [`find_hvg_batch_aware_sc()`](find_hvg_batch_aware_sc.md) : Identify
-  HVGs (batch aware)
-
-- [`find_hvg_sc()`](find_hvg_sc.md) : Identify HVGs
-
-- [`find_markers_sc()`](find_markers_sc.md) : Calculate DGE between two
-  cell groups
-
-- [`find_neighbours_sc()`](find_neighbours_sc.md) : Find the neighbours
-  for single cell.
-
-- [`find_rbh_communities()`](find_rbh_communities.md) : Find RBH
-  communities
-
-- [`fix_contrast_names()`](fix_contrast_names.md) : Fixes contrast names
-  for DGEs
-
-- [`fix_meta_data_column()`](fix_meta_data_column.md) : Helper to fix
-  meta-data columns to be R conform
-
-- [`flip_ica_loading_signs()`](flip_ica_loading_signs.md) : Flips the
-  ICA source sign
-
-- [`gene_set_proportions_sc()`](gene_set_proportions_sc.md) : Calculate
-  the proportions of reads for specific gene sets
-
-- [`generate_gene_module_data()`](generate_gene_module_data.md) :
-  Generates synthetic gene module data.
-
-- [`generate_knn_sc()`](generate_knn_sc.md) : Generate the KNN data with
-  distances
-
-- [`generate_null_perm_gs()`](generate_null_perm_gs.md) : Generate
-  random gene sets for VISION p-value calculations
-
-- [`generate_perm_diffusion_vecs()`](generate_perm_diffusion_vecs.md) :
-  Generates random permutation vectors
-
-- [`generate_personalisation_vec()`](generate_personalisation_vec.md) :
-  Helper function to create personalisation vectors
-
-- [`generate_rbh_graph()`](generate_rbh_graph.md) : Generate an RBH
-  graph.
-
-- [`generate_single_cell_test_data()`](generate_single_cell_test_data.md)
-  : Single cell test data
-
-- [`get_available_embeddings()`](get_available_embeddings.md) : Get the
-  available embeddings from the cache
-
-- [`get_c_pca_factors()`](get_c_pca_factors.md) : Get the contrastive
-  PCA factors
-
-- [`get_c_pca_loadings()`](get_c_pca_loadings.md) : Get the contrastive
-  PCA loadings
-
-- [`get_cell_indices()`](get_cell_indices.md) : Get the index position
-  for a gene
-
-- [`get_cell_names()`](get_cell_names.md) : Get the cell names
-
-- [`get_cell_ranger_params()`](get_cell_ranger_params.md) : Helper to
-  generate cell ranger input parameters
-
-- [`get_cells_to_keep()`](get_cells_to_keep.md) : Get the cells to keep
-
-- [`get_cistarget_res()`](get_cistarget_res.md) : Extract the TF to gene
-  data from the ScenicGrn object
-
-- [`get_cor_graph()`](get_cor_graph.md) : Get correlation-based graph
-
-- [`get_cores()`](get_cores.md) : Helper function for core detection.
-
-- [`get_counts_from_rust()`](get_counts_from_rust.md) : Helper function
-  to get counts from Rust
-
-- [`get_dge_effect_sizes()`](get_dge_effect_sizes.md) : Return the
-  effect size results
-
-- [`get_dge_limma_voom()`](get_dge_limma_voom.md) : Return the Limma
-  Voom results
-
-- [`get_dge_list()`](get_dge_list.md) : Return the DGEList
-
-- [`get_dge_qc_plot()`](get_dge_qc_plot.md) : Return QC plots
-
-- [`get_diffcor_graph()`](get_diffcor_graph.md) : Get differential
-  correlation-based graph
-
-- [`get_differential_abundance_res()`](get_differential_abundance_res.md)
-  : Get the differential abundance results
-
-- [`get_diffusion_perms()`](get_diffusion_perms.md) : Get the diffusion
-  permutations
-
-- [`get_diffusion_vector()`](get_diffusion_vector.md) : Get the
-  diffusion vector
-
-- [`get_embedding()`](get_embedding.md) : Get the embedding from the
-  cache
-
-- [`get_epsilon_res()`](get_epsilon_res.md) : Return the epsilon data
-
-- [`get_fpkm_counts()`](get_fpkm_counts.md) : Return the FPKM-normalised
-  counts
-
-- [`get_gene_indices()`](get_gene_indices.md) : Get the index position
-  for a gene
-
-- [`get_gene_lengths.BulkCoExp`](get_gene_lengths.BulkCoExp.md) : Get
-  gene set lengths for a BulkCoExp class
-
-- [`get_gene_lengths()`](get_gene_lengths.md) : Get the gene lengths
-
-- [`get_gene_lengths(`*`<matrix>`*`)`](get_gene_lengths.matrix.md) : Get
-  gene set lengths for a matrix
-
-- [`get_gene_names()`](get_gene_names.md) : Get the gene names
-
-- [`get_gene_names_from_idx()`](get_gene_names_from_idx.md) : Get the
-  gene names based on the gene idx
-
-- [`get_go_data_human()`](get_go_data_human.md) : Wrapper function to
-  load and process the gene ontology data.
-
-- [`get_go_levels()`](get_go_levels.md) : Helper to get the Gene
-  Ontology levels
-
-- [`get_grid_search_res()`](get_grid_search_res.md) : Get the grid
-  search results
-
-- [`get_h5ad_dimensions()`](get_h5ad_dimensions.md) : Helper function to
-  get the dimensions and compressed sparse format
-
-- [`get_hotspot_membership()`](get_hotspot_membership.md) : Get the
-  hotspot gene membership table
-
-- [`get_hvg()`](get_hvg.md) : Get the HVG
-
-- [`get_ica_stability_res()`](get_ica_stability_res.md) : Get the ICA
-  component data (stability, convergence, nMI)
-
-- [`get_index_cells()`](get_index_cells.md) : Get the index cells
-
-- [`get_inflection_point()`](get_inflection_point.md) : Identify the
-  inflection point for elbow-like data
-
-- [`get_knn_dist()`](get_knn_dist.md) : Get the KNN distance measures
-
-- [`get_knn_mat()`](get_knn_mat.md) : Get the KNN matrix
-
-- [`get_meta_cell_matrices()`](get_meta_cell_matrices.md) : Create
-  sparse dgRMatrix matrices for raw and norm counts
-
-- [`get_meta_cells_sc()`](get_meta_cells_sc.md) :
-
-  Generate meta cells based on hdWGCNA and return a `MetaCells` object
-
-- [`get_metadata()`](get_metadata.md) : Return the metadata
-
-- [`get_miloR_abundances_sc()`](get_miloR_abundances_sc.md) : Generate
-  an miloR abundance object for differential abundance testing
-
-- [`get_model_fit()`](get_model_fit.md) : Get the fitted model
-
-- [`get_obs_data()`](get_obs_data.md) : Get the ready obs data from
-  various sub method
-
-- [`get_ontology_ancestry()`](get_ontology_ancestry.md) : Return
-  ancestry terms from an ontology
-
-- [`get_outputs()`](get_outputs.md) : Return the outputs
-
-- [`get_params()`](get_params.md)
-  [`get_params.Hotspot()`](get_params.md)
-  [`get_params.miloR()`](get_params.md)
-  [`get_params.ScenicGrn()`](get_params.md) : Get the parameters that
-  were used.
-
-- [`get_pca_factors()`](get_pca_factors.md) : Get the PCA factors
-
-- [`get_pca_loadings()`](get_pca_loadings.md) : Get the PCA loadings
-
-- [`get_pca_singular_val()`](get_pca_singular_val.md) : Get the PCA
-  singular values
-
-- [`get_pseudobulked_sc()`](get_pseudobulked_sc.md) : Generate
-  pseudo-bulked matrices
-
-- [`get_rbh_res()`](get_rbh_res.md) : Get the RBH results
-
-- [`get_resolution_res()`](get_resolution_res.md) : Return the
-  resolution results
-
-- [`get_results()`](get_results.md) : Get the final results from the
-  class
-
-- [`get_rust_count_cell_f_path()`](get_rust_count_cell_f_path.md) : Get
-  the file path to the counts in cell format
-
-- [`get_rust_count_gene_f_path()`](get_rust_count_gene_f_path.md) : Get
-  the file path to the counts in gene format
-
-- [`get_sc_cache()`](get_sc_cache.md) : Getter the memory-stored data
-  from the class
-
-- [`get_sc_counts()`](get_sc_counts.md) : Getter the counts
-
-- [`get_sc_duckdb()`](get_sc_duckdb.md) : Getter for the single cell
-  DuckDB connection
-
-- [`get_sc_map()`](get_sc_map.md) : Getter for the different maps in the
-  object
-
-- [`get_sc_obs()`](get_sc_obs.md) : Getter the obs table
-
-- [`get_sc_rust_ptr()`](get_sc_rust_ptr.md) : Getter for the single cell
-  Rust pointer
-
-- [`get_sc_var()`](get_sc_var.md) : Getter the var table
-
-- [`get_seacells_sc()`](get_seacells_sc.md) :
-
-  Generate meta cells based on SEACells and return a `MetaCells` object
-
-- [`get_seurat_counts_to_list()`](get_seurat_counts_to_list.md) :
-  Transform Seurat raw counts into a List
-
-- [`get_sim_matrix()`](get_sim_matrix.md) : Get the similarity matrix
-
-- [`get_snf_adjcacency_mat()`](get_snf_adjcacency_mat.md) : Get an
-  individual affinity matrix
-
-- [`get_snf_final_mat()`](get_snf_final_mat.md) : Get the final SNF
-  matrix
-
-- [`get_snf_params()`](get_snf_params.md) : Get the SNF params
-
-- [`get_snn_graph()`](get_snn_graph.md) : Get the sNN graph
-
-- [`get_supercells_sc()`](get_supercells_sc.md) :
+- [`cor_module_processing()`](https://gregorlueg.github.io/bixverse/reference/cor_module_processing.md)
+  : Prepare correlation-based module detection
+- [`cor_module_tom()`](https://gregorlueg.github.io/bixverse/reference/cor_module_tom.md)
+  : Update the correlation matrix to a TOM
+- [`diffcor_module_processing()`](https://gregorlueg.github.io/bixverse/reference/diffcor_module_processing.md)
+  : Prepare differential correlation-based module detection
+- [`get_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_cor_graph.md)
+  : Get correlation-based graph
+- [`get_diffcor_graph()`](https://gregorlueg.github.io/bixverse/reference/get_diffcor_graph.md)
+  : Get differential correlation-based graph
+- [`get_epsilon_res()`](https://gregorlueg.github.io/bixverse/reference/get_epsilon_res.md)
+  : Return the epsilon data
+- [`get_resolution_res()`](https://gregorlueg.github.io/bixverse/reference/get_resolution_res.md)
+  : Return the resolution results
+- [`get_outputs()`](https://gregorlueg.github.io/bixverse/reference/get_outputs.md)
+  : Return the outputs
+- [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md)
+  : Wrapper function for graph generation
+- [`params_coremo()`](https://gregorlueg.github.io/bixverse/reference/params_coremo.md)
+  : Wrapper function to generate CoReMo parameters
+
+## Matrix factorisation methods
+
+Methods to identify co-expression via matrix factorisations. Uses the
+same class as the correlation-based ones. You have contrastive PCA, ICA
+and dual graph-regularised dictionary learning as methods.
+
+- [`contrastive_pca_processing()`](https://gregorlueg.github.io/bixverse/reference/contrastive_pca_processing.md)
+  : Prepare class for contrastive PCA
+- [`c_pca_plot_alphas()`](https://gregorlueg.github.io/bixverse/reference/c_pca_plot_alphas.md)
+  : Plot various alphas for the contrastive PCA
+- [`contrastive_pca()`](https://gregorlueg.github.io/bixverse/reference/contrastive_pca.md)
+  : Apply contrastive PCA.
+- [`get_c_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_factors.md)
+  : Get the contrastive PCA factors
+- [`get_c_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_c_pca_loadings.md)
+  : Get the contrastive PCA loadings
+- [`dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/dgrdl_grid_search.md)
+  : Grid search over DGRDL parameters
+- [`dgrdl_result()`](https://gregorlueg.github.io/bixverse/reference/dgrdl_result.md)
+  : Run DGRDL with the specified parameters
+- [`get_ica_stability_res()`](https://gregorlueg.github.io/bixverse/reference/get_ica_stability_res.md)
+  : Get the ICA component data (stability, convergence, nMI)
+- [`get_grid_search_res()`](https://gregorlueg.github.io/bixverse/reference/get_grid_search_res.md)
+  : Get the grid search results
+- [`ica_evaluate_comp()`](https://gregorlueg.github.io/bixverse/reference/ica_evaluate_comp.md)
+  : Iterate over different ncomp parameters for ICA
+- [`ica_optimal_ncomp()`](https://gregorlueg.github.io/bixverse/reference/ica_optimal_ncomp.md)
+  : Identify stability inflection point
+- [`ica_processing()`](https://gregorlueg.github.io/bixverse/reference/ica_processing.md)
+  : Prepare class for ICA
+- [`ica_stabilised_results()`](https://gregorlueg.github.io/bixverse/reference/ica_stabilised_results.md)
+  : Run stabilised ICA with a given number of components
+- [`params_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/params_dgrdl.md)
+  : Wrapper function to generate DGRDL parameters
+- [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
+  : Wrapper function for standard ICA parameters
+- [`params_ica_ncomp()`](https://gregorlueg.github.io/bixverse/reference/params_ica_ncomp.md)
+  : Wrapper function for ICA ncomp iterations
+- [`params_ica_randomisation()`](https://gregorlueg.github.io/bixverse/reference/params_ica_randomisation.md)
+  : Wrapper function for ICA randomisation
+
+## Helpers for differential gene expression
+
+Methods to help out with differential gene expression analyses in a
+structured way. Useful when you have to analyse 10’s to 100’s of
+differential gene expression results.
+
+- [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
+  : Bulk RNAseq differential gene expression class
+- [`add_new_metadata()`](https://gregorlueg.github.io/bixverse/reference/add_new_metadata.md)
+  : Replace the meta data
+- [`change_gene_identifier()`](https://gregorlueg.github.io/bixverse/reference/change_gene_identifier.md)
+  : Change the primary gene identifier of BulkDge
+- [`update_metadata_values()`](https://gregorlueg.github.io/bixverse/reference/update_metadata_values.md)
+  : Replace values in a metadata column
+- [`fix_meta_data_column()`](https://gregorlueg.github.io/bixverse/reference/fix_meta_data_column.md)
+  : Helper to fix meta-data columns to be R conform
+- [`remove_samples()`](https://gregorlueg.github.io/bixverse/reference/remove_samples.md)
+  : Remove samples from object
+- [`qc_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/qc_bulk_dge.md)
+  : QC on the bulk dge data
+- [`preprocess_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_dge.md)
+  : QC on the bulk dge data (DEPRECATED!)
+- [`normalise_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/normalise_bulk_dge.md)
+  : Normalise the count data for DGE.
+- [`batch_correction_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/batch_correction_bulk_dge.md)
+  : Run a linear batch correction
+- [`bulk_dge_from_h5ad()`](https://gregorlueg.github.io/bixverse/reference/bulk_dge_from_h5ad.md)
+  : Wrapper function to generate BulkDge object from h5ad
+- [`calculate_dge_hedges()`](https://gregorlueg.github.io/bixverse/reference/calculate_dge_hedges.md)
+  : Calculates the Hedge's G effect size
+- [`calculate_all_dges()`](https://gregorlueg.github.io/bixverse/reference/calculate_all_dges.md)
+  : Calculate all possible DGE variants (DEPRECATED!)
+- [`calculate_dge_limma()`](https://gregorlueg.github.io/bixverse/reference/calculate_dge_limma.md)
+  : Calculates the Limma Voom DGE
+- [`calculate_pca_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_bulk_dge.md)
+  : Calculate PCA on the expression.
+- [`calculate_rpkm()`](https://gregorlueg.github.io/bixverse/reference/calculate_rpkm.md)
+  : RPKM calculation
+- [`calculate_tpm()`](https://gregorlueg.github.io/bixverse/reference/calculate_tpm.md)
+  : TPM calculation
+- [`run_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/run_limma_voom.md)
+  : Wrapper for a Limma Voom analysis
+- [`hedges_g_dge()`](https://gregorlueg.github.io/bixverse/reference/hedges_g_dge.md)
+  : Calculate the effect size
+- [`get_dge_effect_sizes()`](https://gregorlueg.github.io/bixverse/reference/get_dge_effect_sizes.md)
+  : Return the effect size results
+- [`get_dge_limma_voom()`](https://gregorlueg.github.io/bixverse/reference/get_dge_limma_voom.md)
+  : Return the Limma Voom results
+- [`get_dge_list()`](https://gregorlueg.github.io/bixverse/reference/get_dge_list.md)
+  : Return the DGEList
+- [`get_dge_qc_plot()`](https://gregorlueg.github.io/bixverse/reference/get_dge_qc_plot.md)
+  : Return QC plots
+- [`get_fpkm_counts()`](https://gregorlueg.github.io/bixverse/reference/get_fpkm_counts.md)
+  : Return the FPKM-normalised counts
+- [`get_gene_lengths()`](https://gregorlueg.github.io/bixverse/reference/get_gene_lengths.md)
+  : Get the gene lengths
+- [`get_model_fit()`](https://gregorlueg.github.io/bixverse/reference/get_model_fit.md)
+  : Get the fitted model
+- [`get_tpm_counts()`](https://gregorlueg.github.io/bixverse/reference/get_tpm_counts.md)
+  : Return the TPM-normalised counts
+
+## Biomedical ontologies
+
+For dealing with ontologies and calculating (semantic) similarities in
+disease, phenotype or gene ontologies.
+
+- [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md)
+  : OntologySim class
+- [`pre_process_sim_onto()`](https://gregorlueg.github.io/bixverse/reference/pre_process_sim_onto.md)
+  : Pre-process data for subsequent ontology similarity
+- [`calculate_information_content()`](https://gregorlueg.github.io/bixverse/reference/calculate_information_content.md)
+  : Calculate the information content for each ontology term
+- [`calculate_semantic_sim()`](https://gregorlueg.github.io/bixverse/reference/calculate_semantic_sim.md)
+  : Calculate the Resnik or Lin semantic similarity
+- [`calculate_semantic_sim_mat()`](https://gregorlueg.github.io/bixverse/reference/calculate_semantic_sim_mat.md)
+  : Calculate the Resnik or Lin semantic similarity matrix
+- [`calculate_semantic_sim_onto()`](https://gregorlueg.github.io/bixverse/reference/calculate_semantic_sim_onto.md)
+  : Calculate the Resnik or Lin semantic similarity for an ontology.
+- [`calculate_wang_sim()`](https://gregorlueg.github.io/bixverse/reference/calculate_wang_sim.md)
+  : Calculate the Wang similarities between terms
+- [`calculate_wang_sim_mat()`](https://gregorlueg.github.io/bixverse/reference/calculate_wang_sim_mat.md)
+  : Calculate the Wang similarity matrix
+- [`calculate_wang_sim_onto()`](https://gregorlueg.github.io/bixverse/reference/calculate_wang_sim_onto.md)
+  : Calculate the Wang similarity for an ontology.
+- [`filter_similarities()`](https://gregorlueg.github.io/bixverse/reference/filter_similarities.md)
+  : Filter the calculated similarities
+- [`calculate_critical_value()`](https://gregorlueg.github.io/bixverse/reference/calculate_critical_value.md)
+  : Calculates the critical value
+- [`get_sim_matrix()`](https://gregorlueg.github.io/bixverse/reference/get_sim_matrix.md)
+  : Get the similarity matrix
+- [`get_ontology_ancestry()`](https://gregorlueg.github.io/bixverse/reference/get_ontology_ancestry.md)
+  : Return ancestry terms from an ontology
+
+## Helpers for graph-based analysis
+
+Different methods working on graphs; diffuse information over a network
+and identify communities, generate reciprocal best hit graphs from
+correlations or set similarities, fuse networks together via similarity
+network fusion.
+
+- [`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md)
+  : Network diffusion class
+- [`calculate_diffusion_auc()`](https://gregorlueg.github.io/bixverse/reference/calculate_diffusion_auc.md)
+  : Calculate the AUROC for a diffusion score
+- [`community_detection()`](https://gregorlueg.github.io/bixverse/reference/community_detection.md)
+  : Identify privileged communities based on a given diffusion vector
+- [`constrained_page_rank()`](https://gregorlueg.github.io/bixverse/reference/constrained_page_rank.md)
+  : Constrained personalised page rank
+- [`constrained_page_rank_ls()`](https://gregorlueg.github.io/bixverse/reference/constrained_page_rank_ls.md)
+  : Constrained personalised page rank over a list
+- [`diffuse_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/diffuse_seed_nodes.md)
+  : Diffuse seed genes over a network
+- [`permute_seed_nodes()`](https://gregorlueg.github.io/bixverse/reference/permute_seed_nodes.md)
+  : Generate permuation scores for the diffusion
+- [`get_diffusion_perms()`](https://gregorlueg.github.io/bixverse/reference/get_diffusion_perms.md)
+  : Get the diffusion permutations
+- [`generate_personalisation_vec()`](https://gregorlueg.github.io/bixverse/reference/generate_personalisation_vec.md)
+  : Helper function to create personalisation vectors
+- [`tied_diffusion()`](https://gregorlueg.github.io/bixverse/reference/tied_diffusion.md)
+  : Diffuse seed genes in a tied manner over a network
+- [`RbhGraph()`](https://gregorlueg.github.io/bixverse/reference/RbhGraph.md)
+  : Reciprocal best hit graph
+- [`find_rbh_communities()`](https://gregorlueg.github.io/bixverse/reference/find_rbh_communities.md)
+  : Find RBH communities
+- [`generate_rbh_graph()`](https://gregorlueg.github.io/bixverse/reference/generate_rbh_graph.md)
+  : Generate an RBH graph.
+- [`get_diffusion_vector()`](https://gregorlueg.github.io/bixverse/reference/get_diffusion_vector.md)
+  : Get the diffusion vector
+- [`get_rbh_res()`](https://gregorlueg.github.io/bixverse/reference/get_rbh_res.md)
+  : Get the RBH results
+- [`SimilarityNetworkFusion()`](https://gregorlueg.github.io/bixverse/reference/SimilarityNetworkFusion.md)
+  : Similarity network fusion
+- [`add_snf_data_modality()`](https://gregorlueg.github.io/bixverse/reference/add_snf_data_modality.md)
+  : Add a data modality for SNF generation
+- [`get_snf_params()`](https://gregorlueg.github.io/bixverse/reference/get_snf_params.md)
+  : Get the SNF params
+- [`get_snf_final_mat()`](https://gregorlueg.github.io/bixverse/reference/get_snf_final_mat.md)
+  : Get the final SNF matrix
+- [`get_snf_adjcacency_mat()`](https://gregorlueg.github.io/bixverse/reference/get_snf_adjcacency_mat.md)
+  : Get an individual affinity matrix
+- [`params_graph_resolution()`](https://gregorlueg.github.io/bixverse/reference/params_graph_resolution.md)
+  : Wrapper function to generate resolution parameters for Leiden or
+  Louvain clustering.
+- [`run_snf()`](https://gregorlueg.github.io/bixverse/reference/run_snf.md)
+  : Run the SNF algorithm
+- [`params_community_detection()`](https://gregorlueg.github.io/bixverse/reference/params_community_detection.md)
+  : Wrapper function to generate community detection parameters
+- [`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md)
+  : Wrapper function to generate SNF parameters
+
+## Single cell classe and getters
+
+THE single cell class with a large number of getters.
+
+- [`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md)
+  : bixverse single cell class
+- [`get_sc_obs()`](https://gregorlueg.github.io/bixverse/reference/get_sc_obs.md)
+  : Getter the obs table
+- [`get_sc_var()`](https://gregorlueg.github.io/bixverse/reference/get_sc_var.md)
+  : Getter the var table
+- [`get_sc_counts()`](https://gregorlueg.github.io/bixverse/reference/get_sc_counts.md)
+  : Getter the counts
+- [`get_available_embeddings()`](https://gregorlueg.github.io/bixverse/reference/get_available_embeddings.md)
+  : Get the available embeddings from the cache
+- [`get_cell_indices()`](https://gregorlueg.github.io/bixverse/reference/get_cell_indices.md)
+  : Get the index position for a gene
+- [`get_cell_names()`](https://gregorlueg.github.io/bixverse/reference/get_cell_names.md)
+  : Get the cell names
+- [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md)
+  : Get the cells to keep
+- [`get_embedding()`](https://gregorlueg.github.io/bixverse/reference/get_embedding.md)
+  : Get the embedding from the cache
+- [`get_gene_indices()`](https://gregorlueg.github.io/bixverse/reference/get_gene_indices.md)
+  : Get the index position for a gene
+- [`get_gene_names()`](https://gregorlueg.github.io/bixverse/reference/get_gene_names.md)
+  : Get the gene names
+- [`get_hvg()`](https://gregorlueg.github.io/bixverse/reference/get_hvg.md)
+  : Get the HVG
+- [`get_knn_mat()`](https://gregorlueg.github.io/bixverse/reference/get_knn_mat.md)
+  : Get the KNN matrix
+- [`get_knn_obj()`](https://gregorlueg.github.io/bixverse/reference/get_knn_obj.md)
+  : Get the KNN object
+- [`get_pca_singular_val()`](https://gregorlueg.github.io/bixverse/reference/get_pca_singular_val.md)
+  : Get the PCA singular values
+- [`get_pca_loadings()`](https://gregorlueg.github.io/bixverse/reference/get_pca_loadings.md)
+  : Get the PCA loadings
+- [`get_pca_factors()`](https://gregorlueg.github.io/bixverse/reference/get_pca_factors.md)
+  : Get the PCA factors
+- [`get_snn_graph()`](https://gregorlueg.github.io/bixverse/reference/get_snn_graph.md)
+  : Get the sNN graph
+- [`get_gene_names_from_idx()`](https://gregorlueg.github.io/bixverse/reference/get_gene_names_from_idx.md)
+  : Get the gene names based on the gene idx
+- [`get_sc_available_features()`](https://gregorlueg.github.io/bixverse/reference/get_sc_available_features.md)
+  : Returns the available features for single cell applications
+- [`setnames_sc()`](https://gregorlueg.github.io/bixverse/reference/setnames_sc.md)
+  : Rename columns in the obs or var table
+- [`set_sc_new_obs_col()`](https://gregorlueg.github.io/bixverse/reference/set_sc_new_obs_col.md)
+  : Add a new column to the obs table
+- [`set_sc_new_obs_col_multiple()`](https://gregorlueg.github.io/bixverse/reference/set_sc_new_obs_col_multiple.md)
+  : Add multiple new columns to the obs table
+- [`set_sc_new_var_cols()`](https://gregorlueg.github.io/bixverse/reference/set_sc_new_var_cols.md)
+  : Add a new column to the var table
+
+## Meta cell-related generation, classes and methods
+
+Generating meta cells.
+
+- [`MetaCells()`](https://gregorlueg.github.io/bixverse/reference/MetaCells.md)
+  : bixverse meta cell class
+
+- [`calc_meta_cell_purity()`](https://gregorlueg.github.io/bixverse/reference/calc_meta_cell_purity.md)
+  : Calculate meta cell purity
+
+- [`generate_supercells_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_supercells_sc.md)
+  :
 
   Generate SuperCells and return a `MetaCells` object
 
-- [`get_tf_to_gene()`](get_tf_to_gene.md) : Extract the TF to gene data
-  from the ScenicGrn object
+- [`generate_meta_cells_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_meta_cells_sc.md)
+  :
 
-- [`get_tpm_counts()`](get_tpm_counts.md) : Return the TPM-normalised
-  counts
+  Generate meta cells based on hdWGCNA and return a `MetaCells` object
 
-- [`gse_go_elim_method()`](gse_go_elim_method.md) : Run gene ontology
-  enrichment with elimination method.
+- [`generate_seacells_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_seacells_sc.md)
+  :
 
-- [`gse_go_elim_method_list()`](gse_go_elim_method_list.md) : Run gene
-  ontology enrichment with elimination method over a list.
+  Generate meta cells based on SEACells and return a `MetaCells` object
 
-- [`gse_hypergeometric()`](gse_hypergeometric.md) : Gene set enrichment
-  (GSE) based on a hypergeometric test.
+- [`params_sc_supercell()`](https://gregorlueg.github.io/bixverse/reference/params_sc_supercell.md)
+  : Wrapper function for parameters for SuperCell generation
 
-- [`gse_hypergeometric_list()`](gse_hypergeometric_list.md) : Gene set
-  enrichment (GSE) based on a hypergeometric test over a list.
+- [`params_sc_metacells()`](https://gregorlueg.github.io/bixverse/reference/params_sc_metacells.md)
+  : Wrapper function for parameters for meta cell generation
 
-- [`harmony_sc()`](harmony_sc.md) : Run Harmony
+- [`params_sc_seacells()`](https://gregorlueg.github.io/bixverse/reference/params_sc_seacells.md)
+  : Wrapper function for the SEACells parameters
 
-- [`hedges_g_dge()`](hedges_g_dge.md) : Calculate the effect size
+## Single cell i/o
 
-- [`hotspot_autocor_sc()`](hotspot_autocor_sc.md) : Calculate the local
-  auto-correlation of a gene
+I/O functions for single cell. Load in h5ad, mtx, Seurat or R data into
+Rust and the DuckDB supporting the metadata.
 
-- [`hotspot_gene_cor_sc()`](hotspot_gene_cor_sc.md) : Calculate the
-  local pairwise gene-gene correlation
+- [`get_cell_ranger_params()`](https://gregorlueg.github.io/bixverse/reference/get_cell_ranger_params.md)
+  : Helper to generate cell ranger input parameters
 
-- [`ica_evaluate_comp()`](ica_evaluate_comp.md) : Iterate over different
-  ncomp parameters for ICA
+- [`get_h5ad_dimensions()`](https://gregorlueg.github.io/bixverse/reference/get_h5ad_dimensions.md)
+  : Helper function to get the dimensions and compressed sparse format
 
-- [`ica_optimal_ncomp()`](ica_optimal_ncomp.md) : Identify stability
-  inflection point
+- [`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md)
+  : Pre-scan multiple h5ad files for multi-sample loading
 
-- [`ica_processing()`](ica_processing.md) : Prepare class for ICA
+- [`load_existing()`](https://gregorlueg.github.io/bixverse/reference/load_existing.md)
+  : Load an existing SingleCells from disk
 
-- [`ica_stabilised_results()`](ica_stabilised_results.md) : Run
-  stabilised ICA with a given number of components
-
-- [`identify_tf_to_genes()`](identify_tf_to_genes.md) : Identify the TF
-  to gene regulation
-
-- [`knn_graph_label_propagation()`](knn_graph_label_propagation.md) :
-  kNN-based graph label propagation
-
-- [`load_existing()`](load_existing.md) : Load an existing SingleCells
-  from disk
-
-- [`load_go_human_data()`](load_go_human_data.md) : Get the Gene
-  Ontology data human
-
-- [`load_h5ad()`](load_h5ad.md) :
+- [`load_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad.md)
+  :
 
   Load in h5ad to `SingleCells`
 
-- [`load_h5ad_norm()`](load_h5ad_norm.md) :
+- [`load_h5ad_norm()`](https://gregorlueg.github.io/bixverse/reference/load_h5ad_norm.md)
+  :
 
   Load in h5ad with normalised counts to `SingleCells`
 
-- [`load_mtx()`](load_mtx.md) :
+- [`load_mtx()`](https://gregorlueg.github.io/bixverse/reference/load_mtx.md)
+  :
 
   Load in mtx/plain text files to `SingleCells`
 
-- [`load_multi_h5ad()`](load_multi_h5ad.md) :
+- [`load_multi_h5ad()`](https://gregorlueg.github.io/bixverse/reference/load_multi_h5ad.md)
+  :
 
   Load multiple h5ad files into a single `SingleCells`
 
-- [`load_r_data()`](load_r_data.md) : Load in data directly from R
-  objects.
-
-- [`load_seurat()`](load_seurat.md) :
-
-  Load in Seurat to `SingleCells`
-
-- [`module_scores_sc()`](module_scores_sc.md) : Calculate module
-  activity scores
-
-- [`multilevel_error()`](multilevel_error.md) : Helper function to
-  calculate the multi-level error
-
-- [`new_sc_cache()`](new_sc_cache.md) : Helper function to hold relevant
-  cached data
-
-- [`new_sc_hotspot_res()`](new_sc_hotspot_res.md) : Helper function to
-  generate HotSpot data
-
-- [`new_sc_knn()`](new_sc_knn.md) : Helper function to generate kNN data
-  with distances
-
-- [`new_sc_mapper()`](new_sc_mapper.md) : Helper function to construct
-  relevant maps
-
-- [`new_sc_miloR_res()`](new_sc_miloR_res.md) : Generate a new miloR
-  result
-
-- [`new_scenic_grn()`](new_scenic_grn.md) : Constructor for SCENIC GRN
-  results
-
-- [`nightly_feature()`](nightly_feature.md) : Helper functions to mark
-  something unstable/nightly
-
-- [`normalise_bulk_dge()`](normalise_bulk_dge.md) : Normalise the count
-  data for DGE.
-
-- [`one_hot_encode()`](one_hot_encode.md) : Helper to generate one-hot
-  encodings
-
-- [`ot_harmonic_score()`](ot_harmonic_score.md) : Calculates a harmonic
-  sum normalised between 0 to 1.
-
-- [`params_boost()`](params_boost.md) : Wrapper function for Boost
-  parameters
-
-- [`params_cistarget()`](params_cistarget.md) : Wrapper function to
-  CisTarget parameters
-
-- [`params_community_detection()`](params_community_detection.md) :
-  Wrapper function to generate community detection parameters
-
-- [`params_cor_graph()`](params_cor_graph.md) : Wrapper function for
-  graph generation
-
-- [`params_coremo()`](params_coremo.md) : Wrapper function to generate
-  CoReMo parameters
-
-- [`params_dgrdl()`](params_dgrdl.md) : Wrapper function to generate
-  DGRDL parameters
-
-- [`params_graph_resolution()`](params_graph_resolution.md) : Wrapper
-  function to generate resolution parameters for Leiden or Louvain
-  clustering.
-
-- [`params_gsea()`](params_gsea.md) : Wrapper function to generate GSEA
-  parameters
-
-- [`params_gsva()`](params_gsva.md) : Wrapper function to generate GSVA
-  parameters
-
-- [`params_hvg_defaults()`](params_hvg_defaults.md) : Helper function to
-  generate HVG defaults
-
-- [`params_ica_general()`](params_ica_general.md) : Wrapper function for
-  standard ICA parameters
-
-- [`params_ica_ncomp()`](params_ica_ncomp.md) : Wrapper function for ICA
-  ncomp iterations
-
-- [`params_ica_randomisation()`](params_ica_randomisation.md) : Wrapper
-  function for ICA randomisation
-
-- [`params_knn_defaults()`](params_knn_defaults.md) : Helper function to
-  generate kNN defaults
-
-- [`params_label_propagation()`](params_label_propagation.md) : Wrapper
-  function to generate label propagation parameters
-
-- [`params_norm_doublet_detection_defaults()`](params_norm_doublet_detection_defaults.md)
-  : Helper function to generate normalisation defaults for doublet
-  detection.
-
-- [`params_pca_defaults()`](params_pca_defaults.md) : Helper function to
-  generate default parameters for PCA
-
-- [`params_sc_bbknn()`](params_sc_bbknn.md) : Wrapper function for the
-  BBKNN parameters
-
-- [`params_sc_fastmnn()`](params_sc_fastmnn.md) : Wrapper function for
-  the fastMNN parameters
-
-- [`params_sc_harmony()`](params_sc_harmony.md) : Default parameters for
-  Harmony batch correction
-
-- [`params_sc_hotspot()`](params_sc_hotspot.md) : Wrapper function for
-  parameters for HotSpot
-
-- [`params_sc_hvg()`](params_sc_hvg.md) : Wrapper function for HVG
-  detection parameters.
-
-- [`params_sc_metacells()`](params_sc_metacells.md) : Wrapper function
-  for parameters for meta cell generation
-
-- [`params_sc_miloR()`](params_sc_miloR.md) : Wrapper function for
-  parameters for MiloR
-
-- [`params_sc_min_quality()`](params_sc_min_quality.md) : Wrapper
-  function to generate QC metric params for single cell
-
-- [`params_sc_mtx_io()`](params_sc_mtx_io.md) : Wrapper function to
-  provide data for mtx-based loading
-
-- [`params_sc_neighbours()`](params_sc_neighbours.md) : Wrapper function
-  for parameters for neighbour identification in single cell
-
-- [`params_sc_seacells()`](params_sc_seacells.md) : Wrapper function for
-  the SEACells parameters
-
-- [`params_sc_supercell()`](params_sc_supercell.md) : Wrapper function
-  for parameters for SuperCell generation
-
-- [`params_sc_synthetic_data()`](params_sc_synthetic_data.md) : Default
-  parameters for generation of synthetic data
-
-- [`params_sc_vision()`](params_sc_vision.md) : Wrapper function for
-  parameters for VISION with auto-correlation
-
-- [`params_scenic()`](params_scenic.md) : Constructor for SCENIC
-  parameters
-
-- [`params_scenic_extra_trees_defaults()`](params_scenic_extra_trees_defaults.md)
-  : Default parameters for the SCENIC ExtraTrees regression learner
-
-- [`params_scenic_gradient_boosting_defaults()`](params_scenic_gradient_boosting_defaults.md)
-  : Default parameters for the SCENIC GradientBoosting (GRNBoost2)
-  regression learner
-
-- [`params_scenic_random_forest_defaults()`](params_scenic_random_forest_defaults.md)
-  : Default parameters for the SCENIC RandomForest regression learner
-
-- [`params_scrublet()`](params_scrublet.md) : Wrapper function for
-  Scrublet doublet detection parameters
-
-- [`params_snf()`](params_snf.md) : Wrapper function to generate SNF
-  parameters
-
-- [`params_ssgsea()`](params_ssgsea.md) : Wrapper function to generate
-  ssGSEA parameters
-
-- [`permute_seed_nodes()`](permute_seed_nodes.md) : Generate permuation
-  scores for the diffusion
-
-- [`plot(`*`<cpca_synthetic_data>`*`)`](plot.cpca_synthetic_data.md) :
-  Plot the contrastive PCA example data
-
-- [`plot(`*`<synthetic_matrix_simple>`*`)`](plot.synthetic_matrix_simple.md)
-  : Plot the (simple) synthetic gene expression
-
-- [`plot_boxplot_normalization()`](plot_boxplot_normalization.md) :
-  Helper plot function for boxplot of normalized data
-
-- [`plot_epsilon_res()`](plot_epsilon_res.md) : Plot the epsilon vs.
-  power law goodness of fit result
-
-- [`plot_hvgs()`](plot_hvgs.md) : Plot the highly variable genes
-
-- [`plot_ica_ncomp_params()`](plot_ica_ncomp_params.md) : Plot various
-  parameters with no comp
-
-- [`plot_ica_stability_individual()`](plot_ica_stability_individual.md)
-  : Plot the stability of the ICA components
-
-- [`plot_optimal_cuts()`](plot_optimal_cuts.md) : Plot the k cuts vs
-  median R2
-
-- [`plot_pca()`](plot_pca.md) : Helper plot function for pca with
-  contrasts
-
-- [`plot_pca_res()`](plot_pca_res.md) : Plot the PCA data
-
-- [`plot_preprocessing_genes()`](plot_preprocessing_genes.md) : Helper
-  plot function of distribution of genes by samples
-
-- [`plot_preprocessing_outliers()`](plot_preprocessing_outliers.md) :
-  Helper plot function for identification of outliers
-
-- [`plot_rbf_impact()`](plot_rbf_impact.md) : Helper function to plot
-  distance to affinity relationship
-
-- [`plot_resolution_res()`](plot_resolution_res.md) : Plot the
-  resolution results.
-
-- [`plot_voom_normalization()`](plot_voom_normalization.md) : Helper
-  plot function for Voom normalisation
-
-- [`pre_process_sim_onto()`](pre_process_sim_onto.md) : Pre-process data
-  for subsequent ontology similarity
-
-- [`prep_data_gower_hamming_dist()`](prep_data_gower_hamming_dist.md) :
-  Transform data.tables into matrices for distance calculations
-
-- [`prep_limma_contrasts()`](prep_limma_contrasts.md) : Create all limma
-  contrasts from a provided string
-
-- [`prep_stats_pathways()`](prep_stats_pathways.md) : Helper function to
-  prepare data for GSEA
-
-- [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) : Process the
-  raw data
-
-- [`preprocess_bulk_dge()`](preprocess_bulk_dge.md) : QC on the bulk dge
-  data (DEPRECATED!)
-
-- [`prescan_h5ad_files()`](prescan_h5ad_files.md) : Pre-scan multiple
-  h5ad files for multi-sample loading
-
-- [`print.BulkCoExp`](print.BulkCoExp.md) : print Method for BulkCoExp
-  object
-
-- [`print.GeneOntologyElim`](print.GeneOntologyElim.md) : print Method
-  for GeneOntologyElim object
-
-- [`print.OntologySim`](print.OntologySim.md) : print Method for
-  OntologySim object
-
-- [`print.SingleCells`](print.SingleCells.md) : print Method for
-  SingleCells object
-
-- [`process_cistarget_res()`](process_cistarget_res.md) : Helper to
-  process CisTarget results
-
-- [`process_go_data()`](process_go_data.md) : Process Gene Ontology data
-  into the right format
-
-- [`qc_bulk_dge()`](qc_bulk_dge.md) : QC on the bulk dge data
-
-- [`read_h5ad_metadata()`](read_h5ad_metadata.md) : Read obs and var
-  tables and metadata from an h5ad file
-
-- [`read_h5ad_x_summary()`](read_h5ad_x_summary.md) : Read summary
-  statistics from the X slot of an h5ad file
-
-- [`read_motif_annotation_file()`](read_motif_annotation_file.md) : Read
-  in the motif annotation file
-
-- [`read_motif_ranking()`](read_motif_ranking.md) : Read in the motif
-  rankings and transform them into a matrix
-
-- [`remove_knn()`](remove_knn.md) : Remove the KNN data
-
-- [`remove_samples()`](remove_samples.md) : Remove samples from object
-
-- [`remove_snn_graph()`](remove_snn_graph.md) : Remove the sNN graph
-
-- [`robust_scale()`](robust_scale.md) : Robust scaler.
-
-- [`rs_2d_loess()`](rs_2d_loess.md) : Rust implementation of a Loess
-  function
-
-- [`rs_aucell()`](rs_aucell.md) : Calculate AUCell in Rust
-
-- [`rs_bbknn()`](rs_bbknn.md) : BBKNN implementation in Rust
-
-- [`rs_bbknn_filtering()`](rs_bbknn_filtering.md) : Reduce BBKNN matrix
-  to Top X neighbours
-
-- [`rs_calc_es()`](rs_calc_es.md) : Calculates the traditional GSEA
-  enrichment score
-
-- [`rs_calc_gsea_stat_cumulative_batch()`](rs_calc_gsea_stat_cumulative_batch.md)
-  : Helper function to generate fgsea simple-based permutations
-
-- [`rs_calc_gsea_stat_traditional_batch()`](rs_calc_gsea_stat_traditional_batch.md)
-  : Helper function to generate traditional GSEA-based permutations
-
-- [`rs_calc_gsea_stats()`](rs_calc_gsea_stats.md) : Rust implementation
-  of the fgsea::calcGseaStat() function
-
-- [`rs_calc_multi_level()`](rs_calc_multi_level.md) : Calculates
-  p-values for pre-processed data
-
-- [`rs_calculate_dge_mann_whitney()`](rs_calculate_dge_mann_whitney.md)
-  : Calculate DGEs between cells based on Mann Whitney stats
-
-- [`rs_cistarget()`](rs_cistarget.md) : Run CisTarget motif enrichment
-  analysis
-
-- [`rs_cluster_stability()`](rs_cluster_stability.md) : Helper function
-  to assess cluster stability
-
-- [`rs_compare_knn()`](rs_compare_knn.md) : Helper to compare kNN graphs
-
-- [`rs_constrained_page_rank()`](rs_constrained_page_rank.md) :
-  Calculate a constrained page-rank score
-
-- [`rs_constrained_page_rank_list()`](rs_constrained_page_rank_list.md)
-  : Calculate a constrained page-rank score over a list.
-
-- [`rs_contrastive_pca()`](rs_contrastive_pca.md) : Calculate the
-  contrastive PCA
-
-- [`rs_cor()`](rs_cor.md) : Calculate the column wise correlations.
-
-- [`rs_cor2()`](rs_cor2.md) : Calculate the column wise correlations.
-
-- [`rs_cor_upper_triangle()`](rs_cor_upper_triangle.md) : Calculate the
-  column wise correlations.
-
-- [`rs_coremo_quality()`](rs_coremo_quality.md) : Helper function to
-  assess CoReMo cluster quality
-
-- [`rs_coremo_stability()`](rs_coremo_stability.md) : Helper function to
-  assess CoReMo cluster stability
-
-- [`rs_cos()`](rs_cos.md) : Calculate the column wise cosine
-  similarities
-
-- [`rs_count_zeroes()`](rs_count_zeroes.md) : Helper to get zero stats
-  from a given matrix
-
-- [`rs_cov2cor()`](rs_cov2cor.md) : Calculates the correlation matrix
-  from the co-variance matrix
-
-- [`rs_covariance()`](rs_covariance.md) : Calculate the column-wise
-  co-variance.
-
-- [`rs_create_random_aucs()`](rs_create_random_aucs.md) : Create random
-  AUCs
-
-- [`rs_critval()`](rs_critval.md) : Calculate the critical value
-
-- [`rs_critval_mat()`](rs_critval_mat.md) : Calculate the critical value
-
-- [`rs_dense_to_upper_triangle()`](rs_dense_to_upper_triangle.md) :
-  Generate a vector-based representation of the upper triangle of a
-  matrix
-
-- [`rs_differential_cor()`](rs_differential_cor.md) : Calculate the
-  column wise differential correlation between two sets of data.
-
-- [`rs_dist()`](rs_dist.md) : Calculate the pairwise column distance in
-  a matrix
-
-- [`rs_fast_auc()`](rs_fast_auc.md) : Fast AUC calculation
-
-- [`rs_fast_ica()`](rs_fast_ica.md) : Run the Rust implementation of
-  fast ICA.
-
-- [`rs_fdr_adjustment()`](rs_fdr_adjustment.md) : Calculate a BH-based
-  FDR
-
-- [`rs_filter_onto_sim()`](rs_filter_onto_sim.md) : Filter the term
-  similarities for a specific critical value
-
-- [`rs_generate_bulk_rnaseq()`](rs_generate_bulk_rnaseq.md) : Generation
-  of bulkRNAseq-like data with optional correlation structure
-
-- [`rs_geom_elim_fgsea_simple()`](rs_geom_elim_fgsea_simple.md) : Run
-  fgsea simple method for gene ontology with elimination method
-
-- [`rs_get_gs_indices()`](rs_get_gs_indices.md) : Helper function to
-  rapidly retrieve the indices of the gene set members
-
-- [`rs_get_metacells()`](rs_get_metacells.md) : Generate meta cells
-  (hdWGCNA method)
-
-- [`rs_get_seacells()`](rs_get_seacells.md) : Generate SEACells
-
-- [`rs_gower_dist()`](rs_gower_dist.md) : Calculates the Gower distance
-  for a given matrix
-
-- [`rs_gse_geom_elim()`](rs_gse_geom_elim.md) : Run hypergeometric
-  enrichment over the gene ontology
-
-- [`rs_gse_geom_elim_list()`](rs_gse_geom_elim_list.md) : Run
-  hypergeometric enrichment a list of target genes over the gene
-  ontology
-
-- [`rs_gsva()`](rs_gsva.md) : Rust version of the GSVA algorithm
-
-- [`rs_h5ad_data()`](rs_h5ad_data.md) : Load in h5ad data via Rust
-
-- [`rs_hamming_dist()`](rs_hamming_dist.md) : Calculates the Hamming
-  distance between categorical columns
-
-- [`rs_harmony()`](rs_harmony.md) : Harmony batch correction in Rust
-
-- [`rs_hedges_g()`](rs_hedges_g.md) : Calculate the Hedge's G effect
-
-- [`rs_hotspot_autocor()`](rs_hotspot_autocor.md) : Calculate gene
-  spatial auto-correlations
-
-- [`rs_hotspot_cluster_genes()`](rs_hotspot_cluster_genes.md) : Cluster
-  the genes by Z-score together
-
-- [`rs_hotspot_gene_cor()`](rs_hotspot_gene_cor.md) : Calculate
-  gene\<\>gene spatial correlations
-
-- [`rs_hypergeom_test()`](rs_hypergeom_test.md) : Run a single
-  hypergeometric test.
-
-- [`rs_hypergeom_test_list()`](rs_hypergeom_test_list.md) : Run a
-  hypergeometric test over a list of target genes
-
-- [`rs_ica_iters()`](rs_ica_iters.md) : Run ICA over a given no_comp
-  with random initilisations of w_init
-
-- [`rs_ica_iters_cv()`](rs_ica_iters_cv.md) : Run ICA with
-  cross-validation and random initialsiation
-
-- [`rs_jaccard_row_integers()`](rs_jaccard_row_integers.md) : Calculate
-  rapidbly Jaccard similarities between rows
-
-- [`rs_kbet()`](rs_kbet.md) : Calculate kBET type scores
-
-- [`rs_knn_label_propagation()`](rs_knn_label_propagation.md) : kNN
-  label propagation
-
-- [`rs_knn_mat_to_edge_list()`](rs_knn_mat_to_edge_list.md) : Flatten
-  kNN matrix to edge list
-
-- [`rs_knn_mat_to_edge_pairs()`](rs_knn_mat_to_edge_pairs.md) : Flatten
-  kNN matrix to edge list
-
-- [`rs_mad_outlier()`](rs_mad_outlier.md) : Calculate MAD outlier
-  detection in Rust.
-
-- [`rs_make_milor_nhoods()`](rs_make_milor_nhoods.md) : Generate the
-  neighbourhoods akin to the miloR approach
-
-- [`rs_mitch_calc()`](rs_mitch_calc.md) : Calculate mitch enrichment
-  leveraging Rust under the hood
-
-- [`rs_mnn()`](rs_mnn.md) : FastMNN batch correction in Rust
-
-- [`rs_module_scoring()`](rs_module_scoring.md) : Calculate module
-  activity scores in Rust
-
-- [`rs_mutual_info()`](rs_mutual_info.md) : Calculates the mutual
-  information matrix
-
-- [`rs_onto_semantic_sim()`](rs_onto_semantic_sim.md) : Calculate the
-  semantic similarity in an ontology
-
-- [`rs_onto_semantic_sim_mat()`](rs_onto_semantic_sim_mat.md) :
-  Calculate the semantic similarity in an ontology
-
-- [`rs_onto_sim_wang()`](rs_onto_sim_wang.md) : Calculate the Wang
-  similarity for specific terms
-
-- [`rs_onto_sim_wang_mat()`](rs_onto_sim_wang_mat.md) : Calculate the
-  Wang similarity matrix for an ontology
-
-- [`rs_ot_harmonic_sum()`](rs_ot_harmonic_sum.md) : Calculate the OT
-  harmonic sum
-
-- [`rs_page_rank()`](rs_page_rank.md) : Rust version of calcaluting the
-  personalised page rank
-
-- [`rs_page_rank_parallel()`](rs_page_rank_parallel.md) : Calculate
-  massively parallelised personalised page rank scores
-
-- [`rs_pairwise_gene_cors()`](rs_pairwise_gene_cors.md) : Calculates
-  pairwise gene correlations in single cell
-
-- [`rs_phyper()`](rs_phyper.md) : Calculate the hypergeometric rest in
-  Rust
-
-- [`rs_pointwise_mutual_info()`](rs_pointwise_mutual_info.md) :
-  Calculates the point wise mutual information
-
-- [`rs_prcomp()`](rs_prcomp.md) : Rust implementation of prcomp
-
-- [`rs_prepare_gsva_gs()`](rs_prepare_gsva_gs.md) : Prepare a pathway
-  list for GSVA
-
-- [`rs_prepare_whitening()`](rs_prepare_whitening.md) : Prepare the data
-  for whitening
-
-- [`rs_pseudobulk_cells_dense()`](rs_pseudobulk_cells_dense.md) :
-  Pseudo-bulk a set of cells (dense)
-
-- [`rs_pseudobulk_cells_sparse()`](rs_pseudobulk_cells_sparse.md) :
-  Pseudo-bulk a set of cells (sparse)
-
-- [`rs_random_svd()`](rs_random_svd.md) : Run randomised SVD over a
-  matrix
-
-- [`rs_range_norm()`](rs_range_norm.md) : Apply a range normalisation on
-  a vector.
-
-- [`rs_rbf_function()`](rs_rbf_function.md) : Apply a Radial Basis
-  Function
-
-- [`rs_rbf_function_mat()`](rs_rbf_function_mat.md) : Apply a Radial
-  Basis Function (to a matrix)
-
-- [`rs_rbf_iterate_epsilons()`](rs_rbf_iterate_epsilons.md) : Helper to
-  identify the right epsilon parameter
-
-- [`rs_rbh_cor()`](rs_rbh_cor.md) : Generate reciprocal best hits based
-  on correlations
-
-- [`rs_rbh_sets()`](rs_rbh_sets.md) : Generate reciprocal best hits
-  based on set similarities
-
-- [`rs_sample_ids_for_cell_types()`](rs_sample_ids_for_cell_types.md) :
-  Helper function to generate sample identifiers based on cells
-
-- [`rs_sc_doublet_detection()`](rs_sc_doublet_detection.md) : Detect
-  Doublets via BoostClassifier (in Rust)
-
-- [`rs_sc_get_gene_set_perc()`](rs_sc_get_gene_set_perc.md) : Calculate
-  the percentage of gene sets in the cells
-
-- [`rs_sc_get_top_genes_perc()`](rs_sc_get_top_genes_perc.md) :
-  Calculates the cumulative proportion of the top X genes
-
-- [`rs_sc_hvg()`](rs_sc_hvg.md) : Calculate the percentage of gene sets
-  in the cells
-
-- [`rs_sc_hvg_batch_aware()`](rs_sc_hvg_batch_aware.md) : Calculate HVG
-  per batch
-
-- [`rs_sc_knn()`](rs_sc_knn.md) : Generates the kNN graph
-
-- [`rs_sc_knn_w_dist()`](rs_sc_knn_w_dist.md) : Generates the kNN graph
-  with additional distances
-
-- [`rs_sc_pca()`](rs_sc_pca.md) : Calculates PCA for single cell
-
-- [`rs_sc_pca_sparse()`](rs_sc_pca_sparse.md) : Calculates sparse PCA
-  for single cell
-
-- [`rs_sc_scrublet()`](rs_sc_scrublet.md) : Scrublet Rust interface
-
-- [`rs_sc_snn()`](rs_sc_snn.md) : Generates the sNN graph for igraph
-
-- [`rs_scenic_gene_filter()`](rs_scenic_gene_filter.md) : Identifies
-  genes to include into a SCENIC analysis
-
-- [`rs_scenic_grn()`](rs_scenic_grn.md) : SCENIC: Generating
-  gene-regulatory networks
-
-- [`rs_scenic_grn_streaming()`](rs_scenic_grn_streaming.md) : SCENIC:
-  Generating gene-regulatory networks (streaming version)
-
-- [`rs_set_similarity()`](rs_set_similarity.md) : Set similarities
-
-- [`rs_set_similarity_list()`](rs_set_similarity_list.md) : Set
-  similarities over one list
-
-- [`rs_set_similarity_list2()`](rs_set_similarity_list2.md) : Set
-  similarities over two list
-
-- [`rs_simple_and_multi_err()`](rs_simple_and_multi_err.md) : Calculates
-  the simple and multi error for fgsea multi level
-
-- [`rs_simulate_dropouts()`](rs_simulate_dropouts.md) : Sparsify
-  bulkRNAseq like data
-
-- [`rs_snf()`](rs_snf.md) : Similarity network fusion
-
-- [`rs_snf_affinity_cat()`](rs_snf_affinity_cat.md) : Calculate the SNF
-  affinity matrix for categorical values
-
-- [`rs_snf_affinity_continuous()`](rs_snf_affinity_continuous.md) :
-  Calculate the SNF affinity matrix for continuous values
-
-- [`rs_snf_affinity_mixed()`](rs_snf_affinity_mixed.md) : Calculate the
-  SNF affinity matrix for mixed values
-
-- [`rs_sparse_dict_dgrdl()`](rs_sparse_dict_dgrdl.md) : Generate a
-  sparse dictionary with DGRDL
-
-- [`rs_sparse_dict_dgrdl_grid_search()`](rs_sparse_dict_dgrdl_grid_search.md)
-  : Generate a sparse dictionary with DGRDL
-
-- [`rs_spectral_clustering()`](rs_spectral_clustering.md) : Rust
-  implementation of spectral clustering
-
-- [`rs_spectral_clustering_sim()`](rs_spectral_clustering_sim.md) : Rust
-  implementation of spectral clustering
-
-- [`rs_split_cor_signs()`](rs_split_cor_signs.md) : Helper function to
-  split correlation matrices by sign
-
-- [`rs_ssgsea()`](rs_ssgsea.md) : Rust version of the ssGSEA algorithm
-
-- [`rs_supercell()`](rs_supercell.md) : Generate SuperCells.
-
-- [`rs_synthetic_sc_data_csc()`](rs_synthetic_sc_data_csc.md) : Generate
-  synthetic single cell data (Seurat type)
-
-- [`rs_synthetic_sc_data_csr()`](rs_synthetic_sc_data_csr.md) : Generate
-  synthetic single cell data (h5ad type)
-
-- [`rs_synthetic_sc_data_with_cell_types()`](rs_synthetic_sc_data_with_cell_types.md)
-  : Generates synthetic data for single cell
-
-- [`rs_tied_diffusion_parallel()`](rs_tied_diffusion_parallel.md) :
-  Calculate massively parallelised tied diffusion scores
-
-- [`rs_tom()`](rs_tom.md) : Calculates the TOM over an affinity matrix
-
-- [`rs_top_k_targets()`](rs_top_k_targets.md) : SCENIC: Select the Top
-  TF \<\> Gene pairs
-
-- [`rs_upper_triangle_to_dense()`](rs_upper_triangle_to_dense.md) :
-  Reconstruct a matrix from a flattened upper triangle vector
-
-- [`rs_upper_triangle_to_sparse()`](rs_upper_triangle_to_sparse.md) :
-  Generate sparse data from an upper triangle
-
-- [`rs_vision()`](rs_vision.md) : Calculate VISION pathway scores in
-  Rust
-
-- [`rs_vision_with_autocorrelation()`](rs_vision_with_autocorrelation.md)
-  : Calculate VISION pathway scores in Rust with auto-correlation
-
-- [`run_cistarget()`](run_cistarget.md) : Main function to run CisTarget
-
-- [`run_limma_voom()`](run_limma_voom.md) : Wrapper for a Limma Voom
-  analysis
-
-- [`run_snf()`](run_snf.md) : Run the SNF algorithm
-
-- [`save_sc_exp_to_disk()`](save_sc_exp_to_disk.md) : Save memory-bound
-  data to disk
-
-- [`sc_old_file_conversion()`](sc_old_file_conversion.md) : Convert
-  legacy v2 single-cell data files to v3 format
-
-- [`scale_free_fit()`](scale_free_fit.md) : Calculate the goodness of
-  fit for a power law distribution.
-
-- [`scenic_gene_filter_sc()`](scenic_gene_filter_sc.md) : Filter genes
-  for SCENIC GRN inference
-
-- [`scenic_grn_sc()`](scenic_grn_sc.md) : Run SCENIC GRN inference
-
-- [`scrublet_sc()`](scrublet_sc.md) : Doublet detection with Scrublet
-
-- [`select_user_option()`](select_user_option.md) : Helper function for
-  user option selection
-
-- [`set_cell_mapping()`](set_cell_mapping.md) : Set cell mapping for
-  ScMap object
-
-- [`set_cells_to_keep()`](set_cells_to_keep.md) : Set cells to keep for
-  ScMap object
-
-- [`set_embedding()`](set_embedding.md) : Add additional embeddings to
-  the class
-
-- [`set_gene_mapping()`](set_gene_mapping.md) : Set gene mapping for
-  ScMap object
-
-- [`set_hotspot_membership()`](set_hotspot_membership.md) : Identify
-  hotspot gene clusters
-
-- [`set_hvg()`](set_hvg.md) : Set the HVG genes
-
-- [`set_knn()`](set_knn.md) : Set/add KNN
-
-- [`set_pca_factors()`](set_pca_factors.md) : Set/add PCA factors
-
-- [`set_pca_loadings()`](set_pca_loadings.md) : Set/add PCA loadings
-
-- [`set_pca_singular_vals()`](set_pca_singular_vals.md) : Set/add PCA
-  singular values
-
-- [`set_sc_new_obs_col()`](set_sc_new_obs_col.md) : Add a new column to
-  the obs table
-
-- [`set_sc_new_obs_col_multiple()`](set_sc_new_obs_col_multiple.md) :
-  Add multiple new columns to the obs table
-
-- [`set_sc_new_var_cols()`](set_sc_new_var_cols.md) : Add a new column
-  to the var table
-
-- [`set_snn_graph()`](set_snn_graph.md) : Set/add KNN
-
-- [`simplify_hypergeom_res()`](simplify_hypergeom_res.md) : Simplify
-  gene set results via ontologies
-
-- [`simulate_dropouts()`](simulate_dropouts.md) : Simulate dropouts via
-  different functions on synthetic bulk data
-
-- [`snf_process_aff_cat_mixed()`](snf_process_aff_cat_mixed.md) : Helper
-  function to process categorical or mixed data for SNF
-
-- [`snf_process_aff_continuous()`](snf_process_aff_continuous.md) :
-  Helper function to process continuous data for SNF
-
-- [`sparse_list_to_mat()`](sparse_list_to_mat.md) : Helper function to
-  transform the Rust-exported sparse matrices into R ones
-
-- [`sparse_mat_to_list()`](sparse_mat_to_list.md) : Helper function to
-  transform R sparse matrices to list
-
-- [`stream_h5ad()`](stream_h5ad.md) :
+- [`stream_h5ad()`](https://gregorlueg.github.io/bixverse/reference/stream_h5ad.md)
+  :
 
   Stream in h5ad to `SingleCells`
 
-- [`summarise_scores()`](summarise_scores.md) : Summarise gene scores if
-  they are duplicates.
+- [`load_r_data()`](https://gregorlueg.github.io/bixverse/reference/load_r_data.md)
+  : Load in data directly from R objects.
 
-- [`synthetic_bulk_cor_matrix()`](synthetic_bulk_cor_matrix.md) :
-  Generates synthetic bulk RNAseq data
+- [`load_seurat()`](https://gregorlueg.github.io/bixverse/reference/load_seurat.md)
+  :
 
-- [`synthetic_c_pca_data()`](synthetic_c_pca_data.md) : Generates
-  synthetic data for contrastive PCA exploration.
+  Load in Seurat to `SingleCells`
 
-- [`synthetic_signal_matrix()`](synthetic_signal_matrix.md) : Generates
-  a simple synthetic, pseudo gene expression matrix
+- [`read_h5ad_metadata()`](https://gregorlueg.github.io/bixverse/reference/read_h5ad_metadata.md)
+  : Read obs and var tables and metadata from an h5ad file
 
-- [`test_nhoods()`](test_nhoods.md) : Test neighbourhoods for
-  differential abundance
+- [`read_h5ad_x_summary()`](https://gregorlueg.github.io/bixverse/reference/read_h5ad_x_summary.md)
+  : Read summary statistics from the X slot of an h5ad file
 
-- [`tf_to_genes_correlations()`](tf_to_genes_correlations.md) : Generate
-  TF to gene correlations
+- [`save_sc_exp_to_disk()`](https://gregorlueg.github.io/bixverse/reference/save_sc_exp_to_disk.md)
+  : Save memory-bound data to disk
 
-- [`tf_to_genes_motif_enrichment()`](tf_to_genes_motif_enrichment.md) :
-  Run the SCENIC motif enrichment
+- [`sc_old_file_conversion()`](https://gregorlueg.github.io/bixverse/reference/sc_old_file_conversion.md)
+  : Convert legacy v2 single-cell data files to v3 format
 
-- [`tied_diffusion()`](tied_diffusion.md) : Diffuse seed genes in a tied
-  manner over a network
+- [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md)
+  : Wrapper function to generate QC metric params for single cell
 
-- [`to_snake_case()`](to_snake_case.md) : Helper function to transform
-  strings to snake_case
+- [`params_sc_mtx_io()`](https://gregorlueg.github.io/bixverse/reference/params_sc_mtx_io.md)
+  : Wrapper function to provide data for mtx-based loading
 
-- [`top_genes_perc_sc()`](top_genes_perc_sc.md) : Calculate the
-  proportions of reads for the Top N genes
+## Single cell processing
 
-- [`tree_cut_iter()`](tree_cut_iter.md) : Coremo: Iterate over k for
-  gene module detection.
+Helpers to process single cell data. Doublet detection, proportions of
+gene sets, HVG (batch-aware), PCA and batch corrections.
 
-- [`update_metadata_values()`](update_metadata_values.md) : Replace
-  values in a metadata column
+- [`scrublet_sc()`](https://gregorlueg.github.io/bixverse/reference/scrublet_sc.md)
+  : Doublet detection with Scrublet
+- [`call_doublets_manual()`](https://gregorlueg.github.io/bixverse/reference/call_doublets_manual.md)
+  : Helper function to manually readjust Scrublet thresholds
+- [`doublet_detection_boost_sc()`](https://gregorlueg.github.io/bixverse/reference/doublet_detection_boost_sc.md)
+  : Doublet detection with boosted doublet classification
+- [`gene_set_proportions_sc()`](https://gregorlueg.github.io/bixverse/reference/gene_set_proportions_sc.md)
+  : Calculate the proportions of reads for specific gene sets
+- [`per_cell_qc_outlier()`](https://gregorlueg.github.io/bixverse/reference/per_cell_qc_outlier.md)
+  : Use MAD outlier detection on per-cell QC metrics
+- [`run_cell_qc()`](https://gregorlueg.github.io/bixverse/reference/run_cell_qc.md)
+  : Run MAD outlier detection on per-cell QC metrics
+- [`find_hvg_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_sc.md)
+  : Identify HVGs
+- [`find_hvg_batch_aware_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_batch_aware_sc.md)
+  : Identify HVGs (batch aware)
+- [`calculate_pca_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_pca_sc.md)
+  : Run PCA for single cell
+- [`generate_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/generate_sc_knn.md)
+  : Generate a new SingleCellNearestNeighbour from data
+- [`find_neighbours_sc()`](https://gregorlueg.github.io/bixverse/reference/find_neighbours_sc.md)
+  : Find the neighbours for single cell.
+- [`top_genes_perc_sc()`](https://gregorlueg.github.io/bixverse/reference/top_genes_perc_sc.md)
+  : Calculate the proportions of reads for the Top N genes
+- [`fast_mnn_sc()`](https://gregorlueg.github.io/bixverse/reference/fast_mnn_sc.md)
+  : Run fastMNN
+- [`harmony_sc()`](https://gregorlueg.github.io/bixverse/reference/harmony_sc.md)
+  : Run Harmony
+- [`bbknn_sc()`](https://gregorlueg.github.io/bixverse/reference/bbknn_sc.md)
+  : Run BBKNN
+- [`calculate_kbet_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_kbet_sc.md)
+  : Calculate kBET scores
+- [`calculate_batch_asw_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_asw_sc.md)
+  : Calculate batch average silhouette width
+- [`calculate_batch_lisi_sc()`](https://gregorlueg.github.io/bixverse/reference/calculate_batch_lisi_sc.md)
+  : Calculate batch LISI scores
+- [`params_norm_doublet_detection_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_norm_doublet_detection_defaults.md)
+  : Helper function to generate normalisation defaults for doublet
+  detection.
+- [`params_boost()`](https://gregorlueg.github.io/bixverse/reference/params_boost.md)
+  : Wrapper function for Boost parameters
+- [`params_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hvg.md)
+  : Wrapper function for HVG detection parameters.
+- [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md)
+  : Wrapper function for Scrublet doublet detection parameters
+- [`params_sc_bbknn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.md)
+  : Wrapper function for the BBKNN parameters
+- [`params_sc_fastmnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fastmnn.md)
+  : Wrapper function for the fastMNN parameters
+- [`params_sc_harmony()`](https://gregorlueg.github.io/bixverse/reference/params_sc_harmony.md)
+  : Default parameters for Harmony batch correction
+- [`params_sc_neighbours()`](https://gregorlueg.github.io/bixverse/reference/params_sc_neighbours.md)
+  : Wrapper function for parameters for neighbour identification in
+  single cell
+- [`params_hvg_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_hvg_defaults.md)
+  : Helper function to generate HVG defaults
+- [`params_pca_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_pca_defaults.md)
+  : Helper function to generate default parameters for PCA
+- [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  : Helper function to generate kNN defaults
 
-- [`upper_triangle_diffcor_mat`](upper_triangle_diffcor_mat.md) : Class
-  for symmetric differential correlation matrices
+## Single cell analysis methods
 
-- [`upper_triangle_to_sparse()`](upper_triangle_to_sparse.md) :
-  Transform an upper triangle-stored matrix to a sparse one
+A large number of different methods to extract insights from your single
+cell experiment. Gene set scoring, DGEs, kNN generations, pseudo-bulk
+count extraction, miloR, Hotspot, VISION and SCENIC.
 
-- [`upper_triangular_sym_mat`](upper_triangular_sym_mat.md) : Class for
-  symmetric correlation matrices
+- [`aucell_sc()`](https://gregorlueg.github.io/bixverse/reference/aucell_sc.md)
+  : Calculate AUC scores (akin to AUCell)
+- [`module_scores_sc()`](https://gregorlueg.github.io/bixverse/reference/module_scores_sc.md)
+  : Calculate module activity scores
+- [`find_clusters_sc()`](https://gregorlueg.github.io/bixverse/reference/find_clusters_sc.md)
+  : Graph-based clustering of cells on the sNN graph
+- [`find_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_markers_sc.md)
+  : Calculate DGE between two cell groups
+- [`find_all_markers_sc()`](https://gregorlueg.github.io/bixverse/reference/find_all_markers_sc.md)
+  : Find all markers
+- [`get_pseudobulked_sc()`](https://gregorlueg.github.io/bixverse/reference/get_pseudobulked_sc.md)
+  : Generate pseudo-bulked matrices
+- [`generate_knn_sc()`](https://gregorlueg.github.io/bixverse/reference/generate_knn_sc.md)
+  : Generate the KNN data with distances
+- [`get_differential_abundance_res()`](https://gregorlueg.github.io/bixverse/reference/get_differential_abundance_res.md)
+  : Get the differential abundance results
+- [`hotspot_autocor_sc()`](https://gregorlueg.github.io/bixverse/reference/hotspot_autocor_sc.md)
+  : Calculate the local auto-correlation of a gene
+- [`hotspot_gene_cor_sc()`](https://gregorlueg.github.io/bixverse/reference/hotspot_gene_cor_sc.md)
+  : Calculate the local pairwise gene-gene correlation
+- [`generate_hotspot_membership()`](https://gregorlueg.github.io/bixverse/reference/generate_hotspot_membership.md)
+  : Identify hotspot gene clusters
+- [`get_hotspot_membership()`](https://gregorlueg.github.io/bixverse/reference/get_hotspot_membership.md)
+  : Get the hotspot gene membership table
+- [`get_miloR_abundances_sc()`](https://gregorlueg.github.io/bixverse/reference/get_miloR_abundances_sc.md)
+  : Generate an miloR abundance object for differential abundance
+  testing
+- [`get_index_cells()`](https://gregorlueg.github.io/bixverse/reference/get_index_cells.md)
+  : Get the index cells
+- [`add_nhoods_info()`](https://gregorlueg.github.io/bixverse/reference/add_nhoods_info.md)
+  : Add neighbourhood info on majority cell type
+- [`test_nhoods()`](https://gregorlueg.github.io/bixverse/reference/test_nhoods.md)
+  : Test neighbourhoods for differential abundance
+- [`vision_sc()`](https://gregorlueg.github.io/bixverse/reference/vision_sc.md)
+  : Calculate VISION scores
+- [`vision_w_autocor_sc()`](https://gregorlueg.github.io/bixverse/reference/vision_w_autocor_sc.md)
+  : Calculate VISION scores (with auto-correlation scores)
+- [`identify_tf_to_genes()`](https://gregorlueg.github.io/bixverse/reference/identify_tf_to_genes.md)
+  : Identify the TF to gene regulation
+- [`scenic_gene_filter_sc()`](https://gregorlueg.github.io/bixverse/reference/scenic_gene_filter_sc.md)
+  : Filter genes for SCENIC GRN inference
+- [`scenic_grn_sc()`](https://gregorlueg.github.io/bixverse/reference/scenic_grn_sc.md)
+  : Run SCENIC GRN inference
+- [`get_cistarget_res()`](https://gregorlueg.github.io/bixverse/reference/get_cistarget_res.md)
+  : Extract the TF to gene data from the ScenicGrn object
+- [`get_tf_to_gene()`](https://gregorlueg.github.io/bixverse/reference/get_tf_to_gene.md)
+  : Extract the TF to gene data from the ScenicGrn object
+- [`tf_to_genes_correlations()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_correlations.md)
+  : Generate TF to gene correlations
+- [`tf_to_genes_motif_enrichment()`](https://gregorlueg.github.io/bixverse/reference/tf_to_genes_motif_enrichment.md)
+  : Run the SCENIC motif enrichment
+- [`params_sc_hotspot()`](https://gregorlueg.github.io/bixverse/reference/params_sc_hotspot.md)
+  : Wrapper function for parameters for HotSpot
+- [`params_sc_miloR()`](https://gregorlueg.github.io/bixverse/reference/params_sc_miloR.md)
+  : Wrapper function for parameters for MiloR
+- [`params_sc_vision()`](https://gregorlueg.github.io/bixverse/reference/params_sc_vision.md)
+  : Wrapper function for parameters for VISION with auto-correlation
+- [`params_scenic()`](https://gregorlueg.github.io/bixverse/reference/params_scenic.md)
+  : Constructor for SCENIC parameters
+- [`params_scenic_extra_trees_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_extra_trees_defaults.md)
+  : Default parameters for the SCENIC ExtraTrees regression learner
+- [`params_scenic_gradient_boosting_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_gradient_boosting_defaults.md)
+  : Default parameters for the SCENIC GradientBoosting (GRNBoost2)
+  regression learner
+- [`params_scenic_random_forest_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_scenic_random_forest_defaults.md)
+  : Default parameters for the SCENIC RandomForest regression learner
 
-- [`vision_sc()`](vision_sc.md) : Calculate VISION scores
+## Single-cell related classes and methods
 
-- [`vision_w_autocor_sc()`](vision_w_autocor_sc.md) : Calculate VISION
-  scores (with auto-correlation scores)
+Additional helpers for specific small sub classes used in single cell.
 
-- [`write_cellranger_output()`](write_cellranger_output.md) : Helper
-  function to write data to a cell ranger like output
+- [`get_knn_dist()`](https://gregorlueg.github.io/bixverse/reference/get_knn_dist.md)
+  : Get the KNN distance measures
+- [`get_obs_data()`](https://gregorlueg.github.io/bixverse/reference/get_obs_data.md)
+  : Get the ready obs data from various sub method
+- [`new_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/new_sc_knn.md)
+  : Helper function to generate kNN data with distances
 
-- [`write_h5ad_sc()`](write_h5ad_sc.md) : Helper function to write data
-  to h5ad format
+## Single-cell plotting stuff
+
+Various helpers that generate data for plotting single cell, such as 2D
+embeddings, or extract specific columns from the metadata or genes (and
+their summaries) from the binary storage files.
+
+- [`sc_knn_to_nearest_neighbours()`](https://gregorlueg.github.io/bixverse/reference/sc_knn_to_nearest_neighbours.md)
+  : Convert SingleCellNearestNeighbour to manifoldsR NearestNeighbours
+- [`umap_sc()`](https://gregorlueg.github.io/bixverse/reference/umap_sc.md)
+  : Run UMAP on a SingleCells object
+- [`tsne_sc()`](https://gregorlueg.github.io/bixverse/reference/tsne_sc.md)
+  : Run t-SNE on a SingleCells object
+- [`phate_sc()`](https://gregorlueg.github.io/bixverse/reference/phate_sc.md)
+  : Run PHATE on a SingleCells object
+- [`extract_dot_plot_data()`](https://gregorlueg.github.io/bixverse/reference/extract_dot_plot_data.md)
+  : Extract grouped gene statistics for dot plots
+- [`extract_gene_expression()`](https://gregorlueg.github.io/bixverse/reference/extract_gene_expression.md)
+  : Extract normalised gene expression for plotting
+
+## Stastical functions
+
+Any types of functions that help with statistics
+
+- [`calculate_effect_size()`](https://gregorlueg.github.io/bixverse/reference/calculate_effect_size.md)
+  : Calculate the Hedge G effect between two matrices
+- [`calculate_tom()`](https://gregorlueg.github.io/bixverse/reference/calculate_tom.md)
+  : Calculate the TOM from a correlation matrix
+- [`calculate_tom_from_exp()`](https://gregorlueg.github.io/bixverse/reference/calculate_tom_from_exp.md)
+  : Calculate the TOM from an expression matrix
+- [`f1_score_confusion_mat()`](https://gregorlueg.github.io/bixverse/reference/f1_score_confusion_mat.md)
+  : F1 scores on top of a confusion matrix
+- [`fast_ica_rust()`](https://gregorlueg.github.io/bixverse/reference/fast_ica_rust.md)
+  : Fast ICA via Rust
+- [`fast_ica_rust_helper()`](https://gregorlueg.github.io/bixverse/reference/fast_ica_rust_helper.md)
+  : Fast ICA via Rust from processed data
+- [`get_inflection_point()`](https://gregorlueg.github.io/bixverse/reference/get_inflection_point.md)
+  : Identify the inflection point for elbow-like data
+- [`ot_harmonic_score()`](https://gregorlueg.github.io/bixverse/reference/ot_harmonic_score.md)
+  : Calculates a harmonic sum normalised between 0 to 1.
+- [`robust_scale()`](https://gregorlueg.github.io/bixverse/reference/robust_scale.md)
+  : Robust scaler.
+
+## Plotting helpers
+
+Some core plotting helpers in the package (usually for QC). The ones to
+plot downstream results can be found in bixverse.plots.
+
+- [`plot_boxplot_normalization()`](https://gregorlueg.github.io/bixverse/reference/plot_boxplot_normalization.md)
+  : Helper plot function for boxplot of normalized data
+- [`plot_epsilon_res()`](https://gregorlueg.github.io/bixverse/reference/plot_epsilon_res.md)
+  : Plot the epsilon vs. power law goodness of fit result
+- [`plot_hvgs()`](https://gregorlueg.github.io/bixverse/reference/plot_hvgs.md)
+  : Plot the highly variable genes
+- [`plot_ica_ncomp_params()`](https://gregorlueg.github.io/bixverse/reference/plot_ica_ncomp_params.md)
+  : Plot various parameters with no comp
+- [`plot_ica_stability_individual()`](https://gregorlueg.github.io/bixverse/reference/plot_ica_stability_individual.md)
+  : Plot the stability of the ICA components
+- [`plot_optimal_cuts()`](https://gregorlueg.github.io/bixverse/reference/plot_optimal_cuts.md)
+  : Plot the k cuts vs median R2
+- [`plot_pca()`](https://gregorlueg.github.io/bixverse/reference/plot_pca.md)
+  : Helper plot function for pca with contrasts
+- [`plot_pca_res()`](https://gregorlueg.github.io/bixverse/reference/plot_pca_res.md)
+  : Plot the PCA data
+- [`plot_preprocessing_genes()`](https://gregorlueg.github.io/bixverse/reference/plot_preprocessing_genes.md)
+  : Helper plot function of distribution of genes by samples
+- [`plot_preprocessing_outliers()`](https://gregorlueg.github.io/bixverse/reference/plot_preprocessing_outliers.md)
+  : Helper plot function for identification of outliers
+- [`plot_rbf_impact()`](https://gregorlueg.github.io/bixverse/reference/plot_rbf_impact.md)
+  : Helper function to plot distance to affinity relationship
+- [`plot_resolution_res()`](https://gregorlueg.github.io/bixverse/reference/plot_resolution_res.md)
+  : Plot the resolution results.
+- [`plot_voom_normalization()`](https://gregorlueg.github.io/bixverse/reference/plot_voom_normalization.md)
+  : Helper plot function for Voom normalisation
+
+## Data downloads and synthetic data generation
+
+Functions and helpers to download or generate synthetic data.
+
+- [`download_pbmc3k()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc3k.md)
+  : Download PBMC3K data from Zenodo
+- [`download_demuxlet_pbmc()`](https://gregorlueg.github.io/bixverse/reference/download_demuxlet_pbmc.md)
+  : Download PBMCs with demuxlet doublet information
+- [`download_pbmc_batches()`](https://gregorlueg.github.io/bixverse/reference/download_pbmc_batches.md)
+  : Download two different PBMC data sets for batch correction testing
+- [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
+  : Helper function to calculate the induced sparsity
+- [`generate_gene_module_data()`](https://gregorlueg.github.io/bixverse/reference/generate_gene_module_data.md)
+  : Generates synthetic gene module data.
+- [`generate_single_cell_test_data()`](https://gregorlueg.github.io/bixverse/reference/generate_single_cell_test_data.md)
+  : Single cell test data
+- [`cell_cycle_genes`](https://gregorlueg.github.io/bixverse/reference/cell_cycle_genes.md)
+  : Cell cycle genes
+- [`write_cellranger_output()`](https://gregorlueg.github.io/bixverse/reference/write_cellranger_output.md)
+  : Helper function to write data to a cell ranger like output
+- [`write_h5ad_sc()`](https://gregorlueg.github.io/bixverse/reference/write_h5ad_sc.md)
+  : Helper function to write data to h5ad format
+- [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md)
+  : Default parameters for generation of synthetic data
+- [`synthetic_signal_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_signal_matrix.md)
+  : Generates a simple synthetic, pseudo gene expression matrix
+- [`simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/simulate_dropouts.md)
+  : Simulate dropouts via different functions on synthetic bulk data
+- [`synthetic_bulk_cor_matrix()`](https://gregorlueg.github.io/bixverse/reference/synthetic_bulk_cor_matrix.md)
+  : Generates synthetic bulk RNAseq data
+- [`synthetic_c_pca_data()`](https://gregorlueg.github.io/bixverse/reference/synthetic_c_pca_data.md)
+  : Generates synthetic data for contrastive PCA exploration.
+
+## Utils
+
+All types of other random helpers without a clear pattern
+
+- [`AnnDataParser`](https://gregorlueg.github.io/bixverse/reference/AnnDataParser.md)
+  : Class for Anndata
+- [`calculate_sparsity_stats()`](https://gregorlueg.github.io/bixverse/reference/calculate_sparsity_stats.md)
+  : Helper function to calculate the induced sparsity
+- [`get_seurat_counts_to_list()`](https://gregorlueg.github.io/bixverse/reference/get_seurat_counts_to_list.md)
+  : Transform Seurat raw counts into a List
+- [`knn_graph_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/knn_graph_label_propagation.md)
+  : kNN-based graph label propagation
+- [`params_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/params_label_propagation.md)
+  : Wrapper function to generate label propagation parameters
+- [`upper_triangle_to_sparse()`](https://gregorlueg.github.io/bixverse/reference/upper_triangle_to_sparse.md)
+  : Transform an upper triangle-stored matrix to a sparse one
+- [`upper_triangular_sym_mat`](https://gregorlueg.github.io/bixverse/reference/upper_triangular_sym_mat.md)
+  : Class for symmetric correlation matrices
+- [`to_snake_case()`](https://gregorlueg.github.io/bixverse/reference/to_snake_case.md)
+  : Helper function to transform strings to snake_case
+
+## Rust wrappers
+
+Everything rusty - only use this if you know what you are doing… Maybe
+useful for your own package? Use with care and read the documentation!
+
+- [`rs_aucell()`](https://gregorlueg.github.io/bixverse/reference/rs_aucell.md)
+  : Calculate AUCell in Rust
+- [`rs_batch_lisi()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_lisi.md)
+  : Calculate batch LISI scores
+- [`rs_batch_silhouette_width()`](https://gregorlueg.github.io/bixverse/reference/rs_batch_silhouette_width.md)
+  : Calculate batch silhouette width from an embedding
+- [`rs_bbknn()`](https://gregorlueg.github.io/bixverse/reference/rs_bbknn.md)
+  : BBKNN implementation in Rust
+- [`rs_bbknn_filtering()`](https://gregorlueg.github.io/bixverse/reference/rs_bbknn_filtering.md)
+  : Reduce BBKNN results to Top X neighbours
+- [`rs_calc_es()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_es.md)
+  : Calculates the traditional GSEA enrichment score
+- [`rs_calc_gsea_stat_cumulative_batch()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stat_cumulative_batch.md)
+  : Helper function to generate fgsea simple-based permutations
+- [`rs_calc_gsea_stat_traditional_batch()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stat_traditional_batch.md)
+  : Helper function to generate traditional GSEA-based permutations
+- [`rs_calc_gsea_stats()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_gsea_stats.md)
+  : Rust implementation of the fgsea::calcGseaStat() function
+- [`rs_calc_multi_level()`](https://gregorlueg.github.io/bixverse/reference/rs_calc_multi_level.md)
+  : Calculates p-values for pre-processed data
+- [`rs_calculate_dge_mann_whitney()`](https://gregorlueg.github.io/bixverse/reference/rs_calculate_dge_mann_whitney.md)
+  : Calculate DGEs between cells based on Mann Whitney stats
+- [`rs_cistarget()`](https://gregorlueg.github.io/bixverse/reference/rs_cistarget.md)
+  : Run CisTarget motif enrichment analysis
+- [`rs_cluster_stability()`](https://gregorlueg.github.io/bixverse/reference/rs_cluster_stability.md)
+  : Helper function to assess cluster stability
+- [`rs_compare_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_compare_knn.md)
+  : Helper to compare kNN graphs
+- [`rs_constrained_page_rank()`](https://gregorlueg.github.io/bixverse/reference/rs_constrained_page_rank.md)
+  : Calculate a constrained page-rank score
+- [`rs_constrained_page_rank_list()`](https://gregorlueg.github.io/bixverse/reference/rs_constrained_page_rank_list.md)
+  : Calculate a constrained page-rank score over a list.
+- [`rs_contrastive_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_contrastive_pca.md)
+  : Calculate the contrastive PCA
+- [`rs_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cor.md)
+  : Calculate the column wise correlations.
+- [`rs_cor2()`](https://gregorlueg.github.io/bixverse/reference/rs_cor2.md)
+  : Calculate the column wise correlations.
+- [`rs_coremo_quality()`](https://gregorlueg.github.io/bixverse/reference/rs_coremo_quality.md)
+  : Helper function to assess CoReMo cluster quality
+- [`rs_coremo_stability()`](https://gregorlueg.github.io/bixverse/reference/rs_coremo_stability.md)
+  : Helper function to assess CoReMo cluster stability
+- [`rs_cor_upper_triangle()`](https://gregorlueg.github.io/bixverse/reference/rs_cor_upper_triangle.md)
+  : Calculate the column wise correlations.
+- [`rs_cos()`](https://gregorlueg.github.io/bixverse/reference/rs_cos.md)
+  : Calculate the column wise cosine similarities
+- [`rs_count_zeroes()`](https://gregorlueg.github.io/bixverse/reference/rs_count_zeroes.md)
+  : Helper to get zero stats from a given matrix
+- [`rs_cov2cor()`](https://gregorlueg.github.io/bixverse/reference/rs_cov2cor.md)
+  : Calculates the correlation matrix from the co-variance matrix
+- [`rs_covariance()`](https://gregorlueg.github.io/bixverse/reference/rs_covariance.md)
+  : Calculate the column-wise co-variance.
+- [`rs_create_random_aucs()`](https://gregorlueg.github.io/bixverse/reference/rs_create_random_aucs.md)
+  : Create random AUCs
+- [`rs_critval()`](https://gregorlueg.github.io/bixverse/reference/rs_critval.md)
+  : Calculate the critical value
+- [`rs_critval_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_critval_mat.md)
+  : Calculate the critical value
+- [`rs_dense_to_upper_triangle()`](https://gregorlueg.github.io/bixverse/reference/rs_dense_to_upper_triangle.md)
+  : Generate a vector-based representation of the upper triangle of a
+  matrix
+- [`rs_differential_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_differential_cor.md)
+  : Calculate the column wise differential correlation between two sets
+  of data.
+- [`rs_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_dist.md)
+  : Calculate the pairwise column distance in a matrix
+- [`rs_extract_grouped_gene_stats()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_grouped_gene_stats.md)
+  : Calculates the gene statistics for a set of cell groups and genes
+- [`rs_extract_several_genes_plots()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_several_genes_plots.md)
+  : Helper to extract single cell counts for several genes
+- [`rs_extract_counts_plots()`](https://gregorlueg.github.io/bixverse/reference/rs_extract_counts_plots.md)
+  : Helper to extract single cell counts as a dense vector for plotting
+- [`rs_fast_auc()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_auc.md)
+  : Fast AUC calculation
+- [`rs_fast_ica()`](https://gregorlueg.github.io/bixverse/reference/rs_fast_ica.md)
+  : Run the Rust implementation of fast ICA.
+- [`rs_fdr_adjustment()`](https://gregorlueg.github.io/bixverse/reference/rs_fdr_adjustment.md)
+  : Calculate a BH-based FDR
+- [`rs_filter_onto_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_filter_onto_sim.md)
+  : Filter the term similarities for a specific critical value
+- [`rs_generate_bulk_rnaseq()`](https://gregorlueg.github.io/bixverse/reference/rs_generate_bulk_rnaseq.md)
+  : Generation of bulkRNAseq-like data with optional correlation
+  structure
+- [`rs_geom_elim_fgsea_simple()`](https://gregorlueg.github.io/bixverse/reference/rs_geom_elim_fgsea_simple.md)
+  : Run fgsea simple method for gene ontology with elimination method
+- [`rs_get_gs_indices()`](https://gregorlueg.github.io/bixverse/reference/rs_get_gs_indices.md)
+  : Helper function to rapidly retrieve the indices of the gene set
+  members
+- [`rs_get_metacells()`](https://gregorlueg.github.io/bixverse/reference/rs_get_metacells.md)
+  : Generate meta cells (hdWGCNA method)
+- [`rs_get_seacells()`](https://gregorlueg.github.io/bixverse/reference/rs_get_seacells.md)
+  : Generate SEACells
+- [`rs_gower_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_gower_dist.md)
+  : Calculates the Gower distance for a given matrix
+- [`rs_gse_geom_elim()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim.md)
+  : Run hypergeometric enrichment over the gene ontology
+- [`rs_gse_geom_elim_list()`](https://gregorlueg.github.io/bixverse/reference/rs_gse_geom_elim_list.md)
+  : Run hypergeometric enrichment a list of target genes over the gene
+  ontology
+- [`rs_gsva()`](https://gregorlueg.github.io/bixverse/reference/rs_gsva.md)
+  : Rust version of the GSVA algorithm
+- [`rs_h5ad_data()`](https://gregorlueg.github.io/bixverse/reference/rs_h5ad_data.md)
+  : Load in h5ad data via Rust
+- [`rs_hamming_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_hamming_dist.md)
+  : Calculates the Hamming distance between categorical columns
+- [`rs_harmony()`](https://gregorlueg.github.io/bixverse/reference/rs_harmony.md)
+  : Harmony batch correction in Rust
+- [`rs_hedges_g()`](https://gregorlueg.github.io/bixverse/reference/rs_hedges_g.md)
+  : Calculate the Hedge's G effect
+- [`rs_hotspot_autocor()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_autocor.md)
+  : Calculate gene spatial auto-correlations
+- [`rs_hotspot_cluster_genes()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_cluster_genes.md)
+  : Cluster the genes by Z-score together
+- [`rs_hotspot_gene_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_hotspot_gene_cor.md)
+  : Calculate gene\<\>gene spatial correlations
+- [`rs_hypergeom_test()`](https://gregorlueg.github.io/bixverse/reference/rs_hypergeom_test.md)
+  : Run a single hypergeometric test.
+- [`rs_hypergeom_test_list()`](https://gregorlueg.github.io/bixverse/reference/rs_hypergeom_test_list.md)
+  : Run a hypergeometric test over a list of target genes
+- [`rs_ica_iters()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters.md)
+  : Run ICA over a given no_comp with random initilisations of w_init
+- [`rs_ica_iters_cv()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters_cv.md)
+  : Run ICA with cross-validation and random initialsiation
+- [`rs_jaccard_row_integers()`](https://gregorlueg.github.io/bixverse/reference/rs_jaccard_row_integers.md)
+  : Calculate rapidbly Jaccard similarities between rows
+- [`rs_kbet()`](https://gregorlueg.github.io/bixverse/reference/rs_kbet.md)
+  : Calculate kBET type scores
+- [`rs_knn_label_propagation()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_label_propagation.md)
+  : kNN label propagation
+- [`rs_knn_mat_to_edge_list()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_list.md)
+  : Flatten kNN matrix to edge list
+- [`rs_knn_mat_to_edge_pairs()`](https://gregorlueg.github.io/bixverse/reference/rs_knn_mat_to_edge_pairs.md)
+  : Flatten kNN matrix to edge list
+- [`rs_mad_outlier()`](https://gregorlueg.github.io/bixverse/reference/rs_mad_outlier.md)
+  : Calculate MAD outlier detection in Rust.
+- [`rs_make_milor_nhoods()`](https://gregorlueg.github.io/bixverse/reference/rs_make_milor_nhoods.md)
+  : Generate the neighbourhoods akin to the miloR approach
+- [`rs_mitch_calc()`](https://gregorlueg.github.io/bixverse/reference/rs_mitch_calc.md)
+  : Calculate mitch enrichment leveraging Rust under the hood
+- [`rs_mnn()`](https://gregorlueg.github.io/bixverse/reference/rs_mnn.md)
+  : FastMNN batch correction in Rust
+- [`rs_module_scoring()`](https://gregorlueg.github.io/bixverse/reference/rs_module_scoring.md)
+  : Calculate module activity scores in Rust
+- [`rs_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_mutual_info.md)
+  : Calculates the mutual information matrix
+- [`rs_onto_semantic_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim.md)
+  : Calculate the semantic similarity in an ontology
+- [`rs_onto_semantic_sim_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_semantic_sim_mat.md)
+  : Calculate the semantic similarity in an ontology
+- [`rs_onto_sim_wang()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_sim_wang.md)
+  : Calculate the Wang similarity for specific terms
+- [`rs_onto_sim_wang_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_onto_sim_wang_mat.md)
+  : Calculate the Wang similarity matrix for an ontology
+- [`rs_ot_harmonic_sum()`](https://gregorlueg.github.io/bixverse/reference/rs_ot_harmonic_sum.md)
+  : Calculate the OT harmonic sum
+- [`rs_page_rank()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank.md)
+  : Rust version of calcaluting the personalised page rank
+- [`rs_page_rank_parallel()`](https://gregorlueg.github.io/bixverse/reference/rs_page_rank_parallel.md)
+  : Calculate massively parallelised personalised page rank scores
+- [`rs_pairwise_gene_cors()`](https://gregorlueg.github.io/bixverse/reference/rs_pairwise_gene_cors.md)
+  : Calculates pairwise gene correlations in single cell
+- [`rs_phyper()`](https://gregorlueg.github.io/bixverse/reference/rs_phyper.md)
+  : Calculate the hypergeometric rest in Rust
+- [`rs_pointwise_mutual_info()`](https://gregorlueg.github.io/bixverse/reference/rs_pointwise_mutual_info.md)
+  : Calculates the point wise mutual information
+- [`rs_prcomp()`](https://gregorlueg.github.io/bixverse/reference/rs_prcomp.md)
+  : Rust implementation of prcomp
+- [`rs_prepare_gsva_gs()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_gsva_gs.md)
+  : Prepare a pathway list for GSVA
+- [`rs_prepare_whitening()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.md)
+  : Prepare the data for whitening
+- [`rs_pseudobulk_cells_dense()`](https://gregorlueg.github.io/bixverse/reference/rs_pseudobulk_cells_dense.md)
+  : Pseudo-bulk a set of cells (dense)
+- [`rs_pseudobulk_cells_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_pseudobulk_cells_sparse.md)
+  : Pseudo-bulk a set of cells (sparse)
+- [`rs_random_svd()`](https://gregorlueg.github.io/bixverse/reference/rs_random_svd.md)
+  : Run randomised SVD over a matrix
+- [`rs_range_norm()`](https://gregorlueg.github.io/bixverse/reference/rs_range_norm.md)
+  : Apply a range normalisation on a vector.
+- [`rs_rbf_function()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function.md)
+  : Apply a Radial Basis Function
+- [`rs_rbf_function_mat()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_function_mat.md)
+  : Apply a Radial Basis Function (to a matrix)
+- [`rs_rbf_iterate_epsilons()`](https://gregorlueg.github.io/bixverse/reference/rs_rbf_iterate_epsilons.md)
+  : Helper to identify the right epsilon parameter
+- [`rs_rbh_cor()`](https://gregorlueg.github.io/bixverse/reference/rs_rbh_cor.md)
+  : Generate reciprocal best hits based on correlations
+- [`rs_rbh_sets()`](https://gregorlueg.github.io/bixverse/reference/rs_rbh_sets.md)
+  : Generate reciprocal best hits based on set similarities
+- [`rs_sample_ids_for_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_sample_ids_for_cell_types.md)
+  : Helper function to generate sample identifiers based on cells
+- [`rs_sc_doublet_detection()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_doublet_detection.md)
+  : Detect Doublets via BoostClassifier (in Rust)
+- [`rs_sc_get_gene_set_perc()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_get_gene_set_perc.md)
+  : Calculate the percentage of gene sets in the cells
+- [`rs_sc_get_top_genes_perc()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_get_top_genes_perc.md)
+  : Calculates the cumulative proportion of the top X genes
+- [`rs_sc_hvg()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_hvg.md)
+  : Calculate the percentage of gene sets in the cells
+- [`rs_sc_hvg_batch_aware()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_hvg_batch_aware.md)
+  : Calculate HVG per batch
+- [`rs_sc_knn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn.md)
+  : Generates the kNN graph
+- [`rs_sc_knn_w_dist()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_knn_w_dist.md)
+  : Generates the kNN graph with additional distances
+- [`rs_sc_pca()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_pca.md)
+  : Calculates PCA for single cell
+- [`rs_sc_pca_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_pca_sparse.md)
+  : Calculates sparse PCA for single cell
+- [`rs_sc_scrublet()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_scrublet.md)
+  : Scrublet Rust interface
+- [`rs_sc_snn()`](https://gregorlueg.github.io/bixverse/reference/rs_sc_snn.md)
+  : Generates the sNN graph for igraph
+- [`rs_scenic_gene_filter()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_gene_filter.md)
+  : Identifies genes to include into a SCENIC analysis
+- [`rs_scenic_grn()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_grn.md)
+  : SCENIC: Generating gene-regulatory networks
+- [`rs_scenic_grn_streaming()`](https://gregorlueg.github.io/bixverse/reference/rs_scenic_grn_streaming.md)
+  : SCENIC: Generating gene-regulatory networks (streaming version)
+- [`rs_set_similarity()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity.md)
+  : Set similarities
+- [`rs_set_similarity_list()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list.md)
+  : Set similarities over one list
+- [`rs_set_similarity_list2()`](https://gregorlueg.github.io/bixverse/reference/rs_set_similarity_list2.md)
+  : Set similarities over two list
+- [`rs_simple_and_multi_err()`](https://gregorlueg.github.io/bixverse/reference/rs_simple_and_multi_err.md)
+  : Calculates the simple and multi error for fgsea multi level
+- [`rs_simulate_dropouts()`](https://gregorlueg.github.io/bixverse/reference/rs_simulate_dropouts.md)
+  : Sparsify bulkRNAseq like data
+- [`rs_snf()`](https://gregorlueg.github.io/bixverse/reference/rs_snf.md)
+  : Similarity network fusion
+- [`rs_snf_affinity_cat()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_cat.md)
+  : Calculate the SNF affinity matrix for categorical values
+- [`rs_snf_affinity_continuous()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_continuous.md)
+  : Calculate the SNF affinity matrix for continuous values
+- [`rs_snf_affinity_mixed()`](https://gregorlueg.github.io/bixverse/reference/rs_snf_affinity_mixed.md)
+  : Calculate the SNF affinity matrix for mixed values
+- [`rs_sparse_dict_dgrdl()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl.md)
+  : Generate a sparse dictionary with DGRDL
+- [`rs_sparse_dict_dgrdl_grid_search()`](https://gregorlueg.github.io/bixverse/reference/rs_sparse_dict_dgrdl_grid_search.md)
+  : Generate a sparse dictionary with DGRDL
+- [`rs_spectral_clustering()`](https://gregorlueg.github.io/bixverse/reference/rs_spectral_clustering.md)
+  : Rust implementation of spectral clustering
+- [`rs_spectral_clustering_sim()`](https://gregorlueg.github.io/bixverse/reference/rs_spectral_clustering_sim.md)
+  : Rust implementation of spectral clustering
+- [`rs_split_cor_signs()`](https://gregorlueg.github.io/bixverse/reference/rs_split_cor_signs.md)
+  : Helper function to split correlation matrices by sign
+- [`rs_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/rs_ssgsea.md)
+  : Rust version of the ssGSEA algorithm
+- [`rs_supercell()`](https://gregorlueg.github.io/bixverse/reference/rs_supercell.md)
+  : Generate SuperCells.
+- [`rs_synthetic_sc_data_csc()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_csc.md)
+  : Generate synthetic single cell data (Seurat type)
+- [`rs_synthetic_sc_data_csr()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_csr.md)
+  : Generate synthetic single cell data (h5ad type)
+- [`rs_synthetic_sc_data_with_cell_types()`](https://gregorlueg.github.io/bixverse/reference/rs_synthetic_sc_data_with_cell_types.md)
+  : Generates synthetic data for single cell
+- [`rs_tied_diffusion_parallel()`](https://gregorlueg.github.io/bixverse/reference/rs_tied_diffusion_parallel.md)
+  : Calculate massively parallelised tied diffusion scores
+- [`rs_tom()`](https://gregorlueg.github.io/bixverse/reference/rs_tom.md)
+  : Calculates the TOM over an affinity matrix
+- [`rs_top_k_targets()`](https://gregorlueg.github.io/bixverse/reference/rs_top_k_targets.md)
+  : SCENIC: Select the Top TF \<\> Gene pairs
+- [`rs_upper_triangle_to_dense()`](https://gregorlueg.github.io/bixverse/reference/rs_upper_triangle_to_dense.md)
+  : Reconstruct a matrix from a flattened upper triangle vector
+- [`rs_upper_triangle_to_sparse()`](https://gregorlueg.github.io/bixverse/reference/rs_upper_triangle_to_sparse.md)
+  : Generate sparse data from an upper triangle
+- [`rs_vision()`](https://gregorlueg.github.io/bixverse/reference/rs_vision.md)
+  : Calculate VISION pathway scores in Rust
+- [`rs_vision_with_autocorrelation()`](https://gregorlueg.github.io/bixverse/reference/rs_vision_with_autocorrelation.md)
+  : Calculate VISION pathway scores in Rust with auto-correlation
+- [`rs_2d_loess()`](https://gregorlueg.github.io/bixverse/reference/rs_2d_loess.md)
+  : Rust implementation of a Loess function

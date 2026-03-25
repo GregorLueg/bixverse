@@ -2,12 +2,31 @@
 
 ### Articles
 
-- [Bixverse R \<\> Rust interface](rust_functions.md):
+- [Bixverse R \<\> Rust
+  interface](https://gregorlueg.github.io/bixverse/articles/rust_functions.md):
+- [Technical design choices for the single cell
+  implementation](https://gregorlueg.github.io/bixverse/articles/design_single_cell.md):
 
 ### Tutorials
 
-- [Single Cell Analysis](Single_cell_analysis.md):
-- [Gene Set Enrichment Methods](gse_methods.md):
-- [Pathway activity functions](pathway_activity.md):
-- [Genetic diffusion and community detections](genetic_diffusions.md):
-- [Contrastive PCA](cpca.md):
+- [Gene Set Enrichment
+  Methods](https://gregorlueg.github.io/bixverse/articles/gse_methods.md):
+- [Pathway activity
+  functions](https://gregorlueg.github.io/bixverse/articles/pathway_activity.md):
+- [Genetic diffusion and community
+  detections](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.md):
+- [Contrastive
+  PCA](https://gregorlueg.github.io/bixverse/articles/cpca.md):
+
+### Single Cells
+
+- [Thinking about single cells the bixverse
+  way](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.md):
+- [Analysing PBMCs with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.md):
+- [Doublet detection with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/doublet_detection.md):
+- [Batch correction with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_batch_corrections.md):
+- [Scaling to millions of cells with
+  bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):

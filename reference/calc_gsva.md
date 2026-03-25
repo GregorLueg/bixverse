@@ -34,7 +34,8 @@ calc_gsva(
 
 - gsva_params:
 
-  List. The GSVA parameters, see [`params_gsva()`](params_gsva.md)
+  List. The GSVA parameters, see
+  [`params_gsva()`](https://gregorlueg.github.io/bixverse/reference/params_gsva.md)
   wrapper function. This function generates a list containing:
 
   - tau - Float. The tau parameter of the algorithm. Large values will

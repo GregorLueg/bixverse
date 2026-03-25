@@ -39,7 +39,7 @@ rs_gse_geom_elim_list(
 - go_obj:
 
   The gene_ontology_data S7 class. See
-  [`gene_ontology_data()`](gene_ontology_data.md).
+  [`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).
 
 - gene_universe_length:
 

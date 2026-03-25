@@ -1,31 +1,40 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.0.2.3-orange)
-
-r_package
+![r_package](https://img.shields.io/badge/R_package-0.3.0-orange)[![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
+[![License:
+MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
 
 ![bixverse logo](reference/figures/bixverse_logo.png)
 
-## Description
+## Intro
 
-This package contains various bioinformatics and computational biology
-workflows that are being routinely used, ranging from gene set
-enrichment analyses, to network-based approaches for module detection in
-bulk RNAseq. The package provides useful, bare bone versions of most
-bioinformatics functionalities and leverages Rust to make any
-computational bottlenecks go *brrrrrrr* (i.e., fast).
+### Description
 
-## Release notes
+This is an *opionated* package making various bioinformatics workflows
+in R (or ported from Python) much faster via low-level implementations
+in Rust. The core idea is to take different methods, write
+implementations in a compiled, memory-managed language with minimal
+kernel round trips and leverage R purely as an orchestraction layer.
+Result? Blazingly fast performance with low memory usage, making
+large-scale analyses feasable without any cloud compute. Over time more
+and more methods will be added. The aim will be to come a `tidyverse`
+equivalent, but for a lot of downstream methods post WGS processing.
+There is a sister package for plotting functions being build in
+parallel, see [here](https://github.com/GregorLueg/bixverse.plots) (that
+one is in alpha phase).
 
-This is now officially the version **0.0.2.3** release. With this update
-the following has been updated/changed:
+### Release notes
 
-- (R/Py)CisTarget is implemented into Rust for speed.
+With the `0.3.0` a lot has happened. The lack of updates had a reason
+Some cooking has been going on… The package now contains a full release
+of the a single cell functionality suite that you can use to analyse
+millions of cells locally. Please checkout out the website of the
+package.
 
-Also, watch the space… The **0.0.3.0** release is coming soon with a
-major update…
+## Usage
 
-## Installation
+### Installation
 
 You will need Rust on your system to have the package working. An
 installation guide is provided
@@ -57,24 +66,55 @@ Steps for installation:
 
     devtools::install_github("https://github.com/GregorLueg/bixverse")
 
-## PKGdown site
+### Windows support
 
-The package documentation can be found
+If you are using Windows, I am sorry, the tool chain is just very, very
+painful… I really tried to make this work and maybe there are some hacks
+in terms of compiling everything to install the package, but it has
+proven… challenging in the CI/CD. Hence, no official Windows support for
+now.
 
-[here](https://gregorlueg.github.io/bixverse/).
+### How to use the package.
 
-## Docs
+The package website can be found
+[here](https://gregorlueg.github.io/bixverse/). A good primer for [why
+Rust is
+here](https://gregorlueg.github.io/bixverse/docs/articles/rust_functions.html) -
+a show case of how much faster Rust can make a lot of basic functions
+much faster. If you wish to integrate this into your package, please
+feel free. If you wish to use the single cell part, it is really worth
+reading this
+[here](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html)
+first… It will give you a good explainer on the design decisions, the
+choices and trade-offs. The vignettes will show you how to analyse data.
 
-- [Roadmap](/info/roadmap.md)
-- [Change log](/info/change_log.md)
-- [Why Rust](/info/why_rust.md)
-- [Code Style](/info/code_style.md) (If you want to contribute).
+## Roadmap
 
-## Aim
+- For single cell the following stuff will be hopefully soon’ish
+  implemented:
+  - More multi-file read in support. At the moment, multiple h5ad files
+    are possible, but not yet for other file formats.
+  - h5 file i/o.
+  - Saving data to h5ad for easier interoperability with Python.
+  - Methods on top of the meta cells: co-expression network detection
+    etc.
+  - Expansion of the [sister
+    package](https://github.com/GregorLueg/bixverse.plots) to have
+    plotting helpers in there for single cell.
+  - Helpers to slice and dice the data easier and add new data.
+  - Implementations of
+    [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
+    [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
+  - Port over
+    [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
+  - Add more GPU-acceleration via [cubecl/WGPU backend](NA) for
+    GPU-agnostic acceleration where appropriate, see another [sister
+    package](https://github.com/GregorLueg/bixverse.gpu)
+- Leverage the current infrastructure and add dedicated support and
+  methods for spatial transcriptomics.
+- Add other interesting methods that I find.
 
-![but why](reference/figures/but_why.png)
+## For developers
 
-Good question, why this package? Basically, there are three reasons for
-this:
-
-*Last update to the read-me: 01.11.2025*
+If you wish to contribute, please read the [Code
+Style](https://gregorlueg.github.io/info/code_style.md).

@@ -27,4 +27,4 @@ process_go_data(go_info, go_genes, go_relationships)
 ## Value
 
 data.table ready for usage in
-[`gene_ontology_data()`](gene_ontology_data.md).
+[`gene_ontology_data()`](https://gregorlueg.github.io/bixverse/reference/gene_ontology_data.md).

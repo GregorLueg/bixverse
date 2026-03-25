@@ -23,7 +23,8 @@ scenic_gene_filter_sc(
 
 - scenic_params:
 
-  List. SCENIC parameters, see [`params_scenic()`](params_scenic.md).
+  List. SCENIC parameters, see
+  [`params_scenic()`](https://gregorlueg.github.io/bixverse/reference/params_scenic.md).
   Only `min_counts` and `min_cells` are used by this function.
 
 - cells_to_take:

@@ -1,8 +1,10 @@
 # QC on the bulk dge data (DEPRECATED!)
 
 This is a deprecated method and will raise an error. Please use
-[`qc_bulk_dge()`](qc_bulk_dge.md) and
-[`normalise_bulk_dge()`](normalise_bulk_dge.md) instead.
+[`qc_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/qc_bulk_dge.md)
+and
+[`normalise_bulk_dge()`](https://gregorlueg.github.io/bixverse/reference/normalise_bulk_dge.md)
+instead.
 
 ## Usage
 
@@ -21,7 +23,8 @@ preprocess_bulk_dge(
 
 - object:
 
-  The underlying class, see [`BulkDge()`](BulkDge.md).
+  The underlying class, see
+  [`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md).
 
 - group_col:
 

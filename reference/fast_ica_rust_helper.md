@@ -23,12 +23,12 @@ fast_ica_rust_helper(
 - X:
 
   Numeric matrix. Processed data. Output of
-  [`rs_prepare_whitening()`](rs_prepare_whitening.md).
+  [`rs_prepare_whitening()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.md).
 
 - K:
 
   The K matrix. Pre-whitening matrix. Output of
-  [`rs_prepare_whitening()`](rs_prepare_whitening.md).
+  [`rs_prepare_whitening()`](https://gregorlueg.github.io/bixverse/reference/rs_prepare_whitening.md).
 
 - n_icas:
 
@@ -45,8 +45,8 @@ fast_ica_rust_helper(
 - ica_params:
 
   List. The ICA parameters, see
-  [`params_ica_general()`](params_ica_general.md) wrapper function. This
-  function generates a list containing:
+  [`params_ica_general()`](https://gregorlueg.github.io/bixverse/reference/params_ica_general.md)
+  wrapper function. This function generates a list containing:
 
   - maxit - Integer. Maximum number of iterations for ICA.
 

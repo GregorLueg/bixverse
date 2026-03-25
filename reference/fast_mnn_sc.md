@@ -36,13 +36,14 @@ fast_mnn_sc(
 
   Integer vector. These are the highly variable genes, identified by a
   batch-aware method. Please refer to
-  [`find_hvg_batch_aware_sc()`](find_hvg_batch_aware_sc.md) for more
-  details.
+  [`find_hvg_batch_aware_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_batch_aware_sc.md)
+  for more details.
 
 - fastmnn_params:
 
-  A list, please see [`params_sc_fastmnn()`](params_sc_fastmnn.md). The
-  list has the following parameters:
+  A list, please see
+  [`params_sc_fastmnn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_fastmnn.md).
+  The list has the following parameters:
 
   - sigma - Numeric. Bandwidth of the Gaussian smoothing kernel (as
     proportion of space radius).
@@ -58,8 +59,8 @@ fast_mnn_sc(
   - random_svd - Logical. Use randomised SVD.
 
   - knn - List of kNN parameters. See
-    [`params_knn_defaults()`](params_knn_defaults.md) for available
-    parameters and their defaults.
+    [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
 
 - use_precomputed_pca:
 

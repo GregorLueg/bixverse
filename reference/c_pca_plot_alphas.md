@@ -21,8 +21,10 @@ c_pca_plot_alphas(
 
 - object:
 
-  The underlying class, see [`BulkCoExp()`](BulkCoExp.md). You need to
-  apply [`contrastive_pca_processing()`](contrastive_pca_processing.md)
+  The underlying class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  You need to apply
+  [`contrastive_pca_processing()`](https://gregorlueg.github.io/bixverse/reference/contrastive_pca_processing.md)
   to the function for this method to work. Checkmate will raise errors
   otherwise.
 

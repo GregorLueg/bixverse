@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`OntologySim()`](OntologySim.md).
+This constructor has been renamed to
+[`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 ## Usage
 
@@ -23,4 +24,6 @@ ontology(parent_child_dt, .verbose = TRUE)
 
 ## Value
 
-Returns a [`OntologySim()`](OntologySim.md) object.
+Returns a
+[`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md)
+object.

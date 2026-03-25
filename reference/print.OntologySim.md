@@ -7,7 +7,7 @@ Print a OntologySim object.
 - x:
 
   An object of class `OntologySim`, see
-  [`OntologySim()`](OntologySim.md).
+  [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 - ...:
 

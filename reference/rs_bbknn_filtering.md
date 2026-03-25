@@ -1,11 +1,11 @@
-# Reduce BBKNN matrix to Top X neighbours
+# Reduce BBKNN results to Top X neighbours
 
-Reduce BBKNN matrix to Top X neighbours
+Reduce BBKNN results to Top X neighbours
 
 ## Usage
 
 ``` r
-rs_bbknn_filtering(indptr, indices, no_neighbours_to_keep)
+rs_bbknn_filtering(indptr, indices, data, no_neighbours_to_keep)
 ```
 
 ## Arguments
@@ -18,12 +18,16 @@ rs_bbknn_filtering(indptr, indices, no_neighbours_to_keep)
 
   Integer vector. The indices of the nearest neighbours.
 
+- data:
+
+  Numeric vector. The distances to the nearest neighbours.
+
 - no_neighbours_to_keep:
 
   Integer. Number of nearest neighbours to keep.
 
 ## Value
 
-A numerical matrix with the Top X neighbours per row. If
-`no_neighbours_to_keep` is larger than the number of neighbours in the
-data, these positions will be `NA`.
+A list with `indices` (integer matrix) and `dist` (numeric matrix), each
+with shape (n_cells, no_neighbours_to_keep). Positions without
+neighbours are filled with -1 (indices) or NaN (distances).

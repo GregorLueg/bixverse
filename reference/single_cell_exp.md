@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`SingleCells()`](SingleCells.md).
+This constructor has been renamed to
+[`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md).
 
 ## Usage
 
@@ -18,4 +19,6 @@ single_cell_exp(dir_data)
 
 ## Value
 
-Returns a [`SingleCells()`](SingleCells.md) object.
+Returns a
+[`SingleCells()`](https://gregorlueg.github.io/bixverse/reference/SingleCells.md)
+object.

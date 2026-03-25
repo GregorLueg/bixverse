@@ -20,6 +20,8 @@ checks, etc.
 
 - [`SingleCellDuckDBBase$get_cells_to_keep()`](#method-SingleCellDuckDBBase-get_cells_to_keep)
 
+- [`SingleCellDuckDBBase$get_obs_cols()`](#method-SingleCellDuckDBBase-get_obs_cols)
+
 - [`SingleCellDuckDBBase$set_cells_to_keep()`](#method-SingleCellDuckDBBase-set_cells_to_keep)
 
 - [`SingleCellDuckDBBase$filter_var_table()`](#method-SingleCellDuckDBBase-filter_var_table)
@@ -31,6 +33,8 @@ checks, etc.
 - [`SingleCellDuckDBBase$set_to_keep_column()`](#method-SingleCellDuckDBBase-set_to_keep_column)
 
 - [`SingleCellDuckDBBase$add_data_var()`](#method-SingleCellDuckDBBase-add_data_var)
+
+- [`SingleCellDuckDBBase$rename_column()`](#method-SingleCellDuckDBBase-rename_column)
 
 - [`SingleCellDuckDBBase$clone()`](#method-SingleCellDuckDBBase-clone)
 
@@ -146,7 +150,7 @@ A named numeric containing the gene index mapping.
 
 ------------------------------------------------------------------------
 
-### Method [`get_cells_to_keep()`](get_cells_to_keep.md)
+### Method [`get_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/get_cells_to_keep.md)
 
 Returns the indices of the cells that have to_keep = TRUE in the DB.
 
@@ -156,12 +160,26 @@ Returns the indices of the cells that have to_keep = TRUE in the DB.
 
 #### Returns
 
-The index positions (1-index) of the cells to keep. Filter the obs table
-and reset the cell idx
+The index positions (1-index) of the cells to keep.
 
 ------------------------------------------------------------------------
 
-### Method [`set_cells_to_keep()`](set_cells_to_keep.md)
+### Method `get_obs_cols()`
+
+Returns the available column names in the obs table.
+
+#### Usage
+
+    SingleCellDuckDBBase$get_obs_cols()
+
+#### Returns
+
+A character vector of column names. Filter the obs table and reset the
+cell idx
+
+------------------------------------------------------------------------
+
+### Method [`set_cells_to_keep()`](https://gregorlueg.github.io/bixverse/reference/set_cells_to_keep.md)
 
 #### Usage
 
@@ -266,6 +284,34 @@ Add the information which genes pass threshold to the DuckDB.
 
 Invisible self while adding the new columns to the var table in the
 DuckDB.
+
+------------------------------------------------------------------------
+
+### Method `rename_column()`
+
+Rename a column in the obs or var table.
+
+#### Usage
+
+    SingleCellDuckDBBase$rename_column(table = c("obs", "var"), old, new)
+
+#### Arguments
+
+- `table`:
+
+  String. Either "obs" or "var".
+
+- `old`:
+
+  String. The current column name.
+
+- `new`:
+
+  String. The desired new column name.
+
+#### Returns
+
+Invisible self.
 
 ------------------------------------------------------------------------
 

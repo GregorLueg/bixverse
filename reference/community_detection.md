@@ -19,14 +19,14 @@ community_detection(
 - object:
 
   `NetworkDiffusions` object. The underlying class
-  [`NetworkDiffusions()`](NetworkDiffusions.md).
+  [`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md).
 
 - community_params:
 
   List. Parameters for the community detection within the reduced
   network, see
-  [`params_community_detection()`](params_community_detection.md). A
-  list with the following items:
+  [`params_community_detection()`](https://gregorlueg.github.io/bixverse/reference/params_community_detection.md).
+  A list with the following items:
 
   - max_nodes - Integer. Number of maximum nodes per community. Larger
     communities will be recursively subclustered.

@@ -15,7 +15,7 @@ GeneOntologyElim(go_data_dt, min_genes)
 
   A data.table that contains the gene ontology information. This can be
   extract with for example
-  [`get_go_data_human()`](get_go_data_human.md).
+  [`get_go_data_human()`](https://gregorlueg.github.io/bixverse/reference/get_go_data_human.md).
 
 - min_genes:
 

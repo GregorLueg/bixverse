@@ -15,7 +15,8 @@ cor_module_coremo_cor_sign(object, min_stability = NULL, .verbose = TRUE)
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - min_stability:
 

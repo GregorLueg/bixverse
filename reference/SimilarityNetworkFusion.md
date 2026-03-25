@@ -33,8 +33,9 @@ SimilarityNetworkFusion(
 
 - snf_params:
 
-  List. The SNF parameters, see [`params_snf()`](params_snf.md). The
-  list contains the following elements:
+  List. The SNF parameters, see
+  [`params_snf()`](https://gregorlueg.github.io/bixverse/reference/params_snf.md).
+  The list contains the following elements:
 
   - k - Integer. Number of neighbours to consider.
 

@@ -21,9 +21,11 @@ diffcor_module_processing(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md). Ideally, you should run
-  [`preprocess_bulk_coexp()`](preprocess_bulk_coexp.md) before applying
-  this function.
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
+  Ideally, you should run
+  [`preprocess_bulk_coexp()`](https://gregorlueg.github.io/bixverse/reference/preprocess_bulk_coexp.md)
+  before applying this function.
 
 - background_mat:
 

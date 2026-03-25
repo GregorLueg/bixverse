@@ -1,7 +1,8 @@
 # Return the Limma Voom results
 
 Getter function to extract the Limma Voom results from the
-[`BulkDge()`](BulkDge.md) class.
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
+class.
 
 ## Usage
 

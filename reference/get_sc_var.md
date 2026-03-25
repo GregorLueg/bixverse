@@ -12,7 +12,7 @@ get_sc_var(object, indices = NULL, cols = NULL)
 
 - object:
 
-  `single_cell_exp`, `meta_cells` class.
+  `SingleCells`, `MetaCells` class.
 
 - indices:
 

@@ -39,11 +39,12 @@ params_sc_miloR(
 - knn:
 
   List. Optional overrides for kNN parameters. See
-  [`params_knn_defaults()`](params_knn_defaults.md) for available
-  parameters: `k`, `knn_method`, `ann_dist`, `search_budget`, `n_trees`,
-  `delta`, `diversify_prob`, `ef_budget`, `m`, `ef_construction`,
-  `ef_search`, `n_list` and `n_probe`. Note: `knn_method` cannot be
-  `"exhaustive"` for MiloR as it doesn't generate an index!
+  [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+  for available parameters: `k`, `knn_method`, `ann_dist`,
+  `search_budget`, `n_trees`, `delta`, `diversify_prob`, `ef_budget`,
+  `m`, `ef_construction`, `ef_search`, `n_list` and `n_probe`. Note:
+  `knn_method` cannot be `"exhaustive"` for MiloR as it doesn't generate
+  an index!
 
 ## Value
 

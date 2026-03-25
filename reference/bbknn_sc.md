@@ -13,7 +13,7 @@ refer to Polański, et al.
 bbknn_sc(
   object,
   batch_column,
-  no_neighbours_to_keep = 15L,
+  no_neighbours_to_keep = 5L,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   bbknn_params = params_sc_bbknn(),
@@ -38,7 +38,7 @@ bbknn_sc(
   Integer. Maximum number of neighbours to keep from the BBKNN
   algorithm. Due to generating neighbours for each batch, there might be
   a large number of generated neighbours. This will only keep the top
-  `no_neighbours_to_keep` neighbours.
+  `no_neighbours_to_keep` neighbours. Defaults to `5L`.
 
 - embd_to_use:
 
@@ -51,8 +51,9 @@ bbknn_sc(
 
 - bbknn_params:
 
-  A list, please see [`params_sc_bbknn()`](params_sc_bbknn.md). The list
-  has the following parameters:
+  A list, please see
+  [`params_sc_bbknn()`](https://gregorlueg.github.io/bixverse/reference/params_sc_bbknn.md).
+  The list has the following parameters:
 
   - neighbours_within_batch - Integer. Number of neighbours to consider
     per batch.
@@ -70,8 +71,8 @@ bbknn_sc(
     `10 * neighbours_within_batch`.
 
   - knn - List of kNN parameters. See
-    [`params_knn_defaults()`](params_knn_defaults.md) for available
-    parameters and their defaults.
+    [`params_knn_defaults()`](https://gregorlueg.github.io/bixverse/reference/params_knn_defaults.md)
+    for available parameters and their defaults.
 
 - seed:
 

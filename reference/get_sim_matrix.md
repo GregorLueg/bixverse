@@ -12,7 +12,8 @@ get_sim_matrix(object, as_data_table = FALSE, .verbose = TRUE)
 
 - object:
 
-  `OntologySim class`. See [`OntologySim()`](OntologySim.md).
+  `OntologySim class`. See
+  [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 - as_data_table:
 

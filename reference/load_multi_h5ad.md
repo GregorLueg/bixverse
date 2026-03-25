@@ -1,8 +1,9 @@
 # Load multiple h5ad files into a single `SingleCells`
 
 Takes a pre-scan result from
-[`prescan_h5ad_files()`](prescan_h5ad_files.md) and loads all files into
-a single experiment with global gene QC and sequential cell indexing.
+[`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md)
+and loads all files into a single experiment with global gene QC and
+sequential cell indexing.
 
 ## Usage
 
@@ -26,11 +27,13 @@ load_multi_h5ad(
 
 - prescan_result:
 
-  Output of [`prescan_h5ad_files()`](prescan_h5ad_files.md).
+  Output of
+  [`prescan_h5ad_files()`](https://gregorlueg.github.io/bixverse/reference/prescan_h5ad_files.md).
 
 - sc_qc_param:
 
-  List. Output of [`params_sc_min_quality()`](params_sc_min_quality.md).
+  List. Output of
+  [`params_sc_min_quality()`](https://gregorlueg.github.io/bixverse/reference/params_sc_min_quality.md).
 
 - cell_id_col:
 

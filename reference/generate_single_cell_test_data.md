@@ -18,8 +18,9 @@ generate_single_cell_test_data(
 - syn_data_params:
 
   List. Contains the parameters for the generation of synthetic data,
-  see: [`params_sc_synthetic_data()`](params_sc_synthetic_data.md). Has
-  the following elements:
+  see:
+  [`params_sc_synthetic_data()`](https://gregorlueg.github.io/bixverse/reference/params_sc_synthetic_data.md).
+  Has the following elements:
 
   - n_cells - Integer. Number of cells.
 

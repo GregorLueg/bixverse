@@ -3,7 +3,7 @@
 **\[deprecated\]**
 
 This constructor has been renamed to
-[`NetworkDiffusions()`](NetworkDiffusions.md).
+[`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md).
 
 ## Usage
 
@@ -29,4 +29,6 @@ network_diffusions(edge_data_frame, weighted, directed)
 
 ## Value
 
-Returns a [`NetworkDiffusions()`](NetworkDiffusions.md) object.
+Returns a
+[`NetworkDiffusions()`](https://gregorlueg.github.io/bixverse/reference/NetworkDiffusions.md)
+object.

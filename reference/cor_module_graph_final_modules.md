@@ -25,14 +25,15 @@ cor_module_graph_final_modules(
 
 - object:
 
-  The class, see [`BulkCoExp()`](BulkCoExp.md).
+  The class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - resolution:
 
   The Leiden resolution parameter you wish to use. If NULL, it will use
   the optimal one identified by
-  [`cor_module_graph_check_res()`](cor_module_graph_check_res.md). If
-  nothing can be found, will default to 1.
+  [`cor_module_graph_check_res()`](https://gregorlueg.github.io/bixverse/reference/cor_module_graph_check_res.md).
+  If nothing can be found, will default to 1.
 
 - min_size:
 
@@ -54,7 +55,9 @@ cor_module_graph_final_modules(
 - .graph_params:
 
   List. Parameters for the generation of the (differential) correlation
-  graph, see [`params_cor_graph()`](params_cor_graph.md). Contains:
+  graph, see
+  [`params_cor_graph()`](https://gregorlueg.github.io/bixverse/reference/params_cor_graph.md).
+  Contains:
 
   - Epsilon - Defines the epsilon parameter for the radial basis
     function. Defaults to 2, but should be ideally optimised.
@@ -69,7 +72,7 @@ cor_module_graph_final_modules(
   - verbose - Boolean. Controls verbosity of the graph generation.
 
   This parameter is only relevant if you did *not* run
-  [`cor_module_graph_check_res()`](cor_module_graph_check_res.md).
+  [`cor_module_graph_check_res()`](https://gregorlueg.github.io/bixverse/reference/cor_module_graph_check_res.md).
 
 - .max_iters:
 

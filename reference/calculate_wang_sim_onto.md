@@ -13,7 +13,8 @@ calculate_wang_sim_onto(object, weights, .verbose = TRUE)
 
 - object:
 
-  `OntologySim` class. See [`OntologySim()`](OntologySim.md).
+  `OntologySim` class. See
+  [`OntologySim()`](https://gregorlueg.github.io/bixverse/reference/OntologySim.md).
 
 - weights:
 

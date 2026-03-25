@@ -35,7 +35,8 @@ rs_sc_scrublet(
 
 - scrublet_params:
 
-  List. Parameter list, see [`params_scrublet()`](params_scrublet.md).
+  List. Parameter list, see
+  [`params_scrublet()`](https://gregorlueg.github.io/bixverse/reference/params_scrublet.md).
 
 - seed:
 

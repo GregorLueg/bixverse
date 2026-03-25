@@ -22,7 +22,9 @@ BulkDge(
 - raw_counts:
 
   matrix. The raw count matrix. Rows = genes, columns = samples. Note:
-  this is different from the [`BulkCoExp()`](BulkCoExp.md) class!
+  this is different from the
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+  class!
 
 - meta_data:
 

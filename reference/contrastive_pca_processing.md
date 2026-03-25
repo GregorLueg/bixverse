@@ -18,7 +18,8 @@ contrastive_pca_processing(
 
 - object:
 
-  The underlying class, see [`BulkCoExp()`](BulkCoExp.md).
+  The underlying class, see
+  [`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 - background_matrix:
 

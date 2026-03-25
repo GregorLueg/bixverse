@@ -2,7 +2,8 @@
 
 **\[deprecated\]**
 
-This constructor has been renamed to [`BulkCoExp()`](BulkCoExp.md).
+This constructor has been renamed to
+[`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md).
 
 ## Usage
 
@@ -28,4 +29,6 @@ bulk_coexp(raw_data, meta_data, variable_info = NULL)
 
 ## Value
 
-Returns a [`BulkCoExp()`](BulkCoExp.md) object.
+Returns a
+[`BulkCoExp()`](https://gregorlueg.github.io/bixverse/reference/BulkCoExp.md)
+object.

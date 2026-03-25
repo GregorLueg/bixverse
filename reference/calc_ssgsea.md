@@ -23,7 +23,8 @@ calc_ssgsea(exp, pathways, ssgsea_params = params_ssgsea(), .verbose = FALSE)
 
 - ssgsea_params:
 
-  List. The GSVA parameters, see [`params_ssgsea()`](params_ssgsea.md)
+  List. The GSVA parameters, see
+  [`params_ssgsea()`](https://gregorlueg.github.io/bixverse/reference/params_ssgsea.md)
   wrapper function. This function generates a list containing:
 
   - alpha - Float. The exponent defining the weight of the tail in the

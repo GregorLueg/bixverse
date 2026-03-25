@@ -13,7 +13,8 @@ calculate_critical_value(x, alpha, permutations = 100000L, seed = 10101L)
 
 - x:
 
-  Numerical matrix or `ontology class`, see [`ontology()`](ontology.md).
+  Numerical matrix or `ontology class`, see
+  [`ontology()`](https://gregorlueg.github.io/bixverse/reference/ontology.md).
   This function tends to be slower on matrices compared to
   `ontology class`.
 

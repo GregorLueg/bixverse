@@ -1,7 +1,8 @@
 # Return the effect size results
 
 Getter function to extract the Effect size results from the
-[`BulkDge()`](BulkDge.md) class.
+[`BulkDge()`](https://gregorlueg.github.io/bixverse/reference/BulkDge.md)
+class.
 
 ## Usage
 
