@@ -417,7 +417,7 @@ download_pbmc_batches <- function() {
   untar(dest_file, exdir = temp_dir)
 
   # add headers to genes.tsv
-  data_path <- file.path(temp_dir, "PBMC_batches")
+  data_path <- file.path(temp_dir, "pbmc_batches")
 
   data_path
 }
