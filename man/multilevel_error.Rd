@@ -17,3 +17,4 @@ Returns the log2error
 \description{
 Helper function to calculate the multi-level error
 }
+\keyword{internal}

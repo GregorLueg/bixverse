@@ -4,7 +4,7 @@
 \alias{rs_upper_triangle_to_sparse}
 \title{Generate sparse data from an upper triangle}
 \usage{
-rs_upper_triangle_to_sparse(value, shift, n)
+rs_upper_triangle_to_sparse(value, shift, n, cs_type)
 }
 \arguments{
 \item{value}{Numeric vector. The upper triangle values.}
@@ -12,6 +12,9 @@ rs_upper_triangle_to_sparse(value, shift, n)
 \item{shift}{Integer Did you apply a shift to remove the diagonal values?}
 
 \item{n}{Integer. The number of columns/rows in the symmetric matrix.}
+
+\item{cs_type}{String. One of \code{c("csr", "csc")}. Which type of list to
+return.}
 }
 \value{
 A list containing:

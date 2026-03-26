@@ -1,80 +1,77 @@
-original_function <- function(
-  stats,
-  selectedStats,
-  gseaParam = 1,
-  returnAllExtremes = FALSE,
-  returnLeadingEdge = FALSE,
-  scoreType = c("std", "pos", "neg")
-) {
-  scoreType <- match.arg(scoreType)
-  S <- selectedStats
-  r <- stats
-  p <- gseaParam
-  S <- sort(S)
-  stopifnot(all(head(S, -1) < tail(S, -1)))
-  m <- length(S)
-  N <- length(r)
-  if (m == N) {
-    stop("GSEA statistic is not defined when all genes are selected")
-  }
-  NR <- (sum(abs(r[S])^p))
-  rAdj <- abs(r[S])^p
-  if (NR == 0) {
-    rCumSum <- seq_along(rAdj) / length(rAdj)
-  } else {
-    rCumSum <- cumsum(rAdj) / NR
-  }
-  tops <- rCumSum - (S - seq_along(S)) / (N - m)
-  print("tops:")
-  print(tops)
-  if (NR == 0) {
-    bottoms <- tops - 1 / m
-  } else {
-    bottoms <- tops - rAdj / NR
-  }
-  maxP <- max(tops)
-  minP <- min(bottoms)
-  switch(
-    scoreType,
-    std = geneSetStatistic <- ifelse(
-      maxP == -minP,
-      0,
-      ifelse(maxP > -minP, maxP, minP)
-    ),
-    pos = geneSetStatistic <- maxP,
-    neg = geneSetStatistic <- minP
-  )
-  if (!returnAllExtremes && !returnLeadingEdge) {
-    return(geneSetStatistic)
-  }
-  res <- list(res = geneSetStatistic)
-  if (returnAllExtremes) {
-    res <- c(res, list(tops = tops, bottoms = bottoms))
-  }
-  if (returnLeadingEdge) {
-    switch(
-      scoreType,
-      std = leadingEdge <- if (maxP > -minP) {
-        S[seq_along(S) <= which.max(tops)]
-      } else if (maxP < -minP) {
-        rev(S[seq_along(S) >= which.min(bottoms)])
-      } else {
-        NULL
-      },
-      pos = leadingEdge <- S[seq_along(S) <= which.max(tops)],
-      neg = leadingEdge <- rev(S[seq_along(S) >= which.min(bottoms)])
-    )
-    res <- c(res, list(leadingEdge = leadingEdge))
-  }
-  res
-}
+vars <- get_sc_var(single_cell_obj)
 
-fgsea_res <- original_function(
-  stats = stats,
-  selectedStats = pathway_indices_r$pathway_pos,
-  returnLeadingEdge = TRUE,
-  returnAllExtremes = TRUE
+tfs <- fread(
+  "https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt",
+  header = FALSE
+) %>%
+  `colnames<-`("tf")
+
+tf_indices <- which(vars$column1 %in% tfs$tf) - 1L
+
+object = single_cell_obj
+
+genes_to_include <- rs_scenic_gene_filter(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  cell_indices = get_cells_to_keep(object),
+  scenic_params = params_scenic(min_counts = 15L),
+  verbose = TRUE
 )
 
+includes_genes_ids <- vars[genes_to_include + 1, column1]
 
-fgsea_res$bottoms
+tf_indices_red <- intersect(tf_indices, genes_to_include)
+
+scenic_results <- rs_scenic_grn(
+  f_path_genes = get_rust_count_gene_f_path(object),
+  cell_indices = get_cells_to_keep(object),
+  gene_indices = genes_to_include,
+  tf_indices = as.integer(tf_indices_red),
+  scenic_params = params_scenic(
+    gene_batch_size = 64L,
+    learner_type = "randomforest"
+  ),
+  seed = 123L,
+  verbose = TRUE
+)
+
+top_x_per_column <- function(mat, x, gene_ids) {
+  apply(
+    mat,
+    2,
+    function(col) gene_ids[order(col, decreasing = TRUE)[1:x]],
+    simplify = FALSE
+  )
+}
+
+results <- top_x_per_column(
+  scenic_results,
+  x = 50L,
+  gene_ids = includes_genes_ids
+)
+
+names(results) <- vars$column1[tf_indices_red + 1]
+
+paths <- download_cistarget_hg38()
+rankings <- read_motif_ranking(paths$rankings)
+annotations <- read_motif_annotation_file(paths$motif_annotations)
+
+cis_target_results <- run_cistarget(
+  gs_list = results,
+  rankings = rankings,
+  annot_data = annotations
+)
+
+cis_target_results[,
+  match := purrr::map2_lgl(
+    gs_name,
+    TF_highConf,
+    \(tf, associated_tf) {
+      if (is.na(associated_tf)) {
+        return(FALSE)
+      }
+      tf %in% strsplit(associated_tf, ";")[[1]]
+    }
+  )
+]
+
+cis_target_results[(match)]$gs_name

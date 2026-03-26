@@ -19,3 +19,4 @@ The R2 value of of the goodness of fit.
 \description{
 Calculate the goodness of fit for a power law distribution.
 }
+\keyword{internal}

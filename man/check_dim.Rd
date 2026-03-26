@@ -7,7 +7,7 @@
 check_dim(object, no_samples)
 }
 \arguments{
-\item{object}{\code{snf} class.}
+\item{object}{\code{SimilarityNetworkFusion} class.}
 
 \item{no_samples}{Integer. New number of samples}
 }
@@ -19,3 +19,4 @@ with what has been stored in the class so far, it will throw an error.
 \description{
 Helper to assert same number of samples
 }
+\keyword{internal}

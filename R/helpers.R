@@ -1,49 +1,3 @@
-# parallelisation stuff --------------------------------------------------------
-
-#' Helper function for core detection.
-#'
-#' @description
-#' Identifies the number of cores/workers to use for parallel tasks. Will
-#' default to half of the available cores, to a maximum of `abs_max_workers`.
-#'
-#' @param abs_max_workers Integer. Absolute maximum number of cores to use.
-#' Defaults to `8L`.
-#'
-#' @returns Integer. Number of cores to use.
-get_cores <- function(abs_max_workers = 8L) {
-  checkmate::qassert(abs_max_workers, "I1")
-  cores <- as.integer(parallel::detectCores() / 2)
-  cores <- ifelse(cores >= abs_max_workers, abs_max_workers, cores)
-  return(cores)
-}
-
-# user options -----------------------------------------------------------------
-
-#' Helper function for user option selection
-#'
-#' @param options Character vector. The options the user has to choose from.
-#'
-#' @returns The chosen option
-select_user_option <- function(options) {
-  cat("Please select an option:\n")
-  for (i in seq_along(options)) {
-    cat(i, ": ", options[i], "\n")
-  }
-
-  while (TRUE) {
-    cat("\nEnter the number of your choice: ")
-    user_choice <- as.integer(readLines(n = 1))
-
-    if (
-      !is.na(user_choice) && user_choice > 0 && user_choice <= length(options)
-    ) {
-      return(options[user_choice])
-    } else {
-      cat("Invalid selection. Please try again.\n")
-    }
-  }
-}
-
 # gene set libraries -----------------------------------------------------------
 
 ## gene ontology ---------------------------------------------------------------
@@ -218,6 +172,8 @@ get_go_data_human <- function(filter_relationships = TRUE, .verbose = TRUE) {
 #' connections between the different terms)
 #'
 #' @return A data.table with the identifier and depth.
+#'
+#' @keywords internal
 get_go_levels <- function(edge_dt) {
   # checks
   checkmate::assertDataTable(edge_dt)
@@ -259,7 +215,9 @@ get_go_levels <- function(edge_dt) {
   return(level_dt)
 }
 
-# sparse matrices --------------------------------------------------------------
+# data -------------------------------------------------------------------------
+
+## sparse matrices -------------------------------------------------------------
 
 #' Transform an upper triangle-stored matrix to a sparse one
 #'
@@ -267,25 +225,35 @@ get_go_levels <- function(edge_dt) {
 #' stored in a row major format.
 #' @param shift Integer. Did you shift the diagonal up.
 #' @param n Integer. Number of columns and rows of the symmetric matrix.
+#' @param type String. One of `c("csc", "csr")`. Which type of of sparse matrix
+#' to return.
 #'
 #' @returns The sparse matrix.
 #'
 #' @export
-upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
+upper_triangle_to_sparse <- function(
+  upper_triangle_vals,
+  shift,
+  n,
+  type = c("csc", "csr")
+) {
+  type <- match.arg(type)
+
   # checks
   checkmate::qassert(upper_triangle_vals, "N+")
   checkmate::qassert(shift, "I1")
   checkmate::qassert(n, "I1")
+  checkmate::assertChoice(type, c("csc", "csr"))
 
   # functions
-  data <- rs_upper_triangle_to_sparse(upper_triangle_vals, as.integer(shift), n)
-
-  matrix = Matrix::sparseMatrix(
-    i = data$row_indices + 1,
-    p = data$col_ptr,
-    x = unlist(data$data),
-    dims = c(n, n)
+  data <- rs_upper_triangle_to_sparse(
+    value = upper_triangle_vals,
+    shift = as.integer(shift),
+    n = n,
+    cs_type = type
   )
+
+  matrix <- sparse_list_to_mat(data)
 
   return(matrix)
 }
@@ -297,20 +265,26 @@ upper_triangle_to_sparse <- function(upper_triangle_vals, shift, n) {
 #' @returns The sparseMatrix from the data.
 #'
 #' @export
+#'
+#' @keywords internal
 sparse_list_to_mat <- function(ls) {
   # checks
-  checkmate::assertList(ls, types = "numeric", names = "named")
+  checkmate::assertList(ls, names = "named")
   checkmate::assertNames(
     names(ls),
-    must.include = c("data", "row_indices", "col_ptr", "ncol", "nrow")
+    must.include = c("data", "indices", "indptr", "ncol", "nrow", "cs_type")
   )
+  checkmate::assertChoice(ls$cs_type, c("csc", "csr"))
 
   # body
+  repr <- if (ls$cs_type == "csc") "C" else "R"
+
   sparse_mat <- Matrix::sparseMatrix(
-    i = ls$row_indices + 1,
-    p = ls$col_ptr,
+    i = ls$indices + 1,
+    p = ls$indptr,
     x = ls$data,
-    dims = c(ls$nrow, ls$ncol)
+    dims = c(ls$nrow, ls$ncol),
+    repr = repr
   )
 
   return(sparse_mat)
@@ -384,7 +358,101 @@ get_inflection_point <- function(x, y, span = 0.5) {
   )
 }
 
+# others -----------------------------------------------------------------------
+
+## parallelisation stuff -------------------------------------------------------
+
+#' Helper function for core detection.
+#'
+#' @description
+#' Identifies the number of cores/workers to use for parallel tasks. Will
+#' default to half of the available cores, to a maximum of `abs_max_workers`.
+#'
+#' @param abs_max_workers Integer. Absolute maximum number of cores to use.
+#' Defaults to `8L`.
+#'
+#' @returns Integer. Number of cores to use.
+#'
+#' @keywords internal
+get_cores <- function(abs_max_workers = 8L) {
+  checkmate::qassert(abs_max_workers, "I1")
+  cores <- as.integer(parallel::detectCores() / 2)
+  cores <- ifelse(cores >= abs_max_workers, abs_max_workers, cores)
+  return(cores)
+}
+
+## string stuff ----------------------------------------------------------------
+
+#' Helper function to transform strings to snake_case
+#'
+#' @param x String. The string (vector) you wish to transform to snake_case.
+#' @param ignore_na Boolean. Shall the function just ignore `NA` values and
+#' return `NA` at this position.
+#' Defaults to `FALSE`.
+#'
+#' @return Returns the string in snake_case format.
+#'
+#' @export
+to_snake_case <- function(x, ignore_na = FALSE) {
+  # checks
+  if (ignore_na) {
+    checkmate::qassert(x, "s+")
+    na_positions <- is.na(x)
+    x <- x[!na_positions]
+  } else {
+    checkmate::qassert(x, "S+")
+    x <- x
+  }
+
+  # transformations
+  x <- gsub("([a-z])([A-Z])", "\\1_\\2", x)
+  x <- tolower(x)
+  x <- gsub("[^a-z0-9]+", "_", x)
+  x <- gsub("^_+|_+$", "", x)
+  x <- gsub("_+", "_", x)
+
+  if (ignore_na) {
+    res <- vector(mode = "character", length = length(na_positions))
+    res[!na_positions] <- x
+    res[na_positions] <- NA
+    return(res)
+  } else {
+    return(x)
+  }
+}
+
+## user options --------------------q--------------------------------------------
+
+#' Helper function for user option selection
+#'
+#' @param options Character vector. The options the user has to choose from.
+#'
+#' @returns The chosen option
+#'
+#' @keywords internal
+select_user_option <- function(options) {
+  cat("Please select an option:\n")
+  for (i in seq_along(options)) {
+    cat(i, ": ", options[i], "\n")
+  }
+
+  while (TRUE) {
+    cat("\nEnter the number of your choice: ")
+    user_choice <- as.integer(readLines(n = 1))
+
+    if (
+      !is.na(user_choice) && user_choice > 0 && user_choice <= length(options)
+    ) {
+      return(options[user_choice])
+    } else {
+      cat("Invalid selection. Please try again.\n")
+    }
+  }
+}
+
 # data transforms --------------------------------------------------------------
+
+## data.table to matrices ------------------------------------------------------
 
 #' Transform data.tables into matrices for distance calculations
 #'
@@ -407,6 +475,8 @@ get_inflection_point <- function(x, y, span = 0.5) {
 #' }
 #'
 #' @export
+#'
+#' @keywords internal
 prep_data_gower_hamming_dist <- function(dt, sample_names) {
   # checks
   checkmate::assertDataTable(dt)
@@ -441,7 +511,7 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
   return(res)
 }
 
-# one hot encoding -------------------------------------------------------------
+## one hot encoding ------------------------------------------------------------
 
 #' Helper to generate one-hot encodings
 #'
@@ -451,6 +521,8 @@ prep_data_gower_hamming_dist <- function(dt, sample_names) {
 #' @param labels String vector. `NA`s signify unlabelled data.
 #'
 #' @return One-hot encoded matrix.
+#'
+#' @keywords internal
 one_hot_encode <- function(labels) {
   # checks
   checkmate::qassert(labels, "s+")
@@ -467,4 +539,51 @@ one_hot_encode <- function(labels) {
   }
 
   mat
+}
+
+## sparse to list --------------------------------------------------------------
+
+#' Helper function to transform R sparse matrices to list
+#'
+#' @param sparse_mat Sparse matrix. The matrix to transform into a list.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item indptr - Index pointers of the sparse data.
+#'   \item indices - Indices of the data.
+#'   \item data - The underlying data.
+#'   \item format - String that defines if the data is CSR or CSC.
+#'   \item nrow - The number of rows.
+#'   \item ncol - The number of columns.
+#' }
+#'
+#' @keywords internal
+sparse_mat_to_list <- function(sparse_mat) {
+  # checks
+  checkmate::assert(
+    checkmate::testClass(sparse_mat, "dgCMatrix"),
+    checkmate::testClass(sparse_mat, "dgRMatrix")
+  )
+
+  res <- if (checkmate::testClass(sparse_mat, "dgCMatrix")) {
+    list(
+      indptr = sparse_mat@p,
+      indices = sparse_mat@i,
+      data = sparse_mat@x,
+      format = "csc",
+      nrow = sparse_mat@Dim[1],
+      ncol = sparse_mat@Dim[2]
+    )
+  } else {
+    list(
+      indptr = sparse_mat@p,
+      indices = sparse_mat@j,
+      data = sparse_mat@x,
+      format = "csr",
+      nrow = sparse_mat@Dim[1],
+      ncol = sparse_mat@Dim[2]
+    )
+  }
+
+  return(res)
 }

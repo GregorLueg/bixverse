@@ -56,7 +56,7 @@ calculate_rpkm <- function(counts, gene_lengths) {
 #' Get the gene lengths
 #'
 #' @param x Object to extract gene lengths from. Can be a matrix or
-#' bulk_coexp object.
+#' BulkCoExp object.
 #' @param species String. One of `c("human", "mouse", "rat")`.
 #' @param ... Additional parameters passed to methods.
 #'
@@ -75,6 +75,8 @@ get_gene_lengths <- function(x, species = c("human", "mouse", "rat"), ...) {
 #' @returns Named numeric representing the gene lengths.
 #'
 #' @export
+#'
+#' @keywords internal
 get_gene_lengths.matrix <- function(
   x,
   species = c("human", "mouse", "rat"),
@@ -130,22 +132,24 @@ get_gene_lengths.matrix <- function(
   return(gene_lengths)
 }
 
-#' @name get_gene_lengths.bulk_coexp
+#' @name get_gene_lengths.BulkCoExp
 #'
-#' @title Get gene set lengths for a bulk_coexp class
+#' @title Get gene set lengths for a BulkCoExp class
 #'
 #' @description
-#' Get gene lengths for a bulk_coexp object by extracting the count matrix
+#' Get gene lengths for a BulkCoExp object by extracting the count matrix
 #' and delegating to the matrix method.
 #'
-#' @param x An object of class `bulk_coexp`.
+#' @param x An object of class `BulkCoExp`.
 #' @param species String. One of `c("human", "mouse", "rat")`.
 #' @param ... Additional parameters. Not in use atm.
 #'
 #' @returns Named numeric representing the gene lengths.
 #'
-#' @method get_gene_lengths bulk_coexp
-S7::method(get_gene_lengths, bulk_coexp) <- function(
+#' @method get_gene_lengths BulkCoExp
+#'
+#' @keywords internal
+S7::method(get_gene_lengths, BulkCoExp) <- function(
   x,
   species = c("human", "mouse", "rat"),
   ...
@@ -153,7 +157,7 @@ S7::method(get_gene_lengths, bulk_coexp) <- function(
   species <- match.arg(species)
 
   # checks
-  checkmate::assertClass(x, "bixverse::bulk_coexp")
+  checkmate::assertClass(x, "bixverse::BulkCoExp")
   checkmate::assertChoice(species, c("human", "mouse", "rat"))
 
   # Fixed: condition was inverted
@@ -177,6 +181,8 @@ S7::method(get_gene_lengths, bulk_coexp) <- function(
 #' @param x Vector of strings or factors.
 #'
 #' @returns Vector with fixed naming based on R conventions.
+#'
+#' @keywords internal
 fix_contrast_names <- function(x) {
   checkmate::qassert(x, c("S+", "F+", "N+"))
   if (checkmate::qtest(x, c("S+", "F+"))) {
@@ -202,6 +208,8 @@ fix_contrast_names <- function(x) {
 #' all co-variate comparisons will be returned.
 #'
 #' @returns The Limma contrasts for further usage.
+#'
+#' @keywords internal
 all_limma_contrasts <- function(limma_fit, contrast_grps) {
   # Globals
   coef <- combn <- NULL
@@ -240,6 +248,8 @@ all_limma_contrasts <- function(limma_fit, contrast_grps) {
 #' `"contrast1-contrast2"`.
 #'
 #' @returns The Limma contrasts for further usage.
+#'
+#' @keywords internal
 prep_limma_contrasts <- function(limma_fit, contrast_list) {
   # Checks
   checkmate::assertClass(limma_fit, "MArrayLM")

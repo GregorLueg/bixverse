@@ -4,7 +4,7 @@
 \alias{upper_triangle_to_sparse}
 \title{Transform an upper triangle-stored matrix to a sparse one}
 \usage{
-upper_triangle_to_sparse(upper_triangle_vals, shift, n)
+upper_triangle_to_sparse(upper_triangle_vals, shift, n, type = c("csc", "csr"))
 }
 \arguments{
 \item{upper_triangle_vals}{Numerical vector. The values of the upper triangle
@@ -13,6 +13,9 @@ stored in a row major format.}
 \item{shift}{Integer. Did you shift the diagonal up.}
 
 \item{n}{Integer. Number of columns and rows of the symmetric matrix.}
+
+\item{type}{String. One of \code{c("csc", "csr")}. Which type of of sparse matrix
+to return.}
 }
 \value{
 The sparse matrix.

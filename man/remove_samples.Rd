@@ -7,8 +7,8 @@
 remove_samples(object, samples_to_remove, ...)
 }
 \arguments{
-\item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
-\code{bixverse::bulk_dge}.}
+\item{object}{The underlying object, either \code{\link[=BulkCoExp]{BulkCoExp()}} or
+\code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{samples_to_remove}{Character vector. The sample identifiers to remove.}
 

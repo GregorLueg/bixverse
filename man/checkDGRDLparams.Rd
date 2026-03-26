@@ -16,3 +16,4 @@ checkDGRDLparams(x)
 Checkmate extension for checking dual graph regularised
 dictionary learning parameters.
 }
+\keyword{internal}

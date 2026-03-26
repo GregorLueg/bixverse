@@ -8,6 +8,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+author:
+  - name: Gregor Lueg
 ---
 
 ## Genetic diffusion and community detections
@@ -60,21 +62,21 @@ edge_data <- setDT(igraph::as_data_frame(barabasi_graph))
 probs <- igraph::degree(barabasi_graph) / sum(igraph::degree(barabasi_graph))
 
 genes_1 <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 5, 
+  igraph::V(barabasi_graph)$name,
+  size = 5,
   prob = probs
 )
 genes_2 <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 8, 
+  igraph::V(barabasi_graph)$name,
+  size = 8,
   prob = probs
 )
 
 diffusion_vector_1 <- rep(1, length(genes_1)) %>% `names<-`(genes_1)
 diffusion_vector_2 <- rep(1, length(genes_2)) %>% `names<-`(genes_2)
 gold_standard_genes <- sample(
-  igraph::V(barabasi_graph)$name, 
-  size = 6, 
+  igraph::V(barabasi_graph)$name,
+  size = 6,
   prob = probs
 )
 ```
@@ -86,9 +88,9 @@ To generate the class, you run
 ```{r}
 #| label: class initialisation
 
-diffusion_obj <- network_diffusions(
-  edge_data, 
-  weighted = FALSE, 
+diffusion_obj <- NetworkDiffusions(
+  edge_data,
+  weighted = FALSE,
   directed = FALSE
 )
 ```
@@ -99,8 +101,8 @@ For just running a single diffusion from a single set, you can do:
 #| label: single diffusion
 
 diffusion_obj <- diffuse_seed_nodes(
-  object = diffusion_obj, 
-  diffusion_vector = diffusion_vector_1, 
+  object = diffusion_obj,
+  diffusion_vector = diffusion_vector_1,
   summarisation = "max"
 )
 
@@ -149,14 +151,14 @@ To assess if the diffusions are useful to start with, you can run:
 #| label: AUC calculations
 
 auc_results <- calculate_diffusion_auc(
-  object = diffusion_obj, 
+  object = diffusion_obj,
   hit_nodes = gold_standard_genes,
   permutation_test = TRUE # This will do permutation and generate Z-scores
 )
 
 print(
   sprintf(
-    "The AUC of the diffuion is %.3f.", 
+    "The AUC of the diffuion is %.3f.",
     auc_results$auc
   )
 )
@@ -239,8 +241,8 @@ you can just do:
 #| label: tied diffusion
 
 diffusion_obj <- tied_diffusion(
-  object = diffusion_obj, 
-  diffusion_vector_1 = diffusion_vector_1, 
+  object = diffusion_obj,
+  diffusion_vector_1 = diffusion_vector_1,
   diffusion_vector_2 = diffusion_vector_2,
   summarisation = "max",
   score_aggregation = "min"
@@ -275,8 +277,8 @@ par(mfrow = c(1, 2))
 
 hist(diffusion_res, xlab = "Tied PPR score", main = "Diffusion result (tied)")
 hist(
-  permutation_res, 
-  xlab = "Tied PPR score", 
+  permutation_res,
+  xlab = "Tied PPR score",
   main = "Permutations result (tied)"
 )
 
@@ -321,3 +323,8 @@ diffusion_obj <- community_detection(
 results_v2 <- get_results(diffusion_obj)
 head(results_v2)
 ```
+
+As you can appreciate, the diffusions can be used to identify more "influenced"
+parts of the network. If you want to transform the graphs into some embeddings
+for visualisations, also check out [genewalkR](https://gregorlueg.github.io/genewalkR/)
+which has very fast node2vec methods. 

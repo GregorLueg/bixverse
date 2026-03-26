@@ -16,3 +16,4 @@ checkIcaNcomps(x)
 Checkmate extension for checking the ICA number of component
 parameters.
 }
+\keyword{internal}

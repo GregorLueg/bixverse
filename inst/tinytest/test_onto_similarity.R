@@ -147,7 +147,8 @@ expected_filtered <- data.table::data.table(
 
 ### ancestry ------------------------------------------------------------------
 
-c(ancestors, descendants) %<-% get_ontology_ancestry(test_onto)
+zeallot::`%<-%`(c(ancestors, descendants), get_ontology_ancestry(test_onto))
+
 
 expect_equivalent(
   current = ancestors[names(expected_ancestors)],
@@ -233,7 +234,7 @@ expect_equal(
 
 ## class -----------------------------------------------------------------------
 
-test_class <- ontology(test_onto, .verbose = FALSE)
+test_class <- OntologySim(test_onto, .verbose = FALSE)
 
 expect_warning(
   current = calculate_semantic_sim_onto(test_class, sim_type = "resnik"),
@@ -511,14 +512,14 @@ expect_error(
 
 ## class -----------------------------------------------------------------------
 
-test_class <- ontology(test_onto, .verbose = FALSE)
+test_class <- OntologySim(test_onto, .verbose = FALSE)
 
 expect_error(
   current = calculate_wang_sim_onto(test_class, .verbose = FALSE),
   info = "Wang ontology class - correct error when column is missing"
 )
 
-test_class <- ontology(test_onto_wang, .verbose = FALSE)
+test_class <- OntologySim(test_onto_wang, .verbose = FALSE)
 
 test_class <- calculate_wang_sim_onto(
   object = test_class,

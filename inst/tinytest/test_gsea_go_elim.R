@@ -49,7 +49,7 @@ toy_go_data <- data.table::data.table(
 
 ## test rust implementations ---------------------------------------------------
 
-object <- gene_ontology_data(toy_go_data, min_genes = 3L)
+object <- GeneOntologyElim(toy_go_data, min_genes = 3L)
 
 levels <- names(S7::prop(object, "levels"))
 
@@ -271,7 +271,7 @@ toy_go_data <- data.table::data.table(
 ) %>%
   data.table::setorder(-depth)
 
-object <- gene_ontology_data(toy_go_data, min_genes = 3L)
+object <- GeneOntologyElim(toy_go_data, min_genes = 3L)
 
 levels <- names(S7::prop(object, "levels"))
 
@@ -281,11 +281,11 @@ levels <- names(S7::prop(object, "levels"))
 
 # these are super significant due to the sampling...
 
-expected_sizes <- c(40, 48, 44, 61, 35, 38, 40, 50)
+expected_sizes <- c(48, 44, 40, 61, 35, 38, 40, 50)
 expected_err <- c(
-  1.60243115,
-  1.39518713,
-  1.34223377,
+  NA,
+  NA,
+  NA,
   1.09592929,
   1.03769616,
   0.83908894,
@@ -324,12 +324,12 @@ expect_equal(
 expected_sizes <- c(100, 64, 35, 40, 125, 97, 40, 50)
 expected_err <- c(
   NA,
-  1.52970525,
+  NA,
   1.03769616,
   0.06299909,
   NA,
   NA,
-  1.60243115,
+  NA,
   0.03458907
 )
 

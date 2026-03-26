@@ -7,7 +7,7 @@
 plot_hvgs(object, bins = 50L)
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 
 \item{bins}{Integer. Number of bins to plot.}
 }

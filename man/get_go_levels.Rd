@@ -16,3 +16,4 @@ A data.table with the identifier and depth.
 \description{
 Gets the ontology depth based on the edge dt
 }
+\keyword{internal}

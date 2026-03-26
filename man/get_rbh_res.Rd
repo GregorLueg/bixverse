@@ -7,7 +7,7 @@
 get_rbh_res(object)
 }
 \arguments{
-\item{object}{The underlying class \code{\link[=rbh_graph]{rbh_graph()}}.}
+\item{object}{The underlying class \code{\link[=RbhGraph]{RbhGraph()}}.}
 }
 \value{
 The data.table with the RBH result if found, otherwise NULL.

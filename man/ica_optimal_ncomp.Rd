@@ -7,7 +7,7 @@
 ica_optimal_ncomp(object, span = 0.2, show_plot = TRUE, .verbose = TRUE)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to apply
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to apply
 \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}} before running this function.}
 
 \item{span}{Float. A value between 0.1 and 1.0 for the loess function
@@ -19,7 +19,7 @@ Defaults to \code{TRUE}.}
 \item{.verbose}{Boolean. Controls the verbosity of the function.}
 }
 \value{
-\code{bulk_coexp} with optimal ncomp based on the inflection point method.
+\code{BulkCoExp} with optimal ncomp based on the inflection point method.
 }
 \description{
 This function can be used after having run \code{\link[=ica_evaluate_comp]{ica_evaluate_comp()}}.

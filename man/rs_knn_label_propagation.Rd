@@ -5,17 +5,19 @@
 \title{kNN label propagation}
 \usage{
 rs_knn_label_propagation(
-  edge_list,
+  from,
+  to,
   one_hot_encoding,
   label_mask,
-  alpha,
-  iterations,
-  tolerance
+  weights,
+  label_prop_params
 )
 }
 \arguments{
-\item{edge_list}{Integer vector. In form of node_1, node_2, node_3, ...
-which indicates alternating pairs (node_1, node_2), etc in terms of edges}
+\item{from}{Integer vector. Source node indices for each edge.}
+
+\item{to}{Integer vector. Target node indices for each edge. Must be the
+same length as \code{from}.}
 
 \item{one_hot_encoding}{Integer matrix. Each row represents a sample, the
 columns the one-hot encodings. Everything 0 denotes the unlabelled data.}
@@ -23,17 +25,23 @@ columns the one-hot encodings. Everything 0 denotes the unlabelled data.}
 \item{label_mask}{Boolean vector. Which of the samples do not have a label.
 Needs to be same length as \code{nrow(one_hot_encoding)}.}
 
-\item{alpha}{Numeric. Parameter that controls the spreading. Usually between
-0.9 to 0.95. Larger values drive further labelling, smaller values are more
-conversative.}
+\item{weights}{Optional numeric vector. Edge weights for each pair in
+\code{from}/\code{to}. Must have the same length as \code{from}. If NULL, all edges are
+treated as unweighted.}
 
-\item{iterations}{For how many (max) iterations to run the algorithm.}
-
-\item{tolerance}{If the value below this is reached, an early stop is
-initialised}
+\item{label_prop_params}{List. Named list of parameters with the following
+optional fields (defaults in parentheses):
+\itemize{
+\item \code{alpha} numeric, spreading strength (0.9)
+\item \code{iter} integer, max iterations (100)
+\item \code{tolerance} numeric, convergence threshold (1e-6)
+\item \code{symmetrise} logical, symmetrise the graph (FALSE)
+\item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
+\item \code{max_hops} integer, restrict spreading radius (unrestricted)
+}}
 }
 \value{
-The matrix with the probabilities of being of a certain class
+The matrix with the probabilities of being of a certain class.
 }
 \description{
 The function is a helper function to do kNN label propagation. This can

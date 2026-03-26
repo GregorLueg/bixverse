@@ -7,12 +7,12 @@
 get_dge_effect_sizes(object)
 }
 \arguments{
-\item{object}{\code{bulk_dge} class.}
+\item{object}{\code{BulkDge} class.}
 }
 \value{
 Returns the effect size results. (If found.)
 }
 \description{
 Getter function to extract the Effect size results from the
-\code{\link[=bulk_dge]{bulk_dge()}} class.
+\code{\link[=BulkDge]{BulkDge()}} class.
 }

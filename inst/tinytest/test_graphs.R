@@ -395,29 +395,13 @@ expect_true(
 
 ## synthetic data --------------------------------------------------------------
 
-# fmt: skip
-edge_list <- c(
-  1, 2,   # Sample 1 (A) connects to 2
-  1, 5,   # Sample 1 (A) connects to 5
-  2, 3,   # Sample 2 connects to 3 (B)
-  2, 4,   # Sample 2 connects to 4
-  3, 4,   # Sample 3 (B) connects to 4
-  3, 6,   # Sample 3 (B) connects to 6
-  4, 7,   # Sample 4 connects to 7
-  5, 6,   # Sample 5 connects to 6
-  5, 9,   # Sample 5 connects to 9
-  6, 7,   # Sample 6 connects to 7
-  7, 8,   # Sample 7 connects to 8 (C)
-  8, 9,   # Sample 8 (C) connects to 9
-  8, 10,  # Sample 8 (C) connects to 10
-  9, 10   # Sample 9 connects to 10
-)
-edge_list <- as.integer(edge_list)
-
+from <- as.integer(c(1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 8, 8, 9))
+to <- as.integer(c(2, 5, 3, 4, 4, 6, 7, 6, 9, 7, 8, 9, 10, 10))
 labels <- c("A", NA, "B", NA, NA, NA, NA, "C", NA, NA)
 
 propagated_labels <- knn_graph_label_propagation(
-  edge_list = edge_list,
+  from = from,
+  to = to,
   labels = labels
 )
 
@@ -425,4 +409,190 @@ expect_equal(
   current = propagated_labels$final_labels,
   target = c("A", "B", "B", "B", "A", "B", "C", "C", "C", "C"),
   info = "graph label propagation working as expected"
+)
+expect_true(
+  current = checkmate::test_list(propagated_labels, names = "named"),
+  info = "graph label returning a list"
+)
+expect_equal(
+  current = names(propagated_labels),
+  target = c("assignment_probs", "final_labels"),
+  info = "graph label returning the right names"
+)
+
+# test zero hop
+propagated_labels_no_hops <- knn_graph_label_propagation(
+  from = from,
+  to = to,
+  labels = labels,
+  label_prop_params = params_label_propagation(max_hops = 0L)
+)
+unlabelled_idx <- which(is.na(labels))
+unlabelled_probs <- propagated_labels_no_hops$assignment_probs[unlabelled_idx, ]
+
+expect_true(
+  all(unlabelled_probs == 0),
+  info = "max_hops = 0 should leave unlabelled nodes with no propagated probability"
+)
+
+# igraph comparisons -----------------------------------------------------------
+
+if (!requireNamespace("igraph", quietly = TRUE)) {
+  exit_file("igraph not available")
+}
+
+## data ------------------------------------------------------------------------
+
+edge_dt <- data.table::data.table(
+  from = c("a", "b", "c", "d", "d"),
+  to = c("b", "c", "d", "a", "e")
+)
+
+edge_dt_weighted <- data.table::data.table(
+  from = c("a", "b", "c", "d", "d"),
+  to = c("b", "c", "d", "a", "e"),
+  weight = c(1, 1, 0.5, 0.4, 0.25)
+)
+
+unique_nodes <- unique(c(edge_dt$from, edge_dt$to))
+
+personalised_v1 <- c(1, 0, 0, 0, 0)
+personalised_v2 <- rep(1, 5) / 5
+
+## tests -----------------------------------------------------------------------
+
+# graphs
+g_undir <- igraph::graph_from_data_frame(edge_dt, directed = FALSE)
+g_dir <- igraph::graph_from_data_frame(edge_dt, directed = TRUE)
+g_weighted <- igraph::graph_from_data_frame(
+  edge_dt_weighted,
+  directed = FALSE
+)
+
+# version 1 - igraph
+igraph_res_undir_v1 <- igraph::page_rank(
+  graph = g_undir,
+  personalized = personalised_v1
+)$vector
+
+igraph_res_dir_v1 <- igraph::page_rank(
+  graph = g_dir,
+  personalized = personalised_v1
+)$vector
+
+igraph_res_weighted_v1 <- igraph::page_rank(
+  graph = g_weighted,
+  personalized = personalised_v1
+)$vector
+
+# version 2 - igraph
+igraph_res_undir_v2 <- igraph::page_rank(
+  graph = g_undir,
+  personalized = personalised_v2
+)$vector
+
+igraph_res_dir_v2 <- igraph::page_rank(
+  graph = g_dir,
+  personalized = personalised_v2
+)$vector
+
+igraph_res_weighted_v2 <- igraph::page_rank(
+  graph = g_weighted,
+  personalized = personalised_v2
+)$vector
+
+# version 1 - rust
+rs_res_undir_v1 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt$from,
+  to = edge_dt$to,
+  weights = NULL,
+  personalised = personalised_v1,
+  undirected = TRUE
+)
+
+rs_res_dir_v1 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt$from,
+  to = edge_dt$to,
+  weights = NULL,
+  personalised = personalised_v1,
+  undirected = FALSE
+)
+
+rs_res_weighted_v1 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt_weighted$from,
+  to = edge_dt_weighted$to,
+  weights = edge_dt_weighted$weight,
+  personalised = personalised_v1,
+  undirected = TRUE
+)
+
+# version 2 - rust
+rs_res_undir_v2 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt$from,
+  to = edge_dt$to,
+  weights = NULL,
+  personalised = personalised_v2,
+  undirected = TRUE
+)
+
+rs_res_dir_v2 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt$from,
+  to = edge_dt$to,
+  weights = NULL,
+  personalised = personalised_v2,
+  undirected = FALSE
+)
+
+rs_res_weighted_v2 <- rs_page_rank(
+  node_names = unique_nodes,
+  from = edge_dt_weighted$from,
+  to = edge_dt_weighted$to,
+  weights = edge_dt_weighted$weight,
+  personalised = personalised_v2,
+  undirected = TRUE
+)
+
+# version 1
+cor_undir_v1 <- cor(igraph_res_undir_v1, rs_res_undir_v1)
+cor_dir_v1 <- cor(igraph_res_dir_v1, rs_res_dir_v1)
+cor_weighted_v1 <- cor(igraph_res_weighted_v1, rs_res_weighted_v1)
+
+expect_true(
+  cor_undir_v1 > 0.99,
+  info = "Rust personalsied Page Rank implementation undirected network (v1)."
+)
+
+expect_true(
+  cor_dir_v1 > 0.99,
+  info = "Rust personalsied Page Rank implementation directed network (v1)."
+)
+
+expect_true(
+  cor_weighted_v1 > 0.99,
+  info = "Rust personalsied Page Rank implementation weighted network (v1)."
+)
+
+# version 2
+cor_undir_v2 <- cor(igraph_res_undir_v2, rs_res_undir_v2)
+cor_dir_v2 <- cor(igraph_res_dir_v2, rs_res_dir_v2)
+cor_weighted_v2 <- cor(igraph_res_weighted_v2, rs_res_weighted_v2)
+
+expect_true(
+  cor_undir_v2 > 0.99,
+  info = "Rust personalsied Page Rank implementation undirected network (v2)."
+)
+
+expect_true(
+  cor_dir_v2 > 0.99,
+  info = "Rust personalsied Page Rank implementation directed network (v2)."
+)
+
+expect_true(
+  cor_weighted_v2 > 0.99,
+  info = "Rust personalsied Page Rank implementation weighted network (v2)."
 )

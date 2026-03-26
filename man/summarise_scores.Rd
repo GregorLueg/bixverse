@@ -17,3 +17,4 @@ Named numeric.
 \description{
 Summarise gene scores if they are duplicates.
 }
+\keyword{internal}

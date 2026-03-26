@@ -22,3 +22,4 @@ Invisibly returns the checked object if the assertion is successful.
 Checkmate extension for asserting the ICA randomisation
 parameters for a version of stabilised ICA.
 }
+\keyword{internal}

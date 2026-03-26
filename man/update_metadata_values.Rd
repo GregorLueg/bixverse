@@ -7,8 +7,8 @@
 update_metadata_values(object, column, replacement, ...)
 }
 \arguments{
-\item{object}{The underlying object, either \code{bixverse::bulk_coexp} or
-\code{bixverse::bulk_dge}.}
+\item{object}{The underlying object, either \code{\link[=BulkCoExp]{BulkCoExp()}} or
+\code{\link[=BulkDge]{BulkDge()}}.}
 
 \item{column}{Character vector. The columns for which to replace the
 values.}

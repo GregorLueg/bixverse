@@ -14,12 +14,12 @@ c_pca_plot_alphas(
 )
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need
+\item{object}{The underlying class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need
 to apply \code{\link[=contrastive_pca_processing]{contrastive_pca_processing()}} to the function for this
 method to work. Checkmate will raise errors otherwise.}
 
 \item{label_column}{An optional sample label column. Needs to exist in the
-meta_data of the \code{bulk_coexp} class.}
+meta_data of the \code{BulkCoExp} class.}
 
 \item{min_alpha}{Minimum alpha to test.}
 

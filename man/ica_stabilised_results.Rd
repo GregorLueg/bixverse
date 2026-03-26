@@ -16,7 +16,7 @@ ica_stabilised_results(
 )
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}. You need to apply
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}. You need to apply
 \code{\link[=ica_processing]{ica_processing()}} before running this function.}
 
 \item{no_comp}{Optional integer. Number of components you wish to use for the
@@ -59,7 +59,7 @@ absolute bigger tail is set to positive floats.}
 \item{.verbose}{Boolean. Controls verbosity.}
 }
 \value{
-\code{bulk_coexp} with the the source matrix S, mixing matrix A and other
+\code{BulkCoExp} with the the source matrix S, mixing matrix A and other
 parameters added to the slots.
 }
 \description{

@@ -187,6 +187,8 @@ expect_equal(
   info = "DGRDL synthetic data 2 expected coefficients"
 )
 
+dim(synthetic_data_2$data)
+
 expect_equal(
   current = res_bio$feature_laplacian,
   target = expected_feat_laplacian,
@@ -262,7 +264,7 @@ expect_equal(
 
 ## initialisation and first warnings -------------------------------------------
 
-s7_obj <- bulk_coexp(
+s7_obj <- BulkCoExp(
   raw_data = synthetic_data_2$data,
   meta_data = synthetic_data_2$meta_data
 )
@@ -360,12 +362,12 @@ expect_equivalent(
 )
 
 expect_true(
-  current = class(s7_res$feature_laplacian) == "dgCMatrix",
+  current = class(s7_res$feature_laplacian) == "dgRMatrix",
   info = "DGRDL class - feature laplacian class"
 )
 
 expect_true(
-  current = class(s7_res$sample_laplacian) == "dgCMatrix",
+  current = class(s7_res$sample_laplacian) == "dgRMatrix",
   info = "DGRDL class - sample laplacian class"
 )
 

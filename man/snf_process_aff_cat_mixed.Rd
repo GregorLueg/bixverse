@@ -20,3 +20,4 @@ The affinity matrix based on categorical and/or mixed values.
 \description{
 Helper function to process categorical or mixed data for SNF
 }
+\keyword{internal}

@@ -146,31 +146,31 @@ expected_coremo_modules <- qs2::qs_read("./test_data/coremo_modules.qs")
 ### object generation ----------------------------------------------------------
 
 expect_error(
-  current = bulk_coexp(raw_data = data_bad, meta_data = meta_data),
-  info = "bulk_coexp - bad matrix"
+  current = BulkCoExp(raw_data = data_bad, meta_data = meta_data),
+  info = "BulkCoExp - bad matrix"
 )
 
 expect_error(
-  current = bulk_coexp(raw_data = data, meta_data = meta_data_bad),
-  info = "bulk_coexp - bad metadata"
+  current = BulkCoExp(raw_data = data, meta_data = meta_data_bad),
+  info = "BulkCoExp - bad metadata"
 )
 
-cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data)
+cor_test <- BulkCoExp(raw_data = data, meta_data = meta_data)
 
 expect_true(
-  S7::S7_inherits(cor_test, bulk_coexp),
-  info = "bulk_coexp - correct main class"
+  S7::S7_inherits(cor_test, BulkCoExp),
+  info = "BulkCoExp - correct main class"
 )
 expect_true(
-  S7::S7_inherits(cor_test, bixverse::bixverse_base_class),
-  info = "bulk_coexp - correct base class"
+  S7::S7_inherits(cor_test, bixverse::BixverseBaseClass),
+  info = "BulkCoExp - correct base class"
 )
 
 ### hvg ------------------------------------------------------------------------
 
 expect_warning(
   current = plot_hvgs(cor_test),
-  info = "bulk_coexp - warning without hvg genes"
+  info = "BulkCoExp - warning without hvg genes"
 )
 
 cor_test <- preprocess_bulk_coexp(
@@ -181,21 +181,21 @@ cor_test <- preprocess_bulk_coexp(
 
 expect_true(
   current = sum(cor_test@processed_data$feature_meta$hvg) == 737,
-  info = "bulk_coexp - correct number of HVG genes with mad thresholding"
+  info = "BulkCoExp - correct number of HVG genes with mad thresholding"
 )
 
 hvg_plot <- plot_hvgs(cor_test)
 
 expect_true(
   "ggplot" %in% class(hvg_plot),
-  info = "bulk_coexp - plotting of hvg working"
+  info = "BulkCoExp - plotting of hvg working"
 )
 
 cor_test <- preprocess_bulk_coexp(cor_test, hvg = 0.5, .verbose = FALSE)
 
 expect_true(
   current = sum(cor_test@processed_data$feature_meta$hvg) == 500,
-  info = "bulk_coexp - correct number of HVG genes with proportion"
+  info = "BulkCoExp - correct number of HVG genes with proportion"
 )
 
 ### correlations and epsilon search --------------------------------------------
@@ -375,7 +375,7 @@ expected_cor_graph_res <- qs2::qs_read(
 
 ### regenerate the data --------------------------------------------------------
 
-cor_test <- bulk_coexp(raw_data = data, meta_data = meta_data) %>%
+cor_test <- BulkCoExp(raw_data = data, meta_data = meta_data) %>%
   preprocess_bulk_coexp(., hvg = 0.5, .verbose = FALSE) %>%
   cor_module_processing(., cor_method = "spearman", .verbose = FALSE)
 

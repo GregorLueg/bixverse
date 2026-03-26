@@ -20,3 +20,4 @@ A data.table with two columns
 Runs an ANOVA for the group variable vs PC1 and PC2 and checks if either
 principal component can separate the groups.
 }
+\keyword{internal}

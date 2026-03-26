@@ -16,3 +16,4 @@ checkGSEAParams(x)
 Checkmate extension for checking the gene set enrichment
 analysis (GSEA) parameters.
 }
+\keyword{internal}

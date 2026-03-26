@@ -13,7 +13,8 @@ rs_mutual_info(x, n_bins, strategy, normalise)
 the function will default to \code{sqrt(nrows(x))}.}
 
 \item{strategy}{String. Binning strategy One of
-\code{c("equal_width", "equal_freq")}.}
+\code{c("equal_width", "equal_freq")}. If weird string is provided, it will
+default to \code{"equal_width"}.}
 
 \item{normalise}{Boolean. Shall the normalised mutual information be
 calculated via joint entropy.}

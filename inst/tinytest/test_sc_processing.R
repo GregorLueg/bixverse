@@ -1,0 +1,754 @@
+# sc processing ----------------------------------------------------------------
+
+set.seed(123L)
+
+test_temp_dir <- file.path(
+  tempdir(),
+  "processing"
+)
+
+dir.create(test_temp_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot("Test directory does not exist" = dir.exists(test_temp_dir))
+
+## testing parameters ----------------------------------------------------------
+
+# thresholds
+min_lib_size <- 300L
+min_genes_exp <- 45L
+min_cells_exp <- 500L
+# hvg
+hvg_to_keep <- 30L
+# pca
+no_pcs <- 15L
+
+## synthetic test data ---------------------------------------------------------
+
+single_cell_test_data <- generate_single_cell_test_data()
+
+genes_pass <- which(
+  Matrix::colSums(single_cell_test_data$counts != 0) >= min_cells_exp
+)
+
+cells_pass <- which(
+  (Matrix::rowSums(single_cell_test_data$counts[, genes_pass]) >=
+    min_lib_size) &
+    (Matrix::rowSums(single_cell_test_data$counts[, genes_pass] != 0) >=
+      min_genes_exp)
+)
+
+expect_true(
+  current = length(genes_pass) > 80 & length(genes_pass) != 100,
+  info = "sc processing - sensible amount of genes pass"
+)
+
+expect_true(
+  current = length(cells_pass) > 800 & length(cells_pass) != 1000,
+  info = "sc processing - sensible amount of cells pass"
+)
+
+counts_filtered <- single_cell_test_data$counts[cells_pass, genes_pass]
+
+sc_qc_param <- params_sc_min_quality(
+  min_unique_genes = min_genes_exp,
+  min_lib_size = min_lib_size,
+  min_cells = min_cells_exp,
+  target_size = 1000
+)
+
+## underlying class ------------------------------------------------------------
+
+sc_object <- SingleCells(dir_data = test_temp_dir)
+
+sc_object <- load_r_data(
+  object = sc_object,
+  counts = single_cell_test_data$counts,
+  obs = single_cell_test_data$obs,
+  var = single_cell_test_data$var,
+  sc_qc_param = params_sc_min_quality(
+    min_unique_genes = min_genes_exp,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells_exp
+  ),
+  streaming = FALSE,
+  .verbose = FALSE
+)
+
+# tests ------------------------------------------------------------------------
+
+## test filter column and cells to get -----------------------------------------
+
+expect_true(
+  current = checkmate::qtest(unlist(sc_object[["to_keep"]]), "B+"),
+  info = "to_keep column added"
+)
+
+expect_true(
+  current = checkmate::qtest(get_cells_to_keep(sc_object), "I+"),
+  info = "cells_to_keep loaded independently of setting"
+)
+
+## function warnings -----------------------------------------------------------
+
+expect_warning(
+  current = get_hvg(sc_object),
+  info = "warning that hvgs can be found"
+)
+
+expect_warning(
+  current = calculate_pca_sc(sc_object, no_pcs = 10L),
+  info = "warning that no HVGs are detected"
+)
+
+expect_warning(
+  current = find_neighbours_sc(object = sc_object),
+  info = "warning that no PCA data are detected"
+)
+
+expect_warning(
+  current = find_clusters_sc(sc_object),
+  info = "warning that no kNN/sNN data was found"
+)
+
+## gene set proportions --------------------------------------------------------
+
+### top proportion n genes -----------------------------------------------------
+
+top_n <- c(5L, 10L, 25L)
+
+proportions_in_r <- sapply(top_n, function(x) {
+  apply(as.matrix(counts_filtered), 1, function(row) {
+    sum(sort(as.matrix(row), decreasing = TRUE)[1:x])
+  }) /
+    rowSums(as.matrix(counts_filtered))
+})
+
+sc_object <- top_genes_perc_sc(sc_object, top_n_vals = top_n, .verbose = FALSE)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_5_genes_percentage"]]),
+  target = proportions_in_r[, 1],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_10_genes_percentage"]]),
+  target = proportions_in_r[, 2],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_25_genes_percentage"]]),
+  target = proportions_in_r[, 3],
+  tolerance = 1e-7,
+)
+
+#### streaming -----------------------------------------------------------------
+
+sc_object <- top_genes_perc_sc(
+  sc_object,
+  top_n_vals = top_n,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_5_genes_percentage"]]),
+  target = proportions_in_r[, 1],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_10_genes_percentage"]]),
+  target = proportions_in_r[, 2],
+  tolerance = 1e-7,
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["top_25_genes_percentage"]]),
+  target = proportions_in_r[, 3],
+  tolerance = 1e-7,
+)
+
+### gene set -------------------------------------------------------------------
+
+gs_of_interest <- list(
+  gs_1 = c("gene_001", "gene_002", "gene_003", "gene_004"),
+  gs_2 = c("gene_096", "gene_097", "gene_100")
+)
+
+total_size <- Matrix::rowSums(counts_filtered)
+
+props_gs_1 <- Matrix::rowSums(counts_filtered[, gs_of_interest$gs_1]) /
+  total_size
+props_gs_2 <- Matrix::rowSums(counts_filtered[, gs_of_interest$gs_2]) /
+  total_size
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_1"]]),
+  target = props_gs_1,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 1"
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_2"]]),
+  target = props_gs_2,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 2"
+)
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all(!c("gs_1.1", "gs_2.1") %in% colnames(sc_object[[]])),
+  info = "overwriting of obs data works"
+)
+
+#### streaming -----------------------------------------------------------------
+
+sc_object <- gene_set_proportions_sc(
+  sc_object,
+  gs_of_interest,
+  streaming = TRUE,
+  .verbose = FALSE
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_1"]]),
+  target = props_gs_1,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 1 - streaming version"
+)
+
+expect_equivalent(
+  current = unlist(sc_object[["gs_2"]]),
+  target = props_gs_2,
+  tolerance = 10e-7,
+  info = "gene proportion calculations gene set 2 - streaming version"
+)
+
+## cells to keep logic ---------------------------------------------------------
+
+threshold <- 0.05
+
+cells_to_keep <- sc_object[[]][gs_2 < threshold, cell_id]
+
+expect_true(
+  current = length(cells_to_keep) > 600,
+  info = "sensible cell filtering based on the threshold"
+)
+
+sc_object <- set_cells_to_keep(sc_object, cells_to_keep)
+
+expect_true(
+  current = all(
+    unlist(sc_object[["cell_id"]]) == cells_to_keep
+  ),
+  info = "setting cells to keep removes them from the obs table"
+)
+
+cell_names_filtered <- get_cell_names(sc_object, filtered = TRUE)
+
+expect_true(
+  current = all(cell_names_filtered == cells_to_keep),
+  info = "filter flag on cell names works"
+)
+
+counts_more_filtered <- counts_filtered[
+  which(props_gs_2 < threshold),
+]
+
+expect_equivalent(
+  current = get_cells_to_keep(sc_object),
+  target = which(props_gs_2 < threshold) - 1, # zero indexed in Rust
+  info = "cell to keep logic"
+)
+
+# the logic of retrieving cells will become more complicated here...
+
+expect_equal(
+  current = sc_object[,, use_cells_to_keep = TRUE],
+  target = counts_more_filtered,
+  info = "counts after setting cells to keep and using the parameter"
+)
+
+expect_equal(
+  current = sc_object[,, use_cells_to_keep = FALSE],
+  target = counts_filtered,
+  info = "counts after setting cells to keep and NOT using the parameter"
+)
+
+## check addition of new data --------------------------------------------------
+
+new_data <- rep("random_new_data", length(cells_to_keep))
+
+new_data_list <- list(
+  "other_random_data" = rep("A", length(cells_to_keep)),
+  "even_different_random_data" = seq_len(length(cells_to_keep))
+)
+
+sc_object[["random_new_data"]] <- new_data
+
+sc_object[[names(new_data_list)]] <- new_data_list
+
+sc_object[[c("new_name_a", "new_name_b")]] <- new_data_list
+
+expect_true(
+  current = unique(unlist(sc_object[[c("random_new_data")]])) ==
+    "random_new_data",
+  info = "obs table addition worked - single value"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("other_random_data")]])) == "A",
+  info = "obs table addition worked - from list string"
+)
+
+expect_true(
+  current = all(
+    unlist(sc_object[[c("even_different_random_data")]]) ==
+      seq_len(length(cells_to_keep))
+  ),
+  info = "obs table addition worked - from list numeric"
+)
+
+expect_true(
+  current = unique(unlist(sc_object[[c("new_name_a")]])) == "A",
+  info = "obs table addition worked - from list string - renamed"
+)
+
+expect_true(
+  current = all(
+    unlist(sc_object[[c("new_name_b")]]) == seq_len(length(cells_to_keep))
+  ),
+  info = "obs table addition worked - from list string - renamed"
+)
+
+# error handling
+
+new_data_bad <- c("A")
+
+new_data_bad_v2 <- list(
+  "x" = c(1, 2, 3),
+  "y" = letters
+)
+
+expect_error(
+  current = {
+    sc_object[["random_new_data"]] <- new_data_bad
+  },
+  info = "addition of wrong length throws the right error"
+)
+
+expect_error(
+  current = {
+    sc_object[[names(new_data_bad_v2)]] <- new_data_bad_v2
+  },
+  info = "addition of list with random lengths throws an error"
+)
+
+
+### test that the original data is still in there ------------------------------
+
+expect_true(
+  current = nrow(get_sc_obs(sc_object)) == sc_object@dims[1],
+  info = "original rows are still in the DB"
+)
+
+## hvg selection ---------------------------------------------------------------
+
+### vst version ----------------------------------------------------------------
+
+#### r version -----------------------------------------------------------------
+
+n_cells <- nrow(counts_more_filtered)
+
+# calculate mean and variance
+mean_values_r <- Matrix::colMeans(counts_more_filtered)
+var_values_r <- matrixStats::colVars(as.matrix(counts_more_filtered)) *
+  ((n_cells - 1) /
+    n_cells)
+
+valid_genes <- var_values_r > 0 & mean_values_r > 0
+
+mean_log10 <- log10(mean_values_r[valid_genes])
+var_log10 <- log10(var_values_r[valid_genes])
+
+loess_fit <- loess(var_log10 ~ mean_log10, span = 0.3, degree = 2)
+var_expected_log10 <- predict(loess_fit, mean_log10)
+var_expected <- 10^var_expected_log10
+
+clip_max <- sqrt(n_cells)
+
+var_std <- sapply(1:ncol(counts_more_filtered), function(i) {
+  gene_vals <- counts_more_filtered[, i]
+  mean_i <- mean_values_r[i]
+  sd_expected <- sqrt(var_expected[i])
+
+  standardised <- (gene_vals - mean_i) / sd_expected
+
+  standardised <- pmin(pmax(standardised, -clip_max), clip_max)
+
+  # Variance of standardized values
+  # population variance
+  var(standardised) * ((n_cells - 1) / n_cells)
+})
+
+var_std[is.na(var_std)] <- 0
+
+# need to 0-index
+hvg_r <- order(var_std, decreasing = TRUE)[1:hvg_to_keep] - 1
+
+#### rust part -----------------------------------------------------------------
+
+##### direct load --------------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+var_data <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data$mean,
+  target = mean_values_r,
+  tolerance = 10e-7,
+  info = "Correct mean calculations for genes"
+)
+
+expect_equivalent(
+  current = var_data$var,
+  target = var_values_r,
+  tolerance = 10e-7,
+  info = "Correct variance calculations for genes"
+)
+
+expect_equivalent(
+  current = var_data$var_std,
+  target = var_std,
+  tolerance = 10e-3,
+  info = "Correct standardised variance calculations for genes"
+)
+
+hvg_rs <- get_hvg(sc_object)
+
+expect_true(
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
+  info = "Overlap in the detected HVGs"
+)
+
+##### streaming version --------------------------------------------------------
+
+sc_object <- find_hvg_sc(
+  object = sc_object,
+  hvg_no = hvg_to_keep,
+  .verbose = FALSE
+)
+
+var_data <- get_sc_var(sc_object)
+
+expect_equivalent(
+  current = var_data$mean,
+  target = mean_values_r,
+  tolerance = 10e-7,
+  info = "Correct mean calculations for genes"
+)
+
+expect_equivalent(
+  current = var_data$var,
+  target = var_values_r,
+  tolerance = 10e-7,
+  info = "Correct variance calculations for genes"
+)
+
+expect_equivalent(
+  current = var_data$var_std,
+  target = var_std,
+  tolerance = 10e-3,
+  info = "Correct standardised variance calculations for genes"
+)
+
+hvg_rs <- get_hvg(sc_object)
+
+expect_true(
+  current = length(intersect(hvg_r, hvg_rs)) == hvg_to_keep,
+  info = "Overlap in the detected HVGs"
+)
+
+## pca -------------------------------------------------------------------------
+
+### r --------------------------------------------------------------------------
+
+pca_input <- as.matrix(sc_object[,
+  as.integer(get_hvg(sc_object) + 1),
+  assay = "norm",
+  return_format = "gene",
+  use_cells_to_keep = TRUE
+])
+
+scaled_data <- scale(pca_input)
+
+pca_r <- prcomp(pca_input, scale. = TRUE)
+
+expected_names <- get_gene_names(sc_object)[hvg_r + 1]
+actual_names <- colnames(pca_input)
+
+### rust -----------------------------------------------------------------------
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  randomised_svd = FALSE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:no_pcs], pca_r$x[, 1:no_pcs]))),
+    rep(1, no_pcs),
+    tolerance = 1e-8
+  ),
+  info = "PCA on single cell data compared to R"
+)
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  randomised_svd = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = all.equal(
+    abs(diag(cor(get_pca_factors(sc_object)[, 1:no_pcs], pca_r$x[, 1:no_pcs]))),
+    rep(1, no_pcs),
+    tolerance = 1e-8
+  ),
+  info = "PCA on single cell data compared to R (randomised SVD)"
+)
+
+#### scaling within the rust function ------------------------------------------
+
+# test if the scaling results in the same data
+zeallot::`%<-%`(
+  c(pca_factors, pca_loadings, pca_eigenvals, scaled),
+  rs_sc_pca(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = FALSE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    return_scaled = TRUE,
+    verbose = FALSE
+  )
+)
+
+expect_equivalent(
+  current = scaled,
+  target = scaled_data,
+  tolerance = 1e-6,
+  info = "scaling behaves"
+)
+
+## knn and snn -----------------------------------------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  .verbose = FALSE
+)
+
+expect_equal(
+  current = dim(get_knn_mat(sc_object)),
+  target = c(682, 15),
+  info = "kNN matrix correctly returned"
+)
+
+expect_true(
+  current = class(get_snn_graph(sc_object)) == "igraph",
+  info = "igraph correctly returned"
+)
+
+## community detection ---------------------------------------------------------
+
+sc_object <- find_clusters_sc(sc_object)
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+
+f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
+
+expect_true(
+  current = all(f1_scores > 0.95),
+  info = "leiden clustering identifies the cell groups"
+)
+
+### check the DB structure -----------------------------------------------------
+
+expect_true(
+  current = all(is.na(get_sc_obs(sc_object)[!(to_keep), leiden_clustering])),
+  info = "leiden clustering for cells that are not kept should be NA"
+)
+
+## dges ------------------------------------------------------------------------
+
+### between two groups ---------------------------------------------------------
+
+cell_names_1 <- sc_object[[]][leiden_clustering == 1, cell_id]
+cell_names_2 <- sc_object[[]][leiden_clustering == 2, cell_id]
+
+expect_error(
+  current = find_markers_sc(
+    object = sc_object,
+    cells_1 = c(cell_names_1, "x"),
+    cells_2 = cell_names_2
+  ),
+  info = "error if weird cells are selected"
+)
+
+dge_test <- find_markers_sc(
+  object = sc_object,
+  cells_1 = cell_names_1,
+  cells_2 = cell_names_2,
+  .verbose = FALSE
+)
+
+expected_upregulated <- sprintf("gene_%03d", 1:10)
+expected_downregulated <- sprintf("gene_%03d", 21:30)
+
+expect_true(
+  current = all(
+    expected_upregulated %in% dge_test[lfc > 0 & fdr <= 0.05, gene_id]
+  ),
+  info = "all expected up-regulated genes identified"
+)
+
+expect_true(
+  current = all(
+    expected_downregulated %in% dge_test[lfc < 0 & fdr <= 0.05, gene_id]
+  ),
+  info = "all expected down-regulated genes identified"
+)
+
+### find all markers -----------------------------------------------------------
+
+dge_test_2 <- find_all_markers_sc(
+  object = sc_object,
+  column_of_interest = "leiden_clustering",
+  .verbose = FALSE
+)
+
+all_cell_markers <- sprintf("gene_%03d", 1:30)
+
+expect_true(
+  current = all(
+    all_cell_markers %in% dge_test_2[fdr <= 0.05, gene_id]
+  ),
+  info = "all expected cell markers identified"
+)
+
+## sparse pca ------------------------------------------------------------------
+
+### direct rust functions ------------------------------------------------------
+
+zeallot::`%<-%`(
+  c(sparse_pca_factors, sparse_pca_loadings, sparse_pca_eigenvals),
+  rs_sc_pca_sparse(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = FALSE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    verbose = FALSE
+  )
+)
+
+zeallot::`%<-%`(
+  c(sparse_pca_factors_rnd, sparse_pca_loadings_rnd, sparse_pca_eigenvals_rnd),
+  rs_sc_pca_sparse(
+    f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+    no_pcs = no_pcs,
+    random_svd = TRUE,
+    cell_indices = get_cells_to_keep(sc_object),
+    gene_indices = get_hvg(sc_object),
+    seed = 42L,
+    verbose = FALSE
+  )
+)
+
+expect_equal(
+  current = abs(diag(cor(sparse_pca_factors, sparse_pca_factors_rnd))),
+  target = rep(1, 15),
+  tolerance = 1e-7,
+  into = "sparse svd - randomised and normal return very similar results"
+)
+
+expect_equal(
+  current = abs(diag(cor(pca_factors, sparse_pca_factors))),
+  target = rep(1, no_pcs),
+  info = "sparse PCA returns the same as dense PCA"
+)
+
+### object method --------------------------------------------------------------
+
+# more PCs needed for sparse SVD to recover all of the data set structure
+
+sc_object <- calculate_pca_sc(
+  object = sc_object,
+  no_pcs = no_pcs,
+  randomised_svd = FALSE,
+  sparse_svd = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    x = get_pca_factors(sc_object),
+    mode = "numeric",
+    row.names = "named",
+    col.names = "named",
+    ncol = no_pcs
+  ),
+  info = "sparse PCA correctly added to object and returned"
+)
+
+### test synthetic data set structure recovery ---------------------------------
+
+sc_object <- find_neighbours_sc(
+  sc_object,
+  neighbours_params = params_sc_neighbours(),
+  .verbose = FALSE
+)
+
+sc_object <- find_clusters_sc(sc_object)
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+leiden_clusters <- unlist(sc_object[["leiden_clustering"]])
+
+cell_grps <- unlist(sc_object[["cell_grp"]])
+
+f1_scores <- f1_score_confusion_mat(cell_grps, leiden_clusters)
+
+expect_true(
+  current = all(f1_scores > 0.95),
+  info = "leiden clustering on top of sparse SVD identifies the cell groups"
+)
+
+# clean up ---------------------------------------------------------------------
+
+on.exit(unlink(test_temp_dir, recursive = TRUE, force = TRUE), add = TRUE)

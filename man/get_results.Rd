@@ -7,7 +7,7 @@
 get_results(object)
 }
 \arguments{
-\item{object}{The underlying \code{\link[=bixverse_base_class]{bixverse_base_class()}}
+\item{object}{The underlying \code{\link[=BixverseBaseClass]{BixverseBaseClass()}}
 class. The class functionality is usually inherited by other S7 classes in
 \code{bixverse}.}
 }
@@ -15,6 +15,6 @@ class. The class functionality is usually inherited by other S7 classes in
 Returns the final results if any have been stored in the class.
 }
 \description{
-Get the final results from \code{bixverse_base_class} class (or child
+Get the final results from \code{BixverseBaseClass} class (or child
 classes).
 }

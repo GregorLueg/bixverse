@@ -7,7 +7,7 @@
 get_c_pca_factors(object)
 }
 \arguments{
-\item{object}{The underlying class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The underlying class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
 The sample scores of the contrastive PCA run. If not found,

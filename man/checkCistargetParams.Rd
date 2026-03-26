@@ -15,3 +15,4 @@ checkCistargetParams(x)
 \description{
 Checkmate extension for checking CisTarget parameters.
 }
+\keyword{internal}

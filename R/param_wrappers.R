@@ -34,7 +34,6 @@ params_ica_general <- function(
   ))
 }
 
-
 #' Wrapper function for ICA ncomp iterations
 #'
 #' @description Wrapper function to provide parameters through which ncomps to
@@ -524,4 +523,295 @@ params_cistarget <- function(
     high_conf_cats = high_conf_cats,
     low_conf_cats = low_conf_cats
   ))
+}
+
+## graph label propagation -----------------------------------------------------
+
+#' Wrapper function to generate label propagation parameters
+#'
+#' @param alpha Numeric. Controls the spreading strength. Higher values anchor
+#' labelled nodes more strongly to their original label. Defaults to `0.9`.
+#' @param iter Integer. Maximum number of iterations to run. Defaults to `100L`.
+#' @param tolerance Numeric. Convergence threshold. Stops early if the maximum
+#' change across all nodes falls below this value. Defaults to `1e-6`.
+#' @param symmetrise Logical. Whether to symmetrise the graph. Defaults to
+#' `TRUE`.
+#' @param symmetry_strategy Character. Strategy to resolve weight conflicts when
+#' symmetrising. One of `"average"`, `"min"`, or `"max"`. Only relevant when
+#' `symmetrise = TRUE` and edge weights are provided. Defaults to `"average"`.
+#' @param max_hops Integer or NULL. If provided, restricts label spreading to
+#' nodes within this many hops of any labelled node. Nodes beyond this limit
+#' remain all-zeroes. Defaults to `NULL`.
+#'
+#' @returns A named list of label propagation parameters.
+#'
+#' @export
+params_label_propagation <- function(
+  alpha = 0.9,
+  iter = 100L,
+  tolerance = 1e-6,
+  symmetrise = TRUE,
+  symmetry_strategy = "average",
+  max_hops = NULL
+) {
+  checkmate::qassert(alpha, "R1[0, 1]")
+  checkmate::qassert(iter, "I1[1,]")
+  checkmate::qassert(tolerance, "R1")
+  checkmate::qassert(symmetrise, "B1")
+  checkmate::assert_choice(symmetry_strategy, c("average", "avg", "min", "max"))
+  if (!is.null(max_hops)) {
+    checkmate::qassert(max_hops, "I1[0,]")
+  }
+
+  list(
+    alpha = alpha,
+    iter = iter,
+    tolerance = tolerance,
+    symmetrise = symmetrise,
+    symmetry_strategy = symmetry_strategy,
+    max_hops = max_hops
+  )
+}
+
+## single cell -----------------------------------------------------------------
+
+### general --------------------------------------------------------------------
+
+### synthetic data -------------------------------------------------------------
+
+#' Default parameters for generation of synthetic data
+#'
+#' @param n_cells Integer. Number of cells.
+#' @param n_genes Integer. Number of genes.
+#' @param n_batches Integer. Number of batches.
+#' @param marker_genes List. A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param batch_effect_strength String. One of
+#' `c("strong", "medium", "weak")`. The strength of the batch effect to add.
+#' @param n_samples Optional integer. Shall sample membership be added to the
+#' synthetic data. If you want sample information you need to provide
+#' `n_samples` and `sample_bias`.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_sc_synthetic_data <- function(
+  n_cells = 1000L,
+  n_genes = 100L,
+  n_batches = 1L,
+  marker_genes = list(
+    cell_type_1 = list(
+      marker_genes = 0:9L
+    ),
+    cell_type_2 = list(
+      marker_genes = 10:19L
+    ),
+    cell_type_3 = list(
+      marker_genes = 20:29L
+    )
+  ),
+  batch_effect_strength = c("strong", "medium", "weak"),
+  n_samples = NULL,
+  sample_bias = NULL
+) {
+  batch_effect_strength <- match.arg(batch_effect_strength)
+
+  # checks
+  checkmate::qassert(n_cells, "I1")
+  checkmate::qassert(n_genes, "I1")
+  checkmate::assertList(marker_genes, types = "list", names = "named")
+  checkmate::qassert(n_batches, "I1")
+  checkmate::assertChoice(batch_effect_strength, c("strong", "medium", "weak"))
+  checkmate::qassert(n_samples, c("I1", "0"))
+  checkmate::assert(
+    checkmate::testNull(sample_bias),
+    checkmate::testChoice(
+      sample_bias,
+      c("even", "slightly_uneven", "very_uneven")
+    )
+  )
+
+  list(
+    n_cells = n_cells,
+    n_genes = n_genes,
+    marker_genes = marker_genes,
+    n_batches = n_batches,
+    batch_effect_strength = batch_effect_strength,
+    n_samples = n_samples,
+    sample_bias = sample_bias
+  )
+}
+
+### io -------------------------------------------------------------------------
+
+#' Wrapper function to provide data for mtx-based loading
+#'
+#' @param path_mtx String. Path to the .mtx file
+#' @param path_obs String. Path to the file containing cell/barcode info.
+#' @param path_var String. Path to the file containing gene/variable info.
+#' @param cells_as_rows Boolean. Do cells represent the rows or columns.
+#' @param has_hdr Boolean. Do the plain text files have headers.
+#'
+#' @returns A list with the mtx loading parameters for usage in subsequent
+#' functions.
+#'
+#' @export
+params_sc_mtx_io <- function(
+  path_mtx,
+  path_obs,
+  path_var,
+  cells_as_rows,
+  has_hdr
+) {
+  # checks
+  checkmate::assertFileExists(path_mtx)
+  checkmate::assertFileExists(path_obs)
+  checkmate::assertFileExists(path_var)
+  checkmate::qassert(cells_as_rows, "B1")
+  checkmate::qassert(has_hdr, "B1")
+
+  list(
+    path_mtx = path_mtx,
+    path_obs = path_obs,
+    path_var = path_var,
+    cells_as_rows = cells_as_rows,
+    has_hdr = has_hdr
+  )
+}
+
+### qc -------------------------------------------------------------------------
+
+#' Wrapper function to generate QC metric params for single cell
+#'
+#' @param min_unique_genes Integer. Minimum number of unique genes per cell/spot
+#' to be included.
+#' @param min_lib_size Integer. Minimum library size per cell/spot to be
+#' included.
+#' @param min_cells Integer. Minimum number of cells a gene has to be
+#' expressed to be included.
+#' @param target_size Float. The target size for the normalisation. Defaults
+#' to `1e4`.
+#'
+#' @returns A list with the minimum quality parameters + target size.
+#'
+#' @export
+params_sc_min_quality <- function(
+  min_unique_genes = 100L,
+  min_lib_size = 250L,
+  min_cells = 10L,
+  target_size = 1e4
+) {
+  # checks
+  checkmate::qassert(min_unique_genes, "I1")
+  checkmate::qassert(min_lib_size, "I1")
+  checkmate::qassert(min_cells, "I1")
+  checkmate::qassert(target_size, "N1")
+
+  list(
+    min_unique_genes = min_unique_genes,
+    min_lib_size = min_lib_size,
+    min_cells = min_cells,
+    target_size = target_size
+  )
+}
+
+#' Wrapper function for HVG detection parameters.
+#'
+#' @param method String. One of `c("vst", "meanvarbin", "dispersion")`.
+#' @param loess_span Numeric. The span parameter for the loess function that is
+#' used to standardise the variance for `method = "vst"`.
+#' @param num_bin Integer. Not yet implemented.
+#' @param bin_method String. One of `c("equal_width", "equal_freq")`.
+#'
+#' @returns A list with the HVG parameters
+#'
+#' @export
+params_sc_hvg <- function(
+  method = "vst",
+  loess_span = 0.3,
+  num_bin = 20L,
+  bin_method = "equal_width"
+) {
+  # check
+  checkmate::assertChoice(method, c("vst", "meanvarbin", "dispersion"))
+  checkmate::qassert(loess_span, "N1[0.1, 1]")
+  checkmate::qassert(num_bin, "N1")
+  checkmate::assertChoice(bin_method, c("equal_width", "equal_freq"))
+
+  list(
+    method = method,
+    loess_span = loess_span,
+    num_bin = num_bin,
+    bin_method = bin_method
+  )
+}
+
+### harmony --------------------------------------------------------------------
+
+#' Default parameters for Harmony batch correction
+#'
+#' @param k Optional integer. Number of clusters for k-means clustering. If
+#' not provided, it will be automatically determined as
+#' `min(round(N / 30), 200)`.
+#' @param sigma Numeric vector. Per-cluster diversity weights. Either a single
+#' value (broadcast to all clusters) or a vector of length k.
+#' @param theta Numeric vector. Per-variable diversity penalties. Either a
+#' single value (broadcast to all variables) or a vector of length equal to the
+#' number of batch variables.
+#' @param lambda Numeric vector. Ridge regression penalty for the linear model.
+#' Typically a single value that is broadcast to all design matrix columns.
+#' @param block_size Numeric. Fraction of cells to update per block during
+#' optimisation (0.0-1.0). Lower values reduce memory usage but increase
+#' computation time.
+#' @param max_iter_kmeans Integer. Maximum number of k-means iterations per
+#' Harmony round.
+#' @param max_iter_harmony Integer. Maximum number of Harmony outer iterations.
+#' @param epsilon_kmeans Numeric. Convergence threshold for k-means clustering.
+#' Stops when the relative change in cluster assignments falls below this value.
+#' @param epsilon_harmony Numeric. Convergence threshold for Harmony. Stops when
+#' the relative change in the objective function falls below this value.
+#' @param window_size Integer. Number of previous iterations to consider when
+#' checking convergence.
+#'
+#' @return A list with the parameters.
+#'
+#' @export
+params_sc_harmony <- function(
+  k = NULL,
+  sigma = 0.1,
+  theta = 2.0,
+  lambda = 1.0,
+  block_size = 0.05,
+  max_iter_kmeans = 20L,
+  max_iter_harmony = 10L,
+  epsilon_kmeans = 1e-5,
+  epsilon_harmony = 1e-4,
+  window_size = 2L
+) {
+  # checks
+  checkmate::qassert(k, c("I1[1,)", "0"))
+  checkmate::qassert(sigma, "N+[0,)")
+  checkmate::qassert(theta, "N+[0,)")
+  checkmate::qassert(lambda, "N+[0,)")
+  checkmate::qassert(block_size, "N1(0,1]")
+  checkmate::qassert(max_iter_kmeans, "I1[1,)")
+  checkmate::qassert(max_iter_harmony, "I1[1,)")
+  checkmate::qassert(epsilon_kmeans, "N1(0,)")
+  checkmate::qassert(epsilon_harmony, "N1(0,)")
+  checkmate::qassert(window_size, "I1[1,)")
+
+  list(
+    k = k,
+    sigma = sigma,
+    theta = theta,
+    lambda = lambda,
+    block_size = block_size,
+    max_iter_kmeans = max_iter_kmeans,
+    max_iter_harmony = max_iter_harmony,
+    epsilon_kmeans = epsilon_kmeans,
+    epsilon_harmony = epsilon_harmony,
+    window_size = window_size
+  )
 }

@@ -7,12 +7,12 @@
 get_epsilon_res(object)
 }
 \arguments{
-\item{object}{\code{bulk_coexp} class.}
+\item{object}{\code{BulkCoExp} class.}
 }
 \value{
 Returns the epsilon data. (If found. Otherwise \code{NULL}).
 }
 \description{
 Getter function to extract the \verb{epsilon param ~ power law goodness of fit}
-data from the \code{\link[=bulk_coexp]{bulk_coexp()}} class.
+data from the \code{\link[=BulkCoExp]{BulkCoExp()}} class.
 }

@@ -101,7 +101,8 @@ rs_dist <- function(x, distance_type) .Call(wrap__rs_dist, x, distance_type)
 #' @param n_bins Optional integer. Number of bins to use. If `NULL` is provided
 #' the function will default to `sqrt(nrows(x))`.
 #' @param strategy String. Binning strategy One of
-#' `c("equal_width", "equal_freq")`.
+#' `c("equal_width", "equal_freq")`. If weird string is provided, it will
+#' default to `"equal_width"`.
 #' @param normalise Boolean. Shall the normalised mutual information be
 #' calculated via joint entropy.
 #'
@@ -194,6 +195,19 @@ rs_set_similarity_list <- function(list, overlap_coefficient) .Call(wrap__rs_set
 #' @export
 rs_set_similarity_list2 <- function(s_1_list, s_2_list, overlap_coefficient) .Call(wrap__rs_set_similarity_list2, s_1_list, s_2_list, overlap_coefficient)
 
+#' Calculate rapidbly Jaccard similarities between rows
+#'
+#' @description Helper function to quickly calculate the Jaccard similarity
+#' between the rows across the two matrices.
+#'
+#' @param data_1 Integer matrix. The first matrix to compare.
+#' @param data_2 Integer matrix. The second matrix to compare.
+#'
+#' @returns The average Jaccard similarity.
+#'
+#' @export
+rs_jaccard_row_integers <- function(data_1, data_2) .Call(wrap__rs_jaccard_row_integers, data_1, data_2)
+
 #' Calculates the Hamming distance between categorical columns
 #'
 #' @param x Integer matrix. The integers represent the factor data.
@@ -209,7 +223,7 @@ rs_hamming_dist <- function(x) .Call(wrap__rs_hamming_dist, x)
 #' variables as numerical values.
 #' @param is_cat Boolean. Which of the columns represent categorical values.
 #'
-#' @return The Gower distance matrix.
+#' @return The Gower distance matrix between the rows
 #'
 #' @export
 rs_gower_dist <- function(x, is_cat) .Call(wrap__rs_gower_dist, x, is_cat)
@@ -355,8 +369,9 @@ rs_rbf_function_mat <- function(x, epsilon, rbf_type) .Call(wrap__rs_rbf_functio
 #' distance matrix.
 #' @param shift Integer. Was the matrix shifted up (0 = diagonal included; 1
 #' diagonal not incldued).
-#' @param rbf_type String. Option of `c('gaussian', 'bump')` for the currently
-#' implemented RBF function.
+#' @param rbf_type String. One of `c('gaussian', 'bump', 'inverse_quadratic')`
+#' for the currently implemented RBF function. Weird strings will default
+#' to Gaussian.
 #'
 #' @return A matrix with rows being the epsilons tested, and columns
 #' representing the summed affinity to other features.
@@ -440,6 +455,28 @@ rs_fdr_adjustment <- function(pvals) .Call(wrap__rs_fdr_adjustment, pvals)
 #' @export
 rs_phyper <- function(q, m, n, k) .Call(wrap__rs_phyper, q, m, n, k)
 
+#' Calculate MAD outlier detection in Rust.
+#'
+#' @param x Numerical vector to test.
+#' @param threshold Numeric. Number of MADs in either direction that is
+#' acceptable.
+#' @param direction String. One of `c("below", "above", "twosided")`. Shall
+#' the outlier direction be done for values below the threshold, above the
+#' threshold or in both directions. Weird strings default to twosided tests.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'  \item outlier - Boolean vector if element is an outlier
+#'  \item threshold - Applied final threshold
+#' }
+#'
+#' @details
+#' Should you provide too short vectors, the function will return an empty
+#' boolean and a threshold of 0.
+#'
+#' @export
+rs_mad_outlier <- function(x, threshold, direction) .Call(wrap__rs_mad_outlier, x, threshold, direction)
+
 #' Rust implementation of prcomp
 #'
 #' @description Runs the singular value decomposition over the matrix x.
@@ -510,6 +547,24 @@ rs_random_svd <- function(x, rank, seed, oversampling, n_power_iter) .Call(wrap_
 #' @export
 rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings) .Call(wrap__rs_contrastive_pca, target_covar, background_covar, target_mat, alpha, n_pcs, return_loadings)
 
+#' Rust implementation of a Loess function
+#'
+#' @param x Numeric. The x values to fit.
+#' @param y Numeric. The y values to fit.
+#' @param span Numeric. The span parameter. Needs to be between 0.1 and 1.
+#' @param degree Integer. Either 1 (linear) or 2 (quadratic). Other values
+#' will cause an error.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item predicted - The predicted values.
+#'   \item residuals - The residuals for every data point.
+#'   \item valid_idx - Which data indices were included.
+#' }
+#'
+#' @export
+rs_2d_loess <- function(x, y, span, degree) .Call(wrap__rs_2d_loess, x, y, span, degree)
+
 #' Generate sparse data from an upper triangle
 #'
 #' @description This function takes the values from an upper triangle matrix
@@ -518,6 +573,8 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' @param value Numeric vector. The upper triangle values.
 #' @param shift Integer Did you apply a shift to remove the diagonal values?
 #' @param n Integer. The number of columns/rows in the symmetric matrix.
+#' @param cs_type String. One of `c("csr", "csc")`. Which type of list to
+#' return.
 #'
 #' @return A list containing:
 #'  \itemize{
@@ -528,7 +585,7 @@ rs_contrastive_pca <- function(target_covar, background_covar, target_mat, alpha
 #' }
 #'
 #' @export
-rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n)
+rs_upper_triangle_to_sparse <- function(value, shift, n, cs_type) .Call(wrap__rs_upper_triangle_to_sparse, value, shift, n, cs_type)
 
 #' Helper to get zero stats from a given matrix
 #'
@@ -548,6 +605,110 @@ rs_upper_triangle_to_sparse <- function(value, shift, n) .Call(wrap__rs_upper_tr
 #'
 #' @export
 rs_count_zeroes <- function(x) .Call(wrap__rs_count_zeroes, x)
+
+#' Generate synthetic single cell data (Seurat type)
+#'
+#' @description This function generates pseudo data to test single cell
+#' functions in form of the Seurat version, with cells = columns and genes =
+#' rows. The data is CSC type.
+#'
+#' @param n_genes Integer. Number of genes you wish to have in the synthetic
+#' data.
+#' @param n_cells Integer. Number of cells you wish to have in the synthetic
+#' data.
+#' @param min_genes Integer. Minimum number of genes expressed per cell.
+#' @param max_genes Integer. Maximum number of genes expressed per cell.
+#' @param max_exp Upper bound in terms of expression. Expression values will be
+#' sampled from `1:max_exp`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The list with the synthetic data with the following items:
+#'  \itemize{
+#'   \item data - The synthetic counts
+#'   \item col_ptrs - The column pointers
+#'   \item row_indices - The row indices
+#'   \item nrow - Number of rows (cells)
+#'   \item ncol - Number of cols (genes)
+#' }
+rs_synthetic_sc_data_csc <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csc, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
+#' Generate synthetic single cell data (h5ad type)
+#'
+#' @description This function generates pseudo data to test single cell
+#' functions in form of the h5ad version, with cells = rows and genes =
+#' columns. The data is encoded in CSR.
+#'
+#' @param n_genes Integer. Number of genes you wish to have in the synthetic
+#' data.
+#' @param n_cells Integer. Number of cells you wish to have in the synthetic
+#' data.
+#' @param min_genes Integer. Minimum number of genes expressed per cell.
+#' @param max_genes Integer. Maximum number of genes expressed per cell.
+#' @param max_exp Upper bound in terms of expression. Expression values will be
+#' sampled from `1:max_exp`.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return The list with the synthetic data with the following items:
+#'  \itemize{
+#'   \item data - The synthetic counts
+#'   \item row_ptrs - The row pointers
+#'   \item col_indices - The column indices
+#'   \item nrow - Number of rows (cells)
+#'   \item ncol - Number of cols (genes)
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_csr <- function(n_genes, n_cells, min_genes, max_genes, max_exp, seed) .Call(wrap__rs_synthetic_sc_data_csr, n_genes, n_cells, min_genes, max_genes, max_exp, seed)
+
+#' Generates synthetic data for single cell
+#'
+#' @description
+#' Helper function to generate synthetic single cell data with optional
+#'
+#' @param n_cells Integer. Number of cells to generate.
+#' @param n_genes Integer. Number of genes to generate.
+#' @param n_batches Integer. Number of the batches to generated.
+#' @param n_samples Optional integer. Shall the cells be distributed over
+#' `n_samples` samples.
+#' @param cell_configs A nested list that indicates which gene indices
+#' are markers for which cell.
+#' @param batch_effect_strength String. One of `c("strong", "medium", "low")`.
+#' Defines the strength of the added batch effect.
+#' @param sample_bias Optional string. One of
+#' `c("even", "slightly_uneven", "very_uneven")`
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items.
+#' \itemize{
+#'   \item data - The synthetic raw counts.
+#'   \item indptr - The index pointers of the cells.
+#'   \item indices - The indices of the genes for the given cells.
+#'   \item nrow - Number of rows.
+#'   \item ncol - Number of columns
+#'   \item cell_type_indices - Vector indicating which cell type this is.
+#'   \item batch_indices - Vector indicating the batch.
+#'   \item sample_indices - Optional sample indices if asked for.
+#' }
+#'
+#' @export
+rs_synthetic_sc_data_with_cell_types <- function(n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed) .Call(wrap__rs_synthetic_sc_data_with_cell_types, n_cells, n_genes, n_batches, n_samples, cell_configs, batch_effect_strength, sample_bias, seed)
+
+#' Helper function to generate sample identifiers based on cells
+#'
+#' @description
+#' Extract out of `rs_synthetic_sc_data_with_cell_types()` to quickly iterate
+#' over different sample to cell type patterns
+#'
+#' @param cell_type_indices Integer vector. Each integer represents a cell
+#' type.
+#' @param n_samples Integer. Number of different sample ids to generate.
+#' @param sample_bias String. One of
+#' `c("even", "slightly_uneven", "very_uneven")`. Determins the cell type
+#' to sample id associations.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns An integer vector representing the samples.
+rs_sample_ids_for_cell_types <- function(cell_type_indices, n_samples, sample_bias, seed) .Call(wrap__rs_sample_ids_for_cell_types, cell_type_indices, n_samples, sample_bias, seed)
 
 #' Generation of bulkRNAseq-like data with optional correlation structure
 #'
@@ -625,6 +786,32 @@ rs_generate_bulk_rnaseq <- function(num_samples, num_genes, seed, add_modules, m
 #'
 #' @export
 rs_simulate_dropouts <- function(count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed) .Call(wrap__rs_simulate_dropouts, count_mat, dropout_function, dropout_midpoint, dropout_shape, power_factor, global_sparsity, seed)
+
+#' Load in h5ad data via Rust
+#'
+#' @description
+#' Loads in h5ad data within Rust and automatically converts the data into
+#' CSR with cells x genes.
+#'
+#' @param f_path File path. The path to the h5ad file.
+#' @param cs_type String. Is the data stored in CSC or CSR.
+#' @param nrows Integer. Number of rows in the file.
+#' @param ncols Integer. Number of columns in the file.
+#' @param cell_quality List. Specifiying the cell quality. Please refer
+#' to [bixverse::params_sc_min_quality()].
+#' @param verbose Boolean. Controls verbosity of the function
+#'
+#' @returns A list with:
+#' \itemize{
+#'   \item data - The data of the sparse matrix stored on the h5ad file.
+#'   \item indices - The indices of the sparse matrix stored in the h5ad file.
+#'   \item indptr - The indptr of the sparse matrix stored in the h5ad file.
+#'   \item no_genes - No of genes in the sparse matrix (i.e., ncol).
+#'   \item no_cells - No of cells in the sparse matrix (i.e., nrow).
+#' }
+#'
+#' @export
+rs_h5ad_data <- function(f_path, cs_type, nrows, ncols, cell_quality, verbose) .Call(wrap__rs_h5ad_data, f_path, cs_type, nrows, ncols, cell_quality, verbose)
 
 #' Calculates the traditional GSEA enrichment score
 #'
@@ -1121,23 +1308,67 @@ rs_spectral_clustering <- function(data, distance_type, epsilon, k_neighbours, n
 #' be useful for semi-supervised tasks. It implements the label spreading
 #' method.
 #'
-#' @param edge_list Integer vector. In form of node_1, node_2, node_3, ...
-#' which indicates alternating pairs (node_1, node_2), etc in terms of edges
+#' @param from Integer vector. Source node indices for each edge.
+#' @param to Integer vector. Target node indices for each edge. Must be the
+#' same length as `from`.
 #' @param one_hot_encoding Integer matrix. Each row represents a sample, the
 #' columns the one-hot encodings. Everything 0 denotes the unlabelled data.
 #' @param label_mask Boolean vector. Which of the samples do not have a label.
 #' Needs to be same length as `nrow(one_hot_encoding)`.
-#' @param alpha Numeric. Parameter that controls the spreading. Usually between
-#' 0.9 to 0.95. Larger values drive further labelling, smaller values are more
-#' conversative.
-#' @param iterations For how many (max) iterations to run the algorithm.
-#' @param tolerance If the value below this is reached, an early stop is
-#' initialised
+#' @param weights Optional numeric vector. Edge weights for each pair in
+#' `from`/`to`. Must have the same length as `from`. If NULL, all edges are
+#' treated as unweighted.
+#' @param label_prop_params List. Named list of parameters with the following
+#' optional fields (defaults in parentheses):
+#' \itemize{
+#'   \item \code{alpha} numeric, spreading strength (0.9)
+#'   \item \code{iter} integer, max iterations (100)
+#'   \item \code{tolerance} numeric, convergence threshold (1e-6)
+#'   \item \code{symmetrise} logical, symmetrise the graph (FALSE)
+#'   \item \code{symmetry_strategy} character, one of "average", "min", "max" ("average")
+#'   \item \code{max_hops} integer, restrict spreading radius (unrestricted)
+#' }
 #'
-#' @return The matrix with the probabilities of being of a certain class
+#' @return The matrix with the probabilities of being of a certain class.
 #'
 #' @export
-rs_knn_label_propagation <- function(edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance) .Call(wrap__rs_knn_label_propagation, edge_list, one_hot_encoding, label_mask, alpha, iterations, tolerance)
+rs_knn_label_propagation <- function(from, to, one_hot_encoding, label_mask, weights, label_prop_params) .Call(wrap__rs_knn_label_propagation, from, to, one_hot_encoding, label_mask, weights, label_prop_params)
+
+#' Flatten kNN matrix to edge list
+#'
+#' @description
+#' Helper function to leverage Rust to transform a kNN matrix into two vectors
+#' of from, to
+#'
+#' @param knn_mat Integer matrix. Rows represent the samples and the columns
+#' the indices of the k-nearest neighbours.
+#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
+#' data be returned.
+#'
+#' @return A flat vector representing the edge list.
+#'
+#' @export
+rs_knn_mat_to_edge_list <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_list, knn_mat, one_index)
+
+#' Flatten kNN matrix to edge list
+#'
+#' @description
+#' Helper function to leverage Rust to transform a kNN matrix into an edge
+#' list.
+#'
+#' @param knn_mat Integer matrix. Rows represent the samples and the columns
+#' the indices of the k-nearest neighbours.
+#' @param one_index Boolean. If the original data is 0-index, shall 1-indexed
+#' data be returned.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item from - the from indices
+#'   \item to - the to indices
+#' }
+#'
+#' @export
+rs_knn_mat_to_edge_pairs <- function(knn_mat, one_index) .Call(wrap__rs_knn_mat_to_edge_pairs, knn_mat, one_index)
 
 #' Calculates the TOM over an affinity matrix
 #'
@@ -1374,7 +1605,8 @@ rs_prepare_whitening <- function(x, fast_svd, seed, rank, oversampling, n_power_
 #' @param whiten Numerical matrix. The whitened matrix.
 #' @param w_init Numerical matrix. The initial unmixing matrix. ncols need to
 #' be equal to nrows of whiten.
-#' @param ica_type String. One of 'logcosh' or 'exp'.
+#' @param ica_type String. One of 'logcosh' or 'exp'. If weird string is
+#' provided, it will default to `"logcosh"`.
 #' @param ica_params A list containing:
 #'  \itemize{
 #'   \item maxit - Integer. Maximum number of iterations for ICA.
@@ -1774,6 +2006,1089 @@ rs_onto_sim_wang_mat <- function(parents, children, w, flat_matrix) .Call(wrap__
 #'
 #' @export
 rs_filter_onto_sim <- function(sim_vals, names, threshold) .Call(wrap__rs_filter_onto_sim, sim_vals, names, threshold)
+
+#' Calculate kBET type scores
+#'
+#' @description
+#' The function takes in a kNN matrix and a batch vector indicating which
+#' cell belongs to which batch. The function will check for the neighbourhood
+#' of each cell if the proportion of represented batches are different from
+#' the overall batch proportions. Good mixing of batches would mean very
+#' cells have significant differences; bad mixing a lot of the batches
+#' have bad mixing.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item pval - The p-values from the ChiSquare test
+#'   \item chi_square_stats - ChiSquare statistics
+#'   \item mean_chi_square - The mean ChiSquare value
+#'   \item median_chi_square - The median ChiSquare value
+#' }
+#'
+#' @export
+rs_kbet <- function(knn_mat, batch_vector) .Call(wrap__rs_kbet, knn_mat, batch_vector)
+
+#' Calculate batch silhouette width from an embedding
+#'
+#' @description
+#' Computes the average silhouette width on batch labels using pairwise
+#' distances in the embedding space. Values near 0 indicate good batch
+#' mixing, values near 1 indicate batch separation.
+#'
+#' @param embedding Numeric matrix. The embedding to assess (e.g. PCA or
+#' corrected embedding). Rows are cells, columns are dimensions.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#' @param max_cells Integer or NULL. If not NULL, subsample to this many
+#' cells for performance. Defaults to 5000.
+#' @param seed Integer. Seed for subsampling reproducibility.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell silhouette scores
+#'   \item mean_asw - Mean silhouette width
+#'   \item median_asw - Median silhouette width
+#' }
+#'
+#' @export
+rs_batch_silhouette_width <- function(embedding, batch_vector, max_cells, seed) .Call(wrap__rs_batch_silhouette_width, embedding, batch_vector, max_cells, seed)
+
+#' Calculate batch LISI scores
+#'
+#' @description
+#' Computes the Local Inverse Simpson's Index on batch labels using the
+#' kNN graph. Measures the effective number of batches in each cell's
+#' neighbourhood. Under perfect mixing LISI equals the number of batches,
+#' under no mixing LISI equals 1.
+#'
+#' @param knn_mat Integer matrix. The rows represent the cells and the
+#' columns the neighbour indices.
+#' @param batch_vector Integer vector. The integers indicate to which
+#' batch a given cell belongs.
+#'
+#' @return A list with the following items
+#' \itemize{
+#'   \item per_cell - Per-cell LISI scores
+#'   \item mean_lisi - Mean LISI
+#'   \item median_lisi - Median LISI
+#' }
+#'
+#' @export
+rs_batch_lisi <- function(knn_mat, batch_vector) .Call(wrap__rs_batch_lisi, knn_mat, batch_vector)
+
+#' BBKNN implementation in Rust
+#'
+#' @description
+#' This function implements the BBKNN algorithm from Polański, et al.
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' BBKNN parameters. Usually PCA. Rows represent cells.
+#' @param batch_labels Integer vector. These represent to which batch a given
+#' cell belongs.
+#' @param bbknn_params List. Contains all of the BBKNN parameters.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list of two lists representing the sparse matrix representation
+#' of the distances and the connectivities.
+#'
+#' @export
+#'
+#' @references Polański, et al., Bioinformatics, 2020
+rs_bbknn <- function(embd, batch_labels, bbknn_params, seed, verbose) .Call(wrap__rs_bbknn, embd, batch_labels, bbknn_params, seed, verbose)
+
+#' Reduce BBKNN results to Top X neighbours
+#'
+#' @param indptr Integer vector. The index pointers of the underlying data.
+#' @param indices Integer vector. The indices of the nearest neighbours.
+#' @param data Numeric vector. The distances to the nearest neighbours.
+#' @param no_neighbours_to_keep Integer. Number of nearest neighbours to keep.
+#'
+#' @return A list with `indices` (integer matrix) and `dist` (numeric matrix),
+#' each with shape (n_cells, no_neighbours_to_keep). Positions without
+#' neighbours are filled with -1 (indices) or NaN (distances).
+#'
+#' @export
+rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Call(wrap__rs_bbknn_filtering, indptr, indices, data, no_neighbours_to_keep)
+
+#' FastMNN batch correction in Rust
+#'
+#' @description
+#' This function implements the (fast) MNN algorithm from Haghverdi, et al.
+#' Instead of working on the full matrix, it uses under the hood PCA and
+#' generates an aligned embedding space.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!) Ideally
+#' these are batch-aware highly variable genes.
+#' @param batch_indices Integer vector. These represent to which batch a given
+#' cell belongs.
+#' @param mnn_params List. Contains all of the fastMNN parameters.
+#' @param precomputed_pca Optional PCA matrix. If you want to provide a
+#' pre-computed matrix.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The batch-corrected embedding space.
+#'
+#' @export
+rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed) .Call(wrap__rs_mnn, f_path_gene, cell_indices, gene_indices, batch_indices, precomputed_pca, mnn_params, verbose, seed)
+
+#' Harmony batch correction in Rust
+#'
+#' @description
+#' This function implements the Harmony algorithm from
+#'
+#' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
+#' @param harmony_params List. The parameters for the Harmony algorithm.
+#' @param batch_labels List. Each element in the list needs to be a 0-indexed
+#' integer that represents the batch effects you wish to regress out.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The batch-corrected Harmony embedding space.
+#'
+#' @export
+rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony, pca, harmony_params, batch_labels, seed, verbose)
+
+#' Scrublet Rust interface
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+#' to include in this analysis.
+#' @param scrublet_params List. Parameter list, see
+#' [bixverse::params_scrublet()].
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity
+#' @param streaming Boolean. Shall the data be streamed for the HVG
+#' calculations.
+#' @param return_combined_pca Boolean. Shall the generated PCA be returned.
+#' @param return_pairs Boolean. Shall the parents of the simulated cells
+#' be returned.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'  a doublet for the observed cells.
+#'  \item doublet_scores_sim - Numerical vector with the likelihood of being
+#'  a doublet for the simulated cells.
+#'  \item doublet_errors_obs - Numerical vector with the standard errors of
+#'  the scores for the observed cells.
+#'  \item z_scores - Z-scores for the observed cells. Represents:
+#'  `score - threshold / error`.
+#'  \item threshold - Used threshold.
+#'  \item detected_doublet_rate - Fraction of cells that are called as
+#'  doublet.
+#'  \item detectable_doublet_fraction - Fraction of simulated doublets with
+#'  scores above the threshold.
+#'  \item overall_doublet_rate - Estimated overall doublet rate. Should roughly
+#'  match the expected doublet rate.
+#'  \item pca - Optional PCA embeddings across the original cells and simulated
+#'  doublets.
+#'  \item pair_1 - Optional integer vector representing the first parent of the
+#'  simulated doublets.
+#'  \item pair_2 -  Optional integer vector representing the second parent of
+#'  the simulated doublets.
+#' }
+#'
+#' @export
+rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs) .Call(wrap__rs_sc_scrublet, f_path_gene, f_path_cell, cells_to_keep, scrublet_params, seed, verbose, streaming, return_combined_pca, return_pairs)
+
+#' Detect Doublets via BoostClassifier (in Rust)
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param cells_to_keep Integer vector. The indices (0-indexed!) of the cells
+#' to include in this analysis.
+#' @param boost_params List. Parameter list, see
+#' [bixverse::params_boost()].
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity
+#' @param streaming Boolean. Shall the data be streamed for the HVG
+#' calculations.
+#'
+#' @returns A list with
+#' \itemize{
+#'  \item predicted_doublets - Boolean vector indicating which observed cells
+#'  predicted as doublets (TRUE = doublet, FALSE = singlet).
+#'  \item doublet_scores_obs - Numerical vector with the likelihood of being
+#'  a doublet for the observed cells.
+#'  \item voting_avg - Voting average across the different iterations.
+#' }
+#'
+#' @export
+rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
+
+#' Calculates the cumulative proportion of the top X genes
+#'
+#' @description
+#' This calculates the cumulative proportion of the top X genes, for example
+#' Top10, 50, 100. High values here indicate low complexity samples, i.e.,
+#' bad quality.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param top_n_vals Integer. The different Top X to look for.
+#' @param cell_indices Integer. The indices of the cells for which to calculate
+#' the proportions. (0-indexed!)
+#' @param streaming Boolean. Shall the data be worked on in chunks.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the cumulative percentages of the Top X genes defined
+#' as in `top_n_vals`.
+#'
+#' @export
+rs_sc_get_top_genes_perc <- function(f_path_cell, top_n_vals, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_top_genes_perc, f_path_cell, top_n_vals, cell_indices, streaming, verbose)
+
+#' Calculate the percentage of gene sets in the cells
+#'
+#' @description
+#' This function allows to calculate for example the proportion of
+#' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+#'
+#' @param f_path_cell String. Path to the `counts_cells.bin` file.
+#' @param gene_set_idx Named list with integer(!) positions (0-indexed!) as
+#' elements of the genes of interest.
+#' @param cell_indices Integer. The indices of the cells for which to calculate
+#' the proportions. (0-indexed!)
+#' @param streaming Boolean. Shall the data be worked on in chunks.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the percentages of counts per gene set group detected
+#' in the cells.
+#'
+#' @export
+rs_sc_get_gene_set_perc <- function(f_path_cell, gene_set_idx, cell_indices, streaming, verbose) .Call(wrap__rs_sc_get_gene_set_perc, f_path_cell, gene_set_idx, cell_indices, streaming, verbose)
+
+#' Calculates pairwise gene correlations in single cell
+#'
+#' @param f_path Path to the `counts_genes.bin` file.
+#' @param gene_indices_1 Integer vector. The first set of gene indices to
+#' correlate against `gene_indices_2` (0-indexed!)
+#' @param gene_indices_2 Integer vector. The second set of gene indices. Needs
+#' to be of same length as `gene_indices_1`. (0-indexed!)
+#' @param cells_to_keep Integer. The indices of the cells to include in this
+#' analysis. (0-indexed!)
+#' @param spearman Boolean. Shall spearman correlation be used.
+#'
+#' @returns The vector of correlations between the pairs of gene_indices_1
+#' and gene_indices_2
+#'
+#' @export
+rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman) .Call(wrap__rs_pairwise_gene_cors, f_path, gene_indices_1, gene_indices_2, cells_to_keep, spearman)
+
+#' Calculate the percentage of gene sets in the cells
+#'
+#' @description
+#' This function allows to calculate for example the proportion of
+#' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param hvg_method String. Which HVG detection method to use. Options
+#' are `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
+#' implemented.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param loess_span Numeric. The span parameter for the loess function.
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
+#' not provided.
+#' @param streaming Boolean. Shall the genes be streamed in to reduce memory
+#' pressure.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the percentages of counts per gene set group detected
+#' in the cells:
+#' \itemize{
+#'   \item mean - The average expression of the gene.
+#'   \item var - The variance of the gene.
+#'   \item var_exp - The expected variance of the gene.
+#'   \item var_std - The standardised variance of the gene.
+#' }
+#'
+#' @export
+rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose)
+
+#' Calculate HVG per batch
+#'
+#' @description
+#' Batch-aware highly variable gene detection. Calculates HVG statistics
+#' separately for each batch, allowing for downstream selection strategies
+#' such as union of top genes per batch.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param hvg_method String. Which HVG detection method to use. Currently
+#' only `"vst"` is implemented for batch-aware mode.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param batch_labels Integer vector (0-indexed!) defining batch membership
+#' for each cell. Must be same length as `cell_indices`.
+#' @param loess_span Numeric. The span parameter for the loess function.
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
+#' batch if not provided.
+#' @param streaming Boolean. Shall the genes be streamed in to reduce memory
+#' pressure.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with HVG statistics concatenated across all batches:
+#' \itemize{
+#'   \item mean - The average expression of each gene in each batch.
+#'   \item var - The variance of each gene in each batch.
+#'   \item var_exp - The expected variance of each gene in each batch.
+#'   \item var_std - The standardised variance of each gene in each batch.
+#'   \item batch - Batch index for each gene (length = n_genes * n_batches).
+#'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+#'   n_batches).
+#' }
+#'
+#' @export
+rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose)
+
+#' Calculates PCA for single cell
+#'
+#' @description
+#' Helper function that will calculate the PCA for the specified highly
+#' variable genes. Has the option to use randomised SVD for faster solving
+#' of the PCA.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param return_scaled Boolean. Shall the scaled data be returned.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space.
+#'   \item loadings - The loadings of the features for the PCA.
+#'   \item singular_values - The singular values for the PCA.
+#'   \item scaled - The scaled matrix if you set return_scaled to `TRUE`.
+#' }
+#'
+#' @export
+rs_sc_pca <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose) .Call(wrap__rs_sc_pca, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, return_scaled, verbose)
+
+#' Calculates sparse PCA for single cell
+#'
+#' @description
+#' Helper function that will calculate sparse PCA without scaling the data.
+#' This has the advantage that you avoid creating a large dense matrix due
+#' to scaling; however, it has the disadvantage that the first PC will be
+#' heavily influenced by average expression. If random_svd is set to `FALSE`,
+#' Lanczos iterations will be used to solve the SVD; if random_svd is set
+#' to `TRUE`, the randomised version will be used with multiplication of the
+#' initial sparse matrix with a much smaller random dense matrix, avoiding
+#' holding a large dense matrix in memory.
+#'
+#' @param f_path_gene String. Path to the `counts_genes.bin` file.
+#' @param no_pcs Integer. Number of PCs to calculate.
+#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param cell_indices Integer. The cell indices to use. (0-indexed!)
+#' @param gene_indices Integer. The gene indices to use. (0-indexed!)
+#' @param seed Integer. Random seed for the randomised SVD.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space (solved via sparse
+#'   SVD).
+#'   \item loadings - The loadings of the features for the PCA (solved via
+#'   sparse SVD).
+#'   \item singular_values - The singular values for the PCA (solved via sparse
+#'   SVD).
+#' }
+#'
+#' @export
+rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose) .Call(wrap__rs_sc_pca_sparse, f_path_gene, no_pcs, random_svd, cell_indices, gene_indices, seed, verbose)
+
+#' Generates the kNN graph
+#'
+#' @description
+#' This function is a wrapper over the Rust-based generation of the approximate
+#' nearest neighbours. You have several options to get the approximate nearest
+#' neighbours:
+#'
+#' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
+#'   an index. Good compromise of index generation, querying speed.
+#' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
+#'   hood. The index generation takes more long, but higher recall and ideal
+#'   for very large datasets due to subdued memory pressure.
+#' - `"nndescent"`: an index-free approximate nearest neighbour algorithm
+#'   that is ideal for small, ephemeral kNN graphs.
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param knn_params List. The kNN parameters defined by
+#' [bixverse::params_sc_neighbours()].
+#' @param verbose Boolean. Controls verbosity of the function and returns
+#' how long certain operations took.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return A integer matrix of N x k with N being the number of cells and k the
+#' number of neighbours.
+#'
+#' @export
+rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, verbose, seed)
+
+#' Generates the kNN graph with additional distances
+#'
+#' @description
+#' This function is a wrapper over the Rust-based generation of the approximate
+#' nearest neighbours.
+#'
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param knn_params List. The kNN parameters defined by
+#' [bixverse::params_sc_neighbours()].
+#' @param verbose Boolean. Controls verbosity of the function and returns
+#' how long certain operations took.
+#' @param seed Integer. Seed for reproducibility purposes.
+#'
+#' @return A list with:
+#' \itemize{
+#'  \item indices - An integer matrix representing the indices of the
+#'  approximate nearest neighbours.
+#'  \item dist - An numerical matrix representing the distances to the nearest
+#'  neighbours.
+#'  \item dist_metric - String representing the used distance metric.
+#' }
+#'
+#' @export
+rs_sc_knn_w_dist <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, verbose, seed)
+
+#' Generates the sNN graph for igraph
+#'
+#' @description
+#' This function takes a kNN matrix and generates the inputs for an SNN
+#' graph based on it.
+#'
+#' @param knn_mat Integer matrix. Rows represent cells and the columns
+#' represent the neighbours.
+#' @param snn_method String. Which method to use to calculate the similarity.
+#' Choice of `c("jaccard", "rank")`.
+#' @param limited_graph Boolean. Shall the sNNs only be calculated between
+#' direct neighbours in the graph, or between all possible combinations.
+#' @param pruning Float. Below which value for the Jaccard similarity to prune
+#' the weight to 0.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'  \item edges - sNN edges as edge pairs.
+#'  \item weights - sNN weights of the pairs above.
+#' }
+#'
+#' @export
+rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
+
+#' Helper to compare kNN graphs
+#'
+#' @param knn_mat_a Integer matrix. The first kNN graph to compare.
+#' @param knn_mat_b Integer matrix. The second kNN graph to compare.
+#'
+#' @returns Vector of number of overlaps per sample.
+rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn_mat_a, knn_mat_b)
+
+#' Calculate DGEs between cells based on Mann Whitney stats
+#'
+#' @description
+#' The function will take two sets of cell indices and calculate the
+#' differential gene expression based on the Mann Whitney test between the
+#' two groups.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_1 Integer. Index positions (0-indexed) of the cells
+#' of group 1.
+#' @param cell_indices_2 Integer. Index positions (0-indexed) of the cells
+#' of group 2.
+#' @param min_prop Minimum proportion of expression in at least one of the
+#' two groups to be tested.
+#' @param alternative String. One of `c("twosided", "greater", "less")`. Null
+#' hypothesis.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A list with the following elements
+#' \itemize{
+#'   \item lfc - Log fold changes between the two groups.
+#'   \item prop1 - Proportion of cells expressing the gene in group 1.
+#'   \item prop2 - Proportion of cells expressing the gene in group 2.
+#'   \item z_scores - Z-scores based on the Mann Whitney statistic.
+#'   \item p_values - P-values of the Mann Whitney statistic.
+#'   \item fdr - False discovery rate after BH adjustment
+#'   \item genes_to_keep - Boolean indicating which genes were tested.
+#' }
+#'
+#' @export
+rs_calculate_dge_mann_whitney <- function(f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose) .Call(wrap__rs_calculate_dge_mann_whitney, f_path, cell_indices_1, cell_indices_2, min_prop, alternative, verbose)
+
+#' Calculate AUCell in Rust
+#'
+#' @description
+#' The function will take in a list of gene set indices (0-indexed!) and
+#' calculate an AUCell type statistic. Two options here: calculate this
+#' with proper AUROC calculations (useful for marker gene expression) or
+#' based on the Mann-Whitney statistic (useful for pathway activity
+#' measurs). Data can be streamed in chunks of 50k cells per or loaded in
+#' in one go.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list List. List with the gene set indices (0-indexed!) of the
+#' genes of interest.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param auc_type String. One of `"wilcox"` or `"auroc"`, pending on
+#' which statistic you wish to calculate.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of cells x gene sets with the values representing the
+#' AUC.
+#'
+#' @export
+rs_aucell <- function(f_path, gs_list, cells_to_keep, auc_type, streaming, verbose) .Call(wrap__rs_aucell, f_path, gs_list, cells_to_keep, auc_type, streaming, verbose)
+
+#' Calculate gene spatial auto-correlations
+#'
+#' @description
+#' This function implements the HotSpot auto-correlation functionality and
+#' will return to what extent a given gene shows auto-correlation in the
+#' generated kNN-graph from the embeddings. For details see DeTomaso, et al.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param f_path_cells Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param hotspot_params List. The HotSpot parameter list.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which cells
+#' to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param streaming Boolean. Shall the data be streamed in chunks. Useful
+#' for large data sets.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item gene_idx - 0-based integer indicating the gene index.
+#'   \item gaerys_c - Gaery's C calculation for the autocorrelation
+#'   coefficient.
+#'   \item z_score - Z-score of the auto-correlation.
+#'   \item pval - P-value derived from the Z-score.
+#'   \item fdr - False discovery rate based on the p-value.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+rs_hotspot_autocor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_autocor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+
+#' Cluster the genes by Z-score together
+#'
+#' @param z_matrix Numerical matrix representing the Z-scores.
+#' @param fdr_threshold Float. The FDR thresholds in terms of the Z-scores.
+#' @param min_size Integer. Minimum cluster size.
+#'
+#' @returns An assignment vector. NA indicates that the gene did not pass the
+#' thresholds and has not been assigned.
+#'
+#' @export
+rs_hotspot_cluster_genes <- function(z_matrix, fdr_threshold, min_size) .Call(wrap__rs_hotspot_cluster_genes, z_matrix, fdr_threshold, min_size)
+
+#' Calculate gene<>gene spatial correlations
+#'
+#' @description
+#' This function implements the HotSpot gene <> gene local correlation
+#' functionality from HotSpot, see DeTomaso, et al.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param f_path_cells Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix from which to generate
+#' the kNN graph.
+#' @param hotspot_params List. The HotSpot parameter list.
+#' @param cells_to_keep Integer vector. 0-index vector indicating which cells
+#' to include in the analysis. Ensure that this is of same order/length
+#' as the embedding matrix.
+#' @param genes_to_use Integer vector. 0-index vector indicating which genes
+#' to include.
+#' @param streaming Boolean. Shall the data be streamed in chunks. Useful
+#' for large data sets.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @returns A list with the following elements.
+#' \itemize{
+#'   \item cor - A matrix of the N x N genes_to_use length with the auto-
+#'   correlation coefficients.
+#'   \item z - A matrix of N x N genes_to_use length with the Z-scores of the
+#'   local correlations between two genes.
+#' }
+#'
+#' @export
+#'
+#' @references DeTomaso, et al., Cell Systems, 2021
+rs_hotspot_gene_cor <- function(f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed) .Call(wrap__rs_hotspot_gene_cor, f_path_genes, f_path_cells, embd, hotspot_params, cells_to_keep, genes_to_use, streaming, verbose, seed)
+
+#' Calculate module activity scores in Rust
+#'
+#' @description
+#' Calculates module activity scores following Seurat's `AddModuleScore`.
+#' For each module (gene set), computes the average expression of genes in the
+#' set minus the average expression of randomly selected control genes from the
+#' same expression bins. Genes are binned based on their average expression
+#' across cells to ensure controls are expression-matched.
+#'
+#' @param f_path_cells String. Path to the cell-based binary file.
+#' @param f_path_genes String. Path to the gene-based binary file.
+#' @param gs_list List. List of integer vectors, where each vector contains
+#' gene indices (0-based) for a module/gene set.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param nbin Integer. Number of bins for gene stratification.
+#' @param ctrl Integer. Number of control genes to sample per gene in each
+#' module.
+#' @param seed Integer. Random seed for reproducible control gene sampling.
+#' @param streaming Logical. If TRUE, processes cells and genes are read in in
+#' chunks to reduce memory usage.
+#' @param verbose Logical. Controls verbosity of the function.
+#'
+#' @return Matrix of module scores (modules x cells). Each row corresponds to a
+#' module from gs_list, each column to a cell from cells_to_keep.
+#'
+#' @references
+#' Tirosh et al, Science (2016)
+#'
+#' @export
+rs_module_scoring <- function(f_path_cells, f_path_genes, gs_list, cells_to_keep, nbin, ctrl, seed, streaming, verbose) .Call(wrap__rs_module_scoring, f_path_cells, f_path_genes, gs_list, cells_to_keep, nbin, ctrl, seed, streaming, verbose)
+
+#' Generate the neighbourhoods akin to the miloR approach
+#'
+#' @description Rust version of the
+#'
+#' @param embd Numeric matrix. Represents the matrix used to generate the kNN
+#' graph and will be used to refine the neighbourhoods.
+#' @param knn_indices Integer matrix. Each row represents a given cell and
+#' the columns the neighbours. (0-indexed!)
+#' @param milor_params Named list. Contains the parameters for running the
+#' miloR approach.
+#' @param seed Integer. Seed for reproducibility.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item index_cell - Integer. 0-indexed positions of the cells defining the
+#'  neighbourhood.
+#'  \item nhoods_i - Integer. 0-indexed positions of the cells in the
+#'  neighbourhood.
+#'  \item nhoods_j - Integer. To which neighbourhood the cell belongs.
+#'  \item nhoods_x - Numeric. The x-value of the COO type matrix, i.e.,
+#'  defaults to `1.0`.
+#'  \item nrows - Integer. Number of cells in the matrix
+#'  \item ncols - Integer. Number of refined neighbourhoods.
+#'  \item kth_distances - The k-th distances for spatial FDR calculations.
+#' }
+#'
+#' @export
+rs_make_milor_nhoods <- function(embd, knn_indices, milor_params, seed, verbose) .Call(wrap__rs_make_milor_nhoods, embd, knn_indices, milor_params, seed, verbose)
+
+#' Calculate VISION pathway scores in Rust
+#'
+#' @description
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return A matrix of cells x vision scores per gene set.
+#'
+#' @export
+rs_vision <- function(f_path, gs_list, cells_to_keep, streaming, verbose) .Call(wrap__rs_vision, f_path, gs_list, cells_to_keep, streaming, verbose)
+
+#' Calculate VISION pathway scores in Rust with auto-correlation
+#'
+#' @description
+#' The function will take in a list of gene sets that contains lists of `"pos"`
+#' and `"neg"` gene indices (0-indexed). You don't have to provide the `"neg"`,
+#' but it can be useful to classify the delta of two stats (EMT, Th1; Th2) etc.
+#' Additionally, it will take a random gene list and calculate an
+#' auto-correlation score based on Gaery's C to identify pathways that show
+#' significant patterns on the kNN graph generate on the provided embedding.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix to use to generate the
+#' kNN graph.
+#' @param gs_list Nested list. Each sublist contains the (0-indexed!) positive
+#' and negative gene indices of that specific gene set.
+#' @param random_gs_list Double-nested list. The outer list represents the
+#' clusters of clusters and the inner list represents the permutations within
+#' that cluster.
+#' @param vision_params List. Contains various parameters to use in terms
+#' of the kNN generation.
+#' @param cells_to_keep Integer. Vector of indices of the cells to keep.
+#' @param cluster_membership Integer. Vector that indicates to which of the
+#' permuted gene set clusters the given gene set belongs.
+#' @param streaming Boolean. Shall the data be streamed.
+#' @param verbose Boolean. Controls verbosity of the function.
+#' @param seed Integer. Random seed for reproducibility.
+#'
+#' @return A list with the following items:
+#' \itemize{
+#'   \item autocor_res - Auto-correlation results, i.e., 1 - C, p-value and
+#'   FDR.
+#'   \item vision_mat - A matrix of cells x vision scores per gene set.
+#' }
+#'
+#' @export
+rs_vision_with_autocorrelation <- function(f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed) .Call(wrap__rs_vision_with_autocorrelation, f_path, embd, gs_list, random_gs_list, vision_params, cells_to_keep, cluster_membership, streaming, verbose, seed)
+
+#' Identifies genes to include into a SCENIC analysis
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns The 0-indexed positions of the genes to include in the scenic
+#' analysis.
+#'
+#' @export
+rs_scenic_gene_filter <- function(f_path_genes, cell_indices, scenic_params, verbose) .Call(wrap__rs_scenic_gene_filter, f_path_genes, cell_indices, scenic_params, verbose)
+
+#' SCENIC: Generating gene-regulatory networks
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+#' predictor variables to use in the generation of the regression learners.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param seed Integer. Controls reproducibility of the function.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_scenic_grn <- function(f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_scenic_grn, f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose)
+
+#' SCENIC: Generating gene-regulatory networks (streaming version)
+#'
+#' @description Loads the genes in as chunks to avoid high memory pressure.
+#'
+#' @param f_path_genes Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer vector. 0-indexed(!) positions of cells to
+#' include in the analysis
+#' @param gene_indices Integer vector. 0-indexed(!) positions of the genes
+#' to include.
+#' @param tf_indices Integer vector. 0-indexed(!) positions of the TF
+#' predictor variables to use in the generation of the regression learners.
+#' @param scenic_params Named list. Contains all of the parameters need for
+#' SCENIC.
+#' @param seed Integer. Controls reproducibility of the function.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A gene x TF importance matrix
+#'
+#' @export
+rs_scenic_grn_streaming <- function(f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose) .Call(wrap__rs_scenic_grn_streaming, f_path_genes, cell_indices, gene_indices, tf_indices, scenic_params, seed, verbose)
+
+#' SCENIC: Select the Top TF <> Gene pairs
+#'
+#' @param matrix Numeric matrix with genes x TF importance values
+#' @param k Integer. Number of top genes / TFs to extract.
+#' @param margin If set to 1, the top k TFs per gene are used. If set to 2, the
+#' top k genes per TF are used. Both versions were used in the original paper.
+#' @param min_value Float. An
+#'
+#' @returns A list with three vectors: tf, gene, importance
+#'
+#' @export
+rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_targets, matrix, k, margin, min_value)
+
+#' SCENIC: Select TF-gene pairs by per-gene importance threshold
+#'
+#' For each gene (row), computes mean + n_sd * SD of the importance scores
+#' across all TFs and retains only pairs exceeding that threshold.
+#'
+#' @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
+#' values.
+#' @param n_sd Float. Number of standard deviations above the mean to use as
+#' the per-gene threshold.
+#' @param min_value Optional float. Absolute minimum importance score. Pairs
+#' below this are excluded even if they pass the per-gene threshold.
+#'
+#' @returns A list with three vectors: tf, gene, importance
+#'
+#' @export
+rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_importance_threshold, matrix, n_sd, min_value)
+
+#' Generate meta cells (hdWGCNA method)
+#'
+#' @description This function implements the approach from Morabito, et al.
+#' to generate meta cells. You can provide an already pre-computed kNN matrix
+#' or an embedding to regenerate the kNN matrix with specified parameters in
+#' the meta_cell_params. If `knn_mat` is provided, this one will be used. You
+#' need to at least provide `knn_mat` or `embd`!
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
+#' for the generation of the meta cells. This function expects 0-indices!
+#' @param embd Optional numerical matrix. The embedding matrix (for example
+#' PCA embedding) you wish to use for the generation of the kNN graph that
+#' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types. If this is provided, the kNN graph will be regenerated.
+#' @param meta_cell_params A list containing the meta cell parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#' }
+#'
+#' @export
+rs_get_metacells <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose) .Call(wrap__rs_get_metacells, f_path, knn_mat, embd, cells_to_keep, cells_to_use, meta_cell_params, target_size, seed, verbose)
+
+#' Generate SEACells
+#'
+#' @description This function implements the SEACells algorithm for generating
+#' meta cells from Persad et al. An embedding matrix must be provided which is
+#' used to construct the kNN graph and kernel matrix for the SEACells
+#' algorithm. This version is highly memory and speed-optimised and will
+#' truncate small values during matrix operations which can affect convergence.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param embd Numerical matrix. The embedding matrix (for example PCA embedding)
+#' used for the generation of the kNN graph and kernel matrix.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types.
+#' @param seacells_params A list containing the SEACells parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#'  \item rss - Vector of RSS values from each iteration.
+#'  \item archetypes - Vector of cell indices selected as archetypes.
+#' }
+#'
+#' @export
+#'
+#' @references Persad, et al., Nat. Biotechnol., 2023.
+rs_get_seacells <- function(f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose) .Call(wrap__rs_get_seacells, f_path, embd, cells_to_keep, cells_to_use, seacells_params, target_size, seed, verbose)
+
+#' Pseudo-bulk a set of cells (dense)
+#'
+#' @description This function will return a dense matrix of
+#' `length(cell_indices_ls) x number of genes`. The function has the option
+#' to return the sum of the sum of the raw counts or the average of the
+#' normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A dense matrix with the pseudo-bulked data.
+#'
+#' @export
+rs_pseudobulk_cells_dense <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_dense, f_path, cell_indices_ls, assay, verbose)
+
+#' Pseudo-bulk a set of cells (sparse)
+#'
+#' @description This function will return a sparse matrix of
+#' `length(cell_indices_ls) x number of genes` (in list form in CSR).
+#' The function has the option to return the sum of the sum of the raw counts
+#' or the average of the normalised counts.
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param cell_indices_ls List. Must contains 0-indexed positions of the
+#' cells to aggregate per element.
+#' @param assay String. One of `c("raw", "norm")`. Which counts to normalise.
+#' @param verbose Controls verbosity of the function
+#'
+#' @returns A list with the following elements (easy to convert into CSR in R)
+#' \itemize{
+#'   \item indptr - The index pointers (representing cells)
+#'   \item indices - The indices (representing genes)
+#'   \item data - The pseudo-bulked data
+#'   \item nrow - Number of rows (i.e., pseudo-bulked samples)
+#'   \item ncol - Number of columns
+#' }
+#'
+#' @export
+rs_pseudobulk_cells_sparse <- function(f_path, cell_indices_ls, assay, verbose) .Call(wrap__rs_pseudobulk_cells_sparse, f_path, cell_indices_ls, assay, verbose)
+
+#' Generate SuperCells.
+#'
+#'
+#' @description This function implements the approach from Bilous, et al.
+#' to generate meta cells or called here SuperCells. You can provide an
+#' already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
+#' with specified parameters in the meta_cell_params. If `knn_mat` is provided,
+#' this one will be used. You need to at least provide `knn_mat` or `embd`!
+#'
+#' @param f_path String. Path to the `counts_cells.bin` file.
+#' @param knn_mat Optional integer matrix. The kNN matrix you wish to use
+#' for the generation of the meta cells. This function expects 0-indices!
+#' @param embd Optional numerical matrix. The embedding matrix (for example
+#' PCA embedding) you wish to use for the generation of the kNN graph that
+#' is used subsequently for aggregation of the meta cells.
+#' @param cells_to_keep Optional indices of the cells to keep, i.e., the
+#' cells used for the generation of the embedding.
+#' @param cells_to_use Optional indices of cells to use for meta cell
+#' generation. Useful if you wish to generate meta cells in specific cell
+#' types. If this is provided, the kNN graph will be regenerated.
+#' @param supercell_params A list containing the SuperCell parameters.
+#' @param target_size Numeric. Target library size for re-normalisation of
+#' the meta cells. Typically `1e4`.
+#' @param seed Integer. For reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'  \item assignments - A list containing assignment information with elements:
+#'    assignments (vector), metacells (list), unassigned (vector), n_metacells,
+#'    n_cells, n_unassigned
+#'  \item aggregated - A list with indptr, indices, raw_counts, norm_counts,
+#'    nrow, ncol in sparse format.
+#' }
+#'
+#' @export
+rs_supercell <- function(f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose) .Call(wrap__rs_supercell, f_path, knn_mat, embd, cells_to_keep, cells_to_use, supercell_params, target_size, seed, verbose)
+
+#' Helper to extract single cell counts as a dense vector for plotting
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_index Integer. Gene index position to return (0-indexed!).
+#' @param norm Boolean. Shall normalised counts be returned.
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns The dense vector of expression values for this gene.
+#'
+#' @export
+rs_extract_counts_plots <- function(f_path, cell_indices, gene_index, norm, scale, clip) .Call(wrap__rs_extract_counts_plots, f_path, cell_indices, gene_index, norm, scale, clip)
+
+#' Helper to extract single cell counts for several genes
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_indices Integer. Gene index position to return (0-indexed!).
+#' @param scale Boolean. Shall the normalised counts be scaled.
+#' @param clip Optional float. Clipping for the Z-scores if scale is set to
+#' `TRUE`
+#'
+#' @returns A list of dense vectors of the normalised counts.
+#'
+#' @export
+rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, scale, clip) .Call(wrap__rs_extract_several_genes_plots, f_path, cell_indices, gene_indices, scale, clip)
+
+#' Calculates the gene statistics for a set of cell groups and genes
+#'
+#' @description
+#' Helper function to extract data for dot plots and/or heatmaps.
+#'
+#' @param f_path String. Path to the `counts_genes.bin` file.
+#' @param cell_indices Integer positions (0-indexed!) that defines the cells
+#' to keep.
+#' @param gene_indices Integer. Gene index position to return (0-indexed!).
+#' @param group_ids Integer. The levels of the data. (0-indexed!)
+#' @param group_levels String. Name of the factors.
+#'
+#' @returns A list with the following elements:
+#' \itemize{
+#'   \item grp_label - The label of that group
+#'   \item mean_exp - Vector of mean expression values in row major (genes x
+#'   n_levels)
+#'   \item perc_exp - Vector of proportions of cells with expression in row
+#'   major (genes x n_levels)
+#' }
+rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
+
+SingeCellCountData <- new.env(parent = emptyenv())
+
+SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)
+
+SingeCellCountData$get_shape <- function() .Call(wrap__SingeCellCountData__get_shape, self)
+
+SingeCellCountData$r_data_to_file <- function(r_data, qc_params, verbose) .Call(wrap__SingeCellCountData__r_data_to_file, self, r_data, qc_params, verbose)
+
+SingeCellCountData$h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+
+SingeCellCountData$norm_h5_to_file <- function(cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose) .Call(wrap__SingeCellCountData__norm_h5_to_file, self, cs_type, h5_path, no_cells, no_genes, obs_lib_size_col, target_size, qc_params, verbose)
+
+SingeCellCountData$h5_to_file_streaming <- function(cs_type, h5_path, no_cells, no_genes, qc_params, verbose) .Call(wrap__SingeCellCountData__h5_to_file_streaming, self, cs_type, h5_path, no_cells, no_genes, qc_params, verbose)
+
+SingeCellCountData$multi_h5_to_file <- function(file_tasks, universe_size, qc_params, verbose) .Call(wrap__SingeCellCountData__multi_h5_to_file, self, file_tasks, universe_size, qc_params, verbose)
+
+SingeCellCountData$mtx_to_file <- function(mtx_path, qc_params, cells_as_rows, verbose) .Call(wrap__SingeCellCountData__mtx_to_file, self, mtx_path, qc_params, cells_as_rows, verbose)
+
+SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call(wrap__SingeCellCountData__return_full_mat, self, assay, cell_based, verbose)
+
+SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
+
+SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
+
+SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose))
+
+SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose))
+
+SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
+
+SingeCellCountData$set_from_file <- function() invisible(.Call(wrap__SingeCellCountData__set_from_file, self))
+
+SingeCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingeCellCountData__get_nnz_genes, self, gene_indices)
+
+#' @export
+`$.SingeCellCountData` <- function (self, name) { func <- SingeCellCountData[[name]]; environment(func) <- environment(); func }
+
+#' @export
+`[[.SingeCellCountData` <- `$.SingeCellCountData`
 
 
 # nolint end

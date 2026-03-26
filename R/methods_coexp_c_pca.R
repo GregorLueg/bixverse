@@ -3,16 +3,16 @@
 #' Prepare class for contrastive PCA
 #'
 #' @description
-#' This function will prepare the `bulk_coexp` for subsequent usage of the
+#' This function will prepare the `BulkCoExp` for subsequent usage of the
 #' contrastive PCA functions. This is based on the work of Abid, et al.
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #' @param background_matrix Numeric matrix. The background matrix you wish to
 #' remove. You should apply any data transformation to this matrix, too!
 #' @param scale Boolean. Shall the data be scaled. Defaults to FALSE.
 #' @param .verbose Boolean. Controls verbosity of the function.
 #'
-#' @return `bulk_coexp` with the needed data for contrastive PCA in the
+#' @return `BulkCoExp` with the needed data for contrastive PCA in the
 #' properties of the class.
 #'
 #' @references Abid, et al., Nature Communications, 2018
@@ -32,11 +32,11 @@ contrastive_pca_processing <- S7::new_generic(
 #'
 #' @export
 #'
-#' @method contrastive_pca_processing bulk_coexp
-S7::method(contrastive_pca_processing, bulk_coexp) <-
+#' @method contrastive_pca_processing BulkCoExp
+S7::method(contrastive_pca_processing, BulkCoExp) <-
   function(object, background_matrix, scale = FALSE, .verbose = TRUE) {
     # Checks
-    checkmate::assertClass(object, "bixverse::bulk_coexp")
+    checkmate::assertClass(object, "bixverse::BulkCoExp")
     checkmate::assertMatrix(background_matrix, mode = "numeric")
     checkmate::qassert(scale, "B1")
     checkmate::qassert(.verbose, "B1")
@@ -115,11 +115,11 @@ S7::method(contrastive_pca_processing, bulk_coexp) <-
 #' Applies the contrastive PCA algorithm given a specified alpha and a number of
 #' contrastive principal components to extract.
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #' @param alpha Alpha parameter to use.
 #' @param no_pcs Number of contrastive PCs to generate.
 #'
-#' @return `bulk_coexp` with additional data in the slots
+#' @return `BulkCoExp` with additional data in the slots
 #'
 #' @references Abid, et al., Nature Communications, 2018
 #'
@@ -138,13 +138,13 @@ contrastive_pca <- S7::new_generic(
 #'
 #' @export
 #'
-#' @method contrastive_pca bulk_coexp
-S7::method(contrastive_pca, bulk_coexp) <-
+#' @method contrastive_pca BulkCoExp
+S7::method(contrastive_pca, BulkCoExp) <-
   function(object, alpha, no_pcs) {
     # Scope checks
     factors <- loadings <- NULL
     # Checks
-    checkmate::assertClass(object, "bixverse::bulk_coexp")
+    checkmate::assertClass(object, "bixverse::BulkCoExp")
     checkmate::qassert(alpha, "N1")
     checkmate::qassert(no_pcs, "I1")
     detection_method <- S7::prop(object, "params")["detection_method"]
@@ -190,7 +190,7 @@ S7::method(contrastive_pca, bulk_coexp) <-
 #' @description
 #' Getter function for the feature loadings of the contrastive PCA
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #'
 #' @returns The feature loadings of the contrastive PCA run. If not found,
 #' returns a warning and NULL.
@@ -206,10 +206,10 @@ get_c_pca_loadings <- S7::new_generic(
 
 #' @export
 #'
-#' @method get_c_pca_loadings bulk_coexp
-S7::method(get_c_pca_loadings, bulk_coexp) <- function(object) {
+#' @method get_c_pca_loadings BulkCoExp
+S7::method(get_c_pca_loadings, BulkCoExp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
 
   loadings <- S7::prop(object, "outputs")[["c_pca_loadings"]]
 
@@ -226,7 +226,7 @@ S7::method(get_c_pca_loadings, bulk_coexp) <- function(object) {
 #' @description
 #' Getter function for the feature factors of the contrastive PCA
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()].
+#' @param object The underlying class, see [bixverse::BulkCoExp()].
 #'
 #' @returns The sample scores of the contrastive PCA run. If not found,
 #' returns a warning and NULL.
@@ -242,10 +242,10 @@ get_c_pca_factors <- S7::new_generic(
 
 #' @export
 #'
-#' @method get_c_pca_factors bulk_coexp
-S7::method(get_c_pca_factors, bulk_coexp) <- function(object) {
+#' @method get_c_pca_factors BulkCoExp
+S7::method(get_c_pca_factors, BulkCoExp) <- function(object) {
   # checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
 
   factors <- S7::prop(object, "outputs")[["c_pca_factors"]]
 
@@ -264,11 +264,11 @@ S7::method(get_c_pca_factors, bulk_coexp) <- function(object) {
 #' This function will plot various alphas to highlight the most interesting
 #' alpha parameters akin to the implementation of contrastive PCA in Python.
 #'
-#' @param object The underlying class, see [bixverse::bulk_coexp()]. You need
+#' @param object The underlying class, see [bixverse::BulkCoExp()]. You need
 #' to apply [bixverse::contrastive_pca_processing()] to the function for this
 #' method to work. Checkmate will raise errors otherwise.
 #' @param label_column An optional sample label column. Needs to exist in the
-#' meta_data of the `bulk_coexp` class.
+#' meta_data of the `BulkCoExp` class.
 #' @param min_alpha Minimum alpha to test.
 #' @param max_alpha Maximum alpha to test.
 #' @param n_alphas Number of alphas to test. The function will generate a series
@@ -305,8 +305,8 @@ c_pca_plot_alphas <- S7::new_generic(
 #' @import data.table
 #' @import ggplot2
 #'
-#' @method c_pca_plot_alphas bulk_coexp
-S7::method(c_pca_plot_alphas, bulk_coexp) <- function(
+#' @method c_pca_plot_alphas BulkCoExp
+S7::method(c_pca_plot_alphas, BulkCoExp) <- function(
   object,
   label_column = NULL,
   min_alpha = .1,
@@ -318,7 +318,7 @@ S7::method(c_pca_plot_alphas, bulk_coexp) <- function(
   label <- NULL
 
   # Checks
-  checkmate::assertClass(object, "bixverse::bulk_coexp")
+  checkmate::assertClass(object, "bixverse::BulkCoExp")
   checkmate::qassert(label_column, c("S1", "0"))
   checkmate::qassert(min_alpha, "N1")
   checkmate::qassert(max_alpha, sprintf("N1(%f,]", min_alpha))

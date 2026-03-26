@@ -27,3 +27,4 @@ and will transform them into matrices for subsequent distance calculations
 based on Hamming distance (everything categorical) or for Gower distance
 (mixed types).
 }
+\keyword{internal}

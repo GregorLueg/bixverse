@@ -7,7 +7,7 @@
 get_grid_search_res(object)
 }
 \arguments{
-\item{object}{The class, see \code{\link[=bulk_coexp]{bulk_coexp()}}.}
+\item{object}{The class, see \code{\link[=BulkCoExp]{BulkCoExp()}}.}
 }
 \value{
 data.table with the grid search results (if found. Otherwise \code{NULL}.)

@@ -15,3 +15,4 @@ checkCorGraphParams(x)
 \description{
 Checkmate extension for checking the graph parameters.
 }
+\keyword{internal}

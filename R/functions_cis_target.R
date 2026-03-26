@@ -1,5 +1,53 @@
 # cistarget --------------------------------------------------------------------
 
+## data ------------------------------------------------------------------------
+
+#' Download CisTarget reference files for human (hg38)
+#'
+#' @param cache_dir String. Directory to cache the files. Defaults to a
+#' package-specific user cache directory.
+#' @param overwrite Logical. Re-download even if files already exist.
+#'
+#' @return Named list with paths: `rankings` and `motif_annotations`.
+#'
+#' @export
+download_cistarget_hg38 <- function(
+  cache_dir = tools::R_user_dir("bixverse", which = "cache"),
+  overwrite = FALSE
+) {
+  checkmate::qassert(cache_dir, "S1")
+  checkmate::qassert(overwrite, "B1")
+
+  urls <- list(
+    rankings = paste0(
+      "https://resources.aertslab.org/cistarget/databases/",
+      "homo_sapiens/hg38/refseq_r80/mc_v10_clust/gene_based/",
+      "hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"
+    ),
+    motif_annotations = paste0(
+      "https://resources.aertslab.org/cistarget/motif2tf/",
+      "motifs-v10nr_clust-nr.hgnc-m0.001-o0.0.tbl"
+    )
+  )
+
+  if (!dir.exists(cache_dir)) {
+    dir.create(cache_dir, recursive = TRUE)
+  }
+
+  paths <- purrr::imap(urls, \(url, name) {
+    dest <- file.path(cache_dir, basename(url))
+    if (!file.exists(dest) || overwrite) {
+      message(sprintf("Downloading %s ...", name))
+      utils::download.file(url, destfile = dest, mode = "wb")
+    } else {
+      message(sprintf("Using cached %s: %s", name, dest))
+    }
+    dest
+  })
+
+  paths
+}
+
 ## helpers ---------------------------------------------------------------------
 
 #' Helper to process CisTarget results
@@ -12,6 +60,8 @@
 #' rankings.
 #'
 #' @return A data.table with the results if there were any significant motifs.
+#'
+#' @keywords internal
 process_cistarget_res <- function(
   cs_ls,
   gs_name,
@@ -99,10 +149,14 @@ read_motif_annotation_file <- function(annot_file) {
   # fcase is cool!
   motif_annotations[,
     annotationSource := data.table::fcase(
-      inferred_orthology & inferred_motif_sim , "inferredBy_MotifSimilarity_n_Orthology" ,
-      inferred_motif_sim                      , "inferredBy_MotifSimilarity"             ,
-      inferred_orthology                      , "inferredBy_Orthology"                   ,
-      direct_annotation                       , "directAnnotation"                       ,
+      inferred_orthology & inferred_motif_sim  ,
+      "inferredBy_MotifSimilarity_n_Orthology" ,
+      inferred_motif_sim                       ,
+      "inferredBy_MotifSimilarity"             ,
+      inferred_orthology                       ,
+      "inferredBy_Orthology"                   ,
+      direct_annotation                        ,
+      "directAnnotation"                       ,
       default = ""
     )
   ]

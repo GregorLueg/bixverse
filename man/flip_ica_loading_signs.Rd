@@ -16,3 +16,4 @@ Returns a consistent ICA feature loading
 Makes sure that the largest absolute value in the ICA source matrix S will
 be positive.
 }
+\keyword{internal}

@@ -1,6 +1,6 @@
-# libraries --------------------------------------------------------------------
+# simple sparse tests ----------------------------------------------------------
 
-# data -------------------------------------------------------------------------
+## data ------------------------------------------------------------------------
 
 data <- c(0.3, 0.0, 1.0, 0, 0.2, -0.5)
 
@@ -11,20 +11,20 @@ expected_sparse_matrix <- as(
   "generalMatrix"
 )
 
-## rust tests ------------------------------------------------------------------
+### rust tests -----------------------------------------------------------------
 
-rs_data <- rs_upper_triangle_to_sparse(data, 1, 4)
+rs_data <- rs_upper_triangle_to_sparse(data, 1, 4, cs_type = "csc")
 
 sparse_matrix <- sparse_list_to_mat(rs_data)
 
 expect_equal(
-  current = rs_data$row_indices,
+  current = rs_data$indices,
   target = expected_sparse_matrix@i,
   info = "Rust sparse implementation - row indices"
 )
 
 expect_equal(
-  current = rs_data$col_ptr,
+  current = rs_data$indptr,
   target = expected_sparse_matrix@p,
   info = "Rust sparse implementation - col pointers"
 )
@@ -51,7 +51,7 @@ expect_equal(
   info = "Rust sparse list to sparse mat"
 )
 
-## r tests ---------------------------------------------------------------------
+### r tests --------------------------------------------------------------------
 
 sparse_matrix <- upper_triangle_to_sparse(data, 1L, 4L)
 
@@ -61,7 +61,7 @@ expect_equal(
   info = "Upper triangle to sparse via Rust"
 )
 
-## class test ------------------------------------------------------------------
+### class test -----------------------------------------------------------------
 
 rownames(expected_sparse_matrix) <- colnames(expected_sparse_matrix) <- c(
   "a",

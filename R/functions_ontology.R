@@ -329,7 +329,7 @@ calculate_critical_value <- function(
   # checks
   checkmate::assert(
     checkmate::test_matrix(x, mode = "numeric"),
-    checkmate::test_class(x, "bixverse::ontology")
+    checkmate::test_class(x, "bixverse::OntologySim")
   )
   checkmate::qassert(alpha, "N1(0, 1)")
   checkmate::qassert(permutations, "I1")
