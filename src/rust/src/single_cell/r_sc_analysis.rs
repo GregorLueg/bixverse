@@ -34,6 +34,7 @@ extendr_module! {
     fn rs_scenic_grn;
     fn rs_scenic_grn_streaming;
     fn rs_top_k_targets;
+    fn rs_importance_threshold;
 }
 
 //////////
@@ -975,6 +976,62 @@ fn rs_top_k_targets(matrix: RMatrix<f64>, k: i32, margin: i32, min_value: Option
             tfs.push(tf_name.to_string());
             genes.push(gene_name.to_string());
             importances.push(val);
+        }
+    }
+
+    list!(tf = tfs, gene = genes, importance = importances)
+}
+
+/// SCENIC: Select TF-gene pairs by per-gene importance threshold
+///
+/// For each gene (row), computes mean + n_sd * SD of the importance scores
+/// across all TFs and retains only pairs exceeding that threshold.
+///
+/// @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
+/// values.
+/// @param n_sd Float. Number of standard deviations above the mean to use as
+/// the per-gene threshold.
+/// @param min_value Optional float. Absolute minimum importance score. Pairs
+/// below this are excluded even if they pass the per-gene threshold.
+///
+/// @returns A list with three vectors: tf, gene, importance
+///
+/// @export
+#[extendr]
+fn rs_importance_threshold(matrix: RMatrix<f64>, n_sd: f64, min_value: Option<f64>) -> List {
+    let nrow = matrix.nrows();
+    let ncol = matrix.ncols();
+    let data = matrix.data();
+
+    let dimnames = matrix.get_attrib("dimnames").unwrap();
+    let dimnames_list: List = dimnames.try_into().unwrap();
+    let rownames: Strings = dimnames_list.elt(0).unwrap().try_into().unwrap();
+    let colnames: Strings = dimnames_list.elt(1).unwrap().try_into().unwrap();
+
+    let mut tfs: Vec<String> = Vec::new();
+    let mut genes: Vec<String> = Vec::new();
+    let mut importances: Vec<f64> = Vec::new();
+
+    for i in 0..nrow {
+        let mut sum = 0.0;
+        let mut sum_sq = 0.0;
+        for j in 0..ncol {
+            let v = data[j * nrow + i];
+            sum += v;
+            sum_sq += v * v;
+        }
+        let mean = sum / ncol as f64;
+        let var = sum_sq / ncol as f64 - mean * mean;
+        let sd = var.max(0.0).sqrt();
+        let threshold = mean + n_sd * sd;
+
+        for j in 0..ncol {
+            let v = data[j * nrow + i];
+            if v >= threshold && min_value.is_none_or(|min| v >= min) {
+                tfs.push(colnames[j].as_str().to_string());
+                genes.push(rownames[i].as_str().to_string());
+                importances.push(v);
+            }
         }
     }
 

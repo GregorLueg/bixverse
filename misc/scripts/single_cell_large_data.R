@@ -5,6 +5,7 @@ devtools::load_all()
 rextendr::clean()
 rextendr::document()
 
+tictoc::tic()
 path_h5 <- path.expand(
   "~/Downloads/plate1_filt_Vevo_Tahoe100M_WServicesFrom_ParseGigalab.h5ad"
 )
@@ -15,7 +16,7 @@ sc_object <- SingleCells(dir_data = path.expand("~/Desktop/bixverse_big_data/"))
 
 sc_object <- stream_h5ad(object = sc_object, h5_path = path_h5)
 
-sc_object <- load_existing(object = sc_object)
+# sc_object <- load_existing(object = sc_object)
 
 var <- get_sc_var(object = sc_object)
 
@@ -34,8 +35,6 @@ sc_object <- gene_set_proportions_sc(
 sc_object[[c(1:5L)]]
 
 qc_df <- sc_object[[c("cell_id", "lib_size", "nnz", "MT")]]
-
-rm(qc_df)
 
 metrics <- list(
   log10_lib_size = log10(qc_df$lib_size),
@@ -93,12 +92,12 @@ meta_data <- sc_object[[c("cell_id", "cell_name", "drug")]]
 cells_grp_a <- meta_data[drug == "AT7519", cell_id]
 cells_grp_b <- meta_data[drug == "palbociclib", cell_id]
 
-tictoc::tic()
 dge_results <- find_markers_sc(
   object = sc_object,
   cells_1 = cells_grp_a,
   cells_2 = cells_grp_b
 )
+
 tictoc::toc()
 
 setorder(dge_results, fdr)

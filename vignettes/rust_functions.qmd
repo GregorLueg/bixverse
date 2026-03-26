@@ -92,6 +92,12 @@ higher-level package functionality. This vignette covers:
 
 These may be useful for your own package development.
 
+::: {.callout-note}
+The vignette was built on a GitHub runner which is a 2-core machine with ~8 GB
+of memory. The performance differences tend to be (even) more pronounced on 
+machines with more cores and computational power.
+:::
+
 ## Set-up
 ```{r}
 #| label: setup

@@ -26,4 +26,9 @@
     "BatchLisiScores",
     print.BatchLisiScores
   )
+  registerS3method(
+    "print",
+    "Hotspot",
+    print.Hotspot
+  )
 }

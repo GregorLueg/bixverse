@@ -2444,16 +2444,7 @@ rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, em
 #'
 #' @description
 #' This function is a wrapper over the Rust-based generation of the approximate
-#' nearest neighbours. You have several options to get the approximate nearest
-#' neighbours:
-#'
-#' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
-#'   an index. Good compromise of index generation, querying speed.
-#' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-#'   hood. The index generation takes more long, but higher recall and ideal
-#'   for very large datasets due to subdued memory pressure.
-#' - `"nndescent"`: an index-free approximate nearest neighbour algorithm
-#'   that is ideal for small, ephemeral kNN graphs.
+#' nearest neighbours.
 #'
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
@@ -2491,8 +2482,11 @@ rs_sc_knn_w_dist <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_
 #' the weight to 0.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A integer matrix of N x k with N being the number of cells and k the
-#' number of neighbours.
+#' @return A list with the following items:
+#' \itemize{
+#'  \item edges - sNN edges as edge pairs.
+#'  \item weights - sNN weights of the pairs above.
+#' }
 #'
 #' @export
 rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Call(wrap__rs_sc_snn, knn_mat, snn_method, limited_graph, pruning, verbose)
@@ -2829,6 +2823,23 @@ rs_scenic_grn_streaming <- function(f_path_genes, cell_indices, gene_indices, tf
 #'
 #' @export
 rs_top_k_targets <- function(matrix, k, margin, min_value) .Call(wrap__rs_top_k_targets, matrix, k, margin, min_value)
+
+#' SCENIC: Select TF-gene pairs by per-gene importance threshold
+#'
+#' For each gene (row), computes mean + n_sd * SD of the importance scores
+#' across all TFs and retains only pairs exceeding that threshold.
+#'
+#' @param matrix Numeric matrix with genes (rows) x TFs (columns) importance
+#' values.
+#' @param n_sd Float. Number of standard deviations above the mean to use as
+#' the per-gene threshold.
+#' @param min_value Optional float. Absolute minimum importance score. Pairs
+#' below this are excluded even if they pass the per-gene threshold.
+#'
+#' @returns A list with three vectors: tf, gene, importance
+#'
+#' @export
+rs_importance_threshold <- function(matrix, n_sd, min_value) .Call(wrap__rs_importance_threshold, matrix, n_sd, min_value)
 
 #' Generate meta cells (hdWGCNA method)
 #'
