@@ -288,19 +288,19 @@ lisi_score_post_mnn <- calculate_batch_lisi_sc(
 kbet_score_post_mnn
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.3402 (1987 / 5841)
-#>   Mean Chi-Square:     3.5687 (expected under H0: 1)
+#>   Rejection rate:      0.3486 (2036 / 5841)
+#>   Mean Chi-Square:     3.5917 (expected under H0: 1)
 #>   Median Chi-Square:   3.6444
 asw_score_post_mnn
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0208 (0 = perfect mixing, 1 = separated)
-#>   Median ASW:  0.0569
+#>   Mean ASW:    0.0186 (0 = perfect mixing, 1 = separated)
+#>   Median ASW:  0.0428
 lisi_score_post_mnn
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.4288 (1 = no mixing, 2 = perfect mixing)
-#>   Median LISI:  1.3006
+#>   Mean LISI:    1.4452 (1 = no mixing, 2 = perfect mixing)
+#>   Median LISI:  1.4706
 ```
 
 We can see clear improvements across all scores. Lower kBET scores,
@@ -380,19 +380,19 @@ lisi_score_post_harmony <- calculate_batch_lisi_sc(
 kbet_score_post_harmony
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.4039 (2359 / 5841)
-#>   Mean Chi-Square:     5.4640 (expected under H0: 1)
-#>   Median Chi-Square:   3.6444
+#>   Rejection rate:      0.1481 (865 / 5841)
+#>   Mean Chi-Square:     2.1294 (expected under H0: 1)
+#>   Median Chi-Square:   1.5425
 asw_score_post_harmony
 #> Batch Silhouette Width
 #>   Cells: 5000 | Batches: 2
-#>   Mean ASW:    0.0810 (0 = perfect mixing, 1 = separated)
-#>   Median ASW:  0.1186
+#>   Mean ASW:    0.0201 (0 = perfect mixing, 1 = separated)
+#>   Median ASW:  0.0353
 lisi_score_post_harmony
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.3911 (1 = no mixing, 2 = perfect mixing)
-#>   Median LISI:  1.3006
+#>   Mean LISI:    1.5908 (1 = no mixing, 2 = perfect mixing)
+#>   Median LISI:  1.6423
 ```
 
 Also here, we observe improvements across the board.

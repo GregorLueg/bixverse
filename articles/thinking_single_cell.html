@@ -462,8 +462,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.382103 1.435613 1.560119 1.459442 1.481619 2.467222    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.146361 2.278559 2.374095 2.406884 2.441573 2.566878    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.273197 1.281084 1.363823 1.350251 1.430671 1.539825    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 2.020301 2.148822 2.289115 2.238745 2.323718 3.027833    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">

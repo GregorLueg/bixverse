@@ -6,7 +6,7 @@ This vignette walks through a standard single cell analysis on the
 PBMC3k data set using `bixverse`. If you have not read the [design
 choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the [introductory
-vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
+vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first; this vignette assumes familiarity with how the
 `SingleCells` class, on-disk storage and cells-to-keep logic work.
 
@@ -237,25 +237,26 @@ all_markers <- find_all_markers_sc(
   object = sc_object,
   column_of_interest = "leiden_clusters"
 )
-#> Processing group 1 out of 7.
-#> Processing group 2 out of 7.
-#> Processing group 3 out of 7.
-#> Processing group 4 out of 7.
-#> Processing group 5 out of 7.
-#> Processing group 6 out of 7.
-#> Processing group 7 out of 7.
+#> Processing group 1 out of 8.
+#> Processing group 2 out of 8.
+#> Processing group 3 out of 8.
+#> Processing group 4 out of 8.
+#> Processing group 5 out of 8.
+#> Processing group 6 out of 8.
+#> Processing group 7 out of 8.
+#> Processing group 8 out of 8.
 
 all_markers[, gene_symbol := ensembl_to_symbol[gene_id]]
 
 head(all_markers[fdr <= 0.05][order(-abs(lfc))])
 #>      grp         gene_id      lfc     prop1      prop2 z_scores      p_values
 #>    <num>          <char>    <num>     <num>      <num>    <num>         <num>
-#> 1:     6 ENSG00000163220 4.174770 0.9887324 0.20077434 29.09827 1.887722e-186
-#> 2:     7 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77
-#> 3:     6 ENSG00000090382 4.081069 1.0000000 0.51050884 29.66810 9.907717e-194
-#> 4:     7 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69
-#> 5:     6 ENSG00000143546 3.663987 0.9718310 0.11504425 28.62794 1.508612e-180
-#> 6:     7 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76
+#> 1:     7 ENSG00000163220 4.174770 0.9887324 0.20077434 29.09827 1.887722e-186
+#> 2:     8 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77
+#> 3:     7 ENSG00000090382 4.081069 1.0000000 0.51050884 29.66810 9.907717e-194
+#> 4:     8 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69
+#> 5:     7 ENSG00000143546 3.663987 0.9718310 0.11504425 28.62794 1.508612e-180
+#> 6:     8 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76
 #>              fdr gene_symbol
 #>            <num>      <char>
 #> 1: 4.275690e-183      S100A9

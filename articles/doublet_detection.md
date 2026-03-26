@@ -123,7 +123,7 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14528 cells, 1751 doublets (12.1%)
+#> ScrubletRes: 14528 cells, 1755 doublets (12.1%)
 #>   Threshold:              0.1852
 #>   Detected doublet rate:  12.1%
 #>   Detectable fraction:    87.3%
@@ -151,13 +151,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6636208
+#> [1] 0.6626781
 #> 
 #> $recall
-#> [1] 0.7453496
+#> [1] 0.745991
 #> 
 #> $f1
-#> [1] 0.7021148
+#> [1] 0.7018709
 ```
 
 #### Manual threshold adjustment
@@ -188,13 +188,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.7027586
+#> [1] 0.7011019
 #> 
 #> $recall
-#> [1] 0.6536241
+#> [1] 0.6529827
 #> 
 #> $f1
-#> [1] 0.6773014
+#> [1] 0.6761873
 ```
 
 We have made it worse here, but maybe there are cases where the scores

@@ -37,7 +37,7 @@ fast_mnn_sc(
   Integer vector. These are the highly variable genes, identified by a
   batch-aware method. Please refer to
   [`find_hvg_batch_aware_sc()`](https://gregorlueg.github.io/bixverse/reference/find_hvg_batch_aware_sc.md)
-  for more details.
+  for more details. These genes have to be 0-indexed!
 
 - fastmnn_params:
 

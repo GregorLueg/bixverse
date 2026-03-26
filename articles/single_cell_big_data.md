@@ -8,9 +8,9 @@ a MacBook Pro M1 Max - without exhausting memory. If you have not read
 the [design
 choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the [introductory
-vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
+vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first. The [PBMC3k
-walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc3k.html)
+walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html)
 covers every step in detail on a small data set; here we focus on what
 changes when the cell count moves from thousands to millions.
 
