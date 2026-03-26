@@ -815,7 +815,7 @@ S7::method(fast_mnn_sc, SingleCells) <- function(
   mnn_embd <- rs_mnn(
     f_path = get_rust_count_gene_f_path(object),
     cell_indices = get_cells_to_keep(object),
-    gene_indices = as.integer(batch_hvg_genes - 1L),
+    gene_indices = as.integer(batch_hvg_genes),
     batch_indices = batch_indices,
     mnn_params = fastmnn_params,
     precomputed_pca = pca_data,
