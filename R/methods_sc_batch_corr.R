@@ -924,7 +924,7 @@ S7::method(harmony_sc, SingleCells) <- function(
   ))
 
   if (is.null(harmony_params$k)) {
-    harmony_params$k <- min(round(nrow(pca_data) / 30), 200L)
+    harmony_params$k <- as.integer(min(round(nrow(pca_data) / 30), 200L))
     if (.verbose) {
       message(sprintf(
         " Auto-determined number of Harmony clusters: %d",
