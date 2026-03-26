@@ -17,6 +17,7 @@
   detections](https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.md):
 - [Contrastive
   PCA](https://gregorlueg.github.io/bixverse/articles/cpca.md):
+- [Ontologies](https://gregorlueg.github.io/bixverse/articles/ontologies.md):
 
 ### Single Cells
 
@@ -28,5 +29,7 @@
   bixverse](https://gregorlueg.github.io/bixverse/articles/doublet_detection.md):
 - [Batch correction with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_batch_corrections.md):
+- [Gene set analysis and GRN inference on
+  PBMCs](https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.md):
 - [Scaling to millions of cells with
   bixverse](https://gregorlueg.github.io/bixverse/articles/single_cell_big_data.md):

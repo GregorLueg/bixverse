@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -89,49 +91,50 @@
 
 
 
-    <section class="level2"><h2 id="single-sample-pathway-activity-functions">Single sample pathway activity functions<a class="anchor" aria-label="anchor" href="#single-sample-pathway-activity-functions"></a>
+    <section class="level2"><h2 id="single-sample-pathway-activity">Single-sample pathway activity<a class="anchor" aria-label="anchor" href="#single-sample-pathway-activity"></a>
 </h2>
-<p>An often used algorithm to check pathway activity (or maybe rather concordant up or down-regulation of genes belonging to a given pathway) is <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7" class="external-link">GSVA</a>. There is a corresponding package on <a href="https://www.bioconductor.org/packages/release/bioc/html/GSVA.html" class="external-link">BioConductor</a> for this, but <code>bixverse</code> offers Rust-accelerated versions of two of the algorithm.</p>
+<p>A common question in transcriptomics is whether the genes belonging to a given pathway are concordantly up- or down-regulated in each sample. Several algorithms tackle this by collapsing a gene-by-sample expression matrix into a pathway-by-sample score matrix, the most widely used being <a href="https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7" class="external-link">GSVA</a> and <a href="https://www.nature.com/articles/nature08460" class="external-link">ssGSEA</a>. <code>biverse</code> provides fast versions of both with some tricks under the hood to make them faster than the original implementations. Moreover, if you have multiple contrasts (different drugs vs. DMSO for example). <code>bixverse</code> also provides Rust-accelerated implementations from <a href="https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9" class="external-link">mitch</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="level3"><h3 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
-</h3>
-<p>Similar to the vignette of GSVA, let us create some random data (Gaussian or Poisson distributed) to mimic different types of transcriptomics measurements.</p>
+</section><section class="level2"><h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
+</h2>
+<p>Following the GSVA vignette convention, we generate some synthetic expression data (Gaussian-distributed to mimic normalised microarray or RNA-seq log counts, and Poisson-distributed to mimic raw counts) together with a collection of random gene sets.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">10000</span> <span class="co"># number of genes</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100</span> <span class="co"># number of samples</span></span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">10000L</span> <span class="co"># genes</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">100L</span> <span class="co"># samples</span></span>
 <span></span>
-<span><span class="co"># simulate expression values from a standard Gaussian distribution</span></span>
+<span><span class="co"># Gaussian expression matrix</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">p</span> <span class="op">*</span> <span class="va">n</span><span class="op">)</span>,</span>
 <span>  nrow <span class="op">=</span> <span class="va">p</span>,</span>
-<span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># simulate expression values from a Poisson distribution</span></span>
-<span><span class="va">X1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
+<span><span class="co"># Poisson count matrix</span></span>
+<span><span class="va">X_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="va">p</span> <span class="op">*</span> <span class="va">n</span>, lambda <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
 <span>  nrow <span class="op">=</span> <span class="va">p</span>,</span>
-<span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span>  dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"s"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">X1</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"numeric"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">X_counts</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"numeric"</span></span>
 <span></span>
-<span><span class="co"># generate some random gene sets</span></span>
+<span><span class="co"># Random gene sets of varying size</span></span>
 <span><span class="va">gs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">10</span><span class="op">:</span><span class="fl">100</span>, size <span class="op">=</span> <span class="fl">250</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co"># sample gene sets</span></span>
 <span><span class="va">gs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
 <span>  <span class="va">gs</span>,</span>
-<span>  <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">p</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">p</span>, size <span class="op">=</span> <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">p</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span>, size <span class="op">=</span> <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  <span class="va">p</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">gs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gs"</span>, <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gs</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">gs</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"gs"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">gs</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="gsva-gaussian-version">GSVA (Gaussian version)<a class="anchor" aria-label="anchor" href="#gsva-gaussian-version"></a>
+</section><section class="level2"><h2 id="gsva">GSVA<a class="anchor" aria-label="anchor" href="#gsva"></a>
+</h2>
+<section class="level3"><h3 id="gaussian-kernel">Gaussian kernel<a class="anchor" aria-label="anchor" href="#gaussian-kernel"></a>
 </h3>
-<p>To run the GSVA implementation in bixverse, you can just do</p>
+<p>The Gaussian kernel version of GSVA is appropriate for continuous expression values (log-CPM, microarray intensities, etc.). Running it in <code>bixverse</code> is a single call:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bixverse_res_gaussian</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span></span>
@@ -141,216 +144,215 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1           s2          s3          s4         s5</span></span>
-<span><span class="co">#&gt; gs1 -0.01320378 -0.093492292  0.10111879 -0.10211421  0.1019284</span></span>
-<span><span class="co">#&gt; gs2  0.14308516 -0.132894778  0.13513867  0.09514166 -0.1564986</span></span>
-<span><span class="co">#&gt; gs3 -0.21491357 -0.075694242  0.12316338 -0.04042700 -0.1765931</span></span>
-<span><span class="co">#&gt; gs4  0.12565312  0.129707548 -0.07585571 -0.22496932  0.2923787</span></span>
-<span><span class="co">#&gt; gs5  0.15323107  0.002392075 -0.07922392 -0.09677161  0.1677735</span></span></code></pre></div>
+<span><span class="co">#&gt;              s1           s2          s3          s4           s5</span></span>
+<span><span class="co">#&gt; gs1  0.08628682  0.162468040 -0.12407794 -0.01699471  0.045879159</span></span>
+<span><span class="co">#&gt; gs2 -0.01972725 -0.044652108  0.15891362  0.23113720  0.187682308</span></span>
+<span><span class="co">#&gt; gs3  0.07005935  0.133884105  0.15350399  0.16393521  0.001112463</span></span>
+<span><span class="co">#&gt; gs4  0.01597900 -0.152684628 -0.06113659  0.08263373 -0.154560563</span></span>
+<span><span class="co">#&gt; gs5 -0.06311077 -0.003932136  0.07008926 -0.04882520 -0.234603178</span></span></code></pre></div>
 </div>
-<p>If we compare against the original implementation of GSVA</p>
+<p>If the original <code>GSVA</code> Bioconductor package is available we can verify that the results are essentially identical. Minor differences in numerical precision arise from optimisations on the Rust side, but per-pathway correlations between the two implementations are consistently above 0.99.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rcastelo/GSVA" class="external-link">GSVA</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gsvaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
+<span><span class="va">gsva_res_gaussian</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">gsva_res_gaussian</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_gaussian</span>, <span class="va">gsva_res_gaussian</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">gsva_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1           s2          s3          s4         s5</span></span>
-<span><span class="co">#&gt; gs1 -0.01320378 -0.093486863  0.10113341 -0.10211972  0.1019327</span></span>
-<span><span class="co">#&gt; gs2  0.14309364 -0.133006505  0.13515390  0.09503537 -0.1563926</span></span>
-<span><span class="co">#&gt; gs3 -0.21491357 -0.075675821  0.12306305 -0.04043898 -0.1766003</span></span>
-<span><span class="co">#&gt; gs4  0.12565056  0.129698884 -0.07586936 -0.22497445  0.2923787</span></span>
-<span><span class="co">#&gt; gs5  0.15323059  0.002390686 -0.07921143 -0.09676413  0.1677762</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>  <span class="st">"All pathway correlations &gt;= 0.99: %s (min: %.4f)"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">correlations</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "All pathway correlations &gt;= 0.99: TRUE (min: 1.0000)"</span></span></code></pre></div>
 </div>
-<p>We can appreciated very similar values. There is slight differences in numerical precision due to optimisations in Rust. However, the correlations between the two are ≥0.99</p>
+<p>Let’s compare speed (differences will be more pronounced, the more computational fire power your system has.)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_gaussian</span>, <span class="va">gsva_res_gaussian</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">same_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
-<span>    <span class="st">"GSVA and bixverse return (basically) the"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"same results for GSVA (Gaussian): %s"</span>, <span class="va">same_res</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "GSVA and bixverse return (basically) the same results for GSVA (Gaussian): TRUE"</span></span></code></pre></div>
-</div>
-<p>The <code>biverse</code> code is highly optimised, hence, usually yielding faster results compared to the original <code>GSVA</code> code.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  gsva <span class="op">=</span> <span class="op">{</span></span>
 <span>    <span class="va">gsvaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>,</span>
-<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span></span>
-<span>    exp <span class="op">=</span> <span class="va">X</span>,</span>
-<span>    pathways <span class="op">=</span> <span class="va">gs</span>,</span>
-<span>    gaussian <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>  <span class="op">)</span>,</span>
+<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span>exp <span class="op">=</span> <span class="va">X</span>, pathways <span class="op">=</span> <span class="va">gs</span>, gaussian <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq      mean    median        uq      max neval</span></span>
-<span><span class="co">#&gt;      gsva 2505.7374 2511.5945 2525.2353 2517.4516 2534.9843 2552.517     3</span></span>
-<span><span class="co">#&gt;  bixverse  580.6615  580.7829  581.0223  580.9043  581.2026  581.501     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean    median       uq      max neval</span></span>
+<span><span class="co">#&gt;      gsva 2477.6086 2479.3432 2496.9232 2481.0777 2506.580 2532.083     3</span></span>
+<span><span class="co">#&gt;  bixverse  581.0207  581.2603  581.3635  581.4999  581.535  581.570     3</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="gsva-poisson-version">GSVA (Poisson version)<a class="anchor" aria-label="anchor" href="#gsva-poisson-version"></a>
+</section><section class="level3"><h3 id="poisson-kernel">Poisson kernel<a class="anchor" aria-label="anchor" href="#poisson-kernel"></a>
 </h3>
-<p>To use the version with a Poisson kernel (more appropriate for count data) is as simple.</p>
+<p>For count data a Poisson kernel is more appropriate. The only change is setting <code>gaussian = FALSE</code>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># bixverse expects floats also for the Poisson version</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">X1</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"numeric"</span></span>
-<span></span>
-<span><span class="va">bixverse_res_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span></span>
-<span>  exp <span class="op">=</span> <span class="va">X1</span>,</span>
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bixverse_res_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span></span>
+<span>  exp <span class="op">=</span> <span class="va">X_counts</span>,</span>
 <span>  pathways <span class="op">=</span> <span class="va">gs</span>,</span>
-<span>  gaussian <span class="op">=</span> <span class="cn">FALSE</span> <span class="co"># uses the Poisson kernel now</span></span>
+<span>  gaussian <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2           s3          s4           s5</span></span>
-<span><span class="co">#&gt; gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941</span></span>
-<span><span class="co">#&gt; gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030</span></span>
-<span><span class="co">#&gt; gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363</span></span>
-<span><span class="co">#&gt; gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450</span></span>
-<span><span class="co">#&gt; gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668</span></span></code></pre></div>
+<span><span class="co">#&gt;                s1           s2           s3          s4          s5</span></span>
+<span><span class="co">#&gt; gs1 -0.0674450688  0.055786011 -0.132640895 -0.30473470 -0.06203656</span></span>
+<span><span class="co">#&gt; gs2  0.1214739059  0.002783677 -0.038542278 -0.02869359 -0.03257555</span></span>
+<span><span class="co">#&gt; gs3 -0.0006558778 -0.119649298  0.104531158 -0.15860377  0.28732790</span></span>
+<span><span class="co">#&gt; gs4 -0.1942288027  0.117815360  0.023093446 -0.24011772 -0.01502935</span></span>
+<span><span class="co">#&gt; gs5 -0.1691196820  0.109705922  0.003075152  0.09952563  0.19973827</span></span></code></pre></div>
 </div>
-<p>This is how you would do this in the official GSVA code:</p>
+<p>And vs. the original</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gsvaParPoisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X_counts</span>, <span class="va">gs</span>, kcdf <span class="op">=</span> <span class="st">"Poisson"</span><span class="op">)</span></span>
+<span><span class="va">gsva_res_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaParPoisson</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_poisson</span>, <span class="va">gsva_res_poisson</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>  <span class="st">"All pathway correlations &gt;= 0.99: %s (min: %.4f)"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">correlations</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "All pathway correlations &gt;= 0.99: TRUE (min: 1.0000)"</span></span></code></pre></div>
+</div>
+<p>And speed:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># update this to use for kcdf = "Poisson"</span></span>
-<span><span class="va">gsvaParPoisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X1</span>, <span class="va">gs</span>, kcdf <span class="op">=</span> <span class="st">"Poisson"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">gsva_res_poisson</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaParPoisson</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check the correlation between the two</span></span>
-<span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_poisson</span>, <span class="va">gsva_res_poisson</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># basically the same results</span></span>
-<span><span class="va">same_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
-<span>    <span class="st">"GSVA and bixverse return (basically) the"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"same results for GSVA (Poisson): %s"</span>, <span class="va">same_res</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "GSVA and bixverse return (basically) the same results for GSVA (Poisson): TRUE"</span></span>
-<span></span>
-<span><span class="va">gsva_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2           s3          s4           s5</span></span>
-<span><span class="co">#&gt; gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941</span></span>
-<span><span class="co">#&gt; gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030</span></span>
-<span><span class="co">#&gt; gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363</span></span>
-<span><span class="co">#&gt; gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450</span></span>
-<span><span class="co">#&gt; gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668</span></span></code></pre></div>
-</div>
-<p>And speed comparisons for the Poisson kernel version between <code>GSVA</code> and <code>bixverse</code>:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  gsva <span class="op">=</span> <span class="op">{</span></span>
-<span>    <span class="va">gsvaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X1</span>, <span class="va">gs</span>, kcdf <span class="op">=</span> <span class="st">"Poisson"</span><span class="op">)</span></span>
+<span>    <span class="va">gsvaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsvaParam-class.html" class="external-link">gsvaParam</a></span><span class="op">(</span><span class="va">X_counts</span>, <span class="va">gs</span>, kcdf <span class="op">=</span> <span class="st">"Poisson"</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">gsvaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>,</span>
-<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span></span>
-<span>    exp <span class="op">=</span> <span class="va">X1</span>,</span>
-<span>    pathways <span class="op">=</span> <span class="va">gs</span>,</span>
-<span>    gaussian <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>  <span class="op">)</span>,</span>
+<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_gsva.html">calc_gsva</a></span><span class="op">(</span>exp <span class="op">=</span> <span class="va">X_counts</span>, pathways <span class="op">=</span> <span class="va">gs</span>, gaussian <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 18.893905 18.896677 18.899481 18.899448 18.902270 18.905091     3</span></span>
-<span><span class="co">#&gt;  bixverse  2.766826  2.771615  2.777271  2.776405  2.782494  2.788582     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 18.840433 18.857260 18.876192 18.874088 18.894071 18.914054     3</span></span>
+<span><span class="co">#&gt;  bixverse  2.783815  2.786702  2.788913  2.789589  2.791463  2.793336     3</span></span></code></pre></div>
 </div>
-</section><section class="level3"><h3 id="single-sample-gsea">single sample GSEA<a class="anchor" aria-label="anchor" href="#single-sample-gsea"></a>
-</h3>
-<p>ssGSEA was first described in <a href="https://www.nature.com/articles/nature08460" class="external-link">Barbie et al.</a> and there is an implementation in <code>GSVA</code>. Compared to <code>GSVA</code> there is no normalisation across samples based on the kcdf. <code>bixverse</code> also provides a Rust optimised version of this algorithm.</p>
+</section></section><section class="level2"><h2 id="ssgsea">ssGSEA<a class="anchor" aria-label="anchor" href="#ssgsea"></a>
+</h2>
+<p>ssGSEA, first described in <a href="https://www.nature.com/articles/nature08460" class="external-link">Barbie et al.</a>, takes a similar approach but does not apply a kernel-based normalisation across samples. <code>bixverse</code> provides a Rust-optimised version here as well:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bixverse_res_ssgsea</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_ssgsea.html">calc_ssgsea</a></span><span class="op">(</span></span>
 <span>  exp <span class="op">=</span> <span class="va">X</span>,</span>
 <span>  pathways <span class="op">=</span> <span class="va">gs</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_ssgsea</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1         s2         s3          s4         s5</span></span>
-<span><span class="co">#&gt; gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275</span></span>
-<span><span class="co">#&gt; gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417</span></span>
-<span><span class="co">#&gt; gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794</span></span>
-<span><span class="co">#&gt; gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069</span></span>
-<span><span class="co">#&gt; gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864</span></span></code></pre></div>
+<span><span class="co">#&gt;             s1          s2         s3         s4          s5</span></span>
+<span><span class="co">#&gt; gs1 0.12512352  0.17652964 0.10816822 0.11325955  0.18806734</span></span>
+<span><span class="co">#&gt; gs2 0.08642855  0.03348075 0.14572278 0.23587374  0.19681256</span></span>
+<span><span class="co">#&gt; gs3 0.08138112  0.16244841 0.12900853 0.15641615  0.20597470</span></span>
+<span><span class="co">#&gt; gs4 0.11455992 -0.01617358 0.06832694 0.13304662  0.07221899</span></span>
+<span><span class="co">#&gt; gs5 0.09614405  0.12148288 0.13471805 0.07828363 -0.02899348</span></span></code></pre></div>
 </div>
-<p>This is the way you would run the ssGSEA algorithm in the GSVA package.</p>
+<p>Let’s compare again against the GSVA version:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ssgseaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/ssgseaParam-class.html" class="external-link">ssgseaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
+<span><span class="va">ssgsea_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">ssgseaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_ssgsea</span>, <span class="va">ssgsea_res</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>  <span class="st">"All pathway correlations &gt;= 0.99: %s (min: %.4f)"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">correlations</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "All pathway correlations &gt;= 0.99: TRUE (min: 1.0000)"</span></span></code></pre></div>
+</div>
+<p>And check the underlying speed differences:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># update this to the ssgsea parameters</span></span>
-<span><span class="va">ssgseaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/ssgseaParam-class.html" class="external-link">ssgseaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">ssgsea_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">ssgseaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check the correlation between the two</span></span>
-<span><span class="va">correlations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/cor.html" class="external-link">cor</a></span><span class="op">(</span><span class="va">bixverse_res_ssgsea</span>, <span class="va">ssgsea_res</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># basically the same results</span></span>
-<span><span class="va">same_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">correlations</span> <span class="op">&gt;=</span> <span class="fl">0.99</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
-<span>    <span class="st">"GSVA and bixverse return (basically) the"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"same results for ssGSEA: %s"</span>, <span class="va">same_res</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "GSVA and bixverse return (basically) the same results for ssGSEA: TRUE"</span></span>
-<span></span>
-<span><span class="va">ssgsea_res</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1         s2         s3          s4         s5</span></span>
-<span><span class="co">#&gt; gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275</span></span>
-<span><span class="co">#&gt; gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417</span></span>
-<span><span class="co">#&gt; gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794</span></span>
-<span><span class="co">#&gt; gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069</span></span>
-<span><span class="co">#&gt; gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864</span></span></code></pre></div>
-</div>
-<p>Again, you should observe speed improvements thanks to algorithm improvements and leveraging Rust’s performance.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
 <span>  gsva <span class="op">=</span> <span class="op">{</span></span>
 <span>    <span class="va">ssgseaPar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/ssgseaParam-class.html" class="external-link">ssgseaParam</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">gs</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/pkg/GSVA/man/gsva.html" class="external-link">gsva</a></span><span class="op">(</span><span class="va">ssgseaPar</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>,</span>
-<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_ssgsea.html">calc_ssgsea</a></span><span class="op">(</span></span>
-<span>    exp <span class="op">=</span> <span class="va">X</span>,</span>
-<span>    pathways <span class="op">=</span> <span class="va">gs</span></span>
-<span>  <span class="op">)</span>,</span>
+<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_ssgsea.html">calc_ssgsea</a></span><span class="op">(</span>exp <span class="op">=</span> <span class="va">X</span>, pathways <span class="op">=</span> <span class="va">gs</span><span class="op">)</span>,</span>
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;      gsva 620.2673 623.9776 625.2376 627.6879 627.7227 627.7575     3</span></span>
-<span><span class="co">#&gt;  bixverse 119.0858 119.9084 120.4692 120.7310 121.1609 121.5908     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 619.1660 620.1188 624.6780 621.0716 627.4340 633.7964     3</span></span>
+<span><span class="co">#&gt;  bixverse 102.7411 103.3562 103.7881 103.9713 104.3116 104.6520     3</span></span></code></pre></div>
 </div>
+</section><section class="level2"><h2 id="multi-contrast-enrichment-mitch">Multi-contrast enrichment (mitch)<a class="anchor" aria-label="anchor" href="#multi-contrast-enrichment-mitch"></a>
+</h2>
+<p>When you have multiple contrasts - say, differential expression results from several comparisons or different omics layers - you often want to know which pathways show coordinated changes <em>across</em> contrasts. The <a href="https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9" class="external-link">mitch</a> method does exactly this: it ranks genes within each contrast, computes mean ranks per pathway, and then uses a MANOVA test to identify pathways that are enriched in one or more contrasts simultaneously. <code>bixverse</code> re-implements the core algorithm so that it slots into the same workflow as the other pathway activity functions… Also, heavily multi-threaded and designed to go <strong>brrrrrr</strong> in terms of speed.</p>
+<p><code>calc_mitch</code> expects a numeric matrix of contrast statistics (genes in rows, contrasts in columns) and a named list of gene sets. It returns a <code>data.table</code> containing per-pathway MANOVA p-values, FDR-adjusted p-values, and the individual contrast-level enrichment scores and p-values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">contrast_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">3</span> <span class="op">*</span> <span class="fl">26</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">26</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">contrast_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"contrast_%i"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">contrast_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">letters</span></span>
+<span></span>
+<span><span class="va">gene_sets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  pathway_A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  pathway_B <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">5</span><span class="op">)</span>,</span>
+<span>  pathway_C <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">6</span><span class="op">)</span>,</span>
+<span>  pathway_D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">letters</span>, <span class="fl">7</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_mitch.html">calc_mitch</a></span><span class="op">(</span></span>
+<span>  contrast_mat <span class="op">=</span> <span class="va">contrast_data</span>,</span>
+<span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">res</span></span></code></pre></div>
+</div>
+<p>Note that pathways smaller than the internal minimum set size are dropped from the output, and the results are sorted by significance. The function also validates its input: passing a matrix containing <code>NA</code> values will throw an error rather than silently producing nonsense.</p>
+<section class="level3"><h3 id="comparison-with-the-mitch-package">Comparison with the mitch package<a class="anchor" aria-label="anchor" href="#comparison-with-the-mitch-package"></a>
+</h3>
+<p>When the original <code>mitch</code> package is available we can verify that the two implementations produce identical results. Here we use the example data bundled with <code>mitch</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">myImportedData</span>, <span class="va">genesetsExample</span>, package <span class="op">=</span> <span class="st">"mitch"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">mitch_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu">mitch_calc</span><span class="op">(</span></span>
+<span>  <span class="va">myImportedData</span>,</span>
+<span>  <span class="va">genesetsExample</span>,</span>
+<span>  priority <span class="op">=</span> <span class="st">"significance"</span>,</span>
+<span>  minsetsize <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  cores <span class="op">=</span> <span class="fl">2</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bixverse_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calc_mitch.html">calc_mitch</a></span><span class="op">(</span></span>
+<span>  contrast_mat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">myImportedData</span><span class="op">)</span>,</span>
+<span>  gene_set_list <span class="op">=</span> <span class="va">genesetsExample</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Pathway ordering and FDR values should match exactly</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">bixverse_res</span><span class="op">$</span><span class="va">pathway_names</span> <span class="op">==</span> <span class="va">mitch_res</span><span class="op">$</span><span class="va">enrichment_result</span><span class="op">$</span><span class="va">set</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">bixverse_res</span><span class="op">$</span><span class="va">manova_fdr</span>, <span class="va">mitch_res</span><span class="op">$</span><span class="va">enrichment_result</span><span class="op">$</span><span class="va">p.adjustMANOVA</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>And let’s check the speed differences:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">microbenchmark</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/microbenchmark/man/microbenchmark.html" class="external-link">microbenchmark</a></span><span class="op">(</span></span>
+<span>  mitch <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages</a></span><span class="op">(</span><span class="fu">mitch</span><span class="fu">::</span><span class="fu">mitch_calc</span><span class="op">(</span></span>
+<span>    <span class="va">myImportedData</span>,</span>
+<span>    <span class="va">genesetsExample</span>,</span>
+<span>    priority <span class="op">=</span> <span class="st">"significance"</span>,</span>
+<span>    minsetsize <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>    cores <span class="op">=</span> <span class="fl">2</span></span>
+<span>  <span class="op">)</span><span class="op">)</span>,</span>
+<span>  bixverse <span class="op">=</span> <span class="fu"><a href="../reference/calc_mitch.html">calc_mitch</a></span><span class="op">(</span></span>
+<span>    contrast_mat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">myImportedData</span><span class="op">)</span>,</span>
+<span>    gene_set_list <span class="op">=</span> <span class="va">genesetsExample</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  times <span class="op">=</span> <span class="fl">5L</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>As with the GSVA and ssGSEA implementations, you should observe meaningful speed improvements from Rust, particularly as the number of gene sets or contrasts grows and the more cores/oomph your system has.</p>
 </section></section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

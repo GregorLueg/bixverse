@@ -21,6 +21,7 @@ tf_to_genes_motif_enrichment(
   motif_rankings,
   annot_data,
   cis_target_params = params_cistarget(),
+  gene_id_to_symbol = NULL,
   only_high_conf_tf = TRUE,
   .verbose = TRUE
 )
@@ -31,6 +32,7 @@ tf_to_genes_motif_enrichment(
   motif_rankings,
   annot_data,
   cis_target_params = params_cistarget(),
+  gene_id_to_symbol = NULL,
   only_high_conf_tf = TRUE,
   .verbose = TRUE
 )
@@ -72,6 +74,14 @@ tf_to_genes_motif_enrichment(
 
   - low_conf_cats - Character vector. Annotation categories considered
     lower confidence (e.g., "inferredBy_MotifSimilarity").
+
+- gene_id_to_symbol:
+
+  Named character vector. Mapping from gene identifiers used internally
+  (e.g., Ensembl IDs) to the identifiers used in the motif rankings
+  (e.g., HGNC symbols). Names are internal IDs, values are ranking IDs.
+  If `NULL` (default), no mapping is applied and the internal IDs are
+  assumed to match the ranking rownames.
 
 - only_high_conf_tf:
 

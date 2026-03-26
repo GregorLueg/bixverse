@@ -881,6 +881,8 @@ useful for your own package? Use with care and read the documentation!
   : Run ICA over a given no_comp with random initilisations of w_init
 - [`rs_ica_iters_cv()`](https://gregorlueg.github.io/bixverse/reference/rs_ica_iters_cv.md)
   : Run ICA with cross-validation and random initialsiation
+- [`rs_importance_threshold()`](https://gregorlueg.github.io/bixverse/reference/rs_importance_threshold.md)
+  : SCENIC: Select TF-gene pairs by per-gene importance threshold
 - [`rs_jaccard_row_integers()`](https://gregorlueg.github.io/bixverse/reference/rs_jaccard_row_integers.md)
   : Calculate rapidbly Jaccard similarities between rows
 - [`rs_kbet()`](https://gregorlueg.github.io/bixverse/reference/rs_kbet.md)

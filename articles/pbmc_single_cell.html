@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -91,7 +93,7 @@
 
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
-<p>This vignette walks through a standard single cell analysis on the PBMC3k data set using <code>bixverse</code>. If you have not read the <a href="https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/docs/articles/single_cell_intro.html">introductory vignette</a>, please do so first – this vignette assumes familiarity with how the <code>SingleCells</code> class, on-disk storage and cells-to-keep logic work.</p>
+<p>This vignette walks through a standard single cell analysis on the PBMC3k data set using <code>bixverse</code>. If you have not read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html">introductory vignette</a>, please do so first; this vignette assumes familiarity with how the <code>SingleCells</code> class, on-disk storage and cells-to-keep logic work.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
@@ -301,14 +303,13 @@
 <span>  object <span class="op">=</span> <span class="va">sc_object</span>,</span>
 <span>  column_of_interest <span class="op">=</span> <span class="st">"leiden_clusters"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Processing group 1 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 2 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 3 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 4 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 5 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 6 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 7 out of 8.</span></span>
-<span><span class="co">#&gt; Processing group 8 out of 8.</span></span>
+<span><span class="co">#&gt; Processing group 1 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 2 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 3 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 4 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 5 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 6 out of 7.</span></span>
+<span><span class="co">#&gt; Processing group 7 out of 7.</span></span>
 <span></span>
 <span><span class="va">all_markers</span><span class="op">[</span>, <span class="va">gene_symbol</span> <span class="op">:=</span> <span class="va">ensembl_to_symbol</span><span class="op">[</span><span class="va">gene_id</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
@@ -316,11 +317,11 @@
 <span><span class="co">#&gt;      grp         gene_id      lfc     prop1      prop2 z_scores      p_values</span></span>
 <span><span class="co">#&gt;    &lt;num&gt;          &lt;char&gt;    &lt;num&gt;     &lt;num&gt;      &lt;num&gt;    &lt;num&gt;         &lt;num&gt;</span></span>
 <span><span class="co">#&gt; 1:     6 ENSG00000163220 4.174770 0.9887324 0.20077434 29.09827 1.887722e-186</span></span>
-<span><span class="co">#&gt; 2:     8 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77</span></span>
+<span><span class="co">#&gt; 2:     7 ENSG00000105374 4.156168 1.0000000 0.25049117 18.50890  8.752290e-77</span></span>
 <span><span class="co">#&gt; 3:     6 ENSG00000090382 4.081069 1.0000000 0.51050884 29.66810 9.907717e-194</span></span>
-<span><span class="co">#&gt; 4:     8 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69</span></span>
+<span><span class="co">#&gt; 4:     7 ENSG00000115523 3.934315 0.9527559 0.13654225 17.52567  4.562691e-69</span></span>
 <span><span class="co">#&gt; 5:     6 ENSG00000143546 3.663987 0.9718310 0.11504425 28.62794 1.508612e-180</span></span>
-<span><span class="co">#&gt; 6:     8 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76</span></span>
+<span><span class="co">#&gt; 6:     7 ENSG00000100453 3.544770 0.9842520 0.06974459 18.39899  6.691597e-76</span></span>
 <span><span class="co">#&gt;              fdr gene_symbol</span></span>
 <span><span class="co">#&gt;            &lt;num&gt;      &lt;char&gt;</span></span>
 <span><span class="co">#&gt; 1: 4.275690e-183      S100A9</span></span>
@@ -346,7 +347,7 @@
 <span><span class="co">#&gt; Running t-SNE.</span></span>
 <span><span class="co">#&gt; Using provided kNN graph.</span></span></code></pre></div>
 </div>
-<p>We can pull the embeddings back into data.tables and plot them. The obs columns can be appended directly.</p>
+<p>We can pull the embeddings back into data.tables and plot them (longer term, the idea will be to provide plotting helpers in <code>bixverse.plots</code>). The obs columns can be appended directly.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">umap_dt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span></span>

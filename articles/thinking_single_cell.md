@@ -4,7 +4,7 @@
 
 Before diving into this vignette, it would be really recommended to read
 the [design
-choices](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html)
+choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 to understand **why** single cell has been implemented the way it is in
 this package. This will make understanding the downstream text much
 easier. The aim of this vignette is to take some small synthetic data
@@ -450,8 +450,8 @@ microbenchmark::microbenchmark(
 )
 #> Unit: milliseconds
 #>               expr      min       lq     mean   median       uq      max neval
-#>    the_correct_way 1.378463 1.413539 1.597908 1.468417 1.531820 2.808093    10
-#>  the_incorrect_way 2.102736 2.141779 2.398495 2.472377 2.571641 2.684382    10
+#>    the_correct_way 1.382103 1.435613 1.560119 1.459442 1.481619 2.467222    10
+#>  the_incorrect_way 2.146361 2.278559 2.374095 2.406884 2.441573 2.566878    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

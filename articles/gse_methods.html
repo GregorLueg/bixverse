@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -235,7 +237,7 @@
 <span>  gene_set_list <span class="op">=</span> <span class="va">gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 0.489 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.453 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="gene-ontology-aware-enrichment-the-elimination-method">Gene Ontology-aware enrichment: the elimination method<a class="anchor" aria-label="anchor" href="#gene-ontology-aware-enrichment-the-elimination-method"></a>
 </h2>
@@ -336,7 +338,7 @@
 <span>  target_gene_list <span class="op">=</span> <span class="va">go_target_gene_sets</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">tictoc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/tictoc/man/tic.html" class="external-link">toc</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 1.429 sec elapsed</span></span></code></pre></div>
+<span><span class="co">#&gt; 1.373 sec elapsed</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="alternative-post-hoc-simplification-of-go-results">Alternative: post-hoc simplification of GO results<a class="anchor" aria-label="anchor" href="#alternative-post-hoc-simplification-of-go-results"></a>
 </h2>
@@ -517,8 +519,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
 <span><span class="co">#&gt;   expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;  fgsea 2.449627 2.483603 2.657701 2.603835 2.698428 3.053011     5</span></span>
-<span><span class="co">#&gt;   rust 2.205492 2.214468 2.230479 2.232631 2.249130 2.250674     5</span></span></code></pre></div>
+<span><span class="co">#&gt;  fgsea 2.431760 2.454479 2.626617 2.576537 2.682153 2.988155     5</span></span>
+<span><span class="co">#&gt;   rust 2.207318 2.217959 2.218303 2.218482 2.222239 2.225518     5</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="go-aware-gsea-the-elimination-method">GO-aware GSEA: the elimination method<a class="anchor" aria-label="anchor" href="#go-aware-gsea-the-elimination-method"></a>
 </h2>

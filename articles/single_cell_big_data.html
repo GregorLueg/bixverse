@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -91,15 +93,15 @@
 
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
-<p>This vignette demonstrates how to run a single cell analysis on a data set containing nearly 3 million cells on a local machine - in this case a MacBook Pro M1 Max - without exhausting memory. If you have not read the <a href="https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/docs/articles/single_cell_intro.html">introductory vignette</a>, please do so first. The <a href="https://gregorlueg.github.io/bixverse/docs/articles/pbmc3k.html">PBMC3k walkthrough</a> covers every step in detail on a small data set; here we focus on what changes when the cell count moves from thousands to millions.</p>
-<p>The data set used is one of the h5ad of the <a href="https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3" class="external-link">100 million cell Tahoe</a> data set from Parse Biosciences. The original file has 5.5m cells; after quality control roughly 2.9 million cells are retained and read in.</p>
+<p>This vignette demonstrates how to run a single cell analysis on a data set containing nearly 3 million cells on a local machine - in this case a MacBook Pro M1 Max - without exhausting memory. If you have not read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> and the <a href="https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html">introductory vignette</a>, please do so first. The <a href="https://gregorlueg.github.io/bixverse/articles/pbmc3k.html">PBMC3k walkthrough</a> covers every step in detail on a small data set; here we focus on what changes when the cell count moves from thousands to millions.</p>
+<p>The data set used is one of the h5ad of the <a href="https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3" class="external-link">100 million cell Tahoe</a> data set from Parse Biosciences. The original file has 5.5m cells; after quality control roughly 2.9 million cells are retained and read in. It was for me large enough data set to test out what can be done on a laptop.</p>
 <div>
 <blockquote>
 <p><strong>Note</strong></p>
 <p>None of the code chunks below are evaluated. This vignette is a reference for how one <em>would</em> run such an analysis, not a live rendering - the data set is far too large for CI/CD runners and Microsoft would not be happy.</p>
 </blockquote>
 </div>
-<p>If you want to reproduce this, download one of the h5ad files or data you always wanted to analyse.</p>
+<p>If you want to reproduce this, download one of the h5ad files from Tahoe 100m. Or use large enough data you always wanted to analyse.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span>
@@ -127,7 +129,14 @@
 <span></span>
 <span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stream_h5ad.html">stream_h5ad</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span>, h5_path <span class="op">=</span> <span class="va">h5_path</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>This step is slow. Ca. 5 to 10 minutes. If you have already loaded in the data and exist on-disk from a previous session, skip the streaming step entirely and reconnect:</p>
+<p>This step is slow. Ca. 10 minutes. The function does 4 things on the counts.</p>
+<ul>
+<li>First, (streaming) scan to understand in how many cells a gene is expressed. Only keep genes that are expressed in whatever you set to <code>min_cells</code> (for me ca. 90 seconds).</li>
+<li>Second, (streaming) scan, given the genes from the first step, which cells to include based on minimum library size and minimum features. (For me ca. 2 min).</li>
+<li>Third, now that it’s clear which cells/genes to include, load the data in chunks and write into a CSR style format for easy cell-retrieval while also directly normalising the data. (Ca. 3 to 4 minutes for me.)</li>
+<li>Lastly, load in the cell data in small chunks and do a transpose to a CSC style format for easy gene retrieval. (Ca. 3 to 4 minutes for me.)</li>
+</ul>
+<p>The DuckDB also gets populated with the metadata in the observations (based on what has been filtered) and the vars (add another 1 to 2 minutes here). This step takes the most time and is partially bound by the field going for h5 as the go-to file storage. Go have a coffee while this is running, listen to a podcast, watch something on the side. If you have already loaded in the data and it exists on-disk from a previous session, skip the streaming step entirely and reconnect. This is the one (very) slow part in <code>bixverse</code> single cell… To be fair, I have no idea how long it would take to load in the full h5ad file in Python or R – I do not want to try with 64 GB memory.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SingleCells.html">SingleCells</a></span><span class="op">(</span></span>
@@ -185,8 +194,10 @@
 <span></span>
 <span><span class="va">qc</span></span></code></pre></div>
 </div>
+<p>I cannot recommend trying to plot this naively… ggplot2 will not be happy.</p>
 </section><section class="level3"><h3 id="filtering-cells">Filtering cells<a class="anchor" aria-label="anchor" href="#filtering-cells"></a>
 </h3>
+<p>Usual filters.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span><span class="op">[[</span><span class="st">"outlier"</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">qc</span><span class="op">$</span><span class="va">combined</span></span>
@@ -199,7 +210,7 @@
 </div>
 </section></section><section class="level2"><h2 id="feature-selection-and-pca">Feature selection and PCA<a class="anchor" aria-label="anchor" href="#feature-selection-and-pca"></a>
 </h2>
-<p>HVG selection at this scale again requires <code>streaming = TRUE</code>. PCA uses a sparse SVD, which is automatically selected when cell counts exceed 500k but can be set explicitly.</p>
+<p>HVG selection at this scale again requires <code>streaming = TRUE</code>. There is two data passes to avoid materialising large data in memory. First pass will calculate the means and standard deviations. Second pass will do the variance stabilisation. PCA uses a sparse SVD, which is automatically selected when cell counts exceed 500k but can be set explicitly.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_hvg_sc.html">find_hvg_sc</a></span><span class="op">(</span></span>
@@ -216,11 +227,12 @@
 </div>
 </section><section class="level2"><h2 id="nearest-neighbours-gpu-accelerated">Nearest neighbours (GPU-accelerated)<a class="anchor" aria-label="anchor" href="#nearest-neighbours-gpu-accelerated"></a>
 </h2>
-<p>At nearly 3 million cells, nearest neighbour search is the main computational bottleneck. The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU as long as you can fit the data into VRAM (should be feasible with 8 GBs - I think?) this should run quite fast. CPU-side alternatives such as <code>nndescent</code> or <code>HNSW</code> also work but will be considerably slower at this scale. For reference:</p>
+<p>At nearly 3 million cells, nearest neighbour search is the main computational bottleneck. The companion package <a href="https://github.com/GregorLueg/bixverse.gpu" class="external-link">bixverse.gpu</a> exposes a CAGRA-style GPU-accelerated approximate nearest neighbour search that makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL and WGPU as long as you can fit the data into VRAM (should be feasible with 8 GBs - I think?) this should run quite fast. CPU-side alternatives such as <code>"nndescent"</code> or <code>"hnsw"</code> also work but will be considerably slower at this scale. For (empirical reference):</p>
 <ul>
 <li>GPU version on M1 Max with 64 GB takes ~1 minute.</li>
 <li>HNSW somewhere between 3 to 4 minutes.</li>
 </ul>
+<p>Likely still comparably much faster if you are used to the more established single cell methods in terms of CPU speed, but yeah… If you have a GPU, go use that.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse.gpu</span><span class="op">)</span></span>
@@ -234,7 +246,7 @@
 </div>
 </section><section class="level2"><h2 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a>
 </h2>
-<p>Running UMAP on the shared nearest neighbour graph built from ~2.9 million cells and 65 million+ edges takes time but does complete on a single machine (optimisation with parallel Adam optimisation done in &lt;3 minutes for me).</p>
+<p>Running UMAP on the shared nearest neighbour graph built from ~2.8 million cells and 65 million+ edges takes time but does complete on a single machine (embedding optimisation with parallel Adam optimisation done in &lt;3 minutes for me).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/umap_sc.html">umap_sc</a></span><span class="op">(</span>object <span class="op">=</span> <span class="va">sc_object</span><span class="op">)</span></span></code></pre></div>
@@ -264,14 +276,16 @@
 <p>The API surface is intentionally identical to the PBMC3k walkthrough. The meaningful differences when working at the million-cell scale are:</p>
 <ol type="1">
 <li>
-<strong>Streaming I/O.</strong> Use <code>stream_h5ad</code> instead of <code>load_h5ad</code>, and set <code>streaming = TRUE</code> on <code>gene_set_proportions_sc</code> and <code>find_hvg_sc</code>. This is VERY important.</li>
+<strong>Streaming I/O.</strong> Use <code>stream_h5ad</code> instead of <code>load_h5ad</code>, and set <code>streaming = TRUE</code> on <code>gene_set_proportions_sc</code> and <code>find_hvg_sc</code>. This is VERY important. This is also what makes this package actually quite cool.</li>
 <li>
 <strong>On-disk persistence.</strong> <code>load_existing</code> lets you reconnect to a previously streamed data set without re-reading the <code>.h5ad</code>. (Btw, works for any data.)</li>
 <li>
-<strong>Sparse SVD.</strong> Automatically enabled above 500k cells; can be forced explicitly via <code>sparse_svd = TRUE</code>.</li>
+<strong>Sparse SVD.</strong> Automatically enabled above 500k cells; can be forced explicitly via <code>sparse_svd = TRUE</code> (slower on small data sets… Modern BLAS just eats up small matrix multiplications in <code>faer</code>).</li>
 <li>
-<strong>GPU-accelerated kNN.</strong> <code>bixverse.gpu</code> provides CAGRA-based nearest neighbour search that scales comfortably to millions of cells and makes it run in a minute or so. The CPU versions are still highly optimised with SIMD and specifically designed memory layouts to avoid making your memory cry.</li>
-</ol></section><script id="quarto-html-after-body" type="application/javascript">
+<strong>GPU-accelerated kNN.</strong> <code>bixverse.gpu</code> provides CAGRA-based nearest neighbour search (also others) that scales comfortably to millions of cells and makes it run in a minute or so. The CPU versions are still highly optimised with SIMD and memory layouts specifically designed to avoid cache misses.</li>
+</ol>
+<p>For context… Running this on my machine took (MacBook Pro M1 Max with 64 GB) took a grand total of ca. 20 minutes from start to finish, with basically half of the time being spent on data I/O. Memory pressure remained green through out the whole thing.</p>
+</section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);

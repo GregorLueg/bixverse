@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -91,7 +93,7 @@
 
     <section class="level2"><h2 id="intro">Intro<a class="anchor" aria-label="anchor" href="#intro"></a>
 </h2>
-<p>Before diving into this vignette, it would be really recommended to read the <a href="https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html">design choices</a> to understand <strong>why</strong> single cell has been implemented the way it is in this package. This will make understanding the downstream text much easier. The aim of this vignette is to take some small synthetic data and point out some quirks due to design choices made.</p>
+<p>Before diving into this vignette, it would be really recommended to read the <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">design choices</a> to understand <strong>why</strong> single cell has been implemented the way it is in this package. This will make understanding the downstream text much easier. The aim of this vignette is to take some small synthetic data and point out some quirks due to design choices made.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">bixverse</span><span class="op">)</span></span></code></pre></div>
@@ -460,8 +462,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;               expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;    the_correct_way 1.378463 1.413539 1.597908 1.468417 1.531820 2.808093    10</span></span>
-<span><span class="co">#&gt;  the_incorrect_way 2.102736 2.141779 2.398495 2.472377 2.571641 2.684382    10</span></span></code></pre></div>
+<span><span class="co">#&gt;    the_correct_way 1.382103 1.435613 1.560119 1.459442 1.481619 2.467222    10</span></span>
+<span><span class="co">#&gt;  the_incorrect_way 2.146361 2.278559 2.374095 2.406884 2.441573 2.566878    10</span></span></code></pre></div>
 </div>
 <p>The difference seems marginal here, but it WILL bite you if you do this on large data sets. Also, the memory advantages this approach gives you usually will disappear if you force the wrong format. Also, another thing to REALLY consider… The indices you supply in R should match what the Rust files have and again you need to THINK about the cells to keep. A nasty example here:</p>
 <div class="cell">

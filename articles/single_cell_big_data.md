@@ -6,18 +6,20 @@ This vignette demonstrates how to run a single cell analysis on a data
 set containing nearly 3 million cells on a local machine - in this case
 a MacBook Pro M1 Max - without exhausting memory. If you have not read
 the [design
-choices](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html)
+choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the [introductory
-vignette](https://gregorlueg.github.io/bixverse/docs/articles/single_cell_intro.html),
+vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
 please do so first. The [PBMC3k
-walkthrough](https://gregorlueg.github.io/bixverse/docs/articles/pbmc3k.html)
+walkthrough](https://gregorlueg.github.io/bixverse/articles/pbmc3k.html)
 covers every step in detail on a small data set; here we focus on what
 changes when the cell count moves from thousands to millions.
 
 The data set used is one of the h5ad of the [100 million cell
 Tahoe](https://www.biorxiv.org/content/10.1101/2025.02.20.639398v3) data
 set from Parse Biosciences. The original file has 5.5m cells; after
-quality control roughly 2.9 million cells are retained and read in.
+quality control roughly 2.9 million cells are retained and read in. It
+was for me large enough data set to test out what can be done on a
+laptop.
 
 > **Note**
 >
@@ -26,8 +28,8 @@ quality control roughly 2.9 million cells are retained and read in.
 > rendering - the data set is far too large for CI/CD runners and
 > Microsoft would not be happy.
 
-If you want to reproduce this, download one of the h5ad files or data
-you always wanted to analyse.
+If you want to reproduce this, download one of the h5ad files from Tahoe
+100m. Or use large enough data you always wanted to analyse.
 
 ``` r
 library(bixverse)
@@ -60,9 +62,31 @@ sc_object <- SingleCells(
 sc_object <- stream_h5ad(object = sc_object, h5_path = h5_path)
 ```
 
-This step is slow. Ca. 5 to 10 minutes. If you have already loaded in
-the data and exist on-disk from a previous session, skip the streaming
-step entirely and reconnect:
+This step is slow. Ca. 10 minutes. The function does 4 things on the
+counts.
+
+- First, (streaming) scan to understand in how many cells a gene is
+  expressed. Only keep genes that are expressed in whatever you set to
+  `min_cells` (for me ca. 90 seconds).
+- Second, (streaming) scan, given the genes from the first step, which
+  cells to include based on minimum library size and minimum features.
+  (For me ca. 2 min).
+- Third, now that it’s clear which cells/genes to include, load the data
+  in chunks and write into a CSR style format for easy cell-retrieval
+  while also directly normalising the data. (Ca. 3 to 4 minutes for me.)
+- Lastly, load in the cell data in small chunks and do a transpose to a
+  CSC style format for easy gene retrieval. (Ca. 3 to 4 minutes for me.)
+
+The DuckDB also gets populated with the metadata in the observations
+(based on what has been filtered) and the vars (add another 1 to 2
+minutes here). This step takes the most time and is partially bound by
+the field going for h5 as the go-to file storage. Go have a coffee while
+this is running, listen to a podcast, watch something on the side. If
+you have already loaded in the data and it exists on-disk from a
+previous session, skip the streaming step entirely and reconnect. This
+is the one (very) slow part in `bixverse` single cell… To be fair, I
+have no idea how long it would take to load in the full h5ad file in
+Python or R – I do not want to try with 64 GB memory.
 
 ``` r
 sc_object <- SingleCells(
@@ -128,7 +152,12 @@ rm(qc_df)
 qc
 ```
 
+I cannot recommend trying to plot this naively… ggplot2 will not be
+happy.
+
 ### Filtering cells
+
+Usual filters.
 
 ``` r
 sc_object[["outlier"]] <- qc$combined
@@ -142,9 +171,12 @@ sc_object
 
 ## Feature selection and PCA
 
-HVG selection at this scale again requires `streaming = TRUE`. PCA uses
-a sparse SVD, which is automatically selected when cell counts exceed
-500k but can be set explicitly.
+HVG selection at this scale again requires `streaming = TRUE`. There is
+two data passes to avoid materialising large data in memory. First pass
+will calculate the means and standard deviations. Second pass will do
+the variance stabilisation. PCA uses a sparse SVD, which is
+automatically selected when cell counts exceed 500k but can be set
+explicitly.
 
 ``` r
 sc_object <- find_hvg_sc(
@@ -169,11 +201,15 @@ CAGRA-style GPU-accelerated approximate nearest neighbour search that
 makes this quite fast on a laptop with a discrete GPU - thanks to CubeCL
 and WGPU as long as you can fit the data into VRAM (should be feasible
 with 8 GBs - I think?) this should run quite fast. CPU-side alternatives
-such as `nndescent` or `HNSW` also work but will be considerably slower
-at this scale. For reference:
+such as `"nndescent"` or `"hnsw"` also work but will be considerably
+slower at this scale. For (empirical reference):
 
 - GPU version on M1 Max with 64 GB takes ~1 minute.
 - HNSW somewhere between 3 to 4 minutes.
+
+Likely still comparably much faster if you are used to the more
+established single cell methods in terms of CPU speed, but yeah… If you
+have a GPU, go use that.
 
 ``` r
 library(bixverse.gpu)
@@ -188,10 +224,10 @@ sc_object <- find_neighbours_cagra_sc(
 
 ## Visualisation
 
-Running UMAP on the shared nearest neighbour graph built from ~2.9
+Running UMAP on the shared nearest neighbour graph built from ~2.8
 million cells and 65 million+ edges takes time but does complete on a
-single machine (optimisation with parallel Adam optimisation done in \<3
-minutes for me).
+single machine (embedding optimisation with parallel Adam optimisation
+done in \<3 minutes for me).
 
 ``` r
 sc_object <- umap_sc(object = sc_object)
@@ -230,14 +266,22 @@ The meaningful differences when working at the million-cell scale are:
 
 1.  **Streaming I/O.** Use `stream_h5ad` instead of `load_h5ad`, and set
     `streaming = TRUE` on `gene_set_proportions_sc` and `find_hvg_sc`.
-    This is VERY important.
+    This is VERY important. This is also what makes this package
+    actually quite cool.
 2.  **On-disk persistence.** `load_existing` lets you reconnect to a
     previously streamed data set without re-reading the `.h5ad`. (Btw,
     works for any data.)
 3.  **Sparse SVD.** Automatically enabled above 500k cells; can be
-    forced explicitly via `sparse_svd = TRUE`.
+    forced explicitly via `sparse_svd = TRUE` (slower on small data
+    sets… Modern BLAS just eats up small matrix multiplications in
+    `faer`).
 4.  **GPU-accelerated kNN.** `bixverse.gpu` provides CAGRA-based nearest
-    neighbour search that scales comfortably to millions of cells and
-    makes it run in a minute or so. The CPU versions are still highly
-    optimised with SIMD and specifically designed memory layouts to
-    avoid making your memory cry.
+    neighbour search (also others) that scales comfortably to millions
+    of cells and makes it run in a minute or so. The CPU versions are
+    still highly optimised with SIMD and memory layouts specifically
+    designed to avoid cache misses.
+
+For context… Running this on my machine took (MacBook Pro M1 Max with 64
+GB) took a grand total of ca. 20 minutes from start to finish, with
+basically half of the time being spent on data I/O. Memory pressure
+remained green through out the whole thing.

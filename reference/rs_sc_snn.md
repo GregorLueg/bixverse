@@ -37,5 +37,8 @@ rs_sc_snn(knn_mat, snn_method, limited_graph, pruning, verbose)
 
 ## Value
 
-A integer matrix of N x k with N being the number of cells and k the
-number of neighbours.
+A list with the following items:
+
+- edges - sNN edges as edge pairs.
+
+- weights - sNN weights of the pairs above.

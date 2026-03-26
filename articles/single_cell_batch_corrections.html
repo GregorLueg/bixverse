@@ -47,16 +47,18 @@
     <li><a class="dropdown-item" href="../articles/pathway_activity.html">Pathway activity functions</a></li>
     <li><a class="dropdown-item" href="../articles/genetic_diffusions.html">Genetic diffusion and community detections</a></li>
     <li><a class="dropdown-item" href="../articles/cpca.html">Contrastive PCA</a></li>
+    <li><a class="dropdown-item" href="../articles/ontologies.html">Semantic similarities on ontologies</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-single-cells" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Single Cells</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-single-cells">
 <li><a class="dropdown-item" href="../articles/thinking_single_cell.html">Thinking about single cells the bixverse way</a></li>
-    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">Running an analysis with the bixverse single cell framework</a></li>
+    <li><a class="dropdown-item" href="../articles/pbmc_single_cell.html">PBMC analysis with the bixverse single cell framework</a></li>
     <li><a class="dropdown-item" href="../articles/doublet_detection.html">Doublet detection in bixverse</a></li>
     <li><a class="dropdown-item" href="../articles/single_cell_batch_corrections.html">Batch corrections</a></li>
-    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data</a></li>
+    <li><a class="dropdown-item" href="../articles/analysis_single_cell.html">'Bag of genes' methods for single cell in bixverse</a></li>
+    <li><a class="dropdown-item" href="../articles/single_cell_big_data.html">Analysing big data on a powerful laptop (example)</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -337,8 +339,8 @@
 <span><span class="va">kbet_score_post_mnn</span></span>
 <span><span class="co">#&gt; kBET Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2 | Threshold: 0.050</span></span>
-<span><span class="co">#&gt;   Rejection rate:      0.3405 (1989 / 5841)</span></span>
-<span><span class="co">#&gt;   Mean Chi-Square:     3.5685 (expected under H0: 1)</span></span>
+<span><span class="co">#&gt;   Rejection rate:      0.3402 (1987 / 5841)</span></span>
+<span><span class="co">#&gt;   Mean Chi-Square:     3.5687 (expected under H0: 1)</span></span>
 <span><span class="co">#&gt;   Median Chi-Square:   3.6444</span></span>
 <span><span class="va">asw_score_post_mnn</span></span>
 <span><span class="co">#&gt; Batch Silhouette Width</span></span>
@@ -348,7 +350,7 @@
 <span><span class="va">lisi_score_post_mnn</span></span>
 <span><span class="co">#&gt; Batch LISI Scores</span></span>
 <span><span class="co">#&gt;   Cells: 5841 | Batches: 2</span></span>
-<span><span class="co">#&gt;   Mean LISI:    1.4287 (1 = no mixing, 2 = perfect mixing)</span></span>
+<span><span class="co">#&gt;   Mean LISI:    1.4288 (1 = no mixing, 2 = perfect mixing)</span></span>
 <span><span class="co">#&gt;   Median LISI:  1.3006</span></span></code></pre></div>
 </div>
 <p>We can see clear improvements across all scores. Lower kBET scores, better mean AWS scores and LISI scores also closer to 2 (i.e., number of batches).</p>

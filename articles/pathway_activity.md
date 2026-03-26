@@ -1,59 +1,66 @@
 # Pathway activity functions
 
-## Single sample pathway activity functions
+## Single-sample pathway activity
 
-An often used algorithm to check pathway activity (or maybe rather
-concordant up or down-regulation of genes belonging to a given pathway)
-is
-[GSVA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7).
-There is a corresponding package on
-[BioConductor](https://www.bioconductor.org/packages/release/bioc/html/GSVA.html)
-for this, but `bixverse` offers Rust-accelerated versions of two of the
-algorithm.
+A common question in transcriptomics is whether the genes belonging to a
+given pathway are concordantly up- or down-regulated in each sample.
+Several algorithms tackle this by collapsing a gene-by-sample expression
+matrix into a pathway-by-sample score matrix, the most widely used being
+[GSVA](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-7)
+and [ssGSEA](https://www.nature.com/articles/nature08460). `biverse`
+provides fast versions of both with some tricks under the hood to make
+them faster than the original implementations. Moreover, if you have
+multiple contrasts (different drugs vs. DMSO for example). `bixverse`
+also provides Rust-accelerated implementations from
+[mitch](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9).
 
 ``` r
 library(bixverse)
 ```
 
-### Data
+## Data
 
-Similar to the vignette of GSVA, let us create some random data
-(Gaussian or Poisson distributed) to mimic different types of
-transcriptomics measurements.
+Following the GSVA vignette convention, we generate some synthetic
+expression data (Gaussian-distributed to mimic normalised microarray or
+RNA-seq log counts, and Poisson-distributed to mimic raw counts)
+together with a collection of random gene sets.
 
 ``` r
-p <- 10000 # number of genes
-n <- 100 # number of samples
+p <- 10000L # genes
+n <- 100L # samples
 
-# simulate expression values from a standard Gaussian distribution
+# Gaussian expression matrix
 X <- matrix(
   rnorm(p * n),
   nrow = p,
-  dimnames = list(paste0("g", 1:p), paste0("s", 1:n))
+  dimnames = list(paste0("g", seq_len(p)), paste0("s", seq_len(n)))
 )
 
-# simulate expression values from a Poisson distribution
-X1 <- matrix(
+# Poisson count matrix
+X_counts <- matrix(
   rpois(p * n, lambda = 10),
   nrow = p,
-  dimnames = list(paste0("g", 1:p), paste0("s", 1:n))
+  dimnames = list(paste0("g", seq_len(p)), paste0("s", seq_len(n)))
 )
-storage.mode(X1) <- "numeric"
+storage.mode(X_counts) <- "numeric"
 
-# generate some random gene sets
+# Random gene sets of varying size
 gs <- as.list(sample(10:100, size = 250, replace = TRUE))
-# sample gene sets
 gs <- lapply(
   gs,
-  function(n, p) paste0("g", sample(1:p, size = n, replace = FALSE)),
+  function(n, p) paste0("g", sample(seq_len(p), size = n, replace = FALSE)),
   p
 )
-names(gs) <- paste0("gs", 1:length(gs))
+names(gs) <- paste0("gs", seq_along(gs))
 ```
 
-### GSVA (Gaussian version)
+## GSVA
 
-To run the GSVA implementation in bixverse, you can just do
+### Gaussian kernel
+
+The Gaussian kernel version of GSVA is appropriate for continuous
+expression values (log-CPM, microarray intensities, etc.). Running it in
+`bixverse` is a single call:
 
 ``` r
 bixverse_res_gaussian <- calc_gsva(
@@ -63,56 +70,38 @@ bixverse_res_gaussian <- calc_gsva(
 )
 
 bixverse_res_gaussian[1:5, 1:5]
-#>              s1           s2          s3          s4         s5
-#> gs1 -0.01320378 -0.093492292  0.10111879 -0.10211421  0.1019284
-#> gs2  0.14308516 -0.132894778  0.13513867  0.09514166 -0.1564986
-#> gs3 -0.21491357 -0.075694242  0.12316338 -0.04042700 -0.1765931
-#> gs4  0.12565312  0.129707548 -0.07585571 -0.22496932  0.2923787
-#> gs5  0.15323107  0.002392075 -0.07922392 -0.09677161  0.1677735
+#>              s1           s2          s3          s4           s5
+#> gs1  0.08628682  0.162468040 -0.12407794 -0.01699471  0.045879159
+#> gs2 -0.01972725 -0.044652108  0.15891362  0.23113720  0.187682308
+#> gs3  0.07005935  0.133884105  0.15350399  0.16393521  0.001112463
+#> gs4  0.01597900 -0.152684628 -0.06113659  0.08263373 -0.154560563
+#> gs5 -0.06311077 -0.003932136  0.07008926 -0.04882520 -0.234603178
 ```
 
-If we compare against the original implementation of GSVA
+If the original `GSVA` Bioconductor package is available we can verify
+that the results are essentially identical. Minor differences in
+numerical precision arise from optimisations on the Rust side, but
+per-pathway correlations between the two implementations are
+consistently above 0.99.
 
 ``` r
 library(GSVA)
 
 gsvaPar <- gsvaParam(X, gs)
+gsva_res_gaussian <- as.matrix(gsva(gsvaPar, verbose = FALSE))
 
-gsva_res_gaussian <- as.matrix(
-  gsva(gsvaPar, verbose = FALSE)
-)
+correlations <- diag(cor(bixverse_res_gaussian, gsva_res_gaussian))
 
-gsva_res_gaussian[1:5, 1:5]
-#>              s1           s2          s3          s4         s5
-#> gs1 -0.01320378 -0.093486863  0.10113341 -0.10211972  0.1019327
-#> gs2  0.14309364 -0.133006505  0.13515390  0.09503537 -0.1563926
-#> gs3 -0.21491357 -0.075675821  0.12306305 -0.04043898 -0.1766003
-#> gs4  0.12565056  0.129698884 -0.07586936 -0.22497445  0.2923787
-#> gs5  0.15323059  0.002390686 -0.07921143 -0.09676413  0.1677762
+print(sprintf(
+  "All pathway correlations >= 0.99: %s (min: %.4f)",
+  all(correlations >= 0.99),
+  min(correlations)
+))
+#> [1] "All pathway correlations >= 0.99: TRUE (min: 1.0000)"
 ```
 
-We can appreciated very similar values. There is slight differences in
-numerical precision due to optimisations in Rust. However, the
-correlations between the two are ≥0.99
-
-``` r
-correlations <- diag(
-  cor(bixverse_res_gaussian, gsva_res_gaussian)
-)
-
-same_res <- all(correlations >= 0.99)
-
-print(
-  paste(
-    "GSVA and bixverse return (basically) the",
-    sprintf("same results for GSVA (Gaussian): %s", same_res)
-  )
-)
-#> [1] "GSVA and bixverse return (basically) the same results for GSVA (Gaussian): TRUE"
-```
-
-The `biverse` code is highly optimised, hence, usually yielding faster
-results compared to the original `GSVA` code.
+Let’s compare speed (differences will be more pronounced, the more
+computational fire power your system has.)
 
 ``` r
 microbenchmark::microbenchmark(
@@ -120,107 +109,75 @@ microbenchmark::microbenchmark(
     gsvaPar <- gsvaParam(X, gs)
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(
-    exp = X,
-    pathways = gs,
-    gaussian = TRUE
-  ),
+  bixverse = calc_gsva(exp = X, pathways = gs, gaussian = TRUE),
   times = 3L
 )
 #> Unit: milliseconds
-#>      expr       min        lq      mean    median        uq      max neval
-#>      gsva 2505.7374 2511.5945 2525.2353 2517.4516 2534.9843 2552.517     3
-#>  bixverse  580.6615  580.7829  581.0223  580.9043  581.2026  581.501     3
+#>      expr       min        lq      mean    median       uq      max neval
+#>      gsva 2477.6086 2479.3432 2496.9232 2481.0777 2506.580 2532.083     3
+#>  bixverse  581.0207  581.2603  581.3635  581.4999  581.535  581.570     3
 ```
 
-### GSVA (Poisson version)
+### Poisson kernel
 
-To use the version with a Poisson kernel (more appropriate for count
-data) is as simple.
+For count data a Poisson kernel is more appropriate. The only change is
+setting `gaussian = FALSE`:
 
 ``` r
-# bixverse expects floats also for the Poisson version
-storage.mode(X1) <- "numeric"
-
 bixverse_res_poisson <- calc_gsva(
-  exp = X1,
+  exp = X_counts,
   pathways = gs,
-  gaussian = FALSE # uses the Poisson kernel now
+  gaussian = FALSE
 )
 
 bixverse_res_poisson[1:5, 1:5]
-#>              s1          s2           s3          s4           s5
-#> gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941
-#> gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030
-#> gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363
-#> gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450
-#> gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668
+#>                s1           s2           s3          s4          s5
+#> gs1 -0.0674450688  0.055786011 -0.132640895 -0.30473470 -0.06203656
+#> gs2  0.1214739059  0.002783677 -0.038542278 -0.02869359 -0.03257555
+#> gs3 -0.0006558778 -0.119649298  0.104531158 -0.15860377  0.28732790
+#> gs4 -0.1942288027  0.117815360  0.023093446 -0.24011772 -0.01502935
+#> gs5 -0.1691196820  0.109705922  0.003075152  0.09952563  0.19973827
 ```
 
-This is how you would do this in the official GSVA code:
+And vs. the original
 
 ``` r
-# update this to use for kcdf = "Poisson"
-gsvaParPoisson <- gsvaParam(X1, gs, kcdf = "Poisson")
+gsvaParPoisson <- gsvaParam(X_counts, gs, kcdf = "Poisson")
+gsva_res_poisson <- as.matrix(gsva(gsvaParPoisson, verbose = FALSE))
 
-gsva_res_poisson <- as.matrix(
-  gsva(gsvaParPoisson, verbose = FALSE)
-)
+correlations <- diag(cor(bixverse_res_poisson, gsva_res_poisson))
 
-# Check the correlation between the two
-correlations <- diag(
-  cor(bixverse_res_poisson, gsva_res_poisson)
-)
-
-# basically the same results
-same_res <- all(correlations >= 0.99)
-
-print(
-  paste(
-    "GSVA and bixverse return (basically) the",
-    sprintf("same results for GSVA (Poisson): %s", same_res)
-  )
-)
-#> [1] "GSVA and bixverse return (basically) the same results for GSVA (Poisson): TRUE"
-
-gsva_res_poisson[1:5, 1:5]
-#>              s1          s2           s3          s4           s5
-#> gs1 -0.13315522  0.11296689  0.028935180 -0.03946902  0.009183941
-#> gs2  0.02985661 -0.04947534  0.133505116  0.05730318  0.089421030
-#> gs3  0.06049196 -0.09175719 -0.097897108  0.15923866 -0.227262363
-#> gs4  0.12682541  0.00356020 -0.024443641 -0.04817659  0.332142450
-#> gs5  0.04596053 -0.13591350 -0.008891869  0.01180001 -0.117298668
+print(sprintf(
+  "All pathway correlations >= 0.99: %s (min: %.4f)",
+  all(correlations >= 0.99),
+  min(correlations)
+))
+#> [1] "All pathway correlations >= 0.99: TRUE (min: 1.0000)"
 ```
 
-And speed comparisons for the Poisson kernel version between `GSVA` and
-`bixverse`:
+And speed:
 
 ``` r
 microbenchmark::microbenchmark(
   gsva = {
-    gsvaPar <- gsvaParam(X1, gs, kcdf = "Poisson")
+    gsvaPar <- gsvaParam(X_counts, gs, kcdf = "Poisson")
     gsva(gsvaPar, verbose = FALSE)
   },
-  bixverse = calc_gsva(
-    exp = X1,
-    pathways = gs,
-    gaussian = FALSE
-  ),
+  bixverse = calc_gsva(exp = X_counts, pathways = gs, gaussian = FALSE),
   times = 3L
 )
 #> Unit: seconds
 #>      expr       min        lq      mean    median        uq       max neval
-#>      gsva 18.893905 18.896677 18.899481 18.899448 18.902270 18.905091     3
-#>  bixverse  2.766826  2.771615  2.777271  2.776405  2.782494  2.788582     3
+#>      gsva 18.840433 18.857260 18.876192 18.874088 18.894071 18.914054     3
+#>  bixverse  2.783815  2.786702  2.788913  2.789589  2.791463  2.793336     3
 ```
 
-### single sample GSEA
+## ssGSEA
 
-ssGSEA was first described in [Barbie et
-al.](https://www.nature.com/articles/nature08460) and there is an
-implementation in `GSVA`. Compared to `GSVA` there is no normalisation
-across samples based on the kcdf. `bixverse` also provides a Rust
-optimised version of this algorithm.
+ssGSEA, first described in [Barbie et
+al.](https://www.nature.com/articles/nature08460), takes a similar
+approach but does not apply a kernel-based normalisation across samples.
+`bixverse` provides a Rust-optimised version here as well:
 
 ``` r
 bixverse_res_ssgsea <- calc_ssgsea(
@@ -229,51 +186,31 @@ bixverse_res_ssgsea <- calc_ssgsea(
 )
 
 bixverse_res_ssgsea[1:5, 1:5]
-#>              s1         s2         s3          s4         s5
-#> gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275
-#> gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417
-#> gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794
-#> gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069
-#> gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864
+#>             s1          s2         s3         s4          s5
+#> gs1 0.12512352  0.17652964 0.10816822 0.11325955  0.18806734
+#> gs2 0.08642855  0.03348075 0.14572278 0.23587374  0.19681256
+#> gs3 0.08138112  0.16244841 0.12900853 0.15641615  0.20597470
+#> gs4 0.11455992 -0.01617358 0.06832694 0.13304662  0.07221899
+#> gs5 0.09614405  0.12148288 0.13471805 0.07828363 -0.02899348
 ```
 
-This is the way you would run the ssGSEA algorithm in the GSVA package.
+Let’s compare again against the GSVA version:
 
 ``` r
-# update this to the ssgsea parameters
 ssgseaPar <- ssgseaParam(X, gs)
+ssgsea_res <- as.matrix(gsva(ssgseaPar, verbose = FALSE))
 
-ssgsea_res <- as.matrix(
-  gsva(ssgseaPar, verbose = FALSE)
-)
+correlations <- diag(cor(bixverse_res_ssgsea, ssgsea_res))
 
-# Check the correlation between the two
-correlations <- diag(
-  cor(bixverse_res_ssgsea, ssgsea_res)
-)
-
-# basically the same results
-same_res <- all(correlations >= 0.99)
-
-print(
-  paste(
-    "GSVA and bixverse return (basically) the",
-    sprintf("same results for ssGSEA: %s", same_res)
-  )
-)
-#> [1] "GSVA and bixverse return (basically) the same results for ssGSEA: TRUE"
-
-ssgsea_res[1:5, 1:5]
-#>              s1         s2         s3          s4         s5
-#> gs1  0.11199829 0.06760971 0.15310242  0.06196397 0.15278275
-#> gs2  0.12984610 0.07205401 0.13272593  0.11618010 0.04902417
-#> gs3 -0.03134935 0.03046895 0.21958267  0.03765917 0.06731794
-#> gs4  0.25277204 0.14904210 0.09270736 -0.03693458 0.31172069
-#> gs5  0.18062070 0.09837657 0.10226841  0.06596902 0.19550864
+print(sprintf(
+  "All pathway correlations >= 0.99: %s (min: %.4f)",
+  all(correlations >= 0.99),
+  min(correlations)
+))
+#> [1] "All pathway correlations >= 0.99: TRUE (min: 1.0000)"
 ```
 
-Again, you should observe speed improvements thanks to algorithm
-improvements and leveraging Rust’s performance.
+And check the underlying speed differences:
 
 ``` r
 microbenchmark::microbenchmark(
@@ -281,14 +218,107 @@ microbenchmark::microbenchmark(
     ssgseaPar <- ssgseaParam(X, gs)
     gsva(ssgseaPar, verbose = FALSE)
   },
-  bixverse = calc_ssgsea(
-    exp = X,
-    pathways = gs
-  ),
+  bixverse = calc_ssgsea(exp = X, pathways = gs),
   times = 3L
 )
 #> Unit: milliseconds
 #>      expr      min       lq     mean   median       uq      max neval
-#>      gsva 620.2673 623.9776 625.2376 627.6879 627.7227 627.7575     3
-#>  bixverse 119.0858 119.9084 120.4692 120.7310 121.1609 121.5908     3
+#>      gsva 619.1660 620.1188 624.6780 621.0716 627.4340 633.7964     3
+#>  bixverse 102.7411 103.3562 103.7881 103.9713 104.3116 104.6520     3
 ```
+
+## Multi-contrast enrichment (mitch)
+
+When you have multiple contrasts - say, differential expression results
+from several comparisons or different omics layers - you often want to
+know which pathways show coordinated changes *across* contrasts. The
+[mitch](https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-020-06856-9)
+method does exactly this: it ranks genes within each contrast, computes
+mean ranks per pathway, and then uses a MANOVA test to identify pathways
+that are enriched in one or more contrasts simultaneously. `bixverse`
+re-implements the core algorithm so that it slots into the same workflow
+as the other pathway activity functions… Also, heavily multi-threaded
+and designed to go **brrrrrr** in terms of speed.
+
+`calc_mitch` expects a numeric matrix of contrast statistics (genes in
+rows, contrasts in columns) and a named list of gene sets. It returns a
+`data.table` containing per-pathway MANOVA p-values, FDR-adjusted
+p-values, and the individual contrast-level enrichment scores and
+p-values.
+
+``` r
+set.seed(42L)
+
+contrast_data <- matrix(rnorm(3 * 26), nrow = 26)
+colnames(contrast_data) <- sprintf("contrast_%i", 1:3)
+rownames(contrast_data) <- letters
+
+gene_sets <- list(
+  pathway_A = sample(letters, 4),
+  pathway_B = sample(letters, 5),
+  pathway_C = sample(letters, 6),
+  pathway_D = sample(letters, 7)
+)
+
+res <- calc_mitch(
+  contrast_mat = contrast_data,
+  gene_set_list = gene_sets
+)
+
+res
+```
+
+Note that pathways smaller than the internal minimum set size are
+dropped from the output, and the results are sorted by significance. The
+function also validates its input: passing a matrix containing `NA`
+values will throw an error rather than silently producing nonsense.
+
+### Comparison with the mitch package
+
+When the original `mitch` package is available we can verify that the
+two implementations produce identical results. Here we use the example
+data bundled with `mitch`:
+
+``` r
+data(myImportedData, genesetsExample, package = "mitch")
+
+mitch_res <- suppressMessages(mitch::mitch_calc(
+  myImportedData,
+  genesetsExample,
+  priority = "significance",
+  minsetsize = 5,
+  cores = 2
+))
+
+bixverse_res <- calc_mitch(
+  contrast_mat = as.matrix(myImportedData),
+  gene_set_list = genesetsExample
+)
+
+# Pathway ordering and FDR values should match exactly
+all(bixverse_res$pathway_names == mitch_res$enrichment_result$set) &&
+  all.equal(bixverse_res$manova_fdr, mitch_res$enrichment_result$p.adjustMANOVA)
+```
+
+And let’s check the speed differences:
+
+``` r
+microbenchmark::microbenchmark(
+  mitch = suppressMessages(mitch::mitch_calc(
+    myImportedData,
+    genesetsExample,
+    priority = "significance",
+    minsetsize = 5,
+    cores = 2
+  )),
+  bixverse = calc_mitch(
+    contrast_mat = as.matrix(myImportedData),
+    gene_set_list = genesetsExample
+  ),
+  times = 5L
+)
+```
+
+As with the GSVA and ssGSEA implementations, you should observe
+meaningful speed improvements from Rust, particularly as the number of
+gene sets or contrasts grows and the more cores/oomph your system has.

@@ -1,12 +1,14 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://gregorlueg.github.io/bixverse/404.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/LICENSE-text.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/articles/analysis_single_cell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/cpca.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/design_single_cell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/doublet_detection.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/genetic_diffusions.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/gse_methods.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/index.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/articles/ontologies.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/pathway_activity.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/pbmc_single_cell.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/articles/rust_functions.html</loc></url>
@@ -362,6 +364,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/permute_seed_nodes.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/phate_sc.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/plot.CellQc.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/plot.Hotspot.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/plot.cpca_synthetic_data.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/plot.synthetic_matrix_simple.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/plot_boxplot_normalization.html</loc></url>
@@ -467,6 +470,7 @@
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_hypergeom_test_list.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_ica_iters.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_ica_iters_cv.html</loc></url>
+<url><loc>https://gregorlueg.github.io/bixverse/reference/rs_importance_threshold.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_jaccard_row_integers.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_kbet.html</loc></url>
 <url><loc>https://gregorlueg.github.io/bixverse/reference/rs_knn_label_propagation.html</loc></url>
