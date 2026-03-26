@@ -403,7 +403,8 @@ print.BatchLisiScores <- function(x, ...) {
 #' This function will calculate the HVG per given experimental batch and you
 #' can choose the way to combine them. The choices are union (of Top x HVG per
 #' batch), based on the average variance per batch or only take genes that are
-#' amongst the Top X HVG in all batches.
+#' amongst the Top X HVG in all batches. Important. The function returns
+#' 0-indices for the genes!
 #'
 #' @param object `SingleCells` class.
 #' @param batch_column String. The column name of the batch column in the obs
@@ -735,7 +736,8 @@ S7::method(bbknn_sc, SingleCells) <- function(
 #' obs data of the class.
 #' @param batch_hvg_genes Integer vector. These are the highly variable genes,
 #' identified by a batch-aware method. Please refer to
-#' [bixverse::find_hvg_batch_aware_sc()] for more details.
+#' [bixverse::find_hvg_batch_aware_sc()] for more details. These genes have to
+#' be 0-indexed!
 #' @param fastmnn_params A list, please see [bixverse::params_sc_fastmnn()]. The
 #' list has the following parameters:
 #' \itemize{

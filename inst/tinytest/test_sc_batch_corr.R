@@ -722,13 +722,13 @@ batch_aware_hvg = find_hvg_batch_aware_sc(
 test_mnn_pca <- calculate_pca_sc(
   test_mnn_pca,
   no_pcs = 10L,
-  hvg = batch_aware_hvg$hvg_genes,
+  hvg = unique(batch_aware_hvg$hvg_genes) + 1L, # needs to be 1-indexed
   .verbose = FALSE
 )
 
 expect_equal(
   current = get_hvg(test_mnn_pca),
-  target = batch_aware_hvg$hvg_genes - 1,
+  target = batch_aware_hvg$hvg_genes,
   info = "batch aware hvg update worked"
 )
 

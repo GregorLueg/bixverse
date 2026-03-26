@@ -523,6 +523,7 @@ fn rs_sc_hvg_batch_aware(
 /////////
 // PCA //
 /////////
+/////////
 
 /// Calculates PCA for single cell
 ///

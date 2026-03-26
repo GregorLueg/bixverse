@@ -22,7 +22,8 @@ obs data of the class.}
 
 \item{batch_hvg_genes}{Integer vector. These are the highly variable genes,
 identified by a batch-aware method. Please refer to
-\code{\link[=find_hvg_batch_aware_sc]{find_hvg_batch_aware_sc()}} for more details.}
+\code{\link[=find_hvg_batch_aware_sc]{find_hvg_batch_aware_sc()}} for more details. These genes have to
+be 0-indexed!}
 
 \item{fastmnn_params}{A list, please see \code{\link[=params_sc_fastmnn]{params_sc_fastmnn()}}. The
 list has the following parameters:

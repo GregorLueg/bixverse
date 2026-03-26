@@ -59,5 +59,6 @@ manner. At the moment the implementation has only the VST-based version
 This function will calculate the HVG per given experimental batch and you
 can choose the way to combine them. The choices are union (of Top x HVG per
 batch), based on the average variance per batch or only take genes that are
-amongst the Top X HVG in all batches.
+amongst the Top X HVG in all batches. Important. The function returns
+0-indices for the genes!
 }
