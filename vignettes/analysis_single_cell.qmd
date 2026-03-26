@@ -21,7 +21,7 @@ picks up where the
 left off: QC, normalisation, PCA, nearest neighbours, clustering and UMAP
 are all assumed to be done already. If you have not read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
-and the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
+and the [introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first.
 
 The methods fall into two broad categories:

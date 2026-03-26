@@ -17,7 +17,7 @@ This vignette walks through a standard single cell analysis on the PBMC3k data
 set using `bixverse`. If you have not read the
 [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the
-[introductory vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
+[introductory vignette](https://gregorlueg.github.io/bixverse/articles/thinking_single_cell.html),
 please do so first; this vignette assumes familiarity with how the
 `SingleCells` class, on-disk storage and cells-to-keep logic work.
 

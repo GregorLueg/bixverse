@@ -1,5 +1,8 @@
 # bixverse 0.3.0
 
+The big one... First, shift of versioning + release of full single cell analysis
+suite. See below for more details.
+
 * Full refactor of the Rust code, so it lives in its own [crate](https://crates.io/crates/bixverse-rs)
 * Single cell officially released:
   - Class with getters that leverages on-disk storage of counts and a streaming
