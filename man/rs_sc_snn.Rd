@@ -22,8 +22,11 @@ the weight to 0.}
 \item{verbose}{Boolean. Controls verbosity of the function.}
 }
 \value{
-A integer matrix of N x k with N being the number of cells and k the
-number of neighbours.
+A list with the following items:
+\itemize{
+\item edges - sNN edges as edge pairs.
+\item weights - sNN weights of the pairs above.
+}
 }
 \description{
 This function takes a kNN matrix and generates the inputs for an SNN

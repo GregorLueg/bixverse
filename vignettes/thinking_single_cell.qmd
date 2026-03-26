@@ -14,7 +14,7 @@ author: "Gregor Lueg and Grant Neilson"
 ## Intro
 
 Before diving into this vignette, it would be really recommended to read
-the [design choices](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html) 
+the [design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html) 
 to understand **why** single cell has been implemented the way it is in this
 package. This will make understanding the downstream text much easier. The aim
 of this vignette is to take some small synthetic data and point out some quirks 

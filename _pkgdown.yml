@@ -36,18 +36,22 @@ navbar:
           href: articles/genetic_diffusions.html
         - text: Contrastive PCA
           href: articles/cpca.html
+        - text: Semantic similarities on ontologies
+          href: articles/ontologies.html
     singlecells:
       text: Single Cells
       menu:
         - text: Thinking about single cells the bixverse way
           href: articles/thinking_single_cell.html
-        - text: Running an analysis with the bixverse single cell framework
+        - text: PBMC analysis with the bixverse single cell framework
           href: articles/pbmc_single_cell.html
         - text: Doublet detection in bixverse
           href: articles/doublet_detection.html
         - text: Batch corrections
           href: articles/single_cell_batch_corrections.html
-        - text: Analysing big data
+        - text: "'Bag of genes' methods for single cell in bixverse"
+          href: articles/analysis_single_cell.html
+        - text: Analysing big data on a powerful laptop (example)
           href: articles/single_cell_big_data.html
     articles:
       text: Articles
@@ -74,6 +78,7 @@ articles:
       - pathway_activity
       - genetic_diffusions
       - cpca
+      - ontologies
   - title: Single Cells
     navbar: Single Cells
     contents:
@@ -81,6 +86,7 @@ articles:
       - pbmc_single_cell
       - doublet_detection
       - single_cell_batch_corrections
+      - analysis_single_cell
       - single_cell_big_data
 
 reference:
@@ -562,6 +568,7 @@ reference:
       - rs_hypergeom_test_list
       - rs_ica_iters
       - rs_ica_iters_cv
+      - rs_importance_threshold
       - rs_jaccard_row_integers
       - rs_kbet
       - rs_knn_label_propagation

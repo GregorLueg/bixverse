@@ -870,8 +870,6 @@ expect_warning(
 
 rf_scenic_res_batch_32 <- identify_tf_to_genes(
   rf_scenic_res_batch_32,
-  k_tfs = 5L,
-  k_genes = 10L,
   .verbose = FALSE
 )
 

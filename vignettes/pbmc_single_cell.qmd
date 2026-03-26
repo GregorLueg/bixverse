@@ -15,10 +15,10 @@ author: "Grant Neilson and Gregor Lueg"
 
 This vignette walks through a standard single cell analysis on the PBMC3k data
 set using `bixverse`. If you have not read the
-[design choices](https://gregorlueg.github.io/bixverse/docs/articles/design_single_cell.html)
+[design choices](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 and the
-[introductory vignette](https://gregorlueg.github.io/bixverse/docs/articles/single_cell_intro.html),
-please do so first -- this vignette assumes familiarity with how the
+[introductory vignette](https://gregorlueg.github.io/bixverse/articles/single_cell_intro.html),
+please do so first; this vignette assumes familiarity with how the
 `SingleCells` class, on-disk storage and cells-to-keep logic work.
 
 ```{r}
@@ -230,8 +230,10 @@ sc_object <- umap_sc(sc_object, knn_method = "annoy")
 sc_object <- tsne_sc(sc_object, perplexity = 30, knn_method = "annoy")
 ```
 
-We can pull the embeddings back into data.tables and plot them. The obs columns
-can be appended directly.
+We can pull the embeddings back into data.tables and plot them (longer term,
+the idea will be to provide plotting helpers in `bixverse.plots`). The obs 
+columns can be appended directly.
+
 ```{r}
 #| label: umap plot
 #| fig-width: 7
