@@ -1,3 +1,15 @@
+# bixverse 0.3.1
+
+Following things were added:
+
+* scDblFinder as another doublet detection method
+* Following methods on top of meta-cells:
+  - HVG detection
+  - PCA
+  - kNN generation
+  - sNN generation
+  - Leiden clustering
+
 # bixverse 0.3.0
 
 The big one... First, shift of versioning + release of full single cell analysis

@@ -1,6 +1,6 @@
 # bixverse package
 
-![r_package](https://img.shields.io/badge/R_package-0.3.0-orange) 
+![r_package](https://img.shields.io/badge/R_package-0.3.1-orange) 
 [![CI](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml/badge.svg)](https://github.com/GregorLueg/bixverse/actions/workflows/R-cmd-check.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![pkgdown](https://img.shields.io/badge/pkgdown-website-1b5e9f?logo=github)](https://gregorlueg.github.io/bixverse/)
