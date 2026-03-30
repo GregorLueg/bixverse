@@ -5,7 +5,8 @@ use std::time::Instant;
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
-    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scrublet::*, snn::*,
+    doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scdblfinder::*,
+    scrublet::*, snn::*,
 };
 
 /////////////
@@ -17,6 +18,7 @@ extendr_module! {
     // doublet detection
     fn rs_sc_scrublet;
     fn rs_sc_doublet_detection;
+    fn rs_sc_scdblfinder;
     // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
@@ -173,6 +175,47 @@ fn rs_sc_doublet_detection(
         doublet_score = boost_res.doublet_scores,
         voting_avg = boost_res.voting_average
     )
+}
+
+/// Run scDblFinder doublet detection
+///
+/// @param f_path_gene String. Path to the gene-based binary file.
+/// @param f_path_cell String. Path to the cell-based binary file.
+/// @param cell_indices Integer vector (0-indexed).
+/// @param params List. scDblFinder parameters from R.
+/// @param streaming Boolean. Stream HVG computation.
+/// @param seed Integer. Seed for reproducibility.
+/// @param verbose Boolean. Controls verbosity.
+///
+/// @returns A list with predicted_doublets, doublet_scores, threshold,
+/// cluster_labels and detected_doublet_rate.
+#[extendr]
+fn rs_sc_scdblfinder(
+    f_path_gene: &str,
+    f_path_cell: &str,
+    cell_indices: &[i32],
+    params: List,
+    streaming: bool,
+    seed: i32,
+    verbose: bool,
+) -> extendr_api::Result<List> {
+    let cell_indices = cell_indices.r_int_convert();
+    let params = ScDblFinderParams::from_r_list(params);
+
+    let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
+    let res = finder.run(streaming, seed as usize, verbose);
+
+    Ok(list!(
+        predicted_doublets = res.predicted_doublets,
+        doublet_scores = res.doublet_scores.r_float_convert(),
+        threshold = res.threshold as f64,
+        cluster_labels = res
+            .cluster_labels
+            .iter()
+            .map(|&x| x as i32)
+            .collect::<Vec<i32>>(),
+        detected_doublet_rate = res.detected_doublet_rate as f64
+    ))
 }
 
 /////////////

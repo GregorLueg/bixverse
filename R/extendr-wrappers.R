@@ -2228,6 +2228,20 @@ rs_sc_scrublet <- function(f_path_gene, f_path_cell, cells_to_keep, scrublet_par
 #' @export
 rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose) .Call(wrap__rs_sc_doublet_detection, f_path_gene, f_path_cell, cells_to_keep, boost_params, seed, streaming, verbose)
 
+#' Run scDblFinder doublet detection
+#'
+#' @param f_path_gene String. Path to the gene-based binary file.
+#' @param f_path_cell String. Path to the cell-based binary file.
+#' @param cell_indices Integer vector (0-indexed).
+#' @param params List. scDblFinder parameters from R.
+#' @param streaming Boolean. Stream HVG computation.
+#' @param seed Integer. Seed for reproducibility.
+#' @param verbose Boolean. Controls verbosity.
+#'
+#' @returns A list with predicted_doublets, doublet_scores, threshold,
+#' cluster_labels and detected_doublet_rate.
+rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, streaming, seed, verbose) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, streaming, seed, verbose)
+
 #' Calculates the cumulative proportion of the top X genes
 #'
 #' @description

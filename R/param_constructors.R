@@ -308,6 +308,129 @@ params_boost <- function(
   params
 }
 
+### scdblfinder ----------------------------------------------------------------
+
+#' Wrapper function for scDblFinder doublet detection parameters
+#'
+#' @description Constructor for the scDblFinder parameters. This method
+#' combines cluster-aware doublet simulation with a gradient-boosted
+#' classifier trained on engineered features.
+#'
+#' @param doublet_ratio Numeric. Ratio of simulated doublets to observed cells.
+#' Defaults to `1.0`.
+#' @param heterotypic_bias Numeric. Fraction of simulated pairs forced to come
+#' from different clusters (0-1). Defaults to `0.8`.
+#' @param cluster_resolution Numeric. Resolution for the initial Louvain
+#' clustering. Defaults to `1.0`.
+#' @param cluster_iters Integer. Number of Louvain iterations per clustering
+#' step. Defaults to `10L`.
+#' @param n_iterations Integer. Number of refinement iterations. Typically
+#' 2-3. Defaults to `3L`.
+#' @param n_trees Integer. Maximum number of boosting rounds for the GBM
+#' classifier. Defaults to `200L`.
+#' @param max_depth Integer. Maximum tree depth. Shallow trees (3-5) work
+#' best. Defaults to `4L`.
+#' @param learning_rate Numeric. Shrinkage applied to each tree. Defaults
+#' to `0.3`.
+#' @param min_samples_leaf Integer. Minimum training samples per leaf.
+#' Defaults to `20L`.
+#' @param early_stop_window Integer. Number of recent OOB improvements to
+#' average for early stopping. Defaults to `3L`.
+#' @param subsample_rate Numeric. Fraction of samples used per tree.
+#' Defaults to `0.75`.
+#' @param include_pcs Integer. Number of leading principal components to
+#' include as classifier features. Defaults to `19L`.
+#' @param dbr_per_1k Numeric. Expected doublets per 1000 cells captured.
+#' Use `0.008` for standard 10X chips, `0.004` for HT chips.
+#' Defaults to `0.008`.
+#' @param n_bins Integer. Number of histogram bins for fallback Otsu
+#' thresholding. Defaults to `100L`.
+#' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
+#' (default), expected-rate thresholding is used.
+#' @param normalisation List. Optional overrides for normalisation parameters.
+#' See [bixverse::params_norm_doublet_detection_defaults()].
+#' @param hvg List. Optional overrides for HVG parameters.
+#' See [bixverse::params_hvg_defaults()].
+#' @param pca List. Optional overrides for PCA parameters.
+#' See [bixverse::params_pca_defaults()].
+#' @param knn List. Optional overrides for kNN parameters.
+#' See [bixverse::params_knn_defaults()].
+#'
+#' @returns A named list with all scDblFinder parameters.
+#'
+#' @export
+params_scdblfinder <- function(
+  doublet_ratio = 1.0,
+  heterotypic_bias = 0.8,
+  cluster_resolution = 1.0,
+  cluster_iters = 10L,
+  n_iterations = 3L,
+  n_trees = 200L,
+  max_depth = 4L,
+  learning_rate = 0.3,
+  min_samples_leaf = 20L,
+  early_stop_window = 3L,
+  subsample_rate = 0.75,
+  include_pcs = 19L,
+  dbr_per_1k = 0.008,
+  n_bins = 100L,
+  manual_threshold = NULL,
+  normalisation = list(),
+  hvg = list(min_gene_var_pctl = 0.85),
+  pca = list(),
+  knn = list(k = 0L, ann_dist = "euclidean")
+) {
+  # checks
+  checkmate::qassert(doublet_ratio, "N1(0,)")
+  checkmate::qassert(heterotypic_bias, "N1[0,1]")
+  checkmate::qassert(cluster_resolution, "N1(0,)")
+  checkmate::qassert(cluster_iters, "I1[1,)")
+  checkmate::qassert(n_iterations, "I1[1,)")
+  checkmate::qassert(n_trees, "I1[1,)")
+  checkmate::qassert(max_depth, "I1[1,)")
+  checkmate::qassert(learning_rate, "N1(0,)")
+  checkmate::qassert(min_samples_leaf, "I1[1,)")
+  checkmate::qassert(early_stop_window, "I1[1,)")
+  checkmate::qassert(subsample_rate, "N1(0,1]")
+  checkmate::qassert(include_pcs, "I1[1,)")
+  checkmate::qassert(dbr_per_1k, "N1(0,)")
+  checkmate::qassert(n_bins, "I1[10,)")
+  if (!is.null(manual_threshold)) {
+    checkmate::qassert(manual_threshold, "N1[0,)")
+  }
+
+  # construct the parameters
+  params <- list(
+    normalisation = modifyList(
+      params_norm_doublet_detection_defaults(),
+      normalisation,
+      keep.null = TRUE
+    ),
+    hvg = modifyList(params_hvg_defaults(), hvg, keep.null = TRUE),
+    pca = modifyList(params_pca_defaults(), pca, keep.null = TRUE),
+    knn = modifyList(params_knn_defaults(), knn, keep.null = TRUE),
+    doublet_ratio = doublet_ratio,
+    heterotypic_bias = heterotypic_bias,
+    cluster_resolution = cluster_resolution,
+    cluster_iters = cluster_iters,
+    n_iterations = n_iterations,
+    n_trees = n_trees,
+    max_depth = max_depth,
+    learning_rate = learning_rate,
+    min_samples_leaf = min_samples_leaf,
+    early_stop_window = early_stop_window,
+    subsample_rate = subsample_rate,
+    include_pcs = include_pcs,
+    dbr_per_1k = dbr_per_1k,
+    n_bins = n_bins,
+    manual_threshold = manual_threshold
+  )
+
+  params <- purrr::list_flatten(params, name_spec = "{inner}")
+
+  params
+}
+
 ## neighbours ------------------------------------------------------------------
 
 #' Wrapper function for parameters for neighbour identification in single cell

@@ -127,7 +127,6 @@ scrublet_res <- rs_sc_scrublet(
   return_pairs = TRUE
 )
 
-
 expect_true(
   current = checkmate::qtest(
     scrublet_res$predicted_doublets,
@@ -434,6 +433,82 @@ expect_true(
     must.include = c("doublet", "doublet_score", "cell_idx")
   ),
   info = "getter on scrublet res working - expected columns"
+)
+
+# test scdblfinder -------------------------------------------------------------
+
+## rust logic ------------------------------------------------------------------
+
+scdblfinder_res <- rs_sc_scdblfinder(
+  f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
+  f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
+  cell_indices = get_cells_to_keep(sc_object),
+  params = params_scdblfinder(
+    heterotypic_bias = 0.5,
+    pca = list(no_pcs = 10L),
+    dbr_per_1k = 0.2
+  ),
+  seed = 42L,
+  verbose = TRUE,
+  streaming = FALSE
+)
+
+str(scdblfinder_res)
+
+expect_true(
+  current = checkmate::qtest(
+    scdblfinder_res$predicted_doublets,
+    sprintf("B%s", nrow(new_obs))
+  ),
+  info = paste(
+    "rust scdblfinder classified doublet detection:",
+    "predicted doublets correct return type"
+  )
+)
+
+expect_true(
+  current = checkmate::qtest(
+    scdblfinder_res$doublet_score,
+    sprintf("N%s", nrow(new_obs))
+  ),
+  info = paste(
+    "rust scdblfinder classified doublet detection:",
+    "doublet scores correct return type"
+  )
+)
+
+expect_true(
+  current = checkmate::qtest(
+    scdblfinder_res$threshold,
+    "N1[0, 1]"
+  ),
+  info = paste(
+    "rust scdblfinder classified doublet detection:",
+    "threshold is correct type"
+  )
+)
+
+metrics <- metrics_helper(
+  cm = table(
+    new_obs$doublet,
+    scdblfinder_res$predicted_doublets
+  )
+)
+
+expect_true(
+  current = metrics["recall"] >= 0.7,
+  info = paste(
+    "rust boost classified doublet detection:",
+    "good recall"
+  )
+)
+
+expect_true(
+  current = metrics["f1"] >= 0.7,
+  info = paste(
+    "rust boost classified doublet detection:",
+    "good f1 scores"
+  )
 )
 
 # clean up ---------------------------------------------------------------------
