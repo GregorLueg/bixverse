@@ -292,10 +292,10 @@ vision_res <- vision_w_autocor_sc(
 head(vision_res$auto_cor_dt)
 #>    gene_set_name  auto_cor       p_val         fdr
 #>           <char>     <num>       <num>       <num>
-#> 1:        T cell 0.7568656 0.001996008 0.002661344
-#> 2:  Cytotoxic NK 0.4577842 0.009980040 0.009980040
-#> 3:        B cell 0.5717304 0.001996008 0.002661344
-#> 4:      Monocyte 0.5570727 0.001996008 0.002661344
+#> 1:        T cell 0.7569539 0.001996008 0.002661344
+#> 2:  Cytotoxic NK 0.4579006 0.009980040 0.009980040
+#> 3:        B cell 0.5717058 0.001996008 0.002661344
+#> 4:      Monocyte 0.5571667 0.001996008 0.002661344
 ```
 
 Unsurprisingly, all of these gene sets show highly significant spatial
@@ -328,26 +328,26 @@ hotspot_autocor[, gene_symbol := ensembl_to_symbol[gene_id]]
 head(hotspot_autocor[order(fdr)], 20L)
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
-#>  1: ENSG00000163131 0.5366545  42.92023     0     0        CTSS
-#>  2: ENSG00000163220 0.7227463  66.40002     0     0      S100A9
-#>  3: ENSG00000143546 0.6844327  67.94946     0     0      S100A8
-#>  4: ENSG00000197956 0.5666957  60.65731     0     0      S100A6
-#>  5: ENSG00000196154 0.6061029  63.35691     0     0      S100A4
-#>  6: ENSG00000177954 0.5416922  73.16705     0     0       RPS27
-#>  7: ENSG00000158869 0.6635677  57.40372     0     0      FCER1G
-#>  8: ENSG00000203747 0.5673878  49.58070     0     0      FCGR3A
-#>  9: ENSG00000198821 0.2257419  53.25378     0     0       CD247
-#> 10: ENSG00000143185 0.3175716  52.36283     0     0        XCL2
-#> 11: ENSG00000143184 0.3614059  64.42456     0     0        XCL1
-#> 12: ENSG00000143947 0.3309858  45.02164     0     0      RPS27A
-#> 13: ENSG00000115523 0.5998339 125.16257     0     0        GNLY
-#> 14: ENSG00000153563 0.2413223  45.56967     0     0        CD8A
-#> 15: ENSG00000172116 0.2275550  42.96084     0     0        CD8B
-#> 16: ENSG00000071082 0.3413285  48.70930     0     0       RPL31
-#> 17: ENSG00000144713 0.3609828  56.28522     0     0       RPL32
-#> 18: ENSG00000233276 0.4697237  43.77005     0     0        GPX1
-#> 19: ENSG00000196542 0.3204369  52.86140     0     0      SPTSSB
-#> 20: ENSG00000159674 0.4994882  94.23416     0     0       SPON2
+#>  1: ENSG00000163131 0.5366704  42.91443     0     0        CTSS
+#>  2: ENSG00000163220 0.7227550  66.40006     0     0      S100A9
+#>  3: ENSG00000143546 0.6843619  67.94913     0     0      S100A8
+#>  4: ENSG00000197956 0.5665500  60.65715     0     0      S100A6
+#>  5: ENSG00000196154 0.6060381  63.34048     0     0      S100A4
+#>  6: ENSG00000177954 0.5416304  73.15880     0     0       RPS27
+#>  7: ENSG00000158869 0.6635526  57.40015     0     0      FCER1G
+#>  8: ENSG00000203747 0.5669235  49.57281     0     0      FCGR3A
+#>  9: ENSG00000198821 0.2257676  53.26115     0     0       CD247
+#> 10: ENSG00000143185 0.3176146  52.36552     0     0        XCL2
+#> 11: ENSG00000143184 0.3614059  64.42469     0     0        XCL1
+#> 12: ENSG00000143947 0.3309339  45.01256     0     0      RPS27A
+#> 13: ENSG00000115523 0.6002206 125.16958     0     0        GNLY
+#> 14: ENSG00000153563 0.2413224  45.56978     0     0        CD8A
+#> 15: ENSG00000172116 0.2275551  42.96094     0     0        CD8B
+#> 16: ENSG00000071082 0.3411410  48.68288     0     0       RPL31
+#> 17: ENSG00000144713 0.3609850  56.28975     0     0       RPL32
+#> 18: ENSG00000233276 0.4705684  43.87033     0     0        GPX1
+#> 19: ENSG00000196542 0.3204369  52.86151     0     0      SPTSSB
+#> 20: ENSG00000159674 0.4989858  94.22457     0     0       SPON2
 #>             gene_id  gaerys_c   z_score  pval   fdr gene_symbol
 #>              <char>     <num>     <num> <num> <num>      <char>
 ```
@@ -373,7 +373,7 @@ hotspot_cor <- hotspot_gene_cor_sc(
 
 hotspot_cor
 #> Hotspot gene-gene local correlation results
-#>   Genes: 2086
+#>   Genes: 2083
 #>   Cells: 2163
 #>   Modules: not yet computed (see generate_hotspot_membership)
 ```
@@ -401,26 +401,26 @@ membership <- membership[!is.na(cluster_member)]
 head(membership[order(cluster_member)], 20L)
 #>             gene_id cluster_member  gene_symbol
 #>              <char>          <num>       <char>
-#>  1: ENSG00000117155            567       SSX2IP
-#>  2: ENSG00000117586            567       TNFSF4
-#>  3: ENSG00000150681            567        RGS18
-#>  4: ENSG00000187699            567      C2orf88
-#>  5: ENSG00000168497            567         SDPR
-#>  6: ENSG00000088726            567       TMEM40
-#>  7: ENSG00000169704            567          GP9
-#>  8: ENSG00000163737            567          PF4
-#>  9: ENSG00000163736            567         PPBP
-#> 10: ENSG00000245954            567 RP11-18H21.1
-#> 11: ENSG00000134352            567        IL6ST
-#> 12: ENSG00000158985            567     CDC42SE2
-#> 13: ENSG00000113140            567        SPARC
-#> 14: ENSG00000176783            567        RUFY1
-#> 15: ENSG00000272053            567 RP11-367G6.3
-#> 16: ENSG00000180573            567    HIST1H2AC
-#> 17: ENSG00000204420            567      C6orf25
-#> 18: ENSG00000161911            567       TREML1
-#> 19: ENSG00000171611            567        PTCRA
-#> 20: ENSG00000223855            567   AC147651.3
+#>  1: ENSG00000117155            557       SSX2IP
+#>  2: ENSG00000117586            557       TNFSF4
+#>  3: ENSG00000150681            557        RGS18
+#>  4: ENSG00000187699            557      C2orf88
+#>  5: ENSG00000168497            557         SDPR
+#>  6: ENSG00000088726            557       TMEM40
+#>  7: ENSG00000169704            557          GP9
+#>  8: ENSG00000163737            557          PF4
+#>  9: ENSG00000163736            557         PPBP
+#> 10: ENSG00000245954            557 RP11-18H21.1
+#> 11: ENSG00000158985            557     CDC42SE2
+#> 12: ENSG00000113140            557        SPARC
+#> 13: ENSG00000176783            557        RUFY1
+#> 14: ENSG00000272053            557 RP11-367G6.3
+#> 15: ENSG00000180573            557    HIST1H2AC
+#> 16: ENSG00000204420            557      C6orf25
+#> 17: ENSG00000161911            557       TREML1
+#> 18: ENSG00000171611            557        PTCRA
+#> 19: ENSG00000223855            557   AC147651.3
+#> 20: ENSG00000122566            557    HNRNPA2B1
 #>             gene_id cluster_member  gene_symbol
 #>              <char>          <num>       <char>
 ```

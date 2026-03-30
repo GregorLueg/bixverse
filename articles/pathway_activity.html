@@ -37,7 +37,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/rust_functions.html">Bixverse R &lt;&gt; Rust interface</a></li>
-    <li><a class="dropdown-item" href="../articles/design_single_cell.html">Technical design choices</a></li>
+    <li><a class="dropdown-item" href="../articles/design_single_cell.html">Technical design choices for single cell</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
@@ -144,12 +144,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_gaussian</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;               s1         s2          s3          s4           s5</span></span>
-<span><span class="co">#&gt; gs1 -0.075436851 0.08874773 -0.29032907  0.03666050  0.003490431</span></span>
-<span><span class="co">#&gt; gs2  0.045967473 0.02680164  0.14284502  0.06021367  0.048393300</span></span>
-<span><span class="co">#&gt; gs3 -0.040131314 0.12064009 -0.06047280 -0.13430186 -0.040807741</span></span>
-<span><span class="co">#&gt; gs4  0.004545015 0.11269629  0.20636933 -0.20664760 -0.153879434</span></span>
-<span><span class="co">#&gt; gs5 -0.006735444 0.14636113 -0.09257269  0.26422288  0.117304759</span></span></code></pre></div>
+<span><span class="co">#&gt;               s1            s2          s3         s4         s5</span></span>
+<span><span class="co">#&gt; gs1 -0.125379686 -0.0002753507 -0.27075320 -0.0149965 0.10181396</span></span>
+<span><span class="co">#&gt; gs2  0.431285019  0.4572149731 -0.02734870 -0.2521640 0.24059663</span></span>
+<span><span class="co">#&gt; gs3  0.072955500 -0.0435766858  0.08876514 -0.2767354 0.15397751</span></span>
+<span><span class="co">#&gt; gs4  0.009979068 -0.1260349107 -0.11304355  0.2150496 0.34972861</span></span>
+<span><span class="co">#&gt; gs5  0.158826978 -0.3428231735  0.29442696  0.1610547 0.02362777</span></span></code></pre></div>
 </div>
 <p>If the original <code>GSVA</code> Bioconductor package is available we can verify that the results are essentially identical. Minor differences in numerical precision arise from optimisations on the Rust side, but per-pathway correlations between the two implementations are consistently above 0.99.</p>
 <div class="cell">
@@ -181,8 +181,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr       min        lq      mean    median        uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 2271.1716 2275.5442 2290.0911 2279.9169 2299.5509 2319.1849     3</span></span>
-<span><span class="co">#&gt;  bixverse  545.4204  548.6961  550.1203  551.9718  552.4702  552.9687     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 2777.5820 2784.0050 2798.9440 2790.4281 2809.6250 2828.8218     3</span></span>
+<span><span class="co">#&gt;  bixverse  595.7625  596.0755  596.3969  596.3884  596.7141  597.0397     3</span></span></code></pre></div>
 </div>
 </section><section class="level3"><h3 id="poisson-kernel">Poisson kernel<a class="anchor" aria-label="anchor" href="#poisson-kernel"></a>
 </h3>
@@ -196,12 +196,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_poisson</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;              s1          s2          s3           s4           s5</span></span>
-<span><span class="co">#&gt; gs1  0.21964233 -0.20477132  0.01956516  0.004396629 -0.048076778</span></span>
-<span><span class="co">#&gt; gs2  0.01417628 -0.01810093  0.10677614 -0.071339075  0.006115717</span></span>
-<span><span class="co">#&gt; gs3  0.25619808 -0.16809600 -0.22196848 -0.174259674 -0.087915526</span></span>
-<span><span class="co">#&gt; gs4 -0.32533328 -0.40293066  0.19883616 -0.035847435  0.036035200</span></span>
-<span><span class="co">#&gt; gs5  0.13724064 -0.12972869 -0.13488030  0.133450829 -0.098246270</span></span></code></pre></div>
+<span><span class="co">#&gt;             s1           s2          s3            s4          s5</span></span>
+<span><span class="co">#&gt; gs1  0.1084424  0.029205630 -0.01296459 -0.0157263622  0.05225398</span></span>
+<span><span class="co">#&gt; gs2  0.1280114  0.044572596 -0.27349116  0.0003915453 -0.01366357</span></span>
+<span><span class="co">#&gt; gs3  0.3688927  0.005809983  0.06554314 -0.0537208658  0.01837911</span></span>
+<span><span class="co">#&gt; gs4  0.2467090 -0.093335949  0.01880300  0.0537020536  0.10581924</span></span>
+<span><span class="co">#&gt; gs5 -0.1425242 -0.218299303  0.12353356 -0.0518123221  0.07799435</span></span></code></pre></div>
 </div>
 <p>And vs. the original</p>
 <div class="cell">
@@ -230,9 +230,9 @@
 <span>  times <span class="op">=</span> <span class="fl">3L</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: seconds</span></span>
-<span><span class="co">#&gt;      expr       min        lq     mean    median       uq       max neval</span></span>
-<span><span class="co">#&gt;      gsva 17.429650 17.432347 17.43999 17.435045 17.44516 17.455272     3</span></span>
-<span><span class="co">#&gt;  bixverse  2.638189  2.645508  2.64983  2.652828  2.65565  2.658472     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      expr       min        lq      mean   median        uq       max neval</span></span>
+<span><span class="co">#&gt;      gsva 19.242522 19.256889 19.262840 19.27126 19.272998 19.274740     3</span></span>
+<span><span class="co">#&gt;  bixverse  2.877258  2.878819  2.880716  2.88038  2.882445  2.884509     3</span></span></code></pre></div>
 </div>
 </section></section><section class="level2"><h2 id="ssgsea">ssGSEA<a class="anchor" aria-label="anchor" href="#ssgsea"></a>
 </h2>
@@ -245,12 +245,12 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bixverse_res_ssgsea</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span>
-<span><span class="co">#&gt;             s1        s2          s3         s4         s5</span></span>
-<span><span class="co">#&gt; gs1 0.11407375 0.1211923 -0.01228080 0.11705377 0.15899439</span></span>
-<span><span class="co">#&gt; gs2 0.07665503 0.0983818  0.20845330 0.11568205 0.11925805</span></span>
-<span><span class="co">#&gt; gs3 0.04094315 0.1205627  0.12356233 0.05931790 0.13235632</span></span>
-<span><span class="co">#&gt; gs4 0.13650345 0.2188706  0.13999245 0.07893155 0.06604441</span></span>
-<span><span class="co">#&gt; gs5 0.15551444 0.2299125  0.05670878 0.23275483 0.13986226</span></span></code></pre></div>
+<span><span class="co">#&gt;             s1          s2          s3          s4         s5</span></span>
+<span><span class="co">#&gt; gs1 0.02624714  0.08773804 -0.01773371  0.11170401 0.16043017</span></span>
+<span><span class="co">#&gt; gs2 0.27052834  0.28890150  0.06278301 -0.01936697 0.16878179</span></span>
+<span><span class="co">#&gt; gs3 0.14301884  0.07794637  0.17867257  0.01510024 0.12589642</span></span>
+<span><span class="co">#&gt; gs4 0.13766275  0.03574684  0.10599234  0.19819662 0.25361975</span></span>
+<span><span class="co">#&gt; gs5 0.12651192 -0.10004270  0.21708259  0.15936208 0.04687915</span></span></code></pre></div>
 </div>
 <p>Let’s compare again against the GSVA version:</p>
 <div class="cell">
@@ -280,8 +280,8 @@
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Unit: milliseconds</span></span>
 <span><span class="co">#&gt;      expr      min       lq     mean   median       uq      max neval</span></span>
-<span><span class="co">#&gt;      gsva 566.7203 571.7434 576.3497 576.7666 581.1645 585.5623     3</span></span>
-<span><span class="co">#&gt;  bixverse 104.6159 106.2191 106.8717 107.8223 107.9995 108.1767     3</span></span></code></pre></div>
+<span><span class="co">#&gt;      gsva 633.4885 641.9074 647.9088 650.3262 655.1189 659.9116     3</span></span>
+<span><span class="co">#&gt;  bixverse 143.6848 143.9036 144.5300 144.1223 144.9526 145.7829     3</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="multi-contrast-enrichment-mitch">Multi-contrast enrichment (mitch)<a class="anchor" aria-label="anchor" href="#multi-contrast-enrichment-mitch"></a>
 </h2>

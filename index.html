@@ -37,7 +37,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/rust_functions.html">Bixverse R &lt;&gt; Rust interface</a></li>
-    <li><a class="dropdown-item" href="articles/design_single_cell.html">Technical design choices</a></li>
+    <li><a class="dropdown-item" href="articles/design_single_cell.html">Technical design choices for single cell</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -93,7 +93,7 @@
 <div class="section level3">
 <h3 id="release-notes">Release notes<a class="anchor" aria-label="anchor" href="#release-notes"></a>
 </h3>
-<p>With the <code>0.3.0</code> a lot has happened. The lack of updates had a reason Some cooking has been going on… The package now contains a full release of the a single cell functionality suite that you can use to analyse millions of cells locally. Please checkout out the website of the package.</p>
+<p>With the <code>0.3.0</code> a lot has happened. The lack of updates had a reason… Some heavy cooking has been going on… The package now contains a full release of the a single cell functionality suite that you can use to analyse millions of cells locally and implements already a large number of methods in this space into Rust and exposes them to R. <a href="https://gregorlueg.github.io/bixverse/">Please checkout out the website of the package.</a>, specifically the sections arounds single cell.</p>
 </div>
 </div>
 <div class="section level2">
@@ -121,12 +121,12 @@
 <div class="section level3">
 <h3 id="windows-support">Windows support<a class="anchor" aria-label="anchor" href="#windows-support"></a>
 </h3>
-<p>If you are using Windows, I am sorry, the tool chain is just very, very painful… I really tried to make this work and maybe there are some hacks in terms of compiling everything to install the package, but it has proven… challenging in the CI/CD. Hence, no official Windows support for now.</p>
+<p>If you are using Windows, I am sorry, the tool chain is just very, very painful… I really tried to make this work and maybe there are some hacks in terms of compiling everything to install the package, but it has proven… challenging in the CI/CD. Hence, no official Windows support for now. It is specifically the incorporation of h5 which proves non-trivial with cross-compiling that with Rust within the R umbrella.</p>
 </div>
 <div class="section level3">
 <h3 id="how-to-use-the-package">How to use the package.<a class="anchor" aria-label="anchor" href="#how-to-use-the-package"></a>
 </h3>
-<p>The package website can be found <a href="https://gregorlueg.github.io/bixverse/">here</a>. A good primer for <a href="https://gregorlueg.github.io/bixverse/articles/rust_functions.html">why Rust is here</a> - a show case of how much faster Rust can make a lot of basic functions much faster. If you wish to integrate this into your package, please feel free. If you wish to use the single cell part, it is really worth reading this <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">here</a> first… It will give you a good explainer on the design decisions, the choices and trade-offs. The vignettes will show you how to analyse data.</p>
+<p>The package website can be found <a href="https://gregorlueg.github.io/bixverse/">here</a>. A good primer for <a href="https://gregorlueg.github.io/bixverse/articles/rust_functions.html">why Rust is here</a> - a show case of how much faster Rust can make a lot of basic functions much faster. If you wish to integrate this into your package, please feel free. If you wish to use the single cell part, it is really worth reading this <a href="https://gregorlueg.github.io/bixverse/articles/design_single_cell.html">here</a> first… It will give you a good explainer on the design decisions, the choices and trade-offs. The various vignettes will show you how to analyse data.</p>
 </div>
 </div>
 <div class="section level2">
@@ -139,11 +139,12 @@
 <li>For single cell the following stuff will be hopefully soon’ish implemented:
 <ul>
 <li>More multi-file read in support. At the moment, multiple h5ad files are possible, but not yet for other file formats.</li>
-<li>h5 file i/o.</li>
+<li>h5 file i/o (provided by CellRanger).</li>
 <li>Saving data to h5ad for easier interoperability with Python.</li>
+<li>Something cool with <a href="https://zarr.dev" class="external-link">Zarr</a> … ?</li>
 <li>Methods on top of the meta cells: co-expression network detection etc.</li>
 <li>Expansion of the <a href="https://github.com/GregorLueg/bixverse.plots" class="external-link">sister package</a> to have plotting helpers in there for single cell.</li>
-<li>Helpers to slice and dice the data easier and add new data.</li>
+<li>Helpers to slice and dice the data easier and add new data - this will</li>
 <li>Implementations of <a href="https://www.nature.com/articles/s41587-019-0068-4" class="external-link">Palantir</a> and <a href="https://pubmed.ncbi.nlm.nih.gov/29914354/" class="external-link">Slingshot</a>.</li>
 <li>Port over <a href="https://www.nature.com/articles/s41592-019-0667-5" class="external-link">NicheNet</a>
 </li>
@@ -151,7 +152,7 @@
 </li>
 </ul>
 </li>
-<li>Leverage the current infrastructure and add dedicated support and methods for spatial transcriptomics. There are some cool methods in that space that for sure could benefit from the speed that a compiled language offers. Especially when analysing more data sets.</li>
+<li>Leverage the current infrastructure and add dedicated support and methods for spatial transcriptomics. There are some cool methods in that space that for sure could benefit from the speed that a compiled, memory-managed language offers. Especially when analysing more data sets.</li>
 <li>Add other interesting methods that I can find (and have a use-case for).</li>
 </ul>
 </div>

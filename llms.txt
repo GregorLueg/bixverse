@@ -26,11 +26,14 @@ one is in alpha phase).
 
 ### Release notes
 
-With the `0.3.0` a lot has happened. The lack of updates had a reason
-Some cooking has been going on… The package now contains a full release
-of the a single cell functionality suite that you can use to analyse
-millions of cells locally. Please checkout out the website of the
-package.
+With the `0.3.0` a lot has happened. The lack of updates had a reason…
+Some heavy cooking has been going on… The package now contains a full
+release of the a single cell functionality suite that you can use to
+analyse millions of cells locally and implements already a large number
+of methods in this space into Rust and exposes them to R. [Please
+checkout out the website of the
+package.](https://gregorlueg.github.io/bixverse/), specifically the
+sections arounds single cell.
 
 ## Usage
 
@@ -72,7 +75,8 @@ If you are using Windows, I am sorry, the tool chain is just very, very
 painful… I really tried to make this work and maybe there are some hacks
 in terms of compiling everything to install the package, but it has
 proven… challenging in the CI/CD. Hence, no official Windows support for
-now.
+now. It is specifically the incorporation of h5 which proves non-trivial
+with cross-compiling that with Rust within the R umbrella.
 
 ### How to use the package.
 
@@ -86,7 +90,8 @@ feel free. If you wish to use the single cell part, it is really worth
 reading this
 [here](https://gregorlueg.github.io/bixverse/articles/design_single_cell.html)
 first… It will give you a good explainer on the design decisions, the
-choices and trade-offs. The vignettes will show you how to analyse data.
+choices and trade-offs. The various vignettes will show you how to
+analyse data.
 
 ## Roadmap
 
@@ -96,14 +101,16 @@ choices and trade-offs. The vignettes will show you how to analyse data.
   implemented:
   - More multi-file read in support. At the moment, multiple h5ad files
     are possible, but not yet for other file formats.
-  - h5 file i/o.
+  - h5 file i/o (provided by CellRanger).
   - Saving data to h5ad for easier interoperability with Python.
+  - Something cool with [Zarr](https://zarr.dev) … ?
   - Methods on top of the meta cells: co-expression network detection
     etc.
   - Expansion of the [sister
     package](https://github.com/GregorLueg/bixverse.plots) to have
     plotting helpers in there for single cell.
-  - Helpers to slice and dice the data easier and add new data.
+  - Helpers to slice and dice the data easier and add new data - this
+    will
   - Implementations of
     [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
     [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
@@ -114,8 +121,9 @@ choices and trade-offs. The vignettes will show you how to analyse data.
     package](https://github.com/GregorLueg/bixverse.gpu)
 - Leverage the current infrastructure and add dedicated support and
   methods for spatial transcriptomics. There are some cool methods in
-  that space that for sure could benefit from the speed that a compiled
-  language offers. Especially when analysing more data sets.
+  that space that for sure could benefit from the speed that a compiled,
+  memory-managed language offers. Especially when analysing more data
+  sets.
 - Add other interesting methods that I can find (and have a use-case
   for).
 
