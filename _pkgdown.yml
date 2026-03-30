@@ -58,7 +58,7 @@ navbar:
       menu:
         - text: Bixverse R <> Rust interface
           href: articles/rust_functions.html
-        - text: Technical design choices
+        - text: Technical design choices for single cell
           href: articles/design_single_cell.html
     github:
       icon: fab fa-github
