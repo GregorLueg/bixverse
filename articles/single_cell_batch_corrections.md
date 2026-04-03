@@ -288,8 +288,8 @@ lisi_score_post_mnn <- calculate_batch_lisi_sc(
 kbet_score_post_mnn
 #> kBET Scores
 #>   Cells: 5841 | Batches: 2 | Threshold: 0.050
-#>   Rejection rate:      0.3487 (2037 / 5841)
-#>   Mean Chi-Square:     3.5881 (expected under H0: 1)
+#>   Rejection rate:      0.3479 (2032 / 5841)
+#>   Mean Chi-Square:     3.5917 (expected under H0: 1)
 #>   Median Chi-Square:   3.6444
 asw_score_post_mnn
 #> Batch Silhouette Width
@@ -299,7 +299,7 @@ asw_score_post_mnn
 lisi_score_post_mnn
 #> Batch LISI Scores
 #>   Cells: 5841 | Batches: 2
-#>   Mean LISI:    1.4454 (1 = no mixing, 2 = perfect mixing)
+#>   Mean LISI:    1.4451 (1 = no mixing, 2 = perfect mixing)
 #>   Median LISI:  1.4706
 ```
 

@@ -449,9 +449,9 @@ microbenchmark::microbenchmark(
   times = 10L
 )
 #> Unit: milliseconds
-#>               expr      min      lq     mean   median       uq      max neval
-#>    the_correct_way 1.322422 1.36151 1.525930 1.401989 1.421929 2.718532    10
-#>  the_incorrect_way 2.208386 2.29257 2.353414 2.398102 2.422693 2.433088    10
+#>               expr      min       lq     mean   median       uq      max neval
+#>    the_correct_way 1.369818 1.406687 1.572891 1.435281 1.544545 2.592492    10
+#>  the_incorrect_way 2.085415 2.150947 2.269651 2.305601 2.355670 2.459253    10
 ```
 
 The difference seems marginal here, but it WILL bite you if you do this

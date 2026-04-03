@@ -123,7 +123,7 @@ scrublet <- scrublet_sc(
 )
 
 scrublet
-#> ScrubletRes: 14528 cells, 1751 doublets (12.1%)
+#> ScrubletRes: 14528 cells, 1753 doublets (12.1%)
 #>   Threshold:              0.1852
 #>   Detected doublet rate:  12.1%
 #>   Detectable fraction:    87.3%
@@ -151,13 +151,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.6641919
+#> [1] 0.664575
 #> 
 #> $recall
-#> [1] 0.745991
+#> [1] 0.7472739
 #> 
 #> $f1
-#> [1] 0.702719
+#> [1] 0.7035024
 ```
 
 #### Manual threshold adjustment
@@ -169,7 +169,7 @@ lets you override it.
 ``` r
 scrublet_adj <- call_doublets_manual(scrublet, threshold = 0.25)
 #> Detected doublet rate = 10.0%
-#> Estimated detectable doublet fraction = 80.5%
+#> Estimated detectable doublet fraction = 80.4%
 #> Overall doublet rate:
 #>   Estimated = 12.4%
 
@@ -188,13 +188,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.6999312
+#> [1] 0.7006897
 #> 
 #> $recall
-#> [1] 0.6523412
+#> [1] 0.6516998
 #> 
 #> $f1
-#> [1] 0.6752988
+#> [1] 0.6753074
 ```
 
 We have made it worse here, but maybe there are cases where the scores
@@ -219,8 +219,8 @@ boosted_doublets <- doublet_detection_boost_sc(
 )
 
 boosted_doublets
-#> BoostRes: 14528 cells, 1243 doublets (8.6%)
-#>   Score range: [0.0041, 0.7300]
+#> BoostRes: 14528 cells, 1247 doublets (8.6%)
+#>   Score range: [0.0057, 0.7240]
 ```
 
 Let’s check how boosted works?
@@ -232,13 +232,13 @@ boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 #> $precision
-#> [1] 0.7039421
+#> [1] 0.7153168
 #> 
 #> $recall
-#> [1] 0.5612572
+#> [1] 0.5721616
 #> 
 #> $f1
-#> [1] 0.6245539
+#> [1] 0.6357805
 ```
 
 ### Conclusion
