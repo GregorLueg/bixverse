@@ -1,5 +1,5 @@
 [package]
-version = '0.3.0'
+version = '0.3.1'
 name = 'bixverse'
 publish = false
 edition = '2021'
@@ -34,4 +34,4 @@ rand = { version = "0.9.0", features = ["std"] }
 rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
-bixverse-rs = { version = "0.1.6", features = ["single-cell",] }
+bixverse-rs = { version = "0.1.7", features = ["single-cell",] }
