@@ -151,13 +151,13 @@ scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
 
 doublet_metrics(predicted = scrublet_dt$doublet, actual = scrublet_dt$Call)
 #> $precision
-#> [1] 0.664575
+#> [1] 0.6634341
 #> 
 #> $recall
-#> [1] 0.7472739
+#> [1] 0.745991
 #> 
 #> $f1
-#> [1] 0.7035024
+#> [1] 0.7022947
 ```
 
 #### Manual threshold adjustment
@@ -188,13 +188,13 @@ doublet_metrics(
   actual = scrublet_adj_dt$Call
 )
 #> $precision
-#> [1] 0.7006897
+#> [1] 0.7015851
 #> 
 #> $recall
-#> [1] 0.6516998
+#> [1] 0.6529827
 #> 
 #> $f1
-#> [1] 0.6753074
+#> [1] 0.676412
 ```
 
 We have made it worse here, but maybe there are cases where the scores

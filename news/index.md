@@ -1,5 +1,10 @@
 # Changelog
 
+## bixverse 0.3.1
+
+- Minor dependency update on the Rust side. Bumped versions to improved
+  Rust crates.
+
 ## bixverse 0.3.0
 
 The big one… First, shift of versioning + release of full single cell

@@ -208,13 +208,13 @@
 <span></span>
 <span><span class="fu">doublet_metrics</span><span class="op">(</span>predicted <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">doublet</span>, actual <span class="op">=</span> <span class="va">scrublet_dt</span><span class="op">$</span><span class="va">Call</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.664575</span></span>
+<span><span class="co">#&gt; [1] 0.6634341</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.7472739</span></span>
+<span><span class="co">#&gt; [1] 0.745991</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.7035024</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.7022947</span></span></code></pre></div>
 </div>
 <section class="level4"><h4 id="manual-threshold-adjustment">Manual threshold adjustment<a class="anchor" aria-label="anchor" href="#manual-threshold-adjustment"></a>
 </h4>
@@ -246,13 +246,13 @@
 <span>  actual <span class="op">=</span> <span class="va">scrublet_adj_dt</span><span class="op">$</span><span class="va">Call</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $precision</span></span>
-<span><span class="co">#&gt; [1] 0.7006897</span></span>
+<span><span class="co">#&gt; [1] 0.7015851</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $recall</span></span>
-<span><span class="co">#&gt; [1] 0.6516998</span></span>
+<span><span class="co">#&gt; [1] 0.6529827</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $f1</span></span>
-<span><span class="co">#&gt; [1] 0.6753074</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.676412</span></span></code></pre></div>
 </div>
 <p>We have made it worse here, but maybe there are cases where the scores are not very good. Compared to the original version, Otsu’s method is used to identify the perfect threshold, but it might fail in some situations.</p>
 </section></section><section class="level3"><h3 id="boosted-doublet-detection">Boosted doublet detection<a class="anchor" aria-label="anchor" href="#boosted-doublet-detection"></a>
