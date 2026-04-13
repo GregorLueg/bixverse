@@ -1,3 +1,15 @@
+# bixverse 0.3.2
+
+Following things were added:
+
+* scDblFinder as another doublet detection method
+* Following methods on top of meta-cells:
+  - HVG detection
+  - PCA
+  - kNN generation
+  - sNN generation
+  - Leiden clustering
+
 # bixverse 0.3.1
 
 - Minor dependency update on the Rust side. Bumped versions to improved Rust
