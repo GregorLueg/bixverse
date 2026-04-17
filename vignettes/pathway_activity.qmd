@@ -9,7 +9,7 @@ knitr:
     collapse: true
     comment: '#>'
 author:
-  - name: Gregor Lueg
+  - name: "Gregor Lueg"
 ---
 
 ## Single-sample pathway activity

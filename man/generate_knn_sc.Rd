@@ -11,6 +11,7 @@ generate_knn_sc(
   no_embd_to_use = NULL,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = TRUE,
   .verbose = TRUE
 )
 }
@@ -31,17 +32,20 @@ A list with the following items:
 \itemize{
 \item full_snn - Boolean. Shall the full shared nearest neighbour graph
 be generated that generates edges between all cells instead of between
-only neighbours.
+only neighbours. Not used for this function.
 \item pruning - Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.
+the generation of the sNN graph. Not used for this function.
 \item snn_similarity - String. One of \code{c("rank", "jaccard")}. Defines how
 the weight from the SNN graph is calculated. For details, please see
-\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}.
+\code{\link[=params_sc_neighbours]{params_sc_neighbours()}}. Not used for this function.
 \item knn - List of kNN parameters. See \code{\link[=params_knn_defaults]{params_knn_defaults()}}
 for available parameters and their defaults.
 }}
 
 \item{seed}{Integer. For reproducibility.}
+
+\item{.validate_index}{Boolean. Shall an exhaustive search against a subset
+of cells be run to validate the approximate nearest neighbour index.}
 
 \item{.verbose}{Boolean. Controls verbosity and returns run times.}
 }
@@ -49,14 +53,22 @@ for available parameters and their defaults.
 Initialised \code{sc_knn} with the kNN data.
 }
 \description{
-This function will generate the kNNs based on a given embedding. Three
-different algorithms are implemented with different speed and accuracy to
-approximate the nearest neighbours. \code{"annoy"} is more
-rapid and based on the \verb{Approximate Nearest Neigbours Oh Yeah} algorithm;
-\code{"hnsw"} implements a \verb{Hierarchical Navigatable Small Worlds} vector
-search that is slower, but more precise. Lastly, there is the option of
-\code{"nndescent"}, a Rust-based implementation of the PyNNDescent algorithm. This
-version skips the index generation and can be faster on smaller data sets.
-This version of the function returns an \code{sc_knn} object that can be
-used in other functions.
+This function will generate the kNNs based on a given embedding. Available
+algorithms are:
+\itemize{
+\item \code{hnsw} - Hierarchical Navigable Small World. A graph-based
+approximate nearest neighbour search algorithm; works well on large data
+sets. A benign race condition is leveraged during index build, making the
+build non-deterministic. Bigger impact on smaller data sets.
+\item \code{ivf} - Inverted file index. Uses first k-means clustering to
+identify Voronoi cells and leverages these during querying. Works well
+on large data sets with high dimensionality.
+\item \code{nndescent} - Nearest neighbour descent. Similar to \code{PyNNDescent},
+uses a first index to initialise the graph. Good all-rounder.
+\item \code{annoy} - Approximate nearest neighbours Oh Yeah. Tree-based index,
+used across different R single cell packages (Seurat, SCE). This version
+is purely memory-based.
+\item \code{exhaustive} - An exhaustive, flat index. On smaller data sets often
+faster than the approximate nearest neighbour search algorithms.
+}
 }

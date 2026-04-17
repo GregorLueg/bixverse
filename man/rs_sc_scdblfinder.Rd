@@ -9,9 +9,10 @@ rs_sc_scdblfinder(
   f_path_cell,
   cell_indices,
   params,
-  streaming,
+  return_features,
   seed,
-  verbose
+  verbose,
+  debug
 )
 }
 \arguments{
@@ -23,11 +24,14 @@ rs_sc_scdblfinder(
 
 \item{params}{List. scDblFinder parameters from R.}
 
-\item{streaming}{Boolean. Stream HVG computation.}
+\item{return_features}{Boolean. Return the features for the observed cells
+that are used to train the classifier.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 
 \item{verbose}{Boolean. Controls verbosity.}
+
+\item{debug}{Boolean. Additional verbosity for debugging purposes.}
 }
 \value{
 A list with predicted_doublets, doublet_scores, threshold,

@@ -5,8 +5,9 @@
 \title{Wrapper function for scDblFinder doublet detection parameters}
 \usage{
 params_scdblfinder(
+  n_genes = 1352L,
   doublet_ratio = 1,
-  heterotypic_bias = 0.8,
+  heterotypic_bias = 1,
   cluster_resolution = 1,
   cluster_iters = 10L,
   n_iterations = 3L,
@@ -14,24 +15,28 @@ params_scdblfinder(
   max_depth = 4L,
   learning_rate = 0.3,
   min_samples_leaf = 20L,
-  early_stop_window = 3L,
   subsample_rate = 0.75,
+  cv_folds = 5L,
+  cv_early_stop = 2L,
+  se_fraction = 1,
   include_pcs = 19L,
-  dbr_per_1k = 0.008,
+  expected_doublet_rate = NULL,
   n_bins = 100L,
   manual_threshold = NULL,
-  normalisation = list(mean_center = TRUE, normalise_variance = TRUE),
-  hvg = list(min_gene_var_pctl = 0.85),
+  normalisation = list(mean_center = TRUE),
   pca = list(),
-  knn = list(k = 0L, ann_dist = "euclidean")
+  knn = list(k = 0L, knn_method = "nndescent")
 )
 }
 \arguments{
+\item{n_genes}{Integer. Number of top-expressed genes to use as features.
+Defaults to \code{1352L}.}
+
 \item{doublet_ratio}{Numeric. Ratio of simulated doublets to observed cells.
 Defaults to \code{1.0}.}
 
 \item{heterotypic_bias}{Numeric. Fraction of simulated pairs forced to come
-from different clusters (0-1). Defaults to \code{0.8}.}
+from different clusters (0-1). Defaults to \code{1.0}.}
 
 \item{cluster_resolution}{Numeric. Resolution for the initial Louvain
 clustering. Defaults to \code{1.0}.}
@@ -39,33 +44,38 @@ clustering. Defaults to \code{1.0}.}
 \item{cluster_iters}{Integer. Number of Louvain iterations per clustering
 step. Defaults to \code{10L}.}
 
-\item{n_iterations}{Integer. Number of refinement iterations. Typically
-2-3. Defaults to \code{3L}.}
+\item{n_iterations}{Integer. Number of refinement iterations. Typically 2-3.
+Defaults to \code{3L}.}
 
 \item{n_trees}{Integer. Maximum number of boosting rounds for the GBM
 classifier. Defaults to \code{200L}.}
 
-\item{max_depth}{Integer. Maximum tree depth. Shallow trees (3-5) work
-best. Defaults to \code{4L}.}
+\item{max_depth}{Integer. Maximum tree depth. Shallow trees (3-5) work best.
+Defaults to \code{4L}.}
 
-\item{learning_rate}{Numeric. Shrinkage applied to each tree. Defaults
-to \code{0.3}.}
+\item{learning_rate}{Numeric. Shrinkage applied to each tree. Defaults to
+\code{0.3}.}
 
-\item{min_samples_leaf}{Integer. Minimum training samples per leaf.
-Defaults to \code{20L}.}
+\item{min_samples_leaf}{Integer. Minimum training samples per leaf. Defaults
+to \code{20L}.}
 
-\item{early_stop_window}{Integer. Number of recent OOB improvements to
-average for early stopping. Defaults to \code{3L}.}
+\item{subsample_rate}{Numeric. Fraction of samples used per tree. Defaults to
+\code{0.75}.}
 
-\item{subsample_rate}{Numeric. Fraction of samples used per tree.
-Defaults to \code{0.75}.}
+\item{cv_folds}{Integer. Number of cross-validation folds for boosting round
+selection. Defaults to \code{5L}.}
 
-\item{include_pcs}{Integer. Number of leading principal components to
-include as classifier features. Defaults to \code{19L}.}
+\item{cv_early_stop}{Integer. Early stopping patience per CV fold. Defaults
+to \code{2L}.}
 
-\item{dbr_per_1k}{Numeric. Expected doublets per 1000 cells captured.
-Use \code{0.008} for standard 10X chips, \code{0.004} for HT chips.
-Defaults to \code{0.008}.}
+\item{se_fraction}{Numeric. Multiplier on the standard error for the SE rule
+used in round selection. Defaults to \code{1.0}}
+
+\item{include_pcs}{Integer. Number of leading principal components to include
+as classifier features. Defaults to \code{19L}.}
+
+\item{expected_doublet_rate}{Optional numeric. Expected doublet rate as a
+percentage. If not provided, will be calculated internally.}
 
 \item{n_bins}{Integer. Number of histogram bins for fallback Otsu
 thresholding. Defaults to \code{100L}.}
@@ -76,14 +86,12 @@ thresholding. Defaults to \code{100L}.}
 \item{normalisation}{List. Optional overrides for normalisation parameters.
 See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}}.}
 
-\item{hvg}{List. Optional overrides for HVG parameters.
-See \code{\link[=params_hvg_defaults]{params_hvg_defaults()}}.}
-
 \item{pca}{List. Optional overrides for PCA parameters.
 See \code{\link[=params_pca_defaults]{params_pca_defaults()}}.}
 
 \item{knn}{List. Optional overrides for kNN parameters.
-See \code{\link[=params_knn_defaults]{params_knn_defaults()}}.}
+See \code{\link[=params_knn_defaults]{params_knn_defaults()}}. NNDescent works better for the larger
+k-values often used here.}
 }
 \value{
 A named list with all scDblFinder parameters.

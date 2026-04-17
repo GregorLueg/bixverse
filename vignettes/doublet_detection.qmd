@@ -8,7 +8,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
-author: "Grant Neilson and Gregor Lueg"
+author: 
+  - name: "Gregor Lueg"
 ---
 
 ## Intro
@@ -120,9 +121,7 @@ Let's check the two methods out and see how they behave
 
 scrublet <- scrublet_sc(
   object = sc_object,
-  scrublet_params = params_scrublet(
-    expected_doublet_rate = 0.1
-  )
+  scrublet_params = params_scrublet(expected_doublet_rate = 0.12)
 )
 
 scrublet
@@ -198,7 +197,7 @@ one of the implemented kNN algorithms that can be faster at this data set size.
 
 boosted_doublets <- doublet_detection_boost_sc(
   object = sc_object,
-  boost_params = params_boost(knn = list(knn_method = "nndescent"))
+  boost_params = params_boost()
 )
 
 boosted_doublets
@@ -224,11 +223,9 @@ doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 scdblfinder <- scdblfinder_sc(
   object = sc_object,
   scdblfinder_params = params_scdblfinder(
-    dbr_per_1k = 0.008,
-    heterotypic_bias = 0.5,
-    early_stop_window = 15L,
-    n_iterations = 5L,
-    normalisation = list(mean_center = FALSE, normalise_variance = FALSE)
+    expected_doublet_rate = 0.12,
+    heterotypic_bias = 1.0,
+    normalisation = list(mean_center = TRUE, normalise_variance = FALSE),
   )
 )
 ```
@@ -238,8 +235,6 @@ scdblfinder_dt <- get_obs_data(scdblfinder)
 
 scdblfinder_dt[, Barcode := get_cell_names(sc_object)]
 scdblfinder_dt <- merge(scdblfinder_dt, demuxlet_data, by = "Barcode")
-
-table(scdblfinder_dt$predicted_doublets)
 
 doublet_metrics(
   predicted = scdblfinder_dt$predicted_doublets,

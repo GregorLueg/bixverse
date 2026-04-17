@@ -23,6 +23,8 @@
 #'   \item{obs_table}{The meta cell observation table.}
 #'   \item{var_table}{The meta cell variable table.}
 #'   \item{data}{List with the raw and normalised counts.}
+#'   \item{sc_cache}{Class with embeddings, kNN/sNN graphs, etc. Shared with
+#'   [bixverse::SingleCells()].}
 #'   \item{original_assignment}{List with original assignment information.}
 #'   \item{dims}{Dimensions of the new meta cell matrices.}
 #'   \item{other_data}{Potential other data returned from the meta-cell
@@ -38,6 +40,7 @@ MetaCells <- S7::new_class(
     obs_table = S7::class_data.frame,
     var_table = S7::class_data.frame,
     data = S7::class_list,
+    sc_cache = S7::class_any,
     original_assignment = S7::class_list,
     dims = S7::class_integer,
     other_data = S7::class_list,
@@ -94,6 +97,7 @@ MetaCells <- S7::new_class(
       obs_table = obs_data,
       var_table = var_data,
       data = list(raw = raw_counts, norm = norm_counts),
+      sc_cache = new_sc_cache(),
       original_assignment = meta_cell_data$assignments[c(
         "assignments",
         "n_cells",

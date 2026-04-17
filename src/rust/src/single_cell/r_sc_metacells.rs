@@ -136,8 +136,14 @@ fn rs_get_metacells(
 
             let knn_params = meta_cell_params.knn_params;
 
-            let (knn, _) =
-                generate_knn_with_dist(embd_subset.as_ref(), &knn_params, false, seed, verbose);
+            let (knn, _) = generate_knn_with_dist(
+                embd_subset.as_ref(),
+                &knn_params,
+                false,
+                false,
+                seed,
+                verbose,
+            );
 
             (subset_to_orig, n_total, knn)
         }
@@ -181,8 +187,14 @@ fn rs_get_metacells(
 
                     let embd = r_matrix_to_faer_fp32(&embd);
 
-                    let (knn, _) =
-                        generate_knn_with_dist(embd.as_ref(), &knn_params, false, seed, verbose);
+                    let (knn, _) = generate_knn_with_dist(
+                        embd.as_ref(),
+                        &knn_params,
+                        false,
+                        false,
+                        seed,
+                        verbose,
+                    );
 
                     knn
                 }
@@ -378,7 +390,7 @@ fn rs_get_seacells(
     let start_knn = Instant::now();
 
     let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd_mat.as_ref(), knn_params, true, seed, verbose);
+        generate_knn_with_dist(embd_mat.as_ref(), knn_params, true, false, seed, verbose);
 
     let end_knn = start_knn.elapsed();
 
@@ -578,6 +590,7 @@ fn rs_supercell(
                 embd_subset.as_ref(),
                 &supercell_params.knn_params,
                 false,
+                false,
                 seed,
                 verbose,
             );
@@ -625,6 +638,7 @@ fn rs_supercell(
                     let (knn, _) = generate_knn_with_dist(
                         embd.as_ref(),
                         &supercell_params.knn_params,
+                        false,
                         false,
                         seed,
                         verbose,

@@ -397,7 +397,7 @@ fn rs_vision_with_autocorrelation(
     let knn_params = KnnParams::from_r_list(vision_params);
 
     let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+        generate_knn_with_dist(embd.as_ref(), &knn_params, true, false, seed, verbose);
 
     let cluster_membership = cluster_membership.r_int_convert_shift();
 
@@ -493,6 +493,7 @@ fn rs_hotspot_autocor(
         embd.as_ref(),
         &hotspot_params.knn_params,
         true,
+        false,
         seed,
         verbose,
     );
@@ -591,6 +592,7 @@ fn rs_hotspot_gene_cor(
         embd.as_ref(),
         &hotspot_params.knn_params,
         true,
+        false,
         seed,
         verbose,
     );

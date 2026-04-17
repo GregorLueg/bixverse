@@ -183,38 +183,61 @@ fn rs_sc_doublet_detection(
 /// @param f_path_cell String. Path to the cell-based binary file.
 /// @param cell_indices Integer vector (0-indexed).
 /// @param params List. scDblFinder parameters from R.
-/// @param streaming Boolean. Stream HVG computation.
+/// @param return_features Boolean. Return the features for the observed cells
+/// that are used to train the classifier.
 /// @param seed Integer. Seed for reproducibility.
 /// @param verbose Boolean. Controls verbosity.
+/// @param debug Boolean. Additional verbosity for debugging purposes.
 ///
 /// @returns A list with predicted_doublets, doublet_scores, threshold,
 /// cluster_labels and detected_doublet_rate.
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_scdblfinder(
     f_path_gene: &str,
     f_path_cell: &str,
     cell_indices: &[i32],
     params: List,
-    streaming: bool,
+    return_features: bool,
     seed: i32,
     verbose: bool,
+    debug: bool,
 ) -> extendr_api::Result<List> {
     let cell_indices = cell_indices.r_int_convert();
-    let params = ScDblFinderParams::from_r_list(params);
+    let mut params = ScDblFinderParams::from_r_list(params);
+
+    // doing this outside to be more explit
+    params.return_features = return_features;
 
     let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
-    let res = finder.run(streaming, seed as usize, verbose);
+    let res: ScDblFinderResult = finder.run(seed as usize, verbose, debug);
+
+    let features = if return_features {
+        let features: FeatureTable = res.features.unwrap();
+
+        list!(
+            feature_names = features.feature_names,
+            feature_mat = faer_to_r_matrix(features.values.as_ref()),
+            included_in_training = features.include_in_training
+        )
+    } else {
+        list!()
+    };
 
     Ok(list!(
         predicted_doublets = res.predicted_doublets,
         doublet_scores = res.doublet_scores.r_float_convert(),
+        cxds_scores = res.cxds.r_float_convert(),
+        weighted = res.weighted.r_float_convert(),
         threshold = res.threshold as f64,
         cluster_labels = res
             .cluster_labels
             .iter()
             .map(|&x| x as i32)
             .collect::<Vec<i32>>(),
-        detected_doublet_rate = res.detected_doublet_rate as f64
+        detected_doublet_rate = res.detected_doublet_rate as f64,
+        selected_genes = res.selected_genes.r_int_convert(),
+        features = features
     ))
 }
 
@@ -701,21 +724,14 @@ fn rs_sc_pca_sparse(
 ///
 /// @description
 /// This function is a wrapper over the Rust-based generation of the approximate
-/// nearest neighbours. You have several options to get the approximate nearest
-/// neighbours:
-///
-/// - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
-///   an index. Good compromise of index generation, querying speed.
-/// - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-///   hood. The index generation takes more long, but higher recall and ideal
-///   for very large datasets due to subdued memory pressure.
-/// - `"nndescent"`: an index-free approximate nearest neighbour algorithm
-///   that is ideal for small, ephemeral kNN graphs.
+/// nearest neighbours.
 ///
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
 /// @param knn_params List. The kNN parameters defined by
-/// [bixverse::params_sc_neighbours()].
+/// [params_sc_neighbours()].
+/// @param validate_index Boolean. If you want to validate the index via
+/// an exhaustive search in a subset of cells.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -728,6 +744,7 @@ fn rs_sc_pca_sparse(
 fn rs_sc_knn(
     embd: RMatrix<f64>,
     knn_params: List,
+    validate_index: bool,
     verbose: bool,
     seed: usize,
 ) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
@@ -748,6 +765,7 @@ fn rs_sc_knn(
             knn_params.ef_construction,
             knn_params.ef_search,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::Annoy => generate_knn_annoy(
@@ -757,6 +775,7 @@ fn rs_sc_knn(
             knn_params.n_tree,
             knn_params.search_budget,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::NNDescent => generate_knn_nndescent(
@@ -767,6 +786,7 @@ fn rs_sc_knn(
             knn_params.ef_budget,
             knn_params.delta,
             seed,
+            validate_index,
             verbose,
         ),
         KnnSearch::Exhaustive => {
@@ -779,6 +799,7 @@ fn rs_sc_knn(
             knn_params.n_list,
             knn_params.n_probe,
             seed,
+            validate_index,
             verbose,
         ),
     };
@@ -803,7 +824,9 @@ fn rs_sc_knn(
 /// @param embd Numerical matrix. The embedding matrix to use to generate the
 /// kNN graph.
 /// @param knn_params List. The kNN parameters defined by
-/// [bixverse::params_sc_neighbours()].
+/// [params_sc_neighbours()].
+/// @param validate_index Boolean. If you want to validate the index via
+/// an exhaustive search in a subset of cells.
 /// @param verbose Boolean. Controls verbosity of the function and returns
 /// how long certain operations took.
 /// @param seed Integer. Seed for reproducibility purposes.
@@ -819,13 +842,25 @@ fn rs_sc_knn(
 ///
 /// @export
 #[extendr]
-fn rs_sc_knn_w_dist(embd: RMatrix<f64>, knn_params: List, verbose: bool, seed: usize) -> List {
+fn rs_sc_knn_w_dist(
+    embd: RMatrix<f64>,
+    knn_params: List,
+    validate_index: bool,
+    verbose: bool,
+    seed: usize,
+) -> List {
     let embd = r_matrix_to_faer_fp32(&embd);
 
     let knn_params = KnnParams::from_r_list(knn_params);
 
-    let (knn_indices, knn_dist) =
-        generate_knn_with_dist(embd.as_ref(), &knn_params, true, seed, verbose);
+    let (knn_indices, knn_dist) = generate_knn_with_dist(
+        embd.as_ref(),
+        &knn_params,
+        true,
+        validate_index,
+        seed,
+        verbose,
+    );
 
     let knn_dist = knn_dist.unwrap();
 

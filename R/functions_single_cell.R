@@ -308,6 +308,8 @@ plot.CellQc <- function(x, qc_df, ...) {
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. Random seed for reproducibility.
+#' @param .validate_index Boolean. Shall an exhaustive search against a subset
+#' of cells be run to validate the approximate nearest neighbour index.
 #' @param .verbose Boolean. Controls verbosity.
 #'
 #' @returns The `SingleCellNearestNeighbour` for downstream usage.
@@ -317,17 +319,20 @@ generate_sc_knn <- function(
   data,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = FALSE,
   .verbose = TRUE
 ) {
   checkmate::assertMatrix(data, mode = "numeric")
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, "B1")
 
   knn_data <- rs_sc_knn_w_dist(
     embd = data,
     knn_params = neighbours_params,
     verbose = .verbose,
+    validate_index = .validate_index,
     seed = seed
   )
 

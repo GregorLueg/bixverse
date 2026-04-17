@@ -179,8 +179,6 @@ expect_true(
   info = "rust scrublet: parent 2 returned"
 )
 
-# the data is so f--king weird it's better to
-# use manual score here
 metrics <- metrics_helper(
   cm = table(
     new_obs$doublet,
@@ -194,7 +192,7 @@ expect_true(
 )
 
 expect_true(
-  current = metrics["f1"] >= 0.5,
+  current = metrics["f1"] >= 0.7,
   info = "rust scrublet: 'good' recall on synthetic data"
 )
 
@@ -444,16 +442,35 @@ scdblfinder_res <- rs_sc_scdblfinder(
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
   cell_indices = get_cells_to_keep(sc_object),
   params = params_scdblfinder(
-    heterotypic_bias = 0.5,
     pca = list(no_pcs = 10L),
-    dbr_per_1k = 0.2
+    expected_doublet_rate = 0.17
   ),
   seed = 42L,
-  verbose = TRUE,
-  streaming = FALSE
+  return_features = TRUE,
+  verbose = TRUE
 )
 
-str(scdblfinder_res)
+hist(
+  scdblfinder_res$doublet_scores[1001:1200],
+  xlab = "Score",
+  main = "Actual doublets"
+)
+
+hist(
+  scdblfinder_res$doublet_scores[1:1000],
+  xlab = "Score",
+  main = "Actual singlets"
+)
+
+summary(scdblfinder_res$doublet_scores[1001:1200])
+
+table(scdblfinder_res$predicted_doublets[1001:1200])
+
+summary(scdblfinder_res$doublet_scores[1:1000])
+
+table(scdblfinder_res$predicted_doublets[1:1000])
+
+table(scdblfinder_res$predicted_doublets)
 
 expect_true(
   current = checkmate::qtest(

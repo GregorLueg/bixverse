@@ -8,7 +8,8 @@ knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
-author: "Grant Neilson and Gregor Lueg"
+author: 
+  - name: "Grant Neilson and Gregor Lueg"
 ---
 
 ## Intro

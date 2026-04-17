@@ -2234,13 +2234,15 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' @param f_path_cell String. Path to the cell-based binary file.
 #' @param cell_indices Integer vector (0-indexed).
 #' @param params List. scDblFinder parameters from R.
-#' @param streaming Boolean. Stream HVG computation.
+#' @param return_features Boolean. Return the features for the observed cells
+#' that are used to train the classifier.
 #' @param seed Integer. Seed for reproducibility.
 #' @param verbose Boolean. Controls verbosity.
+#' @param debug Boolean. Additional verbosity for debugging purposes.
 #'
 #' @returns A list with predicted_doublets, doublet_scores, threshold,
 #' cluster_labels and detected_doublet_rate.
-rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, streaming, seed, verbose) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, streaming, seed, verbose)
+rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, seed, verbose, debug)
 
 #' Calculates the cumulative proportion of the top X genes
 #'
@@ -2429,21 +2431,14 @@ rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene
 #'
 #' @description
 #' This function is a wrapper over the Rust-based generation of the approximate
-#' nearest neighbours. You have several options to get the approximate nearest
-#' neighbours:
-#'
-#' - `"annoy"`: leverages binary trees to generate rapidly in a parallel manner
-#'   an index. Good compromise of index generation, querying speed.
-#' - `"hnsw"`: uses a hierarchical navigatable small worlds index under the
-#'   hood. The index generation takes more long, but higher recall and ideal
-#'   for very large datasets due to subdued memory pressure.
-#' - `"nndescent"`: an index-free approximate nearest neighbour algorithm
-#'   that is ideal for small, ephemeral kNN graphs.
+#' nearest neighbours.
 #'
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
 #' @param knn_params List. The kNN parameters defined by
-#' [bixverse::params_sc_neighbours()].
+#' [params_sc_neighbours()].
+#' @param validate_index Boolean. If you want to validate the index via
+#' an exhaustive search in a subset of cells.
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.
@@ -2452,7 +2447,7 @@ rs_sc_pca_sparse <- function(f_path_gene, no_pcs, random_svd, cell_indices, gene
 #' number of neighbours.
 #'
 #' @export
-rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, verbose, seed)
+rs_sc_knn <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn, embd, knn_params, validate_index, verbose, seed)
 
 #' Generates the kNN graph with additional distances
 #'
@@ -2463,7 +2458,9 @@ rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, em
 #' @param embd Numerical matrix. The embedding matrix to use to generate the
 #' kNN graph.
 #' @param knn_params List. The kNN parameters defined by
-#' [bixverse::params_sc_neighbours()].
+#' [params_sc_neighbours()].
+#' @param validate_index Boolean. If you want to validate the index via
+#' an exhaustive search in a subset of cells.
 #' @param verbose Boolean. Controls verbosity of the function and returns
 #' how long certain operations took.
 #' @param seed Integer. Seed for reproducibility purposes.
@@ -2478,7 +2475,7 @@ rs_sc_knn <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn, em
 #' }
 #'
 #' @export
-rs_sc_knn_w_dist <- function(embd, knn_params, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, verbose, seed)
+rs_sc_knn_w_dist <- function(embd, knn_params, validate_index, verbose, seed) .Call(wrap__rs_sc_knn_w_dist, embd, knn_params, validate_index, verbose, seed)
 
 #' Generates the sNN graph for igraph
 #'

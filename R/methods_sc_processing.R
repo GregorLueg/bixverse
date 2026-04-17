@@ -207,8 +207,9 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #'
 #' @param object `SingleCells` class.
 #' @param scdblfinder_params List. Parameters from
-#'   [bixverse::params_scdblfinder()].
-#' @param streaming Boolean. Stream HVG computation to reduce memory.
+#' [bixverse::params_scdblfinder()].
+#' @param return_features Boolean. Shall the features used to train the
+#' classifier be returned.
 #' @param seed Integer. Seed for reproducibility.
 #' @param .verbose Boolean. Controls verbosity.
 #'
@@ -216,6 +217,8 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' \describe{
 #'   \item{predicted_doublets}{Logical vector of doublet calls.}
 #'   \item{doublet_score}{Numeric vector of classifier probabilities.}
+#'   \item{cxds_scores}{Numeric vector of the cxds scores.}
+#'   \item{weighted}{Numeric vector of the weighted scores.}
 #'   \item{threshold}{The threshold used for calling.}
 #'   \item{cluster_labels}{Integer vector of final cluster assignments.}
 #'   \item{detected_doublet_rate}{Fraction of cells called as doublets.}
@@ -229,7 +232,7 @@ scdblfinder_sc <- S7::new_generic(
   fun = function(
     object,
     scdblfinder_params = params_scdblfinder(),
-    streaming = FALSE,
+    return_features = FALSE,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -243,13 +246,13 @@ scdblfinder_sc <- S7::new_generic(
 S7::method(scdblfinder_sc, SingleCells) <- function(
   object,
   scdblfinder_params = params_scdblfinder(),
-  streaming = FALSE,
+  return_features = FALSE,
   seed = 42L,
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScDblFinder(scdblfinder_params)
-  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(return_features, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -260,18 +263,30 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
     f_path_cell = get_rust_count_cell_f_path(object),
     cell_indices = cell_indices,
     params = scdblfinder_params,
-    streaming = streaming,
+    return_features = return_features,
     seed = seed,
-    verbose = .verbose
+    verbose = .verbose,
+    debug = FALSE
   )
+
+  features <- if (return_features) {
+    feature_matrix <- res$features$feature_mat
+    colnames(feature_matrix) <- res$features$feature_names
+    rownames(feature_matrix) <- get_cell_names(object, filtered = TRUE)
+  } else {
+    NULL
+  }
 
   structure(
     list(
       predicted_doublets = res$predicted_doublets,
       doublet_score = res$doublet_scores,
+      cxds_scores = res$cxds_scores,
+      weighted = res$weighted,
       threshold = res$threshold,
       cluster_labels = res$cluster_labels,
-      detected_doublet_rate = res$detected_doublet_rate
+      detected_doublet_rate = res$detected_doublet_rate,
+      features = features
     ),
     cell_indices = cell_indices,
     class = "ScDblFinderRes"
@@ -699,17 +714,26 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 #' Find the neighbours for single cell.
 #'
 #' @description
-#' This function will generate the kNNs based on a given embedding. Four
-#' different algorithms are implemented with different speed and accuracy to
-#' approximate the nearest neighbours. `"hnsw"` implements a Hierarchical
-#' Navigatable Small Worlds vector search that has slower index generation but
-#' high precision. `"annoy"` is based on the Approximate Nearest Neighbours Oh
-#' Yeah algorithm and is more rapid in terms of index generation, but querying
-#' on large data sets can be slow. `"nndescent"` is a Rust-based implementation
-#' of the PyNNDescent algorithm and is a good all-rounder and performs well
-#' on very large data sets. `"exhaustive"` performs exact nearest neighbour
-#' search. Subsequently, the kNN data will be used to generate an sNN igraph for
-#' clustering methods.
+#' This function will generate the kNNs based on a given embedding. Available
+#' algorithms are:
+#' \itemize{
+#'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
+#'   approximate nearest neighbour search algorithm; works well on large data
+#'   sets. A benign race condition is leveraged during index build, making the
+#'   build non-deterministic. Bigger impact on smaller data sets.
+#'   \item `ivf` - Inverted file index. Uses first k-means clustering to
+#'   identify Voronoi cells and leverages these during querying. Works well
+#'   on large data sets with high dimensionality.
+#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
+#'   uses a first index to initialise the graph. Good all-rounder.
+#'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
+#'   used across different R single cell packages (Seurat, SCE). This version
+#'   is purely memory-based.
+#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
+#'   faster than the approximate nearest neighbour search algorithms.
+#' }
+#' Subsequently, the kNN graph will be additionally transformed into a shared
+#' nearest neighbour graph for clustering methods.
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -909,16 +933,24 @@ S7::method(find_clusters_sc, SingleCells) <- function(
 #' Generate the KNN data with distances
 #'
 #' @description
-#' This function will generate the kNNs based on a given embedding. Three
-#' different algorithms are implemented with different speed and accuracy to
-#' approximate the nearest neighbours. `"annoy"` is more
-#' rapid and based on the `Approximate Nearest Neigbours Oh Yeah` algorithm;
-#' `"hnsw"` implements a `Hierarchical Navigatable Small Worlds` vector
-#' search that is slower, but more precise. Lastly, there is the option of
-#' `"nndescent"`, a Rust-based implementation of the PyNNDescent algorithm. This
-#' version skips the index generation and can be faster on smaller data sets.
-#' This version of the function returns an `sc_knn` object that can be
-#' used in other functions.
+#' This function will generate the kNNs based on a given embedding. Available
+#' algorithms are:
+#' \itemize{
+#'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
+#'   approximate nearest neighbour search algorithm; works well on large data
+#'   sets. A benign race condition is leveraged during index build, making the
+#'   build non-deterministic. Bigger impact on smaller data sets.
+#'   \item `ivf` - Inverted file index. Uses first k-means clustering to
+#'   identify Voronoi cells and leverages these during querying. Works well
+#'   on large data sets with high dimensionality.
+#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
+#'   uses a first index to initialise the graph. Good all-rounder.
+#'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
+#'   used across different R single cell packages (Seurat, SCE). This version
+#'   is purely memory-based.
+#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
+#'   faster than the approximate nearest neighbour search algorithms.
+#' }
 #'
 #' @param object `SingleCells` class.
 #' @param embd_to_use String. The embedding to use. Whichever you chose, it
@@ -932,16 +964,18 @@ S7::method(find_clusters_sc, SingleCells) <- function(
 #' \itemize{
 #'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
 #'   be generated that generates edges between all cells instead of between
-#'   only neighbours.
+#'   only neighbours. Not used for this function.
 #'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'   the generation of the sNN graph.
+#'   the generation of the sNN graph. Not used for this function.
 #'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
 #'   the weight from the SNN graph is calculated. For details, please see
-#'   [bixverse::params_sc_neighbours()].
+#'   [bixverse::params_sc_neighbours()]. Not used for this function.
 #'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
 #'   for available parameters and their defaults.
 #' }
 #' @param seed Integer. For reproducibility.
+#' @param .validate_index Boolean. Shall an exhaustive search against a subset
+#' of cells be run to validate the approximate nearest neighbour index.
 #' @param .verbose Boolean. Controls verbosity and returns run times.
 #'
 #' @return Initialised `sc_knn` with the kNN data.
@@ -957,6 +991,7 @@ generate_knn_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     neighbours_params = params_sc_neighbours(),
     seed = 42L,
+    .validate_index = TRUE,
     .verbose = TRUE
   ) {
     S7::S7_dispatch()
@@ -976,6 +1011,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   no_embd_to_use = NULL,
   neighbours_params = params_sc_neighbours(),
   seed = 42L,
+  .validate_index = TRUE,
   .verbose = TRUE
 ) {
   # checks
@@ -985,6 +1021,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
   checkmate::qassert(cells_to_use, c("S+", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
+  checkmate::qassert(.validate_index, "B1")
   checkmate::qassert(.verbose, "B1")
 
   # function body
@@ -1010,6 +1047,7 @@ S7::method(generate_knn_sc, SingleCells) <- function(
     embd = embd,
     knn_params = neighbours_params,
     verbose = .verbose,
+    validate_index = .validate_index,
     seed = seed
   )
 

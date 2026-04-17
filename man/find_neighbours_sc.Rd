@@ -45,15 +45,24 @@ for available parameters and their defaults.
 The object with added KNN matrix.
 }
 \description{
-This function will generate the kNNs based on a given embedding. Four
-different algorithms are implemented with different speed and accuracy to
-approximate the nearest neighbours. \code{"hnsw"} implements a Hierarchical
-Navigatable Small Worlds vector search that has slower index generation but
-high precision. \code{"annoy"} is based on the Approximate Nearest Neighbours Oh
-Yeah algorithm and is more rapid in terms of index generation, but querying
-on large data sets can be slow. \code{"nndescent"} is a Rust-based implementation
-of the PyNNDescent algorithm and is a good all-rounder and performs well
-on very large data sets. \code{"exhaustive"} performs exact nearest neighbour
-search. Subsequently, the kNN data will be used to generate an sNN igraph for
-clustering methods.
+This function will generate the kNNs based on a given embedding. Available
+algorithms are:
+\itemize{
+\item \code{hnsw} - Hierarchical Navigable Small World. A graph-based
+approximate nearest neighbour search algorithm; works well on large data
+sets. A benign race condition is leveraged during index build, making the
+build non-deterministic. Bigger impact on smaller data sets.
+\item \code{ivf} - Inverted file index. Uses first k-means clustering to
+identify Voronoi cells and leverages these during querying. Works well
+on large data sets with high dimensionality.
+\item \code{nndescent} - Nearest neighbour descent. Similar to \code{PyNNDescent},
+uses a first index to initialise the graph. Good all-rounder.
+\item \code{annoy} - Approximate nearest neighbours Oh Yeah. Tree-based index,
+used across different R single cell packages (Seurat, SCE). This version
+is purely memory-based.
+\item \code{exhaustive} - An exhaustive, flat index. On smaller data sets often
+faster than the approximate nearest neighbour search algorithms.
+}
+Subsequently, the kNN graph will be additionally transformed into a shared
+nearest neighbour graph for clustering methods.
 }

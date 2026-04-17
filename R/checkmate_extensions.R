@@ -1920,10 +1920,7 @@ checkScDblFinder <- function(x) {
       "mean_center",
       "normalise_variance",
       "target_size",
-      "min_gene_var_pctl",
-      "hvg_method",
-      "loess_span",
-      "clip_max",
+      "n_genes",
       "no_pcs",
       "random_svd",
       "doublet_ratio",
@@ -1935,31 +1932,32 @@ checkScDblFinder <- function(x) {
       "max_depth",
       "learning_rate",
       "min_samples_leaf",
-      "early_stop_window",
       "subsample_rate",
+      "cv_folds",
+      "cv_early_stop",
+      "se_fraction",
       "include_pcs",
-      "dbr_per_1k",
       "n_bins"
     )
   )
   if (!isTRUE(res)) {
     return(res)
   }
-  # kNN
   knn_params <- x[names(x) %in% KNN_PARAM_NAMES]
   res <- checkKnnParams(knn_params)
   if (!isTRUE(res)) {
     return(res)
   }
-  # Integer rules
   integer_rules <- list(
+    "n_genes" = "I1[1,)",
     "no_pcs" = "I1[1,)",
     "cluster_iters" = "I1[1,)",
     "n_iterations" = "I1[1,)",
     "n_trees" = "I1[1,)",
     "max_depth" = "I1[1,)",
     "min_samples_leaf" = "I1[1,)",
-    "early_stop_window" = "I1[1,)",
+    "cv_folds" = "I1[2,)",
+    "cv_early_stop" = "I1[1,)",
     "include_pcs" = "I1[1,)",
     "n_bins" = "I1[10,)"
   )
@@ -1977,16 +1975,13 @@ checkScDblFinder <- function(x) {
       broken_elem
     ))
   }
-  # Numeric rules
   numeric_rules <- list(
-    "min_gene_var_pctl" = "N1[0,1]",
-    "loess_span" = "N1(0,)",
     "doublet_ratio" = "N1(0,)",
     "heterotypic_bias" = "N1[0,1]",
     "cluster_resolution" = "N1(0,)",
     "learning_rate" = "N1(0,)",
     "subsample_rate" = "N1(0,1]",
-    "dbr_per_1k" = "N1(0,)",
+    "se_fraction" = "N1[0,)",
     "target_size" = "N1(0,)"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2003,7 +1998,6 @@ checkScDblFinder <- function(x) {
       broken_elem
     ))
   }
-  # Boolean rules
   boolean_rules <- c(
     "log_transform",
     "mean_center",
@@ -2020,9 +2014,8 @@ checkScDblFinder <- function(x) {
       broken_elem
     ))
   }
-  # Optional nullable
   optional_rules <- list(
-    "clip_max" = c("0", "N1(0,)"),
+    "expected_doublet_rate" = c("0", "N1(0,1]"),
     "manual_threshold" = c("0", "N1[0,)")
   )
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2038,11 +2031,6 @@ checkScDblFinder <- function(x) {
       "The element `%s` in scDblFinder parameters is incorrect.",
       broken_elem
     ))
-  }
-  # Choice
-  res <- checkmate::testChoice(x[["hvg_method"]], c("vst", "mvb", "dispersion"))
-  if (!isTRUE(res)) {
-    return("hvg_method must be one of: vst, mvb, dispersion.")
   }
   return(TRUE)
 }
