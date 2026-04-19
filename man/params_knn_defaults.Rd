@@ -12,8 +12,8 @@ parameters:
 \itemize{
 \item k - Number of neighbours. Defaults to \code{15L}.
 \item knn_method - Which of method to use for the approximate nearest
-neighbour search. Defaults to \code{"hnsw"}. The implementations are:
-\code{c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")}.
+neighbour search. Defaults to \code{"kmknn"}. The implementations are:
+\code{c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")}.
 \item ann_dist - Which distance metric to use for the approximate nearest
 neighbour search. Defaults to \code{"cosine"}. The implementations are
 \code{c("cosine", "euclidean")}.

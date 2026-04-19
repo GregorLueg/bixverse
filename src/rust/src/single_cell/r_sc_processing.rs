@@ -1,13 +1,14 @@
-use extendr_api::prelude::*;
-use faer::Mat;
-use std::time::Instant;
-
 use bixverse_rs::prelude::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
     doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scdblfinder::*,
     scrublet::*, snn::*,
 };
+use extendr_api::prelude::*;
+use faer::Mat;
+use std::time::Instant;
+
+use crate::single_cell::utils::flatten_dispersion_batches;
 
 /////////////
 // extendR //
@@ -407,72 +408,100 @@ fn rs_pairwise_gene_cors(
 /// Calculate the percentage of gene sets in the cells
 ///
 /// @description
-/// This function allows to calculate for example the proportion of
-/// mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+/// This function identifies highly variable genes with the three methods known
+/// in Seurat.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
-/// @param hvg_method String. Which HVG detection method to use. Options
-/// are `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
-/// implemented.
+/// @param hvg_method String. Which HVG detection method to use. One of
+/// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 /// not provided.
+/// @param binning String. The binning strategy for the `meanvarbin` method. One
+/// of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with the percentages of counts per gene set group detected
-/// in the cells:
+/// @return A list with the highly variable genes. If `hvg_method == "vst"`, the
+/// following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of the gene.
 ///   \item var - The variance of the gene.
 ///   \item var_exp - The expected variance of the gene.
 ///   \item var_std - The standardised variance of the gene.
 /// }
+/// For the other two methods, these elements can be found:
+/// \itemize{
+///   \item mean - The average expression of the gene.
+///   \item dispersion - The dispersion of the gene
+///   \item dispersion_scaled - The scaled dispersion per bin per gene
+///   \item bin - The bin of the gene
+/// }
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_sc_hvg(
     f_path_gene: &str,
     hvg_method: &str,
     cell_indices: Vec<i32>,
     loess_span: f64,
+    binning: String,
+    n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
 ) -> List {
     let cell_set = cell_indices.r_int_convert();
-
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_res: HvgRes = if streaming {
-        match hvg_type {
-            HvgMethod::Vst => {
+    match hvg_type {
+        HvgMethod::Vst => {
+            let res = if streaming {
                 get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
-            }
-            HvgMethod::MeanVarBin => get_hvg_mvb_streaming(),
-            HvgMethod::Dispersion => get_hvg_dispersion_streaming(),
-        }
-    } else {
-        match hvg_type {
-            HvgMethod::Vst => {
+            } else {
                 get_hvg_vst(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
-            }
-            HvgMethod::MeanVarBin => get_hvg_mvb(),
-            HvgMethod::Dispersion => get_hvg_dispersion(),
+            };
+            list!(
+                mean = res.mean,
+                var = res.var,
+                var_exp = res.var_exp,
+                var_std = res.var_std
+            )
         }
-    };
-
-    list!(
-        mean = hvg_res.mean,
-        var = hvg_res.var,
-        var_exp = hvg_res.var_exp,
-        var_std = hvg_res.var_std
-    )
+        HvgMethod::MeanVarBin => {
+            let res = if streaming {
+                get_hvg_mvb_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+            } else {
+                get_hvg_mvb(f_path_gene, &cell_set, &binning, n_bins, verbose)
+            };
+            list!(
+                mean = res.mean,
+                dispersion = res.dispersion,
+                dispersion_scaled = res.dispersion_scaled,
+                bin = res.bin
+            )
+        }
+        HvgMethod::Dispersion => {
+            let res = if streaming {
+                get_hvg_dispersion_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+            } else {
+                get_hvg_dispersion(f_path_gene, &cell_set, &binning, n_bins, verbose)
+            };
+            list!(
+                mean = res.mean,
+                dispersion = res.dispersion,
+                dispersion_scaled = res.dispersion_scaled,
+                bin = res.bin
+            )
+        }
+    }
 }
 
 /// Calculate HVG per batch
@@ -483,8 +512,8 @@ fn rs_sc_hvg(
 /// such as union of top genes per batch.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
-/// @param hvg_method String. Which HVG detection method to use. Currently
-/// only `"vst"` is implemented for batch-aware mode.
+/// @param hvg_method String. Which HVG detection method to use. One of
+/// `c("vst", "meanvarbin", "dispersion")`.
 /// @param cell_indices Integer positions (0-indexed!) that defines the cells
 /// to keep.
 /// @param batch_labels Integer vector (0-indexed!) defining batch membership
@@ -492,16 +521,31 @@ fn rs_sc_hvg(
 /// @param loess_span Numeric. The span parameter for the loess function.
 /// @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
 /// batch if not provided.
+/// @param binning String. The binning strategy for the `meanvarbin` method. One
+/// of `c("equal_width", "equal_frequency")`.
+/// @param n_bins Integer. Number of bins for the `meanvarbin` method.
 /// @param streaming Boolean. Shall the genes be streamed in to reduce memory
 /// pressure.
 /// @param verbose Boolean. Controls verbosity of the function.
 ///
-/// @return A list with HVG statistics concatenated across all batches:
+/// @return A list with HVG statistics concatenated across all batches. For
+/// `hvg_method == 'vst'`, the following elements can be found:
 /// \itemize{
 ///   \item mean - The average expression of each gene in each batch.
 ///   \item var - The variance of each gene in each batch.
 ///   \item var_exp - The expected variance of each gene in each batch.
 ///   \item var_std - The standardised variance of each gene in each batch.
+///   \item batch - Batch index for each gene (length = n_genes * n_batches).
+///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+///   n_batches).
+/// }
+/// For the other methods
+/// \itemize{
+///   \item mean - The average expression of each gene in each batch.
+///   \item dispersion - The dispersion of the gene in each batch.
+///   \item dispersion_scaled - The scaled dispersion per bin per gene in each
+///   batch.
+///   \item bin - The bin of the gene in each batch.
 ///   \item batch - Batch index for each gene (length = n_genes * n_batches).
 ///   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 ///   n_batches).
@@ -516,79 +560,116 @@ fn rs_sc_hvg_batch_aware(
     cell_indices: Vec<i32>,
     batch_labels: Vec<i32>,
     loess_span: f64,
+    binning: String,
+    n_bins: usize,
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
 ) -> List {
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
-
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
         .unwrap();
 
-    let hvg_results: Vec<HvgRes> = if streaming {
-        match hvg_type {
-            HvgMethod::Vst => get_hvg_vst_batch_aware_streaming(
-                f_path_gene,
-                &cell_set,
-                &batch_set,
-                loess_span as f32,
-                clip_max,
-                verbose,
-            ),
-            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
-            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+    match hvg_type {
+        HvgMethod::Vst => {
+            let results = if streaming {
+                get_hvg_vst_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    loess_span as f32,
+                    clip_max,
+                    verbose,
+                )
+            } else {
+                get_hvg_vst_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    loess_span as f32,
+                    clip_max,
+                    verbose,
+                )
+            };
+
+            let n_genes = results[0].mean.len();
+            let total_len = n_genes * results.len();
+            let mut mean_flat = Vec::with_capacity(total_len);
+            let mut var_flat = Vec::with_capacity(total_len);
+            let mut var_exp_flat = Vec::with_capacity(total_len);
+            let mut var_std_flat = Vec::with_capacity(total_len);
+            let mut batch_idx = Vec::with_capacity(total_len);
+            let mut gene_idx = Vec::with_capacity(total_len);
+
+            for (batch, res) in results.into_iter().enumerate() {
+                mean_flat.extend(res.mean);
+                var_flat.extend(res.var);
+                var_exp_flat.extend(res.var_exp);
+                var_std_flat.extend(res.var_std);
+                batch_idx.extend(vec![batch as i32; n_genes]);
+                gene_idx.extend(0..n_genes as i32);
+            }
+
+            list!(
+                mean = mean_flat,
+                var = var_flat,
+                var_exp = var_exp_flat,
+                var_std = var_std_flat,
+                batch = batch_idx,
+                gene_idx = gene_idx
+            )
         }
-    } else {
-        match hvg_type {
-            HvgMethod::Vst => get_hvg_vst_batch_aware(
-                f_path_gene,
-                &cell_set,
-                &batch_set,
-                loess_span as f32,
-                clip_max,
-                verbose,
-            ),
-            HvgMethod::MeanVarBin => panic!("MeanVarBin not implemented for batch-aware mode"),
-            HvgMethod::Dispersion => panic!("Dispersion not implemented for batch-aware mode"),
+        HvgMethod::MeanVarBin => {
+            let results = if streaming {
+                get_hvg_mvb_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            } else {
+                get_hvg_mvb_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            };
+            flatten_dispersion_batches(results)
         }
-    };
-
-    // Flatten results for easy R manipulation
-    let n_genes = hvg_results[0].mean.len();
-    let n_batches = hvg_results.len();
-    let total_len = n_genes * n_batches;
-
-    let mut mean_flat = Vec::with_capacity(total_len);
-    let mut var_flat = Vec::with_capacity(total_len);
-    let mut var_exp_flat = Vec::with_capacity(total_len);
-    let mut var_std_flat = Vec::with_capacity(total_len);
-    let mut batch_idx = Vec::with_capacity(total_len);
-    let mut gene_idx = Vec::with_capacity(total_len);
-
-    for (batch, hvg_res) in hvg_results.into_iter().enumerate() {
-        mean_flat.extend(hvg_res.mean);
-        var_flat.extend(hvg_res.var);
-        var_exp_flat.extend(hvg_res.var_exp);
-        var_std_flat.extend(hvg_res.var_std);
-        batch_idx.extend(vec![batch as i32; n_genes]);
-        gene_idx.extend(0..n_genes as i32);
+        HvgMethod::Dispersion => {
+            let results = if streaming {
+                get_hvg_dispersion_batch_aware_streaming(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            } else {
+                get_hvg_dispersion_batch_aware(
+                    f_path_gene,
+                    &cell_set,
+                    &batch_set,
+                    &binning,
+                    n_bins,
+                    verbose,
+                )
+            };
+            flatten_dispersion_batches(results)
+        }
     }
-
-    list!(
-        mean = mean_flat,
-        var = var_flat,
-        var_exp = var_exp_flat,
-        var_std = var_std_flat,
-        batch = batch_idx,
-        gene_idx = gene_idx
-    )
 }
 
 /////////
 // PCA //
-/////////
 /////////
 
 /// Calculates PCA for single cell
@@ -800,6 +881,14 @@ fn rs_sc_knn(
             knn_params.n_probe,
             seed,
             validate_index,
+            verbose,
+        ),
+        KnnSearch::KmKnn => generate_knn_kmknn(
+            embd.as_ref(),
+            &knn_params.ann_dist,
+            knn_params.k,
+            knn_params.n_list,
+            seed,
             verbose,
         ),
     };

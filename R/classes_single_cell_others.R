@@ -449,9 +449,43 @@ print.BoostRes <- function(x, ...) {
 #' @export
 get_obs_data.ScDblFinderRes <- function(x, ...) {
   checkmate::assertClass(x, "ScDblFinderRes")
-  obs_dt <- data.table::as.data.table(unclass(x))
+  obs_dt <- data.table::as.data.table(x[c(
+    "predicted_doublets",
+    "doublet_score",
+    "cxds_scores",
+    "weighted",
+    "cluster_labels"
+  )])
   obs_dt[, cell_idx := (attr(x, "cell_indices") + 1)]
   return(obs_dt)
+}
+
+### getters --------------------------------------------------------------------
+
+#' Get the feature matrix used for the classifier
+#'
+#' @param x An object to get the feature matrix from. This will only include
+#' the values of the observed cells.
+#'
+#' @export
+get_feature_mat <- function(x) {
+  UseMethod("get_feature_mat")
+}
+
+#' @rdname get_feature_mat
+#'
+#' @export
+get_feature_mat.ScDblFinderRes <- function(x, ...) {
+  checkmate::assertClass(x, "ScDblFinderRes")
+
+  if (is.null(x$features)) {
+    warning(paste(
+      "You did not extract the features during run of the function.",
+      "Returning NULL."
+    ))
+  }
+
+  return(x$features)
 }
 
 ### print ----------------------------------------------------------------------
@@ -470,6 +504,7 @@ print.ScDblFinderRes <- function(x, ...) {
   n_cells <- length(x$predicted_doublets)
   n_doublets <- sum(x$predicted_doublets)
   n_clusters <- length(unique(x$cluster_labels))
+  features_extracted <- !is.null(x$features)
 
   cat(sprintf(
     "ScDblFinderRes: %d cells, %d doublets (%.1f%%)\n",
@@ -484,6 +519,7 @@ print.ScDblFinderRes <- function(x, ...) {
     max(x$doublet_score)
   ))
   cat(sprintf("  Final clusters:   %d\n", n_clusters))
+  cat(sprintf("  Features avaiable: %s\n", features_extracted))
 
   invisible(x)
 }

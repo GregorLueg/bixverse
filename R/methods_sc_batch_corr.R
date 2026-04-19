@@ -467,7 +467,6 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
 ) {
   gene_comb_method <- match.arg(gene_comb_method)
 
-  # checks
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   checkmate::qassert(batch_column, "S1")
   checkmate::qassert(hvg_no, "I1")
@@ -492,6 +491,8 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
       batch_labels = batch_indices,
       loess_span = loess_span,
       clip_max = NULL,
+      n_bins = num_bin,
+      binning = bin_method,
       streaming = streaming,
       verbose = .verbose
     )
@@ -500,21 +501,36 @@ S7::method(find_hvg_batch_aware_sc, SingleCells) <- function(
   batch_hvgs_dt <- data.table::as.data.table(batch_hvgs)
   batch_hvgs_dt[, batch := levels(batch_factor)[batch + 1L]]
 
+  sort_col <- switch(
+    hvg_params$method,
+    "vst" = "var_std",
+    "dispersion" = "dispersion",
+    "meanvarbin" = "dispersion_scaled",
+    stop("Unknown HVG method: ", hvg_params$method)
+  )
+
   hvg_genes <- switch(
     gene_comb_method,
     union = {
-      batch_hvgs_dt[, .SD[order(-var_std)][1:hvg_no], by = batch][, unique(
-        gene_idx
-      )]
+      batch_hvgs_dt[,
+        .SD[order(-score)][1:hvg_no],
+        by = batch,
+        env = list(score = sort_col)
+      ][, unique(gene_idx)]
     },
     average = {
-      avg_dt <- batch_hvgs_dt[, .(var_std_avg = mean(var_std)), by = gene_idx]
-      avg_dt[order(-var_std_avg)][1:hvg_no, gene_idx]
+      avg_dt <- batch_hvgs_dt[,
+        .(score_avg = mean(score)),
+        by = gene_idx,
+        env = list(score = sort_col)
+      ]
+      avg_dt[order(-score_avg)][1:hvg_no, gene_idx]
     },
     intersection = {
       top_per_batch <- batch_hvgs_dt[,
-        .(gene_idx = .SD[order(-var_std)][1:hvg_no, gene_idx]),
-        by = batch
+        .(gene_idx = .SD[order(-score)][1:hvg_no, gene_idx]),
+        by = batch,
+        env = list(score = sort_col)
       ]
       top_per_batch[, .N, by = gene_idx][
         N == uniqueN(batch_hvgs_dt$batch),

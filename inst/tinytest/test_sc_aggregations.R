@@ -220,6 +220,17 @@ hdwgcna <- calc_meta_cell_purity(
   original_cell_type = unlist(sc_object[["cell_grp"]])
 )
 
+hdwgcna[, assay = "norm"]
+
+
+x <- hdwgcna@data$raw
+
+class(x)
+
+x@p
+x@j
+x@x
+
 expect_true(
   current = checkmate::testDataTable(
     hdwgcna[[]],

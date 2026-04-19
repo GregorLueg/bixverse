@@ -273,6 +273,8 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
     feature_matrix <- res$features$feature_mat
     colnames(feature_matrix) <- res$features$feature_names
     rownames(feature_matrix) <- get_cell_names(object, filtered = TRUE)
+
+    feature_matrix
   } else {
     NULL
   }
@@ -447,48 +449,7 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
 
 ## hvg -------------------------------------------------------------------------
 
-#' Identify HVGs
-#'
-#' @description
-#' This is a helper function to identify highly variable genes. At the moment
-#' the implementation has only the VST-based version (known as Seurat v3). The
-#' other methods will be implemented in the future.
-#'
-#' @param object `SingleCells` class.
-#' @param hvg_no Integer. Number of highly variable genes to include. Defaults
-#' to `2000L`.
-#' @param hvg_params List, see [bixverse::params_sc_hvg()]. This list contains
-#' \itemize{
-#'   \item method - Which method to use. One of
-#'   `c("vst", "meanvarbin", "dispersion")`
-#'   \item loess_span - The span for the loess function to standardise the
-#'   variance
-#'   \item num_bin - Integer. Not yet implemented.
-#'   \item bin_method - String. One of `c("equal_width", "equal_freq")`. Not
-#'   implemented yet.
-#' }
-#' @param streaming Boolean. Shall the genes be streamed in. Useful for larger
-#' data sets where you wish to avoid loading in the whole data. Defaults to
-#' `FALSE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return It will add the mean, var, var_exp, var_std of each gene to the
-#' the var table.
-#'
-#' @export
-find_hvg_sc <- S7::new_generic(
-  name = "find_hvg_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    hvg_no = 2000L,
-    hvg_params = params_sc_hvg(),
-    streaming = FALSE,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
 
 #' @method find_hvg_sc SingleCells
 #'
@@ -524,6 +485,8 @@ S7::method(find_hvg_sc, SingleCells) <- function(
       hvg_method = method,
       cell_indices = get_cells_to_keep(object),
       loess_span = loess_span,
+      n_bins = num_bin,
+      binning = bin_method,
       clip_max = NULL,
       streaming = streaming,
       verbose = .verbose
@@ -532,7 +495,13 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 
   object <- set_sc_new_var_cols(object = object, data_list = res)
 
-  hvg <- order(res$var_std, decreasing = TRUE)[1:hvg_no]
+  hvg <- switch(
+    hvg_params$method,
+    "vst" = order(res$var_std, decreasing = TRUE)[1:hvg_no],
+    "dispersion" = order(res$dispersion, decreasing = TRUE)[1:hvg_no],
+    "meanvarbin" = order(res$dispersion_scaled, decreasing = TRUE)[1:hvg_no],
+    stop("Unknown HVG method: ", hvg_params$method)
+  )
 
   object <- set_hvg(object, hvg = hvg)
 
@@ -543,49 +512,7 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 
 ### pca ------------------------------------------------------------------------
 
-#' Run PCA for single cell
-#'
-#' @description
-#' This function will run PCA (option of full SVD and randomised SVD for now)
-#' on the detected highly variable genes.
-#'
-#' @param object `SingleCells` class.
-#' @param no_pcs Integer. Number of PCs to calculate.
-#' @param randomised_svd Boolean. Shall randomised SVD be used. Faster, but
-#' less precise.
-#' @param sparse_svd Boolean. Shall sparse solvers be used that do not do
-#' scaling. If set to yes, in the case of `random_svd = FALSE`, Lanczos
-#' iterations are used to solve the sparse SVD. With `random_svd = TRUE`, the
-#' sparse initial matrix is multiplied with the random matrix, yielding a
-#' much smaller dense matrix that does not increase the memory pressure
-#' massively.
-#' @param hvg Optional integer. If you want to provide your own HVG genes.
-#' Otherwise, the function will default to what is found in
-#' [bixverse::get_hvg()]. Please provide 1-indexed genes here! If you provide
-#' these, the internal HVG will be overwritten.
-#' @param seed Integer. Controls reproducibility. Only relevant if
-#' `randomised_svd = TRUE`.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return The function will add the PCA factors, loadings and singular values
-#' to the object cache in memory.
-#'
-#' @export
-calculate_pca_sc <- S7::new_generic(
-  name = "calculate_pca_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    no_pcs,
-    randomised_svd = TRUE,
-    sparse_svd = FALSE,
-    hvg = NULL,
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
 
 #' @method calculate_pca_sc SingleCells
 #'
@@ -711,69 +638,7 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 
 ### neighbours -----------------------------------------------------------------
 
-#' Find the neighbours for single cell.
-#'
-#' @description
-#' This function will generate the kNNs based on a given embedding. Available
-#' algorithms are:
-#' \itemize{
-#'   \item `hnsw` - Hierarchical Navigable Small World. A graph-based
-#'   approximate nearest neighbour search algorithm; works well on large data
-#'   sets. A benign race condition is leveraged during index build, making the
-#'   build non-deterministic. Bigger impact on smaller data sets.
-#'   \item `ivf` - Inverted file index. Uses first k-means clustering to
-#'   identify Voronoi cells and leverages these during querying. Works well
-#'   on large data sets with high dimensionality.
-#'   \item `nndescent` - Nearest neighbour descent. Similar to `PyNNDescent`,
-#'   uses a first index to initialise the graph. Good all-rounder.
-#'   \item `annoy` - Approximate nearest neighbours Oh Yeah. Tree-based index,
-#'   used across different R single cell packages (Seurat, SCE). This version
-#'   is purely memory-based.
-#'   \item `exhaustive` - An exhaustive, flat index. On smaller data sets often
-#'   faster than the approximate nearest neighbour search algorithms.
-#' }
-#' Subsequently, the kNN graph will be additionally transformed into a shared
-#' nearest neighbour graph for clustering methods.
-#'
-#' @param object `SingleCells` class.
-#' @param embd_to_use String. The embedding to use. Whichever you chose, it
-#' needs to be part of the object.
-#' @param no_embd_to_use Optional integer. Number of embedding dimensions to
-#' use. If `NULL` all will be used.
-#' @param neighbours_params List. Output of [bixverse::params_sc_neighbours()].
-#' A list with the following items:
-#' \itemize{
-#'   \item full_snn - Boolean. Shall the full shared nearest neighbour graph
-#'   be generated that generates edges between all cells instead of between
-#'   only neighbours.
-#'   \item pruning - Numeric. Weights below this threshold will be set to 0 in
-#'   the generation of the sNN graph.
-#'   \item snn_similarity - String. One of `c("rank", "jaccard")`. Defines how
-#'   the weight from the SNN graph is calculated. For details, please see
-#'   [bixverse::params_sc_neighbours()].
-#'   \item knn - List of kNN parameters. See [bixverse::params_knn_defaults()]
-#'   for available parameters and their defaults.
-#' }
-#' @param seed Integer. For reproducibility.
-#' @param .verbose Boolean. Controls verbosity and returns run times.
-#'
-#' @return The object with added KNN matrix.
-#'
-#' @export
-find_neighbours_sc <- S7::new_generic(
-  name = "find_neighbours_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    embd_to_use = "pca",
-    no_embd_to_use = NULL,
-    neighbours_params = params_sc_neighbours(),
-    seed = 42L,
-    .verbose = TRUE
-  ) {
-    S7::S7_dispatch()
-  }
-)
+# generic found in R/base_generics_sc.R
 
 #' @method find_neighbours_sc SingleCells
 #'
@@ -857,31 +722,6 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
 }
 
 ### clustering -----------------------------------------------------------------
-
-#' Graph-based clustering of cells on the sNN graph
-#'
-#' @description
-#' This function will apply Leiden clustering on the sNN graph with the
-#' given resolution and add a column to the obs table.
-#'
-#' @param object `SingleCells` class.
-#' @param res Numeric. The resolution parameter for [igraph::cluster_leiden()].
-#' @param name String. The name to add to the obs table in the DuckDB.
-#'
-#' @return The object with added clustering in the obs table.
-#'
-#' @export
-find_clusters_sc <- S7::new_generic(
-  name = "find_clusters_sc",
-  dispatch_args = "object",
-  fun = function(
-    object,
-    res = 1,
-    name = "leiden_clustering"
-  ) {
-    S7::S7_dispatch()
-  }
-)
 
 #' @method find_clusters_sc SingleCells
 #'

@@ -1131,8 +1131,6 @@ finalise_matrix <- function(
 
 #' @name get_cell_names.SingleCells
 #'
-#' @title Get the cell names from a `SingleCells`.
-#'
 #' @rdname get_cell_names
 #'
 #' @method get_cell_names SingleCells
@@ -1154,8 +1152,6 @@ S7::method(get_cell_names, SingleCells) <- function(
 
 #' @name get_gene_names.SingleCells
 #'
-#' @title Get the gene names from a `SingleCells`.
-#'
 #' @rdname get_gene_names
 #'
 #' @method get_gene_names SingleCells
@@ -1174,8 +1170,6 @@ S7::method(get_gene_names, SingleCells) <- function(
 }
 
 #' @name get_cells_to_keep.SingleCells
-#'
-#' @title Get the cells to keep from a `SingleCells`.
 #'
 #' @rdname get_cells_to_keep
 #'
@@ -1201,8 +1195,6 @@ S7::method(get_cells_to_keep, SingleCells) <- function(
 
 #' @name get_gene_indices.SingleCells
 #'
-#' @title Get the gene indices from a `SingleCells`.
-#'
 #' @rdname get_gene_indices
 #'
 #' @method get_gene_indices SingleCells
@@ -1226,10 +1218,7 @@ S7::method(get_gene_indices, SingleCells) <- function(
   return(res)
 }
 
-
 #' @name get_cell_indices.SingleCells
-#'
-#' @title Set the gene mapping for a `SingleCells` class.
 #'
 #' @rdname get_cell_indices
 #'
@@ -1256,8 +1245,6 @@ S7::method(get_cell_indices, SingleCells) <- function(
 
 #' @name get_hvg.SingleCells
 #'
-#' @title Get the highly variable gene indices from a `SingleCells`.
-#'
 #' @rdname get_hvg
 #'
 #' @method get_hvg SingleCells
@@ -1276,8 +1263,6 @@ S7::method(get_hvg, SingleCells) <- function(
 }
 
 #' @name get_gene_names_from_idx.SingleCells
-#'
-#' @title Get the highly variable gene indices from a `SingleCells`.
 #'
 #' @rdname get_gene_names_from_idx
 #'
@@ -1306,8 +1291,6 @@ S7::method(get_gene_names_from_idx, SingleCells) <- function(
 
 #' @name get_pca_factors.SingleCells
 #'
-#' @title Get the PCA factors from a `SingleCells`.
-#'
 #' @rdname get_pca_factors
 #'
 #' @method get_pca_factors SingleCells
@@ -1334,8 +1317,6 @@ S7::method(get_pca_factors, SingleCells) <- function(
 
 #' @name get_pca_loadings.SingleCells
 #'
-#' @title Get the PCA loadings from a `SingleCells`.
-#'
 #' @rdname get_pca_loadings
 #'
 #' @method get_pca_loadings SingleCells
@@ -1358,8 +1339,6 @@ S7::method(get_pca_loadings, SingleCells) <- function(
 
 #' @name get_pca_singular_val.SingleCells
 #'
-#' @title Get the PCA singular values from a `SingleCells`.
-#'
 #' @rdname get_pca_singular_val
 #'
 #' @method get_pca_singular_val SingleCells
@@ -1378,8 +1357,6 @@ S7::method(get_pca_singular_val, SingleCells) <- function(
 }
 
 #' @name get_embedding.SingleCells
-#'
-#' @title Get the embeddings from a `SingleCells`.
 #'
 #' @rdname get_embedding
 #'
@@ -1405,8 +1382,6 @@ S7::method(get_embedding, SingleCells) <- function(
 
 #' @name get_available_embeddings.SingleCells
 #'
-#' @title Get the embeddings from a `SingleCells`.
-#'
 #' @rdname get_available_embeddings
 #'
 #' @method get_available_embeddings SingleCells
@@ -1425,8 +1400,6 @@ S7::method(get_available_embeddings, SingleCells) <- function(
 }
 
 #' @name get_knn_mat.SingleCells
-#'
-#' @title Get the KNN matrix from a `SingleCells`.
 #'
 #' @rdname get_knn_mat
 #'
@@ -1447,8 +1420,6 @@ S7::method(get_knn_mat, SingleCells) <- function(
 
 #' @name get_knn_dist.SingleCells
 #'
-#' @title Get the KNN distances from a `SingleCells`.
-#'
 #' @rdname get_knn_dist
 #'
 #' @method get_knn_dist SingleCells
@@ -1468,8 +1439,6 @@ S7::method(get_knn_dist, SingleCells) <- function(
 
 #' @name get_knn_obj.SingleCells
 #'
-#' @title Get the KNN object from a `SingleCells`.
-#'
 #' @rdname get_knn_obj
 #'
 #' @method get_knn_obj SingleCells
@@ -1488,8 +1457,6 @@ S7::method(get_knn_obj, SingleCells) <- function(
 }
 
 #' @name get_snn_graph.SingleCells
-#'
-#' @title Get the SNN graph from a `SingleCells`.
 #'
 #' @rdname get_snn_graph
 #'
@@ -1729,8 +1696,6 @@ S7::method(set_sc_new_var_cols, SingleCells) <- function(
 
 #' @name set_gene_mapping.SingleCells
 #'
-#' @title Set the gene mapping for a `SingleCells` class.
-#'
 #' @rdname set_gene_mapping
 #'
 #' @method set_gene_mapping SingleCells
@@ -1754,8 +1719,6 @@ S7::method(set_gene_mapping, SingleCells) <- function(
 
 #' @name set_cell_mapping.SingleCells
 #'
-#' @title Set the cell mapping for a `SingleCells` class.
-#'
 #' @rdname set_cell_mapping
 #'
 #' @method set_cell_mapping SingleCells
@@ -1778,8 +1741,6 @@ S7::method(set_cell_mapping, SingleCells) <- function(
 }
 
 #' @name set_cells_to_keep.SingleCells
-#'
-#' @title Set the cell mapping for a `SingleCells` class.
 #'
 #' @rdname set_cells_to_keep
 #'
@@ -1810,8 +1771,6 @@ S7::method(set_cells_to_keep, SingleCells) <- function(
 
 #' @name set_hvg.SingleCells
 #'
-#' @title Set the highly variable genes for a `SingleCells` class.
-#'
 #' @rdname set_hvg
 #'
 #' @method set_hvg SingleCells
@@ -1836,8 +1795,6 @@ S7::method(set_hvg, SingleCells) <- function(
 
 #' @name set_pca_factors.SingleCells
 #'
-#' @title Set the PCA factors for a `SingleCells` class.
-#'
 #' @rdname set_pca_factors
 #'
 #' @method set_pca_factors SingleCells
@@ -1859,8 +1816,6 @@ S7::method(set_pca_factors, SingleCells) <- function(
 }
 
 #' @name set_pca_loadings.SingleCells
-#'
-#' @title Set the PCA factors for a `SingleCells` class.
 #'
 #' @rdname set_pca_loadings
 #'
@@ -1884,8 +1839,6 @@ S7::method(set_pca_loadings, SingleCells) <- function(
 
 #' @name set_pca_singular_vals.SingleCells
 #'
-#' @title Set the PCA singular values for a `SingleCells` class.
-#'
 #' @rdname set_pca_singular_vals
 #'
 #' @method set_pca_singular_vals SingleCells
@@ -1907,8 +1860,6 @@ S7::method(set_pca_singular_vals, SingleCells) <- function(
 }
 
 #' @name set_embedding.SingleCells
-#'
-#' @title Set additional embeddings to `SingleCells`.
 #'
 #' @rdname set_embedding
 #'
@@ -1935,8 +1886,6 @@ S7::method(set_embedding, SingleCells) <- function(
 
 #' @name set_knn.SingleCells
 #'
-#' @title Set the KNN matrix for a `SingleCells` class.
-#'
 #' @rdname set_knn
 #'
 #' @method set_knn SingleCells
@@ -1960,8 +1909,6 @@ S7::method(set_knn, SingleCells) <- function(
 
 #' @name set_snn_graph.SingleCells
 #'
-#' @title Set the sNN graph for a `SingleCells` class.
-#'
 #' @rdname set_snn_graph
 #'
 #' @method set_snn_graph SingleCells
@@ -1984,8 +1931,6 @@ S7::method(set_snn_graph, SingleCells) <- function(
 
 #' @name remove_knn.SingleCells
 #'
-#' @title Remove the KNN matrix from a `SingleCells` class.
-#'
 #' @rdname remove_knn
 #'
 #' @method remove_knn SingleCells
@@ -2005,8 +1950,6 @@ S7::method(remove_knn, SingleCells) <- function(
 
 
 #' @name remove_snn_graph.SingleCells
-#'
-#' @title Remove the sNN graph from a `SingleCells` class.
 #'
 #' @rdname remove_snn_graph
 #'
@@ -2028,6 +1971,7 @@ S7::method(remove_snn_graph, SingleCells) <- function(
 ### generic / primitives -------------------------------------------------------
 
 #' @name print.SingleCells
+#'
 #' @title print Method for SingleCells object
 #'
 #' @description
@@ -2078,6 +2022,7 @@ S7::method(print, SingleCells) <- function(x, ...) {
 }
 
 #' @name dim.SingleCells
+#'
 #' @title dim Method for SingleCells object
 #'
 #' @description

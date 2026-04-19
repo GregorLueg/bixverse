@@ -14,7 +14,7 @@ params_boost(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, knn_method = "nndescent")
+  knn = list(k = 0L)
 )
 }
 \arguments{

@@ -19,9 +19,9 @@ checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
 name = "ann-search-rs"
-version = "0.2.12"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e695f3a8a0e7e9fbc0aab691dfff451093ef18c692cafa929214f8442a9579c"
+checksum = "fc2908944968ae4c6d266f807801dd38989b7fadcf6458fd3ce601caff80e3d0"
 dependencies = [
  "approx",
  "clap",
@@ -170,7 +170,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.8"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#e5f984a893d4faa2d04e1a30add45fe7d4c18c85"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#af739ff08ed39c31e8c43986034d92ec49ca7862"
 dependencies = [
  "ann-search-rs",
  "approx",

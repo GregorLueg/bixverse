@@ -8,6 +8,7 @@ pub mod base;
 pub mod data;
 pub mod enrichment;
 pub mod graph;
+pub mod meta_cell;
 pub mod methods;
 pub mod ontology;
 pub mod single_cell;
@@ -57,6 +58,8 @@ pub use single_cell::r_sc_data;
 pub use single_cell::r_sc_metacells;
 pub use single_cell::r_sc_plot_extraction;
 pub use single_cell::r_sc_processing;
+// meta cell
+pub use meta_cell::r_mc_processing;
 
 /////////////
 // extendR //

@@ -7,7 +7,7 @@
 scdblfinder_sc(
   object,
   scdblfinder_params = params_scdblfinder(),
-  streaming = FALSE,
+  return_features = FALSE,
   seed = 42L,
   .verbose = TRUE
 )
@@ -18,7 +18,8 @@ scdblfinder_sc(
 \item{scdblfinder_params}{List. Parameters from
 \code{\link[=params_scdblfinder]{params_scdblfinder()}}.}
 
-\item{streaming}{Boolean. Stream HVG computation to reduce memory.}
+\item{return_features}{Boolean. Shall the features used to train the
+classifier be returned.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 
@@ -29,6 +30,8 @@ An S3 object of class \code{ScDblFinderRes} containing:
 \describe{
 \item{predicted_doublets}{Logical vector of doublet calls.}
 \item{doublet_score}{Numeric vector of classifier probabilities.}
+\item{cxds_scores}{Numeric vector of the cxds scores.}
+\item{weighted}{Numeric vector of the weighted scores.}
 \item{threshold}{The threshold used for calling.}
 \item{cluster_labels}{Integer vector of final cluster assignments.}
 \item{detected_doublet_rate}{Fraction of cells called as doublets.}

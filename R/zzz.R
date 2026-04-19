@@ -1,5 +1,6 @@
 .onLoad <- function(...) {
   S7::methods_register()
+
   # S3 <> S7 weirdness
   # manual registering here
   registerS3method("print", "ScenicGrn", print.ScenicGrn)

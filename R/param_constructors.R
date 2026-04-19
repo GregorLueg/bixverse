@@ -14,8 +14,8 @@
 #' \itemize{
 #'  \item k - Number of neighbours. Defaults to `15L`.
 #'  \item knn_method - Which of method to use for the approximate nearest
-#'  neighbour search. Defaults to `"hnsw"`. The implementations are:
-#'  `c("hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
+#'  neighbour search. Defaults to `"kmknn"`. The implementations are:
+#'  `c("kmknn", "hnsw", "annoy", "nndescent", "ivf", "exhaustive")`.
 #'  \item ann_dist - Which distance metric to use for the approximate nearest
 #'  neighbour search. Defaults to `"cosine"`. The implementations are
 #'  `c("cosine", "euclidean")`.
@@ -47,7 +47,7 @@ params_knn_defaults <- function() {
   list(
     # General parameters
     k = 15L,
-    knn_method = "hnsw",
+    knn_method = "kmknn",
     ann_dist = "euclidean",
     # Annoy
     n_trees = 50L,
@@ -74,8 +74,11 @@ params_knn_defaults <- function() {
 #'  \item min_gene_var_pctl - Which percentile of the highly variable genes
 #'  to include. Defaults to `0.7`.
 #'  \item hvg_method - Which method to use to identify HVG. Defaults to `"vst"`.
-#'  \item loess_span - In case of
-#'  \item clip_max -
+#'  \item loess_span - In case of `"vst"` the span of the loess function.
+#'  \item clip_max - The maximum clipping value (optional).
+#'  \item n_bins - The number of bins to use for the `"meanvarbin"` HVG
+#'  detection.
+#'  \item binning_strategy - Which binning strategy to use for `"meanvarbin"`.
 #' }
 #'
 #' @export
@@ -84,7 +87,9 @@ params_hvg_defaults <- function() {
     min_gene_var_pctl = 0.7,
     hvg_method = "vst",
     loess_span = 0.3,
-    clip_max = NULL
+    clip_max = NULL,
+    n_bins = 20L,
+    binning_strategy = "equal_width"
   )
 }
 
@@ -154,8 +159,8 @@ params_pca_defaults <- function() {
 #' 0 and 1. Defaults to `0.1`.
 #' @param stdev_doublet_rate Numeric. Uncertainty in the expected doublet rate.
 #' Defaults to `0.02`.
-#' @param n_bins Integer. Number of bins for histogram-based automatic threshold
-#' detection. Typically 50-100. Defaults to `100L`.
+#' @param n_bins_histogram Integer. Number of bins for histogram-based automatic
+#' threshold detection. Typically 50-100. Defaults to `100L`.
 #' @param manual_threshold Optional numeric. Manual doublet score threshold. If
 #' `NULL` (default), threshold is automatically detected from simulated doublet
 #' score distribution.
@@ -184,18 +189,18 @@ params_scrublet <- function(
   sim_doublet_ratio = 1.5,
   expected_doublet_rate = 0.1,
   stdev_doublet_rate = 0.02,
-  n_bins = 100L,
+  n_bins_histogram = 100L,
   manual_threshold = NULL,
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, knn_method = "nndescent")
+  knn = list(k = 0L)
 ) {
   # doublet simulation checks
   checkmate::qassert(sim_doublet_ratio, "N1(0,)")
   checkmate::qassert(expected_doublet_rate, "N1[0,1]")
   checkmate::qassert(stdev_doublet_rate, "N1[0,1]")
-  checkmate::qassert(n_bins, "I1[10,)")
+  checkmate::qassert(n_bins_histogram, "I1[10,)")
   if (!is.null(manual_threshold)) {
     checkmate::qassert(manual_threshold, "N1[0,)")
   }
@@ -273,7 +278,7 @@ params_boost <- function(
   normalisation = list(),
   hvg = list(),
   pca = list(),
-  knn = list(k = 0L, knn_method = "nndescent")
+  knn = list(k = 0L)
 ) {
   # checks
   checkmate::qassert(boost_rate, "N1[0,1]")
@@ -348,8 +353,6 @@ params_boost <- function(
 #' as classifier features. Defaults to `19L`.
 #' @param expected_doublet_rate Optional numeric. Expected doublet rate as a
 #' percentage. If not provided, will be calculated internally.
-#' @param n_bins Integer. Number of histogram bins for fallback Otsu
-#' thresholding. Defaults to `100L`.
 #' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
 #' (default), expected-rate thresholding is used.
 #' @param normalisation List. Optional overrides for normalisation parameters.
@@ -380,12 +383,12 @@ params_scdblfinder <- function(
   se_fraction = 1.0,
   include_pcs = 19L,
   expected_doublet_rate = NULL,
-  n_bins = 100L,
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),
-  knn = list(k = 0L, knn_method = "nndescent")
+  knn = list(k = 0L)
 ) {
+  # checks
   checkmate::qassert(n_genes, "I1[1,)")
   checkmate::qassert(doublet_ratio, "N1(0,)")
   checkmate::qassert(heterotypic_bias, "N1[0,1]")
@@ -400,14 +403,10 @@ params_scdblfinder <- function(
   checkmate::qassert(cv_folds, "I1[2,)")
   checkmate::qassert(cv_early_stop, "I1[1,)")
   checkmate::qassert(se_fraction, "N1[0,)")
-  checkmate::qassert(n_bins, "I1[10,)")
-  if (!is.null(expected_doublet_rate)) {
-    checkmate::qassert(expected_doublet_rate, "N1(0,1]")
-  }
-  if (!is.null(manual_threshold)) {
-    checkmate::qassert(manual_threshold, "N1[0,)")
-  }
+  checkmate::qassert(expected_doublet_rate, c("N1(0,1]", "0"))
+  checkmate::qassert(manual_threshold, c("N1[0,)", "0"))
 
+  # generate params list
   params <- list(
     normalisation = modifyList(
       params_norm_doublet_detection_defaults(),
@@ -432,7 +431,6 @@ params_scdblfinder <- function(
     se_fraction = se_fraction,
     include_pcs = include_pcs,
     expected_doublet_rate = expected_doublet_rate,
-    n_bins = n_bins,
     manual_threshold = manual_threshold
   )
 
@@ -594,7 +592,7 @@ params_sc_hotspot <- function(
 #' One of `c("approximate", "bruteforce", "index")`. Defaults to
 #' `"index"`.
 #' @param index_type String. Type of kNN index to use. One of
-#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"hnsw"`.
+#' `c("hnsw", "annoy", "nndescent", "ivf")`. Defaults to `"nndescent"`.
 #' @param knn List. Optional overrides for kNN parameters. See
 #' [bixverse::params_knn_defaults()] for available parameters: `k`,
 #' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
@@ -609,7 +607,7 @@ params_sc_miloR <- function(
   prop = 0.2,
   k_refine = 20L,
   refinement_strategy = c("index", "approximate", "bruteforce"),
-  index_type = c("hnsw", "annoy", "nndescent", "ivf"),
+  index_type = c("nndescent", "ivf", "hnsw", "annoy"),
   knn = list()
 ) {
   refinement_strategy <- match.arg(refinement_strategy)

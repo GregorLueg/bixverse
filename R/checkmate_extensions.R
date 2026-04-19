@@ -1253,7 +1253,7 @@ checkKnnParams <- function(x, required_params = NULL) {
 
   # choice rules
   test_choice_rules <- list(
-    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf"),
+    knn_method = c("annoy", "hnsw", "nndescent", "exhaustive", "ivf", "kmknn"),
     ann_dist = c("euclidean", "cosine")
   )
 
@@ -1558,11 +1558,13 @@ checkScScrublet <- function(x) {
       "hvg_method",
       "loess_span",
       "clip_max",
+      "n_bins",
+      "binning_strategy",
       "sim_doublet_ratio",
       "expected_doublet_rate",
       "stdev_doublet_rate",
       "manual_threshold",
-      "n_bins",
+      "n_bins_histogram",
       "no_pcs",
       "random_svd"
     )
@@ -1581,7 +1583,8 @@ checkScScrublet <- function(x) {
   # Integer rules (non-kNN)
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "n_bins_histogram" = "I1[10,)",
+    "n_bins" = "I1[1,)",
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1693,6 +1696,13 @@ checkScScrublet <- function(x) {
   if (!isTRUE(res)) {
     return("hvg_method must be one of: vst, mvb, dispersion.")
   }
+  res <- checkmate::testChoice(
+    x[["binning_strategy"]],
+    c("equal_width", "equal_frequency")
+  )
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: equal_width, equal_frequency")
+  }
 
   return(TRUE)
 }
@@ -1741,6 +1751,8 @@ checkScBoost <- function(x) {
       "hvg_method",
       "loess_span",
       "clip_max",
+      "n_bins",
+      "binning_strategy",
       "boost_rate",
       "replace",
       "no_pcs",
@@ -1765,7 +1777,8 @@ checkScBoost <- function(x) {
   # Integer rules
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
-    "n_iters" = "I1[1,)"
+    "n_iters" = "I1[1,)",
+    "n_bins" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -1782,7 +1795,7 @@ checkScBoost <- function(x) {
       sprintf(
         paste(
           "The following element `%s` in Boost parameters is incorrect:",
-          "no_pcs and n_iters must be >= 1."
+          "no_pcs, n_bins, and n_iters must be >= 1."
         ),
         broken_elem
       )
@@ -1877,6 +1890,13 @@ checkScBoost <- function(x) {
   if (!isTRUE(res)) {
     return("hvg_method must be one of: vst, mvb, dispersion.")
   }
+  res <- checkmate::testChoice(
+    x[["binning_strategy"]],
+    c("equal_width", "equal_frequency")
+  )
+  if (!isTRUE(res)) {
+    return("hvg_method must be one of: equal_width, equal_frequency")
+  }
 
   return(TRUE)
 }
@@ -1936,8 +1956,7 @@ checkScDblFinder <- function(x) {
       "cv_folds",
       "cv_early_stop",
       "se_fraction",
-      "include_pcs",
-      "n_bins"
+      "include_pcs"
     )
   )
   if (!isTRUE(res)) {
@@ -1958,8 +1977,7 @@ checkScDblFinder <- function(x) {
     "min_samples_leaf" = "I1[1,)",
     "cv_folds" = "I1[2,)",
     "cv_early_stop" = "I1[1,)",
-    "include_pcs" = "I1[1,)",
-    "n_bins" = "I1[10,)"
+    "include_pcs" = "I1[1,)"
   )
   res <- purrr::imap_lgl(x, \(x, name) {
     if (name %in% names(integer_rules)) {

@@ -422,7 +422,7 @@ obs_data <- get_obs_data(obj_res)
 
 expect_true(
   current = checkmate::testDataTable(obs_data),
-  info = "getter on scrublet res working"
+  info = "getter on boost res working"
 )
 
 expect_true(
@@ -430,10 +430,15 @@ expect_true(
     names(obs_data),
     must.include = c("doublet", "doublet_score", "cell_idx")
   ),
-  info = "getter on scrublet res working - expected columns"
+  info = "getter on boost res working - expected columns"
 )
 
 # test scdblfinder -------------------------------------------------------------
+
+scdblfinder_params <- params_scdblfinder(
+  pca = list(no_pcs = 10L),
+  expected_doublet_rate = 0.17
+)
 
 ## rust logic ------------------------------------------------------------------
 
@@ -441,36 +446,12 @@ scdblfinder_res <- rs_sc_scdblfinder(
   f_path_gene = bixverse:::get_rust_count_gene_f_path(sc_object),
   f_path_cell = bixverse:::get_rust_count_cell_f_path(sc_object),
   cell_indices = get_cells_to_keep(sc_object),
-  params = params_scdblfinder(
-    pca = list(no_pcs = 10L),
-    expected_doublet_rate = 0.17
-  ),
+  params = scdblfinder_params,
   seed = 42L,
-  return_features = TRUE,
-  verbose = TRUE
+  return_features = FALSE,
+  verbose = FALSE,
+  debug = FALSE
 )
-
-hist(
-  scdblfinder_res$doublet_scores[1001:1200],
-  xlab = "Score",
-  main = "Actual doublets"
-)
-
-hist(
-  scdblfinder_res$doublet_scores[1:1000],
-  xlab = "Score",
-  main = "Actual singlets"
-)
-
-summary(scdblfinder_res$doublet_scores[1001:1200])
-
-table(scdblfinder_res$predicted_doublets[1001:1200])
-
-summary(scdblfinder_res$doublet_scores[1:1000])
-
-table(scdblfinder_res$predicted_doublets[1:1000])
-
-table(scdblfinder_res$predicted_doublets)
 
 expect_true(
   current = checkmate::qtest(
@@ -515,7 +496,7 @@ metrics <- metrics_helper(
 expect_true(
   current = metrics["recall"] >= 0.7,
   info = paste(
-    "rust boost classified doublet detection:",
+    "rust scdblfinder classified doublet detection:",
     "good recall"
   )
 )
@@ -523,9 +504,72 @@ expect_true(
 expect_true(
   current = metrics["f1"] >= 0.7,
   info = paste(
-    "rust boost classified doublet detection:",
+    "rust scdblfinder classified doublet detection:",
     "good f1 scores"
   )
+)
+
+## s7 method -------------------------------------------------------------------
+
+obj_res <- scdblfinder_sc(
+  object = sc_object,
+  scdblfinder_params = scdblfinder_params,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testClass(obj_res, "ScDblFinderRes"),
+  info = "S7 scDblFinder - correct class returned"
+)
+
+expect_equivalent(
+  current = obj_res$predicted_doublets,
+  target = scdblfinder_res$predicted_doublets,
+  info = "S7 scDblFinder: no weird changes during generation (called doublets)"
+)
+
+obs_data <- get_obs_data(obj_res)
+
+expect_true(
+  current = checkmate::testDataTable(obs_data),
+  info = "getter on scdblfinder res working"
+)
+
+expect_true(
+  current = checkmate::testNames(
+    names(obs_data),
+    must.include = c(
+      "predicted_doublets",
+      "doublet_score",
+      "cxds_scores",
+      "weighted",
+      "cluster_labels",
+      "cell_idx"
+    )
+  ),
+  info = "getter on scdblfinder res working - expected columns"
+)
+
+expect_warning(
+  current = get_feature_mat(obj_res),
+  info = "get_features_mat() returns a warning"
+)
+
+obj_res <- scdblfinder_sc(
+  object = sc_object,
+  scdblfinder_params = scdblfinder_params,
+  return_features = TRUE,
+  .verbose = FALSE
+)
+
+expect_true(
+  current = checkmate::testMatrix(
+    get_feature_mat(obj_res),
+    col.names = "named",
+    row.names = "named",
+    nrows = 1200L
+  ),
+  info = "get_features_mat() returns a feature matrix"
 )
 
 # clean up ---------------------------------------------------------------------

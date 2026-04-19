@@ -54,3 +54,63 @@ S7::method(calc_meta_cell_purity, MetaCells) <- function(
 
   return(object)
 }
+
+## processing ------------------------------------------------------------------
+
+### hvg ------------------------------------------------------------------------
+
+# generic found in R/base_generics_sc.R
+
+#' @method find_hvg_sc MetaCells
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(find_hvg_sc, MetaCells) <- function(
+  object,
+  hvg_no = 2000L,
+  hvg_params = params_sc_hvg(),
+  streaming = FALSE,
+  .verbose = TRUE
+) {
+  checkmate::assertClass(object, "bixverse::SingleCells")
+  checkmate::qassert(hvg_no, "I1")
+  assertScHvg(hvg_params)
+  checkmate::qassert(streaming, "B1")
+  checkmate::qassert(.verbose, "B1")
+
+  assay <- if (hvg_params$method == "vst") {
+    "raw"
+  } else {
+    "norm"
+  }
+
+  count_list <- mc_counts_to_list(object = object, assay = assay)
+
+  res <- with(
+    hvg_params,
+    rs_mc_hvg(
+      sparse_data = count_list,
+      hvg_method = method,
+      loess_span = loess_span,
+      binning = bin_method,
+      n_bins = num_bin,
+      clip_max = NULL,
+    )
+  )
+
+  object <- set_sc_new_var_cols(object = object, data_list = res)
+
+  hvg <- switch(
+    hvg_params$method,
+    "vst" = order(res$var_std, decreasing = TRUE)[1:hvg_no],
+    "dispersion" = order(res$dispersion, decreasing = TRUE)[1:hvg_no],
+    "meanvarbin" = order(res$dispersion_scaled, decreasing = TRUE)[1:hvg_no],
+    stop("Unknown HVG method: ", hvg_params$method)
+  )
+
+  object <- set_hvg(object, hvg = hvg)
+
+  return(object)
+}

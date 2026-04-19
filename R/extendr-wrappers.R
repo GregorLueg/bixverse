@@ -2304,33 +2304,42 @@ rs_pairwise_gene_cors <- function(f_path, gene_indices_1, gene_indices_2, cells_
 #' Calculate the percentage of gene sets in the cells
 #'
 #' @description
-#' This function allows to calculate for example the proportion of
-#' mitochondrial genes, or ribosomal genes in the cells for QC purposes.
+#' This function identifies highly variable genes with the three methods known
+#' in Seurat.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
-#' @param hvg_method String. Which HVG detection method to use. Options
-#' are `c("vst", "meanvarbin", "dispersion")`. So far, only the first is
-#' implemented.
+#' @param hvg_method String. Which HVG detection method to use. One of
+#' `c("vst", "meanvarbin", "dispersion")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep.
 #' @param loess_span Numeric. The span parameter for the loess function.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
 #' not provided.
+#' @param binning String. The binning strategy for the `meanvarbin` method. One
+#' of `c("equal_width", "equal_frequency")`.
+#' @param n_bins Integer. Number of bins for the `meanvarbin` method.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with the percentages of counts per gene set group detected
-#' in the cells:
+#' @return A list with the highly variable genes. If `hvg_method == "vst"`, the
+#' following elements can be found:
 #' \itemize{
 #'   \item mean - The average expression of the gene.
 #'   \item var - The variance of the gene.
 #'   \item var_exp - The expected variance of the gene.
 #'   \item var_std - The standardised variance of the gene.
 #' }
+#' For the other two methods, these elements can be found:
+#' \itemize{
+#'   \item mean - The average expression of the gene.
+#'   \item dispersion - The dispersion of the gene
+#'   \item dispersion_scaled - The scaled dispersion per bin per gene
+#'   \item bin - The bin of the gene
+#' }
 #'
 #' @export
-rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, clip_max, streaming, verbose)
+rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg, f_path_gene, hvg_method, cell_indices, loess_span, binning, n_bins, clip_max, streaming, verbose)
 
 #' Calculate HVG per batch
 #'
@@ -2340,8 +2349,8 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #' such as union of top genes per batch.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
-#' @param hvg_method String. Which HVG detection method to use. Currently
-#' only `"vst"` is implemented for batch-aware mode.
+#' @param hvg_method String. Which HVG detection method to use. One of
+#' `c("vst", "meanvarbin", "dispersion")`.
 #' @param cell_indices Integer positions (0-indexed!) that defines the cells
 #' to keep.
 #' @param batch_labels Integer vector (0-indexed!) defining batch membership
@@ -2349,11 +2358,15 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #' @param loess_span Numeric. The span parameter for the loess function.
 #' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` per
 #' batch if not provided.
+#' @param binning String. The binning strategy for the `meanvarbin` method. One
+#' of `c("equal_width", "equal_frequency")`.
+#' @param n_bins Integer. Number of bins for the `meanvarbin` method.
 #' @param streaming Boolean. Shall the genes be streamed in to reduce memory
 #' pressure.
 #' @param verbose Boolean. Controls verbosity of the function.
 #'
-#' @return A list with HVG statistics concatenated across all batches:
+#' @return A list with HVG statistics concatenated across all batches. For
+#' `hvg_method == 'vst'`, the following elements can be found:
 #' \itemize{
 #'   \item mean - The average expression of each gene in each batch.
 #'   \item var - The variance of each gene in each batch.
@@ -2363,9 +2376,20 @@ rs_sc_hvg <- function(f_path_gene, hvg_method, cell_indices, loess_span, clip_ma
 #'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
 #'   n_batches).
 #' }
+#' For the other methods
+#' \itemize{
+#'   \item mean - The average expression of each gene in each batch.
+#'   \item dispersion - The dispersion of the gene in each batch.
+#'   \item dispersion_scaled - The scaled dispersion per bin per gene in each
+#'   batch.
+#'   \item bin - The bin of the gene in each batch.
+#'   \item batch - Batch index for each gene (length = n_genes * n_batches).
+#'   \item gene_idx - Gene index for each entry (0-indexed, length = n_genes *
+#'   n_batches).
+#' }
 #'
 #' @export
-rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, clip_max, streaming, verbose)
+rs_sc_hvg_batch_aware <- function(f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, streaming, verbose) .Call(wrap__rs_sc_hvg_batch_aware, f_path_gene, hvg_method, cell_indices, batch_labels, loess_span, binning, n_bins, clip_max, streaming, verbose)
 
 #' Calculates PCA for single cell
 #'

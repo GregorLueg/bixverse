@@ -21,11 +21,10 @@ params_scdblfinder(
   se_fraction = 1,
   include_pcs = 19L,
   expected_doublet_rate = NULL,
-  n_bins = 100L,
   manual_threshold = NULL,
   normalisation = list(mean_center = TRUE),
   pca = list(),
-  knn = list(k = 0L, knn_method = "nndescent")
+  knn = list(k = 0L)
 )
 }
 \arguments{
@@ -76,9 +75,6 @@ as classifier features. Defaults to \code{19L}.}
 
 \item{expected_doublet_rate}{Optional numeric. Expected doublet rate as a
 percentage. If not provided, will be calculated internally.}
-
-\item{n_bins}{Integer. Number of histogram bins for fallback Otsu
-thresholding. Defaults to \code{100L}.}
 
 \item{manual_threshold}{Optional numeric. Manual score threshold. If \code{NULL}
 (default), expected-rate thresholding is used.}

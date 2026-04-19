@@ -13,8 +13,11 @@ parameters:
 \item min_gene_var_pctl - Which percentile of the highly variable genes
 to include. Defaults to \code{0.7}.
 \item hvg_method - Which method to use to identify HVG. Defaults to \code{"vst"}.
-\item loess_span - In case of
-\item clip_max -
+\item loess_span - In case of \code{"vst"} the span of the loess function.
+\item clip_max - The maximum clipping value (optional).
+\item n_bins - The number of bins to use for the \code{"meanvarbin"} HVG
+detection.
+\item binning_strategy - Which binning strategy to use for \code{"meanvarbin"}.
 }
 }
 \description{
