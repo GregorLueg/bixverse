@@ -74,7 +74,7 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   streaming = FALSE,
   .verbose = TRUE
 ) {
-  checkmate::assertClass(object, "bixverse::SingleCells")
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
   checkmate::qassert(hvg_no, "I1")
   assertScHvg(hvg_params)
   checkmate::qassert(streaming, "B1")
@@ -96,11 +96,11 @@ S7::method(find_hvg_sc, MetaCells) <- function(
       loess_span = loess_span,
       binning = bin_method,
       n_bins = num_bin,
-      clip_max = NULL,
+      clip_max = NULL
     )
   )
 
-  object <- set_sc_new_var_cols(object = object, data_list = res)
+  object@var_table[, names(res) := res]
 
   hvg <- switch(
     hvg_params$method,
@@ -111,6 +111,79 @@ S7::method(find_hvg_sc, MetaCells) <- function(
   )
 
   object <- set_hvg(object, hvg = hvg)
+
+  return(object)
+}
+
+### pca ------------------------------------------------------------------------
+
+# generic found in R/base_generics_sc.R
+
+#' @method calculate_pca_sc MetaCells
+#'
+#' @export
+#'
+#' @importFrom zeallot `%<-%`
+#' @importFrom magrittr `%>%`
+S7::method(calculate_pca_sc, MetaCells) <- function(
+  object,
+  no_pcs,
+  randomised_svd = TRUE,
+  sparse_svd = FALSE,
+  hvg = NULL,
+  seed = 42L,
+  .verbose = TRUE
+) {
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
+  checkmate::qassert(no_pcs, "I1")
+  checkmate::qassert(randomised_svd, "B1")
+  checkmate::qassert(sparse_svd, "B1")
+  checkmate::qassert(hvg, c("I+", "0"))
+  checkmate::qassert(seed, "I1")
+  checkmate::qassert(.verbose, "B1")
+
+  if ((length(get_hvg(object)) == 0) && is.null(hvg)) {
+    warning(paste(
+      "No HVGs identified in the object nor provided.",
+      "Please run find_hvg_sc() or provide the indices of the HVG",
+      "Returning object as is."
+    ))
+    return(object)
+  }
+
+  selected_hvg <- if (!is.null(hvg)) {
+    if (.verbose) {
+      message(
+        paste(
+          "HVGs provided.",
+          "Will use these ones and set the internal HVG to the provided genes."
+        )
+      )
+    }
+    # the method here uses the R 1 indices
+    object <- set_hvg(object, hvg)
+    hvg
+  } else {
+    get_hvg(object)
+  }
+
+  zeallot::`%<-%`(
+    c(pca_factors, pca_loadings, singular_values, scaled),
+    rs_sc_pca(
+      f_path_gene = get_rust_count_gene_f_path(object),
+      no_pcs = no_pcs,
+      random_svd = randomised_svd,
+      cell_indices = get_cells_to_keep(object),
+      gene_indices = selected_hvg,
+      seed = seed,
+      return_scaled = FALSE,
+      verbose = .verbose
+    )
+  )
+
+  object <- set_pca_factors(object, pca_factors)
+  object <- set_pca_loadings(object, pca_loadings)
+  object <- set_pca_singular_vals(object, singular_values[1:no_pcs])
 
   return(object)
 }

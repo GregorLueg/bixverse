@@ -3085,6 +3085,39 @@ rs_extract_several_genes_plots <- function(f_path, cell_indices, gene_indices, s
 #' }
 rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, group_ids, group_levels) .Call(wrap__rs_extract_grouped_gene_stats, f_path, cell_indices, gene_indices, group_ids, group_levels)
 
+#' Meta cells highly variable genes
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`.
+#' @param hvg_method String. Which HVG detection method to use. Options
+#' are `c("vst", "meanvarbin", "dispersion")`.
+#' @param loess_span Numeric. The span parameter for the loess function
+#' (only used for `"vst"`).
+#' @param clip_max Optional clipping number. Defaults to `sqrt(no_cells)` if
+#' not provided (only used for `"vst"`).
+#' @param binning String. The binning strategy for the `meanvarbin` and
+#' `dispersion` methods. One of `c("equal_width", "equal_frequency")`.
+#' @param n_bins Integer. Number of bins for the `meanvarbin` and
+#' `dispersion` methods.
+#'
+#' @return A list with the HVG statistics. If `hvg_method == "vst"`:
+#' \itemize{
+#'   \item mean - The average expression of the gene.
+#'   \item var - The variance of the gene.
+#'   \item var_exp - The expected variance of the gene.
+#'   \item var_std - The standardised variance of the gene.
+#' }
+#' For `"meanvarbin"` and `"dispersion"`:
+#' \itemize{
+#'   \item mean - The average expression of the gene.
+#'   \item dispersion - The dispersion of the gene.
+#'   \item dispersion_scaled - The scaled dispersion per bin per gene.
+#'   \item bin - The bin of the gene.
+#' }
+#'
+#' @export
+rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+
 SingeCellCountData <- new.env(parent = emptyenv())
 
 SingeCellCountData$new <- function(f_path_cells, f_path_genes) .Call(wrap__SingeCellCountData__new, f_path_cells, f_path_genes)

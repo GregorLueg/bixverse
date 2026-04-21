@@ -788,12 +788,10 @@ fn rs_sc_pca_sparse(
         verbose,
     );
 
-    let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
-
     list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
-        singular_values = singular_values_f64
+        singular_values = res.2.r_float_convert()
     )
 }
 
@@ -1021,7 +1019,7 @@ fn rs_sc_snn(
     };
 
     Ok(list!(
-        edges = snn_data.0.r_int_convert(),
+        edges = snn_data.0.r_int_convert_shift(),
         weights = snn_data.1
     ))
 }

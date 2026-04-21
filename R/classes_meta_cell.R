@@ -305,6 +305,7 @@ S7::method(`[`, MetaCells) <- function(
 #'
 #' @param object `MetaCells` class.
 #' @param assay String. One of `c("raw", "norm")`
+#' @param cell_indices Optional integer.
 #'
 #' @keywords internal
 #'
@@ -330,7 +331,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
   assay <- match.arg(assay)
   # checks
   checkmate::assertChoice(assay, c("raw", "norm"))
-  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
 
   # body
   x <- object[, assay = assay]
@@ -368,6 +369,8 @@ S7::method(`[[<-`, MetaCells) <- function(x, i, ..., value) {
 }
 
 ### others ---------------------------------------------------------------------
+
+#### setters -------------------------------------------------------------------
 
 #' @name set_hvg.MetaCells
 #'
@@ -413,6 +416,8 @@ S7::method(set_hvg, MetaCells) <- function(
   return(x)
 }
 
+#### getters -------------------------------------------------------------------
+
 #' @name get_hvg.MetaCells
 #'
 #' @title Get the highly variable gene indices from a `MetaCells`.
@@ -432,6 +437,68 @@ S7::method(get_hvg, MetaCells) <- function(
   }
 
   return(hvg_indices)
+}
+
+#' @name get_cell_indices.MetaCells
+#'
+#' @title Get the cell indices from a `MetaCells`.
+#'
+#' @rdname get_cell_indices
+#'
+#' @method get_cell_indices MetaCells
+S7::method(get_cell_indices, MetaCells) <- function(
+  x,
+  cell_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(cell_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  indices <- match(cell_ids, x@obs_table[["meta_cell_id"]])
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided meta_cell_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
+  }
+
+  return(indices)
+}
+
+#' @name get_gene_indices.MetaCells
+#'
+#' @title Get the cell indices from a `MetaCells`.
+#'
+#' @rdname get_gene_indices
+#'
+#' @method get_gene_indices MetaCells
+S7::method(get_gene_indices, MetaCells) <- function(
+  x,
+  gene_ids,
+  rust_index
+) {
+  # checks
+  checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+  checkmate::qassert(gene_ids, "S+")
+  checkmate::qassert(rust_index, "B1")
+
+  indices <- match(gene_ids, x@var_table[["gene_id"]])
+
+  missing <- is.na(indices)
+  if (any(missing)) {
+    warning(sprintf(
+      "With the provided gene_ids a total of %i could not be matched.",
+      sum(missing)
+    ))
+    indices <- indices[!missing]
+  }
+
+  return(indices)
 }
 
 ### sc cache -------------------------------------------------------------------

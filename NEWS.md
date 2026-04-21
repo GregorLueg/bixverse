@@ -9,6 +9,13 @@ Following things were added:
   - kNN generation
   - sNN generation
   - Leiden clustering
+  - SCENIC for meta cells
+* Exposing (finally) other HVG methods for single cell
+* Addition of `KmKnn` as a nearest neighbour method
+* Harmony v2 added.
+* Following vignettes added:
+  - K-nearest neighbour searches for single cell
+  - Metacells in `bixverse`
 
 # bixverse 0.3.1
 

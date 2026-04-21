@@ -18,6 +18,7 @@ extendr_module! {
     mod r_mc_processing;
     // hvg and pca
     fn rs_mc_hvg;
+    fn rs_mc_pca;
 }
 
 ///////////////////////////
@@ -25,6 +26,9 @@ extendr_module! {
 ///////////////////////////
 
 /// Meta cells highly variable genes
+///
+/// @description Calculates highly variable genes for MetaCells or more
+/// generally speaking sparse data.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `format`.
@@ -100,4 +104,44 @@ fn rs_mc_hvg(
             )
         }
     }
+}
+
+/////////
+// PCA //
+/////////
+
+/// PCA on MetaCells (sparse data)
+///
+/// @description Calculates PCA for MetaCells or more generally speaking sparse
+/// data.
+///
+/// @param sparse_data A named list that needs to have `data`, `indptr`,
+/// `indices`, `nrow`, `ncol` and `format`.
+/// @param no_pcs Integer. Number of PCs to return.
+/// @param random_svd Boolean. Shall randomised SVD be used.
+/// @param seed Integer. Random seed for the randomised SVD.
+///
+/// @returns A list with with the following items
+/// \itemize{
+///   \item scores - The samples projected on the PCA space (solved via sparse
+///   SVD).
+///   \item loadings - The loadings of the features for the PCA (solved via
+///   sparse SVD).
+///   \item singular_values - The singular values for the PCA (solved via sparse
+///   SVD).
+/// }
+///
+/// @export
+#[extendr]
+fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> List {
+    let sparse: CompressedSparseData2<f64, f64> = list_to_sparse_matrix(sparse_data, true);
+    let sparse = cast_compressed_sparse_data(sparse);
+
+    let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed);
+
+    list!(
+        scores = faer_to_r_matrix(res.0.as_ref()),
+        loadings = faer_to_r_matrix(res.1.as_ref()),
+        singular_values = res.2.r_float_convert()
+    )
 }

@@ -713,8 +713,12 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
     message("Transforming sNN data to igraph.")
   }
 
-  snn_g <- igraph::make_graph(snn_graph_rs$edges + 1, directed = FALSE)
-  igraph::E(snn_g)$weight <- snn_graph_rs$weights
+  snn_g <- igraph::make_empty_graph(n = nrow(embd), directed = FALSE)
+  snn_g <- igraph::add_edges(
+    snn_g,
+    snn_graph_rs$edges,
+    attr = list(weight = snn_graph_rs$weights)
+  )
 
   object <- set_snn_graph(object, snn_graph = snn_g)
 
