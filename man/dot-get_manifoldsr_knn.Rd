@@ -7,7 +7,8 @@
 .get_manifoldsr_knn(x)
 }
 \arguments{
-\item{x}{\code{SingleCells} object from which to extract the kNN data}
+\item{x}{\code{SingleCells}, \code{MetaCells} object from which to extract the kNN
+data.}
 }
 \value{
 The manifoldsR \code{NearestNeigbours} if possible

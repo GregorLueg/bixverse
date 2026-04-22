@@ -156,7 +156,7 @@ print.SingleCellNearestNeighbour <- function(x, ...) {
 sc_knn_to_nearest_neighbours <- function(x) {
   checkmate::assertClass(x, "SingleCellNearestNeighbour")
 
-  manifoldsR::generate_nearest_neigbours_class(
+  manifoldsR::new_nearest_neighbour(
     indices = as.vector(t(x$indices)) + 1L,
     dist = as.vector(t(x$dist)),
     k = x$k,

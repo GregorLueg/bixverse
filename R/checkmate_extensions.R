@@ -1584,7 +1584,7 @@ checkScScrublet <- function(x) {
   integer_rules <- list(
     "no_pcs" = "I1[1,)",
     "n_bins_histogram" = "I1[10,)",
-    "n_bins" = "I1[1,)",
+    "n_bins" = "I1[1,)"
   )
 
   res <- purrr::imap_lgl(x, \(x, name) {
@@ -2956,7 +2956,7 @@ checkScMiloR <- function(x) {
   # Check choice parameters
   test_choice_rules <- list(
     refinement_strategy = c("approximate", "bruteforce", "index"),
-    index_type = c("annoy", "hnsw")
+    index_type = c("nndescent", "ivf", "hnsw", "annoy")
   )
 
   test_choice_res <- purrr::imap_lgl(x, \(val, name) {
@@ -3141,6 +3141,185 @@ checkScHarmonyParams <- function(x) {
 #'
 #' @keywords internal
 assertScHarmonyParams <- checkmate::makeAssertionFunction(checkScHarmonyParams)
+
+#### Harmony (version 2) -------------------------------------------------------
+
+#' Check Harmony v2 parameters
+#'
+#' @description Checkmate extension for checking Harmony v2 parameters.
+#'
+#' @param x The list to check/assert.
+#'
+#' @return \code{TRUE} if the check was successful, otherwise an error message.
+#'
+#' @keywords internal
+checkScHarmonyParamsV2 <- function(x) {
+  res <- checkmate::checkList(x)
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  res <- checkmate::checkNames(
+    names(x),
+    must.include = c(
+      "k",
+      "sigma",
+      "theta",
+      "lambda",
+      "block_size",
+      "max_iter_kmeans",
+      "max_iter_harmony",
+      "epsilon_kmeans",
+      "epsilon_harmony",
+      "window_size",
+      "alpha",
+      "tau",
+      "batch_proportion_cutoff",
+      "use_dynamic_lambda"
+    )
+  )
+  if (!isTRUE(res)) {
+    return(res)
+  }
+
+  # Integer rules
+  integer_rules <- list(
+    "k" = c("I1[1,)", "0"),
+    "max_iter_kmeans" = "I1[1,)",
+    "max_iter_harmony" = "I1[1,)",
+    "window_size" = "I1[1,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(integer_rules)) {
+      checkmate::qtest(x, integer_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "max_iter_kmeans, max_iter_harmony,",
+          "and window_size must be integers >= 1. k must be NULL or an integer."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Numeric vector rules (can be length 1 or longer)
+  vector_rules <- list(
+    "sigma" = "N+[0,)",
+    "theta" = "N+[0,)",
+    "lambda" = "N+[0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(vector_rules)) {
+      checkmate::qtest(x, vector_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "sigma, theta, and lambda must be numeric vectors",
+          "with non-negative values."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Scalar numeric rules
+  scalar_rules <- list(
+    "block_size" = "N1(0,1]",
+    "epsilon_kmeans" = "N1(0,)",
+    "epsilon_harmony" = "N1(0,)",
+    "alpha" = "N1(0,1)",
+    "tau" = "N1[0,)",
+    "batch_proportion_cutoff" = "N1(0,)"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(scalar_rules)) {
+      checkmate::qtest(x, scalar_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "block_size must be in (0,1]; epsilon_kmeans, epsilon_harmony,",
+          "and batch_proportion_cutoff must be > 0;",
+          "alpha must be in (0,1); tau must be >= 0."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  # Boolean rules
+  bool_rules <- list(
+    "use_dynamic_lambda" = "B1"
+  )
+
+  res <- purrr::imap_lgl(x, \(x, name) {
+    if (name %in% names(bool_rules)) {
+      checkmate::qtest(x, bool_rules[[name]])
+    } else {
+      TRUE
+    }
+  })
+
+  if (!isTRUE(all(res))) {
+    broken_elem <- names(res)[which(!res)][1]
+    return(
+      sprintf(
+        paste(
+          "The following element `%s` in Harmony v2 parameters is incorrect:",
+          "use_dynamic_lambda must be a single logical."
+        ),
+        broken_elem
+      )
+    )
+  }
+
+  return(TRUE)
+}
+
+#' Assert Harmony v2 parameters
+#'
+#' @description Checkmate extension for asserting the Harmony v2 parameters.
+#'
+#' @inheritParams checkScHarmonyParamsV2
+#'
+#' @param .var.name Name of the checked object to print in assertions. Defaults
+#' to the heuristic implemented in checkmate.
+#' @param add Collection to store assertion messages. See
+#' [checkmate::makeAssertCollection()].
+#'
+#' @return Invisibly returns the checked object if the assertion is successful.
+#'
+#' @keywords internal
+assertScHarmonyParamsV2 <- checkmate::makeAssertionFunction(
+  checkScHarmonyParamsV2
+)
 
 #### scenic --------------------------------------------------------------------
 

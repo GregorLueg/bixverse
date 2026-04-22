@@ -42,5 +42,6 @@ For \code{"meanvarbin"} and \code{"dispersion"}:
 }
 }
 \description{
-Meta cells highly variable genes
+Calculates highly variable genes for MetaCells or more
+generally speaking sparse data.
 }

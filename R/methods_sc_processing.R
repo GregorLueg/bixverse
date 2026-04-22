@@ -453,8 +453,6 @@ S7::method(gene_set_proportions_sc, SingleCells) <- function(
 
 #' @method find_hvg_sc SingleCells
 #'
-#' @export
-#'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
 S7::method(find_hvg_sc, SingleCells) <- function(
@@ -515,8 +513,6 @@ S7::method(find_hvg_sc, SingleCells) <- function(
 # generic found in R/base_generics_sc.R
 
 #' @method calculate_pca_sc SingleCells
-#'
-#' @export
 #'
 #' @importFrom zeallot `%<-%`
 #' @importFrom magrittr `%>%`
@@ -639,14 +635,10 @@ S7::method(calculate_pca_sc, SingleCells) <- function(
 ### neighbours -----------------------------------------------------------------
 
 # generic found in R/base_generics_sc.R
+# method shared across SingleCells and MetaCells
 
-#' @method find_neighbours_sc SingleCells
-#'
 #' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
-S7::method(find_neighbours_sc, SingleCells) <- function(
+S7::method(find_neighbours_sc, ScOrMc) <- function(
   object,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
@@ -654,25 +646,23 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   seed = 42L,
   .verbose = TRUE
 ) {
-  # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   assertScNeighbours(neighbours_params)
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
-  # early return
   if (!embd_to_use %in% get_available_embeddings(object)) {
     warning("The desired embedding was not found. Returning class as is.")
     return(object)
   }
-  # get embedding
-  embd <- get_embedding(x = object, embd_name = embd_to_use)
 
+  embd <- get_embedding(x = object, embd_name = embd_to_use)
   if (!is.null(no_embd_to_use)) {
-    to_take <- min(c(no_embd_to_use, ncol(embd)))
-    embd <- embd[, 1:to_take]
+    embd <- embd[, 1:min(no_embd_to_use, ncol(embd))]
   }
 
   if (.verbose) {
@@ -681,14 +671,12 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
       neighbours_params$knn_algorithm
     ))
   }
-
   knn_data <- generate_sc_knn(
     data = embd,
     neighbours_params = neighbours_params,
     seed = seed,
     .verbose = .verbose
   )
-
   object <- set_knn(object, knn_data)
 
   if (.verbose) {
@@ -697,7 +685,6 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
       neighbours_params$full_snn
     ))
   }
-
   snn_graph_rs <- with(
     neighbours_params,
     rs_sc_snn(
@@ -712,7 +699,6 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
   if (.verbose) {
     message("Transforming sNN data to igraph.")
   }
-
   snn_g <- igraph::make_empty_graph(n = nrow(embd), directed = FALSE)
   snn_g <- igraph::add_edges(
     snn_g,
@@ -720,36 +706,30 @@ S7::method(find_neighbours_sc, SingleCells) <- function(
     attr = list(weight = snn_graph_rs$weights)
   )
 
-  object <- set_snn_graph(object, snn_graph = snn_g)
-
-  return(object)
+  set_snn_graph(object, snn_graph = snn_g)
 }
 
 ### clustering -----------------------------------------------------------------
 
-#' @method find_clusters_sc SingleCells
-#'
-#' @export
-#'
-#' @importFrom zeallot `%<-%`
-#' @importFrom magrittr `%>%`
-S7::method(find_clusters_sc, SingleCells) <- function(
+# generic found in R/base_generics_sc.R
+# method shared across SingleCells and MetaCells
+
+S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   res = 1,
   name = "leiden_clustering"
 ) {
-  # checks
-  checkmate::assertClass(object, "bixverse::SingleCells")
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(res, "N1")
   checkmate::qassert(name, "S1")
 
   snn_graph <- get_snn_graph(object)
-
   if (is.null(snn_graph)) {
-    warning(paste(
-      "No sNN graph found. Did you run find_neighbours_sc()",
-      "Returning class as is."
-    ))
+    warning(
+      "No sNN graph found. Did you run find_neighbours_sc(). Returning class as is."
+    )
     return(object)
   }
 
@@ -759,17 +739,8 @@ S7::method(find_clusters_sc, SingleCells) <- function(
     resolution = res
   )
 
-  duckdb_con <- get_sc_duckdb(object)
-
-  new_data <- data.table::data.table(
-    cell_idx = get_cells_to_keep(object) + 1, # needs to be 1-indexed
-    new_data = leiden_clusters$membership
-  )
-  data.table::setnames(new_data, "new_data", name)
-
-  duckdb_con$join_data_obs(new_data = new_data)
-
-  return(object)
+  object[[name]] <- leiden_clusters$membership
+  object
 }
 
 ### knn with distances ---------------------------------------------------------

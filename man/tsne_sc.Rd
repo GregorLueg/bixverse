@@ -12,7 +12,7 @@ tsne_sc(
   n_dim = 2L,
   perplexity = 30,
   approx_type = c("bh", "fft"),
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
@@ -20,7 +20,7 @@ tsne_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
 \code{TRUE}. If not available, will default to the embedding.}
@@ -55,5 +55,6 @@ or \code{"fft"}. Defaults to \code{"bh"}.}
 The object with a \code{"tsne"} embedding added.
 }
 \description{
-Wrapper around \code{\link[manifoldsR:tsne]{manifoldsR::tsne()}} for the \code{SingleCells} class.
+Wrapper around \code{\link[manifoldsR:tsne]{manifoldsR::tsne()}} for the \code{SingleCells} and \code{MetaCells}
+classes.
 }

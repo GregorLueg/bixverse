@@ -1,3 +1,5 @@
+use bixverse_rs::single_cell::sc_batch_correction::harmony_v2::harmony_v2;
+use bixverse_rs::single_cell::sc_batch_correction::harmony_v2::HarmonyParamsV2;
 use extendr_api::*;
 use faer::Mat;
 
@@ -22,6 +24,7 @@ extendr_module! {
     fn rs_bbknn_filtering;
     fn rs_mnn;
     fn rs_harmony;
+    fn rs_harmony_v2;
 }
 
 ///////////////
@@ -262,7 +265,7 @@ fn rs_bbknn_filtering(
 /// @description
 /// This function implements the (fast) MNN algorithm from Haghverdi, et al.
 /// Instead of working on the full matrix, it uses under the hood PCA and
-/// generates an aligned embedding space.
+/// generates a batch-aligned embedding space.
 ///
 /// @param f_path_gene String. Path to the `counts_genes.bin` file.
 /// @param cell_indices Integer. The cell indices to use. (0-indexed!)
@@ -319,7 +322,7 @@ fn rs_mnn(
 /// Harmony batch correction in Rust
 ///
 /// @description
-/// This function implements the Harmony algorithm from
+/// This function implements the Harmony algorithm from Korsunsky et al., 2019.
 ///
 /// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 /// @param harmony_params List. The parameters for the Harmony algorithm.
@@ -352,6 +355,53 @@ fn rs_harmony(
     let embd = r_matrix_to_faer_fp32(&pca);
 
     let res = harmony(
+        embd.as_ref(),
+        &batch_indices,
+        &harmony_params,
+        seed,
+        verbose,
+    );
+
+    Ok(faer_to_r_matrix(res.as_ref()))
+}
+
+/// Harmony batch correction in Rust (version 2)
+///
+/// @description
+/// This function implements the version 2 Harmony algorithm from Patikas, et
+/// al., 2026.
+///
+/// @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
+/// @param harmony_params List. The parameters for the Harmony (v2) algorithm.
+/// @param batch_labels List. Each element in the list needs to be a 0-indexed
+/// integer that represents the batch effects you wish to regress out.
+/// @param seed Integer. Seed for reproducibility purposes.
+/// @param verbose Boolean. Controls verbosity of the function.
+///
+/// @return The batch-corrected Harmony (v2) embedding space.
+///
+/// @export
+#[extendr]
+fn rs_harmony_v2(
+    pca: RMatrix<f64>,
+    harmony_params: List,
+    batch_labels: List,
+    seed: usize,
+    verbose: bool,
+) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+    let mut batch_indices: Vec<Vec<usize>> = Vec::new();
+
+    for i in 0..batch_labels.len() {
+        let batch_indices_i = batch_labels.elt(i)?;
+        let batch_indices_i = batch_indices_i.as_integer_vector().unwrap();
+        batch_indices.push(batch_indices_i.r_int_convert());
+    }
+
+    let harmony_params = HarmonyParamsV2::from_r_list(harmony_params);
+
+    let embd = r_matrix_to_faer_fp32(&pca);
+
+    let res = harmony_v2(
         embd.as_ref(),
         &batch_indices,
         &harmony_params,

@@ -100,13 +100,17 @@ and trade-offs. The various vignettes will show you how to analyse data.
   * Methods on top of the meta cells: co-expression network detection etc.
   * Expansion of the [sister package](https://github.com/GregorLueg/bixverse.plots) 
     to have plotting helpers in there for single cell.
-  * Helpers to slice and dice the data easier and add new data - this will
+  * Helpers to slice and dice the data easier and add new data -- this will be
+    a larger piece of work.
   * Implementations of [Palantir](https://www.nature.com/articles/s41587-019-0068-4) and
     [Slingshot](https://pubmed.ncbi.nlm.nih.gov/29914354/).
   * Port over [NicheNet](https://www.nature.com/articles/s41592-019-0667-5)
   * Add more GPU-acceleration via [cubecl/WGPU backend]((https://github.com/tracel-ai/cubecl)) 
-    for GPU-agnostic acceleration where appropriate, see another 
+    for GPU-agnostic acceleration where deemed appropriate, see another 
     [sister package](https://github.com/GregorLueg/bixverse.gpu)
+  * Generate a Python package that interfaces into Deep Learning libraries for
+    training neural networks on top of the data -- will need some thought on how
+    to integrate easily with R/Rust ... ? 
 - Leverage the current infrastructure and add dedicated support and methods for
   spatial transcriptomics. There are some cool methods in that space that for 
   sure could benefit from the speed that a compiled, memory-managed language 

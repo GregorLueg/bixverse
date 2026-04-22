@@ -167,17 +167,19 @@ S7::method(calculate_pca_sc, MetaCells) <- function(
     get_hvg(object)
   }
 
+  count_list <- mc_counts_to_list(
+    object = object,
+    gene_indices = selected_hvg,
+    assay = "norm"
+  )
+
   zeallot::`%<-%`(
-    c(pca_factors, pca_loadings, singular_values, scaled),
-    rs_sc_pca(
-      f_path_gene = get_rust_count_gene_f_path(object),
+    c(pca_factors, pca_loadings, singular_values),
+    rs_mc_pca(
+      sparse_data = count_list,
       no_pcs = no_pcs,
       random_svd = randomised_svd,
-      cell_indices = get_cells_to_keep(object),
-      gene_indices = selected_hvg,
-      seed = seed,
-      return_scaled = FALSE,
-      verbose = .verbose
+      seed = seed
     )
   )
 

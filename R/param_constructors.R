@@ -218,7 +218,7 @@ params_scrublet <- function(
     sim_doublet_ratio = sim_doublet_ratio,
     expected_doublet_rate = expected_doublet_rate,
     stdev_doublet_rate = stdev_doublet_rate,
-    n_bins = n_bins,
+    n_bins_histogram = n_bins_histogram,
     manual_threshold = manual_threshold
   )
 

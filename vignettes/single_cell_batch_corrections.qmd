@@ -171,9 +171,7 @@ sc_object <- calculate_pca_sc(
 
 sc_object <- find_neighbours_sc(
   object = sc_object,
-  neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "exhaustive")
-  )
+  neighbours_params = params_sc_neighbours()
 )
 ```
 
@@ -258,9 +256,7 @@ sc_object <- fast_mnn_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   embd_to_use = "mnn",
-  neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "exhaustive")
-  )
+  neighbours_params = params_sc_neighbours()
 )
 ```
 
@@ -321,7 +317,11 @@ Also, visually the batches get mixed now.
 ### Harmony
 
 Harmony operates on the PCA embedding directly. The number of clusters is
-auto-determined from the dataset size (capped at 200) when left as `NULL`.
+auto-determined from the dataset size (capped at 100) when left as `NULL`.
+
+The two versions of Harmony are supported. Let's start with the original:
+
+#### Version 1
 
 ```{r}
 #| label: harmony
@@ -335,9 +335,7 @@ sc_object <- harmony_sc(
 sc_object <- find_neighbours_sc(
   object = sc_object,
   embd_to_use = "harmony",
-  neighbours_params = params_sc_neighbours(
-    knn = list(knn_method = "exhaustive")
-  )
+  neighbours_params = params_sc_neighbours()
 )
 ```
 
@@ -394,6 +392,77 @@ ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
   theme_bw()
 ```
 
+#### Version 2
+
+To be written
+
+```{r}
+#| label: harmony (v2)
+
+sc_object <- harmony_v2_sc(
+  object = sc_object,
+  batch_column = "sample",
+  harmony_params = params_sc_harmony_v2()
+)
+
+sc_object <- find_neighbours_sc(
+  object = sc_object,
+  embd_to_use = "harmony_v2",
+  neighbours_params = params_sc_neighbours()
+)
+```
+
+Let's calculate the batch correction-related scores
+
+```{r}
+#| label: harmony (v2) metrics
+
+kbet_score_post_harmony <- calculate_kbet_sc(
+  sc_object,
+  batch_column = "sample"
+)
+asw_score_post_harmony <- calculate_batch_asw_sc(
+  sc_object,
+  embd_to_use = "harmony_v2",
+  batch_column = "sample"
+)
+lisi_score_post_harmony <- calculate_batch_lisi_sc(
+  sc_object,
+  batch_column = "sample"
+)
+
+kbet_score_post_harmony
+asw_score_post_harmony
+lisi_score_post_harmony
+```
+
+```{r}
+#| label: harmony (v2) tsne
+
+sc_object <- tsne_sc(object = sc_object)
+
+tsne_dt_harmony <- as.data.table(
+  get_embedding(sc_object, "tsne"),
+  keep.rownames = "cell_id"
+)[, batch := sc_object[["sample"]]]
+```
+
+```{r}
+#| label: harmony (v2) plot
+#| fig-width: 7
+#| fig-height: 5
+
+ggplot(tsne_dt_harmony, aes(x = tsne_1, y = tsne_2)) +
+  geom_point(aes(colour = as.factor(batch)), alpha = 0.5, size = 0.5) +
+  labs(
+    x = "tSNE1",
+    y = "tSNE2",
+    title = "Harmony (version 2) batch correction",
+    colour = "Batch:"
+  ) +
+  theme_bw()
+```
+
 ### BBKNN
 
 BBKNN constructs a batch-balanced kNN graph rather than correcting an
@@ -418,6 +487,7 @@ sc_object <- bbknn_sc(
   bbknn_params = params_sc_bbknn(neighbours_within_batch = 10L)
 )
 ```
+
 ```{r}
 #| label: bbknn metrics
 
@@ -433,6 +503,7 @@ lisi_score_post_bbknn <- calculate_batch_lisi_sc(
 kbet_score_post_bbknn
 lisi_score_post_bbknn
 ```
+
 ```{r}
 #| label: bbknn tsne
 
@@ -443,6 +514,7 @@ tsne_dt_bbknn <- as.data.table(
   keep.rownames = "cell_id"
 )[, batch := sc_object[["sample"]]]
 ```
+
 ```{r}
 #| label: bbknn plot
 #| fig-width: 7

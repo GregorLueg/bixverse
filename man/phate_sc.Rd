@@ -11,7 +11,7 @@ phate_sc(
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   phate_params = manifoldsR::params_phate(),
   seed = 42L,
@@ -19,7 +19,7 @@ phate_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
 \code{TRUE}. If not available, will default to the embedding.}
@@ -51,5 +51,6 @@ Defaults to \code{5L}.}
 The object with a \code{"phate"} embedding added.
 }
 \description{
-Wrapper around \code{\link[manifoldsR:phate]{manifoldsR::phate()}} for the \code{SingleCells} class.
+Wrapper around \code{\link[manifoldsR:phate]{manifoldsR::phate()}} for the \code{SingleCells} and \code{MetaCells}
+classes.
 }

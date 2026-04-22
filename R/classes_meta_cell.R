@@ -129,7 +129,10 @@ MetaCells <- S7::new_class(
 #'
 #' @keywords internal
 S7::method(print, MetaCells) <- function(x, ...) {
+  # checks
   checkmate::assertTRUE(S7::S7_inherits(x, MetaCells))
+
+  # various params
   dims <- S7::prop(x, "dims")
   original_assignment <- S7::prop(x, "original_assignment")
   other_data <- S7::prop(x, "other_data")
@@ -145,6 +148,8 @@ S7::method(print, MetaCells) <- function(x, ...) {
   } else {
     "none"
   }
+
+  # print
   cat(
     "Single cell experiment (Meta Cells).\n",
     sprintf("  Meta cell method: %s\n", meta_cell_method),
@@ -285,6 +290,14 @@ S7::method(`[`, MetaCells) <- function(
   }
   assay <- match.arg(assay)
 
+  # transform (meta)cell ids and gene ids to indices
+  if (checkmate::qtest(i, "S+")) {
+    i <- get_cell_indices(x = x, cell_ids = i, rust_index = FALSE)
+  }
+  if (checkmate::qtest(j, "S+")) {
+    j <- get_gene_indices(x = x, gene_ids = j, rust_index = FALSE)
+  }
+
   checkmate::qassert(i, c("I+", "0"))
   checkmate::qassert(j, c("I+", "0"))
   checkmate::assertChoice(assay, c("raw", "norm"))
@@ -304,8 +317,11 @@ S7::method(`[`, MetaCells) <- function(
 #' specific list.
 #'
 #' @param object `MetaCells` class.
+#' @param cell_indices Optional integer. Defines the indices of the (meta)cells
+#' to extract.
+#' @param gene_indices Optional integer. Defines the indices of the genes to
+#' extract.
 #' @param assay String. One of `c("raw", "norm")`
-#' @param cell_indices Optional integer.
 #'
 #' @keywords internal
 #'
@@ -315,6 +331,8 @@ mc_counts_to_list <- S7::new_generic(
   dispatch_args = "object",
   fun = function(
     object,
+    cell_indices = NULL,
+    gene_indices = NULL,
     assay = c("raw", "norm")
   ) {
     S7::S7_dispatch()
@@ -326,6 +344,8 @@ mc_counts_to_list <- S7::new_generic(
 #' @export
 S7::method(mc_counts_to_list, MetaCells) <- function(
   object,
+  cell_indices = NULL,
+  gene_indices = NULL,
   assay = c("raw", "norm")
 ) {
   assay <- match.arg(assay)
@@ -334,7 +354,7 @@ S7::method(mc_counts_to_list, MetaCells) <- function(
   checkmate::assertTRUE(S7::S7_inherits(object, MetaCells))
 
   # body
-  x <- object[, assay = assay]
+  x <- object[cell_indices, gene_indices, assay = assay]
 
   list(
     indptr = x@p,

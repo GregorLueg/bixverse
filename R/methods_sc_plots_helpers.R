@@ -6,14 +6,17 @@
 
 #' Helper function to generate manifoldsR nearest neighbours
 #'
-#' @param x `SingleCells` object from which to extract the kNN data
+#' @param x `SingleCells`, `MetaCells` object from which to extract the kNN
+#' data.
 #'
 #' @returns The manifoldsR `NearestNeigbours` if possible
 #'
 #' @keywords internal
 .get_manifoldsr_knn <- function(x) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(x, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(x, SingleCells) || S7::S7_inherits(x, MetaCells)
+  )
 
   knn_obj <- get_knn_obj(x)
   if (is.null(knn_obj)) {
@@ -33,9 +36,29 @@
 #' Run UMAP on a SingleCells object
 #'
 #' @description
-#' Wrapper around [manifoldsR::umap()] for the `SingleCells` class.
+#' Wrapper around [manifoldsR::umap()] for the `SingleCells` and `MetaCells`
+#' classes. UMAP produces a low-dimensional embedding that emphasises local
+#' neighbourhood structure while being computationally efficient via its
+#' negative-sampling-based optimisation. It is the de facto default for
+#' visualising single-cell data, though claims that it preserves global
+#' structure substantially better than t-SNE are not well supported; with
+#' matched initialisation (e.g. PCA or Laplacian Eigenmaps), the two methods
+#' behave similarly on global geometry, and both should be interpreted primarily
+#' as views of local structure.
 #'
-#' @param object `SingleCells` class.
+#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
+#' object (via [bixverse::find_neighbours_sc()]) is reused, which avoids
+#' recomputing nearest neighbours and keeps the UMAP consistent with any
+#' downstream sNN-based clustering. If no kNN is present, neighbours are
+#' computed from the chosen embedding on the fly.
+#'
+#' Key parameters to tune: `k` controls the balance between local and global
+#' structure (larger values produce more global layouts), while `min_dist`
+#' and `spread` together control how tightly points are packed in the
+#' embedding. For `MetaCells`, smaller `k` values are often appropriate given
+#' the reduced number of points.
+#'
+#' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for UMAP. Must be available
@@ -69,7 +92,14 @@ umap_sc <- S7::new_generic(
     k = 15L,
     min_dist = 0.5,
     spread = 1.0,
-    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
     nn_params = manifoldsR::params_nn(),
     umap_params = manifoldsR::params_umap(),
     seed = 42L,
@@ -79,10 +109,7 @@ umap_sc <- S7::new_generic(
   }
 )
 
-#' @method umap_sc SingleCells
-#'
-#' @export
-S7::method(umap_sc, SingleCells) <- function(
+S7::method(umap_sc, ScOrMc) <- function(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
@@ -91,14 +118,23 @@ S7::method(umap_sc, SingleCells) <- function(
   k = 15L,
   min_dist = 0.5,
   spread = 1.0,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(use_knn, "B1")
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
@@ -155,9 +191,28 @@ S7::method(umap_sc, SingleCells) <- function(
 #' Run t-SNE on a SingleCells object
 #'
 #' @description
-#' Wrapper around [manifoldsR::tsne()] for the `SingleCells` class.
+#' Wrapper around [manifoldsR::tsne()] for the `SingleCells` and `MetaCells`
+#' classes. t-SNE produces a low-dimensional embedding that emphasises local
+#' neighbourhood structure. Distances between well-separated clusters should not
+#' be over-interpreted quantitatively, but the common claim that t-SNE discards
+#' global structure while UMAP preserves it is largely an artefact of default
+#' initialisations rather than a property of the loss functions themselves.
 #'
-#' @param object `SingleCells` class.
+#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
+#' object is reused. Otherwise neighbours are computed from the chosen
+#' embedding.
+#'
+#' Two approximation strategies are available via `approx_type`: `"bh"`
+#' (Barnes-Hut) is the classical O(n log n) approximation and works well
+#' across a wide range of dataset sizes; `"fft"` (interpolation-based, as in
+#' FIt-SNE) scales better to very large datasets. `perplexity` controls the
+#' bandwidth of the Gaussian kernel used to compute affinities within the
+#' neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
+#' `use_knn = TRUE`, perplexity no longer drives neighbour retrieval but still
+#' shapes the affinity distribution over the retrieved neighbours; values too
+#' close to the kNN size will produce poor results.
+#'
+#' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for t-SNE. Must be available
@@ -189,9 +244,16 @@ tsne_sc <- S7::new_generic(
     embd_to_use = "pca",
     no_embd_to_use = NULL,
     n_dim = 2L,
-    perplexity = 30.0,
+    perplexity = 10.0,
     approx_type = c("bh", "fft"),
-    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
     nn_params = manifoldsR::params_nn(),
     tsne_params = manifoldsR::params_tsne(),
     seed = 42L,
@@ -201,25 +263,31 @@ tsne_sc <- S7::new_generic(
   }
 )
 
-#' @method tsne_sc SingleCells
-#'
-#' @export
-S7::method(tsne_sc, SingleCells) <- function(
+S7::method(tsne_sc, ScOrMc) <- function(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
-  perplexity = 30.0,
+  perplexity = 10.0,
   approx_type = c("bh", "fft"),
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
   nn_params = manifoldsR::params_nn(),
   tsne_params = manifoldsR::params_tsne(),
   seed = 42L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
@@ -273,9 +341,26 @@ S7::method(tsne_sc, SingleCells) <- function(
 #' Run PHATE on a SingleCells object
 #'
 #' @description
-#' Wrapper around [manifoldsR::phate()] for the `SingleCells` class.
+#' Wrapper around [manifoldsR::phate()] for the `SingleCells` and `MetaCells`
+#' classes. PHATE (Potential of Heat-diffusion for Affinity-based Trajectory
+#' Embedding) produces a low-dimensional embedding that preserves both local and
+#' global structure by operating on a diffusion process over the data manifold.
+#' Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
+#' progressions and branching structure, making it the preferred choice for data
+#' with developmental or trajectory-like organisation.
 #'
-#' @param object `SingleCells` class.
+#' When `use_knn = TRUE` (the default), the kNN graph already stored on the
+#' object is reused; otherwise neighbours are computed from the chosen
+#' embedding. The algorithm then constructs a diffusion operator, raises it to a
+#' power (the diffusion time `t`, see [manifoldsR::params_phate()]) that
+#' denoises the manifold, and computes potential distances that are finally
+#' embedded via metric MDS.
+#'
+#' Because PHATE inherently smooths over the kNN graph, it pairs naturally
+#' with `MetaCells`: the combination yields a particularly clean view of
+#' continuous biological processes on denoised data.
+#'
+#' @param object `SingleCells`, `MetaCells` class.
 #' @param use_knn Boolean. Use the kNN graph found in the object. Defaults to
 #' `TRUE`. If not available, will default to the embedding.
 #' @param embd_to_use String. The embedding to use for PHATE. Must be available
@@ -306,7 +391,14 @@ phate_sc <- S7::new_generic(
     no_embd_to_use = NULL,
     n_dim = 2L,
     k = 5L,
-    knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+    knn_method = c(
+      "kmknn",
+      "hnsw",
+      "balltree",
+      "annoy",
+      "nndescent",
+      "exhaustive"
+    ),
     nn_params = manifoldsR::params_nn(),
     phate_params = manifoldsR::params_phate(),
     seed = 42L,
@@ -316,24 +408,30 @@ phate_sc <- S7::new_generic(
   }
 )
 
-#' @method phate_sc SingleCells
-#'
-#' @export
-S7::method(phate_sc, SingleCells) <- function(
+S7::method(phate_sc, ScOrMc) <- function(
   object,
   use_knn = TRUE,
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
   k = 5L,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c(
+    "kmknn",
+    "hnsw",
+    "balltree",
+    "annoy",
+    "nndescent",
+    "exhaustive"
+  ),
   nn_params = manifoldsR::params_nn(),
   phate_params = manifoldsR::params_phate(),
   seed = 42L,
   .verbose = TRUE
 ) {
   # checks
-  checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
+  checkmate::assertTRUE(
+    S7::S7_inherits(object, SingleCells) || S7::S7_inherits(object, MetaCells)
+  )
   checkmate::qassert(embd_to_use, "S1")
   checkmate::qassert(no_embd_to_use, c("I1", "0"))
   checkmate::qassert(n_dim, "I1[2,2]")
@@ -474,10 +572,10 @@ S7::method(extract_dot_plot_data, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param features Character vector. Gene IDs to extract.
 #' @param obs_cols Optional character vector. Column names from the obs table
-#'   to include.
+#' to include.
 #' @param scale Boolean. Whether to z-score the expression values.
 #' @param clip Optional numeric. If `scale = TRUE`, clip z-scores to
-#'   `[-clip, clip]`.
+#' `[-clip, clip]`.
 #'
 #' @return A data.table with a `cell_id` column, one column per gene, and
 #'   any requested obs columns.

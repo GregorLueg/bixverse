@@ -13,7 +13,7 @@ umap_sc(
   k = 15L,
   min_dist = 0.5,
   spread = 1,
-  knn_method = c("hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
+  knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
   umap_params = manifoldsR::params_umap(),
   seed = 42L,
@@ -21,7 +21,7 @@ umap_sc(
 )
 }
 \arguments{
-\item{object}{\code{SingleCells} class.}
+\item{object}{\code{SingleCells}, \code{MetaCells} class.}
 
 \item{use_knn}{Boolean. Use the kNN graph found in the object. Defaults to
 \code{TRUE}. If not available, will default to the embedding.}
@@ -56,5 +56,6 @@ to \code{0.5}.}
 The object with a \code{"umap"} embedding added.
 }
 \description{
-Wrapper around \code{\link[manifoldsR:umap]{manifoldsR::umap()}} for the \code{SingleCells} class.
+Wrapper around \code{\link[manifoldsR:umap]{manifoldsR::umap()}} for the \code{SingleCells} and \code{MetaCells}
+classes.
 }

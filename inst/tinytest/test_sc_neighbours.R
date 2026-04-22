@@ -138,6 +138,15 @@ rs_exhaustive_euc <- rs_sc_knn(
   seed = 42L
 )
 
+# also exact, but let's test nonetheless
+rs_kmknn_euc <- rs_sc_knn(
+  embd = pca_embd,
+  knn_params = list(knn_method = "kmknn", ann_dist = "euclidean"),
+  validate_index = FALSE,
+  verbose = FALSE,
+  seed = 42L
+)
+
 rs_annoy_euc <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "annoy", ann_dist = "euclidean"),
@@ -180,6 +189,7 @@ rs_ivf_euc <- rs_sc_knn(
 ##### comparison against bioc --------------------------------------------------
 
 bioc_exhaustive_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_exhaustive_euc)
+bioc_kmknn_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_kmknn_euc)
 bioc_annoy_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_annoy_euc)
 bioc_hnsw_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_hnsw_euc)
 bioc_nndescent_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_nndescent_euc)
@@ -188,6 +198,10 @@ bioc_ivf_euc <- calc_recall_bioc(bioc_knn_euclidean, rs_ivf_euc)
 expect_true(
   current = bioc_exhaustive_euc >= 0.98,
   info = "bioc <> exhaustive search (euclidean dist) - high overlap"
+)
+expect_true(
+  current = bioc_kmknn_euc >= 0.98,
+  info = "bioc <> kmknn search (euclidean dist) - high overlap"
 )
 expect_true(
   current = bioc_annoy_euc >= 0.98,
@@ -208,11 +222,16 @@ expect_true(
 
 ##### against ground truth -----------------------------------------------------
 
+gt_kmknn_euc <- calc_recall_exh(rs_exhaustive_euc, rs_kmknn_euc)
 gt_annoy_euc <- calc_recall_exh(rs_exhaustive_euc, rs_annoy_euc)
 gt_hnsw_euc <- calc_recall_exh(rs_exhaustive_euc, rs_hnsw_euc)
 gt_nndescent_euc <- calc_recall_exh(rs_exhaustive_euc, rs_nndescent_euc)
 gt_ivf_euc <- calc_recall_exh(rs_exhaustive_euc, rs_ivf_euc)
 
+expect_true(
+  current = gt_kmknn_euc >= 0.98,
+  info = "kmknn <> exhaustive search (euclidean dist) - high overlap"
+)
 expect_true(
   current = gt_annoy_euc >= 0.98,
   info = "annoy <> exhaustive search (euclidean dist) - high overlap"
@@ -235,6 +254,14 @@ expect_true(
 rs_exhaustive_cos <- rs_sc_knn(
   embd = pca_embd,
   knn_params = list(knn_method = "exhaustive", ann_dist = "cosine"),
+  verbose = FALSE,
+  validate_index = FALSE,
+  seed = 42L
+)
+
+rs_kmknn_cos <- rs_sc_knn(
+  embd = pca_embd,
+  knn_params = list(knn_method = "kmknn", ann_dist = "cosine"),
   verbose = FALSE,
   validate_index = FALSE,
   seed = 42L
@@ -285,6 +312,7 @@ rs_ivf_cos <- rs_sc_knn(
 # however is correct...
 
 bioc_exhaustive_cos <- calc_recall_bioc(bioc_knn_cosine, rs_exhaustive_cos)
+bioc_kmknn_cos <- calc_recall_bioc(bioc_knn_cosine, rs_kmknn_cos)
 bioc_annoy_cos <- calc_recall_bioc(bioc_knn_cosine, rs_annoy_cos)
 bioc_hnsw_cos <- calc_recall_bioc(bioc_knn_cosine, rs_hnsw_cos)
 bioc_nndescent_cos <- calc_recall_bioc(bioc_knn_cosine, rs_hnsw_cos)
@@ -293,6 +321,10 @@ bioc_nndescent_cos <- calc_recall_bioc(bioc_knn_cosine, rs_ivf_cos)
 expect_true(
   current = bioc_exhaustive_cos >= 0.98,
   info = "bioc <> exhaustive search (cosine dist) - high overlap"
+)
+expect_true(
+  current = bioc_kmknn_cos >= 0.98,
+  info = "bioc <> kmknn search (cosine dist) - high overlap"
 )
 expect_true(
   current = bioc_annoy_cos >= 0.98,
@@ -313,11 +345,16 @@ expect_true(
 
 ##### against ground truth -----------------------------------------------------
 
+gt_kmknn_cos <- calc_recall_exh(rs_exhaustive_cos, rs_kmknn_cos)
 gt_annoy_cos <- calc_recall_exh(rs_exhaustive_cos, rs_annoy_cos)
 gt_hnsw_cos <- calc_recall_exh(rs_exhaustive_cos, rs_hnsw_cos)
 gt_nndescent_cos <- calc_recall_exh(rs_exhaustive_cos, rs_nndescent_cos)
 gt_ivf_cos <- calc_recall_exh(rs_exhaustive_cos, rs_ivf_cos)
 
+expect_true(
+  current = gt_kmknn_cos >= 0.98,
+  info = "kmknn <> exhaustive search (cosine dist) - high overlap"
+)
 expect_true(
   current = gt_annoy_cos >= 0.98,
   info = "annoy <> exhaustive search (cosine dist) - high overlap"
@@ -423,7 +460,6 @@ sc_object <- find_neighbours_sc(
   sc_object,
   neighbours_params = params_sc_neighbours(
     knn = list(
-      knn_method = "hnsw",
       ann_dist = "euclidean"
     )
   ),
@@ -450,7 +486,7 @@ bixverse_snn_euclidean_jaccard <- rs_sc_snn(
 
 # rank version
 expect_equal(
-  current = bixverse_snn_euclidean_rank$edges + 1,
+  current = bixverse_snn_euclidean_rank$edges,
   target = bluster_snn_euclidean_rank$edges,
   info = paste(
     "sNN full generation (euclidean; rank)",
@@ -472,7 +508,7 @@ expect_true(
 
 # jaccard
 expect_equal(
-  current = bixverse_snn_euclidean_jaccard$edges + 1,
+  current = bixverse_snn_euclidean_jaccard$edges,
   target = bluster_snn_euclidean_jaccard$edges,
   info = paste(
     "sNN full generation (euclidean; jaccard)",

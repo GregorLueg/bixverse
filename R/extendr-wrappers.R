@@ -2121,7 +2121,7 @@ rs_bbknn_filtering <- function(indptr, indices, data, no_neighbours_to_keep) .Ca
 #' @description
 #' This function implements the (fast) MNN algorithm from Haghverdi, et al.
 #' Instead of working on the full matrix, it uses under the hood PCA and
-#' generates an aligned embedding space.
+#' generates a batch-aligned embedding space.
 #'
 #' @param f_path_gene String. Path to the `counts_genes.bin` file.
 #' @param cell_indices Integer. The cell indices to use. (0-indexed!)
@@ -2143,7 +2143,7 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, preco
 #' Harmony batch correction in Rust
 #'
 #' @description
-#' This function implements the Harmony algorithm from
+#' This function implements the Harmony algorithm from Korsunsky et al., 2019.
 #'
 #' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
 #' @param harmony_params List. The parameters for the Harmony algorithm.
@@ -2156,6 +2156,24 @@ rs_mnn <- function(f_path_gene, cell_indices, gene_indices, batch_indices, preco
 #'
 #' @export
 rs_harmony <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony, pca, harmony_params, batch_labels, seed, verbose)
+
+#' Harmony batch correction in Rust (version 2)
+#'
+#' @description
+#' This function implements the version 2 Harmony algorithm from Patikas, et
+#' al., 2026.
+#'
+#' @param pca Numerical matrix, i.e., the PCA matrix you want to correct.
+#' @param harmony_params List. The parameters for the Harmony (v2) algorithm.
+#' @param batch_labels List. Each element in the list needs to be a 0-indexed
+#' integer that represents the batch effects you wish to regress out.
+#' @param seed Integer. Seed for reproducibility purposes.
+#' @param verbose Boolean. Controls verbosity of the function.
+#'
+#' @return The batch-corrected Harmony (v2) embedding space.
+#'
+#' @export
+rs_harmony_v2 <- function(pca, harmony_params, batch_labels, seed, verbose) .Call(wrap__rs_harmony_v2, pca, harmony_params, batch_labels, seed, verbose)
 
 #' Scrublet Rust interface
 #'
@@ -3087,6 +3105,9 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 
 #' Meta cells highly variable genes
 #'
+#' @description Calculates highly variable genes for MetaCells or more
+#' generally speaking sparse data.
+#'
 #' @param sparse_data A named list that needs to have `data`, `indptr`,
 #' `indices`, `nrow`, `ncol` and `format`.
 #' @param hvg_method String. Which HVG detection method to use. Options
@@ -3117,6 +3138,30 @@ rs_extract_grouped_gene_stats <- function(f_path, cell_indices, gene_indices, gr
 #'
 #' @export
 rs_mc_hvg <- function(sparse_data, hvg_method, loess_span, binning, n_bins, clip_max) .Call(wrap__rs_mc_hvg, sparse_data, hvg_method, loess_span, binning, n_bins, clip_max)
+
+#' PCA on MetaCells (sparse data)
+#'
+#' @description Calculates PCA for MetaCells or more generally speaking sparse
+#' data.
+#'
+#' @param sparse_data A named list that needs to have `data`, `indptr`,
+#' `indices`, `nrow`, `ncol` and `format`.
+#' @param no_pcs Integer. Number of PCs to return.
+#' @param random_svd Boolean. Shall randomised SVD be used.
+#' @param seed Integer. Random seed for the randomised SVD.
+#'
+#' @returns A list with with the following items
+#' \itemize{
+#'   \item scores - The samples projected on the PCA space (solved via sparse
+#'   SVD).
+#'   \item loadings - The loadings of the features for the PCA (solved via
+#'   sparse SVD).
+#'   \item singular_values - The singular values for the PCA (solved via sparse
+#'   SVD).
+#' }
+#'
+#' @export
+rs_mc_pca <- function(sparse_data, no_pcs, random_svd, seed) .Call(wrap__rs_mc_pca, sparse_data, no_pcs, random_svd, seed)
 
 SingeCellCountData <- new.env(parent = emptyenv())
 
