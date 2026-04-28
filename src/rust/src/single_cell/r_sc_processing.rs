@@ -189,6 +189,8 @@ fn rs_sc_doublet_detection(
 /// @param params List. scDblFinder parameters from R.
 /// @param return_features Boolean. Return the features for the observed cells
 /// that are used to train the classifier.
+/// @param streaming Boolean. Shall the gene data be streamed in for the
+/// selection of the top genes.
 /// @param seed Integer. Seed for reproducibility.
 /// @param verbose Boolean. Controls verbosity.
 /// @param debug Boolean. Additional verbosity for debugging purposes.
@@ -203,6 +205,7 @@ fn rs_sc_scdblfinder(
     cell_indices: &[i32],
     params: List,
     return_features: bool,
+    streaming: bool,
     seed: i32,
     verbose: bool,
     debug: bool,
@@ -214,7 +217,9 @@ fn rs_sc_scdblfinder(
     params.return_features = return_features;
 
     let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
-    let res: ScDblFinderResult = finder.run(seed as usize, verbose, debug).to_extendr()?;
+    let res: ScDblFinderResult = finder
+        .run(seed as usize, streaming, verbose, debug)
+        .to_extendr()?;
 
     let features = if return_features {
         let features: FeatureTable = res.features.unwrap();

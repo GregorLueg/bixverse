@@ -10,6 +10,7 @@ params_scdblfinder(
   heterotypic_bias = 1,
   cluster_resolution = 1,
   cluster_iters = 10L,
+  fast_cluster = TRUE,
   n_iterations = 3L,
   n_trees = 200L,
   max_depth = 4L,
@@ -42,6 +43,11 @@ clustering. Defaults to \code{1.0}.}
 
 \item{cluster_iters}{Integer. Number of Louvain iterations per clustering
 step. Defaults to \code{10L}.}
+
+\item{fast_cluster}{Boolean. Shall fast Louvain clustering be applied, i.e.,
+k-means clustering and use the centroids for kNN graph generation and
+Louvain clustering with then backpropagating the membership based on centroid
+proximity.}
 
 \item{n_iterations}{Integer. Number of refinement iterations. Typically 2-3.
 Defaults to \code{3L}.}

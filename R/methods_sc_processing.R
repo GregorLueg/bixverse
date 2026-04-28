@@ -220,6 +220,8 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
 #' @param object `SingleCells` class.
 #' @param scdblfinder_params List. Parameters from
 #' [bixverse::params_scdblfinder()].
+#' @param streaming Boolean. Shall the gene data be streamed in. Useful on
+#' large data sets.
 #' @param return_features Boolean. Shall the features used to train the
 #' classifier be returned.
 #' @param seed Integer. Seed for reproducibility.
@@ -245,6 +247,7 @@ scdblfinder_sc <- S7::new_generic(
     object,
     scdblfinder_params = params_scdblfinder(),
     return_features = FALSE,
+    streaming = FALSE,
     seed = 42L,
     .verbose = TRUE
   ) {
@@ -259,12 +262,14 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   object,
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
+  streaming = FALSE,
   seed = 42L,
   .verbose = TRUE
 ) {
   checkmate::assertTRUE(S7::S7_inherits(object, SingleCells))
   assertScDblFinder(scdblfinder_params)
   checkmate::qassert(return_features, "B1")
+  checkmate::qassert(streaming, "B1")
   checkmate::qassert(seed, "I1")
   checkmate::qassert(.verbose, "B1")
 
@@ -282,6 +287,7 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
     cell_indices = cell_indices,
     params = scdblfinder_params,
     return_features = return_features,
+    streaming = streaming,
     seed = seed,
     verbose = .verbose,
     debug = FALSE

@@ -244,6 +244,10 @@ params_scrublet <- function(
 #' @param voter_thresh Numeric. Voter threshold across iterations. Proportion of
 #' iterations a cell must be assigned to a cluster to be considered a member.
 #' Must be between 0 and 1. Defaults to `0.9`.
+#' @param fast_cluster Boolean. Shall fast Louvain clustering be applied, i.e.,
+#' k-means clustering and use the centroids for kNN graph generation and
+#' Louvain clustering with then backpropagating the membership based on centroid
+#' proximity.
 #' @param normalisation List. Optional overrides for normalisation parameters.
 #' See [bixverse::params_norm_doublet_detection_defaults()] for available
 #' parameters: `log_transform`, `mean_center`, `normalise_variance`,
@@ -275,6 +279,7 @@ params_boost <- function(
   n_iters = 25L,
   p_thresh = 1e-7,
   voter_thresh = 0.9,
+  fast_cluster = TRUE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
@@ -287,6 +292,7 @@ params_boost <- function(
   checkmate::qassert(n_iters, "I1[1,)")
   checkmate::qassert(p_thresh, "N1(0,)")
   checkmate::qassert(voter_thresh, "N1[0,1]")
+  checkmate::qassert(fast_cluster, "B1")
 
   # generate final parameters
   params <- list(
@@ -301,6 +307,7 @@ params_boost <- function(
     boost_rate = boost_rate,
     replace = replace,
     resolution = resolution,
+    fast_cluster = fast_cluster,
     n_iters = n_iters,
     p_thresh = p_thresh,
     voter_thresh = voter_thresh
@@ -331,6 +338,10 @@ params_boost <- function(
 #' clustering. Defaults to `1.0`.
 #' @param cluster_iters Integer. Number of Louvain iterations per clustering
 #' step. Defaults to `10L`.
+#' @param fast_cluster Boolean. Shall fast Louvain clustering be applied, i.e.,
+#' k-means clustering and use the centroids for kNN graph generation and
+#' Louvain clustering with then backpropagating the membership based on centroid
+#' proximity.
 #' @param n_iterations Integer. Number of refinement iterations. Typically 2-3.
 #' Defaults to `3L`.
 #' @param n_trees Integer. Maximum number of boosting rounds for the GBM
@@ -372,6 +383,7 @@ params_scdblfinder <- function(
   heterotypic_bias = 1.0,
   cluster_resolution = 1.0,
   cluster_iters = 10L,
+  fast_cluster = TRUE,
   n_iterations = 3L,
   n_trees = 200L,
   max_depth = 4L,
@@ -395,6 +407,7 @@ params_scdblfinder <- function(
   checkmate::qassert(cluster_resolution, "N1(0,)")
   checkmate::qassert(cluster_iters, "I1[1,)")
   checkmate::qassert(n_iterations, "I1[1,)")
+  checkmate::qassert(fast_cluster, "B1")
   checkmate::qassert(n_trees, "I1[1,)")
   checkmate::qassert(max_depth, "I1[1,)")
   checkmate::qassert(learning_rate, "N1(0,)")
@@ -420,6 +433,7 @@ params_scdblfinder <- function(
     heterotypic_bias = heterotypic_bias,
     cluster_resolution = cluster_resolution,
     cluster_iters = cluster_iters,
+    fast_cluster = fast_cluster,
     n_iterations = n_iterations,
     n_trees = n_trees,
     max_depth = max_depth,

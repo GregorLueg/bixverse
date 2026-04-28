@@ -2249,13 +2249,15 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' @param params List. scDblFinder parameters from R.
 #' @param return_features Boolean. Return the features for the observed cells
 #' that are used to train the classifier.
+#' @param streaming Boolean. Shall the gene data be streamed in for the
+#' selection of the top genes.
 #' @param seed Integer. Seed for reproducibility.
 #' @param verbose Boolean. Controls verbosity.
 #' @param debug Boolean. Additional verbosity for debugging purposes.
 #'
 #' @returns A list with predicted_doublets, doublet_scores, threshold,
 #' cluster_labels and detected_doublet_rate.
-rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, seed, verbose, debug)
+rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug)
 
 #' Calculates the cumulative proportion of the top X genes
 #'

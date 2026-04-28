@@ -1947,6 +1947,7 @@ checkScDblFinder <- function(x) {
       "heterotypic_bias",
       "cluster_resolution",
       "cluster_iters",
+      "fast_cluster",
       "n_iterations",
       "n_trees",
       "max_depth",
@@ -2020,7 +2021,8 @@ checkScDblFinder <- function(x) {
     "log_transform",
     "mean_center",
     "normalise_variance",
-    "random_svd"
+    "random_svd",
+    "fast_cluster"
   )
   res <- purrr::map_lgl(boolean_rules, \(name) {
     checkmate::qtest(x[[name]], "B1")

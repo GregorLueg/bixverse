@@ -10,6 +10,7 @@ rs_sc_scdblfinder(
   cell_indices,
   params,
   return_features,
+  streaming,
   seed,
   verbose,
   debug
@@ -26,6 +27,9 @@ rs_sc_scdblfinder(
 
 \item{return_features}{Boolean. Return the features for the observed cells
 that are used to train the classifier.}
+
+\item{streaming}{Boolean. Shall the gene data be streamed in for the
+selection of the top genes.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 

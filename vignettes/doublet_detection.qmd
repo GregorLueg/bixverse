@@ -59,7 +59,6 @@ but irrelevant for this situation), giving us something to benchmark against.
 
 ```{r}
 #| label: load data
-
 doublet_path <- download_demuxlet_pbmc()
 
 tempdir_doublet <- file.path(tempdir(), "demuxlet_bixverse")
@@ -74,7 +73,6 @@ Load in the data into bixverse
 
 ```{r}
 #| label: load into bixverse
-
 sc_object <- SingleCells(dir_data = tempdir_doublet)
 
 mtx_io_params <- get_cell_ranger_params(doublet_path)
@@ -82,7 +80,8 @@ mtx_io_params$cells_as_rows <- TRUE
 
 sc_object <- load_mtx(
   object = sc_object,
-  sc_mtx_io_param = mtx_io_params
+  sc_mtx_io_param = mtx_io_params,
+  streaming = FALSE
 )
 
 sc_object
@@ -93,7 +92,6 @@ demuxlet calls.
 
 ```{r}
 #| label: metrics helper
-
 doublet_metrics <- function(
   predicted,
   actual,
@@ -118,7 +116,6 @@ Let's check the two methods out and see how they behave
 
 ```{r}
 #| label: run scrublet
-
 scrublet <- scrublet_sc(
   object = sc_object,
   scrublet_params = params_scrublet(expected_doublet_rate = 0.12)
@@ -134,7 +131,6 @@ A clean separation between the two modes indicates the threshold is sensible.
 #| label: scrublet plot
 #| fig-width: 7
 #| fig-height: 4
-
 plot(scrublet)
 ```
 
@@ -142,7 +138,6 @@ How does the automatic thresholding perform against the demuxlet ground truth?
 
 ```{r}
 #| label: scrublet metrics
-
 scrublet_dt <- get_obs_data(scrublet)
 scrublet_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_dt <- merge(scrublet_dt, demuxlet_data, by = "Barcode")
@@ -160,7 +155,6 @@ override it.
 #| label: scrublet manual threshold
 #| fig-width: 7
 #| fig-height: 4
-
 scrublet_adj <- call_doublets_manual(scrublet, threshold = 0.25)
 
 plot(scrublet_adj)
@@ -168,7 +162,6 @@ plot(scrublet_adj)
 
 ```{r}
 #| label: scrublet adjusted metrics
-
 scrublet_adj_dt <- get_obs_data(scrublet_adj)
 scrublet_adj_dt[, Barcode := get_cell_names(sc_object)]
 scrublet_adj_dt <- merge(scrublet_adj_dt, demuxlet_data, by = "Barcode")
@@ -194,10 +187,9 @@ one of the implemented kNN algorithms that can be faster at this data set size.
 
 ```{r}
 #| label: run boosted
-
 boosted_doublets <- doublet_detection_boost_sc(
   object = sc_object,
-  boost_params = params_boost()
+  boost_params = params_boost(fast_cluster = TRUE, resolution = 0.1)
 )
 
 boosted_doublets
@@ -207,7 +199,6 @@ Let's check how boosted works?
 
 ```{r}
 #| label: boosted metrics
-
 boosted_dt <- get_obs_data(boosted_doublets)
 boosted_dt[, Barcode := get_cell_names(sc_object)]
 boosted_dt <- merge(boosted_dt, demuxlet_data, by = "Barcode")
@@ -219,7 +210,6 @@ doublet_metrics(predicted = boosted_dt$doublet, actual = boosted_dt$Call)
 
 ```{r}
 #| label: run scrublet
-
 scdblfinder <- scdblfinder_sc(
   object = sc_object,
   scdblfinder_params = params_scdblfinder(

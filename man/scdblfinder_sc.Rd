@@ -8,6 +8,7 @@ scdblfinder_sc(
   object,
   scdblfinder_params = params_scdblfinder(),
   return_features = FALSE,
+  streaming = FALSE,
   seed = 42L,
   .verbose = TRUE
 )
@@ -20,6 +21,9 @@ scdblfinder_sc(
 
 \item{return_features}{Boolean. Shall the features used to train the
 classifier be returned.}
+
+\item{streaming}{Boolean. Shall the gene data be streamed in. Useful on
+large data sets.}
 
 \item{seed}{Integer. Seed for reproducibility.}
 

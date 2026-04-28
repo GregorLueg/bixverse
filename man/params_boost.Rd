@@ -11,6 +11,7 @@ params_boost(
   n_iters = 25L,
   p_thresh = 1e-07,
   voter_thresh = 0.9,
+  fast_cluster = TRUE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
@@ -36,6 +37,11 @@ to \code{1e-7}.}
 \item{voter_thresh}{Numeric. Voter threshold across iterations. Proportion of
 iterations a cell must be assigned to a cluster to be considered a member.
 Must be between 0 and 1. Defaults to \code{0.9}.}
+
+\item{fast_cluster}{Boolean. Shall fast Louvain clustering be applied, i.e.,
+k-means clustering and use the centroids for kNN graph generation and
+Louvain clustering with then backpropagating the membership based on centroid
+proximity.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
 See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}} for available

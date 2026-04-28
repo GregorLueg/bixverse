@@ -170,7 +170,7 @@ dependencies = [
 [[package]]
 name = "bixverse-rs"
 version = "0.1.8"
-source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#549fbd7094bb73b0ca15565f624ec398a44f39fc"
+source = "git+https://github.com/GregorLueg/bixverse-rs.git?branch=release-0.1.8#cbceadff9133f43c141948859bb9a798cb501e91"
 dependencies = [
  "ann-search-rs",
  "approx",
