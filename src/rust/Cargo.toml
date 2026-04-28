@@ -6,7 +6,7 @@ edition = '2021'
 rust-version = '1.88'
 
 [lib]
-crate-type = ['staticlib']
+crate-type = ['staticlib', 'rlib']
 name = 'bixverse'
 
 [features]
@@ -26,7 +26,7 @@ codegen-units = 4
 strip = true
 
 [dependencies]
-extendr-api = "0.8.1"
+extendr-api = "0.9.0"
 faer = { version = '0.23.2' }
 half = { version = "2.7.1", features = ["serde"] }
 petgraph = { version = "0.8.3", features = ["rayon"] }
@@ -35,3 +35,7 @@ rayon = "1.11.0"
 rustc-hash = "2.1.1"
 thousands = "*"
 bixverse-rs = { git = "https://github.com/GregorLueg/bixverse-rs.git", branch = "release-0.1.8", features = ["single-cell",] }
+
+[[bin]]
+name = "document"
+path = "document.rs"

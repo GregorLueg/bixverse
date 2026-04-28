@@ -197,8 +197,8 @@ fn rs_bbknn(
     bbknn_params: List,
     seed: usize,
     verbose: bool,
-) -> List {
-    let bbknn_params = BbknnParams::from_r_list(bbknn_params);
+) -> Result<List> {
+    let bbknn_params = BbknnParams::from_r_list(bbknn_params)?;
     let embd = r_matrix_to_faer_fp32(&embd);
     let batch_labels = batch_labels
         .iter()
@@ -208,10 +208,10 @@ fn rs_bbknn(
     let (distances, connectivities) =
         bbknn(embd.as_ref(), &batch_labels, &bbknn_params, seed, verbose);
 
-    list!(
+    Ok(list!(
         distances = sparse_data_to_list(distances),
         connectivities = sparse_data_to_list(connectivities)
-    )
+    ))
 }
 
 /// Reduce BBKNN results to Top X neighbours
@@ -293,11 +293,11 @@ fn rs_mnn(
     mnn_params: List,
     verbose: bool,
     seed: usize,
-) -> Result<RArray<f64, [usize; 2]>> {
+) -> Result<RArray<f64, 2>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
-    let mnn_params = FastMnnParams::from_r_list(mnn_params);
+    let mnn_params = FastMnnParams::from_r_list(mnn_params)?;
 
     let pre_computed_pca = precomputed_pca.map(|embd| r_matrix_to_faer_fp32(&embd));
 
@@ -342,7 +342,7 @@ fn rs_harmony(
     batch_labels: List,
     seed: usize,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let mut batch_indices: Vec<Vec<usize>> = Vec::new();
 
     for i in 0..batch_labels.len() {
@@ -351,7 +351,7 @@ fn rs_harmony(
         batch_indices.push(batch_indices_i.r_int_convert());
     }
 
-    let harmony_params = HarmonyParams::from_r_list(harmony_params);
+    let harmony_params = HarmonyParams::from_r_list(harmony_params)?;
 
     let embd = r_matrix_to_faer_fp32(&pca);
 
@@ -389,7 +389,7 @@ fn rs_harmony_v2(
     batch_labels: List,
     seed: usize,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let mut batch_indices: Vec<Vec<usize>> = Vec::new();
 
     for i in 0..batch_labels.len() {
@@ -398,7 +398,7 @@ fn rs_harmony_v2(
         batch_indices.push(batch_indices_i.r_int_convert());
     }
 
-    let harmony_params = HarmonyParamsV2::from_r_list(harmony_params);
+    let harmony_params = HarmonyParamsV2::from_r_list(harmony_params)?;
 
     let embd = r_matrix_to_faer_fp32(&pca);
 

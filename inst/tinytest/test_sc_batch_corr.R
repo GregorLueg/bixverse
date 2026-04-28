@@ -852,7 +852,99 @@ assess_harmony_impact <- function(object) {
   return(res)
 }
 
+# Assess batch correction impact using Harmony (version 2)
+#
+# Compares the neighbourhood composition before and after batch correction.
+# Calculates both kBET score and the proportion of same-type neighbours in
+# the k-nearest neighbour graph.
+#
+# @param object A SingleCells object with PCA factors, batch labels,
+# and cell type annotations
+#
+# @return A list with
+#   - kbet_original: original kBET score
+#   - kbet_correct: number of cells with kBET < 0.05 after correction
+#   - neighbours_original: count of same-type neighbours per cell (uncorrected)
+#   - neighbours_corrected: count of same-type neighbours per cell (corrected)
+assess_harmony_impact_v2 <- function(object) {
+  # remove any knns and regenerate
+  object = find_neighbours_sc(
+    object,
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+    .verbose = FALSE
+  )
+
+  knn_original <- get_knn_mat(object)
+  cell_types <- unlist(object[["cell_grp"]])
+  batch_effects <- unlist(object[["batch_index"]])
+
+  correct_neighbours_uncor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_uncor[cell_idx] <- sum(
+      cell_types[knn_original[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  kbet_original <- rs_kbet(
+    knn_mat = knn_original,
+    batch_vector = as.integer(batch_effects)
+  )
+
+  kbet_score_original <- sum(kbet_original$pval <= 0.05) /
+    length(kbet_original$pval)
+
+  object = harmony_v2_sc(
+    object = object,
+    batch_column = "batch_index",
+    harmony_params = params_sc_harmony_v2(),
+    .verbose = FALSE
+  )
+
+  object <- find_neighbours_sc(
+    object,
+    embd_to_use = "harmony_v2",
+    neighbours_params = params_sc_neighbours(knn = list(k = 10L)),
+    .verbose = FALSE
+  )
+
+  knn_corrected <- get_knn_mat(object)
+
+  kbet_corrected <- rs_kbet(
+    knn_mat = knn_corrected,
+    batch_vector = as.integer(batch_effects)
+  )
+
+  kbet_score_corrected <- sum(kbet_corrected$pval <= 0.05) /
+    length(kbet_corrected$pval)
+
+  correct_neighbours_cor <- vector(
+    mode = "numeric",
+    length = length(cell_types)
+  )
+
+  for (cell_idx in seq_len(length(cell_types))) {
+    correct_neighbours_cor[cell_idx] <- sum(
+      cell_types[knn_corrected[cell_idx, ] + 1] == cell_types[cell_idx]
+    )
+  }
+
+  res <- list(
+    kbet_original = kbet_score_original,
+    kbet_correct = kbet_score_corrected,
+    neighbours_original = correct_neighbours_uncor,
+    neighbours_corrected = correct_neighbours_cor
+  )
+
+  return(res)
+}
+
 ### weak batch effects ---------------------------------------------------------
+
+#### harmony v1 ----------------------------------------------------------------
 
 weak_batch_effect_res <- assess_harmony_impact(
   object = sc_object.weak_batch_effect
@@ -873,7 +965,30 @@ expect_true(
   )
 )
 
+#### harmony v2 ----------------------------------------------------------------
+
+weak_batch_effect_res <- assess_harmony_impact_v2(
+  object = sc_object.weak_batch_effect
+)
+
+expect_true(
+  current = weak_batch_effect_res$kbet_original >
+    weak_batch_effect_res$kbet_correct,
+  info = paste("harmony - weak batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(weak_batch_effect_res$neighbours_corrected) >
+    (mean(weak_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "harmony - biological signal is not regressed out",
+    "(weak batch effect)"
+  )
+)
+
 ### medium batch effects -------------------------------------------------------
+
+#### harmony v1 ----------------------------------------------------------------
 
 medium_batch_effect_res <- assess_harmony_impact(
   object = sc_object.medium_batch_effect
@@ -894,9 +1009,53 @@ expect_true(
   )
 )
 
+#### harmony v2 ----------------------------------------------------------------
+
+medium_batch_effect_res <- assess_harmony_impact_v2(
+  object = sc_object.medium_batch_effect
+)
+
+expect_true(
+  current = medium_batch_effect_res$kbet_original >
+    medium_batch_effect_res$kbet_correct,
+  info = paste("harmony - medium batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(medium_batch_effect_res$neighbours_corrected) >
+    (mean(medium_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "harmony - biological signal is not regressed out",
+    "(medium batch effect)"
+  )
+)
+
 ### strong batch effects -------------------------------------------------------
 
+#### harmony v1 ----------------------------------------------------------------
+
 strong_batch_effect_res <- assess_harmony_impact(
+  object = sc_object.strong_batch_effect
+)
+
+expect_true(
+  current = strong_batch_effect_res$kbet_original >
+    strong_batch_effect_res$kbet_correct,
+  info = paste("harmony - strong batch effects get regressed out")
+)
+
+expect_true(
+  current = mean(strong_batch_effect_res$neighbours_corrected) >
+    (mean(strong_batch_effect_res$neighbours_original) - 1),
+  info = paste(
+    "harmony - biological signal is not regressed out",
+    "(strong batch effect)"
+  )
+)
+
+#### harmony v2 ----------------------------------------------------------------
+
+strong_batch_effect_res <- assess_harmony_impact_v2(
   object = sc_object.strong_batch_effect
 )
 

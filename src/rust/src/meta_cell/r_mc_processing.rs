@@ -28,7 +28,8 @@ extendr_module! {
 /// Meta cells highly variable genes
 ///
 /// @description Calculates highly variable genes for MetaCells or more
-/// generally speaking sparse data.
+/// generally speaking sparse data. This is happening in-memory compared to the
+/// (usually much) larger single cell data sets.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `format`.
@@ -67,8 +68,9 @@ fn rs_mc_hvg(
     binning: String,
     n_bins: usize,
     clip_max: Option<f32>,
-) -> List {
-    let sparse: CompressedSparseData2<f64, f64> = list_to_sparse_matrix(sparse_data, true);
+) -> Result<List> {
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
     let sparse = cast_compressed_sparse_data(sparse);
 
     let hvg_type = parse_hvg_method(hvg_method)
@@ -78,30 +80,30 @@ fn rs_mc_hvg(
     match hvg_type {
         HvgMethod::Vst => {
             let res = get_hvg_vst_from_sparse(&sparse, loess_span as f32, clip_max);
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 var = res.var,
                 var_exp = res.var_exp,
                 var_std = res.var_std
-            )
+            ))
         }
         HvgMethod::MeanVarBin => {
             let res = get_hvg_mvb_from_sparse(&sparse, &binning, n_bins);
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 dispersion = res.dispersion,
                 dispersion_scaled = res.dispersion_scaled,
                 bin = res.bin
-            )
+            ))
         }
         HvgMethod::Dispersion => {
             let res = get_hvg_dispersion_from_sparse(&sparse, &binning, n_bins);
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 dispersion = res.dispersion,
                 dispersion_scaled = res.dispersion_scaled,
                 bin = res.bin
-            )
+            ))
         }
     }
 }
@@ -113,7 +115,8 @@ fn rs_mc_hvg(
 /// PCA on MetaCells (sparse data)
 ///
 /// @description Calculates PCA for MetaCells or more generally speaking sparse
-/// data.
+/// data. This is happening in-memory compared to the (usually much) larger
+/// single cell data sets.
 ///
 /// @param sparse_data A named list that needs to have `data`, `indptr`,
 /// `indices`, `nrow`, `ncol` and `format`.
@@ -134,7 +137,8 @@ fn rs_mc_hvg(
 /// @export
 #[extendr]
 fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> Result<List> {
-    let sparse: CompressedSparseData2<f64, f64> = list_to_sparse_matrix(sparse_data, true);
+    let sparse: CompressedSparseData2<f64, f64> =
+        list_to_sparse_matrix(sparse_data, true).to_extendr()?;
     let sparse = cast_compressed_sparse_data(sparse);
 
     let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed).to_extendr()?;

@@ -732,6 +732,7 @@ S7::method(find_neighbours_sc, ScOrMc) <- function(
 # generic found in R/base_generics_sc.R
 # method shared across SingleCells and MetaCells
 
+#' @export
 S7::method(find_clusters_sc, ScOrMc) <- function(
   object,
   res = 1,

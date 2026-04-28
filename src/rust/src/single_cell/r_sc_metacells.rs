@@ -75,7 +75,7 @@ fn rs_get_metacells(
     seed: usize,
     verbose: bool,
 ) -> extendr_api::Result<List> {
-    let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params);
+    let meta_cell_params = MetaCellParams::from_r_list(meta_cell_params)?;
 
     // If subsetting, we need both the QC cells and the subset to use
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
@@ -320,7 +320,7 @@ fn rs_get_seacells(
 ) -> extendr_api::Result<List> {
     let start_seacell = Instant::now();
 
-    let seacells_params = SEACellsParams::from_r_list(seacells_params);
+    let seacells_params = SEACellsParams::from_r_list(seacells_params)?;
 
     let (subset_to_orig, n_total_cells, embd_mat) = match cells_to_use {
         Some(ref use_cells) => {
@@ -485,7 +485,6 @@ fn rs_get_seacells(
 
 /// Generate SuperCells.
 ///
-///
 /// @description This function implements the approach from Bilous, et al.
 /// to generate meta cells or called here SuperCells. You can provide an
 /// already pre-computed kNN matrix or an embedding to regenerate the kNN matrix
@@ -532,7 +531,7 @@ fn rs_supercell(
     seed: usize,
     verbose: bool,
 ) -> extendr_api::Result<List> {
-    let supercell_params = SuperCellParams::from_r_list(supercell_params);
+    let supercell_params = SuperCellParams::from_r_list(supercell_params)?;
 
     if cells_to_use.is_some() && (cells_to_keep.is_none() || embd.is_none()) {
         return Err(
@@ -747,7 +746,7 @@ fn rs_pseudobulk_cells_dense(
     cell_indices_ls: List,
     assay: String,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> extendr_api::Result<RArray<f64, 2>> {
     let bulk_type = parse_pseudo_bulk(&assay).unwrap_or_default();
 
     let mut cell_indices: Vec<Vec<usize>> = Vec::with_capacity(cell_indices_ls.len());

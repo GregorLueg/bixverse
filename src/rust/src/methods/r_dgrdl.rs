@@ -2,6 +2,16 @@ use bixverse_rs::methods::dgrdl::*;
 use bixverse_rs::prelude::*;
 use extendr_api::prelude::*;
 
+/////////////
+// Extendr //
+/////////////
+
+extendr_module! {
+    mod r_dgrdl;
+    fn rs_sparse_dict_dgrdl;
+    fn rs_sparse_dict_dgrdl_grid_search;
+}
+
 /// Generate a sparse dictionary with DGRDL
 ///
 /// @description This is the Rust implementation of dual graph regularised
@@ -41,10 +51,15 @@ use extendr_api::prelude::*;
 ///
 /// @export
 #[extendr]
-fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbose: bool) -> List {
+fn rs_sparse_dict_dgrdl(
+    x: RMatrix<f64>,
+    dgrdl_params: List,
+    seed: usize,
+    verbose: bool,
+) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
 
-    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params);
+    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params)?;
 
     let mut dgrdl_object = Dgrdl::new(dgrdl_params);
 
@@ -59,12 +74,12 @@ fn rs_sparse_dict_dgrdl(x: RMatrix<f64>, dgrdl_params: List, seed: usize, verbos
         CompressedSparseFormat::Csr,
     );
 
-    list!(
+    Ok(list!(
         dictionary = faer_to_r_matrix(res.dictionary.as_ref()),
         coefficients = faer_to_r_matrix(res.coefficients.as_ref()),
         feature_laplacian = sparse_data_to_list(feature_laplacian),
         sample_laplacian = sparse_data_to_list(sample_laplacian),
-    )
+    ))
 }
 
 /// Generate a sparse dictionary with DGRDL
@@ -120,7 +135,7 @@ fn rs_sparse_dict_dgrdl_grid_search(
     dict_sizes: &[i32],
     k_neighbours_vec: &[i32],
     verbose: bool,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
 
     // Transform R i32 to usize
@@ -128,7 +143,7 @@ fn rs_sparse_dict_dgrdl_grid_search(
     let dict_sizes: Vec<usize> = dict_sizes.iter().map(|x| *x as usize).collect();
     let k_neighbours_vec: Vec<usize> = k_neighbours_vec.iter().map(|x| *x as usize).collect();
 
-    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params);
+    let dgrdl_params = DgrdlParams::<f64>::from_r_list(dgrdl_params)?;
     let mut dgrdl_object = Dgrdl::new(dgrdl_params);
 
     let grid_search_res: Vec<DgrdlObjectives<f64>> =
@@ -150,18 +165,12 @@ fn rs_sparse_dict_dgrdl_grid_search(
         k_neighbours_vec.push(res.k_neighbours);
     }
 
-    list!(
+    Ok(list!(
         seed = seeds,
         dict_size = dict_sizes,
         k_neighbours = k_neighbours_vec,
         reconstruction_errs = approximation_err,
         feature_laplacian_objective = feature_laplacian_objective,
         sample_laplacian_objective = sample_laplacian_objective,
-    )
-}
-
-extendr_module! {
-    mod r_dgrdl;
-    fn rs_sparse_dict_dgrdl;
-    fn rs_sparse_dict_dgrdl_grid_search;
+    ))
 }

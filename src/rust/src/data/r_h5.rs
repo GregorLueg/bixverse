@@ -41,7 +41,7 @@ fn rs_h5ad_data(
     cell_quality: List,
     verbose: bool,
 ) -> extendr_api::Result<List> {
-    let cell_quality = MinCellQuality::from_r_list(cell_quality);
+    let cell_quality = MinCellQuality::from_r_list(cell_quality)?;
 
     let file_format = parse_compressed_sparse_format(&cs_type)
         .ok_or_else(|| BixverseErrors::UnknownSparseFormat(cs_type.to_string()))

@@ -97,8 +97,8 @@ fn rs_sc_scrublet(
     streaming: bool,
     return_combined_pca: bool,
     return_pairs: bool,
-) -> Result<List> {
-    let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
+) -> Result<List, extendr_api::Error> {
+    let scrublet_params = ScrubletParams::from_r_list(scrublet_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
     let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes = scrublet
@@ -163,8 +163,8 @@ fn rs_sc_doublet_detection(
     seed: usize,
     streaming: bool,
     verbose: bool,
-) -> Result<List> {
-    let boost_params = BoostParams::from_r_list(boost_params);
+) -> Result<List, extendr_api::Error> {
+    let boost_params = BoostParams::from_r_list(boost_params)?;
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut boost_classifier =
@@ -208,7 +208,7 @@ fn rs_sc_scdblfinder(
     debug: bool,
 ) -> extendr_api::Result<List> {
     let cell_indices = cell_indices.r_int_convert();
-    let mut params = ScDblFinderParams::from_r_list(params);
+    let mut params = ScDblFinderParams::from_r_list(params)?;
 
     // doing this outside to be more explit
     params.return_features = return_features;
@@ -278,7 +278,7 @@ fn rs_sc_get_top_genes_perc(
     cell_indices: &[i32],
     streaming: bool,
     verbose: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let cell_indices = cell_indices.r_int_convert();
     let top_n_vals = top_n_vals.r_int_convert();
 
@@ -390,7 +390,7 @@ fn rs_pairwise_gene_cors(
     gene_indices_2: &[i32],
     cells_to_keep: &[i32],
     spearman: bool,
-) -> Result<Vec<f64>> {
+) -> Result<Vec<f64>, extendr_api::Error> {
     let gene_indices_1 = gene_indices_1.r_int_convert();
     let gene_indices_2 = gene_indices_2.r_int_convert();
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -461,7 +461,7 @@ fn rs_sc_hvg(
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
@@ -576,7 +576,7 @@ fn rs_sc_hvg_batch_aware(
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
@@ -724,7 +724,7 @@ fn rs_sc_pca(
     seed: usize,
     return_scaled: bool,
     verbose: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -791,7 +791,7 @@ fn rs_sc_pca_sparse(
     gene_indices: Vec<i32>,
     seed: usize,
     verbose: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -844,10 +844,10 @@ fn rs_sc_knn(
     validate_index: bool,
     verbose: bool,
     seed: usize,
-) -> extendr_api::Result<extendr_api::RArray<i32, [usize; 2]>> {
+) -> extendr_api::Result<extendr_api::RArray<i32, 2>> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
-    let knn_params = KnnParams::from_r_list(knn_params);
+    let knn_params = KnnParams::from_r_list(knn_params)?;
 
     let start_knn = Instant::now();
 
@@ -953,10 +953,10 @@ fn rs_sc_knn_w_dist(
     validate_index: bool,
     verbose: bool,
     seed: usize,
-) -> List {
+) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
 
-    let knn_params = KnnParams::from_r_list(knn_params);
+    let knn_params = KnnParams::from_r_list(knn_params)?;
 
     let (knn_indices, knn_dist) = generate_knn_with_dist(
         embd.as_ref(),
@@ -972,11 +972,11 @@ fn rs_sc_knn_w_dist(
     let index_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_indices[i][j] as i32);
     let dist_mat = Mat::from_fn(embd.nrows(), knn_params.k, |i, j| knn_dist[i][j] as f64);
 
-    list!(
+    Ok(list!(
         indices = faer_to_r_matrix(index_mat.as_ref()),
         dist = faer_to_r_matrix(dist_mat.as_ref()),
         dist_metric = knn_params.ann_dist
-    )
+    ))
 }
 
 /// Generates the sNN graph for igraph

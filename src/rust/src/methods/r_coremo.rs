@@ -25,11 +25,7 @@ use rustc_hash::FxHashMap;
 ///
 /// @export
 #[extendr]
-fn rs_tom(
-    x: RMatrix<f64>,
-    tom_type: &str,
-    signed: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+fn rs_tom(x: RMatrix<f64>, tom_type: &str, signed: bool) -> extendr_api::Result<RArray<f64, 2>> {
     let x = r_matrix_to_faer(&x);
 
     let tom_version = parse_tom_types(tom_type).ok_or_else(|| {

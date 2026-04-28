@@ -29,5 +29,6 @@ SVD).
 }
 \description{
 Calculates PCA for MetaCells or more generally speaking sparse
-data.
+data. This is happening in-memory compared to the (usually much) larger
+single cell data sets.
 }

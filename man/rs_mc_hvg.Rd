@@ -43,5 +43,6 @@ For \code{"meanvarbin"} and \code{"dispersion"}:
 }
 \description{
 Calculates highly variable genes for MetaCells or more
-generally speaking sparse data.
+generally speaking sparse data. This is happening in-memory compared to the
+(usually much) larger single cell data sets.
 }

@@ -22,7 +22,7 @@ use extendr_api::prelude::*;
 ///
 /// @export
 #[extendr]
-fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List> {
+fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List, extendr_api::Error> {
     let x = r_matrix_to_faer(&x);
     let x_scaled = scale_matrix_col(&x.as_ref(), scale);
     let nrow = x_scaled.nrows() as f64;
@@ -120,7 +120,7 @@ fn rs_contrastive_pca(
     alpha: f64,
     n_pcs: usize,
     return_loadings: bool,
-) -> Result<List> {
+) -> Result<List, extendr_api::Error> {
     let target_covar = r_matrix_to_faer(&target_covar);
     let background_covar = r_matrix_to_faer(&background_covar);
     let target_mat = r_matrix_to_faer(&target_mat);

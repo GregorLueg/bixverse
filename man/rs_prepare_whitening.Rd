@@ -33,7 +33,7 @@ A list containing:
 }
 }
 \description{
-Prepares the data for subsequent usag in ICA.
-WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-functions with type checks are provided in the package.
+Prepares the data for subsequent usag in ICA. Incorrect use can
+cause kernel crashes. Wrapper around the Rust functions with type checks are
+provided in the package.
 }
