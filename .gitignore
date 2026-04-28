@@ -4,6 +4,8 @@
 
 # Apple
 .DS_Store
+
+# Rust and others
 inst/doc
 **/.quarto/
 /doc/
@@ -13,6 +15,7 @@ src/Makevars
 src/Makevars.win
 sc_demo.R
 docs
+vendor.tar.xz
 
 # files
 scratch.R
