@@ -36,7 +36,7 @@ threshold detection. Typically 50-100. Defaults to \code{100L}.}
 score distribution.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
-See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}} for available
+See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available
 parameters: \code{log_transform}, \code{mean_center}, \code{normalise_variance},
 \code{target_size}.}
 

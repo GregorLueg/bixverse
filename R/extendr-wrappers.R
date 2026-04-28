@@ -2549,6 +2549,29 @@ rs_sc_snn <- function(knn_mat, snn_method, limited_graph, pruning, verbose) .Cal
 #' @returns Vector of number of overlaps per sample.
 rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn_mat_a, knn_mat_b)
 
+#' Runs fast Louvain cluster on the data
+#'
+#' @description
+#' Runs first k-means clustering, followed by a kNN detection on the centroids
+#' to then run Louvain clustering on the graph and propagate the membership
+#' back to the original data.
+#'
+#' @param embd Numeric matrix. The original embedding.
+#' @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+#' k means clustering to run.
+#' @param resolutions Numeric vector. The Louvain resolutions to iterate
+#' through.
+#' @param n_centroids Optional integer. The number of clusters to find. If
+#' not provided, defaults to `sqrt(nrow(embd))`.
+#' @param fc_params Named list. The fast clustering parameters.
+#' @param seed Integer. For reproducibility.
+#' @param verbose Boolean. Controls the verbosity of the function.
+#'
+#' @returns A list with the memberships per resolution.
+#'
+#' @export
+rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, seed, verbose)
+
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
 #' @description

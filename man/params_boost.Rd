@@ -44,7 +44,7 @@ Louvain clustering with then backpropagating the membership based on centroid
 proximity.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
-See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}} for available
+See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}} for available
 parameters: \code{log_transform}, \code{mean_center}, \code{normalise_variance},
 \code{target_size}. Note: Boost uses different defaults (\code{log_transform = FALSE},
 \code{mean_center = TRUE}, \code{normalise_variance = TRUE}, \code{target_size = NULL}).}

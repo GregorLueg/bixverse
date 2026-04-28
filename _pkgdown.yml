@@ -365,7 +365,7 @@ reference:
       - calculate_kbet_sc
       - calculate_batch_asw_sc
       - calculate_batch_lisi_sc
-      - params_norm_doublet_detection_defaults
+      - params_norm_doublets_defaults
       - params_boost
       - params_sc_hvg
       - params_scrublet

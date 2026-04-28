@@ -8,7 +8,7 @@ params_sc_neighbours(
   full_snn = FALSE,
   pruning = 1/15,
   snn_similarity = c("rank", "jaccard"),
-  knn = list()
+  knn = list(ann_dist = "cosine")
 )
 }
 \arguments{

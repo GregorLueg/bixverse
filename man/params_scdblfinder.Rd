@@ -86,7 +86,7 @@ percentage. If not provided, will be calculated internally.}
 (default), expected-rate thresholding is used.}
 
 \item{normalisation}{List. Optional overrides for normalisation parameters.
-See \code{\link[=params_norm_doublet_detection_defaults]{params_norm_doublet_detection_defaults()}}.}
+See \code{\link[=params_norm_doublets_defaults]{params_norm_doublets_defaults()}}.}
 
 \item{pca}{List. Optional overrides for PCA parameters.
 See \code{\link[=params_pca_defaults]{params_pca_defaults()}}.}

@@ -1,4 +1,5 @@
 use bixverse_rs::prelude::*;
+use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
     doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scdblfinder::*,
@@ -35,6 +36,8 @@ extendr_module! {
     fn rs_sc_knn_w_dist;
     fn rs_sc_snn;
     fn rs_compare_knn;
+    // clustering
+    fn rs_fast_cluster_sc;
 }
 
 ///////////////////////
@@ -1059,4 +1062,62 @@ fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> 
     let knn_mat_b = r_matrix_to_faer(&knn_mat_b);
 
     compare_knn_graphs(knn_mat_a, knn_mat_b)
+}
+
+/// Runs fast Louvain cluster on the data
+///
+/// @description
+/// Runs first k-means clustering, followed by a kNN detection on the centroids
+/// to then run Louvain clustering on the graph and propagate the membership
+/// back to the original data.
+///
+/// @param embd Numeric matrix. The original embedding.
+/// @param km_type String. One of `c("kmeans", "minibatch")` for the type of
+/// k means clustering to run.
+/// @param resolutions Numeric vector. The Louvain resolutions to iterate
+/// through.
+/// @param n_centroids Optional integer. The number of clusters to find. If
+/// not provided, defaults to `sqrt(nrow(embd))`.
+/// @param fc_params Named list. The fast clustering parameters.
+/// @param seed Integer. For reproducibility.
+/// @param verbose Boolean. Controls the verbosity of the function.
+///
+/// @returns A list with the memberships per resolution.
+///
+/// @export
+#[extendr]
+fn rs_fast_cluster_sc(
+    embd: RMatrix<f64>,
+    km_type: String,
+    resolutions: &[f64],
+    n_centroids: Option<usize>,
+    fc_params: List,
+    seed: usize,
+    verbose: bool,
+) -> Result<List, extendr_api::Error> {
+    let embd = r_matrix_to_faer_fp32(&embd);
+    let n_clusters = n_centroids.unwrap_or((embd.nrows() as f32).sqrt() as usize);
+    let resolutions = resolutions.r_float_convert();
+
+    let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
+
+    params.n_centroids = n_clusters;
+
+    let memberships = fast_louvain_clusters(
+        embd.as_ref(),
+        &km_type,
+        &resolutions,
+        &params,
+        seed,
+        verbose,
+    );
+
+    let mut res = List::new(memberships.len());
+
+    for (index, membership) in memberships.iter().enumerate() {
+        let membership = membership.clone().r_int_convert();
+        res.set_elt(index, Robj::from(membership))?;
+    }
+
+    Ok(res)
 }

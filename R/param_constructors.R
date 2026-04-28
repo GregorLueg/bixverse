@@ -108,7 +108,7 @@ params_hvg_defaults <- function() {
 #' }
 #'
 #' @export
-params_norm_doublet_detection_defaults <- function() {
+params_norm_doublets_defaults <- function() {
   list(
     log_transform = TRUE,
     mean_center = FALSE,
@@ -165,7 +165,7 @@ params_pca_defaults <- function() {
 #' `NULL` (default), threshold is automatically detected from simulated doublet
 #' score distribution.
 #' @param normalisation List. Optional overrides for normalisation parameters.
-#' See [bixverse::params_norm_doublet_detection_defaults()] for available
+#' See [bixverse::params_norm_doublets_defaults()] for available
 #' parameters: `log_transform`, `mean_center`, `normalise_variance`,
 #' `target_size`.
 #' @param hvg List. Optional overrides for highly variable gene selection
@@ -208,7 +208,7 @@ params_scrublet <- function(
   # generate final parameters
   params <- list(
     normalisation = modifyList(
-      params_norm_doublet_detection_defaults(),
+      params_norm_doublets_defaults(),
       normalisation,
       keep.null = TRUE
     ),
@@ -249,7 +249,7 @@ params_scrublet <- function(
 #' Louvain clustering with then backpropagating the membership based on centroid
 #' proximity.
 #' @param normalisation List. Optional overrides for normalisation parameters.
-#' See [bixverse::params_norm_doublet_detection_defaults()] for available
+#' See [bixverse::params_norm_doublets_defaults()] for available
 #' parameters: `log_transform`, `mean_center`, `normalise_variance`,
 #' `target_size`. Note: Boost uses different defaults (`log_transform = FALSE`,
 #' `mean_center = TRUE`, `normalise_variance = TRUE`, `target_size = NULL`).
@@ -297,7 +297,7 @@ params_boost <- function(
   # generate final parameters
   params <- list(
     normalisation = modifyList(
-      params_norm_doublet_detection_defaults(),
+      params_norm_doublets_defaults(),
       normalisation,
       keep.null = TRUE
     ),
@@ -367,7 +367,7 @@ params_boost <- function(
 #' @param manual_threshold Optional numeric. Manual score threshold. If `NULL`
 #' (default), expected-rate thresholding is used.
 #' @param normalisation List. Optional overrides for normalisation parameters.
-#' See [bixverse::params_norm_doublet_detection_defaults()].
+#' See [bixverse::params_norm_doublets_defaults()].
 #' @param pca List. Optional overrides for PCA parameters.
 #' See [bixverse::params_pca_defaults()].
 #' @param knn List. Optional overrides for kNN parameters.
@@ -422,7 +422,7 @@ params_scdblfinder <- function(
   # generate params list
   params <- list(
     normalisation = modifyList(
-      params_norm_doublet_detection_defaults(),
+      params_norm_doublets_defaults(),
       normalisation,
       keep.null = TRUE
     ),
@@ -482,7 +482,7 @@ params_sc_neighbours <- function(
   full_snn = FALSE,
   pruning = 1 / 15,
   snn_similarity = c("rank", "jaccard"),
-  knn = list()
+  knn = list(ann_dist = "cosine")
 ) {
   snn_similarity <- match.arg(snn_similarity)
 
@@ -492,11 +492,7 @@ params_sc_neighbours <- function(
 
   knn_params <- modifyList(
     params_knn_defaults(),
-    modifyList(
-      list(k = 15L, ann_dist = "cosine"),
-      knn,
-      keep.null = TRUE
-    ),
+    knn,
     keep.null = TRUE
   )
 
@@ -505,6 +501,60 @@ params_sc_neighbours <- function(
       full_snn = full_snn,
       pruning = pruning,
       snn_similarity = snn_similarity
+    ),
+    knn_params
+  )
+}
+
+## fast clustering -------------------------------------------------------------
+
+#' Fast single cell clustering parameters
+#'
+#' @param kmeans_iters Integer. Number of iterations for k-means clustering.
+#' @param batch_size Integer. Batch size for mini batch k-means clustering.
+#' @param drift_threshold Numeric. The drift for the mini batch k-means
+#' clustering. If the centroid drift is below this, the mini batch k-means
+#' terminates.
+#' @param lr_alpha Numeric. Learning rate alpha parameter for mini batch
+#' k-means.
+#' @param louvain_iters Integer. Number of iterations for Louvain clustering.
+#' @param knn List. Optional overrides for kNN parameters. See
+#' [bixverse::params_knn_defaults()] for available parameters: `k`,
+#' `knn_method`, `ann_dist`, `search_budget`, `n_trees`, `delta`,
+#' `diversify_prob`, `ef_budget`, `m`, `ef_construction`, `ef_search`, `n_list`
+#' and `n_probe`. Sets the default `k = 5L`.
+#'
+#' @returns A named list with the single cell fast clustering parameters.
+#'
+#' @export
+params_sc_fast_cluster <- function(
+  kmeans_iters = 100L,
+  batch_size = 4096L,
+  drift_threshold = 1e-4,
+  lr_alpha = 1.0,
+  louvain_iters = 10L,
+  knn = list(k = 5L)
+) {
+  # checks
+  checkmate::qassert(kmeans_iters, "I1")
+  checkmate::qassert(batch_size, "I1")
+  checkmate::qassert(drift_threshold, "N1")
+  checkmate::qassert(lr_alpha, "N1")
+  checkmate::qassert(louvain_iters, "I1")
+
+  knn_params <- modifyList(
+    params_knn_defaults(),
+    knn,
+    keep.null = TRUE
+  )
+
+  c(
+    list(
+      kmeans_iters = kmeans_iters,
+      batch_size = batch_size,
+      drift_threshold = drift_threshold,
+      lr_alpha = lr_alpha,
+      louvain_iters = louvain_iters
     ),
     knn_params
   )

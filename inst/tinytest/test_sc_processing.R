@@ -597,6 +597,24 @@ expect_true(
   info = "leiden clustering identifies the cell groups"
 )
 
+## fast clustering -------------------------------------------------------------
+
+# TODO
+
+nrow_embd <- nrow(get_pca_factors(sc_object))
+
+
+rs_fast_cluster_sc(
+  embd = get_pca_factors(sc_object),
+  km_type = "kmeans",
+  resolutions = c(1.0, 0.5, 0.25),
+  n_centroids = NULL,
+  fc_params = params_sc_fast_cluster(),
+  seed = 42L,
+  verbose = TRUE
+)
+
+
 ### check the DB structure -----------------------------------------------------
 
 expect_true(
