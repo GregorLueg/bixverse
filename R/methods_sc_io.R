@@ -901,15 +901,27 @@ S7::method(load_mtx, SingleCells) <- function(
   # rust part
   rust_con <- get_sc_rust_ptr(object)
 
-  file_res <- with(
-    sc_mtx_io_param,
-    rust_con$mtx_to_file(
-      mtx_path = path_mtx,
-      qc_params = sc_qc_param,
-      cells_as_rows = cells_as_rows,
-      verbose = .verbose
+  file_res <- if (streaming) {
+    with(
+      sc_mtx_io_param,
+      rust_con$mtx_to_file_streaming(
+        mtx_path = path_mtx,
+        qc_params = sc_qc_param,
+        cells_as_rows = cells_as_rows,
+        verbose = .verbose
+      )
     )
-  )
+  } else {
+    with(
+      sc_mtx_io_param,
+      rust_con$mtx_to_file(
+        mtx_path = path_mtx,
+        qc_params = sc_qc_param,
+        cells_as_rows = cells_as_rows,
+        verbose = .verbose
+      )
+    )
+  }
 
   if (streaming) {
     rust_con$generate_gene_based_data_streaming(

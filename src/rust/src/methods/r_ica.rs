@@ -4,9 +4,9 @@ use extendr_api::prelude::*;
 
 /// Prepare the data for whitening
 ///
-/// @description Prepares the data for subsequent usag in ICA.
-/// WARNING! Incorrect use can cause kernel crashes. Wrapper around the Rust
-/// functions with type checks are provided in the package.
+/// @description Prepares the data for subsequent usag in ICA. Incorrect use can
+/// cause kernel crashes. Wrapper around the Rust functions with type checks are
+/// provided in the package.
 ///
 /// @param x The matrix to whiten. The whitening will happen over the columns.
 /// @param fast_svd Boolean. Shall a randomised SVD be used. This is way faster
@@ -37,16 +37,17 @@ fn rs_prepare_whitening(
     rank: Option<usize>,
     oversampling: Option<usize>,
     n_power_iter: Option<usize>,
-) -> List {
+) -> Result<List> {
     let x = r_matrix_to_faer(&x);
     let rank = rank.unwrap_or(10);
 
-    let (x, k) = prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter);
+    let (x, k) =
+        prepare_whitening(x, fast_svd, seed, rank, oversampling, n_power_iter).to_extendr()?;
 
-    list!(
+    Ok(list!(
         x = faer_to_r_matrix(x.as_ref()),
         k = faer_to_r_matrix(k.as_ref())
-    )
+    ))
 }
 
 /// Run the Rust implementation of fast ICA.
@@ -235,7 +236,7 @@ fn rs_ica_iters_cv(
     ica_type: &str,
     random_seed: usize,
     ica_params: List,
-) -> List {
+) -> Result<List> {
     let x = r_matrix_to_faer(&x);
     let ica_params: IcaParams<f64> = IcaParams::<f64>::from_r_list(ica_params);
 
@@ -248,12 +249,13 @@ fn rs_ica_iters_cv(
         ica_params,
         None,
         random_seed,
-    );
+    )
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         s_combined = faer_to_r_matrix(s_combined.as_ref()),
         converged = converged
-    )
+    ))
 }
 
 extendr_module! {

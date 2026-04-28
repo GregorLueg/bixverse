@@ -96,7 +96,8 @@ fn rs_calculate_dge_mann_whitney(
         min_prop as f32,
         &alternative,
         verbose,
-    )?;
+    )
+    .to_extendr()?;
 
     Ok(list!(
         lfc = dge_results
@@ -166,7 +167,7 @@ fn rs_module_scoring(
     seed: usize,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RMatrix<f64>> {
+) -> Result<RMatrix<f64>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -191,7 +192,8 @@ fn rs_module_scoring(
         streaming,
         seed,
         verbose,
-    )?;
+    )
+    .to_extendr()?;
 
     let nrows = module_scores[0].len(); // cells
     let ncols = module_scores.len(); // gene sets
@@ -232,7 +234,7 @@ fn rs_aucell(
     auc_type: &str,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut gs_indices: Vec<Vec<usize>> = Vec::with_capacity(gs_list.len());
@@ -248,9 +250,10 @@ fn rs_aucell(
     }
 
     let res = if streaming {
-        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
+        calculate_aucell_streaming(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)
+            .to_extendr()?
     } else {
-        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose)?
+        calculate_aucell(&f_path, &gs_indices, &cells_to_keep, auc_type, verbose).to_extendr()?
     };
 
     let auc_mat = Mat::from_fn(res[0].len(), res.len(), |i, j| res[j][i] as f64);
@@ -281,14 +284,15 @@ fn rs_vision(
     cells_to_keep: Vec<i32>,
     streaming: bool,
     verbose: bool,
-) -> extendr_api::Result<RArray<f64, [usize; 2]>> {
+) -> Result<RArray<f64, [usize; 2]>> {
     let cells_to_keep = cells_to_keep.r_int_convert();
     let gene_signatures = r_list_to_sig_genes(gs_list)?;
 
     let res = if streaming {
         calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+            .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     let vision_mat = Mat::from_fn(res.len(), res[0].len(), |i, j| res[i][j] as f64);
@@ -358,8 +362,9 @@ fn rs_vision_with_autocorrelation(
 
     let res = if streaming {
         calculate_vision_streaming(&f_path, &gene_signatures, &cells_to_keep, verbose)
+            .to_extendr()?
     } else {
-        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose)
+        calculate_vision(&f_path, &gene_signatures, &cells_to_keep, verbose).to_extendr()?
     };
 
     if verbose {
@@ -378,8 +383,9 @@ fn rs_vision_with_autocorrelation(
 
         let cluster_random_scores = if streaming {
             calculate_vision_streaming(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+                .to_extendr()?
         } else {
-            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose)
+            calculate_vision(&f_path, &cluster_signatures, &cells_to_keep, verbose).to_extendr()?
         };
 
         random_scores_by_cluster.push(cluster_random_scores);
@@ -509,20 +515,24 @@ fn rs_hotspot_autocor(
     );
 
     let res: HotSpotGeneRes = if streaming {
-        hotspot.compute_all_genes_streaming(
-            &genes_to_use,
-            &hotspot_params.model,
-            hotspot_params.normalise,
-            verbose,
-        )
+        hotspot
+            .compute_all_genes_streaming(
+                &genes_to_use,
+                &hotspot_params.model,
+                hotspot_params.normalise,
+                verbose,
+            )
+            .to_extendr()?
     } else {
-        hotspot.compute_all_genes(
-            &genes_to_use,
-            &hotspot_params.model,
-            hotspot_params.normalise,
-            verbose,
-        )
-    }?;
+        hotspot
+            .compute_all_genes(
+                &genes_to_use,
+                &hotspot_params.model,
+                hotspot_params.normalise,
+                verbose,
+            )
+            .to_extendr()?
+    };
 
     Ok(list!(
         gene_idx = res.gene_idx,
@@ -797,14 +807,15 @@ fn rs_scenic_gene_filter(
     cell_indices: Vec<i32>,
     scenic_params: List,
     verbose: bool,
-) -> Vec<i32> {
+) -> Result<Vec<i32>> {
     let cell_indices = cell_indices.r_int_convert();
 
     let scenic_params = ScenicParams::from_r_list(scenic_params);
 
-    let genes_to_use = scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose);
+    let genes_to_use =
+        scenic_gene_filter(&f_path_genes, &cell_indices, &scenic_params, verbose).to_extendr()?;
 
-    genes_to_use.r_int_convert()
+    Ok(genes_to_use.r_int_convert())
 }
 
 /// SCENIC: Generating gene-regulatory networks
@@ -833,7 +844,7 @@ fn rs_scenic_grn(
     scenic_params: List,
     seed: usize,
     verbose: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> Result<RArray<f64, [usize; 2]>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let tf_indices = tf_indices.r_int_convert();
@@ -848,9 +859,10 @@ fn rs_scenic_grn(
         &scenic_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    faer_to_r_matrix(grn_matrix.as_ref())
+    Ok(faer_to_r_matrix(grn_matrix.as_ref()))
 }
 
 /// SCENIC: Generating gene-regulatory networks (streaming version)
@@ -881,7 +893,7 @@ fn rs_scenic_grn_streaming(
     scenic_params: List,
     seed: usize,
     verbose: bool,
-) -> RArray<f64, [usize; 2]> {
+) -> Result<RArray<f64, [usize; 2]>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let tf_indices = tf_indices.r_int_convert();
@@ -896,9 +908,10 @@ fn rs_scenic_grn_streaming(
         &scenic_params,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    faer_to_r_matrix(grn_matrix.as_ref())
+    Ok(faer_to_r_matrix(grn_matrix.as_ref()))
 }
 
 /// SCENIC: Select the Top TF <> Gene pairs

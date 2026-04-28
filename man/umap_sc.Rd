@@ -57,5 +57,24 @@ The object with a \code{"umap"} embedding added.
 }
 \description{
 Wrapper around \code{\link[manifoldsR:umap]{manifoldsR::umap()}} for the \code{SingleCells} and \code{MetaCells}
-classes.
+classes. UMAP produces a low-dimensional embedding that emphasises local
+neighbourhood structure while being computationally efficient via its
+negative-sampling-based optimisation. It is the de facto default for
+visualising single-cell data, though claims that it preserves global
+structure substantially better than t-SNE are not well supported; with
+matched initialisation (e.g. PCA or Laplacian Eigenmaps), the two methods
+behave similarly on global geometry, and both should be interpreted primarily
+as views of local structure.
+
+When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
+object (via \code{\link[=find_neighbours_sc]{find_neighbours_sc()}}) is reused, which avoids
+recomputing nearest neighbours and keeps the UMAP consistent with any
+downstream sNN-based clustering. If no kNN is present, neighbours are
+computed from the chosen embedding on the fly.
+
+Key parameters to tune: \code{k} controls the balance between local and global
+structure (larger values produce more global layouts), while \code{min_dist}
+and \code{spread} together control how tightly points are packed in the
+embedding. For \code{MetaCells}, smaller \code{k} values are often appropriate given
+the reduced number of points.
 }

@@ -97,12 +97,13 @@ fn rs_sc_scrublet(
     streaming: bool,
     return_combined_pca: bool,
     return_pairs: bool,
-) -> List {
+) -> Result<List> {
     let scrublet_params = ScrubletParams::from_r_list(scrublet_params);
     let cells_to_keep = cells_to_keep.r_int_convert();
     let mut scrublet = Scrublet::new(f_path_gene, f_path_cell, scrublet_params, &cells_to_keep);
-    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes =
-        scrublet.run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs);
+    let (scrublet_res, pca, pair_1, pair_2): FinalScrubletRes = scrublet
+        .run_scrublet(streaming, seed, verbose, return_combined_pca, return_pairs)
+        .to_extendr()?;
 
     let pca_out = pca.map(|m| faer_to_r_matrix(m.as_ref()));
     let pair_1_out: Robj = match pair_1 {
@@ -114,7 +115,7 @@ fn rs_sc_scrublet(
         None => NULL.into(),
     };
 
-    list!(
+    Ok(list!(
         predicted_doublets = scrublet_res.predicted_doublets,
         doublet_scores_obs = scrublet_res.doublet_scores_obs.r_float_convert(),
         doublet_scores_sim = scrublet_res.doublet_scores_sim.r_float_convert(),
@@ -127,7 +128,7 @@ fn rs_sc_scrublet(
         pca = pca_out,
         pair_1 = pair_1_out,
         pair_2 = pair_2_out
-    )
+    ))
 }
 
 /// Detect Doublets via BoostClassifier (in Rust)
@@ -162,20 +163,22 @@ fn rs_sc_doublet_detection(
     seed: usize,
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let boost_params = BoostParams::from_r_list(boost_params);
     let cells_to_keep = cells_to_keep.r_int_convert();
 
     let mut boost_classifier =
         BoostClassifier::new(f_path_gene, f_path_cell, boost_params, &cells_to_keep);
 
-    let boost_res: BoostResult = boost_classifier.run_boost(streaming, seed, verbose);
+    let boost_res: BoostResult = boost_classifier
+        .run_boost(streaming, seed, verbose)
+        .to_extendr()?;
 
-    list!(
+    Ok(list!(
         doublet = boost_res.predicted_doublets,
         doublet_score = boost_res.doublet_scores,
         voting_avg = boost_res.voting_average
-    )
+    ))
 }
 
 /// Run scDblFinder doublet detection
@@ -211,7 +214,7 @@ fn rs_sc_scdblfinder(
     params.return_features = return_features;
 
     let mut finder = ScDblFinder::new(f_path_gene, f_path_cell, params, &cell_indices);
-    let res: ScDblFinderResult = finder.run(seed as usize, verbose, debug);
+    let res: ScDblFinderResult = finder.run(seed as usize, verbose, debug).to_extendr()?;
 
     let features = if return_features {
         let features: FeatureTable = res.features.unwrap();
@@ -275,14 +278,15 @@ fn rs_sc_get_top_genes_perc(
     cell_indices: &[i32],
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let top_n_vals = top_n_vals.r_int_convert();
 
     let res = if streaming {
         get_top_genes_perc_streaming(f_path_cell, &top_n_vals, &cell_indices, verbose)
+            .to_extendr()?
     } else {
-        get_top_genes_perc(f_path_cell, &top_n_vals, &cell_indices, verbose)
+        get_top_genes_perc(f_path_cell, &top_n_vals, &cell_indices, verbose).to_extendr()?
     };
 
     let mut result_list = List::new(top_n_vals.len());
@@ -292,7 +296,7 @@ fn rs_sc_get_top_genes_perc(
         result_list.set_elt(i, Robj::from(res_i)).unwrap();
     }
 
-    result_list
+    Ok(result_list)
 }
 
 //////////////////////////
@@ -342,8 +346,9 @@ fn rs_sc_get_gene_set_perc(
 
     let res = if streaming {
         get_gene_set_perc_streaming(f_path_cell, gene_set_indices, &cell_indices, verbose)
+            .to_extendr()?
     } else {
-        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose)
+        get_gene_set_perc(f_path_cell, gene_set_indices, &cell_indices, verbose).to_extendr()?
     };
 
     let mut result_list = List::new(gene_set_idx.len());
@@ -385,7 +390,7 @@ fn rs_pairwise_gene_cors(
     gene_indices_2: &[i32],
     cells_to_keep: &[i32],
     spearman: bool,
-) -> Vec<f64> {
+) -> Result<Vec<f64>> {
     let gene_indices_1 = gene_indices_1.r_int_convert();
     let gene_indices_2 = gene_indices_2.r_int_convert();
     let cells_to_keep = cells_to_keep.r_int_convert();
@@ -396,9 +401,10 @@ fn rs_pairwise_gene_cors(
         &gene_indices_2,
         &cells_to_keep,
         spearman,
-    );
+    )
+    .to_extendr()?;
 
-    pairwise_cors.r_float_convert()
+    Ok(pairwise_cors.r_float_convert())
 }
 
 ///////////////////////////
@@ -455,7 +461,7 @@ fn rs_sc_hvg(
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let cell_set = cell_indices.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
         .ok_or_else(|| format!("Invalid HVG method: {}", hvg_method))
@@ -465,41 +471,46 @@ fn rs_sc_hvg(
         HvgMethod::Vst => {
             let res = if streaming {
                 get_hvg_vst_streaming(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
+                    .to_extendr()?
             } else {
                 get_hvg_vst(f_path_gene, &cell_set, loess_span as f32, clip_max, verbose)
+                    .to_extendr()?
             };
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 var = res.var,
                 var_exp = res.var_exp,
                 var_std = res.var_std
-            )
+            ))
         }
         HvgMethod::MeanVarBin => {
             let res = if streaming {
                 get_hvg_mvb_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
             } else {
-                get_hvg_mvb(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                get_hvg_mvb(f_path_gene, &cell_set, &binning, n_bins, verbose).to_extendr()?
             };
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 dispersion = res.dispersion,
                 dispersion_scaled = res.dispersion_scaled,
                 bin = res.bin
-            )
+            ))
         }
         HvgMethod::Dispersion => {
             let res = if streaming {
                 get_hvg_dispersion_streaming(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
             } else {
                 get_hvg_dispersion(f_path_gene, &cell_set, &binning, n_bins, verbose)
+                    .to_extendr()?
             };
-            list!(
+            Ok(list!(
                 mean = res.mean,
                 dispersion = res.dispersion,
                 dispersion_scaled = res.dispersion_scaled,
                 bin = res.bin
-            )
+            ))
         }
     }
 }
@@ -565,7 +576,7 @@ fn rs_sc_hvg_batch_aware(
     clip_max: Option<f32>,
     streaming: bool,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let cell_set = cell_indices.r_int_convert();
     let batch_set = batch_labels.r_int_convert();
     let hvg_type = parse_hvg_method(hvg_method)
@@ -592,7 +603,8 @@ fn rs_sc_hvg_batch_aware(
                     clip_max,
                     verbose,
                 )
-            };
+            }
+            .to_extendr()?;
 
             let n_genes = results[0].mean.len();
             let total_len = n_genes * results.len();
@@ -612,14 +624,14 @@ fn rs_sc_hvg_batch_aware(
                 gene_idx.extend(0..n_genes as i32);
             }
 
-            list!(
+            Ok(list!(
                 mean = mean_flat,
                 var = var_flat,
                 var_exp = var_exp_flat,
                 var_std = var_std_flat,
                 batch = batch_idx,
                 gene_idx = gene_idx
-            )
+            ))
         }
         HvgMethod::MeanVarBin => {
             let results = if streaming {
@@ -640,8 +652,10 @@ fn rs_sc_hvg_batch_aware(
                     n_bins,
                     verbose,
                 )
-            };
-            flatten_dispersion_batches(results)
+            }
+            .to_extendr()?;
+
+            Ok(flatten_dispersion_batches(results))
         }
         HvgMethod::Dispersion => {
             let results = if streaming {
@@ -662,8 +676,10 @@ fn rs_sc_hvg_batch_aware(
                     n_bins,
                     verbose,
                 )
-            };
-            flatten_dispersion_batches(results)
+            }
+            .to_extendr()?;
+
+            Ok(flatten_dispersion_batches(results))
         }
     }
 }
@@ -708,7 +724,7 @@ fn rs_sc_pca(
     seed: usize,
     return_scaled: bool,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -721,17 +737,18 @@ fn rs_sc_pca(
         seed,
         return_scaled,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     let singular_values_f64: Vec<f64> = res.2.iter().map(|&x| x as f64).collect();
     let scaled = res.3.map(|s| faer_to_r_matrix(s.as_ref()));
 
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = singular_values_f64,
         scaled = scaled
-    )
+    ))
 }
 
 /// Calculates sparse PCA for single cell
@@ -774,7 +791,7 @@ fn rs_sc_pca_sparse(
     gene_indices: Vec<i32>,
     seed: usize,
     verbose: bool,
-) -> List {
+) -> Result<List> {
     let cell_set = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
@@ -786,13 +803,14 @@ fn rs_sc_pca_sparse(
         random_svd,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = res.2.r_float_convert()
-    )
+    ))
 }
 
 ///////////////

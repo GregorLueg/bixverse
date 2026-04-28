@@ -133,15 +133,15 @@ fn rs_mc_hvg(
 ///
 /// @export
 #[extendr]
-fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> List {
+fn rs_mc_pca(sparse_data: List, no_pcs: usize, random_svd: bool, seed: usize) -> Result<List> {
     let sparse: CompressedSparseData2<f64, f64> = list_to_sparse_matrix(sparse_data, true);
     let sparse = cast_compressed_sparse_data(sparse);
 
-    let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed);
+    let res = pca_on_metacells(&sparse, no_pcs, random_svd, seed).to_extendr()?;
 
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(res.0.as_ref()),
         loadings = faer_to_r_matrix(res.1.as_ref()),
         singular_values = res.2.r_float_convert()
-    )
+    ))
 }

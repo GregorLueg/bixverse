@@ -149,6 +149,32 @@ expect_equivalent(
   info = paste("mtx to binary - correct genes being kept")
 )
 
+#### rust streaming ------------------------------------------------------------
+
+file_res <- with(
+  params_cells_rows_csv,
+  rust_con$mtx_to_file_streaming(
+    mtx_path = path_mtx,
+    qc_params = sc_qc_param,
+    cells_as_rows = cells_as_rows,
+    verbose = FALSE
+  )
+)
+
+rust_con$mtx_to_file_streaming()
+
+expect_equivalent(
+  current = file_res$cell_indices + 1,
+  target = cells_pass,
+  info = paste("mtx to binary - correct cells being kept")
+)
+
+expect_equivalent(
+  current = file_res$gene_indices + 1,
+  target = genes_pass,
+  info = paste("mtx to binary - correct genes being kept")
+)
+
 #### duckdb csv ----------------------------------------------------------------
 
 duckdb_con <- get_sc_duckdb(sc_object)

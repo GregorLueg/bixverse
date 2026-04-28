@@ -3185,15 +3185,15 @@ SingeCellCountData$return_full_mat <- function(assay, cell_based, verbose) .Call
 
 SingeCellCountData$get_cells_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_cells_by_indices, self, indices, assay)
 
-SingeCellCountData$generate_gene_based_data <- function(verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose))
+SingeCellCountData$generate_gene_based_data <- function(verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data, self, verbose)
 
-SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose))
+SingeCellCountData$generate_gene_based_data_streaming <- function(batch_size, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data_streaming, self, batch_size, verbose)
 
-SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) invisible(.Call(wrap__SingeCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose))
+SingeCellCountData$generate_gene_based_data_memory_bounded <- function(max_genes_in_memory, cell_batch_size, verbose) .Call(wrap__SingeCellCountData__generate_gene_based_data_memory_bounded, self, max_genes_in_memory, cell_batch_size, verbose)
 
 SingeCellCountData$get_genes_by_indices <- function(indices, assay) .Call(wrap__SingeCellCountData__get_genes_by_indices, self, indices, assay)
 
-SingeCellCountData$set_from_file <- function() invisible(.Call(wrap__SingeCellCountData__set_from_file, self))
+SingeCellCountData$set_from_file <- function() .Call(wrap__SingeCellCountData__set_from_file, self)
 
 SingeCellCountData$get_nnz_genes <- function(gene_indices) .Call(wrap__SingeCellCountData__get_nnz_genes, self, gene_indices)
 

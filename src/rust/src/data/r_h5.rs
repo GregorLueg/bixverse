@@ -43,7 +43,9 @@ fn rs_h5ad_data(
 ) -> extendr_api::Result<List> {
     let cell_quality = MinCellQuality::from_r_list(cell_quality);
 
-    let file_format = parse_compressed_sparse_format(&cs_type).unwrap();
+    let file_format = parse_compressed_sparse_format(&cs_type)
+        .ok_or_else(|| BixverseErrors::UnknownSparseFormat(cs_type.to_string()))
+        .to_extendr()?;
 
     let file_quality = match file_format {
         CompressedSparseFormat::Csr => {
@@ -54,12 +56,12 @@ fn rs_h5ad_data(
         }
     };
 
-    let file_data: CompressedSparseData2<u16> = match file_format {
+    let file_data: CompressedSparseData2<u32> = match file_format {
         CompressedSparseFormat::Csr => {
-            read_h5ad_x_data_csr(&f_path, &file_quality, verbose).unwrap()
+            read_h5ad_x_data_csr(&f_path, &file_quality, verbose).to_extendr()?
         }
         CompressedSparseFormat::Csc => {
-            let data = read_h5ad_x_data_csc(&f_path, &file_quality, verbose).unwrap();
+            let data = read_h5ad_x_data_csc(&f_path, &file_quality, verbose).to_extendr()?;
             data.transpose_and_convert()
         }
     };

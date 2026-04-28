@@ -52,5 +52,21 @@ The object with a \code{"phate"} embedding added.
 }
 \description{
 Wrapper around \code{\link[manifoldsR:phate]{manifoldsR::phate()}} for the \code{SingleCells} and \code{MetaCells}
-classes.
+classes. PHATE (Potential of Heat-diffusion for Affinity-based Trajectory
+Embedding) produces a low-dimensional embedding that preserves both local and
+global structure by operating on a diffusion process over the data manifold.
+Unlike UMAP or t-SNE, PHATE is explicitly designed to reveal continuous
+progressions and branching structure, making it the preferred choice for data
+with developmental or trajectory-like organisation.
+
+When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
+object is reused; otherwise neighbours are computed from the chosen
+embedding. The algorithm then constructs a diffusion operator, raises it to a
+power (the diffusion time \code{t}, see \code{\link[manifoldsR:params_phate]{manifoldsR::params_phate()}}) that
+denoises the manifold, and computes potential distances that are finally
+embedded via metric MDS.
+
+Because PHATE inherently smooths over the kNN graph, it pairs naturally
+with \code{MetaCells}: the combination yields a particularly clean view of
+continuous biological processes on denoised data.
 }

@@ -40,17 +40,17 @@ fn rs_extract_counts_plots(
     norm: bool,
     scale: bool,
     clip: Option<f32>,
-) -> Vec<f64> {
+) -> Result<Vec<f64>> {
     let cell_indices = cell_indices.r_int_convert();
 
     let counts = if norm {
-        let raw_counts = extract_raw_counts(f_path, &cell_indices, gene_index);
+        let raw_counts = extract_raw_counts(f_path, &cell_indices, gene_index).to_extendr()?;
         raw_counts.iter().map(|x| *x as f32).collect()
     } else {
-        extract_norm_counts(f_path, &cell_indices, gene_index, scale, clip)
+        extract_norm_counts(f_path, &cell_indices, gene_index, scale, clip).to_extendr()?
     };
 
-    counts.r_float_convert()
+    Ok(counts.r_float_convert())
 }
 
 /// Helper to extract single cell counts for several genes
@@ -73,11 +73,12 @@ fn rs_extract_several_genes_plots(
     gene_indices: &[i32],
     scale: bool,
     clip: Option<f32>,
-) -> extendr_api::Result<List> {
+) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
 
-    let all_counts = extract_norm_counts_multi(f_path, &cell_indices, &gene_indices, scale, clip);
+    let all_counts = extract_norm_counts_multi(f_path, &cell_indices, &gene_indices, scale, clip)
+        .to_extendr()?;
 
     let mut res = List::new(all_counts.len());
 
@@ -116,7 +117,7 @@ fn rs_extract_grouped_gene_stats(
     gene_indices: &[i32],
     group_ids: &[i32],
     group_levels: Vec<String>,
-) -> List {
+) -> Result<List> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let group_ids = group_ids.r_int_convert();
@@ -127,11 +128,12 @@ fn rs_extract_grouped_gene_stats(
         &gene_indices,
         &group_ids,
         &group_levels,
-    );
+    )
+    .to_extendr()?;
 
-    list!(
+    Ok(list!(
         grp_label = gene_res.group_labels,
         mean_exp = gene_res.mean_expression.r_float_convert(),
         perc_exp = gene_res.pct_expressed.r_float_convert(),
-    )
+    ))
 }

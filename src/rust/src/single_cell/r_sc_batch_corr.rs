@@ -293,7 +293,7 @@ fn rs_mnn(
     mnn_params: List,
     verbose: bool,
     seed: usize,
-) -> RArray<f64, [usize; 2]> {
+) -> Result<RArray<f64, [usize; 2]>> {
     let cell_indices = cell_indices.r_int_convert();
     let gene_indices = gene_indices.r_int_convert();
     let batch_indices = batch_indices.r_int_convert();
@@ -310,9 +310,10 @@ fn rs_mnn(
         &mnn_params,
         verbose,
         seed,
-    );
+    )
+    .to_extendr()?;
 
-    faer_to_r_matrix(corrected_embd.as_ref())
+    Ok(faer_to_r_matrix(corrected_embd.as_ref()))
 }
 
 /////////////

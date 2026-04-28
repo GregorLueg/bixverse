@@ -99,6 +99,12 @@ S7::method(scrublet_sc, SingleCells) <- function(
   # function body
   cells_to_keep <- get_cells_to_keep(object)
 
+  if (length(cells_to_keep) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+
+    scrublet_params$sparse <- TRUE
+  }
+
   scrublet_res <- rs_sc_scrublet(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
@@ -181,6 +187,12 @@ S7::method(doublet_detection_boost_sc, SingleCells) <- function(
   # function body
   cells_to_keep <- get_cells_to_keep(object)
 
+  if (length(cells_to_keep) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+
+    boost_params$sparse <- TRUE
+  }
+
   boost_res <- rs_sc_doublet_detection(
     f_path_gene = get_rust_count_gene_f_path(object),
     f_path_cell = get_rust_count_cell_f_path(object),
@@ -257,6 +269,12 @@ S7::method(scdblfinder_sc, SingleCells) <- function(
   checkmate::qassert(.verbose, "B1")
 
   cell_indices <- get_cells_to_keep(object)
+
+  if (length(cell_indices) >= 100000) {
+    message("Setting PCA to sparse default. N_cells greater than 100,000")
+
+    scdblfinder_params$sparse <- TRUE
+  }
 
   res <- rs_sc_scdblfinder(
     f_path_gene = get_rust_count_gene_f_path(object),

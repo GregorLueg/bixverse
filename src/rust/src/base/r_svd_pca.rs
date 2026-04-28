@@ -22,11 +22,14 @@ use extendr_api::prelude::*;
 ///
 /// @export
 #[extendr]
-fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> List {
+fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> Result<List> {
     let x = r_matrix_to_faer(&x);
     let x_scaled = scale_matrix_col(&x.as_ref(), scale);
     let nrow = x_scaled.nrows() as f64;
-    let svd_res = x_scaled.thin_svd().unwrap();
+    let svd_res = x_scaled
+        .thin_svd()
+        .map_err(|_| BixverseErrors::FaerSvdError)
+        .to_extendr()?;
     let scores = x_scaled * svd_res.V();
     let s = svd_res
         .S()
@@ -36,12 +39,12 @@ fn rs_prcomp(x: RMatrix<f64>, scale: bool) -> List {
         .collect::<Vec<f64>>();
     let sdev: Vec<f64> = s.iter().map(|x| x / (nrow as f64 - 1.0).sqrt()).collect();
 
-    list!(
+    Ok(list!(
         scores = faer_to_r_matrix(scores.as_ref()),
         v = faer_to_r_matrix(svd_res.V().as_ref()),
         s = sdev,
         scaled = scale,
-    )
+    ))
 }
 
 /// Run randomised SVD over a matrix
@@ -72,15 +75,15 @@ fn rs_random_svd(
     seed: usize,
     oversampling: Option<usize>,
     n_power_iter: Option<usize>,
-) -> List {
+) -> extendr_api::Result<List> {
     let x = r_matrix_to_faer(&x);
-    let random_svd_res = randomised_svd(x, rank, seed, oversampling, n_power_iter);
+    let random_svd_res = randomised_svd(x, rank, seed, oversampling, n_power_iter).to_extendr()?;
 
-    list!(
+    Ok(list!(
         u = faer_to_r_matrix(random_svd_res.u.as_ref()),
         v = faer_to_r_matrix(random_svd_res.v.as_ref()),
         s = random_svd_res.s
-    )
+    ))
 }
 
 /// Calculate the contrastive PCA
@@ -117,14 +120,14 @@ fn rs_contrastive_pca(
     alpha: f64,
     n_pcs: usize,
     return_loadings: bool,
-) -> List {
+) -> Result<List> {
     let target_covar = r_matrix_to_faer(&target_covar);
     let background_covar = r_matrix_to_faer(&background_covar);
     let target_mat = r_matrix_to_faer(&target_mat);
 
     let final_covar = target_covar - alpha * background_covar;
 
-    let cpca_results = get_top_eigenvalues(&final_covar, n_pcs);
+    let cpca_results = get_top_eigenvalues(&final_covar, n_pcs).to_extendr()?;
 
     let eigenvectors: Vec<Vec<f64>> = cpca_results.iter().map(|x| x.1.clone()).collect();
 
@@ -133,15 +136,15 @@ fn rs_contrastive_pca(
     let c_pca_factors = target_mat * c_pca_loadings.clone();
 
     if return_loadings {
-        list!(
+        Ok(list!(
             factors = faer_to_r_matrix(c_pca_factors.as_ref()),
             loadings = faer_to_r_matrix(c_pca_loadings.as_ref())
-        )
+        ))
     } else {
-        list!(
+        Ok(list!(
             factors = faer_to_r_matrix(c_pca_factors.as_ref()),
             loadings = r!(NULL)
-        )
+        ))
     }
 }
 

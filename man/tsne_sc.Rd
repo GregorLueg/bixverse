@@ -10,7 +10,7 @@ tsne_sc(
   embd_to_use = "pca",
   no_embd_to_use = NULL,
   n_dim = 2L,
-  perplexity = 30,
+  perplexity = 10,
   approx_type = c("bh", "fft"),
   knn_method = c("kmknn", "hnsw", "balltree", "annoy", "nndescent", "exhaustive"),
   nn_params = manifoldsR::params_nn(),
@@ -56,5 +56,23 @@ The object with a \code{"tsne"} embedding added.
 }
 \description{
 Wrapper around \code{\link[manifoldsR:tsne]{manifoldsR::tsne()}} for the \code{SingleCells} and \code{MetaCells}
-classes.
+classes. t-SNE produces a low-dimensional embedding that emphasises local
+neighbourhood structure. Distances between well-separated clusters should not
+be over-interpreted quantitatively, but the common claim that t-SNE discards
+global structure while UMAP preserves it is largely an artefact of default
+initialisations rather than a property of the loss functions themselves.
+
+When \code{use_knn = TRUE} (the default), the kNN graph already stored on the
+object is reused. Otherwise neighbours are computed from the chosen
+embedding.
+
+Two approximation strategies are available via \code{approx_type}: \code{"bh"}
+(Barnes-Hut) is the classical O(n log n) approximation and works well
+across a wide range of dataset sizes; \code{"fft"} (interpolation-based, as in
+FIt-SNE) scales better to very large datasets. \code{perplexity} controls the
+bandwidth of the Gaussian kernel used to compute affinities within the
+neighbour set (typical values 5-50). When a pre-computed kNN is supplied via
+\code{use_knn = TRUE}, perplexity no longer drives neighbour retrieval but still
+shapes the affinity distribution over the retrieved neighbours; values too
+close to the kNN size will produce poor results.
 }

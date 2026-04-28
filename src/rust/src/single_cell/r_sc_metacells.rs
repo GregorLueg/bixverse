@@ -255,7 +255,7 @@ fn rs_get_metacells(
     let metacells_refs: Vec<&[usize]> = metacells_original.iter().map(|v| v.as_slice()).collect();
 
     let aggregated: CompressedSparseData2<u32, f32> =
-        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
     Ok(list!(
         assignments = assignment_list,
@@ -406,7 +406,7 @@ fn rs_get_seacells(
     let knn_dist = knn_dist.unwrap();
 
     seacell.construct_kernel_mat(embd_mat.as_ref(), &knn_indices, &knn_dist, verbose);
-    seacell.initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64);
+    let _ = seacell.initialise_archetypes(&knn_indices, &knn_dist, verbose, seed as u64);
 
     seacell.fit(seed, verbose);
 
@@ -460,7 +460,7 @@ fn rs_get_seacells(
     let n_genes = reader.get_header().total_genes;
 
     let aggregated: CompressedSparseData2<u32, f32> =
-        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
     let end_seacell = start_seacell.elapsed();
 
@@ -706,7 +706,7 @@ fn rs_supercell(
     let n_genes = reader.get_header().total_genes;
 
     let aggregated: CompressedSparseData2<u32, f32> =
-        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes);
+        aggregate_meta_cells(&reader, &metacells_refs, target_size as f32, n_genes).to_extendr()?;
 
     Ok(list!(
         assignments = assignment_list,
@@ -758,7 +758,8 @@ fn rs_pseudobulk_cells_dense(
         cell_indices.push(vec_i);
     }
 
-    let data = get_pseudo_bulked_counts_dense(&f_path, &cell_indices, bulk_type, verbose);
+    let data =
+        get_pseudo_bulked_counts_dense(&f_path, &cell_indices, bulk_type, verbose).to_extendr()?;
 
     Ok(faer_to_r_matrix(data.as_ref()))
 }
@@ -804,7 +805,7 @@ fn rs_pseudobulk_cells_sparse(
     }
 
     let data: CompressedSparseData2<f64> =
-        get_pseudo_bulked_counts_sparse(&f_path, &cell_indices, bulk_type, verbose);
+        get_pseudo_bulked_counts_sparse(&f_path, &cell_indices, bulk_type, verbose).to_extendr()?;
 
     Ok(list!(
         indptr = data.indptr,

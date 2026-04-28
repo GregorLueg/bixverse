@@ -32,6 +32,9 @@ extendr_module! {
 /// Type to store the GeneData during streaming
 type GeneData = Vec<FxHashMap<u32, Vec<(u32, u16, F16)>>>;
 
+/// Type to store the Results structure
+type GeneDataRes = std::result::Result<FxHashMap<u32, Vec<(u32, u16, F16)>>, BixverseErrors>;
+
 ///////////
 // Enums //
 ///////////
@@ -314,10 +317,10 @@ impl SingeCellCountData {
         no_genes: usize,
         qc_params: List,
         verbose: bool,
-    ) -> List {
+    ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = write_h5_counts(
+        let (no_cells, no_genes, cell_qc) = write_h5_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -325,17 +328,18 @@ impl SingeCellCountData {
             no_genes,
             qc_params,
             verbose,
-        );
+        )
+        .to_extendr()?;
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;
 
-        list!(
+        Ok(list!(
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
             nnz = cell_qc.nnz
-        )
+        ))
     }
 
     /// Save h5 with normalised counts to file
@@ -369,10 +373,10 @@ impl SingeCellCountData {
         target_size: f64,
         qc_params: List,
         verbose: bool,
-    ) -> List {
+    ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = write_h5_normalised_counts(
+        let (no_cells, no_genes, cell_qc) = write_h5_normalised_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -382,17 +386,18 @@ impl SingeCellCountData {
             target_size as f32,
             qc_params,
             verbose,
-        );
+        )
+        .to_extendr()?;
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;
 
-        list!(
+        Ok(list!(
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
             nnz = cell_qc.nnz
-        )
+        ))
     }
 
     /// Save h5 to file
@@ -420,10 +425,10 @@ impl SingeCellCountData {
         no_genes: usize,
         qc_params: List,
         verbose: bool,
-    ) -> List {
+    ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let (no_cells, no_genes, cell_qc): (usize, usize, CellQuality) = stream_h5_counts(
+        let (no_cells, no_genes, cell_qc) = stream_h5_counts(
             &h5_path,
             &self.f_path_cells,
             &cs_type,
@@ -431,17 +436,18 @@ impl SingeCellCountData {
             no_genes,
             qc_params,
             verbose,
-        );
+        )
+        .to_extendr()?;
 
         self.n_cells = no_cells;
         self.n_genes = no_genes;
 
-        list!(
+        Ok(list!(
             cell_indices = cell_qc.cell_indices,
             gene_indices = cell_qc.gene_indices,
             lib_size = cell_qc.lib_size,
             nnz = cell_qc.nnz
-        )
+        ))
     }
 
     /// Load multiple h5ad files into a single binary
@@ -466,7 +472,7 @@ impl SingeCellCountData {
         universe_size: i32,
         qc_params: List,
         verbose: bool,
-    ) -> List {
+    ) -> Result<List> {
         let qc = MinCellQuality::from_r_list(qc_params);
 
         let tasks: Vec<H5adFileTask> = file_tasks
@@ -483,7 +489,8 @@ impl SingeCellCountData {
             universe_size as usize,
             &qc,
             verbose,
-        );
+        )
+        .to_extendr()?;
 
         self.n_cells = result.total_cells;
         self.n_genes = result.total_genes;
@@ -501,12 +508,12 @@ impl SingeCellCountData {
             })
             .collect::<List>();
 
-        list!(
+        Ok(list!(
             global_gene_indices = result.global_gene_indices,
             total_cells = result.total_cells,
             total_genes = result.total_genes,
             per_file = per_file
-        )
+        ))
     }
 
     /// Save mtx to file
@@ -530,16 +537,53 @@ impl SingeCellCountData {
     ) -> extendr_api::Result<List> {
         let qc_params = MinCellQuality::from_r_list(qc_params);
 
-        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows)
-            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows).to_extendr()?;
 
-        let mtx_quality_data = mtx_reader
-            .parse_mtx_quality(verbose)
-            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+        let mtx_quality_data = mtx_reader.parse_mtx_quality(verbose).to_extendr()?;
 
         let mtx_res: MtxFinalData = mtx_reader
             .process_mtx_and_write_bin(&self.f_path_cells, &mtx_quality_data, verbose)
-            .map_err(|e| extendr_api::Error::from(Box::new(e) as Box<dyn std::error::Error>))?;
+            .to_extendr()?;
+
+        self.n_cells = mtx_res.no_cells;
+        self.n_genes = mtx_res.no_genes;
+
+        Ok(list!(
+            cell_indices = mtx_res.cell_qc.cell_indices,
+            gene_indices = mtx_res.cell_qc.gene_indices,
+            lib_size = mtx_res.cell_qc.lib_size,
+            nnz = mtx_res.cell_qc.nnz
+        ))
+    }
+
+    /// Save mtx to file (streaming version)
+    ///
+    /// ### Params
+    ///
+    /// * `mtx_path` - Path to the mtx file.
+    /// * `qc_params` - List with the quality control parameters.
+    /// * `cells_as_rows` - Do the cells represent rows (= TRUE) or columns.
+    /// * `verbose` - Controls verbosity of the function.
+    ///
+    /// ### Returns
+    ///
+    /// A list with qc parameters.
+    pub fn mtx_to_file_streaming(
+        &mut self,
+        mtx_path: String,
+        qc_params: List,
+        cells_as_rows: bool,
+        verbose: bool,
+    ) -> extendr_api::Result<List> {
+        let qc_params = MinCellQuality::from_r_list(qc_params);
+
+        let mut mtx_reader = MtxReader::new(&mtx_path, qc_params, cells_as_rows).to_extendr()?;
+
+        let mtx_quality_data = mtx_reader.parse_mtx_quality(verbose).to_extendr()?;
+
+        let mtx_res: MtxFinalData = mtx_reader
+            .process_mtx_and_write_bin_streaming(&self.f_path_cells, &mtx_quality_data, verbose)
+            .to_extendr()?;
 
         self.n_cells = mtx_res.no_cells;
         self.n_genes = mtx_res.no_genes;
@@ -564,15 +608,15 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     /// An R list with all of the info that was stored in the .bin file
-    pub fn return_full_mat(&self, assay: &str, cell_based: bool, verbose: bool) -> List {
+    pub fn return_full_mat(&self, assay: &str, cell_based: bool, verbose: bool) -> Result<List> {
         let mut data: Vec<AssayData> = Vec::new();
         let mut indices: Vec<Vec<i32>> = Vec::new();
         let mut indptr: Vec<usize> = Vec::new();
         let assay_type = parse_count_type(assay).unwrap();
 
         if cell_based {
-            let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
-            let cell_chunks = reader.get_all_cells();
+            let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
+            let cell_chunks = reader.get_all_cells().to_extendr()?;
 
             if verbose {
                 println!("All cells loaded in successfully.")
@@ -593,8 +637,8 @@ impl SingeCellCountData {
                 indptr.push(current_ptr);
             }
         } else {
-            let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
-            let gene_chunks = reader.get_all_genes();
+            let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
+            let gene_chunks = reader.get_all_genes().to_extendr()?;
 
             if verbose {
                 println!("All genes loaded in successfully.")
@@ -617,13 +661,13 @@ impl SingeCellCountData {
         let data: Robj = AssayData::flatten_into_r_vector(data);
         let indices = flatten_vector(indices);
 
-        list!(
+        Ok(list!(
             indptr = indptr,
             indices = indices,
             data = data,
             no_cells = self.n_cells,
             no_genes = self.n_genes
-        )
+        ))
     }
 
     /// Return cells by index positions
@@ -638,14 +682,14 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     /// A list that can be parsed into a CSR matrix in R
-    pub fn get_cells_by_indices(&self, indices: &[i32], assay: &str) -> List {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+    pub fn get_cells_by_indices(&self, indices: &[i32], assay: &str) -> Result<List> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
         let assay_type = parse_count_type(assay).unwrap();
 
         let indices: Vec<usize> = indices.iter().map(|x| (*x - 1) as usize).collect();
 
         // Parallel read all cells at once
-        let cells = reader.read_cells_parallel(&indices);
+        let cells = reader.read_cells_parallel(&indices).to_extendr()?;
 
         // Parallel processing of results
         let results: Vec<(Vec<i32>, AssayData)> = cells
@@ -668,13 +712,13 @@ impl SingeCellCountData {
         let data = AssayData::flatten_into_r_vector(data);
         let col_idx = flatten_vector(col_idx);
 
-        list!(
+        Ok(list!(
             indptr = row_ptr,
             indices = col_idx,
             data = data,
             no_cells = cells.len(),
             no_genes = self.n_genes
-        )
+        ))
     }
 
     ///////////
@@ -692,8 +736,8 @@ impl SingeCellCountData {
     ///
     /// * `qc_params` - List with the quality control parameters.
     /// * `verbose` - Controls verbosity of the function.
-    pub fn generate_gene_based_data(&mut self, verbose: bool) {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+    pub fn generate_gene_based_data(&mut self, verbose: bool) -> Result<()> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
 
         let no_cells = reader.get_header().total_cells;
         let no_genes = reader.get_header().total_genes;
@@ -704,7 +748,7 @@ impl SingeCellCountData {
             println!("Loading in the cell data and saving it into a gene-friendly file")
         }
 
-        let all_cells: Vec<_> = reader.get_all_cells();
+        let all_cells: Vec<_> = reader.get_all_cells().to_extendr()?;
 
         let mut data: Vec<Vec<u32>> = Vec::new();
         let mut data_2: Vec<Vec<F16>> = Vec::new();
@@ -742,8 +786,8 @@ impl SingeCellCountData {
         let sparse_data = sparse_data.transform();
         let data_2 = sparse_data.get_data2_unsafe();
 
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
+            .to_extendr()?;
 
         for i in 0..no_genes {
             let start_i = sparse_data.indptr[i];
@@ -758,7 +802,7 @@ impl SingeCellCountData {
                 true,
             );
 
-            writer.write_gene_chunk(chunk_i).unwrap();
+            writer.write_gene_chunk(chunk_i).to_extendr()?;
         }
 
         let end_conversion = start_conversion.elapsed();
@@ -770,7 +814,9 @@ impl SingeCellCountData {
             );
         }
 
-        writer.finalise().unwrap();
+        writer.finalise().to_extendr()?;
+
+        Ok(())
     }
 
     /// Generate gene-based data with streaming to reduce memory pressure
@@ -783,8 +829,12 @@ impl SingeCellCountData {
     /// * `batch_size` - Size of the batch to process in one go. The larger, the
     ///   more memory pressure will occur.
     /// * `verbose` - Controls verbosity of the function.
-    pub fn generate_gene_based_data_streaming(&mut self, batch_size: usize, verbose: bool) {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+    pub fn generate_gene_based_data_streaming(
+        &mut self,
+        batch_size: usize,
+        verbose: bool,
+    ) -> Result<()> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
         let header = reader.get_header();
         let no_cells = header.total_cells;
         let no_genes = header.total_genes;
@@ -799,8 +849,8 @@ impl SingeCellCountData {
 
         let total_batches = no_cells.div_ceil(batch_size);
 
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
+            .to_extendr()?;
 
         for batch_idx in 0..total_batches {
             let start_cell = batch_idx * batch_size;
@@ -819,7 +869,7 @@ impl SingeCellCountData {
                 }
             }
 
-            let cell_batch = reader.read_cells_parallel(&cell_indices);
+            let cell_batch = reader.read_cells_parallel(&cell_indices).to_extendr()?;
 
             for cell in cell_batch {
                 let cell_id = cell.original_index as u32;
@@ -861,7 +911,7 @@ impl SingeCellCountData {
                     true,
                 );
 
-                writer.write_gene_chunk(chunk).unwrap();
+                writer.write_gene_chunk(chunk).to_extendr()?;
             } else {
                 let chunk = CscGeneChunk::from_conversion(
                     RawCounts::U16(Vec::new()),
@@ -870,7 +920,7 @@ impl SingeCellCountData {
                     gene_id,
                     true,
                 );
-                writer.write_gene_chunk(chunk).unwrap();
+                writer.write_gene_chunk(chunk).to_extendr()?;
             }
         }
 
@@ -883,7 +933,9 @@ impl SingeCellCountData {
             );
         }
 
-        writer.finalise().unwrap();
+        writer.finalise().to_extendr()?;
+
+        Ok(())
     }
 
     /// Generate gene-based data with memory-bounded accumulation
@@ -907,8 +959,8 @@ impl SingeCellCountData {
         max_genes_in_memory: usize,
         cell_batch_size: usize,
         verbose: bool,
-    ) {
-        let reader = Arc::new(ParallelSparseReader::new(&self.f_path_cells).unwrap());
+    ) -> Result<()> {
+        let reader = Arc::new(ParallelSparseReader::new(&self.f_path_cells).to_extendr()?);
         let header = reader.get_header();
         let no_cells = header.total_cells;
         let no_genes = header.total_genes;
@@ -925,8 +977,8 @@ impl SingeCellCountData {
 
         let start_conversion = Instant::now();
 
-        let mut writer =
-            CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes).unwrap();
+        let mut writer = CellGeneSparseWriter::new(&self.f_path_genes, false, no_cells, no_genes)
+            .to_extendr()?;
 
         let num_phases = no_genes.div_ceil(max_genes_in_memory);
 
@@ -955,36 +1007,33 @@ impl SingeCellCountData {
 
             let gene_data_parts: GeneData = cell_batches
                 .par_iter()
-                .map(|&(cell_start, cell_end)| {
+                .map(|&(cell_start, cell_end)| -> GeneDataRes {
                     let mut local_gene_data: FxHashMap<u32, Vec<(u32, u16, F16)>> =
                         FxHashMap::default();
 
-                    if let Ok(local_reader) = ParallelSparseReader::new(&self.f_path_cells) {
-                        let cells = local_reader.read_cells_range(cell_start, cell_end);
+                    let local_reader = ParallelSparseReader::new(&self.f_path_cells)?;
+                    let cells = local_reader.read_cells_range(cell_start, cell_end)?;
 
-                        for cell in cells {
-                            let cell_id = cell.original_index as u32;
-
-                            for (idx, &gene_id) in cell.indices.iter().enumerate() {
-                                if (gene_id as usize) >= gene_phase_start
-                                    && (gene_id as usize) < gene_phase_end
-                                {
-                                    let raw_count =
-                                        cell.data_raw.get(idx).min(u16::MAX as u32) as u16;
-                                    let norm_count = cell.data_norm[idx];
-
-                                    local_gene_data
-                                        .entry(gene_id)
-                                        .or_insert_with(|| Vec::with_capacity(100))
-                                        .push((cell_id, raw_count, norm_count));
-                                }
+                    for cell in cells {
+                        let cell_id = cell.original_index as u32;
+                        for (idx, &gene_id) in cell.indices.iter().enumerate() {
+                            if (gene_id as usize) >= gene_phase_start
+                                && (gene_id as usize) < gene_phase_end
+                            {
+                                let raw_count = cell.data_raw.get(idx).min(u16::MAX as u32) as u16;
+                                let norm_count = cell.data_norm[idx];
+                                local_gene_data
+                                    .entry(gene_id)
+                                    .or_insert_with(|| Vec::with_capacity(100))
+                                    .push((cell_id, raw_count, norm_count));
                             }
                         }
                     }
 
-                    local_gene_data
+                    Ok(local_gene_data)
                 })
-                .collect();
+                .collect::<std::result::Result<Vec<_>, BixverseErrors>>()
+                .to_extendr()?;
 
             if verbose {
                 println!("  Merging parallel results...");
@@ -1028,7 +1077,7 @@ impl SingeCellCountData {
                         gene_id,
                         true,
                     );
-                    writer.write_gene_chunk(empty_chunk).unwrap();
+                    writer.write_gene_chunk(empty_chunk).to_extendr()?;
                 }
             }
 
@@ -1037,7 +1086,7 @@ impl SingeCellCountData {
             }
         }
 
-        writer.finalise().unwrap();
+        writer.finalise().to_extendr()?;
 
         let end_conversion = start_conversion.elapsed();
 
@@ -1047,6 +1096,8 @@ impl SingeCellCountData {
                 end_conversion
             );
         }
+
+        Ok(())
     }
 
     /// Return genes by index positions
@@ -1061,8 +1112,8 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     /// A list that can be parsed into a CSC matrix in R
-    pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> List {
-        let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
+    pub fn get_genes_by_indices(&self, indices: &[i32], assay: &str) -> Result<List> {
+        let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
 
         let assay_type = parse_count_type(assay).unwrap();
 
@@ -1073,7 +1124,7 @@ impl SingeCellCountData {
             .map(|x| (*x - 1) as usize)
             .collect::<Vec<usize>>();
 
-        let genes = reader.read_gene_parallel(&indices);
+        let genes = reader.read_gene_parallel(&indices).to_extendr()?;
 
         let mut data: Vec<AssayData> = Vec::new();
         let mut col_idx: Vec<Vec<i32>> = Vec::new();
@@ -1095,13 +1146,13 @@ impl SingeCellCountData {
         let data = AssayData::flatten_into_r_vector(data);
         let col_idx = flatten_vector(col_idx);
 
-        list!(
+        Ok(list!(
             indptr = row_ptr,
             indices = col_idx,
             data = data,
             no_cells = no_cells,
             no_genes = indices.len()
-        )
+        ))
     }
 
     /// Set cell numbers and genes
@@ -1110,11 +1161,13 @@ impl SingeCellCountData {
     ///
     /// * `cell_no` - No of cells
     /// * `gene_no` - No of genes
-    pub fn set_from_file(&mut self) {
-        let reader = ParallelSparseReader::new(&self.f_path_cells).unwrap();
+    pub fn set_from_file(&mut self) -> Result<()> {
+        let reader = ParallelSparseReader::new(&self.f_path_cells).to_extendr()?;
         let header = reader.get_header();
         self.n_cells = header.total_cells;
         self.n_genes = header.total_genes;
+
+        Ok(())
     }
 
     /// Helper function to get the number of cells expressing a gene
@@ -1127,8 +1180,8 @@ impl SingeCellCountData {
     /// ### Returns
     ///
     /// A vector of NNZ for the genes.
-    pub fn get_nnz_genes(&mut self, gene_indices: Option<&[i32]>) -> Vec<i32> {
-        let reader = ParallelSparseReader::new(&self.f_path_genes).unwrap();
+    pub fn get_nnz_genes(&mut self, gene_indices: Option<&[i32]>) -> Result<Vec<i32>> {
+        let reader = ParallelSparseReader::new(&self.f_path_genes).to_extendr()?;
 
         let nnz = match gene_indices {
             Some(indices) => {
@@ -1136,11 +1189,11 @@ impl SingeCellCountData {
                     .iter()
                     .map(|&x| (x - 1) as usize)
                     .collect::<Vec<usize>>();
-                reader.read_gene_nnz(&gene_indices)
+                reader.read_gene_nnz(&gene_indices).to_extendr()?
             }
-            None => reader.get_all_gene_nnz(),
+            None => reader.get_all_gene_nnz().to_extendr()?,
         };
 
-        nnz.r_int_convert()
+        Ok(nnz.r_int_convert())
     }
 }
