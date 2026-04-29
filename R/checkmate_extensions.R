@@ -1760,7 +1760,8 @@ checkScBoost <- function(x) {
       "resolution",
       "n_iters",
       "p_thresh",
-      "voter_thresh"
+      "voter_thresh",
+      "fast_cluster"
     )
   )
   if (!isTRUE(res)) {
@@ -1842,7 +1843,8 @@ checkScBoost <- function(x) {
     "mean_center",
     "normalise_variance",
     "replace",
-    "random_svd"
+    "random_svd",
+    "fast_cluster"
   )
 
   res <- purrr::map_lgl(boolean_rules, \(name) {

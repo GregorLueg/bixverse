@@ -238,7 +238,7 @@ params_scrublet <- function(
 #' @param resolution Numeric. Resolution parameter for graph-based clustering.
 #' Higher values lead to more clusters. Defaults to `1.0`.
 #' @param n_iters Integer. Number of iterations to run the algorithm. Defaults
-#' to `25L`.
+#' to `20L`.
 #' @param p_thresh Numeric. P-value threshold for significance testing. Defaults
 #' to `1e-7`.
 #' @param voter_thresh Numeric. Voter threshold across iterations. Proportion of
@@ -276,10 +276,10 @@ params_boost <- function(
   boost_rate = 0.25,
   replace = FALSE,
   resolution = 1.0,
-  n_iters = 25L,
+  n_iters = 20L,
   p_thresh = 1e-7,
   voter_thresh = 0.9,
-  fast_cluster = TRUE,
+  fast_cluster = FALSE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
@@ -383,7 +383,7 @@ params_scdblfinder <- function(
   heterotypic_bias = 1.0,
   cluster_resolution = 1.0,
   cluster_iters = 10L,
-  fast_cluster = TRUE,
+  fast_cluster = FALSE,
   n_iterations = 3L,
   n_trees = 200L,
   max_depth = 4L,
@@ -461,7 +461,8 @@ params_scdblfinder <- function(
 #' be generated that generates edges between all cells instead of between
 #' only neighbours.
 #' @param pruning Numeric. Weights below this threshold will be set to 0 in
-#' the generation of the sNN graph.
+#' the generation of the sNN graph. Seurat uses for example `1/15` with
+#' `k = 20`. As the default k is set to 15, we set it to `1/12`.
 #' @param snn_similarity String. One of `c("rank", "jaccard")`. The Jaccard
 #' similarity calculates the Jaccard between the neighbours, whereas the rank
 #' method calculates edge weights based on the ranking of shared neighbours.
@@ -480,8 +481,8 @@ params_scdblfinder <- function(
 #' @export
 params_sc_neighbours <- function(
   full_snn = FALSE,
-  pruning = 1 / 15,
-  snn_similarity = c("rank", "jaccard"),
+  pruning = 1 / 12,
+  snn_similarity = c("jaccard", "rank"),
   knn = list(ann_dist = "cosine")
 ) {
   snn_similarity <- match.arg(snn_similarity)

@@ -488,6 +488,31 @@ get_feature_mat.ScDblFinderRes <- function(x, ...) {
   return(x$features)
 }
 
+#' Get either the cxds or weighted scores
+#'
+#' @param x An object to get the weighted or cxds scores from.
+#'
+#' @export
+get_scores <- function(x, ..., score_type = c("weighted", "cxds_scores")) {
+  UseMethod("get_scores")
+}
+
+#' @rdname get_scores
+#'
+#' @export
+get_scores.ScDblFinderRes <- function(
+  x,
+  ...,
+  score_type = c("weighted", "cxds_scores")
+) {
+  score_type <- match.arg(score_type)
+
+  checkmate::assertClass(x, "ScDblFinderRes")
+  checkmate::assertChoice(score_type, c("weighted", "cxds_scores"))
+
+  x[[score_type]]
+}
+
 ### print ----------------------------------------------------------------------
 
 #' Print a ScDblFinderRes object

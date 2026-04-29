@@ -603,11 +603,10 @@ expect_true(
 
 nrow_embd <- nrow(get_pca_factors(sc_object))
 
-
 rs_fast_cluster_sc(
   embd = get_pca_factors(sc_object),
   km_type = "kmeans",
-  resolutions = c(1.0, 0.5, 0.25),
+  resolutions = c(2.0, 1.5, 1.0, 0.5, 0.25),
   n_centroids = NULL,
   fc_params = params_sc_fast_cluster(),
   seed = 42L,

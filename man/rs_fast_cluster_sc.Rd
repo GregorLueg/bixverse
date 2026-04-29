@@ -10,6 +10,7 @@ rs_fast_cluster_sc(
   resolutions,
   n_centroids,
   fc_params,
+  snn,
   seed,
   verbose
 )
@@ -27,6 +28,9 @@ through.}
 not provided, defaults to \code{sqrt(nrow(embd))}.}
 
 \item{fc_params}{Named list. The fast clustering parameters.}
+
+\item{snn}{Boolean. Shall the kNN graph be additionally transformed into
+an sNN graph.}
 
 \item{seed}{Integer. For reproducibility.}
 

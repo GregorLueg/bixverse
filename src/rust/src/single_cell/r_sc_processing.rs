@@ -3,7 +3,7 @@ use bixverse_rs::single_cell::sc_analysis::fast_clusters::*;
 use bixverse_rs::single_cell::sc_processing::metrics::pairwise_gene_correlations;
 use bixverse_rs::single_cell::sc_processing::{
     doublet_detection::*, hvg::*, knn::compare_knn_graphs, pca::*, qc::*, scdblfinder::*,
-    scrublet::*, snn::*,
+    scrublet::*, snn::*, utils_doublets::find_threshold_otsu,
 };
 use extendr_api::prelude::*;
 use faer::Mat;
@@ -21,6 +21,7 @@ extendr_module! {
     fn rs_sc_scrublet;
     fn rs_sc_doublet_detection;
     fn rs_sc_scdblfinder;
+    fn rs_sc_otsu_method;
     // cell quality
     fn rs_sc_get_top_genes_perc;
     fn rs_sc_get_gene_set_perc;
@@ -251,6 +252,28 @@ fn rs_sc_scdblfinder(
         selected_genes = res.selected_genes.r_int_convert(),
         features = features
     ))
+}
+
+/// Run Otsu's method
+///
+/// Maximises between-class variance of the observed score distribution to
+/// find the optimal binary split. Robust to both bimodal and skewed
+/// distributions.
+///
+/// @param scores Numeric vector. The vector for which to identify the
+/// threshold.
+/// @param bins Integer. Number of bins to use for the histogram building.
+///
+/// @returns The threshold based on Otsu's method
+///
+/// @export
+#[extendr]
+fn rs_sc_otsu_method(scores: &[f64], bins: usize) -> f64 {
+    let scores = scores.r_float_convert();
+
+    let threshold = find_threshold_otsu(&scores, bins);
+
+    threshold as f64
 }
 
 /////////////
@@ -1021,7 +1044,7 @@ fn rs_sc_snn(
     let n_neighbours = knn_mat.ncols();
     let data = knn_mat.data().r_int_convert();
 
-    let snn_method = get_snn_similiarity_method(&snn_method)
+    let snn_method = parse_snn_similiarity_method(&snn_method)
         .ok_or_else(|| format!("Invalid SNN similarity method: {}", snn_method))?;
 
     let snn_data = if limited_graph {
@@ -1064,6 +1087,10 @@ fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> 
     compare_knn_graphs(knn_mat_a, knn_mat_b)
 }
 
+//////////////////
+// Fast cluster //
+//////////////////
+
 /// Runs fast Louvain cluster on the data
 ///
 /// @description
@@ -1079,6 +1106,8 @@ fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> 
 /// @param n_centroids Optional integer. The number of clusters to find. If
 /// not provided, defaults to `sqrt(nrow(embd))`.
 /// @param fc_params Named list. The fast clustering parameters.
+/// @param snn Boolean. Shall the kNN graph be additionally transformed into
+/// an sNN graph.
 /// @param seed Integer. For reproducibility.
 /// @param verbose Boolean. Controls the verbosity of the function.
 ///
@@ -1086,17 +1115,19 @@ fn rs_compare_knn(knn_mat_a: RMatrix<i32>, knn_mat_b: RMatrix<i32>) -> Vec<i32> 
 ///
 /// @export
 #[extendr]
+#[allow(clippy::too_many_arguments)]
 fn rs_fast_cluster_sc(
     embd: RMatrix<f64>,
     km_type: String,
     resolutions: &[f64],
     n_centroids: Option<usize>,
     fc_params: List,
+    snn: bool,
     seed: usize,
     verbose: bool,
 ) -> Result<List, extendr_api::Error> {
     let embd = r_matrix_to_faer_fp32(&embd);
-    let n_clusters = n_centroids.unwrap_or((embd.nrows() as f32).sqrt() as usize);
+    let n_clusters = n_centroids.unwrap_or(((embd.nrows() as f32).sqrt()) as usize);
     let resolutions = resolutions.r_float_convert();
 
     let mut params: FastLouvainParams<f32> = FastLouvainParams::from_r_list(fc_params)?;
@@ -1108,9 +1139,12 @@ fn rs_fast_cluster_sc(
         &km_type,
         &resolutions,
         &params,
+        snn,
+        true,
         seed,
         verbose,
-    );
+    )
+    .to_extendr()?;
 
     let mut res = List::new(memberships.len());
 

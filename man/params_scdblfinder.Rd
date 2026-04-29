@@ -10,7 +10,7 @@ params_scdblfinder(
   heterotypic_bias = 1,
   cluster_resolution = 1,
   cluster_iters = 10L,
-  fast_cluster = TRUE,
+  fast_cluster = FALSE,
   n_iterations = 3L,
   n_trees = 200L,
   max_depth = 4L,

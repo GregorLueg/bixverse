@@ -6,8 +6,8 @@
 \usage{
 params_sc_neighbours(
   full_snn = FALSE,
-  pruning = 1/15,
-  snn_similarity = c("rank", "jaccard"),
+  pruning = 1/12,
+  snn_similarity = c("jaccard", "rank"),
   knn = list(ann_dist = "cosine")
 )
 }
@@ -17,7 +17,8 @@ be generated that generates edges between all cells instead of between
 only neighbours.}
 
 \item{pruning}{Numeric. Weights below this threshold will be set to 0 in
-the generation of the sNN graph.}
+the generation of the sNN graph. Seurat uses for example \code{1/15} with
+\code{k = 20}. As the default k is set to 15, we set it to \code{1/12}.}
 
 \item{snn_similarity}{String. One of \code{c("rank", "jaccard")}. The Jaccard
 similarity calculates the Jaccard between the neighbours, whereas the rank

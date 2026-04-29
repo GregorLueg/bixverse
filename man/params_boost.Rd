@@ -8,10 +8,10 @@ params_boost(
   boost_rate = 0.25,
   replace = FALSE,
   resolution = 1,
-  n_iters = 25L,
+  n_iters = 20L,
   p_thresh = 1e-07,
   voter_thresh = 0.9,
-  fast_cluster = TRUE,
+  fast_cluster = FALSE,
   normalisation = list(),
   hvg = list(),
   pca = list(),
@@ -29,7 +29,7 @@ to \code{FALSE}.}
 Higher values lead to more clusters. Defaults to \code{1.0}.}
 
 \item{n_iters}{Integer. Number of iterations to run the algorithm. Defaults
-to \code{25L}.}
+to \code{20L}.}
 
 \item{p_thresh}{Numeric. P-value threshold for significance testing. Defaults
 to \code{1e-7}.}

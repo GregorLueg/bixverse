@@ -2259,6 +2259,21 @@ rs_sc_doublet_detection <- function(f_path_gene, f_path_cell, cells_to_keep, boo
 #' cluster_labels and detected_doublet_rate.
 rs_sc_scdblfinder <- function(f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug) .Call(wrap__rs_sc_scdblfinder, f_path_gene, f_path_cell, cell_indices, params, return_features, streaming, seed, verbose, debug)
 
+#' Run Otsu's method
+#'
+#' Maximises between-class variance of the observed score distribution to
+#' find the optimal binary split. Robust to both bimodal and skewed
+#' distributions.
+#'
+#' @param scores Numeric vector. The vector for which to identify the
+#' threshold.
+#' @param bins Integer. Number of bins to use for the histogram building.
+#'
+#' @returns The threshold based on Otsu's method
+#'
+#' @export
+rs_sc_otsu_method <- function(scores, bins) .Call(wrap__rs_sc_otsu_method, scores, bins)
+
 #' Calculates the cumulative proportion of the top X genes
 #'
 #' @description
@@ -2564,13 +2579,15 @@ rs_compare_knn <- function(knn_mat_a, knn_mat_b) .Call(wrap__rs_compare_knn, knn
 #' @param n_centroids Optional integer. The number of clusters to find. If
 #' not provided, defaults to `sqrt(nrow(embd))`.
 #' @param fc_params Named list. The fast clustering parameters.
+#' @param snn Boolean. Shall the kNN graph be additionally transformed into
+#' an sNN graph.
 #' @param seed Integer. For reproducibility.
 #' @param verbose Boolean. Controls the verbosity of the function.
 #'
 #' @returns A list with the memberships per resolution.
 #'
 #' @export
-rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, seed, verbose)
+rs_fast_cluster_sc <- function(embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose) .Call(wrap__rs_fast_cluster_sc, embd, km_type, resolutions, n_centroids, fc_params, snn, seed, verbose)
 
 #' Calculate DGEs between cells based on Mann Whitney stats
 #'
